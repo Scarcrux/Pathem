@@ -23,6 +23,7 @@ final class PaneController: NSObject {
     var onDirectoryDidChange: ((URL) -> Void)?
 
     private var watcher: DirectoryWatcher?
+    private var pendingRefresh: DispatchWorkItem?
     private var showingSearchResults = false
 
     init(start: URL) {
@@ -68,18 +69,31 @@ final class PaneController: NSObject {
     /// Move into nav.current: refresh the listing, watch the new folder for
     /// on-disk changes, and tell the browser the folder changed.
     private func enterDirectory() {
+        startWatching()  // arm before snapshotting, to narrow the listing/watch gap
         reload()
-        startWatching()
         onDirectoryDidChange?(nav.current)
     }
 
     private func startWatching() {
-        watcher = DirectoryWatcher(path: nav.current.path) { [weak self] in
-            Task { @MainActor in self?.directoryChangedOnDisk() }
+        let watched = nav.current
+        watcher?.stop()  // tear down the previous watcher deterministically
+        pendingRefresh?.cancel()
+        watcher = DirectoryWatcher(path: watched.path) { [weak self] in
+            Task { @MainActor in self?.directoryChangedOnDisk(watched: watched) }
         }
     }
 
-    private func directoryChangedOnDisk() {
+    /// A disk change arrived for `watched`. Ignore it if we have navigated away,
+    /// and debounce so a burst (an unzip, a large copy) collapses to one refresh.
+    private func directoryChangedOnDisk(watched: URL) {
+        guard watched == nav.current else { return }
+        pendingRefresh?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.applyDiskRefresh() }
+        pendingRefresh = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
+    }
+
+    private func applyDiskRefresh() {
         // Refresh the listing only if we're showing it (not search results),
         // but always tell the browser so it can rebuild the search index.
         if !showingSearchResults { reload() }
