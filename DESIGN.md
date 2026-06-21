@@ -20,7 +20,7 @@ successor to Windows' **Directory Opus**, aimed past Cocoatech's **Path Finder**
 and far past Finder. "Superuser" means the file view is a configurable
 workspace, not a fixed window: dual-pane, tabs, saved layouts, per-folder
 formats, find-as-you-type, batch rename, and (eventually) a command/scripting
-system. Built by a solo dev, perpetual-license (no subscription), on-device,
+system. Built by a solo dev, free and open source (MIT), no subscription, on-device,
 privacy-forward.
 
 Per CONVENTIONS.md: right-language-for-runtime, stdlib-first, **stay narrow**
@@ -393,14 +393,104 @@ USPTO TESS knockout search in Classes 9 & 42.
    appcast, key generated at v0). MAS is skipped — the App Sandbox cannot
    grant Full Disk Access, which would gut the whole-filesystem "superuser"
    reach the product exists for.**
-4. **First differentiator after the engine** — north-star is **integrated LLM
-   support** (§2). Open question is the *first shippable slice*: a small LLM win
-   (e.g. natural-language filter / rename preview) vs. a non-LLM showcase (saved
-   Layouts or the batch-rename engine) to ship while the content index matures.
+4. ~~**First differentiator after the engine**~~ — **Decided: two-launch plan
+   (see §9).** Launch 1 = native engine + minimal dual-pane (the speed is the
+   demo); Launch 2 = on-device semantic search (the §2 north-star), kept free in
+   the OSS build, months later. Each launch is its own Show HN + blog post.
+
+## 9. Business model, license & launch (decided)
+
+Goal reframed: the primary objective is **reach + reputation** (GitHub stars,
+attention, job prospects); revenue is strictly secondary. Two independent,
+adversarially fact-checked research passes (growth strategy; relicensing
+options) converged on the plan below and confirmed the stars goal and the career
+goal are *aligned*, not in tension.
+
+### License: MIT (decided)
+- Permissive OSI licensing is the category norm and the growth funnel: every
+  native-Mac / file-manager breakout is permissive (Files, nnn, superfile,
+  Ghostty, Stats, Maccy). MIT keeps Pathom eligible for Homebrew, distros, and
+  awesome-lists and kills the "that's not real open source" derail that hijacks
+  every source-available launch thread.
+- `LICENSE` is committed (MIT, © 2026 Scarcrux). The only defensible alternative
+  is **Apache-2.0** (explicit patent grant — marginally better for the
+  on-device-AI code); verdict is **keep MIT**. Protect the brand via
+  **trademark, not the license**.
+
+### Relicensing reality ("can we change from MIT later?")
+- As **sole copyright holder** you can release *future* versions under any terms
+  — but only while you remain sole copyright holder.
+- **Already-published MIT versions are permanent and forkable forever**
+  (Terraform→OpenTofu, Redis→Valkey). Relicensing-away is a "rug pull" that
+  detonates goodwill and invites a fork of your last MIT commit. **Last resort,
+  not a plan.**
+
+### Day-one actions to preserve every option (before the repo goes public / before any external PR)
+1. **Relicensing-grant CLA** via CLA-assistant-lite (GitHub Action, signatures
+   in-repo): contributor keeps copyright but grants you a broad, irrevocable,
+   sublicensable license that *explicitly includes the right to relicense /
+   dual-license*. **DCO alone is insufficient.** Single load-bearing action —
+   one external PR merged without it fragments copyright and blocks any relicense.
+2. **Keep sole, provably-clean copyright** — no copied third-party/GPL snippets
+   in the MIT tree; until the CLA tooling is live, hold or rewrite external PRs.
+3. **Trademark "Pathom"** — use `Pathom™` now (common-law, free); budget a USPTO
+   registration (~$350/class DIY) at launch; add a short Trademark Usage Policy.
+   A worst-case MIT fork then still can't ship as "Pathom."
+4. **One IP/OSS lawyer consult** to finalize the CLA wording (not legal advice).
+
+### Monetization (orthogonal to the license, secondary)
+- **Open-core (recommended):** MIT core for stars + a *separate closed-source*
+  "Pathom Pro" superset (power features / sync / saved Layouts), ~$10–30. No
+  license change, no fork/contributor problem on the paid part. Precedent in
+  this exact category: Rectangle (MIT) + Rectangle Pro (closed), same solo dev.
+- **Sell the identical binary:** notarized, auto-updating, support-backed build
+  via Paddle/FastSpring (own the customer, ~95% kept) — MIT permits selling
+  copies. Optional paid **MAS convenience SKU** later (separate, sandbox-limited;
+  must not compromise the non-sandboxed flagship).
+- **GitHub Sponsors** + paid priority-support tiers from day one.
+- **Do NOT** fee-based-dual-license MIT (earns nothing — MIT already permits
+  commercial use; real dual-licensing needs a copyleft side = a license change =
+  star cost).
+- **Iron rules:** never relicense-to-restrictive later; never paywall a
+  previously-free feature; the on-device semantic search stays **free** in the
+  OSS build forever — only a *cloud* variant could ever be paid.
+
+### Launch strategy: two launches
+- **Launch 1 — native engine + minimal dual-pane.** "Show HN: a native macOS
+  file manager that renders 1M rows." The speed is the product.
+- **Launch 2 — on-device semantic search**, months later. Two launches = two
+  star spikes = two blog posts.
+- **Build in public 3–6 weeks first** (demo clips on X/Bluesky, an r/swift
+  virtualization thread) to manufacture the first-hour HN velocity that is the
+  #1 ranking factor.
+- **One Show HN shot:** Tue–Thu 8–10am PT; link the repo; hero GIF + working
+  notarized DMG; own technical top-comment with honest limitations; reply within
+  ~10 min for 2 hours. Stagger cross-posts (r/macapps, r/swift, r/MacOS,
+  Lobsters). **Never solicit upvotes; no paywall/email gate on the download.**
+- **After 225+ stars:** Homebrew cask + awesome-list PRs + AlternativeTo. Product
+  Hunt a few days after HN.
+- **README:** a <15s 1M-row scroll GIF above the fold; "Native AppKit. No
+  Electron. 1M+ files instantly."; real benchmarks; CONTRIBUTING.md +
+  good-first-issues + Sponsors.
+
+### Career signal (the actual payoff)
+The flagship blog post — "How I built a 1M-row native macOS file manager in
+Swift/AppKit" — is the highest-leverage artifact: it drives the launch *and* is
+the 45-second recruiter narrative. Foreground systems depth (getattrlistbulk,
+cell recycling, lazy outline, two-tier watcher), show sustained maintenance, put
+Pathom atop the résumé with stars + benchmark. Optional conference/meetup talk.
+
+### Reconciliation
+- §1 "no subscription, privacy-forward" stays — a promise to users, orthogonal
+  to the source license, and a strong anti-Path-Finder line.
+- §8.3 direct-only non-sandboxed distribution stays for the **free flagship**;
+  any paid MAS SKU is a separate, optional, sandbox-limited convenience build.
+- The earlier "businesses pay $5/seat" idea is **killed** (source-available
+  would cap stars and invite a fork — the opposite of the goal).
 
 ---
 
-*Provenance: research + architecture proposals + adversarial fact-check via a
-10-agent workflow; technical claims verified on macOS 26.5.1 / arm64 /
-Swift 6.3.2. This is engineering analysis, not legal advice (trademark notes
-are a preliminary screen).*
+*Provenance: research + architecture proposals + adversarial fact-check via
+multiple multi-agent workflows; technical claims verified on macOS 26.5.1 /
+arm64 / Swift 6.3.2. This is engineering analysis, not legal advice (license and
+trademark notes are a preliminary screen — get a lawyer consult before launch).*
