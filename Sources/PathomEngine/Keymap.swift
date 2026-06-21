@@ -85,6 +85,7 @@ public struct Keymap: Codable, Sendable {
         "f5": "files.copyToOtherPane",
         "f6": "files.moveToOtherPane",
         "cmd+shift+.": "view.toggleHidden",
+        "cmd+shift+p": "palette.show",
     ]
 
     public static var standard: Keymap { Keymap(bindings: defaultBindings) }

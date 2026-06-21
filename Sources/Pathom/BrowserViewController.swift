@@ -30,6 +30,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     private var folderFormats = FolderFormats()
     /// Saved workspace layouts (pane paths + split position).
     private var layouts = Layouts()
+    /// Fuzzy command palette over the registry (Cmd-Shift-P).
+    private lazy var palette = CommandPalette()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -129,6 +131,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
             [weak self] in self?.applyViewToSubfolders()
         }
         add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
+        add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
@@ -144,6 +147,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
         add("edit.redo", "Redo", enabled: { [weak self] in self?.view.window?.undoManager?.canRedo ?? false }) {
             [weak self] in self?.redo(nil)
         }
+    }
+
+    /// Open the command palette over the current window, dispatching the chosen
+    /// command through the registry.
+    private func showPalette() {
+        guard let window = view.window else { return }
+        let items = commands.all.map { (id: $0.id, title: $0.title) }
+        palette.present(commands: items, onRun: { [weak self] id in self?.commands.perform(id) }, over: window)
     }
 
     /// Resolve a key chord against the keymap and dispatch via the registry.
