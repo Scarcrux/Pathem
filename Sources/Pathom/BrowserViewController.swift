@@ -26,6 +26,8 @@ final class BrowserViewController: NSViewController {
     let commands = CommandRegistry()
     /// Chord -> command id, defaults overlaid with any user keymap.json.
     private var keymap = Keymap.standard
+    /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
+    private var folderFormats = FolderFormats()
 
     /// Per-folder semantic index cache: pre-built when a pane enters a folder,
     /// invalidated when that folder changes on disk, so searches are instant.
@@ -72,12 +74,19 @@ final class BrowserViewController: NSViewController {
         super.viewDidLoad()
         registerCommands()
         loadKeymap()
+        loadFolderFormats()
         left.onBecomeActive = { [weak self] in self?.setActive(self?.left) }
         right.onBecomeActive = { [weak self] in self?.setActive(self?.right) }
         for pane in [left, right] {
             pane.list.tableView.onKeyChord = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
             pane.onDirectoryDidChange = { [weak self] url in self?.directoryChanged(pane, url) }
+            pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
+            pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
         }
+        // The panes loaded with the default format during init (before the store
+        // and closures were wired); reload now to apply any saved per-folder views.
+        left.reload()
+        right.reload()
         setActive(left)
     }
 
@@ -109,6 +118,9 @@ final class BrowserViewController: NSViewController {
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
+        }
+        add("view.applyToSubfolders", "Apply View to Subfolders", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.applyViewToSubfolders()
         }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
@@ -155,6 +167,42 @@ final class BrowserViewController: NSViewController {
         let dir = base.appendingPathComponent("Pathom", isDirectory: true)
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
+    }
+
+    // MARK: - Per-folder view formats
+
+    private static var folderFormatsURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("formats.json")
+    }
+
+    private func loadFolderFormats() {
+        guard let url = Self.folderFormatsURL, let data = try? Data(contentsOf: url),
+            let saved = try? JSONDecoder().decode(FolderFormats.self, from: data)
+        else { return }
+        folderFormats = saved
+    }
+
+    private func saveFolderFormats() {
+        guard let url = Self.folderFormatsURL else { return }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let data = try? encoder.encode(folderFormats) { try? data.write(to: url) }
+    }
+
+    /// Auto-remember: the active folder gets its own exact-path format.
+    private func rememberFormat(_ url: URL, _ format: ViewFormat) {
+        folderFormats.setExact(url.path, format)
+        saveFolderFormats()
+    }
+
+    /// Apply the active pane's current view to its whole subtree, then refresh
+    /// both panes so any visible descendants pick up the new format.
+    private func applyViewToSubfolders() {
+        guard let pane = activePane else { return }
+        folderFormats.setSubtree(pane.currentURL.path, pane.format)
+        saveFolderFormats()
+        left.reload()
+        right.reload()
     }
 
     override func viewDidLayout() {

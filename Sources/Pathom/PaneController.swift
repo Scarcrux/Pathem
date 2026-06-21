@@ -26,8 +26,12 @@ final class PaneController: NSObject {
     private var pendingRefresh: DispatchWorkItem?
     private var showingSearchResults = false
 
-    /// How this pane sorts and filters its listing.
+    /// How this pane sorts and filters its listing (resolved per folder).
     var format = ViewFormat.default
+    /// Asks the browser for the saved format for a folder (the per-folder cascade).
+    var resolveFormat: ((URL) -> ViewFormat)?
+    /// Tells the browser to remember a format for this folder.
+    var rememberFormat: ((URL, ViewFormat) -> Void)?
 
     init(start: URL) {
         nav = NavigationState(current: start.standardizedFileURL)
@@ -54,6 +58,7 @@ final class PaneController: NSObject {
 
     func reload() {
         showingSearchResults = false
+        if let resolveFormat { format = resolveFormat(nav.current) }
         let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)) ?? []
         list.setEntries(format.sorted(entries))
         list.showSortIndicator(key: format.sortKey, ascending: format.ascending)
@@ -171,12 +176,14 @@ final class PaneController: NSObject {
             guard let self else { return }
             self.format.sortKey = key
             self.format.ascending = ascending
+            self.rememberFormat?(self.nav.current, self.format)
             self.reload()
         }
     }
 
     func toggleHidden() {
         format.showHidden.toggle()
+        rememberFormat?(nav.current, format)
         reload()
     }
 
