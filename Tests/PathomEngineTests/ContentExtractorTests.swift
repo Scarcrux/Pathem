@@ -1,3 +1,6 @@
+import AppKit
+import CoreGraphics
+import CoreText
 import Foundation
 import Testing
 
@@ -42,5 +45,35 @@ import Testing
     @Test func returnsNilForMissingFile() {
         let url = URL(fileURLWithPath: "/no/such/pathom/file-\(UUID().uuidString).txt")
         #expect(ContentExtractor.snippet(of: url) == nil)
+    }
+
+    @Test func readsPDFText() throws {
+        try withTempDir { dir in
+            let url = dir.appendingPathComponent("doc.pdf")
+            try Self.makePDF(text: "semanticpdfcontent", at: url)
+            let snippet = ContentExtractor.snippet(of: url)
+            #expect(snippet?.contains("semanticpdfcontent") == true)
+        }
+    }
+
+    /// Generate a one-page PDF with selectable (extractable) text via CoreText.
+    private static func makePDF(text: String, at url: URL) throws {
+        let data = NSMutableData()
+        guard let consumer = CGDataConsumer(data: data as CFMutableData) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        var box = CGRect(x: 0, y: 0, width: 300, height: 300)
+        guard let ctx = CGContext(consumer: consumer, mediaBox: &box, nil) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        ctx.beginPDFPage(nil)
+        let attributed = NSAttributedString(
+            string: text, attributes: [.font: NSFont.systemFont(ofSize: 14)])
+        let line = CTLineCreateWithAttributedString(attributed)
+        ctx.textPosition = CGPoint(x: 20, y: 150)
+        CTLineDraw(line, ctx)
+        ctx.endPDFPage()
+        ctx.closePDF()
+        try (data as Data).write(to: url)
     }
 }

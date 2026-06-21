@@ -25,7 +25,7 @@ public enum SemanticSearcher {
     /// plus a content snippet (for text-like files). Capped at `maxItems`.
     /// Returns an empty index if the on-device model asset isn't ready.
     public static func index(
-        _ entries: [FileEntry], in directory: URL, maxItems: Int = 5000
+        _ entries: [FileEntry], in directory: URL, maxItems: Int = 5000, ocrImages: Bool = false
     ) -> FolderSemanticIndex {
         let embedder = NLEmbedder()
         guard embedder.dimension > 0 else { return FolderSemanticIndex(ids: [], vectors: []) }
@@ -35,7 +35,8 @@ public enum SemanticSearcher {
         for (i, entry) in entries.prefix(maxItems).enumerated() {
             var text = entry.name
             if !entry.isDirectory,
-                let snippet = ContentExtractor.snippet(of: directory.appendingPathComponent(entry.name))
+                let snippet = ContentExtractor.snippet(
+                    of: directory.appendingPathComponent(entry.name), ocr: ocrImages)
             {
                 text += "\n" + snippet
             }
