@@ -8,6 +8,10 @@ DerivedData/
 # macOS
 .DS_Store
 
+# Editors
+.vscode/
+.idea/
+
 # iCloud hygiene (CONVENTIONS standing directive): keep regenerable dirs out
 *.nosync/
 
