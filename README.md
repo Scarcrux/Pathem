@@ -22,10 +22,10 @@ a million-file directory scrolls without a stutter.
 - **Sortable columns** (name, size, date) with directories first.
 - **Safe file ops** — copy/move refuse to overwrite and report failures
   (a full conflict-resolution policy + undo are on the roadmap).
-- **On-device semantic search (early)** — rank a folder by *meaning* using
-  Apple's NaturalLanguage embeddings: fully local, free, and runs on every Mac
-  (no cloud, no Apple Intelligence required). Ranks by file name today;
-  content-aware search is next.
+- **On-device semantic search** — rank a folder by *meaning* using Apple's
+  NaturalLanguage embeddings over file names **and text-file contents**: fully
+  local, free, runs on every Mac (no cloud, no Apple Intelligence required), and
+  cached per folder. Rich formats (PDF, Office, OCR) are next.
 
 ## How it works (the speed is the point)
 
@@ -63,7 +63,7 @@ swift test             # run the engine test suite
 Early but real: a fast, native, dual-pane Finder alternative. It is **not yet**
 at the feature breadth of ForkLift or Directory Opus — see
 [DESIGN.md](DESIGN.md) for the architecture and the roadmap (tabs, saved
-layouts, batch rename, and content-aware semantic search over file *contents*).
+layouts, batch rename, and richer semantic search over PDFs and other formats).
 
 ## License
 
