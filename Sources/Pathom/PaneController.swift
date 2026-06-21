@@ -36,6 +36,9 @@ final class PaneController: NSObject {
 
     var currentURL: URL { nav.current }
     var selectedEntries: [FileEntry] { list.selectedEntries }
+    var canGoBack: Bool { nav.canGoBack }
+    var canGoForward: Bool { nav.canGoForward }
+    var canGoUp: Bool { nav.parent != nil }
 
     /// Entries currently shown (directory listing, or ranked search results).
     var entries: [FileEntry] { list.entries }

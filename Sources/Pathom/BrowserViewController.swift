@@ -21,6 +21,10 @@ final class BrowserViewController: NSViewController {
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
     private static let cutPasteboardType = NSPasteboard.PasteboardType("ai.scarcrux.pathom.cut")
 
+    /// The command bus (DESIGN.md section 10). Every browser action is a named
+    /// command; keybindings, the palette, and the AI bar will dispatch by id.
+    let commands = CommandRegistry()
+
     /// Per-folder semantic index cache: pre-built when a pane enters a folder,
     /// invalidated when that folder changes on disk, so searches are instant.
     private var cachedDir: URL?
@@ -64,14 +68,57 @@ final class BrowserViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        registerCommands()
         left.onBecomeActive = { [weak self] in self?.setActive(self?.left) }
         right.onBecomeActive = { [weak self] in self?.setActive(self?.right) }
         for pane in [left, right] {
-            pane.list.tableView.onCopy = { [weak self] in self?.transfer(move: false) }
-            pane.list.tableView.onMove = { [weak self] in self?.transfer(move: true) }
+            pane.list.tableView.onCopy = { [weak self] in self?.commands.perform("files.copyToOtherPane") }
+            pane.list.tableView.onMove = { [weak self] in self?.commands.perform("files.moveToOtherPane") }
             pane.onDirectoryDidChange = { [weak self] url in self?.directoryChanged(pane, url) }
         }
         setActive(left)
+    }
+
+    /// Register every browser action as a named command. This is the spine the
+    /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
+    private func registerCommands() {
+        func add(
+            _ id: String, _ title: String,
+            enabled: @escaping () -> Bool = { true }, _ run: @escaping () -> Void
+        ) {
+            commands.register(.init(id: id, title: title, isEnabled: enabled, run: run))
+        }
+        let hasSelection: () -> Bool = { [weak self] in
+            self?.activePane?.selectedEntries.isEmpty == false
+        }
+        add("files.copyToOtherPane", "Copy to Other Pane", enabled: hasSelection) {
+            [weak self] in self?.transfer(move: false)
+        }
+        add("files.moveToOtherPane", "Move to Other Pane", enabled: hasSelection) {
+            [weak self] in self?.transfer(move: true)
+        }
+        add("files.copy", "Copy", enabled: hasSelection) {
+            [weak self] in self?.writeSelectionToPasteboard(cut: false)
+        }
+        add("files.cut", "Cut", enabled: hasSelection) {
+            [weak self] in self?.writeSelectionToPasteboard(cut: true)
+        }
+        add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
+        add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
+            [weak self] in self?.activePane?.goBack()
+        }
+        add("nav.forward", "Forward", enabled: { [weak self] in self?.activePane?.canGoForward ?? false }) {
+            [weak self] in self?.activePane?.goForward()
+        }
+        add("nav.up", "Enclosing Folder", enabled: { [weak self] in self?.activePane?.canGoUp ?? false }) {
+            [weak self] in self?.activePane?.goUp()
+        }
+        add("edit.undo", "Undo", enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
+            [weak self] in self?.undo(nil)
+        }
+        add("edit.redo", "Redo", enabled: { [weak self] in self?.view.window?.undoManager?.canRedo ?? false }) {
+            [weak self] in self?.redo(nil)
+        }
     }
 
     override func viewDidLayout() {
