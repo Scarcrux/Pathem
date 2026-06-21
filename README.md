@@ -57,6 +57,28 @@ swift run Pathom   # open the dual-pane browser on your home folder
 swift test         # run the engine tests
 ```
 
+### Packaging a .app
+
+`scripts/package.sh` assembles a universal (Apple Silicon + Intel), ad-hoc
+signed `Pathom.app` under `.build/`:
+
+```
+scripts/package.sh                 # local, ad-hoc signed, double-clickable
+ARCHS="arm64" scripts/package.sh   # faster, native only
+```
+
+For a distributable build, set `DEVELOPER_ID` to a "Developer ID Application"
+identity (signs with Hardened Runtime) and `NOTARY_PROFILE` to a stored
+`notarytool` profile to also notarize and staple. See the comments at the top of
+the script.
+
+This bundle is the prerequisite for the App Intents and Services surfaces. Full
+Shortcuts discovery of the semantic-search action also needs the App Intents
+metadata-extraction step, which the Xcode build system runs but a plain `swift
+build` does not yet; the intent code and the bundle are in place. The command
+bar's on-device LLM additionally needs macOS 26 with Apple Intelligence and
+falls back to a heuristic everywhere else.
+
 ## Status
 
 Early, but already useful: a fast dual-pane file manager with on-device semantic
