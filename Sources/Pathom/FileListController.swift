@@ -22,6 +22,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     var onOpen: ((FileEntry) -> Void)?
     /// This list's table became first responder (its pane became active).
     var onBecomeActive: (() -> Void)?
+    /// User changed the sort by clicking a column header.
+    var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
+    private var suppressSortCallback = false
 
     /// Entries currently selected in the table.
     var selectedEntries: [FileEntry] {
@@ -74,6 +77,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let col = NSTableColumn(identifier: .init(column.rawValue))
             col.title = column.title
             col.width = column.width
+            col.sortDescriptorPrototype = NSSortDescriptor(key: column.rawValue, ascending: true)
             tableView.addTableColumn(col)
         }
 
@@ -98,6 +102,22 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let row = tableView.clickedRow
         guard row >= 0, row < entries.count else { return }
         onOpen?(entries[row])
+    }
+
+    func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
+        guard !suppressSortCallback,
+            let descriptor = tableView.sortDescriptors.first,
+            let key = descriptor.key,
+            let sortKey = ViewFormat.SortKey(rawValue: key)
+        else { return }
+        onSortChanged?(sortKey, descriptor.ascending)
+    }
+
+    /// Show the sort indicator on the header without triggering onSortChanged.
+    func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {
+        suppressSortCallback = true
+        tableView.sortDescriptors = [NSSortDescriptor(key: key.rawValue, ascending: ascending)]
+        suppressSortCallback = false
     }
 
     // MARK: NSTableViewDataSource

@@ -107,6 +107,9 @@ final class BrowserViewController: NSViewController {
         }
         add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
+        add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.activePane?.toggleHidden()
+        }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }

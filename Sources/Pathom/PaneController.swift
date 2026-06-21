@@ -26,6 +26,9 @@ final class PaneController: NSObject {
     private var pendingRefresh: DispatchWorkItem?
     private var showingSearchResults = false
 
+    /// How this pane sorts and filters its listing.
+    var format = ViewFormat.default
+
     init(start: URL) {
         nav = NavigationState(current: start.standardizedFileURL)
         super.init()
@@ -51,8 +54,9 @@ final class PaneController: NSObject {
 
     func reload() {
         showingSearchResults = false
-        let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: false)) ?? []
-        list.setEntries(entries.sorted(by: Self.dirsFirst))
+        let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)) ?? []
+        list.setEntries(format.sorted(entries))
+        list.showSortIndicator(key: format.sortKey, ascending: format.ascending)
         pathControl.url = nav.current
         backButton.isEnabled = nav.canGoBack
         forwardButton.isEnabled = nav.canGoForward
@@ -163,6 +167,17 @@ final class PaneController: NSObject {
     private func wire() {
         list.onOpen = { [weak self] entry in self?.descend(into: entry) }
         list.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
+        list.onSortChanged = { [weak self] key, ascending in
+            guard let self else { return }
+            self.format.sortKey = key
+            self.format.ascending = ascending
+            self.reload()
+        }
+    }
+
+    func toggleHidden() {
+        format.showHidden.toggle()
+        reload()
     }
 
     /// Open the current selection: descend into a folder (files are a no-op for
@@ -178,8 +193,4 @@ final class PaneController: NSObject {
         enterDirectory()
     }
 
-    private static func dirsFirst(_ a: FileEntry, _ b: FileEntry) -> Bool {
-        if a.isDirectory != b.isDirectory { return a.isDirectory }
-        return a.name.localizedStandardCompare(b.name) == .orderedAscending
-    }
 }
