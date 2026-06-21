@@ -526,6 +526,106 @@ Pathom atop the résumé with stars + benchmark. Optional conference/meetup talk
 - The earlier "businesses pay $5/seat" idea is **killed** (source-available
   would cap stars and invite a fork, the opposite of the goal).
 
+## 10. Customization and extensibility architecture (decided)
+
+The Directory-Opus-class superuser layer (layouts, per-folder view formats,
+custom columns, configurable toolbars and keybindings, themes, saved searches, a
+command/FAYT palette) plus an extension story. Designed and fact-checked via a
+research workflow.
+
+### The spine: one command registry
+
+Define a single Command vocabulary (id, title, help, typed args, handler) and
+route every action (copy, move, paste, navigate, view changes, search) through
+it. Then toolbars, keybindings, menus, the FAYT/command palette, the AI command
+bar, and saved-search triggers are all thin declarative bindings to that
+registry. Build this first: it is the cheapest high-leverage piece, and every
+later feature becomes a thin data layer plus an automatic palette entry and a
+bindable key.
+
+### Customization is config-as-data (no third-party code)
+
+Everything ships as schema-versioned Codable JSON under
+~/Library/Application Support/Pathom/ (layouts, formats, columns, toolbars,
+keymap, themes, searches, collections), pretty-printed with sorted keys so files
+are hand-editable and shareable (the file itself is the shareable artifact, like
+a Dir Opus .dcf). Forward-compatibility rules: additive-only fields, ignore
+unknown keys on read and re-emit captured unknown keys on write (so an older
+Pathom does not strip a newer user's fields), and an in-house migration registry
+for breaking bumps. JSON, not TOML or YAML (stdlib-first: Foundation Codable, no
+dependency).
+
+Three subsystems reuse one tiny declarative mini-language (template tokens like
+{name.stem} and {size:human}, globs, regex-extract, ranges, UTI, plus a semantic
+query field over the existing embeddings), interpreted in-process over known
+getattrlistbulk fields with no user code: custom columns; a per-folder, wildcard,
+and content-type view-format cascade (exact path beats glob beats default, with
+per-folder view changes auto-remembered); and saved-search predicates. Layouts
+serialize the pane split and each pane's path, tabs, view format, and toolbar;
+lighter Styles apply view and toolbar settings without moving. Themes are a
+closed named-token map resolved through system colors, so dark mode and
+increase-contrast come for free.
+
+### Extensions: Swift only (decided), and out-of-process
+
+Per the standing rule there is no embedded scripting language (no JavaScript, no
+Lua, hence no JavaScriptCore). The native automation surface is App Intents and
+Shortcuts (pure Swift, future-proof) over the same command registry, plus
+NSServices. If code-backed extensions are ever needed, they are out-of-process
+Swift helpers speaking line-delimited JSON over stdin/stdout (or a real XPC
+service later), each signed with the app's Team ID and notarized, crash-isolated,
+and inheriting none of the app's TCC grants. Never load in-process third-party
+bundles: disable-library-validation is process-global and would hand any loaded
+library the app's Full Disk Access. Never build in-process native viewer or VFS
+plugins; cover viewing through QuickLook and built-ins. Design the contributes
+manifest schema now (commands, columns, viewers, menu items, keybindings,
+themes) so a future Swift extension can slot in without breaking the config
+format, but do not build the runtime until real demand justifies the trust and
+review burden.
+
+Because there is no embedded engine and no in-process foreign code, Pathom keeps
+a clean Hardened Runtime with no opt-outs (no allow-jit, no
+disable-library-validation), which is a real security and notarization story
+worth stating in the README. This is the chief benefit of the Swift-only rule:
+it sidesteps JavaScriptCore's allow-jit requirement entirely (the original
+research proposed JSC and the fact-check showed it needs that opt-out).
+
+### AI command bar (on-device)
+
+Each Command auto-becomes a Foundation Models tool (description from its title
+and help, @Generable args mirroring its typed schema, @Guide to constrain
+enum-like args). Pre-filter to the top-k candidate commands with the existing
+NaturalLanguage embeddings before tool-calling (small on-device context). Gate on
+SystemLanguageModel.availability and keep FAYT as the always-works baseline;
+confirm before any model-chosen destructive action. The model only picks a
+command id and fills typed args; it never runs free-form code.
+
+### Phased roadmap
+
+0. Command registry (foundation; route existing actions through it; add a command
+   and script log panel).
+1. Declarative customization over the registry: rebindable keymap, configurable
+   toolbars, customizable context menu, themes.
+2. Marquee Opus features as data: per-folder/wildcard/content-type view-format
+   cascade, declarative custom columns, Layouts and Styles.
+3. FAYT/command palette as one multi-mode widget: bare text filters, ">" is the
+   command palette, "/" jumps to a path, "~" or "?" runs on-device semantic
+   search. Saved searches and collections.
+4. App Intents and Shortcuts (primary OS automation) plus NSServices. Finder Sync
+   and AppleScript are optional later.
+5. On-device natural-language command bar over the registry (Foundation Models).
+6. Deferred by default: out-of-process Swift helper extensions for transfer/VFS
+   backends and viewers, gated by real demand. No embedded scripting, ever.
+
+### Scope for the career goal
+
+Phases 0 to 3 are the whole worthwhile investment and the "Directory Opus
+successor" narrative: pure data over one registry, zero security or notarization
+risk, demos well, bounded effort. Phase 4 (App Intents) and Phase 5 (on-device
+NL bar) are the disproportionate ML and portfolio payoff. Phase 6 is where
+over-investment lurks; design the manifest seam now, build the runtime later or
+never.
+
 ---
 
 *Provenance: research + architecture proposals + adversarial fact-check via
