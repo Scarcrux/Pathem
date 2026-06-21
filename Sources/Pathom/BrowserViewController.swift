@@ -32,6 +32,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     private var layouts = Layouts()
     /// Fuzzy command palette over the registry (Cmd-Shift-P).
     private lazy var palette = CommandPalette()
+    /// Natural-language command bar (Cmd-Shift-A): Foundation Model when
+    /// available, the engine heuristic otherwise.
+    private lazy var aiBar = AICommandBar()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -132,6 +135,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
         }
         add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
+        add("ai.run", "Ask Pathom (Natural Language)…") { [weak self] in self?.showAICommandBar() }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
@@ -155,6 +159,31 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
         guard let window = view.window else { return }
         let items = commands.all.map { (id: $0.id, title: $0.title) }
         palette.present(commands: items, onRun: { [weak self] id in self?.commands.perform(id) }, over: window)
+    }
+
+    /// Open the natural-language command bar.
+    private func showAICommandBar() {
+        guard let window = view.window else { return }
+        aiBar.present(
+            over: window,
+            resolve: { [weak self] query in await self?.resolveCommand(query) ?? nil },
+            run: { [weak self] id in self?.commands.perform(id) })
+    }
+
+    /// Resolve a natural-language request to a command: the on-device Foundation
+    /// Model when available, the engine heuristic otherwise.
+    private func resolveCommand(_ query: String) async -> (id: String, title: String)? {
+        let items = commands.all.map { (id: $0.id, title: $0.title) }
+        if #available(macOS 26.0, *),
+            let id = await FoundationModelMatcher.match(query, to: items),
+            let command = commands.command(id)
+        {
+            return (command.id, command.title)
+        }
+        if let id = CommandResolver.resolve(query, commands: items), let command = commands.command(id) {
+            return (command.id, command.title)
+        }
+        return nil
     }
 
     /// Resolve a key chord against the keymap and dispatch via the registry.
