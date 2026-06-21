@@ -52,18 +52,24 @@ Jumping to the last row costs about the same as jumping to the tenth.
 Requires macOS 15 or later and a recent Swift toolchain.
 
 ```
-swift build        # build the engine and the app
-swift run Pathom   # open the dual-pane browser on your home folder
-swift test         # run the engine tests
+make run       # build and launch from source (fastest loop)
+make build     # build the engine and the app
+make test      # run the engine tests
+make app       # assemble .build/Pathom.app (universal, ad-hoc signed)
+make install   # build the app and copy it to /Applications
 ```
+
+(These wrap plain `swift build` / `swift run Pathom` / `swift test` if you
+prefer to call those directly.)
 
 ### Packaging a .app
 
-`scripts/package.sh` assembles a universal (Apple Silicon + Intel), ad-hoc
-signed `Pathom.app` under `.build/`:
+`make app` (or `scripts/package.sh`) assembles a universal (Apple Silicon +
+Intel), ad-hoc signed `Pathom.app` under `.build/`. `make install` also copies
+it to /Applications.
 
 ```
-scripts/package.sh                 # local, ad-hoc signed, double-clickable
+make app                           # local, ad-hoc signed, double-clickable
 ARCHS="arm64" scripts/package.sh   # faster, native only
 ```
 

@@ -70,4 +70,14 @@ elif [[ -n "${DEVELOPER_ID:-}" ]]; then
 	echo "==> Skipping notarization (set NOTARY_PROFILE to enable)"
 fi
 
+if [[ -n "${INSTALL:-}" ]]; then
+	dest="/Applications/$APP_NAME.app"
+	echo "==> Installing to $dest"
+	pkill -f "$APP_NAME.app/Contents/MacOS/$APP_NAME" 2>/dev/null || true  # quit a running copy
+	sleep 1
+	rm -rf "$dest"
+	cp -R "$APP" "$dest"
+	echo "    installed (open with: open \"$dest\")"
+fi
+
 echo "==> Done: $APP"
