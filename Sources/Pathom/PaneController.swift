@@ -30,6 +30,12 @@ final class PaneController: NSObject {
     var currentURL: URL { nav.current }
     var selectedEntries: [FileEntry] { list.selectedEntries }
 
+    /// Entries currently shown (directory listing, or ranked search results).
+    var entries: [FileEntry] { list.entries }
+
+    /// Replace the listing with an explicit set (e.g. ranked search results).
+    func showResults(_ entries: [FileEntry]) { list.setEntries(entries) }
+
     func reload() {
         let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: false)) ?? []
         list.setEntries(entries.sorted(by: Self.dirsFirst))
