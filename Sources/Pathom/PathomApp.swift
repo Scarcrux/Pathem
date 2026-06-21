@@ -1,8 +1,8 @@
 import AppKit
 import PathomEngine
 
-// AppKit entry point. Normal launch shows the home directory in a view-based
-// NSTableView. Launch with PATHOM_GATE_A=1 to run the Gate A virtualization
+// AppKit entry point. Normal launch shows a dual-pane browser rooted at the
+// home directory. Launch with PATHOM_GATE_A=1 to run the Gate A virtualization
 // proof (DESIGN.md §5): load 1,000,000 synthetic rows and confirm the table
 // materializes only ~visible cells, not all 1M.
 @main
@@ -12,28 +12,29 @@ enum PathomApp {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
 
-        let controller = FileListController()
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
+            contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
         window.title = "Pathom"
-        window.contentView = controller.scrollView
         window.center()
-        window.makeKeyAndOrderFront(nil)
-        app.activate(ignoringOtherApps: true)
 
         if ProcessInfo.processInfo.environment["PATHOM_GATE_A"] != nil {
+            // Gate A drives a single FileListController directly.
+            let controller = FileListController()
+            window.contentView = controller.scrollView
+            window.makeKeyAndOrderFront(nil)
+            app.activate(ignoringOtherApps: true)
             runGateA(controller, window)  // measures synchronously, then exits
         }
 
-        // Normal mode: list the home directory.
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        let entries = (try? BulkEnumerator().entries(of: home, includingHidden: false)) ?? []
-        controller.setEntries(entries.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending })
-
+        // Normal mode: a dual-pane browser rooted at the home directory.
+        let browser = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser)
+        window.contentViewController = browser
+        window.makeKeyAndOrderFront(nil)
+        app.activate(ignoringOtherApps: true)
         app.run()
     }
 

@@ -9,7 +9,7 @@ import PathomEngine
 @MainActor
 final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     let scrollView = NSScrollView()
-    let tableView = NSTableView()
+    let tableView = KeyTableView()
 
     private(set) var entries: [FileEntry] = []
 
@@ -17,6 +17,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// for. For a virtualized table this stays proportional to the visible
     /// window, never to `entries.count`.
     private(set) var cellRequests = 0
+
+    /// Opened a row (double-click, Return/Enter, or Cmd-Down).
+    var onOpen: ((FileEntry) -> Void)?
+    /// This list's table became first responder (its pane became active).
+    var onBecomeActive: (() -> Void)?
+
+    /// Entries currently selected in the table.
+    var selectedEntries: [FileEntry] {
+        tableView.selectedRowIndexes.compactMap { $0 < entries.count ? entries[$0] : nil }
+    }
 
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -69,6 +79,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         tableView.dataSource = self
         tableView.delegate = self
+        tableView.target = self
+        tableView.doubleAction = #selector(handleDoubleClick)
+        tableView.onActivateRow = { [weak self] in self?.activateSelection() }
+        tableView.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
 
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
@@ -79,6 +93,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     func setEntries(_ entries: [FileEntry]) {
         self.entries = entries
         tableView.reloadData()
+    }
+
+    @objc private func handleDoubleClick() {
+        let row = tableView.clickedRow
+        guard row >= 0, row < entries.count else { return }
+        onOpen?(entries[row])
+    }
+
+    private func activateSelection() {
+        let row = tableView.selectedRow
+        guard row >= 0, row < entries.count else { return }
+        onOpen?(entries[row])
     }
 
     // MARK: NSTableViewDataSource
