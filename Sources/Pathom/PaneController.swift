@@ -194,6 +194,12 @@ final class PaneController: NSObject {
         descend(into: entry)
     }
 
+    /// Jump to an arbitrary folder (used when restoring a layout).
+    func navigate(to url: URL) {
+        nav.go(to: url.standardizedFileURL)
+        enterDirectory()
+    }
+
     @objc private func pathClicked() {
         guard let url = pathControl.clickedPathItem?.url else { return }
         nav.go(to: url)

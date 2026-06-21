@@ -6,7 +6,7 @@ import PathomEngine
 /// (F5 and F6, the classic dual-pane bindings). A fast, native, two-pane file
 /// manager.
 @MainActor
-final class BrowserViewController: NSViewController {
+final class BrowserViewController: NSViewController, NSMenuDelegate {
     private let left: PaneController
     private let right: PaneController
     private weak var activePane: PaneController?
@@ -28,6 +28,10 @@ final class BrowserViewController: NSViewController {
     private var keymap = Keymap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
     private var folderFormats = FolderFormats()
+    /// Saved workspace layouts (pane paths + split position).
+    private var layouts = Layouts()
+    private let layoutsMenu = NSMenu(title: "Layouts")
+    private var didInstallLayoutsMenu = false
 
     /// Per-folder semantic index cache: pre-built when a pane enters a folder,
     /// invalidated when that folder changes on disk, so searches are instant.
@@ -75,6 +79,8 @@ final class BrowserViewController: NSViewController {
         registerCommands()
         loadKeymap()
         loadFolderFormats()
+        loadLayouts()
+        installLayoutsMenu()
         left.onBecomeActive = { [weak self] in self?.setActive(self?.left) }
         right.onBecomeActive = { [weak self] in self?.setActive(self?.right) }
         for pane in [left, right] {
@@ -122,6 +128,7 @@ final class BrowserViewController: NSViewController {
         add("view.applyToSubfolders", "Apply View to Subfolders", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
         }
+        add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
@@ -203,6 +210,95 @@ final class BrowserViewController: NSViewController {
         saveFolderFormats()
         left.reload()
         right.reload()
+    }
+
+    // MARK: - Layouts
+
+    private static var layoutsURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("layouts.json")
+    }
+
+    private func loadLayouts() {
+        guard let url = Self.layoutsURL, let data = try? Data(contentsOf: url),
+            let saved = try? JSONDecoder().decode(Layouts.self, from: data)
+        else { return }
+        layouts = saved
+    }
+
+    private func saveLayouts() {
+        guard let url = Self.layoutsURL else { return }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let data = try? encoder.encode(layouts) { try? data.write(to: url) }
+    }
+
+    /// Add a "Layouts" menu to the main menu, rebuilt on demand from the saved set.
+    private func installLayoutsMenu() {
+        guard !didInstallLayoutsMenu, let mainMenu = NSApp.mainMenu else { return }
+        let item = NSMenuItem()
+        item.title = "Layouts"
+        item.submenu = layoutsMenu
+        layoutsMenu.delegate = self
+        mainMenu.addItem(item)
+        didInstallLayoutsMenu = true
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === layoutsMenu else { return }
+        menu.removeAllItems()
+        let save = menu.addItem(withTitle: "Save Layout…", action: #selector(saveLayoutMenu), keyEquivalent: "")
+        save.target = self
+        guard !layouts.names.isEmpty else { return }
+        menu.addItem(.separator())
+        for name in layouts.names {
+            let item = menu.addItem(withTitle: name, action: #selector(applyLayoutMenu(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = name
+        }
+    }
+
+    @objc private func saveLayoutMenu() { saveLayoutPrompt() }
+
+    @objc private func applyLayoutMenu(_ sender: NSMenuItem) {
+        guard let name = sender.representedObject as? String, let layout = layouts.named(name) else { return }
+        applyLayout(layout)
+    }
+
+    private func saveLayoutPrompt() {
+        let alert = NSAlert()
+        alert.messageText = "Save Layout"
+        alert.informativeText = "Name this arrangement of folders and panes."
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.stringValue = "Layout \(layouts.names.count + 1)"
+        alert.accessoryView = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        layouts.save(captureLayout(name: name))
+        saveLayouts()
+    }
+
+    private func captureLayout(name: String) -> Layout {
+        Layout(
+            name: name,
+            leftPath: left.currentURL.path,
+            rightPath: right.currentURL.path,
+            dividerFraction: dividerFraction())
+    }
+
+    private func dividerFraction() -> Double {
+        let total = split.bounds.width
+        guard total > 0 else { return 0.5 }
+        return Double(left.containerView.frame.width / total)
+    }
+
+    private func applyLayout(_ layout: Layout) {
+        left.navigate(to: URL(fileURLWithPath: layout.leftPath))
+        right.navigate(to: URL(fileURLWithPath: layout.rightPath))
+        let total = split.bounds.width
+        if total > 0 { split.setPosition(total * CGFloat(layout.dividerFraction), ofDividerAt: 0) }
     }
 
     override func viewDidLayout() {
