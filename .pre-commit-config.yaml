@@ -1,0 +1,16 @@
+# One-time: `brew install swift-format` then `pre-commit install`.
+# CONVENTIONS: format on commit; tests via the hook + `swift test`.
+repos:
+  - repo: local
+    hooks:
+      - id: swift-format
+        name: swift-format
+        entry: swift-format format --in-place
+        language: system
+        files: \.swift$
+      - id: swift-test
+        name: swift test
+        entry: swift test
+        language: system
+        pass_filenames: false
+        files: \.swift$

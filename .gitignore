@@ -1,0 +1,17 @@
+# Swift / SwiftPM
+.build/
+.swiftpm/
+Package.resolved
+DerivedData/
+*.xcodeproj
+
+# macOS
+.DS_Store
+
+# iCloud hygiene (CONVENTIONS standing directive): keep regenerable dirs out
+*.nosync/
+
+# Sparkle code-signing — NEVER commit the private update-signing key
+*.private
+sparkle_eddsa_private.key
+dsa_priv.pem
