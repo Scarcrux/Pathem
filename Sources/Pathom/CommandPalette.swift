@@ -112,7 +112,16 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         onRun?(id)
     }
 
-    @objc private func runClicked() { runSelected() }
+    @objc private func runClicked() {
+        // Use the clicked row, not the selection: a double-click on empty space
+        // reports clickedRow == -1 and must do nothing (the keyboard path uses
+        // runSelected). Mirrors FileListController.handleDoubleClick.
+        let row = table.clickedRow
+        guard row >= 0, row < filtered.count else { return }
+        let id = filtered[row].id
+        close()
+        onRun?(id)
+    }
 
     private func close() { panel.orderOut(nil) }
 

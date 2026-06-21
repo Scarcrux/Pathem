@@ -617,6 +617,30 @@ command id and fills typed args; it never runs free-form code.
 6. Deferred by default: out-of-process Swift helper extensions for transfer/VFS
    backends and viewers, gated by real demand. No embedded scripting, ever.
 
+### Status (built)
+
+Phases 0 to 5 are implemented and on `main`, each behind the engine where the
+logic is testable:
+
+- 0: `CommandRegistry` (engine), browser actions dispatch by id.
+- 1: `Keymap` (engine, config-as-data); keys resolve to commands, rebindable via
+  `keymap.json`. Configurable toolbars/context-menu/themes from this phase are
+  not done yet.
+- 2: `ViewFormat` and `FolderFormats` (engine): sortable columns, hidden toggle,
+  per-folder exact/subtree view cascade with apply-to-subfolders, and `Layouts`.
+  Declarative custom columns and Styles are not done yet.
+- 3: `FuzzyMatch` (engine) plus a `CommandPalette` (Cmd-Shift-P). The single
+  multi-mode FAYT widget ("/", "~" modes) and saved searches are not done yet.
+- 4: `SemanticSearchIntent` + `PathomShortcuts` (App Intents). These register
+  only once Pathom ships as a real `.app` bundle; NSServices share that gate and
+  are deferred to packaging.
+- 5: `CommandResolver` (engine heuristic, always works) plus `FoundationModelMatcher`
+  (on-device LLM on macOS 26 + Apple Intelligence) behind an async AI command bar
+  (Cmd-Shift-A).
+
+Two confirmed-bug adversarial-review passes (customization layer, then the
+palette/AI glue) have been run against this code.
+
 ### Scope for the career goal
 
 Phases 0 to 3 are the whole worthwhile investment and the "Directory Opus

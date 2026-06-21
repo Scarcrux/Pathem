@@ -12,6 +12,7 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
 
     private var resolve: ((String) async -> (id: String, title: String)?)?
     private var run: ((String) -> Void)?
+    private var submitTask: Task<Void, Never>?
 
     override init() {
         panel = NSPanel(
@@ -56,10 +57,11 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
         resolve: @escaping (String) async -> (id: String, title: String)?,
         run: @escaping (String) -> Void
     ) {
+        submitTask?.cancel()  // abandon any resolve still running from a prior open
+        submitTask = nil
         self.resolve = resolve
         self.run = run
         field.stringValue = ""
-        field.isEnabled = true
         status.stringValue = ""
 
         let windowFrame = window.frame
@@ -72,23 +74,28 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
 
     private func submit() {
         let query = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty, let resolve else { return }
+        guard !query.isEmpty, let resolve, let run else { return }
         status.stringValue = "Thinking…"
-        field.isEnabled = false
-        Task {
+        submitTask?.cancel()  // a new submit supersedes any in-flight one
+        submitTask = Task { [weak self] in
             let match = await resolve(query)
-            field.isEnabled = true
+            // Drop the result if this request was superseded or the bar was
+            // dismissed while the (possibly multi-second) model call ran.
+            guard let self, !Task.isCancelled, self.panel.isVisible else { return }
             if let match {
-                close()
-                run?(match.id)
+                self.close()
+                run(match.id)
             } else {
-                status.stringValue = "No command matched “\(query)”."
-                panel.makeFirstResponder(field)
+                self.status.stringValue = "No command matched “\(query)”."
             }
         }
     }
 
-    private func close() { panel.orderOut(nil) }
+    private func close() {
+        submitTask?.cancel()
+        submitTask = nil
+        panel.orderOut(nil)
+    }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
         switch selector {
