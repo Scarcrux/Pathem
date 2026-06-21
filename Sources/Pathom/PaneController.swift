@@ -68,6 +68,13 @@ final class PaneController: NSObject {
         upButton.isEnabled = nav.parent != nil
     }
 
+    /// Refresh the listing unless this pane is currently showing search results.
+    /// File operations use this so an op elsewhere never wipes a pane's results
+    /// (the on-disk change is still picked up by the watcher for index rebuild).
+    func reloadIfShowingListing() {
+        if !showingSearchResults { reload() }
+    }
+
     func descend(into entry: FileEntry) {
         guard entry.isDirectory else { return }
         nav.go(to: nav.current.appendingPathComponent(entry.name))

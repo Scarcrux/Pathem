@@ -156,14 +156,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     }
 
     private func loadKeymap() {
-        guard let url = Self.appSupportDirectory()?.appendingPathComponent("keymap.json"),
-            let data = try? Data(contentsOf: url),
-            let user = try? JSONDecoder().decode([String: String].self, from: data)
-        else {
+        let url = Self.appSupportDirectory()?.appendingPathComponent("keymap.json")
+        if let user = loadConfig([String: String].self, from: url) {
+            keymap = Keymap.standard.merging(userBindings: user)
+        } else {
             keymap = .standard
-            return
         }
-        keymap = Keymap.standard.merging(userBindings: user)
     }
 
     private static func appSupportDirectory() -> URL? {
@@ -172,8 +170,37 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
             return nil
         }
         let dir = base.appendingPathComponent("Pathom", isDirectory: true)
-        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        do {
+            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        } catch {
+            NSLog("Pathom: cannot create Application Support directory: %@", String(describing: error))
+            return nil  // callers stop rather than write into a nonexistent dir
+        }
         return dir
+    }
+
+    /// Decode config from `url`. A missing file returns nil (use defaults). A
+    /// present-but-undecodable file (corrupt, hand-edit typo, newer schema) is
+    /// moved aside to <name>.corrupt and returns nil, so the next save cannot
+    /// silently overwrite and destroy still-recoverable config.
+    private func loadConfig<T: Decodable>(_ type: T.Type, from url: URL?) -> T? {
+        guard let url, let data = try? Data(contentsOf: url) else { return nil }
+        if let decoded = try? JSONDecoder().decode(T.self, from: data) { return decoded }
+        let fm = FileManager.default
+        let aside = url.appendingPathExtension("corrupt")
+        try? fm.removeItem(at: aside)
+        try? fm.moveItem(at: url, to: aside)
+        NSLog("Pathom: %@ was unreadable; moved aside to %@", url.lastPathComponent, aside.lastPathComponent)
+        return nil
+    }
+
+    /// Encode and write config atomically (temp file + rename), so a crash or
+    /// power loss mid-write never truncates the existing file.
+    private func saveConfig<T: Encodable>(_ value: T, to url: URL?) {
+        guard let url else { return }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let data = try? encoder.encode(value) { try? data.write(to: url, options: .atomic) }
     }
 
     // MARK: - Per-folder view formats
@@ -183,17 +210,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     }
 
     private func loadFolderFormats() {
-        guard let url = Self.folderFormatsURL, let data = try? Data(contentsOf: url),
-            let saved = try? JSONDecoder().decode(FolderFormats.self, from: data)
-        else { return }
-        folderFormats = saved
+        if let saved = loadConfig(FolderFormats.self, from: Self.folderFormatsURL) { folderFormats = saved }
     }
 
     private func saveFolderFormats() {
-        guard let url = Self.folderFormatsURL else { return }
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        if let data = try? encoder.encode(folderFormats) { try? data.write(to: url) }
+        saveConfig(folderFormats, to: Self.folderFormatsURL)
     }
 
     /// Auto-remember: the active folder gets its own exact-path format.
@@ -203,13 +224,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     }
 
     /// Apply the active pane's current view to its whole subtree, then refresh
-    /// both panes so any visible descendants pick up the new format.
+    /// both panes so any visible descendants pick up the new format. Descendant
+    /// exact rules are cleared first, otherwise they would shadow the new subtree
+    /// rule and silently keep their old view.
     private func applyViewToSubfolders() {
         guard let pane = activePane else { return }
+        folderFormats.clearExactRulesUnder(pane.currentURL.path)
         folderFormats.setSubtree(pane.currentURL.path, pane.format)
         saveFolderFormats()
-        left.reload()
-        right.reload()
+        left.reloadIfShowingListing()
+        right.reloadIfShowingListing()
     }
 
     // MARK: - Layouts
@@ -219,17 +243,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     }
 
     private func loadLayouts() {
-        guard let url = Self.layoutsURL, let data = try? Data(contentsOf: url),
-            let saved = try? JSONDecoder().decode(Layouts.self, from: data)
-        else { return }
-        layouts = saved
+        if let saved = loadConfig(Layouts.self, from: Self.layoutsURL) { layouts = saved }
     }
 
     private func saveLayouts() {
-        guard let url = Self.layoutsURL else { return }
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        if let data = try? encoder.encode(layouts) { try? data.write(to: url) }
+        saveConfig(layouts, to: Self.layoutsURL)
     }
 
     /// Add a "Layouts" menu to the main menu, rebuilt on demand from the saved set.
@@ -295,10 +313,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
     }
 
     private func applyLayout(_ layout: Layout) {
-        left.navigate(to: URL(fileURLWithPath: layout.leftPath))
-        right.navigate(to: URL(fileURLWithPath: layout.rightPath))
+        // Skip paths that no longer resolve to a folder (hand-edited, shared from
+        // another machine, or since deleted) so a pane is never dropped onto the
+        // process working directory or a missing path.
+        if let url = Self.existingFolderURL(layout.leftPath) { left.navigate(to: url) }
+        if let url = Self.existingFolderURL(layout.rightPath) { right.navigate(to: url) }
         let total = split.bounds.width
         if total > 0 { split.setPosition(total * CGFloat(layout.dividerFraction), ofDividerAt: 0) }
+    }
+
+    private static func existingFolderURL(_ path: String) -> URL? {
+        guard !path.isEmpty else { return nil }
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory),
+            isDirectory.boolValue
+        else { return nil }
+        return URL(fileURLWithPath: path)
     }
 
     override func viewDidLayout() {
@@ -347,8 +377,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
             ? FileOperations.move(names, from: sourceURL, to: destinationURL, onConflict: resolution)
             : FileOperations.copy(names, from: sourceURL, to: destinationURL, onConflict: resolution)
 
-        if move { source.reload() }
-        destination.reload()
+        if move { source.reloadIfShowingListing() }
+        destination.reloadIfShowingListing()
 
         if !outcome.performed.isEmpty {
             registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
@@ -382,8 +412,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.undo(performed)
-            target.left.reload()
-            target.right.reload()
+            target.left.reloadIfShowingListing()
+            target.right.reloadIfShowingListing()
             if !result.failures.isEmpty {
                 target.presentFailures(result.failures, title: "Undo failed")
             }
@@ -441,8 +471,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
             ? FileOperations.move(urls: urls, into: destination, onConflict: resolution)
             : FileOperations.copy(urls: urls, into: destination, onConflict: resolution)
 
-        left.reload()
-        right.reload()
+        left.reloadIfShowingListing()
+        right.reloadIfShowingListing()
         if !outcome.performed.isEmpty {
             registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
         }
@@ -491,7 +521,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
             else { return }
             let order = await Task.detached { SemanticSearcher.rank(query: query, in: index) }.value
             let ranked = order.compactMap { $0 < entries.count ? entries[$0] : nil }
-            if activePane?.currentURL == directory { pane.showResults(ranked) }
+            // Only adopt results if the very pane we searched is still active and
+            // on that folder (not merely some pane that shares the path).
+            if activePane === pane, pane.currentURL == directory { pane.showResults(ranked) }
         }
     }
 

@@ -52,9 +52,20 @@ public struct FolderFormats: Codable, Sendable {
         rules.append(Rule(path: path, scope: .subtree, format: format))
     }
 
+    /// Drop exact rules for folders strictly under `path` (not `path` itself), so
+    /// a subtree rule applied to `path` actually governs descendants that the
+    /// user had previously customized one by one.
+    public mutating func clearExactRulesUnder(_ path: String) {
+        rules.removeAll { $0.scope == .exact && $0.path != path && Self.isUnder($0.path, path) }
+    }
+
     static func isUnder(_ path: String, _ prefix: String) -> Bool {
-        if path == prefix { return true }
-        let normalized = prefix.hasSuffix("/") ? prefix : prefix + "/"
-        return path.hasPrefix(normalized)
+        // Tolerate a trailing slash on the (possibly hand-edited or shared)
+        // prefix so a subtree rule still matches its own root folder.
+        var base = prefix
+        while base.count > 1, base.hasSuffix("/") { base.removeLast() }
+        if path == base { return true }
+        if base == "/" { return path.hasPrefix("/") }
+        return path.hasPrefix(base + "/")
     }
 }

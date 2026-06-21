@@ -41,6 +41,32 @@ import Testing
         #expect(formats.format(for: "/ab") == .default)  // "/ab" is not under "/a"
     }
 
+    @Test func trailingSlashSubtreeMatchesRootAndChildren() {
+        // A hand-edited/shared rule whose path ends in "/" must still match.
+        #expect(FolderFormats.isUnder("/a", "/a/"))
+        #expect(FolderFormats.isUnder("/a/b", "/a/"))
+        #expect(!FolderFormats.isUnder("/ab", "/a/"))
+    }
+
+    @Test func clearExactRulesUnderRemovesDescendantsOnly() {
+        var formats = FolderFormats()
+        formats.setExact("/a", byDate)  // the root itself
+        formats.setExact("/a/b", byDate)  // a descendant
+        formats.setExact("/c", byDate)  // unrelated
+        formats.clearExactRulesUnder("/a")
+        #expect(formats.rules.contains { $0.scope == .exact && $0.path == "/a" })  // root kept
+        #expect(!formats.rules.contains { $0.scope == .exact && $0.path == "/a/b" })  // descendant gone
+        #expect(formats.rules.contains { $0.scope == .exact && $0.path == "/c" })  // unrelated kept
+    }
+
+    @Test func applyToSubtreeGovernsPreviouslyCustomizedDescendant() {
+        var formats = FolderFormats()
+        formats.setExact("/a/b", byDate)  // user had customized a child
+        formats.clearExactRulesUnder("/a")  // what applyViewToSubfolders does
+        formats.setSubtree("/a", bySize)
+        #expect(formats.format(for: "/a/b") == bySize)  // child now follows the subtree
+    }
+
     @Test func setReplacesRatherThanDuplicating() {
         var formats = FolderFormats()
         formats.setExact("/a", bySize)

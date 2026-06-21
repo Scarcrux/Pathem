@@ -32,15 +32,26 @@ public struct KeyChord: Hashable, Sendable {
         return parts.joined(separator: "+")
     }
 
-    /// Build a chord from a key event's raw fields. Pass charactersIgnoringModifiers
-    /// so a letter key maps to its base letter regardless of Shift.
+    /// Build a chord from a key event's raw fields. Pass charactersIgnoringModifiers,
+    /// which still applies Shift, so a letter key maps to its base letter (via
+    /// lowercasing) and a shifted symbol is folded back to its unshifted key so
+    /// that, for example, Shift plus "." canonicalizes to "shift+." not "shift+>".
     public static func from(
         keyCode: UInt16, characters: String?,
         cmd: Bool, opt: Bool, ctrl: Bool, shift: Bool
     ) -> KeyChord {
-        let key = specialKeys[keyCode] ?? (characters?.lowercased() ?? "")
+        var key = specialKeys[keyCode] ?? (characters?.lowercased() ?? "")
+        if specialKeys[keyCode] == nil, shift, let base = shiftedSymbols[key] { key = base }
         return KeyChord(key: key, cmd: cmd, opt: opt, ctrl: ctrl, shift: shift)
     }
+
+    /// US-layout shifted punctuation folded back to its base key. lowercased()
+    /// folds letters but not symbols, so a shifted ">" must map to ".".
+    private static let shiftedSymbols: [String: String] = [
+        ">": ".", "<": ",", "?": "/", ":": ";", "\"": "'", "{": "[", "}": "]",
+        "|": "\\", "+": "=", "_": "-", ")": "0", "(": "9", "*": "8", "&": "7",
+        "^": "6", "%": "5", "$": "4", "#": "3", "@": "2", "!": "1", "~": "`",
+    ]
 
     private static let specialKeys: [UInt16: String] = [
         36: "return", 76: "enter", 48: "tab", 53: "escape", 49: "space",

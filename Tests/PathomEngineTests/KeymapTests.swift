@@ -18,9 +18,21 @@ import Testing
             KeyChord.from(keyCode: 36, characters: "\r", cmd: false, opt: false, ctrl: false, shift: false)
                 .canonical == "return")
         // A letter keeps Shift as a modifier so cmd+z and cmd+shift+z differ.
+        // AppKit delivers the uppercased letter for charactersIgnoringModifiers
+        // when Shift is held, so feed "Z" (what really arrives), not "z".
         #expect(
-            KeyChord.from(keyCode: 6, characters: "z", cmd: true, opt: false, ctrl: false, shift: true)
+            KeyChord.from(keyCode: 6, characters: "Z", cmd: true, opt: false, ctrl: false, shift: true)
                 .canonical == "cmd+shift+z")
+    }
+
+    @Test func foldsShiftedPunctuationToBaseKey() {
+        // Shift plus "." yields ">" from charactersIgnoringModifiers; it must
+        // canonicalize to "cmd+shift+." so the default Show Hidden binding fires.
+        #expect(
+            KeyChord.from(keyCode: 47, characters: ">", cmd: true, opt: false, ctrl: false, shift: true)
+                .canonical == "cmd+shift+.")
+        #expect(
+            Keymap.standard.commandID(for: KeyChord(key: ".", cmd: true, shift: true)) == "view.toggleHidden")
     }
 
     @Test func defaultKeymapLookups() {
