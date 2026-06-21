@@ -3,8 +3,8 @@ import PathomEngine
 
 /// One pane of the dual-pane browser: a directory listing with its own
 /// navigation history, an editable path/address bar, and back/forward/up
-/// buttons. The pane is intentionally thin — `NavigationState` owns the history
-/// logic and `BulkEnumerator` does the listing.
+/// buttons. The pane is intentionally thin. NavigationState owns the history
+/// logic and BulkEnumerator does the listing.
 @MainActor
 final class PaneController: NSObject {
     let containerView = NSView()
@@ -18,13 +18,19 @@ final class PaneController: NSObject {
 
     /// Fired when this pane becomes active (its list gains focus).
     var onBecomeActive: (() -> Void)?
+    /// Fired when this pane's folder changes, by navigation or on-disk edits.
+    /// The browser uses it to invalidate and rebuild the semantic-search cache.
+    var onDirectoryDidChange: ((URL) -> Void)?
+
+    private var watcher: DirectoryWatcher?
+    private var showingSearchResults = false
 
     init(start: URL) {
         nav = NavigationState(current: start.standardizedFileURL)
         super.init()
         build()
         wire()
-        reload()
+        enterDirectory()
     }
 
     var currentURL: URL { nav.current }
@@ -34,9 +40,13 @@ final class PaneController: NSObject {
     var entries: [FileEntry] { list.entries }
 
     /// Replace the listing with an explicit set (e.g. ranked search results).
-    func showResults(_ entries: [FileEntry]) { list.setEntries(entries) }
+    func showResults(_ entries: [FileEntry]) {
+        showingSearchResults = true
+        list.setEntries(entries)
+    }
 
     func reload() {
+        showingSearchResults = false
         let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: false)) ?? []
         list.setEntries(entries.sorted(by: Self.dirsFirst))
         pathControl.url = nav.current
@@ -48,12 +58,33 @@ final class PaneController: NSObject {
     func descend(into entry: FileEntry) {
         guard entry.isDirectory else { return }
         nav.go(to: nav.current.appendingPathComponent(entry.name))
-        reload()
+        enterDirectory()
     }
 
-    @objc func goBack() { if nav.goBack() { reload() } }
-    @objc func goForward() { if nav.goForward() { reload() } }
-    @objc func goUp() { if nav.goUp() { reload() } }
+    @objc func goBack() { if nav.goBack() { enterDirectory() } }
+    @objc func goForward() { if nav.goForward() { enterDirectory() } }
+    @objc func goUp() { if nav.goUp() { enterDirectory() } }
+
+    /// Move into nav.current: refresh the listing, watch the new folder for
+    /// on-disk changes, and tell the browser the folder changed.
+    private func enterDirectory() {
+        reload()
+        startWatching()
+        onDirectoryDidChange?(nav.current)
+    }
+
+    private func startWatching() {
+        watcher = DirectoryWatcher(path: nav.current.path) { [weak self] in
+            Task { @MainActor in self?.directoryChangedOnDisk() }
+        }
+    }
+
+    private func directoryChangedOnDisk() {
+        // Refresh the listing only if we're showing it (not search results),
+        // but always tell the browser so it can rebuild the search index.
+        if !showingSearchResults { reload() }
+        onDirectoryDidChange?(nav.current)
+    }
 
     func setActive(_ active: Bool) {
         containerView.layer?.borderColor =
@@ -124,7 +155,7 @@ final class PaneController: NSObject {
     @objc private func pathClicked() {
         guard let url = pathControl.clickedPathItem?.url else { return }
         nav.go(to: url)
-        reload()
+        enterDirectory()
     }
 
     private static func dirsFirst(_ a: FileEntry, _ b: FileEntry) -> Bool {

@@ -3,8 +3,8 @@ import PathomEngine
 
 /// The dual-pane browser: two independent panes side by side in a split view,
 /// one "active" pane (accent border), and one-key copy/move between them
-/// (F5 / F6 — the classic dual-pane bindings). This is the Launch-1 hero: a
-/// fast, native, two-pane file manager.
+/// (F5 and F6, the classic dual-pane bindings). A fast, native, two-pane file
+/// manager.
 @MainActor
 final class BrowserViewController: NSViewController {
     private let left: PaneController
@@ -14,16 +14,16 @@ final class BrowserViewController: NSViewController {
     private let searchField = NSSearchField()
     private var didSetInitialSplit = false
 
-    /// Cap on items embedded per search (bounds the cost on huge folders). The
-    /// scale path — background incremental indexing + a cached vector store —
-    /// is in DESIGN.md §2.
+    /// Cap on items embedded per search, to bound the cost on huge folders.
+    /// The scale path (background incremental indexing and a cached vector
+    /// store) is in DESIGN.md section 2.
     private static let maxSemanticItems = 5_000
 
-    /// Per-folder semantic index cache (rebuilt when the folder or its size
-    /// changes) so repeat searches in the same folder are instant.
+    /// Per-folder semantic index cache: pre-built when a pane enters a folder,
+    /// invalidated when that folder changes on disk, so searches are instant.
+    private var cachedDir: URL?
     private var cachedIndex: FolderSemanticIndex?
     private var cachedEntries: [FileEntry]?
-    private var cachedKey: String?
 
     init(start: URL) {
         left = PaneController(start: start)
@@ -67,6 +67,7 @@ final class BrowserViewController: NSViewController {
         for pane in [left, right] {
             pane.list.tableView.onCopy = { [weak self] in self?.transfer(move: false) }
             pane.list.tableView.onMove = { [weak self] in self?.transfer(move: true) }
+            pane.onDirectoryDidChange = { [weak self] url in self?.directoryChanged(pane, url) }
         }
         setActive(left)
     }
@@ -88,6 +89,7 @@ final class BrowserViewController: NSViewController {
         activePane = pane
         left.setActive(pane === left)
         right.setActive(pane === right)
+        if let directory = pane?.currentURL, directory != cachedDir { preIndex(directory) }
     }
 
     /// Copy (or move) the active pane's selection into the *other* pane's
@@ -120,38 +122,59 @@ final class BrowserViewController: NSViewController {
     // MARK: - Semantic search (on-device, free)
 
     /// Re-rank the active pane's folder by semantic similarity to the query.
-    /// Empty query restores the normal directory listing. Embedding runs off the
-    /// main thread so the UI never blocks.
+    /// An empty query restores the normal directory listing. All embedding runs
+    /// off the main thread, so the UI never blocks.
     @objc private func runSearch(_ sender: NSSearchField) {
         let query = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let pane = activePane else { return }
         guard !query.isEmpty else {
-            pane.reload()  // cleared search -> restore the directory listing
+            pane.reload()  // cleared search, restore the directory listing
             return
         }
         let directory = pane.currentURL
-        let maxItems = Self.maxSemanticItems
         Task {
-            // Enumerate + build the content-aware index off the main thread,
-            // cached per folder so only the first search in a folder pays for it.
-            let dirEntries = await Task.detached {
-                (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
-            }.value
-            let key = "\(directory.path)#\(dirEntries.count)"
-            if cachedKey != key {
-                cachedIndex = await Task.detached {
-                    SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems)
-                }.value
-                cachedEntries = dirEntries
-                cachedKey = key
-            }
-            guard let index = cachedIndex, let entries = cachedEntries else { return }
-            let order = await Task.detached {
-                SemanticSearcher.rank(query: query, in: index)
-            }.value
+            await ensureIndex(for: directory)
+            guard let index = cachedIndex, let entries = cachedEntries, cachedDir == directory
+            else { return }
+            let order = await Task.detached { SemanticSearcher.rank(query: query, in: index) }.value
             let ranked = order.compactMap { $0 < entries.count ? entries[$0] : nil }
-            // Only apply if the user is still on the same folder.
             if activePane?.currentURL == directory { pane.showResults(ranked) }
         }
+    }
+
+    /// Build the semantic index for `directory` in the background (if not already
+    /// cached for it), so the next search there is instant.
+    private func preIndex(_ directory: URL) {
+        Task { await ensureIndex(for: directory) }
+    }
+
+    /// Ensure the cache holds a fresh index for `directory`. Enumerates and
+    /// embeds off the main thread; only adopts the result if the active pane is
+    /// still on that folder.
+    private func ensureIndex(for directory: URL) async {
+        guard cachedDir != directory || cachedIndex == nil else { return }
+        let maxItems = Self.maxSemanticItems
+        let dirEntries = await Task.detached {
+            (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
+        }.value
+        let built = await Task.detached {
+            SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems)
+        }.value
+        if activePane?.currentURL == directory {
+            cachedDir = directory
+            cachedEntries = dirEntries
+            cachedIndex = built
+        }
+    }
+
+    /// A pane's folder changed (navigation or on-disk edit): drop a stale cache
+    /// for it, and rebuild in the background if it is the active pane.
+    private func directoryChanged(_ pane: PaneController, _ url: URL) {
+        if cachedDir == url {
+            cachedDir = nil
+            cachedIndex = nil
+            cachedEntries = nil
+        }
+        if pane === activePane { preIndex(url) }
     }
 }
