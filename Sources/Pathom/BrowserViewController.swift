@@ -92,28 +92,96 @@ final class BrowserViewController: NSViewController {
         if let directory = pane?.currentURL, directory != cachedDir { preIndex(directory) }
     }
 
-    /// Copy (or move) the active pane's selection into the *other* pane's
-    /// directory. Refuses to overwrite and reports any failures (DESIGN.md §6.5).
+    /// Copy (or move) the active pane's selection into the other pane's folder.
+    /// If names already exist there, ask how to resolve (replace, keep both, or
+    /// skip), then register an undo for whatever was performed (DESIGN.md §6.5).
     private func transfer(move: Bool) {
         guard let source = activePane else { return }
         let destination = (source === left) ? right : left
         let names = source.selectedEntries.map(\.name)
         guard !names.isEmpty else { NSSound.beep(); return }
 
-        let failures =
+        let sourceURL = source.currentURL
+        let destinationURL = destination.currentURL
+
+        var resolution = FileOperations.ConflictResolution.skip
+        let conflicts = FileOperations.conflicts(names, from: sourceURL, to: destinationURL)
+        if !conflicts.isEmpty {
+            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else {
+                return  // user cancelled
+            }
+            resolution = chosen
+        }
+
+        let outcome =
             move
-            ? FileOperations.move(names, from: source.currentURL, to: destination.currentURL)
-            : FileOperations.copy(names, from: source.currentURL, to: destination.currentURL)
+            ? FileOperations.move(names, from: sourceURL, to: destinationURL, onConflict: resolution)
+            : FileOperations.copy(names, from: sourceURL, to: destinationURL, onConflict: resolution)
 
         if move { source.reload() }
         destination.reload()
-        if !failures.isEmpty { presentFailures(failures, move: move) }
+
+        if !outcome.performed.isEmpty {
+            registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+        }
+        if !outcome.failures.isEmpty {
+            presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+        }
     }
 
-    private func presentFailures(_ failures: [FileOperations.Failure], move: Bool) {
+    private func askConflictResolution(conflictCount: Int, move: Bool)
+        -> FileOperations.ConflictResolution?
+    {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "\(move ? "Move" : "Copy") failed for \(failures.count) item(s)"
+        alert.messageText =
+            "\(conflictCount) item\(conflictCount == 1 ? "" : "s") already exist at the destination"
+        alert.informativeText = "Choose how to handle the \(move ? "move" : "copy")."
+        alert.addButton(withTitle: "Replace")
+        alert.addButton(withTitle: "Keep Both")
+        alert.addButton(withTitle: "Skip")
+        alert.addButton(withTitle: "Cancel")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: return .replace
+        case .alertSecondButtonReturn: return .keepBoth
+        case .alertThirdButtonReturn: return .skip
+        default: return nil
+        }
+    }
+
+    private func registerUndo(_ performed: [FileOperations.Performed], actionName: String) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let result = FileOperations.undo(performed)
+            target.left.reload()
+            target.right.reload()
+            if !result.failures.isEmpty {
+                target.presentFailures(result.failures, title: "Undo failed")
+            }
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    @objc func undo(_ sender: Any?) {
+        guard let undoManager = view.window?.undoManager, undoManager.canUndo else {
+            NSSound.beep()
+            return
+        }
+        undoManager.undo()
+    }
+
+    @objc func redo(_ sender: Any?) {
+        guard let undoManager = view.window?.undoManager, undoManager.canRedo else {
+            NSSound.beep()
+            return
+        }
+        undoManager.redo()
+    }
+
+    private func presentFailures(_ failures: [FileOperations.Failure], title: String) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "\(title) for \(failures.count) item(s)"
         alert.informativeText =
             failures.prefix(8).map { "\($0.name): \($0.reason)" }.joined(separator: "\n")
         alert.runModal()

@@ -11,6 +11,7 @@ enum PathomApp {
     static func main() {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
+        app.mainMenu = makeMainMenu()
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
@@ -36,6 +37,38 @@ enum PathomApp {
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
         app.run()
+    }
+
+    /// A minimal main menu so Cmd-Q, Cmd-Z (Undo), and standard text editing in
+    /// the search field work.
+    private static func makeMainMenu() -> NSMenu {
+        let mainMenu = NSMenu()
+
+        let appItem = NSMenuItem()
+        mainMenu.addItem(appItem)
+        let appMenu = NSMenu()
+        appItem.submenu = appMenu
+        appMenu.addItem(
+            withTitle: "About Pathom",
+            action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        appMenu.addItem(
+            withTitle: "Quit Pathom", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+
+        let editItem = NSMenuItem()
+        mainMenu.addItem(editItem)
+        let editMenu = NSMenu(title: "Edit")
+        editItem.submenu = editMenu
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        redo.keyEquivalentModifierMask = [.command, .shift]
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(
+            withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        return mainMenu
     }
 
     /// Gate A: prove the view-based table virtualizes a 1M-row dataset. Builds

@@ -15,50 +15,100 @@ import Testing
         try body(src, dst)
     }
 
+    private func exists(_ url: URL) -> Bool { FileManager.default.fileExists(atPath: url.path) }
+
     @Test func copyPlacesFileInDestinationAndKeepsSource() throws {
         try withTwoDirs { src, dst in
             try Data("hi".utf8).write(to: src.appendingPathComponent("a.txt"))
-            let failures = FileOperations.copy(["a.txt"], from: src, to: dst)
-            #expect(failures.isEmpty)
-            #expect(FileManager.default.fileExists(atPath: dst.appendingPathComponent("a.txt").path))
-            #expect(FileManager.default.fileExists(atPath: src.appendingPathComponent("a.txt").path))
+            let outcome = FileOperations.copy(["a.txt"], from: src, to: dst)
+            #expect(outcome.failures.isEmpty)
+            #expect(outcome.performed.count == 1)
+            #expect(exists(dst.appendingPathComponent("a.txt")))
+            #expect(exists(src.appendingPathComponent("a.txt")))
         }
     }
 
     @Test func moveRemovesFromSource() throws {
         try withTwoDirs { src, dst in
             try Data().write(to: src.appendingPathComponent("b.txt"))
-            let failures = FileOperations.move(["b.txt"], from: src, to: dst)
-            #expect(failures.isEmpty)
-            #expect(FileManager.default.fileExists(atPath: dst.appendingPathComponent("b.txt").path))
-            #expect(!FileManager.default.fileExists(atPath: src.appendingPathComponent("b.txt").path))
+            let outcome = FileOperations.move(["b.txt"], from: src, to: dst)
+            #expect(outcome.failures.isEmpty)
+            #expect(exists(dst.appendingPathComponent("b.txt")))
+            #expect(!exists(src.appendingPathComponent("b.txt")))
         }
     }
 
-    @Test func refusesToOverwriteExistingDestination() throws {
+    @Test func skipsExistingByDefault() throws {
         try withTwoDirs { src, dst in
             try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
             try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
-            let failures = FileOperations.copy(["c.txt"], from: src, to: dst)
-            #expect(failures.count == 1)
-            #expect(failures.first?.name == "c.txt")
-            // Destination must be untouched.
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst)
+            #expect(outcome.skipped == ["c.txt"])
+            #expect(outcome.failures.isEmpty)
             let content = try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
-            #expect(content == "old")
+            #expect(content == "old")  // destination untouched
         }
     }
 
-    @Test func partialBatchReportsOnlyTheFailures() throws {
+    @Test func replaceOverwritesDestination() throws {
+        try withTwoDirs { src, dst in
+            try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
+            try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .replace)
+            #expect(outcome.performed.count == 1)
+            let content = try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+            #expect(content == "new")
+        }
+    }
+
+    @Test func keepBothMakesACopyName() throws {
+        try withTwoDirs { src, dst in
+            try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
+            try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .keepBoth)
+            #expect(outcome.performed.count == 1)
+            #expect(exists(dst.appendingPathComponent("c.txt")))  // original kept
+            #expect(exists(dst.appendingPathComponent("c copy.txt")))  // new one renamed
+        }
+    }
+
+    @Test func partialBatchSkipsOnlyTheConflict() throws {
         try withTwoDirs { src, dst in
             try Data().write(to: src.appendingPathComponent("ok1.txt"))
             try Data().write(to: src.appendingPathComponent("clash.txt"))
             try Data().write(to: src.appendingPathComponent("ok2.txt"))
             try Data().write(to: dst.appendingPathComponent("clash.txt"))  // pre-existing
 
-            let failures = FileOperations.copy(["ok1.txt", "clash.txt", "ok2.txt"], from: src, to: dst)
-            #expect(failures.map(\.name) == ["clash.txt"])
-            #expect(FileManager.default.fileExists(atPath: dst.appendingPathComponent("ok1.txt").path))
-            #expect(FileManager.default.fileExists(atPath: dst.appendingPathComponent("ok2.txt").path))
+            let outcome = FileOperations.copy(["ok1.txt", "clash.txt", "ok2.txt"], from: src, to: dst)
+            #expect(outcome.skipped == ["clash.txt"])
+            #expect(exists(dst.appendingPathComponent("ok1.txt")))
+            #expect(exists(dst.appendingPathComponent("ok2.txt")))
+        }
+    }
+
+    @Test func undoMoveMovesItBack() throws {
+        try withTwoDirs { src, dst in
+            try Data("x".utf8).write(to: src.appendingPathComponent("m.txt"))
+            let outcome = FileOperations.move(["m.txt"], from: src, to: dst)
+            #expect(exists(dst.appendingPathComponent("m.txt")))
+
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(undo.failures.isEmpty)
+            #expect(exists(src.appendingPathComponent("m.txt")))
+            #expect(!exists(dst.appendingPathComponent("m.txt")))
+        }
+    }
+
+    @Test func undoCopyTrashesTheCopy() throws {
+        try withTwoDirs { src, dst in
+            try Data("x".utf8).write(to: src.appendingPathComponent("c.txt"))
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst)
+            #expect(exists(dst.appendingPathComponent("c.txt")))
+
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(undo.failures.isEmpty)
+            #expect(!exists(dst.appendingPathComponent("c.txt")))  // moved to Trash
+            #expect(exists(src.appendingPathComponent("c.txt")))  // original kept
         }
     }
 }
