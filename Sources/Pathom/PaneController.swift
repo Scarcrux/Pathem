@@ -15,6 +15,12 @@ final class PaneController: NSObject {
     private var backButton = NSButton()
     private var forwardButton = NSButton()
     private var upButton = NSButton()
+    private let statusLabel = NSTextField(labelWithString: "")
+    private let byteFormatter: ByteCountFormatter = {
+        let f = ByteCountFormatter()
+        f.countStyle = .file
+        return f
+    }()
 
     /// Fired when this pane becomes active (its list gains focus).
     var onBecomeActive: (() -> Void)?
@@ -54,6 +60,7 @@ final class PaneController: NSObject {
     func showResults(_ entries: [FileEntry]) {
         showingSearchResults = true
         list.setEntries(entries)
+        updateStatus()
     }
 
     func reload() {
@@ -62,6 +69,7 @@ final class PaneController: NSObject {
         let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)) ?? []
         list.setEntries(format.sorted(entries))
         list.showSortIndicator(key: format.sortKey, ascending: format.ascending)
+        updateStatus()
         pathControl.url = nav.current
         backButton.isEnabled = nav.canGoBack
         forwardButton.isEnabled = nav.canGoForward
@@ -151,8 +159,14 @@ final class PaneController: NSObject {
         let scroll = list.scrollView
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
+        statusLabel.font = .systemFont(ofSize: 11)
+        statusLabel.textColor = .secondaryLabelColor
+        statusLabel.lineBreakMode = .byTruncatingTail
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+
         containerView.addSubview(toolbar)
         containerView.addSubview(scroll)
+        containerView.addSubview(statusLabel)
         NSLayoutConstraint.activate([
             toolbar.topAnchor.constraint(equalTo: containerView.topAnchor),
             toolbar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -160,8 +174,28 @@ final class PaneController: NSObject {
             scroll.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
             scroll.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             scroll.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            scroll.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -4),
+            statusLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
+            statusLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10),
+            statusLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
         ])
+    }
+
+    /// Update the bottom status line: item count, or the selection count and its
+    /// total size when something is selected.
+    private func updateStatus() {
+        let all = list.entries
+        let selected = list.selectedEntries
+        if selected.isEmpty {
+            let size = all.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
+            let items = "\(all.count) item\(all.count == 1 ? "" : "s")"
+            statusLabel.stringValue = size > 0 ? "\(items) · \(byteFormatter.string(fromByteCount: size))" : items
+        } else {
+            let size = selected.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
+            let prefix = "\(selected.count) of \(all.count) selected"
+            statusLabel.stringValue =
+                size > 0 ? "\(prefix) · \(byteFormatter.string(fromByteCount: size))" : prefix
+        }
     }
 
     private func iconButton(_ symbol: String, _ action: Selector) -> NSButton {
@@ -186,6 +220,7 @@ final class PaneController: NSObject {
             self.rememberFormat?(self.nav.current, self.format)
             self.reload()
         }
+        list.onSelectionChanged = { [weak self] in self?.updateStatus() }
     }
 
     func toggleHidden() {

@@ -1,12 +1,13 @@
 import AppKit
 import PathomEngine
+import Quartz
 
 /// The dual-pane browser: two independent panes side by side in a split view,
 /// one "active" pane (accent border), and one-key copy/move between them
 /// (F5 and F6, the classic dual-pane bindings). A fast, native, two-pane file
 /// manager.
 @MainActor
-final class BrowserViewController: NSViewController, NSMenuDelegate {
+final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource {
     private let left: PaneController
     private let right: PaneController
     private weak var activePane: PaneController?
@@ -136,6 +137,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
         add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
         add("ai.run", "Ask Pathom (Natural Language)…") { [weak self] in self?.showAICommandBar() }
+        add("view.quickLook", "Quick Look", enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
@@ -184,6 +186,46 @@ final class BrowserViewController: NSViewController, NSMenuDelegate {
             return (command.id, command.title)
         }
         return nil
+    }
+
+    // MARK: - Quick Look
+
+    @objc private func toggleQuickLook() {
+        guard let panel = QLPreviewPanel.shared() else { return }
+        if QLPreviewPanel.sharedPreviewPanelExists(), panel.isVisible {
+            panel.orderOut(nil)
+        } else {
+            panel.makeKeyAndOrderFront(nil)
+        }
+    }
+
+    /// File URLs for the active pane's current selection (Quick Look targets).
+    private var quickLookURLs: [URL] {
+        guard let pane = activePane else { return [] }
+        return pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
+    }
+
+    // Quick Look invokes these on the main thread, but the protocol/responder
+    // methods are nonisolated, so hop onto the main actor explicitly.
+    override nonisolated func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool { true }
+
+    override nonisolated func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated { panel.dataSource = self }
+    }
+
+    override nonisolated func endPreviewPanelControl(_ panel: QLPreviewPanel!) {}
+
+    nonisolated func numberOfPreviewItems(in panel: QLPreviewPanel!) -> Int {
+        MainActor.assumeIsolated { quickLookURLs.count }
+    }
+
+    nonisolated func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
+        // Return URL (Sendable) out of the actor hop, then bridge to NSURL.
+        let url: URL? = MainActor.assumeIsolated {
+            let urls = quickLookURLs
+            return index < urls.count ? urls[index] : nil
+        }
+        return url.map { $0 as NSURL }
     }
 
     /// Resolve a key chord against the keymap and dispatch via the registry.

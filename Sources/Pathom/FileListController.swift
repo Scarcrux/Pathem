@@ -1,5 +1,6 @@
 import AppKit
 import PathomEngine
+import UniformTypeIdentifiers
 
 /// The file list: a view-based `NSTableView` driven directly by an array of
 /// `FileEntry` value types (DESIGN.md §4). View-based + fixed row height + cell
@@ -24,6 +25,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     var onBecomeActive: (() -> Void)?
     /// User changed the sort by clicking a column header.
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
+    /// The row selection changed (used to update the status bar).
+    var onSelectionChanged: (() -> Void)?
     private var suppressSortCallback = false
 
     /// Entries currently selected in the table.
@@ -67,7 +70,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     private func configure() {
-        tableView.rowHeight = 22  // fixed height — required for cheap virtualization
+        tableView.rowHeight = 24  // fixed height — required for cheap virtualization
         tableView.usesAlternatingRowBackgroundColors = true
         tableView.allowsMultipleSelection = true
         tableView.style = .inset
@@ -113,6 +116,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         onSortChanged?(sortKey, descriptor.ascending)
     }
 
+    func tableViewSelectionDidChange(_ notification: Notification) {
+        onSelectionChanged?()
+    }
+
     /// Show the sort indicator on the header without triggering onSortChanged.
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {
         suppressSortCallback = true
@@ -131,12 +138,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         cellRequests += 1
 
         let id = tableColumn.identifier
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
+        let isName = id.rawValue == Column.name.rawValue
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makeCell(id, withIcon: isName)
 
         let entry = entries[row]
         switch Column(rawValue: id.rawValue) {
         case .name:
             cell.textField?.stringValue = entry.name
+            cell.imageView?.image = Self.icon(for: entry)
         case .size:
             cell.textField?.stringValue = entry.isDirectory ? "--" : byteFormatter.string(fromByteCount: entry.size)
         case .date:
@@ -147,7 +158,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell
     }
 
-    private static func makeCell(_ id: NSUserInterfaceItemIdentifier) -> NSTableCellView {
+    private static func makeCell(_ id: NSUserInterfaceItemIdentifier, withIcon: Bool) -> NSTableCellView {
         let cell = NSTableCellView()
         cell.identifier = id
         let field = NSTextField(labelWithString: "")
@@ -156,11 +167,49 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         field.font = .systemFont(ofSize: 13)
         cell.addSubview(field)
         cell.textField = field
-        NSLayoutConstraint.activate([
-            field.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
-            field.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
-            field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-        ])
+
+        if withIcon {
+            let icon = NSImageView()
+            icon.translatesAutoresizingMaskIntoConstraints = false
+            icon.imageScaling = .scaleProportionallyDown
+            cell.addSubview(icon)
+            cell.imageView = icon
+            NSLayoutConstraint.activate([
+                icon.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
+                icon.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                icon.widthAnchor.constraint(equalToConstant: 16),
+                icon.heightAnchor.constraint(equalToConstant: 16),
+                field.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
+                field.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
+                field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            ])
+        } else {
+            NSLayoutConstraint.activate([
+                field.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
+                field.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
+                field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            ])
+        }
         return cell
+    }
+
+    private static var iconCache: [String: NSImage] = [:]
+
+    /// A type icon for the entry, cached by extension (or folder) so scrolling a
+    /// huge directory never does per-row disk work.
+    private static func icon(for entry: FileEntry) -> NSImage {
+        let key = entry.isDirectory ? "\u{0}folder" : (entry.name as NSString).pathExtension.lowercased()
+        if let cached = iconCache[key] { return cached }
+        let workspace = NSWorkspace.shared
+        let image: NSImage
+        if entry.isDirectory {
+            image = workspace.icon(for: .folder)
+        } else if !key.isEmpty, let type = UTType(filenameExtension: key) {
+            image = workspace.icon(for: type)
+        } else {
+            image = workspace.icon(for: .data)
+        }
+        iconCache[key] = image
+        return image
     }
 }
