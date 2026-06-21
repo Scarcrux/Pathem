@@ -47,9 +47,25 @@ cell views built per scroll jump:       ~100
 
 Jumping to the last row costs about the same as jumping to the tenth.
 
-## Building
+## Install
 
-Requires macOS 15 or later and a recent Swift toolchain.
+Pathom is distributed as source. Building it yourself needs no Apple Developer
+account: a locally compiled app is not quarantined, so it launches with no
+Gatekeeper prompts. You need macOS 15 or later and the Swift toolchain (Xcode,
+or just the Command Line Tools via `xcode-select --install`).
+
+```
+git clone https://github.com/Scarcrux/Pathom.git
+cd Pathom
+make install     # build a universal Pathom.app and put it in /Applications
+# or
+make run         # build and launch straight from source
+```
+
+Signing and notarization only matter if you hand someone a prebuilt download;
+they are not needed to build and run it yourself.
+
+## Building
 
 ```
 make run       # build and launch from source (fastest loop)
