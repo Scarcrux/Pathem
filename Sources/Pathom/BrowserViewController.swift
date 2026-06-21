@@ -18,6 +18,8 @@ final class BrowserViewController: NSViewController {
     /// The scale path (background incremental indexing and a cached vector
     /// store) is in DESIGN.md section 2.
     private static let maxSemanticItems = 5_000
+    /// Marker on the pasteboard meaning "these files were cut" (paste = move).
+    private static let cutPasteboardType = NSPasteboard.PasteboardType("ai.scarcrux.pathom.cut")
 
     /// Per-folder semantic index cache: pre-built when a pane enters a folder,
     /// invalidated when that folder changes on disk, so searches are instant.
@@ -176,6 +178,62 @@ final class BrowserViewController: NSViewController {
             return
         }
         undoManager.redo()
+    }
+
+    // MARK: - File clipboard (cut / copy / paste)
+    //
+    // Routed via the Edit menu's cut:/copy:/paste:. When the search field is
+    // focused the field editor handles them as text editing; when a pane's table
+    // is focused they reach here and act on files.
+
+    @objc func copy(_ sender: Any?) { writeSelectionToPasteboard(cut: false) }
+    @objc func cut(_ sender: Any?) { writeSelectionToPasteboard(cut: true) }
+
+    @objc func paste(_ sender: Any?) {
+        guard let pane = activePane else { return }
+        let pasteboard = NSPasteboard.general
+        let urls =
+            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            as? [URL] ?? []
+        guard !urls.isEmpty else { NSSound.beep(); return }
+
+        let isMove = pasteboard.data(forType: Self.cutPasteboardType) != nil
+        let destination = pane.currentURL
+
+        var resolution = FileOperations.ConflictResolution.skip
+        let conflicts = FileOperations.conflicts(urls: urls, into: destination)
+        if !conflicts.isEmpty {
+            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: isMove) else {
+                return
+            }
+            resolution = chosen
+        }
+
+        let outcome =
+            isMove
+            ? FileOperations.move(urls: urls, into: destination, onConflict: resolution)
+            : FileOperations.copy(urls: urls, into: destination, onConflict: resolution)
+
+        left.reload()
+        right.reload()
+        if !outcome.performed.isEmpty {
+            registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
+        }
+        if isMove { pasteboard.clearContents() }  // cut items are gone; don't move them twice
+        if !outcome.failures.isEmpty { presentFailures(outcome.failures, title: "Paste failed") }
+    }
+
+    private func writeSelectionToPasteboard(cut: Bool) {
+        guard let pane = activePane else { return }
+        let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.writeObjects(urls as [NSURL])
+        if cut {
+            pasteboard.addTypes([Self.cutPasteboardType], owner: nil)
+            pasteboard.setData(Data(), forType: Self.cutPasteboardType)
+        }
     }
 
     private func presentFailures(_ failures: [FileOperations.Failure], title: String) {

@@ -1,12 +1,13 @@
 import Foundation
 
-/// Bulk file operations behind the dual-pane copy/move actions.
+/// Bulk file operations behind copy/move (between panes, and the clipboard).
 ///
 /// Each item is attempted independently. When a name already exists at the
-/// destination the caller picks a `ConflictResolution`: skip it, replace it
-/// (the existing item goes to the Trash, so it is recoverable), or keep both
-/// (the new item is renamed "x copy"). Every operation records what it did so
-/// the UI can offer undo.
+/// destination the caller picks a `ConflictResolution`: skip it, replace it (the
+/// existing item goes to the Trash, so it is recoverable), or keep both (the new
+/// item is renamed "x copy"). Every operation records what it did so the UI can
+/// offer undo. Sources can be given by name within a folder, or as full URLs
+/// (so a paste can pull from any location, including a Finder copy).
 public enum FileOperations {
     public struct Failure: Error, Equatable, Sendable {
         public let name: String
@@ -17,7 +18,6 @@ public enum FileOperations {
         }
     }
 
-    /// What to do when a name already exists at the destination.
     public enum ConflictResolution: Sendable { case skip, replace, keepBoth }
 
     public enum Action: Sendable { case copied, moved }
@@ -41,23 +41,30 @@ public enum FileOperations {
         public init() {}
     }
 
-    /// The names that already exist at `destination`. A caller can prompt about
-    /// these before choosing a resolution.
+    // MARK: Conflict detection
+
     public static func conflicts(_ names: [String], from source: URL, to destination: URL) -> [String]
     {
-        names.filter {
-            FileManager.default.fileExists(atPath: destination.appendingPathComponent($0).path)
+        conflicts(urls: names.map { source.appendingPathComponent($0) }, into: destination)
+    }
+
+    public static func conflicts(urls: [URL], into destination: URL) -> [String] {
+        urls.compactMap { url in
+            let name = url.lastPathComponent
+            let exists = FileManager.default.fileExists(
+                atPath: destination.appendingPathComponent(name).path)
+            return exists ? name : nil
         }
     }
+
+    // MARK: Copy / move
 
     @discardableResult
     public static func copy(
         _ names: [String], from source: URL, to destination: URL,
         onConflict: ConflictResolution = .skip
     ) -> Outcome {
-        apply(names, from: source, to: destination, action: .copied, onConflict: onConflict) {
-            try FileManager.default.copyItem(at: $0, to: $1)
-        }
+        copy(urls: names.map { source.appendingPathComponent($0) }, into: destination, onConflict: onConflict)
     }
 
     @discardableResult
@@ -65,7 +72,23 @@ public enum FileOperations {
         _ names: [String], from source: URL, to destination: URL,
         onConflict: ConflictResolution = .skip
     ) -> Outcome {
-        apply(names, from: source, to: destination, action: .moved, onConflict: onConflict) {
+        move(urls: names.map { source.appendingPathComponent($0) }, into: destination, onConflict: onConflict)
+    }
+
+    @discardableResult
+    public static func copy(
+        urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip
+    ) -> Outcome {
+        apply(urls, into: destination, action: .copied, onConflict: onConflict) {
+            try FileManager.default.copyItem(at: $0, to: $1)
+        }
+    }
+
+    @discardableResult
+    public static func move(
+        urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip
+    ) -> Outcome {
+        apply(urls, into: destination, action: .moved, onConflict: onConflict) {
             try FileManager.default.moveItem(at: $0, to: $1)
         }
     }
@@ -100,15 +123,17 @@ public enum FileOperations {
         return outcome
     }
 
+    // MARK: Core
+
     private static func apply(
-        _ names: [String], from source: URL, to destination: URL,
+        _ sources: [URL], into destination: URL,
         action: Action, onConflict: ConflictResolution,
         _ op: (URL, URL) throws -> Void
     ) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
-        for name in names {
-            let from = source.appendingPathComponent(name)
+        for from in sources {
+            let name = from.lastPathComponent
             var to = destination.appendingPathComponent(name)
             do {
                 if fm.fileExists(atPath: to.path) {

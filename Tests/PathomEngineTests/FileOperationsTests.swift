@@ -111,4 +111,33 @@ import Testing
             #expect(exists(src.appendingPathComponent("c.txt")))  // original kept
         }
     }
+
+    @Test func pasteCopyFromArbitrarySourceURLs() throws {
+        try withTwoDirs { src, dst in
+            try Data("x".utf8).write(to: src.appendingPathComponent("a.txt"))
+            let outcome = FileOperations.copy(urls: [src.appendingPathComponent("a.txt")], into: dst)
+            #expect(outcome.failures.isEmpty)
+            #expect(exists(dst.appendingPathComponent("a.txt")))
+            #expect(exists(src.appendingPathComponent("a.txt")))
+        }
+    }
+
+    @Test func pasteMoveFromArbitrarySourceURLs() throws {
+        try withTwoDirs { src, dst in
+            try Data().write(to: src.appendingPathComponent("m.txt"))
+            let outcome = FileOperations.move(urls: [src.appendingPathComponent("m.txt")], into: dst)
+            #expect(outcome.performed.count == 1)
+            #expect(exists(dst.appendingPathComponent("m.txt")))
+            #expect(!exists(src.appendingPathComponent("m.txt")))
+        }
+    }
+
+    @Test func conflictsByURLDetectsExisting() throws {
+        try withTwoDirs { src, dst in
+            try Data().write(to: src.appendingPathComponent("c.txt"))
+            try Data().write(to: dst.appendingPathComponent("c.txt"))
+            let found = FileOperations.conflicts(urls: [src.appendingPathComponent("c.txt")], into: dst)
+            #expect(found == ["c.txt"])
+        }
+    }
 }
