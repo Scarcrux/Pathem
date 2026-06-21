@@ -135,14 +135,22 @@ Constraints to settle in a dedicated LLM design phase (not now):
   `bge-small`, MIT, ~30-65MB) + a local vector index (`sqlite-vec`, 384-dim,
   int8/binary). Runs on ~100% of Macs incl. Intel. **This is the AI MVP** and
   the broad-reach headline; it never hallucinates a file reference.
-- **Generation = Apple Foundation Models (primary, 0 bundle bytes).** macOS 26's
+- **Generation = Apple Foundation Models (DECIDED; primary, 0 bundle bytes).** macOS 26's
   built-in ~3B on-device model. `@Generable` constrained decoding yields a
   *typed* FileOperationPlan we preview + user confirms + OUR code executes — the
   LLM never touches the filesystem (safe for destructive ops). Sweet spot =
   summarize / extract / classify = features 2/3/4.
-- **Fallback (optional, downloaded on first run — NEVER in the .app):** a small
-  Apache-2.0 LLM via `mlx-swift` (Qwen3-4B ~2.5GB, or 1.7B for low-RAM) for
-  Apple-Intelligence-ineligible Macs (Intel / AI-off). RAM-gated.
+- **Generation fallback (capability-detected; build the seam now, defer the
+  impl).** When Apple Foundation Models is unavailable, fall back to a small
+  Apache-2.0 model — but mind the runtime split: **`mlx-swift` is
+  Apple-Silicon-only** (covers AS Macs with Apple Intelligence off), while
+  **Intel Macs need `llama.cpp`** (CPU inference, ~a few tok/s — slow).
+  Downloaded on first run, never bundled. Search is unaffected:
+  `NLContextualEmbedding` runs on Intel, so Intel users keep semantic search
+  (the "basic AI") for free regardless. Build the `Embedder`/`Generator`
+  protocol + `SystemLanguageModel.default.availability` detection now; defer the
+  llama.cpp Intel-generation path until demand (Intel is end-of-line — macOS 26
+  was the last Intel release).
 - **Cloud (optional, consented):** Claude (Opus 4.8 / Sonnet 4.6; Haiku 4.5 for
   cheap classification) for large-corpus compare/summarize beyond the on-device
   ~4K context. Per-action consent; send only the selected file/region. Build
@@ -439,7 +447,37 @@ goal are *aligned*, not in tension.
 4. **One IP/OSS lawyer consult** to finalize the CLA wording (not legal advice).
 
 ### Monetization (orthogonal to the license, secondary)
-- **Open-core (recommended):** MIT core for stars + a *separate closed-source*
+
+**Decision: GitHub Sponsors tip jar now + a planned open-core "Pathom Pro"
+later.** Strict sequencing: ship the free MIT flagship and earn the launch stars
+FIRST; Pro comes months later as a *separate closed-source* superset — never by
+paywalling anything that was already free. Sponsors stays a garnish (~$0–100/mo;
+MonitorControl ≈ $120/mo at 33k stars); Pro is the real lever ($1–3k/mo good
+case, Rectangle/AltTab template).
+
+**Pathom Pro scope — iron rule: the free core stays a genuinely great Finder
+replacement, and on-device semantic search (the §2 headline differentiator)
+stays FREE forever. Pro is net-new *additive* power, never a downgrade of free.**
+- **FREE (MIT core):** fast browsing, dual-pane, tabs, navigation, core file
+  ops, QuickLook, hidden files, basic batch rename, AND on-device semantic
+  search.
+- **PRO (~$9.99 one-time, closed):** saved Lister/Layout workspaces; advanced
+  batch-rename presets + scripting/automation; multi-pane (3+); folder
+  sync/compare; FTP/SFTP/cloud remote browsing; a cloud / cross-device variant
+  of semantic search; deep theming/customization.
+- **Structure:** free core in the public MIT repo; Pro a *separate private repo*
+  depending on the core as a Swift package. The core's **relicensing-grant CLA**
+  (§ day-one actions) is what makes building closed Pro on top of community
+  contributions legal — so the CLA is a prerequisite for Pro, not optional. Sell
+  Pro direct via Paddle/Gumroad (~95% kept) ± a paid MAS SKU; offer a trial.
+- **Career note:** Pro is a revenue *side-track*. For the stated job target
+  (ML Engineer / Quant Researcher) the priority is the finance-research
+  flagship, not Pathom revenue — build Pro only once free Pathom has real
+  traction.
+
+The detail below records the broader option space; the decision above is the plan.
+
+- **Open-core (the future lever):** MIT core for stars + a *separate closed-source*
   "Pathom Pro" superset (power features / sync / saved Layouts), ~$10–30. No
   license change, no fork/contributor problem on the paid part. Precedent in
   this exact category: Rectangle (MIT) + Rectangle Pro (closed), same solo dev.
