@@ -24,6 +24,8 @@ final class BrowserViewController: NSViewController {
     /// The command bus (DESIGN.md section 10). Every browser action is a named
     /// command; keybindings, the palette, and the AI bar will dispatch by id.
     let commands = CommandRegistry()
+    /// Chord -> command id, defaults overlaid with any user keymap.json.
+    private var keymap = Keymap.standard
 
     /// Per-folder semantic index cache: pre-built when a pane enters a folder,
     /// invalidated when that folder changes on disk, so searches are instant.
@@ -69,11 +71,11 @@ final class BrowserViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         registerCommands()
+        loadKeymap()
         left.onBecomeActive = { [weak self] in self?.setActive(self?.left) }
         right.onBecomeActive = { [weak self] in self?.setActive(self?.right) }
         for pane in [left, right] {
-            pane.list.tableView.onCopy = { [weak self] in self?.commands.perform("files.copyToOtherPane") }
-            pane.list.tableView.onMove = { [weak self] in self?.commands.perform("files.moveToOtherPane") }
+            pane.list.tableView.onKeyChord = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
             pane.onDirectoryDidChange = { [weak self] url in self?.directoryChanged(pane, url) }
         }
         setActive(left)
@@ -104,6 +106,7 @@ final class BrowserViewController: NSViewController {
             [weak self] in self?.writeSelectionToPasteboard(cut: true)
         }
         add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
+        add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
@@ -119,6 +122,36 @@ final class BrowserViewController: NSViewController {
         add("edit.redo", "Redo", enabled: { [weak self] in self?.view.window?.undoManager?.canRedo ?? false }) {
             [weak self] in self?.redo(nil)
         }
+    }
+
+    /// Resolve a key chord against the keymap and dispatch via the registry.
+    /// Returns true if a binding existed (so the key is consumed even when the
+    /// command is currently disabled).
+    private func handleKeyChord(_ chord: KeyChord) -> Bool {
+        guard let id = keymap.commandID(for: chord) else { return false }
+        commands.perform(id)
+        return true
+    }
+
+    private func loadKeymap() {
+        guard let url = Self.appSupportDirectory()?.appendingPathComponent("keymap.json"),
+            let data = try? Data(contentsOf: url),
+            let user = try? JSONDecoder().decode([String: String].self, from: data)
+        else {
+            keymap = .standard
+            return
+        }
+        keymap = Keymap.standard.merging(userBindings: user)
+    }
+
+    private static func appSupportDirectory() -> URL? {
+        let fm = FileManager.default
+        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let dir = base.appendingPathComponent("Pathom", isDirectory: true)
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
     }
 
     override func viewDidLayout() {

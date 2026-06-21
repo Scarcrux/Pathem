@@ -81,7 +81,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.delegate = self
         tableView.target = self
         tableView.doubleAction = #selector(handleDoubleClick)
-        tableView.onActivateRow = { [weak self] in self?.activateSelection() }
         tableView.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
 
         scrollView.documentView = tableView
@@ -97,12 +96,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     @objc private func handleDoubleClick() {
         let row = tableView.clickedRow
-        guard row >= 0, row < entries.count else { return }
-        onOpen?(entries[row])
-    }
-
-    private func activateSelection() {
-        let row = tableView.selectedRow
         guard row >= 0, row < entries.count else { return }
         onOpen?(entries[row])
     }

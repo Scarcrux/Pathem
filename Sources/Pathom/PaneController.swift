@@ -163,10 +163,13 @@ final class PaneController: NSObject {
     private func wire() {
         list.onOpen = { [weak self] entry in self?.descend(into: entry) }
         list.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
-        let table = list.tableView
-        table.onGoUp = { [weak self] in self?.goUp() }
-        table.onGoBack = { [weak self] in self?.goBack() }
-        table.onGoForward = { [weak self] in self?.goForward() }
+    }
+
+    /// Open the current selection: descend into a folder (files are a no-op for
+    /// now). Used by the "files.open" command.
+    func openSelection() {
+        guard let entry = selectedEntries.first else { return }
+        descend(into: entry)
     }
 
     @objc private func pathClicked() {

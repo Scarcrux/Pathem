@@ -1,18 +1,14 @@
 import AppKit
+import PathomEngine
 
-/// `NSTableView` subclass that surfaces the keyboard actions a file pane needs:
-/// open (Return / Enter / Cmd-Down), navigate (Cmd-Up / Cmd-[ / Cmd-]), and
-/// copy/move (F5 / F6 — the classic dual-pane bindings). Closures are wired by
-/// the pane / browser. Unhandled keys fall through to AppKit, so arrow-key
-/// selection and type-select keep working.
+/// NSTableView subclass that turns each key press into a `KeyChord` and offers
+/// it to a handler. If the handler consumes it (a keymap binding fired), the key
+/// is swallowed; otherwise it falls through to AppKit so arrow-key selection and
+/// type-select keep working. All bindings live in the keymap, not here.
 @MainActor
 final class KeyTableView: NSTableView {
-    var onActivateRow: (() -> Void)?
-    var onGoUp: (() -> Void)?
-    var onGoBack: (() -> Void)?
-    var onGoForward: (() -> Void)?
-    var onCopy: (() -> Void)?
-    var onMove: (() -> Void)?
+    /// Return true if the chord was handled (the key is then consumed).
+    var onKeyChord: ((KeyChord) -> Bool)?
     var onBecomeActive: (() -> Void)?
 
     override func becomeFirstResponder() -> Bool {
@@ -22,16 +18,15 @@ final class KeyTableView: NSTableView {
     }
 
     override func keyDown(with event: NSEvent) {
-        let cmd = event.modifierFlags.contains(.command)
-        switch event.keyCode {
-        case 36, 76: onActivateRow?()  // Return, keypad Enter
-        case 125 where cmd: onActivateRow?()  // Cmd-Down = open
-        case 126 where cmd: onGoUp?()  // Cmd-Up
-        case 33 where cmd: onGoBack?()  // Cmd-[
-        case 30 where cmd: onGoForward?()  // Cmd-]
-        case 96: onCopy?()  // F5
-        case 97: onMove?()  // F6
-        default: super.keyDown(with: event)
-        }
+        let flags = event.modifierFlags
+        let chord = KeyChord.from(
+            keyCode: event.keyCode,
+            characters: event.charactersIgnoringModifiers,
+            cmd: flags.contains(.command),
+            opt: flags.contains(.option),
+            ctrl: flags.contains(.control),
+            shift: flags.contains(.shift))
+        if onKeyChord?(chord) == true { return }
+        super.keyDown(with: event)
     }
 }
