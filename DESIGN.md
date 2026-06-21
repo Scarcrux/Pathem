@@ -101,6 +101,75 @@ non-native feel.**
 
 Each competitor wins one axis and loses the others. That's the opening.
 
+### Lead differentiator: integrated LLM support (decided)
+
+Per the market analysis above, the #1 white-space is AI: no native, fast Mac
+file manager has integrated LLM support. This is Pathom's chosen north-star
+differentiator. Candidate capabilities (sequenced *after* the engine is stable):
+
+- **Semantic / natural-language search** — "the contract I edited last spring,"
+  "screenshots with errors" — over an on-device content index.
+- **Natural-language file ops** — describe a batch rename / move / filter and
+  preview the resulting operations before applying (always undoable).
+- **Content-aware organize & rename** — suggest names/folders from file
+  contents; semantic dedup.
+- **Ask-about-this** — summarize, extract from, or compare selected files.
+
+Constraints to settle in a dedicated LLM design phase (not now):
+
+- **Privacy-forward.** Prefer on-device where viable; for any cloud call,
+  explicit scoped consent — never silently upload file contents. This is itself
+  a trust differentiator vs. the AI-organizer crowd.
+- **Provider.** Default to the latest Claude models (Opus 4.8 / Sonnet 4.6 /
+  Haiku 4.5) for cloud; evaluate on-device models for privacy/cost. Use the
+  `claude-api` skill when we design/build this.
+- **Cost & latency.** Index incrementally, cache, and keep LLM calls off the
+  hot path. Gate the whole feature behind the stable core (stay narrow).
+
+#### LLM engine strategy (decided after research)
+
+"Bundle a local LLM?" → **partly — decouple search from generation.**
+
+- **Search = embeddings, not an LLM.** A tiny embedding model (Apple
+  `NLContextualEmbedding`, 0 bundle bytes / ~100MB on-demand asset; or a bundled
+  `bge-small`, MIT, ~30-65MB) + a local vector index (`sqlite-vec`, 384-dim,
+  int8/binary). Runs on ~100% of Macs incl. Intel. **This is the AI MVP** and
+  the broad-reach headline; it never hallucinates a file reference.
+- **Generation = Apple Foundation Models (primary, 0 bundle bytes).** macOS 26's
+  built-in ~3B on-device model. `@Generable` constrained decoding yields a
+  *typed* FileOperationPlan we preview + user confirms + OUR code executes — the
+  LLM never touches the filesystem (safe for destructive ops). Sweet spot =
+  summarize / extract / classify = features 2/3/4.
+- **Fallback (optional, downloaded on first run — NEVER in the .app):** a small
+  Apache-2.0 LLM via `mlx-swift` (Qwen3-4B ~2.5GB, or 1.7B for low-RAM) for
+  Apple-Intelligence-ineligible Macs (Intel / AI-off). RAM-gated.
+- **Cloud (optional, consented):** Claude (Opus 4.8 / Sonnet 4.6; Haiku 4.5 for
+  cheap classification) for large-corpus compare/summarize beyond the on-device
+  ~4K context. Per-action consent; send only the selected file/region. Build
+  with the `claude-api` skill. (Note for build time: Claude 4.6+ uses adaptive
+  thinking, not `budget_tokens`; use `output_config.format` + strict tools;
+  Haiku 4.5 is 200K context.)
+- **License rule:** bundle only OSI-permissive weights (Apache-2.0 / MIT: Qwen3,
+  SmolLM2, Phi-4-mini, bge-small, Model2Vec). **Avoid Llama (Community License)
+  and Gemma (custom terms)** — open-weight, not OSI, with UI/redistribution
+  strings.
+- **AI is progressive enhancement.** Core file manager works without it
+  (glob/regex batch ops, metadata search, manual templates).
+- **Caveats:** Foundation Models needs Apple silicon + macOS 26 + Apple
+  Intelligence enabled (Intel excluded; Tahoe adoption ~52% near-term);
+  **~4K on-device context** (macOS 26.4 — retrieve-then-feed only the relevant
+  passages, pre-flight every prompt with `tokenCount()`, handle
+  `.contextWindowExceeded`; don't stuff whole files).
+
+> Fact-checked (2026): architecture verified sound. Licenses, model sizes,
+> hardware gating, and Claude model IDs all confirmed. Corrections applied:
+> on-device context is ~4K (not 8K). Additional notes: at true
+> millions-of-files scale use binary/int8 vectors or USearch (HNSW) — sqlite-vec
+> brute-force suits ~100k-500k chunks; don't pin the fallback to one model, pick
+> the latest Apache-2.0 ~3-4B at build time; read embedding dimensionality from
+> the API at runtime and store the model id+revision with the index (any swap
+> forces a full re-index).
+
 ---
 
 ## 3. Language & architecture decision
@@ -277,8 +346,8 @@ Disk Access.
 engine): tabs, Lister/Layout workspaces (then add as Codable JSON), flat view,
 FAYT `=` evaluator, scripting/command system, batch-rename engine (high-
 goodwill — add early as a showcase), collections/saved searches, archive-as-
-folder, FTP/SFTP, inspector/modules, labels/ratings, on-device **AI semantic
-search** (the headline differentiator — gate behind a stable core), and **any
+folder, FTP/SFTP, inspector/modules, labels/ratings, **integrated LLM support**
+(the lead differentiator; see §2 — gate behind a stable core), and **any
 Rust subsystem** (Tantivy index / jwalk) — gated behind a measured profiling
 trigger + a contract/probe test on the new ABI boundary (pin struct layout,
 fail loudly on drift; pin `CARGO_TARGET_DIR` per-project).
@@ -324,8 +393,10 @@ USPTO TESS knockout search in Classes 9 & 42.
    appcast, key generated at v0). MAS is skipped — the App Sandbox cannot
    grant Full Disk Access, which would gut the whole-filesystem "superuser"
    reach the product exists for.**
-4. **First differentiator after the engine** — saved Lister/Layout workspaces,
-   on-device semantic search, or the batch-rename showcase?
+4. **First differentiator after the engine** — north-star is **integrated LLM
+   support** (§2). Open question is the *first shippable slice*: a small LLM win
+   (e.g. natural-language filter / rename preview) vs. a non-LLM showcase (saved
+   Layouts or the batch-rename engine) to ship while the content index matures.
 
 ---
 
