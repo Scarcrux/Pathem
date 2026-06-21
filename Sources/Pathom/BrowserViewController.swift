@@ -7,12 +7,17 @@ import Quartz
 /// (F5 and F6, the classic dual-pane bindings). A fast, native, two-pane file
 /// manager.
 @MainActor
-final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource {
+final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource,
+    NSSplitViewDelegate
+{
     private let left: PaneController
     private let right: PaneController
     private weak var activePane: PaneController?
-    private let split = NSSplitView()
+    private let split = NSSplitView()  // the two panes
+    private let outerSplit = NSSplitView()  // sidebar | panes
+    private let sidebar = SidebarController()
     private let searchField = NSSearchField()
+    private var didSetInitialSidebar = false
     private var didSetInitialSplit = false
 
     /// Cap on items embedded per search, to bound the cost on huge folders.
@@ -56,9 +61,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func loadView() {
         split.isVertical = true
         split.dividerStyle = .thin
-        split.translatesAutoresizingMaskIntoConstraints = false
         split.addArrangedSubview(left.containerView)
         split.addArrangedSubview(right.containerView)
+
+        outerSplit.isVertical = true
+        outerSplit.dividerStyle = .thin
+        outerSplit.delegate = self
+        outerSplit.translatesAutoresizingMaskIntoConstraints = false
+        outerSplit.addArrangedSubview(sidebar.containerView)
+        outerSplit.addArrangedSubview(split)
+        // Keep the sidebar's width when the window resizes; the panes absorb it.
+        outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 0)
 
         searchField.placeholderString = "Semantic search in this folder (on-device)…"
         searchField.translatesAutoresizingMaskIntoConstraints = false
@@ -67,17 +80,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
         let host = NSView()
         host.addSubview(searchField)
-        host.addSubview(split)
+        host.addSubview(outerSplit)
         NSLayoutConstraint.activate([
             searchField.topAnchor.constraint(equalTo: host.topAnchor, constant: 8),
             searchField.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: 8),
             searchField.trailingAnchor.constraint(equalTo: host.trailingAnchor, constant: -8),
-            split.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
-            split.leadingAnchor.constraint(equalTo: host.leadingAnchor),
-            split.trailingAnchor.constraint(equalTo: host.trailingAnchor),
-            split.bottomAnchor.constraint(equalTo: host.bottomAnchor),
+            outerSplit.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
+            outerSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            outerSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            outerSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor),
         ])
         view = host
+    }
+
+    // Constrain the sidebar's width range (divider 0 of the outer split).
+    func splitView(
+        _ splitView: NSSplitView, constrainMinCoordinate proposedMin: CGFloat, ofSubviewAt dividerIndex: Int
+    ) -> CGFloat {
+        (splitView === outerSplit && dividerIndex == 0) ? 140 : proposedMin
+    }
+
+    func splitView(
+        _ splitView: NSSplitView, constrainMaxCoordinate proposedMax: CGFloat, ofSubviewAt dividerIndex: Int
+    ) -> CGFloat {
+        (splitView === outerSplit && dividerIndex == 0) ? 320 : proposedMax
     }
 
     override func viewDidLoad() {
@@ -99,6 +125,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // and closures were wired); reload now to apply any saved per-folder views.
         left.reload()
         right.reload()
+        sidebar.onSelect = { [weak self] url in (self?.activePane ?? self?.left)?.navigate(to: url) }
         setActive(left)
     }
 
@@ -415,6 +442,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     override func viewDidLayout() {
         super.viewDidLayout()
+        if !didSetInitialSidebar, outerSplit.bounds.width > 0 {
+            outerSplit.setPosition(190, ofDividerAt: 0)  // initial sidebar width
+            didSetInitialSidebar = true
+        }
         if !didSetInitialSplit, split.bounds.width > 0 {
             split.setPosition(split.bounds.width / 2, ofDividerAt: 0)
             didSetInitialSplit = true
