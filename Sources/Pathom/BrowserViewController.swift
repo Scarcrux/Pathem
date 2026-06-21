@@ -19,6 +19,12 @@ final class BrowserViewController: NSViewController {
     /// is in DESIGN.md §2.
     private static let maxSemanticItems = 5_000
 
+    /// Per-folder semantic index cache (rebuilt when the folder or its size
+    /// changes) so repeat searches in the same folder are instant.
+    private var cachedIndex: FolderSemanticIndex?
+    private var cachedEntries: [FileEntry]?
+    private var cachedKey: String?
+
     init(start: URL) {
         left = PaneController(start: start)
         right = PaneController(start: start)
@@ -120,26 +126,32 @@ final class BrowserViewController: NSViewController {
         let query = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let pane = activePane else { return }
         guard !query.isEmpty else {
-            pane.reload()
+            pane.reload()  // cleared search -> restore the directory listing
             return
         }
-        let entries = Array(pane.entries.prefix(Self.maxSemanticItems))
-        let names = entries.map(\.name)
+        let directory = pane.currentURL
+        let maxItems = Self.maxSemanticItems
         Task {
-            let order = await Self.semanticRank(query: query, names: names)
+            // Enumerate + build the content-aware index off the main thread,
+            // cached per folder so only the first search in a folder pays for it.
+            let dirEntries = await Task.detached {
+                (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
+            }.value
+            let key = "\(directory.path)#\(dirEntries.count)"
+            if cachedKey != key {
+                cachedIndex = await Task.detached {
+                    SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems)
+                }.value
+                cachedEntries = dirEntries
+                cachedKey = key
+            }
+            guard let index = cachedIndex, let entries = cachedEntries else { return }
+            let order = await Task.detached {
+                SemanticSearcher.rank(query: query, in: index)
+            }.value
             let ranked = order.compactMap { $0 < entries.count ? entries[$0] : nil }
-            pane.showResults(ranked)
+            // Only apply if the user is still on the same folder.
+            if activePane?.currentURL == directory { pane.showResults(ranked) }
         }
-    }
-
-    /// Off-main: embed the names and the query, return item indices ranked by
-    /// similarity. Builds the embedder here so nothing non-Sendable crosses the
-    /// actor boundary. If the OS model asset isn't ready, keeps original order.
-    nonisolated private static func semanticRank(query: String, names: [String]) async -> [Int] {
-        let embedder = NLEmbedder()
-        guard embedder.dimension > 0 else { return Array(names.indices) }
-        var index = SemanticIndex<Int>(embedder: embedder)
-        for (i, name) in names.enumerated() { index.add(i, text: name) }
-        return index.search(query, topK: names.count).map(\.id)
     }
 }
