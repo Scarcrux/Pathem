@@ -34,7 +34,9 @@ public enum SemanticSearcher {
         var vectors: [[Float]] = []
         for (i, entry) in entries.prefix(maxItems).enumerated() {
             var text = entry.name
-            if !entry.isDirectory,
+            // Never read a dataless cloud placeholder: indexing its contents would
+            // silently trigger a download. Index its name only.
+            if !entry.isDirectory, !entry.isDataless,
                 let snippet = ContentExtractor.snippet(
                     of: directory.appendingPathComponent(entry.name), ocr: ocrImages)
             {

@@ -44,6 +44,7 @@ public struct BulkEnumerator: DirectoryEnumerating {
 
         static let vdir: UInt32 = 2  // VDIR (fsobj_type_t)
         static let ufHidden: UInt32 = 0x0000_8000  // UF_HIDDEN (st_flags)
+        static let dataless: UInt32 = 0x4000_0000  // SF_DATALESS (cloud placeholder)
     }
 
     /// Bytes consumed before the variable attribute data: u_int32 record length
@@ -168,7 +169,8 @@ public struct BulkEnumerator: DirectoryEnumerating {
                             name: name,
                             isDirectory: isDirectory,
                             size: isDirectory ? 0 : size,
-                            modificationDate: modificationDate))
+                            modificationDate: modificationDate,
+                            isDataless: flags & Attr.dataless != 0))
                 }
 
                 entry = recordEnd

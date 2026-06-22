@@ -71,7 +71,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     func reload() {
-        roots = [placesNode(), volumesNode()]
+        roots = [placesNode(), cloudNode(), volumesNode()].compactMap { $0 }
         outline.reloadData()
         for root in roots { outline.expandItem(root) }
     }
@@ -88,6 +88,44 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         add("Downloads", try? fm.url(for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
         add("Applications", URL(fileURLWithPath: "/Applications"))
         return Node(title: "Places", url: nil, isHeader: true, children: places)
+    }
+
+    /// Cloud storage the OS already mounts: iCloud Drive plus third-party File
+    /// Providers under ~/Library/CloudStorage. nil when none are present.
+    private func cloudNode() -> Node? {
+        let fm = FileManager.default
+        let home = fm.homeDirectoryForCurrentUser
+        var children: [Node] = []
+
+        let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
+        if fm.fileExists(atPath: iCloud.path) {
+            children.append(Node(title: "iCloud Drive", url: iCloud, isHeader: false))
+        }
+
+        let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
+        if let urls = try? fm.contentsOfDirectory(
+            at: cloudStorage, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+        {
+            for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+                guard isDir else { continue }
+                children.append(Node(title: Self.cloudLabel(url.lastPathComponent), url: url, isHeader: false))
+            }
+        }
+
+        guard !children.isEmpty else { return nil }
+        return Node(title: "Cloud", url: nil, isHeader: true, children: children)
+    }
+
+    /// "GoogleDrive-me@x.com" -> "Google Drive". Falls back to the raw name.
+    static func cloudLabel(_ directoryName: String) -> String {
+        let provider = directoryName.split(separator: "-").first.map(String.init) ?? directoryName
+        var spaced = ""
+        for character in provider {
+            if character.isUppercase, !spaced.isEmpty { spaced.append(" ") }
+            spaced.append(character)
+        }
+        return spaced.isEmpty ? directoryName : spaced
     }
 
     private func volumesNode() -> Node {

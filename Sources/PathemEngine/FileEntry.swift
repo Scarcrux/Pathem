@@ -13,11 +13,18 @@ public struct FileEntry: Sendable, Hashable {
     /// Logical file size in bytes. `0` for directories.
     public let size: Int64
     public let modificationDate: Date?
+    /// True for a cloud placeholder whose bytes are not on disk yet (SF_DATALESS).
+    /// Reading its contents would trigger a download, so callers gate on this.
+    public let isDataless: Bool
 
-    public init(name: String, isDirectory: Bool, size: Int64, modificationDate: Date?) {
+    public init(
+        name: String, isDirectory: Bool, size: Int64, modificationDate: Date?,
+        isDataless: Bool = false
+    ) {
         self.name = name
         self.isDirectory = isDirectory
         self.size = size
         self.modificationDate = modificationDate
+        self.isDataless = isDataless
     }
 }

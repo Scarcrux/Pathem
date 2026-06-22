@@ -136,6 +136,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             menu.addItem(item)
         }
         add("Open", "files.open")
+        add("Download", "files.download")
         add("Reveal in Finder", "files.reveal")
         add("Rename…", "files.rename")
         add("Move to Trash", "files.trash")
@@ -242,7 +243,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         switch Column(rawValue: id.rawValue) {
         case .name:
             cell.textField?.stringValue = entry.name
-            cell.imageView?.image = Self.icon(for: entry)
+            // Online-only (dataless) items: a cloud badge + dimmed name.
+            cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
+            cell.imageView?.image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
         case .size:
             cell.textField?.stringValue = entry.isDirectory ? "--" : byteFormatter.string(fromByteCount: entry.size)
         case .date:
@@ -287,6 +290,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         return cell
     }
+
+    /// Badge for online-only (dataless) cloud placeholders.
+    private static let cloudIcon: NSImage =
+        NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: "Online only")
+        ?? NSImage()
 
     private static var iconCache: [String: NSImage] = [:]
 

@@ -184,6 +184,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
         }
+        add(
+            "files.download", "Download",
+            enabled: { [weak self] in self?.activePane?.selectedEntries.contains(where: \.isDataless) ?? false }
+        ) { [weak self] in self?.downloadSelection() }
         add("view.preferences", "Preferences…") { [weak self] in self?.showPreferences() }
         add("search.toggleOCR", "Toggle Image OCR in Search") { [weak self] in self?.toggleOCR() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
@@ -381,6 +385,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
         NSWorkspace.shared.activateFileViewerSelecting(urls.isEmpty ? [pane.currentURL] : urls)
+    }
+
+    /// Pull down online-only (dataless) cloud files. The provider materializes
+    /// them; the watcher refreshes the badge as they land.
+    private func downloadSelection() {
+        guard let pane = activePane else { return }
+        let directory = pane.currentURL
+        for entry in pane.selectedEntries where entry.isDataless {
+            try? FileManager.default.startDownloadingUbiquitousItem(
+                at: directory.appendingPathComponent(entry.name))
+        }
     }
 
     /// Run a registry command from a menu item carrying its id in representedObject.

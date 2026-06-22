@@ -26,8 +26,17 @@ public struct FoundationEnumerator: DirectoryEnumerating {
                 name: url.lastPathComponent,
                 isDirectory: values.isDirectory ?? false,
                 size: Int64(values.fileSize ?? 0),
-                modificationDate: values.contentModificationDate
+                modificationDate: values.contentModificationDate,
+                isDataless: Self.isDataless(url)
             )
         }
+    }
+
+    /// SF_DATALESS via lstat, matching BulkEnumerator's flags read so the oracle
+    /// and the fallback path agree on cloud placeholders.
+    private static func isDataless(_ url: URL) -> Bool {
+        var info = stat()
+        guard lstat(url.path, &info) == 0 else { return false }
+        return info.st_flags & UInt32(0x4000_0000) != 0
     }
 }
