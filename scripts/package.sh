@@ -7,8 +7,10 @@
 # each step is skipped unless its credentials are present, so the script is safe
 # to run as-is.
 #
-#   ARCHS            architectures to build, space separated
-#                    (default: "arm64 x86_64"; set "arm64" for a faster local build)
+#   ARCHS            architectures to build, space separated. Default: the host
+#                    arch for local builds (fast, and avoids needing the Metal
+#                    toolchain that a universal SwiftTerm build requires);
+#                    "arm64 x86_64" when DEVELOPER_ID is set (distribution).
 #   DEVELOPER_ID     "Developer ID Application: Name (TEAMID)" to sign for release
 #                    with Hardened Runtime (required before notarization)
 #   NOTARY_PROFILE   a notarytool keychain profile name; if set together with
@@ -29,7 +31,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="Pathem"
 CONFIG="release"
-ARCHS="${ARCHS:-arm64 x86_64}"
+# Local builds default to the host arch (fast, and a single-arch SwiftTerm build
+# only copies its Metal shader instead of compiling it, so no Metal toolchain is
+# needed). Distribution builds (DEVELOPER_ID set) go universal.
+if [[ -z "${ARCHS:-}" ]]; then
+  if [[ -n "${DEVELOPER_ID:-}" ]]; then ARCHS="arm64 x86_64"; else ARCHS="$(uname -m)"; fi
+fi
 BUILD_DIR="$ROOT/.build"
 APP="$BUILD_DIR/$APP_NAME.app"
 
