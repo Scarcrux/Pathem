@@ -127,9 +127,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             for (index, entry) in entries.enumerated() where selectedNames.contains(entry.name) {
                 rows.insert(index)
             }
-            if !rows.isEmpty { tableView.selectRowIndexes(rows, byExtendingSelection: false) }
+            // Always apply (an empty set clears a selection whose item vanished,
+            // instead of leaving NSTableView's stale index-based highlight).
+            tableView.selectRowIndexes(rows, byExtendingSelection: false)
         }
-        scrollView.contentView.scroll(to: origin)
+        // Clamp to the new document bounds so a shrunk listing never leaves the
+        // view scrolled past the last row into empty space.
+        let maxY = max(0, tableView.bounds.height - scrollView.contentView.bounds.height)
+        scrollView.contentView.scroll(to: NSPoint(x: origin.x, y: min(max(origin.y, 0), maxY)))
         scrollView.reflectScrolledClipView(scrollView.contentView)
     }
 

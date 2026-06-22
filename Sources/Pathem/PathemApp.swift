@@ -34,6 +34,9 @@ enum PathemApp {
         // Normal mode: a dual-pane browser rooted at the home directory.
         let browser = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser)
         window.contentViewController = browser
+        let delegate = PathemAppDelegate()
+        delegate.browser = browser
+        app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
         app.run()
@@ -176,5 +179,23 @@ enum PathemApp {
         print("RESULT: \(pass ? "PASS" : "FAIL") — table materializes bounded cells regardless of 1M-row dataset")
 
         exit(pass ? 0 : 1)
+    }
+}
+
+/// Warns before quitting while a copy/move is running, so Cmd-Q can't leave a
+/// transfer half-finished without the user's say-so.
+@MainActor
+final class PathemAppDelegate: NSObject, NSApplicationDelegate {
+    weak var browser: BrowserViewController?
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard browser?.isTransferring == true else { return .terminateNow }
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "A file transfer is still in progress"
+        alert.informativeText = "Quitting now may leave it incomplete. Quit anyway?"
+        alert.addButton(withTitle: "Quit Anyway")
+        alert.addButton(withTitle: "Cancel")
+        return alert.runModal() == .alertFirstButtonReturn ? .terminateNow : .terminateCancel
     }
 }

@@ -210,6 +210,27 @@ public enum FileOperations {
         return outcome
     }
 
+    /// Re-apply performed operations (the redo of `undo`): moves and copies go
+    /// from source to their recorded destination again.
+    @discardableResult
+    public static func redo(_ performed: [Performed]) -> Outcome {
+        let fm = FileManager.default
+        var outcome = Outcome()
+        for op in performed {
+            do {
+                switch op.action {
+                case .moved: try fm.moveItem(at: op.source, to: op.destination)
+                case .copied: try fm.copyItem(at: op.source, to: op.destination)
+                }
+                outcome.performed.append(op)
+            } catch {
+                outcome.failures.append(
+                    Failure(name: op.destination.lastPathComponent, reason: error.localizedDescription))
+            }
+        }
+        return outcome
+    }
+
     // MARK: Core
 
     private static func apply(

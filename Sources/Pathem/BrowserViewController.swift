@@ -50,6 +50,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Progress sheet for copy/move; one transfer at a time.
     private lazy var transferProgress = TransferProgress()
     private var transferInFlight = false
+    /// Whether a copy/move is running (so the app can warn before quitting).
+    var isTransferring: Bool { transferInFlight }
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -248,11 +250,37 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let name = try FileOperations.makeFolder(in: pane.currentURL)
             pane.reloadIfShowingListing()
             pane.select(name: name)
+            registerNewFolderUndo(name: name, in: pane.currentURL)
         } catch {
             presentFailures(
                 [FileOperations.Failure(name: "New Folder", reason: error.localizedDescription)],
                 title: "Couldn’t create folder")
         }
+    }
+
+    private func registerNewFolderUndo(name: String, in directory: URL) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let result = FileOperations.trash([name], in: directory)  // undo = trash the new folder
+            target.reloadBothSides()
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Undo failed") }
+            if !result.trashed.isEmpty {
+                target.registerNewFolderRedo(name: name, in: directory, trashed: result.trashed)
+            }
+        }
+        undoManager.setActionName("New Folder")
+    }
+
+    private func registerNewFolderRedo(name: String, in directory: URL, trashed: [FileOperations.Trashed]) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let failures = FileOperations.untrash(trashed)  // redo = restore the folder
+            target.reloadBothSides()
+            target.paneShowing(directory)?.select(name: name)
+            if !failures.isEmpty { target.presentFailures(failures, title: "Redo failed") }
+            target.registerNewFolderUndo(name: name, in: directory)
+        }
+        undoManager.setActionName("New Folder")
     }
 
     private func renameSelection() {
@@ -288,8 +316,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         undoManager.registerUndo(withTarget: self) { target in
             do {
                 try FileOperations.rename(current, to: original, in: directory)
-                target.activePane?.reloadIfShowingListing()
-                target.activePane?.select(name: original)
+                target.reloadBothSides()
+                target.paneShowing(directory)?.select(name: original)
                 target.registerRenameUndo(from: original, to: current, in: directory)  // redo
             } catch {
                 target.presentFailures(
@@ -314,11 +342,39 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
             let failures = FileOperations.untrash(trashed)
-            target.leftTabs.activePane?.reloadIfShowingListing()
-            target.rightTabs.activePane?.reloadIfShowingListing()
+            target.reloadBothSides()
             if !failures.isEmpty { target.presentFailures(failures, title: "Undo failed") }
+            target.registerTrashRedo(trashed)  // redo = move them back to the Trash
         }
         undoManager.setActionName("Move to Trash")
+    }
+
+    private func registerTrashRedo(_ trashed: [FileOperations.Trashed]) {
+        guard let undoManager = view.window?.undoManager,
+            let directory = trashed.first?.original.deletingLastPathComponent()
+        else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let names = trashed.map { $0.original.lastPathComponent }
+            let result = FileOperations.trash(names, in: directory)
+            target.reloadBothSides()
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Redo failed") }
+            if !result.trashed.isEmpty { target.registerTrashUndo(result.trashed) }
+        }
+        undoManager.setActionName("Move to Trash")
+    }
+
+    /// Refresh the active pane on each side (used by undo/redo handlers).
+    private func reloadBothSides() {
+        leftTabs.activePane?.reloadIfShowingListing()
+        rightTabs.activePane?.reloadIfShowingListing()
+    }
+
+    /// The pane (on either side) currently showing `directory`, if any.
+    private func paneShowing(_ directory: URL) -> PaneController? {
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs where pane.currentURL == directory { return pane }
+        }
+        return nil
     }
 
     private func revealSelection() {
@@ -654,7 +710,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activePane = pane
         activeSide = side
         pane.setActive(true)
-        searchField.stringValue = ""  // the shared field follows the active pane
+        // Note: the search field is cleared on navigation (onDidNavigate), not on
+        // every focus change, so a mid-typed query or visible results survive a
+        // pane re-focus.
         if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
     }
 
@@ -662,6 +720,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// If names already exist there, ask how to resolve (replace, keep both, or
     /// skip), then register an undo for whatever was performed (DESIGN.md §6.5).
     private func transfer(move: Bool) {
+        guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
         guard let source = activePane, let activeSide else { return }
         let otherSide = (activeSide === leftTabs) ? rightTabs : leftTabs
         guard let destination = otherSide.activePane else { NSSound.beep(); return }
@@ -763,11 +822,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.undo(performed)
-            target.leftTabs.activePane?.reloadIfShowingListing()
-            target.rightTabs.activePane?.reloadIfShowingListing()
-            if !result.failures.isEmpty {
-                target.presentFailures(result.failures, title: "Undo failed")
-            }
+            target.reloadBothSides()
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Undo failed") }
+            target.registerTransferRedo(performed, actionName: actionName)  // wire up redo
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    private func registerTransferRedo(_ performed: [FileOperations.Performed], actionName: String) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let result = FileOperations.redo(performed)
+            target.reloadBothSides()
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Redo failed") }
+            target.registerUndo(performed, actionName: actionName)  // back to undo
         }
         undoManager.setActionName(actionName)
     }
@@ -798,6 +866,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     @objc func cut(_ sender: Any?) { writeSelectionToPasteboard(cut: true) }
 
     @objc func paste(_ sender: Any?) {
+        guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
         guard let pane = activePane else { return }
         let pasteboard = NSPasteboard.general
         let urls =
