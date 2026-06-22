@@ -8,8 +8,8 @@ import UniformTypeIdentifiers
 final class KeyCollectionView: NSCollectionView {
     var onKeyChord: ((KeyChord) -> Bool)?
     var onBecomeActive: (() -> Void)?
-    var onActivate: (() -> Void)?  // double-click or Return on the selection
-    var onContextClick: ((IndexPath?) -> Void)?
+    /// Double-click (carries the clicked item) or Return (nil = the selection).
+    var onActivate: ((IndexPath?) -> Void)?
 
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
@@ -24,9 +24,8 @@ final class KeyCollectionView: NSCollectionView {
             cmd: flags.contains(.command), opt: flags.contains(.option),
             ctrl: flags.contains(.control), shift: flags.contains(.shift))
         if onKeyChord?(chord) == true { return }
-        // Return / Enter opens the selection.
-        if event.keyCode == 36 || event.keyCode == 76 {
-            onActivate?()
+        if event.keyCode == 36 || event.keyCode == 76 {  // Return / Enter
+            onActivate?(nil)
             return
         }
         super.keyDown(with: event)
@@ -34,8 +33,9 @@ final class KeyCollectionView: NSCollectionView {
 
     override func mouseDown(with event: NSEvent) {
         if event.clickCount == 2 {
+            let indexPath = indexPathForItem(at: convert(event.locationInWindow, from: nil))
             super.mouseDown(with: event)  // keep selection in sync
-            onActivate?()
+            onActivate?(indexPath)
             return
         }
         super.mouseDown(with: event)
@@ -44,15 +44,11 @@ final class KeyCollectionView: NSCollectionView {
     override func menu(for event: NSEvent) -> NSMenu? {
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
-        let indexPath = indexPathForItem(at: point)
-        if let indexPath {
-            if !selectionIndexPaths.contains(indexPath) {
-                selectionIndexPaths = [indexPath]
-            }
+        if let indexPath = indexPathForItem(at: point) {
+            if !selectionIndexPaths.contains(indexPath) { selectionIndexPaths = [indexPath] }
         } else {
             selectionIndexPaths = []
         }
-        onContextClick?(indexPath)
         return super.menu(for: event)
     }
 }
@@ -62,6 +58,8 @@ final class KeyCollectionView: NSCollectionView {
 final class IconItem: NSCollectionViewItem {
     private let icon = NSImageView()
     private let label = NSTextField(labelWithString: "")
+    private var iconWidth: NSLayoutConstraint?
+    private var iconHeight: NSLayoutConstraint?
 
     override func loadView() {
         let root = NSView()
@@ -77,9 +75,16 @@ final class IconItem: NSCollectionViewItem {
         root.addSubview(label)
         imageView = icon
         textField = label
+        // Size constraints created once and updated in configure(), so reused
+        // cells never accumulate duplicate constraints.
+        let w = icon.widthAnchor.constraint(equalToConstant: 56)
+        let h = icon.heightAnchor.constraint(equalToConstant: 56)
+        iconWidth = w
+        iconHeight = h
         NSLayoutConstraint.activate([
             icon.topAnchor.constraint(equalTo: root.topAnchor, constant: 4),
             icon.centerXAnchor.constraint(equalTo: root.centerXAnchor),
+            w, h,
             label.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 4),
             label.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 2),
             label.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -2),
@@ -90,8 +95,8 @@ final class IconItem: NSCollectionViewItem {
     func configure(name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool) {
         loadViewIfNeeded()
         icon.image = image
-        icon.widthAnchor.constraint(equalToConstant: iconSize).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: iconSize).isActive = true
+        iconWidth?.constant = iconSize
+        iconHeight?.constant = iconSize
         label.stringValue = name
         label.font = .systemFont(ofSize: fontSize)
         label.textColor = dimmed ? .secondaryLabelColor : .labelColor
@@ -163,10 +168,15 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         collection.registerForDraggedTypes([.fileURL])
         collection.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
         collection.setDraggingSourceOperationMask([.copy], forLocal: false)
-        collection.onActivate = { [weak self] in
-            guard let self, let first = self.selectedEntries.first else { return }
-            self.onOpen?(first)
+        collection.onActivate = { [weak self] indexPath in
+            guard let self else { return }
+            if let indexPath, indexPath.item < self.entries.count {
+                self.onOpen?(self.entries[indexPath.item])  // the double-clicked item
+            } else if let first = self.selectedEntries.first {
+                self.onOpen?(first)  // Return with a selection
+            }
         }
+        collection.menu = makeContextMenu()
 
         scrollView.documentView = collection
         scrollView.hasVerticalScroller = true
@@ -185,6 +195,31 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             placeholder.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor),
             placeholder.widthAnchor.constraint(lessThanOrEqualTo: scrollView.widthAnchor, constant: -48),
         ])
+    }
+
+    /// Right-click menu mirroring the list's (registry commands dispatched up the
+    /// responder chain to BrowserViewController). Open With is list-only for now.
+    private func makeContextMenu() -> NSMenu {
+        let menu = NSMenu()
+        func add(_ title: String, _ id: String) {
+            let item = NSMenuItem(
+                title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+            item.representedObject = id
+            menu.addItem(item)
+        }
+        add("Open", "files.open")
+        add("Get Info", "files.getInfo")
+        add("Download", "files.download")
+        add("Reveal in Finder", "files.reveal")
+        add("Rename…", "files.rename")
+        add("Move to Trash", "files.trash")
+        menu.addItem(.separator())
+        add("New Folder", "files.newFolder")
+        menu.addItem(.separator())
+        add("Copy", "files.copy")
+        add("Cut", "files.cut")
+        add("Paste", "files.paste")
+        return menu
     }
 
     var selectedEntries: [FileEntry] {
@@ -214,6 +249,14 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         let path = IndexPath(item: index, section: 0)
         collection.selectionIndexPaths = [path]
         collection.scrollToItems(at: [path], scrollPosition: .centeredVertically)
+    }
+
+    func selectNames(_ names: Set<String>) {
+        var paths = Set<IndexPath>()
+        for (index, entry) in entries.enumerated() where names.contains(entry.name) {
+            paths.insert(IndexPath(item: index, section: 0))
+        }
+        collection.selectionIndexPaths = paths
     }
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}  // no headers in a grid
@@ -266,7 +309,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         dropOperation proposedDropOperation: UnsafeMutablePointer<NSCollectionView.DropOperation>
     ) -> NSDragOperation {
         guard !incomingURLs(from: draggingInfo).isEmpty else { return [] }
-        proposedDropOperation.pointee = .on
+        // Normalize to a "before end" drop so drops onto empty grid space (or an
+        // empty folder) are still delivered to acceptDrop.
+        proposedDropOperation.pointee = .before
+        proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
         return resolvedDragOperation(draggingInfo)
     }
 

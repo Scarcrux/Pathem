@@ -35,6 +35,16 @@ import Testing
         #expect(r.app(forPath: "/a/b.PNG", ext: "PNG") == "/Applications/Preview.app")
     }
 
+    @Test func fileOrFolderResolverExcludesType() {
+        var r = OpenerRules()
+        r.setType("txt", app: "/Applications/TextEdit.app")
+        r.setFolder("/Users/x/Notes", app: "/Applications/Bear.app")
+        // file/folder-only: type rule must NOT apply (so session-by-type can layer between).
+        #expect(r.appByFileOrFolder(path: "/Users/x/Notes/a.txt") == "/Applications/Bear.app")
+        #expect(r.appByFileOrFolder(path: "/Users/x/Desktop/a.txt") == nil)
+        #expect(r.app(forType: "txt") == "/Applications/TextEdit.app")
+    }
+
     @Test func codableRoundTrip() throws {
         var r = OpenerRules()
         r.setFile("/a/b.txt", app: "/Applications/Vim.app")

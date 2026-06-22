@@ -25,6 +25,7 @@ protocol PaneContentView: AnyObject {
     func setEntries(_ entries: [FileEntry], preserveState: Bool)
     func showPlaceholder(_ text: String?)
     func select(name: String)
+    func selectNames(_ names: Set<String>)
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool)
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
 }

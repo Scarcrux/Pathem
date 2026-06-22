@@ -308,6 +308,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.scrollRowToVisible(row)
     }
 
+    /// Select all rows whose names are in the set (used to carry selection).
+    func selectNames(_ names: Set<String>) {
+        var rows = IndexSet()
+        for (index, entry) in entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
+        tableView.selectRowIndexes(rows, byExtendingSelection: false)
+    }
+
     /// Show the sort indicator on the header without triggering onSortChanged.
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {
         suppressSortCallback = true

@@ -14,6 +14,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     private var currentMode: ViewFormat.ViewMode = .list
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
+    /// Selection to restore after a view-mode swap repopulates the new content.
+    private var pendingSelection: Set<String>?
     /// Keymap chord handler, re-applied to whichever content is active.
     var onKeyChordHandler: ((KeyChord) -> Bool)? {
         didSet { content.onKeyChord = onKeyChordHandler }
@@ -110,6 +112,11 @@ final class PaneController: NSObject, NSTextFieldDelegate {
                     + "(System Settings ▸ Privacy & Security ▸ Full Disk Access).")
         }
         content.showSortIndicator(key: format.sortKey, ascending: format.ascending)
+        // After a view-mode swap, carry the selection into the fresh content.
+        if let pending = pendingSelection {
+            content.selectNames(pending)
+            pendingSelection = nil
+        }
         updateStatus()
         pathControl.url = nav.current
         backButton.isEnabled = nav.canGoBack
@@ -280,9 +287,12 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     }
 
     /// Swap the content view when the folder's view mode changes, carrying over
-    /// the callbacks and style.
+    /// the callbacks, style, selection, and keyboard focus.
     private func applyViewMode(_ mode: ViewFormat.ViewMode) {
         guard mode != currentMode else { return }
+        // Capture before swapping: the new (empty) content can't report these.
+        let hadFocus = content.keyView.window?.firstResponder === content.keyView
+        pendingSelection = Set(content.selectedEntries.map(\.name))
         currentMode = mode
         switch mode {
         case .list: content = FileListController()
@@ -294,6 +304,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         if let s = lastStyle {
             content.applyStyle(rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
         }
+        if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }
 
     /// Wire the active content's callbacks (run on creation and on every swap).
@@ -365,8 +376,16 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Open the current selection: descend into a folder (files are a no-op for
     /// now). Used by the "files.open" command.
     func openSelection() {
-        guard let entry = selectedEntries.first else { return }
-        descend(into: entry)
+        let selected = selectedEntries
+        // A single item navigates (folder) or opens (file); several items open
+        // each file (folders can't all be navigated to in one pane).
+        if selected.count == 1 {
+            descend(into: selected[0])
+            return
+        }
+        for entry in selected where !entry.isDirectory {
+            descend(into: entry)
+        }
     }
 
     /// Jump to an arbitrary folder (used when restoring a layout).

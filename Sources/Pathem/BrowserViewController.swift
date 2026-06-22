@@ -478,6 +478,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let id = menuItem.representedObject as? String
         else { return true }
         if id == "terminal.toggleFollow" { menuItem.state = terminalFollows ? .on : .off }
+        switch id {
+        case "view.asList": menuItem.state = activePane?.viewMode == .list ? .on : .off
+        case "view.asIcons": menuItem.state = activePane?.viewMode == .icon ? .on : .off
+        case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
+        default: break
+        }
         return commands.command(id)?.isEnabled() ?? true
     }
 
@@ -739,7 +745,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// the persisted file/folder/type rules, else the system default.
     private func applyOpen(_ url: URL) {
         let ext = url.pathExtension.lowercased()
-        let appPath = sessionOpenersByType[ext] ?? openerRules.app(forPath: url.path, ext: ext)
+        // Precedence: a specific file/folder rule, then a session-by-type override,
+        // then a persisted type rule, else the system default.
+        let appPath =
+            openerRules.appByFileOrFolder(path: url.path) ?? sessionOpenersByType[ext]
+            ?? openerRules.app(forType: ext)
         if let appPath {
             NSWorkspace.shared.open(
                 [url], withApplicationAt: URL(fileURLWithPath: appPath),
@@ -773,7 +783,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             item.representedObject = app
             appPopup.menu?.addItem(item)
         }
-        appPopup.menu?.addItem(.separator())
+        if !apps.isEmpty { appPopup.menu?.addItem(.separator()) }
         appPopup.addItem(withTitle: "Choose…")
 
         let scopePopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 320, height: 26))

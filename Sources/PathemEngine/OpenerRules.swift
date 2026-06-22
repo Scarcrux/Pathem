@@ -24,17 +24,24 @@ public struct OpenerRules: Codable, Sendable, Equatable {
 
     /// The persisted default app for a file at `path`, by precedence: the file's
     /// own rule, then the most specific (longest) enclosing folder rule, then its
-    /// extension rule. nil means "no rule; use the session override or the system
-    /// default" (the caller layers session scope on top).
+    /// extension rule. nil means "no rule".
     public func app(forPath path: String, ext: String) -> String? {
+        appByFileOrFolder(path: path) ?? byType[ext.lowercased()]
+    }
+
+    /// Only the file/folder rules (no extension fallback), so a caller can layer a
+    /// session-by-type override between folder and type precedence.
+    public func appByFileOrFolder(path: String) -> String? {
         if let app = byFile[path] { return app }
         var best: (length: Int, app: String)?
         for (folder, app) in byFolder where Self.isUnder(path, folder) {
             if best == nil || folder.count > best!.length { best = (folder.count, app) }
         }
-        if let best { return best.app }
-        return byType[ext.lowercased()]
+        return best?.app
     }
+
+    /// The extension rule only.
+    public func app(forType ext: String) -> String? { byType[ext.lowercased()] }
 
     static func isUnder(_ path: String, _ prefix: String) -> Bool {
         var base = prefix
