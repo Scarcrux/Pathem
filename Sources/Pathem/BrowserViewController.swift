@@ -52,6 +52,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var transferInFlight = false
     /// Whether a copy/move is running (so the app can warn before quitting).
     var isTransferring: Bool { transferInFlight }
+    /// Guided Full Disk Access walkthrough (first launch, until granted).
+    private lazy var fdaGuide = FullDiskAccessGuide()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -719,28 +721,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         maybePromptFullDiskAccess()
     }
 
-    /// Once, on first launch, explain Full Disk Access and offer to open Settings.
-    /// The home folder works without it; this is for browsing everything.
+    /// Show the guided Full Disk Access walkthrough when we don't have access and
+    /// the user hasn't dismissed it. It auto-detects the grant and updates live;
+    /// the home folder works without it, so this never blocks use.
     private func maybePromptFullDiskAccess() {
-        let key = "pathem.didPromptFullDiskAccess"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
+        guard !FullDiskAccess.isGranted() else { return }
+        guard !UserDefaults.standard.bool(forKey: "pathem.fdaGuideDismissed") else { return }
         DispatchQueue.main.async { [weak self] in
             guard let self, let window = self.view.window else { return }
-            let alert = NSAlert()
-            alert.messageText = "Grant Full Disk Access (recommended)"
-            alert.informativeText =
-                "Pathem is a non-sandboxed file manager. To browse everything (other users, "
-                + "system folders, and some app data), grant it Full Disk Access in System "
-                + "Settings. Your home folder works without it."
-            alert.addButton(withTitle: "Open Settings…")
-            alert.addButton(withTitle: "Not Now")
-            alert.beginSheetModal(for: window) { response in
-                guard response == .alertFirstButtonReturn,
-                    let url = URL(
-                        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
-                else { return }
-                NSWorkspace.shared.open(url)
+            self.fdaGuide.present(over: window) {
+                // Remember a skip only when access still isn't granted, so we stop
+                // nagging but reappear nothing once it's actually on.
+                if !FullDiskAccess.isGranted() {
+                    UserDefaults.standard.set(true, forKey: "pathem.fdaGuideDismissed")
+                }
             }
         }
     }
