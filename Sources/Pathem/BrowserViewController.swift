@@ -1,5 +1,5 @@
 import AppKit
-import PathomEngine
+import PathemEngine
 import Quartz
 
 /// The dual-pane browser: two independent panes side by side in a split view,
@@ -25,7 +25,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// store) is in DESIGN.md section 2.
     private static let maxSemanticItems = 5_000
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
-    private static let cutPasteboardType = NSPasteboard.PasteboardType("ai.scarcrux.pathom.cut")
+    private static let cutPasteboardType = NSPasteboard.PasteboardType("ai.scarcrux.pathem.cut")
 
     /// The command bus (DESIGN.md section 10). Every browser action is a named
     /// command; keybindings, the palette, and the AI bar will dispatch by id.
@@ -163,7 +163,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
-        add("ai.run", "Ask Pathom (Natural Language)…") { [weak self] in self?.showAICommandBar() }
+        add("ai.run", "Ask Pathem (Natural Language)…") { [weak self] in self?.showAICommandBar() }
         add("view.quickLook", "Quick Look", enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
@@ -278,11 +278,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return nil
         }
-        let dir = base.appendingPathComponent("Pathom", isDirectory: true)
+        let dir = base.appendingPathComponent("Pathem", isDirectory: true)
         do {
             try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         } catch {
-            NSLog("Pathom: cannot create Application Support directory: %@", String(describing: error))
+            NSLog("Pathem: cannot create Application Support directory: %@", String(describing: error))
             return nil  // callers stop rather than write into a nonexistent dir
         }
         return dir
@@ -299,7 +299,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let aside = url.appendingPathExtension("corrupt")
         try? fm.removeItem(at: aside)
         try? fm.moveItem(at: url, to: aside)
-        NSLog("Pathom: %@ was unreadable; moved aside to %@", url.lastPathComponent, aside.lastPathComponent)
+        NSLog("Pathem: %@ was unreadable; moved aside to %@", url.lastPathComponent, aside.lastPathComponent)
         return nil
     }
 

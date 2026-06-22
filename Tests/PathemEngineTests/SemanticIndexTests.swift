@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct SemanticIndexTests {
     /// Deterministic embedder so the ranking logic is tested without the OS model.

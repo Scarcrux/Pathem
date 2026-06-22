@@ -1,12 +1,12 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct FileOperationsTests {
     private func withTwoDirs(_ body: (URL, URL) throws -> Void) throws {
         let fm = FileManager.default
-        let root = fm.temporaryDirectory.appendingPathComponent("pathom-fileops-\(UUID().uuidString)")
+        let root = fm.temporaryDirectory.appendingPathComponent("pathem-fileops-\(UUID().uuidString)")
         let src = root.appendingPathComponent("src")
         let dst = root.appendingPathComponent("dst")
         try fm.createDirectory(at: src, withIntermediateDirectories: true)

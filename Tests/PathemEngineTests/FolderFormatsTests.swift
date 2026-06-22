@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct FolderFormatsTests {
     private let byDate = ViewFormat(sortKey: .date, ascending: false)

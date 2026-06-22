@@ -1,13 +1,13 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct FoundationEnumeratorTests {
     /// Helper: a fresh temp directory, cleaned up after the test body.
     private func withTempDir(_ body: (URL) throws -> Void) throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathom-test-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-test-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
         try body(dir)

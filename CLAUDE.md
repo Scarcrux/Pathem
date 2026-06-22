@@ -1,4 +1,4 @@
-# Pathom
+# Pathem
 
 A high-performance, deeply native macOS "superuser" file manager — a
 Directory-Opus-class Finder replacement, built in Swift. See
@@ -9,8 +9,8 @@ the shared constellation standards.
 ## At a glance
 - **Language / UI:** Swift. AppKit (view-based `NSTableView` / `NSOutlineView`)
   for the high-performance file list; SwiftUI only for low-cardinality chrome.
-- **Layout:** `PathomEngine` (pure Swift / Foundation, **zero AppKit
-  dependency**, `swift test`-able) is separated from the `Pathom` app by a
+- **Layout:** `PathemEngine` (pure Swift / Foundation, **zero AppKit
+  dependency**, `swift test`-able) is separated from the `Pathem` app by a
   plain-struct boundary (no FFI). Engine = enumeration, watching, file ops,
   search.
 - **Distribution:** non-sandboxed, notarized direct download, user-granted Full
@@ -21,7 +21,7 @@ the shared constellation standards.
 ```bash
 swift build            # build engine + app
 swift test             # run the engine test suite
-swift run Pathom       # launch the (stub) app window
+swift run Pathem       # launch the (stub) app window
 ```
 
 ## Conventions (see CONVENTIONS.md)
@@ -39,7 +39,7 @@ polaris init . && polaris add . && polaris brief --apply    # constellation
 ```
 
 ## Current state
-Scaffold only. `PathomEngine` has a `FileEntry` value type and a
+Scaffold only. `PathemEngine` has a `FileEntry` value type and a
 `FoundationEnumerator` (the correct-but-slow reference impl + test oracle); the
 app is a stub window.
 

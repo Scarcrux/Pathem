@@ -1,6 +1,6 @@
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct CommandResolverTests {
     private let commands: [(id: String, title: String)] = [

@@ -1,5 +1,5 @@
 import AppKit
-import PathomEngine
+import PathemEngine
 import UniformTypeIdentifiers
 
 /// The file list: a view-based `NSTableView` driven directly by an array of

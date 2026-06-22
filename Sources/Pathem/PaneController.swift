@@ -1,5 +1,5 @@
 import AppKit
-import PathomEngine
+import PathemEngine
 
 /// One pane of the dual-pane browser: a directory listing with its own
 /// navigation history, an editable path/address bar, and back/forward/up

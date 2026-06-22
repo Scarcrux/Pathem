@@ -1,13 +1,13 @@
 import AppKit
-import PathomEngine
+import PathemEngine
 
 // AppKit entry point. Normal launch shows a dual-pane browser rooted at the
-// home directory. Launch with PATHOM_GATE_A=1 to run the Gate A virtualization
+// home directory. Launch with PATHEM_GATE_A=1 to run the Gate A virtualization
 // proof (DESIGN.md §5): load 1,000,000 synthetic rows and confirm the table
 // materializes only ~visible cells, not all 1M.
 @main
 @MainActor
-enum PathomApp {
+enum PathemApp {
     static func main() {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
@@ -19,10 +19,10 @@ enum PathomApp {
             backing: .buffered,
             defer: false
         )
-        window.title = "Pathom"
+        window.title = "Pathem"
         window.center()
 
-        if ProcessInfo.processInfo.environment["PATHOM_GATE_A"] != nil {
+        if ProcessInfo.processInfo.environment["PATHEM_GATE_A"] != nil {
             // Gate A drives a single FileListController directly.
             let controller = FileListController()
             window.contentView = controller.scrollView
@@ -49,11 +49,11 @@ enum PathomApp {
         let appMenu = NSMenu()
         appItem.submenu = appMenu
         appMenu.addItem(
-            withTitle: "About Pathom",
+            withTitle: "About Pathem",
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         appMenu.addItem(
-            withTitle: "Quit Pathom", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            withTitle: "Quit Pathem", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         let editItem = NSMenuItem()
         mainMenu.addItem(editItem)

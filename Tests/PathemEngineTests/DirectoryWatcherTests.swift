@@ -1,14 +1,14 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct DirectoryWatcherTests {
     /// Creates a file in a watched directory and confirms the watcher fires.
     /// FSEvents is asynchronous, so this waits a couple of seconds.
     @Test func firesWhenAFileIsCreated() async throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathom-watch-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-watch-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
 
@@ -32,7 +32,7 @@ import Testing
     /// deadlock in stop()) would crash or hang here.
     @Test func rapidStartStopIsSafe() throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathom-watch-stress-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-watch-stress-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
 

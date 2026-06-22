@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct LayoutTests {
     private func layout(_ name: String, left: String = "/a", right: String = "/b") -> Layout {

@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 /// The BulkEnumerator (getattrlistbulk) must agree with the FoundationEnumerator
 /// reference implementation. This is the "contract / probe test" CONVENTIONS
@@ -27,7 +27,7 @@ import Testing
 
     private func withTempDir(_ body: (URL) throws -> Void) throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathom-bulk-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-bulk-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
         try body(dir)
@@ -123,7 +123,7 @@ import Testing
     }
 
     @Test func throwsOnNonexistentDirectory() throws {
-        let missing = URL(fileURLWithPath: "/no/such/pathom/dir-\(UUID().uuidString)")
+        let missing = URL(fileURLWithPath: "/no/such/pathem/dir-\(UUID().uuidString)")
         #expect(throws: BulkEnumerator.EnumerationError.self) {
             _ = try BulkEnumerator().entries(of: missing, includingHidden: true)
         }

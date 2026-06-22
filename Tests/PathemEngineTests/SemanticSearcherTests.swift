@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct SemanticSearcherTests {
     /// Content-aware ranking: files with neutral NAMES ("a.txt"/"b.txt") but
@@ -9,7 +9,7 @@ import Testing
     /// gracefully if the on-device model asset isn't present.
     @Test func ranksByContentNotJustName() throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathom-search-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-search-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
 

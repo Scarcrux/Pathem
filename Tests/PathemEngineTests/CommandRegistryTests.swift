@@ -1,6 +1,6 @@
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct CommandRegistryTests {
     @MainActor @Test func registersAndPerforms() {

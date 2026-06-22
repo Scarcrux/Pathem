@@ -1,4 +1,4 @@
-# Pathom
+# Pathem
 
 A fast, native macOS file manager. Dual-pane, keyboard-driven, and built to stay
 quick even in folders with a lot of files.
@@ -20,7 +20,7 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 - Quick navigation: an editable path bar, back, forward, up, and double-click or
   Return to open a folder.
 - Sortable columns (name, size, date modified), folders first.
-- On-device semantic search. Type what you're after in plain language and Pathom
+- On-device semantic search. Type what you're after in plain language and Pathem
   ranks the folder by meaning, using Apple's NaturalLanguage embeddings over file
   names and the text inside files (including PDFs). It runs entirely on your Mac,
   costs nothing, and doesn't need Apple Intelligence. (OCR for images is built in
@@ -30,7 +30,7 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 
 ## Why it's fast
 
-Two things do most of the work. To read a folder, Pathom uses getattrlistbulk,
+Two things do most of the work. To read a folder, Pathem uses getattrlistbulk,
 which returns many entries and their attributes in one system call instead of a
 readdir plus a stat for every file. To draw the list, it uses a view-based
 NSTableView with cell reuse, so only the visible rows are ever created.
@@ -49,15 +49,15 @@ Jumping to the last row costs about the same as jumping to the tenth.
 
 ## Install
 
-Pathom is distributed as source. Building it yourself needs no Apple Developer
+Pathem is distributed as source. Building it yourself needs no Apple Developer
 account: a locally compiled app is not quarantined, so it launches with no
 Gatekeeper prompts. You need macOS 15 or later and the Swift toolchain (Xcode,
 or just the Command Line Tools via `xcode-select --install`).
 
 ```
-git clone https://github.com/Scarcrux/Pathom.git
-cd Pathom
-make install     # build a universal Pathom.app and put it in /Applications
+git clone https://github.com/Scarcrux/Pathem.git
+cd Pathem
+make install     # build a universal Pathem.app and put it in /Applications
 # or
 make run         # build and launch straight from source
 ```
@@ -71,17 +71,17 @@ they are not needed to build and run it yourself.
 make run       # build and launch from source (fastest loop)
 make build     # build the engine and the app
 make test      # run the engine tests
-make app       # assemble .build/Pathom.app (universal, ad-hoc signed)
+make app       # assemble .build/Pathem.app (universal, ad-hoc signed)
 make install   # build the app and copy it to /Applications
 ```
 
-(These wrap plain `swift build` / `swift run Pathom` / `swift test` if you
+(These wrap plain `swift build` / `swift run Pathem` / `swift test` if you
 prefer to call those directly.)
 
 ### Packaging a .app
 
 `make app` (or `scripts/package.sh`) assembles a universal (Apple Silicon +
-Intel), ad-hoc signed `Pathom.app` under `.build/`. `make install` also copies
+Intel), ad-hoc signed `Pathem.app` under `.build/`. `make install` also copies
 it to /Applications.
 
 ```
@@ -110,9 +110,9 @@ and images, and a file-system watcher that keeps the view in sync with the disk.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). "Pathom" is the project name, so please don't ship a
+MIT, see [LICENSE](LICENSE). "Pathem" is the project name, so please don't ship a
 fork under it.
 
-Built by [Scarcrux](https://github.com/Scarcrux). If Pathom is useful to you, a
+Built by [Scarcrux](https://github.com/Scarcrux). If Pathem is useful to you, a
 star helps, and you can find my other work on
 [my profile](https://github.com/Scarcrux?tab=repositories).

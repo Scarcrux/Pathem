@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct NavigationStateTests {
     private func url(_ path: String) -> URL { URL(fileURLWithPath: path) }

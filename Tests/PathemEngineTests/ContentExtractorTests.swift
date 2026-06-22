@@ -4,12 +4,12 @@ import CoreText
 import Foundation
 import Testing
 
-@testable import PathomEngine
+@testable import PathemEngine
 
 @Suite struct ContentExtractorTests {
     private func withTempDir(_ body: (URL) throws -> Void) throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathom-extract-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-extract-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
         try body(dir)
@@ -43,7 +43,7 @@ import Testing
     }
 
     @Test func returnsNilForMissingFile() {
-        let url = URL(fileURLWithPath: "/no/such/pathom/file-\(UUID().uuidString).txt")
+        let url = URL(fileURLWithPath: "/no/such/pathem/file-\(UUID().uuidString).txt")
         #expect(ContentExtractor.snippet(of: url) == nil)
     }
 

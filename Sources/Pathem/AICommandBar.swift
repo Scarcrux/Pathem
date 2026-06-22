@@ -1,7 +1,7 @@
 import AppKit
 
 /// A natural-language command bar (DESIGN.md section 10, Phase 5): type a request
-/// in plain English and Pathom runs the matching command. Resolution is async
+/// in plain English and Pathem runs the matching command. Resolution is async
 /// (the Foundation Model when available, the engine heuristic otherwise), so the
 /// bar shows a "thinking" state and never blocks the UI.
 @MainActor
@@ -24,13 +24,13 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
     }
 
     private func configure() {
-        panel.title = "Ask Pathom"
+        panel.title = "Ask Pathem"
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
-        field.placeholderString = "Tell Pathom what to do…"
+        field.placeholderString = "Tell Pathem what to do…"
         field.delegate = self
         field.font = .systemFont(ofSize: 15)
         field.translatesAutoresizingMaskIntoConstraints = false

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Package Pathom into a macOS .app bundle.
+# Package Pathem into a macOS .app bundle.
 #
 # Defaults to a universal (arm64 + x86_64), ad-hoc-signed bundle that runs
 # locally. To produce a distributable build, set the environment variables below;
@@ -18,16 +18,16 @@
 #   scripts/package.sh                                  # local, ad-hoc signed
 #   ARCHS="arm64" scripts/package.sh                    # fast native build
 #   DEVELOPER_ID="Developer ID Application: ... (ABC123)" \
-#     NOTARY_PROFILE=pathom-notary scripts/package.sh   # signed + notarized
+#     NOTARY_PROFILE=pathem-notary scripts/package.sh   # signed + notarized
 #
 # Store a notarytool profile once with:
-#   xcrun notarytool store-credentials pathom-notary \
+#   xcrun notarytool store-credentials pathem-notary \
 #     --apple-id you@example.com --team-id ABC123 --password <app-specific-password>
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP_NAME="Pathom"
+APP_NAME="Pathem"
 CONFIG="release"
 ARCHS="${ARCHS:-arm64 x86_64}"
 BUILD_DIR="$ROOT/.build"

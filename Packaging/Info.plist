@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>Pathom</string>
+	<string>Pathem</string>
 	<key>CFBundleDisplayName</key>
-	<string>Pathom</string>
+	<string>Pathem</string>
 	<key>CFBundleIdentifier</key>
-	<string>ai.scarcrux.pathom</string>
+	<string>ai.scarcrux.pathem</string>
 	<key>CFBundleExecutable</key>
-	<string>Pathom</string>
+	<string>Pathem</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleInfoDictionaryVersion</key>
@@ -27,7 +27,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Pathom is open source under the MIT License.</string>
+	<string>Pathem is open source under the MIT License.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

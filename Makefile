@@ -1,8 +1,8 @@
-# Pathom. Everyday commands mirror the constellation convention (see Polaris).
+# Pathem. Everyday commands mirror the constellation convention (see Polaris).
 #   make run      build and launch from source (fastest loop)
 #   make build    build engine + app
 #   make test     run the engine test suite
-#   make app      assemble .build/Pathom.app (universal, ad-hoc signed)
+#   make app      assemble .build/Pathem.app (universal, ad-hoc signed)
 #   make install  build the app and copy it to /Applications
 #   make fmt      format with swift-format (if installed)
 #   make clean    remove build products
@@ -13,7 +13,7 @@ build:
 	swift build
 
 run:
-	swift run Pathom
+	swift run Pathem
 
 test:
 	swift test

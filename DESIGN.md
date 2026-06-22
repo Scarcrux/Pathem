@@ -1,9 +1,12 @@
 # Design: a superuser file manager for macOS
 
-> Name: **Pathom** (decided). Repo codename: `scarcrux-macfinder` (the
-> `macfinder` working name is retired, it contains Apple's "Finder" mark).
-> `pathom.app` is available (RDAP-confirmed); secure it + run USPTO TESS
-> clearance (Classes 9 & 42) before branding spend.
+> Name: **Pathem** (decided). It reads as "Path 'em": plain, friendly, and
+> easy to say, which is why it was chosen over the earlier "Pathom" (whose
+> meaning few people decode). The naming analysis below is the historical
+> Pathom screen; its domain/trademark facts are for `pathom.*` and have NOT
+> been re-run for `pathem.*`. TODO before any branding spend: confirm
+> `pathem.app` availability (RDAP) and run USPTO TESS clearance (Classes
+> 9 & 42). Repo directory: `scarcrux-pathom`.
 
 Status: **design phase**. This document records the competitive analysis, the
 language/architecture decision, and the MVP cut. It is the output of a
@@ -104,7 +107,7 @@ Each competitor wins one axis and loses the others. That's the opening.
 ### Lead differentiator: integrated LLM support (decided)
 
 Per the market analysis above, the #1 white-space is AI: no native, fast Mac
-file manager has integrated LLM support. This is Pathom's chosen north-star
+file manager has integrated LLM support. This is Pathem's chosen north-star
 differentiator. Candidate capabilities (sequenced *after* the engine is stable):
 
 - **Semantic / natural-language search**, "the contract I edited last spring,"
@@ -373,27 +376,27 @@ fail loudly on drift; pin `CARGO_TARGET_DIR` per-project).
 in third-party product names, so "Mac Explorer" is out, and "Power Explorer"
 sits in Microsoft's "Power*"/"Explorer" family and is generically weak).
 
-**Decision: Pathom** (preliminary screen, **not** legal clearance):
+**Decision: Pathem** (preliminary screen, **not** legal clearance):
 
 | Name | Why | TM risk | Notes |
 |------|-----|---------|-------|
-| **Pathom** ✅ chosen | coined from "path"; reads as navigation | **LOW** | no software/app collision found; coined → easiest to own *and defend*. `pathom.app` **available** (RDAP 404 confirmed); `pathom.com` likely held by an unrelated consultancy → use `getpathom.com`. `.app` is HTTPS-only (free TLS). |
-| **Bursar** | "keeper of the stores/keys" → custody + control | LOW | cleanest real-word lane found in a 2nd naming round (no software collisions). Recorded only as a fallback if Pathom is ever revisited. |
+| **Pathem** ✅ chosen | reads as "Path 'em": plain, friendly, sayable | **LOW (historical screen was for "Pathom")** | no software/app collision found in the original screen. Domain facts here are historical for `pathom.*` (`pathom.app` was RDAP-404 available); `pathem.app` / `getpathem.com` availability is NOT yet verified. `.app` is HTTPS-only (free TLS). |
+| **Bursar** | "keeper of the stores/keys" → custody + control | LOW | cleanest real-word lane found in a 2nd naming round (no software collisions). Recorded only as a fallback if Pathem is ever revisited. |
 
 Two naming rounds ran (coined words, then recognizable real words). The
 tradeoff accepted: a coined word is the most ownable/defensible class of mark
-but carries no built-in meaning, so brand/positioning must teach it ("Pathom , 
+but carries no built-in meaning, so brand/positioning must teach it ("Pathem , 
 a file manager for Mac"). No real word cleared the file-manager lane as cleanly
-as Pathom without either a collision or weaker defensibility, so Pathom stands.
+as Pathem without either a collision or weaker defensibility, so Pathem stands.
 
-Before branding spend: secure `pathom.app` (+ `getpathom.com`) and run a full
-USPTO TESS knockout search in Classes 9 & 42.
+Before branding spend: confirm `pathem.app` / `getpathem.com` availability
+(not yet checked) and run a full USPTO TESS knockout search in Classes 9 & 42.
 
 ---
 
 ## 8. Open decisions
 
-1. ~~**Name**~~, **Decided: Pathom.**
+1. ~~**Name**~~, **Decided: Pathem.**
 2. ~~**Dual-pane in MVP?**~~, **Decided: yes (minimal, two panes, one-key
    copy/move). Multi-pane/tabs/Layouts deferred.**
 3. ~~**Update channel / Mac App Store?**~~, **Decided: direct-only,
@@ -417,7 +420,7 @@ goal are *aligned*, not in tension.
 ### License: MIT (decided)
 - Permissive OSI licensing is the category norm and the growth funnel: every
   native-Mac / file-manager breakout is permissive (Files, nnn, superfile,
-  Ghostty, Stats, Maccy). MIT keeps Pathom eligible for Homebrew, distros, and
+  Ghostty, Stats, Maccy). MIT keeps Pathem eligible for Homebrew, distros, and
   awesome-lists and kills the "that's not real open source" derail that hijacks
   every source-available launch thread.
 - `LICENSE` is committed (MIT, © 2026 Scarcrux). The only defensible alternative
@@ -441,21 +444,21 @@ goal are *aligned*, not in tension.
    one external PR merged without it fragments copyright and blocks any relicense.
 2. **Keep sole, provably-clean copyright**, no copied third-party/GPL snippets
    in the MIT tree; until the CLA tooling is live, hold or rewrite external PRs.
-3. **Trademark "Pathom"**, use `Pathom™` now (common-law, free); budget a USPTO
+3. **Trademark "Pathem"**, use `Pathem™` now (common-law, free); budget a USPTO
    registration (~$350/class DIY) at launch; add a short Trademark Usage Policy.
-   A worst-case MIT fork then still can't ship as "Pathom."
+   A worst-case MIT fork then still can't ship as "Pathem."
 4. **One IP/OSS lawyer consult** to finalize the CLA wording (not legal advice).
 
 ### Monetization (orthogonal to the license, secondary)
 
-**Decision: GitHub Sponsors tip jar now + a planned open-core "Pathom Pro"
+**Decision: GitHub Sponsors tip jar now + a planned open-core "Pathem Pro"
 later.** Strict sequencing: ship the free MIT flagship and earn the launch stars
 FIRST; Pro comes months later as a *separate closed-source* superset, never by
 paywalling anything that was already free. Sponsors stays a garnish (~$0–100/mo;
 MonitorControl ≈ $120/mo at 33k stars); Pro is the real lever ($1–3k/mo good
 case, Rectangle/AltTab template).
 
-**Pathom Pro scope, iron rule: the free core stays a genuinely great Finder
+**Pathem Pro scope, iron rule: the free core stays a genuinely great Finder
 replacement, and on-device semantic search (the §2 headline differentiator)
 stays FREE forever. Pro is net-new *additive* power, never a downgrade of free.**
 - **FREE (MIT core):** fast browsing, dual-pane, tabs, navigation, core file
@@ -472,13 +475,13 @@ stays FREE forever. Pro is net-new *additive* power, never a downgrade of free.*
   Pro direct via Paddle/Gumroad (~95% kept) ± a paid MAS SKU; offer a trial.
 - **Career note:** Pro is a revenue *side-track*. For the stated job target
   (ML Engineer / Quant Researcher) the priority is the finance-research
-  flagship, not Pathom revenue, build Pro only once free Pathom has real
+  flagship, not Pathem revenue, build Pro only once free Pathem has real
   traction.
 
 The detail below records the broader option space; the decision above is the plan.
 
 - **Open-core (the future lever):** MIT core for stars + a *separate closed-source*
-  "Pathom Pro" superset (power features / sync / saved Layouts), ~$10–30. No
+  "Pathem Pro" superset (power features / sync / saved Layouts), ~$10–30. No
   license change, no fork/contributor problem on the paid part. Precedent in
   this exact category: Rectangle (MIT) + Rectangle Pro (closed), same solo dev.
 - **Sell the identical binary:** notarized, auto-updating, support-backed build
@@ -516,7 +519,7 @@ The flagship blog post, "How I built a 1M-row native macOS file manager in
 Swift/AppKit", is the highest-leverage artifact: it drives the launch *and* is
 the 45-second recruiter narrative. Foreground systems depth (getattrlistbulk,
 cell recycling, lazy outline, two-tier watcher), show sustained maintenance, put
-Pathom atop the résumé with stars + benchmark. Optional conference/meetup talk.
+Pathem atop the résumé with stars + benchmark. Optional conference/meetup talk.
 
 ### Reconciliation
 - §1 "no subscription, privacy-forward" stays, a promise to users, orthogonal
@@ -546,12 +549,12 @@ bindable key.
 ### Customization is config-as-data (no third-party code)
 
 Everything ships as schema-versioned Codable JSON under
-~/Library/Application Support/Pathom/ (layouts, formats, columns, toolbars,
+~/Library/Application Support/Pathem/ (layouts, formats, columns, toolbars,
 keymap, themes, searches, collections), pretty-printed with sorted keys so files
 are hand-editable and shareable (the file itself is the shareable artifact, like
 a Dir Opus .dcf). Forward-compatibility rules: additive-only fields, ignore
 unknown keys on read and re-emit captured unknown keys on write (so an older
-Pathom does not strip a newer user's fields), and an in-house migration registry
+Pathem does not strip a newer user's fields), and an in-house migration registry
 for breaking bumps. JSON, not TOML or YAML (stdlib-first: Foundation Codable, no
 dependency).
 
@@ -583,7 +586,7 @@ themes) so a future Swift extension can slot in without breaking the config
 format, but do not build the runtime until real demand justifies the trust and
 review burden.
 
-Because there is no embedded engine and no in-process foreign code, Pathom keeps
+Because there is no embedded engine and no in-process foreign code, Pathem keeps
 a clean Hardened Runtime with no opt-outs (no allow-jit, no
 disable-library-validation), which is a real security and notarization story
 worth stating in the README. This is the chief benefit of the Swift-only rule:
@@ -631,8 +634,8 @@ logic is testable:
   Declarative custom columns and Styles are not done yet.
 - 3: `FuzzyMatch` (engine) plus a `CommandPalette` (Cmd-Shift-P). The single
   multi-mode FAYT widget ("/", "~" modes) and saved searches are not done yet.
-- 4: `SemanticSearchIntent` + `PathomShortcuts` (App Intents). These register
-  only once Pathom ships as a real `.app` bundle; NSServices share that gate and
+- 4: `SemanticSearchIntent` + `PathemShortcuts` (App Intents). These register
+  only once Pathem ships as a real `.app` bundle; NSServices share that gate and
   are deferred to packaging.
 - 5: `CommandResolver` (engine heuristic, always works) plus `FoundationModelMatcher`
   (on-device LLM on macOS 26 + Apple Intelligence) behind an async AI command bar

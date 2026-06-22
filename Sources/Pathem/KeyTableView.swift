@@ -1,5 +1,5 @@
 import AppKit
-import PathomEngine
+import PathemEngine
 
 /// NSTableView subclass that turns each key press into a `KeyChord` and offers
 /// it to a handler. If the handler consumes it (a keymap binding fired), the key

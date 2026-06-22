@@ -1,5 +1,5 @@
 import AppKit
-import PathomEngine
+import PathemEngine
 
 /// A floating command palette (DESIGN.md section 10, Phase 3): type to fuzzy-find
 /// any registered command and run it. Because every action is a Command in the

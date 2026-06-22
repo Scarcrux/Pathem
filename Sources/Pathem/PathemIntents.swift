@@ -1,12 +1,12 @@
 #if canImport(AppIntents)
     import AppIntents
     import Foundation
-    import PathomEngine
+    import PathemEngine
 
     // App Intents / Shortcuts integration (DESIGN.md section 10, Phase 4).
     //
     // IMPORTANT: App Intents are only discovered by the Shortcuts app and Spotlight
-    // once Pathom is built and installed as a registered .app bundle (the notarized
+    // once Pathem is built and installed as a registered .app bundle (the notarized
     // direct-download model in DESIGN). They do not register when launched via
     // `swift run`. This code is the real integration, ready to activate at the
     // packaging step; it is not exercisable from the CLI build.
@@ -48,7 +48,7 @@
     }
 
     @available(macOS 15.0, *)
-    struct PathomShortcuts: AppShortcutsProvider {
+    struct PathemShortcuts: AppShortcutsProvider {
         static var appShortcuts: [AppShortcut] {
             AppShortcut(
                 intent: SemanticSearchIntent(),
