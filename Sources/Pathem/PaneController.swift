@@ -68,7 +68,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Replace the listing with an explicit set (e.g. ranked search results).
     func showResults(_ entries: [FileEntry]) {
         showingSearchResults = true
-        list.directoryURL = nil  // results span folders; disable row drag
+        list.directoryURL = nil  // disable row drag during search
+        list.resolutionURL = nav.current  // but results are from this folder, so actions resolve
         list.setEntries(entries)
         list.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
         updateStatus()
@@ -79,6 +80,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     func reload(preserveState: Bool = true) {
         showingSearchResults = false
         list.directoryURL = nav.current  // rows in this folder are draggable
+        list.resolutionURL = nav.current
         if let resolveFormat { format = resolveFormat(nav.current) }
         do {
             let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
@@ -335,14 +337,21 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     @objc private func commitPath() {
         let raw = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         endEditingPath()
+        containerView.window?.makeFirstResponder(list.tableView)  // restore focus on every path
         guard !raw.isEmpty else { return }
-        let url = URL(fileURLWithPath: (raw as NSString).expandingTildeInPath).standardizedFileURL
+        // Resolve relative input against this pane's folder, not the process cwd.
+        let expanded = (raw as NSString).expandingTildeInPath
+        let url =
+            expanded.hasPrefix("/")
+            ? URL(fileURLWithPath: expanded).standardizedFileURL
+            : nav.current.appendingPathComponent(expanded).standardizedFileURL
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
             NSSound.beep()  // no such path
             return
         }
         if isDirectory.boolValue {
+            guard url != nav.current else { return }  // already here: don't push a duplicate history entry
             nav.go(to: url)
             enterDirectory()
         } else {
@@ -351,7 +360,6 @@ final class PaneController: NSObject, NSTextFieldDelegate {
             enterDirectory()
             list.select(name: url.lastPathComponent)
         }
-        containerView.window?.makeFirstResponder(list.tableView)
     }
 
     func controlTextDidEndEditing(_ obj: Notification) {

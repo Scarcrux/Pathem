@@ -34,8 +34,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Row font size, applied per cell so a preference change takes effect on reload.
     private var listFontSize: CGFloat = 13
     /// The folder these rows live in, so a dragged row maps to a file URL. nil
-    /// while showing search results (entries span folders), which disables drag.
+    /// while showing search results, which disables drag.
     var directoryURL: URL?
+    /// The folder used to resolve a row to a URL for actions like Open With. Set
+    /// even during search (results are ranked from this folder), so those actions
+    /// keep working when drag is disabled.
+    var resolutionURL: URL?
     /// Files were dropped onto this list: copy (or move) them into this folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)?
 
@@ -216,7 +220,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // MARK: Open With
 
     private func selectedFileURLs() -> [URL] {
-        guard let dir = directoryURL else { return [] }
+        guard let dir = resolutionURL else { return [] }
         return tableView.selectedRowIndexes.compactMap {
             $0 < entries.count ? dir.appendingPathComponent(entries[$0].name) : nil
         }
@@ -246,7 +250,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 action: #selector(openWithApp(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = app
-            let icon = NSWorkspace.shared.icon(forFile: app.path)
+            // Copy before resizing: mutating the shared cached icon corrupts it process-wide.
+            let icon = (NSWorkspace.shared.icon(forFile: app.path).copy() as? NSImage) ?? NSImage()
             icon.size = NSSize(width: 16, height: 16)
             item.image = icon
             menu.addItem(item)

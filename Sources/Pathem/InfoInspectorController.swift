@@ -78,7 +78,11 @@ final class InfoInspectorController: NSObject {
             iconView.image = NSWorkspace.shared.icon(forFile: info.path)
             titleLabel.stringValue = info.name
             addField("Kind", info.isSymbolicLink ? "Alias / Symlink" : info.kind)
-            addField("Size", info.isDirectory ? "--" : byteFormatter.string(fromByteCount: info.size))
+            if info.isDataless {
+                addField("Size", "Online only (not downloaded)")
+            } else {
+                addField("Size", info.isDirectory ? "--" : byteFormatter.string(fromByteCount: info.size))
+            }
             addField("Where", (info.path as NSString).deletingLastPathComponent)
             if let created = info.created { addField("Created", dateFormatter.string(from: created)) }
             if let modified = info.modified { addField("Modified", dateFormatter.string(from: modified)) }
@@ -86,11 +90,13 @@ final class InfoInspectorController: NSObject {
             if let owner = info.owner { addField("Owner", owner) }
         } else {
             iconView.image = NSWorkspace.shared.icon(for: .item)
-            titleLabel.stringValue = "\(urls.count) items"
+            // Derive every number from the items actually read, so the count,
+            // folder tally, and total size always agree.
             let infos = urls.compactMap { FileInfo.gather(for: $0) }
-            let totalSize = infos.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
+            titleLabel.stringValue = "\(infos.count) items"
+            let totalSize = infos.filter { !$0.isDirectory && !$0.isDataless }.reduce(Int64(0)) { $0 + $1.size }
             let folders = infos.filter(\.isDirectory).count
-            addField("Items", "\(urls.count) (\(folders) folder\(folders == 1 ? "" : "s"))")
+            addField("Items", "\(infos.count) (\(folders) folder\(folders == 1 ? "" : "s"))")
             addField("Total Size", byteFormatter.string(fromByteCount: totalSize))
         }
     }

@@ -13,10 +13,12 @@ public struct FileInfo: Sendable, Equatable {
     public var modified: Date?
     public var permissions: String  // e.g. "rwxr-xr-x"
     public var owner: String?
+    public var isDataless: Bool  // online-only cloud placeholder
 
     public init(
         name: String, path: String, kind: String, isDirectory: Bool, isSymbolicLink: Bool,
-        size: Int64, created: Date?, modified: Date?, permissions: String, owner: String?
+        size: Int64, created: Date?, modified: Date?, permissions: String, owner: String?,
+        isDataless: Bool = false
     ) {
         self.name = name
         self.path = path
@@ -28,6 +30,7 @@ public struct FileInfo: Sendable, Equatable {
         self.modified = modified
         self.permissions = permissions
         self.owner = owner
+        self.isDataless = isDataless
     }
 
     public static func gather(for url: URL) -> FileInfo? {
@@ -39,6 +42,10 @@ public struct FileInfo: Sendable, Equatable {
         let attrs = (try? FileManager.default.attributesOfItem(atPath: url.path)) ?? [:]
         let permissions = (attrs[.posixPermissions] as? NSNumber).map { rwxString($0.uint16Value) } ?? "---------"
         let isDirectory = values.isDirectory ?? false
+        // SF_DATALESS (0x40000000) marks an online-only cloud placeholder. Read it
+        // from st_flags without materializing the file.
+        var st = stat()
+        let isDataless = lstat(url.path, &st) == 0 && (st.st_flags & UInt32(0x4000_0000)) != 0
         return FileInfo(
             name: values.name ?? url.lastPathComponent,
             path: url.path,
@@ -49,7 +56,8 @@ public struct FileInfo: Sendable, Equatable {
             created: values.creationDate,
             modified: values.contentModificationDate,
             permissions: permissions,
-            owner: attrs[.ownerAccountName] as? String)
+            owner: attrs[.ownerAccountName] as? String,
+            isDataless: isDataless)
     }
 
     /// POSIX mode bits (lower 9) as a 9-char "rwxr-xr-x" string.

@@ -582,7 +582,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Returns true if a binding existed (so the key is consumed even when the
     /// command is currently disabled).
     private func handleKeyChord(_ chord: KeyChord) -> Bool {
-        guard let id = keymap.commandID(for: chord) else { return false }
+        // Don't consume a chord whose command is currently disabled, so the event
+        // falls through (e.g. Cmd-W with one tab should reach Close Window).
+        guard let id = keymap.commandID(for: chord), commands.command(id)?.isEnabled() == true else {
+            return false
+        }
         commands.perform(id)
         return true
     }
@@ -1236,14 +1240,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("left-pane-visible", leftTabs.containerView.frame.width > 50, "\(Int(leftTabs.containerView.frame.width))")
         check("right-pane-visible", rightTabs.containerView.frame.width > 50, "\(Int(rightTabs.containerView.frame.width))")
         check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
-        // Open the terminal only if it isn't already (a prior run may have
-        // persisted it open), so the check is deterministic; restore the pref so
-        // the smoke run doesn't leave state behind.
+        // Open the terminal only if needed (a prior run may have persisted it
+        // open), check, then undo exactly what we changed so the run leaves no
+        // state behind (pref, visibility, or a spawned shell).
+        let wasVisible = !terminal.view.isHidden
+        let wasRunning = terminal.isRunning
         let savedVisible = UserDefaults.standard.bool(forKey: "pathem.terminalVisible")
         if terminal.view.isHidden { toggleTerminal() }
         check("terminal-opens", !terminal.view.isHidden && terminal.isRunning,
             "visible=\(!terminal.view.isHidden) running=\(terminal.isRunning)")
-        terminal.shutdown()
+        if !wasVisible, !terminal.view.isHidden { toggleTerminal() }  // we opened it; hide again
+        if !wasRunning, terminal.isRunning { terminal.shutdown() }  // we started the shell; stop it
         UserDefaults.standard.set(savedVisible, forKey: "pathem.terminalVisible")
         return (ok, lines)
     }

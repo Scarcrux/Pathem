@@ -81,10 +81,12 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
   && cp "$ROOT/Packaging/$APP_NAME.icns" "$APP/Contents/Resources/$APP_NAME.icns"
 
 echo "==> Signing"
-signargs=(--force)
+# Hardened Runtime on every build so local (ad-hoc / self-signed) builds preserve
+# Sparkle's nested HR exactly as the notarized release does.
+signargs=(--force --options runtime)
 if [[ -n "${DEVELOPER_ID:-}" ]]; then
 	echo "    Developer ID, Hardened Runtime: $DEVELOPER_ID"
-	signargs+=(--options runtime --timestamp --sign "$DEVELOPER_ID")
+	signargs+=(--timestamp --sign "$DEVELOPER_ID")
 elif [[ -n "${SIGN_IDENTITY:-}" ]]; then
 	# A stable local identity (e.g. a self-signed cert from `make dev-cert`), so a
 	# Full Disk Access grant survives rebuilds. Not for distribution.

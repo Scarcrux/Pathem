@@ -36,8 +36,13 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="${GITHUB_REF_NAME#v}"
+          # CFBundleVersion drives Sparkle's "is this newer?" check, so derive a
+          # monotonic integer from the semver tag (not github.run_number, which
+          # isn't ordered by tag). Each component must stay under 1000.
+          IFS=. read -r MAJOR MINOR PATCH <<< "${VERSION%%-*}"
+          BUILD=$(( ${MAJOR:-0} * 1000000 + ${MINOR:-0} * 1000 + ${PATCH:-0} ))
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Packaging/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Packaging/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Packaging/Info.plist
 
       - name: Import Developer ID certificate
         env:
