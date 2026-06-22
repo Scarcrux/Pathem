@@ -40,6 +40,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var keymap = Keymap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
     private var folderFormats = FolderFormats()
+    /// Scoped default-opener rules (by file / folder / type), persisted.
+    private var openerRules = OpenerRules()
+    /// Session-only opener overrides, keyed by lowercased extension (not persisted).
+    private var sessionOpenersByType: [String: String] = [:]
     /// Saved workspace layouts (pane paths + split position).
     private var layouts = Layouts()
     /// Fuzzy command palette over the registry (Cmd-Shift-P).
@@ -159,12 +163,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadPreferences()
         loadSidebar()
         loadTerminalTheme()
+        loadOpenerRules()
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
                 pane.list.tableView.onKeyChord = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
+                pane.openFile = { [weak self] url in self?.applyOpen(url) }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -714,6 +720,109 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let saved = loadConfig(TerminalTheme.self, from: Self.terminalThemeURL) {
             terminal.theme = saved
         }
+    }
+
+    // MARK: - Scoped openers
+
+    private static var openersURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("openers.json")
+    }
+
+    private func loadOpenerRules() {
+        if let saved = loadConfig(OpenerRules.self, from: Self.openersURL) { openerRules = saved }
+    }
+
+    /// Open a file with its resolved app: session override (by type) first, then
+    /// the persisted file/folder/type rules, else the system default.
+    private func applyOpen(_ url: URL) {
+        let ext = url.pathExtension.lowercased()
+        let appPath = sessionOpenersByType[ext] ?? openerRules.app(forPath: url.path, ext: ext)
+        if let appPath {
+            NSWorkspace.shared.open(
+                [url], withApplicationAt: URL(fileURLWithPath: appPath),
+                configuration: NSWorkspace.OpenConfiguration())
+        } else {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Scope for "Always Open With".
+    private enum OpenerScope: Int { case file, folder, type, session }
+
+    /// Set a default opener for the active selection. Shown from Open With.
+    @objc func setDefaultOpener(_ sender: Any?) {
+        guard let pane = activePane, let entry = pane.selectedEntries.first, !entry.isDirectory else {
+            NSSound.beep()
+            return
+        }
+        let fileURL = pane.currentURL.appendingPathComponent(entry.name)
+        let ext = fileURL.pathExtension.lowercased()
+
+        let alert = NSAlert()
+        alert.messageText = "Always Open With"
+        alert.informativeText = "Choose an application and how widely to apply it."
+
+        // App picker: candidate apps + Choose…
+        let apps = NSWorkspace.shared.urlsForApplications(toOpen: fileURL)
+        let appPopup = NSPopUpButton(frame: NSRect(x: 0, y: 34, width: 320, height: 26))
+        for app in apps {
+            let item = NSMenuItem(title: FileManager.default.displayName(atPath: app.path), action: nil, keyEquivalent: "")
+            item.representedObject = app
+            appPopup.menu?.addItem(item)
+        }
+        appPopup.menu?.addItem(.separator())
+        appPopup.addItem(withTitle: "Choose…")
+
+        let scopePopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 320, height: 26))
+        scopePopup.addItem(withTitle: "This file")
+        scopePopup.addItem(withTitle: "Files in this folder")
+        scopePopup.addItem(withTitle: ext.isEmpty ? "Files of this kind" : "All .\(ext) files")
+        scopePopup.addItem(withTitle: "Just this session")
+
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 64))
+        accessory.addSubview(appPopup)
+        accessory.addSubview(scopePopup)
+        alert.accessoryView = accessory
+        alert.addButton(withTitle: "Set")
+        alert.addButton(withTitle: "Cancel")
+
+        guard let window = view.window else { return }
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            self.resolveChosenApp(appPopup, candidates: apps, over: window) { appURL in
+                guard let appURL else { return }
+                let scope = OpenerScope(rawValue: scopePopup.indexOfSelectedItem) ?? .file
+                self.saveOpener(appPath: appURL.path, for: fileURL, ext: ext, scope: scope)
+            }
+        }
+    }
+
+    /// Resolve the app chosen in the popup; "Choose…" opens an app picker.
+    private func resolveChosenApp(
+        _ popup: NSPopUpButton, candidates: [URL], over window: NSWindow,
+        completion: @escaping (URL?) -> Void
+    ) {
+        if let app = popup.selectedItem?.representedObject as? URL {
+            completion(app)
+            return
+        }
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        panel.beginSheetModal(for: window) { response in
+            completion(response == .OK ? panel.url : nil)
+        }
+    }
+
+    private func saveOpener(appPath: String, for fileURL: URL, ext: String, scope: OpenerScope) {
+        switch scope {
+        case .file: openerRules.setFile(fileURL.path, app: appPath)
+        case .folder: openerRules.setFolder(fileURL.deletingLastPathComponent().path, app: appPath)
+        case .type: openerRules.setType(ext, app: appPath)
+        case .session: sessionOpenersByType[ext] = appPath
+        }
+        if scope != .session { saveConfig(openerRules, to: Self.openersURL) }
     }
 
     /// Apply a built-in terminal theme by name (from the View > Terminal Theme menu).

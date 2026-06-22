@@ -260,6 +260,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let other = NSMenuItem(title: "Other…", action: #selector(openWithOther(_:)), keyEquivalent: "")
         other.target = self
         menu.addItem(other)
+        // Set a persistent/scoped default (handled by BrowserViewController via the
+        // responder chain, since it owns the opener rules).
+        let setDefault = NSMenuItem(
+            title: "Always Open With…", action: #selector(BrowserViewController.setDefaultOpener(_:)),
+            keyEquivalent: "")
+        menu.addItem(setDefault)
     }
 
     @objc private func openWithApp(_ sender: NSMenuItem) {

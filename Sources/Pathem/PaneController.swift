@@ -36,6 +36,9 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     var onDidNavigate: (() -> Void)?
     /// Files were dropped onto this pane: copy/move them into its folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
+    /// Opens a (non-folder) file, applying the browser's scoped opener rules.
+    /// Falls back to the system default when unset.
+    var openFile: ((URL) -> Void)?
 
     private var watcher: DirectoryWatcher?
     private var pendingRefresh: DispatchWorkItem?
@@ -135,8 +138,10 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         if entry.isDirectory {
             nav.go(to: url)
             enterDirectory()
+        } else if let openFile {
+            openFile(url)  // apply scoped opener rules
         } else {
-            NSWorkspace.shared.open(url)  // open files in their default app
+            NSWorkspace.shared.open(url)  // system default
         }
     }
 
