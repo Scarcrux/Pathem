@@ -1,43 +1,90 @@
 import AppKit
+import PathemEngine
 
-/// A Finder-style source list: PLACES (Home, Desktop, Documents, Downloads,
-/// Applications) and VOLUMES (mounted, browsable drives). Selecting a row hands
-/// its URL to `onSelect`, which the browser routes to the active pane. The view
-/// is a translucent sidebar (NSVisualEffectView + source-list NSOutlineView) for
-/// the native look, and it refreshes its volumes on mount and unmount.
+/// A fully customizable Finder-style source list. The user's own groups and
+/// shortcuts come from an editable `Sidebar` model (persisted as sidebar.json):
+/// drag to reorder within and across groups, rename inline, change a shortcut's
+/// SF Symbol icon, and create / rename / delete groups. Below the user groups,
+/// CLOUD and VOLUMES are auto-detected (they reflect what's mounted) and are not
+/// editable. Selecting a row hands its URL to `onSelect`.
 @MainActor
-final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate,
+    NSMenuDelegate, NSTextFieldDelegate
+{
     let containerView = NSVisualEffectView()
     private let scrollView = NSScrollView()
     private let outline = NSOutlineView()
 
+    /// The editable part of the sidebar. Set by the browser after loading, then
+    /// kept in sync; every edit calls `onModelChange` so it can be persisted.
+    var model = Sidebar(groups: []) {
+        didSet { reload() }
+    }
+    var onModelChange: ((Sidebar) -> Void)?
     var onSelect: ((URL) -> Void)?
+    /// Supplies the active pane's folder for "Add Current Folder".
+    var currentFolder: (() -> URL?)?
+
+    private static let itemType = NSPasteboard.PasteboardType("ai.scarcrux.pathem.sidebar-item")
+    private static let groupType = NSPasteboard.PasteboardType("ai.scarcrux.pathem.sidebar-group")
+
+    private static let iconChoices = [
+        "house", "folder", "doc", "doc.text", "star", "heart", "flag", "tag",
+        "bookmark", "tray.full", "archivebox", "music.note", "photo", "film",
+        "hammer", "terminal", "gearshape", "cloud", "externaldrive",
+        "square.grid.2x2", "briefcase", "book", "paintbrush", "cube", "network",
+        "desktopcomputer", "laptopcomputer", "arrow.down.circle",
+    ]
+
+    private enum Kind {
+        case userGroup(UUID)
+        case userItem(UUID)
+        case systemHeader
+        case systemItem
+    }
 
     private final class Node {
+        let kind: Kind
         let title: String
         let url: URL?
-        let isHeader: Bool
+        let icon: String?  // SF Symbol for user items
         var children: [Node]
-        init(title: String, url: URL?, isHeader: Bool, children: [Node] = []) {
+        init(kind: Kind, title: String, url: URL?, icon: String?, children: [Node] = []) {
+            self.kind = kind
             self.title = title
             self.url = url
-            self.isHeader = isHeader
+            self.icon = icon
             self.children = children
+        }
+        var isHeader: Bool {
+            switch kind {
+            case .userGroup, .systemHeader: return true
+            default: return false
+            }
+        }
+        var isEditable: Bool {
+            switch kind {
+            case .userGroup, .userItem: return true
+            default: return false
+            }
         }
     }
     private var roots: [Node] = []
+
+    /// The node a context-menu action targets (set when the menu opens).
+    private weak var menuTargetNode: Node?
+    /// The node currently being renamed inline.
+    private weak var editing: Node?
 
     override init() {
         super.init()
         build()
         reload()
         let center = NSWorkspace.shared.notificationCenter
-        center.addObserver(
-            self, selector: #selector(volumesChanged), name: NSWorkspace.didMountNotification, object: nil)
-        center.addObserver(
-            self, selector: #selector(volumesChanged), name: NSWorkspace.didUnmountNotification, object: nil)
-        center.addObserver(
-            self, selector: #selector(volumesChanged), name: NSWorkspace.didRenameVolumeNotification, object: nil)
+        for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
+                     NSWorkspace.didRenameVolumeNotification] {
+            center.addObserver(self, selector: #selector(volumesChanged), name: name, object: nil)
+        }
     }
 
     @objc private func volumesChanged() { reload() }
@@ -55,6 +102,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         outline.autoresizesOutlineColumn = false
         outline.dataSource = self
         outline.delegate = self
+        outline.registerForDraggedTypes([Self.itemType, Self.groupType, .fileURL])
+        outline.setDraggingSourceOperationMask(.move, forLocal: true)
+
+        let menu = NSMenu()
+        menu.delegate = self
+        outline.menu = menu
 
         scrollView.documentView = outline
         scrollView.drawsBackground = false
@@ -70,28 +123,23 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         ])
     }
 
+    // MARK: Build the tree
+
     func reload() {
-        roots = [placesNode(), cloudNode(), volumesNode()].compactMap { $0 }
+        roots = model.groups.map { group in
+            Node(
+                kind: .userGroup(group.id), title: group.title, url: nil, icon: nil,
+                children: group.items.map {
+                    Node(kind: .userItem($0.id), title: $0.name, url: URL(fileURLWithPath: $0.path), icon: $0.icon)
+                })
+        }
+        if let cloud = cloudNode() { roots.append(cloud) }
+        roots.append(volumesNode())
         outline.reloadData()
         for root in roots { outline.expandItem(root) }
     }
 
-    private func placesNode() -> Node {
-        let fm = FileManager.default
-        var places: [Node] = []
-        func add(_ title: String, _ url: URL?) {
-            if let url { places.append(Node(title: title, url: url, isHeader: false)) }
-        }
-        add("Home", fm.homeDirectoryForCurrentUser)
-        add("Desktop", try? fm.url(for: .desktopDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
-        add("Documents", try? fm.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
-        add("Downloads", try? fm.url(for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: false))
-        add("Applications", URL(fileURLWithPath: "/Applications"))
-        return Node(title: "Places", url: nil, isHeader: true, children: places)
-    }
-
-    /// Cloud storage the OS already mounts: iCloud Drive plus third-party File
-    /// Providers under ~/Library/CloudStorage. nil when none are present.
+    /// Cloud storage the OS already mounts. nil when none are present.
     private func cloudNode() -> Node? {
         let fm = FileManager.default
         let home = fm.homeDirectoryForCurrentUser
@@ -99,9 +147,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
-            children.append(Node(title: "iCloud Drive", url: iCloud, isHeader: false))
+            children.append(Node(kind: .systemItem, title: "iCloud Drive", url: iCloud, icon: nil))
         }
-
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
         if let urls = try? fm.contentsOfDirectory(
             at: cloudStorage, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
@@ -109,12 +156,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
                 let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
                 guard isDir else { continue }
-                children.append(Node(title: Self.cloudLabel(url.lastPathComponent), url: url, isHeader: false))
+                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: nil))
             }
         }
-
         guard !children.isEmpty else { return nil }
-        return Node(title: "Cloud", url: nil, isHeader: true, children: children)
+        return Node(kind: .systemHeader, title: "Cloud", url: nil, icon: nil, children: children)
     }
 
     /// "GoogleDrive-me@x.com" -> "Google Drive". Falls back to the raw name.
@@ -136,9 +182,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         for url in urls {
             let values = try? url.resourceValues(forKeys: Set(keys))
             if values?.volumeIsBrowsable == false { continue }
-            volumes.append(Node(title: values?.volumeName ?? url.lastPathComponent, url: url, isHeader: false))
+            volumes.append(Node(kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url, icon: nil))
         }
-        return Node(title: "Volumes", url: nil, isHeader: true, children: volumes)
+        return Node(kind: .systemHeader, title: "Volumes", url: nil, icon: nil, children: volumes)
+    }
+
+    // MARK: Mutation
+
+    private func mutate(_ change: (inout Sidebar) -> Void) {
+        var copy = model
+        change(&copy)
+        model = copy  // didSet calls reload()
+        onModelChange?(model)
     }
 
     // MARK: NSOutlineViewDataSource
@@ -172,13 +227,22 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if node.isHeader {
             let id = NSUserInterfaceItemIdentifier("header")
             let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeHeaderCell(id)
-            cell.textField?.stringValue = node.title.uppercased()
+            cell.textField?.stringValue = node.title
+            cell.textField?.isEditable = node.isEditable
+            cell.textField?.delegate = self
             return cell
         }
         let id = NSUserInterfaceItemIdentifier("place")
         let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makePlaceCell(id)
         cell.textField?.stringValue = node.title
-        if let url = node.url { cell.imageView?.image = NSWorkspace.shared.icon(forFile: url.path) }
+        cell.textField?.isEditable = node.isEditable
+        cell.textField?.delegate = self
+        if let icon = node.icon {
+            cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)
+            cell.imageView?.contentTintColor = nil
+        } else if let url = node.url {
+            cell.imageView?.image = NSWorkspace.shared.icon(forFile: url.path)
+        }
         return cell
     }
 
@@ -186,6 +250,216 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let row = outline.selectedRow
         guard row >= 0, let node = outline.item(atRow: row) as? Node, let url = node.url else { return }
         onSelect?(url)
+    }
+
+    // MARK: Drag and drop
+
+    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+        guard let node = item as? Node else { return nil }
+        let pb = NSPasteboardItem()
+        switch node.kind {
+        case .userItem(let id): pb.setString(id.uuidString, forType: Self.itemType)
+        case .userGroup(let id): pb.setString(id.uuidString, forType: Self.groupType)
+        default: return nil
+        }
+        return pb
+    }
+
+    func outlineView(
+        _ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo,
+        proposedItem item: Any?, proposedChildIndex index: Int
+    ) -> NSDragOperation {
+        let pb = info.draggingPasteboard
+        // Reordering a user shortcut: destination must be a user group.
+        if pb.availableType(from: [Self.itemType]) != nil {
+            if let group = item as? Node, case .userGroup = group.kind { return .move }
+            return []
+        }
+        // Reordering a user group: only at the root, among the user groups.
+        if pb.availableType(from: [Self.groupType]) != nil {
+            if item == nil, index >= 0, index <= model.groups.count { return .move }
+            return []
+        }
+        // Dropping folders from a pane: add them to a user group as shortcuts.
+        if pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) {
+            if let group = item as? Node, case .userGroup = group.kind { return .copy }
+            return []
+        }
+        return []
+    }
+
+    func outlineView(
+        _ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex index: Int
+    ) -> Bool {
+        let pb = info.draggingPasteboard
+        if let str = pb.string(forType: Self.itemType), let id = UUID(uuidString: str),
+            let group = item as? Node, case let .userGroup(gid) = group.kind
+        {
+            let count = model.groups.first { $0.id == gid }?.items.count ?? 0
+            let target = index < 0 ? count : index
+            mutate { $0.moveItem(id, toGroup: gid, at: target) }
+            return true
+        }
+        if let str = pb.string(forType: Self.groupType), let id = UUID(uuidString: str), item == nil {
+            let target = min(max(index, 0), model.groups.count)
+            mutate { $0.moveGroup(id, to: target) }
+            return true
+        }
+        if let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+            let group = item as? Node, case let .userGroup(gid) = group.kind
+        {
+            mutate { s in
+                for url in urls {
+                    s.addItem(Sidebar.Item(name: url.lastPathComponent, icon: "folder", path: url.path), toGroup: gid)
+                }
+            }
+            return true
+        }
+        return false
+    }
+
+    // MARK: Inline rename
+
+    private func beginRename(_ node: Node?) {
+        guard let node, node.isEditable else { return }
+        let row = outline.row(forItem: node)
+        guard row >= 0 else { return }
+        editing = node
+        outline.editColumn(0, row: row, with: nil, select: true)
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let node = editing, let field = obj.object as? NSTextField else { return }
+        editing = nil
+        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { reload(); return }
+        // Defer so the field editor finishes tearing down before we reload.
+        DispatchQueue.main.async { [weak self] in
+            switch node.kind {
+            case .userItem(let id): self?.mutate { $0.renameItem(id, to: name) }
+            case .userGroup(let id): self?.mutate { $0.renameGroup(id, to: name) }
+            default: break
+            }
+        }
+    }
+
+    // MARK: Context menu
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        let node = outline.item(atRow: outline.clickedRow) as? Node
+        menuTargetNode = node
+
+        func add(_ title: String, _ selector: Selector) {
+            let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
+            item.target = self
+            menu.addItem(item)
+        }
+
+        if let node {
+            switch node.kind {
+            case .userItem:
+                add("Rename", #selector(renameTarget))
+                menu.addItem(iconSubmenuItem())
+                add("Remove from Sidebar", #selector(removeTarget))
+                menu.addItem(.separator())
+            case .userGroup:
+                add("Rename Group", #selector(renameTarget))
+                add("Remove Group", #selector(removeTarget))
+                menu.addItem(.separator())
+            default:
+                break
+            }
+        }
+        add("New Group", #selector(newGroup))
+        if currentFolder?() != nil {
+            add("Add Current Folder", #selector(addCurrentFolder))
+        }
+    }
+
+    private func iconSubmenuItem() -> NSMenuItem {
+        let parent = NSMenuItem(title: "Change Icon", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        for symbol in Self.iconChoices {
+            let item = NSMenuItem(title: symbol, action: #selector(pickIcon(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = symbol
+            item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+            submenu.addItem(item)
+        }
+        submenu.addItem(.separator())
+        let custom = NSMenuItem(title: "Other…", action: #selector(customIcon), keyEquivalent: "")
+        custom.target = self
+        submenu.addItem(custom)
+        parent.submenu = submenu
+        return parent
+    }
+
+    @objc private func renameTarget() { beginRename(menuTargetNode) }
+
+    @objc private func removeTarget() {
+        guard let node = menuTargetNode else { return }
+        switch node.kind {
+        case .userItem(let id): mutate { $0.removeItem(id) }
+        case .userGroup(let id): mutate { $0.removeGroup(id) }
+        default: break
+        }
+    }
+
+    @objc private func pickIcon(_ sender: NSMenuItem) {
+        guard let symbol = sender.representedObject as? String,
+            let node = menuTargetNode, case let .userItem(id) = node.kind
+        else { return }
+        mutate { $0.setIcon(id, to: symbol) }
+    }
+
+    @objc private func customIcon() {
+        guard let node = menuTargetNode, case let .userItem(id) = node.kind else { return }
+        let alert = NSAlert()
+        alert.messageText = "SF Symbol name"
+        alert.informativeText = "Enter any SF Symbol name (for example, \"flame\" or \"folder.badge.gearshape\")."
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Set")
+        alert.addButton(withTitle: "Cancel")
+        if let window = containerView.window {
+            alert.beginSheetModal(for: window) { [weak self] response in
+                guard response == .alertFirstButtonReturn else { return }
+                let symbol = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard NSImage(systemSymbolName: symbol, accessibilityDescription: nil) != nil else { return }
+                self?.mutate { $0.setIcon(id, to: symbol) }
+            }
+        }
+    }
+
+    @objc private func newGroup() {
+        var newID: UUID?
+        mutate { newID = $0.addGroup(title: "New Group") }
+        guard let newID,
+            let node = roots.first(where: { if case let .userGroup(g) = $0.kind { return g == newID }; return false })
+        else { return }
+        beginRename(node)
+    }
+
+    @objc private func addCurrentFolder() {
+        guard let url = currentFolder?() else { return }
+        let targetGroup = resolveGroupID(for: menuTargetNode)
+        mutate { s in
+            let gid: UUID
+            if let targetGroup, s.groupIndex(targetGroup) != nil { gid = targetGroup }
+            else if let first = s.groups.first { gid = first.id }
+            else { gid = s.addGroup(title: "Favorites") }
+            s.addItem(Sidebar.Item(name: url.lastPathComponent, icon: "folder", path: url.path), toGroup: gid)
+        }
+    }
+
+    private func resolveGroupID(for node: Node?) -> UUID? {
+        guard let node else { return nil }
+        switch node.kind {
+        case .userGroup(let id): return id
+        case .userItem(let id): return model.locate(id).map { model.groups[$0.group].id }
+        default: return nil
+        }
     }
 
     // MARK: Cells

@@ -132,6 +132,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadFolderFormats()
         loadLayouts()
         loadPreferences()
+        loadSidebar()
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
@@ -153,6 +154,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         leftTabs.openInitialTab()
         rightTabs.openInitialTab()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
+        sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
+        sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
         if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
         applyPreferences()
     }
@@ -626,6 +629,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private func saveLayouts() {
         saveConfig(layouts, to: Self.layoutsURL)
+    }
+
+    // MARK: - Customizable sidebar
+
+    private static var sidebarURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("sidebar.json")
+    }
+
+    private func loadSidebar() {
+        if let saved = loadConfig(Sidebar.self, from: Self.sidebarURL) {
+            sidebar.model = saved
+        } else {
+            sidebar.model = .makeDefault(home: FileManager.default.homeDirectoryForCurrentUser)
+        }
+    }
+
+    private func saveSidebar(_ model: Sidebar) {
+        saveConfig(model, to: Self.sidebarURL)
     }
 
     /// Add a "Layouts" menu to the main menu, rebuilt on demand from the saved set.
