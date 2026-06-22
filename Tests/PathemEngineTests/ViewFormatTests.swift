@@ -12,6 +12,23 @@ import Testing
             modificationDate: Date(timeIntervalSince1970: seconds))
     }
 
+    @Test func decodesLegacyJSONWithoutViewMode() throws {
+        // Older formats.json had no viewMode; it must still decode (defaulting to
+        // .list) rather than failing and wiping every saved format.
+        let json = #"{"sortKey":"size","ascending":false,"showHidden":true,"foldersFirst":false}"#
+        let format = try JSONDecoder().decode(ViewFormat.self, from: Data(json.utf8))
+        #expect(format.sortKey == .size)
+        #expect(format.viewMode == .list)
+        #expect(format.showHidden == true)
+    }
+
+    @Test func viewModeRoundTrips() throws {
+        let format = ViewFormat(viewMode: .icon)
+        let back = try JSONDecoder().decode(ViewFormat.self, from: JSONEncoder().encode(format))
+        #expect(back.viewMode == .icon)
+        #expect(back == format)
+    }
+
     @Test func nameAscendingWithFoldersFirst() {
         let format = ViewFormat(sortKey: .name, ascending: true)
         let input = [entry("b.txt"), entry("Docs", dir: true), entry("a.txt")]

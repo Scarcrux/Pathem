@@ -6,20 +6,40 @@ import Foundation
 /// view mode; the sort logic lives here so it is unit-testable.
 public struct ViewFormat: Codable, Sendable, Equatable {
     public enum SortKey: String, Codable, Sendable, CaseIterable { case name, size, date }
+    /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
+    /// grid views (gallery uses larger thumbnails).
+    public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery }
 
     public var sortKey: SortKey
     public var ascending: Bool
     public var showHidden: Bool
     public var foldersFirst: Bool
+    public var viewMode: ViewMode
 
     public init(
         sortKey: SortKey = .name, ascending: Bool = true,
-        showHidden: Bool = false, foldersFirst: Bool = true
+        showHidden: Bool = false, foldersFirst: Bool = true, viewMode: ViewMode = .list
     ) {
         self.sortKey = sortKey
         self.ascending = ascending
         self.showHidden = showHidden
         self.foldersFirst = foldersFirst
+        self.viewMode = viewMode
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case sortKey, ascending, showHidden, foldersFirst, viewMode
+    }
+
+    // Decode each key if present so older formats.json (without viewMode, etc.)
+    // still loads instead of resetting every saved format.
+    public init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        sortKey = try c.decodeIfPresent(SortKey.self, forKey: .sortKey) ?? .name
+        ascending = try c.decodeIfPresent(Bool.self, forKey: .ascending) ?? true
+        showHidden = try c.decodeIfPresent(Bool.self, forKey: .showHidden) ?? false
+        foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? true
+        viewMode = try c.decodeIfPresent(ViewMode.self, forKey: .viewMode) ?? .list
     }
 
     public static let `default` = ViewFormat()
