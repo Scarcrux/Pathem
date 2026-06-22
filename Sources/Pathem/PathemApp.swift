@@ -34,6 +34,13 @@ enum PathemApp {
         // Normal mode: a dual-pane browser rooted at the home directory.
         let browser = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser)
         window.contentViewController = browser
+        // Assigning a contentViewController makes the window adopt the content's
+        // Auto Layout fitting size, which collapses to a sliver here (the panes
+        // impose no intrinsic size). Pin a real size and a sane minimum so the
+        // window opens at 1100x700 instead of vanishing.
+        window.setContentSize(NSSize(width: 1100, height: 700))
+        window.contentMinSize = NSSize(width: 720, height: 420)
+        window.center()
         let delegate = PathemAppDelegate()
         delegate.browser = browser
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
