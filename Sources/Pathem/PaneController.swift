@@ -105,10 +105,17 @@ final class PaneController: NSObject {
     }
 
     func descend(into entry: FileEntry) {
-        guard entry.isDirectory else { return }
-        nav.go(to: nav.current.appendingPathComponent(entry.name))
-        enterDirectory()
+        let url = nav.current.appendingPathComponent(entry.name)
+        if entry.isDirectory {
+            nav.go(to: url)
+            enterDirectory()
+        } else {
+            NSWorkspace.shared.open(url)  // open files in their default app
+        }
     }
+
+    /// Select (and scroll to) a row by name, e.g. a just-created folder.
+    func select(name: String) { list.select(name: name) }
 
     @objc func goBack() { if nav.goBack() { enterDirectory() } }
     @objc func goForward() { if nav.goForward() { enterDirectory() } }

@@ -92,7 +92,6 @@ public struct Keymap: Codable, Sendable {
         "cmd+w": "tab.close",
         "cmd+shift+]": "tab.next",
         "cmd+shift+[": "tab.previous",
-        "cmd+,": "view.preferences",
     ]
 
     public static var standard: Keymap { Keymap(bindings: defaultBindings) }

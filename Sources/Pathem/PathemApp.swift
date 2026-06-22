@@ -39,8 +39,11 @@ enum PathemApp {
         app.run()
     }
 
-    /// A minimal main menu so Cmd-Q, Cmd-Z (Undo), and standard text editing in
-    /// the search field work.
+    /// The main menu. App/Edit cover Quit, Undo/Redo, and text editing; File/View/
+    /// Go are thin bindings to the command registry (each item carries its command
+    /// id in representedObject and dispatches via BrowserViewController). Only
+    /// chords the keymap does not own get key equivalents here, so the menu and
+    /// the rebindable keymap never fight over the same keys.
     private static func makeMainMenu() -> NSMenu {
         let mainMenu = NSMenu()
 
@@ -52,8 +55,23 @@ enum PathemApp {
             withTitle: "About Pathem",
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
+        appMenu.addItem(commandItem("Settings…", "view.preferences", ","))
+        appMenu.addItem(.separator())
         appMenu.addItem(
             withTitle: "Quit Pathem", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+
+        let fileItem = NSMenuItem()
+        mainMenu.addItem(fileItem)
+        let fileMenu = NSMenu(title: "File")
+        fileItem.submenu = fileMenu
+        fileMenu.addItem(commandItem("New Tab", "tab.new"))
+        fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
+        fileMenu.addItem(commandItem("Open", "files.open", "o"))
+        fileMenu.addItem(.separator())
+        fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
+        fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
+        fileMenu.addItem(.separator())
+        fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 
         let editItem = NSMenuItem()
         mainMenu.addItem(editItem)
@@ -68,7 +86,42 @@ enum PathemApp {
         editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(
             withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+        let viewItem = NSMenuItem()
+        mainMenu.addItem(viewItem)
+        let viewMenu = NSMenu(title: "View")
+        viewItem.submenu = viewMenu
+        viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
+        viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
+        viewMenu.addItem(.separator())
+        viewMenu.addItem(commandItem("Command Palette…", "palette.show"))
+        viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
+        viewMenu.addItem(commandItem("Batch Rename…", "files.batchRename"))
+
+        let goItem = NSMenuItem()
+        mainMenu.addItem(goItem)
+        let goMenu = NSMenu(title: "Go")
+        goItem.submenu = goMenu
+        goMenu.addItem(commandItem("Back", "nav.back"))
+        goMenu.addItem(commandItem("Forward", "nav.forward"))
+        goMenu.addItem(commandItem("Enclosing Folder", "nav.up"))
+
         return mainMenu
+    }
+
+    /// A menu item that runs a registry command via BrowserViewController. A key
+    /// equivalent is set only when provided (chords the keymap owns are left
+    /// without one so the two never collide).
+    private static func commandItem(
+        _ title: String, _ commandID: String, _ key: String = "",
+        _ mods: NSEvent.ModifierFlags = .command
+    ) -> NSMenuItem {
+        let item = NSMenuItem(
+            title: title, action: #selector(BrowserViewController.performMenuCommand(_:)),
+            keyEquivalent: key)
+        item.representedObject = commandID
+        item.keyEquivalentModifierMask = key.isEmpty ? [] : mods
+        return item
     }
 
     /// Gate A: prove the view-based table virtualizes a 1M-row dataset. Builds

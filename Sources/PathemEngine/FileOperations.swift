@@ -57,6 +57,73 @@ public enum FileOperations {
         }
     }
 
+    // MARK: New folder
+
+    /// Create a new folder in `directory`, picking a unique "untitled folder"
+    /// name (Finder-style) when the base name is taken. Returns the name created.
+    @discardableResult
+    public static func makeFolder(in directory: URL, baseName: String = "untitled folder") throws -> String {
+        let fm = FileManager.default
+        var name = baseName
+        var n = 2
+        while fm.fileExists(atPath: directory.appendingPathComponent(name).path) {
+            name = "\(baseName) \(n)"
+            n += 1
+        }
+        try fm.createDirectory(
+            at: directory.appendingPathComponent(name), withIntermediateDirectories: false)
+        return name
+    }
+
+    // MARK: Trash
+
+    /// A trashed item plus where it landed, so a move-to-trash can be undone.
+    public struct Trashed: Sendable, Equatable {
+        public let original: URL
+        public let trashed: URL
+        public init(original: URL, trashed: URL) {
+            self.original = original
+            self.trashed = trashed
+        }
+    }
+
+    /// Move `names` in `directory` to the Trash. Returns the trashed items (for
+    /// undo) and any failures.
+    public static func trash(_ names: [String], in directory: URL)
+        -> (trashed: [Trashed], failures: [Failure])
+    {
+        let fm = FileManager.default
+        var trashed: [Trashed] = []
+        var failures: [Failure] = []
+        for name in names {
+            let source = directory.appendingPathComponent(name)
+            var resulting: NSURL?
+            do {
+                try fm.trashItem(at: source, resultingItemURL: &resulting)
+                if let landed = resulting as URL? {
+                    trashed.append(Trashed(original: source, trashed: landed))
+                }
+            } catch {
+                failures.append(Failure(name: name, reason: error.localizedDescription))
+            }
+        }
+        return (trashed, failures)
+    }
+
+    /// Restore trashed items to their original locations (the undo of `trash`).
+    public static func untrash(_ items: [Trashed]) -> [Failure] {
+        let fm = FileManager.default
+        var failures: [Failure] = []
+        for item in items {
+            do {
+                try fm.moveItem(at: item.trashed, to: item.original)
+            } catch {
+                failures.append(Failure(name: item.original.lastPathComponent, reason: error.localizedDescription))
+            }
+        }
+        return failures
+    }
+
     // MARK: Copy / move
 
     @discardableResult

@@ -131,6 +131,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         onSelectionChanged?()
     }
 
+    /// Select and scroll to a row by name (no-op if not present).
+    func select(name: String) {
+        guard let row = entries.firstIndex(where: { $0.name == name }) else { return }
+        tableView.selectRowIndexes([row], byExtendingSelection: false)
+        tableView.scrollRowToVisible(row)
+    }
+
     /// Show the sort indicator on the header without triggering onSortChanged.
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {
         suppressSortCallback = true

@@ -8,7 +8,7 @@ import Quartz
 /// manager.
 @MainActor
 final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource,
-    NSSplitViewDelegate
+    NSSplitViewDelegate, NSMenuItemValidation
 {
     private let leftTabs: TabbedPaneController
     private let rightTabs: TabbedPaneController
@@ -168,6 +168,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("files.batchRename", "Batch Rename…", enabled: hasSelection) { [weak self] in self?.showBatchRename() }
+        add("files.newFolder", "New Folder") { [weak self] in self?.newFolder() }
+        add("files.trash", "Move to Trash", enabled: hasSelection) { [weak self] in self?.trashSelection() }
+        add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.revealSelection()
+        }
         add("view.preferences", "Preferences…") { [weak self] in self?.showPreferences() }
         add("search.toggleOCR", "Toggle Image OCR in Search") { [weak self] in self?.toggleOCR() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
@@ -224,6 +229,60 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         batchRename.present(names: names, in: pane.currentURL, existing: existing, over: window) {
             [weak self] in self?.activePane?.reloadIfShowingListing()
         }
+    }
+
+    // MARK: - New folder / Trash / Reveal
+
+    private func newFolder() {
+        guard let pane = activePane else { return }
+        do {
+            let name = try FileOperations.makeFolder(in: pane.currentURL)
+            pane.reloadIfShowingListing()
+            pane.select(name: name)
+        } catch {
+            presentFailures(
+                [FileOperations.Failure(name: "New Folder", reason: error.localizedDescription)],
+                title: "Couldn’t create folder")
+        }
+    }
+
+    private func trashSelection() {
+        guard let pane = activePane else { return }
+        let names = pane.selectedEntries.map(\.name)
+        guard !names.isEmpty else { NSSound.beep(); return }
+        let result = FileOperations.trash(names, in: pane.currentURL)
+        pane.reloadIfShowingListing()
+        if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
+        if !result.failures.isEmpty { presentFailures(result.failures, title: "Move to Trash failed") }
+    }
+
+    private func registerTrashUndo(_ trashed: [FileOperations.Trashed]) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let failures = FileOperations.untrash(trashed)
+            target.leftTabs.activePane?.reloadIfShowingListing()
+            target.rightTabs.activePane?.reloadIfShowingListing()
+            if !failures.isEmpty { target.presentFailures(failures, title: "Undo failed") }
+        }
+        undoManager.setActionName("Move to Trash")
+    }
+
+    private func revealSelection() {
+        guard let pane = activePane else { return }
+        let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
+        NSWorkspace.shared.activateFileViewerSelecting(urls.isEmpty ? [pane.currentURL] : urls)
+    }
+
+    /// Run a registry command from a menu item carrying its id in representedObject.
+    @objc func performMenuCommand(_ sender: NSMenuItem) {
+        if let id = sender.representedObject as? String { commands.perform(id) }
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        guard menuItem.action == #selector(performMenuCommand(_:)),
+            let id = menuItem.representedObject as? String
+        else { return true }
+        return commands.command(id)?.isEnabled() ?? true
     }
 
     // MARK: - Preferences
