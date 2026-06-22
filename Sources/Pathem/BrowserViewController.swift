@@ -18,7 +18,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let outerSplit = NSSplitView()  // sidebar | panes
     private let sidebar = SidebarController()
     private let searchField = NSSearchField()
-    private var didSetInitialSidebar = false
     private var didSetInitialSplit = false
 
     /// Cap on items embedded per search, to bound the cost on huge folders.
@@ -85,6 +84,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         outerSplit.addArrangedSubview(split)
         // Keep the sidebar's width when the window resizes; the panes absorb it.
         outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 0)
+        // Durably pin the sidebar to a sane default width so the panes always get
+        // the rest. setPosition() alone is transient in an auto-layout split and
+        // can let the sidebar swallow the whole window; this constraint stays put
+        // and is still draggable (its priority is below the divider-drag priority).
+        let sidebarWidth = sidebar.containerView.widthAnchor.constraint(equalToConstant: 200)
+        sidebarWidth.priority = NSLayoutConstraint.Priority(260)
+        sidebarWidth.isActive = true
 
         searchField.placeholderString = "Semantic search in this folder (on-device)…"
         searchField.translatesAutoresizingMaskIntoConstraints = false
@@ -705,20 +711,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     override func viewDidLayout() {
         super.viewDidLayout()
-        if !didSetInitialSidebar, outerSplit.bounds.width > 0 {
-            outerSplit.setPosition(190, ofDividerAt: 0)  // initial sidebar width
-            didSetInitialSidebar = true
-        }
-        if !didSetInitialSplit, split.bounds.width > 0 {
-            split.setPosition(split.bounds.width / 2, ofDividerAt: 0)
-            didSetInitialSplit = true
-        }
+        applyInitialSplitPositions()
     }
 
     override func viewDidAppear() {
         super.viewDidAppear()
+        applyInitialSplitPositions()
         view.window?.makeFirstResponder(leftTabs.activePane?.list.tableView)
         maybePromptFullDiskAccess()
+    }
+
+    /// Place the sidebar and pane dividers once, when a real width exists.
+    /// Crucially this sets the sidebar to a fixed width and lets the panes take
+    /// the rest; without it the sidebar's auto-layout could swallow the whole
+    /// window (the "all I see is the sidebar" bug). Runs from whichever of
+    /// viewDidLayout / viewDidAppear first has a laid-out width.
+    private func applyInitialSplitPositions() {
+        guard !didSetInitialSplit, outerSplit.bounds.width > 200 else { return }
+        outerSplit.setPosition(200, ofDividerAt: 0)  // sidebar width
+        outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
+        split.setPosition(split.bounds.width / 2, ofDividerAt: 0)  // even panes
+        didSetInitialSplit = true
     }
 
     /// Show the guided Full Disk Access walkthrough when we don't have access and
