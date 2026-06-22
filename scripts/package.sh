@@ -35,6 +35,7 @@ APP="$BUILD_DIR/$APP_NAME.app"
 
 archflags=()
 for arch in $ARCHS; do archflags+=(--arch "$arch"); done
+[[ ${#archflags[@]} -gt 0 ]] || { echo "error: ARCHS produced no architectures (got: '$ARCHS')" >&2; exit 1; }
 
 echo "==> Building $APP_NAME ($CONFIG; $ARCHS)"
 swift build -c "$CONFIG" "${archflags[@]}"
