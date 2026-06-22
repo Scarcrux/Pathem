@@ -1,4 +1,4 @@
 # Shows the "Sponsor" button once the repo is public and GitHub Sponsors is
-# enabled on the account. Tip jar only — see DESIGN.md §9 (revenue is not the
+# enabled on the account. Tip jar only (see DESIGN.md §9; revenue is not the
 # goal for this project).
 github: [Scarcrux]

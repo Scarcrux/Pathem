@@ -40,38 +40,54 @@ fi
 BUILD_DIR="$ROOT/.build"
 APP="$BUILD_DIR/$APP_NAME.app"
 
-archflags=()
-for arch in $ARCHS; do archflags+=(--arch "$arch"); done
-[[ ${#archflags[@]} -gt 0 ]] || { echo "error: ARCHS produced no architectures (got: '$ARCHS')" >&2; exit 1; }
+[[ -n "$ARCHS" ]] || { echo "error: ARCHS is empty" >&2; exit 1; }
 
+# Build each arch separately, then lipo. A single multi-arch `swift build`
+# compiles SwiftTerm's Metal shader (needs the Metal toolchain, and is broken
+# under some Xcode 26 setups); a single-arch build only COPIES the shader
+# (SwiftTerm compiles it at runtime), so this path needs no Metal toolchain.
 echo "==> Building $APP_NAME ($CONFIG; $ARCHS)"
-swift build -c "$CONFIG" "${archflags[@]}"
-binDir="$(swift build -c "$CONFIG" "${archflags[@]}" --show-bin-path)"
-binary="$binDir/$APP_NAME"
-[[ -x "$binary" ]] || { echo "error: built binary not found at $binary" >&2; exit 1; }
+binaries=()
+for arch in $ARCHS; do
+	echo "    building $arch"
+	swift build -c "$CONFIG" --arch "$arch"
+	archBinDir="$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)"
+	[[ -x "$archBinDir/$APP_NAME" ]] || { echo "error: binary not found at $archBinDir/$APP_NAME" >&2; exit 1; }
+	binaries+=("$archBinDir/$APP_NAME")
+done
 
 echo "==> Assembling bundle"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$binary" "$APP/Contents/MacOS/$APP_NAME"
+if [[ ${#binaries[@]} -gt 1 ]]; then
+	lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/$APP_NAME"
+else
+	cp "${binaries[0]}" "$APP/Contents/MacOS/$APP_NAME"
+fi
+# Note: we deliberately do not ship SwiftTerm's resource bundle. It contains only
+# Shaders.metal for SwiftTerm's optional Metal renderer (the terminal renders via
+# CoreText without it), and as a resource-only directory with no Info.plist it is
+# not a codesignable/notarizable bundle.
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 [[ -f "$ROOT/Packaging/$APP_NAME.icns" ]] \
   && cp "$ROOT/Packaging/$APP_NAME.icns" "$APP/Contents/Resources/$APP_NAME.icns"
 
 echo "==> Signing"
+signargs=(--force)
 if [[ -n "${DEVELOPER_ID:-}" ]]; then
 	echo "    Developer ID, Hardened Runtime: $DEVELOPER_ID"
-	codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID" "$APP"
+	signargs+=(--options runtime --timestamp --sign "$DEVELOPER_ID")
 elif [[ -n "${SIGN_IDENTITY:-}" ]]; then
 	# A stable local identity (e.g. a self-signed cert from `make dev-cert`), so a
 	# Full Disk Access grant survives rebuilds. Not for distribution.
 	echo "    local identity (stable across rebuilds): $SIGN_IDENTITY"
-	codesign --force --sign "$SIGN_IDENTITY" "$APP"
+	signargs+=(--sign "$SIGN_IDENTITY")
 else
 	echo "    ad-hoc (set SIGN_IDENTITY for a stable local id, or DEVELOPER_ID to distribute)"
-	codesign --force --sign - "$APP"
+	signargs+=(--sign -)
 fi
+codesign "${signargs[@]}" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 
 if [[ -n "${NOTARY_PROFILE:-}" && -n "${DEVELOPER_ID:-}" ]]; then

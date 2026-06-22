@@ -63,10 +63,20 @@ Jumping to the last row costs about the same as jumping to the tenth.
 
 ## Install
 
-Pathem is distributed as source. Building it yourself needs no Apple Developer
-account: a locally compiled app is not quarantined, so it launches with no
-Gatekeeper prompts. You need macOS 15 or later and the Swift toolchain (Xcode,
-or just the Command Line Tools via `xcode-select --install`).
+### Download (notarized)
+
+Grab the latest `Pathem-vX.Y.Z-universal.zip` from
+[Releases](https://github.com/Scarcrux/Pathem/releases): a universal (Apple
+Silicon + Intel), Developer ID-signed, notarized, stapled build. Unzip and drag
+`Pathem.app` to /Applications. No Gatekeeper warnings, no build step. Releases
+are produced automatically by the `Release` workflow when a `v*` tag is pushed.
+
+### Build from source
+
+Building it yourself needs no Apple Developer account: a locally compiled app is
+not quarantined, so it launches with no Gatekeeper prompts. You need macOS 15 or
+later and the Swift toolchain (Xcode, or just the Command Line Tools via
+`xcode-select --install`).
 
 ```
 git clone https://github.com/Scarcrux/Pathem.git
@@ -85,6 +95,7 @@ they are not needed to build and run it yourself.
 make run            # build and launch from source (fastest loop)
 make build          # build the engine and the app
 make test           # run the engine tests
+make smoke          # launch and assert the window/pane layout invariants
 make app            # assemble .build/Pathem.app (host arch, ad-hoc signed)
 make install        # build the app and copy it to /Applications
 make watch          # rebuild and relaunch on every save (fast debug loop)
@@ -101,15 +112,14 @@ edit a file, save, and Pathem rebuilds and relaunches itself.
 
 `make app` (or `scripts/package.sh`) assembles an ad-hoc signed `Pathem.app`
 under `.build/`. Local builds default to your Mac's architecture (fast);
-distribution builds (`DEVELOPER_ID` set) go universal. A universal build needs
-Xcode's Metal toolchain, because the embedded terminal (SwiftTerm) ships a Metal
-shader: run `xcodebuild -runFirstLaunch` then
-`xcodebuild -downloadComponent MetalToolchain` once. `make install` also copies
-the app to /Applications.
+distribution builds (`DEVELOPER_ID` set) go universal. The script builds each
+architecture separately and joins them with `lipo`, which sidesteps the Metal
+toolchain that a single multi-arch SwiftPM build would otherwise require for
+SwiftTerm's shader. `make install` also copies the app to /Applications.
 
 ```
 make app                                 # local, host arch, ad-hoc signed
-ARCHS="arm64 x86_64" scripts/package.sh  # universal (needs the Metal toolchain)
+ARCHS="arm64 x86_64" scripts/package.sh  # universal, no Metal toolchain needed
 ```
 
 For a distributable build, set `DEVELOPER_ID` to a "Developer ID Application"

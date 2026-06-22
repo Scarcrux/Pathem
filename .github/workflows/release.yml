@@ -1,0 +1,80 @@
+name: Release
+
+# Push a version tag (e.g. v1.0.0) to build a universal, Developer ID-signed,
+# notarized, stapled Pathem.app and attach it to a GitHub Release. This is the
+# downloadable build; users who prefer to compile from source still can.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   DEVELOPER_ID_CERT_P12       base64 of your "Developer ID Application" .p12
+#                               (base64 -i cert.p12 | pbcopy)
+#   DEVELOPER_ID_CERT_PASSWORD  the .p12 export password
+#   DEVELOPER_ID                "Developer ID Application: Name (TEAMID)"
+#   NOTARY_APPLE_ID             your Apple ID email
+#   NOTARY_TEAM_ID              your 10-char team id
+#   NOTARY_PASSWORD             an app-specific password (appleid.apple.com)
+#
+# All of this needs a paid Apple Developer account. Without these secrets the
+# job fails fast; the build-from-source path in the README is unaffected.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Import Developer ID certificate
+        env:
+          CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          echo "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -P "$CERT_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      - name: Store notary credentials
+        env:
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          xcrun notarytool store-credentials pathem-notary \
+            --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_PASSWORD"
+
+      - name: Build, sign, notarize, staple
+        env:
+          DEVELOPER_ID: ${{ secrets.DEVELOPER_ID }}
+          NOTARY_PROFILE: pathem-notary
+        run: |
+          set -euo pipefail
+          scripts/package.sh   # DEVELOPER_ID set -> universal + Hardened Runtime + notarize + staple
+
+      - name: Zip the app
+        run: |
+          set -euo pipefail
+          ditto -c -k --keepParent .build/Pathem.app "Pathem-${GITHUB_REF_NAME}-universal.zip"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            "Pathem-${GITHUB_REF_NAME}-universal.zip" \
+            --title "Pathem ${GITHUB_REF_NAME}" \
+            --generate-notes
