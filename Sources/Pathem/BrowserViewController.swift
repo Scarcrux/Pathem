@@ -131,6 +131,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.setActiveSide(side, pane: pane)
             }
             side.onPaneDirectoryDidChange = { [weak self] pane, url in self?.directoryChanged(pane, url) }
+            side.onPaneDidNavigate = { [weak self] pane in
+                if pane === self?.activePane { self?.searchField.stringValue = "" }
+            }
         }
         // Open each side's first tab now that configurePane + callbacks are set,
         // so the initial pane is fully wired (formats applied, search preindexed).
@@ -169,6 +172,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("files.batchRename", "Batch Rename…", enabled: hasSelection) { [weak self] in self?.showBatchRename() }
         add("files.newFolder", "New Folder") { [weak self] in self?.newFolder() }
+        add("files.rename", "Rename…", enabled: { [weak self] in self?.activePane?.selectedEntries.count == 1 }) {
+            [weak self] in self?.renameSelection()
+        }
         add("files.trash", "Move to Trash", enabled: hasSelection) { [weak self] in self?.trashSelection() }
         add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
@@ -244,6 +250,51 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 [FileOperations.Failure(name: "New Folder", reason: error.localizedDescription)],
                 title: "Couldn’t create folder")
         }
+    }
+
+    private func renameSelection() {
+        guard let pane = activePane, pane.selectedEntries.count == 1,
+            let entry = pane.selectedEntries.first
+        else { return }
+        let alert = NSAlert()
+        alert.messageText = "Rename “\(entry.name)”"
+        alert.addButton(withTitle: "Rename")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = entry.name
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !newName.isEmpty, newName != entry.name else { return }
+        let directory = pane.currentURL
+        do {
+            try FileOperations.rename(entry.name, to: newName, in: directory)
+            registerRenameUndo(from: newName, to: entry.name, in: directory)
+            pane.reloadIfShowingListing()
+            pane.select(name: newName)
+        } catch {
+            presentFailures(
+                [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
+                title: "Rename failed")
+        }
+    }
+
+    private func registerRenameUndo(from current: String, to original: String, in directory: URL) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            do {
+                try FileOperations.rename(current, to: original, in: directory)
+                target.activePane?.reloadIfShowingListing()
+                target.activePane?.select(name: original)
+                target.registerRenameUndo(from: original, to: current, in: directory)  // redo
+            } catch {
+                target.presentFailures(
+                    [FileOperations.Failure(name: current, reason: error.localizedDescription)],
+                    title: "Undo failed")
+            }
+        }
+        undoManager.setActionName("Rename")
     }
 
     private func trashSelection() {
@@ -600,6 +651,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activePane = pane
         activeSide = side
         pane.setActive(true)
+        searchField.stringValue = ""  // the shared field follows the active pane
         if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
     }
 

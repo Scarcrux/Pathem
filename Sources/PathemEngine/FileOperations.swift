@@ -75,6 +75,18 @@ public enum FileOperations {
         return name
     }
 
+    // MARK: Rename
+
+    /// Rename a single item. Throws if the destination exists (no clobber) or the
+    /// move fails; a no-op when the name is unchanged or empty.
+    public static func rename(_ name: String, to newName: String, in directory: URL) throws {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != name else { return }
+        try FileManager.default.moveItem(
+            at: directory.appendingPathComponent(name),
+            to: directory.appendingPathComponent(trimmed))
+    }
+
     // MARK: Trash
 
     /// A trashed item plus where it landed, so a move-to-trash can be undone.

@@ -27,6 +27,9 @@ final class PaneController: NSObject {
     /// Fired when this pane's folder changes, by navigation or on-disk edits.
     /// The browser uses it to invalidate and rebuild the semantic-search cache.
     var onDirectoryDidChange: ((URL) -> Void)?
+    /// Fired only on user navigation (not watcher refreshes), so the browser can
+    /// clear the stale search query.
+    var onDidNavigate: (() -> Void)?
 
     private var watcher: DirectoryWatcher?
     private var pendingRefresh: DispatchWorkItem?
@@ -63,11 +66,13 @@ final class PaneController: NSObject {
         updateStatus()
     }
 
-    func reload() {
+    /// Refresh the listing. In-place refreshes (sort, file op, watcher) preserve
+    /// the selection and scroll; navigation passes preserveState: false to reset.
+    func reload(preserveState: Bool = true) {
         showingSearchResults = false
         if let resolveFormat { format = resolveFormat(nav.current) }
         let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)) ?? []
-        list.setEntries(format.sorted(entries))
+        list.setEntries(format.sorted(entries), preserveState: preserveState)
         list.showSortIndicator(key: format.sortKey, ascending: format.ascending)
         updateStatus()
         pathControl.url = nav.current
@@ -125,7 +130,8 @@ final class PaneController: NSObject {
     /// on-disk changes, and tell the browser the folder changed.
     private func enterDirectory() {
         startWatching()  // arm before snapshotting, to narrow the listing/watch gap
-        reload()
+        reload(preserveState: false)  // navigation resets selection + scroll
+        onDidNavigate?()
         onDirectoryDidChange?(nav.current)
     }
 

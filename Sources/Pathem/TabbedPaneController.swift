@@ -25,6 +25,8 @@ final class TabbedPaneController: NSObject {
     /// A tab's folder changed (navigation or on-disk); the browser rebuilds the
     /// search cache, and the tab title is refreshed here first.
     var onPaneDirectoryDidChange: ((PaneController, URL) -> Void)?
+    /// A tab navigated (user moved folders), so the browser can clear the search.
+    var onPaneDidNavigate: ((PaneController) -> Void)?
 
     var activePane: PaneController? { tabs.indices.contains(activeIndex) ? tabs[activeIndex] : nil }
     var tabCount: Int { tabs.count }
@@ -91,6 +93,10 @@ final class TabbedPaneController: NSObject {
             guard let self, let pane else { return }
             self.refreshTabBar()
             self.onPaneDirectoryDidChange?(pane, changed)
+        }
+        pane.onDidNavigate = { [weak self, weak pane] in
+            guard let self, let pane else { return }
+            self.onPaneDidNavigate?(pane)
         }
         tabs.append(pane)
         activeIndex = tabs.count - 1

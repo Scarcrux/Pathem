@@ -107,9 +107,30 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.reloadData()
     }
 
-    func setEntries(_ entries: [FileEntry]) {
+    /// Replace the listing. With `preserveState` (an in-place refresh: a sort, a
+    /// file op, a watcher tick) the selection is restored by name and the scroll
+    /// position is held, so the list never jumps or deselects under the user.
+    /// Without it (navigation, search results) the view resets to the top.
+    func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
+        guard preserveState else {
+            self.entries = entries
+            tableView.reloadData()
+            if !entries.isEmpty { tableView.scrollRowToVisible(0) }
+            return
+        }
+        let selectedNames = Set(selectedEntries.map(\.name))
+        let origin = scrollView.contentView.bounds.origin
         self.entries = entries
         tableView.reloadData()
+        if !selectedNames.isEmpty {
+            var rows = IndexSet()
+            for (index, entry) in entries.enumerated() where selectedNames.contains(entry.name) {
+                rows.insert(index)
+            }
+            if !rows.isEmpty { tableView.selectRowIndexes(rows, byExtendingSelection: false) }
+        }
+        scrollView.contentView.scroll(to: origin)
+        scrollView.reflectScrolledClipView(scrollView.contentView)
     }
 
     @objc private func handleDoubleClick() {

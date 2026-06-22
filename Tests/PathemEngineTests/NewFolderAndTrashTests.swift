@@ -26,6 +26,24 @@ import Testing
         #expect(isDir.boolValue)
     }
 
+    @Test func renameMovesAndRefusesClobber() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try "a".data(using: .utf8)!.write(to: dir.appendingPathComponent("a.txt"))
+        try "b".data(using: .utf8)!.write(to: dir.appendingPathComponent("b.txt"))
+
+        try FileOperations.rename("a.txt", to: "c.txt", in: dir)
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("c.txt").path))
+        #expect(!FileManager.default.fileExists(atPath: dir.appendingPathComponent("a.txt").path))
+
+        // No-op when unchanged or empty; throws when the target exists.
+        try FileOperations.rename("c.txt", to: "c.txt", in: dir)
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("c.txt").path))
+        #expect(throws: (any Error).self) {
+            try FileOperations.rename("c.txt", to: "b.txt", in: dir)
+        }
+    }
+
     @Test func trashThenUntrashRestores() throws {
         let dir = try tempDir()
         defer { try? FileManager.default.removeItem(at: dir) }
