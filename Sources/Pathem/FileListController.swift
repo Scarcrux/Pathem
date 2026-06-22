@@ -8,10 +8,12 @@ import UniformTypeIdentifiers
 /// materializing them all — the table only asks for the rows it is about to
 /// show. `cellRequests` instruments exactly that for the Gate A proof.
 @MainActor
-final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
     let scrollView = NSScrollView()
     let tableView = KeyTableView()
     private let placeholder = NSTextField(labelWithString: "")
+    /// Populated on demand with the apps that can open the selection.
+    private let openWithMenu = NSMenu()
 
     private(set) var entries: [FileEntry] = []
 
@@ -147,6 +149,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             menu.addItem(item)
         }
         add("Open", "files.open")
+        let openWith = NSMenuItem(title: "Open With", action: nil, keyEquivalent: "")
+        openWithMenu.delegate = self
+        openWith.submenu = openWithMenu
+        menu.addItem(openWith)
         add("Get Info", "files.getInfo")
         add("Download", "files.download")
         add("Reveal in Finder", "files.reveal")
@@ -205,6 +211,70 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let row = tableView.clickedRow
         guard row >= 0, row < entries.count else { return }
         onOpen?(entries[row])
+    }
+
+    // MARK: Open With
+
+    private func selectedFileURLs() -> [URL] {
+        guard let dir = directoryURL else { return [] }
+        return tableView.selectedRowIndexes.compactMap {
+            $0 < entries.count ? dir.appendingPathComponent(entries[$0].name) : nil
+        }
+    }
+
+    /// Populate the Open With submenu with the apps that can open the selection
+    /// (the default app first), plus "Other…".
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === openWithMenu else { return }
+        menu.removeAllItems()
+        func disabled(_ title: String) {
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            item.isEnabled = false
+            menu.addItem(item)
+        }
+        guard let first = selectedFileURLs().first else { disabled("No selection"); return }
+        var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
+        if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first),
+            let index = apps.firstIndex(of: preferred)
+        {
+            apps.remove(at: index)
+            apps.insert(preferred, at: 0)
+        }
+        guard !apps.isEmpty else { disabled("No applications"); return }
+        for app in apps {
+            let item = NSMenuItem(title: FileManager.default.displayName(atPath: app.path),
+                action: #selector(openWithApp(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = app
+            let icon = NSWorkspace.shared.icon(forFile: app.path)
+            icon.size = NSSize(width: 16, height: 16)
+            item.image = icon
+            menu.addItem(item)
+        }
+        menu.addItem(.separator())
+        let other = NSMenuItem(title: "Other…", action: #selector(openWithOther(_:)), keyEquivalent: "")
+        other.target = self
+        menu.addItem(other)
+    }
+
+    @objc private func openWithApp(_ sender: NSMenuItem) {
+        guard let app = sender.representedObject as? URL else { return }
+        let urls = selectedFileURLs()
+        guard !urls.isEmpty else { return }
+        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    @objc private func openWithOther(_ sender: NSMenuItem) {
+        let urls = selectedFileURLs()
+        guard !urls.isEmpty else { return }
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        panel.begin { response in
+            guard response == .OK, let app = panel.url else { return }
+            NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        }
     }
 
     func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
