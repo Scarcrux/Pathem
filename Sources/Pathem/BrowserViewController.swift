@@ -1193,4 +1193,45 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Hang up the embedded shell. Called on quit so no orphan shell survives.
     func terminateTerminal() { terminal.shutdown() }
+
+    /// Structural UI smoke check (run via PATHEM_SMOKE=1). Asserts the window and
+    /// panes laid out sanely: exactly the class of regression that the engine
+    /// tests can't see (the window-sliver and dual-pane-collapse bugs). Returns
+    /// a pass/fail plus human-readable lines.
+    /// Idempotent geometry invariants, polled by the smoke harness until the
+    /// window has actually laid out (layout can lag a beat right after launch or
+    /// under load, so a single fixed delay is flaky).
+    func layoutSettled() -> Bool {
+        let size = view.window?.frame.size ?? .zero
+        return size.width >= 700 && size.height >= 400
+            && leftTabs.containerView.frame.width > 50
+            && rightTabs.containerView.frame.width > 50
+            && (100...360).contains(sidebar.containerView.frame.width)
+    }
+
+    func smokeReport() -> (ok: Bool, lines: [String]) {
+        var lines: [String] = []
+        var ok = true
+        func check(_ name: String, _ pass: Bool, _ detail: String) {
+            if !pass { ok = false }
+            lines.append("\(pass ? "ok  " : "FAIL") \(name) (\(detail))")
+        }
+        let size = view.window?.frame.size ?? .zero
+        check("window-size", size.width >= 700 && size.height >= 400, "\(Int(size.width))x\(Int(size.height))")
+        let sidebarW = sidebar.containerView.frame.width
+        check("sidebar-width", (100...360).contains(sidebarW), "\(Int(sidebarW))")
+        check("left-pane-visible", leftTabs.containerView.frame.width > 50, "\(Int(leftTabs.containerView.frame.width))")
+        check("right-pane-visible", rightTabs.containerView.frame.width > 50, "\(Int(rightTabs.containerView.frame.width))")
+        check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
+        // Open the terminal only if it isn't already (a prior run may have
+        // persisted it open), so the check is deterministic; restore the pref so
+        // the smoke run doesn't leave state behind.
+        let savedVisible = UserDefaults.standard.bool(forKey: "pathem.terminalVisible")
+        if terminal.view.isHidden { toggleTerminal() }
+        check("terminal-opens", !terminal.view.isHidden && terminal.isRunning,
+            "visible=\(!terminal.view.isHidden) running=\(terminal.isRunning)")
+        terminal.shutdown()
+        UserDefaults.standard.set(savedVisible, forKey: "pathem.terminalVisible")
+        return (ok, lines)
+    }
 }

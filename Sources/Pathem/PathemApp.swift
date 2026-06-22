@@ -47,6 +47,28 @@ enum PathemApp {
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
+
+        // Headless UI smoke test: once the window has laid out, assert the
+        // structural invariants (window not collapsed, both panes visible) and
+        // exit. Catches the layout regressions the engine tests can't see.
+        if ProcessInfo.processInfo.environment["PATHEM_SMOKE"] != nil {
+            // Poll until the window has laid out (up to ~6s), then assert once.
+            // Layout lags a beat after launch, so a fixed delay flakes under load.
+            var attempts = 0
+            func tick() {
+                attempts += 1
+                guard browser.layoutSettled() || attempts >= 30 else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+                    return
+                }
+                let report = browser.smokeReport()
+                print("=== SMOKE: Pathem UI invariants ===")
+                report.lines.forEach { print($0) }
+                print("RESULT: \(report.ok ? "PASS" : "FAIL")")
+                exit(report.ok ? 0 : 1)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+        }
         app.run()
     }
 

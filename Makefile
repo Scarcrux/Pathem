@@ -12,7 +12,7 @@
 #   make fmt      format with swift-format (if installed)
 #   make clean    remove build products
 
-.PHONY: build run test app install watch watch-install icon dev-cert fmt clean
+.PHONY: build run test smoke app install watch watch-install icon dev-cert fmt clean
 
 build:
 	swift build
@@ -22,6 +22,9 @@ run:
 
 test:
 	swift test
+
+smoke:
+	PATHEM_SMOKE=1 swift run Pathem
 
 app:
 	scripts/package.sh

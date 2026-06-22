@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build
+
+      - name: Engine tests
+        run: swift test
+
+      # Gate A proves the table virtualizes a 1M-row dataset; the smoke test
+      # asserts the window/pane layout invariants (the structural GUI bugs the
+      # unit tests can't see). Both boot a real window, so they need the runner's
+      # GUI session, which the macOS runners provide.
+      - name: Gate A (virtualization proof)
+        run: PATHEM_GATE_A=1 swift run Pathem
+
+      - name: UI smoke (layout invariants)
+        run: PATHEM_SMOKE=1 swift run Pathem
