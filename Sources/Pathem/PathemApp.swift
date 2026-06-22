@@ -134,6 +134,10 @@ enum PathemApp {
         mainMenu.addItem(viewItem)
         let viewMenu = NSMenu(title: "View")
         viewItem.submenu = viewMenu
+        viewMenu.addItem(commandItem("as List", "view.asList", "1"))
+        viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
+        viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
+        viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
         viewMenu.addItem(.separator())

@@ -8,7 +8,18 @@ import PathemEngine
 @MainActor
 final class PaneController: NSObject, NSTextFieldDelegate {
     let containerView = NSView()
-    let list = FileListController()
+    /// The active view (list, icon, or gallery), swapped when the folder's view
+    /// mode changes. PaneController drives it through PaneContentView.
+    private var content: PaneContentView = FileListController()
+    private var currentMode: ViewFormat.ViewMode = .list
+    private let contentContainer = NSView()
+    private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
+    /// Keymap chord handler, re-applied to whichever content is active.
+    var onKeyChordHandler: ((KeyChord) -> Bool)? {
+        didSet { content.onKeyChord = onKeyChordHandler }
+    }
+    /// The focusable view of the active content (for first-responder handoff).
+    var keyView: NSView { content.keyView }
     private(set) var nav: NavigationState
 
     private let pathControl = NSPathControl()
@@ -55,26 +66,26 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         nav = NavigationState(current: start.standardizedFileURL)
         super.init()
         build()
-        wire()
+        wireContent()
         enterDirectory()
     }
 
     var currentURL: URL { nav.current }
-    var selectedEntries: [FileEntry] { list.selectedEntries }
+    var selectedEntries: [FileEntry] { content.selectedEntries }
     var canGoBack: Bool { nav.canGoBack }
     var canGoForward: Bool { nav.canGoForward }
     var canGoUp: Bool { nav.parent != nil }
 
     /// Entries currently shown (directory listing, or ranked search results).
-    var entries: [FileEntry] { list.entries }
+    var entries: [FileEntry] { content.entries }
 
     /// Replace the listing with an explicit set (e.g. ranked search results).
     func showResults(_ entries: [FileEntry]) {
         showingSearchResults = true
-        list.directoryURL = nil  // disable row drag during search
-        list.resolutionURL = nav.current  // but results are from this folder, so actions resolve
-        list.setEntries(entries)
-        list.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
+        content.directoryURL = nil  // disable row drag during search
+        content.resolutionURL = nav.current  // but results are from this folder, so actions resolve
+        content.setEntries(entries, preserveState: false)
+        content.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
         updateStatus()
     }
 
@@ -82,22 +93,23 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {
         showingSearchResults = false
-        list.directoryURL = nav.current  // rows in this folder are draggable
-        list.resolutionURL = nav.current
         if let resolveFormat { format = resolveFormat(nav.current) }
+        applyViewMode(format.viewMode)  // may swap the content view before we fill it
+        content.directoryURL = nav.current  // rows in this folder are draggable
+        content.resolutionURL = nav.current
         do {
             let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
-            list.setEntries(format.sorted(entries), preserveState: preserveState)
-            list.showPlaceholder(entries.isEmpty ? "This folder is empty" : nil)
+            content.setEntries(format.sorted(entries), preserveState: preserveState)
+            content.showPlaceholder(entries.isEmpty ? "This folder is empty" : nil)
         } catch {
             // A read failure (permission denied, missing) looks identical to an
             // empty folder unless we say so.
-            list.setEntries([], preserveState: false)
-            list.showPlaceholder(
+            content.setEntries([], preserveState: false)
+            content.showPlaceholder(
                 "Couldn’t read this folder.\nPathem may need Full Disk Access "
                     + "(System Settings ▸ Privacy & Security ▸ Full Disk Access).")
         }
-        list.showSortIndicator(key: format.sortKey, ascending: format.ascending)
+        content.showSortIndicator(key: format.sortKey, ascending: format.ascending)
         updateStatus()
         pathControl.url = nav.current
         backButton.isEnabled = nav.canGoBack
@@ -129,7 +141,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
 
     /// Apply display preferences to this pane's list.
     func applyStyle(rowHeight: Double, fontSize: Int, alternatingRows: Bool) {
-        list.applyStyle(
+        lastStyle = (CGFloat(rowHeight), CGFloat(fontSize), alternatingRows)
+        content.applyStyle(
             rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize), alternatingRows: alternatingRows)
     }
 
@@ -146,7 +159,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     }
 
     /// Select (and scroll to) a row by name, e.g. a just-created folder.
-    func select(name: String) { list.select(name: name) }
+    func select(name: String) { content.select(name: name) }
 
     @objc func goBack() { if nav.goBack() { enterDirectory() } }
     @objc func goForward() { if nav.goForward() { enterDirectory() } }
@@ -226,8 +239,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         toolbar.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
         toolbar.translatesAutoresizingMaskIntoConstraints = false
 
-        let scroll = list.scrollView
-        scroll.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.translatesAutoresizingMaskIntoConstraints = false
 
         statusLabel.font = .systemFont(ofSize: 11)
         statusLabel.textColor = .secondaryLabelColor
@@ -235,27 +247,90 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
         containerView.addSubview(toolbar)
-        containerView.addSubview(scroll)
+        containerView.addSubview(contentContainer)
         containerView.addSubview(statusLabel)
         NSLayoutConstraint.activate([
             toolbar.topAnchor.constraint(equalTo: containerView.topAnchor),
             toolbar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            scroll.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
-            scroll.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -4),
+            contentContainer.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            contentContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            contentContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            contentContainer.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -4),
             statusLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
             statusLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10),
             statusLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
         ])
+        embedContent()
     }
+
+    /// Put the active content's scroll view into the content container, replacing
+    /// any previous one.
+    private func embedContent() {
+        for sub in contentContainer.subviews { sub.removeFromSuperview() }
+        let scroll = content.scrollView
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.addSubview(scroll)
+        NSLayoutConstraint.activate([
+            scroll.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+            scroll.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+            scroll.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            scroll.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
+        ])
+    }
+
+    /// Swap the content view when the folder's view mode changes, carrying over
+    /// the callbacks and style.
+    private func applyViewMode(_ mode: ViewFormat.ViewMode) {
+        guard mode != currentMode else { return }
+        currentMode = mode
+        switch mode {
+        case .list: content = FileListController()
+        case .icon: content = IconCollectionController(gallery: false)
+        case .gallery: content = IconCollectionController(gallery: true)
+        }
+        wireContent()
+        embedContent()
+        if let s = lastStyle {
+            content.applyStyle(rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
+        }
+    }
+
+    /// Wire the active content's callbacks (run on creation and on every swap).
+    private func wireContent() {
+        content.onOpen = { [weak self] entry in self?.descend(into: entry) }
+        content.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
+        content.onSortChanged = { [weak self] key, ascending in
+            guard let self else { return }
+            self.format.sortKey = key
+            self.format.ascending = ascending
+            self.rememberFormat?(self.nav.current, self.format)
+            self.reload()
+        }
+        content.onSelectionChanged = { [weak self] in self?.updateStatus() }
+        content.onDropFiles = { [weak self] urls, move in
+            guard let self else { return }
+            self.onDropFiles?(urls, move, self.nav.current)
+        }
+        content.onKeyChord = onKeyChordHandler
+    }
+
+    /// Switch this folder's view mode (list / icon / gallery), persist it, and
+    /// reload (which swaps the content view).
+    func setViewMode(_ mode: ViewFormat.ViewMode) {
+        guard mode != format.viewMode else { return }
+        format.viewMode = mode
+        rememberFormat?(nav.current, format)
+        reload()
+    }
+
+    var viewMode: ViewFormat.ViewMode { format.viewMode }
 
     /// Update the bottom status line: item count, or the selection count and its
     /// total size when something is selected.
     private func updateStatus() {
-        let all = list.entries
-        let selected = list.selectedEntries
+        let all = content.entries
+        let selected = content.selectedEntries
         if selected.isEmpty {
             let size = all.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
             let items = "\(all.count) item\(all.count == 1 ? "" : "s")"
@@ -280,22 +355,6 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         return button
     }
 
-    private func wire() {
-        list.onOpen = { [weak self] entry in self?.descend(into: entry) }
-        list.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
-        list.onSortChanged = { [weak self] key, ascending in
-            guard let self else { return }
-            self.format.sortKey = key
-            self.format.ascending = ascending
-            self.rememberFormat?(self.nav.current, self.format)
-            self.reload()
-        }
-        list.onSelectionChanged = { [weak self] in self?.updateStatus() }
-        list.onDropFiles = { [weak self] urls, move in
-            guard let self else { return }
-            self.onDropFiles?(urls, move, self.nav.current)
-        }
-    }
 
     func toggleHidden() {
         format.showHidden.toggle()
@@ -342,7 +401,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     @objc private func commitPath() {
         let raw = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         endEditingPath()
-        containerView.window?.makeFirstResponder(list.tableView)  // restore focus on every path
+        containerView.window?.makeFirstResponder(content.keyView)  // restore focus on every path
         guard !raw.isEmpty else { return }
         // Resolve relative input against this pane's folder, not the process cwd.
         let expanded = (raw as NSString).expandingTildeInPath
@@ -363,7 +422,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
             // A file: open its folder and select it.
             nav.go(to: url.deletingLastPathComponent())
             enterDirectory()
-            list.select(name: url.lastPathComponent)
+            content.select(name: url.lastPathComponent)
         }
     }
 
@@ -375,7 +434,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
         if commandSelector == #selector(NSResponder.cancelOperation(_:)) {  // Esc cancels
             endEditingPath()
-            containerView.window?.makeFirstResponder(list.tableView)
+            containerView.window?.makeFirstResponder(content.keyView)
             return true
         }
         return false

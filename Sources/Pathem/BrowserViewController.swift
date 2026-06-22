@@ -167,7 +167,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
-                pane.list.tableView.onKeyChord = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
+                pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
@@ -219,6 +219,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.cut", "Cut", enabled: hasSelection) {
             [weak self] in self?.writeSelectionToPasteboard(cut: true)
         }
+        add("view.asList", "as List") { [weak self] in self?.activePane?.setViewMode(.list) }
+        add("view.asIcons", "as Icons") { [weak self] in self?.activePane?.setViewMode(.icon) }
+        add("view.asGallery", "as Gallery") { [weak self] in self?.activePane?.setViewMode(.gallery) }
         add("terminal.toggle", "Toggle Terminal") { [weak self] in self?.toggleTerminal() }
         add("terminal.here", "Open Terminal Here") { [weak self] in self?.openTerminalHere() }
         add("terminal.toggleFollow", "Terminal Follows Folder") {
@@ -923,7 +926,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func viewDidAppear() {
         super.viewDidAppear()
         applyInitialSplitPositions()
-        view.window?.makeFirstResponder(leftTabs.activePane?.list.tableView)
+        view.window?.makeFirstResponder(leftTabs.activePane?.keyView)
         maybePromptFullDiskAccess()
     }
 
@@ -1361,6 +1364,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if !wasVisible, !terminal.view.isHidden { toggleTerminal() }  // we opened it; hide again
         if !wasRunning, terminal.isRunning { terminal.shutdown() }  // we started the shell; stop it
         UserDefaults.standard.set(savedVisible, forKey: "pathem.terminalVisible")
+        // Icon view hosts the same entries (checked in isolation so the smoke run
+        // doesn't persist a view-mode rule for the home folder).
+        let iconView = IconCollectionController(gallery: false)
+        iconView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
+        check("icon-view-renders", iconView.entries.count > 0, "\(iconView.entries.count) entries")
         return (ok, lines)
     }
 }

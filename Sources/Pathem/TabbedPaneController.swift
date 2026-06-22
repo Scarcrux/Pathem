@@ -149,8 +149,8 @@ final class TabbedPaneController: NSObject {
     }
 
     private func focusActivePane() {
-        guard let table = activePane?.list.tableView else { return }
-        table.window?.makeFirstResponder(table)
+        guard let keyView = activePane?.keyView else { return }
+        keyView.window?.makeFirstResponder(keyView)
     }
 
     private func showActivePane() {
