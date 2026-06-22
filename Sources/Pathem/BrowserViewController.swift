@@ -44,6 +44,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var aiBar = AICommandBar()
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
+    private lazy var preferencesPanel = PreferencesController()
+    /// User preferences (density, font, alternating rows, search OCR).
+    private var prefs = Preferences.default
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -115,6 +118,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadKeymap()
         loadFolderFormats()
         loadLayouts()
+        loadPreferences()
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
@@ -134,6 +138,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         rightTabs.openInitialTab()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
         if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
+        applyPreferences()
     }
 
     /// Register every browser action as a named command. This is the spine the
@@ -163,6 +168,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("files.batchRename", "Batch Rename…", enabled: hasSelection) { [weak self] in self?.showBatchRename() }
+        add("view.preferences", "Preferences…") { [weak self] in self?.showPreferences() }
+        add("search.toggleOCR", "Toggle Image OCR in Search") { [weak self] in self?.toggleOCR() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
         }
@@ -217,6 +224,47 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         batchRename.present(names: names, in: pane.currentURL, existing: existing, over: window) {
             [weak self] in self?.activePane?.reloadIfShowingListing()
         }
+    }
+
+    // MARK: - Preferences
+
+    private static var preferencesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("prefs.json")
+    }
+
+    private func loadPreferences() {
+        if let saved = loadConfig(Preferences.self, from: Self.preferencesURL) { prefs = saved }
+    }
+
+    private func showPreferences() {
+        guard let window = view.window else { return }
+        preferencesPanel.present(prefs, over: window) { [weak self] updated in
+            guard let self else { return }
+            self.prefs = updated
+            self.applyPreferences()
+        }
+    }
+
+    private func toggleOCR() {
+        prefs.searchOCR.toggle()
+        applyPreferences()
+    }
+
+    /// Apply preferences to every tab in both sides, persist them, and rebuild the
+    /// search index (OCR can change what gets embedded).
+    private func applyPreferences() {
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs {
+                pane.applyStyle(
+                    rowHeight: prefs.rowHeight, fontSize: prefs.fontSize,
+                    alternatingRows: prefs.alternatingRows)
+            }
+        }
+        saveConfig(prefs, to: Self.preferencesURL)
+        cachedDir = nil
+        cachedIndex = nil
+        cachedEntries = nil
+        if let directory = activePane?.currentURL { preIndex(directory) }
     }
 
     /// Open the natural-language command bar.
@@ -688,8 +736,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let dirEntries = await Task.detached {
             (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
         }.value
+        let ocr = prefs.searchOCR
         let built = await Task.detached {
-            SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems)
+            SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr)
         }.value
         if activePane?.currentURL == directory {
             cachedDir = directory

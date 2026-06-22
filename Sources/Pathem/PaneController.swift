@@ -98,6 +98,12 @@ final class PaneController: NSObject {
         pendingRefresh?.cancel()
     }
 
+    /// Apply display preferences to this pane's list.
+    func applyStyle(rowHeight: Double, fontSize: Int, alternatingRows: Bool) {
+        list.applyStyle(
+            rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize), alternatingRows: alternatingRows)
+    }
+
     func descend(into entry: FileEntry) {
         guard entry.isDirectory else { return }
         nav.go(to: nav.current.appendingPathComponent(entry.name))

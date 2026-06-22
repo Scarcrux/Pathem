@@ -28,6 +28,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The row selection changed (used to update the status bar).
     var onSelectionChanged: (() -> Void)?
     private var suppressSortCallback = false
+    /// Row font size, applied per cell so a preference change takes effect on reload.
+    private var listFontSize: CGFloat = 13
 
     /// Entries currently selected in the table.
     var selectedEntries: [FileEntry] {
@@ -96,6 +98,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         scrollView.autohidesScrollers = true
     }
 
+    /// Apply display preferences (density-derived row height, font size,
+    /// alternating rows). Reloads so recycled cells pick up the new font.
+    func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
+        listFontSize = fontSize
+        tableView.rowHeight = rowHeight
+        tableView.usesAlternatingRowBackgroundColors = alternatingRows
+        tableView.reloadData()
+    }
+
     func setEntries(_ entries: [FileEntry]) {
         self.entries = entries
         tableView.reloadData()
@@ -144,6 +155,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             ?? Self.makeCell(id, withIcon: isName)
 
         let entry = entries[row]
+        cell.textField?.font = .systemFont(ofSize: listFontSize)
         switch Column(rawValue: id.rawValue) {
         case .name:
             cell.textField?.stringValue = entry.name
