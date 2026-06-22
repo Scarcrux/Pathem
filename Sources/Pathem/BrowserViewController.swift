@@ -47,6 +47,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var preferencesPanel = PreferencesController()
     /// User preferences (density, font, alternating rows, search OCR).
     private var prefs = Preferences.default
+    /// Progress sheet for copy/move; one transfer at a time.
+    private lazy var transferProgress = TransferProgress()
+    private var transferInFlight = false
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -677,19 +680,62 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             resolution = chosen
         }
 
-        let outcome =
-            move
-            ? FileOperations.move(names, from: sourceURL, to: destinationURL, onConflict: resolution)
-            : FileOperations.copy(names, from: sourceURL, to: destinationURL, onConflict: resolution)
-
-        if move { source.reloadIfShowingListing() }
-        destination.reloadIfShowingListing()
-
-        if !outcome.performed.isEmpty {
-            registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+        let urls = names.map { sourceURL.appendingPathComponent($0) }
+        runTransfer(urls: urls, into: destinationURL, move: move, resolution: resolution) {
+            [weak self] outcome in
+            guard let self else { return }
+            if move { source.reloadIfShowingListing() }
+            destination.reloadIfShowingListing()
+            if !outcome.performed.isEmpty {
+                self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+            }
+            if !outcome.failures.isEmpty {
+                self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+            }
         }
-        if !outcome.failures.isEmpty {
-            presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+    }
+
+    /// Run a copy/move off the main thread with a deferred progress sheet (so the
+    /// window never freezes and quick ops never flash a sheet), then hand the
+    /// outcome back on the main actor. One transfer at a time.
+    private func runTransfer(
+        urls: [URL], into destination: URL, move: Bool,
+        resolution: FileOperations.ConflictResolution,
+        completion: @escaping (FileOperations.Outcome) -> Void
+    ) {
+        guard !transferInFlight else { NSSound.beep(); return }
+        transferInFlight = true
+        let total = urls.count
+        let verb = move ? "Moving" : "Copying"
+        let state = TransferState(total: total)
+
+        // Main-actor monitor: wait 0.25s before showing the sheet (so quick ops
+        // never flash it), then poll progress until cancelled by the worker.
+        let monitor = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(250))
+            guard let self, !Task.isCancelled else { return }
+            self.transferProgress.begin(verb: verb, total: total, over: self.view.window) { state.cancel() }
+            while !Task.isCancelled {
+                self.transferProgress.update(completed: state.completed)
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+
+        Task { @MainActor [weak self] in
+            let outcome = await Task.detached(priority: .userInitiated) { () -> FileOperations.Outcome in
+                if move {
+                    return FileOperations.move(
+                        urls: urls, into: destination, onConflict: resolution,
+                        shouldCancel: { state.isCancelled }, progress: { state.setCompleted($0) })
+                }
+                return FileOperations.copy(
+                    urls: urls, into: destination, onConflict: resolution,
+                    shouldCancel: { state.isCancelled }, progress: { state.setCompleted($0) })
+            }.value
+            monitor.cancel()
+            self?.transferProgress.end()
+            self?.transferInFlight = false
+            completion(outcome)
         }
     }
 
@@ -771,18 +817,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             resolution = chosen
         }
 
-        let outcome =
-            isMove
-            ? FileOperations.move(urls: urls, into: destination, onConflict: resolution)
-            : FileOperations.copy(urls: urls, into: destination, onConflict: resolution)
-
-        leftTabs.activePane?.reloadIfShowingListing()
-        rightTabs.activePane?.reloadIfShowingListing()
-        if !outcome.performed.isEmpty {
-            registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
+        runTransfer(urls: urls, into: destination, move: isMove, resolution: resolution) {
+            [weak self] outcome in
+            guard let self else { return }
+            self.leftTabs.activePane?.reloadIfShowingListing()
+            self.rightTabs.activePane?.reloadIfShowingListing()
+            if !outcome.performed.isEmpty {
+                self.registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
+            }
+            if isMove { pasteboard.clearContents() }  // cut items are gone; don't move them twice
+            if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: "Paste failed") }
         }
-        if isMove { pasteboard.clearContents() }  // cut items are gone; don't move them twice
-        if !outcome.failures.isEmpty { presentFailures(outcome.failures, title: "Paste failed") }
     }
 
     private func writeSelectionToPasteboard(cut: Bool) {

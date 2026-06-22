@@ -156,18 +156,26 @@ public enum FileOperations {
 
     @discardableResult
     public static func copy(
-        urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip
+        urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
+        shouldCancel: () -> Bool = { false }, progress: (Int) -> Void = { _ in }
     ) -> Outcome {
-        apply(urls, into: destination, action: .copied, onConflict: onConflict) {
+        apply(
+            urls, into: destination, action: .copied, onConflict: onConflict,
+            shouldCancel: shouldCancel, progress: progress
+        ) {
             try FileManager.default.copyItem(at: $0, to: $1)
         }
     }
 
     @discardableResult
     public static func move(
-        urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip
+        urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
+        shouldCancel: () -> Bool = { false }, progress: (Int) -> Void = { _ in }
     ) -> Outcome {
-        apply(urls, into: destination, action: .moved, onConflict: onConflict) {
+        apply(
+            urls, into: destination, action: .moved, onConflict: onConflict,
+            shouldCancel: shouldCancel, progress: progress
+        ) {
             try FileManager.default.moveItem(at: $0, to: $1)
         }
     }
@@ -207,11 +215,13 @@ public enum FileOperations {
     private static func apply(
         _ sources: [URL], into destination: URL,
         action: Action, onConflict: ConflictResolution,
+        shouldCancel: () -> Bool, progress: (Int) -> Void,
         _ op: (URL, URL) throws -> Void
     ) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
-        for from in sources {
+        for (index, from) in sources.enumerated() {
+            if shouldCancel() { break }  // stop; items already done remain in `performed`
             let name = from.lastPathComponent
             var to = destination.appendingPathComponent(name)
             do {
@@ -231,6 +241,7 @@ public enum FileOperations {
             } catch {
                 outcome.failures.append(Failure(name: name, reason: error.localizedDescription))
             }
+            progress(index + 1)
         }
         return outcome
     }
