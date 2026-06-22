@@ -55,8 +55,13 @@ echo "==> Signing"
 if [[ -n "${DEVELOPER_ID:-}" ]]; then
 	echo "    Developer ID, Hardened Runtime: $DEVELOPER_ID"
 	codesign --force --options runtime --timestamp --sign "$DEVELOPER_ID" "$APP"
+elif [[ -n "${SIGN_IDENTITY:-}" ]]; then
+	# A stable local identity (e.g. a self-signed cert from `make dev-cert`), so a
+	# Full Disk Access grant survives rebuilds. Not for distribution.
+	echo "    local identity (stable across rebuilds): $SIGN_IDENTITY"
+	codesign --force --sign "$SIGN_IDENTITY" "$APP"
 else
-	echo "    ad-hoc (set DEVELOPER_ID to sign for distribution)"
+	echo "    ad-hoc (set SIGN_IDENTITY for a stable local id, or DEVELOPER_ID to distribute)"
 	codesign --force --sign - "$APP"
 fi
 codesign --verify --strict --verbose=2 "$APP"
