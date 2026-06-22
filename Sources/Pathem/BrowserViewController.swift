@@ -42,6 +42,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Natural-language command bar (Cmd-Shift-A): Foundation Model when
     /// available, the engine heuristic otherwise.
     private lazy var aiBar = AICommandBar()
+    /// Batch-rename sheet for the active pane's selection.
+    private lazy var batchRename = BatchRenameController()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -160,6 +162,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
+        add("files.batchRename", "Batch Rename…", enabled: hasSelection) { [weak self] in self?.showBatchRename() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
         }
@@ -203,6 +206,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let window = view.window else { return }
         let items = commands.all.map { (id: $0.id, title: $0.title) }
         palette.present(commands: items, onRun: { [weak self] id in self?.commands.perform(id) }, over: window)
+    }
+
+    /// Open the batch-rename sheet for the active pane's selection.
+    private func showBatchRename() {
+        guard let window = view.window, let pane = activePane else { return }
+        let names = pane.selectedEntries.map(\.name)
+        guard !names.isEmpty else { NSSound.beep(); return }
+        let existing = Set(pane.entries.map(\.name))
+        batchRename.present(names: names, in: pane.currentURL, existing: existing, over: window) {
+            [weak self] in self?.activePane?.reloadIfShowingListing()
+        }
     }
 
     /// Open the natural-language command bar.
