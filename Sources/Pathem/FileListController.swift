@@ -147,6 +147,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             menu.addItem(item)
         }
         add("Open", "files.open")
+        add("Get Info", "files.getInfo")
         add("Download", "files.download")
         add("Reveal in Finder", "files.reveal")
         add("Rename…", "files.rename")

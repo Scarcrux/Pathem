@@ -100,6 +100,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
+        fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))

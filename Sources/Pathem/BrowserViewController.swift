@@ -59,6 +59,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var isTransferring: Bool { transferInFlight }
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
+    private lazy var infoInspector = InfoInspectorController()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -227,6 +228,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.trash", "Move to Trash", enabled: hasSelection) { [weak self] in self?.trashSelection() }
         add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
+        }
+        add("files.getInfo", "Get Info", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.showInfo()
         }
         add(
             "files.download", "Download",
@@ -430,6 +434,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
         NSWorkspace.shared.activateFileViewerSelecting(urls.isEmpty ? [pane.currentURL] : urls)
+    }
+
+    /// Get Info on the selection, or on the current folder when nothing is selected.
+    private func showInfo() {
+        guard let pane = activePane else { return }
+        let names = pane.selectedEntries.map(\.name)
+        let urls = names.isEmpty ? [pane.currentURL] : names.map { pane.currentURL.appendingPathComponent($0) }
+        infoInspector.present(urls: urls, over: view.window)
     }
 
     /// Pull down online-only (dataless) cloud files. The provider materializes
