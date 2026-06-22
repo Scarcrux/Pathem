@@ -30,6 +30,8 @@ final class PaneController: NSObject {
     /// Fired only on user navigation (not watcher refreshes), so the browser can
     /// clear the stale search query.
     var onDidNavigate: (() -> Void)?
+    /// Files were dropped onto this pane: copy/move them into its folder.
+    var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
 
     private var watcher: DirectoryWatcher?
     private var pendingRefresh: DispatchWorkItem?
@@ -62,6 +64,7 @@ final class PaneController: NSObject {
     /// Replace the listing with an explicit set (e.g. ranked search results).
     func showResults(_ entries: [FileEntry]) {
         showingSearchResults = true
+        list.directoryURL = nil  // results span folders; disable row drag
         list.setEntries(entries)
         list.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
         updateStatus()
@@ -71,6 +74,7 @@ final class PaneController: NSObject {
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {
         showingSearchResults = false
+        list.directoryURL = nav.current  // rows in this folder are draggable
         if let resolveFormat { format = resolveFormat(nav.current) }
         do {
             let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
@@ -266,6 +270,10 @@ final class PaneController: NSObject {
             self.reload()
         }
         list.onSelectionChanged = { [weak self] in self?.updateStatus() }
+        list.onDropFiles = { [weak self] urls, move in
+            guard let self else { return }
+            self.onDropFiles?(urls, move, self.nav.current)
+        }
     }
 
     func toggleHidden() {

@@ -173,6 +173,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.onPaneDidNavigate = { [weak self] pane in
                 if pane === self?.activePane { self?.searchField.stringValue = "" }
             }
+            side.onPaneDropFiles = { [weak self] urls, move, destination in
+                self?.dropFiles(urls, move: move, into: destination)
+            }
         }
         // Open each side's first tab now that configurePane + callbacks are set,
         // so the initial pane is fully wired (formats applied, search preindexed).
@@ -847,6 +850,42 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Copy (or move) the active pane's selection into the other pane's folder.
     /// If names already exist there, ask how to resolve (replace, keep both, or
     /// skip), then register an undo for whatever was performed (DESIGN.md §6.5).
+    /// Copy or move files dropped onto a pane into its folder, reusing the same
+    /// off-main progress + undo path as the transfer commands.
+    private func dropFiles(_ allURLs: [URL], move: Bool, into destination: URL) {
+        guard !transferInFlight else { NSSound.beep(); return }
+        // Never copy/move a folder into itself or one of its own descendants.
+        // Resolve symlinks and compare case-insensitively so a different spelling
+        // of the same folder is still caught (the engine has a final backstop).
+        let destPath = destination.resolvingSymlinksInPath().standardizedFileURL.path
+        let urls = allURLs.filter {
+            let src = $0.resolvingSymlinksInPath().standardizedFileURL.path
+            return destPath.compare(src, options: .caseInsensitive) != .orderedSame
+                && !destPath.lowercased().hasPrefix(src.lowercased() + "/")
+        }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let fm = FileManager.default
+        let conflicts = urls.filter {
+            fm.fileExists(atPath: destination.appendingPathComponent($0.lastPathComponent).path)
+        }
+        var resolution = FileOperations.ConflictResolution.skip
+        if !conflicts.isEmpty {
+            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else { return }
+            resolution = chosen
+        }
+        runTransfer(urls: urls, into: destination, move: move, resolution: resolution) { [weak self] outcome in
+            guard let self else { return }
+            self.leftTabs.activePane?.reloadIfShowingListing()
+            self.rightTabs.activePane?.reloadIfShowingListing()
+            if !outcome.performed.isEmpty {
+                self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+            }
+            if !outcome.failures.isEmpty {
+                self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+            }
+        }
+    }
+
     private func transfer(move: Bool) {
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
         guard let source = activePane, let activeSide else { return }

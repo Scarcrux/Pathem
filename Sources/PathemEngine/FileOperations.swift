@@ -246,6 +246,14 @@ public enum FileOperations {
             let name = from.lastPathComponent
             var to = destination.appendingPathComponent(name)
             do {
+                // Never act on the source onto itself: a no-op self-transfer via a
+                // different spelling, a symlink, or letter case on a case-insensitive
+                // volume would otherwise trash the source under .replace. This is the
+                // backstop for every caller (drag-drop, transfer commands, undo/redo).
+                if Self.isSameItem(from, to) {
+                    outcome.skipped.append(name)
+                    continue
+                }
                 if fm.fileExists(atPath: to.path) {
                     switch onConflict {
                     case .skip:
@@ -265,6 +273,19 @@ public enum FileOperations {
             progress(index + 1)
         }
         return outcome
+    }
+
+    /// Whether two URLs refer to the same on-disk item. Prefers the file's
+    /// resource identifier (authoritative across symlinks and case); falls back
+    /// to a symlink-resolved, case-insensitive path compare when `to` does not
+    /// exist yet.
+    private static func isSameItem(_ a: URL, _ b: URL) -> Bool {
+        let idA = try? a.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier
+        let idB = try? b.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier
+        if let idA = idA as? NSObject, let idB = idB as? NSObject { return idA.isEqual(idB) }
+        return a.resolvingSymlinksInPath().standardizedFileURL.path
+            .compare(b.resolvingSymlinksInPath().standardizedFileURL.path, options: .caseInsensitive)
+            == .orderedSame
     }
 
     /// A non-colliding variant like "report copy.txt", then "report copy 2.txt".

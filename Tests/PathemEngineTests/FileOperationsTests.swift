@@ -38,6 +38,21 @@ import Testing
         }
     }
 
+    /// Dropping a file into its own folder, even with .replace, must skip it and
+    /// never trash the source onto itself (the data-loss backstop).
+    @Test func sameFolderReplaceSkipsAndKeepsSource() throws {
+        try withTwoDirs { src, _ in
+            let file = src.appendingPathComponent("self.txt")
+            try Data("keep me".utf8).write(to: file)
+            let outcome = FileOperations.copy(urls: [file], into: src, onConflict: .replace)
+            #expect(outcome.performed.isEmpty)
+            #expect(outcome.skipped == ["self.txt"])
+            #expect(outcome.failures.isEmpty)
+            #expect(exists(file))
+            #expect(try Data(contentsOf: file) == Data("keep me".utf8))
+        }
+    }
+
     @Test func skipsExistingByDefault() throws {
         try withTwoDirs { src, dst in
             try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))

@@ -31,6 +31,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var suppressSortCallback = false
     /// Row font size, applied per cell so a preference change takes effect on reload.
     private var listFontSize: CGFloat = 13
+    /// The folder these rows live in, so a dragged row maps to a file URL. nil
+    /// while showing search results (entries span folders), which disables drag.
+    var directoryURL: URL?
+    /// Files were dropped onto this list: copy (or move) them into this folder.
+    var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)?
 
     /// Entries currently selected in the table.
     var selectedEntries: [FileEntry] {
@@ -99,6 +104,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         scrollView.autohidesScrollers = true
 
         tableView.menu = makeContextMenu()
+
+        // Drag rows out (to Finder, the other pane, or the sidebar) and accept
+        // file drops into this folder.
+        tableView.registerForDraggedTypes([.fileURL])
+        tableView.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
+        tableView.setDraggingSourceOperationMask([.copy], forLocal: false)
 
         placeholder.alignment = .center
         placeholder.textColor = .secondaryLabelColor
@@ -225,6 +236,57 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // MARK: NSTableViewDataSource
 
     func numberOfRows(in tableView: NSTableView) -> Int { entries.count }
+
+    // MARK: Drag and drop
+
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard let dir = directoryURL, row < entries.count else { return nil }
+        let entry = entries[row]
+        guard !entry.isDataless else { return nil }  // don't drag online-only placeholders
+        return dir.appendingPathComponent(entry.name) as NSURL
+    }
+
+    func tableView(
+        _ tableView: NSTableView, validateDrop info: NSDraggingInfo,
+        proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation
+    ) -> NSDragOperation {
+        // Reject (no cursor) when there's nothing to drop here, so the cursor
+        // matches what acceptDrop will actually do.
+        guard !incomingURLs(from: info).isEmpty else { return [] }
+        tableView.setDropRow(-1, dropOperation: .on)  // drop into this folder, not between rows
+        return resolvedDragOperation(for: info)
+    }
+
+    func tableView(
+        _ tableView: NSTableView, acceptDrop info: NSDraggingInfo,
+        row: Int, dropOperation: NSTableView.DropOperation
+    ) -> Bool {
+        let incoming = incomingURLs(from: info)
+        guard !incoming.isEmpty else { return false }
+        onDropFiles?(incoming, resolvedDragOperation(for: info) == .move)
+        return true
+    }
+
+    /// File URLs from the drag that are not already in this folder (a drop onto
+    /// themselves is a no-op). Symlink-resolved and case-insensitive so a
+    /// differently spelled path to the same folder still counts as "here".
+    private func incomingURLs(from info: NSDraggingInfo) -> [URL] {
+        guard let dir = directoryURL,
+            let urls = info.draggingPasteboard.readObjects(
+                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        else { return [] }
+        let dirPath = dir.resolvingSymlinksInPath().standardizedFileURL.path
+        return urls.filter {
+            let parent = $0.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL.path
+            return parent.compare(dirPath, options: .caseInsensitive) != .orderedSame
+        }
+    }
+
+    /// Copy by default; move only when the source offers it and Command is held.
+    private func resolvedDragOperation(for info: NSDraggingInfo) -> NSDragOperation {
+        let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
+        return commandHeld && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
+    }
 
     // MARK: NSTableViewDelegate
 

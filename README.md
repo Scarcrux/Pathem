@@ -14,17 +14,31 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 
 ## What it does
 
-- Two panes side by side, with copy and move between them (F5 and F6).
+- Two panes side by side, with tabs per pane, and copy and move between them
+  (F5 and F6).
 - Stays fast in large folders. Only the rows on screen are built, so 100k or even
   a million files scroll without lag.
-- Quick navigation: an editable path bar, back, forward, up, and double-click or
-  Return to open a folder.
-- Sortable columns (name, size, date modified), folders first.
+- Drag and drop: drag files between panes, to and from Finder, or onto the
+  sidebar. Copy by default, hold Command to move.
+- A customizable sidebar. Reorder shortcuts by drag, rename them, change their
+  icons, and organize them into your own groups. Cloud services and mounted
+  volumes show up automatically below your groups.
+- An embedded terminal that follows the active folder (Ctrl-`). It runs a real
+  login shell (vim, ssh, REPLs, colors) and is themeable: pick System, Dracula,
+  Nord, or Solarized, or set your own font, colors, and shell.
 - On-device semantic search. Type what you're after in plain language and Pathem
   ranks the folder by meaning, using Apple's NaturalLanguage embeddings over file
   names and the text inside files (including PDFs). It runs entirely on your Mac,
   costs nothing, and doesn't need Apple Intelligence. (OCR for images is built in
   but off by default for now.)
+- A command palette and an on-device AI command bar, both bound to a rebindable
+  command registry and keymap.
+- Per-folder saved views, saved layouts, Quick Look (Space), and batch rename.
+- Quick navigation: an editable path bar, back, forward, up, and double-click or
+  Return to open a folder. Sortable columns (name, size, date modified), folders
+  first.
+- Cloud-aware. It browses iCloud, Dropbox, Drive, and OneDrive folders and never
+  silently downloads online-only files just to list or index them.
 - Copy and move never overwrite silently. If a name already exists, that item is
   skipped and reported.
 
@@ -68,25 +82,34 @@ they are not needed to build and run it yourself.
 ## Building
 
 ```
-make run       # build and launch from source (fastest loop)
-make build     # build the engine and the app
-make test      # run the engine tests
-make app       # assemble .build/Pathem.app (universal, ad-hoc signed)
-make install   # build the app and copy it to /Applications
+make run            # build and launch from source (fastest loop)
+make build          # build the engine and the app
+make test           # run the engine tests
+make app            # assemble .build/Pathem.app (host arch, ad-hoc signed)
+make install        # build the app and copy it to /Applications
+make watch          # rebuild and relaunch on every save (fast debug loop)
+make watch-install  # same, but reinstall the signed app each save
+make dev-cert       # create a stable self-signed identity so a Full Disk Access
+                    # grant survives rebuilds (then SIGN_IDENTITY=... make install)
 ```
 
 (These wrap plain `swift build` / `swift run Pathem` / `swift test` if you
-prefer to call those directly.)
+prefer to call those directly.) `make watch` is the quickest way to iterate:
+edit a file, save, and Pathem rebuilds and relaunches itself.
 
 ### Packaging a .app
 
-`make app` (or `scripts/package.sh`) assembles a universal (Apple Silicon +
-Intel), ad-hoc signed `Pathem.app` under `.build/`. `make install` also copies
-it to /Applications.
+`make app` (or `scripts/package.sh`) assembles an ad-hoc signed `Pathem.app`
+under `.build/`. Local builds default to your Mac's architecture (fast);
+distribution builds (`DEVELOPER_ID` set) go universal. A universal build needs
+Xcode's Metal toolchain, because the embedded terminal (SwiftTerm) ships a Metal
+shader: run `xcodebuild -runFirstLaunch` then
+`xcodebuild -downloadComponent MetalToolchain` once. `make install` also copies
+the app to /Applications.
 
 ```
-make app                           # local, ad-hoc signed, double-clickable
-ARCHS="arm64" scripts/package.sh   # faster, native only
+make app                                 # local, host arch, ad-hoc signed
+ARCHS="arm64 x86_64" scripts/package.sh  # universal (needs the Metal toolchain)
 ```
 
 For a distributable build, set `DEVELOPER_ID` to a "Developer ID Application"
@@ -112,12 +135,12 @@ Access" rather than a blank pane.
 
 ## Status
 
-Early, but already useful: a fast dual-pane file manager with tabs per pane, a
-Finder-style sidebar, per-folder saved views, saved layouts, Quick Look, a
-command palette, on-device semantic search, and a watcher that keeps the view in
-sync with the disk. It doesn't cover everything a tool like ForkLift does yet.
-DESIGN.md has the plan, including batch rename and richer search across PDFs and
-images.
+Already useful day to day: a fast dual-pane file manager with tabs per pane, a
+fully customizable sidebar, drag and drop, an embedded themeable terminal,
+per-folder saved views, saved layouts, Quick Look, batch rename, a command
+palette, on-device semantic search, and a watcher that keeps the view in sync
+with the disk. Remote/cloud transfer (S3, WebDAV, SFTP) is the planned
+fast-follow. DESIGN.md and ROADMAP.md have the full plan.
 
 ## License
 

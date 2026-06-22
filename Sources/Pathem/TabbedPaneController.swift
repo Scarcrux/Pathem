@@ -27,6 +27,8 @@ final class TabbedPaneController: NSObject {
     var onPaneDirectoryDidChange: ((PaneController, URL) -> Void)?
     /// A tab navigated (user moved folders), so the browser can clear the search.
     var onPaneDidNavigate: ((PaneController) -> Void)?
+    /// Files were dropped on a tab; the browser copies/moves them into its folder.
+    var onPaneDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
 
     var activePane: PaneController? { tabs.indices.contains(activeIndex) ? tabs[activeIndex] : nil }
     var tabCount: Int { tabs.count }
@@ -97,6 +99,9 @@ final class TabbedPaneController: NSObject {
         pane.onDidNavigate = { [weak self, weak pane] in
             guard let self, let pane else { return }
             self.onPaneDidNavigate?(pane)
+        }
+        pane.onDropFiles = { [weak self] urls, move, destination in
+            self?.onPaneDropFiles?(urls, move, destination)
         }
         tabs.append(pane)
         activeIndex = tabs.count - 1
