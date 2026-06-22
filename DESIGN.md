@@ -495,6 +495,26 @@ The detail below records the broader option space; the decision above is the pla
 - **Iron rules:** never relicense-to-restrictive later; never paywall a
   previously-free feature; the on-device semantic search stays **free** in the
   OSS build forever, only a *cloud* variant could ever be paid.
+- **Dependency-license guardrail (load-bearing once remote protocols land):**
+  every dependency bundled in a shipped build, free OR Pro, must be permissive
+  (MIT / BSD / Apache-2.0 / curl). MIT lets you sell and close-source on top, but
+  a single GPL/AGPL dependency or copied GPL snippet would make a closed Pro
+  build non-distributable. Concretely: FTP/FTPS/SFTP via libcurl (curl license)
+  and/or SwiftNIO + swift-nio-ssh (Apache-2.0); S3/WebDAV via URLSession; if
+  torrents are ever pursued, libtorrent-rasterbar is BSD-3 (permissive). NEVER
+  copy code from FileZilla, Cyberduck, Transmission, or qBittorrent (all GPL),
+  reimplement from the protocol specs. This extends the day-one "no GPL in the
+  MIT tree" rule to the whole shipped dependency graph.
+- **A separate standalone, auto-updating build is already permitted** (two
+  independent grounds, recorded so it is not re-litigated): you are the sole
+  copyright holder, so you can license your own work under any terms for your own
+  builds; and MIT itself grants the right to sell and distribute copies. So a
+  notarized, Sparkle-auto-updating download (free or paid) and the open-core Pro
+  are both fine with zero license change. Build-from-source is the current
+  distribution choice, not a license limitation; both can coexist. The CLA is for
+  relicensing the open core later, not a prerequisite for shipping closed Pro on
+  MIT contributions (MIT already permits closed derivatives); it stays prudent
+  but is not blocking.
 
 ### Launch strategy: two launches
 - **Launch 1, native engine + minimal dual-pane.** "Show HN: a native macOS
