@@ -48,6 +48,8 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$binary" "$APP/Contents/MacOS/$APP_NAME"
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
+[[ -f "$ROOT/Packaging/$APP_NAME.icns" ]] \
+  && cp "$ROOT/Packaging/$APP_NAME.icns" "$APP/Contents/Resources/$APP_NAME.icns"
 
 echo "==> Signing"
 if [[ -n "${DEVELOPER_ID:-}" ]]; then

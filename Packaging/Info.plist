@@ -10,6 +10,8 @@
 	<string>ai.scarcrux.pathem</string>
 	<key>CFBundleExecutable</key>
 	<string>Pathem</string>
+	<key>CFBundleIconFile</key>
+	<string>Pathem</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleInfoDictionaryVersion</key>

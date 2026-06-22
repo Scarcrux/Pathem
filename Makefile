@@ -4,10 +4,11 @@
 #   make test     run the engine test suite
 #   make app      assemble .build/Pathem.app (universal, ad-hoc signed)
 #   make install  build the app and copy it to /Applications
+#   make icon     regenerate Packaging/Pathem.icns from makeicon.swift
 #   make fmt      format with swift-format (if installed)
 #   make clean    remove build products
 
-.PHONY: build run test app install fmt clean
+.PHONY: build run test app install icon fmt clean
 
 build:
 	swift build
@@ -23,6 +24,9 @@ app:
 
 install:
 	INSTALL=1 scripts/package.sh
+
+icon:
+	Packaging/buildicon.sh
 
 fmt:
 	swift-format -i -r Sources Tests
