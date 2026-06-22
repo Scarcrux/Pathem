@@ -157,6 +157,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadLayouts()
         loadPreferences()
         loadSidebar()
+        loadTerminalTheme()
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
@@ -444,6 +445,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(selectTerminalTheme(_:)) {
+            menuItem.state = (menuItem.representedObject as? String == terminal.theme.name) ? .on : .off
+            return true
+        }
         guard menuItem.action == #selector(performMenuCommand(_:)),
             let id = menuItem.representedObject as? String
         else { return true }
@@ -677,6 +682,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private func saveSidebar(_ model: Sidebar) {
         saveConfig(model, to: Self.sidebarURL)
+    }
+
+    // MARK: - Terminal theme
+
+    private static var terminalThemeURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("terminal.json")
+    }
+
+    private func loadTerminalTheme() {
+        if let saved = loadConfig(TerminalTheme.self, from: Self.terminalThemeURL) {
+            terminal.theme = saved
+        }
+    }
+
+    /// Apply a built-in terminal theme by name (from the View > Terminal Theme menu).
+    @objc func selectTerminalTheme(_ sender: NSMenuItem) {
+        guard let name = sender.representedObject as? String,
+            let preset = TerminalTheme.presets.first(where: { $0.name == name })
+        else { return }
+        terminal.theme = preset
+        saveConfig(preset, to: Self.terminalThemeURL)
     }
 
     /// Add a "Layouts" menu to the main menu, rebuilt on demand from the saved set.

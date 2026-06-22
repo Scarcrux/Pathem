@@ -21,6 +21,9 @@ public final class TerminalController: NSObject, LocalProcessTerminalViewDelegat
     public private(set) var isRunning = false
     /// Reports the shell's title (OSC), e.g. for a pane header.
     public var onTitleChange: ((String) -> Void)?
+    /// Appearance + shell. Applied live (colors/font) on set; the shell takes
+    /// effect on the next launch.
+    public var theme: TerminalTheme = .system { didSet { applyTheme() } }
 
     public override init() {
         super.init()
@@ -33,12 +36,29 @@ public final class TerminalController: NSObject, LocalProcessTerminalViewDelegat
             term.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             term.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
+        applyTheme()
     }
 
-    /// Start the user's login shell in `directory`, once. No-op if already running.
+    /// Apply the current theme's font and colors to the live terminal. Empty
+    /// colors fall back to system defaults; an empty/!=16 palette leaves
+    /// SwiftTerm's built-in ANSI colors.
+    private func applyTheme() {
+        let size = CGFloat(theme.fontSize)
+        term.font = NSFont(name: theme.fontName, size: size)
+            ?? NSFont.monospacedSystemFont(ofSize: size, weight: .regular)
+        term.nativeForegroundColor = TerminalTheme.nsColor(theme.foreground) ?? .textColor
+        term.nativeBackgroundColor = TerminalTheme.nsColor(theme.background) ?? .textBackgroundColor
+        if let cursor = TerminalTheme.nsColor(theme.cursor) { term.caretColor = cursor }
+        let palette = theme.ansi.compactMap { TerminalTheme.termColor($0) }
+        if palette.count == 16 { term.installColors(palette) }
+    }
+
+    /// Start the configured (or login) shell in `directory`, once. No-op if running.
     public func ensureStarted(in directory: URL) {
         guard !isRunning else { return }
-        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+        let shell = theme.shellPath.isEmpty
+            ? (ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh")
+            : theme.shellPath
         let shellName = (shell as NSString).lastPathComponent
         let env = Terminal.getEnvironmentVariables(termName: "xterm-256color", trueColor: true)
         // A leading "-" in argv[0] makes it a login shell (loads the user profile),

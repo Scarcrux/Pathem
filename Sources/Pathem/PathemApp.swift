@@ -1,5 +1,6 @@
 import AppKit
 import PathemEngine
+import PathemTerminal
 
 // AppKit entry point. Normal launch shows a dual-pane browser rooted at the
 // home directory. Launch with PATHEM_GATE_A=1 to run the Gate A virtualization
@@ -108,6 +109,17 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
         viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
         viewMenu.addItem(commandItem("Terminal Follows Folder", "terminal.toggleFollow"))
+        let themeItem = NSMenuItem(title: "Terminal Theme", action: nil, keyEquivalent: "")
+        let themeMenu = NSMenu()
+        for theme in TerminalTheme.presets {
+            let item = NSMenuItem(
+                title: theme.name, action: #selector(BrowserViewController.selectTerminalTheme(_:)),
+                keyEquivalent: "")
+            item.representedObject = theme.name
+            themeMenu.addItem(item)
+        }
+        themeItem.submenu = themeMenu
+        viewMenu.addItem(themeItem)
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Command Palette…", "palette.show"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
