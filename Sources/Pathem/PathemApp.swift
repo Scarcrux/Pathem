@@ -105,6 +105,10 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
         viewMenu.addItem(.separator())
+        viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
+        viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
+        viewMenu.addItem(commandItem("Terminal Follows Folder", "terminal.toggleFollow"))
+        viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Command Palette…", "palette.show"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
         viewMenu.addItem(commandItem("Batch Rename…", "files.batchRename"))
@@ -194,6 +198,13 @@ enum PathemApp {
 @MainActor
 final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     weak var browser: BrowserViewController?
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // Hang up the embedded shell so it (and any job it launched) is not orphaned.
+        browser?.terminateTerminal()
+    }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard browser?.isTransferring == true else { return .terminateNow }

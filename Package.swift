@@ -12,14 +12,31 @@ let package = Package(
         // or want to widen the audience. The dev machine is macOS 26.
         .macOS(.v15)
     ],
+    dependencies: [
+        // SwiftTerm (MIT): a real VT/xterm terminal emulator in pure Swift. Used
+        // only by the optional PathemTerminal module so the rest of the app and
+        // the engine stay dependency-free. Compiled in (not a loaded bundle), so
+        // it does not affect our clean Hardened Runtime stance.
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm", from: "1.13.0")
+    ],
     targets: [
         // The engine: enumeration, watching, file ops, search. No AppKit.
         .target(name: "PathemEngine"),
 
-        // The app: AppKit hot list + SwiftUI chrome. Depends on the engine.
+        // Optional terminal module: an embedded shell pane that follows the
+        // active folder. Isolates the SwiftTerm dependency from everything else;
+        // remove this target (and the app's dependency on it) to drop the
+        // feature and the dependency entirely.
+        .target(
+            name: "PathemTerminal",
+            dependencies: [.product(name: "SwiftTerm", package: "SwiftTerm")]
+        ),
+
+        // The app: AppKit hot list + SwiftUI chrome. Depends on the engine and
+        // the optional terminal module.
         .executableTarget(
             name: "Pathem",
-            dependencies: ["PathemEngine"]
+            dependencies: ["PathemEngine", "PathemTerminal"]
         ),
 
         // Engine tests (Swift Testing).

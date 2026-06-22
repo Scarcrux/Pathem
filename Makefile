@@ -4,13 +4,15 @@
 #   make test     run the engine test suite
 #   make app      assemble .build/Pathem.app (universal, ad-hoc signed)
 #   make install  build the app and copy it to /Applications
+#   make watch    rebuild + relaunch on every source change (fast debug loop)
+#   make watch-install  same, but build + sign + install the .app each time
 #   make icon     regenerate Packaging/Pathem.icns from makeicon.swift
 #   make dev-cert create a stable self-signed signing identity (keeps an FDA
 #                 grant across rebuilds); then: SIGN_IDENTITY="Pathem Self-Signed" make install
 #   make fmt      format with swift-format (if installed)
 #   make clean    remove build products
 
-.PHONY: build run test app install icon dev-cert fmt clean
+.PHONY: build run test app install watch watch-install icon dev-cert fmt clean
 
 build:
 	swift build
@@ -26,6 +28,12 @@ app:
 
 install:
 	INSTALL=1 scripts/package.sh
+
+watch:
+	scripts/watch.sh
+
+watch-install:
+	scripts/watch.sh install
 
 icon:
 	Packaging/buildicon.sh

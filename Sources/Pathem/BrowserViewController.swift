@@ -1,5 +1,6 @@
 import AppKit
 import PathemEngine
+import PathemTerminal
 import Quartz
 
 /// The dual-pane browser: two independent panes side by side in a split view,
@@ -16,9 +17,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private weak var activeSide: TabbedPaneController?
     private let split = NSSplitView()  // the two sides
     private let outerSplit = NSSplitView()  // sidebar | panes
+    private let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
     private let sidebar = SidebarController()
+    private let terminal = TerminalController()
     private let searchField = NSSearchField()
     private var didSetInitialSplit = false
+    /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
+    /// default so navigation never disturbs whatever you're running in the shell.
+    private var terminalFollows = UserDefaults.standard.bool(forKey: "pathem.terminalFollows")
 
     /// Cap on items embedded per search, to bound the cost on huge folders.
     /// The scale path (background incremental indexing and a cached vector
@@ -97,32 +103,50 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         searchField.target = self
         searchField.action = #selector(runSearch)
 
+        // Vertical split: the browser (sidebar + panes) on top, the optional
+        // terminal drawer at the bottom. The terminal starts collapsed.
+        vSplit.isVertical = false
+        vSplit.dividerStyle = .thin
+        vSplit.translatesAutoresizingMaskIntoConstraints = false
+        vSplit.addArrangedSubview(outerSplit)
+        vSplit.addArrangedSubview(terminal.view)
+        vSplit.delegate = self
+        // The terminal keeps its height; the browser absorbs window resize.
+        vSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 1)
+        terminal.view.isHidden = true
+
         let host = NSView()
         host.addSubview(searchField)
-        host.addSubview(outerSplit)
+        host.addSubview(vSplit)
         NSLayoutConstraint.activate([
             searchField.topAnchor.constraint(equalTo: host.topAnchor, constant: 8),
             searchField.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: 8),
             searchField.trailingAnchor.constraint(equalTo: host.trailingAnchor, constant: -8),
-            outerSplit.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
-            outerSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
-            outerSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
-            outerSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor),
+            vSplit.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
+            vSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            vSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor),
         ])
         view = host
     }
 
-    // Constrain the sidebar's width range (divider 0 of the outer split).
+    // Constrain the sidebar width (outer split) and the terminal drawer height
+    // (vertical split) so neither the sidebar, the panes, nor the terminal can be
+    // dragged away to nothing.
     func splitView(
         _ splitView: NSSplitView, constrainMinCoordinate proposedMin: CGFloat, ofSubviewAt dividerIndex: Int
     ) -> CGFloat {
-        (splitView === outerSplit && dividerIndex == 0) ? 140 : proposedMin
+        if splitView === outerSplit, dividerIndex == 0 { return 140 }  // min sidebar width
+        if splitView === vSplit, dividerIndex == 0 { return 160 }  // min browser height
+        return proposedMin
     }
 
     func splitView(
         _ splitView: NSSplitView, constrainMaxCoordinate proposedMax: CGFloat, ofSubviewAt dividerIndex: Int
     ) -> CGFloat {
-        (splitView === outerSplit && dividerIndex == 0) ? 320 : proposedMax
+        if splitView === outerSplit, dividerIndex == 0 { return 320 }  // max sidebar width
+        if splitView === vSplit, dividerIndex == 0 { return splitView.bounds.height - 120 }  // min terminal height
+        return proposedMax
     }
 
     override func viewDidLoad() {
@@ -183,6 +207,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.cut", "Cut", enabled: hasSelection) {
             [weak self] in self?.writeSelectionToPasteboard(cut: true)
+        }
+        add("terminal.toggle", "Toggle Terminal") { [weak self] in self?.toggleTerminal() }
+        add("terminal.here", "Open Terminal Here") { [weak self] in self?.openTerminalHere() }
+        add("terminal.toggleFollow", "Terminal Follows Folder") {
+            [weak self] in self?.toggleTerminalFollows()
         }
         add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
         add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
@@ -418,6 +447,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard menuItem.action == #selector(performMenuCommand(_:)),
             let id = menuItem.representedObject as? String
         else { return true }
+        if id == "terminal.toggleFollow" { menuItem.state = terminalFollows ? .on : .off }
         return commands.command(id)?.isEnabled() ?? true
     }
 
@@ -753,6 +783,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
         split.setPosition(split.bounds.width / 2, ofDividerAt: 0)  // even panes
         didSetInitialSplit = true
+        // Restore the terminal drawer if it was open last session.
+        if UserDefaults.standard.bool(forKey: "pathem.terminalVisible") { toggleTerminal() }
     }
 
     /// Show the guided Full Disk Access walkthrough when we don't have access and
@@ -1050,6 +1082,50 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cachedIndex = nil
             cachedEntries = nil
         }
-        if pane === activePane { preIndex(url) }
+        if pane === activePane {
+            preIndex(url)
+            // The terminal follows the active folder only when the user opted in
+            // and the drawer is open (changeDirectory itself ignores TUIs).
+            if terminalFollows, !terminal.view.isHidden { terminal.changeDirectory(to: url) }
+        }
     }
+
+    // MARK: - Terminal
+
+    /// Show or hide the embedded terminal drawer. On first show it starts a login
+    /// shell in the active folder and gives the drawer a reasonable height.
+    func toggleTerminal() {
+        let show = terminal.view.isHidden
+        terminal.view.isHidden = !show
+        UserDefaults.standard.set(show, forKey: "pathem.terminalVisible")
+        guard show else { return }
+        terminal.ensureStarted(in: activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser)
+        let height = vSplit.bounds.height
+        if height > 280 { vSplit.setPosition(height - 240, ofDividerAt: 0) }
+        terminal.focus()
+    }
+
+    /// Reveal the terminal (if hidden) and point it at the active folder. If it
+    /// was already running we send a `cd`; if it had to start, it already launched
+    /// in the active folder, so we skip the redundant (and racy) `cd`.
+    func openTerminalHere() {
+        let wasRunning = terminal.isRunning
+        if terminal.view.isHidden { toggleTerminal() }
+        if wasRunning, let url = activePane?.currentURL { terminal.changeDirectory(to: url) }
+        terminal.focus()
+    }
+
+    /// Toggle whether the terminal follows the active folder, and persist it.
+    func toggleTerminalFollows() {
+        terminalFollows.toggle()
+        UserDefaults.standard.set(terminalFollows, forKey: "pathem.terminalFollows")
+        if terminalFollows, !terminal.view.isHidden, let url = activePane?.currentURL {
+            terminal.changeDirectory(to: url)
+        }
+    }
+
+    var terminalFollowsFolder: Bool { terminalFollows }
+
+    /// Hang up the embedded shell. Called on quit so no orphan shell survives.
+    func terminateTerminal() { terminal.shutdown() }
 }
