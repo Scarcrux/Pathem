@@ -701,6 +701,33 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func viewDidAppear() {
         super.viewDidAppear()
         view.window?.makeFirstResponder(leftTabs.activePane?.list.tableView)
+        maybePromptFullDiskAccess()
+    }
+
+    /// Once, on first launch, explain Full Disk Access and offer to open Settings.
+    /// The home folder works without it; this is for browsing everything.
+    private func maybePromptFullDiskAccess() {
+        let key = "pathem.didPromptFullDiskAccess"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let window = self.view.window else { return }
+            let alert = NSAlert()
+            alert.messageText = "Grant Full Disk Access (recommended)"
+            alert.informativeText =
+                "Pathem is a non-sandboxed file manager. To browse everything (other users, "
+                + "system folders, and some app data), grant it Full Disk Access in System "
+                + "Settings. Your home folder works without it."
+            alert.addButton(withTitle: "Open Settings…")
+            alert.addButton(withTitle: "Not Now")
+            alert.beginSheetModal(for: window) { response in
+                guard response == .alertFirstButtonReturn,
+                    let url = URL(
+                        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+                else { return }
+                NSWorkspace.shared.open(url)
+            }
+        }
     }
 
     /// Mark a pane (in some side) as the active one: move the accent border to it

@@ -63,6 +63,7 @@ final class PaneController: NSObject {
     func showResults(_ entries: [FileEntry]) {
         showingSearchResults = true
         list.setEntries(entries)
+        list.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
         updateStatus()
     }
 
@@ -71,8 +72,18 @@ final class PaneController: NSObject {
     func reload(preserveState: Bool = true) {
         showingSearchResults = false
         if let resolveFormat { format = resolveFormat(nav.current) }
-        let entries = (try? BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)) ?? []
-        list.setEntries(format.sorted(entries), preserveState: preserveState)
+        do {
+            let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
+            list.setEntries(format.sorted(entries), preserveState: preserveState)
+            list.showPlaceholder(entries.isEmpty ? "This folder is empty" : nil)
+        } catch {
+            // A read failure (permission denied, missing) looks identical to an
+            // empty folder unless we say so.
+            list.setEntries([], preserveState: false)
+            list.showPlaceholder(
+                "Couldn’t read this folder.\nPathem may need Full Disk Access "
+                    + "(System Settings ▸ Privacy & Security ▸ Full Disk Access).")
+        }
         list.showSortIndicator(key: format.sortKey, ascending: format.ascending)
         updateStatus()
         pathControl.url = nav.current

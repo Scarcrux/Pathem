@@ -29,4 +29,17 @@ final class KeyTableView: NSTableView {
         if onKeyChord?(chord) == true { return }
         super.keyDown(with: event)
     }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        window?.makeFirstResponder(self)  // the right-clicked pane becomes active
+        let row = self.row(at: convert(event.locationInWindow, from: nil))
+        if row >= 0 {
+            if !selectedRowIndexes.contains(row) {
+                selectRowIndexes([row], byExtendingSelection: false)  // act on the clicked item
+            }
+        } else {
+            deselectAll(nil)  // empty space: folder-level actions only
+        }
+        return super.menu(for: event)
+    }
 }

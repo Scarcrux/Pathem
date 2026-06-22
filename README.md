@@ -101,6 +101,15 @@ build` does not yet; the intent code and the bundle are in place. The command
 bar's on-device LLM additionally needs macOS 26 with Apple Intelligence and
 falls back to a heuristic everywhere else.
 
+## Full Disk Access
+
+Pathem is non-sandboxed, so your home folder works out of the box. To browse
+everything (other users, system folders, some app data), grant it Full Disk
+Access: **System Settings ▸ Privacy & Security ▸ Full Disk Access**, then add
+Pathem. The app shows a one-time prompt with a shortcut to that pane on first
+launch. Without it, an unreadable folder is shown as "Pathem may need Full Disk
+Access" rather than a blank pane.
+
 ## Status
 
 Early, but already useful: a fast dual-pane file manager with tabs per pane, a

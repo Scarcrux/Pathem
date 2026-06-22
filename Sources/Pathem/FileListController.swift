@@ -11,6 +11,7 @@ import UniformTypeIdentifiers
 final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     let scrollView = NSScrollView()
     let tableView = KeyTableView()
+    private let placeholder = NSTextField(labelWithString: "")
 
     private(set) var entries: [FileEntry] = []
 
@@ -96,6 +97,55 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
+
+        tableView.menu = makeContextMenu()
+
+        placeholder.alignment = .center
+        placeholder.textColor = .secondaryLabelColor
+        placeholder.font = .systemFont(ofSize: 13)
+        placeholder.maximumNumberOfLines = 0
+        placeholder.lineBreakMode = .byWordWrapping
+        placeholder.isHidden = true
+        placeholder.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(placeholder)  // floats over the table, does not scroll
+        NSLayoutConstraint.activate([
+            placeholder.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
+            placeholder.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor),
+            placeholder.widthAnchor.constraint(lessThanOrEqualTo: scrollView.widthAnchor, constant: -48),
+        ])
+    }
+
+    /// A centered message shown over an empty or unreadable folder (nil hides it).
+    func showPlaceholder(_ text: String?) {
+        if let text {
+            placeholder.stringValue = text
+            placeholder.isHidden = false
+        } else {
+            placeholder.isHidden = true
+        }
+    }
+
+    /// The right-click menu: thin bindings to the command registry (validated and
+    /// dispatched by BrowserViewController, same as the menu bar).
+    private func makeContextMenu() -> NSMenu {
+        let menu = NSMenu()
+        func add(_ title: String, _ commandID: String) {
+            let item = NSMenuItem(
+                title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+            item.representedObject = commandID
+            menu.addItem(item)
+        }
+        add("Open", "files.open")
+        add("Reveal in Finder", "files.reveal")
+        add("Rename…", "files.rename")
+        add("Move to Trash", "files.trash")
+        menu.addItem(.separator())
+        add("New Folder", "files.newFolder")
+        menu.addItem(.separator())
+        add("Copy", "files.copy")
+        add("Cut", "files.cut")
+        add("Paste", "files.paste")
+        return menu
     }
 
     /// Apply display preferences (density-derived row height, font size,
