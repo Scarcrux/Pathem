@@ -83,6 +83,21 @@ final class PaneController: NSObject {
         if !showingSearchResults { reload() }
     }
 
+    /// Re-apply formats and notify observers once the owning controller has wired
+    /// the pane's callbacks (init runs before resolveFormat / onDirectoryDidChange
+    /// are set, so the initial listing and preindex must be triggered afterward).
+    func refresh() {
+        reload()
+        onDirectoryDidChange?(nav.current)
+    }
+
+    /// Stop watching the folder; called when this pane's tab is closed.
+    func teardown() {
+        watcher?.stop()
+        watcher = nil
+        pendingRefresh?.cancel()
+    }
+
     func descend(into entry: FileEntry) {
         guard entry.isDirectory else { return }
         nav.go(to: nav.current.appendingPathComponent(entry.name))

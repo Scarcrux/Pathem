@@ -10,10 +10,11 @@ import Quartz
 final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource,
     NSSplitViewDelegate
 {
-    private let left: PaneController
-    private let right: PaneController
+    private let leftTabs: TabbedPaneController
+    private let rightTabs: TabbedPaneController
     private weak var activePane: PaneController?
-    private let split = NSSplitView()  // the two panes
+    private weak var activeSide: TabbedPaneController?
+    private let split = NSSplitView()  // the two sides
     private let outerSplit = NSSplitView()  // sidebar | panes
     private let sidebar = SidebarController()
     private let searchField = NSSearchField()
@@ -51,8 +52,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var cachedEntries: [FileEntry]?
 
     init(start: URL) {
-        left = PaneController(start: start)
-        right = PaneController(start: start)
+        leftTabs = TabbedPaneController(start: start)
+        rightTabs = TabbedPaneController(start: start)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -61,8 +62,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func loadView() {
         split.isVertical = true
         split.dividerStyle = .thin
-        split.addArrangedSubview(left.containerView)
-        split.addArrangedSubview(right.containerView)
+        split.addArrangedSubview(leftTabs.containerView)
+        split.addArrangedSubview(rightTabs.containerView)
 
         outerSplit.isVertical = true
         outerSplit.dividerStyle = .thin
@@ -113,20 +114,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadFolderFormats()
         loadLayouts()
         installLayoutsMenu()
-        left.onBecomeActive = { [weak self] in self?.setActive(self?.left) }
-        right.onBecomeActive = { [weak self] in self?.setActive(self?.right) }
-        for pane in [left, right] {
-            pane.list.tableView.onKeyChord = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
-            pane.onDirectoryDidChange = { [weak self] url in self?.directoryChanged(pane, url) }
-            pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
-            pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
+        for side in [leftTabs, rightTabs] {
+            side.configurePane = { [weak self] pane in
+                pane.list.tableView.onKeyChord = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
+                pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
+                pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
+            }
+            side.onPaneBecameActive = { [weak self, weak side] pane in
+                guard let self, let side else { return }
+                self.setActiveSide(side, pane: pane)
+            }
+            side.onPaneDirectoryDidChange = { [weak self] pane, url in self?.directoryChanged(pane, url) }
         }
-        // The panes loaded with the default format during init (before the store
-        // and closures were wired); reload now to apply any saved per-folder views.
-        left.reload()
-        right.reload()
-        sidebar.onSelect = { [weak self] url in (self?.activePane ?? self?.left)?.navigate(to: url) }
-        setActive(left)
+        // Open each side's first tab now that configurePane + callbacks are set,
+        // so the initial pane is fully wired (formats applied, search preindexed).
+        leftTabs.openInitialTab()
+        rightTabs.openInitialTab()
+        sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
+        if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
     }
 
     /// Register every browser action as a named command. This is the spine the
@@ -165,6 +170,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
         add("ai.run", "Ask Pathem (Natural Language)…") { [weak self] in self?.showAICommandBar() }
         add("view.quickLook", "Quick Look", enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
+        add("tab.new", "New Tab") { [weak self] in self?.activeSide?.newTab(duplicatingCurrent: true) }
+        add("tab.close", "Close Tab", enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
+            [weak self] in self?.activeSide?.closeActiveTab()
+        }
+        add("tab.next", "Next Tab", enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
+            [weak self] in self?.activeSide?.selectNextTab()
+        }
+        add("tab.previous", "Previous Tab", enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
+            [weak self] in self?.activeSide?.selectPreviousTab()
+        }
         add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
@@ -341,8 +356,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         folderFormats.clearExactRulesUnder(pane.currentURL.path)
         folderFormats.setSubtree(pane.currentURL.path, pane.format)
         saveFolderFormats()
-        left.reloadIfShowingListing()
-        right.reloadIfShowingListing()
+        leftTabs.activePane?.reloadIfShowingListing()
+        rightTabs.activePane?.reloadIfShowingListing()
     }
 
     // MARK: - Layouts
@@ -410,23 +425,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func captureLayout(name: String) -> Layout {
         Layout(
             name: name,
-            leftPath: left.currentURL.path,
-            rightPath: right.currentURL.path,
+            leftPath: leftTabs.activePane?.currentURL.path ?? "",
+            rightPath: rightTabs.activePane?.currentURL.path ?? "",
             dividerFraction: dividerFraction())
     }
 
     private func dividerFraction() -> Double {
         let total = split.bounds.width
         guard total > 0 else { return 0.5 }
-        return Double(left.containerView.frame.width / total)
+        return Double(leftTabs.containerView.frame.width / total)
     }
 
     private func applyLayout(_ layout: Layout) {
         // Skip paths that no longer resolve to a folder (hand-edited, shared from
         // another machine, or since deleted) so a pane is never dropped onto the
         // process working directory or a missing path.
-        if let url = Self.existingFolderURL(layout.leftPath) { left.navigate(to: url) }
-        if let url = Self.existingFolderURL(layout.rightPath) { right.navigate(to: url) }
+        if let url = Self.existingFolderURL(layout.leftPath) { leftTabs.activePane?.navigate(to: url) }
+        if let url = Self.existingFolderURL(layout.rightPath) { rightTabs.activePane?.navigate(to: url) }
         let total = split.bounds.width
         if total > 0 { split.setPosition(total * CGFloat(layout.dividerFraction), ofDividerAt: 0) }
     }
@@ -454,22 +469,26 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     override func viewDidAppear() {
         super.viewDidAppear()
-        view.window?.makeFirstResponder(left.list.tableView)
+        view.window?.makeFirstResponder(leftTabs.activePane?.list.tableView)
     }
 
-    private func setActive(_ pane: PaneController?) {
+    /// Mark a pane (in some side) as the active one: move the accent border to it
+    /// and remember which side it belongs to (so transfers target the other side).
+    private func setActiveSide(_ side: TabbedPaneController, pane: PaneController) {
+        if activePane !== pane { activePane?.setActive(false) }
         activePane = pane
-        left.setActive(pane === left)
-        right.setActive(pane === right)
-        if let directory = pane?.currentURL, directory != cachedDir { preIndex(directory) }
+        activeSide = side
+        pane.setActive(true)
+        if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
     }
 
     /// Copy (or move) the active pane's selection into the other pane's folder.
     /// If names already exist there, ask how to resolve (replace, keep both, or
     /// skip), then register an undo for whatever was performed (DESIGN.md §6.5).
     private func transfer(move: Bool) {
-        guard let source = activePane else { return }
-        let destination = (source === left) ? right : left
+        guard let source = activePane, let activeSide else { return }
+        let otherSide = (activeSide === leftTabs) ? rightTabs : leftTabs
+        guard let destination = otherSide.activePane else { NSSound.beep(); return }
         let names = source.selectedEntries.map(\.name)
         guard !names.isEmpty else { NSSound.beep(); return }
 
@@ -525,8 +544,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.undo(performed)
-            target.left.reloadIfShowingListing()
-            target.right.reloadIfShowingListing()
+            target.leftTabs.activePane?.reloadIfShowingListing()
+            target.rightTabs.activePane?.reloadIfShowingListing()
             if !result.failures.isEmpty {
                 target.presentFailures(result.failures, title: "Undo failed")
             }
@@ -584,8 +603,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             ? FileOperations.move(urls: urls, into: destination, onConflict: resolution)
             : FileOperations.copy(urls: urls, into: destination, onConflict: resolution)
 
-        left.reloadIfShowingListing()
-        right.reloadIfShowingListing()
+        leftTabs.activePane?.reloadIfShowingListing()
+        rightTabs.activePane?.reloadIfShowingListing()
         if !outcome.performed.isEmpty {
             registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
         }

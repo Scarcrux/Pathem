@@ -103,10 +103,12 @@ falls back to a heuristic everywhere else.
 
 ## Status
 
-Early, but already useful: a fast dual-pane file manager with on-device semantic
-search. It doesn't cover everything a tool like ForkLift does yet. DESIGN.md has
-the plan, including tabs, saved layouts, batch rename, richer search across PDFs
-and images, and a file-system watcher that keeps the view in sync with the disk.
+Early, but already useful: a fast dual-pane file manager with tabs per pane, a
+Finder-style sidebar, per-folder saved views, saved layouts, Quick Look, a
+command palette, on-device semantic search, and a watcher that keeps the view in
+sync with the disk. It doesn't cover everything a tool like ForkLift does yet.
+DESIGN.md has the plan, including batch rename and richer search across PDFs and
+images.
 
 ## License
 

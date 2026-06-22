@@ -88,6 +88,10 @@ public struct Keymap: Codable, Sendable {
         "cmd+shift+p": "palette.show",
         "cmd+shift+a": "ai.run",
         "space": "view.quickLook",
+        "cmd+t": "tab.new",
+        "cmd+w": "tab.close",
+        "cmd+shift+]": "tab.next",
+        "cmd+shift+[": "tab.previous",
     ]
 
     public static var standard: Keymap { Keymap(bindings: defaultBindings) }
