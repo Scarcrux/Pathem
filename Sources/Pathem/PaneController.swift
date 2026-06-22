@@ -6,12 +6,16 @@ import PathemEngine
 /// buttons. The pane is intentionally thin. NavigationState owns the history
 /// logic and BulkEnumerator does the listing.
 @MainActor
-final class PaneController: NSObject {
+final class PaneController: NSObject, NSTextFieldDelegate {
     let containerView = NSView()
     let list = FileListController()
     private(set) var nav: NavigationState
 
     private let pathControl = NSPathControl()
+    /// Editable address bar (Cmd-L): shows the current path so you can edit or
+    /// paste a new one and press Return to jump there. Finder makes this awkward;
+    /// here it's first-class.
+    private let addressField = NSTextField()
     private var backButton = NSButton()
     private var forwardButton = NSButton()
     private var upButton = NSButton()
@@ -199,7 +203,17 @@ final class PaneController: NSObject {
         pathControl.setContentHuggingPriority(.init(1), for: .horizontal)
         pathControl.setContentCompressionResistancePriority(.init(1), for: .horizontal)
 
-        let toolbar = NSStackView(views: [backButton, forwardButton, upButton, pathControl])
+        addressField.placeholderString = "Go to path"
+        addressField.font = .systemFont(ofSize: 12)
+        addressField.translatesAutoresizingMaskIntoConstraints = false
+        addressField.isHidden = true  // shown only while editing (Cmd-L)
+        addressField.delegate = self
+        addressField.target = self
+        addressField.action = #selector(commitPath)
+        addressField.setContentHuggingPriority(.init(1), for: .horizontal)
+        addressField.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+
+        let toolbar = NSStackView(views: [backButton, forwardButton, upButton, pathControl, addressField])
         toolbar.orientation = .horizontal
         toolbar.spacing = 4
         toolbar.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
@@ -301,4 +315,56 @@ final class PaneController: NSObject {
         enterDirectory()
     }
 
+    // MARK: - Editable address bar (paste a path)
+
+    /// Swap the breadcrumb for an editable field pre-filled with the current path,
+    /// selected, so you can type or paste a new path and press Return.
+    func beginEditingPath() {
+        addressField.stringValue = nav.current.path
+        pathControl.isHidden = true
+        addressField.isHidden = false
+        containerView.window?.makeFirstResponder(addressField)
+        addressField.currentEditor()?.selectAll(nil)
+    }
+
+    private func endEditingPath() {
+        addressField.isHidden = true
+        pathControl.isHidden = false
+    }
+
+    @objc private func commitPath() {
+        let raw = addressField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        endEditingPath()
+        guard !raw.isEmpty else { return }
+        let url = URL(fileURLWithPath: (raw as NSString).expandingTildeInPath).standardizedFileURL
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
+            NSSound.beep()  // no such path
+            return
+        }
+        if isDirectory.boolValue {
+            nav.go(to: url)
+            enterDirectory()
+        } else {
+            // A file: open its folder and select it.
+            nav.go(to: url.deletingLastPathComponent())
+            enterDirectory()
+            list.select(name: url.lastPathComponent)
+        }
+        containerView.window?.makeFirstResponder(list.tableView)
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        // Clicked away without committing: restore the breadcrumb.
+        if !addressField.isHidden { endEditingPath() }
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        if commandSelector == #selector(NSResponder.cancelOperation(_:)) {  // Esc cancels
+            endEditingPath()
+            containerView.window?.makeFirstResponder(list.tableView)
+            return true
+        }
+        return false
+    }
 }

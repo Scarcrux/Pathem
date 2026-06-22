@@ -263,6 +263,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("nav.up", "Enclosing Folder", enabled: { [weak self] in self?.activePane?.canGoUp ?? false }) {
             [weak self] in self?.activePane?.goUp()
         }
+        add("nav.editPath", "Go to Path…") { [weak self] in self?.activePane?.beginEditingPath() }
         add("edit.undo", "Undo", enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
             [weak self] in self?.undo(nil)
         }
