@@ -1,20 +1,23 @@
 name: Release
 
 # Push a version tag (e.g. v1.0.0) to build a universal, Developer ID-signed,
-# notarized, stapled Pathem.app and attach it to a GitHub Release. This is the
-# downloadable build; users who prefer to compile from source still can.
+# notarized, stapled Pathem.app, generate a signed Sparkle appcast, and attach
+# both to a GitHub Release. Existing installs then auto-update via Sparkle, and
+# the build-from-source path in the README still works.
 #
 # Required repository secrets (Settings > Secrets and variables > Actions):
 #   DEVELOPER_ID_CERT_P12       base64 of your "Developer ID Application" .p12
-#                               (base64 -i cert.p12 | pbcopy)
 #   DEVELOPER_ID_CERT_PASSWORD  the .p12 export password
 #   DEVELOPER_ID                "Developer ID Application: Name (TEAMID)"
 #   NOTARY_APPLE_ID             your Apple ID email
 #   NOTARY_TEAM_ID              your 10-char team id
 #   NOTARY_PASSWORD             an app-specific password (appleid.apple.com)
+#   SPARKLE_PRIVATE_KEY         the EdDSA private key from Sparkle's generate_keys
+#                               (export with: generate_keys -x private.key, then
+#                               paste the file's contents). The matching public
+#                               key goes in Packaging/Info.plist as SUPublicEDKey.
 #
-# All of this needs a paid Apple Developer account. Without these secrets the
-# job fails fast; the build-from-source path in the README is unaffected.
+# Needs a paid Apple Developer account. Without the secrets the job fails fast.
 
 on:
   push:
@@ -28,6 +31,13 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set version from tag
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Packaging/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Packaging/Info.plist
 
       - name: Import Developer ID certificate
         env:
@@ -64,10 +74,19 @@ jobs:
           set -euo pipefail
           scripts/package.sh   # DEVELOPER_ID set -> universal + Hardened Runtime + notarize + staple
 
-      - name: Zip the app
+      - name: Package + signed appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          ditto -c -k --keepParent .build/Pathem.app "Pathem-${GITHUB_REF_NAME}-universal.zip"
+          mkdir -p dist
+          ditto -c -k --keepParent .build/Pathem.app "dist/Pathem-${GITHUB_REF_NAME}-universal.zip"
+          GENERATE_APPCAST="$(find .build/artifacts -name generate_appcast -type f | head -1)"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle_ed_priv"
+          "$GENERATE_APPCAST" --ed-key-file "$RUNNER_TEMP/sparkle_ed_priv" \
+            --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/" \
+            dist
+          rm -f "$RUNNER_TEMP/sparkle_ed_priv"
 
       - name: Create GitHub Release
         env:
@@ -75,6 +94,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release create "${GITHUB_REF_NAME}" \
-            "Pathem-${GITHUB_REF_NAME}-universal.zip" \
+            "dist/Pathem-${GITHUB_REF_NAME}-universal.zip" \
+            dist/appcast.xml \
             --title "Pathem ${GITHUB_REF_NAME}" \
             --generate-notes

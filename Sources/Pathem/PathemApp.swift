@@ -12,7 +12,8 @@ enum PathemApp {
     static func main() {
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
-        app.mainMenu = makeMainMenu()
+        let updater = UpdaterController()
+        app.mainMenu = makeMainMenu(updater: updater)
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
@@ -44,6 +45,7 @@ enum PathemApp {
         window.center()
         let delegate = PathemAppDelegate()
         delegate.browser = browser
+        delegate.updater = updater  // keep the updater alive for the app's lifetime
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
@@ -77,7 +79,7 @@ enum PathemApp {
     /// id in representedObject and dispatches via BrowserViewController). Only
     /// chords the keymap does not own get key equivalents here, so the menu and
     /// the rebindable keymap never fight over the same keys.
-    private static func makeMainMenu() -> NSMenu {
+    private static func makeMainMenu(updater: UpdaterController) -> NSMenu {
         let mainMenu = NSMenu()
 
         let appItem = NSMenuItem()
@@ -87,6 +89,12 @@ enum PathemApp {
         appMenu.addItem(
             withTitle: "About Pathem",
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        appMenu.addItem(.separator())
+        let checkUpdates = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(UpdaterController.checkForUpdates(_:)), keyEquivalent: "")
+        checkUpdates.target = updater
+        appMenu.addItem(checkUpdates)
         appMenu.addItem(.separator())
         appMenu.addItem(commandItem("Settings…", "view.preferences", ","))
         appMenu.addItem(.separator())
@@ -234,6 +242,7 @@ enum PathemApp {
 @MainActor
 final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     weak var browser: BrowserViewController?
+    var updater: UpdaterController?
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 

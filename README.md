@@ -68,8 +68,10 @@ Jumping to the last row costs about the same as jumping to the tenth.
 Grab the latest `Pathem-vX.Y.Z-universal.zip` from
 [Releases](https://github.com/Scarcrux/Pathem/releases): a universal (Apple
 Silicon + Intel), Developer ID-signed, notarized, stapled build. Unzip and drag
-`Pathem.app` to /Applications. No Gatekeeper warnings, no build step. Releases
-are produced automatically by the `Release` workflow when a `v*` tag is pushed.
+`Pathem.app` to /Applications. No Gatekeeper warnings, no build step. These
+builds **update themselves** via Sparkle (App menu > Check for Updates…).
+Releases are produced automatically by the `Release` workflow when a `v*` tag is
+pushed.
 
 ### Build from source
 
@@ -126,6 +128,19 @@ For a distributable build, set `DEVELOPER_ID` to a "Developer ID Application"
 identity (signs with Hardened Runtime) and `NOTARY_PROFILE` to a stored
 `notarytool` profile to also notarize and staple. See the comments at the top of
 the script.
+
+### Releasing (and auto-update)
+
+`.github/workflows/release.yml` builds, signs, notarizes, generates a signed
+Sparkle appcast, and attaches everything to a GitHub Release on a `v*` tag. It
+needs repo secrets (documented at the top of that file): the Developer ID
+certificate and notary credentials, plus `SPARKLE_PRIVATE_KEY`.
+
+One-time Sparkle setup: run Sparkle's `generate_keys` to create an EdDSA key
+pair, paste the public key into `Packaging/Info.plist` as `SUPublicEDKey`, and
+store the exported private key (`generate_keys -x private.key`) as the
+`SPARKLE_PRIVATE_KEY` secret. Until `SUPublicEDKey` is set, the updater stays
+dormant (source and unsigned builds simply say updates aren't configured).
 
 This bundle is the prerequisite for the App Intents and Services surfaces. Full
 Shortcuts discovery of the semantic-search action also needs the App Intents

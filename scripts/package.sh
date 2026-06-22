@@ -48,26 +48,33 @@ APP="$BUILD_DIR/$APP_NAME.app"
 # (SwiftTerm compiles it at runtime), so this path needs no Metal toolchain.
 echo "==> Building $APP_NAME ($CONFIG; $ARCHS)"
 binaries=()
+frameworkBinDir=""
 for arch in $ARCHS; do
 	echo "    building $arch"
 	swift build -c "$CONFIG" --arch "$arch"
 	archBinDir="$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)"
 	[[ -x "$archBinDir/$APP_NAME" ]] || { echo "error: binary not found at $archBinDir/$APP_NAME" >&2; exit 1; }
 	binaries+=("$archBinDir/$APP_NAME")
+	frameworkBinDir="$archBinDir"  # frameworks (Sparkle) are universal in the xcframework
 done
 
 echo "==> Assembling bundle"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 if [[ ${#binaries[@]} -gt 1 ]]; then
 	lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/$APP_NAME"
 else
 	cp "${binaries[0]}" "$APP/Contents/MacOS/$APP_NAME"
 fi
-# Note: we deliberately do not ship SwiftTerm's resource bundle. It contains only
-# Shaders.metal for SwiftTerm's optional Metal renderer (the terminal renders via
-# CoreText without it), and as a resource-only directory with no Info.plist it is
-# not a codesignable/notarizable bundle.
+# Embed linked frameworks (Sparkle) and point the binary at them, or the app
+# can't launch outside the build tree. Note: we deliberately do not ship
+# SwiftTerm's resource bundle (only Shaders.metal for its optional Metal
+# renderer; the terminal uses CoreText, and the bundle has no Info.plist so it
+# isn't codesignable).
+for fw in "$frameworkBinDir"/*.framework; do
+	[[ -e "$fw" ]] && cp -R "$fw" "$APP/Contents/Frameworks/"
+done
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/$APP_NAME" 2>/dev/null || true
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 [[ -f "$ROOT/Packaging/$APP_NAME.icns" ]] \
@@ -87,6 +94,11 @@ else
 	echo "    ad-hoc (set SIGN_IDENTITY for a stable local id, or DEVELOPER_ID to distribute)"
 	signargs+=(--sign -)
 fi
+# Sign embedded frameworks (Sparkle ships nested XPC services and helper apps) before
+# the app, so the seal is valid inside-out.
+for fw in "$APP/Contents/Frameworks"/*.framework; do
+	[[ -e "$fw" ]] && codesign "${signargs[@]}" --deep "$fw"
+done
 codesign "${signargs[@]}" "$APP"
 codesign --verify --strict --verbose=2 "$APP"
 

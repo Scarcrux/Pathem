@@ -17,7 +17,11 @@ let package = Package(
         // only by the optional PathemTerminal module so the rest of the app and
         // the engine stay dependency-free. Compiled in (not a loaded bundle), so
         // it does not affect our clean Hardened Runtime stance.
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm", from: "1.13.0")
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm", from: "1.13.0"),
+        // Sparkle (MIT): the auto-update framework. Used by the app for the
+        // notarized direct-download build's update feed (DESIGN.md). A linked
+        // framework, embedded and signed by scripts/package.sh.
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
     ],
     targets: [
         // The engine: enumeration, watching, file ops, search. No AppKit.
@@ -36,7 +40,10 @@ let package = Package(
         // the optional terminal module.
         .executableTarget(
             name: "Pathem",
-            dependencies: ["PathemEngine", "PathemTerminal"]
+            dependencies: [
+                "PathemEngine", "PathemTerminal",
+                .product(name: "Sparkle", package: "Sparkle"),
+            ]
         ),
 
         // Engine tests (Swift Testing).

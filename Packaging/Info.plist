@@ -32,5 +32,14 @@
 	<string>Pathem is open source under the MIT License.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Sparkle auto-update. The updater stays dormant until SUPublicEDKey is a
+	     real EdDSA key (run Sparkle's generate_keys, paste the public key here).
+	     SUFeedURL points at the appcast attached to GitHub Releases. -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/Scarcrux/Pathem/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>REPLACE_WITH_SPARKLE_PUBLIC_KEY</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 </dict>
 </plist>
