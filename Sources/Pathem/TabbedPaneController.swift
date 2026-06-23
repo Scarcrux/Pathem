@@ -74,6 +74,25 @@ final class TabbedPaneController: NSObject {
         if tabs.isEmpty { newTab(at: start, focus: false) }
     }
 
+    /// Each tab's folder path, and the active tab index, for session capture.
+    var tabFolders: [String] { tabs.map { $0.currentURL.path } }
+    var activeTabIndex: Int { activeIndex }
+
+    /// Reopen tabs at the given folders (skipping ones that no longer exist).
+    /// Falls back to the start folder if none are valid.
+    func restoreTabs(_ folders: [String], active: Int) {
+        let fm = FileManager.default
+        let valid = folders.filter {
+            var isDir: ObjCBool = false
+            return fm.fileExists(atPath: $0, isDirectory: &isDir) && isDir.boolValue
+        }
+        guard !valid.isEmpty else { openInitialTab(); return }
+        for path in valid { newTab(at: URL(fileURLWithPath: path), focus: false) }
+        activeIndex = min(max(active, 0), tabs.count - 1)
+        showActivePane()
+        refreshTabBar()
+    }
+
     /// Open a new tab. `duplicatingCurrent` opens it at the active tab's folder
     /// (browser-style), otherwise at this side's start folder.
     func newTab(duplicatingCurrent: Bool) {

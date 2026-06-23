@@ -256,6 +256,7 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     func applicationWillTerminate(_ notification: Notification) {
+        browser?.saveSessionNow()  // persist tabs/folders for next launch
         // Hang up the embedded shell so it (and any job it launched) is not orphaned.
         browser?.terminateTerminal()
     }

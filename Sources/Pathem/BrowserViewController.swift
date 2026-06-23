@@ -25,6 +25,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
     /// default so navigation never disturbs whatever you're running in the shell.
     private var terminalFollows = UserDefaults.standard.bool(forKey: "pathem.terminalFollows")
+    /// True while restoring the saved session, so restore activity doesn't trigger
+    /// a (partial) save.
+    private var isRestoringSession = false
+    private var pendingSessionSave: DispatchWorkItem?
 
     /// Cap on items embedded per search, to bound the cost on huge folders.
     /// The scale path (background incremental indexing and a cached vector
@@ -184,14 +188,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self?.dropFiles(urls, move: move, into: destination)
             }
         }
-        // Open each side's first tab now that configurePane + callbacks are set,
-        // so the initial pane is fully wired (formats applied, search preindexed).
-        leftTabs.openInitialTab()
-        rightTabs.openInitialTab()
+        // Restore the last session's tabs/folders (or open initial tabs) now that
+        // configurePane + callbacks are set, so each pane is fully wired.
+        restoreSession()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
-        if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
         applyPreferences()
     }
 
@@ -731,6 +733,59 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    // MARK: - Session restoration
+
+    /// The last window session: each side's tab folders, active tab, active side.
+    private struct SessionState: Codable {
+        var left: [String]
+        var leftActive: Int
+        var right: [String]
+        var rightActive: Int
+        var leftIsActive: Bool
+    }
+
+    private static var sessionURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("session.json")
+    }
+
+    /// Reopen the last session's tabs/folders, or open initial tabs if none.
+    private func restoreSession() {
+        isRestoringSession = true
+        defer { isRestoringSession = false }
+        if let session = loadConfig(SessionState.self, from: Self.sessionURL),
+            !(session.left.isEmpty && session.right.isEmpty)
+        {
+            leftTabs.restoreTabs(session.left, active: session.leftActive)
+            rightTabs.restoreTabs(session.right, active: session.rightActive)
+            let side = session.leftIsActive ? leftTabs : rightTabs
+            if let pane = (side.activePane ?? leftTabs.activePane) {
+                setActiveSide(side.activePane != nil ? side : leftTabs, pane: pane)
+            }
+        } else {
+            leftTabs.openInitialTab()
+            rightTabs.openInitialTab()
+            if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
+        }
+    }
+
+    /// Persist the session a moment after a change (coalesces navigation bursts).
+    private func saveSessionSoon() {
+        guard !isRestoringSession else { return }
+        pendingSessionSave?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.saveSessionNow() }
+        pendingSessionSave = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
+    }
+
+    /// Persist the session immediately (called on quit).
+    func saveSessionNow() {
+        let state = SessionState(
+            left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
+            right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex,
+            leftIsActive: activeSide === leftTabs)
+        saveConfig(state, to: Self.sessionURL)
+    }
+
     // MARK: - Scoped openers
 
     private static var openersURL: URL? {
@@ -984,6 +1039,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // every focus change, so a mid-typed query or visible results survive a
         // pane re-focus.
         if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
+        saveSessionSoon()
     }
 
     /// Copy (or move) the active pane's selection into the other pane's folder.
@@ -1292,6 +1348,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             // and the drawer is open (changeDirectory itself ignores TUIs).
             if terminalFollows, !terminal.view.isHidden { terminal.changeDirectory(to: url) }
         }
+        saveSessionSoon()
     }
 
     // MARK: - Terminal
@@ -1378,6 +1435,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("left-pane-visible", leftTabs.containerView.frame.width > 50, "\(Int(leftTabs.containerView.frame.width))")
         check("right-pane-visible", rightTabs.containerView.frame.width > 50, "\(Int(rightTabs.containerView.frame.width))")
         check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
+        lines.append("info left-folder (\(leftTabs.activePane?.currentURL.path ?? "?"))")
         // Open the terminal only if needed (a prior run may have persisted it
         // open), check, then undo exactly what we changed so the run leaves no
         // state behind (pref, visibility, or a spawned shell).
