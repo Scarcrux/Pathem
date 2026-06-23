@@ -1304,9 +1304,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         UserDefaults.standard.set(show, forKey: "pathem.terminalVisible")
         guard show else { return }
         terminal.ensureStarted(in: activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser)
-        let height = vSplit.bounds.height
-        if height > 280 { vSplit.setPosition(height - 240, ofDividerAt: 0) }
+        sizeTerminalDrawer()
         terminal.focus()
+    }
+
+    /// Give the terminal drawer a fixed height and the browser the rest. When the
+    /// split has no real height yet (e.g. restoring on launch before layout), the
+    /// terminal's holding priority would otherwise collapse the browser, so retry
+    /// on the next runloop once the window has laid out.
+    private func sizeTerminalDrawer() {
+        let height = vSplit.bounds.height
+        if height > 280 {
+            vSplit.setPosition(height - 240, ofDividerAt: 0)
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.terminal.view.isHidden else { return }
+                let h = self.vSplit.bounds.height
+                if h > 280 { self.vSplit.setPosition(h - 240, ofDividerAt: 0) }
+            }
+        }
     }
 
     /// Reveal the terminal (if hidden) and point it at the active folder. If it
