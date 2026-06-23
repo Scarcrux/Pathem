@@ -736,13 +736,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     // MARK: - Session restoration
 
     /// The last window session: each side's tab folders, active tab, active side.
-    private struct SessionState: Codable {
+    private struct SessionState: Codable, Equatable {
         var left: [String]
         var leftActive: Int
         var right: [String]
         var rightActive: Int
         var leftIsActive: Bool
     }
+    private var lastSavedSession: SessionState?
 
     private static var sessionURL: URL? {
         appSupportDirectory()?.appendingPathComponent("session.json")
@@ -783,6 +784,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
             right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex,
             leftIsActive: activeSide === leftTabs)
+        guard state != lastSavedSession else { return }  // skip no-op writes (e.g. watcher ticks)
+        lastSavedSession = state
         saveConfig(state, to: Self.sessionURL)
     }
 

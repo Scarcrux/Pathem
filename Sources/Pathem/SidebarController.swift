@@ -228,19 +228,43 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     /// Lazily list a folder node's subfolders (directories only, sorted) the first
-    /// time it's expanded, so deep trees aren't read up front.
+    /// time it's expanded. The directory read runs off the main thread so a large
+    /// or slow (cloud/network) folder never freezes the UI; children appear when
+    /// it finishes.
     private func loadChildrenIfNeeded(_ node: Node) {
         guard node.isFolder, !node.childrenLoaded, let url = node.url else { return }
         node.childrenLoaded = true
+        Task { [weak self, weak node] in
+            let dirs = await Self.subfolders(of: url)  // runs off the main actor
+            guard let self, let node else { return }
+            node.children = dirs.map {
+                Node(kind: .folderChild, title: $0.lastPathComponent, url: $0, icon: nil, isFolder: true)
+            }
+            self.outline.reloadItem(node, reloadChildren: true)
+            if !node.children.isEmpty { self.outline.expandItem(node) }
+        }
+    }
+
+    /// Reset a folder's lazy state when it collapses, so re-expanding re-reads it
+    /// (otherwise its subfolders would be frozen for the node's lifetime).
+    func outlineViewItemDidCollapse(_ notification: Notification) {
+        guard let node = notification.userInfo?["NSObject"] as? Node, node.isFolder, !node.isHeader
+        else { return }
+        node.childrenLoaded = false
+        node.children = []
+    }
+
+    /// Subfolders of a directory, off the main actor. nonisolated + async means an
+    /// `await` from the main actor runs this on the cooperative pool.
+    nonisolated private static func subfolders(of url: URL) async -> [URL] {
         let keys: [URLResourceKey] = [.isDirectoryKey]
         let contents =
             (try? FileManager.default.contentsOfDirectory(
                 at: url, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])) ?? []
-        node.children =
+        return
             contents
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
-            .map { Node(kind: .folderChild, title: $0.lastPathComponent, url: $0, icon: nil, isFolder: true) }
     }
 
     private static func isDirectory(_ url: URL) -> Bool {
@@ -462,7 +486,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             alert.beginSheetModal(for: window) { [weak self] response in
                 guard response == .alertFirstButtonReturn else { return }
                 let symbol = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard NSImage(systemSymbolName: symbol, accessibilityDescription: nil) != nil else { return }
+                guard NSImage(systemSymbolName: symbol, accessibilityDescription: nil) != nil else {
+                    NSSound.beep()  // not a valid SF Symbol name
+                    return
+                }
                 self?.mutate { $0.setIcon(id, to: symbol) }
             }
         }

@@ -82,13 +82,18 @@ final class TabbedPaneController: NSObject {
     /// Falls back to the start folder if none are valid.
     func restoreTabs(_ folders: [String], active: Int) {
         let fm = FileManager.default
-        let valid = folders.filter {
+        // Keep original indices so the saved active index maps correctly even when
+        // some folders were dropped (deleted on disk).
+        let survivors = folders.enumerated().filter {
             var isDir: ObjCBool = false
-            return fm.fileExists(atPath: $0, isDirectory: &isDir) && isDir.boolValue
+            return fm.fileExists(atPath: $0.element, isDirectory: &isDir) && isDir.boolValue
         }
-        guard !valid.isEmpty else { openInitialTab(); return }
-        for path in valid { newTab(at: URL(fileURLWithPath: path), focus: false) }
-        activeIndex = min(max(active, 0), tabs.count - 1)
+        guard !survivors.isEmpty else { openInitialTab(); return }
+        for survivor in survivors { newTab(at: URL(fileURLWithPath: survivor.element), focus: false) }
+        // Map the saved active index (an original offset) to the surviving tab at
+        // or after it, falling back to the last tab.
+        let mapped = survivors.firstIndex(where: { $0.offset >= active }) ?? (survivors.count - 1)
+        activeIndex = min(max(mapped, 0), tabs.count - 1)
         showActivePane()
         refreshTabBar()
     }
