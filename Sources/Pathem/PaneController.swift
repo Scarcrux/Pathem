@@ -6,7 +6,7 @@ import PathemEngine
 /// buttons. The pane is intentionally thin. NavigationState owns the history
 /// logic and BulkEnumerator does the listing.
 @MainActor
-final class PaneController: NSObject, NSTextFieldDelegate {
+final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     let containerView = NSView()
     /// The active view (list, icon, or gallery), swapped when the folder's view
     /// mode changes. PaneController drives it through PaneContentView.
@@ -48,6 +48,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     private var backButton = NSButton()
     private var forwardButton = NSButton()
     private var upButton = NSButton()
+    private var viewSwitcher = NSSegmentedControl()
+    private let sortButton = NSPopUpButton(frame: .zero, pullsDown: true)
     private let statusLabel = NSTextField(labelWithString: "")
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -354,6 +356,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         backButton = iconButton("chevron.backward", #selector(goBack))
         forwardButton = iconButton("chevron.forward", #selector(goForward))
         upButton = iconButton("chevron.up", #selector(goUp))
+        buildViewSwitcher()
+        buildSortButton()
 
         pathControl.pathStyle = .standard
         pathControl.target = self
@@ -379,7 +383,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         remoteLabel.setContentHuggingPriority(.init(1), for: .horizontal)
 
         let toolbar = NSStackView(views: [
-            backButton, forwardButton, upButton, pathControl, addressField, remoteLabel,
+            backButton, forwardButton, upButton, viewSwitcher, sortButton,
+            pathControl, addressField, remoteLabel,
         ])
         toolbar.orientation = .horizontal
         toolbar.spacing = 4
@@ -429,6 +434,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Swap the content view when the folder's view mode changes, carrying over
     /// the callbacks, style, selection, and keyboard focus.
     private func applyViewMode(_ mode: ViewFormat.ViewMode) {
+        viewSwitcher.selectedSegment = segmentIndex(mode)  // keep the switcher in sync
         guard mode != currentMode else { return }
         // Capture before swapping: the new (empty) content can't report these.
         let hadFocus = content.keyView.window?.firstResponder === content.keyView
@@ -508,6 +514,107 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         button.action = action
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }
+
+    private static func symbol(_ name: String) -> NSImage {
+        NSImage(systemSymbolName: name, accessibilityDescription: nil) ?? NSImage()
+    }
+
+    // MARK: - View switcher + sort dropdown (Finder-style)
+
+    private func segmentIndex(_ mode: ViewFormat.ViewMode) -> Int {
+        switch mode {
+        case .list: 0
+        case .icon: 1
+        case .gallery: 2
+        }
+    }
+
+    private func modeForSegment(_ index: Int) -> ViewFormat.ViewMode {
+        switch index {
+        case 1: .icon
+        case 2: .gallery
+        default: .list
+        }
+    }
+
+    private func buildViewSwitcher() {
+        let segments: [(String, String)] = [
+            ("list.bullet", "as List"), ("square.grid.2x2", "as Icons"), ("photo", "as Gallery"),
+        ]
+        viewSwitcher = NSSegmentedControl(
+            images: segments.map { Self.symbol($0.0) }, trackingMode: .selectOne,
+            target: self, action: #selector(viewSwitcherChanged))
+        for (index, segment) in segments.enumerated() {
+            viewSwitcher.setToolTip(segment.1, forSegment: index)
+        }
+        viewSwitcher.segmentStyle = .texturedRounded
+        viewSwitcher.selectedSegment = segmentIndex(format.viewMode)
+        viewSwitcher.translatesAutoresizingMaskIntoConstraints = false
+    }
+
+    @objc private func viewSwitcherChanged() {
+        guard viewSwitcher.selectedSegment >= 0 else { return }
+        setViewMode(modeForSegment(viewSwitcher.selectedSegment))
+    }
+
+    private func buildSortButton() {
+        sortButton.bezelStyle = .texturedRounded
+        sortButton.imagePosition = .imageOnly
+        sortButton.translatesAutoresizingMaskIntoConstraints = false
+        let menu = NSMenu()
+        menu.delegate = self
+        sortButton.menu = menu
+        rebuildSortMenu(menu)
+        sortButton.toolTip = "Sort"
+    }
+
+    /// Rebuild the sort menu (with current checkmarks) each time it opens.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        if menu === sortButton.menu { rebuildSortMenu(menu) }
+    }
+
+    private func rebuildSortMenu(_ menu: NSMenu) {
+        menu.removeAllItems()
+        let title = NSMenuItem()  // pull-down face (item 0 isn't selectable)
+        title.image = Self.symbol("arrow.up.arrow.down")
+        menu.addItem(title)
+        func addKey(_ label: String, _ key: ViewFormat.SortKey) {
+            let item = NSMenuItem(title: label, action: #selector(sortByKey(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = key.rawValue
+            item.state = format.sortKey == key ? .on : .off
+            menu.addItem(item)
+        }
+        addKey("Name", .name)
+        addKey("Size", .size)
+        addKey("Date Modified", .date)
+        menu.addItem(.separator())
+        let ascending = NSMenuItem(title: "Ascending", action: #selector(sortAscending), keyEquivalent: "")
+        ascending.target = self
+        ascending.state = format.ascending ? .on : .off
+        menu.addItem(ascending)
+        let descending = NSMenuItem(title: "Descending", action: #selector(sortDescending), keyEquivalent: "")
+        descending.target = self
+        descending.state = format.ascending ? .off : .on
+        menu.addItem(descending)
+    }
+
+    @objc private func sortByKey(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let key = ViewFormat.SortKey(rawValue: raw)
+        else { return }
+        applySort(key: key, ascending: format.ascending)
+    }
+
+    @objc private func sortAscending() { applySort(key: format.sortKey, ascending: true) }
+    @objc private func sortDescending() { applySort(key: format.sortKey, ascending: false) }
+
+    private func applySort(key: ViewFormat.SortKey, ascending: Bool) {
+        format.sortKey = key
+        format.ascending = ascending
+        rememberFormat?(nav.current, format)
+        if remote != nil { reloadRemote() } else { reload() }
+        content.showSortIndicator(key: key, ascending: ascending)
     }
 
 
