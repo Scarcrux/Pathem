@@ -50,6 +50,10 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private var upButton = NSButton()
     private var viewSwitcher = NSSegmentedControl()
     private let sortButton = NSPopUpButton(frame: .zero, pullsDown: true)
+    private let actionButton = NSPopUpButton(frame: .zero, pullsDown: true)
+    /// Run a registered browser command by id (set by the browser). The action
+    /// menu uses this so its items reuse the same command spine as the main menu.
+    var runCommand: ((String) -> Void)?
     private let statusLabel = NSTextField(labelWithString: "")
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -358,6 +362,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         upButton = iconButton("chevron.up", #selector(goUp))
         buildViewSwitcher()
         buildSortButton()
+        buildActionButton()
 
         pathControl.pathStyle = .standard
         pathControl.target = self
@@ -383,7 +388,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         remoteLabel.setContentHuggingPriority(.init(1), for: .horizontal)
 
         let toolbar = NSStackView(views: [
-            backButton, forwardButton, upButton, viewSwitcher, sortButton,
+            backButton, forwardButton, upButton, viewSwitcher, sortButton, actionButton,
             pathControl, addressField, remoteLabel,
         ])
         toolbar.orientation = .horizontal
@@ -569,9 +574,72 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         sortButton.toolTip = "Sort"
     }
 
-    /// Rebuild the sort menu (with current checkmarks) each time it opens.
+    /// Rebuild a pull-down menu each time it opens (fresh checkmarks; the action
+    /// menu first makes this pane active so its items target the right pane).
     func menuNeedsUpdate(_ menu: NSMenu) {
-        if menu === sortButton.menu { rebuildSortMenu(menu) }
+        if menu === sortButton.menu {
+            rebuildSortMenu(menu)
+        } else if menu === actionButton.menu {
+            onBecomeActive?()
+            rebuildActionMenu(menu)
+        }
+    }
+
+    private func buildActionButton() {
+        actionButton.bezelStyle = .texturedRounded
+        actionButton.imagePosition = .imageOnly
+        actionButton.translatesAutoresizingMaskIntoConstraints = false
+        let menu = NSMenu()
+        menu.delegate = self
+        actionButton.menu = menu
+        rebuildActionMenu(menu)
+        actionButton.toolTip = "Actions"
+    }
+
+    private func rebuildActionMenu(_ menu: NSMenu) {
+        menu.removeAllItems()
+        let face = NSMenuItem()  // pull-down face (item 0 isn't selectable)
+        face.image = Self.symbol("ellipsis.circle")
+        menu.addItem(face)
+        func add(_ label: String, command id: String) {
+            let item = NSMenuItem(title: label, action: #selector(runActionCommand(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = id
+            menu.addItem(item)
+        }
+        add("New Folder", command: "files.newFolder")
+        add("Get Info", command: "files.getInfo")
+        add("Quick Look", command: "view.quickLook")
+        add("Rename…", command: "files.rename")
+        menu.addItem(.separator())
+        add("Reveal in Finder", command: "files.reveal")
+        let share = NSMenuItem(title: "Share…", action: #selector(shareSelection), keyEquivalent: "")
+        share.target = self
+        menu.addItem(share)
+        if isRemote {
+            add("Download from Server…", command: "remote.download")
+        }
+        menu.addItem(.separator())
+        add("Move to Trash", command: "files.trash")
+    }
+
+    @objc private func runActionCommand(_ sender: NSMenuItem) {
+        if let id = sender.representedObject as? String { runCommand?(id) }
+    }
+
+    @objc private func shareSelection() {
+        onBecomeActive?()
+        guard remote == nil else {
+            NSSound.beep()  // remote files aren't local URLs to share
+            return
+        }
+        let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let picker = NSSharingServicePicker(items: urls)
+        picker.show(relativeTo: actionButton.bounds, of: actionButton, preferredEdge: .minY)
     }
 
     private func rebuildSortMenu(_ menu: NSMenu) {

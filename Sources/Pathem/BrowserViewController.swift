@@ -180,6 +180,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
+                pane.runCommand = { [weak self] id in self?.commands.perform(id) }
                 pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
                     self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)
