@@ -42,7 +42,12 @@ enum PathemApp {
         // window opens at 1100x700 instead of vanishing.
         window.setContentSize(NSSize(width: 1100, height: 700))
         window.contentMinSize = NSSize(width: 720, height: 420)
-        window.center()
+        // Remember the window's position and size across launches. setFrameUsingName
+        // restores the saved frame (returns false on first launch -> center), and
+        // setFrameAutosaveName persists future moves/resizes.
+        let frameName = NSWindow.FrameAutosaveName("ai.scarcrux.pathem.mainWindow")
+        if !window.setFrameUsingName(frameName) { window.center() }
+        window.setFrameAutosaveName(frameName)
         let delegate = PathemAppDelegate()
         delegate.browser = browser
         delegate.updater = updater  // keep the updater alive for the app's lifetime
