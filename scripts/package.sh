@@ -96,13 +96,19 @@ else
 	echo "    ad-hoc (set SIGN_IDENTITY for a stable local id, or DEVELOPER_ID to distribute)"
 	signargs+=(--sign -)
 fi
-# Sign embedded frameworks (Sparkle ships nested XPC services and helper apps) before
-# the app, so the seal is valid inside-out.
+# Sign inside-out (not --deep, which Apple discourages and which mis-signs nested
+# helpers): Sparkle ships nested XPC services, a helper app, and the Autoupdate
+# Mach-O. Sign those first, then the framework, then the app.
 for fw in "$APP/Contents/Frameworks"/*.framework; do
-	[[ -e "$fw" ]] && codesign "${signargs[@]}" --deep "$fw"
+	[[ -e "$fw" ]] || continue
+	# Only the real versioned payload (skips the top-level Current symlinks).
+	while IFS= read -r -d '' nested; do
+		codesign "${signargs[@]}" "$nested"
+	done < <(find "$fw/Versions" \( -name "*.xpc" -o -name "*.app" -o -name "Autoupdate" \) -print0 2>/dev/null)
+	codesign "${signargs[@]}" "$fw"
 done
 codesign "${signargs[@]}" "$APP"
-codesign --verify --strict --verbose=2 "$APP"
+codesign --verify --strict --deep --verbose=2 "$APP"
 
 if [[ -n "${NOTARY_PROFILE:-}" && -n "${DEVELOPER_ID:-}" ]]; then
 	echo "==> Notarizing"
