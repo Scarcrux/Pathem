@@ -173,6 +173,8 @@ enum PathemApp {
         goMenu.addItem(commandItem("Forward", "nav.forward"))
         goMenu.addItem(commandItem("Enclosing Folder", "nav.up"))
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
+        goMenu.addItem(.separator())
+        goMenu.addItem(commandItem("Connections…", "connections.manage", "k", [.command, .shift]))
 
         return mainMenu
     }

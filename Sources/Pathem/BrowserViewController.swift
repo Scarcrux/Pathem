@@ -68,6 +68,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
+    private lazy var connectionsController = ConnectionsController()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -168,6 +169,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadSidebar()
         loadTerminalTheme()
         loadOpenerRules()
+        loadConnections()
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
@@ -279,6 +281,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.activePane?.goUp()
         }
         add("nav.editPath", "Go to Path…") { [weak self] in self?.activePane?.beginEditingPath() }
+        add("connections.manage", "Connections…") {
+            [weak self] in self?.connectionsController.present(over: self?.view.window)
+        }
         add("edit.undo", "Undo", enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
             [weak self] in self?.undo(nil)
         }
@@ -787,6 +792,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard state != lastSavedSession else { return }  // skip no-op writes (e.g. watcher ticks)
         lastSavedSession = state
         saveConfig(state, to: Self.sessionURL)
+    }
+
+    // MARK: - Remote connections
+
+    private static var connectionsURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("connections.json")
+    }
+
+    private func loadConnections() {
+        if let saved = loadConfig([RemoteConnection].self, from: Self.connectionsURL) {
+            connectionsController.connections = saved
+        }
+        connectionsController.onChange = { [weak self] conns in
+            self?.saveConfig(conns, to: Self.connectionsURL)
+        }
     }
 
     // MARK: - Scoped openers
