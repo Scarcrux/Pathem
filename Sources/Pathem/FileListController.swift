@@ -39,6 +39,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var tagCache: [String: [FileTag.Color]] = [:]
     /// Bumped per listing so a stale background tag read can't clobber a newer one.
     private var tagReadGeneration = 0
+    /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
+    private var calculateFolderSizes = false
+    private var folderSizeCache: [String: Int64] = [:]
+    private var sizeReadGeneration = 0
     /// The folder these rows live in, so a dragged row maps to a file URL. nil
     /// while showing search results, which disables drag.
     var directoryURL: URL?
@@ -209,7 +213,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// position is held, so the list never jumps or deselects under the user.
     /// Without it (navigation, search results) the view resets to the top.
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
-        defer { refreshTagsAsync() }  // read tag colors off the main thread, then redraw
+        defer {
+            refreshTagsAsync()  // read tag colors off the main thread, then redraw
+            refreshFolderSizesAsync()  // and folder sizes if enabled
+        }
         guard preserveState else {
             self.entries = entries
             tableView.reloadData()
@@ -428,7 +435,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 cell.textField?.attributedStringValue = Self.name(entry.name, withDots: colors, size: listFontSize)
             }
         case .size:
-            cell.textField?.stringValue = entry.isDirectory ? "--" : byteFormatter.string(fromByteCount: entry.size)
+            if entry.isDirectory {
+                if let bytes = folderSize(for: entry) {
+                    cell.textField?.stringValue = byteFormatter.string(fromByteCount: bytes)
+                } else {
+                    cell.textField?.stringValue = "--"
+                }
+            } else {
+                cell.textField?.stringValue = byteFormatter.string(fromByteCount: entry.size)
+            }
         case .date:
             cell.textField?.stringValue = entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
         case .none:
@@ -483,6 +498,49 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Drop cached tag colors so the next refresh re-reads from disk (call after
     /// the app itself changes tags).
     func invalidateTagCache() { tagCache.removeAll() }
+
+    /// A cached folder size, or nil when not computed (or the option is off).
+    private func folderSize(for entry: FileEntry) -> Int64? {
+        guard calculateFolderSizes, entry.isDirectory, let dir = directoryURL else { return nil }
+        return folderSizeCache[dir.appendingPathComponent(entry.name).path]
+    }
+
+    /// Turn the "calculate all sizes" option on or off.
+    func setCalculateFolderSizes(_ on: Bool) {
+        guard on != calculateFolderSizes else { return }
+        calculateFolderSizes = on
+        if on {
+            refreshFolderSizesAsync()
+        } else {
+            sizeReadGeneration += 1  // drop any in-flight computation
+            tableView.reloadData()  // folders go back to "--"
+        }
+    }
+
+    /// Compute folder sizes off the main thread, publishing each row as it finishes
+    /// (reusing already-computed sizes). Generation-guarded against a newer listing.
+    private func refreshFolderSizesAsync() {
+        guard calculateFolderSizes, let dir = directoryURL else { return }
+        sizeReadGeneration += 1
+        let generation = sizeReadGeneration
+        let folders = entries.filter(\.isDirectory).map(\.name)
+        let known = folderSizeCache
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            for name in folders {
+                let path = dir.appendingPathComponent(name).path
+                let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
+                DispatchQueue.main.async {
+                    guard let self, self.sizeReadGeneration == generation else { return }
+                    self.folderSizeCache[path] = size
+                    if let row = self.entries.firstIndex(where: { $0.isDirectory && $0.name == name }) {
+                        self.tableView.reloadData(
+                            forRowIndexes: IndexSet(integer: row),
+                            columnIndexes: IndexSet(integersIn: 0..<self.tableView.numberOfColumns))
+                    }
+                }
+            }
+        }
+    }
 
     /// Read tag colors for the current entries off the main thread (reusing the
     /// cache for names already read), then redraw. Generation-guarded so a later

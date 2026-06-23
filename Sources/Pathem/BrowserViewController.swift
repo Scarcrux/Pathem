@@ -275,6 +275,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.applyToSubfolders", "Apply View to Subfolders", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
         }
+        add("view.useAsDefault", "Use as Default View", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.useCurrentViewAsDefault()
+        }
+        add("view.calculateSizes", "Calculate All Sizes") { [weak self] in self?.toggleCalculateSizes() }
         add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
         add("ai.run", "Ask Pathem (Natural Language)…") { [weak self] in self?.showAICommandBar() }
@@ -545,6 +549,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
+        case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         default: break
         }
@@ -591,6 +596,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         applyPreferences()  // moves the path bar in every pane and persists
     }
 
+    private func toggleCalculateSizes() {
+        prefs.calculateFolderSizes.toggle()
+        applyPreferences()  // turns folder-size computation on/off in every pane
+    }
+
     /// Apply preferences to every tab in both sides, persist them, and rebuild the
     /// search index (OCR can change what gets embedded).
     private func applyPreferences() {
@@ -600,6 +610,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     rowHeight: prefs.rowHeight, fontSize: prefs.fontSize,
                     alternatingRows: prefs.alternatingRows)
                 pane.setPathBar(atBottom: prefs.pathBarAtBottom)
+                pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
             }
         }
         saveConfig(prefs, to: Self.preferencesURL)
@@ -753,6 +764,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func rememberFormat(_ url: URL, _ format: ViewFormat) {
         folderFormats.setExact(url.path, format)
         saveFolderFormats()
+    }
+
+    /// Make the active pane's current view (mode + sort) the global default for
+    /// folders that don't have their own remembered format.
+    private func useCurrentViewAsDefault() {
+        guard let pane = activePane else { return }
+        folderFormats.defaultFormat = pane.format
+        saveFolderFormats()
+        leftTabs.activePane?.reloadIfShowingListing()
+        rightTabs.activePane?.reloadIfShowingListing()
     }
 
     /// Apply the active pane's current view to its whole subtree, then refresh

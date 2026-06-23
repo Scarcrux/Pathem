@@ -23,12 +23,14 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var pathBarAtBottom: Bool
     /// Opening a saved connection uses a new tab instead of the active one.
     public var openConnectionsInNewTab: Bool
+    /// Compute and show folder sizes in the list (Finder's "Calculate all sizes").
+    public var calculateFolderSizes: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
         alternatingRows: Bool = true, searchOCR: Bool = false,
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = false,
-        openConnectionsInNewTab: Bool = false
+        openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false
     ) {
         self.density = density
         self.fontSize = fontSize
@@ -37,6 +39,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.showFullPathInTitle = showFullPathInTitle
         self.pathBarAtBottom = pathBarAtBottom
         self.openConnectionsInNewTab = openConnectionsInNewTab
+        self.calculateFolderSizes = calculateFolderSizes
     }
 
     public static let `default` = Preferences()
@@ -61,5 +64,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         pathBarAtBottom = try c.decodeIfPresent(Bool.self, forKey: .pathBarAtBottom) ?? d.pathBarAtBottom
         openConnectionsInNewTab =
             try c.decodeIfPresent(Bool.self, forKey: .openConnectionsInNewTab) ?? d.openConnectionsInNewTab
+        calculateFolderSizes =
+            try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes) ?? d.calculateFolderSizes
     }
 }

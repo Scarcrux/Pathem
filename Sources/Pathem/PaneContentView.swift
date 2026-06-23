@@ -29,11 +29,14 @@ protocol PaneContentView: AnyObject {
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool)
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
     func invalidateTagCache()
+    func setCalculateFolderSizes(_ on: Bool)
 }
 
 extension PaneContentView {
     /// Grid views don't render tag dots yet, so dropping the cache is a no-op.
     func invalidateTagCache() {}
+    /// Only the list view shows a size column, so others ignore this.
+    func setCalculateFolderSizes(_ on: Bool) {}
 }
 
 extension FileListController: PaneContentView {

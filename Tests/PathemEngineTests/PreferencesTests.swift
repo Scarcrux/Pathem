@@ -25,7 +25,8 @@ import Testing
     @Test func codableRoundTrip() throws {
         let prefs = Preferences(
             density: .compact, fontSize: 15, alternatingRows: false, searchOCR: true,
-            showFullPathInTitle: true, pathBarAtBottom: true, openConnectionsInNewTab: true)
+            showFullPathInTitle: true, pathBarAtBottom: true, openConnectionsInNewTab: true,
+            calculateFolderSizes: true)
         let data = try JSONEncoder().encode(prefs)
         #expect(try JSONDecoder().decode(Preferences.self, from: data) == prefs)
     }
@@ -43,5 +44,6 @@ import Testing
         #expect(prefs.showFullPathInTitle == false)  // defaulted
         #expect(prefs.pathBarAtBottom == false)  // defaulted
         #expect(prefs.openConnectionsInNewTab == false)  // defaulted
+        #expect(prefs.calculateFolderSizes == false)  // defaulted
     }
 }

@@ -14,6 +14,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private var currentMode: ViewFormat.ViewMode = .list
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
+    private var calculateFolderSizes = false
     /// Selection to restore after a view-mode swap repopulates the new content.
     private var pendingSelection: Set<String>?
     /// Keymap chord handler, re-applied to whichever content is active.
@@ -328,6 +329,12 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize), alternatingRows: alternatingRows)
     }
 
+    /// Toggle Finder-style "calculate all sizes" for this pane's list.
+    func setCalculateFolderSizes(_ on: Bool) {
+        calculateFolderSizes = on
+        content.setCalculateFolderSizes(on)
+    }
+
     func descend(into entry: FileEntry) {
         if let remote {
             if entry.isDirectory {
@@ -561,6 +568,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         if let s = lastStyle {
             content.applyStyle(rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
         }
+        content.setCalculateFolderSizes(calculateFolderSizes)  // carry the option across the swap
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }
 
