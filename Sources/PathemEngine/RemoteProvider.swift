@@ -154,6 +154,7 @@ enum RemoteRunner {
                         cont.resume(throwing: error)
                         return
                     }
+                    box.markLaunched()  // safe to terminate now (handles a cancel that raced run)
                     if let input {  // feed stdin (config / batch), then close so the tool proceeds
                         stdin.fileHandleForWriting.write(Data(input.utf8))
                         stdin.fileHandleForWriting.closeFile()
@@ -179,26 +180,38 @@ enum RemoteRunner {
 }
 
 /// Lock-guarded holder so a cancellation handler (on another thread) can
-/// terminate the running process.
+/// terminate the running process. Tracks launch state because Process.terminate()
+/// on a task that has not been launched raises an uncatchable exception.
 private final class ProcessBox: @unchecked Sendable {
     private let lock = NSLock()
     private var process: Process?
-    private var terminated = false
+    private var launched = false
+    private var cancelled = false
 
-    /// Take ownership of the process. Returns false if termination already
+    /// Take ownership of the process. Returns false if cancellation already
     /// happened (the task was cancelled before the process started).
     func adopt(_ process: Process) -> Bool {
         lock.lock()
         defer { lock.unlock() }
-        if terminated { return false }
+        if cancelled { return false }
         self.process = process
         return true
     }
 
+    /// The process has actually been launched. If cancellation arrived in the
+    /// window between adopt and run, terminate it now.
+    func markLaunched() {
+        lock.lock()
+        defer { lock.unlock() }
+        launched = true
+        if cancelled, process?.isRunning == true { process?.terminate() }
+    }
+
+    /// Request termination; only ever touches a process that has launched.
     func terminate() {
         lock.lock()
         defer { lock.unlock() }
-        terminated = true
-        process?.terminate()
+        cancelled = true
+        if launched, process?.isRunning == true { process?.terminate() }
     }
 }

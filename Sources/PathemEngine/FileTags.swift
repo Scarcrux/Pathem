@@ -44,21 +44,27 @@ public struct FileTag: Sendable, Equatable, Hashable {
 public enum FileTags {
     static let attribute = "com.apple.metadata:_kMDItemUserTags"
 
-    /// Read the file's tags (empty if none or unreadable).
+    /// Read the file's tags (empty if none or unreadable). Tags attach to a
+    /// symlink itself (XATTR_NOFOLLOW), matching Finder.
     public static func tags(of url: URL) -> [FileTag] {
         url.withUnsafeFileSystemRepresentation { fsr -> [FileTag] in
             guard let fsr else { return [] }
-            let size = getxattr(fsr, attribute, nil, 0, 0, 0)
-            guard size > 0 else { return [] }
-            var buffer = [UInt8](repeating: 0, count: size)
-            let read = getxattr(fsr, attribute, &buffer, size, 0, 0)
-            guard read > 0 else { return [] }
-            let data = Data(buffer.prefix(read))
-            guard
-                let list = (try? PropertyListSerialization.propertyList(
-                    from: data, options: [], format: nil)) as? [String]
-            else { return [] }
-            return list.map(parse)
+            while true {
+                let size = getxattr(fsr, attribute, nil, 0, 0, XATTR_NOFOLLOW)
+                guard size > 0 else { return [] }  // ENOATTR / empty -> no tags
+                var buffer = [UInt8](repeating: 0, count: size)
+                let read = getxattr(fsr, attribute, &buffer, size, 0, XATTR_NOFOLLOW)
+                if read < 0 {
+                    if errno == ERANGE { continue }  // attribute grew between probe and read; retry
+                    return []
+                }
+                let data = Data(buffer.prefix(read))
+                guard
+                    let list = (try? PropertyListSerialization.propertyList(
+                        from: data, options: [], format: nil)) as? [String]
+                else { return [] }
+                return list.map(parse)
+            }
         }
     }
 
@@ -67,7 +73,7 @@ public enum FileTags {
         try url.withUnsafeFileSystemRepresentation { fsr in
             guard let fsr else { return }
             if tags.isEmpty {
-                let result = removexattr(fsr, attribute, 0)
+                let result = removexattr(fsr, attribute, XATTR_NOFOLLOW)
                 // ENOATTR just means there was nothing to remove.
                 if result != 0, errno != ENOATTR {
                     throw tagError("removexattr")
@@ -77,20 +83,27 @@ public enum FileTags {
             let strings = tags.map(format)
             let data = try PropertyListSerialization.data(
                 fromPropertyList: strings, format: .binary, options: 0)
-            let result = data.withUnsafeBytes { setxattr(fsr, attribute, $0.baseAddress, data.count, 0, 0) }
+            let result = data.withUnsafeBytes {
+                setxattr(fsr, attribute, $0.baseAddress, data.count, 0, XATTR_NOFOLLOW)
+            }
             if result != 0 { throw tagError("setxattr") }
         }
     }
 
     /// Add a color tag if absent, or remove it if already present.
-    public static func toggleColor(_ color: FileTag.Color, on url: URL) throws {
+    @discardableResult
+    public static func toggleColor(_ color: FileTag.Color, on url: URL) throws -> Bool {
         var tags = tags(of: url)
+        let added: Bool
         if let index = tags.firstIndex(where: { $0.color == color }) {
             tags.remove(at: index)
+            added = false
         } else {
             tags.append(FileTag(color: color))
+            added = true
         }
         try setTags(tags, on: url)
+        return added
     }
 
     // MARK: Helpers

@@ -164,6 +164,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        Self.cleanupRemoteTemp()
         registerCommands()
         loadKeymap()
         loadFolderFormats()
@@ -933,9 +934,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
             }
+            self.transferInFlight = true  // so Quit warns mid-transfer
             self.transferController.run(
                 items, title: "Downloading from \(ctx.connection.host)", over: window
             ) { [weak self] failures, cancelled in
+                self?.transferInFlight = false
                 self?.reportTransfer(failures, cancelled: cancelled, verb: "download")
             }
         }
@@ -961,12 +964,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
         }
+        transferInFlight = true  // so Quit warns mid-transfer
         transferController.run(
             items, title: "Uploading to \(connection.host)", over: window
         ) { [weak self, weak pane] failures, cancelled in
+            self?.transferInFlight = false
             pane?.refreshRemote()  // show the newly uploaded files
             self?.reportTransfer(failures, cancelled: cancelled, verb: "upload")
         }
+    }
+
+    /// Temp directory for remote files opened locally.
+    private static var remoteTempDir: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Remote", isDirectory: true)
+    }
+
+    /// Remove leftover opened-remote files from a previous run. Done once at launch
+    /// so it never deletes a file the user is still editing this session.
+    private static func cleanupRemoteTemp() {
+        try? FileManager.default.removeItem(at: remoteTempDir)
     }
 
     /// Double-clicking a remote file: download it to a temp file and open it.
@@ -974,14 +990,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         _ connection: RemoteConnection, remotePath: String, password: String, name: String
     ) {
         guard let window = view.window else { return }
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Remote", isDirectory: true)
+        let dir = Self.remoteTempDir
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let local = uniqueLocalURL(dir.appendingPathComponent(name))
         let provider = RemoteProviders.make(for: connection.proto)
         let item = TransferController.Item(name: name) {
             try await provider.download(connection, remotePath: remotePath, to: local, password: password)
         }
+        transferInFlight = true  // so Quit warns mid-transfer
         transferController.run([item], title: "Opening \(name)", over: window) { [weak self] failures, cancelled in
+            self?.transferInFlight = false
             guard !cancelled else { return }
             if failures.isEmpty {
                 NSWorkspace.shared.open(local)

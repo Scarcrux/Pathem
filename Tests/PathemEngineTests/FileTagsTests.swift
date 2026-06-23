@@ -46,6 +46,20 @@ import Testing
         #expect(!FileTags.tags(of: url).contains(FileTag(color: .orange)))
     }
 
+    @Test func tagsAttachToSymlinkNotTarget() throws {
+        let target = try tempFile()
+        let link = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-link-\(UUID().uuidString)")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target)
+        defer {
+            try? FileManager.default.removeItem(at: link)
+            try? FileManager.default.removeItem(at: target)
+        }
+        try FileTags.setTags([FileTag(color: .blue)], on: link)
+        #expect(FileTags.tags(of: link) == [FileTag(color: .blue)])
+        #expect(FileTags.tags(of: target).isEmpty)  // the link's target must be untouched
+    }
+
     @Test func usesFinderWireFormat() {
         // "Name\nColorIndex"; a plain name means no color.
         #expect(FileTags.format(FileTag(color: .red)) == "Red\n6")

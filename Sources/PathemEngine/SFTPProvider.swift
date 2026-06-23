@@ -61,12 +61,18 @@ public struct SFTPProvider: RemoteProvider {
         return try await RemoteRunner.run(sftp, args, input: batch, env: env)
     }
 
-    /// Quote a path for an sftp batch line: escape backslash and quote, and strip
-    /// newlines so a crafted name can't inject extra batch commands.
+    /// Quote a path for an sftp batch line: strip newlines (so a crafted name
+    /// can't inject extra batch commands), escape backslash and quote, and
+    /// backslash-escape the glob metacharacters sftp expands even inside quotes,
+    /// so get/put of a literal name containing * ? [ ] works. Backslash must be
+    /// escaped first so the escapes we add survive.
     private func quote(_ s: String) -> String {
-        let cleaned = s.replacingOccurrences(of: "\n", with: "").replacingOccurrences(of: "\r", with: "")
-        let escaped = cleaned.replacingOccurrences(of: "\\", with: "\\\\")
+        var escaped = s.replacingOccurrences(of: "\n", with: "").replacingOccurrences(of: "\r", with: "")
+        escaped = escaped.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
+        for glob in ["*", "?", "[", "]"] {
+            escaped = escaped.replacingOccurrences(of: glob, with: "\\" + glob)
+        }
         return "\"\(escaped)\""
     }
 

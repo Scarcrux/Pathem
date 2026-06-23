@@ -195,9 +195,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private func reloadRemote() {
         guard let session = remote else { return }
         showingSearchResults = false
-        pendingSelection = nil  // a view-mode swap here has no prior selection to carry
         onDidNavigate?()  // clear the (local) search field as the remote folder changes
         applyViewMode(format.viewMode)
+        pendingSelection = nil  // clear AFTER the swap (which would set it) so it can't leak forward
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
         content.showPlaceholder("Loading \(session.connection.host)…")
@@ -600,6 +600,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
 
     @objc private func viewSwitcherChanged() {
         guard viewSwitcher.selectedSegment >= 0 else { return }
+        onBecomeActive?()  // act on this pane, like the action menu
         setViewMode(modeForSegment(viewSwitcher.selectedSegment))
     }
 
@@ -618,6 +619,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// menu first makes this pane active so its items target the right pane).
     func menuNeedsUpdate(_ menu: NSMenu) {
         if menu === sortButton.menu {
+            onBecomeActive?()  // sort applies to this pane
             rebuildSortMenu(menu)
         } else if menu === actionButton.menu {
             onBecomeActive?()
@@ -699,7 +701,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         tagSelection(toggle: color)
     }
 
-    /// Toggle a color tag on every selected file (local only).
+    /// Toggle a color tag across the selection (local only). The decision is made
+    /// once for the whole selection: if every file already has the color, remove
+    /// it from all; otherwise add it to all (so a mixed selection becomes uniform).
     func tagSelection(toggle color: FileTag.Color) {
         guard remote == nil else {
             NSSound.beep()  // remote files have no local xattr
@@ -710,7 +714,25 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             NSSound.beep()
             return
         }
-        for url in urls { try? FileTags.toggleColor(color, on: url) }
+        let allHave = urls.allSatisfy { FileTags.tags(of: $0).contains { $0.color == color } }
+        var failed = false
+        for url in urls {
+            do {
+                var tags = FileTags.tags(of: url)
+                if allHave {
+                    tags.removeAll { $0.color == color }
+                } else if !tags.contains(where: { $0.color == color }) {
+                    tags.append(FileTag(color: color))
+                } else {
+                    continue
+                }
+                try FileTags.setTags(tags, on: url)
+            } catch {
+                failed = true
+            }
+        }
+        if failed { NSSound.beep() }
+        content.invalidateTagCache()
         reload()
     }
 
@@ -727,7 +749,12 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             NSSound.beep()
             return
         }
-        for url in urls { try? FileTags.setTags([], on: url) }
+        var failed = false
+        for url in urls {
+            do { try FileTags.setTags([], on: url) } catch { failed = true }
+        }
+        if failed { NSSound.beep() }
+        content.invalidateTagCache()
         reload()
     }
 

@@ -28,6 +28,12 @@ protocol PaneContentView: AnyObject {
     func selectNames(_ names: Set<String>)
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool)
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
+    func invalidateTagCache()
+}
+
+extension PaneContentView {
+    /// Grid views don't render tag dots yet, so dropping the cache is a no-op.
+    func invalidateTagCache() {}
 }
 
 extension FileListController: PaneContentView {

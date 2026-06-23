@@ -33,9 +33,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var suppressSortCallback = false
     /// Row font size, applied per cell so a preference change takes effect on reload.
     private var listFontSize: CGFloat = 13
-    /// Tag colors per file path, read lazily for visible rows and cleared on reload
-    /// so scrolling a big directory never re-reads xattrs it already has.
+    /// Tag colors per file path, filled by an off-main read after each listing so
+    /// the cell path never does a syscall. Reused across refreshes for names
+    /// already read.
     private var tagCache: [String: [FileTag.Color]] = [:]
+    /// Bumped per listing so a stale background tag read can't clobber a newer one.
+    private var tagReadGeneration = 0
     /// The folder these rows live in, so a dragged row maps to a file URL. nil
     /// while showing search results, which disables drag.
     var directoryURL: URL?
@@ -206,7 +209,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// position is held, so the list never jumps or deselects under the user.
     /// Without it (navigation, search results) the view resets to the top.
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
-        tagCache.removeAll()  // tags may have changed; re-read lazily for visible rows
+        defer { refreshTagsAsync() }  // read tag colors off the main thread, then redraw
         guard preserveState else {
             self.entries = entries
             tableView.reloadData()
@@ -469,15 +472,53 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell
     }
 
-    /// Tag colors for an entry, cached by path. Only for a real folder listing
-    /// (directoryURL set); search results span folders, so they show no dots.
+    /// Tag colors for a row, read only from the cache so the cell path never does
+    /// a filesystem syscall on the main thread. The cache is filled by
+    /// refreshTagsAsync after each listing change.
     private func tagColors(for entry: FileEntry) -> [FileTag.Color] {
-        guard let dir = directoryURL else { return [] }
-        let url = dir.appendingPathComponent(entry.name)
-        if let cached = tagCache[url.path] { return cached }
-        let colors = FileTags.tags(of: url).map(\.color).filter { $0 != .none }
-        tagCache[url.path] = colors
-        return colors
+        guard let dir = directoryURL else { return [] }  // search results span folders: no dots
+        return tagCache[dir.appendingPathComponent(entry.name).path] ?? []
+    }
+
+    /// Drop cached tag colors so the next refresh re-reads from disk (call after
+    /// the app itself changes tags).
+    func invalidateTagCache() { tagCache.removeAll() }
+
+    /// Read tag colors for the current entries off the main thread (reusing the
+    /// cache for names already read), then redraw. Generation-guarded so a later
+    /// listing supersedes an in-flight read.
+    private func refreshTagsAsync() {
+        guard let dir = directoryURL else {
+            tagCache.removeAll()
+            return
+        }
+        tagReadGeneration += 1
+        let generation = tagReadGeneration
+        let names = entries.map(\.name)
+        let known = tagCache
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var result: [String: [FileTag.Color]] = [:]
+            result.reserveCapacity(names.count)
+            for name in names {
+                let path = dir.appendingPathComponent(name).path
+                if let cached = known[path] {
+                    result[path] = cached
+                } else {
+                    result[path] = FileTags.tags(of: URL(fileURLWithPath: path)).map(\.color)
+                        .filter { $0 != .none }
+                }
+            }
+            DispatchQueue.main.async {
+                guard let self, self.tagReadGeneration == generation else { return }
+                let hadDots = self.tagCache.contains { !$0.value.isEmpty }
+                self.tagCache = result
+                // Only redraw if any row actually shows a dot, so the common
+                // untagged case never triggers a second reload.
+                if hadDots || result.contains(where: { !$0.value.isEmpty }) {
+                    self.tableView.reloadData()
+                }
+            }
+        }
     }
 
     /// The filename followed by a small colored dot for each tag color.
