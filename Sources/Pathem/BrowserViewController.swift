@@ -313,7 +313,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: - New folder / Trash / Reveal
 
+    /// Local-only commands must not act while a remote pane is active: the pane's
+    /// selection is remote names but its currentURL is the saved LOCAL folder, so
+    /// running them would hit the local disk. Returns true (and beeps) if blocked.
+    private func blockedByRemote() -> Bool {
+        if activePane?.isRemote == true {
+            NSSound.beep()
+            return true
+        }
+        return false
+    }
+
     private func newFolder() {
+        if blockedByRemote() { return }
         guard let pane = activePane else { return }
         do {
             let name = try FileOperations.makeFolder(in: pane.currentURL)
@@ -353,6 +365,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func renameSelection() {
+        if blockedByRemote() { return }
         guard let pane = activePane, pane.selectedEntries.count == 1,
             let entry = pane.selectedEntries.first
         else { return }
@@ -398,6 +411,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func trashSelection() {
+        if blockedByRemote() { return }
         guard let pane = activePane else { return }
         let names = pane.selectedEntries.map(\.name)
         guard !names.isEmpty else { NSSound.beep(); return }
@@ -447,6 +461,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func revealSelection() {
+        if blockedByRemote() { return }
         guard let pane = activePane else { return }
         let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
         NSWorkspace.shared.activateFileViewerSelecting(urls.isEmpty ? [pane.currentURL] : urls)
@@ -454,6 +469,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Get Info on the selection, or on the current folder when nothing is selected.
     private func showInfo() {
+        if blockedByRemote() { return }
         guard let pane = activePane else { return }
         let names = pane.selectedEntries.map(\.name)
         let urls = names.isEmpty ? [pane.currentURL] : names.map { pane.currentURL.appendingPathComponent($0) }
@@ -463,6 +479,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Pull down online-only (dataless) cloud files. The provider materializes
     /// them; the watcher refreshes the badge as they land.
     private func downloadSelection() {
+        if blockedByRemote() { return }
         guard let pane = activePane else { return }
         let directory = pane.currentURL
         for entry in pane.selectedEntries where entry.isDataless {
@@ -813,6 +830,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Prompt for a password and open the server in the active pane.
     private func connectToRemote(_ connection: RemoteConnection) {
         guard let pane = activePane, let window = view.window else { return }
+        if connection.proto == .sftp {
+            let alert = NSAlert()
+            alert.messageText = "SFTP isn't supported yet"
+            alert.informativeText = "SFTP needs the out-of-process libssh2 backend, which is coming. FTP and FTPS work today."
+            alert.beginSheetModal(for: window, completionHandler: nil)
+            return
+        }
         let who = connection.user.isEmpty ? "anonymous" : connection.user
         let alert = NSAlert()
         alert.messageText = "Connect to \(connection.host)"
@@ -860,6 +884,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Set a default opener for the active selection. Shown from Open With.
     @objc func setDefaultOpener(_ sender: Any?) {
+        if blockedByRemote() { return }
         guard let pane = activePane, let entry = pane.selectedEntries.first, !entry.isDirectory else {
             NSSound.beep()
             return
@@ -1123,6 +1148,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func transfer(move: Bool) {
+        if blockedByRemote() { return }
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
         guard let source = activePane, let activeSide else { return }
         let otherSide = (activeSide === leftTabs) ? rightTabs : leftTabs
@@ -1269,6 +1295,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     @objc func cut(_ sender: Any?) { writeSelectionToPasteboard(cut: true) }
 
     @objc func paste(_ sender: Any?) {
+        if blockedByRemote() { return }
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
         guard let pane = activePane else { return }
         let pasteboard = NSPasteboard.general
@@ -1303,6 +1330,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func writeSelectionToPasteboard(cut: Bool) {
+        if blockedByRemote() { return }
         guard let pane = activePane else { return }
         let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
         guard !urls.isEmpty else { NSSound.beep(); return }
@@ -1332,6 +1360,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     @objc private func runSearch(_ sender: NSSearchField) {
         let query = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let pane = activePane else { return }
+        guard !pane.isRemote else { NSSound.beep(); return }  // search indexes the local folder only
         guard !query.isEmpty else {
             pane.reload()  // cleared search, restore the directory listing
             return

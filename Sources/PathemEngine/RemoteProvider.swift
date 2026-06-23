@@ -62,13 +62,20 @@ public struct CurlFTPProvider: RemoteProvider {
 
     private func endpoint(_ c: RemoteConnection, _ path: String) -> String {
         let clean = path.hasPrefix("/") ? path : "/" + path
-        return "ftp://\(c.host):\(c.effectivePort)\(clean)"  // ftp:// + --ssl-reqd handles explicit FTPS
+        // Percent-encode each path segment so spaces, #, ?, etc. in names don't
+        // break the URL (slashes are preserved as separators).
+        let encoded = clean.split(separator: "/", omittingEmptySubsequences: false)
+            .map { String($0).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String($0) }
+            .joined(separator: "/")
+        return "ftp://\(c.host):\(c.effectivePort)\(encoded)"  // ftp:// + --ssl-reqd handles explicit FTPS
     }
 
     private func run(_ c: RemoteConnection, _ password: String, _ opArgs: [String]) async throws
         -> (Data, Int32, String)
     {
-        let base = ["-s", "--show-error", "--connect-timeout", "20", "-K", "-"]
+        // -q first: never read the ambient ~/.curlrc. --globoff: names with []{}
+        // aren't treated as curl globs.
+        let base = ["-q", "-s", "--show-error", "--globoff", "--connect-timeout", "20", "-K", "-"]
         return try await Self.runCurl(base + tls(c) + opArgs, input: Self.credentials(c, password))
     }
 
@@ -80,8 +87,15 @@ public struct CurlFTPProvider: RemoteProvider {
     /// password never appears in the process argument list (visible to `ps`).
     static func credentials(_ c: RemoteConnection, _ password: String) -> String {
         let user = c.user.isEmpty ? "anonymous" : c.user  // empty user means anonymous FTP
+        // Escape backslash/quote and control chars so a value can't break out of
+        // the quoted config and inject curl directives (e.g. a newline).
         func esc(_ s: String) -> String {
-            s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+            s.replacingOccurrences(of: "\\", with: "\\\\")
+                .replacingOccurrences(of: "\"", with: "\\\"")
+                .replacingOccurrences(of: "\n", with: "\\n")
+                .replacingOccurrences(of: "\r", with: "\\r")
+                .replacingOccurrences(of: "\t", with: "\\t")
+                .replacingOccurrences(of: "\u{0B}", with: "\\v")
         }
         return "user \"\(esc(user)):\(esc(password))\"\n"
     }
@@ -91,27 +105,47 @@ public struct CurlFTPProvider: RemoteProvider {
     nonisolated static func runCurl(_ args: [String], input: String? = nil) async throws
         -> (Data, Int32, String)
     {
-        try await Task.detached(priority: .userInitiated) {
-            let curl = "/usr/bin/curl"
-            guard FileManager.default.isExecutableFile(atPath: curl) else { throw RemoteError.curlMissing }
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: curl)
-            process.arguments = args
-            let out = Pipe()
-            let err = Pipe()
-            process.standardOutput = out
-            process.standardError = err
-            let stdin = Pipe()
-            if input != nil { process.standardInput = stdin }
-            try process.run()
-            if let input {  // feed the credential config, then close so curl proceeds
-                stdin.fileHandleForWriting.write(Data(input.utf8))
-                stdin.fileHandleForWriting.closeFile()
+        // Run the blocking process work on a background queue; the concurrent
+        // pipe drain (a DispatchGroup wait) is legal there but not in an async
+        // context, so a continuation bridges it back.
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<(Data, Int32, String), Error>) in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let curl = "/usr/bin/curl"
+                guard FileManager.default.isExecutableFile(atPath: curl) else {
+                    cont.resume(throwing: RemoteError.curlMissing)
+                    return
+                }
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: curl)
+                process.arguments = args
+                let out = Pipe()
+                let err = Pipe()
+                process.standardOutput = out
+                process.standardError = err
+                let stdin = Pipe()
+                if input != nil { process.standardInput = stdin }
+                do {
+                    try process.run()
+                } catch {
+                    cont.resume(throwing: error)
+                    return
+                }
+                if let input {  // feed the credential config, then close so curl proceeds
+                    stdin.fileHandleForWriting.write(Data(input.utf8))
+                    stdin.fileHandleForWriting.closeFile()
+                }
+                // Drain stdout and stderr concurrently so a large stream on either
+                // pipe can't fill its buffer and deadlock the process.
+                let group = DispatchGroup()
+                var errData = Data()
+                DispatchQueue.global().async(group: group) {
+                    errData = err.fileHandleForReading.readDataToEndOfFile()
+                }
+                let outData = out.fileHandleForReading.readDataToEndOfFile()
+                group.wait()
+                process.waitUntilExit()
+                cont.resume(returning: (outData, process.terminationStatus, String(decoding: errData, as: UTF8.self)))
             }
-            let outData = out.fileHandleForReading.readDataToEndOfFile()
-            let errData = err.fileHandleForReading.readDataToEndOfFile()
-            process.waitUntilExit()
-            return (outData, process.terminationStatus, String(decoding: errData, as: UTF8.self))
-        }.value
+        }
     }
 }

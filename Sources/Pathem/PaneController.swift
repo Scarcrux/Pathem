@@ -147,16 +147,21 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Switch this pane to browse a remote server. The local location is kept so
     /// going up from the remote root returns here.
     func openRemote(_ connection: RemoteConnection, password: String) {
+        // Stop watching the local folder while remote, so local disk changes
+        // don't trigger spurious remote re-lists or local re-indexing.
+        watcher?.stop()
+        watcher = nil
+        pendingRefresh?.cancel()
         remote = RemoteSession(
             connection: connection, path: connection.path.isEmpty ? "/" : connection.path, password: password)
         reloadRemote()
         containerView.window?.makeFirstResponder(content.keyView)
     }
 
-    /// Leave remote browsing and return to the local folder.
+    /// Leave remote browsing and return to the local folder (re-arms the watcher).
     func closeRemote() {
         remote = nil
-        reload(preserveState: false)
+        enterDirectory()
         containerView.window?.makeFirstResponder(content.keyView)
     }
 
@@ -164,6 +169,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     private func reloadRemote() {
         guard let session = remote else { return }
         showingSearchResults = false
+        pendingSelection = nil  // a view-mode swap here has no prior selection to carry
+        onDidNavigate?()  // clear the (local) search field as the remote folder changes
         applyViewMode(format.viewMode)
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
@@ -188,7 +195,9 @@ final class PaneController: NSObject, NSTextFieldDelegate {
                 self.content.showPlaceholder(entries.isEmpty ? "Empty folder" : nil)
                 self.updateStatus()
             } catch {
-                guard let self, self.remote?.path == session.path else { return }
+                guard let self, let cur = self.remote, cur.path == session.path,
+                    cur.connection.id == session.connection.id
+                else { return }
                 self.content.setEntries([], preserveState: false)
                 self.content.showPlaceholder(
                     "Couldn’t open \(session.connection.host)\(session.path)\n\(Self.describe(error))")
@@ -300,7 +309,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// A disk change arrived for `watched`. Ignore it if we have navigated away,
     /// and debounce so a burst (an unzip, a large copy) collapses to one refresh.
     private func directoryChangedOnDisk(watched: URL) {
-        guard watched == nav.current else { return }
+        guard remote == nil, watched == nav.current else { return }  // ignore local changes while remote
         pendingRefresh?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.applyDiskRefresh() }
         pendingRefresh = work
