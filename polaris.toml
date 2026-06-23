@@ -2,8 +2,8 @@
 # Committed at the project root; this is the authoritative
 # self-description. Re-run `polaris add .` after editing.
 
-name = "scarcrux-pathom"
-working_dir = "/Users/scarcrux/Code/scarcrux-pathom"
+name = "pathem"
+working_dir = "."
 # icon_emoji = "🛰️"
 
 # --- Mode A: periodic checks -------------------------------------

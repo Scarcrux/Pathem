@@ -35,8 +35,16 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// An active remote browsing session (nil = browsing the local disk).
     private struct RemoteSession { let connection: RemoteConnection; var path: String; let password: String }
     private var remote: RemoteSession?
-    private let remoteProvider: RemoteProvider = CurlFTPProvider()
     var isRemote: Bool { remote != nil }
+
+    /// The active remote session as plain values, for the transfer layer. Nil locally.
+    var remoteContext: (connection: RemoteConnection, path: String, password: String)? {
+        remote.map { ($0.connection, $0.path, $0.password) }
+    }
+    /// Local files dropped onto a remote pane: upload them to the current folder.
+    var onUploadFiles: ((_ urls: [URL], _ connection: RemoteConnection, _ remotePath: String, _ password: String) -> Void)?
+    /// Opening a remote file: download it to a temp file and open it locally.
+    var onOpenRemoteFile: ((_ connection: RemoteConnection, _ remotePath: String, _ password: String, _ name: String) -> Void)?
     private var backButton = NSButton()
     private var forwardButton = NSButton()
     private var upButton = NSButton()
@@ -158,6 +166,11 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         containerView.window?.makeFirstResponder(content.keyView)
     }
 
+    /// Re-list the current remote folder (e.g. after an upload added a file).
+    func refreshRemote() {
+        if remote != nil { reloadRemote() }
+    }
+
     /// Leave remote browsing and return to the local folder (re-arms the watcher).
     func closeRemote() {
         remote = nil
@@ -183,7 +196,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         forwardButton.isEnabled = false
         upButton.isEnabled = true  // up goes to the parent, or back to local at the root
 
-        let provider = remoteProvider
+        let provider = RemoteProviders.make(for: session.connection.proto)
         Task { [weak self] in
             do {
                 let entries = try await provider.list(
@@ -224,6 +237,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         case .unsupported(let message): return message
         case .curl(let code, let message): return message.isEmpty ? "curl error \(code)" : message
         case .curlMissing: return "curl was not found"
+        case .sftp(let code, let message): return message.isEmpty ? "sftp error \(code)" : message
+        case .sftpMissing: return "sftp was not found"
         }
     }
 
@@ -255,7 +270,8 @@ final class PaneController: NSObject, NSTextFieldDelegate {
                 self.remote?.path = Self.joinRemote(remote.path, entry.name)
                 reloadRemote()
             } else {
-                NSSound.beep()  // remote file open/download is a later step
+                onOpenRemoteFile?(
+                    remote.connection, Self.joinRemote(remote.path, entry.name), remote.password, entry.name)
             }
             return
         }
@@ -445,7 +461,11 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         content.onSelectionChanged = { [weak self] in self?.updateStatus() }
         content.onDropFiles = { [weak self] urls, move in
             guard let self else { return }
-            self.onDropFiles?(urls, move, self.nav.current)
+            if let remote = self.remote {  // dropping onto a remote pane uploads
+                self.onUploadFiles?(urls, remote.connection, remote.path, remote.password)
+            } else {
+                self.onDropFiles?(urls, move, self.nav.current)
+            }
         }
         content.onKeyChord = onKeyChordHandler
     }

@@ -4,6 +4,8 @@ public enum RemoteError: Error, Sendable {
     case unsupported(String)
     case curl(code: Int32, message: String)
     case curlMissing
+    case sftp(code: Int32, message: String)
+    case sftpMissing
 }
 
 /// The seam between the browser and remote networking. Implementations run the
@@ -19,9 +21,19 @@ public protocol RemoteProvider: Sendable {
         async throws
 }
 
+/// Picks the right out-of-process backend for a connection's protocol. The UI
+/// goes through this so adding a backend is a one-line change here.
+public enum RemoteProviders {
+    public static func make(for proto: RemoteConnection.Proto) -> RemoteProvider {
+        switch proto {
+        case .ftp, .ftps: return CurlFTPProvider()
+        case .sftp: return SFTPProvider()
+        }
+    }
+}
+
 /// FTP / FTPS backend that shells out to the system `curl` (a separate process,
-/// permissively licensed). SFTP is not supported here (system curl lacks it);
-/// that arrives with the XPC + libssh2 backend.
+/// permissively licensed). SFTP is handled by `SFTPProvider` (system `sftp`).
 public struct CurlFTPProvider: RemoteProvider {
     public init() {}
 
@@ -100,52 +112,93 @@ public struct CurlFTPProvider: RemoteProvider {
         return "user \"\(esc(user)):\(esc(password))\"\n"
     }
 
-    /// Run curl off the main actor. Returns (stdout, exit code, stderr). Reads
-    /// stdout to EOF concurrently so a large listing can't deadlock the pipe.
+    /// Run curl, checking it exists first. Returns (stdout, exit code, stderr).
     nonisolated static func runCurl(_ args: [String], input: String? = nil) async throws
         -> (Data, Int32, String)
     {
-        // Run the blocking process work on a background queue; the concurrent
-        // pipe drain (a DispatchGroup wait) is legal there but not in an async
-        // context, so a continuation bridges it back.
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<(Data, Int32, String), Error>) in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let curl = "/usr/bin/curl"
-                guard FileManager.default.isExecutableFile(atPath: curl) else {
-                    cont.resume(throwing: RemoteError.curlMissing)
-                    return
+        let curl = "/usr/bin/curl"
+        guard FileManager.default.isExecutableFile(atPath: curl) else { throw RemoteError.curlMissing }
+        return try await RemoteRunner.run(curl, args, input: input)
+    }
+}
+
+/// Runs a subprocess off the main actor. Returns (stdout, exit code, stderr).
+/// Drains stdout and stderr concurrently so a large transfer can't deadlock the
+/// pipe, and honors Task cancellation by terminating the process (so a transfer
+/// can be cancelled mid-flight).
+enum RemoteRunner {
+    nonisolated static func run(
+        _ executable: String, _ args: [String], input: String? = nil, env: [String: String]? = nil
+    ) async throws -> (Data, Int32, String) {
+        let box = ProcessBox()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<(Data, Int32, String), Error>) in
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let process = Process()
+                    process.executableURL = URL(fileURLWithPath: executable)
+                    process.arguments = args
+                    if let env { process.environment = env }
+                    let out = Pipe()
+                    let err = Pipe()
+                    process.standardOutput = out
+                    process.standardError = err
+                    let stdin = Pipe()
+                    if input != nil { process.standardInput = stdin }
+                    guard box.adopt(process) else {  // cancelled before we could start
+                        cont.resume(throwing: CancellationError())
+                        return
+                    }
+                    do {
+                        try process.run()
+                    } catch {
+                        cont.resume(throwing: error)
+                        return
+                    }
+                    if let input {  // feed stdin (config / batch), then close so the tool proceeds
+                        stdin.fileHandleForWriting.write(Data(input.utf8))
+                        stdin.fileHandleForWriting.closeFile()
+                    }
+                    // Drain stdout and stderr concurrently so a large stream on either
+                    // pipe can't fill its buffer and deadlock the process.
+                    let group = DispatchGroup()
+                    var errData = Data()
+                    DispatchQueue.global().async(group: group) {
+                        errData = err.fileHandleForReading.readDataToEndOfFile()
+                    }
+                    let outData = out.fileHandleForReading.readDataToEndOfFile()
+                    group.wait()
+                    process.waitUntilExit()
+                    cont.resume(
+                        returning: (outData, process.terminationStatus, String(decoding: errData, as: UTF8.self)))
                 }
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: curl)
-                process.arguments = args
-                let out = Pipe()
-                let err = Pipe()
-                process.standardOutput = out
-                process.standardError = err
-                let stdin = Pipe()
-                if input != nil { process.standardInput = stdin }
-                do {
-                    try process.run()
-                } catch {
-                    cont.resume(throwing: error)
-                    return
-                }
-                if let input {  // feed the credential config, then close so curl proceeds
-                    stdin.fileHandleForWriting.write(Data(input.utf8))
-                    stdin.fileHandleForWriting.closeFile()
-                }
-                // Drain stdout and stderr concurrently so a large stream on either
-                // pipe can't fill its buffer and deadlock the process.
-                let group = DispatchGroup()
-                var errData = Data()
-                DispatchQueue.global().async(group: group) {
-                    errData = err.fileHandleForReading.readDataToEndOfFile()
-                }
-                let outData = out.fileHandleForReading.readDataToEndOfFile()
-                group.wait()
-                process.waitUntilExit()
-                cont.resume(returning: (outData, process.terminationStatus, String(decoding: errData, as: UTF8.self)))
             }
+        } onCancel: {
+            box.terminate()
         }
+    }
+}
+
+/// Lock-guarded holder so a cancellation handler (on another thread) can
+/// terminate the running process.
+private final class ProcessBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var process: Process?
+    private var terminated = false
+
+    /// Take ownership of the process. Returns false if termination already
+    /// happened (the task was cancelled before the process started).
+    func adopt(_ process: Process) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        if terminated { return false }
+        self.process = process
+        return true
+    }
+
+    func terminate() {
+        lock.lock()
+        defer { lock.unlock() }
+        terminated = true
+        process?.terminate()
     }
 }

@@ -69,6 +69,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
     private lazy var connectionsController = ConnectionsController()
+    private lazy var transferController = TransferController()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -177,6 +178,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
+                pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
+                    guard let self, let pane else { return }
+                    self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)
+                }
+                pane.onOpenRemoteFile = { [weak self] connection, remotePath, password, name in
+                    self?.openRemoteFile(connection, remotePath: remotePath, password: password, name: name)
+                }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -284,6 +292,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("connections.manage", "Connections…") {
             [weak self] in self?.connectionsController.present(over: self?.view.window)
         }
+        add(
+            "remote.download", "Download from Server…",
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, pane.isRemote else { return false }
+                return pane.selectedEntries.contains { !$0.isDirectory }
+            }
+        ) { [weak self] in self?.downloadSelectedRemote() }
         add("edit.undo", "Undo", enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
             [weak self] in self?.undo(nil)
         }
@@ -830,13 +845,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Prompt for a password and open the server in the active pane.
     private func connectToRemote(_ connection: RemoteConnection) {
         guard let pane = activePane, let window = view.window else { return }
-        if connection.proto == .sftp {
-            let alert = NSAlert()
-            alert.messageText = "SFTP isn't supported yet"
-            alert.informativeText = "SFTP needs the out-of-process libssh2 backend, which is coming. FTP and FTPS work today."
-            alert.beginSheetModal(for: window, completionHandler: nil)
-            return
-        }
         let who = connection.user.isEmpty ? "anonymous" : connection.user
         let alert = NSAlert()
         alert.messageText = "Connect to \(connection.host)"
@@ -848,6 +856,131 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.beginSheetModal(for: window) { response in
             guard response == .alertFirstButtonReturn else { return }
             pane.openRemote(connection, password: field.stringValue)
+        }
+    }
+
+    // MARK: - Remote file transfer
+
+    /// Download the selected remote files (in the active remote pane) to a folder.
+    private func downloadSelectedRemote() {
+        guard let pane = activePane, let ctx = pane.remoteContext, let window = view.window else {
+            NSSound.beep()
+            return
+        }
+        let entries = pane.selectedEntries.filter { !$0.isDirectory }  // folder download is a later step
+        guard !entries.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let openPanel = NSOpenPanel()
+        openPanel.canChooseDirectories = true
+        openPanel.canChooseFiles = false
+        openPanel.canCreateDirectories = true
+        openPanel.prompt = "Download Here"
+        openPanel.message = "Choose where to save \(entries.count) item(s) from \(ctx.connection.host)"
+        openPanel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let dir = openPanel.url, let self else { return }
+            let provider = RemoteProviders.make(for: ctx.connection.proto)
+            let items = entries.map { entry -> TransferController.Item in
+                let remotePath = PaneController.joinRemote(ctx.path, entry.name)
+                let local = self.uniqueLocalURL(dir.appendingPathComponent(entry.name))
+                return TransferController.Item(name: entry.name) {
+                    try await provider.download(
+                        ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
+                }
+            }
+            self.transferController.run(
+                items, title: "Downloading from \(ctx.connection.host)", over: window
+            ) { [weak self] failures, cancelled in
+                self?.reportTransfer(failures, cancelled: cancelled, verb: "download")
+            }
+        }
+    }
+
+    /// Upload local files dropped onto a remote pane to its current folder.
+    private func uploadFiles(
+        _ urls: [URL], to connection: RemoteConnection, remotePath: String, password: String,
+        pane: PaneController
+    ) {
+        guard let window = view.window else { return }
+        let files = urls.filter {
+            (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory != true
+        }
+        guard !files.isEmpty else {
+            NSSound.beep()  // folder upload isn't supported yet
+            return
+        }
+        let provider = RemoteProviders.make(for: connection.proto)
+        let items = files.map { url -> TransferController.Item in
+            let dest = PaneController.joinRemote(remotePath, url.lastPathComponent)
+            return TransferController.Item(name: url.lastPathComponent) {
+                try await provider.upload(url, to: connection, remotePath: dest, password: password)
+            }
+        }
+        transferController.run(
+            items, title: "Uploading to \(connection.host)", over: window
+        ) { [weak self, weak pane] failures, cancelled in
+            pane?.refreshRemote()  // show the newly uploaded files
+            self?.reportTransfer(failures, cancelled: cancelled, verb: "upload")
+        }
+    }
+
+    /// Double-clicking a remote file: download it to a temp file and open it.
+    private func openRemoteFile(
+        _ connection: RemoteConnection, remotePath: String, password: String, name: String
+    ) {
+        guard let window = view.window else { return }
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Remote", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let local = uniqueLocalURL(dir.appendingPathComponent(name))
+        let provider = RemoteProviders.make(for: connection.proto)
+        let item = TransferController.Item(name: name) {
+            try await provider.download(connection, remotePath: remotePath, to: local, password: password)
+        }
+        transferController.run([item], title: "Opening \(name)", over: window) { [weak self] failures, cancelled in
+            guard !cancelled else { return }
+            if failures.isEmpty {
+                NSWorkspace.shared.open(local)
+            } else {
+                self?.reportTransfer(failures, cancelled: false, verb: "download")
+            }
+        }
+    }
+
+    /// Avoid clobbering a local file: append " 2", " 3", … if the name is taken.
+    private func uniqueLocalURL(_ url: URL) -> URL {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: url.path) else { return url }
+        let dir = url.deletingLastPathComponent()
+        let ext = url.pathExtension
+        let stem = url.deletingPathExtension().lastPathComponent
+        var n = 2
+        while true {
+            let name = ext.isEmpty ? "\(stem) \(n)" : "\(stem) \(n).\(ext)"
+            let candidate = dir.appendingPathComponent(name)
+            if !fm.fileExists(atPath: candidate.path) { return candidate }
+            n += 1
+        }
+    }
+
+    private func reportTransfer(_ failures: [(String, Error)], cancelled: Bool, verb: String) {
+        guard !failures.isEmpty, let window = view.window else { return }  // success/cancel is silent
+        let alert = NSAlert()
+        alert.messageText = failures.count == 1 ? "A \(verb) failed" : "\(failures.count) \(verb)s failed"
+        alert.informativeText = failures.prefix(8)
+            .map { "\($0.0): \(Self.describeRemote($0.1))" }
+            .joined(separator: "\n")
+        alert.beginSheetModal(for: window, completionHandler: nil)
+    }
+
+    private static func describeRemote(_ error: Error) -> String {
+        guard let error = error as? RemoteError else { return error.localizedDescription }
+        switch error {
+        case .unsupported(let message): return message
+        case .curl(let code, let message): return message.isEmpty ? "curl error \(code)" : message
+        case .curlMissing: return "curl was not found"
+        case .sftp(let code, let message): return message.isEmpty ? "sftp error \(code)" : message
+        case .sftpMissing: return "sftp was not found"
         }
     }
 

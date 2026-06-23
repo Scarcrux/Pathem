@@ -6,7 +6,7 @@
 > Pathom screen; its domain/trademark facts are for `pathom.*` and have NOT
 > been re-run for `pathem.*`. TODO before any branding spend: confirm
 > `pathem.app` availability (RDAP) and run USPTO TESS clearance (Classes
-> 9 & 42). Repo directory: `scarcrux-pathom`.
+> 9 & 42).
 
 Status: **design phase**. This document records the competitive analysis, the
 language/architecture decision, and the MVP cut. It is the output of a
