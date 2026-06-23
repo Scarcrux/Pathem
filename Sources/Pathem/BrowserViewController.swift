@@ -242,6 +242,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.asList", "as List") { [weak self] in self?.activePane?.setViewMode(.list) }
         add("view.asIcons", "as Icons") { [weak self] in self?.activePane?.setViewMode(.icon) }
         add("view.asGallery", "as Gallery") { [weak self] in self?.activePane?.setViewMode(.gallery) }
+        add("view.asColumn", "as Columns") { [weak self] in self?.activePane?.setViewMode(.column) }
         add("terminal.toggle", "Toggle Terminal") { [weak self] in self?.toggleTerminal() }
         add("terminal.here", "Open Terminal Here") { [weak self] in self?.openTerminalHere() }
         add("terminal.toggleFollow", "Terminal Follows Folder") {
@@ -547,6 +548,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asList": menuItem.state = activePane?.viewMode == .list ? .on : .off
         case "view.asIcons": menuItem.state = activePane?.viewMode == .icon ? .on : .off
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
+        case "view.asColumn": menuItem.state = activePane?.viewMode == .column ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
@@ -1605,8 +1607,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     @objc private func runSearch(_ sender: NSSearchField) {
         let query = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let pane = activePane else { return }
-        guard !pane.isRemote, !pane.isShowingSmartResults else {
-            NSSound.beep()  // search indexes a single local folder
+        guard !pane.isRemote, !pane.isShowingSmartResults, pane.viewMode != .column else {
+            NSSound.beep()  // search needs a single local list (not remote/smart/columns)
             return
         }
         guard !query.isEmpty else {

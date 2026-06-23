@@ -119,7 +119,11 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         enterDirectory()
     }
 
-    var currentURL: URL { nav.current }
+    // The folder file operations act on. For list/icon/gallery this equals
+    // nav.current (the content's directoryURL is kept in sync); for column view it
+    // is the active column's folder; for search/smart/remote the content reports
+    // nil, so it falls back to nav.current.
+    var currentURL: URL { content.directoryURL ?? nav.current }
     var selectedEntries: [FileEntry] { content.selectedEntries }
     var canGoBack: Bool { nav.canGoBack }
     var canGoForward: Bool { nav.canGoForward }
@@ -562,6 +566,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         case .list: content = FileListController()
         case .icon: content = IconCollectionController(gallery: false)
         case .gallery: content = IconCollectionController(gallery: true)
+        case .column: content = ColumnBrowserController()
         }
         wireContent()
         embedContent()
@@ -653,6 +658,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         case .list: 0
         case .icon: 1
         case .gallery: 2
+        case .column: 3
         }
     }
 
@@ -660,6 +666,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         switch index {
         case 1: .icon
         case 2: .gallery
+        case 3: .column
         default: .list
         }
     }
@@ -667,6 +674,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private func buildViewSwitcher() {
         let segments: [(String, String)] = [
             ("list.bullet", "as List"), ("square.grid.2x2", "as Icons"), ("photo", "as Gallery"),
+            ("rectangle.split.3x1", "as Columns"),
         ]
         viewSwitcher = NSSegmentedControl(
             images: segments.map { Self.symbol($0.0) }, trackingMode: .selectOne,

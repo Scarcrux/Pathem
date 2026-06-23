@@ -7,8 +7,8 @@ import Foundation
 public struct ViewFormat: Codable, Sendable, Equatable {
     public enum SortKey: String, Codable, Sendable, CaseIterable { case name, size, date }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
-    /// grid views (gallery uses larger thumbnails).
-    public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery }
+    /// grid views (gallery uses larger thumbnails); `column` is miller columns.
+    public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery, column }
 
     public var sortKey: SortKey
     public var ascending: Bool

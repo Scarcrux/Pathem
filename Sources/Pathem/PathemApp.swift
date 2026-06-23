@@ -146,6 +146,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as List", "view.asList", "1"))
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
+        viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
         viewMenu.addItem(commandItem("Use as Default View", "view.useAsDefault"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
