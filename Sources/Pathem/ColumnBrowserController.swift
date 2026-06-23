@@ -21,6 +21,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private var activeColumn = 0
     private var rootURL: URL?
     private var storedResolutionURL: URL?
+    private var trailingConstraint: NSLayoutConstraint?
     private let columnWidth: CGFloat = 220
 
     // PaneContentView callbacks.
@@ -102,6 +103,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     /// container's trailing to the last one (which sets the scrollable width).
     private func relayout() {
         for sub in container.subviews { sub.removeFromSuperview() }
+        trailingConstraint?.isActive = false  // the empty-case constraint isn't auto-removed
         var leading = container.leadingAnchor
         for (index, col) in columns.enumerated() {
             container.addSubview(col.scroll)
@@ -114,10 +116,11 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             leading = col.scroll.trailingAnchor
         }
         if let last = columns.last {
-            container.trailingAnchor.constraint(equalTo: last.scroll.trailingAnchor).isActive = true
+            trailingConstraint = container.trailingAnchor.constraint(equalTo: last.scroll.trailingAnchor)
         } else {
-            container.trailingAnchor.constraint(equalTo: container.leadingAnchor).isActive = true
+            trailingConstraint = container.trailingAnchor.constraint(equalTo: container.leadingAnchor)
         }
+        trailingConstraint?.isActive = true
         container.layoutSubtreeIfNeeded()
     }
 
@@ -257,12 +260,28 @@ extension ColumnBrowserController: PaneContentView {
             relayout()
             return
         }
+        // An in-place refresh (a watcher tick on the root) updates the first column
+        // without collapsing the drilled columns or losing focus/selection.
+        if preserveState, let first = columns.first, first.folder == root {
+            let names = Set(first.table.selectedRowIndexes.compactMap {
+                $0 < columns[0].entries.count ? columns[0].entries[$0].name : nil
+            })
+            columns[0].entries = entries
+            first.table.reloadData()
+            var rows = IndexSet()
+            for (index, entry) in entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
+            first.table.selectRowIndexes(rows, byExtendingSelection: false)
+            return
+        }
+        let wasFocused = outerScroll.window?.firstResponder === container
+            || columns.contains { $0.table === outerScroll.window?.firstResponder }
         let first = makeColumn(folder: root, entries: entries, index: 0)
         columns = [first]
         activeColumn = 0
         relayout()
         first.table.reloadData()
         outerScroll.contentView.scroll(to: .zero)
+        if wasFocused { outerScroll.window?.makeFirstResponder(first.table) }  // not the empty container
     }
 
     func showPlaceholder(_ text: String?) {

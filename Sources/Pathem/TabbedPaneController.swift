@@ -74,8 +74,9 @@ final class TabbedPaneController: NSObject {
         if tabs.isEmpty { newTab(at: start, focus: false) }
     }
 
-    /// Each tab's folder path, and the active tab index, for session capture.
-    var tabFolders: [String] { tabs.map { $0.currentURL.path } }
+    /// Each tab's root folder path, and the active tab index, for session capture
+    /// (rootURL, not currentURL, so a column-view drill-down isn't what gets saved).
+    var tabFolders: [String] { tabs.map { $0.rootURL.path } }
     var activeTabIndex: Int { activeIndex }
 
     /// Reopen tabs at the given folders (skipping ones that no longer exist).

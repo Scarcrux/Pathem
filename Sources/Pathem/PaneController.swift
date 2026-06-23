@@ -124,6 +124,10 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     // is the active column's folder; for search/smart/remote the content reports
     // nil, so it falls back to nav.current.
     var currentURL: URL { content.directoryURL ?? nav.current }
+
+    /// The tab's navigated root folder (ignores column-view drill-down). Used for
+    /// session/layout capture so a restart reopens the tab's folder, not a deep column.
+    var rootURL: URL { nav.current }
     var selectedEntries: [FileEntry] { content.selectedEntries }
     var canGoBack: Bool { nav.canGoBack }
     var canGoForward: Bool { nav.canGoForward }
@@ -157,7 +161,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         smartEntries = entries
         smartTitle = title
         showingSearchResults = true  // keep watcher-driven reloads from fighting it
-        applyViewMode(format.viewMode)
+        // Column view can't show a flat cross-folder list; use list for the smart
+        // results (the saved format is untouched, so leaving restores columns).
+        applyViewMode(format.viewMode == .column ? .list : format.viewMode)
         pendingSelection = nil
         content.directoryURL = nil  // not a single folder: disable drag
         content.resolutionURL = nil
@@ -367,7 +373,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         if let location = entry.location {
             return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
         }
-        return nav.current.appendingPathComponent(entry.name)
+        // currentURL is the active column's folder in column view (and nav.current
+        // for list/icon/gallery), so opening a file resolves to the right folder.
+        return currentURL.appendingPathComponent(entry.name)
     }
 
     /// Select (and scroll to) a row by name, e.g. a just-created folder.
