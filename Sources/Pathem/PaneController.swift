@@ -54,6 +54,13 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// Run a registered browser command by id (set by the browser). The action
     /// menu uses this so its items reuse the same command spine as the main menu.
     var runCommand: ((String) -> Void)?
+
+    /// The path-display group (breadcrumb / edit field / remote label), moved as a
+    /// unit between the top toolbar and a bottom strip.
+    private let pathBar = NSStackView()
+    private var toolbarStack = NSStackView()
+    private let bottomStack = NSStackView()
+    private var pathBarBottomWidth: NSLayoutConstraint?
     private let statusLabel = NSTextField(labelWithString: "")
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -387,38 +394,71 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         remoteLabel.translatesAutoresizingMaskIntoConstraints = false
         remoteLabel.setContentHuggingPriority(.init(1), for: .horizontal)
 
-        let toolbar = NSStackView(views: [
+        // The path-display group travels between the top toolbar and the bottom
+        // strip as one unit.
+        pathBar.orientation = .horizontal
+        pathBar.spacing = 4
+        pathBar.translatesAutoresizingMaskIntoConstraints = false
+        pathBar.setContentHuggingPriority(.init(1), for: .horizontal)
+        pathBar.addArrangedSubview(pathControl)
+        pathBar.addArrangedSubview(addressField)
+        pathBar.addArrangedSubview(remoteLabel)
+
+        toolbarStack = NSStackView(views: [
             backButton, forwardButton, upButton, viewSwitcher, sortButton, actionButton,
-            pathControl, addressField, remoteLabel,
         ])
-        toolbar.orientation = .horizontal
-        toolbar.spacing = 4
-        toolbar.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        toolbarStack.orientation = .horizontal
+        toolbarStack.spacing = 4
+        toolbarStack.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
+        toolbarStack.translatesAutoresizingMaskIntoConstraints = false
 
         contentContainer.translatesAutoresizingMaskIntoConstraints = false
 
         statusLabel.font = .systemFont(ofSize: 11)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        containerView.addSubview(toolbar)
+        bottomStack.orientation = .vertical
+        bottomStack.alignment = .leading
+        bottomStack.spacing = 2
+        bottomStack.translatesAutoresizingMaskIntoConstraints = false
+        bottomStack.addArrangedSubview(statusLabel)
+
+        containerView.addSubview(toolbarStack)
         containerView.addSubview(contentContainer)
-        containerView.addSubview(statusLabel)
+        containerView.addSubview(bottomStack)
         NSLayoutConstraint.activate([
-            toolbar.topAnchor.constraint(equalTo: containerView.topAnchor),
-            toolbar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            contentContainer.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            toolbarStack.topAnchor.constraint(equalTo: containerView.topAnchor),
+            toolbarStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            toolbarStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            contentContainer.topAnchor.constraint(equalTo: toolbarStack.bottomAnchor),
             contentContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             contentContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            contentContainer.bottomAnchor.constraint(equalTo: statusLabel.topAnchor, constant: -4),
-            statusLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
-            statusLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10),
-            statusLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
+            contentContainer.bottomAnchor.constraint(equalTo: bottomStack.topAnchor, constant: -4),
+            bottomStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
+            bottomStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10),
+            bottomStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
         ])
+        setPathBar(atBottom: false)  // default: path bar in the top toolbar
         embedContent()
+    }
+
+    /// Move the path-display group to the bottom strip (Finder-style) or back into
+    /// the top toolbar.
+    func setPathBar(atBottom: Bool) {
+        pathBarBottomWidth?.isActive = false
+        pathBarBottomWidth = nil
+        if let parent = pathBar.superview as? NSStackView {
+            parent.removeArrangedSubview(pathBar)
+            pathBar.removeFromSuperview()
+        }
+        if atBottom {
+            bottomStack.insertArrangedSubview(pathBar, at: 0)
+            pathBarBottomWidth = pathBar.widthAnchor.constraint(equalTo: bottomStack.widthAnchor)
+            pathBarBottomWidth?.isActive = true
+        } else {
+            toolbarStack.addArrangedSubview(pathBar)
+        }
     }
 
     /// Put the active content's scroll view into the content container, replacing

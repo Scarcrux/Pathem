@@ -145,6 +145,7 @@ enum PathemApp {
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
         viewMenu.addItem(commandItem("Show Full Path in Title Bar", "view.fullPathTitle"))
+        viewMenu.addItem(commandItem("Show Path Bar at Bottom", "view.pathBarBottom"))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))

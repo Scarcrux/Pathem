@@ -181,6 +181,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
                 pane.runCommand = { [weak self] id in self?.commands.perform(id) }
+                pane.setPathBar(atBottom: self?.prefs.pathBarAtBottom ?? false)
                 pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
                     self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)
@@ -264,6 +265,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         ) { [weak self] in self?.downloadSelection() }
         add("view.preferences", "Preferences…") { [weak self] in self?.showPreferences() }
         add("view.fullPathTitle", "Show Full Path in Title Bar") { [weak self] in self?.toggleFullPathTitle() }
+        add("view.pathBarBottom", "Show Path Bar at Bottom") { [weak self] in self?.togglePathBarPosition() }
         add("search.toggleOCR", "Toggle Image OCR in Search") { [weak self] in self?.toggleOCR() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
@@ -531,6 +533,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asIcons": menuItem.state = activePane?.viewMode == .icon ? .on : .off
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
+        case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         default: break
         }
@@ -572,6 +575,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         saveConfig(prefs, to: Self.preferencesURL)
     }
 
+    private func togglePathBarPosition() {
+        prefs.pathBarAtBottom.toggle()
+        applyPreferences()  // moves the path bar in every pane and persists
+    }
+
     /// Apply preferences to every tab in both sides, persist them, and rebuild the
     /// search index (OCR can change what gets embedded).
     private func applyPreferences() {
@@ -580,6 +588,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.applyStyle(
                     rowHeight: prefs.rowHeight, fontSize: prefs.fontSize,
                     alternatingRows: prefs.alternatingRows)
+                pane.setPathBar(atBottom: prefs.pathBarAtBottom)
             }
         }
         saveConfig(prefs, to: Self.preferencesURL)
