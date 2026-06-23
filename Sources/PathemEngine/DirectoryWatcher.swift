@@ -17,7 +17,7 @@ import Foundation
 /// Do not call `stop()` from inside the change callback.
 public final class DirectoryWatcher {
     private var stream: FSEventStreamRef? = nil
-    private let queue = DispatchQueue(label: "ai.scarcrux.pathem.DirectoryWatcher")
+    private let queue = DispatchQueue(label: "com.scarcrux.pathem.DirectoryWatcher")
     private let onChange: @Sendable () -> Void
 
     /// Creates and starts a watcher for `path`. Returns `nil` if the stream

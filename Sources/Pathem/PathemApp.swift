@@ -45,7 +45,7 @@ enum PathemApp {
         // Remember the window's position and size across launches. setFrameUsingName
         // restores the saved frame (returns false on first launch -> center), and
         // setFrameAutosaveName persists future moves/resizes.
-        let frameName = NSWindow.FrameAutosaveName("ai.scarcrux.pathem.mainWindow")
+        let frameName = NSWindow.FrameAutosaveName("com.scarcrux.pathem.mainWindow")
         if !window.setFrameUsingName(frameName) { window.center() }
         window.setFrameAutosaveName(frameName)
         let delegate = PathemAppDelegate()

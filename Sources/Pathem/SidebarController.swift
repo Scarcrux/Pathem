@@ -25,8 +25,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// Supplies the active pane's folder for "Add Current Folder".
     var currentFolder: (() -> URL?)?
 
-    private static let itemType = NSPasteboard.PasteboardType("ai.scarcrux.pathem.sidebar-item")
-    private static let groupType = NSPasteboard.PasteboardType("ai.scarcrux.pathem.sidebar-group")
+    private static let itemType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-item")
+    private static let groupType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-group")
 
     private static let iconChoices = [
         "house", "folder", "doc", "doc.text", "star", "heart", "flag", "tag",

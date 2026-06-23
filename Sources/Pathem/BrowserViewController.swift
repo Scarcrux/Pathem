@@ -35,7 +35,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// store) is in DESIGN.md section 2.
     private static let maxSemanticItems = 5_000
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
-    private static let cutPasteboardType = NSPasteboard.PasteboardType("ai.scarcrux.pathem.cut")
+    private static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
 
     /// The command bus (DESIGN.md section 10). Every browser action is a named
     /// command; keybindings, the palette, and the AI bar will dispatch by id.

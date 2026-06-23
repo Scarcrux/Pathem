@@ -7,7 +7,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>Pathem</string>
 	<key>CFBundleIdentifier</key>
-	<string>ai.scarcrux.pathem</string>
+	<string>com.scarcrux.pathem</string>
 	<key>CFBundleExecutable</key>
 	<string>Pathem</string>
 	<key>CFBundleIconFile</key>
