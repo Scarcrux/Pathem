@@ -41,6 +41,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case userItem(UUID)
         case systemHeader
         case systemItem
+        case folderChild  // a lazily-loaded subfolder of an expandable location
     }
 
     private final class Node {
@@ -48,12 +49,20 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let title: String
         let url: URL?
         let icon: String?  // SF Symbol for user items
+        /// A folder location can be expanded to reveal its subfolders.
+        let isFolder: Bool
         var children: [Node]
-        init(kind: Kind, title: String, url: URL?, icon: String?, children: [Node] = []) {
+        /// Subfolders are loaded lazily the first time the node is expanded.
+        var childrenLoaded = false
+        init(
+            kind: Kind, title: String, url: URL?, icon: String?, isFolder: Bool = false,
+            children: [Node] = []
+        ) {
             self.kind = kind
             self.title = title
             self.url = url
             self.icon = icon
+            self.isFolder = isFolder
             self.children = children
         }
         var isHeader: Bool {
@@ -130,7 +139,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             Node(
                 kind: .userGroup(group.id), title: group.title, url: nil, icon: nil,
                 children: group.items.map {
-                    Node(kind: .userItem($0.id), title: $0.name, url: URL(fileURLWithPath: $0.path), icon: $0.icon)
+                    let url = URL(fileURLWithPath: $0.path)
+                    return Node(
+                        kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon,
+                        isFolder: Self.isDirectory(url))
                 })
         }
         if let cloud = cloudNode() { roots.append(cloud) }
@@ -147,7 +159,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
-            children.append(Node(kind: .systemItem, title: "iCloud Drive", url: iCloud, icon: nil))
+            children.append(Node(kind: .systemItem, title: "iCloud Drive", url: iCloud, icon: nil, isFolder: true))
         }
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
         if let urls = try? fm.contentsOfDirectory(
@@ -156,7 +168,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
                 let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
                 guard isDir else { continue }
-                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: nil))
+                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: nil, isFolder: true))
             }
         }
         guard !children.isEmpty else { return nil }
@@ -182,7 +194,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         for url in urls {
             let values = try? url.resourceValues(forKeys: Set(keys))
             if values?.volumeIsBrowsable == false { continue }
-            volumes.append(Node(kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url, icon: nil))
+            volumes.append(Node(kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url, icon: nil, isFolder: true))
         }
         return Node(kind: .systemHeader, title: "Volumes", url: nil, icon: nil, children: volumes)
     }
@@ -199,17 +211,41 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     // MARK: NSOutlineViewDataSource
 
     func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-        guard let item else { return roots.count }
-        return (item as? Node)?.children.count ?? 0
+        guard let node = item as? Node else { return roots.count }
+        if node.isFolder { loadChildrenIfNeeded(node) }
+        return node.children.count
     }
 
     func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
         guard let node = item as? Node else { return roots[index] }
+        if node.isFolder { loadChildrenIfNeeded(node) }
         return node.children[index]
     }
 
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
-        (item as? Node)?.isHeader ?? false
+        guard let node = item as? Node else { return false }
+        return node.isHeader || node.isFolder  // folders expand to their subfolders
+    }
+
+    /// Lazily list a folder node's subfolders (directories only, sorted) the first
+    /// time it's expanded, so deep trees aren't read up front.
+    private func loadChildrenIfNeeded(_ node: Node) {
+        guard node.isFolder, !node.childrenLoaded, let url = node.url else { return }
+        node.childrenLoaded = true
+        let keys: [URLResourceKey] = [.isDirectoryKey]
+        let contents =
+            (try? FileManager.default.contentsOfDirectory(
+                at: url, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])) ?? []
+        node.children =
+            contents
+            .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            .map { Node(kind: .folderChild, title: $0.lastPathComponent, url: $0, icon: nil, isFolder: true) }
+    }
+
+    private static func isDirectory(_ url: URL) -> Bool {
+        var isDir: ObjCBool = false
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
     }
 
     // MARK: NSOutlineViewDelegate
