@@ -109,10 +109,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebarWidth.priority = NSLayoutConstraint.Priority(260)
         sidebarWidth.isActive = true
 
-        searchField.placeholderString = "Semantic search in this folder (on-device)…"
+        searchField.placeholderString = "Search"
         searchField.translatesAutoresizingMaskIntoConstraints = false
         searchField.target = self
         searchField.action = #selector(runSearch)
+        searchField.sendsSearchStringImmediately = false
+        searchField.toolTip = "Semantic search in this folder (on-device)"
 
         // Vertical split: the browser (sidebar + panes) on top, the optional
         // terminal drawer at the bottom. The terminal starts collapsed.
@@ -131,8 +133,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         host.addSubview(vSplit)
         NSLayoutConstraint.activate([
             searchField.topAnchor.constraint(equalTo: host.topAnchor, constant: 8),
-            searchField.leadingAnchor.constraint(equalTo: host.leadingAnchor, constant: 8),
             searchField.trailingAnchor.constraint(equalTo: host.trailingAnchor, constant: -8),
+            searchField.widthAnchor.constraint(equalToConstant: 240),  // top-right, like Finder
             vSplit.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
             vSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
             vSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
@@ -192,7 +194,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             side.onPaneDirectoryDidChange = { [weak self] pane, url in self?.directoryChanged(pane, url) }
             side.onPaneDidNavigate = { [weak self] pane in
-                if pane === self?.activePane { self?.searchField.stringValue = "" }
+                guard pane === self?.activePane else { return }
+                self?.searchField.stringValue = ""
+                self?.updateWindowTitle()  // covers remote nav too
             }
             side.onPaneDropFiles = { [weak self] urls, move, destination in
                 self?.dropFiles(urls, move: move, into: destination)
@@ -258,6 +262,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             enabled: { [weak self] in self?.activePane?.selectedEntries.contains(where: \.isDataless) ?? false }
         ) { [weak self] in self?.downloadSelection() }
         add("view.preferences", "Preferences…") { [weak self] in self?.showPreferences() }
+        add("view.fullPathTitle", "Show Full Path in Title Bar") { [weak self] in self?.toggleFullPathTitle() }
         add("search.toggleOCR", "Toggle Image OCR in Search") { [weak self] in self?.toggleOCR() }
         add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
@@ -291,6 +296,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("nav.editPath", "Go to Path…") { [weak self] in self?.activePane?.beginEditingPath() }
         add("connections.manage", "Connections…") {
             [weak self] in self?.connectionsController.present(over: self?.view.window)
+        }
+        add("connections.newTabToggle", "Open Connections in a New Tab") {
+            [weak self] in self?.toggleConnectionsNewTab()
         }
         add(
             "remote.download", "Download from Server…",
@@ -521,6 +529,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asList": menuItem.state = activePane?.viewMode == .list ? .on : .off
         case "view.asIcons": menuItem.state = activePane?.viewMode == .icon ? .on : .off
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
+        case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
+        case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         default: break
         }
         return commands.command(id)?.isEnabled() ?? true
@@ -548,6 +558,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func toggleOCR() {
         prefs.searchOCR.toggle()
         applyPreferences()
+    }
+
+    private func toggleFullPathTitle() {
+        prefs.showFullPathInTitle.toggle()
+        saveConfig(prefs, to: Self.preferencesURL)
+        updateWindowTitle()
+    }
+
+    private func toggleConnectionsNewTab() {
+        prefs.openConnectionsInNewTab.toggle()
+        saveConfig(prefs, to: Self.preferencesURL)
     }
 
     /// Apply preferences to every tab in both sides, persist them, and rebuild the
@@ -853,9 +874,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.accessoryView = field
         alert.addButton(withTitle: "Connect")
         alert.addButton(withTitle: "Cancel")
-        alert.beginSheetModal(for: window) { response in
-            guard response == .alertFirstButtonReturn else { return }
-            pane.openRemote(connection, password: field.stringValue)
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            var target = pane
+            if self.prefs.openConnectionsInNewTab, let side = self.activeSide {
+                side.newTab(duplicatingCurrent: true)  // the new tab becomes active
+                target = self.activePane ?? pane
+            }
+            target.openRemote(connection, password: field.stringValue)
         }
     }
 
@@ -1191,6 +1217,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         super.viewDidAppear()
         applyInitialSplitPositions()
         view.window?.makeFirstResponder(leftTabs.activePane?.keyView)
+        updateWindowTitle()
         maybePromptFullDiskAccess()
     }
 
@@ -1234,6 +1261,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activePane = pane
         activeSide = side
         pane.setActive(true)
+        updateWindowTitle()
         // Note: the search field is cleared on navigation (onDidNavigate), not on
         // every focus change, so a mid-typed query or visible results survive a
         // pane re-focus.
@@ -1547,11 +1575,33 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         if pane === activePane {
             preIndex(url)
+            updateWindowTitle()
             // The terminal follows the active folder only when the user opted in
             // and the drawer is open (changeDirectory itself ignores TUIs).
             if terminalFollows, !terminal.view.isHidden { terminal.changeDirectory(to: url) }
         }
         saveSessionSoon()
+    }
+
+    /// The window title: folder name by default (like Finder), full POSIX path
+    /// when the preference is on, or the server location for a remote pane. Also
+    /// sets representedURL so the title gets a proxy icon and path popup.
+    private func updateWindowTitle() {
+        guard let window = view.window else { return }
+        guard let pane = activePane else {
+            window.title = "Pathem"
+            window.representedURL = nil
+            return
+        }
+        if let ctx = pane.remoteContext {
+            window.representedURL = nil
+            window.title = "\(ctx.connection.host)\(ctx.path)"
+            return
+        }
+        let url = pane.currentURL
+        window.representedURL = url
+        let name = url.lastPathComponent
+        window.title = prefs.showFullPathInTitle ? url.path : (name.isEmpty ? url.path : name)
     }
 
     // MARK: - Terminal

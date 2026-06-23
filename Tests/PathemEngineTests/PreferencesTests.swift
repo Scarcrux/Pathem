@@ -23,8 +23,25 @@ import Testing
     }
 
     @Test func codableRoundTrip() throws {
-        let prefs = Preferences(density: .compact, fontSize: 15, alternatingRows: false, searchOCR: true)
+        let prefs = Preferences(
+            density: .compact, fontSize: 15, alternatingRows: false, searchOCR: true,
+            showFullPathInTitle: true, pathBarAtBottom: true, openConnectionsInNewTab: true)
         let data = try JSONEncoder().encode(prefs)
         #expect(try JSONDecoder().decode(Preferences.self, from: data) == prefs)
+    }
+
+    @Test func decodesOlderFileWithMissingKeys() throws {
+        // A prefs.json from a build before the newer keys existed must still load,
+        // defaulting the missing keys instead of failing (which would reset prefs).
+        let legacy = """
+            { "density": "compact", "fontSize": 15, "alternatingRows": false, "searchOCR": true }
+            """
+        let prefs = try JSONDecoder().decode(Preferences.self, from: Data(legacy.utf8))
+        #expect(prefs.density == .compact)
+        #expect(prefs.fontSize == 15)
+        #expect(prefs.searchOCR == true)
+        #expect(prefs.showFullPathInTitle == false)  // defaulted
+        #expect(prefs.pathBarAtBottom == false)  // defaulted
+        #expect(prefs.openConnectionsInNewTab == false)  // defaulted
     }
 }

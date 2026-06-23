@@ -144,6 +144,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
+        viewMenu.addItem(commandItem("Show Full Path in Title Bar", "view.fullPathTitle"))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
@@ -175,6 +176,7 @@ enum PathemApp {
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
         goMenu.addItem(.separator())
         goMenu.addItem(commandItem("Connections…", "connections.manage", "k", [.command, .shift]))
+        goMenu.addItem(commandItem("Open Connections in a New Tab", "connections.newTabToggle"))
         goMenu.addItem(commandItem("Download from Server…", "remote.download"))
 
         return mainMenu
