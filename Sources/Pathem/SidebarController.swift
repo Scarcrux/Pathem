@@ -30,6 +30,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onSelect: ((URL) -> Void)?
     /// A smart location (Recents / a tag filter) was selected.
     var onSelectSmart: ((SmartQuery) -> Void)?
+    /// A discovered shared computer (by display name) was selected.
+    var onSelectShared: ((String) -> Void)?
+    private var sharedHosts: [String] = []
+
+    /// Update the Shared section with discovered SMB hosts.
+    func setSharedHosts(_ hosts: [String]) {
+        guard hosts != sharedHosts else { return }
+        sharedHosts = hosts
+        reload()
+    }
     /// Supplies the active pane's folder for "Add Current Folder".
     var currentFolder: (() -> URL?)?
 
@@ -51,6 +61,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case systemItem
         case folderChild  // a lazily-loaded subfolder of an expandable location
         case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
+        case shared(String)  // a discovered SMB host (by display name)
     }
 
     private final class Node {
@@ -159,10 +170,20 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         if let cloud = cloudNode() { roots.append(cloud) }
         roots.append(volumesNode())
+        if let shared = sharedNode() { roots.append(shared) }
         roots.append(smartNode())
         roots.append(tagsNode())
         outline.reloadData()
         for root in roots { outline.expandItem(root) }
+    }
+
+    /// Discovered SMB computers on the local network (nil when none seen yet).
+    private func sharedNode() -> Node? {
+        guard !sharedHosts.isEmpty else { return nil }
+        let children = sharedHosts.map { host in
+            Node(kind: .shared(host), title: host, url: nil, icon: "desktopcomputer")
+        }
+        return Node(kind: .systemHeader, title: "Shared", url: nil, icon: nil, children: children)
     }
 
     /// Spotlight-backed smart locations (currently Recents).
@@ -360,6 +381,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         guard row >= 0, let node = outline.item(atRow: row) as? Node else { return }
         if case .smart(let query) = node.kind {
             onSelectSmart?(query)
+            return
+        }
+        if case .shared(let host) = node.kind {
+            onSelectShared?(host)
             return
         }
         guard let url = node.url else { return }

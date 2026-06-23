@@ -1,4 +1,5 @@
 import AppKit
+import NetFS
 import PathemEngine
 import PathemTerminal
 import Quartz
@@ -70,6 +71,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var infoInspector = InfoInspectorController()
     private lazy var connectionsController = ConnectionsController()
     private lazy var transferController = TransferController()
+    private let sharedDiscovery = SharedDiscovery()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -210,8 +212,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         restoreSession()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
+        sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
+        sharedDiscovery.onChange = { [weak self] hosts in self?.sidebar.setSharedHosts(hosts) }
+        sharedDiscovery.start()
         applyPreferences()
     }
 
@@ -951,6 +956,52 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }  // stale
             pane.showSmartResults(entries, title: title)
+        }
+    }
+
+    // MARK: - Shared (SMB) computers
+
+    /// Resolve a discovered Bonjour host and mount its SMB share, then browse it.
+    private func connectToShared(_ name: String) {
+        sharedDiscovery.resolveHost(named: name) { [weak self] host in
+            guard let self, let host else {
+                NSSound.beep()
+                return
+            }
+            self.mountSMB(host: host)
+        }
+    }
+
+    /// Mount smb://host via NetFS (the OS handles auth/Keychain and shows its own
+    /// prompt when needed), then navigate the active pane to the mount point.
+    private func mountSMB(host: String) {
+        guard let url = URL(string: "smb://\(host)") else {
+            NSSound.beep()
+            return
+        }
+        Task { [weak self] in
+            let mount = await Self.mountShare(url)
+            guard let self else { return }
+            if let mount {
+                self.activePane?.navigate(to: mount)
+            } else {
+                NSSound.beep()
+            }
+        }
+    }
+
+    /// Off-main NetFS mount. Returns the mount point, or nil on failure/cancel.
+    nonisolated private static func mountShare(_ url: URL) async -> URL? {
+        await withCheckedContinuation { (cont: CheckedContinuation<URL?, Never>) in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let openOptions = NSMutableDictionary()
+                openOptions[kNAUIOptionKey] = kNAUIOptionAllowUI  // let the OS prompt for credentials
+                var mountpoints: Unmanaged<CFArray>?
+                let status = NetFSMountURLSync(
+                    url as CFURL, nil, nil, nil, openOptions as CFMutableDictionary, nil, &mountpoints)
+                let paths = (mountpoints?.takeRetainedValue() as? [String]) ?? []
+                cont.resume(returning: status == 0 ? paths.first.map { URL(fileURLWithPath: $0) } : nil)
+            }
         }
     }
 
