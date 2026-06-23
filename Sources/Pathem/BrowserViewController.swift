@@ -261,6 +261,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.renameSelection()
         }
         add("files.trash", "Move to Trash", enabled: hasSelection) { [weak self] in self?.trashSelection() }
+        add("files.airdrop", "Send via AirDrop", enabled: hasSelection) {
+            [weak self] in self?.activePane?.airDropSelection()
+        }
         add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
         }

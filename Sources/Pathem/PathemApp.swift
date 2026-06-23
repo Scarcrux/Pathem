@@ -122,6 +122,7 @@ enum PathemApp {
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
+        fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 

@@ -755,6 +755,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         let share = NSMenuItem(title: "Share…", action: #selector(shareSelection), keyEquivalent: "")
         share.target = self
         menu.addItem(share)
+        let airdrop = NSMenuItem(title: "Send via AirDrop", action: #selector(airDropSelection), keyEquivalent: "")
+        airdrop.target = self
+        menu.addItem(airdrop)
         let tagsItem = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
         tagsItem.submenu = makeTagsSubmenu()
         menu.addItem(tagsItem)
@@ -855,19 +858,42 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         reload()
     }
 
+    /// Local URLs of the current selection, resolved against the active folder
+    /// (the active column in column view, else nav.current).
+    private func selectedLocalURLs() -> [URL] {
+        let folder = content.directoryURL ?? nav.current
+        return content.selectedEntries.map { folder.appendingPathComponent($0.name) }
+    }
+
     @objc private func shareSelection() {
         onBecomeActive?()
         guard remote == nil, !smartActive else {
             NSSound.beep()  // remote / cross-folder results aren't a single local selection
             return
         }
-        let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
+        let urls = selectedLocalURLs()
         guard !urls.isEmpty else {
             NSSound.beep()
             return
         }
         let picker = NSSharingServicePicker(items: urls)
         picker.show(relativeTo: actionButton.bounds, of: actionButton, preferredEdge: .minY)
+    }
+
+    /// Send the selection straight to the AirDrop sheet (a shortcut past the full
+    /// share picker). Local files only; macOS has no public API to receive/browse.
+    @objc func airDropSelection() {
+        onBecomeActive?()
+        guard remote == nil, !smartActive else {
+            NSSound.beep()
+            return
+        }
+        let urls = selectedLocalURLs()
+        guard !urls.isEmpty, let service = NSSharingService(named: .sendViaAirDrop) else {
+            NSSound.beep()
+            return
+        }
+        service.perform(withItems: urls)
     }
 
     private func rebuildSortMenu(_ menu: NSMenu) {
