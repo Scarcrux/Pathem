@@ -23,6 +23,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     private func build() {
         panel.title = "Connections"
+        panel.isReleasedWhenClosed = false  // controller owns it; title-bar close just hides it
         let column = NSTableColumn(identifier: .init("c"))
         column.title = "Server"
         table.addTableColumn(column)
@@ -71,7 +72,15 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     func present(over window: NSWindow?) {
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible {
+            if let window {  // center over the owning window
+                let f = window.frame
+                let s = panel.frame.size
+                panel.setFrameOrigin(NSPoint(x: f.midX - s.width / 2, y: f.midY - s.height / 2))
+            } else {
+                panel.center()
+            }
+        }
         panel.makeKeyAndOrderFront(nil)
     }
 
@@ -114,18 +123,21 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         }
     }
 
-    /// Add imported sites that aren't already present (by host+user+proto).
+    /// Add imported sites that aren't already present (by proto+host+port+user).
     private func merge(_ imported: [RemoteConnection]) {
         guard !imported.isEmpty else {
             NSSound.beep()
             return
         }
-        var existing = Set(connections.map { "\($0.proto.rawValue)|\($0.host)|\($0.user)" })
-        for site in imported {
-            let key = "\(site.proto.rawValue)|\(site.host)|\(site.user)"
-            if existing.insert(key).inserted { connections.append(site) }
+        func key(_ c: RemoteConnection) -> String { "\(c.proto.rawValue)|\(c.host)|\(c.effectivePort)|\(c.user)" }
+        var existing = Set(connections.map(key))
+        let before = connections.count
+        for site in imported where existing.insert(key(site)).inserted { connections.append(site) }
+        if connections.count > before {
+            commit()  // only write when something actually changed
+        } else {
+            NSSound.beep()  // everything was already present
         }
-        commit()
     }
 
     /// Add (row == nil) or edit a connection via a compact form sheet.

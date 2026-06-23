@@ -24,7 +24,9 @@ public enum FileZillaImporter {
     /// Parse sitemanager.xml data into connections. Each <Server> carries the
     /// connection fields as child elements and the site name as its text content.
     public static func parse(_ data: Data) -> [RemoteConnection] {
-        guard let doc = try? XMLDocument(data: data),
+        // Never resolve external entities: a hostile sitemanager.xml could
+        // otherwise read local files into fields (XXE) inside the app process.
+        guard let doc = try? XMLDocument(data: data, options: [.nodeLoadExternalEntitiesNever]),
             let servers = (try? doc.nodes(forXPath: "//Server")) as? [XMLElement]
         else { return [] }
         return servers.compactMap { parseServer($0) }
@@ -38,8 +40,12 @@ public enum FileZillaImporter {
         guard let host = child("Host"), !host.isEmpty else { return nil }
 
         let proto = mapProtocol(child("Protocol"))
-        let port = Int(child("Port") ?? "") ?? 0
+        // Normalize out-of-range/invalid ports to 0 ("use the protocol default").
+        let parsedPort = Int(child("Port") ?? "") ?? 0
+        let port = (1...65535).contains(parsedPort) ? parsedPort : 0
         let user = child("User") ?? ""
+        // RemoteDir/LocalDir are intentionally not imported (FileZilla's encoded
+        // path format is brittle); connections start at "/".
         // FileZilla stores the site name as the element's own text content (mixed
         // content alongside the child elements); fall back to the host.
         let name = siteName(element) ?? host

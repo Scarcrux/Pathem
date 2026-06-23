@@ -70,4 +70,22 @@ import Testing
         #expect(FileZillaImporter.parse(Data("not xml".utf8)).isEmpty)
         #expect(FileZillaImporter.parse(Data("<FileZilla3></FileZilla3>".utf8)).isEmpty)
     }
+
+    @Test func doesNotResolveExternalEntities() throws {
+        // Write a secret file and reference it via a SYSTEM entity (XXE attempt).
+        let secret = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-xxe-\(UUID().uuidString).txt")
+        try Data("TOPSECRET".utf8).write(to: secret)
+        defer { try? FileManager.default.removeItem(at: secret) }
+        let xml = """
+            <?xml version="1.0"?>
+            <!DOCTYPE x [ <!ENTITY xxe SYSTEM "file://\(secret.path)"> ]>
+            <FileZilla3><Servers><Server>
+            <Host>&xxe;</Host><Protocol>0</Protocol><User>x</User>
+            </Server></Servers></FileZilla3>
+            """
+        let sites = FileZillaImporter.parse(Data(xml.utf8))
+        // The entity must not be resolved; the secret must never appear in a field.
+        for site in sites { #expect(!site.host.contains("TOPSECRET")) }
+    }
 }
