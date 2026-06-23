@@ -303,6 +303,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("connections.newTabToggle", "Open Connections in a New Tab") {
             [weak self] in self?.toggleConnectionsNewTab()
         }
+        for color in FileTag.Color.displayOrder {
+            add("tags.toggle.\(color.rawValue)", "Tag \(color.label)", enabled: hasSelection) {
+                [weak self] in self?.activePane?.tagSelection(toggle: color)
+            }
+        }
+        add("tags.clear", "Clear Tags", enabled: hasSelection) {
+            [weak self] in self?.activePane?.clearSelectionTags()
+        }
         add(
             "remote.download", "Download from Server…",
             enabled: { [weak self] in

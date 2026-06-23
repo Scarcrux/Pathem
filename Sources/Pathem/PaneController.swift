@@ -656,6 +656,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         let share = NSMenuItem(title: "Share…", action: #selector(shareSelection), keyEquivalent: "")
         share.target = self
         menu.addItem(share)
+        let tagsItem = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
+        tagsItem.submenu = makeTagsSubmenu()
+        menu.addItem(tagsItem)
         if isRemote {
             add("Download from Server…", command: "remote.download")
         }
@@ -665,6 +668,67 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
 
     @objc private func runActionCommand(_ sender: NSMenuItem) {
         if let id = sender.representedObject as? String { runCommand?(id) }
+    }
+
+    /// A submenu of the seven Finder colors (checkmarked if the first selected
+    /// item has them) plus Clear Tags.
+    private func makeTagsSubmenu() -> NSMenu {
+        let menu = NSMenu()
+        let current: Set<FileTag.Color> = {
+            guard remote == nil, let first = content.selectedEntries.first else { return [] }
+            let url = nav.current.appendingPathComponent(first.name)
+            return Set(FileTags.tags(of: url).map(\.color))
+        }()
+        for color in FileTag.Color.displayOrder {
+            let item = NSMenuItem(title: color.label, action: #selector(tagMenuItem(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = color.rawValue
+            item.image = TagColors.dot(color)
+            item.state = current.contains(color) ? .on : .off
+            menu.addItem(item)
+        }
+        menu.addItem(.separator())
+        let clear = NSMenuItem(title: "Clear Tags", action: #selector(clearTags), keyEquivalent: "")
+        clear.target = self
+        menu.addItem(clear)
+        return menu
+    }
+
+    @objc private func tagMenuItem(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? Int, let color = FileTag.Color(rawValue: raw) else { return }
+        tagSelection(toggle: color)
+    }
+
+    /// Toggle a color tag on every selected file (local only).
+    func tagSelection(toggle color: FileTag.Color) {
+        guard remote == nil else {
+            NSSound.beep()  // remote files have no local xattr
+            return
+        }
+        let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        for url in urls { try? FileTags.toggleColor(color, on: url) }
+        reload()
+    }
+
+    @objc private func clearTags() { clearSelectionTags() }
+
+    /// Remove all tags from every selected file (local only).
+    func clearSelectionTags() {
+        guard remote == nil else {
+            NSSound.beep()
+            return
+        }
+        let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        for url in urls { try? FileTags.setTags([], on: url) }
+        reload()
     }
 
     @objc private func shareSelection() {

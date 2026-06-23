@@ -33,6 +33,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var suppressSortCallback = false
     /// Row font size, applied per cell so a preference change takes effect on reload.
     private var listFontSize: CGFloat = 13
+    /// Tag colors per file path, read lazily for visible rows and cleared on reload
+    /// so scrolling a big directory never re-reads xattrs it already has.
+    private var tagCache: [String: [FileTag.Color]] = [:]
     /// The folder these rows live in, so a dragged row maps to a file URL. nil
     /// while showing search results, which disables drag.
     var directoryURL: URL?
@@ -163,6 +166,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         add("Rename…", "files.rename")
         add("Move to Trash", "files.trash")
         menu.addItem(.separator())
+        let tags = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
+        let tagsMenu = NSMenu()
+        for color in FileTag.Color.displayOrder {
+            let item = NSMenuItem(
+                title: color.label, action: #selector(BrowserViewController.performMenuCommand(_:)),
+                keyEquivalent: "")
+            item.representedObject = "tags.toggle.\(color.rawValue)"
+            item.image = TagColors.dot(color)
+            tagsMenu.addItem(item)
+        }
+        tagsMenu.addItem(.separator())
+        let clearTags = NSMenuItem(
+            title: "Clear Tags", action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+        clearTags.representedObject = "tags.clear"
+        tagsMenu.addItem(clearTags)
+        tags.submenu = tagsMenu
+        menu.addItem(tags)
+        menu.addItem(.separator())
         add("New Folder", "files.newFolder")
         menu.addItem(.separator())
         add("Copy", "files.copy")
@@ -185,6 +206,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// position is held, so the list never jumps or deselects under the user.
     /// Without it (navigation, search results) the view resets to the top.
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
+        tagCache.removeAll()  // tags may have changed; re-read lazily for visible rows
         guard preserveState else {
             self.entries = entries
             tableView.reloadData()
@@ -393,10 +415,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         cell.textField?.font = .systemFont(ofSize: listFontSize)
         switch Column(rawValue: id.rawValue) {
         case .name:
-            cell.textField?.stringValue = entry.name
             // Online-only (dataless) items: a cloud badge + dimmed name.
             cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
             cell.imageView?.image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+            let colors = tagColors(for: entry)
+            if colors.isEmpty {
+                cell.textField?.stringValue = entry.name
+            } else {
+                cell.textField?.attributedStringValue = Self.name(entry.name, withDots: colors, size: listFontSize)
+            }
         case .size:
             cell.textField?.stringValue = entry.isDirectory ? "--" : byteFormatter.string(fromByteCount: entry.size)
         case .date:
@@ -440,6 +467,34 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             ])
         }
         return cell
+    }
+
+    /// Tag colors for an entry, cached by path. Only for a real folder listing
+    /// (directoryURL set); search results span folders, so they show no dots.
+    private func tagColors(for entry: FileEntry) -> [FileTag.Color] {
+        guard let dir = directoryURL else { return [] }
+        let url = dir.appendingPathComponent(entry.name)
+        if let cached = tagCache[url.path] { return cached }
+        let colors = FileTags.tags(of: url).map(\.color).filter { $0 != .none }
+        tagCache[url.path] = colors
+        return colors
+    }
+
+    /// The filename followed by a small colored dot for each tag color.
+    private static func name(_ name: String, withDots colors: [FileTag.Color], size: CGFloat)
+        -> NSAttributedString
+    {
+        let result = NSMutableAttributedString(
+            string: name, attributes: [.font: NSFont.systemFont(ofSize: size)])
+        let diameter = size - 2
+        for color in colors {
+            let attachment = NSTextAttachment()
+            attachment.image = TagColors.dot(color, diameter: diameter)
+            attachment.bounds = NSRect(x: 0, y: -1, width: diameter, height: diameter)
+            result.append(NSAttributedString(string: " "))
+            result.append(NSAttributedString(attachment: attachment))
+        }
+        return result
     }
 
     /// Badge for online-only (dataless) cloud placeholders.
