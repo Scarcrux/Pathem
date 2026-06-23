@@ -29,7 +29,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Pathem is open source under the MIT License.</string>
+	<string>Copyright © 2026 Scarcrux. Open source under the MIT License.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- Sparkle auto-update. The updater stays dormant until SUPublicEDKey is a

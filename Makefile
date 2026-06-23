@@ -6,13 +6,15 @@
 #   make install  build the app and copy it to /Applications
 #   make watch    rebuild + relaunch on every source change (fast debug loop)
 #   make watch-install  same, but build + sign + install the .app each time
+#   make ci       run the full CI suite locally (build, test, Gate A, smoke);
+#                 remote GitHub Actions CI is manual-only to save minutes
 #   make icon     regenerate Packaging/Pathem.icns from makeicon.swift
 #   make dev-cert create a stable self-signed signing identity (keeps an FDA
 #                 grant across rebuilds); then: SIGN_IDENTITY="Pathem Self-Signed" make install
 #   make fmt      format with swift-format (if installed)
 #   make clean    remove build products
 
-.PHONY: build run test smoke app install watch watch-install icon dev-cert fmt clean
+.PHONY: build run test smoke ci app install watch watch-install icon dev-cert fmt clean
 
 build:
 	swift build
@@ -24,6 +26,13 @@ test:
 	swift test
 
 smoke:
+	PATHEM_SMOKE=1 swift run Pathem
+
+# The same checks the (now manual-only) GitHub Actions workflow runs.
+ci:
+	swift build
+	swift test
+	PATHEM_GATE_A=1 swift run Pathem
 	PATHEM_SMOKE=1 swift run Pathem
 
 app:

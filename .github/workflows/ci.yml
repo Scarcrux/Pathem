@@ -1,9 +1,10 @@
 name: CI
 
+# Auto-runs on push/PR are disabled to save GitHub Actions minutes; run the same
+# checks locally with `make ci`. This workflow stays available to trigger by hand
+# from the Actions tab (Run workflow) for a clean-room run when wanted.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
