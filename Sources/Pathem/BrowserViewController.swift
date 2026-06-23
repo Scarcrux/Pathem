@@ -913,6 +913,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func openSmart(_ query: SmartQuery) {
         guard let pane = activePane else { return }
         let scope = FileManager.default.homeDirectoryForCurrentUser
+        let token = pane.beginContentRequest()  // detect navigation / a newer request
         Task {
             let urls: [URL]
             let title: String
@@ -925,7 +926,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 title = "Tag: \(color.label)"
             }
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
-            guard self.activePane === pane else { return }  // user moved on
+            guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }  // stale
             pane.showSmartResults(entries, title: title)
         }
     }

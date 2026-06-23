@@ -38,6 +38,21 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     var isRemote: Bool { remote != nil }
     /// Showing a cross-folder smart-result list (Recents / tag filter).
     private var smartActive = false
+    /// The smart results currently shown, kept so sort / view-mode changes re-apply
+    /// in memory (there's no folder to re-read).
+    private var smartEntries: [FileEntry] = []
+    private var smartTitle = ""
+    /// Bumped whenever the pane's shown content changes (navigation, a new smart
+    /// request) so a slow async smart load can detect it's stale and not clobber.
+    private var contentRequestToken = 0
+
+    /// Reserve a content-request token for an async load; the loader applies its
+    /// result only if `isContentRequestCurrent(token)` still holds.
+    func beginContentRequest() -> Int {
+        contentRequestToken += 1
+        return contentRequestToken
+    }
+    func isContentRequestCurrent(_ token: Int) -> Bool { contentRequestToken == token }
 
     /// The active remote session as plain values, for the transfer layer. Nil locally.
     var remoteContext: (connection: RemoteConnection, path: String, password: String)? {
@@ -134,6 +149,8 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         watcher = nil
         pendingRefresh?.cancel()
         smartActive = true
+        smartEntries = entries
+        smartTitle = title
         showingSearchResults = true  // keep watcher-driven reloads from fighting it
         applyViewMode(format.viewMode)
         pendingSelection = nil
@@ -364,6 +381,8 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// on-disk changes, and tell the browser the folder changed.
     private func enterDirectory() {
         smartActive = false  // entering a real folder leaves any smart-result view
+        contentRequestToken += 1  // invalidate any pending async smart load
+        smartEntries = []
         startWatching()  // arm before snapshotting, to narrow the listing/watch gap
         reload(preserveState: false)  // navigation resets selection + scroll
         onDidNavigate?()
@@ -392,7 +411,10 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private func applyDiskRefresh() {
         // Refresh the listing only if we're showing it (not search results),
         // but always tell the browser so it can rebuild the search index.
-        if !showingSearchResults { reload() }
+        if !showingSearchResults {
+            content.invalidateTagCache()  // an on-disk change may include external tag edits
+            reload()
+        }
         onDirectoryDidChange?(nav.current)
     }
 
@@ -570,6 +592,13 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     func setViewMode(_ mode: ViewFormat.ViewMode) {
         guard mode != format.viewMode else { return }
         format.viewMode = mode
+        if smartActive {
+            // Re-apply in memory; don't persist a format rule onto the underlying
+            // folder, and don't reload (there's no folder to read).
+            applyViewMode(mode)
+            content.setEntries(format.sorted(smartEntries), preserveState: false)
+            return
+        }
         rememberFormat?(nav.current, format)
         reload()
     }
@@ -721,7 +750,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private func makeTagsSubmenu() -> NSMenu {
         let menu = NSMenu()
         let current: Set<FileTag.Color> = {
-            guard remote == nil, let first = content.selectedEntries.first else { return [] }
+            guard remote == nil, !smartActive, let first = content.selectedEntries.first else { return [] }
             let url = nav.current.appendingPathComponent(first.name)
             return Set(FileTags.tags(of: url).map(\.color))
         }()
@@ -749,8 +778,8 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// once for the whole selection: if every file already has the color, remove
     /// it from all; otherwise add it to all (so a mixed selection becomes uniform).
     func tagSelection(toggle color: FileTag.Color) {
-        guard remote == nil else {
-            NSSound.beep()  // remote files have no local xattr
+        guard remote == nil, !smartActive else {
+            NSSound.beep()  // remote / cross-folder smart results don't resolve to one folder
             return
         }
         let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
@@ -784,7 +813,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
 
     /// Remove all tags from every selected file (local only).
     func clearSelectionTags() {
-        guard remote == nil else {
+        guard remote == nil, !smartActive else {
             NSSound.beep()
             return
         }
@@ -804,8 +833,8 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
 
     @objc private func shareSelection() {
         onBecomeActive?()
-        guard remote == nil else {
-            NSSound.beep()  // remote files aren't local URLs to share
+        guard remote == nil, !smartActive else {
+            NSSound.beep()  // remote / cross-folder results aren't a single local selection
             return
         }
         let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
@@ -855,6 +884,12 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private func applySort(key: ViewFormat.SortKey, ascending: Bool) {
         format.sortKey = key
         format.ascending = ascending
+        if smartActive {
+            // Re-sort the held results in memory; don't persist onto the folder.
+            content.setEntries(format.sorted(smartEntries), preserveState: true)
+            content.showSortIndicator(key: key, ascending: ascending)
+            return
+        }
         rememberFormat?(nav.current, format)
         if remote != nil { reloadRemote() } else { reload() }
         content.showSortIndicator(key: key, ascending: ascending)
