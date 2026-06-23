@@ -36,6 +36,8 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private struct RemoteSession { let connection: RemoteConnection; var path: String; let password: String }
     private var remote: RemoteSession?
     var isRemote: Bool { remote != nil }
+    /// Showing a cross-folder smart-result list (Recents / tag filter).
+    private var smartActive = false
 
     /// The active remote session as plain values, for the transfer layer. Nil locally.
     var remoteContext: (connection: RemoteConnection, path: String, password: String)? {
@@ -120,10 +122,42 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         updateStatus()
     }
 
+    /// True while showing a cross-folder smart-result list (Recents, tag filter).
+    var isShowingSmartResults: Bool { smartActive }
+
+    /// Show a cross-folder result list. Entries carry their own location so opening
+    /// resolves across folders. It's read-only: the browser blocks file ops here
+    /// (they assume a single current folder). Back or selecting a folder leaves it.
+    func showSmartResults(_ entries: [FileEntry], title: String) {
+        remote = nil
+        watcher?.stop()
+        watcher = nil
+        pendingRefresh?.cancel()
+        smartActive = true
+        showingSearchResults = true  // keep watcher-driven reloads from fighting it
+        applyViewMode(format.viewMode)
+        pendingSelection = nil
+        content.directoryURL = nil  // not a single folder: disable drag
+        content.resolutionURL = nil
+        content.setEntries(format.sorted(entries), preserveState: false)
+        content.showPlaceholder(entries.isEmpty ? "No items" : nil)
+        pathControl.isHidden = true
+        addressField.isHidden = true
+        remoteLabel.isHidden = false
+        remoteLabel.stringValue = title
+        backButton.isEnabled = nav.canGoBack
+        forwardButton.isEnabled = nav.canGoForward
+        upButton.isEnabled = false
+        updateStatus()
+        onDidNavigate?()
+        containerView.window?.makeFirstResponder(content.keyView)
+    }
+
     /// Refresh the listing. In-place refreshes (sort, file op, watcher) preserve
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {
         if remote != nil { reloadRemote(); return }
+        if smartActive { return }  // a smart-result view isn't a folder to refresh
         showingSearchResults = false
         remoteLabel.isHidden = true
         pathControl.isHidden = false
@@ -288,15 +322,24 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             }
             return
         }
-        let url = nav.current.appendingPathComponent(entry.name)
+        let url = urlFor(entry)  // smart-result entries carry their own folder
         if entry.isDirectory {
             nav.go(to: url)
-            enterDirectory()
+            enterDirectory()  // clears smart mode and watches the real folder
         } else if let openFile {
             openFile(url)  // apply scoped opener rules
         } else {
             NSWorkspace.shared.open(url)  // system default
         }
+    }
+
+    /// Resolve an entry to a URL: smart-result entries carry their own location;
+    /// normal entries live in the current folder.
+    private func urlFor(_ entry: FileEntry) -> URL {
+        if let location = entry.location {
+            return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+        }
+        return nav.current.appendingPathComponent(entry.name)
     }
 
     /// Select (and scroll to) a row by name, e.g. a just-created folder.
@@ -320,6 +363,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// Move into nav.current: refresh the listing, watch the new folder for
     /// on-disk changes, and tell the browser the folder changed.
     private func enterDirectory() {
+        smartActive = false  // entering a real folder leaves any smart-result view
         startWatching()  // arm before snapshotting, to narrow the listing/watch gap
         reload(preserveState: false)  // navigation resets selection + scroll
         onDidNavigate?()

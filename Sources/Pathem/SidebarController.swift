@@ -1,6 +1,12 @@
 import AppKit
 import PathemEngine
 
+/// A smart (Spotlight-backed) sidebar location that isn't a folder path.
+enum SmartQuery: Equatable {
+    case recents
+    case tag(FileTag.Color)
+}
+
 /// A fully customizable Finder-style source list. The user's own groups and
 /// shortcuts come from an editable `Sidebar` model (persisted as sidebar.json):
 /// drag to reorder within and across groups, rename inline, change a shortcut's
@@ -22,6 +28,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
     var onModelChange: ((Sidebar) -> Void)?
     var onSelect: ((URL) -> Void)?
+    /// A smart location (Recents / a tag filter) was selected.
+    var onSelectSmart: ((SmartQuery) -> Void)?
     /// Supplies the active pane's folder for "Add Current Folder".
     var currentFolder: (() -> URL?)?
 
@@ -42,6 +50,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case systemHeader
         case systemItem
         case folderChild  // a lazily-loaded subfolder of an expandable location
+        case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
     }
 
     private final class Node {
@@ -51,18 +60,21 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let icon: String?  // SF Symbol for user items
         /// A folder location can be expanded to reveal its subfolders.
         let isFolder: Bool
+        /// A colored dot icon for a tag-filter row.
+        let tagColor: FileTag.Color?
         var children: [Node]
         /// Subfolders are loaded lazily the first time the node is expanded.
         var childrenLoaded = false
         init(
             kind: Kind, title: String, url: URL?, icon: String?, isFolder: Bool = false,
-            children: [Node] = []
+            tagColor: FileTag.Color? = nil, children: [Node] = []
         ) {
             self.kind = kind
             self.title = title
             self.url = url
             self.icon = icon
             self.isFolder = isFolder
+            self.tagColor = tagColor
             self.children = children
         }
         var isHeader: Bool {
@@ -147,8 +159,24 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         if let cloud = cloudNode() { roots.append(cloud) }
         roots.append(volumesNode())
+        roots.append(smartNode())
+        roots.append(tagsNode())
         outline.reloadData()
         for root in roots { outline.expandItem(root) }
+    }
+
+    /// Spotlight-backed smart locations (currently Recents).
+    private func smartNode() -> Node {
+        let recents = Node(kind: .smart(.recents), title: "Recents", url: nil, icon: "clock")
+        return Node(kind: .systemHeader, title: "Smart", url: nil, icon: nil, children: [recents])
+    }
+
+    /// The seven Finder tag colors; selecting one filters to files with that tag.
+    private func tagsNode() -> Node {
+        let children = FileTag.Color.displayOrder.map { color in
+            Node(kind: .smart(.tag(color)), title: color.label, url: nil, icon: nil, tagColor: color)
+        }
+        return Node(kind: .systemHeader, title: "Tags", url: nil, icon: nil, children: children)
     }
 
     /// Cloud storage the OS already mounts. nil when none are present.
@@ -315,7 +343,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.stringValue = node.title
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
-        if let icon = node.icon {
+        if let tagColor = node.tagColor {
+            cell.imageView?.image = TagColors.dot(tagColor, diameter: 12)
+            cell.imageView?.contentTintColor = nil
+        } else if let icon = node.icon {
             cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)
             cell.imageView?.contentTintColor = nil
         } else if let url = node.url {
@@ -326,7 +357,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     func outlineViewSelectionDidChange(_ notification: Notification) {
         let row = outline.selectedRow
-        guard row >= 0, let node = outline.item(atRow: row) as? Node, let url = node.url else { return }
+        guard row >= 0, let node = outline.item(atRow: row) as? Node else { return }
+        if case .smart(let query) = node.kind {
+            onSelectSmart?(query)
+            return
+        }
+        guard let url = node.url else { return }
         onSelect?(url)
     }
 

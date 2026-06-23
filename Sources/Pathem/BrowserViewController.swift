@@ -209,6 +209,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // configurePane + callbacks are set, so each pane is fully wired.
         restoreSession()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
+        sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
         applyPreferences()
@@ -348,11 +349,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: - New folder / Trash / Reveal
 
-    /// Local-only commands must not act while a remote pane is active: the pane's
-    /// selection is remote names but its currentURL is the saved LOCAL folder, so
-    /// running them would hit the local disk. Returns true (and beeps) if blocked.
+    /// Local single-folder commands must not act when the active pane shows remote
+    /// content (selection names resolve against the saved local folder) or a
+    /// cross-folder smart-result list (entries live in different folders). Returns
+    /// true (and beeps) if blocked.
     private func blockedByRemote() -> Bool {
-        if activePane?.isRemote == true {
+        if activePane?.isRemote == true || activePane?.isShowingSmartResults == true {
             NSSound.beep()
             return true
         }
@@ -901,6 +903,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 target = self.activePane ?? pane
             }
             target.openRemote(connection, password: field.stringValue)
+        }
+    }
+
+    // MARK: - Smart locations (Recents, tag filters)
+
+    /// Run a Spotlight-backed smart query and show the (cross-folder) results in
+    /// the active pane.
+    private func openSmart(_ query: SmartQuery) {
+        guard let pane = activePane else { return }
+        let scope = FileManager.default.homeDirectoryForCurrentUser
+        Task {
+            let urls: [URL]
+            let title: String
+            switch query {
+            case .recents:
+                urls = await SpotlightSearch.recentFiles(scope: scope, days: 30, limit: 200)
+                title = "Recents"
+            case .tag(let color):
+                urls = await SpotlightSearch.taggedFiles(color.label, scope: scope, limit: 500)
+                title = "Tag: \(color.label)"
+            }
+            let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
+            guard self.activePane === pane else { return }  // user moved on
+            pane.showSmartResults(entries, title: title)
         }
     }
 
@@ -1557,7 +1583,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     @objc private func runSearch(_ sender: NSSearchField) {
         let query = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let pane = activePane else { return }
-        guard !pane.isRemote else { NSSound.beep(); return }  // search indexes the local folder only
+        guard !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()  // search indexes a single local folder
+            return
+        }
         guard !query.isEmpty else {
             pane.reload()  // cleared search, restore the directory listing
             return
