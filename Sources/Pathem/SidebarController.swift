@@ -175,15 +175,33 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return Node(kind: .systemHeader, title: "Cloud", url: nil, icon: nil, children: children)
     }
 
-    /// "GoogleDrive-me@x.com" -> "Google Drive". Falls back to the raw name.
+    private static let knownProviders = [
+        "GoogleDrive": "Google Drive", "iCloudDrive": "iCloud Drive", "OneDrive": "OneDrive",
+        "Dropbox": "Dropbox", "Box": "Box", "pCloud": "pCloud", "ProtonDrive": "Proton Drive",
+    ]
+
+    /// "GoogleDrive-me@x.com" -> "Google Drive (me@x.com)". CloudStorage folders
+    /// are "Provider-Account"; the account (after the first "-") is shown in
+    /// parentheses so multiple accounts of the same provider are distinguishable.
     static func cloudLabel(_ directoryName: String) -> String {
-        let provider = directoryName.split(separator: "-").first.map(String.init) ?? directoryName
+        let parts = directoryName.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+        let providerRaw = String(parts.first ?? "")
+        let account = parts.count > 1 ? String(parts[1]) : ""
+        let provider = knownProviders[providerRaw] ?? spacedCamelCase(providerRaw)
+        let base = provider.isEmpty ? directoryName : provider
+        // Drop an account that just repeats the provider (e.g. "iCloudDrive (date)").
+        if account.isEmpty || account.hasPrefix(providerRaw) { return base }
+        return "\(base) (\(account))"
+    }
+
+    /// "GoogleDrive" -> "Google Drive".
+    private static func spacedCamelCase(_ text: String) -> String {
         var spaced = ""
-        for character in provider {
+        for character in text {
             if character.isUppercase, !spaced.isEmpty { spaced.append(" ") }
             spaced.append(character)
         }
-        return spaced.isEmpty ? directoryName : spaced
+        return spaced
     }
 
     private func volumesNode() -> Node {
