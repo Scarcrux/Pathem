@@ -18,6 +18,17 @@ public struct Sidebar: Codable, Sendable, Equatable {
             self.icon = icon
             self.path = path
         }
+
+        // Tolerant: a missing key defaults rather than failing the whole sidebar.
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+            name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+            icon = try c.decodeIfPresent(String.self, forKey: .icon) ?? "folder"
+            path = try c.decodeIfPresent(String.self, forKey: .path) ?? ""
+        }
+
+        private enum CodingKeys: String, CodingKey { case id, name, icon, path }
     }
 
     public struct Group: Codable, Sendable, Equatable, Identifiable {
@@ -30,11 +41,27 @@ public struct Sidebar: Codable, Sendable, Equatable {
             self.title = title
             self.items = items
         }
+
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+            title = try c.decodeIfPresent(String.self, forKey: .title) ?? ""
+            items = try c.decodeIfPresent([Item].self, forKey: .items) ?? []
+        }
+
+        private enum CodingKeys: String, CodingKey { case id, title, items }
     }
 
     public var groups: [Group]
 
     public init(groups: [Group]) { self.groups = groups }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        groups = try c.decodeIfPresent([Group].self, forKey: .groups) ?? []
+    }
+
+    private enum CodingKeys: String, CodingKey { case groups }
 
     /// The seed for a fresh install: a Favorites group of the standard places.
     public static func makeDefault(home: URL) -> Sidebar {

@@ -41,6 +41,9 @@ public struct SFTPProvider: RemoteProvider {
     {
         let sftp = "/usr/bin/sftp"
         guard FileManager.default.isExecutableFile(atPath: sftp) else { throw RemoteError.sftpMissing }
+        guard c.hasValidHost else {
+            throw RemoteError.unsupported("Invalid host \"\(c.host)\"")  // never pass a smuggled authority to ssh
+        }
         let askpass = try Self.askpassScript()
         var env = ProcessInfo.processInfo.environment
         env["PATHEM_PW"] = password  // read by the askpass helper, not visible in argv
@@ -66,7 +69,7 @@ public struct SFTPProvider: RemoteProvider {
     /// backslash-escape the glob metacharacters sftp expands even inside quotes,
     /// so get/put of a literal name containing * ? [ ] works. Backslash must be
     /// escaped first so the escapes we add survive.
-    private func quote(_ s: String) -> String {
+    func quote(_ s: String) -> String {
         var escaped = s.replacingOccurrences(of: "\n", with: "").replacingOccurrences(of: "\r", with: "")
         escaped = escaped.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
@@ -77,7 +80,7 @@ public struct SFTPProvider: RemoteProvider {
     }
 
     /// Drop OpenSSH's noise so the surfaced error is the useful line.
-    private func cleanError(_ s: String) -> String {
+    func cleanError(_ s: String) -> String {
         s.split(whereSeparator: \.isNewline).map(String.init)
             .filter { !$0.hasPrefix("Warning: Permanently added") && !$0.isEmpty }
             .joined(separator: "\n")

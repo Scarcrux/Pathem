@@ -16,12 +16,28 @@ public enum FTPListParser {
         let isDir = type == "d"
         let isSymlink = type == "l"
         let size = Int64(parts[4]) ?? 0
-        // Name is everything from field 8 on (keeps spaces); strip the symlink target.
-        var name = parts[8...].joined(separator: " ")
+        // Slice the name verbatim from the original line (everything after the 8
+        // metadata fields), so internal runs of multiple spaces are preserved
+        // rather than collapsed by re-joining split tokens.
+        guard let nameStart = indexAfterFields(8, in: line) else { return nil }
+        var name = String(line[nameStart...])
         if isSymlink, let arrow = name.range(of: " -> ") { name = String(name[..<arrow.lowerBound]) }
         name = name.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty, name != ".", name != ".." else { return nil }
         // A symlink to a directory can't be known from LIST alone; treat links as files.
         return FileEntry(name: name, isDirectory: isDir, size: isDir ? 0 : size, modificationDate: nil)
+    }
+
+    /// The index just past the Nth space-delimited field (skipping following
+    /// spaces), or nil if the line has fewer than N fields plus a name.
+    private static func indexAfterFields(_ count: Int, in line: String) -> String.Index? {
+        var index = line.startIndex
+        for _ in 0..<count {
+            while index < line.endIndex, line[index] == " " { index = line.index(after: index) }
+            guard index < line.endIndex else { return nil }
+            while index < line.endIndex, line[index] != " " { index = line.index(after: index) }
+        }
+        while index < line.endIndex, line[index] == " " { index = line.index(after: index) }
+        return index < line.endIndex ? index : nil
     }
 }

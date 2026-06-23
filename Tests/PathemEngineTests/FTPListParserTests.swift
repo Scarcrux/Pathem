@@ -22,6 +22,15 @@ import Testing
         #expect(entries[3].name == "current")  // symlink target stripped
     }
 
+    @Test func preservesInternalMultipleSpacesInName() {
+        // The name is sliced verbatim, so runs of spaces inside it survive.
+        let text = "-rw-r--r--   1 alice staff   42 Jan 02 12:00 a  b   c.txt"
+        let entries = FTPListParser.parse(text)
+        #expect(entries.count == 1)
+        #expect(entries[0].name == "a  b   c.txt")
+        #expect(entries[0].size == 42)
+    }
+
     @Test func skipsDotEntriesAndGarbage() {
         let text = """
             drwxr-xr-x 2 a b 4096 Jan 02 12:00 .

@@ -70,6 +70,9 @@ public struct CurlFTPProvider: RemoteProvider {
 
     private func requireFTP(_ c: RemoteConnection) throws {
         if c.proto == .sftp { throw RemoteError.unsupported("SFTP requires the XPC backend") }
+        guard c.hasValidHost else {
+            throw RemoteError.unsupported("Invalid host \"\(c.host)\"")  // never shell out to a smuggled authority
+        }
     }
 
     private func endpoint(_ c: RemoteConnection, _ path: String) -> String {
@@ -86,8 +89,11 @@ public struct CurlFTPProvider: RemoteProvider {
         -> (Data, Int32, String)
     {
         // -q first: never read the ambient ~/.curlrc. --globoff: names with []{}
-        // aren't treated as curl globs.
-        let base = ["-q", "-s", "--show-error", "--globoff", "--connect-timeout", "20", "-K", "-"]
+        // aren't treated as curl globs. --proto: a smuggled scheme can't redirect.
+        let base = [
+            "-q", "-s", "--show-error", "--globoff", "--proto", "=ftp,ftps",
+            "--connect-timeout", "20", "-K", "-",
+        ]
         return try await Self.runCurl(base + tls(c) + opArgs, input: Self.credentials(c, password))
     }
 
@@ -156,8 +162,12 @@ enum RemoteRunner {
                     }
                     box.markLaunched()  // safe to terminate now (handles a cancel that raced run)
                     if let input {  // feed stdin (config / batch), then close so the tool proceeds
-                        stdin.fileHandleForWriting.write(Data(input.utf8))
-                        stdin.fileHandleForWriting.closeFile()
+                        // Use the throwing API and swallow a broken pipe: if the child
+                        // already exited or was cancelled mid-write, fall through to
+                        // draining + waitUntilExit rather than raising an uncatchable
+                        // NSException (SIGPIPE is ignored process-wide at startup).
+                        try? stdin.fileHandleForWriting.write(contentsOf: Data(input.utf8))
+                        try? stdin.fileHandleForWriting.close()
                     }
                     // Drain stdout and stderr concurrently so a large stream on either
                     // pipe can't fill its buffer and deadlock the process.

@@ -27,6 +27,16 @@ public struct FolderFormats: Codable, Sendable {
         self.defaultFormat = defaultFormat
     }
 
+    // Tolerant: an older/partial formats.json loads with defaults instead of
+    // failing and discarding every saved per-folder view.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        rules = try c.decodeIfPresent([Rule].self, forKey: .rules) ?? []
+        defaultFormat = try c.decodeIfPresent(ViewFormat.self, forKey: .defaultFormat) ?? .default
+    }
+
+    private enum CodingKeys: String, CodingKey { case rules, defaultFormat }
+
     /// The format for `path`: exact rule, else the most specific (longest)
     /// matching subtree rule, else the default.
     public func format(for path: String) -> ViewFormat {

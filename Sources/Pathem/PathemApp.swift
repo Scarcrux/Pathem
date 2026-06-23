@@ -10,6 +10,9 @@ import PathemTerminal
 @MainActor
 enum PathemApp {
     static func main() {
+        // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
+        // deliver a fatal signal; the remote runner handles the error instead.
+        signal(SIGPIPE, SIG_IGN)
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
         let updater = UpdaterController()

@@ -39,6 +39,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     var isRemote: Bool { remote != nil }
     /// Showing a cross-folder smart-result list (Recents / tag filter).
     private var smartActive = false
+    /// This pane's current search query, so the shared search field can resync when
+    /// focus moves between panes/tabs.
+    var searchQuery = ""
     /// The smart results currently shown, kept so sort / view-mode changes re-apply
     /// in memory (there's no folder to re-read).
     private var smartEntries: [FileEntry] = []
@@ -258,7 +261,8 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         guard let session = remote else { return }
         showingSearchResults = false
         onDidNavigate?()  // clear the (local) search field as the remote folder changes
-        applyViewMode(format.viewMode)
+        // Column view can't render a single remote listing; use list for remote.
+        applyViewMode(format.viewMode == .column ? .list : format.viewMode)
         pendingSelection = nil  // clear AFTER the swap (which would set it) so it can't leak forward
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
@@ -778,7 +782,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         let menu = NSMenu()
         let current: Set<FileTag.Color> = {
             guard remote == nil, !smartActive, let first = content.selectedEntries.first else { return [] }
-            let url = nav.current.appendingPathComponent(first.name)
+            let url = currentURL.appendingPathComponent(first.name)  // active column folder in column view
             return Set(FileTags.tags(of: url).map(\.color))
         }()
         for color in FileTag.Color.displayOrder {
@@ -809,7 +813,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             NSSound.beep()  // remote / cross-folder smart results don't resolve to one folder
             return
         }
-        let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
+        let urls = selectedLocalURLs()  // active column's folder in column view, else nav.current
         guard !urls.isEmpty else {
             NSSound.beep()
             return
@@ -844,7 +848,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             NSSound.beep()
             return
         }
-        let urls = content.selectedEntries.map { nav.current.appendingPathComponent($0.name) }
+        let urls = selectedLocalURLs()  // active column's folder in column view, else nav.current
         guard !urls.isEmpty else {
             NSSound.beep()
             return

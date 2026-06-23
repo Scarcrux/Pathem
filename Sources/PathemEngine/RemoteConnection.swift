@@ -45,4 +45,37 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         let credentials = user.isEmpty ? "" : "\(user)@"
         return "\(proto.rawValue)://\(credentials)\(host):\(effectivePort)\(path)"
     }
+
+    public var hasValidHost: Bool { Self.isValidHost(host) }
+
+    /// A host is only a plain hostname, IPv4, or bracketed IPv6. Anything with
+    /// characters that could redirect the URL authority (`@`, `/`, `\`, `?`, `#`,
+    /// `:`, whitespace, controls) is rejected, so credentials can never be sent to
+    /// a smuggled host.
+    public static func isValidHost(_ host: String) -> Bool {
+        guard !host.isEmpty, host.count <= 253 else { return false }
+        if host.hasPrefix("["), host.hasSuffix("]") {  // bracketed IPv6
+            let inner = host.dropFirst().dropLast()
+            return !inner.isEmpty
+                && inner.unicodeScalars.allSatisfy { Self.ipv6Allowed.contains($0) }
+        }
+        return host.unicodeScalars.allSatisfy { Self.hostAllowed.contains($0) }
+    }
+
+    private static let hostAllowed = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-")
+    private static let ipv6Allowed = CharacterSet(charactersIn: "0123456789abcdefABCDEF:.%")
+
+    // Tolerant decoding so a connections.json from an older build (or one bad
+    // entry) doesn't fail the whole array and wipe every saved connection.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        host = try c.decodeIfPresent(String.self, forKey: .host) ?? ""
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? host
+        proto = try c.decodeIfPresent(Proto.self, forKey: .proto) ?? .ftp
+        port = try c.decodeIfPresent(Int.self, forKey: .port) ?? 0
+        user = try c.decodeIfPresent(String.self, forKey: .user) ?? ""
+        path = try c.decodeIfPresent(String.self, forKey: .path) ?? "/"
+    }
 }

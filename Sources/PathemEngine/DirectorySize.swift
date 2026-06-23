@@ -7,11 +7,11 @@ public enum DirectorySize {
     /// Total bytes of all regular files under `url` (descending into subfolders).
     /// Symlinks are not followed; unreadable items are skipped.
     public static func total(of url: URL) -> Int64 {
-        let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey, .totalFileAllocatedSizeKey]
+        let keys: [URLResourceKey] = [.isRegularFileKey, .fileSizeKey]
         guard
             let enumerator = FileManager.default.enumerator(
                 at: url, includingPropertiesForKeys: keys,
-                options: [.skipsHiddenFiles], errorHandler: { _, _ in true })
+                options: [], errorHandler: { _, _ in true })  // count hidden too, like Finder
         else { return 0 }
         var total: Int64 = 0
         for case let file as URL in enumerator {

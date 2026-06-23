@@ -199,6 +199,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             side.onPaneDirectoryDidChange = { [weak self] pane, url in self?.directoryChanged(pane, url) }
             side.onPaneDidNavigate = { [weak self] pane in
+                pane.searchQuery = ""  // navigating clears that pane's query
                 guard pane === self?.activePane else { return }
                 self?.searchField.stringValue = ""
                 self?.updateWindowTitle()  // covers remote nav too
@@ -1402,6 +1403,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activeSide = side
         pane.setActive(true)
         updateWindowTitle()
+        searchField.stringValue = pane.searchQuery  // show the focused pane's own query
         // Note: the search field is cleared on navigation (onDidNavigate), not on
         // every focus change, so a mid-typed query or visible results survive a
         // pane re-focus.
@@ -1665,6 +1667,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             NSSound.beep()  // search needs a single local list (not remote/smart/columns)
             return
         }
+        pane.searchQuery = query  // remember per pane so the shared field resyncs on focus change
         guard !query.isEmpty else {
             pane.reload()  // cleared search, restore the directory listing
             return

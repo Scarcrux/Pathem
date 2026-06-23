@@ -33,6 +33,7 @@ final class InfoInspectorController: NSObject {
 
     private func build() {
         panel.title = "Info"
+        panel.isReleasedWhenClosed = false  // the controller owns it; closing just hides it
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.imageScaling = .scaleProportionallyUpOrDown
         iconView.widthAnchor.constraint(equalToConstant: 64).isActive = true

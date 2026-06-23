@@ -127,6 +127,34 @@ import Testing
         }
     }
 
+    @Test func redoMoveReappliesAfterUndo() throws {
+        try withTwoDirs { src, dst in
+            try Data("x".utf8).write(to: src.appendingPathComponent("m.txt"))
+            let outcome = FileOperations.move(["m.txt"], from: src, to: dst)
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(exists(src.appendingPathComponent("m.txt")))
+
+            let redo = FileOperations.redo(undo.performed)
+            #expect(redo.failures.isEmpty)
+            #expect(exists(dst.appendingPathComponent("m.txt")))  // back at destination
+            #expect(!exists(src.appendingPathComponent("m.txt")))
+        }
+    }
+
+    @Test func redoCopyReappliesAfterUndo() throws {
+        try withTwoDirs { src, dst in
+            try Data("x".utf8).write(to: src.appendingPathComponent("c.txt"))
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst)
+            let undo = FileOperations.undo(outcome.performed)  // trashes the copy
+            #expect(!exists(dst.appendingPathComponent("c.txt")))
+
+            let redo = FileOperations.redo(undo.performed)
+            #expect(redo.failures.isEmpty)
+            #expect(exists(dst.appendingPathComponent("c.txt")))  // copy re-created
+            #expect(exists(src.appendingPathComponent("c.txt")))  // source still there
+        }
+    }
+
     @Test func pasteCopyFromArbitrarySourceURLs() throws {
         try withTwoDirs { src, dst in
             try Data("x".utf8).write(to: src.appendingPathComponent("a.txt"))

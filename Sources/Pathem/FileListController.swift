@@ -42,7 +42,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
     private var calculateFolderSizes = false
     private var folderSizeCache: [String: Int64] = [:]
-    private var sizeReadGeneration = 0
+    /// Thread-safe generation so the background size walk can be cancelled (a new
+    /// listing or disabling the option bumps it, stopping in-flight walks).
+    private let sizeGen = GenerationBox()
     /// The folder these rows live in, so a dragged row maps to a file URL. nil
     /// while showing search results, which disables drag.
     var directoryURL: URL?
@@ -512,31 +514,34 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         if on {
             refreshFolderSizesAsync()
         } else {
-            sizeReadGeneration += 1  // drop any in-flight computation
+            _ = sizeGen.bump()  // cancel any in-flight computation
             tableView.reloadData()  // folders go back to "--"
         }
     }
 
     /// Compute folder sizes off the main thread, publishing each row as it finishes
-    /// (reusing already-computed sizes). Generation-guarded against a newer listing.
+    /// (reusing already-computed sizes). The walk stops early once its generation is
+    /// stale (a newer listing or the option turned off), and each publish is O(1).
     private func refreshFolderSizesAsync() {
         guard calculateFolderSizes, let dir = directoryURL else { return }
-        sizeReadGeneration += 1
-        let generation = sizeReadGeneration
-        let folders = entries.filter(\.isDirectory).map(\.name)
+        let generation = sizeGen.bump()
+        let folders: [(name: String, row: Int)] = entries.enumerated()
+            .compactMap { row, entry in entry.isDirectory ? (entry.name, row) : nil }
         let known = folderSizeCache
+        let gen = sizeGen
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            for name in folders {
-                let path = dir.appendingPathComponent(name).path
+            for folder in folders {
+                guard gen.isCurrent(generation) else { return }  // navigated away / disabled
+                let path = dir.appendingPathComponent(folder.name).path
                 let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
                 DispatchQueue.main.async {
-                    guard let self, self.sizeReadGeneration == generation else { return }
+                    guard let self, self.sizeGen.isCurrent(generation), folder.row < self.entries.count,
+                        self.entries[folder.row].isDirectory, self.entries[folder.row].name == folder.name
+                    else { return }
                     self.folderSizeCache[path] = size
-                    if let row = self.entries.firstIndex(where: { $0.isDirectory && $0.name == name }) {
-                        self.tableView.reloadData(
-                            forRowIndexes: IndexSet(integer: row),
-                            columnIndexes: IndexSet(integersIn: 0..<self.tableView.numberOfColumns))
-                    }
+                    self.tableView.reloadData(
+                        forRowIndexes: IndexSet(integer: folder.row),
+                        columnIndexes: IndexSet(integersIn: 0..<self.tableView.numberOfColumns))
                 }
             }
         }
@@ -619,5 +624,25 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         iconCache[key] = image
         return image
+    }
+}
+
+/// A lock-guarded generation counter, readable from a background queue so an
+/// in-flight computation can detect it has been superseded and stop.
+final class GenerationBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = 0
+
+    func bump() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        value += 1
+        return value
+    }
+
+    func isCurrent(_ generation: Int) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return value == generation
     }
 }

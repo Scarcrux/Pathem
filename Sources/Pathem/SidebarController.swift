@@ -119,6 +119,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
     }
 
+    deinit { NSWorkspace.shared.notificationCenter.removeObserver(self) }
+
     @objc private func volumesChanged() { reload() }
 
     private func build() {
