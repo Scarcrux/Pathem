@@ -19,7 +19,10 @@ struct SidebarTests {
         let s = Sidebar.makeDefault(home: URL(fileURLWithPath: "/Users/x"))
         #expect(s.groups.count == 1)
         #expect(s.groups[0].title == "Favorites")
-        #expect(s.groups[0].items.map(\.name) == ["Home", "Desktop", "Documents", "Downloads", "Applications"])
+        #expect(
+            s.groups[0].items.map(\.name) == [
+                "Home", "Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music", "Applications",
+            ])
         #expect(s.groups[0].items[0].path == "/Users/x")
     }
 

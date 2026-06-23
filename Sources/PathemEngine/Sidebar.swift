@@ -48,6 +48,9 @@ public struct Sidebar: Codable, Sendable, Equatable {
                 place("Desktop", "menubar.dock.rectangle", home.appendingPathComponent("Desktop")),
                 place("Documents", "doc", home.appendingPathComponent("Documents")),
                 place("Downloads", "arrow.down.circle", home.appendingPathComponent("Downloads")),
+                place("Pictures", "photo", home.appendingPathComponent("Pictures")),
+                place("Movies", "film", home.appendingPathComponent("Movies")),
+                place("Music", "music.note", home.appendingPathComponent("Music")),
                 place("Applications", "square.grid.2x2", URL(fileURLWithPath: "/Applications")),
             ])
         return Sidebar(groups: [favorites])
