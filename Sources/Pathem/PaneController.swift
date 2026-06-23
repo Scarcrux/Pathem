@@ -29,6 +29,14 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// paste a new one and press Return to jump there. Finder makes this awkward;
     /// here it's first-class.
     private let addressField = NSTextField()
+    /// Shown instead of the breadcrumb while browsing a remote server.
+    private let remoteLabel = NSTextField(labelWithString: "")
+
+    /// An active remote browsing session (nil = browsing the local disk).
+    private struct RemoteSession { let connection: RemoteConnection; var path: String; let password: String }
+    private var remote: RemoteSession?
+    private let remoteProvider: RemoteProvider = CurlFTPProvider()
+    var isRemote: Bool { remote != nil }
     private var backButton = NSButton()
     private var forwardButton = NSButton()
     private var upButton = NSButton()
@@ -94,7 +102,10 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Refresh the listing. In-place refreshes (sort, file op, watcher) preserve
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {
+        if remote != nil { reloadRemote(); return }
         showingSearchResults = false
+        remoteLabel.isHidden = true
+        pathControl.isHidden = false
         if let resolveFormat { format = resolveFormat(nav.current) }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
         content.directoryURL = nav.current  // rows in this folder are draggable
@@ -131,6 +142,82 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         if !showingSearchResults { reload() }
     }
 
+    // MARK: - Remote browsing
+
+    /// Switch this pane to browse a remote server. The local location is kept so
+    /// going up from the remote root returns here.
+    func openRemote(_ connection: RemoteConnection, password: String) {
+        remote = RemoteSession(
+            connection: connection, path: connection.path.isEmpty ? "/" : connection.path, password: password)
+        reloadRemote()
+        containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    /// Leave remote browsing and return to the local folder.
+    func closeRemote() {
+        remote = nil
+        reload(preserveState: false)
+        containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    /// List the current remote folder off the main thread (via the provider).
+    private func reloadRemote() {
+        guard let session = remote else { return }
+        showingSearchResults = false
+        applyViewMode(format.viewMode)
+        content.directoryURL = nil  // remote items aren't local-draggable yet
+        content.resolutionURL = nil
+        content.showPlaceholder("Loading \(session.connection.host)…")
+        pathControl.isHidden = true
+        addressField.isHidden = true
+        remoteLabel.isHidden = false
+        remoteLabel.stringValue = "\(session.connection.proto.label)  \(session.connection.host)\(session.path)"
+        backButton.isEnabled = false
+        forwardButton.isEnabled = false
+        upButton.isEnabled = true  // up goes to the parent, or back to local at the root
+
+        let provider = remoteProvider
+        Task { [weak self] in
+            do {
+                let entries = try await provider.list(
+                    session.connection, path: session.path, password: session.password)
+                guard let self, let cur = self.remote, cur.path == session.path,
+                    cur.connection.id == session.connection.id
+                else { return }
+                self.content.setEntries(self.format.sorted(entries), preserveState: false)
+                self.content.showPlaceholder(entries.isEmpty ? "Empty folder" : nil)
+                self.updateStatus()
+            } catch {
+                guard let self, self.remote?.path == session.path else { return }
+                self.content.setEntries([], preserveState: false)
+                self.content.showPlaceholder(
+                    "Couldn’t open \(session.connection.host)\(session.path)\n\(Self.describe(error))")
+                self.updateStatus()
+            }
+        }
+    }
+
+    static func joinRemote(_ base: String, _ name: String) -> String {
+        (base.hasSuffix("/") ? base : base + "/") + name
+    }
+
+    static func parentRemote(_ path: String) -> String {
+        var p = path
+        if p.count > 1, p.hasSuffix("/") { p.removeLast() }
+        guard let slash = p.lastIndex(of: "/") else { return "/" }
+        let parent = String(p[..<slash])
+        return parent.isEmpty ? "/" : parent
+    }
+
+    private static func describe(_ error: Error) -> String {
+        guard let error = error as? RemoteError else { return error.localizedDescription }
+        switch error {
+        case .unsupported(let message): return message
+        case .curl(let code, let message): return message.isEmpty ? "curl error \(code)" : message
+        case .curlMissing: return "curl was not found"
+        }
+    }
+
     /// Re-apply formats and notify observers once the owning controller has wired
     /// the pane's callbacks (init runs before resolveFormat / onDirectoryDidChange
     /// are set, so the initial listing and preindex must be triggered afterward).
@@ -154,6 +241,15 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     }
 
     func descend(into entry: FileEntry) {
+        if let remote {
+            if entry.isDirectory {
+                self.remote?.path = Self.joinRemote(remote.path, entry.name)
+                reloadRemote()
+            } else {
+                NSSound.beep()  // remote file open/download is a later step
+            }
+            return
+        }
         let url = nav.current.appendingPathComponent(entry.name)
         if entry.isDirectory {
             nav.go(to: url)
@@ -168,9 +264,20 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Select (and scroll to) a row by name, e.g. a just-created folder.
     func select(name: String) { content.select(name: name) }
 
-    @objc func goBack() { if nav.goBack() { enterDirectory() } }
-    @objc func goForward() { if nav.goForward() { enterDirectory() } }
-    @objc func goUp() { if nav.goUp() { enterDirectory() } }
+    @objc func goBack() { guard remote == nil else { return }; if nav.goBack() { enterDirectory() } }
+    @objc func goForward() { guard remote == nil else { return }; if nav.goForward() { enterDirectory() } }
+    @objc func goUp() {
+        if let remote {
+            if remote.path == "/" || remote.path.isEmpty {
+                closeRemote()  // at the remote root: return to the local folder
+            } else {
+                self.remote?.path = Self.parentRemote(remote.path)
+                reloadRemote()
+            }
+            return
+        }
+        if nav.goUp() { enterDirectory() }
+    }
 
     /// Move into nav.current: refresh the listing, watch the new folder for
     /// on-disk changes, and tell the browser the folder changed.
@@ -240,7 +347,15 @@ final class PaneController: NSObject, NSTextFieldDelegate {
         addressField.setContentHuggingPriority(.init(1), for: .horizontal)
         addressField.setContentCompressionResistancePriority(.init(1), for: .horizontal)
 
-        let toolbar = NSStackView(views: [backButton, forwardButton, upButton, pathControl, addressField])
+        remoteLabel.font = .systemFont(ofSize: 12)
+        remoteLabel.lineBreakMode = .byTruncatingMiddle
+        remoteLabel.isHidden = true
+        remoteLabel.translatesAutoresizingMaskIntoConstraints = false
+        remoteLabel.setContentHuggingPriority(.init(1), for: .horizontal)
+
+        let toolbar = NSStackView(views: [
+            backButton, forwardButton, upButton, pathControl, addressField, remoteLabel,
+        ])
         toolbar.orientation = .horizontal
         toolbar.spacing = 4
         toolbar.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
@@ -405,6 +520,7 @@ final class PaneController: NSObject, NSTextFieldDelegate {
     /// Swap the breadcrumb for an editable field pre-filled with the current path,
     /// selected, so you can type or paste a new path and press Return.
     func beginEditingPath() {
+        guard remote == nil else { NSSound.beep(); return }  // remote path editing is a later step
         addressField.stringValue = nav.current.path
         pathControl.isHidden = true
         addressField.isHidden = false

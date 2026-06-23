@@ -12,6 +12,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     var connections: [RemoteConnection] = [] { didSet { table.reloadData() } }
     /// Called whenever the list changes, so the browser can persist it.
     var onChange: (([RemoteConnection]) -> Void)?
+    /// Open the chosen server (the browser prompts for a password and connects).
+    var onConnect: ((RemoteConnection) -> Void)?
 
     override init() {
         panel = NSPanel(
@@ -31,7 +33,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         table.rowHeight = 36
         table.dataSource = self
         table.delegate = self
-        table.doubleAction = #selector(editSelected)
+        table.doubleAction = #selector(connectSelected)
         table.target = self
 
         let scroll = NSScrollView()
@@ -45,8 +47,10 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         let importFZ = button("Import from FileZilla…", #selector(importFileZilla))
         let spacer = NSView()
         spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+        let connect = button("Connect", #selector(connectSelected))
+        connect.keyEquivalent = "\r"
         let close = button("Done", #selector(closePanel))
-        let bar = NSStackView(views: [add, edit, remove, importFZ, spacer, close])
+        let bar = NSStackView(views: [add, edit, remove, importFZ, spacer, connect, close])
         bar.orientation = .horizontal
         bar.spacing = 8
         bar.translatesAutoresizingMaskIntoConstraints = false
@@ -103,6 +107,14 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         guard row >= 0, row < connections.count else { return }
         connections.remove(at: row)
         commit()
+    }
+
+    @objc private func connectSelected() {
+        let row = table.selectedRow
+        guard row >= 0, row < connections.count else { return }
+        let conn = connections[row]
+        panel.orderOut(nil)
+        onConnect?(conn)
     }
 
     @objc private func closePanel() { panel.orderOut(nil) }

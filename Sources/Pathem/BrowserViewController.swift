@@ -807,6 +807,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         connectionsController.onChange = { [weak self] conns in
             self?.saveConfig(conns, to: Self.connectionsURL)
         }
+        connectionsController.onConnect = { [weak self] connection in self?.connectToRemote(connection) }
+    }
+
+    /// Prompt for a password and open the server in the active pane.
+    private func connectToRemote(_ connection: RemoteConnection) {
+        guard let pane = activePane, let window = view.window else { return }
+        let who = connection.user.isEmpty ? "anonymous" : connection.user
+        let alert = NSAlert()
+        alert.messageText = "Connect to \(connection.host)"
+        alert.informativeText = "Enter the password for \(who)@\(connection.host)."
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        alert.accessoryView = field
+        alert.addButton(withTitle: "Connect")
+        alert.addButton(withTitle: "Cancel")
+        alert.beginSheetModal(for: window) { response in
+            guard response == .alertFirstButtonReturn else { return }
+            pane.openRemote(connection, password: field.stringValue)
+        }
     }
 
     // MARK: - Scoped openers

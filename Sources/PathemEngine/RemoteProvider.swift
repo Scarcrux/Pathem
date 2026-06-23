@@ -31,8 +31,7 @@ public struct CurlFTPProvider: RemoteProvider {
         try requireFTP(connection)
         var dir = path.isEmpty ? "/" : path
         if !dir.hasSuffix("/") { dir += "/" }  // trailing slash makes curl LIST, not retrieve
-        let url = endpoint(connection, dir)
-        let (data, status, err) = try await Self.runCurl(auth(connection, password) + tls(connection) + [url])
+        let (data, status, err) = try await run(connection, password, [endpoint(connection, dir)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
         return FTPListParser.parse(String(decoding: data, as: UTF8.self))
     }
@@ -41,9 +40,8 @@ public struct CurlFTPProvider: RemoteProvider {
         _ connection: RemoteConnection, remotePath: String, to localFile: URL, password: String
     ) async throws {
         try requireFTP(connection)
-        let url = endpoint(connection, remotePath)
-        let (_, status, err) = try await Self.runCurl(
-            auth(connection, password) + tls(connection) + ["-o", localFile.path, url])
+        let (_, status, err) = try await run(
+            connection, password, ["-o", localFile.path, endpoint(connection, remotePath)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
@@ -51,9 +49,8 @@ public struct CurlFTPProvider: RemoteProvider {
         _ localFile: URL, to connection: RemoteConnection, remotePath: String, password: String
     ) async throws {
         try requireFTP(connection)
-        let url = endpoint(connection, remotePath)
-        let (_, status, err) = try await Self.runCurl(
-            auth(connection, password) + tls(connection) + ["--ftp-create-dirs", "-T", localFile.path, url])
+        let (_, status, err) = try await run(
+            connection, password, ["--ftp-create-dirs", "-T", localFile.path, endpoint(connection, remotePath)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
@@ -68,17 +65,32 @@ public struct CurlFTPProvider: RemoteProvider {
         return "ftp://\(c.host):\(c.effectivePort)\(clean)"  // ftp:// + --ssl-reqd handles explicit FTPS
     }
 
-    private func auth(_ c: RemoteConnection, _ password: String) -> [String] {
-        ["-s", "--show-error", "--connect-timeout", "20", "-u", "\(c.user):\(password)"]
+    private func run(_ c: RemoteConnection, _ password: String, _ opArgs: [String]) async throws
+        -> (Data, Int32, String)
+    {
+        let base = ["-s", "--show-error", "--connect-timeout", "20", "-K", "-"]
+        return try await Self.runCurl(base + tls(c) + opArgs, input: Self.credentials(c, password))
     }
 
     private func tls(_ c: RemoteConnection) -> [String] {
         c.proto == .ftps ? ["--ssl-reqd"] : []
     }
 
+    /// A curl config (read via `-K -` on stdin) carrying the credentials, so the
+    /// password never appears in the process argument list (visible to `ps`).
+    static func credentials(_ c: RemoteConnection, _ password: String) -> String {
+        let user = c.user.isEmpty ? "anonymous" : c.user  // empty user means anonymous FTP
+        func esc(_ s: String) -> String {
+            s.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        }
+        return "user \"\(esc(user)):\(esc(password))\"\n"
+    }
+
     /// Run curl off the main actor. Returns (stdout, exit code, stderr). Reads
     /// stdout to EOF concurrently so a large listing can't deadlock the pipe.
-    nonisolated static func runCurl(_ args: [String]) async throws -> (Data, Int32, String) {
+    nonisolated static func runCurl(_ args: [String], input: String? = nil) async throws
+        -> (Data, Int32, String)
+    {
         try await Task.detached(priority: .userInitiated) {
             let curl = "/usr/bin/curl"
             guard FileManager.default.isExecutableFile(atPath: curl) else { throw RemoteError.curlMissing }
@@ -89,7 +101,13 @@ public struct CurlFTPProvider: RemoteProvider {
             let err = Pipe()
             process.standardOutput = out
             process.standardError = err
+            let stdin = Pipe()
+            if input != nil { process.standardInput = stdin }
             try process.run()
+            if let input {  // feed the credential config, then close so curl proceeds
+                stdin.fileHandleForWriting.write(Data(input.utf8))
+                stdin.fileHandleForWriting.closeFile()
+            }
             let outData = out.fileHandleForReading.readDataToEndOfFile()
             let errData = err.fileHandleForReading.readDataToEndOfFile()
             process.waitUntilExit()
