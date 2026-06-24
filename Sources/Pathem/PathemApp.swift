@@ -131,6 +131,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
         fileMenu.addItem(commandItem("Copy SHA-256", "files.copySHA256"))
         fileMenu.addItem(commandItem("Verify Checksum…", "files.verifyChecksum"))
+        fileMenu.addItem(commandItem("Compress", "files.compress"))
+        fileMenu.addItem(commandItem("Extract", "files.extract"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 

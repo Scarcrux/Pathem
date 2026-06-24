@@ -138,7 +138,8 @@ public struct CurlFTPProvider: RemoteProvider {
 /// can be cancelled mid-flight).
 enum RemoteRunner {
     nonisolated static func run(
-        _ executable: String, _ args: [String], input: String? = nil, env: [String: String]? = nil
+        _ executable: String, _ args: [String], input: String? = nil, env: [String: String]? = nil,
+        cwd: URL? = nil
     ) async throws -> (Data, Int32, String) {
         let box = ProcessBox()
         return try await withTaskCancellationHandler {
@@ -148,6 +149,7 @@ enum RemoteRunner {
                     process.executableURL = URL(fileURLWithPath: executable)
                     process.arguments = args
                     if let env { process.environment = env }
+                    if let cwd { process.currentDirectoryURL = cwd }
                     let out = Pipe()
                     let err = Pipe()
                     process.standardOutput = out

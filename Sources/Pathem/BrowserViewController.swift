@@ -370,6 +370,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.comparePanes", "Compare Panes…", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.comparePanes()
         }
+        add("files.compress", "Compress", enabled: hasSelection) { [weak self] in self?.compressSelection() }
+        add(
+            "files.extract", "Extract",
+            enabled: { [weak self] in
+                (self?.activePane?.selectedLocalURLs() ?? []).contains { Archiver.canExtract($0) }
+            }
+        ) { [weak self] in self?.extractSelection() }
         add("shelf.add", "Add to Shelf", enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
         add("shelf.toggle", "Show Shelf") { [weak self] in self?.toggleShelf() }
@@ -636,6 +643,52 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.informativeText = text
         alert.addButton(withTitle: "OK")
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+    }
+
+    /// Zip the selection into the current folder (off-main), then select the archive.
+    private func compressSelection() {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        let base = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
+        let dest = uniqueLocalURL(folder.appendingPathComponent("\(base).zip"))
+        Task { @MainActor [weak self] in
+            do {
+                try await Archiver.compress(urls, to: dest)
+                self?.reloadBothSides()
+                self?.activePane?.select(name: dest.lastPathComponent)
+            } catch {
+                self?.reportArchiveError("Couldn’t create the archive", error)
+            }
+        }
+    }
+
+    /// Extract each selected archive into its own folder in the current directory.
+    private func extractSelection() {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        let archives = pane.selectedLocalURLs().filter { Archiver.canExtract($0) }
+        guard !archives.isEmpty else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            var failed = false
+            for archive in archives {
+                let name = (archive.lastPathComponent as NSString).deletingPathExtension
+                let out = self.uniqueLocalURL(folder.appendingPathComponent(name))
+                do { try await Archiver.extract(archive, to: out) } catch { failed = true }
+            }
+            self.reloadBothSides()
+            if failed { self.reportArchiveError("Couldn’t extract one or more archives", nil) }
+        }
+    }
+
+    private func reportArchiveError(_ title: String, _ error: Error?) {
+        let alert = NSAlert()
+        alert.messageText = title
+        if let error { alert.informativeText = "\(error)" }
+        alert.addButton(withTitle: "OK")
+        if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { NSSound.beep() }
     }
 
     /// Compare the two panes' folders and offer a one-way mirror (preview-then-apply).
