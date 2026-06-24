@@ -403,6 +403,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.addToCollection", "Add to Collection…", enabled: hasSelection) {
             [weak self] in self?.addToCollection()
         }
+        add("files.organizeAI", "Organize with AI…", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.organizeWithAI()
+        }
         add("files.copySHA256", "Copy SHA-256", enabled: hasSelection) { [weak self] in self?.copyChecksums() }
         add("files.verifyChecksum", "Verify Checksum…", enabled: hasSelection) {
             [weak self] in self?.verifyChecksum()
@@ -953,6 +956,65 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func updatePreview() {
         guard previewVisible else { return }
         previewView.previewItem = activePane?.singleSelectedURL as NSURL?
+    }
+
+    // MARK: - Organize with AI (typed plan; the model proposes, our code executes)
+
+    private func organizeWithAI() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        let files = pane.selectedEntries.isEmpty ? pane.entries.map(\.name) : pane.selectedEntries.map(\.name)
+        guard !files.isEmpty else { NSSound.beep(); return }
+        guard let instruction = promptForName(title: "Organize with AI", default: "group by file type")
+        else { return }
+
+        #if canImport(FoundationModels)
+            if #available(macOS 26, *) {
+                Task { @MainActor in
+                    guard let plan = await self.proposeOrganizePlan(instruction: instruction, files: files),
+                        !plan.steps.isEmpty
+                    else {
+                        self.presentInfo("Couldn’t propose a plan", "The model returned no steps.")
+                        return
+                    }
+                    self.confirmAndRun(plan, in: folder)
+                }
+                return
+            }
+        #endif
+        presentInfo(
+            "Organize with AI is unavailable",
+            "It needs macOS 26 with Apple Intelligence. The plan engine is ready for when it is.")
+    }
+
+    /// Preview the plan, then execute it on confirmation (off-main) and report.
+    private func confirmAndRun(_ plan: OrganizePlan, in folder: URL) {
+        let lines = plan.summary(in: folder)
+        let alert = NSAlert()
+        alert.messageText = "Organize \(folder.lastPathComponent)?"
+        alert.informativeText = lines.prefix(20).joined(separator: "\n") + (lines.count > 20 ? "\n…" : "")
+        alert.addButton(withTitle: "Apply")
+        alert.addButton(withTitle: "Cancel")
+        guard let window = view.window else { return }
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            Task { @MainActor in
+                let result = await Task.detached { plan.execute(in: folder) }.value
+                self.reloadBothSides()
+                self.presentInfo(
+                    "Organized",
+                    "Moved \(result.moved), trashed \(result.trashed), labeled \(result.labeled)"
+                        + (result.failures.isEmpty ? "" : ", \(result.failures.count) skipped"))
+            }
+        }
+    }
+
+    private func presentInfo(_ title: String, _ text: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = text
+        alert.addButton(withTitle: "OK")
+        if let window = view.window { alert.beginSheetModal(for: window) { _ in } }
     }
 
     /// Apply (toggle) the named label carried by a "Label" menu item to the selection.

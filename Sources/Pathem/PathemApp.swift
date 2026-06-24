@@ -196,6 +196,7 @@ enum PathemApp {
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Command Palette…", "palette.show"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
+        viewMenu.addItem(commandItem("Organize with AI…", "files.organizeAI"))
         viewMenu.addItem(commandItem("Batch Rename…", "files.batchRename"))
 
         let goItem = NSMenuItem()

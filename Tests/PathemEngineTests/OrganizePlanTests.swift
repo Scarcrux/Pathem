@@ -1,0 +1,54 @@
+import Foundation
+import Testing
+
+@testable import PathemEngine
+
+@Suite struct OrganizePlanTests {
+    private func tempDir() throws -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-org-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    @Test func executesMoveTrashAndLabel() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data("a".utf8).write(to: dir.appendingPathComponent("a.txt"))
+        try Data("b".utf8).write(to: dir.appendingPathComponent("b.txt"))
+        try Data("c".utf8).write(to: dir.appendingPathComponent("c.txt"))
+
+        let plan = OrganizePlan(steps: [
+            .init(action: .move, file: "a.txt", destination: "Text"),
+            .init(action: .trash, file: "b.txt"),
+            .init(action: .label, file: "c.txt", label: "Important"),
+        ])
+        let result = plan.execute(in: dir)
+        #expect(result.moved == 1)
+        #expect(result.trashed == 1)
+        #expect(result.labeled == 1)
+        #expect(result.failures.isEmpty)
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("Text/a.txt").path))
+        #expect(!FileManager.default.fileExists(atPath: dir.appendingPathComponent("b.txt").path))
+        #expect(FileTags.tags(of: dir.appendingPathComponent("c.txt")).contains { $0.name == "Important" })
+    }
+
+    @Test func rejectsPathTraversalAndMissingFiles() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let plan = OrganizePlan(steps: [
+            .init(action: .trash, file: "../escape.txt"),  // traversal
+            .init(action: .move, file: "ghost.txt", destination: "X"),  // missing
+        ])
+        let result = plan.execute(in: dir)
+        #expect(result.moved == 0)
+        #expect(result.trashed == 0)
+        #expect(result.failures.count == 2)
+    }
+
+    @Test func decodesModelStyleJSON() throws {
+        let json = #"{"steps":[{"action":"move","file":"x.png","destination":"Images"}]}"#
+        let plan = try JSONDecoder().decode(OrganizePlan.self, from: Data(json.utf8))
+        #expect(plan.steps.first?.action == .move)
+        #expect(plan.steps.first?.destination == "Images")
+    }
+}
