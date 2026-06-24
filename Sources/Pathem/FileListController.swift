@@ -39,6 +39,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var tagCache: [String: [FileTag.Color]] = [:]
     /// Bumped per listing so a stale background tag read can't clobber a newer one.
     private var tagReadGeneration = 0
+    /// Git state per absolute path (set by the pane after an off-main `git status`).
+    private var gitStates: [String: GitFileState] = [:]
     /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
     private var calculateFolderSizes = false
     private var folderSizeCache: [String: DirectorySize.Measurement] = [:]
@@ -454,10 +456,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
             cell.imageView?.image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
             let colors = tagColors(for: entry)
-            if colors.isEmpty {
+            let git = gitState(for: entry)
+            if colors.isEmpty, git == nil {
                 cell.textField?.stringValue = entry.name
             } else {
-                cell.textField?.attributedStringValue = Self.name(entry.name, withDots: colors, size: listFontSize)
+                cell.textField?.attributedStringValue = Self.decoratedName(
+                    entry.name, git: git, dots: colors, size: listFontSize)
             }
         case .size:
             if entry.isDirectory {
@@ -577,6 +581,19 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private func tagColors(for entry: FileEntry) -> [FileTag.Color] {
         guard directoryURL != nil else { return [] }  // search results span folders: no dots
         return tagCache[cacheKey(for: entry)] ?? []
+    }
+
+    /// Update the git overlays and redraw if anything changed.
+    func setGitStates(_ states: [String: GitFileState]) {
+        guard states != gitStates else { return }
+        let hadAny = !gitStates.isEmpty
+        gitStates = states
+        if hadAny || !states.isEmpty { tableView.reloadData() }
+    }
+
+    private func gitState(for entry: FileEntry) -> GitFileState? {
+        guard !gitStates.isEmpty else { return nil }
+        return gitStates[cacheKey(for: entry)]
     }
 
     /// Drop cached tag colors so the next refresh re-reads from disk (call after
@@ -735,11 +752,49 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     /// The filename followed by a small colored dot for each tag color.
+    /// Color + letter for a git state badge.
+    private static func gitBadge(_ state: GitFileState) -> (letter: String, color: NSColor) {
+        switch state {
+        case .modified: return ("M", .systemOrange)
+        case .added: return ("A", .systemGreen)
+        case .deleted: return ("D", .systemRed)
+        case .renamed: return ("R", .systemBlue)
+        case .untracked: return ("?", .systemGray)
+        case .conflicted: return ("!", .systemRed)
+        }
+    }
+
+    /// The name cell content: an optional colored git-state letter, the name, then a
+    /// colored dot per tag.
+    private static func decoratedName(
+        _ name: String, git: GitFileState?, dots colors: [FileTag.Color], size: CGFloat
+    ) -> NSAttributedString {
+        let result = NSMutableAttributedString()
+        if let git {
+            let badge = gitBadge(git)
+            result.append(
+                NSAttributedString(
+                    string: "\(badge.letter) ",
+                    attributes: [.font: NSFont.boldSystemFont(ofSize: size), .foregroundColor: badge.color]))
+        }
+        result.append(
+            NSAttributedString(string: name, attributes: [.font: NSFont.systemFont(ofSize: size)]))
+        appendDots(colors, to: result, size: size)
+        return result
+    }
+
     private static func name(_ name: String, withDots colors: [FileTag.Color], size: CGFloat)
         -> NSAttributedString
     {
         let result = NSMutableAttributedString(
             string: name, attributes: [.font: NSFont.systemFont(ofSize: size)])
+        appendDots(colors, to: result, size: size)
+        return result
+    }
+
+    private static func appendDots(
+        _ colors: [FileTag.Color], to result: NSMutableAttributedString, size: CGFloat
+    ) {
         let diameter = size - 2
         for color in colors {
             let attachment = NSTextAttachment()
@@ -748,7 +803,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             result.append(NSAttributedString(string: " "))
             result.append(NSAttributedString(attachment: attachment))
         }
-        return result
     }
 
     /// Badge for online-only (dataless) cloud placeholders.

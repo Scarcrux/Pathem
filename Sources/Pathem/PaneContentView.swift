@@ -33,6 +33,7 @@ protocol PaneContentView: AnyObject {
     func setSortFormat(_ format: ViewFormat)
     func setCutPaths(_ paths: Set<String>)
     func refreshDrilledColumns()
+    func setGitStates(_ states: [String: GitFileState])
 }
 
 extension PaneContentView {
@@ -47,6 +48,8 @@ extension PaneContentView {
     func setCutPaths(_ paths: Set<String>) {}
     /// Only column view has drilled columns to re-enumerate after a file op.
     func refreshDrilledColumns() {}
+    /// Only the list view draws git overlays for now.
+    func setGitStates(_ states: [String: GitFileState]) {}
 }
 
 extension FileListController: PaneContentView {

@@ -117,6 +117,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// The unfiltered display set, kept so changing the filter re-applies instantly.
     private var sourceEntries: [FileEntry] = []
 
+    /// Git overlay state for the status line, and a generation guard so a stale
+    /// off-main `git status` can't clobber a newer listing.
+    private let gitGen = GenerationBox()
+    private var gitSummary: String?
+
     /// How this pane sorts and filters its listing (resolved per folder).
     var format = ViewFormat.default
     /// Asks the browser for the saved format for a folder (the per-folder cascade).
@@ -237,6 +242,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         smartActive = true
         smartEntries = entries
         smartTitle = title
+        gitSummary = nil
+        content.setGitStates([:])  // a cross-folder list isn't one repo folder
         showingSearchResults = true  // keep watcher-driven reloads from fighting it
         // Column view can't show a flat cross-folder list; use list for the smart
         // results (the saved format is untouched, so leaving restores columns).
@@ -314,10 +321,34 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             pendingSelection = nil
         }
         updateStatus()
+        refreshGitStatusAsync()
         pathControl.url = nav.current
         backButton.isEnabled = nav.canGoBack
         forwardButton.isEnabled = nav.canGoForward
         upButton.isEnabled = nav.parent != nil
+    }
+
+    /// Read the git status of the current folder off the main thread and apply the
+    /// per-file overlays + branch summary, guarded so a stale result is dropped.
+    private func refreshGitStatusAsync() {
+        let dir = nav.current
+        let generation = gitGen.bump()
+        Task.detached(priority: .utility) { [weak self] in
+            let info = await GitStatus.status(for: dir)
+            await MainActor.run {
+                guard let self, self.gitGen.isCurrent(generation), self.remote == nil, !self.smartActive,
+                    self.nav.current == dir
+                else { return }
+                self.content.setGitStates(info?.states ?? [:])
+                self.gitSummary = info.map { gitInfo in
+                    var parts = ["\u{2387} \(gitInfo.branch ?? "detached")"]  // ⎇ branch
+                    if gitInfo.ahead > 0 { parts.append("\u{2191}\(gitInfo.ahead)") }
+                    if gitInfo.behind > 0 { parts.append("\u{2193}\(gitInfo.behind)") }
+                    return parts.joined(separator: " ")
+                }
+                self.updateStatus()
+            }
+        }
     }
 
     /// Refresh the listing unless this pane is currently showing search results.
@@ -339,6 +370,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pendingRefresh?.cancel()
         remote = RemoteSession(
             connection: connection, path: connection.path.isEmpty ? "/" : connection.path, password: password)
+        gitSummary = nil
+        content.setGitStates([:])  // no git overlays on a remote server
         reloadRemote()
         containerView.window?.makeFirstResponder(content.keyView)
     }
@@ -766,16 +799,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func updateStatus() {
         let all = content.entries
         let selected = content.selectedEntries
+        var text: String
         if selected.isEmpty {
             let size = all.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
             let items = "\(all.count) item\(all.count == 1 ? "" : "s")"
-            statusLabel.stringValue = size > 0 ? "\(items) · \(byteFormatter.string(fromByteCount: size))" : items
+            text = size > 0 ? "\(items) · \(byteFormatter.string(fromByteCount: size))" : items
         } else {
             let size = selected.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
             let prefix = "\(selected.count) of \(all.count) selected"
-            statusLabel.stringValue =
-                size > 0 ? "\(prefix) · \(byteFormatter.string(fromByteCount: size))" : prefix
+            text = size > 0 ? "\(prefix) · \(byteFormatter.string(fromByteCount: size))" : prefix
         }
+        if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
+        statusLabel.stringValue = text
     }
 
     private func iconButton(_ symbol: String, _ action: Selector) -> NSButton {
