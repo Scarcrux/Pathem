@@ -364,6 +364,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.filter", "Filter…", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.beginFilter()
         }
+        add("files.findDuplicates", "Find Duplicates", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.findDuplicates()
+        }
         add("shelf.add", "Add to Shelf", enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
         add("shelf.toggle", "Show Shelf") { [weak self] in self?.toggleShelf() }
@@ -630,6 +633,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.informativeText = text
         alert.addButton(withTitle: "OK")
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+    }
+
+    /// Scan the active folder's subtree for content duplicates (off-main) and show
+    /// them as one cross-folder list (per-group adjacency), so the extras can be
+    /// selected and trashed.
+    private func findDuplicates() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let root = pane.currentURL
+        pane.showSmartResults([], title: "Finding duplicates in \(root.lastPathComponent)…")
+        Task { @MainActor [weak self] in
+            let groups = await Task.detached { DuplicateFinder.find(in: [root]) }.value
+            guard let self, self.activePane === pane else { return }
+            let files = groups.flatMap { $0.files }
+            let title =
+                groups.isEmpty
+                ? "No duplicates in \(root.lastPathComponent)"
+                : "Duplicates: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
+            pane.showSmartResults(files, title: title)
+        }
     }
 
     /// Apply (toggle) the named label carried by a "Label" menu item to the selection.
