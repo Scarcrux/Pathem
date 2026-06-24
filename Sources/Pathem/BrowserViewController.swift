@@ -69,6 +69,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var isTransferring: Bool { transferInFlight }
     /// File paths currently marked for cut (dimmed until pasted or cleared).
     private var cutPaths: Set<String> = []
+    private var sidebarWidthConstraint: NSLayoutConstraint!
+    private var compactSidebar = false
+    private static let compactSidebarWidth: CGFloat = 56
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
@@ -113,6 +116,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let sidebarWidth = sidebar.containerView.widthAnchor.constraint(equalToConstant: 200)
         sidebarWidth.priority = NSLayoutConstraint.Priority(260)
         sidebarWidth.isActive = true
+        sidebarWidthConstraint = sidebarWidth
 
         searchField.placeholderString = "Search"
         searchField.translatesAutoresizingMaskIntoConstraints = false
@@ -153,7 +157,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func splitView(
         _ splitView: NSSplitView, constrainMinCoordinate proposedMin: CGFloat, ofSubviewAt dividerIndex: Int
     ) -> CGFloat {
-        if splitView === outerSplit, dividerIndex == 0 { return 140 }  // min sidebar width
+        // Compact mode lets the sidebar shrink to an icons-only width.
+        if splitView === outerSplit, dividerIndex == 0 { return compactSidebar ? 48 : 140 }
         if splitView === vSplit, dividerIndex == 0 { return 160 }  // min browser height
         return proposedMin
     }
@@ -292,6 +297,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.useCurrentViewAsDefault()
         }
         add("view.calculateSizes", "Calculate All Sizes") { [weak self] in self?.toggleCalculateSizes() }
+        add("view.compactSidebar", "Compact Sidebar") { [weak self] in self?.toggleCompactSidebar() }
         add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
         add("ai.run", "Ask Pathem (Natural Language)…") { [weak self] in self?.showAICommandBar() }
@@ -583,6 +589,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
+        case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         default: break
         }
@@ -624,6 +631,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         saveConfig(prefs, to: Self.preferencesURL)
     }
 
+    private func toggleCompactSidebar() {
+        prefs.compactSidebar.toggle()
+        applyPreferences()  // applies labels + width and persists
+    }
+
+    /// Hide/show sidebar labels and narrow/restore the sidebar per the preference.
+    private func applyCompactSidebar() {
+        compactSidebar = prefs.compactSidebar
+        sidebar.setShowsLabels(!compactSidebar)
+        let width: CGFloat = compactSidebar ? Self.compactSidebarWidth : 200
+        sidebarWidthConstraint?.constant = width
+        if didSetInitialSplit { outerSplit.setPosition(width, ofDividerAt: 0) }  // resize live
+    }
+
     private func togglePathBarPosition() {
         prefs.pathBarAtBottom.toggle()
         applyPreferences()  // moves the path bar in every pane and persists
@@ -646,6 +667,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
             }
         }
+        applyCompactSidebar()
         saveConfig(prefs, to: Self.preferencesURL)
         cachedDir = nil
         cachedIndex = nil
@@ -1393,7 +1415,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// viewDidLayout / viewDidAppear first has a laid-out width.
     private func applyInitialSplitPositions() {
         guard !didSetInitialSplit, outerSplit.bounds.width > 200 else { return }
-        outerSplit.setPosition(200, ofDividerAt: 0)  // sidebar width
+        outerSplit.setPosition(compactSidebar ? Self.compactSidebarWidth : 200, ofDividerAt: 0)  // sidebar width
         outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
         split.setPosition(split.bounds.width / 2, ofDividerAt: 0)  // even panes
         didSetInitialSplit = true

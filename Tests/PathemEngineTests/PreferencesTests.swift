@@ -26,7 +26,7 @@ import Testing
         let prefs = Preferences(
             density: .compact, fontSize: 15, alternatingRows: false, searchOCR: true,
             showFullPathInTitle: true, pathBarAtBottom: true, openConnectionsInNewTab: true,
-            calculateFolderSizes: true)
+            calculateFolderSizes: true, compactSidebar: true)
         let data = try JSONEncoder().encode(prefs)
         #expect(try JSONDecoder().decode(Preferences.self, from: data) == prefs)
     }
@@ -45,5 +45,6 @@ import Testing
         #expect(prefs.pathBarAtBottom == true)  // defaulted (Finder-style bottom path bar)
         #expect(prefs.openConnectionsInNewTab == false)  // defaulted
         #expect(prefs.calculateFolderSizes == false)  // defaulted
+        #expect(prefs.compactSidebar == false)  // defaulted
     }
 }

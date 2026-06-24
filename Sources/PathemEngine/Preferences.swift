@@ -25,12 +25,15 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var openConnectionsInNewTab: Bool
     /// Compute and show folder sizes in the list (Finder's "Calculate all sizes").
     public var calculateFolderSizes: Bool
+    /// Hide sidebar row labels (icons only) and narrow it, for a compact sidebar.
+    public var compactSidebar: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
         alternatingRows: Bool = true, searchOCR: Bool = false,
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
-        openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false
+        openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
+        compactSidebar: Bool = false
     ) {
         self.density = density
         self.fontSize = fontSize
@@ -40,6 +43,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.pathBarAtBottom = pathBarAtBottom
         self.openConnectionsInNewTab = openConnectionsInNewTab
         self.calculateFolderSizes = calculateFolderSizes
+        self.compactSidebar = compactSidebar
     }
 
     public static let `default` = Preferences()
@@ -66,5 +70,6 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .openConnectionsInNewTab) ?? d.openConnectionsInNewTab
         calculateFolderSizes =
             try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes) ?? d.calculateFolderSizes
+        compactSidebar = try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
     }
 }

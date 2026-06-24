@@ -31,6 +31,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// Open Settings (the gear shortcut at the bottom of the sidebar).
     var onOpenSettings: (() -> Void)?
     private let settingsButton = NSButton()
+    /// When false, sidebar rows show icons only (compact mode); labels are the tooltip.
+    private var showsLabels = true
     /// A smart location (Recents / a tag filter) was selected.
     var onSelectSmart: ((SmartQuery) -> Void)?
     /// A discovered shared computer (by display name) was selected.
@@ -151,14 +153,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
         settingsButton.bezelStyle = .texturedRounded
         settingsButton.isBordered = false
-        settingsButton.imagePosition = .imageOnly
+        settingsButton.font = .systemFont(ofSize: 12)
         settingsButton.target = self
         settingsButton.action = #selector(openSettings)
         settingsButton.toolTip = "Settings"
         settingsButton.translatesAutoresizingMaskIntoConstraints = false
+        configureSettingsButton()
 
         containerView.addSubview(scrollView)
         containerView.addSubview(settingsButton)
@@ -168,10 +170,32 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: settingsButton.topAnchor, constant: -2),
             settingsButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
+            settingsButton.trailingAnchor.constraint(
+                lessThanOrEqualTo: containerView.trailingAnchor, constant: -8),
             settingsButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
-            settingsButton.widthAnchor.constraint(equalToConstant: 24),
             settingsButton.heightAnchor.constraint(equalToConstant: 22),
         ])
+    }
+
+    /// The Settings button shows a "Settings" label like every other sidebar row,
+    /// or just the gear when labels are hidden (compact mode).
+    private func configureSettingsButton() {
+        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
+        if showsLabels {
+            settingsButton.title = "Settings"
+            settingsButton.imagePosition = .imageLeading
+        } else {
+            settingsButton.title = ""
+            settingsButton.imagePosition = .imageOnly
+        }
+    }
+
+    /// Hide row labels (icons only) for a compact sidebar, or show them.
+    func setShowsLabels(_ on: Bool) {
+        guard on != showsLabels else { return }
+        showsLabels = on
+        configureSettingsButton()
+        outline.reloadData()
     }
 
     @objc private func openSettings() { onOpenSettings?() }
@@ -372,16 +396,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if node.isHeader {
             let id = NSUserInterfaceItemIdentifier("header")
             let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeHeaderCell(id)
-            cell.textField?.stringValue = node.title
+            cell.textField?.stringValue = showsLabels ? node.title : ""
             cell.textField?.isEditable = node.isEditable
             cell.textField?.delegate = self
+            cell.toolTip = node.title
             return cell
         }
         let id = NSUserInterfaceItemIdentifier("place")
         let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makePlaceCell(id)
-        cell.textField?.stringValue = node.title
+        cell.textField?.stringValue = showsLabels ? node.title : ""  // compact: icons only
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
+        cell.toolTip = node.title  // name on hover when compact
         if let tagColor = node.tagColor {
             cell.imageView?.image = TagColors.dot(tagColor, diameter: 12)
             cell.imageView?.contentTintColor = nil
