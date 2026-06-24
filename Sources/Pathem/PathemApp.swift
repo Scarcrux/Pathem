@@ -27,6 +27,31 @@ enum PathemApp {
         window.title = "Pathem"
         window.center()
 
+        if ProcessInfo.processInfo.environment["PATHEM_L10N_SMOKE"] != nil {
+            // Deterministic: confirm the localized resources are bundled and a sample
+            // of the Spanish catalog is correct (independent of the system language).
+            print("=== L10N SMOKE: localized resources ===")
+            print("available:", Bundle.module.localizations)
+            let expected = [
+                "menu.file": "Archivo", "menu.files.trash": "Mover a la papelera",
+                "menu.view.cleanup": "Limpieza…", "menu.label": "Etiqueta",
+            ]
+            guard let path = Bundle.module.path(forResource: "es", ofType: "lproj"),
+                let es = Bundle(path: path)
+            else {
+                print("RESULT: FAIL (Spanish catalog not bundled)")
+                exit(1)
+            }
+            var ok = true
+            for (key, want) in expected.sorted(by: { $0.key < $1.key }) {
+                let got = es.localizedString(forKey: key, value: "?", table: nil)
+                print("  \(key): \(got)")
+                if got != want { ok = false }
+            }
+            print("RESULT: \(ok ? "PASS" : "FAIL")")
+            exit(ok ? 0 : 1)
+        }
+
         if ProcessInfo.processInfo.environment["PATHEM_GATE_A"] != nil {
             // Gate A drives a single FileListController directly.
             let controller = FileListController()
@@ -133,11 +158,11 @@ enum PathemApp {
         let appMenu = NSMenu()
         appItem.submenu = appMenu
         appMenu.addItem(
-            withTitle: "About Pathem",
+            withTitle: L("menu.about", "About Pathem"),
             action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         let checkUpdates = NSMenuItem(
-            title: "Check for Updates…",
+            title: L("menu.checkUpdates", "Check for Updates…"),
             action: #selector(UpdaterController.checkForUpdates(_:)), keyEquivalent: "")
         checkUpdates.target = updater
         appMenu.addItem(checkUpdates)
@@ -145,11 +170,11 @@ enum PathemApp {
         appMenu.addItem(commandItem("Settings…", "view.preferences", ","))
         appMenu.addItem(.separator())
         appMenu.addItem(
-            withTitle: "Quit Pathem", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            withTitle: L("menu.quit", "Quit Pathem"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         let fileItem = NSMenuItem()
         mainMenu.addItem(fileItem)
-        let fileMenu = NSMenu(title: "File")
+        let fileMenu = NSMenu(title: L("menu.file", "File"))
         fileItem.submenu = fileMenu
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
@@ -173,17 +198,17 @@ enum PathemApp {
 
         let editItem = NSMenuItem()
         mainMenu.addItem(editItem)
-        let editMenu = NSMenu(title: "Edit")
+        let editMenu = NSMenu(title: L("menu.edit", "Edit"))
         editItem.submenu = editMenu
-        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = editMenu.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "z")
+        editMenu.addItem(withTitle: L("menu.undo", "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(withTitle: L("menu.redo", "Redo"), action: Selector(("redo:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: L("menu.cut", "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: L("menu.copy", "Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: L("menu.paste", "Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(
-            withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+            withTitle: L("menu.selectAll", "Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
         editMenu.addItem(.separator())
         editMenu.addItem(commandItem("Copy Path", "files.copyPath", "c", [.command, .option]))
         editMenu.addItem(commandItem("Copy as File URL", "files.copyURL"))
@@ -191,7 +216,7 @@ enum PathemApp {
 
         let viewItem = NSMenuItem()
         mainMenu.addItem(viewItem)
-        let viewMenu = NSMenu(title: "View")
+        let viewMenu = NSMenu(title: L("menu.view", "View"))
         viewItem.submenu = viewMenu
         viewMenu.addItem(commandItem("as List", "view.asList", "1"))
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
@@ -236,7 +261,7 @@ enum PathemApp {
 
         let goItem = NSMenuItem()
         mainMenu.addItem(goItem)
-        let goMenu = NSMenu(title: "Go")
+        let goMenu = NSMenu(title: L("menu.go", "Go"))
         goItem.submenu = goMenu
         goMenu.addItem(commandItem("Back", "nav.back"))
         goMenu.addItem(commandItem("Forward", "nav.forward"))
@@ -256,11 +281,11 @@ enum PathemApp {
     /// An "Open in…" submenu listing the developer editors installed at launch; each
     /// opens the current/selected folder via BrowserViewController.openInExternalEditor.
     private static func openInEditorMenuItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Open in…", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: L("menu.openIn", "Open in…"), action: nil, keyEquivalent: "")
         let submenu = NSMenu(title: "Open in…")
         let editors = ExternalEditors.installed()
         if editors.isEmpty {
-            let none = NSMenuItem(title: "No editors found", action: nil, keyEquivalent: "")
+            let none = NSMenuItem(title: L("menu.noEditors", "No editors found"), action: nil, keyEquivalent: "")
             none.isEnabled = false
             submenu.addItem(none)
         } else {
@@ -278,7 +303,7 @@ enum PathemApp {
 
     /// A "Label" submenu of named labels (each a colored tag) plus Clear Tags.
     private static func applyLabelMenuItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Label", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: L("menu.label", "Label"), action: nil, keyEquivalent: "")
         let submenu = NSMenu(title: "Label")
         for label in LabelSet.default.labels {
             let entry = NSMenuItem(
@@ -299,7 +324,8 @@ enum PathemApp {
         _ mods: NSEvent.ModifierFlags = .command
     ) -> NSMenuItem {
         let item = NSMenuItem(
-            title: title, action: #selector(BrowserViewController.performMenuCommand(_:)),
+            title: L("menu.\(commandID)", title),  // localized by command id; English is the fallback
+            action: #selector(BrowserViewController.performMenuCommand(_:)),
             keyEquivalent: key)
         item.representedObject = commandID
         item.keyEquivalentModifierMask = key.isEmpty ? [] : mods

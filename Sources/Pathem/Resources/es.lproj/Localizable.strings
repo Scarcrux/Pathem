@@ -1,0 +1,84 @@
+/* Títulos de la barra de menús */
+"menu.file" = "Archivo";
+"menu.edit" = "Edición";
+"menu.view" = "Visualización";
+"menu.go" = "Ir";
+
+/* Menú de la aplicación */
+"menu.about" = "Acerca de Pathem";
+"menu.checkUpdates" = "Buscar actualizaciones…";
+"menu.quit" = "Salir de Pathem";
+"menu.view.preferences" = "Ajustes…";
+
+/* Menú Edición (acciones del sistema) */
+"menu.undo" = "Deshacer";
+"menu.redo" = "Rehacer";
+"menu.cut" = "Cortar";
+"menu.copy" = "Copiar";
+"menu.paste" = "Pegar";
+"menu.selectAll" = "Seleccionar todo";
+
+/* Menú Archivo */
+"menu.tab.new" = "Nueva pestaña";
+"menu.files.newFolder" = "Nueva carpeta";
+"menu.files.open" = "Abrir";
+"menu.files.getInfo" = "Obtener información";
+"menu.files.addToCollection" = "Añadir a colección…";
+"menu.files.rename" = "Cambiar nombre…";
+"menu.files.trash" = "Mover a la papelera";
+"menu.files.reveal" = "Mostrar en el Finder";
+"menu.files.airdrop" = "Enviar por AirDrop";
+"menu.shelf.add" = "Añadir al estante";
+"menu.files.copySHA256" = "Copiar SHA-256";
+"menu.files.verifyChecksum" = "Verificar suma de comprobación…";
+"menu.files.compress" = "Comprimir";
+"menu.files.extract" = "Extraer";
+"menu.tab.close" = "Cerrar pestaña";
+
+/* Menú Edición (comandos) */
+"menu.files.copyPath" = "Copiar ruta";
+"menu.files.copyURL" = "Copiar como URL de archivo";
+"menu.files.copyName" = "Copiar nombre";
+
+/* Menú Visualización */
+"menu.view.asList" = "como lista";
+"menu.view.asIcons" = "como iconos";
+"menu.view.asGallery" = "como galería";
+"menu.view.asColumn" = "como columnas";
+"menu.view.flatView" = "Vista plana";
+"menu.view.filter" = "Filtrar…";
+"menu.files.findDuplicates" = "Buscar duplicados";
+"menu.files.comparePanes" = "Comparar paneles…";
+"menu.view.sizeBrowser" = "Explorador de tamaño…";
+"menu.view.cleanup" = "Limpieza…";
+"menu.view.useAsDefault" = "Usar como vista predeterminada";
+"menu.view.toggleHidden" = "Mostrar archivos ocultos";
+"menu.view.fullPathTitle" = "Mostrar ruta completa en la barra de título";
+"menu.view.pathBarBottom" = "Mostrar barra de ruta abajo";
+"menu.view.calculateSizes" = "Calcular todos los tamaños";
+"menu.view.compactSidebar" = "Barra lateral compacta";
+"menu.shelf.toggle" = "Mostrar estante";
+"menu.view.quickLook" = "Vista rápida";
+"menu.view.previewPane" = "Panel de vista previa";
+"menu.terminal.toggle" = "Mostrar u ocultar terminal";
+"menu.terminal.here" = "Abrir terminal aquí";
+"menu.terminal.toggleFollow" = "El terminal sigue la carpeta";
+"menu.palette.show" = "Paleta de comandos…";
+"menu.ai.run" = "Preguntar a Pathem…";
+"menu.files.organizeAI" = "Organizar con IA…";
+"menu.files.batchRename" = "Cambiar nombre por lotes…";
+"menu.tags.clear" = "Borrar etiquetas";
+
+/* Menú Ir */
+"menu.nav.back" = "Atrás";
+"menu.nav.forward" = "Adelante";
+"menu.nav.up" = "Carpeta contenedora";
+"menu.nav.editPath" = "Ir a la ruta…";
+"menu.connections.manage" = "Conexiones…";
+"menu.connections.newTabToggle" = "Abrir conexiones en una pestaña nueva";
+"menu.remote.download" = "Descargar del servidor…";
+
+/* Submenús */
+"menu.openIn" = "Abrir con…";
+"menu.noEditors" = "No se encontraron editores";
+"menu.label" = "Etiqueta";

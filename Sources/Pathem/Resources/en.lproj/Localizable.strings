@@ -1,0 +1,84 @@
+/* Menu bar titles */
+"menu.file" = "File";
+"menu.edit" = "Edit";
+"menu.view" = "View";
+"menu.go" = "Go";
+
+/* App menu */
+"menu.about" = "About Pathem";
+"menu.checkUpdates" = "Check for Updates…";
+"menu.quit" = "Quit Pathem";
+"menu.view.preferences" = "Settings…";
+
+/* Edit menu (system actions) */
+"menu.undo" = "Undo";
+"menu.redo" = "Redo";
+"menu.cut" = "Cut";
+"menu.copy" = "Copy";
+"menu.paste" = "Paste";
+"menu.selectAll" = "Select All";
+
+/* File menu */
+"menu.tab.new" = "New Tab";
+"menu.files.newFolder" = "New Folder";
+"menu.files.open" = "Open";
+"menu.files.getInfo" = "Get Info";
+"menu.files.addToCollection" = "Add to Collection…";
+"menu.files.rename" = "Rename…";
+"menu.files.trash" = "Move to Trash";
+"menu.files.reveal" = "Reveal in Finder";
+"menu.files.airdrop" = "Send via AirDrop";
+"menu.shelf.add" = "Add to Shelf";
+"menu.files.copySHA256" = "Copy SHA-256";
+"menu.files.verifyChecksum" = "Verify Checksum…";
+"menu.files.compress" = "Compress";
+"menu.files.extract" = "Extract";
+"menu.tab.close" = "Close Tab";
+
+/* Edit menu (commands) */
+"menu.files.copyPath" = "Copy Path";
+"menu.files.copyURL" = "Copy as File URL";
+"menu.files.copyName" = "Copy Name";
+
+/* View menu */
+"menu.view.asList" = "as List";
+"menu.view.asIcons" = "as Icons";
+"menu.view.asGallery" = "as Gallery";
+"menu.view.asColumn" = "as Columns";
+"menu.view.flatView" = "Flat View";
+"menu.view.filter" = "Filter…";
+"menu.files.findDuplicates" = "Find Duplicates";
+"menu.files.comparePanes" = "Compare Panes…";
+"menu.view.sizeBrowser" = "Size Browser…";
+"menu.view.cleanup" = "Cleanup…";
+"menu.view.useAsDefault" = "Use as Default View";
+"menu.view.toggleHidden" = "Show Hidden Files";
+"menu.view.fullPathTitle" = "Show Full Path in Title Bar";
+"menu.view.pathBarBottom" = "Show Path Bar at Bottom";
+"menu.view.calculateSizes" = "Calculate All Sizes";
+"menu.view.compactSidebar" = "Compact Sidebar";
+"menu.shelf.toggle" = "Show Shelf";
+"menu.view.quickLook" = "Quick Look";
+"menu.view.previewPane" = "Preview Pane";
+"menu.terminal.toggle" = "Toggle Terminal";
+"menu.terminal.here" = "Open Terminal Here";
+"menu.terminal.toggleFollow" = "Terminal Follows Folder";
+"menu.palette.show" = "Command Palette…";
+"menu.ai.run" = "Ask Pathem…";
+"menu.files.organizeAI" = "Organize with AI…";
+"menu.files.batchRename" = "Batch Rename…";
+"menu.tags.clear" = "Clear Tags";
+
+/* Go menu */
+"menu.nav.back" = "Back";
+"menu.nav.forward" = "Forward";
+"menu.nav.up" = "Enclosing Folder";
+"menu.nav.editPath" = "Go to Path…";
+"menu.connections.manage" = "Connections…";
+"menu.connections.newTabToggle" = "Open Connections in a New Tab";
+"menu.remote.download" = "Download from Server…";
+
+/* Submenus */
+"menu.openIn" = "Open in…";
+"menu.noEditors" = "No editors found";
+"menu.label" = "Label";

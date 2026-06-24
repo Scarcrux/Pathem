@@ -75,6 +75,10 @@ for fw in "$frameworkBinDir"/*.framework; do
 	[[ -e "$fw" ]] && cp -R "$fw" "$APP/Contents/Frameworks/"
 done
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/$APP_NAME" 2>/dev/null || true
+# Ship SwiftPM's resource bundle (localized .strings for the UI). Bundle.module
+# finds it in Contents/Resources of the packaged app.
+resourceBundle="$frameworkBinDir/${APP_NAME}_${APP_NAME}.bundle"
+[[ -d "$resourceBundle" ]] && cp -R "$resourceBundle" "$APP/Contents/Resources/"
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 [[ -f "$ROOT/Packaging/$APP_NAME.icns" ]] \
@@ -107,6 +111,10 @@ for fw in "$APP/Contents/Frameworks"/*.framework; do
 	done < <(find "$fw/Versions" \( -name "*.xpc" -o -name "*.app" -o -name "Autoupdate" \) -print0 2>/dev/null)
 	codesign "${signargs[@]}" "$fw"
 done
+# The nested resource bundle is sealed by the app signature, but sign it explicitly
+# so `codesign --verify --strict --deep` is satisfied.
+resourceBundleInApp="$APP/Contents/Resources/${APP_NAME}_${APP_NAME}.bundle"
+[[ -d "$resourceBundleInApp" ]] && codesign "${signargs[@]}" "$resourceBundleInApp"
 codesign "${signargs[@]}" "$APP"
 # --deep here is for VERIFYING (a thorough recursive check, which is correct and not
 # deprecated); it is only discouraged for SIGNING, which we do inside-out above.

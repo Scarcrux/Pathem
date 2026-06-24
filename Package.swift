@@ -7,6 +7,7 @@ import PackageDescription
 // stays `swift test`-able against real temp dirs (CONVENTIONS: real-I/O tests).
 let package = Package(
     name: "Pathem",
+    defaultLocalization: "en",
     platforms: [
         // Modern minimum; revisit if we lean fully into Liquid Glass (macOS 26)
         // or want to widen the audience. The dev machine is macOS 26.
@@ -43,7 +44,8 @@ let package = Package(
             dependencies: [
                 "PathemEngine", "PathemTerminal",
                 .product(name: "Sparkle", package: "Sparkle"),
-            ]
+            ],
+            resources: [.process("Resources")]  // localized .strings (en, es, …)
         ),
 
         // Engine tests (Swift Testing).

@@ -34,6 +34,7 @@ ci:
 	swift test
 	PATHEM_GATE_A=1 swift run Pathem
 	PATHEM_SMOKE=1 swift run Pathem
+	PATHEM_L10N_SMOKE=1 swift run Pathem
 
 app:
 	scripts/package.sh
