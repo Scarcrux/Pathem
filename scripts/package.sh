@@ -108,6 +108,8 @@ for fw in "$APP/Contents/Frameworks"/*.framework; do
 	codesign "${signargs[@]}" "$fw"
 done
 codesign "${signargs[@]}" "$APP"
+# --deep here is for VERIFYING (a thorough recursive check, which is correct and not
+# deprecated); it is only discouraged for SIGNING, which we do inside-out above.
 codesign --verify --strict --deep --verbose=2 "$APP"
 
 if [[ -n "${NOTARY_PROFILE:-}" && -n "${DEVELOPER_ID:-}" ]]; then
@@ -117,6 +119,9 @@ if [[ -n "${NOTARY_PROFILE:-}" && -n "${DEVELOPER_ID:-}" ]]; then
 	xcrun notarytool submit "$zip" --keychain-profile "$NOTARY_PROFILE" --wait
 	xcrun stapler staple "$APP"
 	rm -f "$zip"
+	# Confirm Gatekeeper will actually accept the stapled app (catches a notarization
+	# or stapling problem before a user ever sees it).
+	spctl --assess --type exec --verbose=4 "$APP"
 elif [[ -n "${DEVELOPER_ID:-}" ]]; then
 	echo "==> Skipping notarization (set NOTARY_PROFILE to enable)"
 fi

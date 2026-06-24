@@ -41,13 +41,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var tagReadGeneration = 0
     /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
     private var calculateFolderSizes = false
-    private var folderSizeCache: [String: Int64] = [:]
+    private var folderSizeCache: [String: DirectorySize.Measurement] = [:]
     /// Thread-safe generation so the background size walk can be cancelled (a new
     /// listing or disabling the option bumps it, stopping in-flight walks).
     private let sizeGen = GenerationBox()
     /// The folder these rows live in, so a dragged row maps to a file URL. nil
     /// while showing search results, which disables drag.
-    var directoryURL: URL?
+    var directoryURL: URL? {
+        didSet { directoryPath = directoryURL?.path }  // cached so cell keys avoid URL building
+    }
+    /// `directoryURL.path`, cached so per-cell cache lookups don't rebuild it.
+    private var directoryPath: String?
     /// The folder used to resolve a row to a URL for actions like Open With. Set
     /// even during search (results are ranked from this folder), so those actions
     /// keep working when drag is disabled.
@@ -444,8 +448,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
         case .size:
             if entry.isDirectory {
-                if let bytes = folderSize(for: entry) {
-                    cell.textField?.stringValue = byteFormatter.string(fromByteCount: bytes)
+                if let measure = folderSize(for: entry) {
+                    // A trailing "+" marks an undercount from an unreadable subtree.
+                    cell.textField?.stringValue =
+                        byteFormatter.string(fromByteCount: measure.bytes) + (measure.complete ? "" : "+")
                 } else {
                     cell.textField?.stringValue = "--"
                 }
@@ -499,8 +505,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// a filesystem syscall on the main thread. The cache is filled by
     /// refreshTagsAsync after each listing change.
     private func tagColors(for entry: FileEntry) -> [FileTag.Color] {
-        guard let dir = directoryURL else { return [] }  // search results span folders: no dots
-        return tagCache[dir.appendingPathComponent(entry.name).path] ?? []
+        guard directoryURL != nil else { return [] }  // search results span folders: no dots
+        return tagCache[cacheKey(for: entry)] ?? []
     }
 
     /// Drop cached tag colors so the next refresh re-reads from disk (call after
@@ -515,7 +521,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let changed = paths.symmetricDifference(cutPaths)  // only these rows change appearance
         cutPaths = paths
         var rows = IndexSet()
-        for (row, entry) in entries.enumerated() where changed.contains(absolutePath(of: entry)) {
+        for (row, entry) in entries.enumerated() where changed.contains(cacheKey(for: entry)) {
             rows.insert(row)
         }
         guard !rows.isEmpty else { return }  // the cut/clear was in another folder
@@ -525,27 +531,29 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// The on-disk path of an entry (smart-result rows carry their own folder;
     /// normal rows live in directoryURL).
-    private func absolutePath(of entry: FileEntry) -> String {
-        if let location = entry.location {
-            return (location as NSString).appendingPathComponent(entry.name)
-        }
-        return directoryURL.map { $0.appendingPathComponent(entry.name).path } ?? entry.name
+    /// The absolute on-disk path of a row, used as the key for the tag, size, and
+    /// cut caches. Built with `NSString` (cheap) rather than `URL.appendingPathComponent`
+    /// so it can run per cell in the scroll hot path; smart-result rows carry their
+    /// own folder, normal rows live in `directoryPath`. All cache writers build keys
+    /// the same way (see `Self.key`) so lookups always hit.
+    private func cacheKey(for entry: FileEntry) -> String {
+        Self.key(base: entry.location ?? directoryPath, name: entry.name)
+    }
+
+    private static func key(base: String?, name: String) -> String {
+        guard let base else { return name }
+        return (base as NSString).appendingPathComponent(name)
     }
 
     private func isCut(_ entry: FileEntry) -> Bool {
         guard !cutPaths.isEmpty else { return false }
-        // Smart-result rows carry their own folder; normal rows live in directoryURL.
-        if let location = entry.location {
-            return cutPaths.contains((location as NSString).appendingPathComponent(entry.name))
-        }
-        guard let dir = directoryURL else { return false }
-        return cutPaths.contains(dir.appendingPathComponent(entry.name).path)
+        return cutPaths.contains(cacheKey(for: entry))
     }
 
     /// A cached folder size, or nil when not computed (or the option is off).
-    private func folderSize(for entry: FileEntry) -> Int64? {
-        guard calculateFolderSizes, entry.isDirectory, let dir = directoryURL else { return nil }
-        return folderSizeCache[dir.appendingPathComponent(entry.name).path]
+    private func folderSize(for entry: FileEntry) -> DirectorySize.Measurement? {
+        guard calculateFolderSizes, entry.isDirectory, directoryURL != nil else { return nil }
+        return folderSizeCache[cacheKey(for: entry)]
     }
 
     /// Turn the "calculate all sizes" option on or off.
@@ -570,15 +578,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             .compactMap { row, entry in entry.isDirectory ? (entry.name, row) : nil }
         let known = folderSizeCache
         let gen = sizeGen
+        let base = dir.path
         let sizeColumn = tableView.column(withIdentifier: .init(Column.size.rawValue))
         DispatchQueue.global(qos: .utility).async { [weak self] in
             // Coalesce completed sizes into batches and redraw only the size column,
             // so a folder with thousands of subfolders doesn't hammer the main thread
             // with one full-row reload per child.
-            var batch: [(path: String, name: String, row: Int, size: Int64)] = []
+            var batch: [(path: String, name: String, row: Int, size: DirectorySize.Measurement)] = []
             for folder in folders {
                 guard gen.isCurrent(generation) else { return }  // navigated away / disabled
-                let path = dir.appendingPathComponent(folder.name).path
+                let path = Self.key(base: base, name: folder.name)  // same key construction as viewFor
                 let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
                 batch.append((path, folder.name, folder.row, size))
                 if batch.count >= 32 {
@@ -600,7 +609,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Apply a batch of computed folder sizes and redraw just those rows' size cells.
     private func publishFolderSizes(
-        _ pending: [(path: String, name: String, row: Int, size: Int64)], generation: Int, sizeColumn: Int
+        _ pending: [(path: String, name: String, row: Int, size: DirectorySize.Measurement)],
+        generation: Int, sizeColumn: Int
     ) {
         guard sizeGen.isCurrent(generation) else { return }
         var rows = IndexSet()
@@ -626,13 +636,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         tagReadGeneration += 1
         let generation = tagReadGeneration
+        let base = dir.path
         let names = entries.map(\.name)
         let known = tagCache
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var result: [String: [FileTag.Color]] = [:]
             result.reserveCapacity(names.count)
             for name in names {
-                let path = dir.appendingPathComponent(name).path
+                let path = Self.key(base: base, name: name)  // same key construction as viewFor's lookups
                 if let cached = known[path] {
                     result[path] = cached
                 } else {
