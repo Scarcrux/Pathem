@@ -166,6 +166,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Filter…", "view.filter", "f"))
         viewMenu.addItem(commandItem("Find Duplicates", "files.findDuplicates"))
         viewMenu.addItem(commandItem("Compare Panes…", "files.comparePanes"))
+        viewMenu.addItem(commandItem("Size Browser…", "view.sizeBrowser"))
         viewMenu.addItem(commandItem("Use as Default View", "view.useAsDefault"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))

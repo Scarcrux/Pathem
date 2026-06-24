@@ -24,6 +24,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var shelfShownConstraint: NSLayoutConstraint?
     private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     private var previewVisible = false
+    private lazy var sizeBrowser = SizeBrowserController()
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -389,6 +390,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.findDuplicates", "Find Duplicates", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findDuplicates()
+        }
+        add("view.sizeBrowser", "Size Browser…", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in
+            guard let self, let url = self.activePane?.currentURL else { return }
+            self.sizeBrowser.present(for: url, over: self.view.window)
         }
         add("files.comparePanes", "Compare Panes…", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.comparePanes()
