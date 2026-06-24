@@ -6,7 +6,7 @@ import PathemEngine
 /// buttons. The pane is intentionally thin. NavigationState owns the history
 /// logic and BulkEnumerator does the listing.
 @MainActor
-final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
+final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     let containerView = NSView()
     /// The active view (list, icon, or gallery), swapped when the folder's view
     /// mode changes. PaneController drives it through PaneContentView.
@@ -111,6 +111,12 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private var pendingRefresh: DispatchWorkItem?
     private var showingSearchResults = false
 
+    /// Live filter (find-as-you-type) over the current listing.
+    private let filterField = NSSearchField()
+    private var filterText = ""
+    /// The unfiltered display set, kept so changing the filter re-applies instantly.
+    private var sourceEntries: [FileEntry] = []
+
     /// How this pane sorts and filters its listing (resolved per folder).
     var format = ViewFormat.default
     /// Asks the browser for the saved format for a folder (the per-folder cascade).
@@ -143,12 +149,56 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// Entries currently shown (directory listing, or ranked search results).
     var entries: [FileEntry] { content.entries }
 
+    /// The single funnel every listing passes through, so the live filter applies
+    /// uniformly (local, smart, flat, remote). A context change (preserveState ==
+    /// false, i.e. navigation or a new smart/remote view) clears the filter; an
+    /// in-place refresh keeps it.
+    private func displayEntries(_ entries: [FileEntry], preserveState: Bool) {
+        if !preserveState, !filterText.isEmpty { clearFilterField() }
+        sourceEntries = entries
+        content.setEntries(filtered(entries), preserveState: preserveState)
+    }
+
+    private func filtered(_ entries: [FileEntry]) -> [FileEntry] {
+        guard !filterText.isEmpty else { return entries }
+        return entries.filter { $0.name.localizedCaseInsensitiveContains(filterText) }
+    }
+
+    /// Apply a live filter over the current display set (called as the user types).
+    func setFilter(_ text: String) {
+        filterText = text
+        let shown = filtered(sourceEntries)
+        content.setEntries(shown, preserveState: true)
+        content.showPlaceholder(
+            shown.isEmpty && !sourceEntries.isEmpty ? "No matches for “\(text)”" : nil)
+        updateStatus()
+    }
+
+    /// Show and focus the filter field.
+    func beginFilter() {
+        filterField.isHidden = false
+        containerView.window?.makeFirstResponder(filterField)
+    }
+
+    /// Clear and hide the filter field, restoring the full listing and focus.
+    func endFilter() {
+        clearFilterField()
+        setFilter("")
+        containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    private func clearFilterField() {
+        filterText = ""
+        filterField.stringValue = ""
+        filterField.isHidden = true
+    }
+
     /// Replace the listing with an explicit set (e.g. ranked search results).
     func showResults(_ entries: [FileEntry]) {
         showingSearchResults = true
         content.directoryURL = nil  // disable row drag during search
         content.resolutionURL = nav.current  // but results are from this folder, so actions resolve
-        content.setEntries(entries, preserveState: false)
+        displayEntries(entries, preserveState: false)
         content.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
         updateStatus()
     }
@@ -194,7 +244,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         pendingSelection = nil
         content.directoryURL = nil  // not a single folder: disable drag
         content.resolutionURL = nil
-        content.setEntries(format.sorted(entries), preserveState: false)
+        displayEntries(format.sorted(entries), preserveState: false)
         content.showPlaceholder(entries.isEmpty ? "No items" : nil)
         pathControl.isHidden = true
         addressField.isHidden = true
@@ -216,7 +266,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         let before = smartEntries.count
         smartEntries.removeAll { paths.contains(Self.path(of: $0)) }
         guard smartEntries.count != before else { return }
-        content.setEntries(format.sorted(smartEntries), preserveState: true)
+        displayEntries(format.sorted(smartEntries), preserveState: true)
         content.showPlaceholder(smartEntries.isEmpty ? "No items" : nil)
         updateStatus()
     }
@@ -244,7 +294,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         content.setSortFormat(format)  // column view re-sorts its drilled columns to match
         do {
             let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
-            content.setEntries(format.sorted(entries), preserveState: preserveState)
+            displayEntries(format.sorted(entries), preserveState: preserveState)
             // setEntries refreshes only the root column; re-enumerate drilled ones too
             // so a file op inside a drilled column shows its result (no-op elsewhere).
             if preserveState { content.refreshDrilledColumns() }
@@ -252,7 +302,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         } catch {
             // A read failure (permission denied, missing) looks identical to an
             // empty folder unless we say so.
-            content.setEntries([], preserveState: false)
+            displayEntries([], preserveState: false)
             content.showPlaceholder(
                 "Couldn’t read this folder.\nPathem may need Full Disk Access "
                     + "(System Settings ▸ Privacy & Security ▸ Full Disk Access).")
@@ -332,14 +382,14 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
                 guard let self, let cur = self.remote, cur.path == session.path,
                     cur.connection.id == session.connection.id
                 else { return }
-                self.content.setEntries(self.format.sorted(entries), preserveState: false)
+                self.displayEntries(self.format.sorted(entries), preserveState: false)
                 self.content.showPlaceholder(entries.isEmpty ? "Empty folder" : nil)
                 self.updateStatus()
             } catch {
                 guard let self, let cur = self.remote, cur.path == session.path,
                     cur.connection.id == session.connection.id
                 else { return }
-                self.content.setEntries([], preserveState: false)
+                self.displayEntries([], preserveState: false)
                 self.content.showPlaceholder(
                     "Couldn’t open \(session.connection.host)\(session.path)\n\(Self.describe(error))")
                 self.updateStatus()
@@ -562,11 +612,22 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
 
+        filterField.placeholderString = "Filter"
+        filterField.controlSize = .small
+        filterField.font = .systemFont(ofSize: 11)
+        filterField.isHidden = true  // shown via the Filter command
+        filterField.delegate = self
+        filterField.sendsWholeSearchString = false
+        filterField.sendsSearchStringImmediately = true
+        filterField.translatesAutoresizingMaskIntoConstraints = false
+
         bottomStack.orientation = .vertical
         bottomStack.alignment = .leading
         bottomStack.spacing = 2
         bottomStack.translatesAutoresizingMaskIntoConstraints = false
+        bottomStack.addArrangedSubview(filterField)
         bottomStack.addArrangedSubview(statusLabel)
+        filterField.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true
 
         containerView.addSubview(toolbarStack)
         containerView.addSubview(pathBar)
@@ -682,7 +743,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             // folder, and don't reload (there's no folder to read). Column mode needs
             // real folders to drill, so a smart result falls back to list.
             applyViewMode(mode == .column ? .list : mode)
-            content.setEntries(format.sorted(smartEntries), preserveState: false)
+            displayEntries(format.sorted(smartEntries), preserveState: false)
             pendingSelection = nil  // don't leak smart names into the next real listing
             return
         }
@@ -1045,7 +1106,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         format.ascending = ascending
         if smartActive {
             // Re-sort the held results in memory; don't persist onto the folder.
-            content.setEntries(format.sorted(smartEntries), preserveState: true)
+            displayEntries(format.sorted(smartEntries), preserveState: true)
             content.showSortIndicator(key: key, ascending: ascending)
             return
         }
@@ -1185,17 +1246,23 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         }
     }
 
+    func controlTextDidChange(_ obj: Notification) {
+        if obj.object as AnyObject === filterField { setFilter(filterField.stringValue) }
+    }
+
     func controlTextDidEndEditing(_ obj: Notification) {
-        // Clicked away without committing: restore the breadcrumb.
-        if !addressField.isHidden { endEditingPath() }
+        // Clicked away from the address bar without committing: restore the breadcrumb.
+        if obj.object as AnyObject === addressField, !addressField.isHidden { endEditingPath() }
     }
 
     func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-        if commandSelector == #selector(NSResponder.cancelOperation(_:)) {  // Esc cancels
+        guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else { return false }  // Esc
+        if control === filterField {
+            endFilter()
+        } else {
             endEditingPath()
             containerView.window?.makeFirstResponder(content.keyView)
-            return true
         }
-        return false
+        return true
     }
 }
