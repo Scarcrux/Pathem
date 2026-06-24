@@ -26,28 +26,34 @@ import PathemEngine
         var label: String?
     }
 
-    extension BrowserViewController {
-        /// Ask the on-device model to propose an OrganizePlan for the given files.
-        @available(macOS 26, *)
-        func proposeOrganizePlan(instruction: String, files: [String]) async -> OrganizePlan? {
-            guard case .available = SystemLanguageModel.default.availability else { return nil }
-            let session = LanguageModelSession(
-                instructions: """
-                    You organize files in a single folder. You are given a list of file names and an
-                    instruction. Return a plan of steps. Each step's `file` must be exactly one of the
-                    provided names. Use action "move" with a `destination` subfolder, "label" with a
-                    `label`, or "trash". Only include files the instruction calls for.
-                    """)
-            let prompt = "Files:\n\(files.joined(separator: "\n"))\n\nInstruction: \(instruction)"
-            guard
-                let generated = try? await session.respond(to: prompt, generating: GeneratedOrganizePlan.self)
-            else { return nil }
-            let steps = generated.content.steps.compactMap { step -> OrganizePlan.Step? in
-                guard let action = OrganizePlan.Action(rawValue: step.action.lowercased()) else { return nil }
-                return OrganizePlan.Step(
-                    action: action, file: step.file, destination: step.destination, label: step.label)
-            }
-            return OrganizePlan(steps: steps)
+    /// Ask the on-device model to propose an OrganizePlan for the given files. A free
+    /// function so both the browser and the headless AI smoke can call it.
+    @available(macOS 26, *)
+    func proposeOrganizePlan(instruction: String, files: [String]) async -> OrganizePlan? {
+        guard case .available = SystemLanguageModel.default.availability else {
+            print("[organize] unavailable: \(SystemLanguageModel.default.availability)")
+            return nil
         }
+        let session = LanguageModelSession(
+            instructions: """
+                You organize files in a single folder. You are given a list of file names and an
+                instruction. Return a plan of steps. Each step's `file` must be exactly one of the
+                provided names. Use action "move" with a `destination` subfolder, "label" with a
+                `label`, or "trash". Only include files the instruction calls for.
+                """)
+        let prompt = "Files:\n\(files.joined(separator: "\n"))\n\nInstruction: \(instruction)"
+        let generated: LanguageModelSession.Response<GeneratedOrganizePlan>
+        do {
+            generated = try await session.respond(to: prompt, generating: GeneratedOrganizePlan.self)
+        } catch {
+            print("[organize] respond error: \(error)")
+            return nil
+        }
+        let steps = generated.content.steps.compactMap { step -> OrganizePlan.Step? in
+            guard let action = OrganizePlan.Action(rawValue: step.action.lowercased()) else { return nil }
+            return OrganizePlan.Step(
+                action: action, file: step.file, destination: step.destination, label: step.label)
+        }
+        return OrganizePlan(steps: steps)
     }
 #endif

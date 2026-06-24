@@ -83,6 +83,36 @@ enum PathemApp {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
         }
+
+        // Headless AI smoke: run the on-device model through our real proposal path
+        // and print the plan it proposes. Needs macOS 26 + Apple Intelligence.
+        #if canImport(FoundationModels)
+            if ProcessInfo.processInfo.environment["PATHEM_AI_SMOKE"] != nil {
+                DispatchQueue.main.async {
+                    Task.detached {
+                        print("=== AI SMOKE: Organize with AI ===")
+                        guard #available(macOS 26, *) else {
+                            print("RESULT: SKIP (macOS < 26)")
+                            exit(0)
+                        }
+                        let files = [
+                            "IMG_1024.jpg", "budget.pdf", "notes.txt", "screenshot.png", "invoice.pdf",
+                            "cat.heic",
+                        ]
+                        let plan = await proposeOrganizePlan(
+                            instruction: "Move images into a Pictures folder and PDFs into a Docs folder",
+                            files: files)
+                        guard let plan, !plan.steps.isEmpty else {
+                            print("RESULT: FAIL (no plan; model unavailable or empty)")
+                            exit(1)
+                        }
+                        for line in plan.summary(in: URL(fileURLWithPath: "/tmp")) { print("  \(line)") }
+                        print("RESULT: PASS (\(plan.steps.count) steps proposed)")
+                        exit(0)
+                    }
+                }
+            }
+        #endif
         app.run()
     }
 
