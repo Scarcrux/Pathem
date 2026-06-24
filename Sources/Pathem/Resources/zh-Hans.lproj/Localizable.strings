@@ -256,6 +256,11 @@
 "fda.step2" = "点按 + 按钮（或开关）并添加 Pathem。";
 "fda.step3" = "返回 Pathem。它会自动检测访问权限。";
 "fda.waitingForAccess" = "正在等待访问权限…";
+"gestures.colGesture" = "手势";
+"gestures.help" = "在文件视图中按住鼠标右键并拖动：← 后退，→ 前进，↑ 上级文件夹。选择一个命令，然后在框中右键拖动以重新绑定。";
+"gestures.reassigned" = "%@ 已从“%@”重新分配。";
+"gestures.recordHint" = "在此处右键拖动";
+"gestures.setLabel" = "手势：";
 "icons.copy" = "拷贝";
 "icons.cut" = "剪切";
 "icons.download" = "下载";
@@ -471,6 +476,7 @@
 "rename.rowSuffix" = "后缀";
 "settings.appearance" = "外观";
 "settings.general" = "通用";
+"settings.gestures" = "手势";
 "settings.layout" = "布局";
 "settings.search" = "搜索";
 "settings.shortcuts" = "快捷键";

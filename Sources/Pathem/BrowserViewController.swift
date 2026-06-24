@@ -52,6 +52,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let commands = CommandRegistry()
     /// Chord -> command id, defaults overlaid with any user keymap.json.
     private var keymap = Keymap.standard
+    /// Stroke -> command id, defaults overlaid with any user gestures.json.
+    private var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
     private var folderFormats = FolderFormats()
     /// Scoped default-opener rules (by file / folder / type), persisted.
@@ -202,6 +204,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadMacros()  // after base commands, so macros can chain them
         loadTemplates()  // register template commands so they appear in the shortcut editor
         loadKeymap()
+        loadGestures()
         loadFolderFormats()
         loadLayouts()
         loadPreferences()
@@ -213,6 +216,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
                 pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
+                pane.onMouseGestureHandler = { [weak self] stroke in self?.handleGesture(stroke) ?? false }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
@@ -1381,6 +1385,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             prefs: prefs,
             commands: commands.all.map { (id: $0.id, title: $0.title) },
             effective: keymap.bindings,
+            gestures: gestureMap.bindings,
             updater: updater,
             terminal: .init(
                 themes: TerminalTheme.presets.map(\.name),
@@ -1410,6 +1415,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 guard let self else { return }
                 self.saveConfig(overlay, to: Self.keymapURL)  // persist the user overlay
                 self.keymap = Keymap.standard.merging(userBindings: overlay)  // apply live
+            },
+            onGestureChange: { [weak self] overlay in
+                guard let self else { return }
+                self.saveConfig(overlay, to: Self.gesturesURL)
+                self.gestureMap = GestureMap.standard.merging(userBindings: overlay)  // apply live
             })
     }
 
@@ -1560,6 +1570,26 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             keymap = Keymap.standard.merging(userBindings: user)
         } else {
             keymap = .standard
+        }
+    }
+
+    /// Resolve a mouse-gesture stroke against the gesture map and dispatch it.
+    private func handleGesture(_ stroke: String) -> Bool {
+        guard let id = gestureMap.commandID(for: stroke), commands.command(id)?.isEnabled() == true
+        else { return false }
+        commands.perform(id)
+        return true
+    }
+
+    private static var gesturesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("gestures.json")
+    }
+
+    private func loadGestures() {
+        if let user = loadConfig([String: String].self, from: Self.gesturesURL) {
+            gestureMap = GestureMap.standard.merging(userBindings: user)
+        } else {
+            gestureMap = .standard
         }
     }
 

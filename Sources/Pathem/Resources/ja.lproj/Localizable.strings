@@ -256,6 +256,11 @@
 "fda.step2" = "「+」ボタン（またはトグル）をクリックしてPathemを追加します。";
 "fda.step3" = "Pathemに戻ります。アクセスは自動的に検出されます。";
 "fda.waitingForAccess" = "アクセスを待機中…";
+"gestures.colGesture" = "ジェスチャ";
+"gestures.help" = "ファイルビューで右ボタンを押しながらドラッグ：← 戻る、→ 進む、↑ 親フォルダ。コマンドを選び、ボックス内で右ドラッグして再割り当てします。";
+"gestures.reassigned" = "%@ は「%@」から再割り当てされました。";
+"gestures.recordHint" = "ここで右ドラッグ";
+"gestures.setLabel" = "ジェスチャ：";
 "icons.copy" = "コピー";
 "icons.cut" = "カット";
 "icons.download" = "ダウンロード";
@@ -471,6 +476,7 @@
 "rename.rowSuffix" = "接尾辞";
 "settings.appearance" = "外観";
 "settings.general" = "一般";
+"settings.gestures" = "ジェスチャ";
 "settings.layout" = "レイアウト";
 "settings.search" = "検索";
 "settings.shortcuts" = "ショートカット";

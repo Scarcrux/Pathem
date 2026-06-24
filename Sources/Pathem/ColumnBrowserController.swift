@@ -32,6 +32,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
     var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)?
     var onKeyChord: ((KeyChord) -> Bool)?
+    var onMouseGesture: ((String) -> Bool)?
 
     override init() {
         super.init()
@@ -77,6 +78,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         table.target = self
         table.doubleAction = #selector(doubleClicked(_:))
         table.onKeyChord = { [weak self] chord in self?.onKeyChord?(chord) ?? false }
+        table.onMouseGesture = { [weak self] stroke in self?.onMouseGesture?(stroke) ?? false }
         table.onBecomeActive = { [weak self, weak table] in
             guard let self, let table, let i = self.columnIndex(of: table) else { return }
             self.activeColumn = i

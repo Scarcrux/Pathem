@@ -256,6 +256,11 @@
 "fda.step2" = "Klicke auf die Taste „+“ (oder den Schalter) und füge Pathem hinzu.";
 "fda.step3" = "Kehre zu Pathem zurück. Der Zugriff wird automatisch erkannt.";
 "fda.waitingForAccess" = "Warten auf Zugriff…";
+"gestures.colGesture" = "Geste";
+"gestures.help" = "Halte die rechte Maustaste gedrückt und ziehe in einer Dateiansicht: ← zurück, → vor, ↑ übergeordneter Ordner. Wähle einen Befehl und ziehe dann mit rechts im Feld, um ihn neu zuzuweisen.";
+"gestures.reassigned" = "%@ wurde von „%@“ neu zugewiesen.";
+"gestures.recordHint" = "Hier mit rechts ziehen";
+"gestures.setLabel" = "Geste:";
 "icons.copy" = "Kopieren";
 "icons.cut" = "Ausschneiden";
 "icons.download" = "Laden";
@@ -471,6 +476,7 @@
 "rename.rowSuffix" = "Suffix";
 "settings.appearance" = "Darstellung";
 "settings.general" = "Allgemein";
+"settings.gestures" = "Gesten";
 "settings.layout" = "Layout";
 "settings.search" = "Suche";
 "settings.shortcuts" = "Kurzbefehle";

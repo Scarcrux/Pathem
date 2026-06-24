@@ -7,7 +7,17 @@ import UniformTypeIdentifiers
 @MainActor
 final class KeyCollectionView: NSCollectionView {
     var onKeyChord: ((KeyChord) -> Bool)?
+    var onMouseGesture: ((String) -> Bool)?
     var onBecomeActive: (() -> Void)?
+
+    private let gestureTracker = MouseGestureTracker()
+
+    override func rightMouseDown(with event: NSEvent) { gestureTracker.begin(event) }
+    override func rightMouseDragged(with event: NSEvent) { gestureTracker.append(event) }
+    override func rightMouseUp(with event: NSEvent) {
+        if let stroke = gestureTracker.end(event), onMouseGesture?(stroke) == true { return }
+        if let menu = menu(for: event) { NSMenu.popUpContextMenu(menu, with: event, for: self) }
+    }
     /// Double-click (carries the clicked item) or Return (nil = the selection).
     var onActivate: ((IndexPath?) -> Void)?
     /// Called when a right-click changes the selection (programmatic selection
@@ -170,6 +180,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     var onKeyChord: ((KeyChord) -> Bool)? {
         get { collection.onKeyChord }
         set { collection.onKeyChord = newValue }
+    }
+    var onMouseGesture: ((String) -> Bool)? {
+        get { collection.onMouseGesture }
+        set { collection.onMouseGesture = newValue }
     }
 
     /// `gallery` uses larger thumbnails than `icon`.

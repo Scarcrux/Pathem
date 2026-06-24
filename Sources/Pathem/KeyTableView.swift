@@ -9,7 +9,20 @@ import PathemEngine
 final class KeyTableView: NSTableView {
     /// Return true if the chord was handled (the key is then consumed).
     var onKeyChord: ((KeyChord) -> Bool)?
+    /// Return true if the right-button stroke was handled (then the menu is suppressed).
+    var onMouseGesture: ((String) -> Bool)?
     var onBecomeActive: (() -> Void)?
+
+    private let gestureTracker = MouseGestureTracker()
+
+    // Take over the right button so a stroke gesture can be recognized; a plain
+    // right-click (no meaningful drag) falls through to the context menu on mouse-up.
+    override func rightMouseDown(with event: NSEvent) { gestureTracker.begin(event) }
+    override func rightMouseDragged(with event: NSEvent) { gestureTracker.append(event) }
+    override func rightMouseUp(with event: NSEvent) {
+        if let stroke = gestureTracker.end(event), onMouseGesture?(stroke) == true { return }
+        if let menu = menu(for: event) { NSMenu.popUpContextMenu(menu, with: event, for: self) }
+    }
 
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()

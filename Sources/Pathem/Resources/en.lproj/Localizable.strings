@@ -256,6 +256,11 @@
 "fda.step2" = "Click the + button (or the toggle) and add Pathem.";
 "fda.step3" = "Come back to Pathem. It detects access automatically.";
 "fda.waitingForAccess" = "Waiting for access…";
+"gestures.colGesture" = "Gesture";
+"gestures.help" = "Hold the right mouse button and drag in a file view: ← back, → forward, ↑ enclosing folder. Pick a command, then right-drag in the box to rebind.";
+"gestures.reassigned" = "%@ was reassigned from “%@”.";
+"gestures.recordHint" = "Right-drag here";
+"gestures.setLabel" = "Gesture:";
 "icons.copy" = "Copy";
 "icons.cut" = "Cut";
 "icons.download" = "Download";
@@ -471,6 +476,7 @@
 "rename.rowSuffix" = "Suffix";
 "settings.appearance" = "Appearance";
 "settings.general" = "General";
+"settings.gestures" = "Gestures";
 "settings.layout" = "Layout";
 "settings.search" = "Search";
 "settings.shortcuts" = "Shortcuts";

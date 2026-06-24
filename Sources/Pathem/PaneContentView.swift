@@ -21,6 +21,7 @@ protocol PaneContentView: AnyObject {
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)? { get set }
     var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)? { get set }
     var onKeyChord: ((KeyChord) -> Bool)? { get set }
+    var onMouseGesture: ((String) -> Bool)? { get set }
 
     func setEntries(_ entries: [FileEntry], preserveState: Bool)
     func showPlaceholder(_ text: String?)
@@ -57,5 +58,9 @@ extension FileListController: PaneContentView {
     var onKeyChord: ((KeyChord) -> Bool)? {
         get { tableView.onKeyChord }
         set { tableView.onKeyChord = newValue }
+    }
+    var onMouseGesture: ((String) -> Bool)? {
+        get { tableView.onMouseGesture }
+        set { tableView.onMouseGesture = newValue }
     }
 }

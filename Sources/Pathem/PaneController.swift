@@ -22,6 +22,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var onKeyChordHandler: ((KeyChord) -> Bool)? {
         didSet { content.onKeyChord = onKeyChordHandler }
     }
+    /// Mouse-gesture handler, re-applied to whichever content is active.
+    var onMouseGestureHandler: ((String) -> Bool)? {
+        didSet { content.onMouseGesture = onMouseGestureHandler }
+    }
     /// The focusable view of the active content (for first-responder handoff).
     var keyView: NSView { content.keyView }
     private(set) var nav: NavigationState
@@ -814,6 +818,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             }
         }
         content.onKeyChord = onKeyChordHandler
+        content.onMouseGesture = onMouseGestureHandler
     }
 
     /// Switch this folder's view mode (list / icon / gallery), persist it, and

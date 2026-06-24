@@ -256,6 +256,11 @@
 "fda.step2" = "Haz clic en el botón + (o en el conmutador) y añade Pathem.";
 "fda.step3" = "Vuelve a Pathem. Detecta el acceso automáticamente.";
 "fda.waitingForAccess" = "Esperando el acceso…";
+"gestures.colGesture" = "Gesto";
+"gestures.help" = "Mantén pulsado el botón derecho y arrastra en una vista de archivos: ← atrás, → adelante, ↑ carpeta contenedora. Elige un comando y luego arrastra con el botón derecho en el recuadro para reasignar.";
+"gestures.reassigned" = "%@ se reasignó desde «%@».";
+"gestures.recordHint" = "Arrastra con el botón derecho aquí";
+"gestures.setLabel" = "Gesto:";
 "icons.copy" = "Copiar";
 "icons.cut" = "Cortar";
 "icons.download" = "Descargar";
@@ -471,6 +476,7 @@
 "rename.rowSuffix" = "Sufijo";
 "settings.appearance" = "Apariencia";
 "settings.general" = "General";
+"settings.gestures" = "Gestos";
 "settings.layout" = "Disposición";
 "settings.search" = "Búsqueda";
 "settings.shortcuts" = "Atajos";

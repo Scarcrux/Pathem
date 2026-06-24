@@ -11,7 +11,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     NSTableViewDelegate
 {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, search, terminal, shortcuts, updates
+        case general, appearance, layout, search, terminal, shortcuts, gestures, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
@@ -20,6 +20,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             case .search: return L("settings.search", "Search")
             case .terminal: return L("settings.terminal", "Terminal")
             case .shortcuts: return L("settings.shortcuts", "Shortcuts")
+            case .gestures: return L("settings.gestures", "Gestures")
             case .updates: return L("settings.updates", "Updates")
             }
         }
@@ -31,6 +32,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             case .search: return "magnifyingglass"
             case .terminal: return "terminal"
             case .shortcuts: return "keyboard"
+            case .gestures: return "hand.draw"
             case .updates: return "arrow.down.circle"
             }
         }
@@ -48,6 +50,13 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     private let table = NSTableView()
     private let recorder = KeyRecorderView()
     private let conflictLabel = NSTextField(labelWithString: "")
+
+    // Gesture editor state (mirrors the shortcut editor).
+    private var gestureEffective: [String: String] = [:]
+    private var onGestureChange: (([String: String]) -> Void)?
+    private let gestureTable = NSTableView()
+    private let gestureRecorder = GestureRecorderView()
+    private let gestureConflictLabel = NSTextField(labelWithString: "")
     private weak var updater: UpdaterController?
     private let updatesStatus = NSTextField(labelWithString: "")
 
@@ -86,13 +95,17 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
 
     func present(
         prefs: Preferences, commands: [(id: String, title: String)], effective: [String: String],
-        updater: UpdaterController?, terminal: TerminalOptions, over parent: NSWindow?,
+        gestures: [String: String], updater: UpdaterController?, terminal: TerminalOptions,
+        over parent: NSWindow?,
         onChange: @escaping (Preferences) -> Void,
-        onKeymapChange: @escaping ([String: String]) -> Void
+        onKeymapChange: @escaping ([String: String]) -> Void,
+        onGestureChange: @escaping ([String: String]) -> Void
     ) {
         self.prefs = prefs
         self.commandList = commands
         self.effective = effective
+        self.gestureEffective = gestures
+        self.onGestureChange = onGestureChange
         self.updater = updater
         self.terminalThemes = terminal.themes
         self.currentTerminalTheme = terminal.current
@@ -149,6 +162,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         ])
         case .terminal: return terminalPane()
         case .shortcuts: return shortcutsPane()
+        case .gestures: return gesturesPane()
         case .updates: return updatesPane()
         }
     }
@@ -376,6 +390,125 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         recorder.canonical = selectedCommandID.flatMap { chords(for: $0).first } ?? ""
     }
 
+    // MARK: Gestures pane
+
+    private func gesturesPane() -> NSView {
+        for (id, width) in [("command", CGFloat(320)), ("gesture", CGFloat(130))] {
+            let column = NSTableColumn(identifier: .init(id))
+            column.title =
+                id == "command"
+                ? L("shortcuts.colCommand", "Command") : L("gestures.colGesture", "Gesture")
+            column.width = width
+            gestureTable.addTableColumn(column)
+        }
+        gestureTable.dataSource = self
+        gestureTable.delegate = self
+        gestureTable.rowHeight = 22
+        gestureTable.usesAlternatingRowBackgroundColors = true
+        let scroll = NSScrollView()
+        scroll.documentView = gestureTable
+        scroll.hasVerticalScroller = true
+        scroll.borderType = .bezelBorder
+        scroll.translatesAutoresizingMaskIntoConstraints = false
+
+        gestureRecorder.onRecord = { [weak self] stroke in self?.assignGesture(stroke) }
+        gestureRecorder.onClear = { [weak self] in self?.clearGesture() }
+        let restore = NSButton(
+            title: L("shortcuts.restoreDefaults", "Restore Defaults"), target: self,
+            action: #selector(restoreGestures))
+        restore.bezelStyle = .rounded
+        gestureConflictLabel.font = .systemFont(ofSize: 11)
+        gestureConflictLabel.textColor = .secondaryLabelColor
+        gestureConflictLabel.lineBreakMode = .byTruncatingTail
+        let help = NSTextField(
+            wrappingLabelWithString:
+                L(
+                    "gestures.help",
+                    "Hold the right mouse button and drag in a file view: ← back, → forward, ↑ enclosing folder. Pick a command, then right-drag in the box to rebind."))
+        help.font = .systemFont(ofSize: 11)
+        help.textColor = .secondaryLabelColor
+
+        let controls = NSStackView(views: [
+            NSTextField(labelWithString: L("gestures.setLabel", "Gesture:")), gestureRecorder, NSView(),
+            restore,
+        ])
+        controls.orientation = .horizontal
+        controls.spacing = 8
+        controls.alignment = .centerY
+        controls.translatesAutoresizingMaskIntoConstraints = false
+
+        let container = NSView()
+        for view in [help, scroll, controls, gestureConflictLabel] {
+            view.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(view)
+        }
+        NSLayoutConstraint.activate([
+            help.topAnchor.constraint(equalTo: container.topAnchor, constant: 14),
+            help.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            help.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            scroll.topAnchor.constraint(equalTo: help.bottomAnchor, constant: 10),
+            scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            scroll.heightAnchor.constraint(equalToConstant: 250),
+            controls.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 10),
+            controls.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
+            controls.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
+            gestureConflictLabel.topAnchor.constraint(equalTo: controls.bottomAnchor, constant: 6),
+            gestureConflictLabel.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
+            gestureConflictLabel.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
+            gestureConflictLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            container.widthAnchor.constraint(equalToConstant: 560),
+        ])
+        gestureTable.reloadData()
+        return container
+    }
+
+    private func gestures(for id: String) -> [String] {
+        gestureEffective.filter { $0.value == id }.keys.sorted()
+    }
+
+    private var selectedGestureCommandID: String? {
+        let row = gestureTable.selectedRow
+        return (0..<commandList.count).contains(row) ? commandList[row].id : nil
+    }
+
+    private func assignGesture(_ stroke: String) {
+        guard let id = selectedGestureCommandID else { return }
+        let previous = gestureEffective[stroke]
+        for (existing, command) in gestureEffective where command == id { gestureEffective[existing] = nil }
+        gestureEffective[stroke] = id
+        onGestureChange?(GestureMap.overlay(forEffective: gestureEffective))
+        if let previous, previous != id {
+            let title = commandList.first { $0.id == previous }?.title ?? previous
+            gestureConflictLabel.stringValue = String(
+                format: L("gestures.reassigned", "%@ was reassigned from “%@”."),
+                GestureFormat.display(stroke), title)
+        } else {
+            gestureConflictLabel.stringValue = ""
+        }
+        refreshGestures()
+    }
+
+    private func clearGesture() {
+        guard let id = selectedGestureCommandID else { return }
+        for (existing, command) in gestureEffective where command == id { gestureEffective[existing] = nil }
+        gestureConflictLabel.stringValue = ""
+        onGestureChange?(GestureMap.overlay(forEffective: gestureEffective))
+        refreshGestures()
+    }
+
+    @objc private func restoreGestures() {
+        gestureEffective = GestureMap.defaultBindings
+        gestureConflictLabel.stringValue = ""
+        onGestureChange?(GestureMap.overlay(forEffective: gestureEffective))
+        refreshGestures()
+    }
+
+    private func refreshGestures() {
+        gestureTable.reloadData()
+        gestureRecorder.stroke = selectedGestureCommandID.flatMap { gestures(for: $0).first } ?? ""
+    }
+
     // MARK: Table
 
     func numberOfRows(in tableView: NSTableView) -> Int { commandList.count }
@@ -400,20 +533,30 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
                 ])
                 return c
             }()
-        if tableColumn.identifier.rawValue == "command" {
+        switch tableColumn.identifier.rawValue {
+        case "command":
             cell.textField?.stringValue = commandList[row].title
             cell.textField?.textColor = .labelColor
-        } else {
-            let shortcut = chords(for: commandList[row].id).map(ChordFormat.display).joined(separator: ", ")
-            cell.textField?.stringValue = shortcut
+        case "gesture":
+            cell.textField?.stringValue = gestures(for: commandList[row].id).map(GestureFormat.display)
+                .joined(separator: ", ")
+            cell.textField?.textColor = .secondaryLabelColor
+        default:  // "shortcut"
+            cell.textField?.stringValue = chords(for: commandList[row].id).map(ChordFormat.display)
+                .joined(separator: ", ")
             cell.textField?.textColor = .secondaryLabelColor
         }
         return cell
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
-        recorder.canonical = selectedCommandID.flatMap { chords(for: $0).first } ?? ""
-        conflictLabel.stringValue = ""
+        if notification.object as? NSTableView === gestureTable {
+            gestureRecorder.stroke = selectedGestureCommandID.flatMap { gestures(for: $0).first } ?? ""
+            gestureConflictLabel.stringValue = ""
+        } else {
+            recorder.canonical = selectedCommandID.flatMap { chords(for: $0).first } ?? ""
+            conflictLabel.stringValue = ""
+        }
     }
 
     // MARK: Updates pane
@@ -479,6 +622,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             ("view.toggleHidden", "Show Hidden Files"), ("palette.show", "Command Palette…"),
         ]
         effective = Keymap.defaultBindings
+        gestureEffective = GestureMap.defaultBindings
         terminalThemes = ["Dark", "Light", "Solarized"]
         currentTerminalTheme = "Dark"
         for pane in Pane.allCases {
