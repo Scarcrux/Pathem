@@ -61,6 +61,8 @@ public enum FolderCompare {
     public static func mirror(
         from left: URL, to right: URL, differences: [Difference], deleteExtras: Bool
     ) -> MirrorResult {
+        let left = left.standardizedFileURL  // normalize so destination paths stay clean
+        let right = right.standardizedFileURL
         let fm = FileManager.default
         var result = MirrorResult()
         for diff in differences {
@@ -120,8 +122,13 @@ public enum FolderCompare {
     // MARK: Helpers
 
     private static func index(of root: URL, maxItems: Int) -> [String: FileEntry] {
+        // Normalize first: the walked entry locations must share the root's prefix, or
+        // a non-standardized root (a real `..` segment) yields mangled relative paths
+        // ("../dir/a.txt") that never match the other side — making identical files look
+        // only-on-each-side, which mirror(deleteExtras:) would then churn/trash.
+        let root = root.standardizedFileURL
         let flat = FlatEnumerator.entries(of: root, includingHidden: true, includeFolders: false, maxItems: maxItems)
-        let rootPath = root.standardizedFileURL.path
+        let rootPath = root.path
         var map: [String: FileEntry] = [:]
         for entry in flat.entries {
             guard let location = entry.location else { continue }
