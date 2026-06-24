@@ -100,7 +100,7 @@ final class InfoInspectorController: NSObject {
                 Task { @MainActor in
                     let hash = await Task.detached { try? FileHasher.hash(url) }.value
                     guard self.inspectedURL == url else { return }  // inspector moved on
-                    hashField.stringValue = hash ?? "—"
+                    hashField.stringValue = hash ?? "unavailable"
                 }
             }
         } else {
