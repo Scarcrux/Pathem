@@ -60,6 +60,33 @@ import Testing
                 atPath: dir.deletingLastPathComponent().appendingPathComponent("f.txt").path))  // never escaped
     }
 
+    @Test func labelIsIdempotentNotAToggle() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data("x".utf8).write(to: dir.appendingPathComponent("f.txt"))
+        let plan = OrganizePlan(steps: [.init(action: .label, file: "f.txt", label: "Important")])
+        _ = plan.execute(in: dir)
+        _ = plan.execute(in: dir)  // running twice must NOT remove the label
+        #expect(
+            FileTags.tags(of: dir.appendingPathComponent("f.txt")).contains { $0.name == "Important" })
+    }
+
+    @Test func nameCollisionMoveCountsAsFailureNotSuccess() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data("a".utf8).write(to: dir.appendingPathComponent("f.txt"))
+        // Pre-create the destination with a colliding name so the move skips.
+        let sub = dir.appendingPathComponent("Sub")
+        try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+        try Data("existing".utf8).write(to: sub.appendingPathComponent("f.txt"))
+
+        let result = OrganizePlan(steps: [.init(action: .move, file: "f.txt", destination: "Sub")])
+            .execute(in: dir)
+        #expect(result.moved == 0)  // skipped, not "moved"
+        #expect(result.failures == ["f.txt"])
+        #expect(result.performed.isEmpty)
+    }
+
     @Test func decodesModelStyleJSON() throws {
         let json = #"{"steps":[{"action":"move","file":"x.png","destination":"Images"}]}"#
         let plan = try JSONDecoder().decode(OrganizePlan.self, from: Data(json.utf8))

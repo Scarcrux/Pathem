@@ -51,7 +51,9 @@ public struct SavedSearch: Codable, Sendable, Equatable {
         }
         if let minSizeBytes { clauses.append("kMDItemFSSize > \(minSizeBytes)") }
         if let modifiedWithinDays {
-            clauses.append("kMDItemFSContentChangeDate >= $time.now(-\(modifiedWithinDays * 86_400))")
+            // Clamp so a huge value can't overflow Int when converted to seconds.
+            let days = min(max(modifiedWithinDays, 0), 3_650_000)
+            clauses.append("kMDItemFSContentChangeDate >= $time.now(-\(days * 86_400))")
         }
         if let contentType, !contentType.isEmpty {
             clauses.append("kMDItemContentTypeTree == \"\(esc(contentType))\"")

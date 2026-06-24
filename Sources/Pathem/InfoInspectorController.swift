@@ -1,5 +1,6 @@
 import AppKit
 import PathemEngine
+import UniformTypeIdentifiers
 
 /// A Finder-style Get Info panel: icon, name, and a labeled field list for the
 /// selected item, or a summary when several are selected. A single reusable
@@ -95,7 +96,15 @@ final class InfoInspectorController: NSObject {
             if let owner = info.owner { addField("Owner", owner) }
             if !info.isDirectory, !info.isDataless {
                 let url = urls[0]
-                if let dimensions = MediaMetadata.dimensionsLabel(of: url) { addField("Dimensions", dimensions) }
+                // Image dimensions read off the main thread (ImageIO can touch disk).
+                if let type = UTType(filenameExtension: url.pathExtension), type.conforms(to: .image) {
+                    let dimField = addField("Dimensions", "Reading…")
+                    Task { @MainActor in
+                        let label = await Task.detached { MediaMetadata.dimensionsLabel(of: url) }.value
+                        guard self.inspectedURL == url else { return }
+                        dimField.stringValue = label ?? "unknown"
+                    }
+                }
                 let hashField = addField("SHA-256", "Calculating…")
                 Task { @MainActor in
                     let hash = await Task.detached { try? FileHasher.hash(url) }.value

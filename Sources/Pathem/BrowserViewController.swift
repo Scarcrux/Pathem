@@ -249,6 +249,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.connectionsController.present(over: self.view.window)
             self.connectionsController.beginEdit(connection)
         }
+        sidebar.onForgetConnection = { connection in
+            KeychainStore.removePassword(for: connection.id)  // recover from a stale/wrong saved password
+        }
         sidebar.onRemoveConnection = { [weak self] connection in
             KeychainStore.removePassword(for: connection.id)  // don't orphan a saved password
             self?.connectionsController.remove(connection)
@@ -272,6 +275,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         appSupportDirectory()?.appendingPathComponent("collections.json")
     }
     private var collectionsStore = Collections()
+    /// Macros currently executing, to break a self/mutually-referential macro cycle.
+    private var runningMacroIDs: Set<String> = []
 
     /// Load collections and register each as a "Collection: <name>" command that
     /// shows its (still-existing) files as a cross-folder smart list.
@@ -346,10 +351,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let set = loadConfig(Macros.self, from: Self.macrosURL) ?? Macros.default
         for macro in set.macros where !macro.name.isEmpty && !macro.commands.isEmpty {
             let ids = macro.commands
+            let macroID = "macro.\(macro.name)"
             commands.register(
                 .init(
-                    id: "macro.\(macro.name)", title: "Macro: \(macro.name)", isEnabled: { true },
-                    run: { [weak self] in for id in ids { _ = self?.commands.perform(id) } }))
+                    id: macroID, title: "Macro: \(macro.name)", isEnabled: { true },
+                    run: { [weak self] in
+                        guard let self, !self.runningMacroIDs.contains(macroID) else { return }  // cycle guard
+                        self.runningMacroIDs.insert(macroID)
+                        defer { self.runningMacroIDs.remove(macroID) }
+                        for id in ids { _ = self.commands.perform(id) }
+                    }))
         }
     }
 
@@ -814,12 +825,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let expected = (NSPasteboard.general.string(forType: .string) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .components(separatedBy: .whitespaces).first?.lowercased() ?? ""
-        guard expected.range(of: "^[0-9a-f]{32,128}$", options: .regularExpression) != nil else {
-            presentChecksumResult(title: "No checksum on the clipboard", text: "Copy a hex checksum first.")
+        // Only the lengths we can actually compute (MD5/SHA-1/SHA-256); accepting a
+        // SHA-512-length digest and silently comparing it as SHA-256 would never match.
+        let algorithm: FileHasher.Algorithm
+        switch expected.range(of: "^[0-9a-f]+$", options: .regularExpression) != nil ? expected.count : -1 {
+        case 32: algorithm = .md5
+        case 40: algorithm = .sha1
+        case 64: algorithm = .sha256
+        default:
+            presentChecksumResult(
+                title: "Unsupported checksum",
+                text: "Copy a hex MD5, SHA-1, or SHA-256 to the clipboard first.")
             return
         }
-        let algorithm: FileHasher.Algorithm =
-            expected.count == 32 ? .md5 : (expected.count == 40 ? .sha1 : .sha256)
         Task { @MainActor in
             let actual = await Task.detached { try? FileHasher.hash(url, algorithm: algorithm) }.value
             guard let actual else {
@@ -843,7 +861,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Zip the selection into the current folder (off-main), then select the archive.
     private func compressSelection() {
-        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        // Smart/flat/duplicate views span multiple folders; Archiver assumes one
+        // shared parent, so restrict Compress to a single real folder.
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let urls = pane.selectedLocalURLs()
         guard !urls.isEmpty else { NSSound.beep(); return }
         let folder = pane.currentURL
@@ -948,10 +968,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func findDuplicates() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let root = pane.currentURL
+        let token = pane.beginContentRequest()  // so navigating away discards stale results
         pane.showSmartResults([], title: "Finding duplicates in \(root.lastPathComponent)…")
         Task { @MainActor [weak self] in
             let groups = await Task.detached { DuplicateFinder.find(in: [root]) }.value
-            guard let self, self.activePane === pane else { return }
+            guard let self, self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
             let files = groups.flatMap { $0.files }
             let title =
                 groups.isEmpty
@@ -998,7 +1019,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         #if canImport(FoundationModels)
             if #available(macOS 26, *) {
                 Task { @MainActor in
-                    guard let plan = await self.proposeOrganizePlan(instruction: instruction, files: files),
+                    guard let plan = await proposeOrganizePlan(instruction: instruction, files: files),
                         !plan.steps.isEmpty
                     else {
                         self.presentInfo("Couldn’t propose a plan", "The model returned no steps.")
@@ -1028,6 +1049,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             Task { @MainActor in
                 let result = await Task.detached { plan.execute(in: folder) }.value
                 self.reloadBothSides()
+                // Register undo like every other local file op (moves + trashes).
+                if !result.performed.isEmpty { self.registerUndo(result.performed, actionName: "Organize") }
+                if !result.trashedItems.isEmpty { self.registerTrashUndo(result.trashedItems) }
                 self.presentInfo(
                     "Organized",
                     "Moved \(result.moved), trashed \(result.trashed), labeled \(result.labeled)"

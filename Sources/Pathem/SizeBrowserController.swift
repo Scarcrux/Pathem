@@ -32,8 +32,10 @@ final class SizeBrowserController: NSObject {
 
     func present(for url: URL, over window: NSWindow?) {
         root = url
-        panel.center()
-        if let window { window.beginSheet(panel) { _ in } } else { panel.makeKeyAndOrderFront(nil) }
+        // A normal closable utility window (not a sheet), so its close button works and
+        // re-presenting just brings it forward instead of beginSheet-ing twice.
+        if !panel.isVisible { panel.center() }
+        panel.makeKeyAndOrderFront(nil)
         load(url)
     }
 

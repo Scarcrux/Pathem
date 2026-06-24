@@ -44,6 +44,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onConnectConnectionInNewTab: ((RemoteConnection) -> Void)?
     /// Edit a saved server (right-click menu).
     var onEditConnection: ((RemoteConnection) -> Void)?
+    /// Forget a saved server's stored Keychain password (right-click menu).
+    var onForgetConnection: ((RemoteConnection) -> Void)?
     /// Remove a saved server (right-click menu).
     var onRemoveConnection: ((RemoteConnection) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
@@ -662,6 +664,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 add("Connect in New Tab", #selector(connectInNewTabTarget))
                 menu.addItem(.separator())
                 add("Edit…", #selector(editConnectionTarget))
+                add("Forget Password", #selector(forgetConnectionTarget))
                 add("Remove", #selector(removeConnectionTarget))
                 return  // connection-only menu (no New Group / Add Current Folder)
             case .manageConnections:
@@ -685,6 +688,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     @objc private func connectTarget() { targetConnection().map { onSelectConnection?($0) } }
     @objc private func connectInNewTabTarget() { targetConnection().map { onConnectConnectionInNewTab?($0) } }
     @objc private func editConnectionTarget() { targetConnection().map { onEditConnection?($0) } }
+    @objc private func forgetConnectionTarget() { targetConnection().map { onForgetConnection?($0) } }
     @objc private func removeConnectionTarget() { targetConnection().map { onRemoveConnection?($0) } }
     @objc private func manageConnectionsTarget() { onManageConnections?() }
 

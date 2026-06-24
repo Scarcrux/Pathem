@@ -46,6 +46,14 @@ import Testing
         #expect(info.states["/repo/after.txt"] == .untracked)  // parsing stayed in sync
     }
 
+    @Test func preservesConsecutiveSpacesInPath() {
+        // A file name with two spaces must keep both, or the badge maps to a wrong path.
+        let info = GitStatus.parse(
+            porcelainZ: "1 .M N... 100644 100644 100644 1 2 my  file.txt", repoRoot: root)
+        #expect(info.states["/repo/my  file.txt"] == .modified)
+        #expect(info.states["/repo/my file.txt"] == nil)  // not collapsed
+    }
+
     @Test func detachedHeadHasNoBranch() {
         let info = GitStatus.parse(porcelainZ: "# branch.head (detached)", repoRoot: root)
         #expect(info.branch == nil)

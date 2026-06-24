@@ -43,6 +43,9 @@ public struct OrganizePlan: Codable, Sendable, Equatable {
         public var trashed = 0
         public var labeled = 0
         public var failures: [String] = []
+        /// Records for undo: the moves performed and the items trashed.
+        public var performed: [FileOperations.Performed] = []
+        public var trashedItems: [FileOperations.Trashed] = []
     }
 
     /// A human-readable preview (one line per step) for a confirmation dialog.
@@ -86,13 +89,32 @@ public struct OrganizePlan: Codable, Sendable, Equatable {
                 let destDir = folder.appendingPathComponent(dest)
                 try? fm.createDirectory(at: destDir, withIntermediateDirectories: true)
                 let outcome = FileOperations.move(urls: [src], into: destDir)
-                if outcome.failures.isEmpty { result.moved += 1 } else { result.failures.append(step.file) }
+                // Only a real move counts; a name-collision skip (or failure) is not
+                // success. Keep the Performed record so the caller can register undo.
+                if let record = outcome.performed.first {
+                    result.moved += 1
+                    result.performed.append(record)
+                } else {
+                    result.failures.append(step.file)
+                }
             case .trash:
                 let trash = FileOperations.trash(urls: [src])
-                if trash.failures.isEmpty { result.trashed += 1 } else { result.failures.append(step.file) }
+                if let item = trash.trashed.first {
+                    result.trashed += 1
+                    result.trashedItems.append(item)
+                } else {
+                    result.failures.append(step.file)
+                }
             case .label:
                 guard let label = step.label, !label.isEmpty else {
                     result.failures.append(step.file)
+                    continue
+                }
+                // Additive + idempotent: applying an already-present label is a no-op
+                // success, not a toggle-off (re-running a plan must not un-label files).
+                let existing = FileTags.tags(of: src)
+                if existing.contains(where: { $0.name.caseInsensitiveCompare(label) == .orderedSame }) {
+                    result.labeled += 1
                     continue
                 }
                 let color = LabelSet.default.labels.first { $0.name == label }?.color ?? .none

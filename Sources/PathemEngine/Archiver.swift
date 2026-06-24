@@ -34,7 +34,9 @@ public enum Archiver {
     /// `.git` directories for a clean source archive.
     public static func compress(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {
         guard let parent = urls.first?.deletingLastPathComponent() else { throw ArchiveError.nothingToCompress }
-        let names = urls.map(\.lastPathComponent)
+        // Prefix each name with "./" so a file named "-foo" isn't read as a zip option
+        // (zip stores the "./" -prefixed name without the leading "./").
+        let names = urls.map { "./\($0.lastPathComponent)" }
         guard !names.isEmpty else { throw ArchiveError.nothingToCompress }
         var args = ["-r", "-X", "-q", destination.path] + names
         args += ["-x", "*.DS_Store", "-x", "__MACOSX*", "-x", "*/__MACOSX/*"]

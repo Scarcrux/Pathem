@@ -78,6 +78,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return f
     }()
 
+    /// Distinguishes each list's column-autosave key so concurrent panes don't share one.
+    private static var instanceCount = 0
+
     private enum Column: String, CaseIterable {
         case name, size, kind, date
         var title: String {
@@ -121,11 +124,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             col.isHidden = (column == .kind)  // Kind is opt-in; off by default
             tableView.addTableColumn(col)
         }
-        // Let users reorder, resize, and show/hide columns; AppKit persists the
-        // layout (order/width/visibility) under this autosave name.
+        // Let users reorder, resize, and show/hide columns; AppKit persists the layout
+        // per instance (a unique name avoids multiple live tables stomping one shared
+        // autosave key).
         tableView.allowsColumnReordering = true
         tableView.allowsColumnResizing = true
-        tableView.autosaveName = "PathemFileList"
+        Self.instanceCount += 1
+        tableView.autosaveName = "PathemFileList.\(Self.instanceCount)"
         tableView.autosaveTableColumns = true
         tableView.headerView?.menu = makeHeaderMenu()
 

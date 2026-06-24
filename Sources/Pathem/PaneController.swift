@@ -98,10 +98,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Fired when the row selection changes (used by the preview pane).
     var onSelectionChanged: (() -> Void)?
 
-    /// The single selected file's URL, or nil (for the preview pane).
+    /// The single selected file's URL, or nil (for the preview pane). Never a remote
+    /// row (currentURL is the local fallback, so it'd be a bogus path) and never an
+    /// online-only file (previewing it would fault a download).
     var singleSelectedURL: URL? {
+        guard remote == nil else { return nil }
         let selected = content.selectedEntries
-        guard selected.count == 1, let entry = selected.first, !entry.isDirectory else { return nil }
+        guard selected.count == 1, let entry = selected.first, !entry.isDirectory, !entry.isDataless
+        else { return nil }
         if let location = entry.location {
             return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
         }
@@ -340,6 +344,25 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         upButton.isEnabled = nav.parent != nil
     }
 
+    /// Re-key git states from the canonical repo root to the displayed folder path, so
+    /// overlays match when the folder is browsed through a symlink.
+    private static func remapStates(_ states: [String: GitFileState], to dir: URL)
+        -> [String: GitFileState]
+    {
+        let canonical = dir.resolvingSymlinksInPath().path
+        let displayed = dir.path
+        guard canonical != displayed else { return states }  // no symlink: nothing to do
+        var remapped: [String: GitFileState] = [:]
+        for (key, value) in states {
+            if key == canonical || key.hasPrefix(canonical + "/") {
+                remapped[displayed + key.dropFirst(canonical.count)] = value
+            } else {
+                remapped[key] = value
+            }
+        }
+        return remapped
+    }
+
     /// Read the git status of the current folder off the main thread and apply the
     /// per-file overlays + branch summary, guarded so a stale result is dropped.
     private func refreshGitStatusAsync() {
@@ -351,7 +374,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 guard let self, self.gitGen.isCurrent(generation), self.remote == nil, !self.smartActive,
                     self.nav.current == dir
                 else { return }
-                self.content.setGitStates(info?.states ?? [:])
+                // git reports the canonical repo root (symlinks resolved), but the list
+                // keys rows by the displayed (possibly symlinked) path. Remap so badges
+                // match when the folder is reached through a symlink (e.g. /tmp).
+                self.content.setGitStates(Self.remapStates(info?.states ?? [:], to: dir))
                 self.gitSummary = info.map { gitInfo in
                     var parts = ["\u{2387} \(gitInfo.branch ?? "detached")"]  // ⎇ branch
                     if gitInfo.ahead > 0 { parts.append("\u{2191}\(gitInfo.ahead)") }

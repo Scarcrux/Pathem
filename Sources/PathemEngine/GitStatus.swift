@@ -85,13 +85,27 @@ public enum GitStatus {
         return info
     }
 
-    /// Split a `1`/`2`/`u` record into its path (everything past `fieldsBeforePath`
-    /// space-separated fields) and its two-char XY status.
+    /// Split a `1`/`2`/`u` record into its path (everything after the first
+    /// `fieldsBeforePath` single-space-separated fields) and its two-char XY status.
+    /// The path is taken as a verbatim substring so consecutive spaces in a name are
+    /// preserved (split+join would collapse them).
     private static func pathAndXY(_ record: String, fieldsBeforePath: Int) -> (path: String, xy: String)? {
-        let fields = record.split(separator: " ").map(String.init)
-        guard fields.count > fieldsBeforePath else { return nil }
-        let path = fields[fieldsBeforePath...].joined(separator: " ")
-        return (path, fields.count > 1 ? fields[1] : "..")
+        var spaces = 0
+        var index = record.startIndex
+        while index < record.endIndex {
+            if record[index] == " " {
+                spaces += 1
+                if spaces == fieldsBeforePath {
+                    let start = record.index(after: index)
+                    guard start < record.endIndex else { return nil }
+                    let head = record.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
+                    let xy = head.count > 1 ? String(head[1]) : ".."
+                    return (String(record[start...]), xy)
+                }
+            }
+            index = record.index(after: index)
+        }
+        return nil
     }
 
     private static func state(_ xy: String) -> GitFileState {
