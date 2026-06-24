@@ -72,8 +72,12 @@ final class InfoInspectorController: NSObject {
         panel.makeKeyAndOrderFront(nil)
     }
 
+    /// The single file currently shown, so an async SHA-256 ignores a stale result.
+    private var inspectedURL: URL?
+
     private func configure(_ urls: [URL]) {
         fields.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        inspectedURL = urls.count == 1 ? urls[0] : nil
 
         if urls.count == 1, let info = FileInfo.gather(for: urls[0]) {
             iconView.image = NSWorkspace.shared.icon(forFile: info.path)
@@ -89,6 +93,15 @@ final class InfoInspectorController: NSObject {
             if let modified = info.modified { addField("Modified", dateFormatter.string(from: modified)) }
             addField("Permissions", info.permissions)
             if let owner = info.owner { addField("Owner", owner) }
+            if !info.isDirectory, !info.isDataless {
+                let hashField = addField("SHA-256", "Calculating…")
+                let url = urls[0]
+                Task { @MainActor in
+                    let hash = await Task.detached { try? FileHasher.hash(url) }.value
+                    guard self.inspectedURL == url else { return }  // inspector moved on
+                    hashField.stringValue = hash ?? "—"
+                }
+            }
         } else {
             iconView.image = NSWorkspace.shared.icon(for: .item)
             // Derive every number from the items actually read, so the count,
@@ -102,7 +115,8 @@ final class InfoInspectorController: NSObject {
         }
     }
 
-    private func addField(_ label: String, _ value: String) {
+    @discardableResult
+    private func addField(_ label: String, _ value: String) -> NSTextField {
         let name = NSTextField(labelWithString: label)
         name.font = .systemFont(ofSize: 12, weight: .semibold)
         name.textColor = .secondaryLabelColor
@@ -122,6 +136,7 @@ final class InfoInspectorController: NSObject {
         row.translatesAutoresizingMaskIntoConstraints = false
         fields.addArrangedSubview(row)
         row.widthAnchor.constraint(equalTo: fields.widthAnchor).isActive = true
+        return val
     }
 }
 

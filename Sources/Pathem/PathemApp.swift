@@ -127,6 +127,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
         fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
         fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
+        fileMenu.addItem(commandItem("Copy SHA-256", "files.copySHA256"))
+        fileMenu.addItem(commandItem("Verify Checksum…", "files.verifyChecksum"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 

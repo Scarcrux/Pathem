@@ -305,6 +305,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.copyPaths(asURL: true)
         }
         add("files.copyName", "Copy Name", enabled: hasSelection) { [weak self] in self?.copyNames() }
+        add("files.copySHA256", "Copy SHA-256", enabled: hasSelection) { [weak self] in self?.copyChecksums() }
+        add("files.verifyChecksum", "Verify Checksum…", enabled: hasSelection) {
+            [weak self] in self?.verifyChecksum()
+        }
         add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
         }
@@ -564,6 +568,62 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let lines = urls.map { asURL ? $0.absoluteString : $0.path }.joined(separator: "\n")
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(lines, forType: .string)
+    }
+
+    /// Hash the selected file(s) off the main thread and copy the digests (one per
+    /// line; "hash  name" when multiple).
+    private func copyChecksums(_ algorithm: FileHasher.Algorithm = .sha256) {
+        let files = (activePane?.selectedLocalURLs() ?? []).filter {
+            (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) != true
+        }
+        guard !files.isEmpty else { NSSound.beep(); return }
+        Task { @MainActor in
+            let lines = await Task.detached { () -> [String] in
+                files.compactMap { url in
+                    guard let hash = try? FileHasher.hash(url, algorithm: algorithm) else { return nil }
+                    return files.count == 1 ? hash : "\(hash)  \(url.lastPathComponent)"
+                }
+            }.value
+            guard !lines.isEmpty else { NSSound.beep(); return }
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
+        }
+    }
+
+    /// Hash the one selected file and compare it to a checksum on the clipboard
+    /// (algorithm inferred from the clipboard digest's length).
+    private func verifyChecksum() {
+        guard let url = (activePane?.selectedLocalURLs() ?? []).first,
+            (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) != true
+        else { NSSound.beep(); return }
+        let expected = (NSPasteboard.general.string(forType: .string) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .components(separatedBy: .whitespaces).first?.lowercased() ?? ""
+        guard expected.range(of: "^[0-9a-f]{32,128}$", options: .regularExpression) != nil else {
+            presentChecksumResult(title: "No checksum on the clipboard", text: "Copy a hex checksum first.")
+            return
+        }
+        let algorithm: FileHasher.Algorithm =
+            expected.count == 32 ? .md5 : (expected.count == 40 ? .sha1 : .sha256)
+        Task { @MainActor in
+            let actual = await Task.detached { try? FileHasher.hash(url, algorithm: algorithm) }.value
+            guard let actual else {
+                presentChecksumResult(title: "Couldn’t read the file", text: url.lastPathComponent)
+                return
+            }
+            let match = actual == expected
+            presentChecksumResult(
+                title: match ? "\(algorithm.label) matches ✓" : "\(algorithm.label) does NOT match",
+                text: "\(url.lastPathComponent)\n\nExpected: \(expected)\nActual:   \(actual)")
+        }
+    }
+
+    private func presentChecksumResult(title: String, text: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = text
+        alert.addButton(withTitle: "OK")
+        if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
     }
 
     /// Copy the selection's file names to the clipboard, one per line.
