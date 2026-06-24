@@ -19,6 +19,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let split = NSSplitView()  // the two sides
     private let outerSplit = NSSplitView()  // sidebar | panes
     private let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
+    private let shelf = ShelfController()  // stash shelf / drop stack across the bottom
+    private var shelfHiddenConstraint: NSLayoutConstraint?
+    private var shelfShownConstraint: NSLayoutConstraint?
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -142,13 +145,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
         let host = NSView()
         host.addSubview(vSplit)
+        host.addSubview(shelf.view)  // the stash shelf docks across the bottom
+        shelf.view.isHidden = true
         NSLayoutConstraint.activate([
             vSplit.topAnchor.constraint(equalTo: host.topAnchor),
             vSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
             vSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
-            vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor),
+            shelf.view.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            shelf.view.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            shelf.view.bottomAnchor.constraint(equalTo: host.bottomAnchor),
         ])
+        // The browser fills the window; when the shelf shows, it gives up the bottom.
+        shelfHiddenConstraint = vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor)
+        shelfShownConstraint = vSplit.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
+        shelfHiddenConstraint?.isActive = true
         view = host
+        configureShelf()
     }
 
     // Constrain the sidebar width (outer split) and the terminal drawer height
@@ -337,6 +349,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.activePane?.goUp()
         }
         add("nav.editPath", "Go to Path…") { [weak self] in self?.activePane?.beginEditingPath() }
+        add("shelf.add", "Add to Shelf", enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
+        { [weak self] in self?.addSelectionToShelf() }
+        add("shelf.toggle", "Show Shelf") { [weak self] in self?.toggleShelf() }
         add("connections.manage", "Connections…") {
             [weak self] in self?.connectionsController.present(over: self?.view.window)
         }
@@ -605,6 +620,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
+        case "shelf.toggle":
+            menuItem.state = shelf.view.isHidden ? .off : .on
+            menuItem.title = shelf.view.isHidden ? "Show Shelf" : "Hide Shelf"
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         default: break
         }
@@ -1545,6 +1563,86 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
             }
         }
+    }
+
+    // MARK: - Stash shelf / drop stack
+
+    private func configureShelf() {
+        shelf.onChanged = { [weak self] in
+            guard let self else { return }
+            if !self.shelf.isEmpty, self.shelf.view.isHidden { self.setShelfVisible(true) }  // auto-show on first add
+        }
+        shelf.onCopyHere = { [weak self] urls in self?.shelfTransfer(urls, move: false) }
+        shelf.onMoveHere = { [weak self] urls in self?.shelfTransfer(urls, move: true) }
+        shelf.onTrash = { [weak self] urls in self?.shelfTrash(urls) }
+        shelf.onReveal = { urls in
+            NSWorkspace.shared.activateFileViewerSelecting(urls)
+        }
+        shelf.onShare = { urls, from in
+            guard !urls.isEmpty else { return }
+            let picker = NSSharingServicePicker(items: urls)
+            picker.show(relativeTo: from.bounds, of: from, preferredEdge: .minY)
+        }
+        shelf.onHide = { [weak self] in self?.setShelfVisible(false) }
+    }
+
+    private func setShelfVisible(_ visible: Bool) {
+        guard shelf.view.isHidden == visible else { return }
+        shelf.view.isHidden = !visible
+        shelfHiddenConstraint?.isActive = !visible
+        shelfShownConstraint?.isActive = visible
+    }
+
+    private func toggleShelf() { setShelfVisible(shelf.view.isHidden) }
+
+    /// Add the active pane's selection to the shelf (location-aware, so smart-result
+    /// rows contribute their real paths).
+    private func addSelectionToShelf() {
+        guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
+        shelf.add(urls)
+    }
+
+    /// Copy or move shelved items into the active pane's folder, reusing the same
+    /// conflict-aware, undoable transfer path as F5/F6.
+    private func shelfTransfer(_ urls: [URL], move: Bool) {
+        guard !transferInFlight else { NSSound.beep(); return }
+        guard let destination = activePane else { NSSound.beep(); return }
+        let destinationURL = destination.currentURL
+        // Don't act on items that are already in (or are) the destination folder.
+        let sources = urls.filter { $0.deletingLastPathComponent().standardizedFileURL != destinationURL.standardizedFileURL }
+        guard !sources.isEmpty else { NSSound.beep(); return }
+
+        var resolution = FileOperations.ConflictResolution.skip
+        let conflicts = FileOperations.conflicts(urls: sources, into: destinationURL)
+        if !conflicts.isEmpty {
+            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else { return }
+            resolution = chosen
+        }
+        runTransfer(urls: sources, into: destinationURL, move: move, resolution: resolution) {
+            [weak self] outcome in
+            guard let self else { return }
+            self.reloadBothSides()
+            if move {
+                let moved = Set(outcome.performed.map(\.source.path))
+                self.pruneSmartEntries(moved)
+                self.shelf.itemsRemoved(outcome.performed.map(\.source))  // gone from source now
+            }
+            if !outcome.performed.isEmpty {
+                self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+            }
+            if !outcome.failures.isEmpty {
+                self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+            }
+        }
+    }
+
+    private func shelfTrash(_ urls: [URL]) {
+        let result = FileOperations.trash(urls: urls)
+        reloadBothSides()
+        pruneSmartEntries(Set(result.trashed.map(\.original.path)))
+        shelf.itemsRemoved(result.trashed.map(\.original))  // trashed: drop from the shelf
+        if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
+        if !result.failures.isEmpty { presentFailures(result.failures, title: "Move to Trash failed") }
     }
 
     private func transfer(move: Bool) {

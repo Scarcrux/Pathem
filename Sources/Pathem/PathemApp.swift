@@ -126,6 +126,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
         fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
+        fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 
@@ -158,6 +159,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Show Path Bar at Bottom", "view.pathBarBottom"))
         viewMenu.addItem(commandItem("Calculate All Sizes", "view.calculateSizes"))
         viewMenu.addItem(commandItem("Compact Sidebar", "view.compactSidebar"))
+        viewMenu.addItem(commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
