@@ -19,7 +19,7 @@ final class PreferencesController: NSObject {
     override init() {
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 210),
-            styleMask: [.titled, .closable, .fullSizeContentView],
+            styleMask: [.titled, .closable],  // not .fullSizeContentView: keep content below the title bar
             backing: .buffered, defer: true)
         super.init()
         build()
@@ -49,30 +49,61 @@ final class PreferencesController: NSObject {
             check.action = #selector(changed)
         }
 
+        // Checkboxes span the full width (no empty label column); only the labeled
+        // rows use the label + control layout.
         let form = NSStackView(views: [
             row(L("prefs.densityLabel", "Density"), densityPopup),
             row(L("prefs.fontSizeLabel", "Font size"), fontStepper, fontValue),
-            row("", alternatingCheck),
-            row("", ocrCheck),
+            alternatingCheck,
+            ocrCheck,
         ])
         form.orientation = .vertical
         form.alignment = .leading
         form.spacing = 12
         form.translatesAutoresizingMaskIntoConstraints = false
 
+        let inset: CGFloat = 18
         let content = panel.contentView!
         content.addSubview(form)
         NSLayoutConstraint.activate([
-            form.topAnchor.constraint(equalTo: content.topAnchor, constant: 18),
-            form.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
-            form.trailingAnchor.constraint(lessThanOrEqualTo: content.trailingAnchor, constant: -18),
+            form.topAnchor.constraint(equalTo: content.topAnchor, constant: inset),
+            form.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: inset),
+            form.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -inset),
+            form.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -inset),
         ])
+        // Size the panel to fit its content so longer (localized) strings aren't clipped.
+        content.layoutSubtreeIfNeeded()
+        let fit = form.fittingSize
+        panel.setContentSize(NSSize(width: fit.width + inset * 2, height: fit.height + inset * 2))
+    }
+
+    /// Debug: render the laid-out content to a PNG so the layout can be inspected
+    /// headlessly (run via PATHEM_PREFS_SHOT=1).
+    func debugRenderToPNG(_ path: String) {
+        densityPopup.selectItem(at: 0)
+        fontStepper.integerValue = 13
+        fontValue.stringValue = "13"
+        alternatingCheck.state = .on
+        ocrCheck.state = .off
+        guard let content = panel.contentView else { return }
+        content.wantsLayer = true
+        content.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        content.layoutSubtreeIfNeeded()
+        let bounds = content.bounds
+        guard let rep = content.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        content.cacheDisplay(in: bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+            print("PREFS SHOT: \(path) content \(Int(bounds.width))x\(Int(bounds.height))")
+        }
     }
 
     private func row(_ title: String, _ views: NSView...) -> NSStackView {
         let label = NSTextField(labelWithString: title)
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        // A consistent column that can grow for longer localized labels (never clips).
+        label.widthAnchor.constraint(greaterThanOrEqualToConstant: 80).isActive = true
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
         let stack = NSStackView(views: [label] + views)
         stack.orientation = .horizontal
         stack.spacing = 8

@@ -65,6 +65,11 @@ enum PathemApp {
             exit(ok ? 0 : 1)
         }
 
+        if ProcessInfo.processInfo.environment["PATHEM_PREFS_SHOT"] != nil {
+            PreferencesController().debugRenderToPNG("/tmp/prefs.png")
+            exit(0)
+        }
+
         if ProcessInfo.processInfo.environment["PATHEM_GATE_A"] != nil {
             // Gate A drives a single FileListController directly.
             let controller = FileListController()
