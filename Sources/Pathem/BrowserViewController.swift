@@ -25,6 +25,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     private var previewVisible = false
     private lazy var sizeBrowser = SizeBrowserController()
+    private lazy var cleanup = CleanupController()
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -486,6 +487,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in
             guard let self, let url = self.activePane?.currentURL else { return }
             self.sizeBrowser.present(for: url, over: self.view.window)
+        }
+        add("view.cleanup", "Cleanup…", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in
+            guard let self, let url = self.activePane?.currentURL else { return }
+            self.cleanup.present(for: url, over: self.view.window)
         }
         add("files.comparePanes", "Compare Panes…", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.comparePanes()
