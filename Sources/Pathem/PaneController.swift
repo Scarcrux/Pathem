@@ -95,6 +95,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Fired when this pane becomes active (its list gains focus).
     var onBecomeActive: (() -> Void)?
+    /// Fired when the row selection changes (used by the preview pane).
+    var onSelectionChanged: (() -> Void)?
+
+    /// The single selected file's URL, or nil (for the preview pane).
+    var singleSelectedURL: URL? {
+        let selected = content.selectedEntries
+        guard selected.count == 1, let entry = selected.first, !entry.isDirectory else { return nil }
+        if let location = entry.location {
+            return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+        }
+        return currentURL.appendingPathComponent(entry.name)
+    }
     /// Fired when this pane's folder changes, by navigation or on-disk edits.
     /// The browser uses it to invalidate and rebuild the semantic-search cache.
     var onDirectoryDidChange: ((URL) -> Void)?
@@ -754,7 +766,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             self.rememberFormat?(self.nav.current, self.format)
             self.reload()
         }
-        content.onSelectionChanged = { [weak self] in self?.updateStatus() }
+        content.onSelectionChanged = { [weak self] in
+            self?.updateStatus()
+            self?.onSelectionChanged?()
+        }
         content.onDropFiles = { [weak self] urls, move in
             guard let self else { return }
             if let remote = self.remote {  // dropping onto a remote pane uploads

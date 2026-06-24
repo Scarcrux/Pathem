@@ -22,6 +22,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let shelf = ShelfController()  // stash shelf / drop stack across the bottom
     private var shelfHiddenConstraint: NSLayoutConstraint?
     private var shelfShownConstraint: NSLayoutConstraint?
+    private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
+    private var previewVisible = false
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -212,6 +214,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.onOpenRemoteFile = { [weak self] connection, remotePath, password, name in
                     self?.openRemoteFile(connection, remotePath: remotePath, password: password, name: name)
                 }
+                pane.onSelectionChanged = { [weak self] in self?.updatePreview() }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -379,6 +382,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("view.filter", "Filter…", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.beginFilter()
+        }
+        add("view.previewPane", "Preview Pane", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.togglePreviewPane()
         }
         add("files.findDuplicates", "Find Duplicates", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findDuplicates()
@@ -781,6 +787,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Show/hide the QuickLook preview pane docked at the right of the window.
+    private func togglePreviewPane() {
+        previewVisible.toggle()
+        if previewVisible {
+            previewView.translatesAutoresizingMaskIntoConstraints = true
+            outerSplit.addArrangedSubview(previewView)  // [sidebar | panes | preview]
+            outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(255), forSubviewAt: 2)
+            if previewView.frame.width < 100 {
+                outerSplit.setPosition(outerSplit.bounds.width - 300, ofDividerAt: outerSplit.arrangedSubviews.count - 2)
+            }
+            updatePreview()
+        } else {
+            previewView.previewItem = nil
+            outerSplit.removeArrangedSubview(previewView)
+            previewView.removeFromSuperview()
+        }
+    }
+
+    /// Point the preview at the active pane's single selected file (when visible).
+    private func updatePreview() {
+        guard previewVisible else { return }
+        previewView.previewItem = activePane?.singleSelectedURL as NSURL?
+    }
+
     /// Apply (toggle) the named label carried by a "Label" menu item to the selection.
     @objc func applyLabelFromMenu(_ sender: NSMenuItem) {
         guard let label = sender.representedObject as? FileLabel else { NSSound.beep(); return }
@@ -887,6 +917,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
+        case "view.previewPane": menuItem.state = previewVisible ? .on : .off
         case "shelf.toggle":
             menuItem.state = shelf.view.isHidden ? .off : .on
             menuItem.title = shelf.view.isHidden ? "Show Shelf" : "Hide Shelf"
@@ -1790,6 +1821,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // every focus change, so a mid-typed query or visible results survive a
         // pane re-focus.
         if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
+        updatePreview()  // follow the newly active pane's selection
         saveSessionSoon()
     }
 

@@ -175,6 +175,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Compact Sidebar", "view.compactSidebar"))
         viewMenu.addItem(commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
+        viewMenu.addItem(commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
         viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
