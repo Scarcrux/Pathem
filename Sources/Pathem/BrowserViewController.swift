@@ -190,6 +190,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         super.viewDidLoad()
         Self.cleanupRemoteTemp()
         registerCommands()
+        loadSavedSearches()  // register before macros so a macro can run a search
         loadMacros()  // after base commands, so macros can chain them
         loadKeymap()
         loadFolderFormats()
@@ -265,6 +266,34 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Register every browser action as a named command. This is the spine the
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
     private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
+    private static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
+
+    /// Register each saved search (searches.json) as a command that runs its mdfind
+    /// query and shows the results as a cross-folder smart list.
+    private func loadSavedSearches() {
+        let set = loadConfig(SavedSearches.self, from: Self.savedSearchesURL) ?? SavedSearches.default
+        for search in set.searches where !search.name.isEmpty {
+            let query = search.mdfindQuery()
+            guard !query.isEmpty else { continue }
+            let name = search.name
+            commands.register(
+                .init(
+                    id: "search.\(name)", title: "Search: \(name)", isEnabled: { true },
+                    run: { [weak self] in self?.runSavedSearch(name, query: query) }))
+        }
+    }
+
+    private func runSavedSearch(_ name: String, query: String) {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        let token = pane.beginContentRequest()
+        pane.showSmartResults([], title: "Searching: \(name)…")
+        Task { @MainActor in
+            let urls = await SpotlightSearch.matching(query, scope: nil, limit: 1000)
+            let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
+            guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
+            pane.showSmartResults(entries, title: "Search: \(name) (\(entries.count))")
+        }
+    }
 
     /// Register each user macro (macros.json) as a command that runs its command IDs
     /// in order; it then appears in the palette and is bindable like any command.

@@ -18,6 +18,12 @@ public enum SpotlightSearch {
         return Array(sorted.prefix(limit))
     }
 
+    /// Files matching a raw mdfind predicate (e.g. from a SavedSearch).
+    public static func matching(_ query: String, scope: URL? = nil, limit: Int = 1000) async -> [URL] {
+        guard !query.isEmpty else { return [] }
+        return await run(query: query, scope: scope, limit: limit)
+    }
+
     // MARK: Query builders (pure, testable)
 
     static func tagQuery(_ tag: String) -> String {
