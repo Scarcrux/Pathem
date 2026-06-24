@@ -94,8 +94,9 @@ final class InfoInspectorController: NSObject {
             addField("Permissions", info.permissions)
             if let owner = info.owner { addField("Owner", owner) }
             if !info.isDirectory, !info.isDataless {
-                let hashField = addField("SHA-256", "Calculating…")
                 let url = urls[0]
+                if let dimensions = MediaMetadata.dimensionsLabel(of: url) { addField("Dimensions", dimensions) }
+                let hashField = addField("SHA-256", "Calculating…")
                 Task { @MainActor in
                     let hash = await Task.detached { try? FileHasher.hash(url) }.value
                     guard self.inspectedURL == url else { return }  // inspector moved on
