@@ -37,6 +37,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private static let maxSemanticItems = 5_000
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
     private static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
+    private static let searchItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.search")
 
     /// The command bus (DESIGN.md section 10). Every browser action is a named
     /// command; keybindings, the palette, and the AI bar will dispatch by id.
@@ -119,6 +120,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         searchField.action = #selector(runSearch)
         searchField.sendsSearchStringImmediately = false
         searchField.toolTip = "Semantic search in this folder (on-device)"
+        // The search field lives in the window's unified toolbar (Finder-style),
+        // not its own strip; pin a width for when it's in the toolbar item.
+        searchField.widthAnchor.constraint(equalToConstant: 240).isActive = true
 
         // Vertical split: the browser (sidebar + panes) on top, the optional
         // terminal drawer at the bottom. The terminal starts collapsed.
@@ -133,13 +137,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         terminal.view.isHidden = true
 
         let host = NSView()
-        host.addSubview(searchField)
         host.addSubview(vSplit)
         NSLayoutConstraint.activate([
-            searchField.topAnchor.constraint(equalTo: host.topAnchor, constant: 8),
-            searchField.trailingAnchor.constraint(equalTo: host.trailingAnchor, constant: -8),
-            searchField.widthAnchor.constraint(equalToConstant: 240),  // top-right, like Finder
-            vSplit.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
+            vSplit.topAnchor.constraint(equalTo: host.topAnchor),
             vSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
             vSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
             vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor),
@@ -1379,6 +1379,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     override func viewDidAppear() {
         super.viewDidAppear()
+        installToolbarIfNeeded()
         applyInitialSplitPositions()
         view.window?.makeFirstResponder(leftTabs.activePane?.keyView)
         updateWindowTitle()
@@ -1790,6 +1791,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         window.title = prefs.showFullPathInTitle ? url.path : (name.isEmpty ? url.path : name)
     }
 
+    /// Put the search field in the window's unified toolbar (Finder-style), so it
+    /// doesn't waste a whole strip at the top of the content.
+    private func installToolbarIfNeeded() {
+        guard let window = view.window, window.toolbar == nil else { return }
+        let toolbar = NSToolbar(identifier: "com.scarcrux.pathem.toolbar")
+        toolbar.delegate = self
+        toolbar.allowsUserCustomization = false
+        toolbar.displayMode = .iconOnly
+        window.toolbarStyle = .unified
+        window.toolbar = toolbar
+    }
+
     // MARK: - Terminal
 
     /// Show or hide the embedded terminal drawer. On first show it starts a login
@@ -1893,5 +1906,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         iconView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("icon-view-renders", iconView.entries.count > 0, "\(iconView.entries.count) entries")
         return (ok, lines)
+    }
+}
+
+extension BrowserViewController: NSToolbarDelegate {
+    func toolbar(
+        _ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
+        willBeInsertedIntoToolbar flag: Bool
+    ) -> NSToolbarItem? {
+        guard identifier == Self.searchItemID else { return nil }
+        let item = NSToolbarItem(itemIdentifier: identifier)
+        item.view = searchField  // the on-device semantic search field
+        item.label = "Search"
+        item.visibilityPriority = .high
+        return item
+    }
+
+    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace, Self.searchItemID]  // pushes search to the trailing edge
+    }
+
+    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace, Self.searchItemID]
     }
 }
