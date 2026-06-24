@@ -67,6 +67,8 @@ final class IconItem: NSCollectionViewItem {
     private let label = NSTextField(labelWithString: "")
     private var iconWidth: NSLayoutConstraint?
     private var iconHeight: NSLayoutConstraint?
+    /// The file this cell is showing; guards an async thumbnail against cell reuse.
+    private var representedURL: URL?
 
     override func loadView() {
         let root = NSView()
@@ -99,15 +101,36 @@ final class IconItem: NSCollectionViewItem {
         view = root
     }
 
-    func configure(name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool) {
+    func configure(
+        name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
+        thumbnailURL: URL?
+    ) {
         loadViewIfNeeded()
-        icon.image = image
+        icon.image = image  // type icon shows immediately; a thumbnail replaces it when ready
         iconWidth?.constant = iconSize
         iconHeight?.constant = iconSize
         label.stringValue = name
         label.font = .systemFont(ofSize: fontSize)
         label.textColor = dimmed ? .secondaryLabelColor : .labelColor
         updateHighlight()
+
+        representedURL = thumbnailURL
+        guard let url = thumbnailURL else { return }
+        let size = CGSize(width: iconSize, height: iconSize)
+        if let hit = ThumbnailProvider.shared.cached(url, size: size) {
+            icon.image = hit
+            return
+        }
+        let scale = view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak self] image in
+            guard let self, self.representedURL == url else { return }  // cell wasn't reused
+            self.icon.image = image
+        }
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        representedURL = nil  // ignore any in-flight thumbnail for the previous file
     }
 
     override var isSelected: Bool { didSet { updateHighlight() } }
@@ -286,9 +309,12 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
         let entry = entries[indexPath.item]
         let image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+        // Real content thumbnails for files only; never for folders or online-only
+        // (dataless) items, where generating one could fault a download.
+        let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
         item.configure(
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
-            dimmed: entry.isDataless)
+            dimmed: entry.isDataless, thumbnailURL: thumbnailURL)
         return item
     }
 
@@ -332,6 +358,14 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         guard !incoming.isEmpty else { return false }
         onDropFiles?(incoming, resolvedDragOperation(draggingInfo) == .move)
         return true
+    }
+
+    /// The on-disk URL of an entry (smart-result rows carry their own folder).
+    private func fileURL(for entry: FileEntry) -> URL? {
+        if let location = entry.location {
+            return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+        }
+        return directoryURL?.appendingPathComponent(entry.name)
     }
 
     private func incomingURLs(from info: NSDraggingInfo) -> [URL] {
