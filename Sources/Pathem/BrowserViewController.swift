@@ -187,6 +187,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         super.viewDidLoad()
         Self.cleanupRemoteTemp()
         registerCommands()
+        loadMacros()  // after base commands, so macros can chain them
         loadKeymap()
         loadFolderFormats()
         loadLayouts()
@@ -258,6 +259,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Register every browser action as a named command. This is the spine the
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
+    private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
+
+    /// Register each user macro (macros.json) as a command that runs its command IDs
+    /// in order; it then appears in the palette and is bindable like any command.
+    private func loadMacros() {
+        let set = loadConfig(Macros.self, from: Self.macrosURL) ?? Macros.default
+        for macro in set.macros where !macro.name.isEmpty && !macro.commands.isEmpty {
+            let ids = macro.commands
+            commands.register(
+                .init(
+                    id: "macro.\(macro.name)", title: "Macro: \(macro.name)", isEnabled: { true },
+                    run: { [weak self] in for id in ids { _ = self?.commands.perform(id) } }))
+        }
+    }
+
     private func registerCommands() {
         func add(
             _ id: String, _ title: String,
