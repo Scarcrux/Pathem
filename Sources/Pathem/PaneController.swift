@@ -77,12 +77,15 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// menu uses this so its items reuse the same command spine as the main menu.
     var runCommand: ((String) -> Void)?
 
-    /// The path-display group (breadcrumb / edit field / remote label), moved as a
-    /// unit between the top toolbar and a bottom strip.
+    /// The location bar (breadcrumb / edit field / remote label): its own full-width
+    /// row, above or below the file list (Directory Opus style), never crammed onto
+    /// the button row.
     private let pathBar = NSStackView()
     private var toolbarStack = NSStackView()
     private let bottomStack = NSStackView()
-    private var pathBarBottomWidth: NSLayoutConstraint?
+    /// The constraints that position the location bar above or below the list; swapped
+    /// when the position toggles.
+    private var pathBarPositionConstraints: [NSLayoutConstraint] = []
     private let statusLabel = NSTextField(labelWithString: "")
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -546,40 +549,44 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         bottomStack.addArrangedSubview(statusLabel)
 
         containerView.addSubview(toolbarStack)
+        containerView.addSubview(pathBar)
         containerView.addSubview(contentContainer)
         containerView.addSubview(bottomStack)
         NSLayoutConstraint.activate([
             toolbarStack.topAnchor.constraint(equalTo: containerView.topAnchor),
             toolbarStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             toolbarStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            contentContainer.topAnchor.constraint(equalTo: toolbarStack.bottomAnchor),
             contentContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             contentContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            contentContainer.bottomAnchor.constraint(equalTo: bottomStack.topAnchor, constant: -4),
             bottomStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
             bottomStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10),
             bottomStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
+            // The location bar always spans the pane's full width on its own row.
+            pathBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
+            pathBar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
         ])
-        setPathBar(atBottom: false)  // default: path bar in the top toolbar
+        setPathBar(atBottom: false)  // default: location bar directly under the buttons
         embedContent()
     }
 
-    /// Move the path-display group to the bottom strip (Finder-style) or back into
-    /// the top toolbar.
+    /// Position the full-width location bar below the buttons (top, Directory Opus
+    /// style) or above the status line (bottom, Finder style).
     func setPathBar(atBottom: Bool) {
-        pathBarBottomWidth?.isActive = false
-        pathBarBottomWidth = nil
-        if let parent = pathBar.superview as? NSStackView {
-            parent.removeArrangedSubview(pathBar)
-            pathBar.removeFromSuperview()
-        }
+        NSLayoutConstraint.deactivate(pathBarPositionConstraints)
         if atBottom {
-            bottomStack.insertArrangedSubview(pathBar, at: 0)
-            pathBarBottomWidth = pathBar.widthAnchor.constraint(equalTo: bottomStack.widthAnchor)
-            pathBarBottomWidth?.isActive = true
+            pathBarPositionConstraints = [
+                contentContainer.topAnchor.constraint(equalTo: toolbarStack.bottomAnchor),
+                contentContainer.bottomAnchor.constraint(equalTo: pathBar.topAnchor, constant: -4),
+                pathBar.bottomAnchor.constraint(equalTo: bottomStack.topAnchor, constant: -4),
+            ]
         } else {
-            toolbarStack.addArrangedSubview(pathBar)
+            pathBarPositionConstraints = [
+                pathBar.topAnchor.constraint(equalTo: toolbarStack.bottomAnchor, constant: 2),
+                contentContainer.topAnchor.constraint(equalTo: pathBar.bottomAnchor, constant: 2),
+                contentContainer.bottomAnchor.constraint(equalTo: bottomStack.topAnchor, constant: -4),
+            ]
         }
+        NSLayoutConstraint.activate(pathBarPositionConstraints)
     }
 
     /// Put the active content's scroll view into the content container, replacing
