@@ -29,7 +29,7 @@ public struct Preferences: Codable, Sendable, Equatable {
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
         alternatingRows: Bool = true, searchOCR: Bool = false,
-        showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = false,
+        showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false
     ) {
         self.density = density

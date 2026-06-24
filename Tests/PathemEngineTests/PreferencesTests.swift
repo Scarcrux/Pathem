@@ -42,7 +42,7 @@ import Testing
         #expect(prefs.fontSize == 15)
         #expect(prefs.searchOCR == true)
         #expect(prefs.showFullPathInTitle == false)  // defaulted
-        #expect(prefs.pathBarAtBottom == false)  // defaulted
+        #expect(prefs.pathBarAtBottom == true)  // defaulted (Finder-style bottom path bar)
         #expect(prefs.openConnectionsInNewTab == false)  // defaulted
         #expect(prefs.calculateFolderSizes == false)  // defaulted
     }
