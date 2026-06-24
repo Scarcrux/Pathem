@@ -41,7 +41,12 @@ import PathemEngine
                 provided names. Use action "move" with a `destination` subfolder, "label" with a
                 `label`, or "trash". Only include files the instruction calls for.
                 """)
-        let prompt = "Files:\n\(files.joined(separator: "\n"))\n\nInstruction: \(instruction)"
+        // Lead with the natural-language instruction so the on-device model's language
+        // classifier reliably detects English; a filename-dominated prompt (the list
+        // first) can classify as "undetermined" and fail guided generation.
+        let prompt =
+            "Instruction: \(instruction)\n\nApply it to these files, using their exact names:\n"
+            + files.joined(separator: "\n")
         let generated: LanguageModelSession.Response<GeneratedOrganizePlan>
         do {
             generated = try await session.respond(to: prompt, generating: GeneratedOrganizePlan.self)

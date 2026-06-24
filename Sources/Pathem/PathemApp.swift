@@ -87,7 +87,11 @@ enum PathemApp {
         // Headless AI smoke: run the on-device model through our real proposal path
         // and print the plan it proposes. Needs macOS 26 + Apple Intelligence.
         #if canImport(FoundationModels)
-            if ProcessInfo.processInfo.environment["PATHEM_AI_SMOKE"] != nil {
+            // Env var for direct runs; --ai-smoke arg so it also works via `open`
+            // (LaunchServices doesn't pass the terminal environment through).
+            if ProcessInfo.processInfo.environment["PATHEM_AI_SMOKE"] != nil
+                || CommandLine.arguments.contains("--ai-smoke")
+            {
                 DispatchQueue.main.async {
                     Task.detached {
                         print("=== AI SMOKE: Organize with AI ===")
@@ -98,7 +102,7 @@ enum PathemApp {
                         let files = [
                             "IMG_1024.jpg", "budget.pdf", "notes.txt", "screenshot.png", "invoice.pdf",
                             "cat.heic",
-                        ]
+                        ]  // a filename-heavy case that used to trip the language classifier
                         let plan = await proposeOrganizePlan(
                             instruction: "Move images into a Pictures folder and PDFs into a Docs folder",
                             files: files)

@@ -10,6 +10,15 @@
 	<string>com.scarcrux.pathem</string>
 	<key>CFBundleExecutable</key>
 	<string>Pathem</string>
+	<!-- Declare the app's language so a GUI-app process resolves a concrete locale
+	     (en_US), which on-device FoundationModels requires; without this the bundle
+	     resolves to an undetermined locale and the model returns "Unsupported language". -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+	</array>
 	<key>CFBundleIconFile</key>
 	<string>Pathem</string>
 	<key>CFBundlePackageType</key>
