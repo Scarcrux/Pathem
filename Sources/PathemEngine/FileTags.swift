@@ -6,7 +6,7 @@ import Foundation
 /// set in Pathem show up in Finder and vice versa.
 public struct FileTag: Sendable, Equatable, Hashable {
     /// Finder's seven standard label colors (index 0 means "no color").
-    public enum Color: Int, Sendable, CaseIterable {
+    public enum Color: Int, Codable, Sendable, CaseIterable {
         case none = 0, gray = 1, green = 2, purple = 3, blue = 4, yellow = 5, red = 6, orange = 7
 
         public var label: String {
@@ -91,6 +91,21 @@ public enum FileTags {
             }
             if result != 0 { throw tagError("setxattr") }
         }
+    }
+
+    /// Add a named tag if absent, or remove it (by name, case-insensitive) if present.
+    /// Used to apply/remove named labels, which are just colored tags.
+    @discardableResult
+    public static func toggle(_ tag: FileTag, on url: URL) throws -> Bool {
+        var tags = tags(of: url)
+        if let index = tags.firstIndex(where: { $0.name.caseInsensitiveCompare(tag.name) == .orderedSame }) {
+            tags.remove(at: index)
+            try setTags(tags, on: url)
+            return false
+        }
+        tags.append(tag)
+        try setTags(tags, on: url)
+        return true
     }
 
     /// Add a color tag if absent, or remove it if already present.

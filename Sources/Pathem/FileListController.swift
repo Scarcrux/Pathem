@@ -481,6 +481,22 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell
     }
 
+    /// Tint a tagged row with its (first) label color, so labels read as colored
+    /// rows, not just dots.
+    func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+        let id = NSUserInterfaceItemIdentifier("tintRow")
+        let rowView =
+            (tableView.makeView(withIdentifier: id, owner: self) as? TintRowView)
+            ?? {
+                let view = TintRowView()
+                view.identifier = id
+                return view
+            }()
+        let color = row < entries.count ? tagColors(for: entries[row]).first : nil
+        rowView.tint = color.map { TagColors.nsColor($0) }
+        return rowView
+    }
+
     /// A human-readable file kind (localized) derived from the type, no I/O.
     private static func kind(for entry: FileEntry) -> String {
         if entry.isDirectory { return "Folder" }
@@ -778,5 +794,21 @@ final class GenerationBox: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return value == generation
+    }
+}
+
+/// A list row that paints a faint wash of its label color behind the content, so a
+/// tagged file reads as a colored row (not just a dot). Skipped while selected so the
+/// selection highlight stays clear.
+final class TintRowView: NSTableRowView {
+    var tint: NSColor? {
+        didSet { if tint != oldValue { needsDisplay = true } }
+    }
+
+    override func drawBackground(in dirtyRect: NSRect) {
+        super.drawBackground(in: dirtyRect)
+        guard let tint, !isSelected else { return }
+        tint.withAlphaComponent(0.16).setFill()
+        dirtyRect.fill()
     }
 }

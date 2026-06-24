@@ -890,6 +890,41 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         reload()
     }
 
+    /// Toggle a named label (a colored tag) across the selection (local only).
+    func applyLabel(_ label: FileLabel) {
+        guard remote == nil, !smartActive else {
+            NSSound.beep()
+            return
+        }
+        let urls = selectedLocalURLs()
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let allHave = urls.allSatisfy {
+            FileTags.tags(of: $0).contains { $0.name.caseInsensitiveCompare(label.name) == .orderedSame }
+        }
+        var failed = false
+        for url in urls {
+            do {
+                if allHave {
+                    var tags = FileTags.tags(of: url)
+                    tags.removeAll { $0.name.caseInsensitiveCompare(label.name) == .orderedSame }
+                    try FileTags.setTags(tags, on: url)
+                } else if !FileTags.tags(of: url).contains(where: {
+                    $0.name.caseInsensitiveCompare(label.name) == .orderedSame
+                }) {
+                    _ = try FileTags.toggle(label.tag, on: url)
+                }
+            } catch {
+                failed = true
+            }
+        }
+        if failed { NSSound.beep() }
+        content.invalidateTagCache()
+        reload()
+    }
+
     @objc private func clearTags() { clearSelectionTags() }
 
     /// Remove all tags from every selected file (local only).

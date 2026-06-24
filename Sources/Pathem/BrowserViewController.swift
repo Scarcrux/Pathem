@@ -626,6 +626,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
     }
 
+    /// Apply (toggle) the named label carried by a "Label" menu item to the selection.
+    @objc func applyLabelFromMenu(_ sender: NSMenuItem) {
+        guard let label = sender.representedObject as? FileLabel else { NSSound.beep(); return }
+        activePane?.applyLabel(label)
+    }
+
     /// The folder to open in an external editor: a single selected folder, else the
     /// active pane's current folder.
     private func editorTarget() -> URL? {

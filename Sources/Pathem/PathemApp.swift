@@ -122,6 +122,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
+        fileMenu.addItem(applyLabelMenuItem())
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
@@ -226,6 +227,24 @@ enum PathemApp {
                 submenu.addItem(entry)
             }
         }
+        item.submenu = submenu
+        return item
+    }
+
+    /// A "Label" submenu of named labels (each a colored tag) plus Clear Tags.
+    private static func applyLabelMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Label", action: nil, keyEquivalent: "")
+        let submenu = NSMenu(title: "Label")
+        for label in LabelSet.default.labels {
+            let entry = NSMenuItem(
+                title: label.name,
+                action: #selector(BrowserViewController.applyLabelFromMenu(_:)), keyEquivalent: "")
+            entry.representedObject = label
+            entry.image = TagColors.dot(label.color, diameter: 12)
+            submenu.addItem(entry)
+        }
+        submenu.addItem(.separator())
+        submenu.addItem(commandItem("Clear Tags", "tags.clear"))
         item.submenu = submenu
         return item
     }
