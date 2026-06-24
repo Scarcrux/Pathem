@@ -32,7 +32,7 @@ import PathemEngine
         let session = LanguageModelSession(
             instructions: """
                 You help reclaim disk space. Given a numbered list of files and folders with sizes and
-                why each was flagged, return the indices that are SAFE to delete — regenerable caches,
+                why each was flagged, return the indices that are SAFE to delete: regenerable caches,
                 build artifacts, duplicate copies, and obvious junk. Be conservative: never recommend
                 deleting documents, photos, or anything ambiguous.
                 """)
