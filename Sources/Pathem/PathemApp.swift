@@ -143,6 +143,10 @@ enum PathemApp {
         editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(
             withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        editMenu.addItem(.separator())
+        editMenu.addItem(commandItem("Copy Path", "files.copyPath", "c", [.command, .option]))
+        editMenu.addItem(commandItem("Copy as File URL", "files.copyURL"))
+        editMenu.addItem(commandItem("Copy Name", "files.copyName"))
 
         let viewItem = NSMenuItem()
         mainMenu.addItem(viewItem)

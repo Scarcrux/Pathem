@@ -300,6 +300,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.airdrop", "Send via AirDrop", enabled: hasSelection) {
             [weak self] in self?.activePane?.airDropSelection()
         }
+        add("files.copyPath", "Copy Path", enabled: hasSelection) { [weak self] in self?.copyPaths(asURL: false) }
+        add("files.copyURL", "Copy as File URL", enabled: hasSelection) {
+            [weak self] in self?.copyPaths(asURL: true)
+        }
+        add("files.copyName", "Copy Name", enabled: hasSelection) { [weak self] in self?.copyNames() }
         add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
         }
@@ -551,6 +556,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func reloadBothSides() {
         leftTabs.activePane?.reloadIfShowingListing()
         rightTabs.activePane?.reloadIfShowingListing()
+    }
+
+    /// Copy the selection's paths (POSIX or file://) to the clipboard, one per line.
+    private func copyPaths(asURL: Bool) {
+        guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
+        let lines = urls.map { asURL ? $0.absoluteString : $0.path }.joined(separator: "\n")
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(lines, forType: .string)
+    }
+
+    /// Copy the selection's file names to the clipboard, one per line.
+    private func copyNames() {
+        guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(
+            urls.map { $0.lastPathComponent }.joined(separator: "\n"), forType: .string)
     }
 
     /// Prune the given paths from every pane's smart-result list (after a file op

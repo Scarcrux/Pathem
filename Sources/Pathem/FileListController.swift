@@ -77,11 +77,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }()
 
     private enum Column: String, CaseIterable {
-        case name, size, date
+        case name, size, kind, date
         var title: String {
             switch self {
             case .name: return "Name"
             case .size: return "Size"
+            case .kind: return "Kind"
             case .date: return "Date Modified"
             }
         }
@@ -89,9 +90,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             switch self {
             case .name: return 360
             case .size: return 110
+            case .kind: return 130
             case .date: return 180
             }
         }
+        /// Kind is derived (no sort key in ViewFormat), so its header isn't clickable.
+        var isSortable: Bool { self != .kind }
     }
 
     override init() {
@@ -110,9 +114,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let col = NSTableColumn(identifier: .init(column.rawValue))
             col.title = column.title
             col.width = column.width
-            col.sortDescriptorPrototype = NSSortDescriptor(key: column.rawValue, ascending: true)
+            col.sortDescriptorPrototype =
+                column.isSortable ? NSSortDescriptor(key: column.rawValue, ascending: true) : nil
+            col.isHidden = (column == .kind)  // Kind is opt-in; off by default
             tableView.addTableColumn(col)
         }
+        // Let users reorder, resize, and show/hide columns; AppKit persists the
+        // layout (order/width/visibility) under this autosave name.
+        tableView.allowsColumnReordering = true
+        tableView.allowsColumnResizing = true
+        tableView.autosaveName = "PathemFileList"
+        tableView.autosaveTableColumns = true
+        tableView.headerView?.menu = makeHeaderMenu()
 
         tableView.dataSource = self
         tableView.delegate = self
@@ -458,12 +471,53 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             } else {
                 cell.textField?.stringValue = byteFormatter.string(fromByteCount: entry.size)
             }
+        case .kind:
+            cell.textField?.stringValue = Self.kind(for: entry)
         case .date:
             cell.textField?.stringValue = entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
         case .none:
             break
         }
         return cell
+    }
+
+    /// A human-readable file kind (localized) derived from the type, no I/O.
+    private static func kind(for entry: FileEntry) -> String {
+        if entry.isDirectory { return "Folder" }
+        let ext = (entry.name as NSString).pathExtension
+        if !ext.isEmpty, let type = UTType(filenameExtension: ext) {
+            return type.localizedDescription ?? "\(ext.uppercased()) file"
+        }
+        return "Document"
+    }
+
+    /// The right-click menu on the column header: toggle each optional column.
+    private func makeHeaderMenu() -> NSMenu {
+        let menu = NSMenu()
+        for column in Column.allCases where column != .name {  // Name is always shown
+            let item = NSMenuItem(title: column.title, action: #selector(toggleColumn(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = column.rawValue
+            menu.addItem(item)
+        }
+        return menu
+    }
+
+    @objc private func toggleColumn(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+            let column = tableView.tableColumn(withIdentifier: .init(id))
+        else { return }
+        column.isHidden.toggle()
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        // Check the header-menu items that map to a column's visibility.
+        if let id = menuItem.representedObject as? String,
+            let column = tableView.tableColumn(withIdentifier: .init(id))
+        {
+            menuItem.state = column.isHidden ? .off : .on
+        }
+        return true
     }
 
     private static func makeCell(_ id: NSUserInterfaceItemIdentifier, withIcon: Bool) -> NSTableCellView {
