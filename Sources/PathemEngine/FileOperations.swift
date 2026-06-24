@@ -27,10 +27,14 @@ public enum FileOperations {
         public let action: Action
         public let source: URL
         public let destination: URL
-        public init(action: Action, source: URL, destination: URL) {
+        /// If a Replace conflict trashed an existing item at `destination`, where it
+        /// landed in the Trash, so undo can restore the overwritten file.
+        public let replacedOriginalTrashed: URL?
+        public init(action: Action, source: URL, destination: URL, replacedOriginalTrashed: URL? = nil) {
             self.action = action
             self.source = source
             self.destination = destination
+            self.replacedOriginalTrashed = replacedOriginalTrashed
         }
     }
 
@@ -206,6 +210,18 @@ public enum FileOperations {
                 case .copied:
                     try fm.trashItem(at: op.destination, resultingItemURL: nil)
                 }
+                // Restore a file that a Replace conflict overwrote, so undo doesn't
+                // leave it stranded in the Trash (and report failure if it can't).
+                if let trashed = op.replacedOriginalTrashed {
+                    do {
+                        try fm.moveItem(at: trashed, to: op.destination)
+                    } catch {
+                        outcome.failures.append(
+                            Failure(
+                                name: op.destination.lastPathComponent,
+                                reason: "couldn't restore the replaced file: \(error.localizedDescription)"))
+                    }
+                }
                 outcome.performed.append(op)
             } catch {
                 outcome.failures.append(
@@ -250,6 +266,7 @@ public enum FileOperations {
             if shouldCancel() { break }  // stop; items already done remain in `performed`
             let name = from.lastPathComponent
             var to = destination.appendingPathComponent(name)
+            var replacedTrash: URL?  // where a Replace put the overwritten file (for undo)
             do {
                 // Never act on the source onto itself: a no-op self-transfer via a
                 // different spelling, a symlink, or letter case on a case-insensitive
@@ -265,13 +282,17 @@ public enum FileOperations {
                         outcome.skipped.append(name)
                         continue
                     case .replace:
-                        try fm.trashItem(at: to, resultingItemURL: nil)
+                        var landed: NSURL?
+                        try fm.trashItem(at: to, resultingItemURL: &landed)
+                        replacedTrash = landed as URL?  // remember it so undo can restore it
                     case .keepBoth:
                         to = uniqueDestination(to)
                     }
                 }
                 try op(from, to)
-                outcome.performed.append(Performed(action: action, source: from, destination: to))
+                outcome.performed.append(
+                    Performed(
+                        action: action, source: from, destination: to, replacedOriginalTrashed: replacedTrash))
             } catch {
                 outcome.failures.append(Failure(name: name, reason: error.localizedDescription))
             }

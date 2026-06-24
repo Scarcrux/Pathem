@@ -127,6 +127,34 @@ import Testing
         }
     }
 
+    @Test func undoReplaceRestoresOverwrittenCopy() throws {
+        try withTwoDirs { src, dst in
+            try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
+            try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .replace)
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(undo.failures.isEmpty)
+            // The overwritten original is restored, not stranded in the Trash.
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+            #expect(exists(src.appendingPathComponent("c.txt")))
+        }
+    }
+
+    @Test func undoReplaceMoveRestoresOverwrittenAndSource() throws {
+        try withTwoDirs { src, dst in
+            try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
+            try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
+            let outcome = FileOperations.move(["c.txt"], from: src, to: dst, onConflict: .replace)
+
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(undo.failures.isEmpty)
+            #expect(try String(contentsOf: src.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+        }
+    }
+
     @Test func redoMoveReappliesAfterUndo() throws {
         try withTwoDirs { src, dst in
             try Data("x".utf8).write(to: src.appendingPathComponent("m.txt"))
