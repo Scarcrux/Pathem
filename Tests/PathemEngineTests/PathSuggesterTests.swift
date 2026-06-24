@@ -99,6 +99,39 @@ import Testing
         #expect(withModel.suggestion?.lastPathComponent == "Photos")
     }
 
+    @Test func emptyInputResolvesToNothing() {
+        let result = PathSuggester.resolve("   ", base: URL(fileURLWithPath: "/tmp"))
+        #expect(!result.exists)
+        #expect(result.suggestion == nil)
+    }
+
+    @Test func unknownTildeUserIsNotJoinedToBase() {
+        let result = PathSuggester.resolve("~nonexistentuser12345/x", base: URL(fileURLWithPath: "/tmp"))
+        #expect(result.kind == .absolute)  // they used ~, so it's an (unresolvable) absolute ref
+        #expect(!result.exists)
+        #expect(!result.requested.path.contains("~"))  // never joined the literal ~user onto /tmp
+    }
+
+    @Test func shortUnrelatedNameIsNotCorrected() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(
+            at: dir.appendingPathComponent("xyz"), withIntermediateDirectories: true)
+        // "ab" is a completely different 2-char name; it must not "correct" to "xyz".
+        let result = PathSuggester.resolve(dir.appendingPathComponent("ab").path, base: dir)
+        #expect(result.suggestion == nil)
+    }
+
+    @Test func locateNeverSuggests() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try FileManager.default.createDirectory(
+            at: dir.appendingPathComponent("Desktop"), withIntermediateDirectories: true)
+        let result = PathSuggester.locate(dir.appendingPathComponent("Desktp").path, base: dir)
+        #expect(!result.exists)
+        #expect(result.suggestion == nil)  // the cheap pass never runs the fuzzy scan
+    }
+
     @Test func editDistanceIsCorrect() {
         #expect(PathSuggester.distance("kitten", "sitting") == 3)
         #expect(PathSuggester.distance("desktp", "desktop") == 1)

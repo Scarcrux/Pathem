@@ -32,4 +32,10 @@ public struct NLEmbedder: TextEmbedder {
         guard let embedding, let vector = embedding.vector(for: text) else { return nil }
         return vector.map(Float.init)
     }
+
+    /// A process-wide embedder so the on-device model asset loads once and is
+    /// reused. The underlying NLEmbedding is read-only and safe to share across
+    /// threads; `nonisolated(unsafe)` opts this immutable value out of the Sendable
+    /// check without locking.
+    nonisolated(unsafe) public static let shared = NLEmbedder()
 }

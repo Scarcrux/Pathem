@@ -1054,27 +1054,28 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         endEditingPath()
         containerView.window?.makeFirstResponder(content.keyView)  // restore focus on every path
         guard !raw.isEmpty else { return }
+        guard remote == nil else { NSSound.beep(); return }  // path entry is local-only for now
 
-        // Cheap pass: resolve (absolute vs relative-to-this-folder) and fuzzy-correct
-        // by spelling, with no model load. Navigate or offer the spelling fix at once.
+        // Cheap existence check on the main thread (no fuzzy scan): navigate at once
+        // if it's a real path (absolute, or relative to this folder).
         let base = nav.current
-        let quick = PathSuggester.resolve(raw, base: base)
-        if let existing = quick.existing {
+        let located = PathSuggester.locate(raw, base: base)
+        if let existing = located.existing {
             goToResolved(existing)
             return
         }
-        if let suggestion = quick.suggestion {
-            offerSuggestion(suggestion, for: raw)
-            return
-        }
-        // Nothing spelled close. Try the on-device model (it may need to load, so do
-        // it off the main thread) for a meaning-based match like "pics" -> "Photos".
+        // A miss: the fuzzy/semantic "did you mean" (and a possible model load) is
+        // heavier, so run it off the main thread, then re-validate the pane hasn't
+        // navigated, gone remote, or closed before acting on the suggestion.
+        let requested = located.requested
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let deep = PathSuggester.resolve(raw, base: base, embedder: NLEmbedder())
+            let suggestion = PathSuggester.suggest(for: requested, embedder: NLEmbedder.shared)
             DispatchQueue.main.async {
-                guard let self else { return }
-                if let suggestion = deep.suggestion {
-                    self.offerSuggestion(suggestion, for: raw)
+                guard let self, self.containerView.window != nil, self.remote == nil,
+                    self.nav.current == base
+                else { return }
+                if let suggestion {
+                    self.offerSuggestion(suggestion, for: raw, base: base)
                 } else {
                     NSSound.beep()  // no such path, nothing close
                 }
@@ -1102,18 +1103,23 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     }
 
     /// Offer a "did you mean" correction for a path that doesn't exist.
-    private func offerSuggestion(_ suggestion: URL, for raw: String) {
+    private func offerSuggestion(_ suggestion: URL, for raw: String, base: URL) {
+        // Need a window, and don't stack a second sheet on one already up.
+        guard let window = containerView.window, window.attachedSheet == nil else {
+            NSSound.beep()
+            return
+        }
         let alert = NSAlert()
         alert.messageText = "No such path"
         alert.informativeText = "“\(raw)” doesn't exist.\n\nDid you mean:\n\(suggestion.path)"
         alert.addButton(withTitle: "Go")
         alert.addButton(withTitle: "Cancel")
-        guard let window = containerView.window else {
-            if alert.runModal() == .alertFirstButtonReturn { goToResolved(suggestion) }
-            return
-        }
         alert.beginSheetModal(for: window) { [weak self] response in
-            if response == .alertFirstButtonReturn { self?.goToResolved(suggestion) }
+            // The sheet is async too: re-validate before navigating.
+            guard let self, response == .alertFirstButtonReturn, self.remote == nil,
+                self.nav.current == base
+            else { return }
+            self.goToResolved(suggestion)
         }
     }
 
