@@ -367,6 +367,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.findDuplicates", "Find Duplicates", enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findDuplicates()
         }
+        add("files.comparePanes", "Compare Panes…", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.comparePanes()
+        }
         add("shelf.add", "Add to Shelf", enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
         add("shelf.toggle", "Show Shelf") { [weak self] in self?.toggleShelf() }
@@ -633,6 +636,61 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.informativeText = text
         alert.addButton(withTitle: "OK")
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+    }
+
+    /// Compare the two panes' folders and offer a one-way mirror (preview-then-apply).
+    private func comparePanes() {
+        guard let left = leftTabs.activePane, let right = rightTabs.activePane,
+            !left.isRemote, !right.isRemote
+        else { NSSound.beep(); return }
+        let leftURL = left.currentURL
+        let rightURL = right.currentURL
+        guard leftURL != rightURL else { NSSound.beep(); return }
+        Task { @MainActor [weak self] in
+            let diffs = await Task.detached { FolderCompare.compare(left: leftURL, right: rightURL) }.value
+            self?.presentCompare(diffs, leftURL: leftURL, rightURL: rightURL)
+        }
+    }
+
+    private func presentCompare(_ diffs: [FolderCompare.Difference], leftURL: URL, rightURL: URL) {
+        let s = FolderCompare.summary(diffs)
+        let alert = NSAlert()
+        alert.messageText = "Compare: \(leftURL.lastPathComponent) ↔ \(rightURL.lastPathComponent)"
+        alert.informativeText =
+            "Only on left: \(s.onlyLeft)\nOnly on right: \(s.onlyRight)\nDiffer: \(s.differs)\nIdentical: \(s.identical)"
+        let deleteExtras = NSButton(checkboxWithTitle: "Also delete files missing from the source", target: nil, action: nil)
+        alert.accessoryView = deleteExtras
+        alert.addButton(withTitle: "Mirror Left → Right")
+        alert.addButton(withTitle: "Mirror Right → Left")
+        alert.addButton(withTitle: "Close")
+        guard let window = view.window else { return }
+        alert.beginSheetModal(for: window) { [weak self] response in
+            let delete = deleteExtras.state == .on
+            switch response {
+            case .alertFirstButtonReturn: self?.runMirror(source: leftURL, target: rightURL, deleteExtras: delete)
+            case .alertSecondButtonReturn: self?.runMirror(source: rightURL, target: leftURL, deleteExtras: delete)
+            default: break
+            }
+        }
+    }
+
+    /// Mirror `source` onto `target` (recompute the diff fresh, then apply off-main).
+    private func runMirror(source: URL, target: URL, deleteExtras: Bool) {
+        Task { @MainActor [weak self] in
+            let result = await Task.detached { () -> FolderCompare.MirrorResult in
+                let diffs = FolderCompare.compare(left: source, right: target)
+                return FolderCompare.mirror(from: source, to: target, differences: diffs, deleteExtras: deleteExtras)
+            }.value
+            guard let self else { return }
+            self.reloadBothSides()
+            let alert = NSAlert()
+            alert.messageText = "Mirror complete"
+            alert.informativeText =
+                "Copied \(result.copied), deleted \(result.deleted)"
+                + (result.failures.isEmpty ? "" : ", \(result.failures.count) failed")
+            alert.addButton(withTitle: "OK")
+            if let window = self.view.window { alert.beginSheetModal(for: window) { _ in } }
+        }
     }
 
     /// Scan the active folder's subtree for content duplicates (off-main) and show
