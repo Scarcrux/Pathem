@@ -120,6 +120,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
+        fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(.separator())
@@ -206,6 +207,29 @@ enum PathemApp {
     /// A menu item that runs a registry command via BrowserViewController. A key
     /// equivalent is set only when provided (chords the keymap owns are left
     /// without one so the two never collide).
+    /// An "Open in…" submenu listing the developer editors installed at launch; each
+    /// opens the current/selected folder via BrowserViewController.openInExternalEditor.
+    private static func openInEditorMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Open in…", action: nil, keyEquivalent: "")
+        let submenu = NSMenu(title: "Open in…")
+        let editors = ExternalEditors.installed()
+        if editors.isEmpty {
+            let none = NSMenuItem(title: "No editors found", action: nil, keyEquivalent: "")
+            none.isEnabled = false
+            submenu.addItem(none)
+        } else {
+            for editor in editors {
+                let entry = NSMenuItem(
+                    title: editor.name,
+                    action: #selector(BrowserViewController.openInExternalEditor(_:)), keyEquivalent: "")
+                entry.representedObject = editor.url
+                submenu.addItem(entry)
+            }
+        }
+        item.submenu = submenu
+        return item
+    }
+
     private static func commandItem(
         _ title: String, _ commandID: String, _ key: String = "",
         _ mods: NSEvent.ModifierFlags = .command

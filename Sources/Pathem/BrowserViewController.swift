@@ -626,6 +626,31 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
     }
 
+    /// The folder to open in an external editor: a single selected folder, else the
+    /// active pane's current folder.
+    private func editorTarget() -> URL? {
+        if let urls = activePane?.selectedLocalURLs(), urls.count == 1,
+            (try? urls[0].resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        {
+            return urls[0]
+        }
+        return activePane?.currentURL
+    }
+
+    /// Open the target folder in the editor whose application URL is the menu item's
+    /// represented object (set when the dynamic "Open in…" menu is built).
+    @objc func openInExternalEditor(_ sender: NSMenuItem) {
+        guard let editor = sender.representedObject as? URL, let target = editorTarget() else {
+            NSSound.beep()
+            return
+        }
+        let config = NSWorkspace.OpenConfiguration()
+        config.promptsUserIfNeeded = true
+        NSWorkspace.shared.open([target], withApplicationAt: editor, configuration: config) { _, error in
+            if error != nil { DispatchQueue.main.async { NSSound.beep() } }
+        }
+    }
+
     /// Copy the selection's file names to the clipboard, one per line.
     private func copyNames() {
         guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
