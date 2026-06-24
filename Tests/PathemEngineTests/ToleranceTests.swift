@@ -32,6 +32,33 @@ import Testing
         #expect(list[1].proto == .sftp)
     }
 
+    @Test func sidebarPartialJSONFillsDefaults() throws {
+        let s = try decode(Sidebar.self, #"{"groups":[{"title":"Favorites","items":[{"name":"Home"}]}]}"#)
+        #expect(s.groups.count == 1)
+        let item = try #require(s.groups.first?.items.first)
+        #expect(item.name == "Home")
+        #expect(item.icon == "folder")  // defaulted
+        #expect(item.path == "")  // defaulted
+    }
+
+    @Test func sidebarEmptyJSONDecodes() throws {
+        #expect(try decode(Sidebar.self, "{}").groups.isEmpty)
+    }
+
+    @Test func folderFormatsEmptyJSONIsAllDefault() throws {
+        let f = try decode(FolderFormats.self, "{}")
+        #expect(f.rules.isEmpty)
+        #expect(f.format(for: "/anywhere") == .default)
+    }
+
+    @Test func folderFormatsRuleWithPartialFormatCascadesDefaults() throws {
+        let f = try decode(
+            FolderFormats.self,
+            #"{"rules":[{"path":"/x","scope":"exact","format":{"viewMode":"icon"}}]}"#)
+        #expect(f.format(for: "/x").viewMode == .icon)
+        #expect(f.format(for: "/x").sortKey == .name)  // omitted -> default
+    }
+
     @Test func folderFormatsBadScopeDoesNotWipeRules() throws {
         let f = try decode(
             FolderFormats.self,

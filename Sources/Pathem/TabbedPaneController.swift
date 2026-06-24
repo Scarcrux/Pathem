@@ -141,6 +141,10 @@ final class TabbedPaneController: NSObject {
 
     private func closeTab(at index: Int) {
         guard tabs.count > 1, tabs.indices.contains(index) else { return }
+        // Only pull focus to this side if it already had it (or we're closing the
+        // active tab), so clicking the X on a background side's tab doesn't steal it.
+        let hadFocus = activePane.map { $0.keyView.window?.firstResponder === $0.keyView } ?? false
+        let closingActive = index == activeIndex
         tabs.remove(at: index).teardown()
         if activeIndex >= tabs.count {
             activeIndex = tabs.count - 1
@@ -149,7 +153,7 @@ final class TabbedPaneController: NSObject {
         }
         showActivePane()
         refreshTabBar()
-        focusActivePane()
+        if hadFocus || closingActive { focusActivePane() }
     }
 
     func selectTab(_ index: Int) {

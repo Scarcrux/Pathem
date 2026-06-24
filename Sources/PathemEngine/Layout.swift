@@ -16,6 +16,18 @@ public struct Layout: Codable, Sendable, Equatable {
         self.rightPath = rightPath
         self.dividerFraction = dividerFraction
     }
+
+    // Tolerant: an older/partial layouts.json loads with defaults rather than
+    // failing the whole [Layout] array (which would drop every saved layout).
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        leftPath = try c.decodeIfPresent(String.self, forKey: .leftPath) ?? ""
+        rightPath = try c.decodeIfPresent(String.self, forKey: .rightPath) ?? ""
+        dividerFraction = try c.decodeIfPresent(Double.self, forKey: .dividerFraction) ?? 0.5
+    }
+
+    private enum CodingKeys: String, CodingKey { case name, leftPath, rightPath, dividerFraction }
 }
 
 /// The saved layouts, persisted as config-as-data (DESIGN.md section 10).
@@ -23,6 +35,14 @@ public struct Layouts: Codable, Sendable {
     public var layouts: [Layout]
 
     public init(layouts: [Layout] = []) { self.layouts = layouts }
+
+    // Tolerant: a missing/older key loads as empty instead of failing the file.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        layouts = try c.decodeIfPresent([Layout].self, forKey: .layouts) ?? []
+    }
+
+    private enum CodingKeys: String, CodingKey { case layouts }
 
     /// Save by name, replacing any existing layout with the same name.
     public mutating func save(_ layout: Layout) {

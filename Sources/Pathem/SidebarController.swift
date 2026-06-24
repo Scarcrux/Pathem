@@ -49,6 +49,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
+    /// Header keys the user has collapsed, so reload() doesn't re-expand them.
+    private var collapsedHeaderKeys: Set<String> = []
+    /// True while reload() restores the highlight, to suppress the action callback.
+    private var restoringSelection = false
 
     /// Update the Connections section with the saved servers.
     func setConnections(_ list: [RemoteConnection]) {
@@ -223,6 +227,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     // MARK: Build the tree
 
     func reload() {
+        // Nodes are rebuilt every reload, so remember the selection and per-header
+        // collapse state by a stable key and restore them afterwards. Otherwise a
+        // volume/connection change would clear the highlight and re-open sections
+        // the user had collapsed.
+        let selectedKey = (outline.item(atRow: outline.selectedRow) as? Node).map(Self.key)
+
         roots = model.groups.map { group in
             Node(
                 kind: .userGroup(group.id), title: group.title, url: nil, icon: nil,
@@ -241,7 +251,36 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         roots.append(smartNode())
         roots.append(tagsNode())
         outline.reloadData()
-        for root in roots { outline.expandItem(root) }
+        for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) { outline.expandItem(root) }
+
+        if let selectedKey, let row = rowForKey(selectedKey) {
+            restoringSelection = true  // restore the highlight without re-firing the action
+            outline.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            restoringSelection = false
+        }
+    }
+
+    /// A stable identity for a node across rebuilds (used to restore selection and
+    /// collapse state in reload()).
+    private static func key(_ node: Node) -> String {
+        switch node.kind {
+        case .userGroup(let id): return "group:\(id)"
+        case .userItem(let id): return "item:\(id)"
+        case .systemHeader: return "header:\(node.title)"
+        case .systemItem: return "system:\(node.title):\(node.url?.path ?? "")"
+        case .folderChild: return "folder:\(node.url?.path ?? "")"
+        case .smart(let query): return "smart:\(query)"
+        case .shared(let host): return "shared:\(host)"
+        case .connection(let connection): return "conn:\(connection.id)"
+        case .manageConnections: return "manage"
+        }
+    }
+
+    private func rowForKey(_ wanted: String) -> Int? {
+        for row in 0..<outline.numberOfRows where (outline.item(atRow: row) as? Node).map(Self.key) == wanted {
+            return row
+        }
+        return nil
     }
 
     /// Saved FTP/SFTP servers, always shown (with a Manage… row) so connections
@@ -395,10 +434,20 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// Reset a folder's lazy state when it collapses, so re-expanding re-reads it
     /// (otherwise its subfolders would be frozen for the node's lifetime).
     func outlineViewItemDidCollapse(_ notification: Notification) {
-        guard let node = notification.userInfo?["NSObject"] as? Node, node.isFolder, !node.isHeader
-        else { return }
-        node.childrenLoaded = false
-        node.children = []
+        guard let node = notification.userInfo?["NSObject"] as? Node else { return }
+        if node.isHeader {
+            collapsedHeaderKeys.insert(Self.key(node))  // remember it stays closed across reloads
+            return
+        }
+        if node.isFolder {
+            node.childrenLoaded = false
+            node.children = []
+        }
+    }
+
+    func outlineViewItemDidExpand(_ notification: Notification) {
+        guard let node = notification.userInfo?["NSObject"] as? Node, node.isHeader else { return }
+        collapsedHeaderKeys.remove(Self.key(node))
     }
 
     /// Subfolders of a directory, off the main actor. nonisolated + async means an
@@ -455,6 +504,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     func outlineViewSelectionDidChange(_ notification: Notification) {
+        guard !restoringSelection else { return }  // reload() is just restoring the highlight
         let row = outline.selectedRow
         guard row >= 0, let node = outline.item(atRow: row) as? Node else { return }
         if case .smart(let query) = node.kind {

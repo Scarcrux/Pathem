@@ -912,6 +912,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         var right: [String]
         var rightActive: Int
         var leftIsActive: Bool
+
+        init(left: [String], leftActive: Int, right: [String], rightActive: Int, leftIsActive: Bool) {
+            self.left = left
+            self.leftActive = leftActive
+            self.right = right
+            self.rightActive = rightActive
+            self.leftIsActive = leftIsActive
+        }
+
+        // Tolerant: a partial/older session.json restores what it can instead of
+        // failing the whole decode (which would discard the session entirely).
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            left = try c.decodeIfPresent([String].self, forKey: .left) ?? []
+            leftActive = try c.decodeIfPresent(Int.self, forKey: .leftActive) ?? 0
+            right = try c.decodeIfPresent([String].self, forKey: .right) ?? []
+            rightActive = try c.decodeIfPresent(Int.self, forKey: .rightActive) ?? 0
+            leftIsActive = try c.decodeIfPresent(Bool.self, forKey: .leftIsActive) ?? true
+        }
     }
     private var lastSavedSession: SessionState?
 
@@ -1040,7 +1059,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Mount smb://host via NetFS (the OS handles auth/Keychain and shows its own
     /// prompt when needed), then navigate the active pane to the mount point.
     private func mountSMB(host: String) {
-        guard let url = URL(string: "smb://\(host)") else {
+        // The host comes from a Bonjour-resolved service on the LAN; validate it and
+        // build the URL via URLComponents so a hostile name can't smuggle a path,
+        // query, or alternate authority into the smb:// URL.
+        guard RemoteConnection.isValidHost(host) else {
+            NSSound.beep()
+            return
+        }
+        var components = URLComponents()
+        components.scheme = "smb"
+        components.host = host
+        guard let url = components.url else {
             NSSound.beep()
             return
         }
@@ -1423,7 +1452,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         super.viewDidAppear()
         installToolbarIfNeeded()
         applyInitialSplitPositions()
-        view.window?.makeFirstResponder(leftTabs.activePane?.keyView)
+        // Focus the restored active pane, not always the left one.
+        let focusPane = activePane ?? activeSide?.activePane ?? leftTabs.activePane
+        view.window?.makeFirstResponder(focusPane?.keyView)
         updateWindowTitle()
         maybePromptFullDiskAccess()
     }

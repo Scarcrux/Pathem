@@ -554,22 +554,50 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             .compactMap { row, entry in entry.isDirectory ? (entry.name, row) : nil }
         let known = folderSizeCache
         let gen = sizeGen
+        let sizeColumn = tableView.column(withIdentifier: .init(Column.size.rawValue))
         DispatchQueue.global(qos: .utility).async { [weak self] in
+            // Coalesce completed sizes into batches and redraw only the size column,
+            // so a folder with thousands of subfolders doesn't hammer the main thread
+            // with one full-row reload per child.
+            var batch: [(path: String, name: String, row: Int, size: Int64)] = []
             for folder in folders {
                 guard gen.isCurrent(generation) else { return }  // navigated away / disabled
                 let path = dir.appendingPathComponent(folder.name).path
                 let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
-                DispatchQueue.main.async {
-                    guard let self, self.sizeGen.isCurrent(generation), folder.row < self.entries.count,
-                        self.entries[folder.row].isDirectory, self.entries[folder.row].name == folder.name
-                    else { return }
-                    self.folderSizeCache[path] = size
-                    self.tableView.reloadData(
-                        forRowIndexes: IndexSet(integer: folder.row),
-                        columnIndexes: IndexSet(integersIn: 0..<self.tableView.numberOfColumns))
+                batch.append((path, folder.name, folder.row, size))
+                if batch.count >= 32 {
+                    let pending = batch
+                    batch = []
+                    DispatchQueue.main.async { [weak self] in
+                        self?.publishFolderSizes(pending, generation: generation, sizeColumn: sizeColumn)
+                    }
+                }
+            }
+            if !batch.isEmpty {
+                let pending = batch
+                DispatchQueue.main.async { [weak self] in
+                    self?.publishFolderSizes(pending, generation: generation, sizeColumn: sizeColumn)
                 }
             }
         }
+    }
+
+    /// Apply a batch of computed folder sizes and redraw just those rows' size cells.
+    private func publishFolderSizes(
+        _ pending: [(path: String, name: String, row: Int, size: Int64)], generation: Int, sizeColumn: Int
+    ) {
+        guard sizeGen.isCurrent(generation) else { return }
+        var rows = IndexSet()
+        for item in pending
+        where item.row < entries.count && entries[item.row].isDirectory
+            && entries[item.row].name == item.name {
+            folderSizeCache[item.path] = item.size
+            rows.insert(item.row)
+        }
+        guard !rows.isEmpty else { return }
+        let columns =
+            sizeColumn >= 0 ? IndexSet(integer: sizeColumn) : IndexSet(integersIn: 0..<tableView.numberOfColumns)
+        tableView.reloadData(forRowIndexes: rows, columnIndexes: columns)
     }
 
     /// Read tag colors for the current entries off the main thread (reusing the

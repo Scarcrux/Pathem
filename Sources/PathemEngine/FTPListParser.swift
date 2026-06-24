@@ -37,13 +37,21 @@ public enum FTPListParser {
         let type = bytes[starts[0]]
         let isDir = type == UInt8(ascii: "d")
         let isSymlink = type == UInt8(ascii: "l")
+        let isDevice = type == UInt8(ascii: "c") || type == UInt8(ascii: "b")
 
+        // A char/block device lists "major, minor" where a regular file lists its
+        // size. When the major ends with a comma, the minor is a separate field, so
+        // the name (and the size's absence) shift one column right.
         let sizeEnd = bytes[starts[4]...].firstIndex(of: space) ?? bytes.count
-        let size = Int64(String(decoding: bytes[starts[4]..<sizeEnd], as: UTF8.self)) ?? 0
+        let majorHasComma = isDevice && bytes[sizeEnd - 1] == UInt8(ascii: ",")
+        let nameField = majorHasComma ? 9 : 8
+        guard starts.count > nameField else { return nil }
+        let size: Int64 =
+            isDevice ? 0 : (Int64(String(decoding: bytes[starts[4]..<sizeEnd], as: UTF8.self)) ?? 0)
 
-        // Name is the verbatim remainder from the 9th field (preserves internal
+        // Name is the verbatim remainder from the name field (preserves internal
         // multiple spaces); strip a symlink's " -> target".
-        var nameBytes = Array(bytes[starts[8]...])
+        var nameBytes = Array(bytes[starts[nameField]...])
         if isSymlink, let arrow = Self.arrowRange(in: nameBytes) { nameBytes = Array(nameBytes[..<arrow]) }
         while let last = nameBytes.last, last == space || last == 0x0D { nameBytes.removeLast() }
         guard !nameBytes.isEmpty else { return nil }

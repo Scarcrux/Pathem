@@ -183,6 +183,29 @@ import Testing
         }
     }
 
+    @Test func untrashRestoresUnderNewNameWhenOriginalReoccupied() throws {
+        try withTwoDirs { dir, _ in
+            let original = dir.appendingPathComponent("c.txt")
+            try Data("old".utf8).write(to: original)
+            let (trashed, failures) = FileOperations.trash(urls: [original])
+            #expect(failures.isEmpty)
+            #expect(trashed.count == 1)
+
+            // Something reoccupies the original path before the undo.
+            try Data("new".utf8).write(to: original)
+            let undoFailures = FileOperations.untrash(trashed)
+
+            // The trashed file comes back (under a new name) and the clash is reported,
+            // instead of the undo silently failing and leaving it in the Trash.
+            #expect(undoFailures.count == 1)
+            let names = try FileManager.default.contentsOfDirectory(atPath: dir.path)
+            #expect(names.count == 2)
+            #expect(try String(contentsOf: original, encoding: .utf8) == "new")  // reoccupier untouched
+            let restored = try #require(names.first { $0 != "c.txt" })
+            #expect(try String(contentsOf: dir.appendingPathComponent(restored), encoding: .utf8) == "old")
+        }
+    }
+
     @Test func pasteCopyFromArbitrarySourceURLs() throws {
         try withTwoDirs { src, dst in
             try Data("x".utf8).write(to: src.appendingPathComponent("a.txt"))

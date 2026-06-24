@@ -138,6 +138,13 @@ final class FullDiskAccessGuide: NSObject {
     }
 
     func present(over window: NSWindow, onDismiss: @escaping () -> Void) {
+        // Tear down any prior run's timer/observer first so a second present() can't
+        // leak them (mirrors dismiss()).
+        timer?.invalidate()
+        timer = nil
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+        observer = nil
+
         self.host = window
         self.onDismiss = onDismiss
         granted = false

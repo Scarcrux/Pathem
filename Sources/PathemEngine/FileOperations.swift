@@ -131,13 +131,24 @@ public enum FileOperations {
         return (trashed, failures)
     }
 
-    /// Restore trashed items to their original locations (the undo of `trash`).
+    /// Restore trashed items to their original locations (the undo of `trash`). If
+    /// the original location was reoccupied, restore under a non-colliding name and
+    /// report it, so the file comes back instead of the undo silently failing.
     public static func untrash(_ items: [Trashed]) -> [Failure] {
         let fm = FileManager.default
         var failures: [Failure] = []
         for item in items {
+            let destination = fm.fileExists(atPath: item.original.path)
+                ? uniqueDestination(item.original) : item.original
             do {
-                try fm.moveItem(at: item.trashed, to: item.original)
+                try fm.moveItem(at: item.trashed, to: destination)
+                if destination != item.original {
+                    failures.append(
+                        Failure(
+                            name: item.original.lastPathComponent,
+                            reason:
+                                "the original location was taken; restored as \"\(destination.lastPathComponent)\""))
+                }
             } catch {
                 failures.append(Failure(name: item.original.lastPathComponent, reason: error.localizedDescription))
             }

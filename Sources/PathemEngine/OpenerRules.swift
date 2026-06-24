@@ -18,6 +18,17 @@ public struct OpenerRules: Codable, Sendable, Equatable {
         self.byType = byType
     }
 
+    // Tolerant: an older openers.json missing one of the maps loads it as empty
+    // instead of failing the whole file and dropping every opener rule.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        byFile = try c.decodeIfPresent([String: String].self, forKey: .byFile) ?? [:]
+        byFolder = try c.decodeIfPresent([String: String].self, forKey: .byFolder) ?? [:]
+        byType = try c.decodeIfPresent([String: String].self, forKey: .byType) ?? [:]
+    }
+
+    private enum CodingKeys: String, CodingKey { case byFile, byFolder, byType }
+
     public mutating func setFile(_ path: String, app: String) { byFile[path] = app }
     public mutating func setFolder(_ path: String, app: String) { byFolder[path] = app }
     public mutating func setType(_ ext: String, app: String) { byType[ext.lowercased()] = app }

@@ -24,9 +24,11 @@ import Testing
 
         let order = SemanticSearcher.rank(query: "kitten", in: index)
         let ranked = order.compactMap { $0 < entries.count ? entries[$0].name : nil }
-        if let aPos = ranked.firstIndex(of: "a.txt"), let bPos = ranked.firstIndex(of: "b.txt") {
-            #expect(aPos < bPos)  // the cat-content file ranks above the car-content file
-        }
+        // Required, not conditional: once the model is present both files must rank,
+        // so a regression that drops one fails loudly instead of passing vacuously.
+        let aPos = try #require(ranked.firstIndex(of: "a.txt"))
+        let bPos = try #require(ranked.firstIndex(of: "b.txt"))
+        #expect(aPos < bPos)  // the cat-content file ranks above the car-content file
     }
 
     /// A toy embedder so the index/rank pipeline is asserted deterministically,

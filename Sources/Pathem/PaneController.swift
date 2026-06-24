@@ -652,10 +652,17 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         format.viewMode = mode
         if smartActive {
             // Re-apply in memory; don't persist a format rule onto the underlying
-            // folder, and don't reload (there's no folder to read).
-            applyViewMode(mode)
+            // folder, and don't reload (there's no folder to read). Column mode needs
+            // real folders to drill, so a smart result falls back to list.
+            applyViewMode(mode == .column ? .list : mode)
             content.setEntries(format.sorted(smartEntries), preserveState: false)
             return
+        }
+        // Changing the view while showing search results drops them (reload re-reads
+        // the folder); clear the search field too so it doesn't lie about the listing.
+        if showingSearchResults {
+            searchQuery = ""
+            onDidNavigate?()
         }
         rememberFormat?(nav.current, format)
         reload()

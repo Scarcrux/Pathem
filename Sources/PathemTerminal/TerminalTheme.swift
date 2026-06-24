@@ -32,6 +32,24 @@ public struct TerminalTheme: Codable, Sendable, Equatable {
         self.shellPath = shellPath
     }
 
+    // Tolerant: a terminal.json from an older build (missing newer keys) loads with
+    // defaults rather than failing and resetting the saved theme.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? "Custom"
+        fontName = try c.decodeIfPresent(String.self, forKey: .fontName) ?? "Menlo"
+        fontSize = try c.decodeIfPresent(Double.self, forKey: .fontSize) ?? 12
+        foreground = try c.decodeIfPresent(String.self, forKey: .foreground) ?? ""
+        background = try c.decodeIfPresent(String.self, forKey: .background) ?? ""
+        cursor = try c.decodeIfPresent(String.self, forKey: .cursor) ?? ""
+        ansi = try c.decodeIfPresent([String].self, forKey: .ansi) ?? []
+        shellPath = try c.decodeIfPresent(String.self, forKey: .shellPath) ?? ""
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name, fontName, fontSize, foreground, background, cursor, ansi, shellPath
+    }
+
     // MARK: Color helpers
 
     private static func rgb(_ hex: String) -> (UInt8, UInt8, UInt8)? {

@@ -2,10 +2,11 @@ import Foundation
 
 /// SFTP backend that drives the system `sftp` (OpenSSH, BSD-licensed, ships with
 /// macOS) as a subprocess, so SSH networking stays out of this process. The
-/// password is supplied through SSH_ASKPASS, which reads it from the child's
-/// environment (never in argv, never written to disk). Directory listings reuse
-/// the Unix `ls -l` parser. The RemoteProvider seam means a stricter XPC +
-/// libssh2 backend could replace this later without any UI changes.
+/// password is supplied through SSH_ASKPASS in a MINIMAL child environment built
+/// from scratch (not the app's full inherited environment), and never appears in
+/// argv. Directory listings reuse the Unix `ls -l` parser. The RemoteProvider
+/// seam means a stricter XPC + libssh2 backend could replace this later without
+/// any UI changes.
 public struct SFTPProvider: RemoteProvider {
     public init() {}
 
@@ -13,7 +14,7 @@ public struct SFTPProvider: RemoteProvider {
         -> [FileEntry]
     {
         let dir = path.isEmpty ? "/" : path
-        let (out, status, err) = try await run(connection, password, batch: "cd \(quote(dir))\nls -l\n")
+        let (out, status, err) = try await run(connection, password, batch: "cd \(try quote(dir))\nls -l\n")
         guard status == 0 else { throw RemoteError.sftp(code: status, message: cleanError(err)) }
         return FTPListParser.parse(out)  // byte-based: preserves non-UTF-8 names as rawName
     }
@@ -22,7 +23,7 @@ public struct SFTPProvider: RemoteProvider {
         _ connection: RemoteConnection, remotePath: String, to localFile: URL, password: String
     ) async throws {
         let (_, status, err) = try await run(
-            connection, password, batch: "get \(quote(remotePath)) \(quote(localFile.path))\n")
+            connection, password, batch: "get \(try quote(remotePath)) \(try quote(localFile.path))\n")
         guard status == 0 else { throw RemoteError.sftp(code: status, message: cleanError(err)) }
     }
 
@@ -30,7 +31,7 @@ public struct SFTPProvider: RemoteProvider {
         _ localFile: URL, to connection: RemoteConnection, remotePath: String, password: String
     ) async throws {
         let (_, status, err) = try await run(
-            connection, password, batch: "put \(quote(localFile.path)) \(quote(remotePath))\n")
+            connection, password, batch: "put \(try quote(localFile.path)) \(try quote(remotePath))\n")
         guard status == 0 else { throw RemoteError.sftp(code: status, message: cleanError(err)) }
     }
 
@@ -45,11 +46,19 @@ public struct SFTPProvider: RemoteProvider {
             throw RemoteError.unsupported("Invalid host \"\(c.host)\"")  // never pass a smuggled authority to ssh
         }
         let askpass = try Self.askpassScript()
-        var env = ProcessInfo.processInfo.environment
-        env["PATHEM_PW"] = password  // read by the askpass helper, not visible in argv
-        env["SSH_ASKPASS"] = askpass.path
-        env["SSH_ASKPASS_REQUIRE"] = "force"
-        env["DISPLAY"] = env["DISPLAY"] ?? ":0"  // older ssh only uses askpass when DISPLAY is set
+        defer { try? FileManager.default.removeItem(at: askpass) }  // don't leave it lying around
+        let parent = ProcessInfo.processInfo.environment
+        // Build a minimal environment from scratch rather than inheriting the app's
+        // full one, so no unrelated secret leaks into the child and the password's
+        // exposure is confined to exactly the process that needs it.
+        let env = [
+            "PATH": "/usr/bin:/bin",
+            "HOME": parent["HOME"] ?? NSHomeDirectory(),  // for ~/.ssh/known_hosts
+            "PATHEM_PW": password,  // read by the askpass helper, not visible in argv
+            "SSH_ASKPASS": askpass.path,
+            "SSH_ASKPASS_REQUIRE": "force",
+            "DISPLAY": parent["DISPLAY"] ?? ":0",  // older ssh only uses askpass when DISPLAY is set
+        ]
         let user = c.user.isEmpty ? "anonymous" : c.user
         let args = [
             "-q",  // suppress the banner/warnings
@@ -64,14 +73,19 @@ public struct SFTPProvider: RemoteProvider {
         return try await RemoteRunner.run(sftp, args, input: batch, env: env)
     }
 
-    /// Quote a path for an sftp batch line: strip newlines (so a crafted name
-    /// can't inject extra batch commands), escape backslash and quote, and
+    /// Quote a path for an sftp batch line: escape backslash and quote, and
     /// backslash-escape the glob metacharacters sftp expands even inside quotes,
     /// so get/put of a literal name containing * ? [ ] works. Backslash must be
     /// escaped first so the escapes we add survive.
-    func quote(_ s: String) -> String {
-        var escaped = s.replacingOccurrences(of: "\n", with: "").replacingOccurrences(of: "\r", with: "")
-        escaped = escaped.replacingOccurrences(of: "\\", with: "\\\\")
+    ///
+    /// The sftp batch protocol is line-based, so a newline, carriage return, or NUL
+    /// in a path cannot be represented; rather than silently stripping it (which
+    /// would map to a DIFFERENT remote path), reject it.
+    func quote(_ s: String) throws -> String {
+        guard !s.contains("\n"), !s.contains("\r"), !s.contains("\0") else {
+            throw RemoteError.unsupported("name contains a character sftp can't handle (newline or NUL)")
+        }
+        var escaped = s.replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
         for glob in ["*", "?", "[", "]"] {
             escaped = escaped.replacingOccurrences(of: glob, with: "\\" + glob)
@@ -87,11 +101,12 @@ public struct SFTPProvider: RemoteProvider {
     }
 
     /// Write a tiny askpass helper that prints $PATHEM_PW. The script holds no
-    /// secret (the password arrives via the child environment); it lives in the
-    /// per-user temp dir and is rewritten each time so its contents and 0700
-    /// permissions are always known-good.
+    /// secret (the password arrives via the child environment). A unique per-run
+    /// name (deleted by the caller's defer) avoids concurrent sftp runs racing on a
+    /// shared file; 0700 keeps it readable only by this user.
     private static func askpassScript() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-askpass.sh")
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-askpass-\(UUID().uuidString).sh")
         try "#!/bin/sh\nprintf '%s\\n' \"$PATHEM_PW\"\n".write(to: url, atomically: true, encoding: .utf8)
         try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: url.path)
         return url

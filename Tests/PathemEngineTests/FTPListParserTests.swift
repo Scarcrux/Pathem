@@ -22,6 +22,17 @@ import Testing
         #expect(entries[3].name == "current")  // symlink target stripped
     }
 
+    @Test func parsesDeviceFileWithMajorMinorInPlaceOfSize() {
+        // Char/block devices list "major, minor" where a file lists its size, which
+        // shifts the name one field right; the name must not be misread.
+        let text = "crw-rw-rw-  1 root  wheel    3,   2 Jan 02 12:00 null"
+        let entries = FTPListParser.parse(text)
+        #expect(entries.count == 1)
+        #expect(entries[0].name == "null")  // not "2" or a date field
+        #expect(entries[0].size == 0)
+        #expect(entries[0].isDirectory == false)
+    }
+
     @Test func preservesInternalMultipleSpacesInName() {
         // The name is sliced verbatim, so runs of spaces inside it survive.
         let text = "-rw-r--r--   1 alice staff   42 Jan 02 12:00 a  b   c.txt"
