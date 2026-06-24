@@ -65,13 +65,16 @@ public enum FTPListParser {
             rawName: isUTF8Clean ? nil : raw)
     }
 
-    /// The index of " -> " (the symlink separator) in the name bytes, if present.
+    /// The index of the LAST " -> " (the symlink separator) in the name bytes, if
+    /// present. Using the last occurrence keeps a link name that itself contains
+    /// " -> " intact (e.g. "a -> b -> c" parses to name "a -> b").
     private static func arrowRange(in bytes: [UInt8]) -> Int? {
         let arrow: [UInt8] = [0x20, 0x2D, 0x3E, 0x20]  // " -> "
         guard bytes.count >= arrow.count else { return nil }
+        var found: Int?
         for i in 0...(bytes.count - arrow.count) where Array(bytes[i..<(i + arrow.count)]) == arrow {
-            return i
+            found = i
         }
-        return nil
+        return found
     }
 }

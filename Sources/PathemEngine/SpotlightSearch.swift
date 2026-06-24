@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Runs Spotlight (`mdfind`) queries off the main actor for smart locations that
 /// span folders (Recents, tag filters). Returns matching file URLs. The query
@@ -35,15 +36,28 @@ public enum SpotlightSearch {
 
     // MARK: Runner
 
+    private static let log = Logger(subsystem: "com.scarcrux.pathem", category: "SpotlightSearch")
+
     private static func run(query: String, scope: URL?, limit: Int) async -> [URL] {
         let mdfind = "/usr/bin/mdfind"
         guard FileManager.default.isExecutableFile(atPath: mdfind) else { return [] }
         var args = ["-0"]  // NUL-separate paths so newlines in names don't split a result
         if let scope { args += ["-onlyin", scope.path] }
         args.append(query)
-        guard let (data, status, _) = try? await RemoteRunner.run(mdfind, args), status == 0 else { return [] }
-        let paths = String(decoding: data, as: UTF8.self).split(separator: "\0", omittingEmptySubsequences: true)
-        return paths.prefix(limit).map { URL(fileURLWithPath: String($0)) }
+        do {
+            let (data, status, err) = try await RemoteRunner.run(mdfind, args)
+            guard status == 0 else {
+                // Don't fail silently to an empty folder; a non-zero mdfind is diagnosable.
+                log.error("mdfind exited \(status): \(err, privacy: .public)")
+                return []
+            }
+            let paths = String(decoding: data, as: UTF8.self).split(
+                separator: "\0", omittingEmptySubsequences: true)
+            return paths.prefix(limit).map { URL(fileURLWithPath: String($0)) }
+        } catch {
+            log.error("mdfind failed: \(error.localizedDescription, privacy: .public)")
+            return []
+        }
     }
 
     private static func modificationDate(_ url: URL) -> Date {

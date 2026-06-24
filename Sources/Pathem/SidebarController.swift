@@ -512,6 +512,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             return
         }
         if case .shared(let host) = node.kind {
+            outline.deselectRow(row)  // a mount action; re-clicking should retry, not no-op
             onSelectShared?(host)
             return
         }
@@ -664,7 +665,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 add("Remove", #selector(removeConnectionTarget))
                 return  // connection-only menu (no New Group / Add Current Folder)
             case .manageConnections:
-                add("Add Connection…", #selector(manageConnectionsTarget))
+                add(connections.isEmpty ? "Add Connection…" : "Manage…", #selector(manageConnectionsTarget))
                 return
             default:
                 break

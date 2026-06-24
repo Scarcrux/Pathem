@@ -69,7 +69,11 @@ public struct CurlFTPProvider: RemoteProvider {
     // MARK: Helpers
 
     private func requireFTP(_ c: RemoteConnection) throws {
-        if c.proto == .sftp { throw RemoteError.unsupported("SFTP requires the XPC backend") }
+        // Defensive: RemoteProviders.make never routes SFTP here, but this provider
+        // is public and could be constructed directly.
+        if c.proto == .sftp {
+            throw RemoteError.unsupported("CurlFTPProvider handles FTP/FTPS only; use SFTPProvider for SFTP")
+        }
         guard c.hasValidHost else {
             throw RemoteError.unsupported("Invalid host \"\(c.host)\"")  // never shell out to a smuggled authority
         }

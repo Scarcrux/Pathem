@@ -292,17 +292,21 @@ extension ColumnBrowserController: PaneContentView {
     }
 
     func select(name: String) {
-        guard let first = columns.first, let row = first.entries.firstIndex(where: { $0.name == name })
-        else { return }
-        first.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        first.table.scrollRowToVisible(row)
+        // The active column is where a new-folder/rename happened, so select there
+        // (not always the root column).
+        guard columns.indices.contains(activeColumn) else { return }
+        let column = columns[activeColumn]
+        guard let row = column.entries.firstIndex(where: { $0.name == name }) else { return }
+        column.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        column.table.scrollRowToVisible(row)
     }
 
     func selectNames(_ names: Set<String>) {
-        guard let first = columns.first else { return }
+        guard columns.indices.contains(activeColumn) else { return }
+        let column = columns[activeColumn]
         var rows = IndexSet()
-        for (index, entry) in first.entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
-        first.table.selectRowIndexes(rows, byExtendingSelection: false)
+        for (index, entry) in column.entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
+        column.table.selectRowIndexes(rows, byExtendingSelection: false)
     }
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}

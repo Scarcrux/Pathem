@@ -62,4 +62,23 @@ import Testing
         let ranked = order.compactMap { $0 < entries.count ? entries[$0].name : nil }
         #expect(ranked.first == "a.txt")  // cat-content ranks above car-content for "kitten"
     }
+
+    @Test func datalessEntryIsIndexedByNameOnly() throws {
+        // A dataless cloud placeholder must NOT have its contents read (that would
+        // trigger a download); only its name is embedded.
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-dataless-\(UUID().uuidString)")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: dir) }
+        try "car engine driving".write(to: dir.appendingPathComponent("kitten.txt"), atomically: true, encoding: .utf8)
+
+        let regular = FileEntry(name: "kitten.txt", isDirectory: false, size: 0, modificationDate: nil)
+        let dataless = FileEntry(
+            name: "kitten.txt", isDirectory: false, size: 0, modificationDate: nil, isDataless: true)
+        let index = SemanticSearcher.index([regular, dataless], in: dir, embedder: StubEmbedder())
+
+        #expect(index.vectors.count == 2)
+        #expect(index.vectors[0] == [1, 1])  // regular: name "kitten" + content "car"
+        #expect(index.vectors[1] == [1, 0])  // dataless: name only, content never read
+    }
 }

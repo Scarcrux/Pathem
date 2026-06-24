@@ -77,15 +77,18 @@ import Testing
             .appendingPathComponent("pathem-xxe-\(UUID().uuidString).txt")
         try Data("TOPSECRET".utf8).write(to: secret)
         defer { try? FileManager.default.removeItem(at: secret) }
+        // Valid host so the Server parses regardless; the entity goes in a non-gating
+        // field (User) so the test can't pass vacuously by dropping the whole Server.
         let xml = """
             <?xml version="1.0"?>
             <!DOCTYPE x [ <!ENTITY xxe SYSTEM "file://\(secret.path)"> ]>
             <FileZilla3><Servers><Server>
-            <Host>&xxe;</Host><Protocol>0</Protocol><User>x</User>
+            <Host>ok.example.com</Host><Protocol>0</Protocol><User>&xxe;</User>
             </Server></Servers></FileZilla3>
             """
         let sites = FileZillaImporter.parse(Data(xml.utf8))
-        // The entity must not be resolved; the secret must never appear in a field.
-        for site in sites { #expect(!site.host.contains("TOPSECRET")) }
+        let site = try #require(sites.first)  // the Server must parse (host is valid)
+        #expect(site.host == "ok.example.com")
+        #expect(!site.user.contains("TOPSECRET"))  // the entity was not resolved
     }
 }

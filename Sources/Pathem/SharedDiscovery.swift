@@ -26,6 +26,7 @@ final class SharedDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate
             completion(nil)
             return
         }
+        resolving[service]?(nil)  // a prior resolution for this service is superseded, not leaked
         resolving[service] = completion
         service.delegate = self
         service.resolve(withTimeout: 5)

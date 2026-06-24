@@ -656,6 +656,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             // real folders to drill, so a smart result falls back to list.
             applyViewMode(mode == .column ? .list : mode)
             content.setEntries(format.sorted(smartEntries), preserveState: false)
+            pendingSelection = nil  // don't leak smart names into the next real listing
             return
         }
         // Changing the view while showing search results drops them (reload re-reads
@@ -668,7 +669,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         reload()
     }
 
-    var viewMode: ViewFormat.ViewMode { format.viewMode }
+    /// The mode actually on screen (not the persisted format), so the View menu and
+    /// the toolbar switcher agree even when a remote/smart pane clamps Column to list.
+    var viewMode: ViewFormat.ViewMode { currentMode }
 
     /// Update the bottom status line: item count, or the selection count and its
     /// total size when something is selected.

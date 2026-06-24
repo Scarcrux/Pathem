@@ -10,6 +10,9 @@ final class KeyCollectionView: NSCollectionView {
     var onBecomeActive: (() -> Void)?
     /// Double-click (carries the clicked item) or Return (nil = the selection).
     var onActivate: ((IndexPath?) -> Void)?
+    /// Called when a right-click changes the selection (programmatic selection
+    /// changes don't fire the delegate's didSelect/didDeselect).
+    var onSelectionMutated: (() -> Void)?
 
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
@@ -44,11 +47,15 @@ final class KeyCollectionView: NSCollectionView {
     override func menu(for event: NSEvent) -> NSMenu? {
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
+        let before = selectionIndexPaths
         if let indexPath = indexPathForItem(at: point) {
             if !selectionIndexPaths.contains(indexPath) { selectionIndexPaths = [indexPath] }
         } else {
             selectionIndexPaths = []
         }
+        // Programmatic selection changes don't fire the delegate, so the controller's
+        // selection (and the menu's enabled actions) would otherwise go stale.
+        if selectionIndexPaths != before { onSelectionMutated?() }
         return super.menu(for: event)
     }
 }
@@ -176,6 +183,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
                 self.onOpen?(first)  // Return with a selection
             }
         }
+        collection.onSelectionMutated = { [weak self] in self?.onSelectionChanged?() }
         collection.menu = makeContextMenu()
 
         scrollView.documentView = collection

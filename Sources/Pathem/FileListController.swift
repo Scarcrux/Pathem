@@ -512,8 +512,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     func setCutPaths(_ paths: Set<String>) {
         guard paths != cutPaths else { return }
+        let changed = paths.symmetricDifference(cutPaths)  // only these rows change appearance
         cutPaths = paths
-        tableView.reloadData()
+        var rows = IndexSet()
+        for (row, entry) in entries.enumerated() where changed.contains(absolutePath(of: entry)) {
+            rows.insert(row)
+        }
+        guard !rows.isEmpty else { return }  // the cut/clear was in another folder
+        tableView.reloadData(
+            forRowIndexes: rows, columnIndexes: IndexSet(integersIn: 0..<tableView.numberOfColumns))
+    }
+
+    /// The on-disk path of an entry (smart-result rows carry their own folder;
+    /// normal rows live in directoryURL).
+    private func absolutePath(of entry: FileEntry) -> String {
+        if let location = entry.location {
+            return (location as NSString).appendingPathComponent(entry.name)
+        }
+        return directoryURL.map { $0.appendingPathComponent(entry.name).path } ?? entry.name
     }
 
     private func isCut(_ entry: FileEntry) -> Bool {

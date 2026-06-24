@@ -49,7 +49,9 @@ public enum FileTags {
     public static func tags(of url: URL) -> [FileTag] {
         url.withUnsafeFileSystemRepresentation { fsr -> [FileTag] in
             guard let fsr else { return [] }
-            while true {
+            // Bounded retry: a pathological writer that keeps growing the attribute
+            // between probe and read can't pin this background worker forever.
+            for _ in 0..<4 {
                 let size = getxattr(fsr, attribute, nil, 0, 0, XATTR_NOFOLLOW)
                 guard size > 0 else { return [] }  // ENOATTR / empty -> no tags
                 var buffer = [UInt8](repeating: 0, count: size)
@@ -65,6 +67,7 @@ public enum FileTags {
                 else { return [] }
                 return list.map(parse)
             }
+            return []
         }
     }
 
