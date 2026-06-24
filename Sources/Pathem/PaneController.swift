@@ -1021,7 +1021,12 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     }
 
     @objc private func pathClicked() {
-        guard let url = pathControl.clickedPathItem?.url else { return }
+        // Clicking a crumb navigates; clicking the empty part of the bar opens the
+        // editable address field, so pasting a path is discoverable without Cmd-L.
+        guard let url = pathControl.clickedPathItem?.url else {
+            beginEditingPath()
+            return
+        }
         nav.go(to: url)
         enterDirectory()
     }
@@ -1049,26 +1054,66 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         endEditingPath()
         containerView.window?.makeFirstResponder(content.keyView)  // restore focus on every path
         guard !raw.isEmpty else { return }
-        // Resolve relative input against this pane's folder, not the process cwd.
-        let expanded = (raw as NSString).expandingTildeInPath
-        let url =
-            expanded.hasPrefix("/")
-            ? URL(fileURLWithPath: expanded).standardizedFileURL
-            : nav.current.appendingPathComponent(expanded).standardizedFileURL
+
+        // Cheap pass: resolve (absolute vs relative-to-this-folder) and fuzzy-correct
+        // by spelling, with no model load. Navigate or offer the spelling fix at once.
+        let base = nav.current
+        let quick = PathSuggester.resolve(raw, base: base)
+        if let existing = quick.existing {
+            goToResolved(existing)
+            return
+        }
+        if let suggestion = quick.suggestion {
+            offerSuggestion(suggestion, for: raw)
+            return
+        }
+        // Nothing spelled close. Try the on-device model (it may need to load, so do
+        // it off the main thread) for a meaning-based match like "pics" -> "Photos".
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let deep = PathSuggester.resolve(raw, base: base, embedder: NLEmbedder())
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if let suggestion = deep.suggestion {
+                    self.offerSuggestion(suggestion, for: raw)
+                } else {
+                    NSSound.beep()  // no such path, nothing close
+                }
+            }
+        }
+    }
+
+    /// Navigate to a resolved path: a folder opens, a file opens its folder and
+    /// selects it. Skips a no-op re-navigation to the current folder.
+    private func goToResolved(_ url: URL) {
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
-            NSSound.beep()  // no such path
+            NSSound.beep()
             return
         }
         if isDirectory.boolValue {
-            guard url != nav.current else { return }  // already here: don't push a duplicate history entry
+            guard url != nav.current else { return }
             nav.go(to: url)
             enterDirectory()
         } else {
-            // A file: open its folder and select it.
             nav.go(to: url.deletingLastPathComponent())
             enterDirectory()
             content.select(name: url.lastPathComponent)
+        }
+    }
+
+    /// Offer a "did you mean" correction for a path that doesn't exist.
+    private func offerSuggestion(_ suggestion: URL, for raw: String) {
+        let alert = NSAlert()
+        alert.messageText = "No such path"
+        alert.informativeText = "“\(raw)” doesn't exist.\n\nDid you mean:\n\(suggestion.path)"
+        alert.addButton(withTitle: "Go")
+        alert.addButton(withTitle: "Cancel")
+        guard let window = containerView.window else {
+            if alert.runModal() == .alertFirstButtonReturn { goToResolved(suggestion) }
+            return
+        }
+        alert.beginSheetModal(for: window) { [weak self] response in
+            if response == .alertFirstButtonReturn { self?.goToResolved(suggestion) }
         }
     }
 
