@@ -19,6 +19,12 @@ public protocol RemoteProvider: Sendable {
         async throws
     func upload(_ localFile: URL, to connection: RemoteConnection, remotePath: String, password: String)
         async throws
+    /// Create a directory at `path`.
+    func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws
+    /// Delete a file or (empty) directory at `path`.
+    func remove(_ connection: RemoteConnection, path: String, isDirectory: Bool, password: String) async throws
+    /// Rename/move `from` to `to`.
+    func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws
 }
 
 /// Picks the right out-of-process backend for a connection's protocol. The UI
@@ -64,6 +70,41 @@ public struct CurlFTPProvider: RemoteProvider {
         let (_, status, err) = try await run(
             connection, password, ["--ftp-create-dirs", "-T", localFile.path, endpoint(connection, remotePath)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
+    }
+
+    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws {
+        try await quote(["MKD \(try ftpArg(path))"], on: connection, password: password)
+    }
+
+    public func remove(
+        _ connection: RemoteConnection, path: String, isDirectory: Bool, password: String
+    ) async throws {
+        try await quote(["\(isDirectory ? "RMD" : "DELE") \(try ftpArg(path))"], on: connection, password: password)
+    }
+
+    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws {
+        try await quote(
+            ["RNFR \(try ftpArg(from))", "RNTO \(try ftpArg(to))"], on: connection, password: password)
+    }
+
+    /// Run raw FTP commands via curl's `-Q`. A bare URL is required, so we target the
+    /// root; the commands carry the absolute paths.
+    private func quote(_ commands: [String], on c: RemoteConnection, password: String) async throws {
+        try requireFTP(c)
+        var opArgs: [String] = []
+        for command in commands { opArgs += ["-Q", command] }
+        opArgs.append(endpoint(c, "/"))
+        let (_, status, err) = try await run(c, password, opArgs)
+        guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
+    }
+
+    /// A remote path safe to put in an FTP command line (no CR/LF that could inject
+    /// a second command).
+    private func ftpArg(_ path: String) throws -> String {
+        guard !path.contains("\n"), !path.contains("\r") else {
+            throw RemoteError.unsupported("path contains a newline")
+        }
+        return path
     }
 
     // MARK: Helpers

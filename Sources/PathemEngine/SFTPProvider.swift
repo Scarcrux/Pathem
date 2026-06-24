@@ -35,6 +35,25 @@ public struct SFTPProvider: RemoteProvider {
         guard status == 0 else { throw RemoteError.sftp(code: status, message: cleanError(err)) }
     }
 
+    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws {
+        try await batch("mkdir \(try quote(path))\n", connection, password)
+    }
+
+    public func remove(
+        _ connection: RemoteConnection, path: String, isDirectory: Bool, password: String
+    ) async throws {
+        try await batch("\(isDirectory ? "rmdir" : "rm") \(try quote(path))\n", connection, password)
+    }
+
+    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws {
+        try await batch("rename \(try quote(from)) \(try quote(to))\n", connection, password)
+    }
+
+    private func batch(_ commands: String, _ connection: RemoteConnection, _ password: String) async throws {
+        let (_, status, err) = try await run(connection, password, batch: commands)
+        guard status == 0 else { throw RemoteError.sftp(code: status, message: cleanError(err)) }
+    }
+
     // MARK: Helpers
 
     private func run(_ c: RemoteConnection, _ password: String, batch: String) async throws

@@ -511,9 +511,50 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return false
     }
 
+    /// Run a remote file operation off-main, refreshing the pane and reporting errors.
+    private func performRemoteOp(
+        _ pane: PaneController, verb: String,
+        _ op: @escaping @Sendable (RemoteProvider, RemoteConnection, String, String) async throws -> Void
+    ) {
+        guard let ctx = pane.remoteContext else { return }
+        let provider = RemoteProviders.make(for: ctx.connection.proto)
+        Task { @MainActor [weak self] in
+            do {
+                try await op(provider, ctx.connection, ctx.path, ctx.password)
+                pane.refreshRemote()
+            } catch {
+                self?.presentFailures(
+                    [FileOperations.Failure(name: verb, reason: "\(error)")], title: "\(verb) failed")
+            }
+        }
+    }
+
+    /// A modal single-line name prompt; nil if cancelled or empty.
+    private func promptForName(title: String, default value: String) -> String? {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Cancel")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = value
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? nil : name
+    }
+
     private func newFolder() {
-        if blockedByRemoteOrSmart() { return }  // needs a single destination folder
         guard let pane = activePane else { return }
+        if pane.isShowingSmartResults { NSSound.beep(); return }  // no single destination
+        if pane.isRemote {
+            guard let name = promptForName(title: "New Folder", default: "untitled folder") else { return }
+            performRemoteOp(pane, verb: "New Folder") { provider, connection, path, password in
+                try await provider.makeDirectory(
+                    connection, path: PaneController.joinRemote(path, name), password: password)
+            }
+            return
+        }
         do {
             let name = try FileOperations.makeFolder(in: pane.currentURL)
             pane.reloadIfShowingListing()
@@ -552,7 +593,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func renameSelection() {
-        if blockedByRemote() { return }
         guard let pane = activePane, pane.selectedEntries.count == 1,
             let entry = pane.selectedEntries.first
         else { return }
@@ -567,6 +607,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newName.isEmpty, newName != entry.name else { return }
+        if pane.isRemote {
+            performRemoteOp(pane, verb: "Rename") { provider, connection, path, password in
+                try await provider.rename(
+                    connection, from: PaneController.joinRemote(path, entry.name),
+                    to: PaneController.joinRemote(path, newName), password: password)
+            }
+            return
+        }
         // The file's real folder: its own location in a smart view, else current.
         let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
         do {
@@ -599,8 +647,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func trashSelection() {
-        if blockedByRemote() { return }
         guard let pane = activePane else { return }
+        if pane.isRemote {
+            let entries = pane.selectedEntries
+            guard !entries.isEmpty else { NSSound.beep(); return }
+            let names = entries.map { ($0.name, $0.isDirectory) }
+            performRemoteOp(pane, verb: "Delete") { provider, connection, path, password in
+                for (name, isDir) in names {
+                    try await provider.remove(
+                        connection, path: PaneController.joinRemote(path, name), isDirectory: isDir,
+                        password: password)
+                }
+            }
+            return
+        }
         let urls = pane.selectedLocalURLs()  // location-aware: trashes the real files in smart views
         guard !urls.isEmpty else { NSSound.beep(); return }
         let result = FileOperations.trash(urls: urls)
