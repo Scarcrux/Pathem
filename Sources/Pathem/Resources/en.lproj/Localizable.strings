@@ -119,6 +119,8 @@
 "bvc.collectionLoading" = "Collection: %@…";
 "bvc.compareSummary" = "Only on left: %d\nOnly on right: %d\nDiffer: %d\nIdentical: %d";
 "bvc.compareTitle" = "Compare: %@ ↔ %@";
+"bvc.confirmTrashBody" = "You can put them back from the Trash.";
+"bvc.confirmTrashTitle" = "Move the selected items to the Trash?";
 "bvc.conflictHandle" = "Choose how to handle the %@.";
 "bvc.connect" = "Connect";
 "bvc.connectTo" = "Connect to %@";
@@ -428,6 +430,7 @@
 "prefs.alternatingRows" = "Alternating row colors";
 "prefs.calculateFolderSizes" = "Calculate folder sizes";
 "prefs.compactSidebar" = "Compact sidebar (icons only)";
+"prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";
 "prefs.densityComfortable" = "Comfortable";
 "prefs.densityCompact" = "Compact";
 "prefs.densityLabel" = "Density";
@@ -471,6 +474,7 @@
 "settings.layout" = "Layout";
 "settings.search" = "Search";
 "settings.shortcuts" = "Shortcuts";
+"settings.terminal" = "Terminal";
 "settings.title" = "Settings";
 "settings.updates" = "Updates";
 "shelf.clear" = "Clear";
@@ -539,6 +543,8 @@
 "templates.newTitle" = "New Template";
 "templates.run" = "Run";
 "templates.title" = "Create Templates";
+"terminal.followsFolder" = "Terminal follows the active folder";
+"terminal.theme" = "Theme";
 "toolbar.cleanup" = "Cleanup";
 "toolbar.cleanup.tip" = "Find and remove reclaimable files";
 "transfer.itemProgress" = "%@  (%d of %d)";

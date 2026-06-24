@@ -119,6 +119,8 @@
 "bvc.collectionLoading" = "Collection : %@…";
 "bvc.compareSummary" = "Uniquement à gauche : %d\nUniquement à droite : %d\nDifférents : %d\nIdentiques : %d";
 "bvc.compareTitle" = "Comparer : %@ ↔ %@";
+"bvc.confirmTrashBody" = "Vous pourrez les récupérer depuis la corbeille.";
+"bvc.confirmTrashTitle" = "Placer les éléments sélectionnés dans la corbeille ?";
 "bvc.conflictHandle" = "Choisissez comment gérer le %@.";
 "bvc.connect" = "Se connecter";
 "bvc.connectTo" = "Se connecter à %@";
@@ -428,6 +430,7 @@
 "prefs.alternatingRows" = "Couleurs de rangées alternées";
 "prefs.calculateFolderSizes" = "Calculer la taille des dossiers";
 "prefs.compactSidebar" = "Barre latérale compacte (icônes seulement)";
+"prefs.confirmBeforeDelete" = "Demander confirmation avant de placer des éléments dans la corbeille";
 "prefs.densityComfortable" = "Confortable";
 "prefs.densityCompact" = "Compacte";
 "prefs.densityLabel" = "Densité";
@@ -471,6 +474,7 @@
 "settings.layout" = "Disposition";
 "settings.search" = "Recherche";
 "settings.shortcuts" = "Raccourcis";
+"settings.terminal" = "Terminal";
 "settings.title" = "Réglages";
 "settings.updates" = "Mises à jour";
 "shelf.clear" = "Vider";
@@ -539,6 +543,8 @@
 "templates.newTitle" = "Nouveau modèle";
 "templates.run" = "Exécuter";
 "templates.title" = "Modèles de création";
+"terminal.followsFolder" = "Le terminal suit le dossier actif";
+"terminal.theme" = "Thème";
 "toolbar.cleanup" = "Nettoyage";
 "toolbar.cleanup.tip" = "Rechercher et supprimer les fichiers récupérables";
 "transfer.itemProgress" = "%@  (%d sur %d)";

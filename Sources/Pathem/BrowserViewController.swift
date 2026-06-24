@@ -906,6 +906,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         let urls = pane.selectedLocalURLs()  // location-aware: trashes the real files in smart views
         guard !urls.isEmpty else { NSSound.beep(); return }
+        guard prefs.confirmBeforeDelete, let window = view.window else {
+            performLocalTrash(urls)
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = L("bvc.confirmTrashTitle", "Move the selected items to the Trash?")
+        alert.informativeText = L("bvc.confirmTrashBody", "You can put them back from the Trash.")
+        alert.addButton(withTitle: L("bvc.moveToTrashAction", "Move to Trash"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            if response == .alertFirstButtonReturn { self?.performLocalTrash(urls) }
+        }
+    }
+
+    private func performLocalTrash(_ urls: [URL]) {
         let result = FileOperations.trash(urls: urls)
         reloadBothSides()  // the trashed files may have lived in either visible folder
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
@@ -1367,6 +1382,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             commands: commands.all.map { (id: $0.id, title: $0.title) },
             effective: keymap.bindings,
             updater: updater,
+            terminal: .init(
+                themes: TerminalTheme.presets.map(\.name),
+                current: terminal.theme.name,
+                follows: terminalFollows,
+                onSelectTheme: { [weak self] name in
+                    guard let self, let preset = TerminalTheme.presets.first(where: { $0.name == name })
+                    else { return }
+                    self.terminal.theme = preset
+                    self.saveConfig(preset, to: Self.terminalThemeURL)
+                },
+                onToggleFollows: { [weak self] on in
+                    guard let self else { return }
+                    self.terminalFollows = on
+                    UserDefaults.standard.set(on, forKey: "pathem.terminalFollows")
+                    if on, !self.terminal.view.isHidden, let url = self.activePane?.currentURL {
+                        self.terminal.changeDirectory(to: url)
+                    }
+                }),
             over: window,
             onChange: { [weak self] updated in
                 guard let self else { return }

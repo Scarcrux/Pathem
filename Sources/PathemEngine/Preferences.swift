@@ -27,13 +27,16 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var calculateFolderSizes: Bool
     /// Hide sidebar row labels (icons only) and narrow it, for a compact sidebar.
     public var compactSidebar: Bool
+    /// Ask for confirmation before moving local items to the Trash (off by default,
+    /// since the Trash is reversible).
+    public var confirmBeforeDelete: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
         alternatingRows: Bool = true, searchOCR: Bool = false,
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
-        compactSidebar: Bool = false
+        compactSidebar: Bool = false, confirmBeforeDelete: Bool = false
     ) {
         self.density = density
         self.fontSize = fontSize
@@ -44,6 +47,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.openConnectionsInNewTab = openConnectionsInNewTab
         self.calculateFolderSizes = calculateFolderSizes
         self.compactSidebar = compactSidebar
+        self.confirmBeforeDelete = confirmBeforeDelete
     }
 
     public static let `default` = Preferences()
@@ -72,5 +76,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         calculateFolderSizes =
             try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes) ?? d.calculateFolderSizes
         compactSidebar = try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
+        confirmBeforeDelete =
+            try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
     }
 }

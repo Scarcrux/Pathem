@@ -119,6 +119,8 @@
 "bvc.collectionLoading" = "Sammlung: %@…";
 "bvc.compareSummary" = "Nur links: %d\nNur rechts: %d\nUnterschiedlich: %d\nIdentisch: %d";
 "bvc.compareTitle" = "Vergleich: %@ ↔ %@";
+"bvc.confirmTrashBody" = "Du kannst sie aus dem Papierkorb zurückholen.";
+"bvc.confirmTrashTitle" = "Die ausgewählten Objekte in den Papierkorb legen?";
 "bvc.conflictHandle" = "Wähle, wie mit %@ umgegangen werden soll.";
 "bvc.connect" = "Verbinden";
 "bvc.connectTo" = "Mit %@ verbinden";
@@ -428,6 +430,7 @@
 "prefs.alternatingRows" = "Abwechselnde Zeilenfarben";
 "prefs.calculateFolderSizes" = "Ordnergrößen berechnen";
 "prefs.compactSidebar" = "Kompakte Seitenleiste (nur Symbole)";
+"prefs.confirmBeforeDelete" = "Vor dem Verschieben in den Papierkorb nachfragen";
 "prefs.densityComfortable" = "Komfortabel";
 "prefs.densityCompact" = "Kompakt";
 "prefs.densityLabel" = "Dichte";
@@ -471,6 +474,7 @@
 "settings.layout" = "Layout";
 "settings.search" = "Suche";
 "settings.shortcuts" = "Kurzbefehle";
+"settings.terminal" = "Terminal";
 "settings.title" = "Einstellungen";
 "settings.updates" = "Updates";
 "shelf.clear" = "Leeren";
@@ -539,6 +543,8 @@
 "templates.newTitle" = "Neue Vorlage";
 "templates.run" = "Ausführen";
 "templates.title" = "Erstellungsvorlagen";
+"terminal.followsFolder" = "Terminal folgt dem aktiven Ordner";
+"terminal.theme" = "Thema";
 "toolbar.cleanup" = "Aufräumen";
 "toolbar.cleanup.tip" = "Wiederverwertbare Dateien finden und entfernen";
 "transfer.itemProgress" = "%@  (%d von %d)";

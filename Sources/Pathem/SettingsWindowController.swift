@@ -11,13 +11,14 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     NSTableViewDelegate
 {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, search, shortcuts, updates
+        case general, appearance, layout, search, terminal, shortcuts, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
             case .appearance: return L("settings.appearance", "Appearance")
             case .layout: return L("settings.layout", "Layout")
             case .search: return L("settings.search", "Search")
+            case .terminal: return L("settings.terminal", "Terminal")
             case .shortcuts: return L("settings.shortcuts", "Shortcuts")
             case .updates: return L("settings.updates", "Updates")
             }
@@ -28,6 +29,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             case .appearance: return "paintbrush"
             case .layout: return "sidebar.squares.left"
             case .search: return "magnifyingglass"
+            case .terminal: return "terminal"
             case .shortcuts: return "keyboard"
             case .updates: return "arrow.down.circle"
             }
@@ -49,6 +51,13 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     private weak var updater: UpdaterController?
     private let updatesStatus = NSTextField(labelWithString: "")
 
+    // Terminal pane state (stored outside Preferences, so callbacks drive it).
+    private var terminalThemes: [String] = []
+    private var currentTerminalTheme = ""
+    private var onSelectTerminalTheme: ((String) -> Void)?
+    private var terminalFollows = false
+    private var onToggleTerminalFollows: ((Bool) -> Void)?
+
     private var paneViews: [Pane: NSView] = [:]
 
     override init() {
@@ -67,9 +76,17 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     }
 
     /// Show the window, populated with current state.
+    struct TerminalOptions {
+        var themes: [String]
+        var current: String
+        var follows: Bool
+        var onSelectTheme: (String) -> Void
+        var onToggleFollows: (Bool) -> Void
+    }
+
     func present(
         prefs: Preferences, commands: [(id: String, title: String)], effective: [String: String],
-        updater: UpdaterController?, over parent: NSWindow?,
+        updater: UpdaterController?, terminal: TerminalOptions, over parent: NSWindow?,
         onChange: @escaping (Preferences) -> Void,
         onKeymapChange: @escaping ([String: String]) -> Void
     ) {
@@ -77,6 +94,11 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         self.commandList = commands
         self.effective = effective
         self.updater = updater
+        self.terminalThemes = terminal.themes
+        self.currentTerminalTheme = terminal.current
+        self.onSelectTerminalTheme = terminal.onSelectTheme
+        self.terminalFollows = terminal.follows
+        self.onToggleTerminalFollows = terminal.onToggleFollows
         self.onChange = onChange
         self.onKeymapChange = onKeymapChange
         paneViews = [:]  // rebuild with fresh state
@@ -109,6 +131,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         case .general: return form([
             check(L("prefs.openConnectionsNewTab", "Open connections in a new tab"), \.openConnectionsInNewTab),
             check(L("prefs.calculateFolderSizes", "Calculate folder sizes"), \.calculateFolderSizes),
+            check(L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"), \.confirmBeforeDelete),
         ])
         case .appearance: return form([
             labeled(L("prefs.densityLabel", "Density"), densityControl()),
@@ -124,9 +147,30 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             check(L("prefs.searchOCR", "Search image contents (OCR, slower)"), \.searchOCR),
             hint(L("prefs.searchOCRHint", "Text and PDF contents are always indexed; image OCR is extra.")),
         ])
+        case .terminal: return terminalPane()
         case .shortcuts: return shortcutsPane()
         case .updates: return updatesPane()
         }
+    }
+
+    private func terminalPane() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: terminalThemes)
+        popup.selectItem(withTitle: currentTerminalTheme)
+        popup.target = self
+        popup.action = #selector(terminalThemeChanged(_:))
+        let follows = NSButton(
+            checkboxWithTitle: L("terminal.followsFolder", "Terminal follows the active folder"),
+            target: self, action: #selector(terminalFollowsToggled(_:)))
+        follows.state = terminalFollows ? .on : .off
+        return form([labeled(L("terminal.theme", "Theme"), popup), follows])
+    }
+
+    @objc private func terminalThemeChanged(_ sender: NSPopUpButton) {
+        if let title = sender.titleOfSelectedItem { onSelectTerminalTheme?(title) }
+    }
+    @objc private func terminalFollowsToggled(_ sender: NSButton) {
+        onToggleTerminalFollows?(sender.state == .on)
     }
 
     // MARK: Form helpers
@@ -435,6 +479,8 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             ("view.toggleHidden", "Show Hidden Files"), ("palette.show", "Command Palette…"),
         ]
         effective = Keymap.defaultBindings
+        terminalThemes = ["Dark", "Light", "Solarized"]
+        currentTerminalTheme = "Dark"
         for pane in Pane.allCases {
             let view = build(pane)
             view.layoutSubtreeIfNeeded()

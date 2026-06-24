@@ -119,6 +119,8 @@
 "bvc.collectionLoading" = "收藏集：%@…";
 "bvc.compareSummary" = "仅在左侧：%d\n仅在右侧：%d\n不同：%d\n相同：%d";
 "bvc.compareTitle" = "比较：%@ ↔ %@";
+"bvc.confirmTrashBody" = "你可以从废纸篓中将其放回。";
+"bvc.confirmTrashTitle" = "将所选项目移到废纸篓？";
 "bvc.conflictHandle" = "选择如何处理这 %@。";
 "bvc.connect" = "连接";
 "bvc.connectTo" = "连接到 %@";
@@ -428,6 +430,7 @@
 "prefs.alternatingRows" = "交替行颜色";
 "prefs.calculateFolderSizes" = "计算文件夹大小";
 "prefs.compactSidebar" = "紧凑边栏（仅图标）";
+"prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";
 "prefs.densityComfortable" = "宽松";
 "prefs.densityCompact" = "紧凑";
 "prefs.densityLabel" = "密度";
@@ -471,6 +474,7 @@
 "settings.layout" = "布局";
 "settings.search" = "搜索";
 "settings.shortcuts" = "快捷键";
+"settings.terminal" = "终端";
 "settings.title" = "设置";
 "settings.updates" = "更新";
 "shelf.clear" = "清除";
@@ -539,6 +543,8 @@
 "templates.newTitle" = "新建模板";
 "templates.run" = "运行";
 "templates.title" = "创建模板";
+"terminal.followsFolder" = "终端跟随当前文件夹";
+"terminal.theme" = "主题";
 "toolbar.cleanup" = "清理";
 "toolbar.cleanup.tip" = "查找并移除可回收的文件";
 "transfer.itemProgress" = "%@（第 %d 个，共 %d 个）";
