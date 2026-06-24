@@ -32,7 +32,7 @@ final class TransferController {
         detailLabel.lineBreakMode = .byTruncatingMiddle
         bar.style = .bar
         bar.isIndeterminate = false
-        let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancelTapped))
+        let cancel = NSButton(title: L("common.cancel", "Cancel"), target: self, action: #selector(cancelTapped))
         cancel.bezelStyle = .rounded
         cancel.keyEquivalent = "\u{1b}"  // Esc
 
@@ -81,7 +81,9 @@ final class TransferController {
             var failures: [(String, Error)] = []
             for (index, item) in items.enumerated() {
                 if Task.isCancelled { break }
-                detailLabel.stringValue = "\(item.name)  (\(index + 1) of \(items.count))"
+                detailLabel.stringValue = String(
+                    format: L("transfer.itemProgress", "%@  (%d of %d)"),
+                    item.name, index + 1, items.count)
                 do {
                     try await item.run()
                 } catch {

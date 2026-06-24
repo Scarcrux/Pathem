@@ -11,17 +11,17 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     private let panel: NSPanel
     private let findField = NSTextField()
     private let replaceField = NSTextField()
-    private let regexCheck = NSButton(checkboxWithTitle: "Regex", target: nil, action: nil)
+    private let regexCheck = NSButton(checkboxWithTitle: L("rename.regex", "Regex"), target: nil, action: nil)
     private let prefixField = NSTextField()
     private let suffixField = NSTextField()
     private let casePopup = NSPopUpButton()
-    private let extCheck = NSButton(checkboxWithTitle: "Include extension", target: nil, action: nil)
-    private let numberCheck = NSButton(checkboxWithTitle: "Number (# in a field, else appended)", target: nil, action: nil)
+    private let extCheck = NSButton(checkboxWithTitle: L("rename.includeExtension", "Include extension"), target: nil, action: nil)
+    private let numberCheck = NSButton(checkboxWithTitle: L("rename.number", "Number (# in a field, else appended)"), target: nil, action: nil)
     private let startField = NSTextField()
     private let padField = NSTextField()
     private let table = NSTableView()
     private let warnLabel = NSTextField(labelWithString: "")
-    private let applyButton = NSButton(title: "Rename", target: nil, action: nil)
+    private let applyButton = NSButton(title: L("rename.renameButton", "Rename"), target: nil, action: nil)
 
     private var names: [String] = []
     private var existing: Set<String> = []
@@ -39,7 +39,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     private func build() {
-        panel.title = "Batch Rename"
+        panel.title = L("rename.panelTitle", "Batch Rename")
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
@@ -53,7 +53,12 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         startField.widthAnchor.constraint(equalToConstant: 48).isActive = true
         padField.widthAnchor.constraint(equalToConstant: 48).isActive = true
 
-        casePopup.addItems(withTitles: ["Keep case", "lowercase", "UPPERCASE", "Title Case"])
+        casePopup.addItems(withTitles: [
+            L("rename.caseKeep", "Keep case"),
+            L("rename.caseLower", "lowercase"),
+            L("rename.caseUpper", "UPPERCASE"),
+            L("rename.caseTitle", "Title Case"),
+        ])
         casePopup.target = self
         casePopup.action = #selector(ruleChanged)
         for check in [regexCheck, extCheck, numberCheck] {
@@ -65,10 +70,10 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         table.rowHeight = 20
         table.usesAlternatingRowBackgroundColors = true
         let current = NSTableColumn(identifier: .init("current"))
-        current.title = "Current"
+        current.title = L("rename.columnCurrent", "Current")
         current.width = 250
         let renamed = NSTableColumn(identifier: .init("renamed"))
-        renamed.title = "New name"
+        renamed.title = L("rename.columnNewName", "New name")
         renamed.width = 250
         table.addTableColumn(current)
         table.addTableColumn(renamed)
@@ -84,20 +89,20 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         warnLabel.textColor = .systemRed
         warnLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancel))
+        let cancel = NSButton(title: L("common.cancel", "Cancel"), target: self, action: #selector(cancel))
         cancel.keyEquivalent = "\u{1b}"  // Esc
         applyButton.target = self
         applyButton.action = #selector(apply)
         applyButton.keyEquivalent = "\r"  // Return
 
         let form = NSStackView(views: [
-            row("Find", findField, regexCheck),
-            row("Replace", replaceField),
-            row("Prefix", prefixField),
-            row("Suffix", suffixField),
-            row("Case", casePopup, extCheck),
-            row("Numbering", numberCheck),
-            row("Start", startField, label("Pad"), padField),
+            row(L("rename.rowFind", "Find"), findField, regexCheck),
+            row(L("rename.rowReplace", "Replace"), replaceField),
+            row(L("rename.rowPrefix", "Prefix"), prefixField),
+            row(L("rename.rowSuffix", "Suffix"), suffixField),
+            row(L("rename.rowCase", "Case"), casePopup, extCheck),
+            row(L("rename.rowNumbering", "Numbering"), numberCheck),
+            row(L("rename.rowStart", "Start"), startField, label(L("rename.labelPad", "Pad")), padField),
         ])
         form.orientation = .vertical
         form.alignment = .leading
@@ -184,7 +189,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         let changes = plan.pairs.contains { $0.original != $0.renamed }
         applyButton.isEnabled = changes && !plan.hasCollisions
         warnLabel.stringValue =
-            plan.hasCollisions ? "Name conflicts: adjust the rule before renaming." : ""
+            plan.hasCollisions ? L("rename.conflicts", "Name conflicts: adjust the rule before renaming.") : ""
     }
 
     func controlTextDidChange(_ obj: Notification) { recompute() }
@@ -200,7 +205,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         if !outcome.failures.isEmpty {
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = "Renamed \(outcome.renamed); \(outcome.failures.count) failed"
+            alert.messageText = String(
+                format: L("rename.renameResult", "Renamed %d; %d failed"),
+                outcome.renamed, outcome.failures.count)
             alert.informativeText = outcome.failures.prefix(8).joined(separator: "\n")
             alert.runModal()
         }

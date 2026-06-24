@@ -14,7 +14,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     }
 
     private let panel: NSPanel
-    private let titleLabel = NSTextField(labelWithString: "Cleanup")
+    private let titleLabel = NSTextField(labelWithString: L("cleanup.title", "Cleanup"))
     private let summaryLabel = NSTextField(labelWithString: "")
     private let table = NSTableView()
     private let spinner = NSProgressIndicator()
@@ -34,7 +34,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             contentRect: NSRect(x: 0, y: 0, width: 640, height: 520),
             styleMask: [.titled, .closable, .resizable, .utilityWindow], backing: .buffered, defer: true)
         super.init()
-        panel.title = "Cleanup"
+        panel.title = L("cleanup.panelTitle", "Cleanup")
         build()
     }
 
@@ -57,8 +57,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         spinner.isDisplayedWhenStopped = false
 
         for (id, title, width) in [
-            ("check", "", CGFloat(24)), ("name", "Item", 280), ("size", "Size", 90),
-            ("category", "Why", 130),
+            ("check", "", CGFloat(24)), ("name", L("cleanup.colItem", "Item"), 280),
+            ("size", L("cleanup.colSize", "Size"), 90),
+            ("category", L("cleanup.colWhy", "Why"), 130),
         ] {
             let column = NSTableColumn(identifier: .init(id))
             column.title = title
@@ -75,16 +76,17 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
 
-        aiButton.title = "Recommend with AI"
+        aiButton.title = L("cleanup.recommendWithAI", "Recommend with AI")
         aiButton.bezelStyle = .rounded
         aiButton.target = self
         aiButton.action = #selector(recommendWithAI)
-        trashButton.title = "Move Checked to Trash"
+        trashButton.title = L("cleanup.moveCheckedToTrash", "Move Checked to Trash")
         trashButton.bezelStyle = .rounded
         trashButton.keyEquivalent = "\r"
         trashButton.target = self
         trashButton.action = #selector(trashChecked)
-        let reveal = NSButton(title: "Reveal", target: self, action: #selector(revealSelected))
+        let reveal = NSButton(
+            title: L("cleanup.reveal", "Reveal"), target: self, action: #selector(revealSelected))
         reveal.bezelStyle = .rounded
 
         let header = NSStackView(views: [titleLabel, spinner, NSView(), summaryLabel])
@@ -115,7 +117,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     // MARK: Scan
 
     private func scan() {
-        titleLabel.stringValue = "Scanning \(root.lastPathComponent)…"
+        titleLabel.stringValue = String(
+            format: L("cleanup.scanning", "Scanning %@…"), root.lastPathComponent)
         summaryLabel.stringValue = ""
         rows = []
         table.reloadData()
@@ -139,9 +142,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             + report.duplicates.map { Row(item: $0, checked: true) }
             + report.large.map { Row(item: $0, checked: false) }
             + report.old.map { Row(item: $0, checked: false) }
-        titleLabel.stringValue = "Cleanup: \(root.lastPathComponent)"
+        titleLabel.stringValue = String(
+            format: L("cleanup.titleFor", "Cleanup: %@"), root.lastPathComponent)
         table.reloadData()
-        updateSummary(extra: report.truncated ? " (partial scan)" : "")
+        updateSummary(extra: report.truncated ? L("cleanup.partialScan", " (partial scan)") : "")
     }
 
     private func updateSummary(extra: String = "") {
@@ -149,7 +153,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let safe = rows.filter { $0.item.category == .junk || $0.item.category == .duplicate }
             .reduce(Int64(0)) { $0 + $1.item.size }
         summaryLabel.stringValue =
-            "\(byteFormatter.string(fromByteCount: checked)) checked · \(byteFormatter.string(fromByteCount: safe)) safe to remove\(extra)"
+            String(
+                format: L("cleanup.summary", "%@ checked · %@ safe to remove"),
+                byteFormatter.string(fromByteCount: checked),
+                byteFormatter.string(fromByteCount: safe)) + extra
         trashButton.isEnabled = checked > 0
     }
 
@@ -217,16 +224,23 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     }
 
     @objc private func recommendWithAI() {
+        if let reason = AIAvailability.unavailableReason() {
+            AIAvailability.presentUnavailable(
+                L("ai.cleanup.unavail", "AI recommendations are unavailable"), reason: reason,
+                over: panel)
+            return
+        }
         #if canImport(FoundationModels)
             if #available(macOS 26, *) {
                 let items = rows.map { (path: ($0.item.path as NSString).lastPathComponent, size: $0.item.size, reason: "\($0.item.category.rawValue), \($0.item.reason)") }
                 guard !items.isEmpty else { NSSound.beep(); return }
                 aiButton.isEnabled = false
-                summaryLabel.stringValue = "Asking the model…"
+                summaryLabel.stringValue = L("ai.cleanup.thinking", "Asking the model…")
                 Task { @MainActor in
                     defer { self.aiButton.isEnabled = true }
                     guard let advice = await recommendCleanup(items: items) else {
-                        self.summaryLabel.stringValue = "The model had no recommendation."
+                        self.summaryLabel.stringValue = L(
+                            "ai.cleanup.noRec", "The model had no recommendation.")
                         return
                     }
                     for index in advice.safeToDelete where index >= 0 && index < self.rows.count {
@@ -235,10 +249,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                     self.table.reloadData()
                     self.updateSummary(extra: advice.summary.isEmpty ? "" : ": \(advice.summary)")
                 }
-                return
             }
         #endif
-        summaryLabel.stringValue = "AI recommendations need macOS 26 with Apple Intelligence."
     }
 
     private static func textCell(_ table: NSTableView, owner: Any?, icon: Bool) -> NSTableCellView {

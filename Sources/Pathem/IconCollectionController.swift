@@ -238,18 +238,18 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             item.representedObject = id
             menu.addItem(item)
         }
-        add("Open", "files.open")
-        add("Get Info", "files.getInfo")
-        add("Download", "files.download")
-        add("Reveal in Finder", "files.reveal")
-        add("Rename…", "files.rename")
-        add("Move to Trash", "files.trash")
+        add(L("common.open", "Open"), "files.open")
+        add(L("icons.getInfo", "Get Info"), "files.getInfo")
+        add(L("icons.download", "Download"), "files.download")
+        add(L("icons.revealInFinder", "Reveal in Finder"), "files.reveal")
+        add(L("icons.rename", "Rename…"), "files.rename")
+        add(L("icons.moveToTrash", "Move to Trash"), "files.trash")
         menu.addItem(.separator())
-        add("New Folder", "files.newFolder")
+        add(L("icons.newFolder", "New Folder"), "files.newFolder")
         menu.addItem(.separator())
-        add("Copy", "files.copy")
-        add("Cut", "files.cut")
-        add("Paste", "files.paste")
+        add(L("icons.copy", "Copy"), "files.copy")
+        add(L("icons.cut", "Cut"), "files.cut")
+        add(L("icons.paste", "Paste"), "files.paste")
         return menu
     }
 
@@ -388,7 +388,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     // MARK: Icons
 
     private static let cloudIcon =
-        NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: "Online only") ?? NSImage()
+        NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: L("icons.onlineOnly", "Online only")) ?? NSImage()
     private static var iconCache: [String: NSImage] = [:]
 
     private static func icon(for entry: FileEntry) -> NSImage {

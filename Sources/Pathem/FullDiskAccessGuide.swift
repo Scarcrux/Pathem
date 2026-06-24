@@ -25,9 +25,9 @@ final class FullDiskAccessGuide: NSObject {
     private let panel: NSPanel
     private let spinner = NSProgressIndicator()
     private let statusIcon = NSImageView()
-    private let statusLabel = NSTextField(labelWithString: "Waiting for access…")
-    private let relaunchButton = NSButton(title: "Relaunch Pathem", target: nil, action: nil)
-    private let primaryButton = NSButton(title: "Not Now", target: nil, action: nil)
+    private let statusLabel = NSTextField(labelWithString: L("fda.waitingForAccess", "Waiting for access…"))
+    private let relaunchButton = NSButton(title: L("fda.relaunchButton", "Relaunch Pathem"), target: nil, action: nil)
+    private let primaryButton = NSButton(title: L("fda.notNow", "Not Now"), target: nil, action: nil)
 
     private weak var host: NSWindow?
     private var timer: Timer?
@@ -45,18 +45,19 @@ final class FullDiskAccessGuide: NSObject {
     }
 
     private func build() {
-        panel.title = "Full Disk Access"
+        panel.title = L("fda.panelTitle", "Full Disk Access")
 
-        let title = NSTextField(labelWithString: "Give Pathem Full Disk Access")
+        let title = NSTextField(labelWithString: L("fda.headline", "Give Pathem Full Disk Access"))
         title.font = .boldSystemFont(ofSize: 16)
         let subtitle = NSTextField(
             wrappingLabelWithString:
+                L("fda.subtitle",
                 "Your home folder works now. To browse everything (other users, system "
-                + "folders, and some app data), add Pathem to Full Disk Access.")
+                + "folders, and some app data), add Pathem to Full Disk Access."))
         subtitle.font = .systemFont(ofSize: 12)
         subtitle.textColor = .secondaryLabelColor
 
-        let openButton = NSButton(title: "Open Full Disk Access Settings", target: self, action: #selector(openSettings))
+        let openButton = NSButton(title: L("fda.openSettingsButton", "Open Full Disk Access Settings"), target: self, action: #selector(openSettings))
         openButton.bezelStyle = .rounded
         openButton.keyEquivalent = "\r"
 
@@ -89,10 +90,10 @@ final class FullDiskAccessGuide: NSObject {
 
         let stack = NSStackView(views: [
             title, subtitle,
-            stepRow(1, "Click the button below to open the settings pane."),
+            stepRow(1, L("fda.step1", "Click the button below to open the settings pane.")),
             openButton,
-            stepRow(2, "Click the + button (or the toggle) and add Pathem."),
-            stepRow(3, "Come back to Pathem. It detects access automatically."),
+            stepRow(2, L("fda.step2", "Click the + button (or the toggle) and add Pathem.")),
+            stepRow(3, L("fda.step3", "Come back to Pathem. It detects access automatically.")),
             separator,
             statusRow,
             buttonRow,
@@ -172,7 +173,7 @@ final class FullDiskAccessGuide: NSObject {
             updateStatus()
         } else if returnedFromSettings {
             // They visited Settings but we still can't read; a relaunch applies it.
-            statusLabel.stringValue = "Added Pathem? A relaunch will apply it."
+            statusLabel.stringValue = L("fda.addedRelaunchHint", "Added Pathem? A relaunch will apply it.")
             relaunchButton.isHidden = false
         }
     }
@@ -182,18 +183,18 @@ final class FullDiskAccessGuide: NSObject {
             spinner.stopAnimation(nil)
             spinner.isHidden = true
             statusIcon.image = NSImage(
-                systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Granted")
+                systemSymbolName: "checkmark.circle.fill", accessibilityDescription: L("fda.grantedA11y", "Granted"))
             statusIcon.contentTintColor = .systemGreen
             statusIcon.isHidden = false
-            statusLabel.stringValue = "Full Disk Access granted."
+            statusLabel.stringValue = L("fda.grantedStatus", "Full Disk Access granted.")
             relaunchButton.isHidden = true
-            primaryButton.title = "Done"
+            primaryButton.title = L("common.done", "Done")
             primaryButton.keyEquivalent = "\r"
         } else {
             spinner.isHidden = false
             spinner.startAnimation(nil)
             statusIcon.isHidden = true
-            statusLabel.stringValue = "Waiting for access…"
+            statusLabel.stringValue = L("fda.waitingForAccess", "Waiting for access…")
         }
     }
 

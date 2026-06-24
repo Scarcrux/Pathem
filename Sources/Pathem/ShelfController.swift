@@ -11,9 +11,9 @@ final class ShelfController: NSObject {
     let view = ShelfBarView()
 
     private var model = ShelfModel()
-    private let titleLabel = NSTextField(labelWithString: "Shelf")
+    private let titleLabel = NSTextField(labelWithString: L("shelf.title", "Shelf"))
     private let chipsStack = NSStackView()
-    private let emptyHint = NSTextField(labelWithString: "Drag files here to stash them")
+    private let emptyHint = NSTextField(labelWithString: L("shelf.emptyHint", "Drag files here to stash them"))
     private var actionButtons: [NSButton] = []
 
     /// Emptiness changed (so the browser can auto-show the bar and update toggles).
@@ -104,24 +104,24 @@ final class ShelfController: NSObject {
         ])
 
         let actions = NSStackView(views: [
-            actionButton("Copy Here", #selector(copyHere)),
-            actionButton("Move Here", #selector(moveHere)),
-            actionButton("Trash", #selector(trash)),
-            actionButton("Reveal", #selector(reveal)),
-            actionButton("Share", #selector(share)),
-            actionButton("Clear", #selector(clearAll)),
+            actionButton(L("shelf.copyHere", "Copy Here"), #selector(copyHere)),
+            actionButton(L("shelf.moveHere", "Move Here"), #selector(moveHere)),
+            actionButton(L("shelf.trash", "Trash"), #selector(trash)),
+            actionButton(L("shelf.reveal", "Reveal"), #selector(reveal)),
+            actionButton(L("shelf.share", "Share"), #selector(share)),
+            actionButton(L("shelf.clear", "Clear"), #selector(clearAll)),
         ])
         actions.orientation = .horizontal
         actions.spacing = 4
         actions.setHuggingPriority(.defaultHigh, for: .horizontal)
 
         let hide = NSButton()
-        hide.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Hide Shelf")
+        hide.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("shelf.hideShelfAX", "Hide Shelf"))
         hide.isBordered = false
         hide.bezelStyle = .inline
         hide.target = self
         hide.action = #selector(hideShelf)
-        hide.toolTip = "Hide the shelf"
+        hide.toolTip = L("shelf.hideShelfTooltip", "Hide the shelf")
 
         let row = NSStackView(views: [titleLabel, scroll, actions, hide])
         row.orientation = .horizontal
@@ -157,7 +157,10 @@ final class ShelfController: NSObject {
         for (index, url) in model.items.enumerated() {
             chipsStack.addArrangedSubview(makeChip(for: url, index: index))
         }
-        titleLabel.stringValue = model.isEmpty ? "Shelf" : "Shelf (\(model.count))"
+        titleLabel.stringValue =
+            model.isEmpty
+            ? L("shelf.title", "Shelf")
+            : String(format: L("shelf.titleCount", "Shelf (%d)"), model.count)
         emptyHint.isHidden = !model.isEmpty
         for button in actionButtons {
             // Clear is enabled whenever there are items; the rest too.
@@ -187,7 +190,7 @@ final class ShelfController: NSObject {
         label.maximumNumberOfLines = 1
 
         let remove = NSButton()
-        remove.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: "Remove")
+        remove.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: L("common.remove", "Remove"))
         remove.isBordered = false
         remove.bezelStyle = .inline
         remove.contentTintColor = .tertiaryLabelColor

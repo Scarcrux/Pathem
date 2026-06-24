@@ -26,7 +26,7 @@ final class SizeBrowserController: NSObject {
             backing: .buffered, defer: true)
         root = URL(fileURLWithPath: NSHomeDirectory())
         super.init()
-        panel.title = "Size Browser"
+        panel.title = L("size.windowTitle", "Size Browser")
         build()
     }
 
@@ -40,7 +40,7 @@ final class SizeBrowserController: NSObject {
     }
 
     private func build() {
-        upButton.title = "Enclosing Folder"
+        upButton.title = L("size.enclosingFolder", "Enclosing Folder")
         upButton.bezelStyle = .rounded
         upButton.controlSize = .small
         upButton.target = self
@@ -123,7 +123,7 @@ final class SizeBrowserController: NSObject {
             rows.addArrangedSubview(makeRow(item, maxSize: maxSize))
         }
         if items.isEmpty {
-            rows.addArrangedSubview(NSTextField(labelWithString: "Empty folder"))
+            rows.addArrangedSubview(NSTextField(labelWithString: L("size.emptyFolder", "Empty folder")))
         }
     }
 

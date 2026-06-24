@@ -46,7 +46,7 @@ final class TabbedPaneController: NSObject {
         tabBar.edgeInsets = NSEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
         tabBar.translatesAutoresizingMaskIntoConstraints = false
 
-        plusButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: "New Tab")
+        plusButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: L("tabs.newTab", "New Tab"))
         plusButton.bezelStyle = .texturedRounded
         plusButton.setButtonType(.momentaryPushIn)
         plusButton.imagePosition = .imageOnly
@@ -235,7 +235,7 @@ final class TabbedPaneController: NSObject {
         if closable {
             let close = NSButton(title: "", target: self, action: #selector(closeClicked(_:)))
             close.tag = index
-            close.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Close Tab")
+            close.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("tabs.closeTab", "Close Tab"))
             close.imagePosition = .imageOnly
             close.isBordered = false
             close.translatesAutoresizingMaskIntoConstraints = false
@@ -258,6 +258,6 @@ final class TabbedPaneController: NSObject {
 
     static func title(for url: URL) -> String {
         let name = url.lastPathComponent
-        return (name.isEmpty || name == "/") ? "Macintosh HD" : name
+        return (name.isEmpty || name == "/") ? L("tabs.macintoshHD", "Macintosh HD") : name
     }
 }

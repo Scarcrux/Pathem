@@ -45,6 +45,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
     private static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
     private static let searchItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.search")
+    private static let cleanupItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.cleanup")
 
     /// The command bus (DESIGN.md section 10). Every browser action is a named
     /// command; keybindings, the palette, and the AI bar will dispatch by id.
@@ -125,12 +126,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebarWidth.isActive = true
         sidebarWidthConstraint = sidebarWidth
 
-        searchField.placeholderString = "Search"
+        searchField.placeholderString = L("bvc.searchPlaceholder", "Search")
         searchField.translatesAutoresizingMaskIntoConstraints = false
         searchField.target = self
         searchField.action = #selector(runSearch)
         searchField.sendsSearchStringImmediately = false
-        searchField.toolTip = "Semantic search in this folder (on-device)"
+        searchField.toolTip = L("bvc.searchTip", "Semantic search in this folder (on-device)")
         // The search field lives in the window's unified toolbar (Finder-style),
         // not its own strip; pin a width for when it's in the toolbar item.
         searchField.widthAnchor.constraint(equalToConstant: 240).isActive = true
@@ -289,7 +290,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func registerCollectionCommand(_ name: String) {
         commands.register(
             .init(
-                id: "collection.\(name)", title: "Collection: \(name)", isEnabled: { true },
+                id: "collection.\(name)", title: String(format: L("bvc.collectionCmdTitle", "Collection: %@"), name), isEnabled: { true },
                 run: { [weak self] in self?.showCollection(name) }))
     }
 
@@ -298,21 +299,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let paths = collectionsStore.collection(named: name)?.paths
         else { NSSound.beep(); return }
         let token = pane.beginContentRequest()
-        pane.showSmartResults([], title: "Collection: \(name)…")
+        pane.showSmartResults([], title: String(format: L("bvc.collectionLoading", "Collection: %@…"), name))
         Task { @MainActor in
             let entries = await Task.detached { () -> [FileEntry] in
                 paths.filter { FileManager.default.fileExists(atPath: $0) }
                     .map { FileEntry(contentsOf: URL(fileURLWithPath: $0)) }
             }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
-            pane.showSmartResults(entries, title: "Collection: \(name) (\(entries.count))")
+            pane.showSmartResults(entries, title: String(format: L("bvc.collectionCount", "Collection: %@ (%d)"), name, entries.count))
         }
     }
 
     /// Add the selection to a collection (prompting for / creating the name).
     private func addToCollection() {
         guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
-        guard let name = promptForName(title: "Add to Collection", default: "Collection") else { return }
+        guard let name = promptForName(title: L("bvc.addToCollectionPrompt", "Add to Collection"), default: L("bvc.collectionDefaultName", "Collection")) else { return }
         let isNew = collectionsStore.collection(named: name) == nil
         collectionsStore.add(urls.map(\.path), to: name)
         saveConfig(collectionsStore, to: Self.collectionsConfigURL)
@@ -329,7 +330,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let name = search.name
             commands.register(
                 .init(
-                    id: "search.\(name)", title: "Search: \(name)", isEnabled: { true },
+                    id: "search.\(name)", title: String(format: L("bvc.searchCmdTitle", "Search: %@"), name), isEnabled: { true },
                     run: { [weak self] in self?.runSavedSearch(name, query: query) }))
         }
     }
@@ -337,12 +338,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func runSavedSearch(_ name: String, query: String) {
         guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
         let token = pane.beginContentRequest()
-        pane.showSmartResults([], title: "Searching: \(name)…")
+        pane.showSmartResults([], title: String(format: L("bvc.searchingLoading", "Searching: %@…"), name))
         Task { @MainActor in
             let urls = await SpotlightSearch.matching(query, scope: nil, limit: 1000)
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
-            pane.showSmartResults(entries, title: "Search: \(name) (\(entries.count))")
+            pane.showSmartResults(entries, title: String(format: L("bvc.searchCount", "Search: %@ (%d)"), name, entries.count))
         }
     }
 
@@ -355,7 +356,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let macroID = "macro.\(macro.name)"
             commands.register(
                 .init(
-                    id: macroID, title: "Macro: \(macro.name)", isEnabled: { true },
+                    id: macroID, title: String(format: L("bvc.macroCmdTitle", "Macro: %@"), macro.name), isEnabled: { true },
                     run: { [weak self] in
                         guard let self, !self.runningMacroIDs.contains(macroID) else { return }  // cycle guard
                         self.runningMacroIDs.insert(macroID)
@@ -375,162 +376,162 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let hasSelection: () -> Bool = { [weak self] in
             self?.activePane?.selectedEntries.isEmpty == false
         }
-        add("files.copyToOtherPane", "Copy to Other Pane", enabled: hasSelection) {
+        add("files.copyToOtherPane", L("bvc.cmd.copyToOtherPane", "Copy to Other Pane"), enabled: hasSelection) {
             [weak self] in self?.transfer(move: false)
         }
-        add("files.moveToOtherPane", "Move to Other Pane", enabled: hasSelection) {
+        add("files.moveToOtherPane", L("bvc.cmd.moveToOtherPane", "Move to Other Pane"), enabled: hasSelection) {
             [weak self] in self?.transfer(move: true)
         }
-        add("files.copy", "Copy", enabled: hasSelection) {
+        add("files.copy", L("bvc.cmd.copy", "Copy"), enabled: hasSelection) {
             [weak self] in self?.writeSelectionToPasteboard(cut: false)
         }
-        add("files.cut", "Cut", enabled: hasSelection) {
+        add("files.cut", L("bvc.cmd.cut", "Cut"), enabled: hasSelection) {
             [weak self] in self?.writeSelectionToPasteboard(cut: true)
         }
-        add("view.asList", "as List") { [weak self] in self?.activePane?.setViewMode(.list) }
-        add("view.asIcons", "as Icons") { [weak self] in self?.activePane?.setViewMode(.icon) }
-        add("view.asGallery", "as Gallery") { [weak self] in self?.activePane?.setViewMode(.gallery) }
-        add("view.asColumn", "as Columns") { [weak self] in self?.activePane?.setViewMode(.column) }
-        add("terminal.toggle", "Toggle Terminal") { [weak self] in self?.toggleTerminal() }
-        add("terminal.here", "Open Terminal Here") { [weak self] in self?.openTerminalHere() }
-        add("terminal.toggleFollow", "Terminal Follows Folder") {
+        add("view.asList", L("bvc.cmd.asList", "as List")) { [weak self] in self?.activePane?.setViewMode(.list) }
+        add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.activePane?.setViewMode(.icon) }
+        add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.activePane?.setViewMode(.gallery) }
+        add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.activePane?.setViewMode(.column) }
+        add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
+        add("terminal.here", L("bvc.cmd.openTerminalHere", "Open Terminal Here")) { [weak self] in self?.openTerminalHere() }
+        add("terminal.toggleFollow", L("bvc.cmd.terminalFollowsFolder", "Terminal Follows Folder")) {
             [weak self] in self?.toggleTerminalFollows()
         }
-        add("files.paste", "Paste") { [weak self] in self?.paste(nil) }
-        add("files.open", "Open", enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
-        add("files.batchRename", "Batch Rename…", enabled: hasSelection) { [weak self] in self?.showBatchRename() }
-        add("files.newFolder", "New Folder") { [weak self] in self?.newFolder() }
-        add("files.rename", "Rename…", enabled: { [weak self] in self?.activePane?.selectedEntries.count == 1 }) {
+        add("files.paste", L("bvc.cmd.paste", "Paste")) { [weak self] in self?.paste(nil) }
+        add("files.open", L("bvc.cmd.open", "Open"), enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
+        add("files.batchRename", L("bvc.cmd.batchRename", "Batch Rename…"), enabled: hasSelection) { [weak self] in self?.showBatchRename() }
+        add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in self?.newFolder() }
+        add("files.rename", L("bvc.cmd.rename", "Rename…"), enabled: { [weak self] in self?.activePane?.selectedEntries.count == 1 }) {
             [weak self] in self?.renameSelection()
         }
-        add("files.trash", "Move to Trash", enabled: hasSelection) { [weak self] in self?.trashSelection() }
-        add("files.airdrop", "Send via AirDrop", enabled: hasSelection) {
+        add("files.trash", L("bvc.cmd.moveToTrash", "Move to Trash"), enabled: hasSelection) { [weak self] in self?.trashSelection() }
+        add("files.airdrop", L("bvc.cmd.sendViaAirDrop", "Send via AirDrop"), enabled: hasSelection) {
             [weak self] in self?.activePane?.airDropSelection()
         }
-        add("files.copyPath", "Copy Path", enabled: hasSelection) { [weak self] in self?.copyPaths(asURL: false) }
-        add("files.copyURL", "Copy as File URL", enabled: hasSelection) {
+        add("files.copyPath", L("bvc.cmd.copyPath", "Copy Path"), enabled: hasSelection) { [weak self] in self?.copyPaths(asURL: false) }
+        add("files.copyURL", L("bvc.cmd.copyAsFileURL", "Copy as File URL"), enabled: hasSelection) {
             [weak self] in self?.copyPaths(asURL: true)
         }
-        add("files.copyName", "Copy Name", enabled: hasSelection) { [weak self] in self?.copyNames() }
-        add("files.addToCollection", "Add to Collection…", enabled: hasSelection) {
+        add("files.copyName", L("bvc.cmd.copyName", "Copy Name"), enabled: hasSelection) { [weak self] in self?.copyNames() }
+        add("files.addToCollection", L("bvc.cmd.addToCollection", "Add to Collection…"), enabled: hasSelection) {
             [weak self] in self?.addToCollection()
         }
-        add("files.organizeAI", "Organize with AI…", enabled: { [weak self] in self?.activePane != nil }) {
+        add("files.organizeAI", L("bvc.cmd.organizeWithAI", "Organize with AI…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.organizeWithAI()
         }
-        add("files.copySHA256", "Copy SHA-256", enabled: hasSelection) { [weak self] in self?.copyChecksums() }
-        add("files.verifyChecksum", "Verify Checksum…", enabled: hasSelection) {
+        add("files.copySHA256", L("bvc.cmd.copySHA256", "Copy SHA-256"), enabled: hasSelection) { [weak self] in self?.copyChecksums() }
+        add("files.verifyChecksum", L("bvc.cmd.verifyChecksum", "Verify Checksum…"), enabled: hasSelection) {
             [weak self] in self?.verifyChecksum()
         }
-        add("files.reveal", "Reveal in Finder", enabled: { [weak self] in self?.activePane != nil }) {
+        add("files.reveal", L("bvc.cmd.revealInFinder", "Reveal in Finder"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
         }
-        add("files.getInfo", "Get Info", enabled: { [weak self] in self?.activePane != nil }) {
+        add("files.getInfo", L("bvc.cmd.getInfo", "Get Info"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.showInfo()
         }
         add(
-            "files.download", "Download",
+            "files.download", L("bvc.cmd.download", "Download"),
             enabled: { [weak self] in self?.activePane?.selectedEntries.contains(where: \.isDataless) ?? false }
         ) { [weak self] in self?.downloadSelection() }
-        add("view.preferences", "Preferences…") { [weak self] in self?.showPreferences() }
-        add("view.fullPathTitle", "Show Full Path in Title Bar") { [weak self] in self?.toggleFullPathTitle() }
-        add("view.pathBarBottom", "Show Path Bar at Bottom") { [weak self] in self?.togglePathBarPosition() }
-        add("search.toggleOCR", "Toggle Image OCR in Search") { [weak self] in self?.toggleOCR() }
-        add("view.toggleHidden", "Show Hidden Files", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.preferences", L("bvc.cmd.preferences", "Preferences…")) { [weak self] in self?.showPreferences() }
+        add("view.fullPathTitle", L("bvc.cmd.showFullPathInTitleBar", "Show Full Path in Title Bar")) { [weak self] in self?.toggleFullPathTitle() }
+        add("view.pathBarBottom", L("bvc.cmd.showPathBarAtBottom", "Show Path Bar at Bottom")) { [weak self] in self?.togglePathBarPosition() }
+        add("search.toggleOCR", L("bvc.cmd.toggleImageOCRInSearch", "Toggle Image OCR in Search")) { [weak self] in self?.toggleOCR() }
+        add("view.toggleHidden", L("bvc.cmd.showHiddenFiles", "Show Hidden Files"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
         }
-        add("view.applyToSubfolders", "Apply View to Subfolders", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.applyToSubfolders", L("bvc.cmd.applyViewToSubfolders", "Apply View to Subfolders"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
         }
-        add("view.useAsDefault", "Use as Default View", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.useAsDefault", L("bvc.cmd.useAsDefaultView", "Use as Default View"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.useCurrentViewAsDefault()
         }
-        add("view.calculateSizes", "Calculate All Sizes") { [weak self] in self?.toggleCalculateSizes() }
-        add("view.compactSidebar", "Compact Sidebar") { [weak self] in self?.toggleCompactSidebar() }
-        add("layout.save", "Save Layout…") { [weak self] in self?.saveLayoutPrompt() }
-        add("palette.show", "Command Palette…") { [weak self] in self?.showPalette() }
-        add("ai.run", "Ask Pathem (Natural Language)…") { [weak self] in self?.showAICommandBar() }
-        add("view.quickLook", "Quick Look", enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
-        add("tab.new", "New Tab") { [weak self] in self?.activeSide?.newTab(duplicatingCurrent: true) }
-        add("tab.close", "Close Tab", enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
+        add("view.calculateSizes", L("bvc.cmd.calculateAllSizes", "Calculate All Sizes")) { [weak self] in self?.toggleCalculateSizes() }
+        add("view.compactSidebar", L("bvc.cmd.compactSidebar", "Compact Sidebar")) { [weak self] in self?.toggleCompactSidebar() }
+        add("layout.save", L("bvc.cmd.saveLayout", "Save Layout…")) { [weak self] in self?.saveLayoutPrompt() }
+        add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in self?.showPalette() }
+        add("ai.run", L("bvc.cmd.askPathem", "Ask Pathem (Natural Language)…")) { [weak self] in self?.showAICommandBar() }
+        add("view.quickLook", L("bvc.cmd.quickLook", "Quick Look"), enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
+        add("tab.new", L("bvc.cmd.newTab", "New Tab")) { [weak self] in self?.activeSide?.newTab(duplicatingCurrent: true) }
+        add("tab.close", L("bvc.cmd.closeTab", "Close Tab"), enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
             [weak self] in self?.activeSide?.closeActiveTab()
         }
-        add("tab.next", "Next Tab", enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
+        add("tab.next", L("bvc.cmd.nextTab", "Next Tab"), enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
             [weak self] in self?.activeSide?.selectNextTab()
         }
-        add("tab.previous", "Previous Tab", enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
+        add("tab.previous", L("bvc.cmd.previousTab", "Previous Tab"), enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
             [weak self] in self?.activeSide?.selectPreviousTab()
         }
-        add("nav.back", "Back", enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
+        add("nav.back", L("bvc.cmd.back", "Back"), enabled: { [weak self] in self?.activePane?.canGoBack ?? false }) {
             [weak self] in self?.activePane?.goBack()
         }
-        add("nav.forward", "Forward", enabled: { [weak self] in self?.activePane?.canGoForward ?? false }) {
+        add("nav.forward", L("bvc.cmd.forward", "Forward"), enabled: { [weak self] in self?.activePane?.canGoForward ?? false }) {
             [weak self] in self?.activePane?.goForward()
         }
-        add("nav.up", "Enclosing Folder", enabled: { [weak self] in self?.activePane?.canGoUp ?? false }) {
+        add("nav.up", L("bvc.cmd.enclosingFolder", "Enclosing Folder"), enabled: { [weak self] in self?.activePane?.canGoUp ?? false }) {
             [weak self] in self?.activePane?.goUp()
         }
-        add("nav.editPath", "Go to Path…") { [weak self] in self?.activePane?.beginEditingPath() }
-        add("view.flatView", "Flat View", enabled: { [weak self] in self?.activePane != nil }) {
+        add("nav.editPath", L("bvc.cmd.goToPath", "Go to Path…")) { [weak self] in self?.activePane?.beginEditingPath() }
+        add("view.flatView", L("bvc.cmd.flatView", "Flat View"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.showFlatView()
         }
-        add("view.filter", "Filter…", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.filter", L("bvc.cmd.filter", "Filter…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.beginFilter()
         }
-        add("view.previewPane", "Preview Pane", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.previewPane", L("bvc.cmd.previewPane", "Preview Pane"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.togglePreviewPane()
         }
-        add("files.findDuplicates", "Find Duplicates", enabled: { [weak self] in self?.activePane != nil }) {
+        add("files.findDuplicates", L("bvc.cmd.findDuplicates", "Find Duplicates"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findDuplicates()
         }
-        add("view.sizeBrowser", "Size Browser…", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.sizeBrowser", L("bvc.cmd.sizeBrowser", "Size Browser…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in
             guard let self, let url = self.activePane?.currentURL else { return }
             self.sizeBrowser.present(for: url, over: self.view.window)
         }
-        add("view.cleanup", "Cleanup…", enabled: { [weak self] in self?.activePane != nil }) {
+        add("view.cleanup", L("bvc.cmd.cleanup", "Cleanup…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in
             guard let self, let url = self.activePane?.currentURL else { return }
             self.cleanup.present(for: url, over: self.view.window)
         }
-        add("files.comparePanes", "Compare Panes…", enabled: { [weak self] in self?.activePane != nil }) {
+        add("files.comparePanes", L("bvc.cmd.comparePanes", "Compare Panes…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.comparePanes()
         }
-        add("files.compress", "Compress", enabled: hasSelection) { [weak self] in self?.compressSelection() }
+        add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasSelection) { [weak self] in self?.compressSelection() }
         add(
-            "files.extract", "Extract",
+            "files.extract", L("bvc.cmd.extract", "Extract"),
             enabled: { [weak self] in
                 (self?.activePane?.selectedLocalURLs() ?? []).contains { Archiver.canExtract($0) }
             }
         ) { [weak self] in self?.extractSelection() }
-        add("shelf.add", "Add to Shelf", enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
+        add("shelf.add", L("bvc.cmd.addToShelf", "Add to Shelf"), enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
-        add("shelf.toggle", "Show Shelf") { [weak self] in self?.toggleShelf() }
-        add("connections.manage", "Connections…") {
+        add("shelf.toggle", L("bvc.cmd.showShelf", "Show Shelf")) { [weak self] in self?.toggleShelf() }
+        add("connections.manage", L("bvc.cmd.connections", "Connections…")) {
             [weak self] in self?.connectionsController.present(over: self?.view.window)
         }
-        add("connections.newTabToggle", "Open Connections in a New Tab") {
+        add("connections.newTabToggle", L("bvc.cmd.openConnectionsInNewTab", "Open Connections in a New Tab")) {
             [weak self] in self?.toggleConnectionsNewTab()
         }
         for color in FileTag.Color.displayOrder {
-            add("tags.toggle.\(color.rawValue)", "Tag \(color.label)", enabled: hasSelection) {
+            add("tags.toggle.\(color.rawValue)", String(format: L("bvc.cmd.tagColor", "Tag %@"), color.label), enabled: hasSelection) {
                 [weak self] in self?.activePane?.tagSelection(toggle: color)
             }
         }
-        add("tags.clear", "Clear Tags", enabled: hasSelection) {
+        add("tags.clear", L("bvc.cmd.clearTags", "Clear Tags"), enabled: hasSelection) {
             [weak self] in self?.activePane?.clearSelectionTags()
         }
         add(
-            "remote.download", "Download from Server…",
+            "remote.download", L("bvc.cmd.downloadFromServer", "Download from Server…"),
             enabled: { [weak self] in
                 guard let pane = self?.activePane, pane.isRemote else { return false }
                 return pane.selectedEntries.contains { !$0.isDirectory }
             }
         ) { [weak self] in self?.downloadSelectedRemote() }
-        add("edit.undo", "Undo", enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
+        add("edit.undo", L("bvc.cmd.undo", "Undo"), enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
             [weak self] in self?.undo(nil)
         }
-        add("edit.redo", "Redo", enabled: { [weak self] in self?.view.window?.undoManager?.canRedo ?? false }) {
+        add("edit.redo", L("bvc.cmd.redo", "Redo"), enabled: { [weak self] in self?.view.window?.undoManager?.canRedo ?? false }) {
             [weak self] in self?.redo(nil)
         }
     }
@@ -592,7 +593,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.refreshRemote()
             } catch {
                 self?.presentFailures(
-                    [FileOperations.Failure(name: verb, reason: "\(error)")], title: "\(verb) failed")
+                    [FileOperations.Failure(name: verb, reason: "\(error)")],
+                    title: String(format: L("bvc.remoteOpFailed", "%@ failed"), verb))
             }
         }
     }
@@ -601,8 +603,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func promptForName(title: String, default value: String) -> String? {
         let alert = NSAlert()
         alert.messageText = title
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         field.stringValue = value
         alert.accessoryView = field
@@ -616,8 +618,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         if pane.isShowingSmartResults { NSSound.beep(); return }  // no single destination
         if pane.isRemote {
-            guard let name = promptForName(title: "New Folder", default: "untitled folder") else { return }
-            performRemoteOp(pane, verb: "New Folder") { provider, connection, path, password in
+            guard let name = promptForName(title: L("bvc.newFolderPrompt", "New Folder"), default: L("bvc.untitledFolder", "untitled folder")) else { return }
+            performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) { provider, connection, path, password in
                 try await provider.makeDirectory(
                     connection, path: PaneController.joinRemote(path, name), password: password)
             }
@@ -630,8 +632,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             registerNewFolderUndo(name: name, in: pane.currentURL)
         } catch {
             presentFailures(
-                [FileOperations.Failure(name: "New Folder", reason: error.localizedDescription)],
-                title: "Couldn’t create folder")
+                [FileOperations.Failure(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
+                title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
         }
     }
 
@@ -640,12 +642,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.trash([name], in: directory)  // undo = trash the new folder
             target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Undo failed") }
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
             if !result.trashed.isEmpty {
                 target.registerNewFolderRedo(name: name, in: directory, trashed: result.trashed)
             }
         }
-        undoManager.setActionName("New Folder")
+        undoManager.setActionName(L("bvc.newFolderVerb", "New Folder"))
     }
 
     private func registerNewFolderRedo(name: String, in directory: URL, trashed: [FileOperations.Trashed]) {
@@ -654,10 +656,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let failures = FileOperations.untrash(trashed)  // redo = restore the folder
             target.reloadBothSides()
             target.paneShowing(directory)?.select(name: name)
-            if !failures.isEmpty { target.presentFailures(failures, title: "Redo failed") }
+            if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
             target.registerNewFolderUndo(name: name, in: directory)
         }
-        undoManager.setActionName("New Folder")
+        undoManager.setActionName(L("bvc.newFolderVerb", "New Folder"))
     }
 
     private func renameSelection() {
@@ -665,9 +667,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let entry = pane.selectedEntries.first
         else { return }
         let alert = NSAlert()
-        alert.messageText = "Rename “\(entry.name)”"
-        alert.addButton(withTitle: "Rename")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = String(format: L("bvc.renameTitle", "Rename “%@”"), entry.name)
+        alert.addButton(withTitle: L("bvc.renameButton", "Rename"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         field.stringValue = entry.name
         alert.accessoryView = field
@@ -678,11 +680,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if pane.isRemote {
             guard entry.rawName == nil else {
                 presentInfo(
-                    "Can’t rename this item",
-                    "Its name isn’t valid UTF-8, which remote operations don’t support yet.")
+                    L("bvc.cantRenameTitle", "Can’t rename this item"),
+                    L("bvc.cantRenameBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
                 return
             }
-            performRemoteOp(pane, verb: "Rename") { provider, connection, path, password in
+            performRemoteOp(pane, verb: L("bvc.renameVerb", "Rename")) { provider, connection, path, password in
                 try await provider.rename(
                     connection, from: PaneController.joinRemote(path, entry.name),
                     to: PaneController.joinRemote(path, newName), password: password)
@@ -699,7 +701,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         } catch {
             presentFailures(
                 [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
-                title: "Rename failed")
+                title: L("bvc.renameFailed", "Rename failed"))
         }
     }
 
@@ -714,10 +716,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             } catch {
                 target.presentFailures(
                     [FileOperations.Failure(name: current, reason: error.localizedDescription)],
-                    title: "Undo failed")
+                    title: L("bvc.undoFailed", "Undo failed"))
             }
         }
-        undoManager.setActionName("Rename")
+        undoManager.setActionName(L("bvc.renameVerb", "Rename"))
     }
 
     private func trashSelection() {
@@ -729,24 +731,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             // String could hit the wrong file, so refuse it for now.
             guard entries.allSatisfy({ $0.rawName == nil }) else {
                 presentInfo(
-                    "Can’t delete this item",
-                    "Its name isn’t valid UTF-8, which remote operations don’t support yet.")
+                    L("bvc.cantDeleteTitle", "Can’t delete this item"),
+                    L("bvc.cantDeleteBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
                 return
             }
             // Remote delete is permanent (no Trash, no undo) — confirm explicitly.
-            let host = pane.remoteContext?.connection.host ?? "the server"
+            let host = pane.remoteContext?.connection.host ?? L("bvc.theServer", "the server")
             let alert = NSAlert()
             alert.alertStyle = .warning
             alert.messageText =
                 "Permanently delete \(entries.count) item\(entries.count == 1 ? "" : "s") on \(host)?"
-            alert.informativeText = "This can’t be undone."
-            alert.addButton(withTitle: "Delete")
-            alert.addButton(withTitle: "Cancel")
+            alert.informativeText = L("bvc.cantBeUndone", "This can’t be undone.")
+            alert.addButton(withTitle: L("common.delete", "Delete"))
+            alert.addButton(withTitle: L("common.cancel", "Cancel"))
             guard let window = view.window else { return }
             let names = entries.map { ($0.name, $0.isDirectory) }
             alert.beginSheetModal(for: window) { [weak self] response in
                 guard response == .alertFirstButtonReturn, let self else { return }
-                self.performRemoteOp(pane, verb: "Delete") { provider, connection, path, password in
+                self.performRemoteOp(pane, verb: L("bvc.deleteVerb", "Delete")) { provider, connection, path, password in
                     for (name, isDir) in names {
                         try await provider.remove(
                             connection, path: PaneController.joinRemote(path, name), isDirectory: isDir,
@@ -762,7 +764,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         reloadBothSides()  // the trashed files may have lived in either visible folder
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
         if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
-        if !result.failures.isEmpty { presentFailures(result.failures, title: "Move to Trash failed") }
+        if !result.failures.isEmpty { presentFailures(result.failures, title: L("bvc.moveToTrashFailed", "Move to Trash failed")) }
     }
 
     private func registerTrashUndo(_ trashed: [FileOperations.Trashed]) {
@@ -770,10 +772,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         undoManager.registerUndo(withTarget: self) { target in
             let failures = FileOperations.untrash(trashed)
             target.reloadBothSides()
-            if !failures.isEmpty { target.presentFailures(failures, title: "Undo failed") }
+            if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.undoFailed", "Undo failed")) }
             target.registerTrashRedo(trashed)  // redo = move them back to the Trash
         }
-        undoManager.setActionName("Move to Trash")
+        undoManager.setActionName(L("bvc.moveToTrashAction", "Move to Trash"))
     }
 
     private func registerTrashRedo(_ trashed: [FileOperations.Trashed]) {
@@ -782,10 +784,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             // Trash by original URL so cross-folder selections redo correctly.
             let result = FileOperations.trash(urls: trashed.map(\.original))
             target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Redo failed") }
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
             if !result.trashed.isEmpty { target.registerTrashUndo(result.trashed) }
         }
-        undoManager.setActionName("Move to Trash")
+        undoManager.setActionName(L("bvc.moveToTrashAction", "Move to Trash"))
     }
 
     /// Refresh the active pane on each side (used by undo/redo handlers).
@@ -840,20 +842,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case 64: algorithm = .sha256
         default:
             presentChecksumResult(
-                title: "Unsupported checksum",
-                text: "Copy a hex MD5, SHA-1, or SHA-256 to the clipboard first.")
+                title: L("bvc.unsupportedChecksum", "Unsupported checksum"),
+                text: L("bvc.unsupportedChecksumBody", "Copy a hex MD5, SHA-1, or SHA-256 to the clipboard first."))
             return
         }
         Task { @MainActor in
             let actual = await Task.detached { try? FileHasher.hash(url, algorithm: algorithm) }.value
             guard let actual else {
-                presentChecksumResult(title: "Couldn’t read the file", text: url.lastPathComponent)
+                presentChecksumResult(title: L("bvc.couldntReadFile", "Couldn’t read the file"), text: url.lastPathComponent)
                 return
             }
             let match = actual == expected
             presentChecksumResult(
-                title: match ? "\(algorithm.label) matches ✓" : "\(algorithm.label) does NOT match",
-                text: "\(url.lastPathComponent)\n\nExpected: \(expected)\nActual:   \(actual)")
+                title: match
+                    ? String(format: L("bvc.checksumMatches", "%@ matches ✓"), algorithm.label)
+                    : String(format: L("bvc.checksumNoMatch", "%@ does NOT match"), algorithm.label),
+                text: "\(url.lastPathComponent)\n\n"
+                    + String(format: L("bvc.checksumExpectedActual", "Expected: %@\nActual:   %@"), expected, actual))
         }
     }
 
@@ -861,7 +866,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = text
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("common.ok", "OK"))
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
     }
 
@@ -881,7 +886,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self?.reloadBothSides()
                 self?.activePane?.select(name: dest.lastPathComponent)
             } catch {
-                self?.reportArchiveError("Couldn’t create the archive", error)
+                self?.reportArchiveError(L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
             }
         }
     }
@@ -901,7 +906,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 do { try await Archiver.extract(archive, to: out) } catch { failed = true }
             }
             self.reloadBothSides()
-            if failed { self.reportArchiveError("Couldn’t extract one or more archives", nil) }
+            if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
         }
     }
 
@@ -909,7 +914,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let alert = NSAlert()
         alert.messageText = title
         if let error { alert.informativeText = "\(error)" }
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("common.ok", "OK"))
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { NSSound.beep() }
     }
 
@@ -930,14 +935,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func presentCompare(_ diffs: [FolderCompare.Difference], leftURL: URL, rightURL: URL) {
         let s = FolderCompare.summary(diffs)
         let alert = NSAlert()
-        alert.messageText = "Compare: \(leftURL.lastPathComponent) ↔ \(rightURL.lastPathComponent)"
-        alert.informativeText =
-            "Only on left: \(s.onlyLeft)\nOnly on right: \(s.onlyRight)\nDiffer: \(s.differs)\nIdentical: \(s.identical)"
-        let deleteExtras = NSButton(checkboxWithTitle: "Also delete files missing from the source", target: nil, action: nil)
+        alert.messageText = String(
+            format: L("bvc.compareTitle", "Compare: %@ ↔ %@"),
+            leftURL.lastPathComponent, rightURL.lastPathComponent)
+        alert.informativeText = String(
+            format: L("bvc.compareSummary", "Only on left: %d\nOnly on right: %d\nDiffer: %d\nIdentical: %d"),
+            s.onlyLeft, s.onlyRight, s.differs, s.identical)
+        let deleteExtras = NSButton(checkboxWithTitle: L("bvc.alsoDeleteMissing", "Also delete files missing from the source"), target: nil, action: nil)
         alert.accessoryView = deleteExtras
-        alert.addButton(withTitle: "Mirror Left → Right")
-        alert.addButton(withTitle: "Mirror Right → Left")
-        alert.addButton(withTitle: "Close")
+        alert.addButton(withTitle: L("bvc.mirrorLeftToRight", "Mirror Left → Right"))
+        alert.addButton(withTitle: L("bvc.mirrorRightToLeft", "Mirror Right → Left"))
+        alert.addButton(withTitle: L("common.close", "Close"))
         guard let window = view.window else { return }
         alert.beginSheetModal(for: window) { [weak self] response in
             let delete = deleteExtras.state == .on
@@ -959,11 +967,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let self else { return }
             self.reloadBothSides()
             let alert = NSAlert()
-            alert.messageText = "Mirror complete"
+            alert.messageText = L("bvc.mirrorComplete", "Mirror complete")
             alert.informativeText =
-                "Copied \(result.copied), deleted \(result.deleted)"
-                + (result.failures.isEmpty ? "" : ", \(result.failures.count) failed")
-            alert.addButton(withTitle: "OK")
+                String(format: L("bvc.mirrorCopiedDeleted", "Copied %d, deleted %d"), result.copied, result.deleted)
+                + (result.failures.isEmpty ? "" : String(format: L("bvc.mirrorFailedSuffix", ", %d failed"), result.failures.count))
+            alert.addButton(withTitle: L("common.ok", "OK"))
             if let window = self.view.window { alert.beginSheetModal(for: window) { _ in } }
         }
     }
@@ -975,14 +983,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let root = pane.currentURL
         let token = pane.beginContentRequest()  // so navigating away discards stale results
-        pane.showSmartResults([], title: "Finding duplicates in \(root.lastPathComponent)…")
+        pane.showSmartResults([], title: String(format: L("bvc.findingDuplicates", "Finding duplicates in %@…"), root.lastPathComponent))
         Task { @MainActor [weak self] in
             let groups = await Task.detached { DuplicateFinder.find(in: [root]) }.value
             guard let self, self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
             let files = groups.flatMap { $0.files }
             let title =
                 groups.isEmpty
-                ? "No duplicates in \(root.lastPathComponent)"
+                ? String(format: L("bvc.noDuplicates", "No duplicates in %@"), root.lastPathComponent)
                 : "Duplicates: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
             pane.showSmartResults(files, title: title)
         }
@@ -1016,10 +1024,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private func organizeWithAI() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        // Check the model up front (before prompting) so we explain instead of failing.
+        if let reason = AIAvailability.unavailableReason() {
+            AIAvailability.presentUnavailable(
+                L("ai.organize.unavail", "Organize with AI is unavailable"), reason: reason,
+                over: view.window)
+            return
+        }
         let folder = pane.currentURL
         let files = pane.selectedEntries.isEmpty ? pane.entries.map(\.name) : pane.selectedEntries.map(\.name)
         guard !files.isEmpty else { NSSound.beep(); return }
-        guard let instruction = promptForName(title: "Organize with AI", default: "group by file type")
+        guard let instruction = promptForName(
+            title: L("ai.organize.title", "Organize with AI"), default: "group by file type")
         else { return }
 
         #if canImport(FoundationModels)
@@ -1028,27 +1044,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     guard let plan = await proposeOrganizePlan(instruction: instruction, files: files),
                         !plan.steps.isEmpty
                     else {
-                        self.presentInfo("Couldn’t propose a plan", "The model returned no steps.")
+                        self.presentInfo(
+                            L("ai.organize.noPlan.title", "Couldn’t propose a plan"),
+                            L("ai.organize.noPlan.body", "The model returned no steps."))
                         return
                     }
                     self.confirmAndRun(plan, in: folder)
                 }
-                return
             }
         #endif
-        presentInfo(
-            "Organize with AI is unavailable",
-            "It needs macOS 26 with Apple Intelligence. The plan engine is ready for when it is.")
     }
 
     /// Preview the plan, then execute it on confirmation (off-main) and report.
     private func confirmAndRun(_ plan: OrganizePlan, in folder: URL) {
         let lines = plan.summary(in: folder)
         let alert = NSAlert()
-        alert.messageText = "Organize \(folder.lastPathComponent)?"
+        alert.messageText = String(format: L("bvc.organizeQ", "Organize %@?"), folder.lastPathComponent)
         alert.informativeText = lines.prefix(20).joined(separator: "\n") + (lines.count > 20 ? "\n…" : "")
-        alert.addButton(withTitle: "Apply")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("common.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         guard let window = view.window else { return }
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
@@ -1056,12 +1070,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 let result = await Task.detached { plan.execute(in: folder) }.value
                 self.reloadBothSides()
                 // Register undo like every other local file op (moves + trashes).
-                if !result.performed.isEmpty { self.registerUndo(result.performed, actionName: "Organize") }
+                if !result.performed.isEmpty { self.registerUndo(result.performed, actionName: L("bvc.organizeAction", "Organize")) }
                 if !result.trashedItems.isEmpty { self.registerTrashUndo(result.trashedItems) }
                 self.presentInfo(
-                    "Organized",
-                    "Moved \(result.moved), trashed \(result.trashed), labeled \(result.labeled)"
-                        + (result.failures.isEmpty ? "" : ", \(result.failures.count) skipped"))
+                    L("bvc.organized", "Organized"),
+                    String(format: L("bvc.organizedSummary", "Moved %d, trashed %d, labeled %d"), result.moved, result.trashed, result.labeled)
+                        + (result.failures.isEmpty ? "" : String(format: L("bvc.organizedSkippedSuffix", ", %d skipped"), result.failures.count)))
             }
         }
     }
@@ -1070,7 +1084,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = text
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("common.ok", "OK"))
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } }
     }
 
@@ -1183,7 +1197,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.previewPane": menuItem.state = previewVisible ? .on : .off
         case "shelf.toggle":
             menuItem.state = shelf.view.isHidden ? .off : .on
-            menuItem.title = shelf.view.isHidden ? "Show Shelf" : "Hide Shelf"
+            menuItem.title = shelf.view.isHidden ? L("bvc.showShelf", "Show Shelf") : L("bvc.hideShelf", "Hide Shelf")
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         default: break
         }
@@ -1584,20 +1598,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
         guard let window = view.window else { return }
-        let who = connection.user.isEmpty ? "anonymous" : connection.user
+        let who = connection.user.isEmpty ? L("bvc.anonymous", "anonymous") : connection.user
         let alert = NSAlert()
-        alert.messageText = "Connect to \(connection.host)"
-        alert.informativeText = "Enter the password for \(who)@\(connection.host)."
+        alert.messageText = String(format: L("bvc.connectTo", "Connect to %@"), connection.host)
+        alert.informativeText = String(format: L("bvc.enterPasswordFor", "Enter the password for %@@%@."), who, connection.host)
         let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        let remember = NSButton(checkboxWithTitle: "Remember password in Keychain", target: nil, action: nil)
+        let remember = NSButton(checkboxWithTitle: L("bvc.rememberPasswordInKeychain", "Remember password in Keychain"), target: nil, action: nil)
         let accessory = NSStackView(views: [field, remember])
         accessory.orientation = .vertical
         accessory.alignment = .leading
         accessory.frame = NSRect(x: 0, y: 0, width: 260, height: 52)
         field.widthAnchor.constraint(equalToConstant: 260).isActive = true
         alert.accessoryView = accessory
-        alert.addButton(withTitle: "Connect")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("bvc.connect", "Connect"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
             if remember.state == .on {
@@ -1633,10 +1647,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             switch query {
             case .recents:
                 urls = await SpotlightSearch.recentFiles(scope: scope, days: 30, limit: 200)
-                title = "Recents"
+                title = L("bvc.recents", "Recents")
             case .tag(let color):
                 urls = await SpotlightSearch.taggedFiles(color.label, scope: scope, limit: 500)
-                title = "Tag: \(color.label)"
+                title = String(format: L("bvc.tagTitle", "Tag: %@"), color.label)
             }
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }  // stale
@@ -1717,8 +1731,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         openPanel.canChooseDirectories = true
         openPanel.canChooseFiles = false
         openPanel.canCreateDirectories = true
-        openPanel.prompt = "Download Here"
-        openPanel.message = "Choose where to save \(entries.count) item(s) from \(ctx.connection.host)"
+        openPanel.prompt = L("bvc.downloadHere", "Download Here")
+        openPanel.message = String(
+            format: L("bvc.chooseDownloadDest", "Choose where to save %d item(s) from %@"),
+            entries.count, ctx.connection.host)
         openPanel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let dir = openPanel.url, let self else { return }
             let provider = RemoteProviders.make(for: ctx.connection.proto)
@@ -1733,7 +1749,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard !self.transferInFlight else { NSSound.beep(); return }  // one transfer at a time
             self.transferInFlight = true  // so Quit warns mid-transfer
             self.transferController.run(
-                items, title: "Downloading from \(ctx.connection.host)", over: window
+                items, title: String(format: L("bvc.downloadingFrom", "Downloading from %@"), ctx.connection.host), over: window
             ) { [weak self] failures, cancelled in
                 self?.transferInFlight = false
                 self?.reportTransfer(failures, cancelled: cancelled, verb: "download")
@@ -1764,7 +1780,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
         transferInFlight = true  // so Quit warns mid-transfer
         transferController.run(
-            items, title: "Uploading to \(connection.host)", over: window
+            items, title: String(format: L("bvc.uploadingTo", "Uploading to %@"), connection.host), over: window
         ) { [weak self, weak pane] failures, cancelled in
             self?.transferInFlight = false
             pane?.refreshRemote()  // show the newly uploaded files
@@ -1797,7 +1813,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
         transferInFlight = true  // so Quit warns mid-transfer
-        transferController.run([item], title: "Opening \(name)", over: window) { [weak self] failures, cancelled in
+        transferController.run([item], title: String(format: L("bvc.opening", "Opening %@"), name), over: window) { [weak self] failures, cancelled in
             self?.transferInFlight = false
             guard !cancelled else { return }
             if failures.isEmpty {
@@ -1838,10 +1854,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let error = error as? RemoteError else { return error.localizedDescription }
         switch error {
         case .unsupported(let message): return message
-        case .curl(let code, let message): return message.isEmpty ? "curl error \(code)" : message
-        case .curlMissing: return "curl was not found"
-        case .sftp(let code, let message): return message.isEmpty ? "sftp error \(code)" : message
-        case .sftpMissing: return "sftp was not found"
+        case .curl(let code, let message): return message.isEmpty ? String(format: L("bvc.curlError", "curl error %d"), code) : message
+        case .curlMissing: return L("bvc.curlMissing", "curl was not found")
+        case .sftp(let code, let message): return message.isEmpty ? String(format: L("bvc.sftpError", "sftp error %d"), code) : message
+        case .sftpMissing: return L("bvc.sftpMissing", "sftp was not found")
         }
     }
 
@@ -1888,8 +1904,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let ext = fileURL.pathExtension.lowercased()
 
         let alert = NSAlert()
-        alert.messageText = "Always Open With"
-        alert.informativeText = "Choose an application and how widely to apply it."
+        alert.messageText = L("bvc.alwaysOpenWith", "Always Open With")
+        alert.informativeText = L("bvc.alwaysOpenWithBody", "Choose an application and how widely to apply it.")
 
         // App picker: candidate apps + Choose…
         let apps = NSWorkspace.shared.urlsForApplications(toOpen: fileURL)
@@ -1900,20 +1916,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             appPopup.menu?.addItem(item)
         }
         if !apps.isEmpty { appPopup.menu?.addItem(.separator()) }
-        appPopup.addItem(withTitle: "Choose…")
+        appPopup.addItem(withTitle: L("bvc.chooseEllipsis", "Choose…"))
 
         let scopePopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 320, height: 26))
-        scopePopup.addItem(withTitle: "This file")
-        scopePopup.addItem(withTitle: "Files in this folder")
-        scopePopup.addItem(withTitle: ext.isEmpty ? "Files of this kind" : "All .\(ext) files")
-        scopePopup.addItem(withTitle: "Just this session")
+        scopePopup.addItem(withTitle: L("bvc.scopeThisFile", "This file"))
+        scopePopup.addItem(withTitle: L("bvc.scopeThisFolder", "Files in this folder"))
+        scopePopup.addItem(withTitle: ext.isEmpty ? L("bvc.scopeThisKind", "Files of this kind") : String(format: L("bvc.scopeAllExt", "All .%@ files"), ext))
+        scopePopup.addItem(withTitle: L("bvc.scopeThisSession", "Just this session"))
 
         let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 64))
         accessory.addSubview(appPopup)
         accessory.addSubview(scopePopup)
         alert.accessoryView = accessory
-        alert.addButton(withTitle: "Set")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("bvc.set", "Set"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
 
         guard let window = view.window else { return }
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -1967,7 +1983,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func installLayoutsMenu() {
         guard !didInstallLayoutsMenu, let mainMenu = NSApp.mainMenu else { return }
         let item = NSMenuItem()
-        item.title = "Layouts"
+        item.title = L("bvc.layoutsMenu", "Layouts")
         item.submenu = layoutsMenu
         layoutsMenu.delegate = self
         mainMenu.addItem(item)
@@ -1977,7 +1993,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func menuNeedsUpdate(_ menu: NSMenu) {
         guard menu === layoutsMenu else { return }
         menu.removeAllItems()
-        let save = menu.addItem(withTitle: "Save Layout…", action: #selector(saveLayoutMenu), keyEquivalent: "")
+        let save = menu.addItem(withTitle: L("bvc.saveLayoutMenuItem", "Save Layout…"), action: #selector(saveLayoutMenu), keyEquivalent: "")
         save.target = self
         guard !layouts.names.isEmpty else { return }
         menu.addItem(.separator())
@@ -1997,12 +2013,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private func saveLayoutPrompt() {
         let alert = NSAlert()
-        alert.messageText = "Save Layout"
-        alert.informativeText = "Name this arrangement of folders and panes."
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = L("bvc.saveLayoutTitle", "Save Layout")
+        alert.informativeText = L("bvc.saveLayoutBody", "Name this arrangement of folders and panes.")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
-        field.stringValue = "Layout \(layouts.names.count + 1)"
+        field.stringValue = String(format: L("bvc.layoutDefaultName", "Layout %d"), layouts.names.count + 1)
         alert.accessoryView = field
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -2141,10 +2157,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.leftTabs.activePane?.reloadIfShowingListing()
             self.rightTabs.activePane?.reloadIfShowingListing()
             if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+                self.registerUndo(outcome.performed, actionName: move ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
             if !outcome.failures.isEmpty {
-                self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+                self.presentFailures(
+                    outcome.failures,
+                    title: move ? L("bvc.moveFailed", "Move failed") : L("bvc.copyFailed", "Copy failed"))
             }
         }
     }
@@ -2212,10 +2230,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.shelf.itemsRemoved(outcome.performed.map(\.source))  // gone from source now
             }
             if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+                self.registerUndo(outcome.performed, actionName: move ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
             if !outcome.failures.isEmpty {
-                self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+                self.presentFailures(
+                    outcome.failures,
+                    title: move ? L("bvc.moveFailed", "Move failed") : L("bvc.copyFailed", "Copy failed"))
             }
         }
     }
@@ -2226,7 +2246,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))
         shelf.itemsRemoved(result.trashed.map(\.original))  // trashed: drop from the shelf
         if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
-        if !result.failures.isEmpty { presentFailures(result.failures, title: "Move to Trash failed") }
+        if !result.failures.isEmpty { presentFailures(result.failures, title: L("bvc.moveToTrashFailed", "Move to Trash failed")) }
     }
 
     private func transfer(move: Bool) {
@@ -2258,10 +2278,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))
             }
             if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
+                self.registerUndo(outcome.performed, actionName: move ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
             if !outcome.failures.isEmpty {
-                self.presentFailures(outcome.failures, title: "\(move ? "Move" : "Copy") failed")
+                self.presentFailures(
+                    outcome.failures,
+                    title: move ? L("bvc.moveFailed", "Move failed") : L("bvc.copyFailed", "Copy failed"))
             }
         }
     }
@@ -2277,7 +2299,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard !transferInFlight else { NSSound.beep(); return }
         transferInFlight = true
         let total = urls.count
-        let verb = move ? "Moving" : "Copying"
+        let verb = move ? L("bvc.moving", "Moving") : L("bvc.copying", "Copying")
         let state = TransferState(total: total)
 
         // Main-actor monitor: wait 0.25s before showing the sheet (so quick ops
@@ -2317,11 +2339,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.alertStyle = .warning
         alert.messageText =
             "\(conflictCount) item\(conflictCount == 1 ? "" : "s") already exist at the destination"
-        alert.informativeText = "Choose how to handle the \(move ? "move" : "copy")."
-        alert.addButton(withTitle: "Replace")
-        alert.addButton(withTitle: "Keep Both")
-        alert.addButton(withTitle: "Skip")
-        alert.addButton(withTitle: "Cancel")
+        alert.informativeText = String(
+            format: L("bvc.conflictHandle", "Choose how to handle the %@."),
+            move ? L("bvc.moveNoun", "move") : L("bvc.copyNoun", "copy"))
+        alert.addButton(withTitle: L("bvc.replace", "Replace"))
+        alert.addButton(withTitle: L("bvc.keepBoth", "Keep Both"))
+        alert.addButton(withTitle: L("bvc.skip", "Skip"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         switch alert.runModal() {
         case .alertFirstButtonReturn: return .replace
         case .alertSecondButtonReturn: return .keepBoth
@@ -2335,7 +2359,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.undo(performed)
             target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Undo failed") }
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
             target.registerTransferRedo(performed, actionName: actionName)  // wire up redo
         }
         undoManager.setActionName(actionName)
@@ -2346,7 +2370,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.redo(performed)
             target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Redo failed") }
+            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
             target.registerUndo(performed, actionName: actionName)  // back to undo
         }
         undoManager.setActionName(actionName)
@@ -2405,7 +2429,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.leftTabs.activePane?.reloadIfShowingListing()
             self.rightTabs.activePane?.reloadIfShowingListing()
             if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
+                self.registerUndo(outcome.performed, actionName: isMove ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
             if isMove {
                 pasteboard.clearContents()  // cut items are gone; don't move them twice
@@ -2413,7 +2437,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.applyCutPaths()  // clear the dimming
                 self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))  // drop moved rows
             }
-            if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: "Paste failed") }
+            if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: L("bvc.pasteFailed", "Paste failed")) }
         }
     }
 
@@ -2445,7 +2469,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func presentFailures(_ failures: [FileOperations.Failure], title: String) {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "\(title) for \(failures.count) item(s)"
+        alert.messageText = String(format: L("bvc.failuresForItems", "%@ for %d item(s)"), title, failures.count)
         alert.informativeText =
             failures.prefix(8).map { "\($0.name): \($0.reason)" }.joined(separator: "\n")
         alert.runModal()
@@ -2669,19 +2693,34 @@ extension BrowserViewController: NSToolbarDelegate {
         _ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
         willBeInsertedIntoToolbar flag: Bool
     ) -> NSToolbarItem? {
+        if identifier == Self.cleanupItemID {
+            let item = NSToolbarItem(itemIdentifier: identifier)
+            item.label = L("toolbar.cleanup", "Cleanup")
+            item.toolTip = L("toolbar.cleanup.tip", "Find and remove reclaimable files")
+            item.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: item.label)
+            item.isBordered = true
+            item.target = self
+            item.action = #selector(cleanupFromToolbar)
+            return item
+        }
         guard identifier == Self.searchItemID else { return nil }
         let item = NSToolbarItem(itemIdentifier: identifier)
         item.view = searchField  // the on-device semantic search field
-        item.label = "Search"
+        item.label = L("bvc.searchToolbarLabel", "Search")
         item.visibilityPriority = .high
         return item
     }
 
+    @objc private func cleanupFromToolbar() {
+        guard let url = activePane?.currentURL else { NSSound.beep(); return }
+        cleanup.present(for: url, over: view.window)
+    }
+
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.flexibleSpace, Self.searchItemID]  // pushes search to the trailing edge
+        [Self.cleanupItemID, .flexibleSpace, Self.searchItemID]  // cleanup leading, search trailing
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [.flexibleSpace, Self.searchItemID]
+        [Self.cleanupItemID, .flexibleSpace, Self.searchItemID]
     }
 }

@@ -85,10 +85,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         case name, size, kind, date
         var title: String {
             switch self {
-            case .name: return "Name"
-            case .size: return "Size"
-            case .kind: return "Kind"
-            case .date: return "Date Modified"
+            case .name: return L("list.columnName", "Name")
+            case .size: return L("list.columnSize", "Size")
+            case .kind: return L("list.columnKind", "Kind")
+            case .date: return L("list.columnDate", "Date Modified")
             }
         }
         var width: CGFloat {
@@ -188,18 +188,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             item.representedObject = commandID
             menu.addItem(item)
         }
-        add("Open", "files.open")
-        let openWith = NSMenuItem(title: "Open With", action: nil, keyEquivalent: "")
+        add(L("common.open", "Open"), "files.open")
+        let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
         openWithMenu.delegate = self
         openWith.submenu = openWithMenu
         menu.addItem(openWith)
-        add("Get Info", "files.getInfo")
-        add("Download", "files.download")
-        add("Reveal in Finder", "files.reveal")
-        add("Rename…", "files.rename")
-        add("Move to Trash", "files.trash")
+        add(L("list.getInfo", "Get Info"), "files.getInfo")
+        add(L("list.download", "Download"), "files.download")
+        add(L("list.revealInFinder", "Reveal in Finder"), "files.reveal")
+        add(L("list.rename", "Rename…"), "files.rename")
+        add(L("list.moveToTrash", "Move to Trash"), "files.trash")
         menu.addItem(.separator())
-        let tags = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
+        let tags = NSMenuItem(title: L("list.tags", "Tags"), action: nil, keyEquivalent: "")
         let tagsMenu = NSMenu()
         for color in FileTag.Color.displayOrder {
             let item = NSMenuItem(
@@ -211,17 +211,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         tagsMenu.addItem(.separator())
         let clearTags = NSMenuItem(
-            title: "Clear Tags", action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+            title: L("list.clearTags", "Clear Tags"), action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
         clearTags.representedObject = "tags.clear"
         tagsMenu.addItem(clearTags)
         tags.submenu = tagsMenu
         menu.addItem(tags)
         menu.addItem(.separator())
-        add("New Folder", "files.newFolder")
+        add(L("list.newFolder", "New Folder"), "files.newFolder")
         menu.addItem(.separator())
-        add("Copy", "files.copy")
-        add("Cut", "files.cut")
-        add("Paste", "files.paste")
+        add(L("list.copy", "Copy"), "files.copy")
+        add(L("list.cut", "Cut"), "files.cut")
+        add(L("list.paste", "Paste"), "files.paste")
         return menu
     }
 
@@ -299,7 +299,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             item.isEnabled = false
             menu.addItem(item)
         }
-        guard let first = selectedFileURLs().first else { disabled("No selection"); return }
+        guard let first = selectedFileURLs().first else { disabled(L("list.noSelection", "No selection")); return }
         var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
         if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first),
             let index = apps.firstIndex(of: preferred)
@@ -307,7 +307,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             apps.remove(at: index)
             apps.insert(preferred, at: 0)
         }
-        guard !apps.isEmpty else { disabled("No applications"); return }
+        guard !apps.isEmpty else { disabled(L("list.noApplications", "No applications")); return }
         for app in apps {
             let item = NSMenuItem(title: FileManager.default.displayName(atPath: app.path),
                 action: #selector(openWithApp(_:)), keyEquivalent: "")
@@ -320,13 +320,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let other = NSMenuItem(title: "Other…", action: #selector(openWithOther(_:)), keyEquivalent: "")
+        let other = NSMenuItem(title: L("list.other", "Other…"), action: #selector(openWithOther(_:)), keyEquivalent: "")
         other.target = self
         menu.addItem(other)
         // Set a persistent/scoped default (handled by BrowserViewController via the
         // responder chain, since it owns the opener rules).
         let setDefault = NSMenuItem(
-            title: "Always Open With…", action: #selector(BrowserViewController.setDefaultOpener(_:)),
+            title: L("list.alwaysOpenWith", "Always Open With…"), action: #selector(BrowserViewController.setDefaultOpener(_:)),
             keyEquivalent: "")
         menu.addItem(setDefault)
     }
@@ -508,12 +508,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// A human-readable file kind (localized) derived from the type, no I/O.
     private static func kind(for entry: FileEntry) -> String {
-        if entry.isDirectory { return "Folder" }
+        if entry.isDirectory { return L("list.kindFolder", "Folder") }
         let ext = (entry.name as NSString).pathExtension
         if !ext.isEmpty, let type = UTType(filenameExtension: ext) {
-            return type.localizedDescription ?? "\(ext.uppercased()) file"
+            return type.localizedDescription ?? String(format: L("list.kindExtFile", "%@ file"), ext.uppercased())
         }
-        return "Document"
+        return L("list.kindDocument", "Document")
     }
 
     /// The right-click menu on the column header: toggle each optional column.
@@ -812,7 +812,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Badge for online-only (dataless) cloud placeholders.
     private static let cloudIcon: NSImage =
-        NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: "Online only")
+        NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: L("list.onlineOnly", "Online only"))
         ?? NSImage()
 
     private static var iconCache: [String: NSImage] = [:]

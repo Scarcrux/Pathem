@@ -33,7 +33,7 @@ final class InfoInspectorController: NSObject {
     }
 
     private func build() {
-        panel.title = "Info"
+        panel.title = L("info.panelTitle", "Info")
         panel.isReleasedWhenClosed = false  // the controller owns it; closing just hides it
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.imageScaling = .scaleProportionallyUpOrDown
@@ -83,33 +83,33 @@ final class InfoInspectorController: NSObject {
         if urls.count == 1, let info = FileInfo.gather(for: urls[0]) {
             iconView.image = NSWorkspace.shared.icon(forFile: info.path)
             titleLabel.stringValue = info.name
-            addField("Kind", info.isSymbolicLink ? "Alias / Symlink" : info.kind)
+            addField(L("info.kindLabel", "Kind"), info.isSymbolicLink ? L("info.aliasSymlink", "Alias / Symlink") : info.kind)
             if info.isDataless {
-                addField("Size", "Online only (not downloaded)")
+                addField(L("info.sizeLabel", "Size"), L("info.onlineOnly", "Online only (not downloaded)"))
             } else {
-                addField("Size", info.isDirectory ? "--" : byteFormatter.string(fromByteCount: info.size))
+                addField(L("info.sizeLabel", "Size"), info.isDirectory ? "--" : byteFormatter.string(fromByteCount: info.size))
             }
-            addField("Where", (info.path as NSString).deletingLastPathComponent)
-            if let created = info.created { addField("Created", dateFormatter.string(from: created)) }
-            if let modified = info.modified { addField("Modified", dateFormatter.string(from: modified)) }
-            addField("Permissions", info.permissions)
-            if let owner = info.owner { addField("Owner", owner) }
+            addField(L("info.whereLabel", "Where"), (info.path as NSString).deletingLastPathComponent)
+            if let created = info.created { addField(L("info.createdLabel", "Created"), dateFormatter.string(from: created)) }
+            if let modified = info.modified { addField(L("info.modifiedLabel", "Modified"), dateFormatter.string(from: modified)) }
+            addField(L("info.permissionsLabel", "Permissions"), info.permissions)
+            if let owner = info.owner { addField(L("info.ownerLabel", "Owner"), owner) }
             if !info.isDirectory, !info.isDataless {
                 let url = urls[0]
                 // Image dimensions read off the main thread (ImageIO can touch disk).
                 if let type = UTType(filenameExtension: url.pathExtension), type.conforms(to: .image) {
-                    let dimField = addField("Dimensions", "Reading…")
+                    let dimField = addField(L("info.dimensionsLabel", "Dimensions"), L("info.reading", "Reading…"))
                     Task { @MainActor in
                         let label = await Task.detached { MediaMetadata.dimensionsLabel(of: url) }.value
                         guard self.inspectedURL == url else { return }
-                        dimField.stringValue = label ?? "unknown"
+                        dimField.stringValue = label ?? L("info.unknown", "unknown")
                     }
                 }
-                let hashField = addField("SHA-256", "Calculating…")
+                let hashField = addField("SHA-256", L("info.calculating", "Calculating…"))
                 Task { @MainActor in
                     let hash = await Task.detached { try? FileHasher.hash(url) }.value
                     guard self.inspectedURL == url else { return }  // inspector moved on
-                    hashField.stringValue = hash ?? "unavailable"
+                    hashField.stringValue = hash ?? L("info.unavailable", "unavailable")
                 }
             }
         } else {
@@ -117,11 +117,11 @@ final class InfoInspectorController: NSObject {
             // Derive every number from the items actually read, so the count,
             // folder tally, and total size always agree.
             let infos = urls.compactMap { FileInfo.gather(for: $0) }
-            titleLabel.stringValue = "\(infos.count) items"
+            titleLabel.stringValue = String(format: L("info.itemsCount", "%d items"), infos.count)
             let totalSize = infos.filter { !$0.isDirectory && !$0.isDataless }.reduce(Int64(0)) { $0 + $1.size }
             let folders = infos.filter(\.isDirectory).count
-            addField("Items", "\(infos.count) (\(folders) folder\(folders == 1 ? "" : "s"))")
-            addField("Total Size", byteFormatter.string(fromByteCount: totalSize))
+            addField(L("info.itemsLabel", "Items"), "\(infos.count) (\(folders) folder\(folders == 1 ? "" : "s"))")
+            addField(L("info.totalSizeLabel", "Total Size"), byteFormatter.string(fromByteCount: totalSize))
         }
     }
 

@@ -28,25 +28,38 @@ enum PathemApp {
         window.center()
 
         if ProcessInfo.processInfo.environment["PATHEM_L10N_SMOKE"] != nil {
-            // Deterministic: confirm the localized resources are bundled and a sample
-            // of the Spanish catalog is correct (independent of the system language).
+            // Deterministic: every shipped language must be bundled and actually
+            // translated (sample keys resolve to a non-empty value that differs from
+            // English). Independent of the system language.
             print("=== L10N SMOKE: localized resources ===")
-            print("available:", Bundle.module.localizations)
-            let expected = [
-                "menu.file": "Archivo", "menu.files.trash": "Mover a la papelera",
-                "menu.view.cleanup": "Limpieza…", "menu.label": "Etiqueta",
-            ]
-            guard let path = Bundle.module.path(forResource: "es", ofType: "lproj"),
-                let es = Bundle(path: path)
-            else {
-                print("RESULT: FAIL (Spanish catalog not bundled)")
-                exit(1)
-            }
+            let available = Bundle.module.localizations
+            print("available:", available)
             var ok = true
-            for (key, want) in expected.sorted(by: { $0.key < $1.key }) {
-                let got = es.localizedString(forKey: key, value: "?", table: nil)
-                print("  \(key): \(got)")
-                if got != want { ok = false }
+            // SwiftPM may canonicalize a region tag's case (e.g. zh-Hans -> zh-hans),
+            // so match the shipped languages against `available` case-insensitively.
+            func code(for wanted: String) -> String? {
+                available.first { $0.caseInsensitiveCompare(wanted) == .orderedSame }
+            }
+            for lang in ["en", "es", "fr", "de", "zh-Hans", "ja"] where code(for: lang) == nil {
+                print("  MISSING lproj: \(lang)")
+                ok = false
+            }
+            let sample = ["menu.file": "File", "common.cancel": "Cancel"]
+            for lang in ["es", "fr", "de", "zh-Hans", "ja"] {
+                guard let actual = code(for: lang),
+                    let path = Bundle.module.path(forResource: actual, ofType: "lproj"),
+                    let bundle = Bundle(path: path)
+                else {
+                    print("  \(lang): catalog not loadable")
+                    ok = false
+                    continue
+                }
+                for (key, english) in sample.sorted(by: { $0.key < $1.key }) {
+                    let got = bundle.localizedString(forKey: key, value: "?", table: nil)
+                    let good = !got.isEmpty && got != "?" && got != english
+                    if !good { ok = false }
+                    print("  \(lang)/\(key): \(got)\(good ? "" : "  <-- BAD")")
+                }
             }
             print("RESULT: \(ok ? "PASS" : "FAIL")")
             exit(ok ? 0 : 1)
@@ -242,7 +255,8 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
         viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
         viewMenu.addItem(commandItem("Terminal Follows Folder", "terminal.toggleFollow"))
-        let themeItem = NSMenuItem(title: "Terminal Theme", action: nil, keyEquivalent: "")
+        let themeItem = NSMenuItem(
+            title: L("menu.terminalTheme", "Terminal Theme"), action: nil, keyEquivalent: "")
         let themeMenu = NSMenu()
         for theme in TerminalTheme.presets {
             let item = NSMenuItem(
@@ -405,10 +419,11 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
         guard browser?.isTransferring == true else { return .terminateNow }
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = "A file transfer is still in progress"
-        alert.informativeText = "Quitting now may leave it incomplete. Quit anyway?"
-        alert.addButton(withTitle: "Quit Anyway")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = L("quit.transferTitle", "A file transfer is still in progress")
+        alert.informativeText = L(
+            "quit.transferBody", "Quitting now may leave it incomplete. Quit anyway?")
+        alert.addButton(withTitle: L("quit.quitAnyway", "Quit Anyway"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         return alert.runModal() == .alertFirstButtonReturn ? .terminateNow : .terminateCancel
     }
 }

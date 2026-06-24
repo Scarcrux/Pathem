@@ -35,7 +35,7 @@ final class TransferProgress: NSObject {
     private let panel: NSPanel
     private let bar = NSProgressIndicator()
     private let label = NSTextField(labelWithString: "")
-    private let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
+    private let cancelButton = NSButton(title: L("common.cancel", "Cancel"), target: nil, action: nil)
 
     private weak var host: NSWindow?
     private var showing = false
@@ -52,7 +52,7 @@ final class TransferProgress: NSObject {
     }
 
     private func build() {
-        panel.title = "Transferring"
+        panel.title = L("progress.windowTitle", "Transferring")
         label.font = .systemFont(ofSize: 13)
         label.translatesAutoresizingMaskIntoConstraints = false
         bar.style = .bar
@@ -100,7 +100,7 @@ final class TransferProgress: NSObject {
     func update(completed: Int) {
         guard showing else { return }
         bar.doubleValue = Double(completed)
-        label.stringValue = "\(verb) \(completed) of \(total)…"
+        label.stringValue = String(format: L("progress.countStatus", "%@ %d of %d…"), verb, completed, total)
     }
 
     func end() {
@@ -116,7 +116,7 @@ final class TransferProgress: NSObject {
 
     @objc private func cancelClicked() {
         cancelButton.isEnabled = false
-        label.stringValue = "Cancelling…"
+        label.stringValue = L("progress.cancelling", "Cancelling…")
         onCancel?()
     }
 }

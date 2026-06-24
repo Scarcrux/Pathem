@@ -191,7 +191,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let shown = filtered(sourceEntries)
         content.setEntries(shown, preserveState: true)
         content.showPlaceholder(
-            shown.isEmpty && !sourceEntries.isEmpty ? "No matches for “\(text)”" : nil)
+            shown.isEmpty && !sourceEntries.isEmpty
+                ? String(format: L("pane.noMatchesFor", "No matches for “%@”"), text) : nil)
         updateStatus()
     }
 
@@ -220,7 +221,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.directoryURL = nil  // disable row drag during search
         content.resolutionURL = nav.current  // but results are from this folder, so actions resolve
         displayEntries(entries, preserveState: false)
-        content.showPlaceholder(entries.isEmpty ? "No matching files" : nil)
+        content.showPlaceholder(entries.isEmpty ? L("pane.noMatchingFiles", "No matching files") : nil)
         updateStatus()
     }
 
@@ -242,7 +243,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     self.remote == nil
                 else { return }
                 let title =
-                    "Flat View: \(root.lastPathComponent)" + (result.truncated ? " (first \(result.entries.count))" : "")
+                    String(format: L("pane.flatViewTitle", "Flat View: %@"), root.lastPathComponent)
+                    + (result.truncated
+                        ? String(format: L("pane.flatViewFirstN", " (first %d)"), result.entries.count) : "")
                 self.showSmartResults(result.entries, title: title)
             }
         }
@@ -268,7 +271,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.directoryURL = nil  // not a single folder: disable drag
         content.resolutionURL = nil
         displayEntries(format.sorted(entries), preserveState: false)
-        content.showPlaceholder(entries.isEmpty ? "No items" : nil)
+        content.showPlaceholder(entries.isEmpty ? L("pane.noItems", "No items") : nil)
         pathControl.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
@@ -290,7 +293,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         smartEntries.removeAll { paths.contains(Self.path(of: $0)) }
         guard smartEntries.count != before else { return }
         displayEntries(format.sorted(smartEntries), preserveState: true)
-        content.showPlaceholder(smartEntries.isEmpty ? "No items" : nil)
+        content.showPlaceholder(smartEntries.isEmpty ? L("pane.noItems", "No items") : nil)
         updateStatus()
     }
 
@@ -321,14 +324,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             // setEntries refreshes only the root column; re-enumerate drilled ones too
             // so a file op inside a drilled column shows its result (no-op elsewhere).
             if preserveState { content.refreshDrilledColumns() }
-            content.showPlaceholder(entries.isEmpty ? "This folder is empty" : nil)
+            content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
         } catch {
             // A read failure (permission denied, missing) looks identical to an
             // empty folder unless we say so.
             displayEntries([], preserveState: false)
             content.showPlaceholder(
-                "Couldn’t read this folder.\nPathem may need Full Disk Access "
-                    + "(System Settings ▸ Privacy & Security ▸ Full Disk Access).")
+                L(
+                    "pane.readFolderFailed",
+                    "Couldn’t read this folder.\nPathem may need Full Disk Access "
+                        + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
         }
         content.showSortIndicator(key: format.sortKey, ascending: format.ascending)
         // After a view-mode swap, carry the selection into the fresh content.
@@ -379,7 +384,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 // match when the folder is reached through a symlink (e.g. /tmp).
                 self.content.setGitStates(Self.remapStates(info?.states ?? [:], to: dir))
                 self.gitSummary = info.map { gitInfo in
-                    var parts = ["\u{2387} \(gitInfo.branch ?? "detached")"]  // ⎇ branch
+                    var parts = ["\u{2387} \(gitInfo.branch ?? L("pane.gitDetached", "detached"))"]  // ⎇ branch
                     if gitInfo.ahead > 0 { parts.append("\u{2191}\(gitInfo.ahead)") }
                     if gitInfo.behind > 0 { parts.append("\u{2193}\(gitInfo.behind)") }
                     return parts.joined(separator: " ")
@@ -436,7 +441,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pendingSelection = nil  // clear AFTER the swap (which would set it) so it can't leak forward
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
-        content.showPlaceholder("Loading \(session.connection.host)…")
+        content.showPlaceholder(String(format: L("pane.loadingHost", "Loading %@…"), session.connection.host))
         pathControl.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
@@ -454,7 +459,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     cur.connection.id == session.connection.id
                 else { return }
                 self.displayEntries(self.format.sorted(entries), preserveState: false)
-                self.content.showPlaceholder(entries.isEmpty ? "Empty folder" : nil)
+                self.content.showPlaceholder(entries.isEmpty ? L("pane.emptyFolder", "Empty folder") : nil)
                 self.updateStatus()
             } catch {
                 guard let self, let cur = self.remote, cur.path == session.path,
@@ -462,7 +467,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 else { return }
                 self.displayEntries([], preserveState: false)
                 self.content.showPlaceholder(
-                    "Couldn’t open \(session.connection.host)\(session.path)\n\(Self.describe(error))")
+                    String(
+                        format: L("pane.openHostFailed", "Couldn’t open %@%@\n%@"),
+                        session.connection.host, session.path, Self.describe(error)))
                 self.updateStatus()
             }
         }
@@ -484,10 +491,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         guard let error = error as? RemoteError else { return error.localizedDescription }
         switch error {
         case .unsupported(let message): return message
-        case .curl(let code, let message): return message.isEmpty ? "curl error \(code)" : message
-        case .curlMissing: return "curl was not found"
-        case .sftp(let code, let message): return message.isEmpty ? "sftp error \(code)" : message
-        case .sftpMissing: return "sftp was not found"
+        case .curl(let code, let message):
+            return message.isEmpty ? String(format: L("pane.curlError", "curl error %d"), code) : message
+        case .curlMissing: return L("pane.curlMissing", "curl was not found")
+        case .sftp(let code, let message):
+            return message.isEmpty ? String(format: L("pane.sftpError", "sftp error %d"), code) : message
+        case .sftpMissing: return L("pane.sftpMissing", "sftp was not found")
         }
     }
 
@@ -643,7 +652,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pathControl.setContentHuggingPriority(.init(1), for: .horizontal)
         pathControl.setContentCompressionResistancePriority(.init(1), for: .horizontal)
 
-        addressField.placeholderString = "Go to path"
+        addressField.placeholderString = L("pane.goToPathPlaceholder", "Go to path")
         addressField.font = .systemFont(ofSize: 12)
         addressField.translatesAutoresizingMaskIntoConstraints = false
         addressField.isHidden = true  // shown only while editing (Cmd-L)
@@ -683,7 +692,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
 
-        filterField.placeholderString = "Filter"
+        filterField.placeholderString = L("pane.filterPlaceholder", "Filter")
         filterField.controlSize = .small
         filterField.font = .systemFont(ofSize: 11)
         filterField.isHidden = true  // shown via the Filter command
@@ -843,12 +852,23 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         var text: String
         if selected.isEmpty {
             let size = all.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
-            let items = "\(all.count) item\(all.count == 1 ? "" : "s")"
-            text = size > 0 ? "\(items) · \(byteFormatter.string(fromByteCount: size))" : items
+            let items =
+                all.count == 1
+                ? String(format: L("pane.itemCountSingular", "%d item"), all.count)
+                : String(format: L("pane.itemCountPlural", "%d items"), all.count)
+            text =
+                size > 0
+                ? String(
+                    format: L("pane.itemsWithSize", "%@ · %@"), items, byteFormatter.string(fromByteCount: size))
+                : items
         } else {
             let size = selected.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
-            let prefix = "\(selected.count) of \(all.count) selected"
-            text = size > 0 ? "\(prefix) · \(byteFormatter.string(fromByteCount: size))" : prefix
+            let prefix = String(format: L("pane.selectedOf", "%d of %d selected"), selected.count, all.count)
+            text =
+                size > 0
+                ? String(
+                    format: L("pane.itemsWithSize", "%@ · %@"), prefix, byteFormatter.string(fromByteCount: size))
+                : prefix
         }
         if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
         statusLabel.stringValue = text
@@ -892,8 +912,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     private func buildViewSwitcher() {
         let segments: [(String, String)] = [
-            ("list.bullet", "as List"), ("square.grid.2x2", "as Icons"), ("photo", "as Gallery"),
-            ("rectangle.split.3x1", "as Columns"),
+            ("list.bullet", L("pane.viewAsList", "as List")),
+            ("square.grid.2x2", L("pane.viewAsIcons", "as Icons")),
+            ("photo", L("pane.viewAsGallery", "as Gallery")),
+            ("rectangle.split.3x1", L("pane.viewAsColumns", "as Columns")),
         ]
         viewSwitcher = NSSegmentedControl(
             images: segments.map { Self.symbol($0.0) }, trackingMode: .selectOne,
@@ -920,7 +942,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         menu.delegate = self
         sortButton.menu = menu
         rebuildSortMenu(menu)
-        sortButton.toolTip = "Sort"
+        sortButton.toolTip = L("pane.sortTooltip", "Sort")
     }
 
     /// Rebuild a pull-down menu each time it opens (fresh checkmarks; the action
@@ -943,7 +965,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         menu.delegate = self
         actionButton.menu = menu
         rebuildActionMenu(menu)
-        actionButton.toolTip = "Actions"
+        actionButton.toolTip = L("pane.actionsTooltip", "Actions")
     }
 
     private func rebuildActionMenu(_ menu: NSMenu) {
@@ -957,26 +979,28 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             item.representedObject = id
             menu.addItem(item)
         }
-        add("New Folder", command: "files.newFolder")
-        add("Get Info", command: "files.getInfo")
+        add(L("pane.newFolder", "New Folder"), command: "files.newFolder")
+        add(L("pane.getInfo", "Get Info"), command: "files.getInfo")
         add("Quick Look", command: "view.quickLook")
-        add("Rename…", command: "files.rename")
+        add(L("pane.rename", "Rename…"), command: "files.rename")
         menu.addItem(.separator())
-        add("Reveal in Finder", command: "files.reveal")
-        let share = NSMenuItem(title: "Share…", action: #selector(shareSelection), keyEquivalent: "")
+        add(L("pane.revealInFinder", "Reveal in Finder"), command: "files.reveal")
+        let share = NSMenuItem(title: L("pane.share", "Share…"), action: #selector(shareSelection), keyEquivalent: "")
         share.target = self
         menu.addItem(share)
-        let airdrop = NSMenuItem(title: "Send via AirDrop", action: #selector(airDropSelection), keyEquivalent: "")
+        let airdrop = NSMenuItem(
+            title: L("pane.sendViaAirDrop", "Send via AirDrop"), action: #selector(airDropSelection),
+            keyEquivalent: "")
         airdrop.target = self
         menu.addItem(airdrop)
-        let tagsItem = NSMenuItem(title: "Tags", action: nil, keyEquivalent: "")
+        let tagsItem = NSMenuItem(title: L("pane.tags", "Tags"), action: nil, keyEquivalent: "")
         tagsItem.submenu = makeTagsSubmenu()
         menu.addItem(tagsItem)
         if isRemote {
-            add("Download from Server…", command: "remote.download")
+            add(L("pane.downloadFromServer", "Download from Server…"), command: "remote.download")
         }
         menu.addItem(.separator())
-        add("Move to Trash", command: "files.trash")
+        add(L("pane.moveToTrash", "Move to Trash"), command: "files.trash")
     }
 
     @objc private func runActionCommand(_ sender: NSMenuItem) {
@@ -1001,7 +1025,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let clear = NSMenuItem(title: "Clear Tags", action: #selector(clearTags), keyEquivalent: "")
+        let clear = NSMenuItem(title: L("pane.clearTags", "Clear Tags"), action: #selector(clearTags), keyEquivalent: "")
         clear.target = self
         menu.addItem(clear)
         return menu
@@ -1154,15 +1178,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             item.state = format.sortKey == key ? .on : .off
             menu.addItem(item)
         }
-        addKey("Name", .name)
-        addKey("Size", .size)
-        addKey("Date Modified", .date)
+        addKey(L("pane.sortName", "Name"), .name)
+        addKey(L("pane.sortSize", "Size"), .size)
+        addKey(L("pane.sortDateModified", "Date Modified"), .date)
         menu.addItem(.separator())
-        let ascending = NSMenuItem(title: "Ascending", action: #selector(sortAscending), keyEquivalent: "")
+        let ascending = NSMenuItem(
+            title: L("pane.sortAscending", "Ascending"), action: #selector(sortAscending), keyEquivalent: "")
         ascending.target = self
         ascending.state = format.ascending ? .on : .off
         menu.addItem(ascending)
-        let descending = NSMenuItem(title: "Descending", action: #selector(sortDescending), keyEquivalent: "")
+        let descending = NSMenuItem(
+            title: L("pane.sortDescending", "Descending"), action: #selector(sortDescending), keyEquivalent: "")
         descending.target = self
         descending.state = format.ascending ? .off : .on
         menu.addItem(descending)
@@ -1309,10 +1335,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             return
         }
         let alert = NSAlert()
-        alert.messageText = "No such path"
-        alert.informativeText = "“\(raw)” doesn't exist.\n\nDid you mean:\n\(suggestion.path)"
-        alert.addButton(withTitle: "Go")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = L("pane.noSuchPathTitle", "No such path")
+        alert.informativeText = String(
+            format: L("pane.noSuchPathBody", "“%@” doesn't exist.\n\nDid you mean:\n%@"), raw, suggestion.path)
+        alert.addButton(withTitle: L("pane.goButton", "Go"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
             // The sheet is async too: re-validate before navigating.
             guard let self, response == .alertFirstButtonReturn, self.remote == nil,

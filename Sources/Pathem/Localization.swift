@@ -20,8 +20,8 @@ private let localizedBundle: Bundle = {
 /// A localized UI string from the app's resource bundle. Pass the English text as
 /// `fallback` so an un-translated key still reads well.
 ///
-/// Migrate user-facing strings to `L("some.key", "English text")` incrementally;
-/// add the key to each `Resources/<lang>.lproj/Localizable.strings`.
+/// Migrate user-facing strings to L(key, fallback) incrementally; add the key to
+/// each Resources/<lang>.lproj/Localizable.strings.
 func L(_ key: String, _ fallback: String) -> String {
     localizedBundle.localizedString(forKey: key, value: fallback, table: nil)
 }

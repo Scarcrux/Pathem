@@ -10,8 +10,8 @@ final class PreferencesController: NSObject {
     private let densityPopup = NSPopUpButton()
     private let fontStepper = NSStepper()
     private let fontValue = NSTextField(labelWithString: "13")
-    private let alternatingCheck = NSButton(checkboxWithTitle: "Alternating row colors", target: nil, action: nil)
-    private let ocrCheck = NSButton(checkboxWithTitle: "Search image contents (OCR, slower)", target: nil, action: nil)
+    private let alternatingCheck = NSButton(checkboxWithTitle: L("prefs.alternatingRows", "Alternating row colors"), target: nil, action: nil)
+    private let ocrCheck = NSButton(checkboxWithTitle: L("prefs.searchImageContents", "Search image contents (OCR, slower)"), target: nil, action: nil)
 
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
@@ -26,12 +26,12 @@ final class PreferencesController: NSObject {
     }
 
     private func build() {
-        panel.title = "Preferences"
+        panel.title = L("prefs.title", "Preferences")
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
-        densityPopup.addItems(withTitles: ["Comfortable", "Compact"])
+        densityPopup.addItems(withTitles: [L("prefs.densityComfortable", "Comfortable"), L("prefs.densityCompact", "Compact")])
         densityPopup.target = self
         densityPopup.action = #selector(changed)
 
@@ -50,8 +50,8 @@ final class PreferencesController: NSObject {
         }
 
         let form = NSStackView(views: [
-            row("Density", densityPopup),
-            row("Font size", fontStepper, fontValue),
+            row(L("prefs.densityLabel", "Density"), densityPopup),
+            row(L("prefs.fontSizeLabel", "Font size"), fontStepper, fontValue),
             row("", alternatingCheck),
             row("", ocrCheck),
         ])

@@ -28,13 +28,13 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     }
 
     private func configure() {
-        panel.title = "Run Command"
+        panel.title = L("palette.runCommandTitle", "Run Command")
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
-        field.placeholderString = "Type a command…"
+        field.placeholderString = L("palette.searchPlaceholder", "Type a command…")
         field.delegate = self
         field.font = .systemFont(ofSize: 15)
         field.translatesAutoresizingMaskIntoConstraints = false

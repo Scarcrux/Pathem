@@ -24,13 +24,13 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
     }
 
     private func configure() {
-        panel.title = "Ask Pathem"
+        panel.title = L("aibar.panelTitle", "Ask Pathem")
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
-        field.placeholderString = "Tell Pathem what to do…"
+        field.placeholderString = L("aibar.placeholder", "Tell Pathem what to do…")
         field.delegate = self
         field.font = .systemFont(ofSize: 15)
         field.translatesAutoresizingMaskIntoConstraints = false
@@ -75,7 +75,7 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
     private func submit() {
         let query = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty, let resolve, let run else { return }
-        status.stringValue = "Thinking…"
+        status.stringValue = L("aibar.thinking", "Thinking…")
         submitTask?.cancel()  // a new submit supersedes any in-flight one
         submitTask = Task { [weak self] in
             let match = await resolve(query)
@@ -86,7 +86,8 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
                 self.close()
                 run(match.id)
             } else {
-                self.status.stringValue = "No command matched “\(query)”."
+                self.status.stringValue = String(
+                    format: L("aibar.noMatch", "No command matched “%@”."), query)
             }
         }
     }

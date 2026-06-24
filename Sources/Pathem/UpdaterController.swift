@@ -25,10 +25,12 @@ final class UpdaterController: NSObject {
     @objc func checkForUpdates(_ sender: Any?) {
         guard isConfigured else {
             let alert = NSAlert()
-            alert.messageText = "Updates aren't set up for this build"
+            alert.messageText = L("update.notSetUpTitle", "Updates aren't set up for this build")
             alert.informativeText =
-                "This is a source or unsigned build. Download the latest notarized "
-                + "release from GitHub; those builds update themselves."
+                L(
+                    "update.notSetUpBody",
+                    "This is a source or unsigned build. Download the latest notarized "
+                        + "release from GitHub; those builds update themselves.")
             alert.runModal()
             return
         }

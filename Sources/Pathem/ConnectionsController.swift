@@ -24,10 +24,10 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     private func build() {
-        panel.title = "Connections"
+        panel.title = L("conn.panelTitle", "Connections")
         panel.isReleasedWhenClosed = false  // controller owns it; title-bar close just hides it
         let column = NSTableColumn(identifier: .init("c"))
-        column.title = "Server"
+        column.title = L("conn.serverColumn", "Server")
         table.addTableColumn(column)
         table.headerView = nil
         table.rowHeight = 36
@@ -41,15 +41,15 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         scroll.hasVerticalScroller = true
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
-        let add = button("Add", #selector(addNew))
-        let edit = button("Edit", #selector(editSelected))
-        let remove = button("Remove", #selector(removeSelected))
-        let importFZ = button("Import from FileZilla…", #selector(importFileZilla))
+        let add = button(L("conn.addButton", "Add"), #selector(addNew))
+        let edit = button(L("conn.editButton", "Edit"), #selector(editSelected))
+        let remove = button(L("common.remove", "Remove"), #selector(removeSelected))
+        let importFZ = button(L("conn.importButton", "Import from FileZilla…"), #selector(importFileZilla))
         let spacer = NSView()
         spacer.setContentHuggingPriority(.init(1), for: .horizontal)
-        let connect = button("Connect", #selector(connectSelected))
+        let connect = button(L("conn.connectButton", "Connect"), #selector(connectSelected))
         connect.keyEquivalent = "\r"
-        let close = button("Done", #selector(closePanel))
+        let close = button(L("common.done", "Done"), #selector(closePanel))
         let bar = NSStackView(views: [add, edit, remove, importFZ, spacer, connect, close])
         bar.orientation = .horizontal
         bar.spacing = 8
@@ -138,7 +138,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         } else {
             // Let the user point at sitemanager.xml.
             let openPanel = NSOpenPanel()
-            openPanel.message = "Choose FileZilla's sitemanager.xml"
+            openPanel.message = L("conn.chooseSiteManager", "Choose FileZilla's sitemanager.xml")
             openPanel.allowedContentTypes = [.xml]
             openPanel.allowsMultipleSelection = false
             openPanel.beginSheetModal(for: panel) { [weak self] response in
@@ -169,7 +169,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     private func editConnection(_ row: Int?) {
         let existing = row.map { connections[$0] }
         let alert = NSAlert()
-        alert.messageText = row == nil ? "New Connection" : "Edit Connection"
+        alert.messageText = row == nil ? L("conn.newConnectionTitle", "New Connection") : L("conn.editConnectionTitle", "Edit Connection")
 
         let proto = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
         proto.addItems(withTitles: RemoteConnection.Proto.allCases.map(\.label))
@@ -181,23 +181,23 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             f.stringValue = value
             return f
         }
-        let name = field("Name", existing?.name ?? "")
-        let host = field("Host", existing?.host ?? "")
-        let port = field("Port (blank = default)", existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
-        let user = field("User", existing?.user ?? "")
-        let path = field("Path", existing?.path ?? "/")
+        let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
+        let host = field(L("conn.hostPlaceholder", "Host"), existing?.host ?? "")
+        let port = field(L("conn.portPlaceholder", "Port (blank = default)"), existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
+        let user = field(L("conn.userPlaceholder", "User"), existing?.user ?? "")
+        let path = field(L("conn.pathPlaceholder", "Path"), existing?.path ?? "/")
 
         let rows = NSStackView(views: [
-            labeled("Protocol", proto), labeled("Name", name), labeled("Host", host),
-            labeled("Port", port), labeled("User", user), labeled("Path", path),
+            labeled(L("conn.protocolLabel", "Protocol"), proto), labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
+            labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
         ])
         rows.orientation = .vertical
         rows.alignment = .leading
         rows.spacing = 6
         rows.frame = NSRect(x: 0, y: 0, width: 320, height: 200)
         alert.accessoryView = rows
-        alert.addButton(withTitle: "Save")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
 
         guard let window = panel.isVisible ? panel : nil else { return }
         alert.beginSheetModal(for: window) { [weak self] response in
