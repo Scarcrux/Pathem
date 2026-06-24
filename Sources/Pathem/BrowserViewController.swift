@@ -1100,6 +1100,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
             }
+            guard !self.transferInFlight else { NSSound.beep(); return }  // one transfer at a time
             self.transferInFlight = true  // so Quit warns mid-transfer
             self.transferController.run(
                 items, title: "Downloading from \(ctx.connection.host)", over: window
@@ -1130,6 +1131,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
         }
+        guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
         transferInFlight = true  // so Quit warns mid-transfer
         transferController.run(
             items, title: "Uploading to \(connection.host)", over: window
@@ -1163,6 +1165,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let item = TransferController.Item(name: name) {
             try await provider.download(connection, remotePath: remotePath, to: local, password: password)
         }
+        guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
         transferInFlight = true  // so Quit warns mid-transfer
         transferController.run([item], title: "Opening \(name)", over: window) { [weak self] failures, cancelled in
             self?.transferInFlight = false

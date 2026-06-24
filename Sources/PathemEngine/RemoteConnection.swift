@@ -73,7 +73,9 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         host = try c.decodeIfPresent(String.self, forKey: .host) ?? ""
         name = try c.decodeIfPresent(String.self, forKey: .name) ?? host
-        proto = try c.decodeIfPresent(Proto.self, forKey: .proto) ?? .ftp
+        // try? for the enum: an unknown protocol falls back instead of dropping the
+        // whole connection (and, in an array, every other connection with it).
+        proto = (try? c.decode(Proto.self, forKey: .proto)) ?? .ftp
         port = try c.decodeIfPresent(Int.self, forKey: .port) ?? 0
         user = try c.decodeIfPresent(String.self, forKey: .user) ?? ""
         path = try c.decodeIfPresent(String.self, forKey: .path) ?? "/"

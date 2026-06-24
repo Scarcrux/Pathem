@@ -203,8 +203,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
             let host = host.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !host.isEmpty else {
-                NSSound.beep()
+            guard !host.isEmpty, RemoteConnection.isValidHost(host) else {
+                NSSound.beep()  // empty or a smuggling host (@ / : etc.)
                 return
             }
             let chosen = RemoteConnection.Proto.allCases[proto.indexOfSelectedItem]
@@ -213,7 +213,13 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 name: name.stringValue.isEmpty ? host : name.stringValue,
                 proto: chosen, host: host, port: Int(port.stringValue) ?? 0,
                 user: user.stringValue, path: path.stringValue.isEmpty ? "/" : path.stringValue)
-            if let row { self.connections[row] = conn } else { self.connections.append(conn) }
+            // Resolve the target by identity, not the captured row index, which can
+            // go stale if the list changed while this modeless sheet was open.
+            if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id }) {
+                self.connections[idx] = conn
+            } else {
+                self.connections.append(conn)
+            }
             self.commit()
         }
     }

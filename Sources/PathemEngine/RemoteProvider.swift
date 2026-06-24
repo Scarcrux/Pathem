@@ -75,7 +75,7 @@ public struct CurlFTPProvider: RemoteProvider {
         }
     }
 
-    private func endpoint(_ c: RemoteConnection, _ path: String) -> String {
+    func endpoint(_ c: RemoteConnection, _ path: String) -> String {
         let clean = path.hasPrefix("/") ? path : "/" + path
         // Percent-encode each path segment so spaces, #, ?, etc. in names don't
         // break the URL (slashes are preserved as separators).

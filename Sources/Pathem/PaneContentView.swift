@@ -32,6 +32,7 @@ protocol PaneContentView: AnyObject {
     func setCalculateFolderSizes(_ on: Bool)
     func setSortFormat(_ format: ViewFormat)
     func setCutPaths(_ paths: Set<String>)
+    func refreshDrilledColumns()
 }
 
 extension PaneContentView {
@@ -44,6 +45,8 @@ extension PaneContentView {
     func setSortFormat(_ format: ViewFormat) {}
     /// Only the list view dims cut items for now.
     func setCutPaths(_ paths: Set<String>) {}
+    /// Only column view has drilled columns to re-enumerate after a file op.
+    func refreshDrilledColumns() {}
 }
 
 extension FileListController: PaneContentView {

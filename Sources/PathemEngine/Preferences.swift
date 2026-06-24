@@ -59,7 +59,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Preferences.default
-        density = try c.decodeIfPresent(Density.self, forKey: .density) ?? d.density
+        // try? for the enum: an unknown raw value falls back rather than failing the file.
+        density = (try? c.decode(Density.self, forKey: .density)) ?? d.density
         fontSize = try c.decodeIfPresent(Int.self, forKey: .fontSize) ?? d.fontSize
         alternatingRows = try c.decodeIfPresent(Bool.self, forKey: .alternatingRows) ?? d.alternatingRows
         searchOCR = try c.decodeIfPresent(Bool.self, forKey: .searchOCR) ?? d.searchOCR

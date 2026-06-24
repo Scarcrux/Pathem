@@ -35,11 +35,13 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     // still loads instead of resetting every saved format.
     public init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        sortKey = try c.decodeIfPresent(SortKey.self, forKey: .sortKey) ?? .name
+        // `try?` (not decodeIfPresent) for enums: an unknown raw value (a newer
+        // schema or a typo) falls back to the default instead of failing the file.
+        sortKey = (try? c.decode(SortKey.self, forKey: .sortKey)) ?? .name
         ascending = try c.decodeIfPresent(Bool.self, forKey: .ascending) ?? true
         showHidden = try c.decodeIfPresent(Bool.self, forKey: .showHidden) ?? false
         foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? true
-        viewMode = try c.decodeIfPresent(ViewMode.self, forKey: .viewMode) ?? .list
+        viewMode = (try? c.decode(ViewMode.self, forKey: .viewMode)) ?? .list
     }
 
     public static let `default` = ViewFormat()

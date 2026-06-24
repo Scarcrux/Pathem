@@ -17,6 +17,17 @@ public struct FolderFormats: Codable, Sendable {
             self.scope = scope
             self.format = format
         }
+
+        // Tolerant so one rule with a future/unknown scope doesn't fail the whole
+        // [Rule] array (which would discard every saved per-folder view).
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            path = try c.decodeIfPresent(String.self, forKey: .path) ?? ""
+            scope = (try? c.decode(Scope.self, forKey: .scope)) ?? .exact
+            format = (try? c.decode(ViewFormat.self, forKey: .format)) ?? .default
+        }
+
+        private enum CodingKeys: String, CodingKey { case path, scope, format }
     }
 
     public var rules: [Rule]
@@ -43,7 +54,9 @@ public struct FolderFormats: Codable, Sendable {
         if let exact = rules.first(where: { $0.scope == .exact && $0.path == path }) {
             return exact.format
         }
-        let matches = rules.filter { $0.scope == .subtree && Self.isUnder(path, $0.path) }
+        // An empty path is never a valid subtree root (it would match everything);
+        // guards against a malformed/defaulted rule governing the whole disk.
+        let matches = rules.filter { $0.scope == .subtree && !$0.path.isEmpty && Self.isUnder(path, $0.path) }
         if let best = matches.max(by: { $0.path.count < $1.path.count }) {
             return best.format
         }

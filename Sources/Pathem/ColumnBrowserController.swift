@@ -308,6 +308,33 @@ extension ColumnBrowserController: PaneContentView {
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {}
 
+    /// Re-enumerate the drilled (non-root) columns after a file operation, so an op
+    /// inside a drilled column shows its result instead of stale rows. The root
+    /// column is refreshed separately by setEntries; here we prune any column whose
+    /// folder vanished and reload the rest, preserving each column's selection.
+    func refreshDrilledColumns() {
+        guard columns.count > 1 else { return }
+        let fm = FileManager.default
+        while columns.count > 1, !fm.fileExists(atPath: columns[columns.count - 1].folder.path) {
+            columns.removeLast()  // the folder this column showed was deleted/moved
+        }
+        if activeColumn >= columns.count { activeColumn = max(0, columns.count - 1) }
+        for index in columns.indices where index > 0 {
+            let folder = columns[index].folder
+            let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
+            let sorted = sortFormat.sorted(entries)
+            let names = Set(columns[index].table.selectedRowIndexes.compactMap {
+                $0 < columns[index].entries.count ? columns[index].entries[$0].name : nil
+            })
+            columns[index].entries = sorted
+            columns[index].table.reloadData()
+            var rows = IndexSet()
+            for (row, entry) in sorted.enumerated() where names.contains(entry.name) { rows.insert(row) }
+            columns[index].table.selectRowIndexes(rows, byExtendingSelection: false)
+        }
+        relayout()
+    }
+
     /// Adopt the pane's sort and re-sort every open column (including drilled ones)
     /// so all columns order consistently, not just the first.
     func setSortFormat(_ format: ViewFormat) {

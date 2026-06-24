@@ -222,6 +222,9 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         do {
             let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
             content.setEntries(format.sorted(entries), preserveState: preserveState)
+            // setEntries refreshes only the root column; re-enumerate drilled ones too
+            // so a file op inside a drilled column shows its result (no-op elsewhere).
+            if preserveState { content.refreshDrilledColumns() }
             content.showPlaceholder(entries.isEmpty ? "This folder is empty" : nil)
         } catch {
             // A read failure (permission denied, missing) looks identical to an
