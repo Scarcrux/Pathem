@@ -358,6 +358,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.activePane?.goUp()
         }
         add("nav.editPath", "Go to Path…") { [weak self] in self?.activePane?.beginEditingPath() }
+        add("view.flatView", "Flat View", enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.activePane?.showFlatView()
+        }
         add("shelf.add", "Add to Shelf", enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
         add("shelf.toggle", "Show Shelf") { [weak self] in self?.toggleShelf() }

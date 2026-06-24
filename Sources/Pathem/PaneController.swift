@@ -157,6 +157,26 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     var isShowingSmartResults: Bool { smartActive }
 
     /// Show a cross-folder result list. Entries carry their own location so opening
+    /// Flatten this folder's whole subtree into one cross-folder list (Directory
+    /// Opus "Flat View"). Walks off the main thread, then renders through the smart-
+    /// results path; re-validates the pane hasn't moved before showing.
+    func showFlatView() {
+        guard remote == nil else { NSSound.beep(); return }
+        let root = nav.current
+        let token = beginContentRequest()
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = FlatEnumerator.entries(of: root)
+            DispatchQueue.main.async {
+                guard let self, self.isContentRequestCurrent(token), self.nav.current == root,
+                    self.remote == nil
+                else { return }
+                let title =
+                    "Flat View: \(root.lastPathComponent)" + (result.truncated ? " (first \(result.entries.count))" : "")
+                self.showSmartResults(result.entries, title: title)
+            }
+        }
+    }
+
     /// resolves across folders. It's read-only: the browser blocks file ops here
     /// (they assume a single current folder). Back or selecting a folder leaves it.
     func showSmartResults(_ entries: [FileEntry], title: String) {
