@@ -40,6 +40,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private var sharedHosts: [String] = []
     /// A saved FTP/SFTP connection was selected (connect to it).
     var onSelectConnection: ((RemoteConnection) -> Void)?
+    /// Connect to a saved server in a new tab (from the right-click menu).
+    var onConnectConnectionInNewTab: ((RemoteConnection) -> Void)?
+    /// Edit a saved server (right-click menu).
+    var onEditConnection: ((RemoteConnection) -> Void)?
+    /// Remove a saved server (right-click menu).
+    var onRemoveConnection: ((RemoteConnection) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
@@ -600,6 +606,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 add("Rename Group", #selector(renameTarget))
                 add("Remove Group", #selector(removeTarget))
                 menu.addItem(.separator())
+            case .connection:
+                add("Connect", #selector(connectTarget))
+                add("Connect in New Tab", #selector(connectInNewTabTarget))
+                menu.addItem(.separator())
+                add("Edit…", #selector(editConnectionTarget))
+                add("Remove", #selector(removeConnectionTarget))
+                return  // connection-only menu (no New Group / Add Current Folder)
+            case .manageConnections:
+                add("Add Connection…", #selector(manageConnectionsTarget))
+                return
             default:
                 break
             }
@@ -609,6 +625,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             add("Add Current Folder", #selector(addCurrentFolder))
         }
     }
+
+    private func targetConnection() -> RemoteConnection? {
+        guard let node = menuTargetNode, case let .connection(connection) = node.kind else { return nil }
+        return connection
+    }
+
+    @objc private func connectTarget() { targetConnection().map { onSelectConnection?($0) } }
+    @objc private func connectInNewTabTarget() { targetConnection().map { onConnectConnectionInNewTab?($0) } }
+    @objc private func editConnectionTarget() { targetConnection().map { onEditConnection?($0) } }
+    @objc private func removeConnectionTarget() { targetConnection().map { onRemoveConnection?($0) } }
+    @objc private func manageConnectionsTarget() { onManageConnections?() }
 
     private func iconSubmenuItem() -> NSMenuItem {
         let parent = NSMenuItem(title: "Change Icon", action: nil, keyEquivalent: "")

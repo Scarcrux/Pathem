@@ -222,6 +222,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
         sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }
         sidebar.onSelectConnection = { [weak self] connection in self?.connectToRemote(connection) }
+        sidebar.onConnectConnectionInNewTab = { [weak self] connection in
+            self?.connectToRemote(connection, forceNewTab: true)
+        }
+        sidebar.onEditConnection = { [weak self] connection in
+            guard let self else { return }
+            self.connectionsController.present(over: self.view.window)
+            self.connectionsController.beginEdit(connection)
+        }
+        sidebar.onRemoveConnection = { [weak self] connection in
+            self?.connectionsController.remove(connection)
+        }
         sidebar.onManageConnections = { [weak self] in
             self?.connectionsController.present(over: self?.view.window)
         }
@@ -967,7 +978,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// Prompt for a password and open the server in the active pane.
-    private func connectToRemote(_ connection: RemoteConnection) {
+    private func connectToRemote(_ connection: RemoteConnection, forceNewTab: Bool = false) {
         guard let pane = activePane, let window = view.window else { return }
         let who = connection.user.isEmpty ? "anonymous" : connection.user
         let alert = NSAlert()
@@ -980,7 +991,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
             var target = pane
-            if self.prefs.openConnectionsInNewTab, let side = self.activeSide {
+            if (forceNewTab || self.prefs.openConnectionsInNewTab), let side = self.activeSide {
                 side.newTab(duplicatingCurrent: true)  // the new tab becomes active
                 target = self.activePane ?? pane
             }

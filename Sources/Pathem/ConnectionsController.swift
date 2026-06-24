@@ -109,6 +109,19 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         commit()
     }
 
+    /// Remove a connection by identity (from the sidebar right-click menu).
+    func remove(_ connection: RemoteConnection) {
+        connections.removeAll { $0.id == connection.id }
+        commit()
+    }
+
+    /// Open the edit sheet for a specific connection (the panel must be visible).
+    func beginEdit(_ connection: RemoteConnection) {
+        guard let row = connections.firstIndex(where: { $0.id == connection.id }) else { return }
+        table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        editConnection(row)
+    }
+
     @objc private func connectSelected() {
         let row = table.selectedRow
         guard row >= 0, row < connections.count else { return }
