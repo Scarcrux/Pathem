@@ -254,9 +254,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // MARK: Open With
 
     private func selectedFileURLs() -> [URL] {
-        guard let dir = resolutionURL else { return [] }
-        return tableView.selectedRowIndexes.compactMap {
-            $0 < entries.count ? dir.appendingPathComponent(entries[$0].name) : nil
+        return tableView.selectedRowIndexes.compactMap { row -> URL? in
+            guard row < entries.count else { return nil }
+            let entry = entries[row]
+            // Smart-result rows carry their real folder; normal rows use resolutionURL.
+            if let location = entry.location {
+                return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+            }
+            return resolutionURL?.appendingPathComponent(entry.name)
         }
     }
 
@@ -512,7 +517,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     private func isCut(_ entry: FileEntry) -> Bool {
-        guard !cutPaths.isEmpty, let dir = directoryURL else { return false }
+        guard !cutPaths.isEmpty else { return false }
+        // Smart-result rows carry their own folder; normal rows live in directoryURL.
+        if let location = entry.location {
+            return cutPaths.contains((location as NSString).appendingPathComponent(entry.name))
+        }
+        guard let dir = directoryURL else { return false }
         return cutPaths.contains(dir.appendingPathComponent(entry.name).path)
     }
 

@@ -28,6 +28,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
     var onModelChange: ((Sidebar) -> Void)?
     var onSelect: ((URL) -> Void)?
+    /// Open Settings (the gear shortcut at the bottom of the sidebar).
+    var onOpenSettings: (() -> Void)?
+    private let settingsButton = NSButton()
     /// A smart location (Recents / a tag filter) was selected.
     var onSelectSmart: ((SmartQuery) -> Void)?
     /// A discovered shared computer (by display name) was selected.
@@ -148,14 +151,30 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         scrollView.hasVerticalScroller = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
+        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Settings")
+        settingsButton.bezelStyle = .texturedRounded
+        settingsButton.isBordered = false
+        settingsButton.imagePosition = .imageOnly
+        settingsButton.target = self
+        settingsButton.action = #selector(openSettings)
+        settingsButton.toolTip = "Settings"
+        settingsButton.translatesAutoresizingMaskIntoConstraints = false
+
         containerView.addSubview(scrollView)
+        containerView.addSubview(settingsButton)
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: containerView.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: settingsButton.topAnchor, constant: -2),
+            settingsButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
+            settingsButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
+            settingsButton.widthAnchor.constraint(equalToConstant: 24),
+            settingsButton.heightAnchor.constraint(equalToConstant: 22),
         ])
     }
+
+    @objc private func openSettings() { onOpenSettings?() }
 
     // MARK: Build the tree
 

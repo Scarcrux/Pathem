@@ -871,20 +871,20 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         reload()
     }
 
-    /// Local URLs of the current selection, resolved against the active folder
-    /// (the active column in column view, else nav.current).
-    private func selectedLocalURLs() -> [URL] {
-        let folder = content.directoryURL ?? nav.current
-        return content.selectedEntries.map { folder.appendingPathComponent($0.name) }
+    /// Local URLs of the current selection, each resolved against its real folder:
+    /// the entry's own location for cross-folder smart results, the active column in
+    /// column view, else the current folder.
+    func selectedLocalURLs() -> [URL] {
+        content.selectedEntries.map(urlFor)
     }
 
     @objc private func shareSelection() {
         onBecomeActive?()
-        guard remote == nil, !smartActive else {
-            NSSound.beep()  // remote / cross-folder results aren't a single local selection
+        guard remote == nil else {
+            NSSound.beep()  // remote files aren't local URLs to share
             return
         }
-        let urls = selectedLocalURLs()
+        let urls = selectedLocalURLs()  // location-aware, so smart results share correctly
         guard !urls.isEmpty else {
             NSSound.beep()
             return
@@ -897,7 +897,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     /// share picker). Local files only; macOS has no public API to receive/browse.
     @objc func airDropSelection() {
         onBecomeActive?()
-        guard remote == nil, !smartActive else {
+        guard remote == nil else {  // remote files aren't local URLs; smart results resolve by location
             NSSound.beep()
             return
         }

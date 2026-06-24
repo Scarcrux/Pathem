@@ -216,6 +216,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
         sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }
+        sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
         sharedDiscovery.onChange = { [weak self] hosts in self?.sidebar.setSharedHosts(hosts) }
@@ -672,7 +673,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// File URLs for the active pane's current selection (Quick Look targets).
     private var quickLookURLs: [URL] {
         guard let pane = activePane else { return [] }
-        return pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
+        return pane.selectedLocalURLs()  // location-aware: previews the right file in smart views too
     }
 
     // Quick Look invokes these on the main thread, but the protocol/responder
@@ -1639,9 +1640,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func writeSelectionToPasteboard(cut: Bool) {
-        if blockedByRemote() { return }
         guard let pane = activePane else { return }
-        let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
+        // Copy/cut only writes URLs (no mutation), so it's safe in smart-result views;
+        // selectedLocalURLs resolves each item to its real folder. Remote has no local URL.
+        guard !pane.isRemote else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
         guard !urls.isEmpty else { NSSound.beep(); return }
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
