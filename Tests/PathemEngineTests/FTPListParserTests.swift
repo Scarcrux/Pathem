@@ -31,6 +31,26 @@ import Testing
         #expect(entries[0].size == 42)
     }
 
+    @Test func preservesNonUTF8NameBytes() {
+        // A listing line whose name has an invalid UTF-8 byte (0xFF) keeps the exact
+        // bytes in rawName, while `name` is the lossy decode for display.
+        var line = Array("-rw-r--r--   1 a b 5 Jan 02 12:00 caf".utf8)
+        line.append(0xFF)  // invalid UTF-8
+        line.append(contentsOf: Array(".txt".utf8))
+        let entries = FTPListParser.parse(Data(line))
+        #expect(entries.count == 1)
+        #expect(entries[0].rawName != nil)
+        #expect(entries[0].rawName?.last == UInt8(ascii: "t"))  // "...txt"
+        #expect(entries[0].rawName?.contains(0xFF) == true)  // exact byte kept
+        #expect(entries[0].name.contains("\u{FFFD}"))  // display is lossy
+    }
+
+    @Test func utf8CleanNameHasNoRawName() {
+        let entries = FTPListParser.parse("-rw-r--r-- 1 a b 5 Jan 02 12:00 plain.txt")
+        #expect(entries.count == 1)
+        #expect(entries[0].rawName == nil)  // only kept when it differs from a clean decode
+    }
+
     @Test func skipsDotEntriesAndGarbage() {
         let text = """
             drwxr-xr-x 2 a b 4096 Jan 02 12:00 .

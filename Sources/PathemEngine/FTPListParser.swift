@@ -1,43 +1,69 @@
 import Foundation
 
-/// Parses an FTP directory listing (the raw `LIST` response) into FileEntry
-/// values. Handles the common Unix `ls -l` style; pure and unit-tested so the
-/// fiddly bit is verified without a live server.
+/// Parses an FTP/SFTP directory listing (the raw `LIST` / `ls -l` response) into
+/// FileEntry values. Handles the common Unix `ls -l` style; pure and unit-tested
+/// so the fiddly bit is verified without a live server.
+///
+/// Parsing works on the raw bytes so a name that isn't valid UTF-8 keeps its exact
+/// bytes (`FileEntry.rawName`) instead of being lost to a lossy decode; `name` is
+/// the lossy decode for display.
 public enum FTPListParser {
     public static func parse(_ text: String) -> [FileEntry] {
-        text.split(whereSeparator: \.isNewline).compactMap { parseLine(String($0)) }
+        parse(Data(text.utf8))
     }
 
-    static func parseLine(_ line: String) -> FileEntry? {
+    public static func parse(_ data: Data) -> [FileEntry] {
+        data.split(separator: 0x0A, omittingEmptySubsequences: true).compactMap { parseLine(Array($0)) }
+    }
+
+    static func parseLine(_ bytes: [UInt8]) -> FileEntry? {
         // Unix: "drwxr-xr-x  2 user group   4096 Jan 01 12:00 name with spaces"
-        let parts = line.split(separator: " ", omittingEmptySubsequences: true)
-        guard parts.count >= 9, let perms = parts.first, perms.count >= 10 else { return nil }
-        let type = perms.first!
-        let isDir = type == "d"
-        let isSymlink = type == "l"
-        let size = Int64(parts[4]) ?? 0
-        // Slice the name verbatim from the original line (everything after the 8
-        // metadata fields), so internal runs of multiple spaces are preserved
-        // rather than collapsed by re-joining split tokens.
-        guard let nameStart = indexAfterFields(8, in: line) else { return nil }
-        var name = String(line[nameStart...])
-        if isSymlink, let arrow = name.range(of: " -> ") { name = String(name[..<arrow.lowerBound]) }
-        name = name.trimmingCharacters(in: .whitespaces)
-        guard !name.isEmpty, name != ".", name != ".." else { return nil }
-        // A symlink to a directory can't be known from LIST alone; treat links as files.
-        return FileEntry(name: name, isDirectory: isDir, size: isDir ? 0 : size, modificationDate: nil)
+        let space: UInt8 = 0x20
+        // Start index of each space-delimited field.
+        var starts: [Int] = []
+        var inField = false
+        for (i, b) in bytes.enumerated() {
+            if b == space {
+                inField = false
+            } else if !inField {
+                starts.append(i)
+                inField = true
+            }
+        }
+        guard starts.count >= 9 else { return nil }
+
+        let permsEnd = bytes[starts[0]...].firstIndex(of: space) ?? bytes.count
+        guard permsEnd - starts[0] >= 10 else { return nil }
+        let type = bytes[starts[0]]
+        let isDir = type == UInt8(ascii: "d")
+        let isSymlink = type == UInt8(ascii: "l")
+
+        let sizeEnd = bytes[starts[4]...].firstIndex(of: space) ?? bytes.count
+        let size = Int64(String(decoding: bytes[starts[4]..<sizeEnd], as: UTF8.self)) ?? 0
+
+        // Name is the verbatim remainder from the 9th field (preserves internal
+        // multiple spaces); strip a symlink's " -> target".
+        var nameBytes = Array(bytes[starts[8]...])
+        if isSymlink, let arrow = Self.arrowRange(in: nameBytes) { nameBytes = Array(nameBytes[..<arrow]) }
+        while let last = nameBytes.last, last == space || last == 0x0D { nameBytes.removeLast() }
+        guard !nameBytes.isEmpty else { return nil }
+
+        let raw = Data(nameBytes)
+        let display = String(decoding: raw, as: UTF8.self)
+        guard display != ".", display != ".." else { return nil }
+        let isUTF8Clean = Array(display.utf8) == nameBytes  // only keep rawName when it differs
+        return FileEntry(
+            name: display, isDirectory: isDir, size: isDir ? 0 : size, modificationDate: nil,
+            rawName: isUTF8Clean ? nil : raw)
     }
 
-    /// The index just past the Nth space-delimited field (skipping following
-    /// spaces), or nil if the line has fewer than N fields plus a name.
-    private static func indexAfterFields(_ count: Int, in line: String) -> String.Index? {
-        var index = line.startIndex
-        for _ in 0..<count {
-            while index < line.endIndex, line[index] == " " { index = line.index(after: index) }
-            guard index < line.endIndex else { return nil }
-            while index < line.endIndex, line[index] != " " { index = line.index(after: index) }
+    /// The index of " -> " (the symlink separator) in the name bytes, if present.
+    private static func arrowRange(in bytes: [UInt8]) -> Int? {
+        let arrow: [UInt8] = [0x20, 0x2D, 0x3E, 0x20]  // " -> "
+        guard bytes.count >= arrow.count else { return nil }
+        for i in 0...(bytes.count - arrow.count) where Array(bytes[i..<(i + arrow.count)]) == arrow {
+            return i
         }
-        while index < line.endIndex, line[index] == " " { index = line.index(after: index) }
-        return index < line.endIndex ? index : nil
+        return nil
     }
 }

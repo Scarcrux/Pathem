@@ -45,7 +45,7 @@ public struct CurlFTPProvider: RemoteProvider {
         if !dir.hasSuffix("/") { dir += "/" }  // trailing slash makes curl LIST, not retrieve
         let (data, status, err) = try await run(connection, password, [endpoint(connection, dir)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
-        return FTPListParser.parse(String(decoding: data, as: UTF8.self))
+        return FTPListParser.parse(data)  // byte-based: preserves non-UTF-8 names as rawName
     }
 
     public func download(

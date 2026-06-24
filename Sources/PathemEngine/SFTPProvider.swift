@@ -15,7 +15,7 @@ public struct SFTPProvider: RemoteProvider {
         let dir = path.isEmpty ? "/" : path
         let (out, status, err) = try await run(connection, password, batch: "cd \(quote(dir))\nls -l\n")
         guard status == 0 else { throw RemoteError.sftp(code: status, message: cleanError(err)) }
-        return FTPListParser.parse(String(decoding: out, as: UTF8.self))
+        return FTPListParser.parse(out)  // byte-based: preserves non-UTF-8 names as rawName
     }
 
     public func download(

@@ -22,6 +22,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private var rootURL: URL?
     private var storedResolutionURL: URL?
     private var trailingConstraint: NSLayoutConstraint?
+    private var sortFormat = ViewFormat.default  // how every column (incl. drilled) is sorted
     private let columnWidth: CGFloat = 220
 
     // PaneContentView callbacks.
@@ -129,9 +130,10 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private func openFolder(_ folder: URL, after index: Int) {
         if columns.count > index + 1 { columns.removeSubrange((index + 1)...) }  // drop deeper now
         relayout()
+        let format = sortFormat
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
-            let sorted = ViewFormat.default.sorted(entries)
+            let sorted = format.sorted(entries)
             DispatchQueue.main.async {
                 guard let self, self.columns.indices.contains(index), self.columns.count == index + 1
                 else { return }  // a deeper column already opened, or the parent is gone
@@ -305,4 +307,14 @@ extension ColumnBrowserController: PaneContentView {
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {}
+
+    /// Adopt the pane's sort and re-sort every open column (including drilled ones)
+    /// so all columns order consistently, not just the first.
+    func setSortFormat(_ format: ViewFormat) {
+        sortFormat = format
+        for index in columns.indices {
+            columns[index].entries = format.sorted(columns[index].entries)
+            columns[index].table.reloadData()
+        }
+    }
 }

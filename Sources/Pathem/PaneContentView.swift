@@ -30,6 +30,7 @@ protocol PaneContentView: AnyObject {
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
+    func setSortFormat(_ format: ViewFormat)
 }
 
 extension PaneContentView {
@@ -37,6 +38,9 @@ extension PaneContentView {
     func invalidateTagCache() {}
     /// Only the list view shows a size column, so others ignore this.
     func setCalculateFolderSizes(_ on: Bool) {}
+    /// Only column view re-sorts its own drilled columns; list/icon/gallery are
+    /// (re)sorted by the pane before setEntries.
+    func setSortFormat(_ format: ViewFormat) {}
 }
 
 extension FileListController: PaneContentView {

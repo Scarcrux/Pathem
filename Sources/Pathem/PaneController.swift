@@ -196,6 +196,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
         content.directoryURL = nav.current  // rows in this folder are draggable
         content.resolutionURL = nav.current
+        content.setSortFormat(format)  // column view re-sorts its drilled columns to match
         do {
             let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
             content.setEntries(format.sorted(entries), preserveState: preserveState)

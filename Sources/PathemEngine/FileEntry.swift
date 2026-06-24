@@ -20,10 +20,14 @@ public struct FileEntry: Sendable, Hashable {
     /// locations like Recents or a tag filter). `nil` for a normal listing, where
     /// the entry lives in the pane's current directory.
     public let location: String?
+    /// The exact on-the-wire name bytes for a remote entry whose name isn't valid
+    /// UTF-8 (so `name`, a lossy decode, doesn't lose them). `nil` for local
+    /// entries and remote names that are already valid UTF-8.
+    public let rawName: Data?
 
     public init(
         name: String, isDirectory: Bool, size: Int64, modificationDate: Date?,
-        isDataless: Bool = false, location: String? = nil
+        isDataless: Bool = false, location: String? = nil, rawName: Data? = nil
     ) {
         self.name = name
         self.isDirectory = isDirectory
@@ -31,6 +35,7 @@ public struct FileEntry: Sendable, Hashable {
         self.modificationDate = modificationDate
         self.isDataless = isDataless
         self.location = location
+        self.rawName = rawName
     }
 
     /// Build an entry for a file at a known URL (used for smart-location results).
@@ -44,5 +49,6 @@ public struct FileEntry: Sendable, Hashable {
         self.modificationDate = values?.contentModificationDate
         self.isDataless = false
         self.location = url.deletingLastPathComponent().path
+        self.rawName = nil
     }
 }

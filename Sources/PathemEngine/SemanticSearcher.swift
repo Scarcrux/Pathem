@@ -25,9 +25,9 @@ public enum SemanticSearcher {
     /// plus a content snippet (for text-like files). Capped at `maxItems`.
     /// Returns an empty index if the on-device model asset isn't ready.
     public static func index(
-        _ entries: [FileEntry], in directory: URL, maxItems: Int = 5000, ocrImages: Bool = false
+        _ entries: [FileEntry], in directory: URL, maxItems: Int = 5000, ocrImages: Bool = false,
+        embedder: TextEmbedder = NLEmbedder()
     ) -> FolderSemanticIndex {
-        let embedder = NLEmbedder()
         guard embedder.dimension > 0 else { return FolderSemanticIndex(ids: [], vectors: []) }
 
         var ids: [Int] = []
@@ -52,9 +52,10 @@ public enum SemanticSearcher {
 
     /// Rank the indexed items by cosine similarity to `query`, best first.
     /// Returns the original entry indices (so the caller maps back to entries).
-    public static func rank(query: String, in index: FolderSemanticIndex) -> [Int] {
+    public static func rank(
+        query: String, in index: FolderSemanticIndex, embedder: TextEmbedder = NLEmbedder()
+    ) -> [Int] {
         guard !index.isEmpty else { return [] }
-        let embedder = NLEmbedder()
         guard let q = embedder.embed(query) else { return index.ids }
         let scored = zip(index.ids, index.vectors).map { ($0.0, SemanticIndex<Int>.cosine(q, $0.1)) }
         return scored.sorted { $0.1 > $1.1 }.map { $0.0 }
