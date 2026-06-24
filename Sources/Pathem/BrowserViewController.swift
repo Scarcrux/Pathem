@@ -66,6 +66,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var transferInFlight = false
     /// Whether a copy/move is running (so the app can warn before quitting).
     var isTransferring: Bool { transferInFlight }
+    /// File paths currently marked for cut (dimmed until pasted or cleared).
+    private var cutPaths: Set<String> = []
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
@@ -1627,7 +1629,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             if !outcome.performed.isEmpty {
                 self.registerUndo(outcome.performed, actionName: isMove ? "Move" : "Copy")
             }
-            if isMove { pasteboard.clearContents() }  // cut items are gone; don't move them twice
+            if isMove {
+                pasteboard.clearContents()  // cut items are gone; don't move them twice
+                self.cutPaths = []
+                self.applyCutPaths()  // clear the dimming
+            }
             if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: "Paste failed") }
         }
     }
@@ -1643,6 +1649,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if cut {
             pasteboard.addTypes([Self.cutPasteboardType], owner: nil)
             pasteboard.setData(Data(), forType: Self.cutPasteboardType)
+        }
+        cutPaths = cut ? Set(urls.map(\.path)) : []  // dim cut items; a copy clears any prior cut
+        applyCutPaths()
+    }
+
+    /// Show the current cut-dimming in every pane.
+    private func applyCutPaths() {
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.setCutPaths(cutPaths) }
         }
     }
 

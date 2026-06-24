@@ -31,6 +31,7 @@ protocol PaneContentView: AnyObject {
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
     func setSortFormat(_ format: ViewFormat)
+    func setCutPaths(_ paths: Set<String>)
 }
 
 extension PaneContentView {
@@ -41,6 +42,8 @@ extension PaneContentView {
     /// Only column view re-sorts its own drilled columns; list/icon/gallery are
     /// (re)sorted by the pane before setEntries.
     func setSortFormat(_ format: ViewFormat) {}
+    /// Only the list view dims cut items for now.
+    func setCutPaths(_ paths: Set<String>) {}
 }
 
 extension FileListController: PaneContentView {

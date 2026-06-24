@@ -425,6 +425,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         let entry = entries[row]
         cell.textField?.font = .systemFont(ofSize: listFontSize)
+        cell.alphaValue = isCut(entry) ? 0.45 : 1.0  // dim items marked for cut
         switch Column(rawValue: id.rawValue) {
         case .name:
             // Online-only (dataless) items: a cloud badge + dimmed name.
@@ -500,6 +501,20 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Drop cached tag colors so the next refresh re-reads from disk (call after
     /// the app itself changes tags).
     func invalidateTagCache() { tagCache.removeAll() }
+
+    /// Paths currently marked for cut, dimmed until pasted or the cut is cleared.
+    private var cutPaths: Set<String> = []
+
+    func setCutPaths(_ paths: Set<String>) {
+        guard paths != cutPaths else { return }
+        cutPaths = paths
+        tableView.reloadData()
+    }
+
+    private func isCut(_ entry: FileEntry) -> Bool {
+        guard !cutPaths.isEmpty, let dir = directoryURL else { return false }
+        return cutPaths.contains(dir.appendingPathComponent(entry.name).path)
+    }
 
     /// A cached folder size, or nil when not computed (or the option is off).
     private func folderSize(for entry: FileEntry) -> Int64? {

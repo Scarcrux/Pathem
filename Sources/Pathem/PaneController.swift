@@ -15,6 +15,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var calculateFolderSizes = false
+    private var cutPaths: Set<String> = []
     /// Selection to restore after a view-mode swap repopulates the new content.
     private var pendingSelection: Set<String>?
     /// Keymap chord handler, re-applied to whichever content is active.
@@ -350,6 +351,12 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         content.setCalculateFolderSizes(on)
     }
 
+    /// Dim the given paths (items marked for cut), carried across view-mode swaps.
+    func setCutPaths(_ paths: Set<String>) {
+        cutPaths = paths
+        content.setCutPaths(paths)
+    }
+
     func descend(into entry: FileEntry) {
         if let remote {
             if entry.isDirectory {
@@ -587,6 +594,7 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
             content.applyStyle(rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
         }
         content.setCalculateFolderSizes(calculateFolderSizes)  // carry the option across the swap
+        content.setCutPaths(cutPaths)  // carry cut-dimming across the swap
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }
 
