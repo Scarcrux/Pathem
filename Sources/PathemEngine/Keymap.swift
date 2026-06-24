@@ -104,4 +104,19 @@ public struct Keymap: Codable, Sendable {
         }
         return Keymap(bindings: merged)
     }
+
+    /// The minimal user overlay (for keymap.json) that turns the built-in defaults
+    /// into `effective`: chords whose command differs from the default are listed,
+    /// and defaults the user removed are listed as "" (unbound). Round-trips, i.e.
+    /// `standard.merging(userBindings: overlay(forEffective: e)).bindings == e`.
+    public static func overlay(forEffective effective: [String: String]) -> [String: String] {
+        var overlay: [String: String] = [:]
+        for (chord, command) in effective where defaultBindings[chord] != command {
+            overlay[chord] = command
+        }
+        for chord in defaultBindings.keys where effective[chord] == nil {
+            overlay[chord] = ""  // a default binding the user removed
+        }
+        return overlay
+    }
 }

@@ -66,7 +66,7 @@ enum PathemApp {
         }
 
         if ProcessInfo.processInfo.environment["PATHEM_PREFS_SHOT"] != nil {
-            PreferencesController().debugRenderToPNG("/tmp/prefs.png")
+            SettingsWindowController().debugRenderPanes(toDir: "/tmp")
             exit(0)
         }
 
@@ -101,6 +101,7 @@ enum PathemApp {
         let delegate = PathemAppDelegate()
         delegate.browser = browser
         delegate.updater = updater  // keep the updater alive for the app's lifetime
+        browser.updater = updater  // surfaced in Settings > Updates
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)

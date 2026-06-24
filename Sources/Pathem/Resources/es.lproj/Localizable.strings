@@ -1,4 +1,4 @@
-/* Pathem UI strings (Espanol) */
+/* Pathem UI strings (Español) */
 "ai.cleanup.noRec" = "El modelo no tenía ninguna recomendación.";
 "ai.cleanup.thinking" = "Consultando al modelo…";
 "ai.cleanup.unavail" = "Las recomendaciones de la AI no están disponibles";
@@ -407,11 +407,18 @@
 "pane.viewAsIcons" = "como iconos";
 "pane.viewAsList" = "como lista";
 "prefs.alternatingRows" = "Colores de fila alternos";
+"prefs.calculateFolderSizes" = "Calcular el tamaño de las carpetas";
+"prefs.compactSidebar" = "Barra lateral compacta (solo iconos)";
 "prefs.densityComfortable" = "Cómoda";
 "prefs.densityCompact" = "Compacta";
 "prefs.densityLabel" = "Densidad";
 "prefs.fontSizeLabel" = "Tamaño de letra";
+"prefs.openConnectionsNewTab" = "Abrir conexiones en una pestaña nueva";
+"prefs.pathBarBottom" = "Mostrar la barra de ruta en la parte inferior";
 "prefs.searchImageContents" = "Buscar en el contenido de las imágenes (OCR, más lento)";
+"prefs.searchOCR" = "Buscar en el contenido de las imágenes (OCR, más lento)";
+"prefs.searchOCRHint" = "El contenido de texto y PDF siempre se indexa; el OCR de imágenes es adicional.";
+"prefs.showFullPath" = "Mostrar la ruta completa en la barra de título";
 "prefs.title" = "Preferencias";
 "progress.cancelling" = "Cancelando…";
 "progress.countStatus" = "%@ %d de %d…";
@@ -440,6 +447,13 @@
 "rename.rowReplace" = "Reemplazar";
 "rename.rowStart" = "Inicio";
 "rename.rowSuffix" = "Sufijo";
+"settings.appearance" = "Apariencia";
+"settings.general" = "General";
+"settings.layout" = "Disposición";
+"settings.search" = "Búsqueda";
+"settings.shortcuts" = "Atajos";
+"settings.title" = "Ajustes";
+"settings.updates" = "Actualizaciones";
 "shelf.clear" = "Vaciar";
 "shelf.copyHere" = "Copiar aquí";
 "shelf.emptyHint" = "Arrastra archivos aquí para guardarlos";
@@ -451,6 +465,14 @@
 "shelf.title" = "Estantería";
 "shelf.titleCount" = "Estantería (%d)";
 "shelf.trash" = "Papelera";
+"shortcuts.clear" = "Borrar";
+"shortcuts.clickToSet" = "Haz clic para asignar";
+"shortcuts.colCommand" = "Comando";
+"shortcuts.colShortcut" = "Atajo";
+"shortcuts.reassigned" = "%@ se reasignó desde «%@».";
+"shortcuts.recording" = "Escribe un atajo…";
+"shortcuts.restoreDefaults" = "Restaurar valores predeterminados";
+"shortcuts.setLabel" = "Atajo:";
 "sidebar.addConnection" = "Añadir conexión…";
 "sidebar.addCurrentFolder" = "Añadir la carpeta actual";
 "sidebar.changeIcon" = "Cambiar icono";
@@ -489,4 +511,8 @@
 "toolbar.cleanup" = "Limpieza";
 "toolbar.cleanup.tip" = "Buscar y eliminar archivos recuperables";
 "transfer.itemProgress" = "%@  (%d de %d)";
+"update.autoCheck" = "Buscar actualizaciones automáticamente";
+"update.checkNow" = "Buscar actualizaciones ahora";
 "update.notSetUpTitle" = "Las actualizaciones no están configuradas para esta compilación";
+"update.sourceBuild" = "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas compilaciones se actualizan solas.";
+"update.viaSparkle" = "Las actualizaciones se entregan automáticamente mediante Sparkle.";

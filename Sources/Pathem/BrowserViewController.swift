@@ -67,7 +67,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var aiBar = AICommandBar()
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
-    private lazy var preferencesPanel = PreferencesController()
+    private lazy var settings = SettingsWindowController()
+    /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
+    var updater: UpdaterController?
     /// User preferences (density, font, alternating rows, search OCR).
     private var prefs = Preferences.default
     /// Progress sheet for copy/move; one transfer at a time.
@@ -1216,11 +1218,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private func showPreferences() {
         guard let window = view.window else { return }
-        preferencesPanel.present(prefs, over: window) { [weak self] updated in
-            guard let self else { return }
-            self.prefs = updated
-            self.applyPreferences()
-        }
+        settings.present(
+            prefs: prefs,
+            commands: commands.all.map { (id: $0.id, title: $0.title) },
+            effective: keymap.bindings,
+            updater: updater,
+            over: window,
+            onChange: { [weak self] updated in
+                guard let self else { return }
+                self.prefs = updated
+                self.applyPreferences()
+            },
+            onKeymapChange: { [weak self] overlay in
+                guard let self else { return }
+                self.saveConfig(overlay, to: Self.keymapURL)  // persist the user overlay
+                self.keymap = Keymap.standard.merging(userBindings: overlay)  // apply live
+            })
     }
 
     private func toggleOCR() {
@@ -1361,9 +1374,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return true
     }
 
+    private static var keymapURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("keymap.json")
+    }
+
     private func loadKeymap() {
-        let url = Self.appSupportDirectory()?.appendingPathComponent("keymap.json")
-        if let user = loadConfig([String: String].self, from: url) {
+        if let user = loadConfig([String: String].self, from: Self.keymapURL) {
             keymap = Keymap.standard.merging(userBindings: user)
         } else {
             keymap = .standard

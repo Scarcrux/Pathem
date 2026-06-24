@@ -1,4 +1,4 @@
-/* Pathem UI strings (Japanese) */
+/* Pathem UI strings (日本語) */
 "ai.cleanup.noRec" = "モデルからの推奨はありませんでした。";
 "ai.cleanup.thinking" = "モデルに問い合わせ中…";
 "ai.cleanup.unavail" = "AIの推奨は利用できません";
@@ -407,11 +407,18 @@
 "pane.viewAsIcons" = "アイコン表示";
 "pane.viewAsList" = "リスト表示";
 "prefs.alternatingRows" = "行の色を交互に表示";
+"prefs.calculateFolderSizes" = "フォルダのサイズを計算";
+"prefs.compactSidebar" = "コンパクトサイドバー（アイコンのみ）";
 "prefs.densityComfortable" = "ゆったり";
 "prefs.densityCompact" = "コンパクト";
 "prefs.densityLabel" = "密度";
 "prefs.fontSizeLabel" = "フォントサイズ";
+"prefs.openConnectionsNewTab" = "接続を新しいタブで開く";
+"prefs.pathBarBottom" = "パスバーを下部に表示";
 "prefs.searchImageContents" = "画像の内容を検索（OCR、低速）";
+"prefs.searchOCR" = "画像の内容を検索（OCR、低速）";
+"prefs.searchOCRHint" = "テキストとPDFの内容は常にインデックスされます。画像のOCRは追加です。";
+"prefs.showFullPath" = "タイトルバーにフルパスを表示";
 "prefs.title" = "環境設定";
 "progress.cancelling" = "キャンセル中…";
 "progress.countStatus" = "%@ %d / %d…";
@@ -440,6 +447,13 @@
 "rename.rowReplace" = "置換";
 "rename.rowStart" = "開始";
 "rename.rowSuffix" = "接尾辞";
+"settings.appearance" = "外観";
+"settings.general" = "一般";
+"settings.layout" = "レイアウト";
+"settings.search" = "検索";
+"settings.shortcuts" = "ショートカット";
+"settings.title" = "設定";
+"settings.updates" = "アップデート";
 "shelf.clear" = "消去";
 "shelf.copyHere" = "ここにコピー";
 "shelf.emptyHint" = "ファイルをここにドラッグして一時保管";
@@ -451,6 +465,14 @@
 "shelf.title" = "シェルフ";
 "shelf.titleCount" = "シェルフ（%d）";
 "shelf.trash" = "ゴミ箱";
+"shortcuts.clear" = "消去";
+"shortcuts.clickToSet" = "クリックして設定";
+"shortcuts.colCommand" = "コマンド";
+"shortcuts.colShortcut" = "ショートカット";
+"shortcuts.reassigned" = "%@ は「%@」から再割り当てされました。";
+"shortcuts.recording" = "ショートカットを入力…";
+"shortcuts.restoreDefaults" = "デフォルトに戻す";
+"shortcuts.setLabel" = "ショートカット：";
 "sidebar.addConnection" = "接続を追加…";
 "sidebar.addCurrentFolder" = "現在のフォルダを追加";
 "sidebar.changeIcon" = "アイコンを変更";
@@ -489,4 +511,8 @@
 "toolbar.cleanup" = "クリーンアップ";
 "toolbar.cleanup.tip" = "再利用可能なファイルを検出して削除";
 "transfer.itemProgress" = "%@  （%d / %d）";
+"update.autoCheck" = "自動的にアップデートを確認";
+"update.checkNow" = "今すぐアップデートを確認";
 "update.notSetUpTitle" = "このビルドではアップデートが設定されていません";
+"update.sourceBuild" = "これはソースまたは署名なしのビルドです。最新の公証済みリリースを GitHub からダウンロードしてください。それらのビルドは自動更新されます。";
+"update.viaSparkle" = "アップデートは Sparkle を通じて自動的に配信されます。";

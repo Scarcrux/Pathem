@@ -22,6 +22,13 @@ final class UpdaterController: NSObject {
         super.init()
     }
 
+    /// Whether Sparkle checks for updates automatically (Settings > Updates). A
+    /// no-op on unconfigured builds, which have no real update feed.
+    var automaticChecks: Bool {
+        get { isConfigured && controller.updater.automaticallyChecksForUpdates }
+        set { if isConfigured { controller.updater.automaticallyChecksForUpdates = newValue } }
+    }
+
     @objc func checkForUpdates(_ sender: Any?) {
         guard isConfigured else {
             let alert = NSAlert()

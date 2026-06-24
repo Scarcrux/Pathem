@@ -1,4 +1,4 @@
-/* Pathem UI strings (Simplified Chinese) */
+/* Pathem UI strings (简体中文) */
 "ai.cleanup.noRec" = "模型没有给出建议。";
 "ai.cleanup.thinking" = "正在向模型询问…";
 "ai.cleanup.unavail" = "AI 建议不可用";
@@ -407,11 +407,18 @@
 "pane.viewAsIcons" = "以图标方式";
 "pane.viewAsList" = "以列表方式";
 "prefs.alternatingRows" = "交替行颜色";
+"prefs.calculateFolderSizes" = "计算文件夹大小";
+"prefs.compactSidebar" = "紧凑边栏（仅图标）";
 "prefs.densityComfortable" = "宽松";
 "prefs.densityCompact" = "紧凑";
 "prefs.densityLabel" = "密度";
 "prefs.fontSizeLabel" = "字体大小";
+"prefs.openConnectionsNewTab" = "在新标签页中打开连接";
+"prefs.pathBarBottom" = "在底部显示路径栏";
 "prefs.searchImageContents" = "搜索图像内容（OCR，较慢）";
+"prefs.searchOCR" = "搜索图像内容（OCR，较慢）";
+"prefs.searchOCRHint" = "文本和 PDF 内容始终会被索引；图像 OCR 为额外项。";
+"prefs.showFullPath" = "在标题栏中显示完整路径";
 "prefs.title" = "偏好设置";
 "progress.cancelling" = "正在取消…";
 "progress.countStatus" = "%@ 第 %d 个，共 %d 个…";
@@ -440,6 +447,13 @@
 "rename.rowReplace" = "替换";
 "rename.rowStart" = "起始";
 "rename.rowSuffix" = "后缀";
+"settings.appearance" = "外观";
+"settings.general" = "通用";
+"settings.layout" = "布局";
+"settings.search" = "搜索";
+"settings.shortcuts" = "快捷键";
+"settings.title" = "设置";
+"settings.updates" = "更新";
 "shelf.clear" = "清除";
 "shelf.copyHere" = "拷贝到此处";
 "shelf.emptyHint" = "将文件拖到此处以暂存";
@@ -451,6 +465,14 @@
 "shelf.title" = "暂存架";
 "shelf.titleCount" = "暂存架（%d）";
 "shelf.trash" = "废纸篓";
+"shortcuts.clear" = "清除";
+"shortcuts.clickToSet" = "点击设置";
+"shortcuts.colCommand" = "命令";
+"shortcuts.colShortcut" = "快捷键";
+"shortcuts.reassigned" = "%@ 已从“%@”重新分配。";
+"shortcuts.recording" = "请按下快捷键…";
+"shortcuts.restoreDefaults" = "恢复默认值";
+"shortcuts.setLabel" = "快捷键：";
 "sidebar.addConnection" = "添加连接…";
 "sidebar.addCurrentFolder" = "添加当前文件夹";
 "sidebar.changeIcon" = "更改图标";
@@ -489,4 +511,8 @@
 "toolbar.cleanup" = "清理";
 "toolbar.cleanup.tip" = "查找并移除可回收的文件";
 "transfer.itemProgress" = "%@（第 %d 个，共 %d 个）";
+"update.autoCheck" = "自动检查更新";
+"update.checkNow" = "立即检查更新";
 "update.notSetUpTitle" = "此构建版本尚未设置更新";
+"update.sourceBuild" = "这是源码或未签名的构建版本。请从 GitHub 下载最新的公证版本；那些版本会自行更新。";
+"update.viaSparkle" = "更新通过 Sparkle 自动提供。";
