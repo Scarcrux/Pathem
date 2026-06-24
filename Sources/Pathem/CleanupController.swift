@@ -233,7 +233,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                         self.rows[index].checked = true
                     }
                     self.table.reloadData()
-                    self.updateSummary(extra: advice.summary.isEmpty ? "" : " — \(advice.summary)")
+                    self.updateSummary(extra: advice.summary.isEmpty ? "" : ": \(advice.summary)")
                 }
                 return
             }
