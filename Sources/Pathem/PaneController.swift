@@ -185,6 +185,27 @@ final class PaneController: NSObject, NSTextFieldDelegate, NSMenuDelegate {
         containerView.window?.makeFirstResponder(content.keyView)
     }
 
+    /// Drop the given paths from the smart-result list (after a file op trashed or
+    /// moved them), since a smart view has no folder to reload from. No-op unless a
+    /// smart view is showing.
+    func pruneSmartEntries(paths: Set<String>) {
+        guard smartActive, !paths.isEmpty else { return }
+        let before = smartEntries.count
+        smartEntries.removeAll { paths.contains(Self.path(of: $0)) }
+        guard smartEntries.count != before else { return }
+        content.setEntries(format.sorted(smartEntries), preserveState: true)
+        content.showPlaceholder(smartEntries.isEmpty ? "No items" : nil)
+        updateStatus()
+    }
+
+    /// The absolute path of a (smart-result) entry, from its own location.
+    private static func path(of entry: FileEntry) -> String {
+        if let location = entry.location {
+            return (location as NSString).appendingPathComponent(entry.name)
+        }
+        return entry.name
+    }
+
     /// Refresh the listing. In-place refreshes (sort, file op, watcher) preserve
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {

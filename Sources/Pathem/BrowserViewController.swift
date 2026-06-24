@@ -355,6 +355,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Open the batch-rename sheet for the active pane's selection.
     private func showBatchRename() {
+        if blockedByRemoteOrSmart() { return }  // operates within one folder
         guard let window = view.window, let pane = activePane else { return }
         let names = pane.selectedEntries.map(\.name)
         guard !names.isEmpty else { NSSound.beep(); return }
@@ -366,11 +367,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: - New folder / Trash / Reveal
 
-    /// Local single-folder commands must not act when the active pane shows remote
-    /// content (selection names resolve against the saved local folder) or a
-    /// cross-folder smart-result list (entries live in different folders). Returns
+    /// Remote panes have no local file URLs, so file ops can't act there. Per-file
+    /// ops (trash, rename, reveal, info, …) ARE allowed in cross-folder smart views
+    /// because they resolve each item by its own folder (selectedLocalURLs). Returns
     /// true (and beeps) if blocked.
     private func blockedByRemote() -> Bool {
+        if activePane?.isRemote == true {
+            NSSound.beep()
+            return true
+        }
+        return false
+    }
+
+    /// Ops that need one destination folder (paste, new folder) can't run in a
+    /// remote pane or a cross-folder smart-result view (there's no single "here").
+    private func blockedByRemoteOrSmart() -> Bool {
         if activePane?.isRemote == true || activePane?.isShowingSmartResults == true {
             NSSound.beep()
             return true
@@ -379,7 +390,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func newFolder() {
-        if blockedByRemote() { return }
+        if blockedByRemoteOrSmart() { return }  // needs a single destination folder
         guard let pane = activePane else { return }
         do {
             let name = try FileOperations.makeFolder(in: pane.currentURL)
@@ -434,7 +445,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newName.isEmpty, newName != entry.name else { return }
-        let directory = pane.currentURL
+        // The file's real folder: its own location in a smart view, else current.
+        let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
         do {
             try FileOperations.rename(entry.name, to: newName, in: directory)
             registerRenameUndo(from: newName, to: entry.name, in: directory)
@@ -467,10 +479,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func trashSelection() {
         if blockedByRemote() { return }
         guard let pane = activePane else { return }
-        let names = pane.selectedEntries.map(\.name)
-        guard !names.isEmpty else { NSSound.beep(); return }
-        let result = FileOperations.trash(names, in: pane.currentURL)
-        pane.reloadIfShowingListing()
+        let urls = pane.selectedLocalURLs()  // location-aware: trashes the real files in smart views
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let result = FileOperations.trash(urls: urls)
+        reloadBothSides()  // the trashed files may have lived in either visible folder
+        pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
         if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
         if !result.failures.isEmpty { presentFailures(result.failures, title: "Move to Trash failed") }
     }
@@ -487,12 +500,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func registerTrashRedo(_ trashed: [FileOperations.Trashed]) {
-        guard let undoManager = view.window?.undoManager,
-            let directory = trashed.first?.original.deletingLastPathComponent()
-        else { return }
+        guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
-            let names = trashed.map { $0.original.lastPathComponent }
-            let result = FileOperations.trash(names, in: directory)
+            // Trash by original URL so cross-folder selections redo correctly.
+            let result = FileOperations.trash(urls: trashed.map(\.original))
             target.reloadBothSides()
             if !result.failures.isEmpty { target.presentFailures(result.failures, title: "Redo failed") }
             if !result.trashed.isEmpty { target.registerTrashUndo(result.trashed) }
@@ -506,6 +517,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         rightTabs.activePane?.reloadIfShowingListing()
     }
 
+    /// Prune the given paths from every pane's smart-result list (after a file op
+    /// removed/moved them), so smart views don't keep stale rows.
+    private func pruneSmartEntries(_ paths: Set<String>) {
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.pruneSmartEntries(paths: paths) }
+        }
+    }
+
     /// The pane (on either side) currently showing `directory`, if any.
     private func paneShowing(_ directory: URL) -> PaneController? {
         for side in [leftTabs, rightTabs] {
@@ -517,7 +536,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func revealSelection() {
         if blockedByRemote() { return }
         guard let pane = activePane else { return }
-        let urls = pane.selectedEntries.map { pane.currentURL.appendingPathComponent($0.name) }
+        let urls = pane.selectedLocalURLs()  // location-aware (reveals the real file in smart views)
         NSWorkspace.shared.activateFileViewerSelecting(urls.isEmpty ? [pane.currentURL] : urls)
     }
 
@@ -525,8 +544,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func showInfo() {
         if blockedByRemote() { return }
         guard let pane = activePane else { return }
-        let names = pane.selectedEntries.map(\.name)
-        let urls = names.isEmpty ? [pane.currentURL] : names.map { pane.currentURL.appendingPathComponent($0) }
+        let selected = pane.selectedLocalURLs()  // location-aware
+        let urls = selected.isEmpty ? [pane.currentURL] : selected
         infoInspector.present(urls: urls, over: view.window)
     }
 
@@ -535,10 +554,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func downloadSelection() {
         if blockedByRemote() { return }
         guard let pane = activePane else { return }
-        let directory = pane.currentURL
         for entry in pane.selectedEntries where entry.isDataless {
-            try? FileManager.default.startDownloadingUbiquitousItem(
-                at: directory.appendingPathComponent(entry.name))
+            let url = entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
+                ?? pane.currentURL.appendingPathComponent(entry.name)  // location-aware
+            try? FileManager.default.startDownloadingUbiquitousItem(at: url)
         }
     }
 
@@ -1192,7 +1211,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             NSSound.beep()
             return
         }
-        let fileURL = pane.currentURL.appendingPathComponent(entry.name)
+        let fileURL = entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
+            ?? pane.currentURL.appendingPathComponent(entry.name)  // location-aware
         let ext = fileURL.pathExtension.lowercased()
 
         let alert = NSAlert()
@@ -1459,14 +1479,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let source = activePane, let activeSide else { return }
         let otherSide = (activeSide === leftTabs) ? rightTabs : leftTabs
         guard let destination = otherSide.activePane else { NSSound.beep(); return }
-        let names = source.selectedEntries.map(\.name)
-        guard !names.isEmpty else { NSSound.beep(); return }
+        let urls = source.selectedLocalURLs()  // location-aware: sources may span folders (smart view)
+        guard !urls.isEmpty else { NSSound.beep(); return }
 
-        let sourceURL = source.currentURL
         let destinationURL = destination.currentURL
 
         var resolution = FileOperations.ConflictResolution.skip
-        let conflicts = FileOperations.conflicts(names, from: sourceURL, to: destinationURL)
+        let conflicts = FileOperations.conflicts(urls: urls, into: destinationURL)
         if !conflicts.isEmpty {
             guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else {
                 return  // user cancelled
@@ -1474,12 +1493,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             resolution = chosen
         }
 
-        let urls = names.map { sourceURL.appendingPathComponent($0) }
         runTransfer(urls: urls, into: destinationURL, move: move, resolution: resolution) {
             [weak self] outcome in
             guard let self else { return }
             if move { source.reloadIfShowingListing() }
             destination.reloadIfShowingListing()
+            if move {  // sources moved away: drop their rows from any smart view
+                self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))
+            }
             if !outcome.performed.isEmpty {
                 self.registerUndo(outcome.performed, actionName: move ? "Move" : "Copy")
             }
@@ -1601,7 +1622,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     @objc func cut(_ sender: Any?) { writeSelectionToPasteboard(cut: true) }
 
     @objc func paste(_ sender: Any?) {
-        if blockedByRemote() { return }
+        if blockedByRemoteOrSmart() { return }  // needs a single destination folder
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
         guard let pane = activePane else { return }
         let pasteboard = NSPasteboard.general
@@ -1634,6 +1655,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pasteboard.clearContents()  // cut items are gone; don't move them twice
                 self.cutPaths = []
                 self.applyCutPaths()  // clear the dimming
+                self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))  // drop moved rows
             }
             if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: "Paste failed") }
         }

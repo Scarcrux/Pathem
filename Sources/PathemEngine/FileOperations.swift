@@ -104,11 +104,16 @@ public enum FileOperations {
     public static func trash(_ names: [String], in directory: URL)
         -> (trashed: [Trashed], failures: [Failure])
     {
+        trash(urls: names.map { directory.appendingPathComponent($0) })
+    }
+
+    /// Move the given file URLs to the Trash (they may span folders, e.g. a
+    /// smart-result selection). Returns the trashed items (for undo) and failures.
+    public static func trash(urls: [URL]) -> (trashed: [Trashed], failures: [Failure]) {
         let fm = FileManager.default
         var trashed: [Trashed] = []
         var failures: [Failure] = []
-        for name in names {
-            let source = directory.appendingPathComponent(name)
+        for source in urls {
             var resulting: NSURL?
             do {
                 try fm.trashItem(at: source, resultingItemURL: &resulting)
@@ -116,7 +121,7 @@ public enum FileOperations {
                     trashed.append(Trashed(original: source, trashed: landed))
                 }
             } catch {
-                failures.append(Failure(name: name, reason: error.localizedDescription))
+                failures.append(Failure(name: source.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return (trashed, failures)
