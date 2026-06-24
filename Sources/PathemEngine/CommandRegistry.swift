@@ -42,6 +42,13 @@ public final class CommandRegistry {
 
     public func command(_ id: String) -> Command? { commands[id] }
 
+    /// Remove a command (e.g. a deleted template's command) so it stops appearing
+    /// in the palette and the shortcut editor.
+    public func unregister(_ id: String) {
+        commands[id] = nil
+        order.removeAll { $0 == id }
+    }
+
     /// All commands in registration order.
     public var all: [Command] { order.compactMap { commands[$0] } }
 

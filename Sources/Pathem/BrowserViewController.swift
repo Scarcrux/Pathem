@@ -68,6 +68,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
     private lazy var settings = SettingsWindowController()
+    private lazy var batchCreate = BatchCreateController()
+    private lazy var templatesManager = TemplatesController()
+    private var createTemplates: [CreateTemplate] = []
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
     var updater: UpdaterController?
     /// User preferences (density, font, alternating rows, search OCR).
@@ -197,6 +200,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadSavedSearches()  // register before macros so a macro can run a search
         loadCollections()
         loadMacros()  // after base commands, so macros can chain them
+        loadTemplates()  // register template commands so they appear in the shortcut editor
         loadKeymap()
         loadFolderFormats()
         loadLayouts()
@@ -404,6 +408,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.batchRename", L("bvc.cmd.batchRename", "Batch Rename…"), enabled: hasSelection) { [weak self] in self?.showBatchRename() }
         add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in self?.newFolder() }
         add("files.newFile", L("bvc.cmd.newFile", "New File")) { [weak self] in self?.newFile() }
+        add("files.batchCreate", L("bvc.cmd.batchCreate", "Batch Create…")) { [weak self] in self?.showBatchCreate() }
+        add("templates.manage", L("bvc.cmd.manageTemplates", "Manage Templates…")) { [weak self] in self?.showTemplatesManager() }
         add("files.rename", L("bvc.cmd.rename", "Rename…"), enabled: { [weak self] in self?.activePane?.selectedEntries.count == 1 }) {
             [weak self] in self?.renameSelection()
         }
@@ -654,6 +660,125 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 [FileOperations.Failure(name: L("bvc.cmd.newFile", "New File"), reason: error.localizedDescription)],
                 title: L("bvc.couldntCreateFile", "Couldn’t create file"))
         }
+    }
+
+    // MARK: - Batch create + templates
+
+    private static var templatesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("create-templates.json")
+    }
+
+    private func loadTemplates() {
+        createTemplates = loadConfig([CreateTemplate].self, from: Self.templatesURL) ?? []
+        registerTemplateCommands()
+    }
+
+    private func saveTemplates() {
+        saveConfig(createTemplates, to: Self.templatesURL)
+        registerTemplateCommands()
+    }
+
+    /// Register one command per template (and drop deleted ones) so each appears in
+    /// the command palette and is bindable in Settings > Shortcuts.
+    private func registerTemplateCommands() {
+        for command in commands.all where command.id.hasPrefix("create.template.") {
+            commands.unregister(command.id)
+        }
+        for template in createTemplates {
+            commands.register(
+                .init(
+                    id: "create.template.\(template.id)",
+                    title: String(format: L("templates.commandTitle", "New: %@"), template.name),
+                    isEnabled: { [weak self] in
+                        guard let pane = self?.activePane else { return false }
+                        return !pane.isRemote && !pane.isShowingSmartResults
+                    },
+                    run: { [weak self] in self?.runTemplate(template) }))
+        }
+    }
+
+    private func showBatchCreate() {
+        guard let window = view.window, let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults
+        else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        batchCreate.present(
+            over: window,
+            create: { [weak self] names, kind in self?.runBatchCreate(names, kind: kind, in: folder) },
+            saveTemplate: { [weak self] names, kind in self?.saveBatchAsTemplate(names, kind: kind) })
+    }
+
+    private func runBatchCreate(_ names: [String], kind: BatchCreate.Kind, in folder: URL) {
+        let result = BatchCreate.create(names, kind: kind, in: folder)
+        reloadBothSides()
+        if let first = result.created.first { paneShowing(folder)?.select(name: first) }
+        registerCreatedUndo(names: result.created, in: folder, actionName: L("batch.actionName", "Batch Create"))
+        if !result.failures.isEmpty {
+            presentFailures(result.failures, title: L("batch.someFailed", "Some items couldn’t be created"))
+        }
+    }
+
+    private func saveBatchAsTemplate(_ names: [String], kind: BatchCreate.Kind) {
+        guard let name = promptForName(
+            title: L("batch.saveTemplateTitle", "Save as Template"),
+            default: L("batch.templateDefaultName", "My Template"))
+        else { return }
+        let entries = names.map { kind == .folders ? "\($0)/" : $0 }
+        createTemplates.append(CreateTemplate(id: UUID().uuidString, name: name, entries: entries))
+        saveTemplates()
+    }
+
+    private func showTemplatesManager() {
+        guard let window = view.window else { return }
+        templatesManager.present(
+            over: window, templates: createTemplates,
+            onChange: { [weak self] templates in
+                self?.createTemplates = templates
+                self?.saveTemplates()
+            },
+            onRun: { [weak self] template in self?.runTemplate(template) })
+    }
+
+    private func runTemplate(_ template: CreateTemplate) {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        let result = template.instantiate(in: folder)
+        reloadBothSides()
+        if let first = result.created.first { paneShowing(folder)?.select(name: first) }
+        registerCreatedUndo(
+            names: result.created, in: folder, actionName: L("templates.actionName", "New from Template"))
+        if !result.failures.isEmpty {
+            presentFailures(result.failures, title: L("batch.someFailed", "Some items couldn’t be created"))
+        }
+    }
+
+    /// Undo support for a set of freshly-created items: trashing them reverses it.
+    private func registerCreatedUndo(names: [String], in directory: URL, actionName: String) {
+        guard !names.isEmpty, let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let result = FileOperations.trash(names, in: directory)
+            target.reloadBothSides()
+            if !result.failures.isEmpty {
+                target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed"))
+            }
+            if !result.trashed.isEmpty {
+                target.registerCreatedRedo(
+                    names: names, in: directory, trashed: result.trashed, actionName: actionName)
+            }
+        }
+        undoManager.setActionName(actionName)
+    }
+
+    private func registerCreatedRedo(
+        names: [String], in directory: URL, trashed: [FileOperations.Trashed], actionName: String
+    ) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let failures = FileOperations.untrash(trashed)
+            target.reloadBothSides()
+            if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
+            target.registerCreatedUndo(names: names, in: directory, actionName: actionName)
+        }
+        undoManager.setActionName(actionName)
     }
 
     private func registerNewItemUndo(name: String, in directory: URL, actionName: String) {

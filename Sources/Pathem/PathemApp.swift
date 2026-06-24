@@ -67,6 +67,7 @@ enum PathemApp {
 
         if ProcessInfo.processInfo.environment["PATHEM_PREFS_SHOT"] != nil {
             SettingsWindowController().debugRenderPanes(toDir: "/tmp")
+            BatchCreateController().debugRender(to: "/tmp/batch.png")
             exit(0)
         }
 
@@ -198,6 +199,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
         fileMenu.addItem(commandItem("New File", "files.newFile"))  // chord owned by the keymap
+        fileMenu.addItem(commandItem("Batch Create…", "files.batchCreate"))
+        fileMenu.addItem(commandItem("Manage Templates…", "templates.manage"))
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
