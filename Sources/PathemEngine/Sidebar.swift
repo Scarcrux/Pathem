@@ -104,6 +104,13 @@ public struct Sidebar: Codable, Sendable, Equatable {
         groups[g].items.append(item)
     }
 
+    /// Insert an item at a position within a group (clamped). Used when dropping a
+    /// folder between existing favorites.
+    public mutating func insertItem(_ item: Item, toGroup groupID: UUID, at index: Int) {
+        guard let g = groupIndex(groupID) else { return }
+        groups[g].items.insert(item, at: min(max(index, 0), groups[g].items.count))
+    }
+
     public mutating func removeItem(_ itemID: UUID) {
         guard let at = locate(itemID) else { return }
         groups[at.group].items.remove(at: at.item)

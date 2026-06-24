@@ -165,9 +165,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 kind: .userGroup(group.id), title: group.title, url: nil, icon: nil,
                 children: group.items.map {
                     let url = URL(fileURLWithPath: $0.path)
-                    return Node(
-                        kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon,
-                        isFolder: Self.isDirectory(url))
+                    // Favorites are not expandable (like Finder): a disclosure triangle
+                    // and drag-hover spring-loading would fight dropping a new favorite
+                    // between existing ones. Drilling stays on the Cloud/Volumes sections.
+                    return Node(kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon)
                 })
         }
         if let cloud = cloudNode() { roots.append(cloud) }
@@ -336,10 +337,6 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
     }
 
-    private static func isDirectory(_ url: URL) -> Bool {
-        var isDir: ObjCBool = false
-        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
-    }
 
     // MARK: NSOutlineViewDelegate
 
@@ -421,9 +418,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             if item == nil, index >= 0, index <= model.groups.count { return .move }
             return []
         }
-        // Dropping folders from a pane: add them to a user group as shortcuts.
+        // Dropping folders from a pane: add them to a user group as shortcuts,
+        // either into the group or between/onto existing favorites.
         if pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) {
             if let group = item as? Node, case .userGroup = group.kind { return .copy }
+            // Dropped onto/near a favorite: retarget into its group at that slot so
+            // the new favorite lands between favorites instead of being rejected.
+            if let node = item as? Node, case let .userItem(id) = node.kind, let at = model.locate(id) {
+                let slot = index == NSOutlineViewDropOnItemIndex ? at.item + 1 : at.item
+                outlineView.setDropItem(roots[at.group], dropChildIndex: slot)
+                return .copy
+            }
             return []
         }
         return []
@@ -449,9 +454,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
             let group = item as? Node, case let .userGroup(gid) = group.kind
         {
+            let count = model.groups.first { $0.id == gid }?.items.count ?? 0
+            let start = index < 0 ? count : min(index, count)
             mutate { s in
-                for url in urls {
-                    s.addItem(Sidebar.Item(name: url.lastPathComponent, icon: "folder", path: url.path), toGroup: gid)
+                for (offset, url) in urls.enumerated() {
+                    s.insertItem(
+                        Sidebar.Item(name: url.lastPathComponent, icon: "folder", path: url.path),
+                        toGroup: gid, at: start + offset)  // land where dropped, not appended
                 }
             }
             return true
