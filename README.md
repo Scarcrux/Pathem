@@ -20,6 +20,10 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
   a million files scroll without lag.
 - Drag and drop: drag files between panes, to and from Finder, or onto the
   sidebar. Copy by default, hold Command to move.
+- Full cut, copy, and paste for files and folders (Cmd-C / Cmd-X / Cmd-V), across
+  panes and with Finder and other apps. Cut items stay dimmed until you paste
+  them, name clashes prompt to skip, replace, or keep both, and every paste is
+  undoable.
 - A customizable sidebar. Reorder shortcuts by drag, rename them, change their
   icons, and organize them into your own groups. Cloud services and mounted
   volumes show up automatically below your groups.
@@ -39,8 +43,9 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
   first.
 - Cloud-aware. It browses iCloud, Dropbox, Drive, and OneDrive folders and never
   silently downloads online-only files just to list or index them.
-- Copy and move never overwrite silently. If a name already exists, that item is
-  skipped and reported.
+- Copy and move never overwrite silently. When a name already exists you choose
+  to skip, replace, or keep both, and a same-folder drop can never trash a file
+  onto itself.
 
 ## Why it's fast
 
