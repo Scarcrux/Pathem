@@ -246,6 +246,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         add(L("icons.moveToTrash", "Move to Trash"), "files.trash")
         menu.addItem(.separator())
         add(L("icons.newFolder", "New Folder"), "files.newFolder")
+        add(L("bvc.cmd.newFile", "New File"), "files.newFile")
         menu.addItem(.separator())
         add(L("icons.copy", "Copy"), "files.copy")
         add(L("icons.cut", "Cut"), "files.cut")

@@ -97,7 +97,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         window.toolbar?.selectedItemIdentifier = pane.itemID
         let size = view.fittingSize
         window.setContentSize(NSSize(width: max(size.width, 460), height: max(size.height, 120)))
-        window.title = "\(L("settings.title", "Settings")) — \(pane.title)"
+        window.title = pane.title  // modern macOS titles the window with the pane name
     }
 
     @objc private func toolbarSelected(_ sender: NSToolbarItem) {

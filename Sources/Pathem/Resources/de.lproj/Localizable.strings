@@ -69,6 +69,7 @@
 "bvc.cmd.goToPath" = "Gehe zu Pfad…";
 "bvc.cmd.moveToOtherPane" = "In anderen Bereich bewegen";
 "bvc.cmd.moveToTrash" = "In den Papierkorb legen";
+"bvc.cmd.newFile" = "Neue Datei";
 "bvc.cmd.newFolder" = "Neuer Ordner";
 "bvc.cmd.newTab" = "Neuer Tab";
 "bvc.cmd.nextTab" = "Nächster Tab";
@@ -112,6 +113,7 @@
 "bvc.copyNoun" = "Kopie";
 "bvc.copying" = "Kopieren";
 "bvc.couldntCreateArchive" = "Das Archiv konnte nicht erstellt werden";
+"bvc.couldntCreateFile" = "Datei konnte nicht erstellt werden";
 "bvc.couldntCreateFolder" = "Ordner konnte nicht erstellt werden";
 "bvc.couldntExtract" = "Ein oder mehrere Archive konnten nicht entpackt werden";
 "bvc.couldntReadFile" = "Die Datei konnte nicht gelesen werden";
@@ -311,6 +313,7 @@
 "menu.files.extract" = "Entpacken";
 "menu.files.findDuplicates" = "Duplikate finden";
 "menu.files.getInfo" = "Informationen";
+"menu.files.newFile" = "Neue Datei";
 "menu.files.newFolder" = "Neuer Ordner";
 "menu.files.open" = "Öffnen";
 "menu.files.organizeAI" = "Mit KI organisieren…";

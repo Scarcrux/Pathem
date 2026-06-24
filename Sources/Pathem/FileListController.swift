@@ -218,6 +218,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         menu.addItem(tags)
         menu.addItem(.separator())
         add(L("list.newFolder", "New Folder"), "files.newFolder")
+        add(L("bvc.cmd.newFile", "New File"), "files.newFile")
         menu.addItem(.separator())
         add(L("list.copy", "Copy"), "files.copy")
         add(L("list.cut", "Cut"), "files.cut")

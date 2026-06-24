@@ -69,6 +69,7 @@
 "bvc.cmd.goToPath" = "Ir a la ruta…";
 "bvc.cmd.moveToOtherPane" = "Mover al otro panel";
 "bvc.cmd.moveToTrash" = "Mover a la papelera";
+"bvc.cmd.newFile" = "Nuevo archivo";
 "bvc.cmd.newFolder" = "Nueva carpeta";
 "bvc.cmd.newTab" = "Nueva pestaña";
 "bvc.cmd.nextTab" = "Pestaña siguiente";
@@ -112,6 +113,7 @@
 "bvc.copyNoun" = "copia";
 "bvc.copying" = "Copiando";
 "bvc.couldntCreateArchive" = "No se pudo crear el archivo comprimido";
+"bvc.couldntCreateFile" = "No se pudo crear el archivo";
 "bvc.couldntCreateFolder" = "No se pudo crear la carpeta";
 "bvc.couldntExtract" = "No se pudieron extraer uno o más archivos comprimidos";
 "bvc.couldntReadFile" = "No se pudo leer el archivo";
@@ -311,6 +313,7 @@
 "menu.files.extract" = "Extraer";
 "menu.files.findDuplicates" = "Buscar duplicados";
 "menu.files.getInfo" = "Obtener información";
+"menu.files.newFile" = "Nuevo archivo";
 "menu.files.newFolder" = "Nueva carpeta";
 "menu.files.open" = "Abrir";
 "menu.files.organizeAI" = "Organizar con la AI…";

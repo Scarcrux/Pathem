@@ -69,6 +69,7 @@
 "bvc.cmd.goToPath" = "前往路径…";
 "bvc.cmd.moveToOtherPane" = "移到另一窗格";
 "bvc.cmd.moveToTrash" = "移到废纸篓";
+"bvc.cmd.newFile" = "新建文件";
 "bvc.cmd.newFolder" = "新建文件夹";
 "bvc.cmd.newTab" = "新建标签页";
 "bvc.cmd.nextTab" = "下一个标签页";
@@ -112,6 +113,7 @@
 "bvc.copyNoun" = "拷贝";
 "bvc.copying" = "正在拷贝";
 "bvc.couldntCreateArchive" = "无法创建归档";
+"bvc.couldntCreateFile" = "无法创建文件";
 "bvc.couldntCreateFolder" = "无法创建文件夹";
 "bvc.couldntExtract" = "无法解压一个或多个归档";
 "bvc.couldntReadFile" = "无法读取文件";
@@ -311,6 +313,7 @@
 "menu.files.extract" = "解压";
 "menu.files.findDuplicates" = "查找重复项";
 "menu.files.getInfo" = "显示简介";
+"menu.files.newFile" = "新建文件";
 "menu.files.newFolder" = "新建文件夹";
 "menu.files.open" = "打开";
 "menu.files.organizeAI" = "用 AI 整理…";

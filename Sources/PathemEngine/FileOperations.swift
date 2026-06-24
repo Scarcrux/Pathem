@@ -79,6 +79,29 @@ public enum FileOperations {
         return name
     }
 
+    // MARK: New file
+
+    /// Create a new empty file in `directory`, picking a unique name (Finder-style)
+    /// when the base name is taken. A number is inserted before the extension, so
+    /// "note.txt" becomes "note 2.txt". Returns the name created.
+    @discardableResult
+    public static func makeFile(in directory: URL, baseName: String = "untitled file") throws -> String {
+        let fm = FileManager.default
+        let ext = (baseName as NSString).pathExtension
+        let stem = ext.isEmpty ? baseName : (baseName as NSString).deletingPathExtension
+        func assemble(_ s: String) -> String { ext.isEmpty ? s : "\(s).\(ext)" }
+        var name = baseName
+        var n = 2
+        while fm.fileExists(atPath: directory.appendingPathComponent(name).path) {
+            name = assemble("\(stem) \(n)")
+            n += 1
+        }
+        guard fm.createFile(atPath: directory.appendingPathComponent(name).path, contents: nil) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        return name
+    }
+
     // MARK: Rename
 
     /// Rename a single item. Throws if the destination exists (no clobber) or the

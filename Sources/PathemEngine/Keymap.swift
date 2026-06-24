@@ -88,6 +88,7 @@ public struct Keymap: Codable, Sendable {
         "cmd+shift+p": "palette.show",
         "cmd+shift+a": "ai.run",
         "space": "view.quickLook",
+        "cmd+ctrl+n": "files.newFile",
         "cmd+t": "tab.new",
         "cmd+w": "tab.close",
         "cmd+shift+]": "tab.next",

@@ -403,6 +403,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.open", L("bvc.cmd.open", "Open"), enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("files.batchRename", L("bvc.cmd.batchRename", "Batch Rename…"), enabled: hasSelection) { [weak self] in self?.showBatchRename() }
         add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in self?.newFolder() }
+        add("files.newFile", L("bvc.cmd.newFile", "New File")) { [weak self] in self?.newFile() }
         add("files.rename", L("bvc.cmd.rename", "Rename…"), enabled: { [weak self] in self?.activePane?.selectedEntries.count == 1 }) {
             [weak self] in self?.renameSelection()
         }
@@ -631,7 +632,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let name = try FileOperations.makeFolder(in: pane.currentURL)
             pane.reloadIfShowingListing()
             pane.select(name: name)
-            registerNewFolderUndo(name: name, in: pane.currentURL)
+            registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.newFolderVerb", "New Folder"))
         } catch {
             presentFailures(
                 [FileOperations.Failure(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
@@ -639,29 +640,47 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    private func registerNewFolderUndo(name: String, in directory: URL) {
+    /// Create a new empty file (local panes only); the Finder pain point this app fixes.
+    private func newFile() {
+        guard let pane = activePane else { return }
+        if pane.isShowingSmartResults || pane.isRemote { NSSound.beep(); return }
+        do {
+            let name = try FileOperations.makeFile(in: pane.currentURL)
+            pane.reloadIfShowingListing()
+            pane.select(name: name)
+            registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.cmd.newFile", "New File"))
+        } catch {
+            presentFailures(
+                [FileOperations.Failure(name: L("bvc.cmd.newFile", "New File"), reason: error.localizedDescription)],
+                title: L("bvc.couldntCreateFile", "Couldn’t create file"))
+        }
+    }
+
+    private func registerNewItemUndo(name: String, in directory: URL, actionName: String) {
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
-            let result = FileOperations.trash([name], in: directory)  // undo = trash the new folder
+            let result = FileOperations.trash([name], in: directory)  // undo = trash the new item
             target.reloadBothSides()
             if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
             if !result.trashed.isEmpty {
-                target.registerNewFolderRedo(name: name, in: directory, trashed: result.trashed)
+                target.registerNewItemRedo(name: name, in: directory, trashed: result.trashed, actionName: actionName)
             }
         }
-        undoManager.setActionName(L("bvc.newFolderVerb", "New Folder"))
+        undoManager.setActionName(actionName)
     }
 
-    private func registerNewFolderRedo(name: String, in directory: URL, trashed: [FileOperations.Trashed]) {
+    private func registerNewItemRedo(
+        name: String, in directory: URL, trashed: [FileOperations.Trashed], actionName: String
+    ) {
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
-            let failures = FileOperations.untrash(trashed)  // redo = restore the folder
+            let failures = FileOperations.untrash(trashed)  // redo = restore the item
             target.reloadBothSides()
             target.paneShowing(directory)?.select(name: name)
             if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
-            target.registerNewFolderUndo(name: name, in: directory)
+            target.registerNewItemUndo(name: name, in: directory, actionName: actionName)
         }
-        undoManager.setActionName(L("bvc.newFolderVerb", "New Folder"))
+        undoManager.setActionName(actionName)
     }
 
     private func renameSelection() {

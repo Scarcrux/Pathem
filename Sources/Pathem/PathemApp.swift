@@ -197,6 +197,7 @@ enum PathemApp {
         fileItem.submenu = fileMenu
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
+        fileMenu.addItem(commandItem("New File", "files.newFile"))  // chord owned by the keymap
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))

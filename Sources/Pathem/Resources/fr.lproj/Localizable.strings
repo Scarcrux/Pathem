@@ -69,6 +69,7 @@
 "bvc.cmd.goToPath" = "Aller au chemin…";
 "bvc.cmd.moveToOtherPane" = "Déplacer vers l’autre volet";
 "bvc.cmd.moveToTrash" = "Placer dans la corbeille";
+"bvc.cmd.newFile" = "Nouveau fichier";
 "bvc.cmd.newFolder" = "Nouveau dossier";
 "bvc.cmd.newTab" = "Nouvel onglet";
 "bvc.cmd.nextTab" = "Onglet suivant";
@@ -112,6 +113,7 @@
 "bvc.copyNoun" = "copie";
 "bvc.copying" = "Copie en cours";
 "bvc.couldntCreateArchive" = "Impossible de créer l’archive";
+"bvc.couldntCreateFile" = "Impossible de créer le fichier";
 "bvc.couldntCreateFolder" = "Impossible de créer le dossier";
 "bvc.couldntExtract" = "Impossible d’extraire une ou plusieurs archives";
 "bvc.couldntReadFile" = "Impossible de lire le fichier";
@@ -311,6 +313,7 @@
 "menu.files.extract" = "Extraire";
 "menu.files.findDuplicates" = "Rechercher les doublons";
 "menu.files.getInfo" = "Lire les informations";
+"menu.files.newFile" = "Nouveau fichier";
 "menu.files.newFolder" = "Nouveau dossier";
 "menu.files.open" = "Ouvrir";
 "menu.files.organizeAI" = "Organiser avec l’IA…";

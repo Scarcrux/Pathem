@@ -980,6 +980,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             menu.addItem(item)
         }
         add(L("pane.newFolder", "New Folder"), command: "files.newFolder")
+        add(L("bvc.cmd.newFile", "New File"), command: "files.newFile")
         add(L("pane.getInfo", "Get Info"), command: "files.getInfo")
         add("Quick Look", command: "view.quickLook")
         add(L("pane.rename", "Rename…"), command: "files.rename")
