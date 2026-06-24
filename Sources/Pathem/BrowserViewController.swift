@@ -247,6 +247,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.connectionsController.beginEdit(connection)
         }
         sidebar.onRemoveConnection = { [weak self] connection in
+            KeychainStore.removePassword(for: connection.id)  // don't orphan a saved password
             self?.connectionsController.remove(connection)
         }
         sidebar.onManageConnections = { [weak self] in
@@ -1314,24 +1315,46 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Prompt for a password and open the server in the active pane.
     private func connectToRemote(_ connection: RemoteConnection, forceNewTab: Bool = false) {
-        guard let pane = activePane, let window = view.window else { return }
+        guard let pane = activePane else { return }
+        // A remembered password connects straight away, no prompt.
+        if let saved = KeychainStore.password(for: connection.id) {
+            openRemoteConnection(connection, password: saved, forceNewTab: forceNewTab, fallback: pane)
+            return
+        }
+        guard let window = view.window else { return }
         let who = connection.user.isEmpty ? "anonymous" : connection.user
         let alert = NSAlert()
         alert.messageText = "Connect to \(connection.host)"
         alert.informativeText = "Enter the password for \(who)@\(connection.host)."
         let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        alert.accessoryView = field
+        let remember = NSButton(checkboxWithTitle: "Remember password in Keychain", target: nil, action: nil)
+        let accessory = NSStackView(views: [field, remember])
+        accessory.orientation = .vertical
+        accessory.alignment = .leading
+        accessory.frame = NSRect(x: 0, y: 0, width: 260, height: 52)
+        field.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        alert.accessoryView = accessory
         alert.addButton(withTitle: "Connect")
         alert.addButton(withTitle: "Cancel")
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
-            var target = pane
-            if (forceNewTab || self.prefs.openConnectionsInNewTab), let side = self.activeSide {
-                side.newTab(duplicatingCurrent: true)  // the new tab becomes active
-                target = self.activePane ?? pane
+            if remember.state == .on {
+                KeychainStore.setPassword(field.stringValue, for: connection.id)
             }
-            target.openRemote(connection, password: field.stringValue)
+            self.openRemoteConnection(
+                connection, password: field.stringValue, forceNewTab: forceNewTab, fallback: pane)
         }
+    }
+
+    private func openRemoteConnection(
+        _ connection: RemoteConnection, password: String, forceNewTab: Bool, fallback: PaneController
+    ) {
+        var target = fallback
+        if (forceNewTab || prefs.openConnectionsInNewTab), let side = activeSide {
+            side.newTab(duplicatingCurrent: true)  // the new tab becomes active
+            target = activePane ?? fallback
+        }
+        target.openRemote(connection, password: password)
     }
 
     // MARK: - Smart locations (Recents, tag filters)
