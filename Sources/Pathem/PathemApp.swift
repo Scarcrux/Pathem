@@ -123,6 +123,7 @@ enum PathemApp {
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
         fileMenu.addItem(applyLabelMenuItem())
+        fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))

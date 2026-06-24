@@ -191,6 +191,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         Self.cleanupRemoteTemp()
         registerCommands()
         loadSavedSearches()  // register before macros so a macro can run a search
+        loadCollections()
         loadMacros()  // after base commands, so macros can chain them
         loadKeymap()
         loadFolderFormats()
@@ -267,6 +268,50 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
     private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
     private static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
+    private static var collectionsConfigURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("collections.json")
+    }
+    private var collectionsStore = Collections()
+
+    /// Load collections and register each as a "Collection: <name>" command that
+    /// shows its (still-existing) files as a cross-folder smart list.
+    private func loadCollections() {
+        collectionsStore = loadConfig(Collections.self, from: Self.collectionsConfigURL) ?? Collections()
+        for name in collectionsStore.names { registerCollectionCommand(name) }
+    }
+
+    private func registerCollectionCommand(_ name: String) {
+        commands.register(
+            .init(
+                id: "collection.\(name)", title: "Collection: \(name)", isEnabled: { true },
+                run: { [weak self] in self?.showCollection(name) }))
+    }
+
+    private func showCollection(_ name: String) {
+        guard let pane = activePane, !pane.isRemote,
+            let paths = collectionsStore.collection(named: name)?.paths
+        else { NSSound.beep(); return }
+        let token = pane.beginContentRequest()
+        pane.showSmartResults([], title: "Collection: \(name)…")
+        Task { @MainActor in
+            let entries = await Task.detached { () -> [FileEntry] in
+                paths.filter { FileManager.default.fileExists(atPath: $0) }
+                    .map { FileEntry(contentsOf: URL(fileURLWithPath: $0)) }
+            }.value
+            guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
+            pane.showSmartResults(entries, title: "Collection: \(name) (\(entries.count))")
+        }
+    }
+
+    /// Add the selection to a collection (prompting for / creating the name).
+    private func addToCollection() {
+        guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
+        guard let name = promptForName(title: "Add to Collection", default: "Collection") else { return }
+        let isNew = collectionsStore.collection(named: name) == nil
+        collectionsStore.add(urls.map(\.path), to: name)
+        saveConfig(collectionsStore, to: Self.collectionsConfigURL)
+        if isNew { registerCollectionCommand(name) }
+    }
 
     /// Register each saved search (searches.json) as a command that runs its mdfind
     /// query and shows the results as a cross-folder smart list.
@@ -355,6 +400,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.copyPaths(asURL: true)
         }
         add("files.copyName", "Copy Name", enabled: hasSelection) { [weak self] in self?.copyNames() }
+        add("files.addToCollection", "Add to Collection…", enabled: hasSelection) {
+            [weak self] in self?.addToCollection()
+        }
         add("files.copySHA256", "Copy SHA-256", enabled: hasSelection) { [weak self] in self?.copyChecksums() }
         add("files.verifyChecksum", "Verify Checksum…", enabled: hasSelection) {
             [weak self] in self?.verifyChecksum()
