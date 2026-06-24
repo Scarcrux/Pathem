@@ -38,6 +38,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// A discovered shared computer (by display name) was selected.
     var onSelectShared: ((String) -> Void)?
     private var sharedHosts: [String] = []
+    /// A saved FTP/SFTP connection was selected (connect to it).
+    var onSelectConnection: ((RemoteConnection) -> Void)?
+    /// The "Manage…" row in the Connections section was selected.
+    var onManageConnections: (() -> Void)?
+    private var connections: [RemoteConnection] = []
+
+    /// Update the Connections section with the saved servers.
+    func setConnections(_ list: [RemoteConnection]) {
+        guard list != connections else { return }
+        connections = list
+        reload()
+    }
 
     /// Update the Shared section with discovered SMB hosts.
     func setSharedHosts(_ hosts: [String]) {
@@ -67,6 +79,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case folderChild  // a lazily-loaded subfolder of an expandable location
         case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
         case shared(String)  // a discovered SMB host (by display name)
+        case connection(RemoteConnection)  // a saved FTP/SFTP server
+        case manageConnections  // the "Manage…" row
     }
 
     private final class Node {
@@ -217,10 +231,24 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if let cloud = cloudNode() { roots.append(cloud) }
         roots.append(volumesNode())
         if let shared = sharedNode() { roots.append(shared) }
+        roots.append(connectionsNode())
         roots.append(smartNode())
         roots.append(tagsNode())
         outline.reloadData()
         for root in roots { outline.expandItem(root) }
+    }
+
+    /// Saved FTP/SFTP servers, always shown (with a Manage… row) so connections
+    /// are discoverable; click a server to connect.
+    private func connectionsNode() -> Node {
+        var children = connections.map { connection in
+            Node(kind: .connection(connection), title: connection.name, url: nil, icon: "network")
+        }
+        children.append(
+            Node(
+                kind: .manageConnections, title: connections.isEmpty ? "Add Connection…" : "Manage…",
+                url: nil, icon: "plus.circle"))
+        return Node(kind: .systemHeader, title: "Connections", url: nil, icon: nil, children: children)
     }
 
     /// Discovered SMB computers on the local network (nil when none seen yet).
@@ -429,6 +457,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         if case .shared(let host) = node.kind {
             onSelectShared?(host)
+            return
+        }
+        if case .connection(let connection) = node.kind {
+            outline.deselectRow(row)  // a connect action, not a persistent selection
+            onSelectConnection?(connection)
+            return
+        }
+        if case .manageConnections = node.kind {
+            outline.deselectRow(row)
+            onManageConnections?()
             return
         }
         guard let url = node.url else { return }

@@ -221,6 +221,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
         sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }
+        sidebar.onSelectConnection = { [weak self] connection in self?.connectToRemote(connection) }
+        sidebar.onManageConnections = { [weak self] in
+            self?.connectionsController.present(over: self?.view.window)
+        }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
@@ -954,8 +958,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let saved = loadConfig([RemoteConnection].self, from: Self.connectionsURL) {
             connectionsController.connections = saved
         }
+        sidebar.setConnections(connectionsController.connections)
         connectionsController.onChange = { [weak self] conns in
             self?.saveConfig(conns, to: Self.connectionsURL)
+            self?.sidebar.setConnections(conns)  // keep the sidebar Connections section in sync
         }
         connectionsController.onConnect = { [weak self] connection in self?.connectToRemote(connection) }
     }
