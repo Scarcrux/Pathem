@@ -45,6 +45,21 @@ import Testing
         #expect(result.failures.count == 2)
     }
 
+    @Test func rejectsParentDestinationEscape() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data("x".utf8).write(to: dir.appendingPathComponent("f.txt"))
+        // destination ".." has no slash but resolves to the parent: must be refused.
+        let plan = OrganizePlan(steps: [.init(action: .move, file: "f.txt", destination: "..")])
+        let result = plan.execute(in: dir)
+        #expect(result.moved == 0)
+        #expect(result.failures == ["f.txt"])
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("f.txt").path))  // stayed put
+        #expect(
+            !FileManager.default.fileExists(
+                atPath: dir.deletingLastPathComponent().appendingPathComponent("f.txt").path))  // never escaped
+    }
+
     @Test func decodesModelStyleJSON() throws {
         let json = #"{"steps":[{"action":"move","file":"x.png","destination":"Images"}]}"#
         let plan = try JSONDecoder().decode(OrganizePlan.self, from: Data(json.utf8))

@@ -51,6 +51,21 @@ import Testing
             try String(contentsOf: right.appendingPathComponent("changed.txt"), encoding: .utf8) == "v2")
     }
 
+    @Test func mirrorRefusesToDeleteADirectoryForAFile() throws {
+        let left = try dir(), right = try dir()
+        defer { try? FileManager.default.removeItem(at: left); try? FileManager.default.removeItem(at: right) }
+        try write("i am a file", left.appendingPathComponent("report"))  // left: FILE named report
+        try write("precious", right.appendingPathComponent("report/important.txt"))  // right: DIR named report
+
+        let diffs = FolderCompare.compare(left: left, right: right)
+        let result = FolderCompare.mirror(from: left, to: right, differences: diffs, deleteExtras: false)
+        // The clashing item is reported, and the right-side directory is NOT destroyed.
+        #expect(result.failures.contains("report"))
+        #expect(
+            try String(contentsOf: right.appendingPathComponent("report/important.txt"), encoding: .utf8)
+                == "precious")
+    }
+
     @Test func mirrorDeleteExtrasTrashesRightOnly() throws {
         let left = try dir(), right = try dir()
         defer { try? FileManager.default.removeItem(at: left); try? FileManager.default.removeItem(at: right) }

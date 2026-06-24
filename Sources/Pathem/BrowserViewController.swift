@@ -659,6 +659,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newName.isEmpty, newName != entry.name else { return }
         if pane.isRemote {
+            guard entry.rawName == nil else {
+                presentInfo(
+                    "Can’t rename this item",
+                    "Its name isn’t valid UTF-8, which remote operations don’t support yet.")
+                return
+            }
             performRemoteOp(pane, verb: "Rename") { provider, connection, path, password in
                 try await provider.rename(
                     connection, from: PaneController.joinRemote(path, entry.name),
@@ -702,12 +708,33 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if pane.isRemote {
             let entries = pane.selectedEntries
             guard !entries.isEmpty else { NSSound.beep(); return }
+            // A non-UTF-8 name only round-trips by its raw bytes; acting on the lossy
+            // String could hit the wrong file, so refuse it for now.
+            guard entries.allSatisfy({ $0.rawName == nil }) else {
+                presentInfo(
+                    "Can’t delete this item",
+                    "Its name isn’t valid UTF-8, which remote operations don’t support yet.")
+                return
+            }
+            // Remote delete is permanent (no Trash, no undo) — confirm explicitly.
+            let host = pane.remoteContext?.connection.host ?? "the server"
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText =
+                "Permanently delete \(entries.count) item\(entries.count == 1 ? "" : "s") on \(host)?"
+            alert.informativeText = "This can’t be undone."
+            alert.addButton(withTitle: "Delete")
+            alert.addButton(withTitle: "Cancel")
+            guard let window = view.window else { return }
             let names = entries.map { ($0.name, $0.isDirectory) }
-            performRemoteOp(pane, verb: "Delete") { provider, connection, path, password in
-                for (name, isDir) in names {
-                    try await provider.remove(
-                        connection, path: PaneController.joinRemote(path, name), isDirectory: isDir,
-                        password: password)
+            alert.beginSheetModal(for: window) { [weak self] response in
+                guard response == .alertFirstButtonReturn, let self else { return }
+                self.performRemoteOp(pane, verb: "Delete") { provider, connection, path, password in
+                    for (name, isDir) in names {
+                        try await provider.remove(
+                            connection, path: PaneController.joinRemote(path, name), isDirectory: isDir,
+                            password: password)
+                    }
                 }
             }
             return

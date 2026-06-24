@@ -75,7 +75,11 @@ public struct OrganizePlan: Codable, Sendable, Equatable {
             }
             switch step.action {
             case .move:
-                guard let dest = step.destination, !dest.isEmpty, !dest.contains("/") else {
+                // Same traversal guard as the file name: ".." (no slash) would
+                // resolve to the parent and move the file OUT of the folder.
+                guard let dest = step.destination, !dest.isEmpty, !dest.contains("/"),
+                    dest != "..", dest != "."
+                else {
                     result.failures.append(step.file)
                     continue
                 }

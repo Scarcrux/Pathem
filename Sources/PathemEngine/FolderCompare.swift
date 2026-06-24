@@ -71,7 +71,22 @@ public enum FolderCompare {
                 do {
                     try fm.createDirectory(
                         at: dst.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    if fm.fileExists(atPath: dst.path) { try fm.removeItem(at: dst) }
+                    if fm.fileExists(atPath: dst.path) {
+                        // Never delete a directory to make room for a file (or vice
+                        // versa) — compare only diffs files, so a file/dir name clash
+                        // would otherwise wipe a whole subtree. And route the overwrite
+                        // through the Trash so it's recoverable, not removeItem.
+                        let dstIsDir = (try? dst.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                        let srcIsDir = (try? src.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                        guard dstIsDir == srcIsDir else {
+                            result.failures.append(diff.relativePath)
+                            continue
+                        }
+                        guard FileOperations.trash(urls: [dst]).failures.isEmpty else {
+                            result.failures.append(diff.relativePath)
+                            continue
+                        }
+                    }
                     try fm.copyItem(at: src, to: dst)
                     result.copied += 1
                 } catch {
