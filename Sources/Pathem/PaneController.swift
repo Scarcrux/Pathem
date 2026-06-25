@@ -6,7 +6,7 @@ import PathemEngine
 /// buttons. The pane is intentionally thin. NavigationState owns the history
 /// logic and BulkEnumerator does the listing.
 @MainActor
-final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
+final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSPathControlDelegate {
     let containerView = NSView()
     /// The active view (list, icon, or gallery), swapped when the folder's view
     /// mode changes. PaneController drives it through PaneContentView.
@@ -656,6 +656,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pathControl.pathStyle = .standard
         pathControl.target = self
         pathControl.action = #selector(pathClicked)
+        pathControl.delegate = self  // lets a crumb be dragged out (e.g. a folder to VS Code)
         pathControl.translatesAutoresizingMaskIntoConstraints = false
         pathControl.setContentHuggingPriority(.init(1), for: .horizontal)
         pathControl.setContentCompressionResistancePriority(.init(1), for: .horizontal)
@@ -1265,6 +1266,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         nav.go(to: url)
         enterDirectory()
+    }
+
+    /// Allow a breadcrumb crumb to be dragged out as a file URL, so a folder in the
+    /// path bar can be dropped on another app (VS Code, Terminal, the Dock, ...).
+    func pathControl(
+        _ pathControl: NSPathControl, shouldDrag pathItem: NSPathControlItem, with pasteboard: NSPasteboard
+    ) -> Bool {
+        guard let url = pathItem.url, url.isFileURL else { return false }
+        pasteboard.clearContents()
+        pasteboard.writeObjects([url as NSURL])
+        return true
     }
 
     // MARK: - Editable address bar (paste a path)
