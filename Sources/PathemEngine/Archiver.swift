@@ -3,8 +3,8 @@ import Foundation
 /// Compress and extract archives by shelling OUT OF PROCESS to the BSD-licensed
 /// command-line tools that ship with macOS (`/usr/bin/zip`, `/usr/bin/tar`,
 /// `/usr/bin/ditto`) — never a GPL library, and untrusted-archive parsing stays
-/// out of the Full-Disk-Access process. Compress/Extract first; browse-into is a
-/// later step.
+/// out of the Full-Disk-Access process. macOS's `tar` is bsdtar on libarchive, which
+/// reads (and writes) 7-Zip and reads RAR natively, so no third-party tools are needed.
 public enum Archiver {
     public enum ArchiveError: Error, Sendable {
         case nothingToCompress
@@ -17,36 +17,25 @@ public enum Archiver {
         kind(of: url) != nil
     }
 
-    // RAR and 7-Zip need third-party CLI tools (The Unarchiver's `unar`/`lsar`, p7zip's
-    // `7z`); we invoke whatever the user installed (never bundle or link GPL code) and
-    // degrade gracefully when they're absent.
-    private static func toolPath(_ names: [String]) -> String? {
-        let dirs = ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin"]
-        for dir in dirs {
-            for name in names {
-                let path = "\(dir)/\(name)"
-                if FileManager.default.isExecutableFile(atPath: path) { return path }
-            }
-        }
-        return nil
+    /// Whether we can write `url`'s contents back into the same format. libarchive can
+    /// create zip, the tar family, and 7-Zip, but not RAR (proprietary, read-only).
+    public static func canRepack(_ url: URL) -> Bool {
+        guard canExtract(url) else { return false }
+        return !url.lastPathComponent.lowercased().hasSuffix(".rar")
     }
-    static var unarTool: String? { toolPath(["unar"]) }
-    static var lsarTool: String? { toolPath(["lsar"]) }
-    static var sevenZipTool: String? { toolPath(["7z", "7za", "7zz"]) }
-    /// Whether a 7-Zip archive can be created on this machine (p7zip installed).
-    public static var canMakeSevenZip: Bool { sevenZipTool != nil }
 
-    private enum Kind { case zip, tar, unar }
+    private enum Kind { case zip, libarchive }
 
     private static func kind(of url: URL) -> Kind? {
         let name = url.lastPathComponent.lowercased()
         if name.hasSuffix(".zip") { return .zip }
-        for suffix in [".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz", ".tbz2", ".tar.xz", ".txz", ".tar.zst"]
-        where name.hasSuffix(suffix) {
-            return .tar
+        // bsdtar (libarchive) reads the tar family plus 7-Zip and RAR (incl. RAR5).
+        for suffix in [
+            ".tar", ".tar.gz", ".tgz", ".tar.bz2", ".tbz", ".tbz2", ".tar.xz", ".txz", ".tar.zst",
+            ".7z", ".rar",
+        ] where name.hasSuffix(suffix) {
+            return .libarchive
         }
-        // rar/7z only count as extractable when the tool to do it is present.
-        if name.hasSuffix(".rar") || name.hasSuffix(".7z") { return unarTool != nil ? .unar : nil }
         return nil
     }
 
@@ -68,21 +57,21 @@ public enum Archiver {
         guard status == 0 else { throw ArchiveError.tool(code: status, message: err) }
     }
 
-    /// Create a 7-Zip archive from items sharing a parent, via p7zip's `7z`. Throws
-    /// `unsupported` when 7z isn't installed (the caller gates the menu on canMakeSevenZip).
+    /// Create a 7-Zip archive from items sharing a parent. bsdtar (libarchive) writes 7z
+    /// natively from the `.7z` extension, so no third-party tool is needed.
     public static func compress7z(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {
-        guard let seven = sevenZipTool else { throw ArchiveError.unsupported("7z") }
         guard let parent = urls.first?.deletingLastPathComponent() else { throw ArchiveError.nothingToCompress }
         let names = urls.map(\.lastPathComponent)
         guard !names.isEmpty else { throw ArchiveError.nothingToCompress }
-        var args = ["a", "-t7z", "-bd", destination.path] + names
-        args += ["-xr!.DS_Store", "-xr!__MACOSX"]
-        if excludeGit { args += ["-xr!.git"] }
-        let (_, status, err) = try await RemoteRunner.run(seven, args, cwd: parent)
+        var args = ["-a", "-c", "-f", destination.path, "--exclude", ".DS_Store", "--exclude", "__MACOSX"]
+        if excludeGit { args += ["--exclude", ".git"] }
+        args += ["-C", parent.path] + names
+        let (_, status, err) = try await RemoteRunner.run("/usr/bin/tar", args)
         guard status == 0 else { throw ArchiveError.tool(code: status, message: err) }
     }
 
-    /// Extract `archive` into `directory` (zip via ditto, tar family via bsdtar).
+    /// Extract `archive` into `directory` (zip via ditto; everything else via bsdtar,
+    /// which auto-detects tar-family compression and reads 7-Zip and RAR).
     public static func extract(_ archive: URL, to directory: URL) async throws {
         guard let kind = kind(of: archive) else {
             throw ArchiveError.unsupported(archive.lastPathComponent)
@@ -93,37 +82,17 @@ public enum Archiver {
         case .zip:
             result = try await RemoteRunner.run(
                 "/usr/bin/ditto", ["-x", "-k", archive.path, directory.path])
-        case .tar:
-            // bsdtar auto-detects gzip/bzip2/xz/zstd compression.
+        case .libarchive:
             result = try await RemoteRunner.run(
                 "/usr/bin/tar", ["-x", "-f", archive.path, "-C", directory.path])
-        case .unar:
-            guard let unar = unarTool else { throw ArchiveError.unsupported(archive.lastPathComponent) }
-            // -no-directory extracts the contents straight into `directory` (matching
-            // tar/ditto) instead of an enclosing folder named after the archive.
-            result = try await RemoteRunner.run(
-                unar,
-                [
-                    "-quiet", "-force-overwrite", "-no-directory", "-output-directory", directory.path,
-                    archive.path,
-                ])
         }
         guard result.1 == 0 else { throw ArchiveError.tool(code: result.1, message: result.2) }
     }
 
-    /// List the entry paths inside `archive` (read-only browse): bsdtar reads zip and the
-    /// tar family; `lsar` reads rar/7z. Out-of-process, like the rest.
+    /// List the entry paths inside `archive` (read-only browse) via bsdtar, which reads
+    /// zip, the tar family, 7-Zip, and RAR. Out-of-process, like the rest.
     public static func list(_ archive: URL) async throws -> [String] {
-        guard let kind = kind(of: archive) else { throw ArchiveError.unsupported(archive.lastPathComponent) }
-        if kind == .unar {
-            guard let lsar = lsarTool else { throw ArchiveError.unsupported(archive.lastPathComponent) }
-            let (data, status, err) = try await RemoteRunner.run(lsar, [archive.path])
-            guard status == 0 else { throw ArchiveError.tool(code: status, message: err) }
-            // lsar prints a "<name>: <Format>" header line first; drop it.
-            let header = "\(archive.lastPathComponent):"
-            return String(decoding: data, as: UTF8.self).split(whereSeparator: \.isNewline)
-                .map(String.init).filter { !$0.isEmpty && !$0.hasPrefix(header) }
-        }
+        guard canExtract(archive) else { throw ArchiveError.unsupported(archive.lastPathComponent) }
         let (data, status, err) = try await RemoteRunner.run("/usr/bin/tar", ["-tf", archive.path])
         guard status == 0 else { throw ArchiveError.tool(code: status, message: err) }
         return String(decoding: data, as: UTF8.self).split(whereSeparator: \.isNewline)
@@ -160,7 +129,8 @@ public enum Archiver {
 
     /// Repack `directory`'s contents back into `archive`, preserving its format, by
     /// writing a sibling temp file and atomically replacing the original (so a failed
-    /// repack never corrupts it). Out-of-process via zip/tar.
+    /// repack never corrupts it). Out-of-process via zip/tar (tar also writes 7-Zip).
+    /// RAR is read-only (libarchive can't write it); callers gate on `canRepack`.
     public static func repack(from directory: URL, into archive: URL) async throws {
         let lower = archive.lastPathComponent.lowercased()
         let tmp = archive.deletingLastPathComponent()
@@ -170,6 +140,9 @@ public enum Archiver {
             result = try await RemoteRunner.run("/usr/bin/zip", ["-r", "-X", "-q", tmp.path, "."], cwd: directory)
         } else if let flags = tarCreateFlags(lower) {
             result = try await RemoteRunner.run("/usr/bin/tar", flags + ["-f", tmp.path, "-C", directory.path, "."])
+        } else if lower.hasSuffix(".7z") {
+            // -a picks the 7z writer from the temp file's .7z suffix.
+            result = try await RemoteRunner.run("/usr/bin/tar", ["-a", "-c", "-f", tmp.path, "-C", directory.path, "."])
         } else {
             throw ArchiveError.unsupported(archive.lastPathComponent)
         }

@@ -561,9 +561,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.comparePanes()
         }
         add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasSelection) { [weak self] in self?.compressSelection() }
-        add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: { [weak self] in
-            Archiver.canMakeSevenZip && !(self?.activePane?.selectedEntries.isEmpty ?? true)
-        }) { [weak self] in self?.compress7zSelection() }
+        add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: hasSelection) { [weak self] in self?.compress7zSelection() }
         add(
             "files.extract", L("bvc.cmd.extract", "Extract"),
             enabled: { [weak self] in
@@ -1214,7 +1212,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func compress7zSelection() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty, Archiver.canMakeSevenZip else { NSSound.beep(); return }
+        guard !urls.isEmpty else { NSSound.beep(); return }
         let folder = pane.currentURL
         let base = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
         let dest = uniqueLocalURL(folder.appendingPathComponent("\(base).7z"))
@@ -1345,6 +1343,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// On leaving a browsed archive, if its extracted contents changed, offer to repack
     /// them back into the original archive.
     private func writeBackArchiveIfChanged(archive: URL, mountRoot: URL, original: [String: String]) {
+        // RAR and other read-only formats can't be repacked; browse them without prompting.
+        guard Archiver.canRepack(archive) else { return }
         Task { @MainActor in
             let changed = await Task.detached { Archiver.snapshot(of: mountRoot) != original }.value
             guard changed, let window = self.view.window else { return }

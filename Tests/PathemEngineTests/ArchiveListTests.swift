@@ -4,25 +4,34 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct ArchiveListTests {
-    @Test func unknownExtensionIsNotExtractable() {
+    @Test func extractableAndRepackableFormats() {
         #expect(!Archiver.canExtract(URL(fileURLWithPath: "/tmp/notes.txt")))
         #expect(Archiver.canExtract(URL(fileURLWithPath: "/tmp/a.zip")))
         #expect(Archiver.canExtract(URL(fileURLWithPath: "/tmp/a.tar.gz")))
+        // 7z and rar read natively via libarchive.
+        #expect(Archiver.canExtract(URL(fileURLWithPath: "/tmp/a.7z")))
+        #expect(Archiver.canExtract(URL(fileURLWithPath: "/tmp/a.rar")))
+        // ...but rar can't be written back (libarchive is read-only for RAR).
+        #expect(Archiver.canRepack(URL(fileURLWithPath: "/tmp/a.7z")))
+        #expect(!Archiver.canRepack(URL(fileURLWithPath: "/tmp/a.rar")))
     }
 
-    // Runs only where p7zip is installed; verifies the 7z create/extract round-trip.
-    @Test func sevenZipRoundTripWhenToolPresent() async throws {
-        guard Archiver.canMakeSevenZip else { return }
+    // 7z create/extract round-trip via the system tar (libarchive) — no third-party tool.
+    @Test func sevenZipRoundTripNatively() async throws {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-7z-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
         let file = dir.appendingPathComponent("hello.txt")
-        try Data("hi".utf8).write(to: file)
+        try Data("hi there".utf8).write(to: file)
         let archive = dir.appendingPathComponent("out.7z")
         try await Archiver.compress7z([file], to: archive)
+        #expect(fm.fileExists(atPath: archive.path))
         let listed = try await Archiver.list(archive)
         #expect(listed.contains { $0.hasSuffix("hello.txt") })
+        let out = dir.appendingPathComponent("out")
+        try await Archiver.extract(archive, to: out)
+        #expect(try String(contentsOf: out.appendingPathComponent("hello.txt"), encoding: .utf8) == "hi there")
     }
 
     @Test func topLevelDerivesFoldersAndFiles() {
