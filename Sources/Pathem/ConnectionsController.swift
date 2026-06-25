@@ -184,17 +184,19 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
         let host = field(L("conn.hostPlaceholder", "Host"), existing?.host ?? "")
         let port = field(L("conn.portPlaceholder", "Port (blank = default)"), existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
-        let user = field(L("conn.userPlaceholder", "User"), existing?.user ?? "")
-        let path = field(L("conn.pathPlaceholder", "Path"), existing?.path ?? "/")
+        let user = field(L("conn.userPlaceholder", "User (S3: access key)"), existing?.user ?? "")
+        let path = field(L("conn.pathPlaceholder", "Path (S3: /bucket)"), existing?.path ?? "/")
+        let region = field(L("conn.regionPlaceholder", "Region (S3, e.g. us-east-1)"), existing?.region ?? "")
 
         let rows = NSStackView(views: [
             labeled(L("conn.protocolLabel", "Protocol"), proto), labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
             labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
+            labeled(L("conn.regionLabel", "Region"), region),
         ])
         rows.orientation = .vertical
         rows.alignment = .leading
         rows.spacing = 6
-        rows.frame = NSRect(x: 0, y: 0, width: 320, height: 200)
+        rows.frame = NSRect(x: 0, y: 0, width: 340, height: 232)
         alert.accessoryView = rows
         alert.addButton(withTitle: L("common.save", "Save"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
@@ -203,16 +205,21 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
             let host = host.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !host.isEmpty, RemoteConnection.isValidHost(host) else {
-                NSSound.beep()  // empty or a smuggling host (@ / : etc.)
+            let chosen = RemoteConnection.Proto.allCases[proto.indexOfSelectedItem]
+            // S3 may leave the host blank (derived from the region: s3.<region>.amazonaws.com);
+            // every other protocol needs a valid, non-smuggling host.
+            if chosen == .s3 {
+                if !host.isEmpty, !RemoteConnection.isValidHost(host) { NSSound.beep(); return }
+            } else if host.isEmpty || !RemoteConnection.isValidHost(host) {
+                NSSound.beep()
                 return
             }
-            let chosen = RemoteConnection.Proto.allCases[proto.indexOfSelectedItem]
             let conn = RemoteConnection(
                 id: existing?.id ?? UUID(),
-                name: name.stringValue.isEmpty ? host : name.stringValue,
+                name: name.stringValue.isEmpty ? (host.isEmpty ? "Amazon S3" : host) : name.stringValue,
                 proto: chosen, host: host, port: Int(port.stringValue) ?? 0,
-                user: user.stringValue, path: path.stringValue.isEmpty ? "/" : path.stringValue)
+                user: user.stringValue, path: path.stringValue.isEmpty ? "/" : path.stringValue,
+                region: region.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             // Resolve the target by identity, not the captured row index, which can
             // go stale if the list changed while this modeless sheet was open.
             if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id }) {

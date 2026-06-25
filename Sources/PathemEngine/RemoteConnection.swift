@@ -6,13 +6,13 @@ import Foundation
 /// Full-Disk-Access app process.
 public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public enum Proto: String, Codable, Sendable, CaseIterable {
-        case ftp, ftps, sftp, webdav, webdavs
+        case ftp, ftps, sftp, webdav, webdavs, s3
         public var defaultPort: Int {
             switch self {
             case .sftp: return 22
             case .ftp, .ftps: return 21
             case .webdav: return 80
-            case .webdavs: return 443
+            case .webdavs, .s3: return 443
             }
         }
         public var label: String {
@@ -22,6 +22,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
             case .sftp: return "SFTP"
             case .webdav: return "WebDAV"
             case .webdavs: return "WebDAV (HTTPS)"
+            case .s3: return "Amazon S3"
             }
         }
         /// True for the HTTP-based WebDAV protocols.
@@ -35,10 +36,11 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public var port: Int  // 0 means "use the protocol default"
     public var user: String
     public var path: String  // initial remote directory
+    public var region: String  // S3 region for SigV4 signing (e.g. "us-east-1"); unused otherwise
 
     public init(
         id: UUID = UUID(), name: String, proto: Proto, host: String, port: Int = 0,
-        user: String = "", path: String = "/"
+        user: String = "", path: String = "/", region: String = ""
     ) {
         self.id = id
         self.name = name
@@ -47,6 +49,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         self.port = port
         self.user = user
         self.path = path
+        self.region = region
     }
 
     public var effectivePort: Int { port > 0 ? port : proto.defaultPort }
@@ -90,5 +93,6 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         port = try c.decodeIfPresent(Int.self, forKey: .port) ?? 0
         user = try c.decodeIfPresent(String.self, forKey: .user) ?? ""
         path = try c.decodeIfPresent(String.self, forKey: .path) ?? "/"
+        region = try c.decodeIfPresent(String.self, forKey: .region) ?? ""
     }
 }

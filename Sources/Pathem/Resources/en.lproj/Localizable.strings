@@ -242,13 +242,15 @@
 "conn.newConnectionTitle" = "New Connection";
 "conn.panelTitle" = "Connections";
 "conn.pathLabel" = "Path";
-"conn.pathPlaceholder" = "Path";
+"conn.pathPlaceholder" = "Path (S3: /bucket)";
 "conn.portLabel" = "Port";
 "conn.portPlaceholder" = "Port (blank = default)";
 "conn.protocolLabel" = "Protocol";
+"conn.regionLabel" = "Region";
+"conn.regionPlaceholder" = "Region (S3, e.g. us-east-1)";
 "conn.serverColumn" = "Server";
 "conn.userLabel" = "User";
-"conn.userPlaceholder" = "User";
+"conn.userPlaceholder" = "User (S3: access key)";
 "fda.addedRelaunchHint" = "Added Pathem? A relaunch will apply it.";
 "fda.grantedA11y" = "Granted";
 "fda.grantedStatus" = "Full Disk Access granted.";

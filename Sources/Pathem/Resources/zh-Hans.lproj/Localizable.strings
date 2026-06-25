@@ -242,13 +242,15 @@
 "conn.newConnectionTitle" = "新建连接";
 "conn.panelTitle" = "连接";
 "conn.pathLabel" = "路径";
-"conn.pathPlaceholder" = "路径";
+"conn.pathPlaceholder" = "路径（S3：/bucket）";
 "conn.portLabel" = "端口";
 "conn.portPlaceholder" = "端口（留空 = 默认）";
 "conn.protocolLabel" = "协议";
+"conn.regionLabel" = "区域";
+"conn.regionPlaceholder" = "区域（S3，例如 us-east-1）";
 "conn.serverColumn" = "服务器";
 "conn.userLabel" = "用户";
-"conn.userPlaceholder" = "用户";
+"conn.userPlaceholder" = "用户（S3：访问密钥）";
 "fda.addedRelaunchHint" = "已添加 Pathem？重新启动后即可生效。";
 "fda.grantedA11y" = "已授予";
 "fda.grantedStatus" = "已授予完全磁盘访问权限。";

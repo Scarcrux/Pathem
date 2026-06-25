@@ -242,13 +242,15 @@
 "conn.newConnectionTitle" = "Nueva conexión";
 "conn.panelTitle" = "Conexiones";
 "conn.pathLabel" = "Ruta";
-"conn.pathPlaceholder" = "Ruta";
+"conn.pathPlaceholder" = "Ruta (S3: /bucket)";
 "conn.portLabel" = "Puerto";
 "conn.portPlaceholder" = "Puerto (en blanco = por omisión)";
 "conn.protocolLabel" = "Protocolo";
+"conn.regionLabel" = "Región";
+"conn.regionPlaceholder" = "Región (S3, p. ej. us-east-1)";
 "conn.serverColumn" = "Servidor";
 "conn.userLabel" = "Usuario";
-"conn.userPlaceholder" = "Usuario";
+"conn.userPlaceholder" = "Usuario (S3: clave de acceso)";
 "fda.addedRelaunchHint" = "¿Has añadido Pathem? Reinícialo para que surta efecto.";
 "fda.grantedA11y" = "Concedido";
 "fda.grantedStatus" = "Acceso total al disco concedido.";

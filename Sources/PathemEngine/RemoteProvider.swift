@@ -35,6 +35,7 @@ public enum RemoteProviders {
         case .ftp, .ftps: return CurlFTPProvider()
         case .sftp: return SFTPProvider()
         case .webdav, .webdavs: return CurlWebDAVProvider()
+        case .s3: return S3Provider()
         }
     }
 }

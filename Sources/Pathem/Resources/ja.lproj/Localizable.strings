@@ -242,13 +242,15 @@
 "conn.newConnectionTitle" = "新規接続";
 "conn.panelTitle" = "接続";
 "conn.pathLabel" = "パス";
-"conn.pathPlaceholder" = "パス";
+"conn.pathPlaceholder" = "パス（S3：/bucket）";
 "conn.portLabel" = "ポート";
 "conn.portPlaceholder" = "ポート（空白=デフォルト）";
 "conn.protocolLabel" = "プロトコル";
+"conn.regionLabel" = "リージョン";
+"conn.regionPlaceholder" = "リージョン（S3、例：us-east-1）";
 "conn.serverColumn" = "サーバ";
 "conn.userLabel" = "ユーザ";
-"conn.userPlaceholder" = "ユーザ";
+"conn.userPlaceholder" = "ユーザ（S3：アクセスキー）";
 "fda.addedRelaunchHint" = "Pathemを追加しましたか？再起動すると適用されます。";
 "fda.grantedA11y" = "許可済み";
 "fda.grantedStatus" = "フルディスクアクセスが許可されました。";
