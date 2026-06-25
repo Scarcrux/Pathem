@@ -219,6 +219,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.configurePane = { [weak self] pane in
                 pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
                 pane.onMouseGestureHandler = { [weak self] stroke in self?.handleGesture(stroke) ?? false }
+                pane.onBrowseArchive = { [weak self, weak pane] archive in
+                    guard let self, let pane else { return }
+                    self.browseArchive(archive, in: pane, origin: pane.currentURL)
+                }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
@@ -2200,11 +2204,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private static var remoteTempDir: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Remote", isDirectory: true)
     }
+    private static var archiveTempDir: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Archives", isDirectory: true)
+    }
 
-    /// Remove leftover opened-remote files from a previous run. Done once at launch
-    /// so it never deletes a file the user is still editing this session.
+    /// Remove leftover opened-remote files and extracted archives from a previous run.
+    /// Done once at launch so it never deletes something in use this session.
     private static func cleanupRemoteTemp() {
         try? FileManager.default.removeItem(at: remoteTempDir)
+        try? FileManager.default.removeItem(at: archiveTempDir)
+    }
+
+    /// Extract an archive to a fresh temp folder and browse it as a folder.
+    private func browseArchive(_ archive: URL, in pane: PaneController, origin: URL) {
+        Task { @MainActor in
+            let mount = Self.archiveTempDir.appendingPathComponent(
+                UUID().uuidString, isDirectory: true
+            ).appendingPathComponent((archive.lastPathComponent as NSString).deletingPathExtension)
+            do {
+                try await Archiver.extract(archive, to: mount)
+                pane.mountArchive(archive: archive, mountRoot: mount, origin: origin)
+            } catch {
+                self.reportArchiveError(L("archive.cantRead", "Couldn’t read the archive"), error)
+            }
+        }
     }
 
     /// Double-clicking a remote file: download it to a temp file and open it.

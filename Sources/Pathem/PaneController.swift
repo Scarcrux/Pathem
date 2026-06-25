@@ -46,6 +46,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     private struct RemoteSession { let connection: RemoteConnection; var path: String; let password: String }
     private var remote: RemoteSession?
     var isRemote: Bool { remote != nil }
+
+    /// Browsing an archive's contents: the archive was extracted to `mountRoot` (a temp
+    /// dir we navigate as a normal folder); going up from the root returns to `origin`.
+    private struct ArchiveSession { let archive: URL; let mountRoot: URL; let origin: URL }
+    private var archiveSession: ArchiveSession?
+    var isBrowsingArchive: Bool { archiveSession != nil }
+    /// Called when the user opens an archive file: the browser extracts it and calls
+    /// `mountArchive` to enter it.
+    var onBrowseArchive: ((URL) -> Void)?
     /// Showing a cross-folder smart-result list (Recents / tag filter).
     private var smartActive = false
     /// This pane's current search query, so the shared search field can resync when
@@ -321,6 +330,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     func reload(preserveState: Bool = true) {
         if remote != nil { reloadRemote(); return }
         if smartActive { return }  // a smart-result view isn't a folder to refresh
+        // Leaving the mounted archive's subtree (sidebar jump, path-bar) drops the session.
+        if let session = archiveSession,
+            !nav.current.standardizedFileURL.path.hasPrefix(session.mountRoot.standardizedFileURL.path)
+        {
+            archiveSession = nil
+        }
         showingSearchResults = false
         remoteLabel.isHidden = true
         pathControl.isHidden = false
@@ -355,9 +370,20 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         updateStatus()
         refreshGitStatusAsync()
         pathControl.url = nav.current
+        // Inside an archive, show a friendly "archive ▸ sub ▸ dir" label, not the raw
+        // temp path, and make Up always available (it climbs out to the origin).
+        if let session = archiveSession {
+            let rootPath = session.mountRoot.standardizedFileURL.path
+            let rel = String(nav.current.standardizedFileURL.path.dropFirst(rootPath.count))
+                .split(separator: "/").joined(separator: " ▸ ")
+            remoteLabel.stringValue = "📦 " + session.archive.lastPathComponent + (rel.isEmpty ? "" : " ▸ " + rel)
+            remoteLabel.isHidden = false
+            pathControl.isHidden = true
+            addressField.isHidden = true
+        }
         backButton.isEnabled = nav.canGoBack
         forwardButton.isEnabled = nav.canGoForward
-        upButton.isEnabled = nav.parent != nil
+        upButton.isEnabled = nav.parent != nil || archiveSession != nil
     }
 
     /// Re-key git states from the canonical repo root to the displayed folder path, so
@@ -566,11 +592,22 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
                 nav.go(to: url)
                 enterDirectory()  // clears smart mode and watches the real folder
             }
+        } else if Archiver.canExtract(url) {
+            onBrowseArchive?(url)  // browse the archive as a folder (extract + enter)
         } else if let openFile {
             openFile(url)  // apply scoped opener rules
         } else {
             NSWorkspace.shared.open(url)  // system default
         }
+    }
+
+    /// Enter an extracted archive: navigate the pane into `mountRoot`, remembering the
+    /// archive and the folder to return to when going up from the root.
+    func mountArchive(archive: URL, mountRoot: URL, origin: URL) {
+        archiveSession = ArchiveSession(archive: archive, mountRoot: mountRoot, origin: origin)
+        nav.go(to: mountRoot)
+        enterDirectory()
+        containerView.window?.makeFirstResponder(content.keyView)
     }
 
     /// Resolve an entry to a URL: smart-result entries carry their own location;
@@ -597,6 +634,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
                 self.remote?.path = Self.parentRemote(remote.path)
                 reloadRemote()
             }
+            return
+        }
+        // Going up from an archive's root returns to the folder it lives in.
+        if let session = archiveSession, nav.current.standardizedFileURL == session.mountRoot.standardizedFileURL {
+            archiveSession = nil
+            nav.go(to: session.origin)
+            enterDirectory()
             return
         }
         if nav.goUp() { enterDirectory() }
