@@ -29,7 +29,7 @@
 "batch.templateDefaultName" = "マイテンプレート";
 "batch.title" = "一括作成";
 "bvc.addToCollectionPrompt" = "コレクションに追加";
-"bvc.alsoDeleteMissing" = "ソースにないファイルも削除";
+"bvc.alsoDeleteMissing" = "ソースにないファイルも削除（ミラーのみ）";
 "bvc.alwaysOpenWith" = "常にこのアプリケーションで開く";
 "bvc.alwaysOpenWithBody" = "アプリケーションと適用範囲を選択してください。";
 "bvc.anonymous" = "anonymous";
@@ -195,6 +195,10 @@
 "bvc.sftpMissing" = "sftpが見つかりませんでした";
 "bvc.showShelf" = "シェルフを表示";
 "bvc.skip" = "スキップ";
+"bvc.syncComplete" = "同期が完了しました";
+"bvc.syncConflicts" = "\n%d 件の競合をスキップ（両側で同じ時刻）";
+"bvc.syncCopied" = "右へ %d 件、左へ %d 件コピーしました";
+"bvc.syncTwoWay" = "双方向で同期（新しい方を優先）";
 "bvc.tagTitle" = "タグ: %@";
 "bvc.theServer" = "サーバ";
 "bvc.undoFailed" = "取り消しに失敗しました";

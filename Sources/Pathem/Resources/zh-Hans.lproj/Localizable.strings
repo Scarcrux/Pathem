@@ -29,7 +29,7 @@
 "batch.templateDefaultName" = "我的模板";
 "batch.title" = "批量创建";
 "bvc.addToCollectionPrompt" = "添加到收藏集";
-"bvc.alsoDeleteMissing" = "同时删除源中已不存在的文件";
+"bvc.alsoDeleteMissing" = "同时删除源中缺失的文件（仅镜像）";
 "bvc.alwaysOpenWith" = "始终以此打开";
 "bvc.alwaysOpenWithBody" = "选择一个应用程序以及应用范围。";
 "bvc.anonymous" = "匿名";
@@ -195,6 +195,10 @@
 "bvc.sftpMissing" = "未找到 sftp";
 "bvc.showShelf" = "显示暂存架";
 "bvc.skip" = "跳过";
+"bvc.syncComplete" = "同步完成";
+"bvc.syncConflicts" = "\n已跳过 %d 个冲突（两侧时间相同）";
+"bvc.syncCopied" = "已向右复制 %d 个，向左复制 %d 个";
+"bvc.syncTwoWay" = "双向同步（较新者优先）";
 "bvc.tagTitle" = "标记：%@";
 "bvc.theServer" = "服务器";
 "bvc.undoFailed" = "撤销失败";

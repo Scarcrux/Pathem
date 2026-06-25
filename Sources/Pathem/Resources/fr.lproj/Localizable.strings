@@ -29,7 +29,7 @@
 "batch.templateDefaultName" = "Mon modèle";
 "batch.title" = "Création par lot";
 "bvc.addToCollectionPrompt" = "Ajouter à la collection";
-"bvc.alsoDeleteMissing" = "Supprimer aussi les fichiers absents de la source";
+"bvc.alsoDeleteMissing" = "Supprimer aussi les fichiers absents de la source (miroir uniquement)";
 "bvc.alwaysOpenWith" = "Toujours ouvrir avec";
 "bvc.alwaysOpenWithBody" = "Choisissez une application et l’étendue à laquelle l’appliquer.";
 "bvc.anonymous" = "anonyme";
@@ -195,6 +195,10 @@
 "bvc.sftpMissing" = "sftp est introuvable";
 "bvc.showShelf" = "Afficher l’étagère";
 "bvc.skip" = "Ignorer";
+"bvc.syncComplete" = "Synchronisation terminée";
+"bvc.syncConflicts" = "\n%d conflits ignorés (même heure des deux côtés)";
+"bvc.syncCopied" = "%d copiés vers la droite, %d vers la gauche";
+"bvc.syncTwoWay" = "Synchroniser dans les deux sens (le plus récent gagne)";
 "bvc.tagTitle" = "Tag : %@";
 "bvc.theServer" = "le serveur";
 "bvc.undoFailed" = "Échec de l’annulation";

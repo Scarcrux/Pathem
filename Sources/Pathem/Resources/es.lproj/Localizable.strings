@@ -29,7 +29,7 @@
 "batch.templateDefaultName" = "Mi plantilla";
 "batch.title" = "Crear en lote";
 "bvc.addToCollectionPrompt" = "Añadir a la colección";
-"bvc.alsoDeleteMissing" = "Eliminar también los archivos que no estén en el origen";
+"bvc.alsoDeleteMissing" = "Eliminar también los archivos que faltan en el origen (solo réplica)";
 "bvc.alwaysOpenWith" = "Abrir siempre con";
 "bvc.alwaysOpenWithBody" = "Elige una aplicación y el alcance con el que aplicarla.";
 "bvc.anonymous" = "anónimo";
@@ -195,6 +195,10 @@
 "bvc.sftpMissing" = "No se encontró sftp";
 "bvc.showShelf" = "Mostrar la estantería";
 "bvc.skip" = "Omitir";
+"bvc.syncComplete" = "Sincronización completada";
+"bvc.syncConflicts" = "\n%d conflictos omitidos (misma hora en ambos lados)";
+"bvc.syncCopied" = "Copiados %d a la derecha, %d a la izquierda";
+"bvc.syncTwoWay" = "Sincronizar en ambos sentidos (gana el más reciente)";
 "bvc.tagTitle" = "Etiqueta: %@";
 "bvc.theServer" = "el servidor";
 "bvc.undoFailed" = "No se pudo deshacer";

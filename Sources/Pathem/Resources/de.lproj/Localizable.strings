@@ -29,7 +29,7 @@
 "batch.templateDefaultName" = "Meine Vorlage";
 "batch.title" = "Stapelerstellung";
 "bvc.addToCollectionPrompt" = "Zur Sammlung hinzufügen";
-"bvc.alsoDeleteMissing" = "Auch Dateien löschen, die in der Quelle fehlen";
+"bvc.alsoDeleteMissing" = "Auch Dateien löschen, die in der Quelle fehlen (nur Spiegeln)";
 "bvc.alwaysOpenWith" = "Immer öffnen mit";
 "bvc.alwaysOpenWithBody" = "Wähle eine App und lege fest, wie umfassend sie angewendet wird.";
 "bvc.anonymous" = "anonym";
@@ -195,6 +195,10 @@
 "bvc.sftpMissing" = "sftp wurde nicht gefunden";
 "bvc.showShelf" = "Ablagefach einblenden";
 "bvc.skip" = "Überspringen";
+"bvc.syncComplete" = "Abgleich abgeschlossen";
+"bvc.syncConflicts" = "\n%d Konflikte übersprungen (gleiche Zeit auf beiden Seiten)";
+"bvc.syncCopied" = "%d nach rechts kopiert, %d nach links";
+"bvc.syncTwoWay" = "In beide Richtungen abgleichen (neuere gewinnt)";
 "bvc.tagTitle" = "Tag: %@";
 "bvc.theServer" = "den Server";
 "bvc.undoFailed" = "Widerrufen fehlgeschlagen";

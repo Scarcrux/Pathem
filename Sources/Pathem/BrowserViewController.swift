@@ -1106,8 +1106,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.informativeText = String(
             format: L("bvc.compareSummary", "Only on left: %d\nOnly on right: %d\nDiffer: %d\nIdentical: %d"),
             s.onlyLeft, s.onlyRight, s.differs, s.identical)
-        let deleteExtras = NSButton(checkboxWithTitle: L("bvc.alsoDeleteMissing", "Also delete files missing from the source"), target: nil, action: nil)
+        let deleteExtras = NSButton(checkboxWithTitle: L("bvc.alsoDeleteMissing", "Also delete files missing from the source (mirror only)"), target: nil, action: nil)
         alert.accessoryView = deleteExtras
+        alert.addButton(withTitle: L("bvc.syncTwoWay", "Sync Both Ways (newer wins)"))
         alert.addButton(withTitle: L("bvc.mirrorLeftToRight", "Mirror Left → Right"))
         alert.addButton(withTitle: L("bvc.mirrorRightToLeft", "Mirror Right → Left"))
         alert.addButton(withTitle: L("common.close", "Close"))
@@ -1115,10 +1116,40 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.beginSheetModal(for: window) { [weak self] response in
             let delete = deleteExtras.state == .on
             switch response {
-            case .alertFirstButtonReturn: self?.runMirror(source: leftURL, target: rightURL, deleteExtras: delete)
-            case .alertSecondButtonReturn: self?.runMirror(source: rightURL, target: leftURL, deleteExtras: delete)
+            case .alertFirstButtonReturn: self?.runSync(left: leftURL, right: rightURL)
+            case .alertSecondButtonReturn: self?.runMirror(source: leftURL, target: rightURL, deleteExtras: delete)
+            case .alertThirdButtonReturn: self?.runMirror(source: rightURL, target: leftURL, deleteExtras: delete)
             default: break
             }
+        }
+    }
+
+    /// Two-way additive sync (recompute fresh, apply off-main): copy each side's unique
+    /// and newer files to the other; never deletes.
+    private func runSync(left: URL, right: URL) {
+        Task { @MainActor [weak self] in
+            let result = await Task.detached { () -> FolderSync.Result in
+                let actions = FolderSync.plan(left: left, right: right, conflict: .newerWins)
+                return FolderSync.execute(actions, left: left, right: right)
+            }.value
+            guard let self else { return }
+            self.reloadBothSides()
+            let alert = NSAlert()
+            alert.messageText = L("bvc.syncComplete", "Sync complete")
+            var info = String(
+                format: L("bvc.syncCopied", "Copied %d to the right, %d to the left"),
+                result.copiedToRight, result.copiedToLeft)
+            if result.conflictsSkipped > 0 {
+                info += String(
+                    format: L("bvc.syncConflicts", "\n%d conflicts skipped (same time on both sides)"),
+                    result.conflictsSkipped)
+            }
+            if !result.failures.isEmpty {
+                info += String(format: L("bvc.mirrorFailedSuffix", ", %d failed"), result.failures.count)
+            }
+            alert.informativeText = info
+            alert.addButton(withTitle: L("common.ok", "OK"))
+            if let window = self.view.window { alert.beginSheetModal(for: window) { _ in } }
         }
     }
 

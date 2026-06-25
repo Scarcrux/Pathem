@@ -29,7 +29,7 @@
 "batch.templateDefaultName" = "My Template";
 "batch.title" = "Batch Create";
 "bvc.addToCollectionPrompt" = "Add to Collection";
-"bvc.alsoDeleteMissing" = "Also delete files missing from the source";
+"bvc.alsoDeleteMissing" = "Also delete files missing from the source (mirror only)";
 "bvc.alwaysOpenWith" = "Always Open With";
 "bvc.alwaysOpenWithBody" = "Choose an application and how widely to apply it.";
 "bvc.anonymous" = "anonymous";
@@ -195,6 +195,10 @@
 "bvc.sftpMissing" = "sftp was not found";
 "bvc.showShelf" = "Show Shelf";
 "bvc.skip" = "Skip";
+"bvc.syncComplete" = "Sync complete";
+"bvc.syncConflicts" = "\n%d conflicts skipped (same time on both sides)";
+"bvc.syncCopied" = "Copied %d to the right, %d to the left";
+"bvc.syncTwoWay" = "Sync Both Ways (newer wins)";
 "bvc.tagTitle" = "Tag: %@";
 "bvc.theServer" = "the server";
 "bvc.undoFailed" = "Undo failed";

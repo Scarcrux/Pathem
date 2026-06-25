@@ -121,7 +121,7 @@ public enum FolderCompare {
 
     // MARK: Helpers
 
-    private static func index(of root: URL, maxItems: Int) -> [String: FileEntry] {
+    static func index(of root: URL, maxItems: Int = 200_000) -> [String: FileEntry] {
         // Normalize first: the walked entry locations must share the root's prefix, or
         // a non-standardized root (a real `..` segment) yields mangled relative paths
         // ("../dir/a.txt") that never match the other side — making identical files look
@@ -142,5 +142,27 @@ public enum FolderCompare {
 
     private static func hash(_ root: URL, _ rel: String) -> String? {
         try? FileHasher.hash(root.appendingPathComponent(rel))
+    }
+
+    /// Copy `srcRoot/rel` over `dstRoot/rel`, creating parent folders, refusing a
+    /// file/dir type clash, and routing any overwrite through the Trash (recoverable).
+    /// Shared by one-way mirror and two-way sync. Returns false on failure.
+    static func copy(rel: String, from srcRoot: URL, to dstRoot: URL) -> Bool {
+        let fm = FileManager.default
+        let src = srcRoot.appendingPathComponent(rel)
+        let dst = dstRoot.appendingPathComponent(rel)
+        do {
+            try fm.createDirectory(at: dst.deletingLastPathComponent(), withIntermediateDirectories: true)
+            if fm.fileExists(atPath: dst.path) {
+                let dstIsDir = (try? dst.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                let srcIsDir = (try? src.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
+                guard dstIsDir == srcIsDir else { return false }
+                guard FileOperations.trash(urls: [dst]).failures.isEmpty else { return false }
+            }
+            try fm.copyItem(at: src, to: dst)
+            return true
+        } catch {
+            return false
+        }
     }
 }
