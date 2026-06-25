@@ -82,13 +82,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private static var instanceCount = 0
 
     private enum Column: String, CaseIterable {
-        case name, size, kind, date
+        case name, size, kind, date, ext, git, path
         var title: String {
             switch self {
             case .name: return L("list.columnName", "Name")
             case .size: return L("list.columnSize", "Size")
             case .kind: return L("list.columnKind", "Kind")
             case .date: return L("list.columnDate", "Date Modified")
+            case .ext: return L("list.columnExt", "Extension")
+            case .git: return L("list.columnGit", "Git")
+            case .path: return L("list.columnPath", "Path")
             }
         }
         var width: CGFloat {
@@ -97,10 +100,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .size: return 110
             case .kind: return 130
             case .date: return 180
+            case .ext: return 90
+            case .git: return 56
+            case .path: return 280
             }
         }
-        /// Kind is derived (no sort key in ViewFormat), so its header isn't clickable.
-        var isSortable: Bool { self != .kind }
+        /// Only columns backed by a ViewFormat sort key get a clickable header.
+        var isSortable: Bool { self == .name || self == .size || self == .date }
+        /// Shown by default; the rest are opt-in via the header menu (persisted).
+        var defaultVisible: Bool { [.name, .size, .date].contains(self) }
     }
 
     override init() {
@@ -121,7 +129,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             col.width = column.width
             col.sortDescriptorPrototype =
                 column.isSortable ? NSSortDescriptor(key: column.rawValue, ascending: true) : nil
-            col.isHidden = (column == .kind)  // Kind is opt-in; off by default
+            col.isHidden = !column.defaultVisible  // Kind/Extension/Git/Path are opt-in
             tableView.addTableColumn(col)
         }
         // Let users reorder, resize, and show/hide columns; AppKit persists the layout
@@ -492,6 +500,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.stringValue = Self.kind(for: entry)
         case .date:
             cell.textField?.stringValue = entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
+        case .ext:
+            cell.textField?.stringValue =
+                entry.isDirectory ? "" : (entry.name as NSString).pathExtension.lowercased()
+        case .git:
+            cell.textField?.stringValue = gitState(for: entry).map { Self.gitBadge($0).letter } ?? ""
+        case .path:
+            cell.textField?.stringValue = entry.location ?? directoryURL?.path ?? ""
+            cell.textField?.textColor = .secondaryLabelColor
         case .none:
             break
         }

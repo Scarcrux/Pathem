@@ -295,8 +295,11 @@
 "list.alwaysOpenWith" = "Immer öffnen mit…";
 "list.clearTags" = "Tags entfernen";
 "list.columnDate" = "Änderungsdatum";
+"list.columnExt" = "Erweiterung";
+"list.columnGit" = "Git";
 "list.columnKind" = "Art";
 "list.columnName" = "Name";
+"list.columnPath" = "Pfad";
 "list.columnSize" = "Größe";
 "list.copy" = "Kopieren";
 "list.cut" = "Ausschneiden";

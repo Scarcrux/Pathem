@@ -295,8 +295,11 @@
 "list.alwaysOpenWith" = "始终以此打开…";
 "list.clearTags" = "清除标记";
 "list.columnDate" = "修改日期";
+"list.columnExt" = "扩展名";
+"list.columnGit" = "Git";
 "list.columnKind" = "种类";
 "list.columnName" = "名称";
+"list.columnPath" = "路径";
 "list.columnSize" = "大小";
 "list.copy" = "拷贝";
 "list.cut" = "剪切";
