@@ -487,6 +487,9 @@
 "prefs.appearanceLabel" = "外观";
 "prefs.appearanceLight" = "浅色";
 "prefs.appearanceSystem" = "跟随系统";
+"prefs.bandwidthHint" = "限制远程下载和上传速度。0 表示不限制。";
+"prefs.bandwidthLabel" = "限制传输速度（KB/s）";
+"prefs.bandwidthPlaceholder" = "0 = 不限制";
 "prefs.calculateFolderSizes" = "计算文件夹大小";
 "prefs.compactSidebar" = "紧凑边栏（仅图标）";
 "prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";
@@ -537,6 +540,7 @@
 "settings.shortcuts" = "快捷键";
 "settings.terminal" = "终端";
 "settings.title" = "设置";
+"settings.transfers" = "传输";
 "settings.updates" = "更新";
 "shelf.clear" = "清除";
 "shelf.copyHere" = "拷贝到此处";

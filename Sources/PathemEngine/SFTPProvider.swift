@@ -86,6 +86,7 @@ public struct SFTPProvider: RemoteProvider {
             "-oConnectTimeout=20",
             "-oNumberOfPasswordPrompts=1",  // don't loop on a bad password
             "-oPort=\(c.effectivePort)",
+        ] + RemoteLimits.sftpArgs + [  // -l <Kbit/s> when a bandwidth cap is set
             "-b", "-",  // read batch commands from stdin
             "\(user)@\(c.host)",
         ]

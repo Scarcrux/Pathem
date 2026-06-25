@@ -487,6 +487,9 @@
 "prefs.appearanceLabel" = "外観";
 "prefs.appearanceLight" = "ライト";
 "prefs.appearanceSystem" = "システム";
+"prefs.bandwidthHint" = "リモートのダウンロード・アップロード速度を制限します。0 は無制限。";
+"prefs.bandwidthLabel" = "転送速度を制限（KB/s）";
+"prefs.bandwidthPlaceholder" = "0 = 無制限";
 "prefs.calculateFolderSizes" = "フォルダのサイズを計算";
 "prefs.compactSidebar" = "コンパクトサイドバー（アイコンのみ）";
 "prefs.confirmBeforeDelete" = "ゴミ箱に入れる前に確認";
@@ -537,6 +540,7 @@
 "settings.shortcuts" = "ショートカット";
 "settings.terminal" = "ターミナル";
 "settings.title" = "設定";
+"settings.transfers" = "転送";
 "settings.updates" = "アップデート";
 "shelf.clear" = "消去";
 "shelf.copyHere" = "ここにコピー";

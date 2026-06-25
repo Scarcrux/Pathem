@@ -487,6 +487,9 @@
 "prefs.appearanceLabel" = "Erscheinungsbild";
 "prefs.appearanceLight" = "Hell";
 "prefs.appearanceSystem" = "System";
+"prefs.bandwidthHint" = "Begrenzt die Geschwindigkeit für entfernte Downloads und Uploads. 0 bedeutet unbegrenzt.";
+"prefs.bandwidthLabel" = "Übertragungsgeschwindigkeit begrenzen (KB/s)";
+"prefs.bandwidthPlaceholder" = "0 = unbegrenzt";
 "prefs.calculateFolderSizes" = "Ordnergrößen berechnen";
 "prefs.compactSidebar" = "Kompakte Seitenleiste (nur Symbole)";
 "prefs.confirmBeforeDelete" = "Vor dem Verschieben in den Papierkorb nachfragen";
@@ -537,6 +540,7 @@
 "settings.shortcuts" = "Kurzbefehle";
 "settings.terminal" = "Terminal";
 "settings.title" = "Einstellungen";
+"settings.transfers" = "Übertragungen";
 "settings.updates" = "Updates";
 "shelf.clear" = "Leeren";
 "shelf.copyHere" = "Hierher kopieren";

@@ -98,7 +98,7 @@ public struct CurlWebDAVProvider: RemoteProvider {
             "-q", "-s", "--show-error", "-f", "--globoff", "--proto", "=http,https",
             "--connect-timeout", "20", "--anyauth", "-K", "-",
         ]
-        return try await CurlFTPProvider.runCurl(base + opArgs, input: Self.credentials(c, password))
+        return try await CurlFTPProvider.runCurl(base + RemoteLimits.curlArgs + opArgs, input: Self.credentials(c, password))
     }
 
     /// curl config (read via `-K -` on stdin) carrying credentials, so the password

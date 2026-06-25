@@ -487,6 +487,9 @@
 "prefs.appearanceLabel" = "Apparence";
 "prefs.appearanceLight" = "Clair";
 "prefs.appearanceSystem" = "Système";
+"prefs.bandwidthHint" = "Limite la vitesse de téléchargement et d’envoi distant. 0 signifie illimité.";
+"prefs.bandwidthLabel" = "Limiter la vitesse de transfert (Ko/s)";
+"prefs.bandwidthPlaceholder" = "0 = illimité";
 "prefs.calculateFolderSizes" = "Calculer la taille des dossiers";
 "prefs.compactSidebar" = "Barre latérale compacte (icônes seulement)";
 "prefs.confirmBeforeDelete" = "Demander confirmation avant de placer des éléments dans la corbeille";
@@ -537,6 +540,7 @@
 "settings.shortcuts" = "Raccourcis";
 "settings.terminal" = "Terminal";
 "settings.title" = "Réglages";
+"settings.transfers" = "Transferts";
 "settings.updates" = "Mises à jour";
 "shelf.clear" = "Vider";
 "shelf.copyHere" = "Copier ici";

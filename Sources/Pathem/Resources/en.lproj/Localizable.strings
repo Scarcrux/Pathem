@@ -487,6 +487,9 @@
 "prefs.appearanceLabel" = "Appearance";
 "prefs.appearanceLight" = "Light";
 "prefs.appearanceSystem" = "System";
+"prefs.bandwidthHint" = "Caps remote download and upload speed. 0 means unlimited.";
+"prefs.bandwidthLabel" = "Limit transfer speed (KB/s)";
+"prefs.bandwidthPlaceholder" = "0 = unlimited";
 "prefs.calculateFolderSizes" = "Calculate folder sizes";
 "prefs.compactSidebar" = "Compact sidebar (icons only)";
 "prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";
@@ -537,6 +540,7 @@
 "settings.shortcuts" = "Shortcuts";
 "settings.terminal" = "Terminal";
 "settings.title" = "Settings";
+"settings.transfers" = "Transfers";
 "settings.updates" = "Updates";
 "shelf.clear" = "Clear";
 "shelf.copyHere" = "Copy Here";

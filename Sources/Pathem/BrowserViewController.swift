@@ -1706,6 +1706,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         applyCompactSidebar()
         applyAppearance()
+        RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
         saveConfig(prefs, to: Self.preferencesURL)
         cachedDir = nil
         cachedIndex = nil

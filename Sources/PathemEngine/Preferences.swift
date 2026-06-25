@@ -37,6 +37,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Dragging items between folders moves them by default (hold Command to copy).
     /// Off keeps the Finder-like default of copy (hold Command to move).
     public var dragMovesByDefault: Bool
+    /// Cap remote transfer speed in KB/s (0 = unlimited).
+    public var bandwidthLimitKBps: Int
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -44,8 +46,10 @@ public struct Preferences: Codable, Sendable, Equatable {
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
-        dragMovesByDefault: Bool = false, appearance: Appearance = .system
+        dragMovesByDefault: Bool = false, appearance: Appearance = .system,
+        bandwidthLimitKBps: Int = 0
     ) {
+        self.bandwidthLimitKBps = bandwidthLimitKBps
         self.appearance = appearance
         self.density = density
         self.fontSize = fontSize
@@ -91,5 +95,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         dragMovesByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .dragMovesByDefault) ?? d.dragMovesByDefault
         appearance = (try? c.decode(Appearance.self, forKey: .appearance)) ?? d.appearance
+        bandwidthLimitKBps =
+            try c.decodeIfPresent(Int.self, forKey: .bandwidthLimitKBps) ?? d.bandwidthLimitKBps
     }
 }

@@ -143,7 +143,7 @@ public struct S3Provider: RemoteProvider {
             "-q", "-s", "--show-error", "-f", "--globoff", "--proto", "=https",
             "--connect-timeout", "20", "--aws-sigv4", "aws:amz:\(region):s3", "-K", "-",
         ]
-        return try await CurlFTPProvider.runCurl(base + opArgs, input: Self.credentials(c, password))
+        return try await CurlFTPProvider.runCurl(base + RemoteLimits.curlArgs + opArgs, input: Self.credentials(c, password))
     }
 
     /// curl config carrying the access key id / secret (the password), kept off the

@@ -141,7 +141,7 @@ public struct CurlFTPProvider: RemoteProvider {
             "-q", "-s", "--show-error", "--globoff", "--proto", "=ftp,ftps",
             "--connect-timeout", "20", "-K", "-",
         ]
-        return try await Self.runCurl(base + tls(c) + opArgs, input: Self.credentials(c, password))
+        return try await Self.runCurl(base + RemoteLimits.curlArgs + tls(c) + opArgs, input: Self.credentials(c, password))
     }
 
     private func tls(_ c: RemoteConnection) -> [String] {

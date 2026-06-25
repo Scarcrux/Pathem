@@ -11,7 +11,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     NSTableViewDelegate
 {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, search, terminal, shortcuts, gestures, updates
+        case general, appearance, layout, search, terminal, transfers, shortcuts, gestures, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
@@ -19,6 +19,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             case .layout: return L("settings.layout", "Layout")
             case .search: return L("settings.search", "Search")
             case .terminal: return L("settings.terminal", "Terminal")
+            case .transfers: return L("settings.transfers", "Transfers")
             case .shortcuts: return L("settings.shortcuts", "Shortcuts")
             case .gestures: return L("settings.gestures", "Gestures")
             case .updates: return L("settings.updates", "Updates")
@@ -31,6 +32,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             case .layout: return "sidebar.squares.left"
             case .search: return "magnifyingglass"
             case .terminal: return "terminal"
+            case .transfers: return "arrow.up.arrow.down"
             case .shortcuts: return "keyboard"
             case .gestures: return "hand.draw"
             case .updates: return "arrow.down.circle"
@@ -163,10 +165,29 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             hint(L("prefs.searchOCRHint", "Text and PDF contents are always indexed; image OCR is extra.")),
         ])
         case .terminal: return terminalPane()
+        case .transfers: return transfersPane()
         case .shortcuts: return shortcutsPane()
         case .gestures: return gesturesPane()
         case .updates: return updatesPane()
         }
+    }
+
+    private func transfersPane() -> NSView {
+        let field = NSTextField()
+        field.stringValue = prefs.bandwidthLimitKBps > 0 ? "\(prefs.bandwidthLimitKBps)" : ""
+        field.placeholderString = L("prefs.bandwidthPlaceholder", "0 = unlimited")
+        field.widthAnchor.constraint(equalToConstant: 90).isActive = true
+        field.target = self
+        field.action = #selector(bandwidthChanged(_:))
+        field.cell?.sendsActionOnEndEditing = true  // commit on Tab/click-away too
+        return form([
+            labeled(L("prefs.bandwidthLabel", "Limit transfer speed (KB/s)"), field),
+            hint(L("prefs.bandwidthHint", "Caps remote download and upload speed. 0 means unlimited.")),
+        ])
+    }
+    @objc private func bandwidthChanged(_ sender: NSTextField) {
+        prefs.bandwidthLimitKBps = max(0, Int(sender.stringValue) ?? 0)
+        onChange?(prefs)
     }
 
     private func terminalPane() -> NSView {
