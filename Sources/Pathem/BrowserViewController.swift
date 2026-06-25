@@ -2475,6 +2475,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case .sftpMissing: return L("bvc.sftpMissing", "sftp was not found")
         case .device(let code, let message): return message.isEmpty ? String(format: L("bvc.deviceError", "device error %d"), code) : message
         case .deviceToolMissing(let tool): return String(format: L("bvc.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
+        case .deviceUnsupported: return L("bvc.deviceUnsupported", "This device is detected, but browsing it isn’t supported yet.")
         }
     }
 

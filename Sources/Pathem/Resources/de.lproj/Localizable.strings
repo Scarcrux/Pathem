@@ -164,6 +164,7 @@
 "bvc.deleteVerb" = "Löschen";
 "bvc.deviceError" = "Gerätefehler %d";
 "bvc.deviceToolMissing" = "%@ ist nicht installiert. Installieren Sie es, um dieses Gerät zu durchsuchen.";
+"bvc.deviceUnsupported" = "Dieses Gerät wird erkannt, kann aber noch nicht durchsucht werden.";
 "bvc.downloadHere" = "Hier laden";
 "bvc.downloadingFrom" = "Laden von %@";
 "bvc.duplicateAction" = "Duplizieren";
@@ -479,6 +480,7 @@
 "pane.curlMissing" = "curl wurde nicht gefunden";
 "pane.deviceError" = "Gerätefehler %d";
 "pane.deviceToolMissing" = "%@ ist nicht installiert. Installieren Sie es, um dieses Gerät zu durchsuchen.";
+"pane.deviceUnsupported" = "Dieses Gerät wird erkannt, kann aber noch nicht durchsucht werden.";
 "pane.downloadFromServer" = "Vom Server laden…";
 "pane.emptyFolder" = "Leerer Ordner";
 "pane.filterPlaceholder" = "Filtern (z. B. ext:pdf, kind:image, size:>10mb)";

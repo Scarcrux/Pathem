@@ -164,6 +164,7 @@
 "bvc.deleteVerb" = "Delete";
 "bvc.deviceError" = "device error %d";
 "bvc.deviceToolMissing" = "%@ is not installed. Install it to browse this device.";
+"bvc.deviceUnsupported" = "This device is detected, but browsing it isn’t supported yet.";
 "bvc.downloadHere" = "Download Here";
 "bvc.downloadingFrom" = "Downloading from %@";
 "bvc.duplicateAction" = "Duplicate";
@@ -479,6 +480,7 @@
 "pane.curlMissing" = "curl was not found";
 "pane.deviceError" = "device error %d";
 "pane.deviceToolMissing" = "%@ is not installed. Install it to browse this device.";
+"pane.deviceUnsupported" = "This device is detected, but browsing it isn’t supported yet.";
 "pane.downloadFromServer" = "Download from Server…";
 "pane.emptyFolder" = "Empty folder";
 "pane.filterPlaceholder" = "Filter (try ext:pdf, kind:image, size:>10mb)";

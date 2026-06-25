@@ -164,6 +164,7 @@
 "bvc.deleteVerb" = "削除";
 "bvc.deviceError" = "デバイスエラー %d";
 "bvc.deviceToolMissing" = "%@ がインストールされていません。このデバイスを参照するにはインストールしてください。";
+"bvc.deviceUnsupported" = "このデバイスは検出されましたが、まだ参照には対応していません。";
 "bvc.downloadHere" = "ここにダウンロード";
 "bvc.downloadingFrom" = "%@からダウンロード中";
 "bvc.duplicateAction" = "複製";
@@ -479,6 +480,7 @@
 "pane.curlMissing" = "curlが見つかりませんでした";
 "pane.deviceError" = "デバイスエラー %d";
 "pane.deviceToolMissing" = "%@ がインストールされていません。このデバイスを参照するにはインストールしてください。";
+"pane.deviceUnsupported" = "このデバイスは検出されましたが、まだ参照には対応していません。";
 "pane.downloadFromServer" = "サーバからダウンロード…";
 "pane.emptyFolder" = "空のフォルダ";
 "pane.filterPlaceholder" = "フィルタ（例：ext:pdf、kind:image、size:>10mb）";
