@@ -333,6 +333,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if fm.fileExists(atPath: iCloud.path) {
             children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: nil, isFolder: true))
         }
+        // Modern Dropbox/Google Drive/OneDrive/Box etc. mount here via the File Provider.
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
         if let urls = try? fm.contentsOfDirectory(
             at: cloudStorage, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
@@ -344,6 +345,28 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
                 children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: nil, isFolder: true))
             }
+        }
+        // Legacy/home-level cloud folders not under CloudStorage (older Dropbox, OneDrive,
+        // Google Drive). Skip any whose provider is already listed above.
+        let alreadyHasProvider: (String) -> Bool = { keyword in
+            children.contains { $0.title.range(of: keyword, options: .caseInsensitive) != nil }
+        }
+        var legacy: [(name: String, folder: String, keyword: String)] = [
+            ("Dropbox", "Dropbox", "Dropbox"), ("Google Drive", "Google Drive", "Google Drive"),
+        ]
+        // OneDrive home folders are "OneDrive", "OneDrive - Personal", "OneDrive - <Org>".
+        if let homeChildren = try? fm.contentsOfDirectory(atPath: home.path) {
+            for name in homeChildren.sorted() where name == "OneDrive" || name.hasPrefix("OneDrive -") {
+                legacy.append((name, name, "OneDrive"))
+            }
+        }
+        for entry in legacy {
+            let url = home.appendingPathComponent(entry.folder)
+            var isDir: ObjCBool = false
+            guard fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue,
+                !alreadyHasProvider(entry.keyword)
+            else { continue }
+            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: nil, isFolder: true))
         }
         guard !children.isEmpty else { return nil }
         return Node(kind: .systemHeader, title: L("sidebar.cloudHeader", "Cloud"), url: nil, icon: nil, children: children)
