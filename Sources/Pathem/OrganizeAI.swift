@@ -14,6 +14,22 @@ import PathemEngine
         var steps: [GeneratedOrganizeStep]
     }
 
+    /// Ask the on-device model for a Conventional-Commits message from a staged diff.
+    @available(macOS 26, *)
+    func aiCommitMessage(diff: String) async -> String? {
+        guard case .available = SystemLanguageModel.default.availability else { return nil }
+        let session = LanguageModelSession(
+            instructions: """
+                You write git commit messages in the Conventional Commits style (for example
+                "feat: ...", "fix: ...", "refactor: ..."). Reply with a single short imperative
+                subject line under 72 characters: no body, no quotes, no trailing period.
+                """)
+        let prompt = "Write a commit message for this staged diff:\n\n" + String(diff.prefix(6000))
+        guard let response = try? await session.respond(to: prompt) else { return nil }
+        return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'`"))
+    }
+
     @available(macOS 26, *)
     @Generable
     struct CleanupAdvice {

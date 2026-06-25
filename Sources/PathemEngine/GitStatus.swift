@@ -24,7 +24,7 @@ public struct GitInfo: Sendable, Equatable {
 }
 
 public enum GitStatus {
-    private static let git = "/usr/bin/git"
+    static let git = "/usr/bin/git"
 
     /// Git status for the repo containing `folder`, or nil if it isn't a repo / git
     /// is unavailable. Runs off-process.

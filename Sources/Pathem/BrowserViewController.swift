@@ -72,6 +72,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var settings = SettingsWindowController()
     private lazy var batchCreate = BatchCreateController()
     private lazy var templatesManager = TemplatesController()
+    private lazy var commitController = CommitController()
     private var createTemplates: [CreateTemplate] = []
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
     var updater: UpdaterController?
@@ -414,6 +415,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.newFile", L("bvc.cmd.newFile", "New File")) { [weak self] in self?.newFile() }
         add("files.batchCreate", L("bvc.cmd.batchCreate", "Batch Create…")) { [weak self] in self?.showBatchCreate() }
         add("templates.manage", L("bvc.cmd.manageTemplates", "Manage Templates…")) { [weak self] in self?.showTemplatesManager() }
+        let inLocalFolder: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.isRemote && !pane.isShowingSmartResults
+        }
+        add("git.commit", L("bvc.cmd.gitCommit", "Commit…"), enabled: inLocalFolder) { [weak self] in self?.gitCommit() }
+        add("git.push", L("bvc.cmd.gitPush", "Push"), enabled: inLocalFolder) { [weak self] in self?.gitPushPull(push: true) }
+        add("git.pull", L("bvc.cmd.gitPull", "Pull"), enabled: inLocalFolder) { [weak self] in self?.gitPushPull(push: false) }
         add("files.rename", L("bvc.cmd.rename", "Rename…"), enabled: { [weak self] in self?.activePane?.selectedEntries.count == 1 }) {
             [weak self] in self?.renameSelection()
         }
@@ -663,6 +671,68 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             presentFailures(
                 [FileOperations.Failure(name: L("bvc.cmd.newFile", "New File"), reason: error.localizedDescription)],
                 title: L("bvc.couldntCreateFile", "Couldn’t create file"))
+        }
+    }
+
+    // MARK: - Git write (commit / push / pull)
+
+    private func gitCommit() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults, let window = view.window
+        else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        Task { @MainActor in
+            let staged = await GitOps.stageAll(in: folder)
+            guard staged.ok else {
+                self.presentInfo(L("git.notRepoTitle", "Not a git repository"), staged.output)
+                return
+            }
+            guard await GitOps.hasStagedChanges(in: folder) else {
+                self.presentInfo(
+                    L("git.nothingTitle", "Nothing to commit"),
+                    L("git.nothingBody", "There are no changes to commit."))
+                return
+            }
+            self.commitController.present(
+                over: window, repo: folder.lastPathComponent, canSuggest: AIAvailability.isAvailable,
+                suggest: { [weak self] in await self?.suggestCommit(folder: folder) ?? nil },
+                commit: { [weak self] message in self?.performCommit(message, in: folder) })
+        }
+    }
+
+    private func suggestCommit(folder: URL) async -> String? {
+        #if canImport(FoundationModels)
+            if #available(macOS 26, *) {
+                return await aiCommitMessage(diff: await GitOps.stagedDiff(in: folder))
+            }
+        #endif
+        return nil
+    }
+
+    private func performCommit(_ message: String, in folder: URL) {
+        Task { @MainActor in
+            let result = await GitOps.commit(message, in: folder)
+            self.reloadBothSides()
+            if !result.ok {
+                self.presentInfo(L("git.commitFailedTitle", "Commit failed"), result.output)
+            }
+        }
+    }
+
+    private func gitPushPull(push: Bool) {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        Task { @MainActor in
+            let result = push ? await GitOps.push(in: folder) : await GitOps.pull(in: folder)
+            self.reloadBothSides()
+            if result.ok {
+                self.presentInfo(
+                    push ? L("git.pushedTitle", "Pushed") : L("git.pulledTitle", "Pulled"),
+                    result.output.isEmpty ? L("git.upToDate", "Already up to date.") : result.output)
+            } else {
+                self.presentInfo(
+                    push ? L("git.pushFailedTitle", "Push failed") : L("git.pullFailedTitle", "Pull failed"),
+                    result.output)
+            }
         }
     }
 
