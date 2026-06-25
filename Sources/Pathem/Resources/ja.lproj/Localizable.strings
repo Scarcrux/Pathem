@@ -405,6 +405,7 @@
 "menu.files.copyURL" = "ファイルURLとしてコピー";
 "menu.files.deleteApp" = "Appをアンインストール…";
 "menu.files.duplicate" = "複製";
+"menu.files.ejectVolume" = "ボリュームを取り出す";
 "menu.files.extract" = "展開";
 "menu.files.findDuplicates" = "重複を検出";
 "menu.files.findInFiles" = "ファイル内を検索…";
@@ -446,7 +447,6 @@
 "menu.terminal.toggleFollow" = "ターミナルをフォルダに追従";
 "menu.terminalTheme" = "ターミナルのテーマ";
 "menu.tools" = "ツール";
-"menu.tools.ejectVolume" = "ボリュームを取り出す";
 "menu.tools.processViewer" = "プロセスビューア";
 "menu.tools.transfers" = "転送";
 "menu.undo" = "取り消す";
@@ -542,11 +542,9 @@
 "prefs.fontSizeLabel" = "フォントサイズ";
 "prefs.openConnectionsNewTab" = "接続を新しいタブで開く";
 "prefs.pathBarBottom" = "パスバーを下部に表示";
-"prefs.searchImageContents" = "画像の内容を検索（OCR、低速）";
 "prefs.searchOCR" = "画像の内容を検索（OCR、低速）";
 "prefs.searchOCRHint" = "テキストとPDFの内容は常にインデックスされます。画像のOCRは追加です。";
 "prefs.showFullPath" = "タイトルバーにフルパスを表示";
-"prefs.title" = "環境設定";
 "proc.confirmForce" = "%@（%d）を強制終了しますか？";
 "proc.confirmQuit" = "%@（%d）を終了しますか？";
 "proc.cpu" = "CPU %";
@@ -683,7 +681,6 @@
 "terminal.theme" = "テーマ";
 "toolbar.cleanup" = "クリーンアップ";
 "toolbar.cleanup.tip" = "再利用可能なファイルを検出して削除";
-"transfer.itemProgress" = "%@  （%d / %d）";
 "update.autoCheck" = "自動的にアップデートを確認";
 "update.checkNow" = "今すぐアップデートを確認";
 "update.notSetUpTitle" = "このビルドではアップデートが設定されていません";

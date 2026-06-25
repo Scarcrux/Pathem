@@ -405,6 +405,7 @@
 "menu.files.copyURL" = "Copiar como URL de archivo";
 "menu.files.deleteApp" = "Desinstalar app…";
 "menu.files.duplicate" = "Duplicar";
+"menu.files.ejectVolume" = "Expulsar volumen";
 "menu.files.extract" = "Extraer";
 "menu.files.findDuplicates" = "Buscar duplicados";
 "menu.files.findInFiles" = "Buscar en archivos…";
@@ -446,7 +447,6 @@
 "menu.terminal.toggleFollow" = "El Terminal sigue a la carpeta";
 "menu.terminalTheme" = "Tema del terminal";
 "menu.tools" = "Herramientas";
-"menu.tools.ejectVolume" = "Expulsar volumen";
 "menu.tools.processViewer" = "Visor de procesos";
 "menu.tools.transfers" = "Transferencias";
 "menu.undo" = "Deshacer";
@@ -542,11 +542,9 @@
 "prefs.fontSizeLabel" = "Tamaño de letra";
 "prefs.openConnectionsNewTab" = "Abrir conexiones en una pestaña nueva";
 "prefs.pathBarBottom" = "Mostrar la barra de ruta en la parte inferior";
-"prefs.searchImageContents" = "Buscar en el contenido de las imágenes (OCR, más lento)";
 "prefs.searchOCR" = "Buscar en el contenido de las imágenes (OCR, más lento)";
 "prefs.searchOCRHint" = "El contenido de texto y PDF siempre se indexa; el OCR de imágenes es adicional.";
 "prefs.showFullPath" = "Mostrar la ruta completa en la barra de título";
-"prefs.title" = "Preferencias";
 "proc.confirmForce" = "¿Forzar la salida de %@ (%d)?";
 "proc.confirmQuit" = "¿Salir de %@ (%d)?";
 "proc.cpu" = "CPU %";
@@ -683,7 +681,6 @@
 "terminal.theme" = "Tema";
 "toolbar.cleanup" = "Limpieza";
 "toolbar.cleanup.tip" = "Buscar y eliminar archivos recuperables";
-"transfer.itemProgress" = "%@  (%d de %d)";
 "update.autoCheck" = "Buscar actualizaciones automáticamente";
 "update.checkNow" = "Buscar actualizaciones ahora";
 "update.notSetUpTitle" = "Las actualizaciones no están configuradas para esta compilación";

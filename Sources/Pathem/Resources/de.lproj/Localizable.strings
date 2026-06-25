@@ -405,6 +405,7 @@
 "menu.files.copyURL" = "Als Datei-URL kopieren";
 "menu.files.deleteApp" = "App deinstallieren…";
 "menu.files.duplicate" = "Duplizieren";
+"menu.files.ejectVolume" = "Volume auswerfen";
 "menu.files.extract" = "Entpacken";
 "menu.files.findDuplicates" = "Duplikate finden";
 "menu.files.findInFiles" = "In Dateien suchen…";
@@ -446,7 +447,6 @@
 "menu.terminal.toggleFollow" = "Terminal folgt Ordner";
 "menu.terminalTheme" = "Terminal-Thema";
 "menu.tools" = "Werkzeuge";
-"menu.tools.ejectVolume" = "Volume auswerfen";
 "menu.tools.processViewer" = "Prozessanzeige";
 "menu.tools.transfers" = "Übertragungen";
 "menu.undo" = "Widerrufen";
@@ -542,11 +542,9 @@
 "prefs.fontSizeLabel" = "Schriftgröße";
 "prefs.openConnectionsNewTab" = "Verbindungen in einem neuen Tab öffnen";
 "prefs.pathBarBottom" = "Pfadleiste unten anzeigen";
-"prefs.searchImageContents" = "Bildinhalte durchsuchen (OCR, langsamer)";
 "prefs.searchOCR" = "Bildinhalte durchsuchen (OCR, langsamer)";
 "prefs.searchOCRHint" = "Text- und PDF-Inhalte werden immer indiziert; die Bild-OCR kommt hinzu.";
 "prefs.showFullPath" = "Vollständigen Pfad in der Titelleiste anzeigen";
-"prefs.title" = "Einstellungen";
 "proc.confirmForce" = "%@ (%d) sofort beenden?";
 "proc.confirmQuit" = "%@ (%d) beenden?";
 "proc.cpu" = "CPU %";
@@ -683,7 +681,6 @@
 "terminal.theme" = "Thema";
 "toolbar.cleanup" = "Aufräumen";
 "toolbar.cleanup.tip" = "Wiederverwertbare Dateien finden und entfernen";
-"transfer.itemProgress" = "%@  (%d von %d)";
 "update.autoCheck" = "Automatisch nach Updates suchen";
 "update.checkNow" = "Jetzt nach Updates suchen";
 "update.notSetUpTitle" = "Für diesen Build sind keine Updates eingerichtet";

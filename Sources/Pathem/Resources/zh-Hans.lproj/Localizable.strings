@@ -405,6 +405,7 @@
 "menu.files.copyURL" = "拷贝为文件 URL";
 "menu.files.deleteApp" = "卸载应用…";
 "menu.files.duplicate" = "复制副本";
+"menu.files.ejectVolume" = "推出宗卷";
 "menu.files.extract" = "解压";
 "menu.files.findDuplicates" = "查找重复项";
 "menu.files.findInFiles" = "在文件中查找…";
@@ -446,7 +447,6 @@
 "menu.terminal.toggleFollow" = "终端跟随文件夹";
 "menu.terminalTheme" = "终端主题";
 "menu.tools" = "工具";
-"menu.tools.ejectVolume" = "推出宗卷";
 "menu.tools.processViewer" = "进程查看器";
 "menu.tools.transfers" = "传输";
 "menu.undo" = "撤销";
@@ -542,11 +542,9 @@
 "prefs.fontSizeLabel" = "字体大小";
 "prefs.openConnectionsNewTab" = "在新标签页中打开连接";
 "prefs.pathBarBottom" = "在底部显示路径栏";
-"prefs.searchImageContents" = "搜索图像内容（OCR，较慢）";
 "prefs.searchOCR" = "搜索图像内容（OCR，较慢）";
 "prefs.searchOCRHint" = "文本和 PDF 内容始终会被索引；图像 OCR 为额外项。";
 "prefs.showFullPath" = "在标题栏中显示完整路径";
-"prefs.title" = "偏好设置";
 "proc.confirmForce" = "强制退出 %@（%d）？";
 "proc.confirmQuit" = "退出 %@（%d）？";
 "proc.cpu" = "CPU %";
@@ -683,7 +681,6 @@
 "terminal.theme" = "主题";
 "toolbar.cleanup" = "清理";
 "toolbar.cleanup.tip" = "查找并移除可回收的文件";
-"transfer.itemProgress" = "%@（第 %d 个，共 %d 个）";
 "update.autoCheck" = "自动检查更新";
 "update.checkNow" = "立即检查更新";
 "update.notSetUpTitle" = "此构建版本尚未设置更新";
