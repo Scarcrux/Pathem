@@ -41,7 +41,22 @@ public enum StorageScan {
         }
     }
 
+    /// Full scan (quick categories + duplicates). The UI prefers the two-phase API
+    /// below so it can show quick results first, but this keeps a one-call entry point.
     public static func scan(
+        _ root: URL, oldAfterDays: Int = 180, largeThreshold: Int64 = 50_000_000,
+        oldMinSize: Int64 = 5_000_000, maxPerReviewCategory: Int = 30, maxItems: Int = 300_000
+    ) -> Report {
+        var report = scanQuick(
+            root, oldAfterDays: oldAfterDays, largeThreshold: largeThreshold, oldMinSize: oldMinSize,
+            maxPerReviewCategory: maxPerReviewCategory, maxItems: maxItems)
+        report.duplicates = duplicates(root, maxItems: maxItems)
+        return report
+    }
+
+    /// The fast phase: junk, large, and old files from a single walk (no hashing), so
+    /// results can be shown almost immediately while duplicates are still computing.
+    public static func scanQuick(
         _ root: URL, oldAfterDays: Int = 180, largeThreshold: Int64 = 50_000_000,
         oldMinSize: Int64 = 5_000_000, maxPerReviewCategory: Int = 30, maxItems: Int = 300_000
     ) -> Report {
@@ -93,16 +108,22 @@ public enum StorageScan {
                 Item(path: $0.path, size: $0.size, category: .old, reason: "unused for a long time", isDirectory: false)
             }
 
-        // Duplicate extras (keep one per group; the rest are reclaimable).
+        return report
+    }
+
+    /// The slow phase: duplicate copies (content-hashed). Run after `scanQuick` so the
+    /// user already sees junk/large/old while this completes.
+    public static func duplicates(_ root: URL, maxItems: Int = 300_000) -> [Item] {
+        var items: [Item] = []
         for group in DuplicateFinder.find(in: [root], minSize: 1, maxItems: maxItems) {
-            for extra in group.files.dropFirst() {
+            for extra in group.files.dropFirst() {  // keep one per group; the rest are reclaimable
                 guard let location = extra.location else { continue }
-                report.duplicates.append(
+                items.append(
                     Item(
                         path: (location as NSString).appendingPathComponent(extra.name), size: extra.size,
                         category: .duplicate, reason: "duplicate copy", isDirectory: false))
             }
         }
-        return report
+        return items
     }
 }

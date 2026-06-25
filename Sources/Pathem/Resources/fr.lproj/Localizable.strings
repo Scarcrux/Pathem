@@ -205,9 +205,12 @@
 "cleanup.colItem" = "Élément";
 "cleanup.colSize" = "Taille";
 "cleanup.colWhy" = "Raison";
+"cleanup.diskUsage" = "%@ utilisés sur %@ · %@ libres";
 "cleanup.moveCheckedToTrash" = "Placer les éléments cochés dans la corbeille";
 "cleanup.panelTitle" = "Nettoyage";
 "cleanup.partialScan" = " (analyse partielle)";
+"cleanup.phaseDuplicates" = "analyse des doublons…";
+"cleanup.phaseScanning" = "Analyse des fichiers…";
 "cleanup.recommendWithAI" = "Recommander avec l’IA";
 "cleanup.reveal" = "Afficher";
 "cleanup.scanning" = "Analyse de %@…";

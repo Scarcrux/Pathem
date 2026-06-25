@@ -16,6 +16,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private let panel: NSPanel
     private let titleLabel = NSTextField(labelWithString: L("cleanup.title", "Cleanup"))
     private let summaryLabel = NSTextField(labelWithString: "")
+    private let diskBar = NSProgressIndicator()
+    private let diskLabel = NSTextField(labelWithString: "")
     private let table = NSTableView()
     private let spinner = NSProgressIndicator()
     private let aiButton = NSButton()
@@ -42,7 +44,30 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         root = url
         if !panel.isVisible { panel.center() }
         panel.makeKeyAndOrderFront(nil)
+        updateDiskStats()  // instant: overall capacity/used/free, before the scan runs
         scan()
+    }
+
+    /// Volume capacity, used, and free for the scanned folder's disk (like the macOS
+    /// Storage summary). Instant via the file system, so it shows immediately.
+    private func updateDiskStats() {
+        let values = try? root.resourceValues(forKeys: [
+            .volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey,
+        ])
+        guard let total = values?.volumeTotalCapacity, total > 0 else {
+            diskLabel.stringValue = ""
+            diskBar.isHidden = true
+            return
+        }
+        let free = Int64(values?.volumeAvailableCapacityForImportantUsage ?? 0)
+        let used = max(0, Int64(total) - free)
+        diskBar.isHidden = false
+        diskBar.doubleValue = Double(used) / Double(total)
+        diskLabel.stringValue = String(
+            format: L("cleanup.diskUsage", "%@ used of %@ · %@ free"),
+            byteFormatter.string(fromByteCount: used),
+            byteFormatter.string(fromByteCount: Int64(total)),
+            byteFormatter.string(fromByteCount: free))
     }
 
     // MARK: Build
@@ -55,6 +80,14 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         spinner.style = .spinning
         spinner.controlSize = .small
         spinner.isDisplayedWhenStopped = false
+
+        diskBar.style = .bar
+        diskBar.isIndeterminate = false
+        diskBar.minValue = 0
+        diskBar.maxValue = 1
+        diskBar.controlSize = .small
+        diskLabel.font = .systemFont(ofSize: 11)
+        diskLabel.textColor = .secondaryLabelColor
 
         for (id, title, width) in [
             ("check", "", CGFloat(24)), ("name", L("cleanup.colItem", "Item"), 280),
@@ -93,11 +126,15 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         header.orientation = .horizontal
         header.spacing = 8
         summaryLabel.setContentHuggingPriority(.init(1), for: .horizontal)
+        let diskStats = NSStackView(views: [diskBar, diskLabel])
+        diskStats.orientation = .vertical
+        diskStats.alignment = .leading
+        diskStats.spacing = 3
         let actions = NSStackView(views: [aiButton, NSView(), reveal, trashButton])
         actions.orientation = .horizontal
         actions.spacing = 8
 
-        let root = NSStackView(views: [header, scroll, actions])
+        let root = NSStackView(views: [header, diskStats, scroll, actions])
         root.orientation = .vertical
         root.spacing = 10
         root.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
@@ -110,42 +147,76 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 root.trailingAnchor.constraint(equalTo: content.trailingAnchor),
                 root.bottomAnchor.constraint(equalTo: content.bottomAnchor),
                 scroll.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
+                diskStats.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
+                diskBar.widthAnchor.constraint(equalTo: diskStats.widthAnchor),
             ])
         }
     }
 
     // MARK: Scan
 
+    private var quickReport: StorageScan.Report?
+
+    /// Two-phase so results appear fast: the quick walk (junk/large/old) shows almost
+    /// immediately, then the slower duplicate analysis fills in, with a live status.
     private func scan() {
         titleLabel.stringValue = String(
             format: L("cleanup.scanning", "Scanning %@…"), root.lastPathComponent)
-        summaryLabel.stringValue = ""
+        summaryLabel.stringValue = L("cleanup.phaseScanning", "Scanning files…")
         rows = []
+        quickReport = nil
         table.reloadData()
+        trashButton.isEnabled = false
         spinner.startAnimation(nil)
         let generation = gen.bump()
         let url = root
         Task.detached(priority: .utility) { [weak self] in
-            let report = StorageScan.scan(url)
+            let quick = StorageScan.scanQuick(url)
             await MainActor.run {
                 guard let self, self.gen.isCurrent(generation) else { return }
-                self.apply(report)
+                self.applyQuick(quick)
+            }
+            let dups = StorageScan.duplicates(url)
+            await MainActor.run {
+                guard let self, self.gen.isCurrent(generation) else { return }
+                self.applyDuplicates(dups)
             }
         }
     }
 
-    private func apply(_ report: StorageScan.Report) {
-        spinner.stopAnimation(nil)
-        // Safe categories pre-checked; review categories off by default.
-        rows =
-            report.junk.map { Row(item: $0, checked: true) }
-            + report.duplicates.map { Row(item: $0, checked: true) }
-            + report.large.map { Row(item: $0, checked: false) }
-            + report.old.map { Row(item: $0, checked: false) }
+    private func applyQuick(_ report: StorageScan.Report) {
+        quickReport = report
         titleLabel.stringValue = String(
             format: L("cleanup.titleFor", "Cleanup: %@"), root.lastPathComponent)
+        rebuildRows()
+        updateSummary(extra: " · " + L("cleanup.phaseDuplicates", "analyzing duplicates…"))
+    }
+
+    private func applyDuplicates(_ items: [StorageScan.Item]) {
+        spinner.stopAnimation(nil)
+        quickReport?.duplicates = items
+        rebuildRows()
+        updateSummary(extra: (quickReport?.truncated ?? false) ? L("cleanup.partialScan", " (partial scan)") : "")
+    }
+
+    /// Rebuild the row list from the latest report, preserving any check toggles the
+    /// user made while the scan was still running.
+    private func rebuildRows() {
+        guard let report = quickReport else {
+            rows = []
+            table.reloadData()
+            return
+        }
+        let priorChecked = Dictionary(rows.map { ($0.item.path, $0.checked) }, uniquingKeysWith: { a, _ in a })
+        func row(_ item: StorageScan.Item, _ defaultChecked: Bool) -> Row {
+            Row(item: item, checked: priorChecked[item.path] ?? defaultChecked)
+        }
+        rows =
+            report.junk.map { row($0, true) }
+            + report.duplicates.map { row($0, true) }
+            + report.large.map { row($0, false) }
+            + report.old.map { row($0, false) }
         table.reloadData()
-        updateSummary(extra: report.truncated ? L("cleanup.partialScan", " (partial scan)") : "")
     }
 
     private func updateSummary(extra: String = "") {

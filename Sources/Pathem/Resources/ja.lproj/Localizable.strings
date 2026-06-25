@@ -205,9 +205,12 @@
 "cleanup.colItem" = "項目";
 "cleanup.colSize" = "サイズ";
 "cleanup.colWhy" = "理由";
+"cleanup.diskUsage" = "%@ / %@ を使用 · 空き %@";
 "cleanup.moveCheckedToTrash" = "選択した項目をゴミ箱に入れる";
 "cleanup.panelTitle" = "クリーンアップ";
 "cleanup.partialScan" = "（部分スキャン）";
+"cleanup.phaseDuplicates" = "重複を分析中…";
+"cleanup.phaseScanning" = "ファイルをスキャン中…";
 "cleanup.recommendWithAI" = "AIで推奨";
 "cleanup.reveal" = "表示";
 "cleanup.scanning" = "%@をスキャン中…";

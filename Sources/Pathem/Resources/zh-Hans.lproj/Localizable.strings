@@ -205,9 +205,12 @@
 "cleanup.colItem" = "项目";
 "cleanup.colSize" = "大小";
 "cleanup.colWhy" = "原因";
+"cleanup.diskUsage" = "已用 %@ / 共 %@ · 剩余 %@";
 "cleanup.moveCheckedToTrash" = "将已勾选项移到废纸篓";
 "cleanup.panelTitle" = "清理";
 "cleanup.partialScan" = "（部分扫描）";
+"cleanup.phaseDuplicates" = "正在分析重复项…";
+"cleanup.phaseScanning" = "正在扫描文件…";
 "cleanup.recommendWithAI" = "用 AI 推荐";
 "cleanup.reveal" = "显示";
 "cleanup.scanning" = "正在扫描 %@…";

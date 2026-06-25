@@ -205,9 +205,12 @@
 "cleanup.colItem" = "Objekt";
 "cleanup.colSize" = "Größe";
 "cleanup.colWhy" = "Grund";
+"cleanup.diskUsage" = "%@ von %@ belegt · %@ frei";
 "cleanup.moveCheckedToTrash" = "Markierte in den Papierkorb legen";
 "cleanup.panelTitle" = "Aufräumen";
 "cleanup.partialScan" = " (Teilscan)";
+"cleanup.phaseDuplicates" = "Duplikate werden analysiert…";
+"cleanup.phaseScanning" = "Dateien werden geprüft…";
 "cleanup.recommendWithAI" = "Mit KI empfehlen";
 "cleanup.reveal" = "Anzeigen";
 "cleanup.scanning" = "%@ wird gescannt…";

@@ -205,9 +205,12 @@
 "cleanup.colItem" = "Item";
 "cleanup.colSize" = "Size";
 "cleanup.colWhy" = "Why";
+"cleanup.diskUsage" = "%@ used of %@ · %@ free";
 "cleanup.moveCheckedToTrash" = "Move Checked to Trash";
 "cleanup.panelTitle" = "Cleanup";
 "cleanup.partialScan" = " (partial scan)";
+"cleanup.phaseDuplicates" = "analyzing duplicates…";
+"cleanup.phaseScanning" = "Scanning files…";
 "cleanup.recommendWithAI" = "Recommend with AI";
 "cleanup.reveal" = "Reveal";
 "cleanup.scanning" = "Scanning %@…";
