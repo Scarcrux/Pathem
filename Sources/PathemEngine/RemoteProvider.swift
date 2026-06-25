@@ -34,6 +34,7 @@ public enum RemoteProviders {
         switch proto {
         case .ftp, .ftps: return CurlFTPProvider()
         case .sftp: return SFTPProvider()
+        case .webdav, .webdavs: return CurlWebDAVProvider()
         }
     }
 }

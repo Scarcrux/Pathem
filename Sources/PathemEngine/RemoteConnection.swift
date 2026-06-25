@@ -6,15 +6,26 @@ import Foundation
 /// Full-Disk-Access app process.
 public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public enum Proto: String, Codable, Sendable, CaseIterable {
-        case ftp, ftps, sftp
-        public var defaultPort: Int { self == .sftp ? 22 : 21 }
+        case ftp, ftps, sftp, webdav, webdavs
+        public var defaultPort: Int {
+            switch self {
+            case .sftp: return 22
+            case .ftp, .ftps: return 21
+            case .webdav: return 80
+            case .webdavs: return 443
+            }
+        }
         public var label: String {
             switch self {
             case .ftp: return "FTP"
             case .ftps: return "FTPS"
             case .sftp: return "SFTP"
+            case .webdav: return "WebDAV"
+            case .webdavs: return "WebDAV (HTTPS)"
             }
         }
+        /// True for the HTTP-based WebDAV protocols.
+        public var isWebDAV: Bool { self == .webdav || self == .webdavs }
     }
 
     public var id: UUID
