@@ -239,6 +239,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Verify Checksum…", "files.verifyChecksum"))
         fileMenu.addItem(commandItem("Compress", "files.compress"))
         fileMenu.addItem(commandItem("Extract", "files.extract"))
+        fileMenu.addItem(commandItem("Show Archive Contents", "files.peekArchive"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 

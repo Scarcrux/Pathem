@@ -19,6 +19,10 @@
 "appdel.body" = "同时移除 %d 个相关文件（%@）：\n%@";
 "appdel.noneBody" = "未找到相关的支持文件。";
 "appdel.title" = "将 %@ 移到废纸篓？";
+"archive.cantRead" = "无法读取压缩包";
+"archive.contents" = "内容";
+"archive.count" = "%d 项";
+"archive.extractAll" = "全部解压…";
 "batch.actionName" = "批量创建";
 "batch.create" = "创建";
 "batch.files" = "文件";
@@ -99,6 +103,7 @@
 "bvc.cmd.openTerminalHere" = "在此处打开终端";
 "bvc.cmd.organizeWithAI" = "用 AI 整理…";
 "bvc.cmd.paste" = "粘贴";
+"bvc.cmd.peekArchive" = "查看压缩包内容";
 "bvc.cmd.preferences" = "偏好设置…";
 "bvc.cmd.previewPane" = "预览窗格";
 "bvc.cmd.previousTab" = "上一个标签页";
@@ -375,6 +380,7 @@
 "menu.files.newFolder" = "新建文件夹";
 "menu.files.open" = "打开";
 "menu.files.organizeAI" = "用 AI 整理…";
+"menu.files.peekArchive" = "查看压缩包内容";
 "menu.files.rename" = "重新命名…";
 "menu.files.reveal" = "在 Finder 中显示";
 "menu.files.trash" = "移到废纸篓";

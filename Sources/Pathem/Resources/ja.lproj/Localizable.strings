@@ -19,6 +19,10 @@
 "appdel.body" = "関連ファイル %d 件も削除（%@）：\n%@";
 "appdel.noneBody" = "関連するサポートファイルは見つかりませんでした。";
 "appdel.title" = "%@ をゴミ箱に入れますか？";
+"archive.cantRead" = "アーカイブを読み込めませんでした";
+"archive.contents" = "内容";
+"archive.count" = "%d 項目";
+"archive.extractAll" = "すべて展開…";
 "batch.actionName" = "一括作成";
 "batch.create" = "作成";
 "batch.files" = "ファイル";
@@ -99,6 +103,7 @@
 "bvc.cmd.openTerminalHere" = "ここでターミナルを開く";
 "bvc.cmd.organizeWithAI" = "AIで整理…";
 "bvc.cmd.paste" = "ペースト";
+"bvc.cmd.peekArchive" = "アーカイブの内容を表示";
 "bvc.cmd.preferences" = "環境設定…";
 "bvc.cmd.previewPane" = "プレビューペイン";
 "bvc.cmd.previousTab" = "前のタブ";
@@ -375,6 +380,7 @@
 "menu.files.newFolder" = "新規フォルダ";
 "menu.files.open" = "開く";
 "menu.files.organizeAI" = "AIで整理…";
+"menu.files.peekArchive" = "アーカイブの内容を表示";
 "menu.files.rename" = "名称変更…";
 "menu.files.reveal" = "Finderに表示";
 "menu.files.trash" = "ゴミ箱に入れる";

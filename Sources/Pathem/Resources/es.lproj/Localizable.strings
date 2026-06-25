@@ -19,6 +19,10 @@
 "appdel.body" = "Eliminar también %d archivos relacionados (%@):\n%@";
 "appdel.noneBody" = "No se encontraron archivos de soporte relacionados.";
 "appdel.title" = "¿Mover %@ a la papelera?";
+"archive.cantRead" = "No se pudo leer el archivo comprimido";
+"archive.contents" = "Contenido";
+"archive.count" = "%d elementos";
+"archive.extractAll" = "Extraer todo…";
 "batch.actionName" = "Crear en lote";
 "batch.create" = "Crear";
 "batch.files" = "Archivos";
@@ -99,6 +103,7 @@
 "bvc.cmd.openTerminalHere" = "Abrir el Terminal aquí";
 "bvc.cmd.organizeWithAI" = "Organizar con la AI…";
 "bvc.cmd.paste" = "Pegar";
+"bvc.cmd.peekArchive" = "Ver contenido del archivo comprimido";
 "bvc.cmd.preferences" = "Preferencias…";
 "bvc.cmd.previewPane" = "Panel de previsualización";
 "bvc.cmd.previousTab" = "Pestaña anterior";
@@ -375,6 +380,7 @@
 "menu.files.newFolder" = "Nueva carpeta";
 "menu.files.open" = "Abrir";
 "menu.files.organizeAI" = "Organizar con la AI…";
+"menu.files.peekArchive" = "Ver contenido del archivo comprimido";
 "menu.files.rename" = "Renombrar…";
 "menu.files.reveal" = "Mostrar en el Finder";
 "menu.files.trash" = "Mover a la papelera";

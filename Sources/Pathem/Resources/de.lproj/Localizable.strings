@@ -19,6 +19,10 @@
 "appdel.body" = "Auch %d zugehörige Dateien entfernen (%@):\n%@";
 "appdel.noneBody" = "Es wurden keine zugehörigen Supportdateien gefunden.";
 "appdel.title" = "%@ in den Papierkorb legen?";
+"archive.cantRead" = "Archiv konnte nicht gelesen werden";
+"archive.contents" = "Inhalt";
+"archive.count" = "%d Objekte";
+"archive.extractAll" = "Alle extrahieren…";
 "batch.actionName" = "Stapelerstellung";
 "batch.create" = "Erstellen";
 "batch.files" = "Dateien";
@@ -99,6 +103,7 @@
 "bvc.cmd.openTerminalHere" = "Terminal hier öffnen";
 "bvc.cmd.organizeWithAI" = "Mit KI organisieren…";
 "bvc.cmd.paste" = "Einsetzen";
+"bvc.cmd.peekArchive" = "Archivinhalt anzeigen";
 "bvc.cmd.preferences" = "Einstellungen…";
 "bvc.cmd.previewPane" = "Vorschaubereich";
 "bvc.cmd.previousTab" = "Vorheriger Tab";
@@ -375,6 +380,7 @@
 "menu.files.newFolder" = "Neuer Ordner";
 "menu.files.open" = "Öffnen";
 "menu.files.organizeAI" = "Mit KI organisieren…";
+"menu.files.peekArchive" = "Archivinhalt anzeigen";
 "menu.files.rename" = "Umbenennen…";
 "menu.files.reveal" = "Im Finder zeigen";
 "menu.files.trash" = "In den Papierkorb legen";

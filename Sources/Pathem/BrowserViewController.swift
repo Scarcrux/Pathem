@@ -73,6 +73,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var batchCreate = BatchCreateController()
     private lazy var templatesManager = TemplatesController()
     private lazy var commitController = CommitController()
+    private lazy var archiveContents = ArchiveContentsController()
     private var createTemplates: [CreateTemplate] = []
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
     var updater: UpdaterController?
@@ -419,6 +420,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane else { return false }
             return !pane.isRemote && !pane.isShowingSmartResults
         }
+        add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
+            return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
+        }) { [weak self] in self?.peekArchive() }
         add("files.deleteApp", L("bvc.cmd.deleteApp", "Uninstall App…"), enabled: { [weak self] in
             guard let entry = self?.activePane?.selectedEntries, entry.count == 1 else { return false }
             return entry.first?.name.hasSuffix(".app") == true
@@ -1186,6 +1191,40 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             self.reloadBothSides()
             if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+        }
+    }
+
+    /// Peek inside an archive (read-only listing), with Extract All from the panel.
+    private func peekArchive() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            pane.selectedEntries.count == 1, let window = view.window
+        else { NSSound.beep(); return }
+        guard let archive = pane.selectedLocalURLs().first, Archiver.canExtract(archive) else {
+            NSSound.beep(); return
+        }
+        let folder = pane.currentURL
+        Task { @MainActor in
+            do {
+                let paths = try await Archiver.list(archive)
+                self.archiveContents.present(
+                    over: window, archiveName: archive.lastPathComponent, entries: paths,
+                    onExtractAll: { [weak self] in self?.extractArchive(archive, in: folder) })
+            } catch {
+                self.reportArchiveError(L("archive.cantRead", "Couldn’t read the archive"), error)
+            }
+        }
+    }
+
+    private func extractArchive(_ archive: URL, in folder: URL) {
+        Task { @MainActor in
+            let name = (archive.lastPathComponent as NSString).deletingPathExtension
+            let out = self.uniqueLocalURL(folder.appendingPathComponent(name))
+            do {
+                try await Archiver.extract(archive, to: out)
+                self.reloadBothSides()
+            } catch {
+                self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), error)
+            }
         }
     }
 

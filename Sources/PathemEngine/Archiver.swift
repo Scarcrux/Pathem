@@ -65,4 +65,29 @@ public enum Archiver {
         }
         guard result.1 == 0 else { throw ArchiveError.tool(code: result.1, message: result.2) }
     }
+
+    /// List the entry paths inside `archive` (read-only browse), via bsdtar which reads
+    /// both zip and the tar family. Out-of-process, like the rest.
+    public static func list(_ archive: URL) async throws -> [String] {
+        guard canExtract(archive) else { throw ArchiveError.unsupported(archive.lastPathComponent) }
+        let (data, status, err) = try await RemoteRunner.run("/usr/bin/tar", ["-tf", archive.path])
+        guard status == 0 else { throw ArchiveError.tool(code: status, message: err) }
+        return String(decoding: data, as: UTF8.self).split(whereSeparator: \.isNewline)
+            .map(String.init).filter { !$0.isEmpty }
+    }
+
+    /// Derive the archive's root-level entries from its full entry paths (pure, tested).
+    /// A name that appears as a parent of any path is a folder.
+    public static func topLevel(_ paths: [String]) -> [(name: String, isDirectory: Bool)] {
+        var isDir: [String: Bool] = [:]
+        var order: [String] = []
+        for raw in paths {
+            let path = raw.hasPrefix("./") ? String(raw.dropFirst(2)) : raw
+            let segments = path.split(separator: "/", omittingEmptySubsequences: true).map(String.init)
+            guard let first = segments.first else { continue }
+            if isDir[first] == nil { order.append(first) }
+            isDir[first] = (isDir[first] ?? false) || segments.count > 1 || path.hasSuffix("/")
+        }
+        return order.map { ($0, isDir[$0] ?? false) }
+    }
 }
