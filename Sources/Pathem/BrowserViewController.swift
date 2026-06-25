@@ -78,6 +78,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var commitController = CommitController()
     private lazy var archiveContents = ArchiveContentsController()
     private lazy var findInFiles = FindInFilesController()
+    private lazy var processViewer = ProcessViewerController()
     private var createTemplates: [CreateTemplate] = []
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
     var updater: UpdaterController?
@@ -432,6 +433,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return !pane.isRemote && !pane.isShowingSmartResults
         }
         add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
+        add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
         add("files.duplicate", L("bvc.cmd.duplicate", "Duplicate"), enabled: { [weak self] in
             guard let pane = self?.activePane else { return false }
             return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty

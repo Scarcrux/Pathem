@@ -328,6 +328,12 @@ enum PathemApp {
         goMenu.addItem(commandItem("Open Connections in a New Tab", "connections.newTabToggle"))
         goMenu.addItem(commandItem("Download from Server…", "remote.download"))
 
+        let toolsItem = NSMenuItem()
+        mainMenu.addItem(toolsItem)
+        let toolsMenu = NSMenu(title: L("menu.tools", "Tools"))
+        toolsItem.submenu = toolsMenu
+        toolsMenu.addItem(commandItem("Process Viewer", "tools.processViewer"))
+
         return mainMenu
     }
 
