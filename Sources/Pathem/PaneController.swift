@@ -558,8 +558,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         }
         let url = urlFor(entry)  // smart-result entries carry their own folder
         if entry.isDirectory {
-            nav.go(to: url)
-            enterDirectory()  // clears smart mode and watches the real folder
+            // App bundles and document packages are directories but should open (launch),
+            // like Finder; entering them is via "Show Package Contents" only.
+            if (try? url.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true {
+                NSWorkspace.shared.open(url)
+            } else {
+                nav.go(to: url)
+                enterDirectory()  // clears smart mode and watches the real folder
+            }
         } else if let openFile {
             openFile(url)  // apply scoped opener rules
         } else {
@@ -1249,8 +1255,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
             descend(into: selected[0])
             return
         }
-        for entry in selected where !entry.isDirectory {
-            descend(into: entry)
+        for entry in selected {
+            // Open files and app/document packages; skip plain folders (can't navigate
+            // several at once in one pane).
+            let isPackage = (try? urlFor(entry).resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+            if !entry.isDirectory || isPackage { descend(into: entry) }
         }
     }
 
