@@ -11,6 +11,22 @@ import Testing
         #expect(FileInfo.rwxString(0o000) == "---------")
     }
 
+    @Test func setPosixModeRoundTrips() throws {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-chmod-\(UUID().uuidString)")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("script.sh")
+        try Data("#!/bin/sh\n".utf8).write(to: file)
+
+        try FileInfo.setPosixMode(0o700, on: file)
+        #expect(FileInfo.gather(for: file)?.posixMode == 0o700)
+        try FileInfo.setPosixMode(0o644, on: file)
+        let info = FileInfo.gather(for: file)
+        #expect(info?.posixMode == 0o644)
+        #expect(info?.permissions == "rw-r--r--")
+    }
+
     @Test func gatherReadsFileMetadata() throws {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-info-\(UUID().uuidString)")

@@ -12,14 +12,16 @@ public struct FileInfo: Sendable, Equatable {
     public var created: Date?
     public var modified: Date?
     public var permissions: String  // e.g. "rwxr-xr-x"
+    public var posixMode: UInt16?  // raw mode bits (& 0o7777) for the chmod editor
     public var owner: String?
     public var isDataless: Bool  // online-only cloud placeholder
 
     public init(
         name: String, path: String, kind: String, isDirectory: Bool, isSymbolicLink: Bool,
         size: Int64, created: Date?, modified: Date?, permissions: String, owner: String?,
-        isDataless: Bool = false
+        posixMode: UInt16? = nil, isDataless: Bool = false
     ) {
+        self.posixMode = posixMode
         self.name = name
         self.path = path
         self.kind = kind
@@ -40,7 +42,8 @@ public struct FileInfo: Sendable, Equatable {
         ]
         guard let values = try? url.resourceValues(forKeys: keys) else { return nil }
         let attrs = (try? FileManager.default.attributesOfItem(atPath: url.path)) ?? [:]
-        let permissions = (attrs[.posixPermissions] as? NSNumber).map { rwxString($0.uint16Value) } ?? "---------"
+        let modeNumber = attrs[.posixPermissions] as? NSNumber
+        let permissions = modeNumber.map { rwxString($0.uint16Value) } ?? "---------"
         let isDirectory = values.isDirectory ?? false
         // SF_DATALESS (0x40000000) marks an online-only cloud placeholder. Read it
         // from st_flags without materializing the file.
@@ -57,7 +60,14 @@ public struct FileInfo: Sendable, Equatable {
             modified: values.contentModificationDate,
             permissions: permissions,
             owner: attrs[.ownerAccountName] as? String,
+            posixMode: modeNumber.map { $0.uint16Value & 0o7777 },
             isDataless: isDataless)
+    }
+
+    /// Apply POSIX mode bits to a file (chmod). `mode` is the full octal (lower 12 bits).
+    public static func setPosixMode(_ mode: UInt16, on url: URL) throws {
+        try FileManager.default.setAttributes(
+            [.posixPermissions: NSNumber(value: mode & 0o7777)], ofItemAtPath: url.path)
     }
 
     /// POSIX mode bits (lower 9) as a 9-char "rwxr-xr-x" string.

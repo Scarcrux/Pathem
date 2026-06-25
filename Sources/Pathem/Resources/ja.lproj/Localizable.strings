@@ -500,6 +500,13 @@
 "pane.viewAsGallery" = "ギャラリー表示";
 "pane.viewAsIcons" = "アイコン表示";
 "pane.viewAsList" = "リスト表示";
+"perms.exec" = "実";
+"perms.group" = "グループ";
+"perms.octal" = "8進数";
+"perms.other" = "その他";
+"perms.owner" = "所有者";
+"perms.read" = "読";
+"perms.write" = "書";
 "prefs.alternatingRows" = "行の色を交互に表示";
 "prefs.appearanceDark" = "ダーク";
 "prefs.appearanceLabel" = "外観";

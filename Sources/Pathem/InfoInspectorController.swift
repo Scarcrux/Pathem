@@ -92,7 +92,22 @@ final class InfoInspectorController: NSObject {
             addField(L("info.whereLabel", "Where"), (info.path as NSString).deletingLastPathComponent)
             if let created = info.created { addField(L("info.createdLabel", "Created"), dateFormatter.string(from: created)) }
             if let modified = info.modified { addField(L("info.modifiedLabel", "Modified"), dateFormatter.string(from: modified)) }
-            addField(L("info.permissionsLabel", "Permissions"), info.permissions)
+            // Editable chmod grid for a local item we can attempt to modify; otherwise
+            // the read-only symbolic string (remote panes, dataless placeholders).
+            if let mode = info.posixMode, !info.isDataless, urls[0].isFileURL {
+                let url = urls[0]
+                let editor = PermissionsEditorView(mode: mode) { newMode in
+                    do {
+                        try FileInfo.setPosixMode(newMode, on: url)
+                        return true
+                    } catch {
+                        return false
+                    }
+                }
+                addCustomField(L("info.permissionsLabel", "Permissions"), editor)
+            } else {
+                addField(L("info.permissionsLabel", "Permissions"), info.permissions)
+            }
             if let owner = info.owner { addField(L("info.ownerLabel", "Owner"), owner) }
             if !info.isDirectory, !info.isDataless {
                 let url = urls[0]
@@ -127,6 +142,15 @@ final class InfoInspectorController: NSObject {
 
     @discardableResult
     private func addField(_ label: String, _ value: String) -> NSTextField {
+        let val = NSTextField(wrappingLabelWithString: value)
+        val.font = .systemFont(ofSize: 12)
+        val.isSelectable = true
+        addCustomField(label, val)
+        return val
+    }
+
+    /// A labeled row hosting an arbitrary trailing view (used by the chmod editor).
+    private func addCustomField(_ label: String, _ trailing: NSView) {
         let name = NSTextField(labelWithString: label)
         name.font = .systemFont(ofSize: 12, weight: .semibold)
         name.textColor = .secondaryLabelColor
@@ -135,18 +159,13 @@ final class InfoInspectorController: NSObject {
         name.widthAnchor.constraint(equalToConstant: 92).isActive = true
         name.setContentHuggingPriority(.required, for: .horizontal)
 
-        let val = NSTextField(wrappingLabelWithString: value)
-        val.font = .systemFont(ofSize: 12)
-        val.isSelectable = true
-
-        let row = NSStackView(views: [name, val])
+        let row = NSStackView(views: [name, trailing])
         row.orientation = .horizontal
         row.alignment = .firstBaseline
         row.spacing = 8
         row.translatesAutoresizingMaskIntoConstraints = false
         fields.addArrangedSubview(row)
         row.widthAnchor.constraint(equalTo: fields.widthAnchor).isActive = true
-        return val
     }
 }
 

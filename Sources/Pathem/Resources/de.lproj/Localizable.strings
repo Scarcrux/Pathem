@@ -500,6 +500,13 @@
 "pane.viewAsGallery" = "als Galerie";
 "pane.viewAsIcons" = "als Symbole";
 "pane.viewAsList" = "als Liste";
+"perms.exec" = "X";
+"perms.group" = "Gruppe";
+"perms.octal" = "Oktal";
+"perms.other" = "Andere";
+"perms.owner" = "Eigentümer";
+"perms.read" = "R";
+"perms.write" = "W";
 "prefs.alternatingRows" = "Abwechselnde Zeilenfarben";
 "prefs.appearanceDark" = "Dunkel";
 "prefs.appearanceLabel" = "Erscheinungsbild";

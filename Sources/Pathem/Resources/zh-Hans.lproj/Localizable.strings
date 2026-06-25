@@ -500,6 +500,13 @@
 "pane.viewAsGallery" = "以画廊方式";
 "pane.viewAsIcons" = "以图标方式";
 "pane.viewAsList" = "以列表方式";
+"perms.exec" = "执";
+"perms.group" = "群组";
+"perms.octal" = "八进制";
+"perms.other" = "其他";
+"perms.owner" = "所有者";
+"perms.read" = "读";
+"perms.write" = "写";
 "prefs.alternatingRows" = "交替行颜色";
 "prefs.appearanceDark" = "深色";
 "prefs.appearanceLabel" = "外观";
