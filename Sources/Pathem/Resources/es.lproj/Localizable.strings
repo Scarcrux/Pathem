@@ -400,7 +400,7 @@
 "pane.curlMissing" = "No se encontró curl";
 "pane.downloadFromServer" = "Descargar del servidor…";
 "pane.emptyFolder" = "Carpeta vacía";
-"pane.filterPlaceholder" = "Filtrar";
+"pane.filterPlaceholder" = "Filtrar (prueba ext:pdf, kind:image, size:>10mb)";
 "pane.flatViewFirstN" = " (primeros %d)";
 "pane.flatViewTitle" = "Vista plana: %@";
 "pane.folderEmpty" = "Esta carpeta está vacía";

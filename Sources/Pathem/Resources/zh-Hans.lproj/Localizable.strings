@@ -400,7 +400,7 @@
 "pane.curlMissing" = "未找到 curl";
 "pane.downloadFromServer" = "从服务器下载…";
 "pane.emptyFolder" = "空文件夹";
-"pane.filterPlaceholder" = "筛选";
+"pane.filterPlaceholder" = "筛选（试试 ext:pdf、kind:image、size:>10mb）";
 "pane.flatViewFirstN" = "（前 %d 个）";
 "pane.flatViewTitle" = "平铺视图：%@";
 "pane.folderEmpty" = "此文件夹为空";

@@ -400,7 +400,7 @@
 "pane.curlMissing" = "curlが見つかりませんでした";
 "pane.downloadFromServer" = "サーバからダウンロード…";
 "pane.emptyFolder" = "空のフォルダ";
-"pane.filterPlaceholder" = "フィルタ";
+"pane.filterPlaceholder" = "フィルタ（例：ext:pdf、kind:image、size:>10mb）";
 "pane.flatViewFirstN" = "（最初の%d件）";
 "pane.flatViewTitle" = "フラット表示: %@";
 "pane.folderEmpty" = "このフォルダは空です";

@@ -138,6 +138,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     /// Live filter (find-as-you-type) over the current listing.
     private let filterField = NSSearchField()
     private var filterText = ""
+    private var fileFilter = FileFilter("")
     /// The unfiltered display set, kept so changing the filter re-applies instantly.
     private var sourceEntries: [FileEntry] = []
 
@@ -189,13 +190,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     }
 
     private func filtered(_ entries: [FileEntry]) -> [FileEntry] {
-        guard !filterText.isEmpty else { return entries }
-        return entries.filter { $0.name.localizedCaseInsensitiveContains(filterText) }
+        guard !fileFilter.isEmpty else { return entries }
+        return entries.filter { fileFilter.matches($0) }
     }
 
     /// Apply a live filter over the current display set (called as the user types).
+    /// Supports name substrings plus tokens like ext:, kind:, and size:.
     func setFilter(_ text: String) {
         filterText = text
+        fileFilter = FileFilter(text)
         let shown = filtered(sourceEntries)
         content.setEntries(shown, preserveState: true)
         content.showPlaceholder(
@@ -701,7 +704,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
 
-        filterField.placeholderString = L("pane.filterPlaceholder", "Filter")
+        filterField.placeholderString = L("pane.filterPlaceholder", "Filter (try ext:pdf, kind:image, size:>10mb)")
         filterField.controlSize = .small
         filterField.font = .systemFont(ofSize: 11)
         filterField.isHidden = true  // shown via the Filter command

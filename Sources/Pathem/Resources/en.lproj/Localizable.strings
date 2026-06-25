@@ -400,7 +400,7 @@
 "pane.curlMissing" = "curl was not found";
 "pane.downloadFromServer" = "Download from Server…";
 "pane.emptyFolder" = "Empty folder";
-"pane.filterPlaceholder" = "Filter";
+"pane.filterPlaceholder" = "Filter (try ext:pdf, kind:image, size:>10mb)";
 "pane.flatViewFirstN" = " (first %d)";
 "pane.flatViewTitle" = "Flat View: %@";
 "pane.folderEmpty" = "This folder is empty";

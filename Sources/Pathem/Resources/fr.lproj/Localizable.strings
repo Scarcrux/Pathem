@@ -400,7 +400,7 @@
 "pane.curlMissing" = "curl est introuvable";
 "pane.downloadFromServer" = "Télécharger depuis le serveur…";
 "pane.emptyFolder" = "Dossier vide";
-"pane.filterPlaceholder" = "Filtrer";
+"pane.filterPlaceholder" = "Filtrer (essayez ext:pdf, kind:image, size:>10mb)";
 "pane.flatViewFirstN" = " (%d premiers)";
 "pane.flatViewTitle" = "Vue à plat : %@";
 "pane.folderEmpty" = "Ce dossier est vide";
