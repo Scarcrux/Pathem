@@ -1664,6 +1664,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// Hide/show sidebar labels and narrow/restore the sidebar per the preference.
+    /// Force the app's appearance (System/Light/Dark) per the preference.
+    private func applyAppearance() {
+        switch prefs.appearance {
+        case .system: NSApp.appearance = nil
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
+    }
+
     private func applyCompactSidebar() {
         compactSidebar = prefs.compactSidebar
         sidebar.setShowsLabels(!compactSidebar)
@@ -1696,6 +1705,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
         }
         applyCompactSidebar()
+        applyAppearance()
         saveConfig(prefs, to: Self.preferencesURL)
         cachedDir = nil
         cachedIndex = nil

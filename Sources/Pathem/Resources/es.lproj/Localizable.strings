@@ -483,6 +483,10 @@
 "pane.viewAsIcons" = "como iconos";
 "pane.viewAsList" = "como lista";
 "prefs.alternatingRows" = "Colores de fila alternos";
+"prefs.appearanceDark" = "Oscuro";
+"prefs.appearanceLabel" = "Apariencia";
+"prefs.appearanceLight" = "Claro";
+"prefs.appearanceSystem" = "Sistema";
 "prefs.calculateFolderSizes" = "Calcular el tamaño de las carpetas";
 "prefs.compactSidebar" = "Barra lateral compacta (solo iconos)";
 "prefs.confirmBeforeDelete" = "Confirmar antes de mover elementos a la papelera";

@@ -148,6 +148,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
         ])
         case .appearance: return form([
+            labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
             labeled(L("prefs.densityLabel", "Density"), densityControl()),
             labeled(L("prefs.fontSizeLabel", "Font size"), fontControl()),
             check(L("prefs.alternatingRows", "Alternating row colors"), \.alternatingRows),
@@ -237,6 +238,23 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     @objc private func checkToggled(_ sender: NSButton) {
         guard let keyPath = boolPaths[ObjectIdentifier(sender)] else { return }
         prefs[keyPath: keyPath] = (sender.state == .on)
+        onChange?(prefs)
+    }
+
+    private func appearanceControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.appearanceSystem", "System"), L("prefs.appearanceLight", "Light"),
+            L("prefs.appearanceDark", "Dark"),
+        ])
+        let order: [Preferences.Appearance] = [.system, .light, .dark]
+        popup.selectItem(at: order.firstIndex(of: prefs.appearance) ?? 0)
+        popup.target = self
+        popup.action = #selector(appearanceChanged(_:))
+        return popup
+    }
+    @objc private func appearanceChanged(_ sender: NSPopUpButton) {
+        prefs.appearance = [.system, .light, .dark][sender.indexOfSelectedItem]
         onChange?(prefs)
     }
 

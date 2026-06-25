@@ -5,9 +5,13 @@ import Foundation
 /// engine and unit-testable.
 public struct Preferences: Codable, Sendable, Equatable {
     public enum Density: String, Codable, Sendable, CaseIterable { case compact, comfortable }
+    /// App appearance: follow the system, or force Light/Dark.
+    public enum Appearance: String, Codable, Sendable, CaseIterable { case system, light, dark }
 
     /// Row spacing for the file list.
     public var density: Density
+    /// App appearance (System/Light/Dark).
+    public var appearance: Appearance
     /// Base font size for list rows.
     public var fontSize: Int
     /// Alternating row background colors.
@@ -40,8 +44,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
-        dragMovesByDefault: Bool = false
+        dragMovesByDefault: Bool = false, appearance: Appearance = .system
     ) {
+        self.appearance = appearance
         self.density = density
         self.fontSize = fontSize
         self.alternatingRows = alternatingRows
@@ -85,5 +90,6 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
         dragMovesByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .dragMovesByDefault) ?? d.dragMovesByDefault
+        appearance = (try? c.decode(Appearance.self, forKey: .appearance)) ?? d.appearance
     }
 }

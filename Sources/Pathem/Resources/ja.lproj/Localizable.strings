@@ -483,6 +483,10 @@
 "pane.viewAsIcons" = "アイコン表示";
 "pane.viewAsList" = "リスト表示";
 "prefs.alternatingRows" = "行の色を交互に表示";
+"prefs.appearanceDark" = "ダーク";
+"prefs.appearanceLabel" = "外観";
+"prefs.appearanceLight" = "ライト";
+"prefs.appearanceSystem" = "システム";
 "prefs.calculateFolderSizes" = "フォルダのサイズを計算";
 "prefs.compactSidebar" = "コンパクトサイドバー（アイコンのみ）";
 "prefs.confirmBeforeDelete" = "ゴミ箱に入れる前に確認";

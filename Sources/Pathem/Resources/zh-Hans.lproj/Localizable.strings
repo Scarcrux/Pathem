@@ -483,6 +483,10 @@
 "pane.viewAsIcons" = "以图标方式";
 "pane.viewAsList" = "以列表方式";
 "prefs.alternatingRows" = "交替行颜色";
+"prefs.appearanceDark" = "深色";
+"prefs.appearanceLabel" = "外观";
+"prefs.appearanceLight" = "浅色";
+"prefs.appearanceSystem" = "跟随系统";
 "prefs.calculateFolderSizes" = "计算文件夹大小";
 "prefs.compactSidebar" = "紧凑边栏（仅图标）";
 "prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";

@@ -483,6 +483,10 @@
 "pane.viewAsIcons" = "en icônes";
 "pane.viewAsList" = "en liste";
 "prefs.alternatingRows" = "Couleurs de rangées alternées";
+"prefs.appearanceDark" = "Sombre";
+"prefs.appearanceLabel" = "Apparence";
+"prefs.appearanceLight" = "Clair";
+"prefs.appearanceSystem" = "Système";
 "prefs.calculateFolderSizes" = "Calculer la taille des dossiers";
 "prefs.compactSidebar" = "Barre latérale compacte (icônes seulement)";
 "prefs.confirmBeforeDelete" = "Demander confirmation avant de placer des éléments dans la corbeille";

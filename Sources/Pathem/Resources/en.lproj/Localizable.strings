@@ -483,6 +483,10 @@
 "pane.viewAsIcons" = "as Icons";
 "pane.viewAsList" = "as List";
 "prefs.alternatingRows" = "Alternating row colors";
+"prefs.appearanceDark" = "Dark";
+"prefs.appearanceLabel" = "Appearance";
+"prefs.appearanceLight" = "Light";
+"prefs.appearanceSystem" = "System";
 "prefs.calculateFolderSizes" = "Calculate folder sizes";
 "prefs.compactSidebar" = "Compact sidebar (icons only)";
 "prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";

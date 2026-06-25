@@ -483,6 +483,10 @@
 "pane.viewAsIcons" = "als Symbole";
 "pane.viewAsList" = "als Liste";
 "prefs.alternatingRows" = "Abwechselnde Zeilenfarben";
+"prefs.appearanceDark" = "Dunkel";
+"prefs.appearanceLabel" = "Erscheinungsbild";
+"prefs.appearanceLight" = "Hell";
+"prefs.appearanceSystem" = "System";
 "prefs.calculateFolderSizes" = "Ordnergrößen berechnen";
 "prefs.compactSidebar" = "Kompakte Seitenleiste (nur Symbole)";
 "prefs.confirmBeforeDelete" = "Vor dem Verschieben in den Papierkorb nachfragen";
