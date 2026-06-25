@@ -14,6 +14,14 @@
 #   make fmt      format with swift-format (if installed)
 #   make clean    remove build products
 
+# SwiftPM keeps its dependency cache as bare git repos under .build; a system/global
+# `safe.bareRepository = explicit` (a git hardening setting) makes git refuse them and
+# breaks resolution. Allow bare repos for SwiftPM's own (trusted) cache via env, so the
+# build works regardless of the host's git config. Exported to every recipe below.
+export GIT_CONFIG_COUNT = 1
+export GIT_CONFIG_KEY_0 = safe.bareRepository
+export GIT_CONFIG_VALUE_0 = all
+
 .PHONY: build run test smoke ci app install watch watch-install icon dev-cert fmt clean
 
 build:

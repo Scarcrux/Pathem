@@ -28,6 +28,13 @@
 
 set -euo pipefail
 
+# Let SwiftPM use its own (trusted) bare-repo cache under .build even when git's
+# safe.bareRepository is 'explicit' (a hardening setting that otherwise breaks
+# resolution). Only sets defaults if not already provided.
+export GIT_CONFIG_COUNT="${GIT_CONFIG_COUNT:-1}"
+export GIT_CONFIG_KEY_0="${GIT_CONFIG_KEY_0:-safe.bareRepository}"
+export GIT_CONFIG_VALUE_0="${GIT_CONFIG_VALUE_0:-all}"
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_NAME="Pathem"
 CONFIG="release"
