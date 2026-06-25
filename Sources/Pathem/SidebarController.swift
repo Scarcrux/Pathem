@@ -48,6 +48,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onForgetConnection: ((RemoteConnection) -> Void)?
     /// Remove a saved server (right-click menu).
     var onRemoveConnection: ((RemoteConnection) -> Void)?
+    /// Eject a mounted volume (right-click menu on a Volumes item).
+    var onEjectVolume: ((URL) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
@@ -697,6 +699,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             case .manageConnections:
                 add(connections.isEmpty ? L("sidebar.addConnection", "Add Connection…") : L("sidebar.manage", "Manage…"), #selector(manageConnectionsTarget))
                 return
+            case .systemItem:
+                if let url = node.url, url.path.hasPrefix("/Volumes/") {
+                    add(L("sidebar.eject", "Eject"), #selector(ejectTarget))
+                    menu.addItem(.separator())
+                }
             default:
                 break
             }
@@ -718,6 +725,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     @objc private func forgetConnectionTarget() { targetConnection().map { onForgetConnection?($0) } }
     @objc private func removeConnectionTarget() { targetConnection().map { onRemoveConnection?($0) } }
     @objc private func manageConnectionsTarget() { onManageConnections?() }
+    @objc private func ejectTarget() {
+        if let url = menuTargetNode?.url { onEjectVolume?(url) }
+    }
 
     private func iconSubmenuItem() -> NSMenuItem {
         let parent = NSMenuItem(title: L("sidebar.changeIcon", "Change Icon"), action: nil, keyEquivalent: "")

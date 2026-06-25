@@ -87,6 +87,7 @@
 "bvc.cmd.download" = "下载";
 "bvc.cmd.downloadFromServer" = "从服务器下载…";
 "bvc.cmd.duplicate" = "复制副本";
+"bvc.cmd.ejectVolume" = "推出宗卷";
 "bvc.cmd.enclosingFolder" = "上层文件夹";
 "bvc.cmd.extract" = "解压";
 "bvc.cmd.filter" = "筛选…";
@@ -153,7 +154,9 @@
 "bvc.couldntCreateArchive" = "无法创建归档";
 "bvc.couldntCreateFile" = "无法创建文件";
 "bvc.couldntCreateFolder" = "无法创建文件夹";
+"bvc.couldntEject" = "无法推出宗卷";
 "bvc.couldntExtract" = "无法解压一个或多个归档";
+"bvc.couldntMount" = "无法装载磁盘映像";
 "bvc.couldntReadFile" = "无法读取文件";
 "bvc.curlError" = "curl 错误 %d";
 "bvc.curlMissing" = "未找到 curl";
@@ -442,6 +445,7 @@
 "menu.terminal.toggleFollow" = "终端跟随文件夹";
 "menu.terminalTheme" = "终端主题";
 "menu.tools" = "工具";
+"menu.tools.ejectVolume" = "推出宗卷";
 "menu.tools.processViewer" = "进程查看器";
 "menu.undo" = "撤销";
 "menu.view" = "显示";
@@ -619,6 +623,7 @@
 "sidebar.connect" = "连接";
 "sidebar.connectInNewTab" = "在新标签页中连接";
 "sidebar.connectionsHeader" = "连接";
+"sidebar.eject" = "推出";
 "sidebar.favoritesDefaultName" = "个人收藏";
 "sidebar.forgetPassword" = "忘记密码";
 "sidebar.iCloudDrive" = "iCloud 云盘";

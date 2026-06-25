@@ -231,6 +231,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.onArchiveClosed = { [weak self] archive, mountRoot, snapshot in
                     self?.writeBackArchiveIfChanged(archive: archive, mountRoot: mountRoot, original: snapshot)
                 }
+                pane.onAttachDiskImage = { [weak self, weak pane] image in
+                    self?.attachDiskImage(image, in: pane)
+                }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
@@ -285,6 +288,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onManageConnections = { [weak self] in
             self?.connectionsController.present(over: self?.view.window)
         }
+        sidebar.onEjectVolume = { [weak self] volume in self?.ejectVolume(volume) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
@@ -434,6 +438,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
+        add("files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote else { return false }
+            let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
+            return volume != nil && volume?.path != "/"
+        }) { [weak self] in self?.ejectActiveVolume() }
         add("files.duplicate", L("bvc.cmd.duplicate", "Duplicate"), enabled: { [weak self] in
             guard let pane = self?.activePane else { return false }
             return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty
@@ -1255,6 +1264,43 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Attach a disk image (.dmg etc.) out-of-process and navigate the pane into it.
+    private func attachDiskImage(_ image: URL, in pane: PaneController?) {
+        Task { @MainActor [weak self] in
+            do {
+                let mountPoint = try await DiskImage.attach(image)
+                (pane ?? self?.activePane)?.navigate(to: mountPoint)
+            } catch {
+                self?.reportArchiveError(L("bvc.couldntMount", "Couldn’t mount the disk image"), error)
+            }
+        }
+    }
+
+    /// Eject the volume that contains the active folder (disk image, USB, network share).
+    private func ejectActiveVolume() {
+        guard let pane = activePane, !pane.isRemote,
+            let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
+        else { NSSound.beep(); return }
+        ejectVolume(volume)
+    }
+
+    /// Eject a specific mounted volume, moving any pane that was inside it back home.
+    private func ejectVolume(_ volume: URL) {
+        if volume.path == "/" { NSSound.beep(); return }  // never the boot volume
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        for side in [leftTabs, rightTabs] {
+            if let pane = side.activePane, !pane.isRemote,
+                pane.currentURL.path.hasPrefix(volume.path) {
+                pane.navigate(to: home)
+            }
+        }
+        do {
+            try NSWorkspace.shared.unmountAndEjectDevice(at: volume)
+        } catch {
+            reportArchiveError(L("bvc.couldntEject", "Couldn’t eject the volume"), error)
+        }
     }
 
     /// Search file contents under the active folder (grep/ripgrep), open a match.

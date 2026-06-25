@@ -60,6 +60,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     /// Called when the user opens an archive file: the browser extracts it and calls
     /// `mountArchive` to enter it.
     var onBrowseArchive: ((URL) -> Void)?
+    var onAttachDiskImage: ((URL) -> Void)?
     /// Called when an archive session ends, so the browser can offer to write changes
     /// back into the archive (compares the mount against the snapshot taken at mount).
     var onArchiveClosed: ((_ archive: URL, _ mountRoot: URL, _ snapshot: [String: String]) -> Void)?
@@ -600,6 +601,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
                 nav.go(to: url)
                 enterDirectory()  // clears smart mode and watches the real folder
             }
+        } else if DiskImage.isDiskImage(url), let onAttachDiskImage {
+            onAttachDiskImage(url)  // mount the image and navigate into it
         } else if Archiver.canExtract(url) {
             onBrowseArchive?(url)  // browse the archive as a folder (extract + enter)
         } else if let openFile {

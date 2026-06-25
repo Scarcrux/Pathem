@@ -87,6 +87,7 @@
 "bvc.cmd.download" = "Descargar";
 "bvc.cmd.downloadFromServer" = "Descargar del servidor…";
 "bvc.cmd.duplicate" = "Duplicar";
+"bvc.cmd.ejectVolume" = "Expulsar volumen";
 "bvc.cmd.enclosingFolder" = "Carpeta contenedora";
 "bvc.cmd.extract" = "Extraer";
 "bvc.cmd.filter" = "Filtrar…";
@@ -153,7 +154,9 @@
 "bvc.couldntCreateArchive" = "No se pudo crear el archivo comprimido";
 "bvc.couldntCreateFile" = "No se pudo crear el archivo";
 "bvc.couldntCreateFolder" = "No se pudo crear la carpeta";
+"bvc.couldntEject" = "No se pudo expulsar el volumen";
 "bvc.couldntExtract" = "No se pudieron extraer uno o más archivos comprimidos";
+"bvc.couldntMount" = "No se pudo montar la imagen de disco";
 "bvc.couldntReadFile" = "No se pudo leer el archivo";
 "bvc.curlError" = "error de curl %d";
 "bvc.curlMissing" = "No se encontró curl";
@@ -442,6 +445,7 @@
 "menu.terminal.toggleFollow" = "El Terminal sigue a la carpeta";
 "menu.terminalTheme" = "Tema del terminal";
 "menu.tools" = "Herramientas";
+"menu.tools.ejectVolume" = "Expulsar volumen";
 "menu.tools.processViewer" = "Visor de procesos";
 "menu.undo" = "Deshacer";
 "menu.view" = "Visualización";
@@ -619,6 +623,7 @@
 "sidebar.connect" = "Conectar";
 "sidebar.connectInNewTab" = "Conectar en una pestaña nueva";
 "sidebar.connectionsHeader" = "Conexiones";
+"sidebar.eject" = "Expulsar";
 "sidebar.favoritesDefaultName" = "Favoritos";
 "sidebar.forgetPassword" = "Olvidar la contraseña";
 "sidebar.iCloudDrive" = "iCloud Drive";

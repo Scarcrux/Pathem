@@ -87,6 +87,7 @@
 "bvc.cmd.download" = "ダウンロード";
 "bvc.cmd.downloadFromServer" = "サーバからダウンロード…";
 "bvc.cmd.duplicate" = "複製";
+"bvc.cmd.ejectVolume" = "ボリュームを取り出す";
 "bvc.cmd.enclosingFolder" = "上位のフォルダ";
 "bvc.cmd.extract" = "展開";
 "bvc.cmd.filter" = "フィルタ…";
@@ -153,7 +154,9 @@
 "bvc.couldntCreateArchive" = "アーカイブを作成できませんでした";
 "bvc.couldntCreateFile" = "ファイルを作成できませんでした";
 "bvc.couldntCreateFolder" = "フォルダを作成できませんでした";
+"bvc.couldntEject" = "ボリュームを取り出せませんでした";
 "bvc.couldntExtract" = "1つ以上のアーカイブを展開できませんでした";
+"bvc.couldntMount" = "ディスクイメージをマウントできませんでした";
 "bvc.couldntReadFile" = "ファイルを読み込めませんでした";
 "bvc.curlError" = "curlエラー %d";
 "bvc.curlMissing" = "curlが見つかりませんでした";
@@ -442,6 +445,7 @@
 "menu.terminal.toggleFollow" = "ターミナルをフォルダに追従";
 "menu.terminalTheme" = "ターミナルのテーマ";
 "menu.tools" = "ツール";
+"menu.tools.ejectVolume" = "ボリュームを取り出す";
 "menu.tools.processViewer" = "プロセスビューア";
 "menu.undo" = "取り消す";
 "menu.view" = "表示";
@@ -619,6 +623,7 @@
 "sidebar.connect" = "接続";
 "sidebar.connectInNewTab" = "新規タブで接続";
 "sidebar.connectionsHeader" = "接続";
+"sidebar.eject" = "取り出す";
 "sidebar.favoritesDefaultName" = "よく使う項目";
 "sidebar.forgetPassword" = "パスワードを破棄";
 "sidebar.iCloudDrive" = "iCloud Drive";

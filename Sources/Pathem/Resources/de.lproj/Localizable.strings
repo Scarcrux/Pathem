@@ -87,6 +87,7 @@
 "bvc.cmd.download" = "Laden";
 "bvc.cmd.downloadFromServer" = "Vom Server laden…";
 "bvc.cmd.duplicate" = "Duplizieren";
+"bvc.cmd.ejectVolume" = "Volume auswerfen";
 "bvc.cmd.enclosingFolder" = "Übergeordneter Ordner";
 "bvc.cmd.extract" = "Entpacken";
 "bvc.cmd.filter" = "Filtern…";
@@ -153,7 +154,9 @@
 "bvc.couldntCreateArchive" = "Das Archiv konnte nicht erstellt werden";
 "bvc.couldntCreateFile" = "Datei konnte nicht erstellt werden";
 "bvc.couldntCreateFolder" = "Ordner konnte nicht erstellt werden";
+"bvc.couldntEject" = "Volume konnte nicht ausgeworfen werden";
 "bvc.couldntExtract" = "Ein oder mehrere Archive konnten nicht entpackt werden";
+"bvc.couldntMount" = "Image konnte nicht geladen werden";
 "bvc.couldntReadFile" = "Die Datei konnte nicht gelesen werden";
 "bvc.curlError" = "curl-Fehler %d";
 "bvc.curlMissing" = "curl wurde nicht gefunden";
@@ -442,6 +445,7 @@
 "menu.terminal.toggleFollow" = "Terminal folgt Ordner";
 "menu.terminalTheme" = "Terminal-Thema";
 "menu.tools" = "Werkzeuge";
+"menu.tools.ejectVolume" = "Volume auswerfen";
 "menu.tools.processViewer" = "Prozessanzeige";
 "menu.undo" = "Widerrufen";
 "menu.view" = "Darstellung";
@@ -619,6 +623,7 @@
 "sidebar.connect" = "Verbinden";
 "sidebar.connectInNewTab" = "In neuem Tab verbinden";
 "sidebar.connectionsHeader" = "Verbindungen";
+"sidebar.eject" = "Auswerfen";
 "sidebar.favoritesDefaultName" = "Favoriten";
 "sidebar.forgetPassword" = "Passwort vergessen";
 "sidebar.iCloudDrive" = "iCloud Drive";
