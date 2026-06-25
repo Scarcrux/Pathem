@@ -162,6 +162,8 @@
 "bvc.curlError" = "curl 错误 %d";
 "bvc.curlMissing" = "未找到 curl";
 "bvc.deleteVerb" = "删除";
+"bvc.deviceError" = "设备错误 %d";
+"bvc.deviceToolMissing" = "未安装 %@。请安装后再浏览此设备。";
 "bvc.downloadHere" = "下载到此处";
 "bvc.downloadingFrom" = "正在从 %@ 下载";
 "bvc.duplicateAction" = "复制副本";
@@ -475,6 +477,8 @@
 "pane.clearTags" = "清除标记";
 "pane.curlError" = "curl 错误 %d";
 "pane.curlMissing" = "未找到 curl";
+"pane.deviceError" = "设备错误 %d";
+"pane.deviceToolMissing" = "未安装 %@。请安装后再浏览此设备。";
 "pane.downloadFromServer" = "从服务器下载…";
 "pane.emptyFolder" = "空文件夹";
 "pane.filterPlaceholder" = "筛选（试试 ext:pdf、kind:image、size:>10mb）";
@@ -636,6 +640,7 @@
 "sidebar.connect" = "连接";
 "sidebar.connectInNewTab" = "在新标签页中连接";
 "sidebar.connectionsHeader" = "连接";
+"sidebar.devicesHeader" = "设备";
 "sidebar.eject" = "推出";
 "sidebar.favoritesDefaultName" = "个人收藏";
 "sidebar.forgetPassword" = "忘记密码";

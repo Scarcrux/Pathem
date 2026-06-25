@@ -162,6 +162,8 @@
 "bvc.curlError" = "curlエラー %d";
 "bvc.curlMissing" = "curlが見つかりませんでした";
 "bvc.deleteVerb" = "削除";
+"bvc.deviceError" = "デバイスエラー %d";
+"bvc.deviceToolMissing" = "%@ がインストールされていません。このデバイスを参照するにはインストールしてください。";
 "bvc.downloadHere" = "ここにダウンロード";
 "bvc.downloadingFrom" = "%@からダウンロード中";
 "bvc.duplicateAction" = "複製";
@@ -475,6 +477,8 @@
 "pane.clearTags" = "タグを消去";
 "pane.curlError" = "curlエラー %d";
 "pane.curlMissing" = "curlが見つかりませんでした";
+"pane.deviceError" = "デバイスエラー %d";
+"pane.deviceToolMissing" = "%@ がインストールされていません。このデバイスを参照するにはインストールしてください。";
 "pane.downloadFromServer" = "サーバからダウンロード…";
 "pane.emptyFolder" = "空のフォルダ";
 "pane.filterPlaceholder" = "フィルタ（例：ext:pdf、kind:image、size:>10mb）";
@@ -636,6 +640,7 @@
 "sidebar.connect" = "接続";
 "sidebar.connectInNewTab" = "新規タブで接続";
 "sidebar.connectionsHeader" = "接続";
+"sidebar.devicesHeader" = "デバイス";
 "sidebar.eject" = "取り出す";
 "sidebar.favoritesDefaultName" = "よく使う項目";
 "sidebar.forgetPassword" = "パスワードを破棄";

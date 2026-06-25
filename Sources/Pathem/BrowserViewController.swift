@@ -100,6 +100,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var connectionsController = ConnectionsController()
     private lazy var transferController = TransferQueueController()
     private let sharedDiscovery = SharedDiscovery()
+    private var deviceTimer: Timer?
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
@@ -294,7 +295,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
         sharedDiscovery.onChange = { [weak self] hosts in self?.sidebar.setSharedHosts(hosts) }
         sharedDiscovery.start()
+        startDeviceWatch()
         applyPreferences()
+    }
+
+    /// Poll for USB-attached phones, but only when a device tool is installed (otherwise
+    /// zero overhead). The sidebar's Devices section updates when the set changes.
+    private func startDeviceWatch() {
+        guard DeviceTools.adb != nil || DeviceTools.idevice_id != nil else { return }
+        refreshDevices()
+        deviceTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
+            self?.refreshDevices()
+        }
+    }
+
+    private func refreshDevices() {
+        Task { @MainActor in self.sidebar.setDevices(await DeviceDiscovery.discover()) }
     }
 
     /// Register every browser action as a named command. This is the spine the
@@ -2167,6 +2183,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Prompt for a password and open the server in the active pane.
     private func connectToRemote(_ connection: RemoteConnection, forceNewTab: Bool = false) {
         guard let pane = activePane else { return }
+        // USB devices (adb / iOS) have no password; connect straight through.
+        if connection.proto.isDevice {
+            openRemoteConnection(connection, password: "", forceNewTab: forceNewTab, fallback: pane)
+            return
+        }
         // A remembered password connects straight away, no prompt.
         if let saved = KeychainStore.password(for: connection.id) {
             openRemoteConnection(connection, password: saved, forceNewTab: forceNewTab, fallback: pane)
@@ -2452,6 +2473,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case .curlMissing: return L("bvc.curlMissing", "curl was not found")
         case .sftp(let code, let message): return message.isEmpty ? String(format: L("bvc.sftpError", "sftp error %d"), code) : message
         case .sftpMissing: return L("bvc.sftpMissing", "sftp was not found")
+        case .device(let code, let message): return message.isEmpty ? String(format: L("bvc.deviceError", "device error %d"), code) : message
+        case .deviceToolMissing(let tool): return String(format: L("bvc.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
         }
     }
 

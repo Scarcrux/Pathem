@@ -71,6 +71,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         sharedHosts = hosts
         reload()
     }
+
+    private var devices: [RemoteConnection] = []
+    /// Update the Devices section with discovered USB phones (adb / iOS).
+    func setDevices(_ found: [RemoteConnection]) {
+        let identity: (RemoteConnection) -> String = { "\($0.proto.rawValue):\($0.host):\($0.name)" }
+        guard devices.map(identity) != found.map(identity) else { return }
+        devices = found
+        reload()
+    }
     /// Supplies the active pane's folder for "Add Current Folder".
     var currentFolder: (() -> URL?)?
 
@@ -94,6 +103,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
         case shared(String)  // a discovered SMB host (by display name)
         case connection(RemoteConnection)  // a saved FTP/SFTP server
+        case device(RemoteConnection)  // a discovered USB phone (adb / iOS)
         case manageConnections  // the "Manage…" row
     }
 
@@ -252,6 +262,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         if let cloud = cloudNode() { roots.append(cloud) }
         roots.append(volumesNode())
+        if let devicesSection = devicesNode() { roots.append(devicesSection) }
         if let shared = sharedNode() { roots.append(shared) }
         roots.append(connectionsNode())
         roots.append(smartNode())
@@ -278,6 +289,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .smart(let query): return "smart:\(query)"
         case .shared(let host): return "shared:\(host)"
         case .connection(let connection): return "conn:\(connection.id)"
+        case .device(let device): return "device:\(device.proto.rawValue):\(device.host)"
         case .manageConnections: return "manage"
         }
     }
@@ -303,6 +315,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     /// Discovered SMB computers on the local network (nil when none seen yet).
+    private func devicesNode() -> Node? {
+        guard !devices.isEmpty else { return nil }
+        let children = devices.map { device in
+            Node(
+                kind: .device(device), title: device.name, url: nil,
+                icon: device.proto == .adb ? "smartphone" : "iphone")
+        }
+        return Node(
+            kind: .systemHeader, title: L("sidebar.devicesHeader", "Devices"), url: nil, icon: nil,
+            children: children)
+    }
+
     private func sharedNode() -> Node? {
         guard !sharedHosts.isEmpty else { return nil }
         let children = sharedHosts.map { host in
@@ -550,6 +574,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if case .connection(let connection) = node.kind {
             outline.deselectRow(row)  // a connect action, not a persistent selection
             onSelectConnection?(connection)
+            return
+        }
+        if case .device(let device) = node.kind {
+            outline.deselectRow(row)  // a connect action, not a persistent selection
+            onSelectConnection?(device)  // devices browse through the same provider seam
             return
         }
         if case .manageConnections = node.kind {

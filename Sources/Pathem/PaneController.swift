@@ -543,6 +543,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         case .sftp(let code, let message):
             return message.isEmpty ? String(format: L("pane.sftpError", "sftp error %d"), code) : message
         case .sftpMissing: return L("pane.sftpMissing", "sftp was not found")
+        case .device(let code, let message):
+            return message.isEmpty ? String(format: L("pane.deviceError", "device error %d"), code) : message
+        case .deviceToolMissing(let tool):
+            return String(format: L("pane.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
         }
     }
 

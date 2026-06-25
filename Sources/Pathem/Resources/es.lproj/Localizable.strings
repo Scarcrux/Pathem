@@ -162,6 +162,8 @@
 "bvc.curlError" = "error de curl %d";
 "bvc.curlMissing" = "No se encontró curl";
 "bvc.deleteVerb" = "Eliminar";
+"bvc.deviceError" = "error de dispositivo %d";
+"bvc.deviceToolMissing" = "%@ no está instalado. Instálalo para explorar este dispositivo.";
 "bvc.downloadHere" = "Descargar aquí";
 "bvc.downloadingFrom" = "Descargando de %@";
 "bvc.duplicateAction" = "Duplicar";
@@ -475,6 +477,8 @@
 "pane.clearTags" = "Borrar etiquetas";
 "pane.curlError" = "error de curl %d";
 "pane.curlMissing" = "No se encontró curl";
+"pane.deviceError" = "error de dispositivo %d";
+"pane.deviceToolMissing" = "%@ no está instalado. Instálalo para explorar este dispositivo.";
 "pane.downloadFromServer" = "Descargar del servidor…";
 "pane.emptyFolder" = "Carpeta vacía";
 "pane.filterPlaceholder" = "Filtrar (prueba ext:pdf, kind:image, size:>10mb)";
@@ -636,6 +640,7 @@
 "sidebar.connect" = "Conectar";
 "sidebar.connectInNewTab" = "Conectar en una pestaña nueva";
 "sidebar.connectionsHeader" = "Conexiones";
+"sidebar.devicesHeader" = "Dispositivos";
 "sidebar.eject" = "Expulsar";
 "sidebar.favoritesDefaultName" = "Favoritos";
 "sidebar.forgetPassword" = "Olvidar la contraseña";

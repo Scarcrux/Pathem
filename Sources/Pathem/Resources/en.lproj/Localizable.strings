@@ -162,6 +162,8 @@
 "bvc.curlError" = "curl error %d";
 "bvc.curlMissing" = "curl was not found";
 "bvc.deleteVerb" = "Delete";
+"bvc.deviceError" = "device error %d";
+"bvc.deviceToolMissing" = "%@ is not installed. Install it to browse this device.";
 "bvc.downloadHere" = "Download Here";
 "bvc.downloadingFrom" = "Downloading from %@";
 "bvc.duplicateAction" = "Duplicate";
@@ -475,6 +477,8 @@
 "pane.clearTags" = "Clear Tags";
 "pane.curlError" = "curl error %d";
 "pane.curlMissing" = "curl was not found";
+"pane.deviceError" = "device error %d";
+"pane.deviceToolMissing" = "%@ is not installed. Install it to browse this device.";
 "pane.downloadFromServer" = "Download from Server…";
 "pane.emptyFolder" = "Empty folder";
 "pane.filterPlaceholder" = "Filter (try ext:pdf, kind:image, size:>10mb)";
@@ -636,6 +640,7 @@
 "sidebar.connect" = "Connect";
 "sidebar.connectInNewTab" = "Connect in New Tab";
 "sidebar.connectionsHeader" = "Connections";
+"sidebar.devicesHeader" = "Devices";
 "sidebar.eject" = "Eject";
 "sidebar.favoritesDefaultName" = "Favorites";
 "sidebar.forgetPassword" = "Forget Password";

@@ -6,13 +6,14 @@ import Foundation
 /// Full-Disk-Access app process.
 public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public enum Proto: String, Codable, Sendable, CaseIterable {
-        case ftp, ftps, sftp, webdav, webdavs, s3
+        case ftp, ftps, sftp, webdav, webdavs, s3, adb, afc
         public var defaultPort: Int {
             switch self {
             case .sftp: return 22
             case .ftp, .ftps: return 21
             case .webdav: return 80
             case .webdavs, .s3: return 443
+            case .adb, .afc: return 0  // USB devices, no network port
             }
         }
         public var label: String {
@@ -23,10 +24,14 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
             case .webdav: return "WebDAV"
             case .webdavs: return "WebDAV (HTTPS)"
             case .s3: return "Amazon S3"
+            case .adb: return "Android (ADB)"
+            case .afc: return "iOS (AFC)"
             }
         }
         /// True for the HTTP-based WebDAV protocols.
         public var isWebDAV: Bool { self == .webdav || self == .webdavs }
+        /// A USB-attached device (no host/port/password), browsed via a CLI tool.
+        public var isDevice: Bool { self == .adb || self == .afc }
     }
 
     public var id: UUID

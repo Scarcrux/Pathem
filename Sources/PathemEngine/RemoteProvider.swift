@@ -6,6 +6,8 @@ public enum RemoteError: Error, Sendable {
     case curlMissing
     case sftp(code: Int32, message: String)
     case sftpMissing
+    case device(code: Int32, message: String)
+    case deviceToolMissing(String)  // the named CLI (adb / pymobiledevice3) isn't installed
 }
 
 /// The seam between the browser and remote networking. Implementations run the
@@ -36,6 +38,8 @@ public enum RemoteProviders {
         case .sftp: return SFTPProvider()
         case .webdav, .webdavs: return CurlWebDAVProvider()
         case .s3: return S3Provider()
+        case .adb: return ADBProvider()
+        case .afc: return AFCProvider()
         }
     }
 }
