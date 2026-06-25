@@ -215,6 +215,8 @@
 "cleanup.reveal" = "Anzeigen";
 "cleanup.scanning" = "%@ wird gescannt…";
 "cleanup.summary" = "%@ markiert · %@ sicher zu entfernen";
+"cleanup.systemStorage" = "Systemspeicher…";
+"cleanup.systemStorageTip" = "Speicher in den Systemeinstellungen öffnen (App-, Foto- und Systemkategorien)";
 "cleanup.title" = "Aufräumen";
 "cleanup.titleFor" = "Aufräumen: %@";
 "common.apply" = "Anwenden";

@@ -17,13 +17,15 @@ public enum DuplicateFinder {
     /// Duplicate groups (2+ files with identical content) under `roots`. Files
     /// smaller than `minSize` are skipped (empty files are trivially identical noise).
     public static func find(
-        in roots: [URL], includingHidden: Bool = false, minSize: Int64 = 1, maxItems: Int = 200_000
+        in roots: [URL], includingHidden: Bool = false, minSize: Int64 = 1,
+        excludingDirectories: Set<String> = [], maxItems: Int = 200_000
     ) -> [Group] {
         // 1. Gather candidate files, bucketed by size (different size => different content).
         var bySize: [Int64: [FileEntry]] = [:]
         for root in roots {
             let flat = FlatEnumerator.entries(
-                of: root, includingHidden: includingHidden, includeFolders: false, maxItems: maxItems)
+                of: root, includingHidden: includingHidden, includeFolders: false,
+                excludingDirectories: excludingDirectories, maxItems: maxItems)
             for entry in flat.entries where !entry.isDirectory && entry.size >= minSize {
                 bySize[entry.size, default: []].append(entry)
             }

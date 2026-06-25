@@ -215,6 +215,8 @@
 "cleanup.reveal" = "Reveal";
 "cleanup.scanning" = "Scanning %@…";
 "cleanup.summary" = "%@ checked · %@ safe to remove";
+"cleanup.systemStorage" = "System Storage…";
+"cleanup.systemStorageTip" = "Open Storage in System Settings (for app, photo, and system categories)";
 "cleanup.title" = "Cleanup";
 "cleanup.titleFor" = "Cleanup: %@";
 "common.apply" = "Apply";

@@ -18,7 +18,7 @@ public enum FlatEnumerator {
 
     public static func entries(
         of root: URL, includingHidden: Bool = false, includeFolders: Bool = false,
-        maxDepth: Int = 64, maxItems: Int = 200_000
+        excludingDirectories: Set<String> = [], maxDepth: Int = 64, maxItems: Int = 200_000
     ) -> Result {
         var out: [FileEntry] = []
         var truncated = false
@@ -39,7 +39,10 @@ public enum FlatEnumerator {
                 }
                 if child.isDirectory {
                     if includeFolders { out.append(located(child, in: dir)) }
-                    if depth < maxDepth { subdirs.append((dir.appendingPathComponent(child.name), depth + 1)) }
+                    // Don't descend into excluded folders (caches/VCS/build noise).
+                    if depth < maxDepth, !excludingDirectories.contains(child.name) {
+                        subdirs.append((dir.appendingPathComponent(child.name), depth + 1))
+                    }
                 } else {
                     out.append(located(child, in: dir))
                 }

@@ -215,6 +215,8 @@
 "cleanup.reveal" = "显示";
 "cleanup.scanning" = "正在扫描 %@…";
 "cleanup.summary" = "已勾选 %@ · 可安全移除 %@";
+"cleanup.systemStorage" = "系统存储…";
+"cleanup.systemStorageTip" = "在系统设置中打开“存储”（应用、照片和系统类别）";
 "cleanup.title" = "清理";
 "cleanup.titleFor" = "清理：%@";
 "common.apply" = "应用";

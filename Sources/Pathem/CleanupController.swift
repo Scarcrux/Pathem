@@ -121,6 +121,12 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let reveal = NSButton(
             title: L("cleanup.reveal", "Reveal"), target: self, action: #selector(revealSelected))
         reveal.bezelStyle = .rounded
+        let systemSettings = NSButton(
+            title: L("cleanup.systemStorage", "System Storage…"), target: self,
+            action: #selector(openSystemStorage))
+        systemSettings.bezelStyle = .rounded
+        systemSettings.toolTip = L(
+            "cleanup.systemStorageTip", "Open Storage in System Settings (for app, photo, and system categories)")
 
         let header = NSStackView(views: [titleLabel, spinner, NSView(), summaryLabel])
         header.orientation = .horizontal
@@ -130,7 +136,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         diskStats.orientation = .vertical
         diskStats.alignment = .leading
         diskStats.spacing = 3
-        let actions = NSStackView(views: [aiButton, NSView(), reveal, trashButton])
+        let actions = NSStackView(views: [aiButton, systemSettings, NSView(), reveal, trashButton])
         actions.orientation = .horizontal
         actions.spacing = 8
 
@@ -284,6 +290,19 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         table.reloadData()
         updateSummary()
         if !result.failures.isEmpty { NSSound.beep() }
+    }
+
+    /// Open Storage in System Settings, which shows app/photo/system categories and
+    /// Apple's own recommendations that a third-party app can't compute.
+    @objc private func openSystemStorage() {
+        let candidates = [
+            "x-apple.systempreferences:com.apple.settings.Storage",
+            "x-apple.systempreferences:com.apple.Storage-Settings.extension",
+            "x-apple.systempreferences:com.apple.preference.general",
+        ]
+        for string in candidates {
+            if let url = URL(string: string), NSWorkspace.shared.open(url) { return }
+        }
     }
 
     @objc private func revealSelected() {

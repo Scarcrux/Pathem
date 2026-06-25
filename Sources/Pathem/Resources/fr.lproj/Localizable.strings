@@ -215,6 +215,8 @@
 "cleanup.reveal" = "Afficher";
 "cleanup.scanning" = "Analyse de %@…";
 "cleanup.summary" = "%@ cochés · %@ pouvant être supprimés en toute sécurité";
+"cleanup.systemStorage" = "Stockage système…";
+"cleanup.systemStorageTip" = "Ouvrir Stockage dans Réglages Système (catégories apps, photos et système)";
 "cleanup.title" = "Nettoyage";
 "cleanup.titleFor" = "Nettoyage : %@";
 "common.apply" = "Appliquer";

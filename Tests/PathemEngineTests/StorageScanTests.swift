@@ -30,6 +30,20 @@ import Testing
         #expect(report.safeReclaimable >= 1000)
     }
 
+    @Test func duplicatesIgnoreExcludedDirectories() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try write(2_000_000, root.appendingPathComponent("a.dat"))
+        try write(2_000_000, root.appendingPathComponent("copy/a.dat"))  // real duplicate
+        try write(2_000_000, root.appendingPathComponent("node_modules/lib/a.dat"))  // noise
+        try write(2_000_000, root.appendingPathComponent(".git/objects/a.dat"))  // noise
+
+        let dups = StorageScan.duplicates(root)
+        // Only the two real copies count; the node_modules/.git copies are excluded.
+        #expect(dups.count == 1)
+        #expect(!dups.contains { $0.path.contains("node_modules") || $0.path.contains(".git") })
+    }
+
     @Test func surfacesLargeOldAndDuplicates() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }

@@ -215,6 +215,8 @@
 "cleanup.reveal" = "表示";
 "cleanup.scanning" = "%@をスキャン中…";
 "cleanup.summary" = "%@選択済み · %@削除可能";
+"cleanup.systemStorage" = "システムストレージ…";
+"cleanup.systemStorageTip" = "システム設定で「ストレージ」を開く（App・写真・システムのカテゴリ）";
 "cleanup.title" = "クリーンアップ";
 "cleanup.titleFor" = "クリーンアップ: %@";
 "common.apply" = "適用";

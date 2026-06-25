@@ -215,6 +215,8 @@
 "cleanup.reveal" = "Mostrar";
 "cleanup.scanning" = "Analizando %@…";
 "cleanup.summary" = "%@ seleccionados · %@ se pueden eliminar sin riesgo";
+"cleanup.systemStorage" = "Almacenamiento del sistema…";
+"cleanup.systemStorageTip" = "Abrir Almacenamiento en Ajustes del Sistema (categorías de apps, fotos y sistema)";
 "cleanup.title" = "Limpieza";
 "cleanup.titleFor" = "Limpieza: %@";
 "common.apply" = "Aplicar";

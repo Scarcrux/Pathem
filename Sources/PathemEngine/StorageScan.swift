@@ -6,11 +6,23 @@ import Foundation
 /// with temp trees; the UI runs it off-main and the on-device model can recommend
 /// from the report. Builds on DirectorySize + DuplicateFinder.
 public enum StorageScan {
-    /// Regenerable directory names treated as junk (not descended into).
+    /// Regenerable directory names treated as junk (listed as reclaimable, not descended into).
     static let junkDirectories: Set<String> = [
         "node_modules", "DerivedData", "__pycache__", ".gradle", ".build", ".next", "Pods", ".venv",
         "venv", ".pytest_cache", ".mypy_cache",
     ]
+
+    /// Directories to skip entirely: version control, caches, and other dev/system
+    /// noise that shouldn't be deleted or counted, and (crucially) shouldn't flood the
+    /// duplicate results with thousands of meaningless copies.
+    static let excludedDirectories: Set<String> = [
+        ".git", ".svn", ".hg", ".Trash", ".Trashes", "Caches", ".cache", ".npm", ".cargo",
+        ".rustup", ".cocoapods", ".m2", "target", ".terraform", ".stack-work", "vendor",
+        "DerivedData", ".gradle",
+    ]
+
+    /// Folders whose contents are excluded from the duplicate scan (junk + noise).
+    static var duplicateExclusions: Set<String> { junkDirectories.union(excludedDirectories) }
 
     public enum Category: String, Sendable, Codable { case junk, duplicate, large, old }
 
@@ -80,6 +92,8 @@ public enum StorageScan {
                             Item(
                                 path: entry.path, size: DirectorySize.total(of: entry).bytes,
                                 category: .junk, reason: entry.lastPathComponent, isDirectory: true))
+                    } else if excludedDirectories.contains(entry.lastPathComponent) {
+                        continue  // skip caches/VCS/system noise entirely (no descend, no listing)
                     } else {
                         stack.append(entry)  // descend
                     }
@@ -115,7 +129,10 @@ public enum StorageScan {
     /// user already sees junk/large/old while this completes.
     public static func duplicates(_ root: URL, maxItems: Int = 300_000) -> [Item] {
         var items: [Item] = []
-        for group in DuplicateFinder.find(in: [root], minSize: 1, maxItems: maxItems) {
+        // Exclude caches/VCS/build dirs so results are meaningful files, not noise.
+        for group in DuplicateFinder.find(
+            in: [root], minSize: 1, excludingDirectories: duplicateExclusions, maxItems: maxItems)
+        {
             for extra in group.files.dropFirst() {  // keep one per group; the rest are reclaimable
                 guard let location = extra.location else { continue }
                 items.append(
