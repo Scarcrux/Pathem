@@ -432,6 +432,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return !pane.isRemote && !pane.isShowingSmartResults
         }
         add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
+        add("files.duplicate", L("bvc.cmd.duplicate", "Duplicate"), enabled: { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty
+        }) { [weak self] in self?.duplicateSelection() }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1209,6 +1213,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.reloadBothSides()
             if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
         }
+    }
+
+    /// Duplicate the selected items in place ("<name> copy"), undoable.
+    private func duplicateSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        let names = pane.selectedEntries.map(\.name)
+        guard !names.isEmpty else { NSSound.beep(); return }
+        var created: [String] = []
+        var failures: [FileOperations.Failure] = []
+        for name in names {
+            do { created.append(try FileOperations.duplicate(name, in: folder)) } catch {
+                failures.append(.init(name: name, reason: error.localizedDescription))
+            }
+        }
+        pane.reloadIfShowingListing()
+        if let first = created.first { pane.select(name: first) }
+        registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
+        if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
     }
 
     /// Search file contents under the active folder (grep/ripgrep), open a match.

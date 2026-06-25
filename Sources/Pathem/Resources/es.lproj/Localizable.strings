@@ -85,6 +85,7 @@
 "bvc.cmd.deleteApp" = "Desinstalar app…";
 "bvc.cmd.download" = "Descargar";
 "bvc.cmd.downloadFromServer" = "Descargar del servidor…";
+"bvc.cmd.duplicate" = "Duplicar";
 "bvc.cmd.enclosingFolder" = "Carpeta contenedora";
 "bvc.cmd.extract" = "Extraer";
 "bvc.cmd.filter" = "Filtrar…";
@@ -157,6 +158,8 @@
 "bvc.deleteVerb" = "Eliminar";
 "bvc.downloadHere" = "Descargar aquí";
 "bvc.downloadingFrom" = "Descargando de %@";
+"bvc.duplicateAction" = "Duplicar";
+"bvc.duplicateFailed" = "No se pudo duplicar";
 "bvc.enterPasswordFor" = "Introduce la contraseña de %@@%@.";
 "bvc.failuresForItems" = "%@ para %d ítem(s)";
 "bvc.findingDuplicates" = "Buscando duplicados en %@…";
@@ -388,6 +391,7 @@
 "menu.files.copySHA256" = "Copiar SHA-256";
 "menu.files.copyURL" = "Copiar como URL de archivo";
 "menu.files.deleteApp" = "Desinstalar app…";
+"menu.files.duplicate" = "Duplicar";
 "menu.files.extract" = "Extraer";
 "menu.files.findDuplicates" = "Buscar duplicados";
 "menu.files.findInFiles" = "Buscar en archivos…";

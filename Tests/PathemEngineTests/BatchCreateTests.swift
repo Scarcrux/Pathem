@@ -42,6 +42,17 @@ import Testing
         #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("a.txt").path))
     }
 
+    @Test func duplicateMakesUniqueCopies() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try Data("hi".utf8).write(to: dir.appendingPathComponent("note.txt"))
+        let first = try FileOperations.duplicate("note.txt", in: dir)
+        let second = try FileOperations.duplicate("note.txt", in: dir)
+        #expect(first == "note copy.txt")
+        #expect(second == "note copy 2.txt")
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("note copy.txt").path))
+    }
+
     @Test func makeFileUniquifiesBeforeExtension() throws {
         let dir = try tempDir()
         defer { try? FileManager.default.removeItem(at: dir) }

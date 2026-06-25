@@ -229,6 +229,7 @@ enum PathemApp {
         fileMenu.addItem(applyLabelMenuItem())
         fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
+        fileMenu.addItem(commandItem("Duplicate", "files.duplicate"))  // chord owned by the keymap
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))

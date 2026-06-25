@@ -1112,6 +1112,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
             menu.addItem(item)
         }
         add(L("pane.rename", "Rename…"), command: "files.rename")
+        add(L("bvc.cmd.duplicate", "Duplicate"), command: "files.duplicate")
         menu.addItem(.separator())
         add(L("pane.revealInFinder", "Reveal in Finder"), command: "files.reveal")
         let share = NSMenuItem(title: L("pane.share", "Share…"), action: #selector(shareSelection), keyEquivalent: "")

@@ -85,6 +85,7 @@
 "bvc.cmd.deleteApp" = "卸载应用…";
 "bvc.cmd.download" = "下载";
 "bvc.cmd.downloadFromServer" = "从服务器下载…";
+"bvc.cmd.duplicate" = "复制副本";
 "bvc.cmd.enclosingFolder" = "上层文件夹";
 "bvc.cmd.extract" = "解压";
 "bvc.cmd.filter" = "筛选…";
@@ -157,6 +158,8 @@
 "bvc.deleteVerb" = "删除";
 "bvc.downloadHere" = "下载到此处";
 "bvc.downloadingFrom" = "正在从 %@ 下载";
+"bvc.duplicateAction" = "复制副本";
+"bvc.duplicateFailed" = "无法复制副本";
 "bvc.enterPasswordFor" = "请输入 %@@%@ 的密码。";
 "bvc.failuresForItems" = "%d 个项目 %@";
 "bvc.findingDuplicates" = "正在 %@ 中查找重复项…";
@@ -388,6 +391,7 @@
 "menu.files.copySHA256" = "拷贝 SHA-256";
 "menu.files.copyURL" = "拷贝为文件 URL";
 "menu.files.deleteApp" = "卸载应用…";
+"menu.files.duplicate" = "复制副本";
 "menu.files.extract" = "解压";
 "menu.files.findDuplicates" = "查找重复项";
 "menu.files.findInFiles" = "在文件中查找…";

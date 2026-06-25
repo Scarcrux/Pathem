@@ -102,6 +102,27 @@ public enum FileOperations {
         return name
     }
 
+    // MARK: Duplicate
+
+    /// Duplicate `name` in `directory` as "<name> copy[.ext]" (Finder-style), picking a
+    /// unique suffix. Works for files and folders. Returns the created name.
+    @discardableResult
+    public static func duplicate(_ name: String, in directory: URL) throws -> String {
+        let fm = FileManager.default
+        let ext = (name as NSString).pathExtension
+        let stem = ext.isEmpty ? name : (name as NSString).deletingPathExtension
+        func assemble(_ s: String) -> String { ext.isEmpty ? s : "\(s).\(ext)" }
+        var dest = assemble("\(stem) copy")
+        var n = 2
+        while fm.fileExists(atPath: directory.appendingPathComponent(dest).path) {
+            dest = assemble("\(stem) copy \(n)")
+            n += 1
+        }
+        try fm.copyItem(
+            at: directory.appendingPathComponent(name), to: directory.appendingPathComponent(dest))
+        return dest
+    }
+
     // MARK: Rename
 
     /// Rename a single item. Throws if the destination exists (no clobber) or the

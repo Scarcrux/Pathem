@@ -85,6 +85,7 @@
 "bvc.cmd.deleteApp" = "Appをアンインストール…";
 "bvc.cmd.download" = "ダウンロード";
 "bvc.cmd.downloadFromServer" = "サーバからダウンロード…";
+"bvc.cmd.duplicate" = "複製";
 "bvc.cmd.enclosingFolder" = "上位のフォルダ";
 "bvc.cmd.extract" = "展開";
 "bvc.cmd.filter" = "フィルタ…";
@@ -157,6 +158,8 @@
 "bvc.deleteVerb" = "削除";
 "bvc.downloadHere" = "ここにダウンロード";
 "bvc.downloadingFrom" = "%@からダウンロード中";
+"bvc.duplicateAction" = "複製";
+"bvc.duplicateFailed" = "複製できませんでした";
 "bvc.enterPasswordFor" = "%@@%@のパスワードを入力してください。";
 "bvc.failuresForItems" = "%d項目で%@";
 "bvc.findingDuplicates" = "%@内の重複を検出中…";
@@ -388,6 +391,7 @@
 "menu.files.copySHA256" = "SHA-256をコピー";
 "menu.files.copyURL" = "ファイルURLとしてコピー";
 "menu.files.deleteApp" = "Appをアンインストール…";
+"menu.files.duplicate" = "複製";
 "menu.files.extract" = "展開";
 "menu.files.findDuplicates" = "重複を検出";
 "menu.files.findInFiles" = "ファイル内を検索…";
