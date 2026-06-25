@@ -133,6 +133,7 @@
 "bvc.cmd.terminalFollowsFolder" = "终端跟随文件夹";
 "bvc.cmd.toggleImageOCRInSearch" = "在搜索中开关图像 OCR";
 "bvc.cmd.toggleTerminal" = "开关终端";
+"bvc.cmd.transfers" = "传输";
 "bvc.cmd.undo" = "撤销";
 "bvc.cmd.useAsDefaultView" = "用作默认视图";
 "bvc.cmd.verifyChecksum" = "校验校验和…";
@@ -447,6 +448,7 @@
 "menu.tools" = "工具";
 "menu.tools.ejectVolume" = "推出宗卷";
 "menu.tools.processViewer" = "进程查看器";
+"menu.tools.transfers" = "传输";
 "menu.undo" = "撤销";
 "menu.view" = "显示";
 "menu.view.asColumn" = "以分栏方式";
@@ -563,6 +565,19 @@
 "progress.cancelling" = "正在取消…";
 "progress.countStatus" = "%@ 第 %d 个，共 %d 个…";
 "progress.windowTitle" = "正在传输";
+"queue.active" = "%d 个进行中";
+"queue.cancel" = "取消";
+"queue.cancelAll" = "全部取消";
+"queue.cancelled" = "已取消";
+"queue.clear" = "清除已完成";
+"queue.done" = "完成";
+"queue.failed" = "失败";
+"queue.idle" = "没有进行中的传输";
+"queue.nameColumn" = "项目";
+"queue.queued" = "排队中";
+"queue.running" = "传输中…";
+"queue.statusColumn" = "状态";
+"queue.title" = "传输";
 "quit.quitAnyway" = "仍要退出";
 "quit.transferBody" = "现在退出可能导致传输不完整。仍要退出吗？";
 "quit.transferTitle" = "文件传输仍在进行中";

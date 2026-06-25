@@ -133,6 +133,7 @@
 "bvc.cmd.terminalFollowsFolder" = "Terminal Follows Folder";
 "bvc.cmd.toggleImageOCRInSearch" = "Toggle Image OCR in Search";
 "bvc.cmd.toggleTerminal" = "Toggle Terminal";
+"bvc.cmd.transfers" = "Transfers";
 "bvc.cmd.undo" = "Undo";
 "bvc.cmd.useAsDefaultView" = "Use as Default View";
 "bvc.cmd.verifyChecksum" = "Verify Checksum…";
@@ -447,6 +448,7 @@
 "menu.tools" = "Tools";
 "menu.tools.ejectVolume" = "Eject Volume";
 "menu.tools.processViewer" = "Process Viewer";
+"menu.tools.transfers" = "Transfers";
 "menu.undo" = "Undo";
 "menu.view" = "View";
 "menu.view.asColumn" = "as Columns";
@@ -563,6 +565,19 @@
 "progress.cancelling" = "Cancelling…";
 "progress.countStatus" = "%@ %d of %d…";
 "progress.windowTitle" = "Transferring";
+"queue.active" = "%d in progress";
+"queue.cancel" = "Cancel";
+"queue.cancelAll" = "Cancel All";
+"queue.cancelled" = "Cancelled";
+"queue.clear" = "Clear Finished";
+"queue.done" = "Done";
+"queue.failed" = "Failed";
+"queue.idle" = "No active transfers";
+"queue.nameColumn" = "Item";
+"queue.queued" = "Queued";
+"queue.running" = "Transferring…";
+"queue.statusColumn" = "Status";
+"queue.title" = "Transfers";
 "quit.quitAnyway" = "Quit Anyway";
 "quit.transferBody" = "Quitting now may leave it incomplete. Quit anyway?";
 "quit.transferTitle" = "A file transfer is still in progress";

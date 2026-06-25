@@ -98,7 +98,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
     private lazy var connectionsController = ConnectionsController()
-    private lazy var transferController = TransferController()
+    private lazy var transferController = TransferQueueController()
     private let sharedDiscovery = SharedDiscovery()
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
@@ -438,6 +438,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
+        add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
         add("files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote else { return false }
             let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
@@ -2312,10 +2313,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         openPanel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let dir = openPanel.url, let self else { return }
             let provider = RemoteProviders.make(for: ctx.connection.proto)
-            let items = entries.map { entry -> TransferController.Item in
+            let items = entries.map { entry -> TransferQueueController.Item in
                 let remotePath = PaneController.joinRemote(ctx.path, entry.name)
                 let local = self.uniqueLocalURL(dir.appendingPathComponent(entry.name))
-                return TransferController.Item(name: entry.name) {
+                return TransferQueueController.Item(name: entry.name) {
                     try await provider.download(
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
@@ -2345,9 +2346,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
         let provider = RemoteProviders.make(for: connection.proto)
-        let items = files.map { url -> TransferController.Item in
+        let items = files.map { url -> TransferQueueController.Item in
             let dest = PaneController.joinRemote(remotePath, url.lastPathComponent)
-            return TransferController.Item(name: url.lastPathComponent) {
+            return TransferQueueController.Item(name: url.lastPathComponent) {
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
         }
@@ -2401,7 +2402,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let local = uniqueLocalURL(dir.appendingPathComponent(name))
         let provider = RemoteProviders.make(for: connection.proto)
-        let item = TransferController.Item(name: name) {
+        let item = TransferQueueController.Item(name: name) {
             try await provider.download(connection, remotePath: remotePath, to: local, password: password)
         }
         guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time

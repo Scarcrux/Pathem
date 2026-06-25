@@ -133,6 +133,7 @@
 "bvc.cmd.terminalFollowsFolder" = "Le Terminal suit le dossier";
 "bvc.cmd.toggleImageOCRInSearch" = "Activer/désactiver l’OCR des images dans la recherche";
 "bvc.cmd.toggleTerminal" = "Afficher/masquer le Terminal";
+"bvc.cmd.transfers" = "Transferts";
 "bvc.cmd.undo" = "Annuler";
 "bvc.cmd.useAsDefaultView" = "Utiliser comme présentation par défaut";
 "bvc.cmd.verifyChecksum" = "Vérifier la somme de contrôle…";
@@ -447,6 +448,7 @@
 "menu.tools" = "Outils";
 "menu.tools.ejectVolume" = "Éjecter le volume";
 "menu.tools.processViewer" = "Moniteur de processus";
+"menu.tools.transfers" = "Transferts";
 "menu.undo" = "Annuler";
 "menu.view" = "Présentation";
 "menu.view.asColumn" = "en colonnes";
@@ -563,6 +565,19 @@
 "progress.cancelling" = "Annulation en cours…";
 "progress.countStatus" = "%@ %d sur %d…";
 "progress.windowTitle" = "Transfert en cours";
+"queue.active" = "%d en cours";
+"queue.cancel" = "Annuler";
+"queue.cancelAll" = "Tout annuler";
+"queue.cancelled" = "Annulé";
+"queue.clear" = "Effacer les terminés";
+"queue.done" = "Terminé";
+"queue.failed" = "Échec";
+"queue.idle" = "Aucun transfert en cours";
+"queue.nameColumn" = "Élément";
+"queue.queued" = "En file";
+"queue.running" = "Transfert…";
+"queue.statusColumn" = "État";
+"queue.title" = "Transferts";
 "quit.quitAnyway" = "Quitter quand même";
 "quit.transferBody" = "Quitter maintenant pourrait le laisser incomplet. Quitter quand même ?";
 "quit.transferTitle" = "Un transfert de fichiers est en cours";

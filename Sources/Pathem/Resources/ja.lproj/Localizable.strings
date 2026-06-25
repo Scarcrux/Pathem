@@ -133,6 +133,7 @@
 "bvc.cmd.terminalFollowsFolder" = "ターミナルをフォルダに追従";
 "bvc.cmd.toggleImageOCRInSearch" = "検索での画像OCRを切り替え";
 "bvc.cmd.toggleTerminal" = "ターミナルの表示を切り替え";
+"bvc.cmd.transfers" = "転送";
 "bvc.cmd.undo" = "取り消す";
 "bvc.cmd.useAsDefaultView" = "デフォルトの表示として使用";
 "bvc.cmd.verifyChecksum" = "チェックサムを検証…";
@@ -447,6 +448,7 @@
 "menu.tools" = "ツール";
 "menu.tools.ejectVolume" = "ボリュームを取り出す";
 "menu.tools.processViewer" = "プロセスビューア";
+"menu.tools.transfers" = "転送";
 "menu.undo" = "取り消す";
 "menu.view" = "表示";
 "menu.view.asColumn" = "カラム表示";
@@ -563,6 +565,19 @@
 "progress.cancelling" = "キャンセル中…";
 "progress.countStatus" = "%@ %d / %d…";
 "progress.windowTitle" = "転送中";
+"queue.active" = "%d 件進行中";
+"queue.cancel" = "キャンセル";
+"queue.cancelAll" = "すべてキャンセル";
+"queue.cancelled" = "キャンセル済み";
+"queue.clear" = "完了分をクリア";
+"queue.done" = "完了";
+"queue.failed" = "失敗";
+"queue.idle" = "実行中の転送はありません";
+"queue.nameColumn" = "項目";
+"queue.queued" = "待機中";
+"queue.running" = "転送中…";
+"queue.statusColumn" = "状態";
+"queue.title" = "転送";
 "quit.quitAnyway" = "終了";
 "quit.transferBody" = "今終了すると未完了のままになる可能性があります。終了しますか？";
 "quit.transferTitle" = "ファイル転送がまだ進行中です";

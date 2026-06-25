@@ -333,6 +333,7 @@ enum PathemApp {
         let toolsMenu = NSMenu(title: L("menu.tools", "Tools"))
         toolsItem.submenu = toolsMenu
         toolsMenu.addItem(commandItem("Process Viewer", "tools.processViewer"))
+        toolsMenu.addItem(commandItem("Transfers", "tools.transfers"))
         toolsMenu.addItem(commandItem("Eject Volume", "files.ejectVolume"))
 
         return mainMenu

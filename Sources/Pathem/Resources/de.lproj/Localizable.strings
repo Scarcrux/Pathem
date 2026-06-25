@@ -133,6 +133,7 @@
 "bvc.cmd.terminalFollowsFolder" = "Terminal folgt Ordner";
 "bvc.cmd.toggleImageOCRInSearch" = "Bild-OCR in der Suche umschalten";
 "bvc.cmd.toggleTerminal" = "Terminal umschalten";
+"bvc.cmd.transfers" = "Übertragungen";
 "bvc.cmd.undo" = "Widerrufen";
 "bvc.cmd.useAsDefaultView" = "Als Standardansicht verwenden";
 "bvc.cmd.verifyChecksum" = "Prüfsumme verifizieren…";
@@ -447,6 +448,7 @@
 "menu.tools" = "Werkzeuge";
 "menu.tools.ejectVolume" = "Volume auswerfen";
 "menu.tools.processViewer" = "Prozessanzeige";
+"menu.tools.transfers" = "Übertragungen";
 "menu.undo" = "Widerrufen";
 "menu.view" = "Darstellung";
 "menu.view.asColumn" = "als Spalten";
@@ -563,6 +565,19 @@
 "progress.cancelling" = "Abbrechen…";
 "progress.countStatus" = "%@ %d von %d…";
 "progress.windowTitle" = "Übertragen";
+"queue.active" = "%d laufend";
+"queue.cancel" = "Abbrechen";
+"queue.cancelAll" = "Alle abbrechen";
+"queue.cancelled" = "Abgebrochen";
+"queue.clear" = "Fertige entfernen";
+"queue.done" = "Fertig";
+"queue.failed" = "Fehlgeschlagen";
+"queue.idle" = "Keine aktiven Übertragungen";
+"queue.nameColumn" = "Objekt";
+"queue.queued" = "In Warteschlange";
+"queue.running" = "Übertrage…";
+"queue.statusColumn" = "Status";
+"queue.title" = "Übertragungen";
 "quit.quitAnyway" = "Trotzdem beenden";
 "quit.transferBody" = "Wenn du jetzt beendest, bleibt sie möglicherweise unvollständig. Trotzdem beenden?";
 "quit.transferTitle" = "Eine Dateiübertragung läuft noch";

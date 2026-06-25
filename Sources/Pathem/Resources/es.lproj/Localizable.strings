@@ -133,6 +133,7 @@
 "bvc.cmd.terminalFollowsFolder" = "El Terminal sigue a la carpeta";
 "bvc.cmd.toggleImageOCRInSearch" = "Activar/desactivar OCR de imágenes en la búsqueda";
 "bvc.cmd.toggleTerminal" = "Mostrar/ocultar el Terminal";
+"bvc.cmd.transfers" = "Transferencias";
 "bvc.cmd.undo" = "Deshacer";
 "bvc.cmd.useAsDefaultView" = "Usar como vista por omisión";
 "bvc.cmd.verifyChecksum" = "Verificar suma de comprobación…";
@@ -447,6 +448,7 @@
 "menu.tools" = "Herramientas";
 "menu.tools.ejectVolume" = "Expulsar volumen";
 "menu.tools.processViewer" = "Visor de procesos";
+"menu.tools.transfers" = "Transferencias";
 "menu.undo" = "Deshacer";
 "menu.view" = "Visualización";
 "menu.view.asColumn" = "como columnas";
@@ -563,6 +565,19 @@
 "progress.cancelling" = "Cancelando…";
 "progress.countStatus" = "%@ %d de %d…";
 "progress.windowTitle" = "Transfiriendo";
+"queue.active" = "%d en curso";
+"queue.cancel" = "Cancelar";
+"queue.cancelAll" = "Cancelar todo";
+"queue.cancelled" = "Cancelado";
+"queue.clear" = "Limpiar finalizados";
+"queue.done" = "Listo";
+"queue.failed" = "Falló";
+"queue.idle" = "Sin transferencias activas";
+"queue.nameColumn" = "Elemento";
+"queue.queued" = "En cola";
+"queue.running" = "Transfiriendo…";
+"queue.statusColumn" = "Estado";
+"queue.title" = "Transferencias";
 "quit.quitAnyway" = "Salir de todos modos";
 "quit.transferBody" = "Salir ahora podría dejarla incompleta. ¿Salir de todos modos?";
 "quit.transferTitle" = "Hay una transferencia de archivos en curso";
