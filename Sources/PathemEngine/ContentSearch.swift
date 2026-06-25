@@ -45,6 +45,72 @@ public enum ContentSearch {
         return parse(output, limit: maxResults)
     }
 
+    public struct ReplaceResult: Sendable, Equatable {
+        public let filesChanged: Int
+        public let replacements: Int
+        public init(filesChanged: Int, replacements: Int) {
+            self.filesChanged = filesChanged
+            self.replacements = replacements
+        }
+    }
+
+    /// Replace every match of `query` with `replacement` across the files under `folder`
+    /// that contain it. Only UTF-8 text files are rewritten (binaries skipped), each
+    /// written atomically. Regex replacement uses ICU templates ($1, $2). This edits files
+    /// in place and is not undoable, so the UI confirms first.
+    public static func replaceAll(
+        _ query: String, with replacement: String, in folder: URL, regex: Bool = false,
+        caseSensitive: Bool = false
+    ) async -> ReplaceResult {
+        let matches = await search(
+            query, in: folder, regex: regex, caseSensitive: caseSensitive, maxResults: 1_000_000)
+        let files = Set(matches.map(\.path))
+        var filesChanged = 0
+        var replacements = 0
+        for path in files {
+            let url = URL(fileURLWithPath: path)
+            guard let original = try? String(contentsOf: url, encoding: .utf8) else { continue }
+            let (updated, count) = applyReplace(
+                to: original, query: query, replacement: replacement, regex: regex,
+                caseSensitive: caseSensitive)
+            guard count > 0, updated != original,
+                (try? updated.write(to: url, atomically: true, encoding: .utf8)) != nil
+            else { continue }
+            filesChanged += 1
+            replacements += count
+        }
+        return ReplaceResult(filesChanged: filesChanged, replacements: replacements)
+    }
+
+    /// Pure replacement over one string; returns the new text and how many matches were
+    /// replaced. Regex uses NSRegularExpression (ICU); literal uses replacingOccurrences.
+    static func applyReplace(
+        to text: String, query: String, replacement: String, regex: Bool, caseSensitive: Bool
+    ) -> (String, Int) {
+        if regex {
+            let options: NSRegularExpression.Options = caseSensitive ? [] : [.caseInsensitive]
+            guard let expression = try? NSRegularExpression(pattern: query, options: options) else {
+                return (text, 0)
+            }
+            let range = NSRange(text.startIndex..., in: text)
+            let count = expression.numberOfMatches(in: text, range: range)
+            guard count > 0 else { return (text, 0) }
+            return (
+                expression.stringByReplacingMatches(in: text, range: range, withTemplate: replacement),
+                count
+            )
+        }
+        let compare: String.CompareOptions = caseSensitive ? [] : [.caseInsensitive]
+        var count = 0
+        var cursor = text.startIndex
+        while let found = text.range(of: query, options: compare, range: cursor..<text.endIndex) {
+            count += 1
+            cursor = found.upperBound
+        }
+        guard count > 0 else { return (text, 0) }
+        return (text.replacingOccurrences(of: query, with: replacement, options: compare), count)
+    }
+
     /// Parse "path:line:text" output (the common rg/grep -n form). A path may contain a
     /// colon, so match the *last* "path:digits:" boundary by anchoring on ":<digits>:".
     static func parse(_ output: String, limit: Int) -> [Match] {

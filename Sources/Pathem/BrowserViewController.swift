@@ -1244,7 +1244,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             search: { query, regex, caseSensitive in
                 await ContentSearch.search(query, in: folder, regex: regex, caseSensitive: caseSensitive)
             },
-            open: { [weak self] match in self?.applyOpen(URL(fileURLWithPath: match.path)) })
+            open: { [weak self] match in self?.applyOpen(URL(fileURLWithPath: match.path)) },
+            replace: { query, replacement, regex, caseSensitive in
+                await ContentSearch.replaceAll(
+                    query, with: replacement, in: folder, regex: regex, caseSensitive: caseSensitive)
+            })
     }
 
     /// Peek inside an archive (read-only listing), with Extract All from the panel.

@@ -290,10 +290,16 @@
 "fda.step3" = "Come back to Pathem. It detects access automatically.";
 "fda.waitingForAccess" = "Waiting for access…";
 "find.caseSensitive" = "Case sensitive";
+"find.confirmReplaceBody" = "Replace every match of \"%@\" in the matched files. This cannot be undone.";
+"find.confirmReplaceTitle" = "Replace in files?";
 "find.location" = "Location";
 "find.match" = "Match";
 "find.placeholder" = "Search file contents…";
 "find.regex" = "Regex";
+"find.replaceAll" = "Replace All";
+"find.replacePlaceholder" = "Replace with…";
+"find.replacedResult" = "Replaced %d in %d files";
+"find.replacing" = "Replacing…";
 "find.results" = "%d matches";
 "find.searching" = "Searching…";
 "find.title" = "Find in %@";

@@ -290,10 +290,16 @@
 "fda.step3" = "Pathemに戻ります。アクセスは自動的に検出されます。";
 "fda.waitingForAccess" = "アクセスを待機中…";
 "find.caseSensitive" = "大文字小文字を区別";
+"find.confirmReplaceBody" = "一致したファイル内の \"%@\" をすべて置換します。この操作は取り消せません。";
+"find.confirmReplaceTitle" = "ファイル内で置換しますか？";
 "find.location" = "場所";
 "find.match" = "一致";
 "find.placeholder" = "ファイルの内容を検索…";
 "find.regex" = "正規表現";
+"find.replaceAll" = "すべて置換";
+"find.replacePlaceholder" = "置換後…";
+"find.replacedResult" = "%d 件のファイルで %d 個を置換";
+"find.replacing" = "置換中…";
 "find.results" = "%d 件の一致";
 "find.searching" = "検索中…";
 "find.title" = "%@ 内を検索";

@@ -290,10 +290,16 @@
 "fda.step3" = "返回 Pathem。它会自动检测访问权限。";
 "fda.waitingForAccess" = "正在等待访问权限…";
 "find.caseSensitive" = "区分大小写";
+"find.confirmReplaceBody" = "替换匹配文件中所有的“%@”。此操作无法撤销。";
+"find.confirmReplaceTitle" = "在文件中替换？";
 "find.location" = "位置";
 "find.match" = "匹配";
 "find.placeholder" = "搜索文件内容…";
 "find.regex" = "正则";
+"find.replaceAll" = "全部替换";
+"find.replacePlaceholder" = "替换为…";
+"find.replacedResult" = "已在 %d 个文件中替换 %d 处";
+"find.replacing" = "替换中…";
 "find.results" = "%d 个匹配";
 "find.searching" = "搜索中…";
 "find.title" = "在 %@ 中查找";

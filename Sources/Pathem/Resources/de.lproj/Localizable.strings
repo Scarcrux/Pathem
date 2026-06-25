@@ -290,10 +290,16 @@
 "fda.step3" = "Kehre zu Pathem zurück. Der Zugriff wird automatisch erkannt.";
 "fda.waitingForAccess" = "Warten auf Zugriff…";
 "find.caseSensitive" = "Groß-/Kleinschreibung";
+"find.confirmReplaceBody" = "Alle Treffer von \"%@\" in den gefundenen Dateien ersetzen. Dies kann nicht rückgängig gemacht werden.";
+"find.confirmReplaceTitle" = "In Dateien ersetzen?";
 "find.location" = "Ort";
 "find.match" = "Treffer";
 "find.placeholder" = "Dateiinhalte durchsuchen…";
 "find.regex" = "Regex";
+"find.replaceAll" = "Alle ersetzen";
+"find.replacePlaceholder" = "Ersetzen durch…";
+"find.replacedResult" = "%d ersetzt in %d Dateien";
+"find.replacing" = "Ersetze…";
 "find.results" = "%d Treffer";
 "find.searching" = "Suche läuft…";
 "find.title" = "In %@ suchen";

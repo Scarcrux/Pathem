@@ -290,10 +290,16 @@
 "fda.step3" = "Vuelve a Pathem. Detecta el acceso automáticamente.";
 "fda.waitingForAccess" = "Esperando el acceso…";
 "find.caseSensitive" = "Distinguir mayúsculas";
+"find.confirmReplaceBody" = "Reemplazar todas las coincidencias de \"%@\" en los archivos encontrados. Esto no se puede deshacer.";
+"find.confirmReplaceTitle" = "¿Reemplazar en los archivos?";
 "find.location" = "Ubicación";
 "find.match" = "Coincidencia";
 "find.placeholder" = "Buscar en el contenido de los archivos…";
 "find.regex" = "Regex";
+"find.replaceAll" = "Reemplazar todo";
+"find.replacePlaceholder" = "Reemplazar con…";
+"find.replacedResult" = "%d reemplazados en %d archivos";
+"find.replacing" = "Reemplazando…";
 "find.results" = "%d coincidencias";
 "find.searching" = "Buscando…";
 "find.title" = "Buscar en %@";

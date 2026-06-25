@@ -290,10 +290,16 @@
 "fda.step3" = "Revenez à Pathem. Il détecte l’accès automatiquement.";
 "fda.waitingForAccess" = "En attente de l’accès…";
 "find.caseSensitive" = "Sensible à la casse";
+"find.confirmReplaceBody" = "Remplacer toutes les correspondances de « %@ » dans les fichiers trouvés. Action irréversible.";
+"find.confirmReplaceTitle" = "Remplacer dans les fichiers ?";
 "find.location" = "Emplacement";
 "find.match" = "Correspondance";
 "find.placeholder" = "Rechercher dans le contenu des fichiers…";
 "find.regex" = "Regex";
+"find.replaceAll" = "Tout remplacer";
+"find.replacePlaceholder" = "Remplacer par…";
+"find.replacedResult" = "%d remplacés dans %d fichiers";
+"find.replacing" = "Remplacement…";
 "find.results" = "%d correspondances";
 "find.searching" = "Recherche…";
 "find.title" = "Rechercher dans %@";

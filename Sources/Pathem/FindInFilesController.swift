@@ -14,11 +14,14 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     private let statusLabel = NSTextField(labelWithString: "")
     private let spinner = NSProgressIndicator()
     private let table = NSTableView()
+    private let replaceField = NSTextField()
+    private let replaceButton = NSButton(title: "", target: nil, action: nil)
     private var matches: [ContentSearch.Match] = []
     private let gen = GenerationBox()
 
     private var onSearch: ((_ query: String, _ regex: Bool, _ caseSensitive: Bool) async -> [ContentSearch.Match])?
     private var onOpen: ((ContentSearch.Match) -> Void)?
+    private var onReplace: ((_ query: String, _ replacement: String, _ regex: Bool, _ caseSensitive: Bool) async -> ContentSearch.ReplaceResult)?
 
     override init() {
         panel = NSPanel(
@@ -31,10 +34,12 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     func present(
         over window: NSWindow, folderName: String,
         search: @escaping (String, Bool, Bool) async -> [ContentSearch.Match],
-        open: @escaping (ContentSearch.Match) -> Void
+        open: @escaping (ContentSearch.Match) -> Void,
+        replace: @escaping (String, String, Bool, Bool) async -> ContentSearch.ReplaceResult
     ) {
         onSearch = search
         onOpen = open
+        onReplace = replace
         panel.title = String(format: L("find.title", "Find in %@"), folderName)
         matches = []
         statusLabel.stringValue = ""
@@ -84,7 +89,18 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         controls.spacing = 8
         queryField.setContentHuggingPriority(.init(1), for: .horizontal)
         statusLabel.setContentHuggingPriority(.init(1), for: .horizontal)
-        let stack = NSStackView(views: [controls, scroll])
+
+        replaceField.placeholderString = L("find.replacePlaceholder", "Replace with…")
+        replaceButton.title = L("find.replaceAll", "Replace All")
+        replaceButton.bezelStyle = .rounded
+        replaceButton.target = self
+        replaceButton.action = #selector(replaceAll)
+        let replaceRow = NSStackView(views: [replaceField, replaceButton])
+        replaceRow.orientation = .horizontal
+        replaceRow.spacing = 8
+        replaceField.setContentHuggingPriority(.init(1), for: .horizontal)
+
+        let stack = NSStackView(views: [controls, replaceRow, scroll])
         stack.orientation = .vertical
         stack.spacing = 10
         stack.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
@@ -97,6 +113,7 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
                 stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
                 stack.bottomAnchor.constraint(equalTo: content.bottomAnchor),
                 controls.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -28),
+                replaceRow.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -28),
                 scroll.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -28),
             ])
         }
@@ -130,6 +147,37 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
             self.matches = results
             self.table.reloadData()
             self.statusLabel.stringValue = String(format: L("find.results", "%d matches"), results.count)
+        }
+    }
+
+    @objc private func replaceAll() {
+        let query = queryField.stringValue
+        guard !query.trimmingCharacters(in: .whitespaces).isEmpty, !matches.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let replacement = replaceField.stringValue
+        let alert = NSAlert()
+        alert.messageText = L("find.confirmReplaceTitle", "Replace in files?")
+        alert.informativeText = String(
+            format: L("find.confirmReplaceBody", "Replace every match of \"%@\" in the matched files. This cannot be undone."),
+            query)
+        alert.addButton(withTitle: L("find.replaceAll", "Replace All"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let regex = regexCheck.state == .on
+        let caseSensitive = caseCheck.state == .on
+        spinner.startAnimation(nil)
+        statusLabel.stringValue = L("find.replacing", "Replacing…")
+        Task { @MainActor in
+            let result = await self.onReplace?(query, replacement, regex, caseSensitive)
+                ?? ContentSearch.ReplaceResult(filesChanged: 0, replacements: 0)
+            self.spinner.stopAnimation(nil)
+            self.statusLabel.stringValue = String(
+                format: L("find.replacedResult", "Replaced %d in %d files"), result.replacements,
+                result.filesChanged)
+            self.runSearch()  // refresh the match list against the edited files
         }
     }
 

@@ -25,6 +25,38 @@ import Testing
         #expect(ContentSearch.parse(out, limit: 10).count == 10)
     }
 
+    @Test func applyReplaceLiteralAndRegex() {
+        let (literal, n1) = ContentSearch.applyReplace(
+            to: "foo Foo FOO", query: "foo", replacement: "bar", regex: false, caseSensitive: false)
+        #expect(literal == "bar bar bar")
+        #expect(n1 == 3)
+
+        let (cased, n2) = ContentSearch.applyReplace(
+            to: "foo Foo", query: "foo", replacement: "bar", regex: false, caseSensitive: true)
+        #expect(cased == "bar Foo")
+        #expect(n2 == 1)
+
+        let (regex, n3) = ContentSearch.applyReplace(
+            to: "v1 v2 v3", query: #"v(\d)"#, replacement: "version$1", regex: true, caseSensitive: true)
+        #expect(regex == "version1 version2 version3")
+        #expect(n3 == 3)
+    }
+
+    @Test func replaceAllRewritesMatchingFiles() async throws {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-rep-\(UUID().uuidString)")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        try "alpha beta alpha\n".write(to: dir.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+        try "gamma\n".write(to: dir.appendingPathComponent("b.txt"), atomically: true, encoding: .utf8)
+        defer { try? fm.removeItem(at: dir) }
+
+        let result = await ContentSearch.replaceAll("alpha", with: "ALPHA", in: dir)
+        #expect(result.filesChanged == 1)
+        #expect(result.replacements == 2)
+        let updated = try String(contentsOf: dir.appendingPathComponent("a.txt"), encoding: .utf8)
+        #expect(updated == "ALPHA beta ALPHA\n")
+    }
+
     @Test func findsTextInRealFiles() async throws {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-grep-\(UUID().uuidString)")
