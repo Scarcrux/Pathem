@@ -2876,6 +2876,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             && (100...360).contains(sidebar.containerView.frame.width)
     }
 
+    /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).
+    func debugRenderSidebar(to path: String) {
+        let view = sidebar.containerView
+        let bounds = view.bounds
+        guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        view.cacheDisplay(in: bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+            print("SIDEBAR SHOT: \(Int(bounds.width))x\(Int(bounds.height))")
+        }
+    }
+
     func smokeReport() -> (ok: Bool, lines: [String]) {
         var lines: [String] = []
         var ok = true

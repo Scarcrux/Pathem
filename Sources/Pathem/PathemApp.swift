@@ -107,6 +107,22 @@ enum PathemApp {
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
 
+        // Headless sidebar render for layout inspection (PATHEM_SIDEBAR_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 520))  // a realistic short window
+            var attempts = 0
+            func tick() {
+                attempts += 1
+                guard browser.layoutSettled() || attempts >= 30 else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+                    return
+                }
+                browser.debugRenderSidebar(to: "/tmp/sidebar.png")
+                exit(0)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+        }
+
         // Headless UI smoke test: once the window has laid out, assert the
         // structural invariants (window not collapsed, both panes visible) and
         // exit. Catches the layout regressions the engine tests can't see.

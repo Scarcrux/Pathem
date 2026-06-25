@@ -177,6 +177,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         scrollView.documentView = outline
         scrollView.drawsBackground = false
         scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true  // no scroller when the content fits
+        scrollView.scrollerStyle = .overlay  // overlay scrollers don't steal width (no clipping)
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         settingsButton.bezelStyle = .texturedRounded
@@ -338,6 +340,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
                 let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
                 guard isDir else { continue }
+                // iCloud is already listed from Mobile Documents above; don't list it twice.
+                if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
                 children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: nil, isFolder: true))
             }
         }
