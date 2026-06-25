@@ -231,6 +231,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
+        fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
         fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
         fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))

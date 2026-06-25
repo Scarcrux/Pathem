@@ -16,6 +16,9 @@
 "aibar.panelTitle" = "Demander à Pathem";
 "aibar.placeholder" = "Indiquez à Pathem ce qu’il doit faire…";
 "aibar.thinking" = "Réflexion en cours…";
+"appdel.body" = "Supprimer aussi %d fichiers associés (%@) :\n%@";
+"appdel.noneBody" = "Aucun fichier de support associé n’a été trouvé.";
+"appdel.title" = "Placer %@ dans la corbeille ?";
 "batch.actionName" = "Création par lot";
 "batch.create" = "Créer";
 "batch.files" = "Fichiers";
@@ -70,6 +73,7 @@
 "bvc.cmd.copySHA256" = "Copier le SHA-256";
 "bvc.cmd.copyToOtherPane" = "Copier vers l’autre volet";
 "bvc.cmd.cut" = "Couper";
+"bvc.cmd.deleteApp" = "Désinstaller l’app…";
 "bvc.cmd.download" = "Télécharger";
 "bvc.cmd.downloadFromServer" = "Télécharger depuis le serveur…";
 "bvc.cmd.enclosingFolder" = "Dossier parent";
@@ -363,6 +367,7 @@
 "menu.files.copyPath" = "Copier le chemin";
 "menu.files.copySHA256" = "Copier le SHA-256";
 "menu.files.copyURL" = "Copier comme URL de fichier";
+"menu.files.deleteApp" = "Désinstaller l’app…";
 "menu.files.extract" = "Extraire";
 "menu.files.findDuplicates" = "Rechercher les doublons";
 "menu.files.getInfo" = "Lire les informations";

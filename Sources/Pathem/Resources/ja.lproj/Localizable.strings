@@ -16,6 +16,9 @@
 "aibar.panelTitle" = "Pathemに質問";
 "aibar.placeholder" = "Pathemに指示を入力…";
 "aibar.thinking" = "考え中…";
+"appdel.body" = "関連ファイル %d 件も削除（%@）：\n%@";
+"appdel.noneBody" = "関連するサポートファイルは見つかりませんでした。";
+"appdel.title" = "%@ をゴミ箱に入れますか？";
 "batch.actionName" = "一括作成";
 "batch.create" = "作成";
 "batch.files" = "ファイル";
@@ -70,6 +73,7 @@
 "bvc.cmd.copySHA256" = "SHA-256をコピー";
 "bvc.cmd.copyToOtherPane" = "もう一方のペインにコピー";
 "bvc.cmd.cut" = "カット";
+"bvc.cmd.deleteApp" = "Appをアンインストール…";
 "bvc.cmd.download" = "ダウンロード";
 "bvc.cmd.downloadFromServer" = "サーバからダウンロード…";
 "bvc.cmd.enclosingFolder" = "上位のフォルダ";
@@ -363,6 +367,7 @@
 "menu.files.copyPath" = "パスをコピー";
 "menu.files.copySHA256" = "SHA-256をコピー";
 "menu.files.copyURL" = "ファイルURLとしてコピー";
+"menu.files.deleteApp" = "Appをアンインストール…";
 "menu.files.extract" = "展開";
 "menu.files.findDuplicates" = "重複を検出";
 "menu.files.getInfo" = "情報を見る";

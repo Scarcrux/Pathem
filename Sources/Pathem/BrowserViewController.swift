@@ -419,6 +419,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane else { return false }
             return !pane.isRemote && !pane.isShowingSmartResults
         }
+        add("files.deleteApp", L("bvc.cmd.deleteApp", "Uninstall App…"), enabled: { [weak self] in
+            guard let entry = self?.activePane?.selectedEntries, entry.count == 1 else { return false }
+            return entry.first?.name.hasSuffix(".app") == true
+        }) { [weak self] in self?.deleteAppWithLeftovers() }
         add("git.commit", L("bvc.cmd.gitCommit", "Commit…"), enabled: inLocalFolder) { [weak self] in self?.gitCommit() }
         add("git.push", L("bvc.cmd.gitPush", "Push"), enabled: inLocalFolder) { [weak self] in self?.gitPushPull(push: true) }
         add("git.pull", L("bvc.cmd.gitPull", "Pull"), enabled: inLocalFolder) { [weak self] in self?.gitPushPull(push: false) }
@@ -732,6 +736,46 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.presentInfo(
                     push ? L("git.pushFailedTitle", "Push failed") : L("git.pullFailedTitle", "Pull failed"),
                     result.output)
+            }
+        }
+    }
+
+    // MARK: - App Deleter (remove an app and its leftover support files)
+
+    private func deleteAppWithLeftovers() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first,
+            entry.name.hasSuffix(".app"), let window = view.window
+        else { NSSound.beep(); return }
+        let appURL = pane.currentURL.appendingPathComponent(entry.name)
+        Task { @MainActor in
+            let leftovers = await Task.detached { AppLeftovers.find(forApp: appURL) }.value
+            let formatter = ByteCountFormatter()
+            formatter.countStyle = .file
+            let total = leftovers.reduce(Int64(0)) { $0 + $1.size }
+            let alert = NSAlert()
+            alert.messageText = String(format: L("appdel.title", "Move %@ to the Trash?"), entry.name)
+            if leftovers.isEmpty {
+                alert.informativeText = L("appdel.noneBody", "No related support files were found.")
+            } else {
+                let list = leftovers.prefix(12).map { "  • " + ($0.path as NSString).lastPathComponent }
+                    .joined(separator: "\n")
+                alert.informativeText = String(
+                    format: L("appdel.body", "Also remove %d related files (%@):\n%@"),
+                    leftovers.count, formatter.string(fromByteCount: total),
+                    list + (leftovers.count > 12 ? "\n  …" : ""))
+            }
+            alert.addButton(withTitle: L("bvc.moveToTrashAction", "Move to Trash"))
+            alert.addButton(withTitle: L("common.cancel", "Cancel"))
+            alert.beginSheetModal(for: window) { [weak self] response in
+                guard response == .alertFirstButtonReturn, let self else { return }
+                let urls = [appURL] + leftovers.map { URL(fileURLWithPath: $0.path) }
+                let result = FileOperations.trash(urls: urls)
+                self.reloadBothSides()
+                if !result.trashed.isEmpty { self.registerTrashUndo(result.trashed) }
+                if !result.failures.isEmpty {
+                    self.presentFailures(result.failures, title: L("bvc.moveToTrashFailed", "Move to Trash failed"))
+                }
             }
         }
     }

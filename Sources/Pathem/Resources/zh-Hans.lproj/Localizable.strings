@@ -16,6 +16,9 @@
 "aibar.panelTitle" = "询问 Pathem";
 "aibar.placeholder" = "告诉 Pathem 要做什么…";
 "aibar.thinking" = "正在思考…";
+"appdel.body" = "同时移除 %d 个相关文件（%@）：\n%@";
+"appdel.noneBody" = "未找到相关的支持文件。";
+"appdel.title" = "将 %@ 移到废纸篓？";
 "batch.actionName" = "批量创建";
 "batch.create" = "创建";
 "batch.files" = "文件";
@@ -70,6 +73,7 @@
 "bvc.cmd.copySHA256" = "拷贝 SHA-256";
 "bvc.cmd.copyToOtherPane" = "拷贝到另一窗格";
 "bvc.cmd.cut" = "剪切";
+"bvc.cmd.deleteApp" = "卸载应用…";
 "bvc.cmd.download" = "下载";
 "bvc.cmd.downloadFromServer" = "从服务器下载…";
 "bvc.cmd.enclosingFolder" = "上层文件夹";
@@ -363,6 +367,7 @@
 "menu.files.copyPath" = "拷贝路径";
 "menu.files.copySHA256" = "拷贝 SHA-256";
 "menu.files.copyURL" = "拷贝为文件 URL";
+"menu.files.deleteApp" = "卸载应用…";
 "menu.files.extract" = "解压";
 "menu.files.findDuplicates" = "查找重复项";
 "menu.files.getInfo" = "显示简介";
