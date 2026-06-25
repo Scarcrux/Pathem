@@ -89,6 +89,7 @@
 "bvc.cmd.extract" = "Extraer";
 "bvc.cmd.filter" = "Filtrar…";
 "bvc.cmd.findDuplicates" = "Buscar duplicados";
+"bvc.cmd.findInFiles" = "Buscar en archivos…";
 "bvc.cmd.flatView" = "Vista plana";
 "bvc.cmd.forward" = "Adelante";
 "bvc.cmd.getInfo" = "Obtener información";
@@ -284,6 +285,14 @@
 "fda.step2" = "Haz clic en el botón + (o en el conmutador) y añade Pathem.";
 "fda.step3" = "Vuelve a Pathem. Detecta el acceso automáticamente.";
 "fda.waitingForAccess" = "Esperando el acceso…";
+"find.caseSensitive" = "Distinguir mayúsculas";
+"find.location" = "Ubicación";
+"find.match" = "Coincidencia";
+"find.placeholder" = "Buscar en el contenido de los archivos…";
+"find.regex" = "Regex";
+"find.results" = "%d coincidencias";
+"find.searching" = "Buscando…";
+"find.title" = "Buscar en %@";
 "gestures.colGesture" = "Gesto";
 "gestures.help" = "Mantén pulsado el botón derecho y arrastra en una vista de archivos: ← atrás, → adelante, ↑ carpeta contenedora. Elige un comando y luego arrastra con el botón derecho en el recuadro para reasignar.";
 "gestures.reassigned" = "%@ se reasignó desde «%@».";
@@ -380,6 +389,7 @@
 "menu.files.deleteApp" = "Desinstalar app…";
 "menu.files.extract" = "Extraer";
 "menu.files.findDuplicates" = "Buscar duplicados";
+"menu.files.findInFiles" = "Buscar en archivos…";
 "menu.files.getInfo" = "Obtener información";
 "menu.files.newFile" = "Nuevo archivo";
 "menu.files.newFolder" = "Nueva carpeta";

@@ -74,6 +74,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var templatesManager = TemplatesController()
     private lazy var commitController = CommitController()
     private lazy var archiveContents = ArchiveContentsController()
+    private lazy var findInFiles = FindInFilesController()
     private var createTemplates: [CreateTemplate] = []
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
     var updater: UpdaterController?
@@ -427,6 +428,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane else { return false }
             return !pane.isRemote && !pane.isShowingSmartResults
         }
+        add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1199,6 +1201,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.reloadBothSides()
             if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
         }
+    }
+
+    /// Search file contents under the active folder (grep/ripgrep), open a match.
+    private func showFindInFiles() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults, let window = view.window
+        else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        findInFiles.present(
+            over: window, folderName: folder.lastPathComponent,
+            search: { query, regex, caseSensitive in
+                await ContentSearch.search(query, in: folder, regex: regex, caseSensitive: caseSensitive)
+            },
+            open: { [weak self] match in self?.applyOpen(URL(fileURLWithPath: match.path)) })
     }
 
     /// Peek inside an archive (read-only listing), with Extract All from the panel.

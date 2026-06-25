@@ -89,6 +89,7 @@
 "bvc.cmd.extract" = "展開";
 "bvc.cmd.filter" = "フィルタ…";
 "bvc.cmd.findDuplicates" = "重複を検出";
+"bvc.cmd.findInFiles" = "ファイル内を検索…";
 "bvc.cmd.flatView" = "フラット表示";
 "bvc.cmd.forward" = "進む";
 "bvc.cmd.getInfo" = "情報を見る";
@@ -284,6 +285,14 @@
 "fda.step2" = "「+」ボタン（またはトグル）をクリックしてPathemを追加します。";
 "fda.step3" = "Pathemに戻ります。アクセスは自動的に検出されます。";
 "fda.waitingForAccess" = "アクセスを待機中…";
+"find.caseSensitive" = "大文字小文字を区別";
+"find.location" = "場所";
+"find.match" = "一致";
+"find.placeholder" = "ファイルの内容を検索…";
+"find.regex" = "正規表現";
+"find.results" = "%d 件の一致";
+"find.searching" = "検索中…";
+"find.title" = "%@ 内を検索";
 "gestures.colGesture" = "ジェスチャ";
 "gestures.help" = "ファイルビューで右ボタンを押しながらドラッグ：← 戻る、→ 進む、↑ 親フォルダ。コマンドを選び、ボックス内で右ドラッグして再割り当てします。";
 "gestures.reassigned" = "%@ は「%@」から再割り当てされました。";
@@ -380,6 +389,7 @@
 "menu.files.deleteApp" = "Appをアンインストール…";
 "menu.files.extract" = "展開";
 "menu.files.findDuplicates" = "重複を検出";
+"menu.files.findInFiles" = "ファイル内を検索…";
 "menu.files.getInfo" = "情報を見る";
 "menu.files.newFile" = "新規ファイル";
 "menu.files.newFolder" = "新規フォルダ";

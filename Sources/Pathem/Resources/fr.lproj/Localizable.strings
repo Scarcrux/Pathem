@@ -89,6 +89,7 @@
 "bvc.cmd.extract" = "Extraire";
 "bvc.cmd.filter" = "Filtrer…";
 "bvc.cmd.findDuplicates" = "Rechercher les doublons";
+"bvc.cmd.findInFiles" = "Rechercher dans les fichiers…";
 "bvc.cmd.flatView" = "Vue à plat";
 "bvc.cmd.forward" = "Suivant";
 "bvc.cmd.getInfo" = "Lire les informations";
@@ -284,6 +285,14 @@
 "fda.step2" = "Cliquez sur le bouton + (ou sur l’interrupteur) et ajoutez Pathem.";
 "fda.step3" = "Revenez à Pathem. Il détecte l’accès automatiquement.";
 "fda.waitingForAccess" = "En attente de l’accès…";
+"find.caseSensitive" = "Sensible à la casse";
+"find.location" = "Emplacement";
+"find.match" = "Correspondance";
+"find.placeholder" = "Rechercher dans le contenu des fichiers…";
+"find.regex" = "Regex";
+"find.results" = "%d correspondances";
+"find.searching" = "Recherche…";
+"find.title" = "Rechercher dans %@";
 "gestures.colGesture" = "Geste";
 "gestures.help" = "Maintenez le bouton droit et faites glisser dans une vue de fichiers : ← précédent, → suivant, ↑ dossier parent. Choisissez une commande, puis faites un clic droit glissé dans le cadre pour réattribuer.";
 "gestures.reassigned" = "%@ a été réassigné depuis « %@ ».";
@@ -380,6 +389,7 @@
 "menu.files.deleteApp" = "Désinstaller l’app…";
 "menu.files.extract" = "Extraire";
 "menu.files.findDuplicates" = "Rechercher les doublons";
+"menu.files.findInFiles" = "Rechercher dans les fichiers…";
 "menu.files.getInfo" = "Lire les informations";
 "menu.files.newFile" = "Nouveau fichier";
 "menu.files.newFolder" = "Nouveau dossier";

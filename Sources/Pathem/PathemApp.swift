@@ -271,6 +271,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
         viewMenu.addItem(commandItem("Flat View", "view.flatView", "f", [.command, .control]))
         viewMenu.addItem(commandItem("Filter…", "view.filter", "f"))
+        viewMenu.addItem(commandItem("Find in Files…", "files.findInFiles"))
         viewMenu.addItem(commandItem("Find Duplicates", "files.findDuplicates"))
         viewMenu.addItem(commandItem("Compare Panes…", "files.comparePanes"))
         viewMenu.addItem(commandItem("Size Browser…", "view.sizeBrowser"))

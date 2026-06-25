@@ -89,6 +89,7 @@
 "bvc.cmd.extract" = "Extract";
 "bvc.cmd.filter" = "Filter…";
 "bvc.cmd.findDuplicates" = "Find Duplicates";
+"bvc.cmd.findInFiles" = "Find in Files…";
 "bvc.cmd.flatView" = "Flat View";
 "bvc.cmd.forward" = "Forward";
 "bvc.cmd.getInfo" = "Get Info";
@@ -284,6 +285,14 @@
 "fda.step2" = "Click the + button (or the toggle) and add Pathem.";
 "fda.step3" = "Come back to Pathem. It detects access automatically.";
 "fda.waitingForAccess" = "Waiting for access…";
+"find.caseSensitive" = "Case sensitive";
+"find.location" = "Location";
+"find.match" = "Match";
+"find.placeholder" = "Search file contents…";
+"find.regex" = "Regex";
+"find.results" = "%d matches";
+"find.searching" = "Searching…";
+"find.title" = "Find in %@";
 "gestures.colGesture" = "Gesture";
 "gestures.help" = "Hold the right mouse button and drag in a file view: ← back, → forward, ↑ enclosing folder. Pick a command, then right-drag in the box to rebind.";
 "gestures.reassigned" = "%@ was reassigned from “%@”.";
@@ -380,6 +389,7 @@
 "menu.files.deleteApp" = "Uninstall App…";
 "menu.files.extract" = "Extract";
 "menu.files.findDuplicates" = "Find Duplicates";
+"menu.files.findInFiles" = "Find in Files…";
 "menu.files.getInfo" = "Get Info";
 "menu.files.newFile" = "New File";
 "menu.files.newFolder" = "New Folder";

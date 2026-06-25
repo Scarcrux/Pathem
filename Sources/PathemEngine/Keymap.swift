@@ -85,6 +85,7 @@ public struct Keymap: Codable, Sendable {
         "f5": "files.copyToOtherPane",
         "f6": "files.moveToOtherPane",
         "cmd+shift+.": "view.toggleHidden",
+        "cmd+shift+f": "files.findInFiles",
         "cmd+shift+p": "palette.show",
         "cmd+shift+a": "ai.run",
         "space": "view.quickLook",

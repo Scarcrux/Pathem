@@ -89,6 +89,7 @@
 "bvc.cmd.extract" = "Entpacken";
 "bvc.cmd.filter" = "Filtern…";
 "bvc.cmd.findDuplicates" = "Duplikate finden";
+"bvc.cmd.findInFiles" = "In Dateien suchen…";
 "bvc.cmd.flatView" = "Flache Ansicht";
 "bvc.cmd.forward" = "Vorwärts";
 "bvc.cmd.getInfo" = "Informationen";
@@ -284,6 +285,14 @@
 "fda.step2" = "Klicke auf die Taste „+“ (oder den Schalter) und füge Pathem hinzu.";
 "fda.step3" = "Kehre zu Pathem zurück. Der Zugriff wird automatisch erkannt.";
 "fda.waitingForAccess" = "Warten auf Zugriff…";
+"find.caseSensitive" = "Groß-/Kleinschreibung";
+"find.location" = "Ort";
+"find.match" = "Treffer";
+"find.placeholder" = "Dateiinhalte durchsuchen…";
+"find.regex" = "Regex";
+"find.results" = "%d Treffer";
+"find.searching" = "Suche läuft…";
+"find.title" = "In %@ suchen";
 "gestures.colGesture" = "Geste";
 "gestures.help" = "Halte die rechte Maustaste gedrückt und ziehe in einer Dateiansicht: ← zurück, → vor, ↑ übergeordneter Ordner. Wähle einen Befehl und ziehe dann mit rechts im Feld, um ihn neu zuzuweisen.";
 "gestures.reassigned" = "%@ wurde von „%@“ neu zugewiesen.";
@@ -380,6 +389,7 @@
 "menu.files.deleteApp" = "App deinstallieren…";
 "menu.files.extract" = "Entpacken";
 "menu.files.findDuplicates" = "Duplikate finden";
+"menu.files.findInFiles" = "In Dateien suchen…";
 "menu.files.getInfo" = "Informationen";
 "menu.files.newFile" = "Neue Datei";
 "menu.files.newFolder" = "Neuer Ordner";

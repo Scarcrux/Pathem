@@ -89,6 +89,7 @@
 "bvc.cmd.extract" = "解压";
 "bvc.cmd.filter" = "筛选…";
 "bvc.cmd.findDuplicates" = "查找重复项";
+"bvc.cmd.findInFiles" = "在文件中查找…";
 "bvc.cmd.flatView" = "平铺视图";
 "bvc.cmd.forward" = "前进";
 "bvc.cmd.getInfo" = "显示简介";
@@ -284,6 +285,14 @@
 "fda.step2" = "点按 + 按钮（或开关）并添加 Pathem。";
 "fda.step3" = "返回 Pathem。它会自动检测访问权限。";
 "fda.waitingForAccess" = "正在等待访问权限…";
+"find.caseSensitive" = "区分大小写";
+"find.location" = "位置";
+"find.match" = "匹配";
+"find.placeholder" = "搜索文件内容…";
+"find.regex" = "正则";
+"find.results" = "%d 个匹配";
+"find.searching" = "搜索中…";
+"find.title" = "在 %@ 中查找";
 "gestures.colGesture" = "手势";
 "gestures.help" = "在文件视图中按住鼠标右键并拖动：← 后退，→ 前进，↑ 上级文件夹。选择一个命令，然后在框中右键拖动以重新绑定。";
 "gestures.reassigned" = "%@ 已从“%@”重新分配。";
@@ -380,6 +389,7 @@
 "menu.files.deleteApp" = "卸载应用…";
 "menu.files.extract" = "解压";
 "menu.files.findDuplicates" = "查找重复项";
+"menu.files.findInFiles" = "在文件中查找…";
 "menu.files.getInfo" = "显示简介";
 "menu.files.newFile" = "新建文件";
 "menu.files.newFolder" = "新建文件夹";
