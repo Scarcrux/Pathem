@@ -680,29 +680,32 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let gen = sizeGen
         let base = dir.path
         let sizeColumn = tableView.column(withIdentifier: .init(Column.size.rawValue))
-        DispatchQueue.global(qos: .utility).async { [weak self] in
-            // Coalesce completed sizes into batches and redraw only the size column,
-            // so a folder with thousands of subfolders doesn't hammer the main thread
-            // with one full-row reload per child.
-            var batch: [(path: String, name: String, row: Int, size: DirectorySize.Measurement)] = []
-            for folder in folders {
-                guard gen.isCurrent(generation) else { return }  // navigated away / disabled
-                let path = Self.key(base: base, name: folder.name)  // same key construction as viewFor
-                let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
-                batch.append((path, folder.name, folder.row, size))
-                if batch.count >= 32 {
+        // Each folder's subtree walk is independent, so compute several at once instead
+        // of one-at-a-time. Workers stride through the list (interleaved) and each keeps
+        // its own batch, publishing on the main thread as sizes finish, so they fill in
+        // progressively and a folder full of large subfolders is much faster.
+        let workers = min(6, max(2, ProcessInfo.processInfo.activeProcessorCount - 1))
+        for offset in 0..<workers {
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                var batch: [(path: String, name: String, row: Int, size: DirectorySize.Measurement)] = []
+                func flush() {
                     let pending = batch
                     batch = []
                     DispatchQueue.main.async { [weak self] in
                         self?.publishFolderSizes(pending, generation: generation, sizeColumn: sizeColumn)
                     }
                 }
-            }
-            if !batch.isEmpty {
-                let pending = batch
-                DispatchQueue.main.async { [weak self] in
-                    self?.publishFolderSizes(pending, generation: generation, sizeColumn: sizeColumn)
+                var index = offset
+                while index < folders.count {
+                    guard gen.isCurrent(generation) else { return }  // navigated away / disabled
+                    let folder = folders[index]
+                    let path = Self.key(base: base, name: folder.name)  // same key as viewFor
+                    let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
+                    batch.append((path, folder.name, folder.row, size))
+                    if batch.count >= 16 { flush() }
+                    index += workers
                 }
+                if !batch.isEmpty { flush() }
             }
         }
     }
