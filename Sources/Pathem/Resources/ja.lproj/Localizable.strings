@@ -476,6 +476,8 @@
 "pane.noSuchPathBody" = "“%@”は存在しません。\n\nもしかして:\n%@";
 "pane.noSuchPathTitle" = "パスが見つかりません";
 "pane.openHostFailed" = "%@%@を開けませんでした\n%@";
+"pane.openWith" = "このアプリで開く";
+"pane.openWithOther" = "その他…";
 "pane.rename" = "名称変更…";
 "pane.revealInFinder" = "Finderに表示";
 "pane.selectedOf" = "%d / %d項目を選択中";

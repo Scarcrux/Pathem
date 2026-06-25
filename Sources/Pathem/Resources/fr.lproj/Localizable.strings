@@ -476,6 +476,8 @@
 "pane.noSuchPathBody" = "« %@ » n’existe pas.\n\nVouliez-vous dire :\n%@";
 "pane.noSuchPathTitle" = "Chemin introuvable";
 "pane.openHostFailed" = "Impossible d’ouvrir %@%@\n%@";
+"pane.openWith" = "Ouvrir avec";
+"pane.openWithOther" = "Autre…";
 "pane.rename" = "Renommer…";
 "pane.revealInFinder" = "Afficher dans le Finder";
 "pane.selectedOf" = "%d sur %d sélectionnés";

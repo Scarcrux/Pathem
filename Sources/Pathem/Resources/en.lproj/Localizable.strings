@@ -476,6 +476,8 @@
 "pane.noSuchPathBody" = "“%@” doesn't exist.\n\nDid you mean:\n%@";
 "pane.noSuchPathTitle" = "No such path";
 "pane.openHostFailed" = "Couldn’t open %@%@\n%@";
+"pane.openWith" = "Open With";
+"pane.openWithOther" = "Other…";
 "pane.rename" = "Rename…";
 "pane.revealInFinder" = "Reveal in Finder";
 "pane.selectedOf" = "%d of %d selected";

@@ -1049,6 +1049,48 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         actionButton.toolTip = L("pane.actionsTooltip", "Actions")
     }
 
+    /// A submenu of apps that can open the single selected file, plus "Other…".
+    private func makeOpenWithSubmenu() -> NSMenu? {
+        guard !isRemote, selectedEntries.count == 1, let entry = selectedEntries.first, !entry.isDirectory
+        else { return nil }
+        let url = urlFor(entry)
+        let submenu = NSMenu()
+        for appURL in NSWorkspace.shared.urlsForApplications(toOpen: url).prefix(15) {
+            let item = NSMenuItem(
+                title: FileManager.default.displayName(atPath: appURL.path),
+                action: #selector(openWithApp(_:)), keyEquivalent: "")
+            item.target = self
+            let icon = NSWorkspace.shared.icon(forFile: appURL.path)
+            icon.size = NSSize(width: 16, height: 16)
+            item.image = icon
+            item.representedObject = [url, appURL]
+            submenu.addItem(item)
+        }
+        if submenu.items.count > 0 { submenu.addItem(.separator()) }
+        let other = NSMenuItem(
+            title: L("pane.openWithOther", "Other…"), action: #selector(openWithOther), keyEquivalent: "")
+        other.target = self
+        other.representedObject = url
+        submenu.addItem(other)
+        return submenu
+    }
+
+    @objc private func openWithApp(_ sender: NSMenuItem) {
+        guard let pair = sender.representedObject as? [URL], pair.count == 2 else { return }
+        NSWorkspace.shared.open([pair[0]], withApplicationAt: pair[1], configuration: .init(), completionHandler: nil)
+    }
+
+    @objc private func openWithOther(_ sender: NSMenuItem) {
+        guard let file = sender.representedObject as? URL else { return }
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.begin { response in
+            guard response == .OK, let app = panel.url else { return }
+            NSWorkspace.shared.open([file], withApplicationAt: app, configuration: .init(), completionHandler: nil)
+        }
+    }
+
     private func rebuildActionMenu(_ menu: NSMenu) {
         menu.removeAllItems()
         let face = NSMenuItem()  // pull-down face (item 0 isn't selectable)
@@ -1064,6 +1106,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         add(L("bvc.cmd.newFile", "New File"), command: "files.newFile")
         add(L("pane.getInfo", "Get Info"), command: "files.getInfo")
         add("Quick Look", command: "view.quickLook")
+        if let openWith = makeOpenWithSubmenu() {
+            let item = NSMenuItem(title: L("pane.openWith", "Open With"), action: nil, keyEquivalent: "")
+            item.submenu = openWith
+            menu.addItem(item)
+        }
         add(L("pane.rename", "Rename…"), command: "files.rename")
         menu.addItem(.separator())
         add(L("pane.revealInFinder", "Reveal in Finder"), command: "files.reveal")

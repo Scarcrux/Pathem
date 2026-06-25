@@ -476,6 +476,8 @@
 "pane.noSuchPathBody" = "„%@“ existiert nicht.\n\nMeintest du:\n%@";
 "pane.noSuchPathTitle" = "Pfad nicht vorhanden";
 "pane.openHostFailed" = "%@%@ konnte nicht geöffnet werden\n%@";
+"pane.openWith" = "Öffnen mit";
+"pane.openWithOther" = "Andere…";
 "pane.rename" = "Umbenennen…";
 "pane.revealInFinder" = "Im Finder zeigen";
 "pane.selectedOf" = "%d von %d ausgewählt";

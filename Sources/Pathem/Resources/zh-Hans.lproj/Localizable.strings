@@ -476,6 +476,8 @@
 "pane.noSuchPathBody" = "“%@”不存在。\n\n您是否想找：\n%@";
 "pane.noSuchPathTitle" = "路径不存在";
 "pane.openHostFailed" = "无法打开 %@%@\n%@";
+"pane.openWith" = "打开方式";
+"pane.openWithOther" = "其他…";
 "pane.rename" = "重新命名…";
 "pane.revealInFinder" = "在 Finder 中显示";
 "pane.selectedOf" = "已选择 %d 个，共 %d 个";

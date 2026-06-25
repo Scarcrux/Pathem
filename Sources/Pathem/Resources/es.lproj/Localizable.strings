@@ -476,6 +476,8 @@
 "pane.noSuchPathBody" = "“%@” no existe.\n\n¿Querías decir:\n%@";
 "pane.noSuchPathTitle" = "No existe la ruta";
 "pane.openHostFailed" = "No se pudo abrir %@%@\n%@";
+"pane.openWith" = "Abrir con";
+"pane.openWithOther" = "Otra…";
 "pane.rename" = "Renombrar…";
 "pane.revealInFinder" = "Mostrar en el Finder";
 "pane.selectedOf" = "%d de %d seleccionados";
