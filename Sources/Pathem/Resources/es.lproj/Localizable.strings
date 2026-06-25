@@ -23,6 +23,11 @@
 "archive.contents" = "Contenido";
 "archive.count" = "%d elementos";
 "archive.extractAll" = "Extraer todo…";
+"archive.saveBackBody" = "Cambiaste archivos dentro de este archivo comprimido. ¿Volver a empaquetarlos en él?";
+"archive.saveBackDiscard" = "Descartar";
+"archive.saveBackFailed" = "No se pudieron guardar los cambios en el archivo comprimido";
+"archive.saveBackSave" = "Guardar en el archivo";
+"archive.saveBackTitle" = "¿Guardar los cambios en %@?";
 "batch.actionName" = "Crear en lote";
 "batch.create" = "Crear";
 "batch.files" = "Archivos";

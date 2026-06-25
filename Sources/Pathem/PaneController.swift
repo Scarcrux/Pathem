@@ -49,12 +49,20 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
 
     /// Browsing an archive's contents: the archive was extracted to `mountRoot` (a temp
     /// dir we navigate as a normal folder); going up from the root returns to `origin`.
-    private struct ArchiveSession { let archive: URL; let mountRoot: URL; let origin: URL }
+    private struct ArchiveSession {
+        let archive: URL
+        let mountRoot: URL
+        let origin: URL
+        let snapshot: [String: String]  // contents fingerprint at mount, to detect edits
+    }
     private var archiveSession: ArchiveSession?
     var isBrowsingArchive: Bool { archiveSession != nil }
     /// Called when the user opens an archive file: the browser extracts it and calls
     /// `mountArchive` to enter it.
     var onBrowseArchive: ((URL) -> Void)?
+    /// Called when an archive session ends, so the browser can offer to write changes
+    /// back into the archive (compares the mount against the snapshot taken at mount).
+    var onArchiveClosed: ((_ archive: URL, _ mountRoot: URL, _ snapshot: [String: String]) -> Void)?
     /// Showing a cross-folder smart-result list (Recents / tag filter).
     private var smartActive = false
     /// This pane's current search query, so the shared search field can resync when
@@ -334,7 +342,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         if let session = archiveSession,
             !nav.current.standardizedFileURL.path.hasPrefix(session.mountRoot.standardizedFileURL.path)
         {
-            archiveSession = nil
+            endArchiveSession()  // offer to write changes back
         }
         showingSearchResults = false
         remoteLabel.isHidden = true
@@ -604,10 +612,19 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     /// Enter an extracted archive: navigate the pane into `mountRoot`, remembering the
     /// archive and the folder to return to when going up from the root.
     func mountArchive(archive: URL, mountRoot: URL, origin: URL) {
-        archiveSession = ArchiveSession(archive: archive, mountRoot: mountRoot, origin: origin)
+        archiveSession = ArchiveSession(
+            archive: archive, mountRoot: mountRoot, origin: origin,
+            snapshot: Archiver.snapshot(of: mountRoot))
         nav.go(to: mountRoot)
         enterDirectory()
         containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    /// End the current archive session and let the browser offer to write changes back.
+    private func endArchiveSession() {
+        guard let session = archiveSession else { return }
+        archiveSession = nil
+        onArchiveClosed?(session.archive, session.mountRoot, session.snapshot)
     }
 
     /// Resolve an entry to a URL: smart-result entries carry their own location;
@@ -638,7 +655,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         }
         // Going up from an archive's root returns to the folder it lives in.
         if let session = archiveSession, nav.current.standardizedFileURL == session.mountRoot.standardizedFileURL {
-            archiveSession = nil
+            endArchiveSession()  // offer to write changes back
             nav.go(to: session.origin)
             enterDirectory()
             return

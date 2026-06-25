@@ -23,6 +23,11 @@
 "archive.contents" = "内容";
 "archive.count" = "%d 项";
 "archive.extractAll" = "全部解压…";
+"archive.saveBackBody" = "你修改了此压缩包内的文件。重新打包回去吗？";
+"archive.saveBackDiscard" = "放弃";
+"archive.saveBackFailed" = "无法将更改保存到压缩包";
+"archive.saveBackSave" = "保存到压缩包";
+"archive.saveBackTitle" = "将更改保存到 %@？";
 "batch.actionName" = "批量创建";
 "batch.create" = "创建";
 "batch.files" = "文件";

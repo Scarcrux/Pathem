@@ -223,6 +223,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     guard let self, let pane else { return }
                     self.browseArchive(archive, in: pane, origin: pane.currentURL)
                 }
+                pane.onArchiveClosed = { [weak self] archive, mountRoot, snapshot in
+                    self?.writeBackArchiveIfChanged(archive: archive, mountRoot: mountRoot, original: snapshot)
+                }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
@@ -1215,6 +1218,34 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     onExtractAll: { [weak self] in self?.extractArchive(archive, in: folder) })
             } catch {
                 self.reportArchiveError(L("archive.cantRead", "Couldn’t read the archive"), error)
+            }
+        }
+    }
+
+    /// On leaving a browsed archive, if its extracted contents changed, offer to repack
+    /// them back into the original archive.
+    private func writeBackArchiveIfChanged(archive: URL, mountRoot: URL, original: [String: String]) {
+        Task { @MainActor in
+            let changed = await Task.detached { Archiver.snapshot(of: mountRoot) != original }.value
+            guard changed, let window = self.view.window else { return }
+            let alert = NSAlert()
+            alert.messageText = String(
+                format: L("archive.saveBackTitle", "Save changes to %@?"), archive.lastPathComponent)
+            alert.informativeText = L(
+                "archive.saveBackBody", "You changed files inside this archive. Repack them into it?")
+            alert.addButton(withTitle: L("archive.saveBackSave", "Save to Archive"))
+            alert.addButton(withTitle: L("archive.saveBackDiscard", "Discard"))
+            alert.beginSheetModal(for: window) { [weak self] response in
+                guard response == .alertFirstButtonReturn, let self else { return }
+                Task { @MainActor in
+                    do {
+                        try await Archiver.repack(from: mountRoot, into: archive)
+                        self.reloadBothSides()
+                    } catch {
+                        self.reportArchiveError(
+                            L("archive.saveBackFailed", "Couldn’t save changes to the archive"), error)
+                    }
+                }
             }
         }
     }

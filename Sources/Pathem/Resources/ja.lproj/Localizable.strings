@@ -23,6 +23,11 @@
 "archive.contents" = "内容";
 "archive.count" = "%d 項目";
 "archive.extractAll" = "すべて展開…";
+"archive.saveBackBody" = "このアーカイブ内のファイルを変更しました。再パックしますか？";
+"archive.saveBackDiscard" = "破棄";
+"archive.saveBackFailed" = "アーカイブに変更を保存できませんでした";
+"archive.saveBackSave" = "アーカイブに保存";
+"archive.saveBackTitle" = "%@ に変更を保存しますか？";
 "batch.actionName" = "一括作成";
 "batch.create" = "作成";
 "batch.files" = "ファイル";

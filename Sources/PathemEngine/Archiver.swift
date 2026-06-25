@@ -76,6 +76,56 @@ public enum Archiver {
             .map(String.init).filter { !$0.isEmpty }
     }
 
+    /// A cheap fingerprint of a folder's contents (relative path -> size+mtime), to
+    /// detect whether an extracted archive mount changed and needs writing back.
+    public static func snapshot(of directory: URL) -> [String: String] {
+        let root = directory.standardizedFileURL.path
+        let flat = FlatEnumerator.entries(of: directory, includingHidden: true, includeFolders: true)
+        var map: [String: String] = [:]
+        for entry in flat.entries {
+            guard let location = entry.location else { continue }
+            let full = (location as NSString).appendingPathComponent(entry.name)
+            guard full.hasPrefix(root) else { continue }
+            let rel = String(full.dropFirst(root.count))
+            map[rel] = entry.isDirectory ? "dir" : "\(entry.size)|\(entry.modificationDate?.timeIntervalSince1970 ?? 0)"
+        }
+        return map
+    }
+
+    /// `tar` create flags for an archive name's compression (nil if not a tar family).
+    private static func tarCreateFlags(_ lowerName: String) -> [String]? {
+        if lowerName.hasSuffix(".tar") { return ["-c"] }
+        if lowerName.hasSuffix(".tar.gz") || lowerName.hasSuffix(".tgz") { return ["-c", "-z"] }
+        if lowerName.hasSuffix(".tar.bz2") || lowerName.hasSuffix(".tbz") || lowerName.hasSuffix(".tbz2") {
+            return ["-c", "-j"]
+        }
+        if lowerName.hasSuffix(".tar.xz") || lowerName.hasSuffix(".txz") { return ["-c", "-J"] }
+        if lowerName.hasSuffix(".tar.zst") { return ["-c", "--zstd"] }
+        return nil
+    }
+
+    /// Repack `directory`'s contents back into `archive`, preserving its format, by
+    /// writing a sibling temp file and atomically replacing the original (so a failed
+    /// repack never corrupts it). Out-of-process via zip/tar.
+    public static func repack(from directory: URL, into archive: URL) async throws {
+        let lower = archive.lastPathComponent.lowercased()
+        let tmp = archive.deletingLastPathComponent()
+            .appendingPathComponent(".pathem-repack-\(UUID().uuidString)-\(archive.lastPathComponent)")
+        let result: (Data, Int32, String)
+        if lower.hasSuffix(".zip") {
+            result = try await RemoteRunner.run("/usr/bin/zip", ["-r", "-X", "-q", tmp.path, "."], cwd: directory)
+        } else if let flags = tarCreateFlags(lower) {
+            result = try await RemoteRunner.run("/usr/bin/tar", flags + ["-f", tmp.path, "-C", directory.path, "."])
+        } else {
+            throw ArchiveError.unsupported(archive.lastPathComponent)
+        }
+        guard result.1 == 0 else {
+            try? FileManager.default.removeItem(at: tmp)
+            throw ArchiveError.tool(code: result.1, message: result.2)
+        }
+        _ = try FileManager.default.replaceItemAt(archive, withItemAt: tmp)
+    }
+
     /// Derive the archive's root-level entries from its full entry paths (pure, tested).
     /// A name that appears as a parent of any path is a folder.
     public static func topLevel(_ paths: [String]) -> [(name: String, isDirectory: Bool)] {

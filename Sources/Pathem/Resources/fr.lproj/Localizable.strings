@@ -23,6 +23,11 @@
 "archive.contents" = "Contenu";
 "archive.count" = "%d éléments";
 "archive.extractAll" = "Tout extraire…";
+"archive.saveBackBody" = "Vous avez modifié des fichiers dans cette archive. Les ré-empaqueter dedans ?";
+"archive.saveBackDiscard" = "Ignorer";
+"archive.saveBackFailed" = "Impossible d’enregistrer les modifications dans l’archive";
+"archive.saveBackSave" = "Enregistrer dans l’archive";
+"archive.saveBackTitle" = "Enregistrer les modifications dans %@ ?";
 "batch.actionName" = "Création par lot";
 "batch.create" = "Créer";
 "batch.files" = "Fichiers";

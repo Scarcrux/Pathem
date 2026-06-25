@@ -23,6 +23,11 @@
 "archive.contents" = "Contents";
 "archive.count" = "%d items";
 "archive.extractAll" = "Extract All…";
+"archive.saveBackBody" = "You changed files inside this archive. Repack them into it?";
+"archive.saveBackDiscard" = "Discard";
+"archive.saveBackFailed" = "Couldn’t save changes to the archive";
+"archive.saveBackSave" = "Save to Archive";
+"archive.saveBackTitle" = "Save changes to %@?";
 "batch.actionName" = "Batch Create";
 "batch.create" = "Create";
 "batch.files" = "Files";

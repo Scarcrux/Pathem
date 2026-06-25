@@ -23,6 +23,11 @@
 "archive.contents" = "Inhalt";
 "archive.count" = "%d Objekte";
 "archive.extractAll" = "Alle extrahieren…";
+"archive.saveBackBody" = "Du hast Dateien in diesem Archiv geändert. Wieder hineinpacken?";
+"archive.saveBackDiscard" = "Verwerfen";
+"archive.saveBackFailed" = "Änderungen konnten nicht im Archiv gesichert werden";
+"archive.saveBackSave" = "Im Archiv sichern";
+"archive.saveBackTitle" = "Änderungen in %@ sichern?";
 "batch.actionName" = "Stapelerstellung";
 "batch.create" = "Erstellen";
 "batch.files" = "Dateien";
