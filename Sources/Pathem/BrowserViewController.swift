@@ -16,6 +16,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let rightTabs: TabbedPaneController
     private weak var activePane: PaneController?
     private weak var activeSide: TabbedPaneController?
+    /// When on, navigating one pane navigates the other to the same folder.
+    private var syncBrowsing = false
+    private var isSyncingPanes = false  // re-entrancy guard for the mirror navigation
     private let split = NSSplitView()  // the two sides
     private let outerSplit = NSSplitView()  // sidebar | panes
     private let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
@@ -478,6 +481,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("search.toggleOCR", L("bvc.cmd.toggleImageOCRInSearch", "Toggle Image OCR in Search")) { [weak self] in self?.toggleOCR() }
         add("view.toggleHidden", L("bvc.cmd.showHiddenFiles", "Show Hidden Files"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.toggleHidden()
+        }
+        add("view.syncBrowsing", L("bvc.cmd.syncBrowsing", "Sync Browsing")) { [weak self] in
+            guard let self else { return }
+            self.syncBrowsing.toggle()
+            if self.syncBrowsing, let url = self.activePane?.currentURL { self.mirrorNavigationIfSyncing(to: url) }
         }
         add("view.applyToSubfolders", L("bvc.cmd.applyViewToSubfolders", "Apply View to Subfolders"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
@@ -1592,6 +1600,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
+        case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
         case "view.previewPane": menuItem.state = previewVisible ? .on : .off
         case "shelf.toggle":
@@ -3033,8 +3042,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             // The terminal follows the active folder only when the user opted in
             // and the drawer is open (changeDirectory itself ignores TUIs).
             if terminalFollows, !terminal.view.isHidden { terminal.changeDirectory(to: url) }
+            mirrorNavigationIfSyncing(to: url)
         }
         saveSessionSoon()
+    }
+
+    /// Sync browsing: point the other side's active pane at the same local folder.
+    private func mirrorNavigationIfSyncing(to url: URL) {
+        guard syncBrowsing, !isSyncingPanes else { return }
+        let other = activeSide === leftTabs ? rightTabs : leftTabs
+        guard let otherPane = other.activePane, !otherPane.isRemote,
+            otherPane.currentURL.standardizedFileURL != url.standardizedFileURL
+        else { return }
+        isSyncingPanes = true
+        otherPane.navigate(to: url)
+        isSyncingPanes = false
     }
 
     /// The window title: folder name by default (like Finder), full POSIX path

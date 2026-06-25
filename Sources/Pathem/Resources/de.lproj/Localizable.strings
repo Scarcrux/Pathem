@@ -124,6 +124,7 @@
 "bvc.cmd.showPathBarAtBottom" = "Pfadleiste unten anzeigen";
 "bvc.cmd.showShelf" = "Ablagefach einblenden";
 "bvc.cmd.sizeBrowser" = "Größenbrowser…";
+"bvc.cmd.syncBrowsing" = "Synchron blättern";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Terminal folgt Ordner";
 "bvc.cmd.toggleImageOCRInSearch" = "Bild-OCR in der Suche umschalten";
@@ -444,6 +445,7 @@
 "menu.view.previewPane" = "Vorschaubereich";
 "menu.view.quickLook" = "Quick Look";
 "menu.view.sizeBrowser" = "Größenbrowser…";
+"menu.view.syncBrowsing" = "Synchron blättern";
 "menu.view.toggleHidden" = "Ausgeblendete Dateien anzeigen";
 "menu.view.useAsDefault" = "Als Standardansicht verwenden";
 "palette.runCommandTitle" = "Befehl ausführen";

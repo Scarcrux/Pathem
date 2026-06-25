@@ -124,6 +124,7 @@
 "bvc.cmd.showPathBarAtBottom" = "Show Path Bar at Bottom";
 "bvc.cmd.showShelf" = "Show Shelf";
 "bvc.cmd.sizeBrowser" = "Size Browser…";
+"bvc.cmd.syncBrowsing" = "Sync Browsing";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Terminal Follows Folder";
 "bvc.cmd.toggleImageOCRInSearch" = "Toggle Image OCR in Search";
@@ -444,6 +445,7 @@
 "menu.view.previewPane" = "Preview Pane";
 "menu.view.quickLook" = "Quick Look";
 "menu.view.sizeBrowser" = "Size Browser…";
+"menu.view.syncBrowsing" = "Sync Browsing";
 "menu.view.toggleHidden" = "Show Hidden Files";
 "menu.view.useAsDefault" = "Use as Default View";
 "palette.runCommandTitle" = "Run Command";

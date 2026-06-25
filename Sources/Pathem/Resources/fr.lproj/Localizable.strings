@@ -124,6 +124,7 @@
 "bvc.cmd.showPathBarAtBottom" = "Afficher la barre de chemin en bas";
 "bvc.cmd.showShelf" = "Afficher l’étagère";
 "bvc.cmd.sizeBrowser" = "Explorateur de tailles…";
+"bvc.cmd.syncBrowsing" = "Navigation synchronisée";
 "bvc.cmd.tagColor" = "Tag %@";
 "bvc.cmd.terminalFollowsFolder" = "Le Terminal suit le dossier";
 "bvc.cmd.toggleImageOCRInSearch" = "Activer/désactiver l’OCR des images dans la recherche";
@@ -444,6 +445,7 @@
 "menu.view.previewPane" = "Volet d’aperçu";
 "menu.view.quickLook" = "Quick Look";
 "menu.view.sizeBrowser" = "Explorateur de tailles…";
+"menu.view.syncBrowsing" = "Navigation synchronisée";
 "menu.view.toggleHidden" = "Afficher les fichiers masqués";
 "menu.view.useAsDefault" = "Utiliser comme présentation par défaut";
 "palette.runCommandTitle" = "Exécuter la commande";

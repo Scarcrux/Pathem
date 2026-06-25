@@ -124,6 +124,7 @@
 "bvc.cmd.showPathBarAtBottom" = "パスバーを下部に表示";
 "bvc.cmd.showShelf" = "シェルフを表示";
 "bvc.cmd.sizeBrowser" = "サイズブラウザ…";
+"bvc.cmd.syncBrowsing" = "同期ブラウズ";
 "bvc.cmd.tagColor" = "タグ %@";
 "bvc.cmd.terminalFollowsFolder" = "ターミナルをフォルダに追従";
 "bvc.cmd.toggleImageOCRInSearch" = "検索での画像OCRを切り替え";
@@ -444,6 +445,7 @@
 "menu.view.previewPane" = "プレビューペイン";
 "menu.view.quickLook" = "Quick Look";
 "menu.view.sizeBrowser" = "サイズブラウザ…";
+"menu.view.syncBrowsing" = "同期ブラウズ";
 "menu.view.toggleHidden" = "隠しファイルを表示";
 "menu.view.useAsDefault" = "デフォルトの表示として使用";
 "palette.runCommandTitle" = "コマンドを実行";
