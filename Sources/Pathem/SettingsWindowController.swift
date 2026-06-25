@@ -145,6 +145,7 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             check(L("prefs.openConnectionsNewTab", "Open connections in a new tab"), \.openConnectionsInNewTab),
             check(L("prefs.calculateFolderSizes", "Calculate folder sizes"), \.calculateFolderSizes),
             check(L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"), \.confirmBeforeDelete),
+            check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
         ])
         case .appearance: return form([
             labeled(L("prefs.densityLabel", "Density"), densityControl()),

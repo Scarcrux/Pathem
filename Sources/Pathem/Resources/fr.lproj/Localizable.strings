@@ -439,6 +439,7 @@
 "prefs.densityComfortable" = "Confortable";
 "prefs.densityCompact" = "Compacte";
 "prefs.densityLabel" = "Densité";
+"prefs.dragMovesByDefault" = "Faire glisser des éléments les déplace (maintenez Commande pour copier)";
 "prefs.fontSizeLabel" = "Taille de police";
 "prefs.openConnectionsNewTab" = "Ouvrir les connexions dans un nouvel onglet";
 "prefs.pathBarBottom" = "Afficher la barre de chemin en bas";

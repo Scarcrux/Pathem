@@ -30,13 +30,17 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Ask for confirmation before moving local items to the Trash (off by default,
     /// since the Trash is reversible).
     public var confirmBeforeDelete: Bool
+    /// Dragging items between folders moves them by default (hold Command to copy).
+    /// Off keeps the Finder-like default of copy (hold Command to move).
+    public var dragMovesByDefault: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
         alternatingRows: Bool = true, searchOCR: Bool = false,
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
-        compactSidebar: Bool = false, confirmBeforeDelete: Bool = false
+        compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
+        dragMovesByDefault: Bool = false
     ) {
         self.density = density
         self.fontSize = fontSize
@@ -48,6 +52,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.calculateFolderSizes = calculateFolderSizes
         self.compactSidebar = compactSidebar
         self.confirmBeforeDelete = confirmBeforeDelete
+        self.dragMovesByDefault = dragMovesByDefault
     }
 
     public static let `default` = Preferences()
@@ -78,5 +83,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         compactSidebar = try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
         confirmBeforeDelete =
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
+        dragMovesByDefault =
+            try c.decodeIfPresent(Bool.self, forKey: .dragMovesByDefault) ?? d.dragMovesByDefault
     }
 }

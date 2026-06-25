@@ -439,6 +439,7 @@
 "prefs.densityComfortable" = "宽松";
 "prefs.densityCompact" = "紧凑";
 "prefs.densityLabel" = "密度";
+"prefs.dragMovesByDefault" = "拖动项目将移动它们（按住 Command 复制）";
 "prefs.fontSizeLabel" = "字体大小";
 "prefs.openConnectionsNewTab" = "在新标签页中打开连接";
 "prefs.pathBarBottom" = "在底部显示路径栏";

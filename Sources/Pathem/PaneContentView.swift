@@ -22,6 +22,8 @@ protocol PaneContentView: AnyObject {
     var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)? { get set }
     var onKeyChord: ((KeyChord) -> Bool)? { get set }
     var onMouseGesture: ((String) -> Bool)? { get set }
+    /// Dragging items between folders moves by default (else copies).
+    var dragMovesByDefault: Bool { get set }
 
     func setEntries(_ entries: [FileEntry], preserveState: Bool)
     func showPlaceholder(_ text: String?)
@@ -51,6 +53,11 @@ extension PaneContentView {
     func refreshDrilledColumns() {}
     /// Only the list view draws git overlays for now.
     func setGitStates(_ states: [String: GitFileState]) {}
+    /// Only the list view distinguishes drag copy vs move for now.
+    var dragMovesByDefault: Bool {
+        get { false }
+        set {}
+    }
 }
 
 extension FileListController: PaneContentView {

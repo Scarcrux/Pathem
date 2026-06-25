@@ -26,6 +26,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var onMouseGestureHandler: ((String) -> Bool)? {
         didSet { content.onMouseGesture = onMouseGestureHandler }
     }
+    /// Drag default (move vs copy), re-applied to whichever content is active.
+    var dragMovesByDefault = false {
+        didSet { content.dragMovesByDefault = dragMovesByDefault }
+    }
     /// The focusable view of the active content (for first-responder handoff).
     var keyView: NSView { content.keyView }
     private(set) var nav: NavigationState
@@ -819,6 +823,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         content.onKeyChord = onKeyChordHandler
         content.onMouseGesture = onMouseGestureHandler
+        content.dragMovesByDefault = dragMovesByDefault
     }
 
     /// Switch this folder's view mode (list / icon / gallery), persist it, and

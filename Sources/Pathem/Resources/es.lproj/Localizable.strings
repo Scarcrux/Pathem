@@ -439,6 +439,7 @@
 "prefs.densityComfortable" = "Cómoda";
 "prefs.densityCompact" = "Compacta";
 "prefs.densityLabel" = "Densidad";
+"prefs.dragMovesByDefault" = "Arrastrar elementos los mueve (mantén Comando para copiar)";
 "prefs.fontSizeLabel" = "Tamaño de letra";
 "prefs.openConnectionsNewTab" = "Abrir conexiones en una pestaña nueva";
 "prefs.pathBarBottom" = "Mostrar la barra de ruta en la parte inferior";

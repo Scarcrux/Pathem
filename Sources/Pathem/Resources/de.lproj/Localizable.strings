@@ -439,6 +439,7 @@
 "prefs.densityComfortable" = "Komfortabel";
 "prefs.densityCompact" = "Kompakt";
 "prefs.densityLabel" = "Dichte";
+"prefs.dragMovesByDefault" = "Ziehen verschiebt Objekte (Befehlstaste halten zum Kopieren)";
 "prefs.fontSizeLabel" = "Schriftgröße";
 "prefs.openConnectionsNewTab" = "Verbindungen in einem neuen Tab öffnen";
 "prefs.pathBarBottom" = "Pfadleiste unten anzeigen";

@@ -439,6 +439,7 @@
 "prefs.densityComfortable" = "ゆったり";
 "prefs.densityCompact" = "コンパクト";
 "prefs.densityLabel" = "密度";
+"prefs.dragMovesByDefault" = "ドラッグで項目を移動（Command を押すとコピー）";
 "prefs.fontSizeLabel" = "フォントサイズ";
 "prefs.openConnectionsNewTab" = "接続を新しいタブで開く";
 "prefs.pathBarBottom" = "パスバーを下部に表示";

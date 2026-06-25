@@ -1473,6 +1473,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     alternatingRows: prefs.alternatingRows)
                 pane.setPathBar(atBottom: prefs.pathBarAtBottom)
                 pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
+                pane.dragMovesByDefault = prefs.dragMovesByDefault
             }
         }
         applyCompactSidebar()

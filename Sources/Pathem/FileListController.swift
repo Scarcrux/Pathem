@@ -435,10 +435,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
     }
 
-    /// Copy by default; move only when the source offers it and Command is held.
+    /// When dragging items between folders moves by default (Settings > General);
+    /// Command then copies. When off (the Finder-like default) it copies and Command
+    /// moves.
+    var dragMovesByDefault = false
+
+    /// Resolve copy vs move from the default and the Command modifier (which inverts
+    /// it). Move only when the source actually offers it (e.g. same volume).
     private func resolvedDragOperation(for info: NSDraggingInfo) -> NSDragOperation {
         let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        return commandHeld && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
+        let wantMove = dragMovesByDefault != commandHeld  // Command inverts the default
+        return wantMove && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
     }
 
     // MARK: NSTableViewDelegate
