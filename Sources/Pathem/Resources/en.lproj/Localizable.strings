@@ -74,6 +74,7 @@
 "bvc.cmd.compactSidebar" = "Compact Sidebar";
 "bvc.cmd.comparePanes" = "Compare Panes…";
 "bvc.cmd.compress" = "Compress";
+"bvc.cmd.compress7z" = "Compress to 7-Zip";
 "bvc.cmd.connections" = "Connections…";
 "bvc.cmd.copy" = "Copy";
 "bvc.cmd.copyAsFileURL" = "Copy as File URL";
@@ -392,6 +393,7 @@
 "menu.files.batchRename" = "Batch Rename…";
 "menu.files.comparePanes" = "Compare Panes…";
 "menu.files.compress" = "Compress";
+"menu.files.compress7z" = "Compress to 7-Zip";
 "menu.files.copyName" = "Copy Name";
 "menu.files.copyPath" = "Copy Path";
 "menu.files.copySHA256" = "Copy SHA-256";

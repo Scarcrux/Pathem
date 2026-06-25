@@ -549,6 +549,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.comparePanes()
         }
         add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasSelection) { [weak self] in self?.compressSelection() }
+        add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: { [weak self] in
+            Archiver.canMakeSevenZip && !(self?.activePane?.selectedEntries.isEmpty ?? true)
+        }) { [weak self] in self?.compress7zSelection() }
         add(
             "files.extract", L("bvc.cmd.extract", "Extract"),
             enabled: { [weak self] in
@@ -1188,6 +1191,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         Task { @MainActor [weak self] in
             do {
                 try await Archiver.compress(urls, to: dest)
+                self?.reloadBothSides()
+                self?.activePane?.select(name: dest.lastPathComponent)
+            } catch {
+                self?.reportArchiveError(L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
+            }
+        }
+    }
+
+    private func compress7zSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, Archiver.canMakeSevenZip else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        let base = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
+        let dest = uniqueLocalURL(folder.appendingPathComponent("\(base).7z"))
+        Task { @MainActor [weak self] in
+            do {
+                try await Archiver.compress7z(urls, to: dest)
                 self?.reloadBothSides()
                 self?.activePane?.select(name: dest.lastPathComponent)
             } catch {

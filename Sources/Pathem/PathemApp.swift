@@ -239,6 +239,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Copy SHA-256", "files.copySHA256"))
         fileMenu.addItem(commandItem("Verify Checksum…", "files.verifyChecksum"))
         fileMenu.addItem(commandItem("Compress", "files.compress"))
+        fileMenu.addItem(commandItem("Compress to 7-Zip", "files.compress7z"))
         fileMenu.addItem(commandItem("Extract", "files.extract"))
         fileMenu.addItem(commandItem("Show Archive Contents", "files.peekArchive"))
         fileMenu.addItem(.separator())

@@ -74,6 +74,7 @@
 "bvc.cmd.compactSidebar" = "サイドバーをコンパクト表示";
 "bvc.cmd.comparePanes" = "ペインを比較…";
 "bvc.cmd.compress" = "圧縮";
+"bvc.cmd.compress7z" = "7-Zip に圧縮";
 "bvc.cmd.connections" = "接続…";
 "bvc.cmd.copy" = "コピー";
 "bvc.cmd.copyAsFileURL" = "ファイルURLとしてコピー";
@@ -392,6 +393,7 @@
 "menu.files.batchRename" = "一括名称変更…";
 "menu.files.comparePanes" = "ペインを比較…";
 "menu.files.compress" = "圧縮";
+"menu.files.compress7z" = "7-Zip に圧縮";
 "menu.files.copyName" = "名前をコピー";
 "menu.files.copyPath" = "パスをコピー";
 "menu.files.copySHA256" = "SHA-256をコピー";

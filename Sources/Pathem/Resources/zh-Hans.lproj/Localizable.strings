@@ -74,6 +74,7 @@
 "bvc.cmd.compactSidebar" = "紧凑边栏";
 "bvc.cmd.comparePanes" = "比较窗格…";
 "bvc.cmd.compress" = "压缩";
+"bvc.cmd.compress7z" = "压缩为 7-Zip";
 "bvc.cmd.connections" = "连接…";
 "bvc.cmd.copy" = "拷贝";
 "bvc.cmd.copyAsFileURL" = "拷贝为文件 URL";
@@ -392,6 +393,7 @@
 "menu.files.batchRename" = "批量重新命名…";
 "menu.files.comparePanes" = "比较窗格…";
 "menu.files.compress" = "压缩";
+"menu.files.compress7z" = "压缩为 7-Zip";
 "menu.files.copyName" = "拷贝名称";
 "menu.files.copyPath" = "拷贝路径";
 "menu.files.copySHA256" = "拷贝 SHA-256";

@@ -4,6 +4,27 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct ArchiveListTests {
+    @Test func unknownExtensionIsNotExtractable() {
+        #expect(!Archiver.canExtract(URL(fileURLWithPath: "/tmp/notes.txt")))
+        #expect(Archiver.canExtract(URL(fileURLWithPath: "/tmp/a.zip")))
+        #expect(Archiver.canExtract(URL(fileURLWithPath: "/tmp/a.tar.gz")))
+    }
+
+    // Runs only where p7zip is installed; verifies the 7z create/extract round-trip.
+    @Test func sevenZipRoundTripWhenToolPresent() async throws {
+        guard Archiver.canMakeSevenZip else { return }
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-7z-\(UUID().uuidString)")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("hello.txt")
+        try Data("hi".utf8).write(to: file)
+        let archive = dir.appendingPathComponent("out.7z")
+        try await Archiver.compress7z([file], to: archive)
+        let listed = try await Archiver.list(archive)
+        #expect(listed.contains { $0.hasSuffix("hello.txt") })
+    }
+
     @Test func topLevelDerivesFoldersAndFiles() {
         let paths = [
             "README.md",

@@ -74,6 +74,7 @@
 "bvc.cmd.compactSidebar" = "Barre latérale compacte";
 "bvc.cmd.comparePanes" = "Comparer les volets…";
 "bvc.cmd.compress" = "Compresser";
+"bvc.cmd.compress7z" = "Compresser en 7-Zip";
 "bvc.cmd.connections" = "Connexions…";
 "bvc.cmd.copy" = "Copier";
 "bvc.cmd.copyAsFileURL" = "Copier comme URL de fichier";
@@ -392,6 +393,7 @@
 "menu.files.batchRename" = "Renommage par lot…";
 "menu.files.comparePanes" = "Comparer les volets…";
 "menu.files.compress" = "Compresser";
+"menu.files.compress7z" = "Compresser en 7-Zip";
 "menu.files.copyName" = "Copier le nom";
 "menu.files.copyPath" = "Copier le chemin";
 "menu.files.copySHA256" = "Copier le SHA-256";
