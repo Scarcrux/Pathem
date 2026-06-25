@@ -22,7 +22,7 @@ export GIT_CONFIG_COUNT = 1
 export GIT_CONFIG_KEY_0 = safe.bareRepository
 export GIT_CONFIG_VALUE_0 = all
 
-.PHONY: build run test smoke ci app install watch watch-install icon dev-cert fmt clean
+.PHONY: build run test smoke e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
 
 build:
 	swift build
@@ -36,13 +36,19 @@ test:
 smoke:
 	PATHEM_SMOKE=1 swift run Pathem
 
+# Blackbox end-to-end: launch the real product and assert behavior from the outside.
+e2e:
+	test/e2e/run.sh
+
+# Same, against the assembled .app (also checks the bundle is complete).
+e2e-app:
+	test/e2e/run.sh --packaged
+
 # The same checks the (now manual-only) GitHub Actions workflow runs.
 ci:
 	swift build
 	swift test
-	PATHEM_GATE_A=1 swift run Pathem
-	PATHEM_SMOKE=1 swift run Pathem
-	PATHEM_L10N_SMOKE=1 swift run Pathem
+	test/e2e/run.sh
 
 app:
 	scripts/package.sh

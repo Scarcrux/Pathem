@@ -160,6 +160,12 @@ enum PathemApp {
                             print("RESULT: SKIP (macOS < 26)")
                             exit(0)
                         }
+                        // Skip (not fail) when Apple Intelligence isn't available, so the
+                        // e2e suite is green on machines without it.
+                        if let reason = AIAvailability.unavailableReason() {
+                            print("RESULT: SKIP (\(reason))")
+                            exit(0)
+                        }
                         let files = [
                             "IMG_1024.jpg", "budget.pdf", "notes.txt", "screenshot.png", "invoice.pdf",
                             "cat.heic",
