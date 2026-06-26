@@ -372,6 +372,8 @@
 "list.alwaysOpenWith" = "Always Open With…";
 "list.clearTags" = "Clear Tags";
 "list.columnDate" = "Date Modified";
+"list.columnDateAccessed" = "Date Last Opened";
+"list.columnDateCreated" = "Date Created";
 "list.columnExt" = "Extension";
 "list.columnGit" = "Git";
 "list.columnKind" = "Kind";

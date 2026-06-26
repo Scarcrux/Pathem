@@ -372,6 +372,8 @@
 "list.alwaysOpenWith" = "常にこのアプリケーションで開く…";
 "list.clearTags" = "タグを消去";
 "list.columnDate" = "変更日";
+"list.columnDateAccessed" = "最終オープン日";
+"list.columnDateCreated" = "作成日";
 "list.columnExt" = "拡張子";
 "list.columnGit" = "Git";
 "list.columnKind" = "種類";

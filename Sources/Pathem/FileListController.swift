@@ -82,13 +82,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private static var instanceCount = 0
 
     private enum Column: String, CaseIterable {
-        case name, size, kind, date, ext, git, path
+        case name, size, kind, date, dateCreated, dateAccessed, ext, git, path
         var title: String {
             switch self {
             case .name: return L("list.columnName", "Name")
             case .size: return L("list.columnSize", "Size")
             case .kind: return L("list.columnKind", "Kind")
             case .date: return L("list.columnDate", "Date Modified")
+            case .dateCreated: return L("list.columnDateCreated", "Date Created")
+            case .dateAccessed: return L("list.columnDateAccessed", "Date Last Opened")
             case .ext: return L("list.columnExt", "Extension")
             case .git: return L("list.columnGit", "Git")
             case .path: return L("list.columnPath", "Path")
@@ -99,14 +101,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .name: return 360
             case .size: return 110
             case .kind: return 130
-            case .date: return 180
+            case .date, .dateCreated, .dateAccessed: return 180
             case .ext: return 90
             case .git: return 56
             case .path: return 280
             }
         }
         /// Only columns backed by a ViewFormat sort key get a clickable header.
-        var isSortable: Bool { self == .name || self == .size || self == .date }
+        var isSortable: Bool { [.name, .size, .date, .dateCreated, .dateAccessed].contains(self) }
         /// Shown by default; the rest are opt-in via the header menu (persisted).
         var defaultVisible: Bool { [.name, .size, .date].contains(self) }
     }
@@ -500,6 +502,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.stringValue = Self.kind(for: entry)
         case .date:
             cell.textField?.stringValue = entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
+        case .dateCreated:
+            cell.textField?.stringValue = entry.creationDate.map { dateFormatter.string(from: $0) } ?? ""
+        case .dateAccessed:
+            cell.textField?.stringValue = entry.accessDate.map { dateFormatter.string(from: $0) } ?? ""
         case .ext:
             cell.textField?.stringValue =
                 entry.isDirectory ? "" : (entry.name as NSString).pathExtension.lowercased()

@@ -10,7 +10,10 @@ public struct FoundationEnumerator: DirectoryEnumerating {
     public init() {}
 
     public func entries(of directory: URL, includingHidden: Bool) throws -> [FileEntry] {
-        let keys: [URLResourceKey] = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey]
+        let keys: [URLResourceKey] = [
+            .isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .creationDateKey,
+            .contentAccessDateKey,
+        ]
         var options: FileManager.DirectoryEnumerationOptions = []
         if !includingHidden { options.insert(.skipsHiddenFiles) }
 
@@ -27,6 +30,8 @@ public struct FoundationEnumerator: DirectoryEnumerating {
                 isDirectory: values.isDirectory ?? false,
                 size: Int64(values.fileSize ?? 0),
                 modificationDate: values.contentModificationDate,
+                creationDate: values.creationDate,
+                accessDate: values.contentAccessDate,
                 isDataless: Self.isDataless(url)
             )
         }

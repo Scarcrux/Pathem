@@ -372,6 +372,8 @@
 "list.alwaysOpenWith" = "Abrir siempre con…";
 "list.clearTags" = "Borrar etiquetas";
 "list.columnDate" = "Fecha de modificación";
+"list.columnDateAccessed" = "Fecha del último acceso";
+"list.columnDateCreated" = "Fecha de creación";
 "list.columnExt" = "Extensión";
 "list.columnGit" = "Git";
 "list.columnKind" = "Tipo";

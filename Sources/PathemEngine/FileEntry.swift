@@ -13,6 +13,10 @@ public struct FileEntry: Sendable, Hashable {
     /// Logical file size in bytes. `0` for directories.
     public let size: Int64
     public let modificationDate: Date?
+    /// Creation and last-access dates, for the optional list columns. `nil` when the
+    /// source didn't provide them (e.g. remote listings).
+    public let creationDate: Date?
+    public let accessDate: Date?
     /// True for a cloud placeholder whose bytes are not on disk yet (SF_DATALESS).
     /// Reading its contents would trigger a download, so callers gate on this.
     public let isDataless: Bool
@@ -27,12 +31,15 @@ public struct FileEntry: Sendable, Hashable {
 
     public init(
         name: String, isDirectory: Bool, size: Int64, modificationDate: Date?,
+        creationDate: Date? = nil, accessDate: Date? = nil,
         isDataless: Bool = false, location: String? = nil, rawName: Data? = nil
     ) {
         self.name = name
         self.isDirectory = isDirectory
         self.size = size
         self.modificationDate = modificationDate
+        self.creationDate = creationDate
+        self.accessDate = accessDate
         self.isDataless = isDataless
         self.location = location
         self.rawName = rawName
@@ -41,12 +48,15 @@ public struct FileEntry: Sendable, Hashable {
     /// Build an entry for a file at a known URL (used for smart-location results).
     public init(contentsOf url: URL) {
         let values = try? url.resourceValues(forKeys: [
-            .isDirectoryKey, .fileSizeKey, .contentModificationDateKey,
+            .isDirectoryKey, .fileSizeKey, .contentModificationDateKey, .creationDateKey,
+            .contentAccessDateKey,
         ])
         self.name = url.lastPathComponent
         self.isDirectory = values?.isDirectory ?? false
         self.size = Int64(values?.fileSize ?? 0)
         self.modificationDate = values?.contentModificationDate
+        self.creationDate = values?.creationDate
+        self.accessDate = values?.contentAccessDate
         self.isDataless = false
         self.location = url.deletingLastPathComponent().path
         self.rawName = nil

@@ -372,6 +372,8 @@
 "list.alwaysOpenWith" = "始终以此打开…";
 "list.clearTags" = "清除标记";
 "list.columnDate" = "修改日期";
+"list.columnDateAccessed" = "上次打开日期";
+"list.columnDateCreated" = "创建日期";
 "list.columnExt" = "扩展名";
 "list.columnGit" = "Git";
 "list.columnKind" = "种类";

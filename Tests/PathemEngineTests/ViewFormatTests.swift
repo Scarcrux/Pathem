@@ -12,6 +12,19 @@ import Testing
             modificationDate: Date(timeIntervalSince1970: seconds))
     }
 
+    @Test func sortsByCreationAndAccessDates() {
+        let a = FileEntry(
+            name: "a", isDirectory: false, size: 0, modificationDate: nil,
+            creationDate: Date(timeIntervalSince1970: 300), accessDate: Date(timeIntervalSince1970: 100))
+        let b = FileEntry(
+            name: "b", isDirectory: false, size: 0, modificationDate: nil,
+            creationDate: Date(timeIntervalSince1970: 100), accessDate: Date(timeIntervalSince1970: 300))
+        let byCreated = ViewFormat(sortKey: .dateCreated, ascending: true, foldersFirst: false).sorted([a, b])
+        #expect(byCreated.map(\.name) == ["b", "a"])  // b created earlier
+        let byAccessed = ViewFormat(sortKey: .dateAccessed, ascending: true, foldersFirst: false).sorted([a, b])
+        #expect(byAccessed.map(\.name) == ["a", "b"])  // a accessed earlier
+    }
+
     @Test func decodesLegacyJSONWithoutViewMode() throws {
         // Older formats.json had no viewMode; it must still decode (defaulting to
         // .list) rather than failing and wiping every saved format.

@@ -372,6 +372,8 @@
 "list.alwaysOpenWith" = "Immer öffnen mit…";
 "list.clearTags" = "Tags entfernen";
 "list.columnDate" = "Änderungsdatum";
+"list.columnDateAccessed" = "Zuletzt geöffnet";
+"list.columnDateCreated" = "Erstellt am";
 "list.columnExt" = "Erweiterung";
 "list.columnGit" = "Git";
 "list.columnKind" = "Art";

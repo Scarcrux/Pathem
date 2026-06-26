@@ -37,7 +37,9 @@ public struct BulkEnumerator: DirectoryEnumerating {
         static let cmnReturnedAttrs: UInt32 = 0x8000_0000  // ATTR_CMN_RETURNED_ATTRS
         static let cmnName: UInt32 = 0x0000_0001  // ATTR_CMN_NAME
         static let cmnObjType: UInt32 = 0x0000_0008  // ATTR_CMN_OBJTYPE
+        static let cmnCrTime: UInt32 = 0x0000_0200  // ATTR_CMN_CRTIME (creation)
         static let cmnModTime: UInt32 = 0x0000_0400  // ATTR_CMN_MODTIME
+        static let cmnAccTime: UInt32 = 0x0000_1000  // ATTR_CMN_ACCTIME (access)
         static let cmnFlags: UInt32 = 0x0004_0000  // ATTR_CMN_FLAGS
         // fileattr bits
         static let fileDataLength: UInt32 = 0x0000_0200  // ATTR_FILE_DATALENGTH
@@ -69,8 +71,8 @@ public struct BulkEnumerator: DirectoryEnumerating {
         var attrList = attrlist()
         attrList.bitmapcount = Attr.bitMapCount
         attrList.commonattr =
-            Attr.cmnReturnedAttrs | Attr.cmnName | Attr.cmnObjType | Attr.cmnModTime
-            | Attr.cmnFlags
+            Attr.cmnReturnedAttrs | Attr.cmnName | Attr.cmnObjType | Attr.cmnCrTime
+            | Attr.cmnModTime | Attr.cmnAccTime | Attr.cmnFlags
         attrList.fileattr = Attr.fileDataLength
 
         let bufSize = 256 * 1024
@@ -114,7 +116,18 @@ public struct BulkEnumerator: DirectoryEnumerating {
                 var isDirectory = false
                 var flags: UInt32 = 0
                 var size: Int64 = 0
+                var creationDate: Date?
                 var modificationDate: Date?
+                var accessDate: Date?
+
+                // struct timespec (tv_sec + tv_nsec) -> Date, bounds-checked.
+                func readTimespec() -> Date? {
+                    guard entry + cursor + 16 <= recordEnd else { return nil }
+                    let seconds = entry.loadUnaligned(fromByteOffset: cursor, as: Int.self)
+                    let nanos = entry.loadUnaligned(fromByteOffset: cursor + 8, as: Int.self)
+                    cursor += 16
+                    return Date(timeIntervalSince1970: Double(seconds) + Double(nanos) / 1_000_000_000)
+                }
 
                 // ATTR_CMN_NAME — attrreference_t (int32 offset relative to the
                 // reference's own location, + u_int32 length incl. trailing NUL),
@@ -139,14 +152,19 @@ public struct BulkEnumerator: DirectoryEnumerating {
                     isDirectory = entry.loadUnaligned(fromByteOffset: cursor, as: UInt32.self) == Attr.vdir
                     cursor += 4
                 }
-                // ATTR_CMN_MODTIME — struct timespec (tv_sec + tv_nsec).
+                // Times appear in canonical bit order: CRTIME (0x200) < MODTIME (0x400)
+                // < ACCTIME (0x1000). Each is conditional on its returned-attrs bit.
+                if commonReturned & Attr.cmnCrTime != 0 {
+                    guard let date = readTimespec() else { entry = recordEnd; continue entryLoop }
+                    creationDate = date
+                }
                 if commonReturned & Attr.cmnModTime != 0 {
-                    guard entry + cursor + 16 <= recordEnd else { entry = recordEnd; continue entryLoop }
-                    let seconds = entry.loadUnaligned(fromByteOffset: cursor, as: Int.self)
-                    let nanos = entry.loadUnaligned(fromByteOffset: cursor + 8, as: Int.self)
-                    modificationDate = Date(
-                        timeIntervalSince1970: Double(seconds) + Double(nanos) / 1_000_000_000)
-                    cursor += 16
+                    guard let date = readTimespec() else { entry = recordEnd; continue entryLoop }
+                    modificationDate = date
+                }
+                if commonReturned & Attr.cmnAccTime != 0 {
+                    guard let date = readTimespec() else { entry = recordEnd; continue entryLoop }
+                    accessDate = date
                 }
                 // ATTR_CMN_FLAGS — st_flags, for UF_HIDDEN parity with
                 // FileManager's .skipsHiddenFiles.
@@ -170,6 +188,8 @@ public struct BulkEnumerator: DirectoryEnumerating {
                             isDirectory: isDirectory,
                             size: isDirectory ? 0 : size,
                             modificationDate: modificationDate,
+                            creationDate: creationDate,
+                            accessDate: accessDate,
                             isDataless: flags & Attr.dataless != 0))
                 }
 

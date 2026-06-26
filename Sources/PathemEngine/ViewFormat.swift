@@ -5,7 +5,9 @@ import Foundation
 /// shared (config-as-data, DESIGN.md section 10). Later this grows columns and a
 /// view mode; the sort logic lives here so it is unit-testable.
 public struct ViewFormat: Codable, Sendable, Equatable {
-    public enum SortKey: String, Codable, Sendable, CaseIterable { case name, size, date }
+    public enum SortKey: String, Codable, Sendable, CaseIterable {
+        case name, size, date, dateCreated, dateAccessed
+    }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
     /// grid views (gallery uses larger thumbnails); `column` is miller columns.
     public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery, column }
@@ -64,6 +66,16 @@ public struct ViewFormat: Codable, Sendable, Equatable {
             case .date:
                 let da = a.modificationDate ?? .distantPast
                 let db = b.modificationDate ?? .distantPast
+                if da == db { return nameAscending(a, b) }
+                ordered = da < db
+            case .dateCreated:
+                let da = a.creationDate ?? .distantPast
+                let db = b.creationDate ?? .distantPast
+                if da == db { return nameAscending(a, b) }
+                ordered = da < db
+            case .dateAccessed:
+                let da = a.accessDate ?? .distantPast
+                let db = b.accessDate ?? .distantPast
                 if da == db { return nameAscending(a, b) }
                 ordered = da < db
             }
