@@ -1,18 +1,12 @@
 import Foundation
 
-/// Discovers USB-attached phones by asking the installed CLI tools, and models each as a
-/// `RemoteConnection` (proto .adb/.afc, serial/UDID in `host`) so the existing provider
-/// seam browses them. Returns nothing when no device tools are installed. The output
-/// parsers are pure and tested.
+/// Discovers USB-attached phones and models each as a `RemoteConnection` (proto .adb/.afc,
+/// serial/UDID in `host`) so the existing provider seam browses them. Android uses `adb`
+/// (when installed); iOS uses our own usbmux client (no third-party tool). The friendly iOS
+/// name is resolved separately/out-of-process by the app. The output parser is pure-tested.
 public enum DeviceDiscovery {
-    public static func discover() async -> [RemoteConnection] {
-        var devices: [RemoteConnection] = []
-        devices.append(contentsOf: await android())
-        devices.append(contentsOf: await ios())
-        return devices
-    }
-
-    private static func android() async -> [RemoteConnection] {
+    /// Attached Android devices via `adb devices -l` (empty when adb isn't installed).
+    public static func androidDevices() async -> [RemoteConnection] {
         guard let adb = DeviceTools.adb,
             let (data, status, _) = try? await RemoteRunner.run(adb, ["devices", "-l"]), status == 0
         else { return [] }
@@ -21,25 +15,10 @@ public enum DeviceDiscovery {
         }
     }
 
-    private static func ios() async -> [RemoteConnection] {
-        guard let tool = DeviceTools.idevice_id,
-            let (data, status, _) = try? await RemoteRunner.run(tool, ["-l"]), status == 0
-        else { return [] }
-        var result: [RemoteConnection] = []
-        for udid in parseUDIDs(String(decoding: data, as: UTF8.self)) {
-            let name = await iosName(udid) ?? "iPhone"
-            result.append(RemoteConnection(name: name, proto: .afc, host: udid, path: "/"))
-        }
-        return result
-    }
-
-    private static func iosName(_ udid: String) async -> String? {
-        guard let info = DeviceTools.ideviceinfo,
-            let (data, status, _) = try? await RemoteRunner.run(info, ["-u", udid, "-k", "DeviceName"]),
-            status == 0
-        else { return nil }
-        let name = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? nil : name
+    /// UDIDs of USB-attached iOS devices, via our native usbmux client (no third-party tool).
+    public static func iosUDIDs() -> [String] {
+        guard let devices = try? USBMux.listDevices() else { return [] }
+        return devices.filter { $0.connectionType == "USB" }.map(\.udid)
     }
 
     /// Parse `adb devices -l`: skip the header, keep only lines whose state is "device"
@@ -56,13 +35,5 @@ public enum DeviceDiscovery {
             devices.append((fields[0], model.flatMap { $0.isEmpty ? nil : String($0) }))
         }
         return devices
-    }
-
-    /// Parse `idevice_id -l`: one UDID per line (some builds append " (USB)").
-    static func parseUDIDs(_ output: String) -> [String] {
-        output.split(whereSeparator: \.isNewline)
-            .map { String($0).trimmingCharacters(in: .whitespaces) }
-            .map { $0.split(separator: " ").first.map(String.init) ?? $0 }
-            .filter { !$0.isEmpty }
     }
 }

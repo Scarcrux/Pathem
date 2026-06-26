@@ -151,6 +151,26 @@ enum DeviceIdentity {
     }
 }
 
+/// iOS device queries that don't need the AFC service.
+public enum IOSDevice {
+    /// The friendly device name via a lightweight pre-SSL lockdown GetValue (no pairing/TLS),
+    /// best-effort. Returns nil if unavailable.
+    public static func name(udid: String) -> String? {
+        guard let device = (try? USBMux.listDevices())?.first(where: { $0.udid == udid }),
+            let channel = try? DeviceChannel(USBMux.connect(deviceID: device.deviceID, port: 62078))
+        else { return nil }
+        defer { channel.close() }
+        do {
+            try lockdownSend(channel, ["Request": "QueryType"])
+            _ = try lockdownReceive(channel)
+            try lockdownSend(channel, ["Request": "GetValue", "Key": "DeviceName"])
+            let reply = try lockdownReceive(channel)
+            if let name = reply["Value"] as? String, !name.isEmpty { return name }
+        } catch {}
+        return nil
+    }
+}
+
 /// An open AFC session over a paired iOS device's media filesystem. One persistent
 /// connection, so typed listings (name + dir + size) are cheap. Synchronous + blocking;
 /// intended to run in the out-of-process helper.

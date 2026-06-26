@@ -12,6 +12,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     /// mode changes. PaneController drives it through PaneContentView.
     private var content: PaneContentView = FileListController()
     private var currentMode: ViewFormat.ViewMode = .list
+    /// When set (from Preferences), every folder shows hidden files regardless of its format.
+    var showHiddenByDefault = false
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var calculateFolderSizes = false
@@ -354,7 +356,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         content.resolutionURL = nav.current
         content.setSortFormat(format)  // column view re-sorts its drilled columns to match
         do {
-            let entries = try BulkEnumerator().entries(of: nav.current, includingHidden: format.showHidden)
+            let entries = try BulkEnumerator().entries(
+                of: nav.current, includingHidden: format.showHidden || showHiddenByDefault)
             displayEntries(format.sorted(entries), preserveState: preserveState)
             // setEntries refreshes only the root column; re-enumerate drilled ones too
             // so a file op inside a drilled column shows its result (no-op elsewhere).

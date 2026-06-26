@@ -240,6 +240,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
                 pane.runCommand = { [weak self] id in self?.commands.perform(id) }
                 pane.setPathBar(atBottom: self?.prefs.pathBarAtBottom ?? false)
+                pane.showHiddenByDefault = self?.prefs.showHiddenByDefault ?? false
                 pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
                     self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)
@@ -299,10 +300,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         applyPreferences()
     }
 
-    /// Poll for USB-attached phones, but only when a device tool is installed (otherwise
-    /// zero overhead). The sidebar's Devices section updates when the set changes.
+    private var deviceNameCache: [String: String] = [:]  // iOS udid -> friendly DeviceName
+
+    /// Poll for USB-attached phones. iOS uses our native usbmux client (always available);
+    /// Android uses adb when installed. The sidebar's Devices section updates on change.
     private func startDeviceWatch() {
-        guard DeviceTools.adb != nil || DeviceTools.idevice_id != nil else { return }
         refreshDevices()
         deviceTimer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
             self?.refreshDevices()
@@ -310,7 +312,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func refreshDevices() {
-        Task { @MainActor in self.sidebar.setDevices(await DeviceDiscovery.discover()) }
+        Task { @MainActor in
+            var devices = await DeviceDiscovery.androidDevices()
+            for udid in DeviceDiscovery.iosUDIDs() {
+                let name: String
+                if let cached = self.deviceNameCache[udid] {
+                    name = cached
+                } else if let resolved = await AFCProvider.friendlyName(udid: udid) {
+                    self.deviceNameCache[udid] = resolved  // cache only a real name
+                    name = resolved
+                } else {
+                    name = L("bvc.iphoneFallback", "iPhone")  // not cached, so a later poll retries
+                }
+                devices.append(RemoteConnection(name: name, proto: .afc, host: udid, path: "/"))
+            }
+            self.sidebar.setDevices(devices)
+        }
     }
 
     /// Register every browser action as a named command. This is the spine the
@@ -432,10 +449,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.cut", L("bvc.cmd.cut", "Cut"), enabled: hasSelection) {
             [weak self] in self?.writeSelectionToPasteboard(cut: true)
         }
-        add("view.asList", L("bvc.cmd.asList", "as List")) { [weak self] in self?.activePane?.setViewMode(.list) }
-        add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.activePane?.setViewMode(.icon) }
-        add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.activePane?.setViewMode(.gallery) }
-        add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.activePane?.setViewMode(.column) }
+        add("view.asList", L("bvc.cmd.asList", "as List")) { [weak self] in self?.setActiveViewMode(.list) }
+        add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.setActiveViewMode(.icon) }
+        add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.setActiveViewMode(.gallery) }
+        add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.setActiveViewMode(.column) }
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
         add("terminal.here", L("bvc.cmd.openTerminalHere", "Open Terminal Here")) { [weak self] in self?.openTerminalHere() }
         add("terminal.toggleFollow", L("bvc.cmd.terminalFollowsFolder", "Terminal Follows Folder")) {
@@ -1540,6 +1557,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         previewView.previewItem = activePane?.singleSelectedURL as NSURL?
     }
 
+    /// Set the active pane's view mode, then sync the auto-preview pane.
+    private func setActiveViewMode(_ mode: ViewFormat.ViewMode) {
+        activePane?.setViewMode(mode)
+        syncAutoPreview()
+    }
+
+    private var previewAutoShown = false
+
+    /// With the "preview in gallery/column" preference on, auto-open the preview pane while
+    /// the active pane is in gallery or column view (and close it again when leaving).
+    private func syncAutoPreview() {
+        guard prefs.previewInGalleryView else { return }
+        let mode = activePane?.viewMode
+        let wantsPreview = (mode == .gallery || mode == .column)
+        if wantsPreview, !previewVisible {
+            togglePreviewPane()
+            previewAutoShown = true
+        } else if !wantsPreview, previewVisible, previewAutoShown {
+            togglePreviewPane()
+            previewAutoShown = false
+        }
+        updatePreview()
+    }
+
     // MARK: - Organize with AI (typed plan; the model proposes, our code executes)
 
     private func organizeWithAI() {
@@ -1676,7 +1717,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         let selected = pane.selectedLocalURLs()  // location-aware
         let urls = selected.isEmpty ? [pane.currentURL] : selected
-        infoInspector.present(urls: urls, over: view.window)
+        if prefs.useFinderGetInfo {
+            Self.openFinderGetInfo(urls)
+        } else {
+            infoInspector.present(urls: urls, over: view.window)
+        }
+    }
+
+    /// Open Finder's own Get Info window for each URL (the optional default-app path).
+    private static func openFinderGetInfo(_ urls: [URL]) {
+        let items = urls.map { "POSIX file \"\($0.path.replacingOccurrences(of: "\"", with: "\\\""))\"" }
+            .joined(separator: ", ")
+        let script = """
+            tell application "Finder"
+                activate
+                open information window of every item of {\(items)}
+            end tell
+            """
+        Task.detached {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+            process.arguments = ["-e", script]
+            try? process.run()
+        }
     }
 
     /// Pull down online-only (dataless) cloud files. The provider materializes
@@ -1839,6 +1902,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.setPathBar(atBottom: prefs.pathBarAtBottom)
                 pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
                 pane.dragMovesByDefault = prefs.dragMovesByDefault
+                let wasHidden = pane.showHiddenByDefault
+                pane.showHiddenByDefault = prefs.showHiddenByDefault
+                if wasHidden != prefs.showHiddenByDefault { pane.reloadIfShowingListing() }
             }
         }
         applyCompactSidebar()
@@ -2739,7 +2805,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // every focus change, so a mid-typed query or visible results survive a
         // pane re-focus.
         if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
-        updatePreview()  // follow the newly active pane's selection
+        syncAutoPreview()  // follow the newly active pane's view mode + selection
         saveSessionSoon()
     }
 
@@ -3280,6 +3346,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             && leftTabs.containerView.frame.width > 50
             && rightTabs.containerView.frame.width > 50
             && (100...360).contains(sidebar.containerView.frame.width)
+    }
+
+    /// Set the active pane's view mode (PATHEM_VIEW_SHOT diagnostics).
+    func debugSetActiveViewMode(_ mode: ViewFormat.ViewMode) { activePane?.setViewMode(mode) }
+
+    /// Navigate the active pane (PATHEM_VIEW_SHOT diagnostics, bypassing session restore).
+    func debugNavigateActive(to url: URL) { activePane?.navigate(to: url) }
+
+    /// Render the whole browser to a PNG (PATHEM_VIEW_SHOT diagnostics).
+    func debugRender(to path: String) {
+        view.layoutSubtreeIfNeeded()
+        let bounds = view.bounds
+        guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        view.cacheDisplay(in: bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+            print("VIEW SHOT: \(path) \(Int(bounds.width))x\(Int(bounds.height))")
+        }
     }
 
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).

@@ -172,6 +172,7 @@
 "bvc.failuresForItems" = "%d項目で%@";
 "bvc.findingDuplicates" = "%@内の重複を検出中…";
 "bvc.hideShelf" = "シェルフを隠す";
+"bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "両方とも残す";
 "bvc.layoutDefaultName" = "レイアウト %d";
 "bvc.layoutsMenu" = "レイアウト";
@@ -546,9 +547,12 @@
 "prefs.fontSizeLabel" = "フォントサイズ";
 "prefs.openConnectionsNewTab" = "接続を新しいタブで開く";
 "prefs.pathBarBottom" = "パスバーを下部に表示";
+"prefs.previewInGallery" = "ギャラリー・カラム表示でプレビューパネルを自動表示";
 "prefs.searchOCR" = "画像の内容を検索（OCR、低速）";
 "prefs.searchOCRHint" = "テキストとPDFの内容は常にインデックスされます。画像のOCRは追加です。";
 "prefs.showFullPath" = "タイトルバーにフルパスを表示";
+"prefs.showHiddenByDefault" = "すべてのフォルダで隠しファイルを表示";
+"prefs.useFinderGetInfo" = "Pathem ではなく Finder の情報ウィンドウを使用";
 "proc.confirmForce" = "%@（%d）を強制終了しますか？";
 "proc.confirmQuit" = "%@（%d）を終了しますか？";
 "proc.cpu" = "CPU %";

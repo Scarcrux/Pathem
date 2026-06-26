@@ -144,10 +144,13 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     private func build(_ pane: Pane) -> NSView {
         switch pane {
         case .general: return form([
+            check(L("prefs.showHiddenByDefault", "Show hidden files in every folder"), \.showHiddenByDefault),
             check(L("prefs.openConnectionsNewTab", "Open connections in a new tab"), \.openConnectionsInNewTab),
             check(L("prefs.calculateFolderSizes", "Calculate folder sizes"), \.calculateFolderSizes),
             check(L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"), \.confirmBeforeDelete),
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
+            check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
+            check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),
         ])
         case .appearance: return form([
             labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),

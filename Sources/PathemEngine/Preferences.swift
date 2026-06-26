@@ -39,6 +39,12 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var dragMovesByDefault: Bool
     /// Cap remote transfer speed in KB/s (0 = unlimited).
     public var bandwidthLimitKBps: Int
+    /// Show dotfiles/hidden files in every folder by default.
+    public var showHiddenByDefault: Bool
+    /// Use Finder's Get Info window instead of Pathem's inspector.
+    public var useFinderGetInfo: Bool
+    /// In gallery/column views, automatically show the preview pane and follow the selection.
+    public var previewInGalleryView: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -47,8 +53,12 @@ public struct Preferences: Codable, Sendable, Equatable {
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
-        bandwidthLimitKBps: Int = 0
+        bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
+        useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false
     ) {
+        self.showHiddenByDefault = showHiddenByDefault
+        self.useFinderGetInfo = useFinderGetInfo
+        self.previewInGalleryView = previewInGalleryView
         self.bandwidthLimitKBps = bandwidthLimitKBps
         self.appearance = appearance
         self.density = density
@@ -97,5 +107,11 @@ public struct Preferences: Codable, Sendable, Equatable {
         appearance = (try? c.decode(Appearance.self, forKey: .appearance)) ?? d.appearance
         bandwidthLimitKBps =
             try c.decodeIfPresent(Int.self, forKey: .bandwidthLimitKBps) ?? d.bandwidthLimitKBps
+        showHiddenByDefault =
+            try c.decodeIfPresent(Bool.self, forKey: .showHiddenByDefault) ?? d.showHiddenByDefault
+        useFinderGetInfo =
+            try c.decodeIfPresent(Bool.self, forKey: .useFinderGetInfo) ?? d.useFinderGetInfo
+        previewInGalleryView =
+            try c.decodeIfPresent(Bool.self, forKey: .previewInGalleryView) ?? d.previewInGalleryView
     }
 }

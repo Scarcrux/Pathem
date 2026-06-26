@@ -80,8 +80,11 @@ enum PathemApp {
             runGateA(controller, window)  // measures synchronously, then exits
         }
 
-        // Normal mode: a dual-pane browser rooted at the home directory.
-        let browser = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser)
+        // Normal mode: a dual-pane browser rooted at the home directory (or a sample
+        // folder when rendering view-mode screenshots).
+        let viewShot = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
+        let start = viewShot ? Self.makeSampleFolder() : FileManager.default.homeDirectoryForCurrentUser
+        let browser = BrowserViewController(start: start)
         window.contentViewController = browser
         // Assigning a contentViewController makes the window adopt the content's
         // Auto Layout fitting size, which collapses to a sliver here (the panes
@@ -106,6 +109,27 @@ enum PathemApp {
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
+
+        // Headless render of gallery / column / icon views over a sample folder.
+        if viewShot {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: start)  // bypass session restore; show the sample folder
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                browser.debugSetActiveViewMode(.gallery)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    browser.debugRender(to: "/tmp/view-gallery.png")
+                    browser.debugSetActiveViewMode(.column)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        browser.debugRender(to: "/tmp/view-column.png")
+                        browser.debugSetActiveViewMode(.icon)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            browser.debugRender(to: "/tmp/view-icon.png")
+                            exit(0)
+                        }
+                    }
+                }
+            }
+        }
 
         // Headless sidebar render for layout inspection (PATHEM_SIDEBAR_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SHOT"] != nil {
@@ -447,6 +471,38 @@ enum PathemApp {
         print("RESULT: \(pass ? "PASS" : "FAIL") — table materializes bounded cells regardless of 1M-row dataset")
 
         exit(pass ? 0 : 1)
+    }
+
+    /// Build a sample folder (subfolders, files, and solid-color PNGs) for PATHEM_VIEW_SHOT.
+    private static func makeSampleFolder() -> URL {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-viewshot")
+        try? fm.removeItem(at: dir)
+        for sub in ["Subfolder A", "Subfolder B"] {
+            try? fm.createDirectory(at: dir.appendingPathComponent(sub), withIntermediateDirectories: true)
+        }
+        try? "notes".write(to: dir.appendingPathComponent("notes.txt"), atomically: true, encoding: .utf8)
+        try? "code".write(to: dir.appendingPathComponent("main.swift"), atomically: true, encoding: .utf8)
+        let colors: [NSColor] = [.systemRed, .systemBlue, .systemGreen, .systemOrange, .systemPurple, .systemTeal]
+        for (index, color) in colors.enumerated() {
+            writeSolidPNG(color, to: dir.appendingPathComponent("photo\(index + 1).png"), side: 256)
+        }
+        return dir
+    }
+
+    private static func writeSolidPNG(_ color: NSColor, to url: URL, side: Int) {
+        guard
+            let rep = NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: side, pixelsHigh: side, bitsPerSample: 8,
+                samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
+        else { return }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        color.setFill()
+        NSRect(x: 0, y: 0, width: side, height: side).fill()
+        NSGraphicsContext.restoreGraphicsState()
+        if let data = rep.representation(using: .png, properties: [:]) { try? data.write(to: url) }
     }
 }
 

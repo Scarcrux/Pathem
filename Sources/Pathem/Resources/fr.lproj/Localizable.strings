@@ -172,6 +172,7 @@
 "bvc.failuresForItems" = "%@ pour %d élément(s)";
 "bvc.findingDuplicates" = "Recherche de doublons dans %@…";
 "bvc.hideShelf" = "Masquer l’étagère";
+"bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "Conserver les deux";
 "bvc.layoutDefaultName" = "Disposition %d";
 "bvc.layoutsMenu" = "Dispositions";
@@ -546,9 +547,12 @@
 "prefs.fontSizeLabel" = "Taille de police";
 "prefs.openConnectionsNewTab" = "Ouvrir les connexions dans un nouvel onglet";
 "prefs.pathBarBottom" = "Afficher la barre de chemin en bas";
+"prefs.previewInGallery" = "Afficher le volet d’aperçu automatiquement dans les vues Galerie et Colonnes";
 "prefs.searchOCR" = "Rechercher dans le contenu des images (OCR, plus lent)";
 "prefs.searchOCRHint" = "Le contenu texte et PDF est toujours indexé ; l’OCR des images est en supplément.";
 "prefs.showFullPath" = "Afficher le chemin complet dans la barre de titre";
+"prefs.showHiddenByDefault" = "Afficher les fichiers cachés dans chaque dossier";
+"prefs.useFinderGetInfo" = "Utiliser la fenêtre Lire les informations du Finder au lieu de celle de Pathem";
 "proc.confirmForce" = "Forcer à quitter %@ (%d) ?";
 "proc.confirmQuit" = "Quitter %@ (%d) ?";
 "proc.cpu" = "CPU %";

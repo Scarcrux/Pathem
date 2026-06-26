@@ -17,9 +17,6 @@ public enum DeviceTools {
         return nil
     }
     public static var adb: String? { find(["adb"], extra: ["~/Library/Android/sdk/platform-tools"]) }
-    public static var idevice_id: String? { find(["idevice_id"]) }
-    public static var ideviceinfo: String? { find(["ideviceinfo"]) }
-    public static var pymobiledevice3: String? { find(["pymobiledevice3"]) }
 }
 
 /// Android device backend: drives `adb` as a subprocess (USB debugging), so device access

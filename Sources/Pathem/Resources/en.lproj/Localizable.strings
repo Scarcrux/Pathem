@@ -172,6 +172,7 @@
 "bvc.failuresForItems" = "%@ for %d item(s)";
 "bvc.findingDuplicates" = "Finding duplicates in %@…";
 "bvc.hideShelf" = "Hide Shelf";
+"bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "Keep Both";
 "bvc.layoutDefaultName" = "Layout %d";
 "bvc.layoutsMenu" = "Layouts";
@@ -546,9 +547,12 @@
 "prefs.fontSizeLabel" = "Font size";
 "prefs.openConnectionsNewTab" = "Open connections in a new tab";
 "prefs.pathBarBottom" = "Show the path bar at the bottom";
+"prefs.previewInGallery" = "Show the preview pane automatically in Gallery and Column views";
 "prefs.searchOCR" = "Search image contents (OCR, slower)";
 "prefs.searchOCRHint" = "Text and PDF contents are always indexed; image OCR is extra.";
 "prefs.showFullPath" = "Show full path in the title bar";
+"prefs.showHiddenByDefault" = "Show hidden files in every folder";
+"prefs.useFinderGetInfo" = "Use Finder’s Get Info window instead of Pathem’s";
 "proc.confirmForce" = "Force quit %@ (%d)?";
 "proc.confirmQuit" = "Quit %@ (%d)?";
 "proc.cpu" = "CPU %";

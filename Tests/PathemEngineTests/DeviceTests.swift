@@ -20,12 +20,6 @@ import Testing
         #expect(devices[1].model == "sdk gphone64 arm64")
     }
 
-    @Test func parsesUDIDs() {
-        let out = "00008110-0011223344556677\n00008030-AABBCCDDEEFF0011 (USB)\n\n"
-        let udids = DeviceDiscovery.parseUDIDs(out)
-        #expect(udids == ["00008110-0011223344556677", "00008030-AABBCCDDEEFF0011"])
-    }
-
     @Test func adbListParserMarksDirectoriesAndStripsCR() {
         // adb shell appends CR to each line; -p marks directories with a trailing slash.
         let out = "./\r\n../\r\nDCIM/\r\nDownload/\r\nphoto.jpg\r\nnotes.txt\r\n"

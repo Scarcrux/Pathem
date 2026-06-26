@@ -14,8 +14,17 @@ public struct AFCProvider: RemoteProvider {
         let size: Int64
     }
 
+    /// The device's friendly name, resolved out-of-process via the helper. nil if unavailable.
+    public static func friendlyName(udid: String) async -> String? {
+        guard let helper = helperPath(),
+            let (data, status, _) = try? await RemoteRunner.run(helper, ["name", udid]), status == 0
+        else { return nil }
+        let name = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? nil : name
+    }
+
     /// Locate the bundled helper (next to the app executable) or the dev build product.
-    static func helperPath() -> String? {
+    public static func helperPath() -> String? {
         var candidates: [String] = []
         if let exe = Bundle.main.executableURL?.deletingLastPathComponent() {
             candidates.append(exe.appendingPathComponent("pathem-afc").path)
