@@ -121,10 +121,14 @@ enum PathemApp {
                     browser.debugSetActiveViewMode(.column)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                         browser.debugRender(to: "/tmp/view-column.png")
-                        browser.debugSetActiveViewMode(.icon)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            browser.debugRender(to: "/tmp/view-icon.png")
-                            exit(0)
+                        browser.debugDrillActive(row: 0)  // drill the first folder
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            browser.debugRender(to: "/tmp/view-column-drilled.png")
+                            browser.debugSetActiveViewMode(.icon)
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                browser.debugRender(to: "/tmp/view-icon.png")
+                                exit(0)
+                            }
                         }
                     }
                 }
@@ -482,6 +486,9 @@ enum PathemApp {
         try? fm.removeItem(at: dir)
         for sub in ["Subfolder A", "Subfolder B"] {
             try? fm.createDirectory(at: dir.appendingPathComponent(sub), withIntermediateDirectories: true)
+        }
+        for name in ["nested1.txt", "nested2.txt", "nested3.txt"] {
+            try? "x".write(to: dir.appendingPathComponent("Subfolder A").appendingPathComponent(name), atomically: true, encoding: .utf8)
         }
         try? "notes".write(to: dir.appendingPathComponent("notes.txt"), atomically: true, encoding: .utf8)
         try? "code".write(to: dir.appendingPathComponent("main.swift"), atomically: true, encoding: .utf8)

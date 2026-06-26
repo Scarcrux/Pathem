@@ -288,6 +288,13 @@ extension ColumnBrowserController: PaneContentView {
         if wasFocused { outerScroll.window?.makeFirstResponder(first.table) }  // not the empty container
     }
 
+    /// Programmatically select a row in the first column (PATHEM_VIEW_SHOT drill test).
+    func debugSelect(row: Int) {
+        guard let first = columns.first, row < first.entries.count else { return }
+        first.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        tableViewSelectionDidChange(Notification(name: NSTableView.selectionDidChangeNotification, object: first.table))
+    }
+
     func showPlaceholder(_ text: String?) {
         placeholder.stringValue = text ?? ""
         placeholder.isHidden = (text == nil)

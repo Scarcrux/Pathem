@@ -29,6 +29,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
 
     /// Zoom the active grid view (Cmd +/-); no-op in list/column.
     func zoomContent(_ delta: CGFloat) { content.adjustZoom(delta) }
+
+    /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
+    func debugColumnDrill(row: Int) { (content as? ColumnBrowserController)?.debugSelect(row: row) }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var calculateFolderSizes = false

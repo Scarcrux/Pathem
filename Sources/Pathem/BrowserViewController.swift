@@ -3368,6 +3368,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Navigate the active pane (PATHEM_VIEW_SHOT diagnostics, bypassing session restore).
     func debugNavigateActive(to url: URL) { activePane?.navigate(to: url) }
 
+    /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
+    func debugDrillActive(row: Int) { activePane?.debugColumnDrill(row: row) }
+
     /// Render the whole browser to a PNG (PATHEM_VIEW_SHOT diagnostics).
     func debugRender(to path: String) {
         view.layoutSubtreeIfNeeded()
