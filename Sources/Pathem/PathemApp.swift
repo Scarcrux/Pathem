@@ -137,6 +137,19 @@ enum PathemApp {
             }
         }
 
+        // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil {
+            let number = window.windowNumber
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                let capture = Process()
+                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/main_live.png"]
+                try? capture.run()
+                capture.waitUntilExit()
+                exit(0)
+            }
+        }
+
         // Live screenshot of the real Settings window (PATHEM_SETTINGS_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_SETTINGS_SHOT"] != nil {
             let settings = SettingsWindowController()

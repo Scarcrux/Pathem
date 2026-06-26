@@ -6,7 +6,7 @@ import PathemEngine
 /// buttons. The pane is intentionally thin. NavigationState owns the history
 /// logic and BulkEnumerator does the listing.
 @MainActor
-final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSPathControlDelegate {
+final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     let containerView = NSView()
     /// The active view (list, icon, or gallery), swapped when the folder's view
     /// mode changes. PaneController drives it through PaneContentView.
@@ -54,7 +54,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     var keyView: NSView { content.keyView }
     private(set) var nav: NavigationState
 
-    private let pathControl = NSPathControl()
+    private let breadcrumb = BreadcrumbBar()
     /// Editable address bar (Cmd-L): shows the current path so you can edit or
     /// paste a new one and press Return to jump there. Finder makes this awkward;
     /// here it's first-class.
@@ -321,7 +321,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         content.resolutionURL = nil
         displayEntries(format.sorted(entries), preserveState: false)
         content.showPlaceholder(entries.isEmpty ? L("pane.noItems", "No items") : nil)
-        pathControl.isHidden = true
+        breadcrumb.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
         remoteLabel.stringValue = title
@@ -367,7 +367,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         }
         showingSearchResults = false
         remoteLabel.isHidden = true
-        pathControl.isHidden = false
+        breadcrumb.isHidden = false
         if let resolveFormat { format = resolveFormat(nav.current) }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
         content.directoryURL = nav.current  // rows in this folder are draggable
@@ -399,7 +399,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         }
         updateStatus()
         refreshGitStatusAsync()
-        pathControl.url = nav.current
+        breadcrumb.setURL(nav.current)
         // Inside an archive, show a friendly "archive ▸ sub ▸ dir" label, not the raw
         // temp path, and make Up always available (it climbs out to the origin).
         if let session = archiveSession {
@@ -408,7 +408,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
                 .split(separator: "/").joined(separator: " ▸ ")
             remoteLabel.stringValue = "📦 " + session.archive.lastPathComponent + (rel.isEmpty ? "" : " ▸ " + rel)
             remoteLabel.isHidden = false
-            pathControl.isHidden = true
+            breadcrumb.isHidden = true
             addressField.isHidden = true
         }
         backButton.isEnabled = nav.canGoBack
@@ -509,7 +509,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
         content.showPlaceholder(String(format: L("pane.loadingHost", "Loading %@…"), session.connection.host))
-        pathControl.isHidden = true
+        breadcrumb.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
         remoteLabel.stringValue = "\(session.connection.proto.label)  \(session.connection.host)\(session.path)"
@@ -751,13 +751,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         buildSortButton()
         buildActionButton()
 
-        pathControl.pathStyle = .standard
-        pathControl.target = self
-        pathControl.action = #selector(pathClicked)
-        pathControl.delegate = self  // lets a crumb be dragged out (e.g. a folder to VS Code)
-        pathControl.translatesAutoresizingMaskIntoConstraints = false
-        pathControl.setContentHuggingPriority(.init(1), for: .horizontal)
-        pathControl.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+        breadcrumb.translatesAutoresizingMaskIntoConstraints = false
+        breadcrumb.setContentHuggingPriority(.init(1), for: .horizontal)
+        breadcrumb.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+        breadcrumb.onNavigate = { [weak self] url in
+            self?.nav.go(to: url)
+            self?.enterDirectory()
+        }
+        breadcrumb.onClickBackground = { [weak self] in self?.beginEditingPath() }
+        breadcrumb.onDropURLs = { [weak self] urls, folder, move in self?.onDropFiles?(urls, move, folder) }
 
         addressField.placeholderString = L("pane.goToPathPlaceholder", "Go to path")
         addressField.font = .systemFont(ofSize: 12)
@@ -781,7 +783,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         pathBar.spacing = 4
         pathBar.translatesAutoresizingMaskIntoConstraints = false
         pathBar.setContentHuggingPriority(.init(1), for: .horizontal)
-        pathBar.addArrangedSubview(pathControl)
+        pathBar.addArrangedSubview(breadcrumb)
         pathBar.addArrangedSubview(addressField)
         pathBar.addArrangedSubview(remoteLabel)
 
@@ -1407,28 +1409,6 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         enterDirectory()
     }
 
-    @objc private func pathClicked() {
-        // Clicking a crumb navigates; clicking the empty part of the bar opens the
-        // editable address field, so pasting a path is discoverable without Cmd-L.
-        guard let url = pathControl.clickedPathItem?.url else {
-            beginEditingPath()
-            return
-        }
-        nav.go(to: url)
-        enterDirectory()
-    }
-
-    /// Allow a breadcrumb crumb to be dragged out as a file URL, so a folder in the
-    /// path bar can be dropped on another app (VS Code, Terminal, the Dock, ...).
-    func pathControl(
-        _ pathControl: NSPathControl, shouldDrag pathItem: NSPathControlItem, with pasteboard: NSPasteboard
-    ) -> Bool {
-        guard let url = pathItem.url, url.isFileURL else { return false }
-        pasteboard.clearContents()
-        pasteboard.writeObjects([url as NSURL])
-        return true
-    }
-
     // MARK: - Editable address bar (paste a path)
 
     /// Swap the breadcrumb for an editable field pre-filled with the current path,
@@ -1436,7 +1416,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     func beginEditingPath() {
         guard remote == nil else { NSSound.beep(); return }  // remote path editing is a later step
         addressField.stringValue = nav.current.path
-        pathControl.isHidden = true
+        breadcrumb.isHidden = true
         addressField.isHidden = false
         containerView.window?.makeFirstResponder(addressField)
         addressField.currentEditor()?.selectAll(nil)
@@ -1444,7 +1424,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
 
     private func endEditingPath() {
         addressField.isHidden = true
-        pathControl.isHidden = false
+        breadcrumb.isHidden = false
     }
 
     @objc private func commitPath() {
