@@ -137,6 +137,8 @@
 "bvc.cmd.undo" = "Annuler";
 "bvc.cmd.useAsDefaultView" = "Utiliser comme présentation par défaut";
 "bvc.cmd.verifyChecksum" = "Vérifier la somme de contrôle…";
+"bvc.cmd.zoomIn" = "Zoom avant";
+"bvc.cmd.zoomOut" = "Zoom arrière";
 "bvc.collectionCmdTitle" = "Collection : %@";
 "bvc.collectionCount" = "Collection : %@ (%d)";
 "bvc.collectionDefaultName" = "Collection";
@@ -480,6 +482,8 @@
 "menu.view.syncBrowsing" = "Navigation synchronisée";
 "menu.view.toggleHidden" = "Afficher les fichiers masqués";
 "menu.view.useAsDefault" = "Utiliser comme présentation par défaut";
+"menu.view.zoomIn" = "Zoom avant";
+"menu.view.zoomOut" = "Zoom arrière";
 "palette.runCommandTitle" = "Exécuter la commande";
 "palette.searchPlaceholder" = "Saisissez une commande…";
 "pane.actionsTooltip" = "Actions";

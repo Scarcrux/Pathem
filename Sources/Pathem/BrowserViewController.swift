@@ -241,6 +241,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.runCommand = { [weak self] id in self?.commands.perform(id) }
                 pane.setPathBar(atBottom: self?.prefs.pathBarAtBottom ?? false)
                 pane.showHiddenByDefault = self?.prefs.showHiddenByDefault ?? false
+                pane.iconZoom = CGFloat(self?.prefs.iconZoom ?? 1)
+                pane.onIconZoomChanged = { [weak self] scale in self?.rememberIconZoom(scale) }
                 pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
                     self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)
@@ -453,6 +455,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.setActiveViewMode(.icon) }
         add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.setActiveViewMode(.gallery) }
         add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.setActiveViewMode(.column) }
+        add("view.zoomIn", L("bvc.cmd.zoomIn", "Zoom In")) { [weak self] in self?.activePane?.zoomContent(0.15) }
+        add("view.zoomOut", L("bvc.cmd.zoomOut", "Zoom Out")) { [weak self] in self?.activePane?.zoomContent(-0.15) }
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
         add("terminal.here", L("bvc.cmd.openTerminalHere", "Open Terminal Here")) { [weak self] in self?.openTerminalHere() }
         add("terminal.toggleFollow", L("bvc.cmd.terminalFollowsFolder", "Terminal Follows Folder")) {
@@ -1893,6 +1897,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Apply preferences to every tab in both sides, persist them, and rebuild the
     /// search index (OCR can change what gets embedded).
+    /// Persist a new icon/gallery zoom and keep both panes' base zoom in sync.
+    private func rememberIconZoom(_ scale: CGFloat) {
+        prefs.iconZoom = Double(scale)
+        saveConfig(prefs, to: Self.preferencesURL)
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.iconZoom = scale }
+        }
+    }
+
     private func applyPreferences() {
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs {
@@ -1905,6 +1918,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 let wasHidden = pane.showHiddenByDefault
                 pane.showHiddenByDefault = prefs.showHiddenByDefault
                 if wasHidden != prefs.showHiddenByDefault { pane.reloadIfShowingListing() }
+                pane.iconZoom = CGFloat(prefs.iconZoom)
             }
         }
         applyCompactSidebar()

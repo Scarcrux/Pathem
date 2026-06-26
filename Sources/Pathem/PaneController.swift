@@ -14,6 +14,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
     private var currentMode: ViewFormat.ViewMode = .list
     /// When set (from Preferences), every folder shows hidden files regardless of its format.
     var showHiddenByDefault = false
+    /// Icon/gallery zoom multiplier, persisted by the browser across view switches/launches.
+    var iconZoom: CGFloat = 1
+    var onIconZoomChanged: ((CGFloat) -> Void)?
+
+    private func makeIconContent(gallery: Bool) -> IconCollectionController {
+        let controller = IconCollectionController(gallery: gallery, scale: iconZoom)
+        controller.onZoomChanged = { [weak self] scale in
+            self?.iconZoom = scale
+            self?.onIconZoomChanged?(scale)
+        }
+        return controller
+    }
+
+    /// Zoom the active grid view (Cmd +/-); no-op in list/column.
+    func zoomContent(_ delta: CGFloat) { content.adjustZoom(delta) }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var calculateFolderSizes = false
@@ -865,8 +880,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
         currentMode = mode
         switch mode {
         case .list: content = FileListController()
-        case .icon: content = IconCollectionController(gallery: false)
-        case .gallery: content = IconCollectionController(gallery: true)
+        case .icon: content = makeIconContent(gallery: false)
+        case .gallery: content = makeIconContent(gallery: true)
         case .column: content = ColumnBrowserController()
         }
         wireContent()

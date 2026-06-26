@@ -137,6 +137,8 @@
 "bvc.cmd.undo" = "Deshacer";
 "bvc.cmd.useAsDefaultView" = "Usar como vista por omisión";
 "bvc.cmd.verifyChecksum" = "Verificar suma de comprobación…";
+"bvc.cmd.zoomIn" = "Acercar";
+"bvc.cmd.zoomOut" = "Alejar";
 "bvc.collectionCmdTitle" = "Colección: %@";
 "bvc.collectionCount" = "Colección: %@ (%d)";
 "bvc.collectionDefaultName" = "Colección";
@@ -480,6 +482,8 @@
 "menu.view.syncBrowsing" = "Navegación sincronizada";
 "menu.view.toggleHidden" = "Mostrar archivos ocultos";
 "menu.view.useAsDefault" = "Usar como vista por omisión";
+"menu.view.zoomIn" = "Acercar";
+"menu.view.zoomOut" = "Alejar";
 "palette.runCommandTitle" = "Ejecutar comando";
 "palette.searchPlaceholder" = "Escribe un comando…";
 "pane.actionsTooltip" = "Acciones";

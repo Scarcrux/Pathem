@@ -137,6 +137,8 @@
 "bvc.cmd.undo" = "取り消す";
 "bvc.cmd.useAsDefaultView" = "デフォルトの表示として使用";
 "bvc.cmd.verifyChecksum" = "チェックサムを検証…";
+"bvc.cmd.zoomIn" = "拡大";
+"bvc.cmd.zoomOut" = "縮小";
 "bvc.collectionCmdTitle" = "コレクション: %@";
 "bvc.collectionCount" = "コレクション: %@（%d）";
 "bvc.collectionDefaultName" = "コレクション";
@@ -480,6 +482,8 @@
 "menu.view.syncBrowsing" = "同期ブラウズ";
 "menu.view.toggleHidden" = "隠しファイルを表示";
 "menu.view.useAsDefault" = "デフォルトの表示として使用";
+"menu.view.zoomIn" = "拡大";
+"menu.view.zoomOut" = "縮小";
 "palette.runCommandTitle" = "コマンドを実行";
 "palette.searchPlaceholder" = "コマンドを入力…";
 "pane.actionsTooltip" = "アクション";

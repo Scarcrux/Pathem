@@ -295,6 +295,8 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
         viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
+        viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
+        viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))
         viewMenu.addItem(commandItem("Flat View", "view.flatView", "f", [.command, .control]))
         viewMenu.addItem(commandItem("Filter…", "view.filter", "f"))
         viewMenu.addItem(commandItem("Find in Files…", "files.findInFiles"))

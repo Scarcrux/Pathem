@@ -137,6 +137,8 @@
 "bvc.cmd.undo" = "Widerrufen";
 "bvc.cmd.useAsDefaultView" = "Als Standardansicht verwenden";
 "bvc.cmd.verifyChecksum" = "Prüfsumme verifizieren…";
+"bvc.cmd.zoomIn" = "Vergrößern";
+"bvc.cmd.zoomOut" = "Verkleinern";
 "bvc.collectionCmdTitle" = "Sammlung: %@";
 "bvc.collectionCount" = "Sammlung: %@ (%d)";
 "bvc.collectionDefaultName" = "Sammlung";
@@ -480,6 +482,8 @@
 "menu.view.syncBrowsing" = "Synchron blättern";
 "menu.view.toggleHidden" = "Ausgeblendete Dateien anzeigen";
 "menu.view.useAsDefault" = "Als Standardansicht verwenden";
+"menu.view.zoomIn" = "Vergrößern";
+"menu.view.zoomOut" = "Verkleinern";
 "palette.runCommandTitle" = "Befehl ausführen";
 "palette.searchPlaceholder" = "Befehl eingeben…";
 "pane.actionsTooltip" = "Aktionen";

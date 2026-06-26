@@ -37,6 +37,8 @@ protocol PaneContentView: AnyObject {
     func setCutPaths(_ paths: Set<String>)
     func refreshDrilledColumns()
     func setGitStates(_ states: [String: GitFileState])
+    /// Zoom the thumbnails (icon/gallery views); a no-op for list/column.
+    func adjustZoom(_ delta: CGFloat)
 }
 
 extension PaneContentView {
@@ -51,6 +53,8 @@ extension PaneContentView {
     func setCutPaths(_ paths: Set<String>) {}
     /// Only column view has drilled columns to re-enumerate after a file op.
     func refreshDrilledColumns() {}
+    /// Only icon/gallery views zoom.
+    func adjustZoom(_ delta: CGFloat) {}
     /// Only the list view draws git overlays for now.
     func setGitStates(_ states: [String: GitFileState]) {}
     /// Only the list view distinguishes drag copy vs move for now.

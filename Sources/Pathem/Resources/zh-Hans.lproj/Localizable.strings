@@ -137,6 +137,8 @@
 "bvc.cmd.undo" = "撤销";
 "bvc.cmd.useAsDefaultView" = "用作默认视图";
 "bvc.cmd.verifyChecksum" = "校验校验和…";
+"bvc.cmd.zoomIn" = "放大";
+"bvc.cmd.zoomOut" = "缩小";
 "bvc.collectionCmdTitle" = "收藏集：%@";
 "bvc.collectionCount" = "收藏集：%@（%d）";
 "bvc.collectionDefaultName" = "收藏集";
@@ -480,6 +482,8 @@
 "menu.view.syncBrowsing" = "同步浏览";
 "menu.view.toggleHidden" = "显示隐藏文件";
 "menu.view.useAsDefault" = "用作默认视图";
+"menu.view.zoomIn" = "放大";
+"menu.view.zoomOut" = "缩小";
 "palette.runCommandTitle" = "运行命令";
 "palette.searchPlaceholder" = "输入命令…";
 "pane.actionsTooltip" = "操作";

@@ -8,6 +8,16 @@ import UniformTypeIdentifiers
 final class KeyCollectionView: NSCollectionView {
     var onKeyChord: ((KeyChord) -> Bool)?
     var onMouseGesture: ((String) -> Bool)?
+    /// Cmd-scroll zoom: reports the vertical scroll delta when Command is held.
+    var onZoom: ((CGFloat) -> Void)?
+
+    override func scrollWheel(with event: NSEvent) {
+        if event.modifierFlags.contains(.command) {
+            onZoom?(event.scrollingDeltaY != 0 ? event.scrollingDeltaY : event.deltaY)
+            return
+        }
+        super.scrollWheel(with: event)
+    }
     var onBecomeActive: (() -> Void)?
 
     private let gestureTracker = MouseGestureTracker()
@@ -164,9 +174,19 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private static let itemID = NSUserInterfaceItemIdentifier("icon-item")
 
     private(set) var entries: [FileEntry] = []
-    private let iconSize: CGFloat
-    private let cellSize: NSSize
+    private let gallery: Bool
+    private var scale: CGFloat = 1
+    private var baseIconSize: CGFloat { gallery ? 96 : 56 }
+    private var iconSize: CGFloat { (baseIconSize * scale).rounded() }
+    private var cellSize: NSSize {
+        let side = iconSize
+        return gallery
+            ? NSSize(width: side + 54, height: side + 54)
+            : NSSize(width: side + 40, height: side + 36)
+    }
     private var labelFontSize: CGFloat = 12
+    /// Reports a new zoom scale so the pane can persist it across view switches/launches.
+    var onZoomChanged: ((CGFloat) -> Void)?
 
     var directoryURL: URL?
     var resolutionURL: URL?
@@ -186,12 +206,26 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         set { collection.onMouseGesture = newValue }
     }
 
-    /// `gallery` uses larger thumbnails than `icon`.
-    init(gallery: Bool) {
-        iconSize = gallery ? 96 : 56
-        cellSize = gallery ? NSSize(width: 150, height: 150) : NSSize(width: 96, height: 92)
+    /// `gallery` uses larger thumbnails than `icon`. `scale` zooms both (1 = default).
+    init(gallery: Bool, scale: CGFloat = 1) {
+        self.gallery = gallery
+        self.scale = min(max(scale, 0.5), 3.0)
         super.init()
         build()
+        collection.onZoom = { [weak self] delta in self?.adjustZoom(delta * 0.0125) }  // Cmd-scroll
+    }
+
+    /// Zoom by an absolute step (Cmd +/-) or a scroll-derived delta; clamps and persists.
+    func adjustZoom(_ delta: CGFloat) {
+        let next = min(max(scale + delta, 0.5), 3.0)
+        guard abs(next - scale) > 0.001 else { return }
+        scale = next
+        if let layout = collection.collectionViewLayout as? NSCollectionViewFlowLayout {
+            layout.itemSize = cellSize
+            layout.invalidateLayout()
+        }
+        collection.reloadData()  // re-request thumbnails at the new size
+        onZoomChanged?(scale)
     }
 
     private func build() {

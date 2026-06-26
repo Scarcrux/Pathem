@@ -45,6 +45,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var useFinderGetInfo: Bool
     /// In gallery/column views, automatically show the preview pane and follow the selection.
     public var previewInGalleryView: Bool
+    /// Icon/gallery thumbnail zoom multiplier (0.5–3.0).
+    public var iconZoom: Double
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -54,8 +56,10 @@ public struct Preferences: Codable, Sendable, Equatable {
         compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
-        useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false
+        useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
+        iconZoom: Double = 1
     ) {
+        self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
         self.previewInGalleryView = previewInGalleryView
@@ -113,5 +117,6 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .useFinderGetInfo) ?? d.useFinderGetInfo
         previewInGalleryView =
             try c.decodeIfPresent(Bool.self, forKey: .previewInGalleryView) ?? d.previewInGalleryView
+        iconZoom = try c.decodeIfPresent(Double.self, forKey: .iconZoom) ?? d.iconZoom
     }
 }
