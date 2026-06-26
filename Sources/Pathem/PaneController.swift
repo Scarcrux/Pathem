@@ -547,8 +547,6 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
             return message.isEmpty ? String(format: L("pane.deviceError", "device error %d"), code) : message
         case .deviceToolMissing(let tool):
             return String(format: L("pane.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
-        case .deviceUnsupported:
-            return L("pane.deviceUnsupported", "This device is detected, but browsing it isn’t supported yet.")
         }
     }
 

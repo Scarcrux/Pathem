@@ -55,6 +55,7 @@ APP="$BUILD_DIR/$APP_NAME.app"
 # (SwiftTerm compiles it at runtime), so this path needs no Metal toolchain.
 echo "==> Building $APP_NAME ($CONFIG; $ARCHS)"
 binaries=()
+helperBinaries=()  # the out-of-process iOS-device (AFC) helper
 frameworkBinDir=""
 for arch in $ARCHS; do
 	echo "    building $arch"
@@ -62,6 +63,7 @@ for arch in $ARCHS; do
 	archBinDir="$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)"
 	[[ -x "$archBinDir/$APP_NAME" ]] || { echo "error: binary not found at $archBinDir/$APP_NAME" >&2; exit 1; }
 	binaries+=("$archBinDir/$APP_NAME")
+	[[ -x "$archBinDir/pathem-afc" ]] && helperBinaries+=("$archBinDir/pathem-afc")
 	frameworkBinDir="$archBinDir"  # frameworks (Sparkle) are universal in the xcframework
 done
 
@@ -72,6 +74,12 @@ if [[ ${#binaries[@]} -gt 1 ]]; then
 	lipo -create "${binaries[@]}" -output "$APP/Contents/MacOS/$APP_NAME"
 else
 	cp "${binaries[0]}" "$APP/Contents/MacOS/$APP_NAME"
+fi
+# The iOS-device (AFC) helper, invoked out-of-process so device parsing stays out of the app.
+if [[ ${#helperBinaries[@]} -gt 1 ]]; then
+	lipo -create "${helperBinaries[@]}" -output "$APP/Contents/MacOS/pathem-afc"
+elif [[ ${#helperBinaries[@]} -eq 1 ]]; then
+	cp "${helperBinaries[0]}" "$APP/Contents/MacOS/pathem-afc"
 fi
 # Embed linked frameworks (Sparkle) and point the binary at them, or the app
 # can't launch outside the build tree. Note: we deliberately do not ship
@@ -122,6 +130,8 @@ done
 # so `codesign --verify --strict --deep` is satisfied.
 resourceBundleInApp="$APP/Contents/Resources/${APP_NAME}_${APP_NAME}.bundle"
 [[ -d "$resourceBundleInApp" ]] && codesign "${signargs[@]}" "$resourceBundleInApp"
+# Sign the nested AFC helper before the app (inside-out), like the frameworks.
+[[ -f "$APP/Contents/MacOS/pathem-afc" ]] && codesign "${signargs[@]}" "$APP/Contents/MacOS/pathem-afc"
 codesign "${signargs[@]}" "$APP"
 # --deep here is for VERIFYING (a thorough recursive check, which is correct and not
 # deprecated); it is only discouraged for SIGNING, which we do inside-out above.

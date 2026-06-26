@@ -16,14 +16,21 @@ public enum AFCPacket {
         case status = 0x0000_0001
         case data = 0x0000_0002
         case readDir = 0x0000_0003
-        case getFileInfo = 0x0000_000A
         case removePath = 0x0000_0008
         case makeDir = 0x0000_0009
+        case getFileInfo = 0x0000_000A
         case fileOpen = 0x0000_000D
+        case fileOpenResult = 0x0000_000E
         case fileRead = 0x0000_000F
         case fileWrite = 0x0000_0010
         case fileClose = 0x0000_0014
         case renamePath = 0x0000_0018
+    }
+
+    /// AFC file-open modes.
+    public enum OpenMode: UInt64 {
+        case read = 0x0000_0001  // AFC_FOPEN_RDONLY
+        case write = 0x0000_0003  // AFC_FOPEN_WRONLY (create + truncate)
     }
 
     public struct Header: Equatable {
@@ -33,16 +40,25 @@ public enum AFCPacket {
         public let operation: UInt64
     }
 
-    /// Encode one AFC packet (header + payload).
+    /// Encode an AFC packet whose entire payload is the operation header (this_length ==
+    /// entire_length). Used by every op except FILE_WRITE.
     public static func encode(_ operation: Op, packetNum: UInt64, payload: Data) -> Data {
-        var data = magic
-        let entire = UInt64(headerSize + payload.count)
-        appendUInt64(&data, entire)  // entire_length
-        appendUInt64(&data, entire)  // this_length (single-chunk packets)
-        appendUInt64(&data, packetNum)
-        appendUInt64(&data, operation.rawValue)
-        data.append(payload)
-        return data
+        encode(operation, packetNum: packetNum, header: payload, data: Data())
+    }
+
+    /// Encode an AFC packet with a distinct header payload and trailing data. `this_length`
+    /// covers the header (40 + header.count); `entire_length` also covers the data. FILE_WRITE
+    /// needs this: the 8-byte handle is the header, the file bytes are the data.
+    public static func encode(_ operation: Op, packetNum: UInt64, header: Data, data: Data) -> Data {
+        var packet = magic
+        let thisLength = UInt64(headerSize + header.count)
+        appendUInt64(&packet, thisLength + UInt64(data.count))  // entire_length
+        appendUInt64(&packet, thisLength)  // this_length
+        appendUInt64(&packet, packetNum)
+        appendUInt64(&packet, operation.rawValue)
+        packet.append(header)
+        packet.append(data)
+        return packet
     }
 
     /// Decode a 40-byte header, validating the magic. Returns nil if malformed.
@@ -72,6 +88,37 @@ public enum AFCPacket {
         data.append(contentsOf: to.utf8)
         data.append(0)
         return data
+    }
+
+    /// FILE_OPEN: uint64 mode followed by the null-terminated path.
+    public static func openPayload(mode: OpenMode, path: String) -> Data {
+        var data = Data()
+        appendUInt64(&data, mode.rawValue)
+        data.append(contentsOf: path.utf8)
+        data.append(0)
+        return data
+    }
+
+    /// FILE_READ: uint64 handle + uint64 length.
+    public static func readPayload(handle: UInt64, length: UInt64) -> Data {
+        var data = Data()
+        appendUInt64(&data, handle)
+        appendUInt64(&data, length)
+        return data
+    }
+
+    /// FILE_WRITE / FILE_CLOSE prefix: uint64 handle, optionally followed by data.
+    public static func handlePayload(_ handle: UInt64, appending data: Data = Data()) -> Data {
+        var out = Data()
+        appendUInt64(&out, handle)
+        out.append(data)
+        return out
+    }
+
+    /// FILE_OPEN result payload carries the 8-byte file handle.
+    public static func handle(_ payload: Data) -> UInt64? {
+        guard payload.count >= 8 else { return nil }
+        return readUInt64(payload, at: payload.startIndex)
     }
 
     // MARK: Response parsers

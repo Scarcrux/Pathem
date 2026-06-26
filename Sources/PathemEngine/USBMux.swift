@@ -98,9 +98,47 @@ public enum USBMux {
         return parseDeviceList(reply)
     }
 
-    /// A connected usbmuxd socket. Not Sendable; used within a single call.
-    final class Connection {
+    /// Read the device's pairing record (HostID, SystemBUID, certificates) that usbmuxd
+    /// stores, used for the lockdown TLS handshake.
+    public static func readPairRecord(udid: String) throws -> [String: Any] {
+        let connection = try Connection()
+        defer { connection.close() }
+        try connection.send(
+            Frame.encode(tag: 1, plist: ["MessageType": "ReadPairRecord", "PairRecordID": udid]))
+        guard let reply = try connection.receivePlist() else { throw USBMuxError.badResponse }
+        guard let recordData = reply["PairRecordData"] as? Data,
+            let record = try PropertyListSerialization.propertyList(from: recordData, format: nil)
+                as? [String: Any]
+        else { throw USBMuxError.badResponse }
+        return record
+    }
+
+    /// Open a raw tunnel to `port` on the device. After this returns, the connection carries
+    /// the device service's bytes directly (lockdown on 62078, then the AFC service port).
+    public static func connect(deviceID: Int, port: Int) throws -> Connection {
+        let connection = try Connection()
+        // usbmuxd wants the port in network byte order.
+        let networkPort = Int(UInt16(port).bigEndian)
+        try connection.send(
+            Frame.encode(
+                tag: 1, plist: ["MessageType": "Connect", "DeviceID": deviceID, "PortNumber": networkPort]))
+        guard let reply = try connection.receivePlist(), let number = reply["Number"] as? Int else {
+            connection.close()
+            throw USBMuxError.badResponse
+        }
+        guard number == 0 else {
+            connection.close()
+            throw USBMuxError.refused(number)
+        }
+        return connection
+    }
+
+    /// A connected usbmuxd socket. Not Sendable; used within a single call. After `connect`,
+    /// it is a raw byte tunnel to a device port (`writeRaw`/`readRaw`).
+    public final class Connection {
         private let fd: Int32
+        /// The underlying descriptor, for layering TLS over the tunnel.
+        public var descriptor: Int32 { fd }
 
         init() throws {
             #if canImport(Darwin)
@@ -116,23 +154,34 @@ public enum USBMux {
                 }
                 let length = socklen_t(MemoryLayout<sockaddr_un>.size)
                 let result = withUnsafePointer(to: &addr) {
-                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { connect(descriptor, $0, length) }
+                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { Darwin.connect(descriptor, $0, length) }
                 }
                 guard result == 0 else {
                     Darwin.close(descriptor)
                     throw USBMuxError.socket("connect(\(USBMux.socketPath)) failed")
                 }
+                // Bound reads/writes so a locked device (AFC stalls when the data partition
+                // re-encrypts) fails fast instead of hanging.
+                var timeout = timeval(tv_sec: 25, tv_usec: 0)
+                setsockopt(descriptor, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+                setsockopt(descriptor, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
                 fd = descriptor
             #else
                 throw USBMuxError.socket("usbmux is only available on macOS")
             #endif
         }
 
-        func close() {
+        public func close() {
             #if canImport(Darwin)
                 Darwin.close(fd)
             #endif
         }
+
+        /// Write all of `data` to the raw tunnel.
+        public func writeRaw(_ data: Data) throws { try send(data) }
+
+        /// Read exactly `count` bytes from the raw tunnel.
+        public func readRaw(_ count: Int) throws -> Data { try readExactly(count) }
 
         func send(_ data: Data) throws {
             #if canImport(Darwin)

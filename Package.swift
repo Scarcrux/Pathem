@@ -53,5 +53,10 @@ let package = Package(
             name: "PathemEngineTests",
             dependencies: ["PathemEngine"]
         ),
+
+        // Out-of-process helper that browses a paired iOS device over AFC (usbmux +
+        // lockdown + TLS + AFC). The app invokes this binary so untrusted device parsing
+        // stays out of the Full-Disk-Access process. Bundled + signed by package.sh.
+        .executableTarget(name: "pathem-afc", dependencies: ["PathemEngine"]),
     ]
 )

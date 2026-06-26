@@ -164,7 +164,6 @@
 "bvc.deleteVerb" = "Eliminar";
 "bvc.deviceError" = "error de dispositivo %d";
 "bvc.deviceToolMissing" = "%@ no está instalado. Instálalo para explorar este dispositivo.";
-"bvc.deviceUnsupported" = "Este dispositivo se detecta, pero aún no se puede explorar.";
 "bvc.downloadHere" = "Descargar aquí";
 "bvc.downloadingFrom" = "Descargando de %@";
 "bvc.duplicateAction" = "Duplicar";
@@ -480,7 +479,6 @@
 "pane.curlMissing" = "No se encontró curl";
 "pane.deviceError" = "error de dispositivo %d";
 "pane.deviceToolMissing" = "%@ no está instalado. Instálalo para explorar este dispositivo.";
-"pane.deviceUnsupported" = "Este dispositivo se detecta, pero aún no se puede explorar.";
 "pane.downloadFromServer" = "Descargar del servidor…";
 "pane.emptyFolder" = "Carpeta vacía";
 "pane.filterPlaceholder" = "Filtrar (prueba ext:pdf, kind:image, size:>10mb)";

@@ -17,6 +17,17 @@ import Testing
         #expect(packet.suffix(payload.count) == payload)
     }
 
+    @Test func fileWriteSplitsHeaderAndData() {
+        // FILE_WRITE: handle is the header (this_length), the bytes are the data payload.
+        let handle = AFCPacket.handlePayload(0xABCD)
+        let body = Data("hello".utf8)
+        let packet = AFCPacket.encode(.fileWrite, packetNum: 2, header: handle, data: body)
+        let header = AFCPacket.decodeHeader(packet)
+        #expect(header?.thisLength == UInt64(AFCPacket.headerSize + handle.count))  // 40 + 8
+        #expect(header?.entireLength == UInt64(AFCPacket.headerSize + handle.count + body.count))  // + 5
+        #expect(packet.suffix(body.count) == body)
+    }
+
     @Test func rejectsBadMagic() {
         var bytes = Data(repeating: 0, count: 40)
         bytes.replaceSubrange(0..<8, with: Data("NOTAFCXX".utf8))

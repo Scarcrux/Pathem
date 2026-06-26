@@ -7,8 +7,7 @@ public enum RemoteError: Error, Sendable {
     case sftp(code: Int32, message: String)
     case sftpMissing
     case device(code: Int32, message: String)
-    case deviceToolMissing(String)  // the named CLI (adb / pymobiledevice3) isn't installed
-    case deviceUnsupported  // detected but not browsable yet (e.g. iOS, pending a native AFC client)
+    case deviceToolMissing(String)  // the named CLI (adb) isn't installed
 }
 
 /// The seam between the browser and remote networking. Implementations run the
