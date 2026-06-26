@@ -27,6 +27,29 @@ import Testing
         #expect(info?.permissions == "rw-r--r--")
     }
 
+    @Test func gatherReadsRichMetadataAndLockToggles() throws {
+        let fm = FileManager.default
+        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-rich-\(UUID().uuidString)")
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: dir) }
+        for name in ["a.txt", "b.txt", "c.txt"] {
+            try Data("hello".utf8).write(to: dir.appendingPathComponent(name))
+        }
+        // A folder reports its child count.
+        #expect(FileInfo.gather(for: dir)?.itemCount == 3)
+
+        let file = dir.appendingPathComponent("a.txt")
+        let info = FileInfo.gather(for: file)
+        #expect(info?.allocatedSize ?? 0 > 0)  // on-disk size populated
+        #expect(info?.accessed != nil)
+
+        // Lock toggles round-trip.
+        try FileInfo.setLocked(true, on: file)
+        #expect(FileInfo.gather(for: file)?.isLocked == true)
+        try FileInfo.setLocked(false, on: file)
+        #expect(FileInfo.gather(for: file)?.isLocked == false)
+    }
+
     @Test func gatherReadsFileMetadata() throws {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-info-\(UUID().uuidString)")

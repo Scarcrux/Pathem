@@ -14,11 +14,21 @@ public struct FileInfo: Sendable, Equatable {
     public var permissions: String  // e.g. "rwxr-xr-x"
     public var posixMode: UInt16?  // raw mode bits (& 0o7777) for the chmod editor
     public var owner: String?
+    public var group: String?
+    public var accessed: Date?  // last opened
+    public var added: Date?  // date added to its folder
+    public var allocatedSize: Int64  // bytes used on disk
+    public var tags: [String]  // native Finder tags
+    public var contentType: String?  // UTI identifier, e.g. "public.png"
+    public var itemCount: Int?  // number of children, for a single folder
+    public var isLocked: Bool  // Finder "Locked" (user immutable flag)
     public var isDataless: Bool  // online-only cloud placeholder
 
     public init(
         name: String, path: String, kind: String, isDirectory: Bool, isSymbolicLink: Bool,
         size: Int64, created: Date?, modified: Date?, permissions: String, owner: String?,
+        group: String? = nil, accessed: Date? = nil, added: Date? = nil, allocatedSize: Int64 = 0,
+        tags: [String] = [], contentType: String? = nil, itemCount: Int? = nil, isLocked: Bool = false,
         posixMode: UInt16? = nil, isDataless: Bool = false
     ) {
         self.posixMode = posixMode
@@ -32,13 +42,23 @@ public struct FileInfo: Sendable, Equatable {
         self.modified = modified
         self.permissions = permissions
         self.owner = owner
+        self.group = group
+        self.accessed = accessed
+        self.added = added
+        self.allocatedSize = allocatedSize
+        self.tags = tags
+        self.contentType = contentType
+        self.itemCount = itemCount
+        self.isLocked = isLocked
         self.isDataless = isDataless
     }
 
     public static func gather(for url: URL) -> FileInfo? {
         let keys: Set<URLResourceKey> = [
-            .nameKey, .isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey,
-            .creationDateKey, .contentModificationDateKey, .localizedTypeDescriptionKey,
+            .nameKey, .isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey, .creationDateKey,
+            .contentModificationDateKey, .contentAccessDateKey, .addedToDirectoryDateKey,
+            .totalFileAllocatedSizeKey, .localizedTypeDescriptionKey, .typeIdentifierKey,
+            .tagNamesKey, .isUserImmutableKey,
         ]
         guard let values = try? url.resourceValues(forKeys: keys) else { return nil }
         let attrs = (try? FileManager.default.attributesOfItem(atPath: url.path)) ?? [:]
@@ -49,6 +69,10 @@ public struct FileInfo: Sendable, Equatable {
         // from st_flags without materializing the file.
         var st = stat()
         let isDataless = lstat(url.path, &st) == 0 && (st.st_flags & UInt32(0x4000_0000)) != 0
+        var itemCount: Int?
+        if isDirectory, !isDataless {
+            itemCount = (try? FileManager.default.contentsOfDirectory(atPath: url.path))?.count
+        }
         return FileInfo(
             name: values.name ?? url.lastPathComponent,
             path: url.path,
@@ -60,6 +84,14 @@ public struct FileInfo: Sendable, Equatable {
             modified: values.contentModificationDate,
             permissions: permissions,
             owner: attrs[.ownerAccountName] as? String,
+            group: attrs[.groupOwnerAccountName] as? String,
+            accessed: values.contentAccessDate,
+            added: values.addedToDirectoryDate,
+            allocatedSize: Int64(values.totalFileAllocatedSize ?? 0),
+            tags: values.tagNames ?? [],
+            contentType: values.typeIdentifier,
+            itemCount: itemCount,
+            isLocked: values.isUserImmutable ?? false,
             posixMode: modeNumber.map { $0.uint16Value & 0o7777 },
             isDataless: isDataless)
     }
@@ -68,6 +100,14 @@ public struct FileInfo: Sendable, Equatable {
     public static func setPosixMode(_ mode: UInt16, on url: URL) throws {
         try FileManager.default.setAttributes(
             [.posixPermissions: NSNumber(value: mode & 0o7777)], ofItemAtPath: url.path)
+    }
+
+    /// Set Finder's "Locked" (the user-immutable flag).
+    public static func setLocked(_ locked: Bool, on url: URL) throws {
+        var values = URLResourceValues()
+        values.isUserImmutable = locked
+        var url = url
+        try url.setResourceValues(values)
     }
 
     /// POSIX mode bits (lower 9) as a 9-char "rwxr-xr-x" string.

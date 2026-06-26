@@ -23,6 +23,32 @@ final class InfoInspectorController: NSObject {
         f.timeStyle = .short
         return f
     }()
+    private let groupedNumber: NumberFormatter = {
+        let f = NumberFormatter()
+        f.numberStyle = .decimal
+        return f
+    }()
+
+    /// "1.2 MB (1,234,567 bytes), 1.3 MB on disk" — Finder-style with exact + allocated size.
+    private func sizeDescription(_ info: FileInfo) -> String {
+        let human = byteFormatter.string(fromByteCount: info.size)
+        let exact = groupedNumber.string(from: NSNumber(value: info.size)) ?? "\(info.size)"
+        var text = String(format: L("info.sizeExact", "%@ (%@ bytes)"), human, exact)
+        if info.allocatedSize > 0 {
+            text += String(format: L("info.sizeOnDisk", ", %@ on disk"), byteFormatter.string(fromByteCount: info.allocatedSize))
+        }
+        return text
+    }
+
+    @objc private func toggleLocked(_ sender: NSButton) {
+        guard let url = inspectedURL else { return }
+        do {
+            try FileInfo.setLocked(sender.state == .on, on: url)
+        } catch {
+            sender.state = sender.state == .on ? .off : .on  // revert on failure
+            NSSound.beep()
+        }
+    }
 
     override init() {
         panel = NSPanel(
@@ -86,12 +112,18 @@ final class InfoInspectorController: NSObject {
             addField(L("info.kindLabel", "Kind"), info.isSymbolicLink ? L("info.aliasSymlink", "Alias / Symlink") : info.kind)
             if info.isDataless {
                 addField(L("info.sizeLabel", "Size"), L("info.onlineOnly", "Online only (not downloaded)"))
+            } else if info.isDirectory {
+                if let count = info.itemCount {
+                    addField(L("info.sizeLabel", "Size"), String(format: L("info.itemsValue", "%d items"), count))
+                }
             } else {
-                addField(L("info.sizeLabel", "Size"), info.isDirectory ? "--" : byteFormatter.string(fromByteCount: info.size))
+                addField(L("info.sizeLabel", "Size"), sizeDescription(info))
             }
             addField(L("info.whereLabel", "Where"), (info.path as NSString).deletingLastPathComponent)
             if let created = info.created { addField(L("info.createdLabel", "Created"), dateFormatter.string(from: created)) }
             if let modified = info.modified { addField(L("info.modifiedLabel", "Modified"), dateFormatter.string(from: modified)) }
+            if let accessed = info.accessed { addField(L("info.accessedLabel", "Last opened"), dateFormatter.string(from: accessed)) }
+            if let added = info.added { addField(L("info.addedLabel", "Added"), dateFormatter.string(from: added)) }
             // Editable chmod grid for a local item we can attempt to modify; otherwise
             // the read-only symbolic string (remote panes, dataless placeholders).
             if let mode = info.posixMode, !info.isDataless, urls[0].isFileURL {
@@ -108,7 +140,15 @@ final class InfoInspectorController: NSObject {
             } else {
                 addField(L("info.permissionsLabel", "Permissions"), info.permissions)
             }
-            if let owner = info.owner { addField(L("info.ownerLabel", "Owner"), owner) }
+            let ownerGroup = [info.owner, info.group].compactMap { $0 }.joined(separator: " : ")
+            if !ownerGroup.isEmpty { addField(L("info.ownerLabel", "Owner"), ownerGroup) }
+            if !info.tags.isEmpty { addField(L("info.tagsLabel", "Tags"), info.tags.joined(separator: ", ")) }
+            if let type = info.contentType, !info.isDirectory { addField(L("info.typeLabel", "Type"), type) }
+            if urls[0].isFileURL, !info.isDataless {
+                let lock = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleLocked(_:)))
+                lock.state = info.isLocked ? .on : .off
+                addCustomField(L("info.lockedLabel", "Locked"), lock)
+            }
             if !info.isDirectory, !info.isDataless {
                 let url = urls[0]
                 // Image dimensions read off the main thread (ImageIO can touch disk).
