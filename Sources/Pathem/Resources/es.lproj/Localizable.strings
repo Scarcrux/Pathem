@@ -627,6 +627,7 @@
 "settings.gestures" = "Gestos";
 "settings.layout" = "Disposición";
 "settings.search" = "Búsqueda";
+"settings.searchPlaceholder" = "Buscar";
 "settings.shortcuts" = "Atajos";
 "settings.terminal" = "Terminal";
 "settings.title" = "Ajustes";

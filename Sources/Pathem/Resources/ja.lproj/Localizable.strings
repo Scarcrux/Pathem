@@ -627,6 +627,7 @@
 "settings.gestures" = "ジェスチャ";
 "settings.layout" = "レイアウト";
 "settings.search" = "検索";
+"settings.searchPlaceholder" = "検索";
 "settings.shortcuts" = "ショートカット";
 "settings.terminal" = "ターミナル";
 "settings.title" = "設定";

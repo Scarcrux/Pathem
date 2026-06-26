@@ -627,6 +627,7 @@
 "settings.gestures" = "手势";
 "settings.layout" = "布局";
 "settings.search" = "搜索";
+"settings.searchPlaceholder" = "搜索";
 "settings.shortcuts" = "快捷键";
 "settings.terminal" = "终端";
 "settings.title" = "设置";

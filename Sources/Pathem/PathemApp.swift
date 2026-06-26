@@ -9,6 +9,8 @@ import PathemTerminal
 @main
 @MainActor
 enum PathemApp {
+    static var liveSettings: SettingsWindowController?  // holds the PATHEM_SETTINGS_SHOT window
+
     static func main() {
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
         // deliver a fatal signal; the remote runner handles the error instead.
@@ -132,6 +134,21 @@ enum PathemApp {
                         }
                     }
                 }
+            }
+        }
+
+        // Live screenshot of the real Settings window (PATHEM_SETTINGS_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_SETTINGS_SHOT"] != nil {
+            let settings = SettingsWindowController()
+            Self.liveSettings = settings  // keep it alive
+            let number = settings.debugPresentLive()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                let capture = Process()
+                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/settings_live.png"]
+                try? capture.run()
+                capture.waitUntilExit()
+                exit(0)
             }
         }
 

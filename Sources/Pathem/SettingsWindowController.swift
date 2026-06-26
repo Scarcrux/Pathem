@@ -7,9 +7,7 @@ import PathemEngine
 /// changes are reported live via `onChange`; shortcut changes via `onKeymapChange`
 /// (a user overlay for keymap.json).
 @MainActor
-final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDataSource,
-    NSTableViewDelegate
-{
+final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     enum Pane: String, CaseIterable {
         case general, appearance, layout, search, terminal, transfers, shortcuts, gestures, updates
         var title: String {
@@ -71,19 +69,61 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
 
     private var paneViews: [Pane: NSView] = [:]
 
+    private let sidebar = SettingsSidebarController()
+    private let contentContainer = NSView()
+    private var chromeBuilt = false
+    private var paneSearchText: [Pane: String] = [:]
+
     override init() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 320),
-            styleMask: [.titled, .closable], backing: .buffered, defer: true)
+            contentRect: NSRect(x: 0, y: 0, width: 740, height: 480),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: true)
         super.init()
         window.title = L("settings.title", "Settings")
         window.isReleasedWhenClosed = false
-        let toolbar = NSToolbar(identifier: "com.scarcrux.pathem.settings")
-        toolbar.delegate = self
-        toolbar.displayMode = .iconAndLabel
-        toolbar.allowsUserCustomization = false
-        window.toolbar = toolbar
-        if #available(macOS 11, *) { window.toolbarStyle = .preference }
+        window.contentMinSize = NSSize(width: 640, height: 360)
+    }
+
+    /// Build the persistent sidebar + content split once.
+    private func buildChrome() {
+        guard !chromeBuilt else { return }
+        chromeBuilt = true
+        sidebar.onSelect = { [weak self] key in
+            if let pane = Pane(rawValue: key) { self?.select(pane) }
+        }
+        sidebar.searchText = { [weak self] item in self?.paneSearchText[Pane(rawValue: item.key) ?? .general] ?? "" }
+
+        contentContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        // The sidebar gets the source-list backing material.
+        let sidebarBacking = NSVisualEffectView()
+        sidebarBacking.material = .sidebar
+        sidebarBacking.blendingMode = .withinWindow
+        sidebarBacking.translatesAutoresizingMaskIntoConstraints = false
+        sidebar.view.addSubview(sidebarBacking, positioned: .below, relativeTo: nil)
+        NSLayoutConstraint.activate([
+            sidebarBacking.topAnchor.constraint(equalTo: sidebar.view.topAnchor),
+            sidebarBacking.bottomAnchor.constraint(equalTo: sidebar.view.bottomAnchor),
+            sidebarBacking.leadingAnchor.constraint(equalTo: sidebar.view.leadingAnchor),
+            sidebarBacking.trailingAnchor.constraint(equalTo: sidebar.view.trailingAnchor),
+        ])
+
+        // Explicit split: fixed-width sidebar on the left, content filling the rest.
+        let root = NSView()
+        root.wantsLayer = true
+        root.addSubview(sidebar.view)
+        root.addSubview(contentContainer)
+        NSLayoutConstraint.activate([
+            sidebar.view.topAnchor.constraint(equalTo: root.topAnchor),
+            sidebar.view.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+            sidebar.view.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            contentContainer.topAnchor.constraint(equalTo: root.topAnchor),
+            contentContainer.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+            contentContainer.leadingAnchor.constraint(equalTo: sidebar.view.trailingAnchor),
+            contentContainer.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+        ])
+        window.contentView = root
+        sidebar.setItems(Pane.allCases.map { .init(key: $0.rawValue, title: $0.title, symbol: $0.symbol) })
     }
 
     /// Show the window, populated with current state.
@@ -116,13 +156,43 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         self.onToggleTerminalFollows = terminal.onToggleFollows
         self.onChange = onChange
         self.onKeymapChange = onKeymapChange
-        paneViews = [:]  // rebuild with fresh state
+        buildChrome()
+        buildAllPanesAndIndex()  // build every pane up front so search can index them
+        sidebar.select(key: Pane.general.rawValue)
         select(.general)
-        if !window.isVisible, let parent { window.setFrameOrigin(NSPoint(x: parent.frame.midX - 240, y: parent.frame.midY - 160)) }
+        if !window.isVisible, let parent {
+            window.setFrameOrigin(NSPoint(x: parent.frame.midX - 370, y: parent.frame.midY - 240))
+        }
         window.makeKeyAndOrderFront(nil)
     }
 
     // MARK: Pane switching
+
+    /// Build every pane once and index its settings' labels for the sidebar search.
+    private func buildAllPanesAndIndex() {
+        paneViews = [:]
+        paneSearchText = [:]
+        for pane in Pane.allCases {
+            let view = build(pane)
+            paneViews[pane] = view
+            paneSearchText[pane] = (pane.title + " " + Self.searchableText(in: view)).lowercased()
+        }
+    }
+
+    /// Collect button titles and text-field strings from a pane's view tree (for search).
+    private static func searchableText(in view: NSView) -> String {
+        var parts: [String] = []
+        func walk(_ v: NSView) {
+            if let button = v as? NSButton, !button.title.isEmpty { parts.append(button.title) }
+            if let field = v as? NSTextField {
+                if !field.stringValue.isEmpty { parts.append(field.stringValue) }
+                if let placeholder = field.placeholderString, !placeholder.isEmpty { parts.append(placeholder) }
+            }
+            v.subviews.forEach(walk)
+        }
+        walk(view)
+        return parts.joined(separator: " ")
+    }
 
     private func select(_ pane: Pane) {
         let view = paneViews[pane] ?? {
@@ -130,15 +200,15 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
             paneViews[pane] = built
             return built
         }()
-        window.contentView = view
-        window.toolbar?.selectedItemIdentifier = pane.itemID
-        let size = view.fittingSize
-        window.setContentSize(NSSize(width: max(size.width, 460), height: max(size.height, 120)))
-        window.title = pane.title  // modern macOS titles the window with the pane name
-    }
-
-    @objc private func toolbarSelected(_ sender: NSToolbarItem) {
-        if let pane = Pane.allCases.first(where: { $0.itemID == sender.itemIdentifier }) { select(pane) }
+        contentContainer.subviews.forEach { $0.removeFromSuperview() }
+        view.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.addSubview(view)
+        NSLayoutConstraint.activate([
+            view.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+            view.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            view.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
+        ])
     }
 
     private func build(_ pane: Pane) -> NSView {
@@ -632,31 +702,28 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
     @objc private func autoCheckToggled(_ sender: NSButton) { updater?.automaticChecks = (sender.state == .on) }
     @objc private func checkNow() { updater?.checkForUpdates(self) }
 
-    // MARK: Toolbar
-
-    func toolbar(
-        _ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
-        willBeInsertedIntoToolbar flag: Bool
-    ) -> NSToolbarItem? {
-        guard let pane = Pane.allCases.first(where: { $0.itemID == identifier }) else { return nil }
-        let item = NSToolbarItem(itemIdentifier: identifier)
-        item.label = pane.title
-        item.image = NSImage(systemSymbolName: pane.symbol, accessibilityDescription: pane.title)
-        item.target = self
-        item.action = #selector(toolbarSelected(_:))
-        return item
-    }
-    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        Pane.allCases.map(\.itemID)
-    }
-    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        Pane.allCases.map(\.itemID)
-    }
-    func toolbarSelectableItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        Pane.allCases.map(\.itemID)
-    }
-
     // MARK: Debug
+
+    /// Present the real window on screen with stub data; returns its window number so a
+    /// caller can screencapture it (PATHEM_SETTINGS_SHOT). cacheDisplay can't capture
+    /// non-layer AppKit controls offscreen, so this is the conclusive layout check.
+    func debugPresentLive() -> Int {
+        commandList = [("files.open", "Open"), ("view.toggleHidden", "Show Hidden Files")]
+        effective = Keymap.defaultBindings
+        gestureEffective = GestureMap.defaultBindings
+        terminalThemes = ["Dark", "Light"]
+        currentTerminalTheme = "Dark"
+        buildChrome()
+        buildAllPanesAndIndex()
+        sidebar.select(key: Pane.general.rawValue)
+        select(.general)
+        if let query = ProcessInfo.processInfo.environment["PATHEM_SETTINGS_QUERY"], !query.isEmpty {
+            sidebar.debugSearch(query)
+        }
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        return window.windowNumber
+    }
 
     /// Render each pane to a PNG (run via PATHEM_PREFS_SHOT=1) for headless layout checks.
     func debugRenderPanes(toDir dir: String) {
@@ -668,6 +735,22 @@ final class SettingsWindowController: NSObject, NSToolbarDelegate, NSTableViewDa
         gestureEffective = GestureMap.defaultBindings
         terminalThemes = ["Dark", "Light", "Solarized"]
         currentTerminalTheme = "Dark"
+        // Whole-window chrome (sidebar + content) so the new layout can be inspected.
+        buildChrome()
+        buildAllPanesAndIndex()
+        sidebar.select(key: Pane.general.rawValue)
+        select(.general)
+        window.setContentSize(NSSize(width: 740, height: 480))
+        if let root = window.contentView {
+            root.layoutSubtreeIfNeeded()
+            if let rep = root.bitmapImageRepForCachingDisplay(in: root.bounds) {
+                root.cacheDisplay(in: root.bounds, to: rep)
+                if let data = rep.representation(using: .png, properties: [:]) {
+                    try? data.write(to: URL(fileURLWithPath: "\(dir)/settings_window.png"))
+                    print("SETTINGS WINDOW SHOT: \(Int(root.bounds.width))x\(Int(root.bounds.height))")
+                }
+            }
+        }
         for pane in Pane.allCases {
             let view = build(pane)
             view.layoutSubtreeIfNeeded()

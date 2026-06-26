@@ -627,6 +627,7 @@
 "settings.gestures" = "Gestures";
 "settings.layout" = "Layout";
 "settings.search" = "Search";
+"settings.searchPlaceholder" = "Search";
 "settings.shortcuts" = "Shortcuts";
 "settings.terminal" = "Terminal";
 "settings.title" = "Settings";
