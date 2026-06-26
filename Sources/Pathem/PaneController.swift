@@ -912,12 +912,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate, NSP
             self?.updateStatus()
             self?.onSelectionChanged?()
         }
-        content.onDropFiles = { [weak self] urls, move in
+        content.onDropFiles = { [weak self] urls, move, destination in
             guard let self else { return }
             if let remote = self.remote {  // dropping onto a remote pane uploads
-                self.onUploadFiles?(urls, remote.connection, remote.path, remote.password)
+                let path = destination.map { remote.path + "/" + $0.lastPathComponent } ?? remote.path
+                self.onUploadFiles?(urls, remote.connection, path, remote.password)
             } else {
-                self.onDropFiles?(urls, move, self.nav.current)
+                self.onDropFiles?(urls, move, destination ?? self.nav.current)
             }
         }
         content.onKeyChord = onKeyChordHandler

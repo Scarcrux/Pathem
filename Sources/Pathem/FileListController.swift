@@ -59,7 +59,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// keep working when drag is disabled.
     var resolutionURL: URL?
     /// Files were dropped onto this list: copy (or move) them into this folder.
-    var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)?
+    var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
 
     /// Entries currently selected in the table.
     var selectedEntries: [FileEntry] {
@@ -413,10 +413,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         _ tableView: NSTableView, validateDrop info: NSDraggingInfo,
         proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation
     ) -> NSDragOperation {
-        // Reject (no cursor) when there's nothing to drop here, so the cursor
-        // matches what acceptDrop will actually do.
-        guard !incomingURLs(from: info).isEmpty else { return [] }
-        tableView.setDropRow(-1, dropOperation: .on)  // drop into this folder, not between rows
+        guard let urls = draggedURLs(from: info), !urls.isEmpty else { return [] }
+        // Over a folder row (that isn't one of the dragged items) -> drop INTO it, with
+        // the row highlighted. Otherwise drop into the current folder.
+        if let folder = folderRow(at: row, excluding: urls), !incomingURLs(urls, into: folder).isEmpty {
+            tableView.setDropRow(row, dropOperation: .on)
+        } else {
+            guard !incomingURLs(urls, into: directoryURL).isEmpty else { return [] }
+            tableView.setDropRow(-1, dropOperation: .on)  // into this folder
+        }
         return resolvedDragOperation(for: info)
     }
 
@@ -424,24 +429,40 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         _ tableView: NSTableView, acceptDrop info: NSDraggingInfo,
         row: Int, dropOperation: NSTableView.DropOperation
     ) -> Bool {
-        let incoming = incomingURLs(from: info)
+        guard let urls = draggedURLs(from: info), !urls.isEmpty else { return false }
+        let folder = folderRow(at: row, excluding: urls)  // a subfolder, or nil for this folder
+        let incoming = incomingURLs(urls, into: folder ?? directoryURL)
         guard !incoming.isEmpty else { return false }
-        onDropFiles?(incoming, resolvedDragOperation(for: info) == .move)
+        onDropFiles?(incoming, resolvedDragOperation(for: info) == .move, folder)
         return true
     }
 
-    /// File URLs from the drag that are not already in this folder (a drop onto
-    /// themselves is a no-op). Symlink-resolved and case-insensitive so a
-    /// differently spelled path to the same folder still counts as "here".
-    private func incomingURLs(from info: NSDraggingInfo) -> [URL] {
-        guard let dir = directoryURL,
-            let urls = info.draggingPasteboard.readObjects(
-                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
-        else { return [] }
-        let dirPath = dir.resolvingSymlinksInPath().standardizedFileURL.path
+    /// The folder URL at `row`, if it's a directory not among the dragged items.
+    private func folderRow(at row: Int, excluding dragged: [URL]) -> URL? {
+        guard row >= 0, row < entries.count, entries[row].isDirectory, let dir = directoryURL else { return nil }
+        let folder = dir.appendingPathComponent(entries[row].name)
+        let folderPath = folder.resolvingSymlinksInPath().standardizedFileURL.path
+        // Don't allow dropping a folder onto itself.
+        if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == folderPath }) {
+            return nil
+        }
+        return folder
+    }
+
+    /// All file URLs on the drag pasteboard.
+    private func draggedURLs(from info: NSDraggingInfo) -> [URL]? {
+        info.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+    }
+
+    /// Of `urls`, the ones not already directly inside `destination` (dropping onto their
+    /// own folder is a no-op). Symlink-resolved + case-insensitive.
+    private func incomingURLs(_ urls: [URL], into destination: URL?) -> [URL] {
+        guard let destination else { return [] }
+        let destPath = destination.resolvingSymlinksInPath().standardizedFileURL.path
         return urls.filter {
             let parent = $0.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL.path
-            return parent.compare(dirPath, options: .caseInsensitive) != .orderedSame
+            return parent.compare(destPath, options: .caseInsensitive) != .orderedSame
         }
     }
 

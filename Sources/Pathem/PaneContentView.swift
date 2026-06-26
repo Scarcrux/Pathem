@@ -19,7 +19,9 @@ protocol PaneContentView: AnyObject {
     var onBecomeActive: (() -> Void)? { get set }
     var onSelectionChanged: (() -> Void)? { get set }
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)? { get set }
-    var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)? { get set }
+    /// `destination` is a specific subfolder to drop into (when the drag is over a folder
+    /// row/item), or nil for the view's own folder.
+    var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)? { get set }
     var onKeyChord: ((KeyChord) -> Bool)? { get set }
     var onMouseGesture: ((String) -> Bool)? { get set }
     /// Dragging items between folders moves by default (else copies).

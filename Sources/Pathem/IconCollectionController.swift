@@ -194,7 +194,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     var onBecomeActive: (() -> Void)?
     var onSelectionChanged: (() -> Void)?
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?  // grid has no column headers
-    var onDropFiles: ((_ urls: [URL], _ move: Bool) -> Void)?
+    var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
 
     var keyView: NSView { collection }
     var onKeyChord: ((KeyChord) -> Bool)? {
@@ -391,11 +391,17 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         proposedIndexPath: AutoreleasingUnsafeMutablePointer<NSIndexPath>,
         dropOperation proposedDropOperation: UnsafeMutablePointer<NSCollectionView.DropOperation>
     ) -> NSDragOperation {
-        guard !incomingURLs(from: draggingInfo).isEmpty else { return [] }
-        // Normalize to a "before end" drop so drops onto empty grid space (or an
-        // empty folder) are still delivered to acceptDrop.
-        proposedDropOperation.pointee = .before
-        proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
+        guard let urls = draggedURLs(from: draggingInfo), !urls.isEmpty else { return [] }
+        // Over a folder item -> drop ONTO it (highlighted). Else a "before end" drop into
+        // this folder so drops onto empty grid space are still delivered to acceptDrop.
+        if let path = folderIndexPath(under: draggingInfo, in: collectionView, excluding: urls) {
+            proposedDropOperation.pointee = .on
+            proposedIndexPath.pointee = path as NSIndexPath
+        } else {
+            guard !incomingURLs(urls, into: directoryURL).isEmpty else { return [] }
+            proposedDropOperation.pointee = .before
+            proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
+        }
         return resolvedDragOperation(draggingInfo)
     }
 
@@ -403,10 +409,30 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         _ collectionView: NSCollectionView, acceptDrop draggingInfo: NSDraggingInfo,
         indexPath: IndexPath, dropOperation: NSCollectionView.DropOperation
     ) -> Bool {
-        let incoming = incomingURLs(from: draggingInfo)
+        guard let urls = draggedURLs(from: draggingInfo), !urls.isEmpty else { return false }
+        var folder: URL?
+        if dropOperation == .on, indexPath.item < entries.count, entries[indexPath.item].isDirectory {
+            folder = fileURL(for: entries[indexPath.item])
+        }
+        let incoming = incomingURLs(urls, into: folder ?? directoryURL)
         guard !incoming.isEmpty else { return false }
-        onDropFiles?(incoming, resolvedDragOperation(draggingInfo) == .move)
+        onDropFiles?(incoming, resolvedDragOperation(draggingInfo) == .move, folder)
         return true
+    }
+
+    /// The index path of a folder item under the drag (not one of the dragged items).
+    private func folderIndexPath(
+        under info: NSDraggingInfo, in collectionView: NSCollectionView, excluding dragged: [URL]
+    ) -> IndexPath? {
+        let point = collectionView.convert(info.draggingLocation, from: nil)
+        guard let path = collectionView.indexPathForItem(at: point), path.item < entries.count,
+            entries[path.item].isDirectory, let folder = fileURL(for: entries[path.item])
+        else { return nil }
+        let folderPath = folder.resolvingSymlinksInPath().standardizedFileURL.path
+        if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == folderPath }) {
+            return nil  // don't drop a folder onto itself
+        }
+        return path
     }
 
     /// The on-disk URL of an entry (smart-result rows carry their own folder).
@@ -417,15 +443,17 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         return directoryURL?.appendingPathComponent(entry.name)
     }
 
-    private func incomingURLs(from info: NSDraggingInfo) -> [URL] {
-        guard let dir = directoryURL,
-            let urls = info.draggingPasteboard.readObjects(
-                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
-        else { return [] }
-        let dirPath = dir.resolvingSymlinksInPath().standardizedFileURL.path
+    private func draggedURLs(from info: NSDraggingInfo) -> [URL]? {
+        info.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+    }
+
+    private func incomingURLs(_ urls: [URL], into destination: URL?) -> [URL] {
+        guard let destination else { return [] }
+        let destPath = destination.resolvingSymlinksInPath().standardizedFileURL.path
         return urls.filter {
             $0.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL.path
-                .compare(dirPath, options: .caseInsensitive) != .orderedSame
+                .compare(destPath, options: .caseInsensitive) != .orderedSame
         }
     }
 
