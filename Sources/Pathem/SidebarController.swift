@@ -50,6 +50,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onRemoveConnection: ((RemoteConnection) -> Void)?
     /// Eject a mounted volume (right-click menu on a Volumes item).
     var onEjectVolume: ((URL) -> Void)?
+    /// Files were dropped onto a folder item (Favorite/Volume/Cloud): move/copy them in.
+    var onDropFilesIntoFolder: ((_ urls: [URL], _ folder: URL, _ move: Bool) -> Void)?
+    /// Files were dropped onto a Tag: apply that color tag to them.
+    var onApplyTag: ((_ urls: [URL], _ color: FileTag.Color) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
@@ -618,6 +622,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             if item == nil, index >= 0, index <= model.groups.count { return .move }
             return []
         }
+        // Dropping files from a pane onto a folder item moves/copies them in; onto a Tag
+        // applies that tag. Both require dropping ON the item, not between rows.
+        if pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]),
+            let node = item as? Node, index == NSOutlineViewDropOnItemIndex
+        {
+            if case .smart(.tag) = node.kind { return .copy }  // apply tag
+            if let url = node.url, Self.isDirectory(url) { return Self.dropOperationForEvent() }
+        }
         // Dropping folders from a pane: add them to a user group as shortcuts,
         // either into the group or between/onto existing favorites.
         if pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) {
@@ -634,10 +646,31 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return []
     }
 
+    static func isDirectory(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+    }
+    static func dropOperationForEvent() -> NSDragOperation {
+        NSApp.currentEvent?.modifierFlags.contains(.command) == true ? .move : .copy
+    }
+
     func outlineView(
         _ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex index: Int
     ) -> Bool {
         let pb = info.draggingPasteboard
+        // Files onto a folder item (move/copy in) or a Tag (apply), when dropped ON it.
+        if index == NSOutlineViewDropOnItemIndex, let node = item as? Node,
+            let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+            !urls.isEmpty
+        {
+            if case .smart(.tag(let color)) = node.kind {
+                onApplyTag?(urls, color)
+                return true
+            }
+            if let url = node.url, Self.isDirectory(url) {
+                onDropFilesIntoFolder?(urls, url, Self.dropOperationForEvent() == .move)
+                return true
+            }
+        }
         if let str = pb.string(forType: Self.itemType), let id = UUID(uuidString: str),
             let group = item as? Node, case let .userGroup(gid) = group.kind
         {

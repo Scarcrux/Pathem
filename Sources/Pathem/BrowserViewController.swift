@@ -293,6 +293,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self?.connectionsController.present(over: self?.view.window)
         }
         sidebar.onEjectVolume = { [weak self] volume in self?.ejectVolume(volume) }
+        sidebar.onDropFilesIntoFolder = { [weak self] urls, folder, move in
+            self?.dropFiles(urls, move: move, into: folder)
+        }
+        sidebar.onApplyTag = { [weak self] urls, color in self?.applyTag(color, to: urls) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
@@ -2828,6 +2832,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// skip), then register an undo for whatever was performed (DESIGN.md §6.5).
     /// Copy or move files dropped onto a pane into its folder, reusing the same
     /// off-main progress + undo path as the transfer commands.
+    /// Apply a color tag to dropped files (drop onto a sidebar Tag).
+    private func applyTag(_ color: FileTag.Color, to urls: [URL]) {
+        for url in urls {
+            var tags = FileTags.tags(of: url)
+            guard !tags.contains(where: { $0.color == color }) else { continue }
+            tags.append(FileTag(color: color))
+            try? FileTags.setTags(tags, on: url)
+        }
+        reloadBothSides()
+    }
+
     private func dropFiles(_ allURLs: [URL], move: Bool, into destination: URL) {
         guard !transferInFlight else { NSSound.beep(); return }
         // Never copy/move a folder into itself or one of its own descendants.
