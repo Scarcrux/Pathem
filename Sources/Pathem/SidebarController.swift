@@ -54,6 +54,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onDropFilesIntoFolder: ((_ urls: [URL], _ folder: URL, _ move: Bool) -> Void)?
     /// Files were dropped onto a Tag: apply that color tag to them.
     var onApplyTag: ((_ urls: [URL], _ color: FileTag.Color) -> Void)?
+    /// The AirDrop row was clicked: AirDrop the active pane's current selection.
+    var onAirDrop: (() -> Void)?
+    /// Files were dropped onto AirDrop: send them with the AirDrop sheet.
+    var onAirDropFiles: ((_ urls: [URL]) -> Void)?
+    /// Files were dropped onto the Trash: move them to the Trash.
+    var onTrashFiles: ((_ urls: [URL]) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
@@ -105,6 +111,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case systemItem
         case folderChild  // a lazily-loaded subfolder of an expandable location
         case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
+        case airdrop  // AirDrop send sheet (no filesystem path)
+        case trash  // the user's Trash (navigable; drops trash the items)
         case shared(String)  // a discovered SMB host (by display name)
         case connection(RemoteConnection)  // a saved FTP/SFTP server
         case device(RemoteConnection)  // a discovered USB phone (adb / iOS)
@@ -264,6 +272,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                     return Node(kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon)
                 })
         }
+        roots.append(locationsNode())
         if let cloud = cloudNode() { roots.append(cloud) }
         roots.append(volumesNode())
         if let devicesSection = devicesNode() { roots.append(devicesSection) }
@@ -291,6 +300,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .systemItem: return "system:\(node.title):\(node.url?.path ?? "")"
         case .folderChild: return "folder:\(node.url?.path ?? "")"
         case .smart(let query): return "smart:\(query)"
+        case .airdrop: return "airdrop"
+        case .trash: return "trash"
         case .shared(let host): return "shared:\(host)"
         case .connection(let connection): return "conn:\(connection.id)"
         case .device(let device): return "device:\(device.proto.rawValue):\(device.host)"
@@ -337,6 +348,19 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             Node(kind: .shared(host), title: host, url: nil, icon: "desktopcomputer")
         }
         return Node(kind: .systemHeader, title: L("sidebar.sharedHeader", "Shared"), url: nil, icon: nil, children: children)
+    }
+
+    /// AirDrop (a send sheet) and the Trash. AirDrop has no path; the Trash is a
+    /// real folder you can browse, but dropping onto it trashes the items.
+    private func locationsNode() -> Node {
+        let airdrop = Node(
+            kind: .airdrop, title: L("sidebar.airdrop", "AirDrop"), url: nil,
+            icon: "dot.radiowaves.left.and.right")
+        let trashURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        let trash = Node(kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: nil)
+        return Node(
+            kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil, icon: nil,
+            children: [airdrop, trash])
     }
 
     /// Spotlight-backed smart locations (currently Recents).
@@ -590,6 +614,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             onManageConnections?()
             return
         }
+        if case .airdrop = node.kind {
+            outline.deselectRow(row)  // an action (share the selection), not a persistent location
+            onAirDrop?()
+            return
+        }
         guard let url = node.url else { return }
         onSelect?(url)
     }
@@ -628,6 +657,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             let node = item as? Node, index == NSOutlineViewDropOnItemIndex
         {
             if case .smart(.tag) = node.kind { return .copy }  // apply tag
+            if case .airdrop = node.kind { return .copy }  // send via AirDrop
+            if case .trash = node.kind { return .move }  // always trashes, regardless of Command
             if let url = node.url, Self.isDirectory(url) { return Self.dropOperationForEvent() }
         }
         // Dropping folders from a pane: add them to a user group as shortcuts,
@@ -664,6 +695,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         {
             if case .smart(.tag(let color)) = node.kind {
                 onApplyTag?(urls, color)
+                return true
+            }
+            if case .airdrop = node.kind {
+                onAirDropFiles?(urls)
+                return true
+            }
+            if case .trash = node.kind {
+                onTrashFiles?(urls)
                 return true
             }
             if let url = node.url, Self.isDirectory(url) {

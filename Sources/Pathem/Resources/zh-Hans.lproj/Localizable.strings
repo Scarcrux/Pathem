@@ -658,6 +658,11 @@
 "sidebar.addCurrentFolder" = "添加当前文件夹";
 "sidebar.changeIcon" = "更改图标";
 "sidebar.cloudHeader" = "云端";
+"sidebar.locationsHeader" = "位置";
+"sidebar.airdrop" = "隔空投送";
+"sidebar.trash" = "废纸篓";
+"bvc.airdropUnavailableTitle" = "无法用隔空投送发送这些项目";
+"bvc.airdropUnavailableBody" = "隔空投送可能已关闭，或这些项目无法发送。";
 "sidebar.connect" = "连接";
 "sidebar.connectInNewTab" = "在新标签页中连接";
 "sidebar.connectionsHeader" = "连接";

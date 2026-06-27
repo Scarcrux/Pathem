@@ -658,6 +658,11 @@
 "sidebar.addCurrentFolder" = "現在のフォルダを追加";
 "sidebar.changeIcon" = "アイコンを変更";
 "sidebar.cloudHeader" = "クラウド";
+"sidebar.locationsHeader" = "場所";
+"sidebar.airdrop" = "AirDrop";
+"sidebar.trash" = "ゴミ箱";
+"bvc.airdropUnavailableTitle" = "これらの項目をAirDropできません";
+"bvc.airdropUnavailableBody" = "AirDropがオフになっているか、これらの項目を送信できません。";
 "sidebar.connect" = "接続";
 "sidebar.connectInNewTab" = "新規タブで接続";
 "sidebar.connectionsHeader" = "接続";

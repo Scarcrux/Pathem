@@ -297,6 +297,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self?.dropFiles(urls, move: move, into: folder)
         }
         sidebar.onApplyTag = { [weak self] urls, color in self?.applyTag(color, to: urls) }
+        sidebar.onAirDrop = { [weak self] in
+            let urls = self?.activePane?.selectedLocalURLs() ?? []
+            guard !urls.isEmpty else { NSSound.beep(); return }  // nothing selected to send
+            self?.airDrop(urls)
+        }
+        sidebar.onAirDropFiles = { [weak self] urls in self?.airDrop(urls) }
+        sidebar.onTrashFiles = { [weak self] urls in self?.performLocalTrash(urls) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
@@ -1116,6 +1123,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.beginSheetModal(for: window) { [weak self] response in
             if response == .alertFirstButtonReturn { self?.performLocalTrash(urls) }
         }
+    }
+
+    /// Hand the given files to the system AirDrop sheet. The OS (sharingd) does the
+    /// transfer, so this stays a plain UI handoff (no networking in our process).
+    private func airDrop(_ urls: [URL]) {
+        guard let service = NSSharingService(named: .sendViaAirDrop) else { NSSound.beep(); return }
+        let sendable = urls.filter { $0.isFileURL }
+        guard service.canPerform(withItems: sendable) else {
+            presentInfo(
+                L("bvc.airdropUnavailableTitle", "Can’t AirDrop these items"),
+                L("bvc.airdropUnavailableBody", "AirDrop may be turned off, or these items can’t be sent."))
+            return
+        }
+        service.perform(withItems: sendable)
     }
 
     private func performLocalTrash(_ urls: [URL]) {

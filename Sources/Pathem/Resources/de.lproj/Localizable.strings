@@ -658,6 +658,11 @@
 "sidebar.addCurrentFolder" = "Aktuellen Ordner hinzufügen";
 "sidebar.changeIcon" = "Symbol ändern";
 "sidebar.cloudHeader" = "Cloud";
+"sidebar.locationsHeader" = "Orte";
+"sidebar.airdrop" = "AirDrop";
+"sidebar.trash" = "Papierkorb";
+"bvc.airdropUnavailableTitle" = "Diese Objekte können nicht per AirDrop gesendet werden";
+"bvc.airdropUnavailableBody" = "AirDrop ist möglicherweise deaktiviert, oder diese Objekte können nicht gesendet werden.";
 "sidebar.connect" = "Verbinden";
 "sidebar.connectInNewTab" = "In neuem Tab verbinden";
 "sidebar.connectionsHeader" = "Verbindungen";
