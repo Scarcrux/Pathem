@@ -18,6 +18,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private let container = NSView()
     private let placeholder = NSTextField(labelWithString: "")
     private var columns: [Column] = []
+    private var previewColumn: NSView?  // a file preview shown after the last column
+    private let previewWidth: CGFloat = 280
     private var activeColumn = 0
     private var rootURL: URL?
     private var storedResolutionURL: URL?
@@ -119,8 +121,20 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             ])
             leading = col.scroll.trailingAnchor
         }
-        if let last = columns.last {
-            trailingConstraint = container.trailingAnchor.constraint(equalTo: last.scroll.trailingAnchor)
+        var trailingView: NSView? = columns.last?.scroll
+        if let preview = previewColumn {  // file preview as a final, wider column
+            container.addSubview(preview)
+            preview.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                preview.leadingAnchor.constraint(equalTo: leading, constant: 1),
+                preview.topAnchor.constraint(equalTo: container.topAnchor),
+                preview.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                preview.widthAnchor.constraint(equalToConstant: previewWidth),
+            ])
+            trailingView = preview
+        }
+        if let trailingView {
+            trailingConstraint = container.trailingAnchor.constraint(equalTo: trailingView.trailingAnchor)
         } else {
             trailingConstraint = container.trailingAnchor.constraint(equalTo: container.leadingAnchor)
         }
@@ -194,13 +208,71 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let selected = table.selectedRowIndexes
         if selected.count == 1, let row = selected.first, row < columns[index].entries.count {
             let entry = columns[index].entries[row]
+            let url = columns[index].folder.appendingPathComponent(entry.name)
             if entry.isDirectory {
-                openFolder(columns[index].folder.appendingPathComponent(entry.name), after: index)
-            } else if columns.count > index + 1 {
-                columns.removeSubrange((index + 1)...)  // a file: no children column
+                previewColumn = nil  // drilling replaces any preview
+                openFolder(url, after: index)
+            } else {
+                if columns.count > index + 1 { columns.removeSubrange((index + 1)...) }
+                previewColumn = makePreviewColumn(for: url)  // show a preview of the file
                 relayout()
+                scrollToEnd()
             }
         }
+    }
+
+    /// A Finder-style preview column: a large thumbnail of the file plus its name and info.
+    private func makePreviewColumn(for url: URL) -> NSView {
+        let box = NSView()
+        let image = NSImageView()
+        image.translatesAutoresizingMaskIntoConstraints = false
+        image.imageScaling = .scaleProportionallyUpOrDown
+        image.image = NSWorkspace.shared.icon(forFile: url.path)
+        let name = NSTextField(labelWithString: url.lastPathComponent)
+        name.translatesAutoresizingMaskIntoConstraints = false
+        name.alignment = .center
+        name.font = .boldSystemFont(ofSize: 13)
+        name.lineBreakMode = .byTruncatingMiddle
+        let info = NSTextField(wrappingLabelWithString: "")
+        info.translatesAutoresizingMaskIntoConstraints = false
+        info.alignment = .center
+        info.font = .systemFont(ofSize: 11)
+        info.textColor = .secondaryLabelColor
+        box.addSubview(image)
+        box.addSubview(name)
+        box.addSubview(info)
+        NSLayoutConstraint.activate([
+            image.topAnchor.constraint(equalTo: box.topAnchor, constant: 20),
+            image.centerXAnchor.constraint(equalTo: box.centerXAnchor),
+            image.widthAnchor.constraint(equalToConstant: 200),
+            image.heightAnchor.constraint(equalToConstant: 200),
+            name.topAnchor.constraint(equalTo: image.bottomAnchor, constant: 12),
+            name.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
+            name.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
+            info.topAnchor.constraint(equalTo: name.bottomAnchor, constant: 8),
+            info.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
+            info.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
+        ])
+
+        let size = CGSize(width: 256, height: 256)
+        if let cached = ThumbnailProvider.shared.cached(url, size: size) {
+            image.image = cached
+        } else {
+            let scale = NSScreen.main?.backingScaleFactor ?? 2
+            ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak image] thumbnail in
+                image?.image = thumbnail
+            }
+        }
+        if let fileInfo = FileInfo.gather(for: url) {
+            let formatter = ByteCountFormatter()
+            let date = DateFormatter()
+            date.dateStyle = .medium
+            date.timeStyle = .short
+            var lines = [fileInfo.kind, formatter.string(fromByteCount: fileInfo.size)]
+            if let modified = fileInfo.modified { lines.append(date.string(from: modified)) }
+            info.stringValue = lines.joined(separator: "\n")
+        }
+        return box
     }
 
     // MARK: Drops (into a column's folder, or onto a folder row within it)
@@ -328,6 +400,7 @@ extension ColumnBrowserController: PaneContentView {
         }
         let wasFocused = outerScroll.window?.firstResponder === container
             || columns.contains { $0.table === outerScroll.window?.firstResponder }
+        previewColumn = nil
         let first = makeColumn(folder: root, entries: entries, index: 0)
         columns = [first]
         activeColumn = 0
