@@ -1919,6 +1919,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.setPathBar(atBottom: prefs.pathBarAtBottom)
                 pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
                 pane.dragMovesByDefault = prefs.dragMovesByDefault
+                pane.setClickBehavior(
+                    singleClick: prefs.singleClickToOpen, underlineHover: prefs.underlineOnHover)
                 let wasHidden = pane.showHiddenByDefault
                 pane.showHiddenByDefault = prefs.showHiddenByDefault
                 if wasHidden != prefs.showHiddenByDefault { pane.reloadIfShowingListing() }

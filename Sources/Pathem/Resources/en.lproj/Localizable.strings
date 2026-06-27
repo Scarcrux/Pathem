@@ -553,6 +553,8 @@
 "prefs.bandwidthPlaceholder" = "0 = unlimited";
 "prefs.calculateFolderSizes" = "Calculate folder sizes";
 "prefs.compactSidebar" = "Compact sidebar (icons only)";
+"prefs.singleClickToOpen" = "Open items with a single click";
+"prefs.underlineOnHover" = "Underline the item under the pointer";
 "prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";
 "prefs.densityComfortable" = "Comfortable";
 "prefs.densityCompact" = "Compact";

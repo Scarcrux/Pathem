@@ -553,6 +553,8 @@
 "prefs.bandwidthPlaceholder" = "0 = 無制限";
 "prefs.calculateFolderSizes" = "フォルダのサイズを計算";
 "prefs.compactSidebar" = "コンパクトサイドバー（アイコンのみ）";
+"prefs.singleClickToOpen" = "シングルクリックで項目を開く";
+"prefs.underlineOnHover" = "ポインタの下の項目に下線を引く";
 "prefs.confirmBeforeDelete" = "ゴミ箱に入れる前に確認";
 "prefs.densityComfortable" = "ゆったり";
 "prefs.densityCompact" = "コンパクト";

@@ -31,6 +31,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The row selection changed (used to update the status bar).
     var onSelectionChanged: (() -> Void)?
     private var suppressSortCallback = false
+    /// Open a row on a single click (Finder's single-click mode).
+    private var singleClickToOpen = false
+    /// Underline the name under the pointer.
+    private var underlineOnHover = false
+    private var hoveredRow = -1
+    private var hoverTrackingArea: NSTrackingArea?
     /// Row font size, applied per cell so a preference change takes effect on reload.
     private var listFontSize: CGFloat = 13
     /// Tag colors per file path, filled by an off-main read after each listing so
@@ -286,6 +292,56 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         onOpen?(entries[row])
     }
 
+    /// Single click opens, in single-click mode, on a plain click of one row.
+    @objc private func handleSingleClick() {
+        guard singleClickToOpen else { return }
+        let flags = NSApp.currentEvent?.modifierFlags ?? []
+        if flags.contains(.shift) || flags.contains(.command) { return }  // extending a selection
+        let row = tableView.clickedRow
+        guard row >= 0, row < entries.count else { return }
+        onOpen?(entries[row])
+    }
+
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
+        singleClickToOpen = singleClick
+        tableView.action = singleClick ? #selector(handleSingleClick) : nil
+        if underlineHover != underlineOnHover {
+            underlineOnHover = underlineHover
+            if underlineHover {
+                let area = NSTrackingArea(
+                    rect: .zero,
+                    options: [.mouseMoved, .mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+                    owner: self, userInfo: nil)
+                tableView.addTrackingArea(area)
+                hoverTrackingArea = area
+            } else {
+                if let area = hoverTrackingArea { tableView.removeTrackingArea(area) }
+                hoverTrackingArea = nil
+                setHovered(-1)
+            }
+        }
+    }
+
+    @objc func mouseMoved(with event: NSEvent) {
+        guard underlineOnHover else { return }
+        setHovered(tableView.row(at: tableView.convert(event.locationInWindow, from: nil)))
+    }
+
+    @objc func mouseExited(with event: NSEvent) { setHovered(-1) }
+
+    /// Move the hover highlight, reloading just the name cell of the old and new rows.
+    private func setHovered(_ row: Int) {
+        guard row != hoveredRow else { return }
+        let old = hoveredRow
+        hoveredRow = row
+        let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        guard nameCol >= 0 else { return }
+        var rows = IndexSet()
+        if old >= 0, old < entries.count { rows.insert(old) }
+        if row >= 0, row < entries.count { rows.insert(row) }
+        if !rows.isEmpty { tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integer: nameCol)) }
+    }
+
     // MARK: Open With
 
     private func selectedFileURLs() -> [URL] {
@@ -506,6 +562,21 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             } else {
                 cell.textField?.attributedStringValue = Self.decoratedName(
                     entry.name, git: git, dots: colors, size: listFontSize)
+            }
+            if underlineOnHover, row == hoveredRow, let field = cell.textField {
+                let text =
+                    field.attributedStringValue.length > 0
+                    ? NSMutableAttributedString(attributedString: field.attributedStringValue)
+                    : NSMutableAttributedString(
+                        string: field.stringValue,
+                        attributes: [
+                            .font: NSFont.systemFont(ofSize: listFontSize),
+                            .foregroundColor: field.textColor ?? NSColor.labelColor,
+                        ])
+                text.addAttribute(
+                    .underlineStyle, value: NSUnderlineStyle.single.rawValue,
+                    range: NSRange(location: 0, length: text.length))
+                field.attributedStringValue = text
             }
         case .size:
             if entry.isDirectory {

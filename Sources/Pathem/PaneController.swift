@@ -34,6 +34,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func debugColumnDrill(row: Int) { (content as? ColumnBrowserController)?.debugSelect(row: row) }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
+    private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)
     private var calculateFolderSizes = false
     private var cutPaths: Set<String> = []
     /// Selection to restore after a view-mode swap repopulates the new content.
@@ -593,6 +594,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize), alternatingRows: alternatingRows)
     }
 
+    /// Apply click behavior (single-click open, hover underline) to this pane's view.
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
+        clickBehavior = (singleClick, underlineHover)
+        content.setClickBehavior(singleClick: singleClick, underlineHover: underlineHover)
+    }
+
     /// Toggle Finder-style "calculate all sizes" for this pane's list.
     func setCalculateFolderSizes(_ on: Bool) {
         calculateFolderSizes = on
@@ -895,6 +902,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             content.applyStyle(rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
         }
         content.setCalculateFolderSizes(calculateFolderSizes)  // carry the option across the swap
+        content.setClickBehavior(  // carry single-click / hover across the swap
+            singleClick: clickBehavior.singleClick, underlineHover: clickBehavior.underlineHover)
         content.setCutPaths(cutPaths)  // carry cut-dimming across the swap
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }

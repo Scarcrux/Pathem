@@ -553,6 +553,8 @@
 "prefs.bandwidthPlaceholder" = "0 = unbegrenzt";
 "prefs.calculateFolderSizes" = "Ordnergrößen berechnen";
 "prefs.compactSidebar" = "Kompakte Seitenleiste (nur Symbole)";
+"prefs.singleClickToOpen" = "Objekte mit einem einzelnen Klick öffnen";
+"prefs.underlineOnHover" = "Objekt unter dem Zeiger unterstreichen";
 "prefs.confirmBeforeDelete" = "Vor dem Verschieben in den Papierkorb nachfragen";
 "prefs.densityComfortable" = "Komfortabel";
 "prefs.densityCompact" = "Kompakt";

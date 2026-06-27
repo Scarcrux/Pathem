@@ -553,6 +553,8 @@
 "prefs.bandwidthPlaceholder" = "0 = sin límite";
 "prefs.calculateFolderSizes" = "Calcular el tamaño de las carpetas";
 "prefs.compactSidebar" = "Barra lateral compacta (solo iconos)";
+"prefs.singleClickToOpen" = "Abrir elementos con un solo clic";
+"prefs.underlineOnHover" = "Subrayar el elemento bajo el puntero";
 "prefs.confirmBeforeDelete" = "Confirmar antes de mover elementos a la papelera";
 "prefs.densityComfortable" = "Cómoda";
 "prefs.densityCompact" = "Compacta";

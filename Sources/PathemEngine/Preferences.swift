@@ -47,6 +47,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var previewInGalleryView: Bool
     /// Icon/gallery thumbnail zoom multiplier (0.5–3.0).
     public var iconZoom: Double
+    /// Open items with a single click (instead of double).
+    public var singleClickToOpen: Bool
+    /// Underline the item name under the pointer while hovering.
+    public var underlineOnHover: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -57,8 +61,11 @@ public struct Preferences: Codable, Sendable, Equatable {
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
-        iconZoom: Double = 1
+        iconZoom: Double = 1, singleClickToOpen: Bool = false,
+        underlineOnHover: Bool = false
     ) {
+        self.singleClickToOpen = singleClickToOpen
+        self.underlineOnHover = underlineOnHover
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -118,5 +125,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         previewInGalleryView =
             try c.decodeIfPresent(Bool.self, forKey: .previewInGalleryView) ?? d.previewInGalleryView
         iconZoom = try c.decodeIfPresent(Double.self, forKey: .iconZoom) ?? d.iconZoom
+        singleClickToOpen =
+            try c.decodeIfPresent(Bool.self, forKey: .singleClickToOpen) ?? d.singleClickToOpen
+        underlineOnHover =
+            try c.decodeIfPresent(Bool.self, forKey: .underlineOnHover) ?? d.underlineOnHover
     }
 }

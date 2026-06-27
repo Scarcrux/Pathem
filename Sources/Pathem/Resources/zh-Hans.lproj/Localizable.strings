@@ -553,6 +553,8 @@
 "prefs.bandwidthPlaceholder" = "0 = 不限制";
 "prefs.calculateFolderSizes" = "计算文件夹大小";
 "prefs.compactSidebar" = "紧凑边栏（仅图标）";
+"prefs.singleClickToOpen" = "单击打开项目";
+"prefs.underlineOnHover" = "为指针下方的项目添加下划线";
 "prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";
 "prefs.densityComfortable" = "宽松";
 "prefs.densityCompact" = "紧凑";

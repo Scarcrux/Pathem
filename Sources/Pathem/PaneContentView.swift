@@ -44,6 +44,8 @@ protocol PaneContentView: AnyObject {
     func setGitStates(_ states: [String: GitFileState])
     /// Zoom the thumbnails (icon/gallery views); a no-op for list/column.
     func adjustZoom(_ delta: CGFloat)
+    /// Open on a single click, and/or underline the item under the pointer.
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool)
 }
 
 extension PaneContentView {
@@ -62,6 +64,8 @@ extension PaneContentView {
     func refreshDrilledColumns() {}
     /// Only icon/gallery views zoom.
     func adjustZoom(_ delta: CGFloat) {}
+    /// Only the list view implements single-click / hover-underline for now.
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {}
     /// Only the list view draws git overlays for now.
     func setGitStates(_ states: [String: GitFileState]) {}
     /// Only the list view distinguishes drag copy vs move for now.
