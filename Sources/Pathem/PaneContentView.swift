@@ -7,6 +7,9 @@ import PathemEngine
 @MainActor
 protocol PaneContentView: AnyObject {
     var scrollView: NSScrollView { get }
+    /// The view PaneController embeds. Defaults to `scrollView`; composite views (gallery's
+    /// preview + filmstrip) override it to embed their whole layout.
+    var contentView: NSView { get }
     /// The focusable view (table or collection), for first-responder handoff.
     var keyView: NSView { get }
     var entries: [FileEntry] { get }
@@ -44,6 +47,8 @@ protocol PaneContentView: AnyObject {
 }
 
 extension PaneContentView {
+    /// Most views embed their scroll view directly; the gallery overrides this.
+    var contentView: NSView { scrollView }
     /// Grid views don't render tag dots yet, so dropping the cache is a no-op.
     func invalidateTagCache() {}
     /// Only the list view shows a size column, so others ignore this.

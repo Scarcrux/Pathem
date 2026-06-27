@@ -3442,6 +3442,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let iconView = IconCollectionController(gallery: false)
         iconView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("icon-view-renders", iconView.entries.count > 0, "\(iconView.entries.count) entries")
+        // Gallery (preview + filmstrip): exercise setEntries so a crash/hang there is caught.
+        let galleryView = GalleryController()
+        galleryView.directoryURL = leftTabs.activePane?.currentURL
+        galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
+        check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
         return (ok, lines)
     }
 }

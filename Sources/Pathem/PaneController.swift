@@ -863,14 +863,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// any previous one.
     private func embedContent() {
         for sub in contentContainer.subviews { sub.removeFromSuperview() }
-        let scroll = content.scrollView
-        scroll.translatesAutoresizingMaskIntoConstraints = false
-        contentContainer.addSubview(scroll)
+        let view = content.contentView
+        view.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.addSubview(view)
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: contentContainer.topAnchor),
-            scroll.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
-            scroll.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
+            view.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+            view.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            view.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
         ])
     }
 
@@ -886,7 +886,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         switch mode {
         case .list: content = FileListController()
         case .icon: content = makeIconContent(gallery: false)
-        case .gallery: content = makeIconContent(gallery: true)
+        case .gallery: content = GalleryController()
         case .column: content = ColumnBrowserController()
         }
         wireContent()
@@ -1026,7 +1026,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let segments: [(String, String)] = [
             ("list.bullet", L("pane.viewAsList", "as List")),
             ("square.grid.2x2", L("pane.viewAsIcons", "as Icons")),
-            ("photo", L("pane.viewAsGallery", "as Gallery")),
+            ("square.grid.3x1.below.line.grid.1x2", L("pane.viewAsGallery", "as Gallery")),
             ("rectangle.split.3x1", L("pane.viewAsColumns", "as Columns")),
         ]
         viewSwitcher = NSSegmentedControl(
