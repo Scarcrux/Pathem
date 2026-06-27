@@ -6,8 +6,8 @@ private final class BundleToken {}
 /// (fatalError) if it can't find the bundle — e.g. when the app is launched mid-install
 /// while package.sh is still copying it — which crashes the whole app at launch. We
 /// locate the bundle ourselves and fall back to the main bundle (so `L` returns its
-/// English fallback) rather than crashing.
-private let resourceBundle: Bundle = {
+/// English fallback) rather than crashing. Use THIS, never `Bundle.module`, anywhere.
+let pathemResourceBundle: Bundle = {
     let bundleName = "Pathem_Pathem.bundle"
     let candidates = [
         Bundle.main.resourceURL,  // a packaged .app: Contents/Resources
@@ -25,15 +25,15 @@ private let resourceBundle: Bundle = {
 /// bundle), resolved against `Locale.preferredLanguages` so it honors the system
 /// language and an `-AppleLanguages` override. Falls back to the resource bundle.
 private let localizedBundle: Bundle = {
-    let available = resourceBundle.localizations
+    let available = pathemResourceBundle.localizations
     let preferred = Bundle.preferredLocalizations(from: available, forPreferences: Locale.preferredLanguages)
-    if let code = preferred.first, code != resourceBundle.developmentLocalization,
-        let path = resourceBundle.path(forResource: code, ofType: "lproj"),
+    if let code = preferred.first, code != pathemResourceBundle.developmentLocalization,
+        let path = pathemResourceBundle.path(forResource: code, ofType: "lproj"),
         let bundle = Bundle(path: path)
     {
         return bundle
     }
-    return resourceBundle
+    return pathemResourceBundle
 }()
 
 /// A localized UI string. Pass the English text as `fallback` so an un-translated key

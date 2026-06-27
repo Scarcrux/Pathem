@@ -34,7 +34,7 @@ enum PathemApp {
             // translated (sample keys resolve to a non-empty value that differs from
             // English). Independent of the system language.
             print("=== L10N SMOKE: localized resources ===")
-            let available = Bundle.module.localizations
+            let available = pathemResourceBundle.localizations
             print("available:", available)
             var ok = true
             // SwiftPM may canonicalize a region tag's case (e.g. zh-Hans -> zh-hans),
@@ -49,7 +49,7 @@ enum PathemApp {
             let sample = ["menu.file": "File", "common.cancel": "Cancel"]
             for lang in ["es", "fr", "de", "zh-Hans", "ja"] {
                 guard let actual = code(for: lang),
-                    let path = Bundle.module.path(forResource: actual, ofType: "lproj"),
+                    let path = pathemResourceBundle.path(forResource: actual, ofType: "lproj"),
                     let bundle = Bundle(path: path)
                 else {
                     print("  \(lang): catalog not loadable")
@@ -137,16 +137,27 @@ enum PathemApp {
             }
         }
 
-        // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1).
+        // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1). Navigation runs on
+        // the run loop (asyncAfter), not synchronously here, or Launch Services deadlocks.
         if ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil {
             let number = window.windowNumber
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                let capture = Process()
-                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
-                capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/main_live.png"]
-                try? capture.run()
-                capture.waitUntilExit()
-                exit(0)
+            let mode = ProcessInfo.processInfo.environment["PATHEM_MAIN_MODE"]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                if let mode {
+                    let target = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
+                    browser.debugNavigateActive(to: target)
+                    let viewMode: ViewFormat.ViewMode =
+                        mode == "gallery" ? .gallery : (mode == "column" ? .column : .icon)
+                    browser.debugSetActiveViewMode(viewMode)
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    let capture = Process()
+                    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                    capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/main_live.png"]
+                    try? capture.run()
+                    capture.waitUntilExit()
+                    exit(0)
+                }
             }
         }
 
