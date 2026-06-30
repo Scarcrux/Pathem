@@ -94,6 +94,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// File paths currently marked for cut (dimmed until pasted or cleared).
     private var cutPaths: Set<String> = []
     private var sidebarWidthConstraint: NSLayoutConstraint!
+    /// Lays out the two panes at a fixed ratio (and tracks divider drags), so switching a
+    /// pane to a content-light view (gallery) can't make the split re-divide and collapse it.
+    private let paneSplitDelegate = PaneRatioSplitDelegate()
     private var compactSidebar = false
     private static let compactSidebarWidth: CGFloat = 56
     /// Guided Full Disk Access walkthrough (first launch, until granted).
@@ -123,6 +126,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func loadView() {
         split.isVertical = true
         split.dividerStyle = .thin
+        // The two panes use NSSplitView's frame model (TAMIC=true subviews), where width
+        // constraints are ignored, so a dedicated delegate lays them out at a fixed ratio.
+        // This is what keeps a content-light view (gallery) from collapsing its pane.
+        split.delegate = paneSplitDelegate
         split.addArrangedSubview(leftTabs.containerView)
         split.addArrangedSubview(rightTabs.containerView)
 
@@ -203,6 +210,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if splitView === outerSplit, dividerIndex == 0 { return 320 }  // max sidebar width
         if splitView === vSplit, dividerIndex == 0 { return splitView.bounds.height - 120 }  // min terminal height
         return proposedMax
+    }
+
+    /// Set the panes' divider to `fraction` (the right pane's share) and lay them out now.
+    /// The delegate keeps that ratio across content swaps and window resizes.
+    private func setRightPaneFraction(_ fraction: Double) {
+        paneSplitDelegate.fraction = max(0.15, min(0.85, fraction))
+        paneSplitDelegate.layout(split)
     }
 
     override func viewDidLoad() {
@@ -1836,7 +1850,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         // Host Settings over the right pane; reveal it if it's collapsed.
         if rightTabs.containerView.frame.width < 120 {
-            split.setPosition(split.bounds.width / 2, ofDividerAt: 0)
+            setRightPaneFraction(0.5)
             view.layoutSubtreeIfNeeded()
         }
         let content = settings.makeEmbedded(
@@ -2833,8 +2847,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // process working directory or a missing path.
         if let url = Self.existingFolderURL(layout.leftPath) { leftTabs.activePane?.navigate(to: url) }
         if let url = Self.existingFolderURL(layout.rightPath) { rightTabs.activePane?.navigate(to: url) }
-        let total = split.bounds.width
-        if total > 0 { split.setPosition(total * CGFloat(layout.dividerFraction), ofDividerAt: 0) }
+        setRightPaneFraction(1 - layout.dividerFraction)  // saved fraction is the left pane's share
     }
 
     private static func existingFolderURL(_ path: String) -> URL? {
@@ -2871,7 +2884,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard !didSetInitialSplit, outerSplit.bounds.width > 200 else { return }
         outerSplit.setPosition(compactSidebar ? Self.compactSidebarWidth : 200, ofDividerAt: 0)  // sidebar width
         outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
-        split.setPosition(split.bounds.width / 2, ofDividerAt: 0)  // even panes
+        setRightPaneFraction(0.5)  // even panes
         didSetInitialSplit = true
         // Restore the terminal drawer if it was open last session.
         if UserDefaults.standard.bool(forKey: "pathem.terminalVisible") { toggleTerminal() }
@@ -3545,6 +3558,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 follows: terminalFollows, onSelectTheme: { _ in }, onToggleFollows: { _ in }),
             onChange: { _ in }, onKeymapChange: { _ in }, onGestureChange: { _ in })
         check("settings-embeds", !settingsView.subviews.isEmpty, "\(settingsView.subviews.count) subviews")
+        // Switching a pane's view mode must not move the split divider (durable ratio constraint).
+        let beforeRight = rightTabs.containerView.frame.width
+        let originalMode = rightTabs.activePane?.viewMode ?? .list
+        rightTabs.activePane?.setViewMode(.gallery)
+        view.layoutSubtreeIfNeeded()
+        let afterRight = rightTabs.containerView.frame.width
+        rightTabs.activePane?.setViewMode(originalMode)  // restore
+        check(
+            "split-stable-on-view-switch", abs(beforeRight - afterRight) < 5,
+            "right pane \(Int(beforeRight)) -> \(Int(afterRight))")
         return (ok, lines)
     }
 }
@@ -3583,5 +3606,50 @@ extension BrowserViewController: NSToolbarDelegate {
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         [Self.cleanupItemID, .flexibleSpace, Self.searchItemID]
+    }
+}
+
+/// Lays out a two-pane vertical NSSplitView at a fixed ratio, taking over its sizing so a
+/// content-light view (e.g. gallery, which wants almost no width) can't make the split
+/// re-divide and shrink its pane. The panes use the frame model (TAMIC=true), where width
+/// constraints are ignored; controlling the frames here is the reliable way to hold a ratio.
+@MainActor
+final class PaneRatioSplitDelegate: NSObject, NSSplitViewDelegate {
+    /// The right pane's share of the split width (0.15...0.85).
+    var fraction: Double = 0.5
+
+    func splitView(_ splitView: NSSplitView, resizeSubviewsWithOldSize oldSize: NSSize) {
+        layout(splitView)
+    }
+
+    /// Frame both panes at the current ratio. Safe to call directly to re-apply after a
+    /// fraction change (the split's bounds haven't changed, so it won't relayout on its own).
+    func layout(_ splitView: NSSplitView) {
+        let subviews = splitView.arrangedSubviews
+        guard subviews.count == 2 else { splitView.adjustSubviews(); return }
+        let divider = splitView.dividerThickness
+        let total = splitView.bounds.width
+        let height = splitView.bounds.height
+        guard total > 1 else { return }
+        let clamped = max(0.15, min(0.85, fraction))
+        let rightWidth = (total - divider) * clamped
+        let leftWidth = total - divider - rightWidth
+        subviews[0].frame = NSRect(x: 0, y: 0, width: leftWidth, height: height)
+        subviews[1].frame = NSRect(x: leftWidth + divider, y: 0, width: rightWidth, height: height)
+    }
+
+    /// Track the user dragging the divider: adopt the new ratio so it sticks (and clamp so
+    /// neither pane can be dragged away to nothing).
+    func splitView(
+        _ splitView: NSSplitView, constrainSplitPosition proposedPosition: CGFloat, ofSubviewAt dividerIndex: Int
+    ) -> CGFloat {
+        let divider = splitView.dividerThickness
+        let total = splitView.bounds.width
+        guard total > 1 else { return proposedPosition }
+        let minLeft = total * 0.15
+        let maxLeft = total * 0.85
+        let clampedLeft = max(minLeft, min(maxLeft, proposedPosition))
+        fraction = (total - divider - clampedLeft) / total
+        return clampedLeft
     }
 }

@@ -886,12 +886,6 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func applyViewMode(_ mode: ViewFormat.ViewMode) {
         viewSwitcher.selectedSegment = segmentIndex(mode)  // keep the switcher in sync
         guard mode != currentMode else { return }
-        // The enclosing split sizes panes by content fitting width, so swapping to a
-        // view that wants less width (gallery has almost no minimum, a list demands
-        // column width) lets the split shrink this pane. Capture the divider positions
-        // and restore them after the swap so the user's split ratio is preserved.
-        let split = enclosingSplitView()
-        let savedDividers = split.flatMap(Self.dividerPositions)
         // Capture before swapping: the new (empty) content can't report these.
         let hadFocus = content.keyView.window?.firstResponder === content.keyView
         pendingSelection = Set(content.selectedEntries.map(\.name))
@@ -912,39 +906,6 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             singleClick: clickBehavior.singleClick, underlineHover: clickBehavior.underlineHover)
         content.setCutPaths(cutPaths)  // carry cut-dimming across the swap
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
-        // Restore the split ratio the new content would otherwise have changed. Done both
-        // now and after the layout settles, since the redistribution can happen on a later pass.
-        if let split, let savedDividers { Self.restoreDividers(savedDividers, in: split) }
-        if let split, let savedDividers {
-            DispatchQueue.main.async { Self.restoreDividers(savedDividers, in: split) }
-        }
-    }
-
-    /// The nearest ancestor split view (the one whose divider sizes this pane).
-    private func enclosingSplitView() -> NSSplitView? {
-        var view: NSView? = containerView.superview
-        while let current = view {
-            if let split = current as? NSSplitView { return split }
-            view = current.superview
-        }
-        return nil
-    }
-
-    /// Each divider's position (trailing edge of every arranged subview but the last), or
-    /// nil if the split isn't laid out yet (so we don't capture and restore zeros).
-    private static func dividerPositions(_ split: NSSplitView) -> [CGFloat]? {
-        let subviews = split.arrangedSubviews
-        guard subviews.count > 1, split.frame.width > 1, split.frame.height > 1 else { return nil }
-        return (0..<(subviews.count - 1)).map { index in
-            let frame = subviews[index].frame
-            return split.isVertical ? frame.maxX : frame.maxY
-        }
-    }
-
-    private static func restoreDividers(_ positions: [CGFloat], in split: NSSplitView) {
-        for (index, position) in positions.enumerated() where index < split.arrangedSubviews.count - 1 {
-            split.setPosition(position, ofDividerAt: index)
-        }
     }
 
     /// Wire the active content's callbacks (run on creation and on every swap).
