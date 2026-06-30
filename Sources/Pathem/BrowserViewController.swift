@@ -73,6 +73,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
     private lazy var settings = SettingsWindowController()
+    /// Settings embedded over the right pane (so browsing continues in the left pane).
+    private var settingsPanel: NSView?
     private lazy var batchCreate = BatchCreateController()
     private lazy var templatesManager = TemplatesController()
     private lazy var commitController = CommitController()
@@ -1828,8 +1830,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func showPreferences() {
-        guard let window = view.window else { return }
-        settings.present(
+        if settingsPanel != nil {  // Cmd-, toggles the embedded panel
+            closeSettingsPanel()
+            return
+        }
+        // Host Settings over the right pane; reveal it if it's collapsed.
+        if rightTabs.containerView.frame.width < 120 {
+            split.setPosition(split.bounds.width / 2, ofDividerAt: 0)
+            view.layoutSubtreeIfNeeded()
+        }
+        let content = settings.makeEmbedded(
             prefs: prefs,
             commands: commands.all.map { (id: $0.id, title: $0.title) },
             effective: keymap.bindings,
@@ -1853,7 +1863,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                         self.terminal.changeDirectory(to: url)
                     }
                 }),
-            over: window,
             onChange: { [weak self] updated in
                 guard let self else { return }
                 self.prefs = updated
@@ -1869,6 +1878,59 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.saveConfig(overlay, to: Self.gesturesURL)
                 self.gestureMap = GestureMap.standard.merging(userBindings: overlay)  // apply live
             })
+        let panel = makeSettingsPanel(content: content)
+        rightTabs.containerView.addSubview(panel)
+        NSLayoutConstraint.activate([
+            panel.topAnchor.constraint(equalTo: rightTabs.containerView.topAnchor),
+            panel.bottomAnchor.constraint(equalTo: rightTabs.containerView.bottomAnchor),
+            panel.leadingAnchor.constraint(equalTo: rightTabs.containerView.leadingAnchor),
+            panel.trailingAnchor.constraint(equalTo: rightTabs.containerView.trailingAnchor),
+        ])
+        settingsPanel = panel
+    }
+
+    /// Wrap the embedded settings content in an opaque panel with a header (title + Done),
+    /// since it no longer has a window title bar.
+    private func makeSettingsPanel(content: NSView) -> NSView {
+        let panel = NSView()
+        panel.translatesAutoresizingMaskIntoConstraints = false
+        panel.wantsLayer = true
+        panel.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+
+        let title = NSTextField(labelWithString: L("settings.title", "Settings"))
+        title.font = .boldSystemFont(ofSize: 13)
+        title.translatesAutoresizingMaskIntoConstraints = false
+        let done = NSButton(
+            title: L("common.done", "Done"), target: self, action: #selector(closeSettingsPanel))
+        done.bezelStyle = .rounded
+        done.translatesAutoresizingMaskIntoConstraints = false
+        let divider = NSBox()
+        divider.boxType = .separator
+        divider.translatesAutoresizingMaskIntoConstraints = false
+
+        panel.addSubview(title)
+        panel.addSubview(done)
+        panel.addSubview(divider)
+        panel.addSubview(content)
+        NSLayoutConstraint.activate([
+            title.leadingAnchor.constraint(equalTo: panel.leadingAnchor, constant: 16),
+            title.topAnchor.constraint(equalTo: panel.topAnchor, constant: 14),
+            done.trailingAnchor.constraint(equalTo: panel.trailingAnchor, constant: -12),
+            done.centerYAnchor.constraint(equalTo: title.centerYAnchor),
+            divider.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 12),
+            divider.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            divider.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            content.topAnchor.constraint(equalTo: divider.bottomAnchor),
+            content.leadingAnchor.constraint(equalTo: panel.leadingAnchor),
+            content.trailingAnchor.constraint(equalTo: panel.trailingAnchor),
+            content.bottomAnchor.constraint(equalTo: panel.bottomAnchor),
+        ])
+        return panel
+    }
+
+    @objc private func closeSettingsPanel() {
+        settingsPanel?.removeFromSuperview()
+        settingsPanel = nil
     }
 
     private func toggleOCR() {
@@ -3470,6 +3532,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         galleryView.directoryURL = leftTabs.activePane?.currentURL
         galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
+        // Embedded Settings: build the in-pane settings view (catches a crash in that path).
+        let settingsView = settings.makeEmbedded(
+            prefs: prefs, commands: commands.all.map { (id: $0.id, title: $0.title) },
+            effective: keymap.bindings, gestures: gestureMap.bindings, updater: updater,
+            terminal: .init(
+                themes: TerminalTheme.presets.map(\.name), current: terminal.theme.name,
+                follows: terminalFollows, onSelectTheme: { _ in }, onToggleFollows: { _ in }),
+            onChange: { _ in }, onKeymapChange: { _ in }, onGestureChange: { _ in })
+        check("settings-embeds", !settingsView.subviews.isEmpty, "\(settingsView.subviews.count) subviews")
         return (ok, lines)
     }
 }

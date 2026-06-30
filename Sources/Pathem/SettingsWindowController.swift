@@ -40,6 +40,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     private let window: NSWindow
+    /// The settings content (sidebar + panes), embeddable in a pane instead of the window.
+    let rootView = NSView()
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
 
@@ -109,7 +111,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         ])
 
         // Explicit split: fixed-width sidebar on the left, content filling the rest.
-        let root = NSView()
+        let root = rootView
         root.wantsLayer = true
         root.addSubview(sidebar.view)
         root.addSubview(contentContainer)
@@ -135,10 +137,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         var onToggleFollows: (Bool) -> Void
     }
 
-    func present(
+    /// Set the controller's state and build the UI (shared by the window and embedded paths).
+    private func configure(
         prefs: Preferences, commands: [(id: String, title: String)], effective: [String: String],
         gestures: [String: String], updater: UpdaterController?, terminal: TerminalOptions,
-        over parent: NSWindow?,
         onChange: @escaping (Preferences) -> Void,
         onKeymapChange: @escaping ([String: String]) -> Void,
         onGestureChange: @escaping ([String: String]) -> Void
@@ -160,10 +162,43 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         buildAllPanesAndIndex()  // build every pane up front so search can index them
         sidebar.select(key: Pane.general.rawValue)
         select(.general)
+    }
+
+    func present(
+        prefs: Preferences, commands: [(id: String, title: String)], effective: [String: String],
+        gestures: [String: String], updater: UpdaterController?, terminal: TerminalOptions,
+        over parent: NSWindow?,
+        onChange: @escaping (Preferences) -> Void,
+        onKeymapChange: @escaping ([String: String]) -> Void,
+        onGestureChange: @escaping ([String: String]) -> Void
+    ) {
+        configure(
+            prefs: prefs, commands: commands, effective: effective, gestures: gestures,
+            updater: updater, terminal: terminal, onChange: onChange,
+            onKeymapChange: onKeymapChange, onGestureChange: onGestureChange)
+        window.contentView = rootView  // the window owns the content (not embedded)
         if !window.isVisible, let parent {
             window.setFrameOrigin(NSPoint(x: parent.frame.midX - 370, y: parent.frame.midY - 240))
         }
         window.makeKeyAndOrderFront(nil)
+    }
+
+    /// Build the settings UI for embedding directly in a pane (no separate window), so the
+    /// user can keep browsing in the other pane. Returns the content view to host.
+    func makeEmbedded(
+        prefs: Preferences, commands: [(id: String, title: String)], effective: [String: String],
+        gestures: [String: String], updater: UpdaterController?, terminal: TerminalOptions,
+        onChange: @escaping (Preferences) -> Void,
+        onKeymapChange: @escaping ([String: String]) -> Void,
+        onGestureChange: @escaping ([String: String]) -> Void
+    ) -> NSView {
+        configure(
+            prefs: prefs, commands: commands, effective: effective, gestures: gestures,
+            updater: updater, terminal: terminal, onChange: onChange,
+            onKeymapChange: onKeymapChange, onGestureChange: onGestureChange)
+        rootView.removeFromSuperview()  // detach from the window if it was ever attached
+        rootView.translatesAutoresizingMaskIntoConstraints = false
+        return rootView
     }
 
     // MARK: Pane switching
