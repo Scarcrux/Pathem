@@ -81,6 +81,12 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         preview.translatesAutoresizingMaskIntoConstraints = false
         preview.imageScaling = .scaleProportionallyUpOrDown
         preview.imageAlignment = .alignCenter
+        // The preview must follow its constraints, never its image size. Otherwise a large
+        // thumbnail's intrinsic size resists compression and shrinks the rest of the window.
+        for axis in [NSLayoutConstraint.Orientation.horizontal, .vertical] {
+            preview.setContentHuggingPriority(.defaultLow, for: axis)
+            preview.setContentCompressionResistancePriority(.defaultLow, for: axis)
+        }
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
         previewName.translatesAutoresizingMaskIntoConstraints = false
