@@ -190,6 +190,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var format = ViewFormat.default
     /// Asks the browser for the saved format for a folder (the per-folder cascade).
     var resolveFormat: ((URL) -> ViewFormat)?
+    /// Whether a folder has its own remembered format. When it doesn't, navigating into it
+    /// keeps the current view mode (so Gallery/Column stays selected as you browse) instead
+    /// of snapping back to the default.
+    var hasExplicitFormat: ((URL) -> Bool)?
     /// Tells the browser to remember a format for this folder.
     var rememberFormat: ((URL, ViewFormat) -> Void)?
 
@@ -369,7 +373,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         showingSearchResults = false
         remoteLabel.isHidden = true
         breadcrumb.isHidden = false
-        if let resolveFormat { format = resolveFormat(nav.current) }
+        if let resolveFormat {
+            var resolved = resolveFormat(nav.current)
+            // Unconfigured folders inherit the current view mode (sticky Gallery/Column),
+            // rather than reverting to the default each time you open a subfolder.
+            if hasExplicitFormat?(nav.current) != true { resolved.viewMode = currentMode }
+            format = resolved
+        }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
         content.directoryURL = nav.current  // rows in this folder are draggable
         content.resolutionURL = nav.current
@@ -790,6 +800,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pathBar.spacing = 4
         pathBar.translatesAutoresizingMaskIntoConstraints = false
         pathBar.setContentHuggingPriority(.init(1), for: .horizontal)
+        // A fixed-height row. NSStackView fills its cross-axis space rather than hugging it, so
+        // without this the path bar stretches to fill whatever a content view yields (a gallery
+        // yields a lot), which pushed the content down.
+        pathBar.heightAnchor.constraint(equalToConstant: 26).isActive = true
         pathBar.addArrangedSubview(breadcrumb)
         pathBar.addArrangedSubview(addressField)
         pathBar.addArrangedSubview(remoteLabel)
@@ -821,6 +835,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         bottomStack.alignment = .leading
         bottomStack.spacing = 2
         bottomStack.translatesAutoresizingMaskIntoConstraints = false
+        // Hug the status row's height so it doesn't stretch to absorb space the content view
+        // yields (a gallery yields a lot); the content area should claim that space instead.
+        bottomStack.setHuggingPriority(.required, for: .vertical)
+        bottomStack.setContentHuggingPriority(.required, for: .vertical)
         bottomStack.addArrangedSubview(filterField)
         bottomStack.addArrangedSubview(statusLabel)
         filterField.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true

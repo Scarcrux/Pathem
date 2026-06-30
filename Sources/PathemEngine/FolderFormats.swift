@@ -48,6 +48,14 @@ public struct FolderFormats: Codable, Sendable {
 
     private enum CodingKeys: String, CodingKey { case rules, defaultFormat }
 
+    /// Whether `path` has its own remembered format (an exact or subtree rule), as
+    /// opposed to falling back to the default. Used to keep the view mode sticky across
+    /// navigation only for folders the user hasn't explicitly configured.
+    public func hasRule(for path: String) -> Bool {
+        if rules.contains(where: { $0.scope == .exact && $0.path == path }) { return true }
+        return rules.contains { $0.scope == .subtree && !$0.path.isEmpty && Self.isUnder(path, $0.path) }
+    }
+
     /// The format for `path`: exact rule, else the most specific (longest)
     /// matching subtree rule, else the default.
     public func format(for path: String) -> ViewFormat {

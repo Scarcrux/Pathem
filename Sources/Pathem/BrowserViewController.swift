@@ -252,6 +252,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     self?.attachDiskImage(image, in: pane)
                 }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
+                pane.hasExplicitFormat = { [weak self] url in self?.folderFormats.hasRule(for: url.path) ?? false }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
                 pane.runCommand = { [weak self] id in self?.commands.perform(id) }
