@@ -81,8 +81,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         preview.translatesAutoresizingMaskIntoConstraints = false
         preview.imageScaling = .scaleProportionallyUpOrDown
         preview.imageAlignment = .alignCenter
-        // The preview must follow its constraints, never its image size. Otherwise a large
-        // thumbnail's intrinsic size resists compression and shrinks the rest of the window.
+        // Let the preview fill the space its constraints give it rather than hugging its image
+        // size; otherwise the whole composite collapses to content height and bottom-aligns.
         for axis in [NSLayoutConstraint.Orientation.horizontal, .vertical] {
             preview.setContentHuggingPriority(.defaultLow, for: axis)
             preview.setContentCompressionResistancePriority(.defaultLow, for: axis)
@@ -119,6 +119,13 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             emptyLabel.centerXAnchor.constraint(equalTo: preview.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: preview.centerYAnchor),
         ])
+        // The composite is "size-indifferent" (the preview scales to whatever space it gets),
+        // so on its own it collapses to content height and its pane stops filling. A low-priority
+        // tall height makes it actively claim vertical space, like a scroll view does, while the
+        // required edge pins still cap it at the pane's height.
+        let fill = composite.heightAnchor.constraint(equalToConstant: 4000)
+        fill.priority = .defaultLow
+        fill.isActive = true
     }
 
     private func makeContextMenu() -> NSMenu {

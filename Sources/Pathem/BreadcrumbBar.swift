@@ -21,15 +21,18 @@ final class BreadcrumbBar: NSView {
         stack.spacing = 1
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
+        // A fixed-height row. Without this the bar has no intrinsic height, so it stretches to
+        // fill whatever vertical space the content view yields (a gallery yields a lot), which
+        // pushed the content down. The stack centers its segments within the row.
+        let height = heightAnchor.constraint(equalToConstant: 26)
+        height.priority = .required
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
             stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor),
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 2),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -2),
+            stack.centerYAnchor.constraint(equalTo: centerYAnchor),
+            height,
         ])
         setContentHuggingPriority(.init(1), for: .horizontal)
-        setContentHuggingPriority(.required, for: .vertical)  // hug the segment height, don't stretch
-        setContentCompressionResistancePriority(.required, for: .vertical)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
