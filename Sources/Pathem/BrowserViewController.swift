@@ -3389,6 +3389,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         toolbar.allowsUserCustomization = false
         toolbar.displayMode = .iconOnly
         window.toolbarStyle = .unified
+        // No hairline under the toolbar. Our sidebar is a plain split view (not an
+        // NSSplitViewController sidebar), so the automatic separator would draw straight
+        // across the top of the sidebar, under the first group label ("Favorites").
+        window.titlebarSeparatorStyle = .none
         window.toolbar = toolbar
     }
 
