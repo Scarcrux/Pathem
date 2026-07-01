@@ -57,4 +57,41 @@ import Testing
         try Data(repeating: 0, count: 250).write(to: sub.appendingPathComponent("b.bin"))
         #expect(FileOperations.totalBytes(of: [root]) == 350)
     }
+
+    @Test func totalBytesTreatsSymlinkToDirectoryAsZero() throws {
+        // copyItem recreates a symlink as the link itself (~0 bytes), so a link to a big
+        // tree must not inflate the denominator by counting the target's contents.
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent("pathem-symlink-\(UUID().uuidString)")
+        let realDir = root.appendingPathComponent("real")
+        try fm.createDirectory(at: realDir, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: root) }
+        try Data(repeating: 0, count: 5000).write(to: realDir.appendingPathComponent("big.bin"))
+        let link = root.appendingPathComponent("link")
+        try fm.createSymbolicLink(at: link, withDestinationURL: realDir)
+        #expect(FileOperations.byteCount(of: link) == 0)  // the link, not its 5000-byte target
+        // A folder that contains a symlink counts only the real file, not the link target.
+        try Data(repeating: 0, count: 40).write(to: root.appendingPathComponent("small.bin"))
+        #expect(FileOperations.totalBytes(of: [root]) == 5040)  // big.bin + small.bin, link adds nothing
+    }
+
+    @Test func failedItemDoesNotAdvanceByteCounter() throws {
+        // A file that fails to copy must not advance completedBytes (which would over-report
+        // the bar), the way a skipped item never does either.
+        let fm = FileManager.default
+        let src = fm.temporaryDirectory.appendingPathComponent("pathem-fail-src-\(UUID().uuidString)")
+        let dst = fm.temporaryDirectory.appendingPathComponent("pathem-fail-dst-\(UUID().uuidString)")
+        try fm.createDirectory(at: src, withIntermediateDirectories: true)
+        try fm.createDirectory(at: dst, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: src); try? fm.removeItem(at: dst) }
+        let good = src.appendingPathComponent("good.bin")
+        try Data(repeating: 0, count: 100).write(to: good)
+        // A source that does not exist forces copyItem to throw for that item.
+        let missing = src.appendingPathComponent("missing.bin")
+        var reports: [FileOperations.Progress] = []
+        let outcome = FileOperations.copy(urls: [good, missing], into: dst, report: { reports.append($0) })
+        #expect(outcome.performed.count == 1)
+        #expect(outcome.failures.count == 1)
+        #expect(reports.last?.completedBytes == 100)  // only the good file's bytes, not both
+    }
 }

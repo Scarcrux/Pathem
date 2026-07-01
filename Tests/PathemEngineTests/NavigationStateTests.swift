@@ -45,6 +45,18 @@ import Testing
         let f3 = s.goForward(); #expect(!f3)
     }
 
+    @Test func resetClearsBothStacks() {
+        var s = NavigationState(current: url("/a"))
+        s.go(to: url("/a/b"))
+        s.go(to: url("/a/b/c"))
+        let back = s.goBack(); #expect(back)  // now has both a back and a forward entry
+
+        s.reset(to: url("/demo/root"))
+        #expect(s.current.path == "/demo/root")
+        #expect(!s.canGoBack)  // throwaway path can't be reached via Back...
+        #expect(!s.canGoForward)  // ...and the old forward entry is gone too
+    }
+
     @Test func goToSameDirectoryIsNoOp() {
         var s = NavigationState(current: url("/a/b"))
         s.go(to: url("/a/b/"))  // standardizes equal

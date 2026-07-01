@@ -25,6 +25,16 @@ public struct NavigationState: Sendable, Equatable {
         return p.path != current.path ? p : nil
     }
 
+    /// Jump to a directory without recording history: set it as current and clear
+    /// both stacks. Used when swapping into or out of demo mode, so a throwaway temp
+    /// path is never reachable via Back (and can't become a dead link once the temp
+    /// directory is cleaned up).
+    public mutating func reset(to url: URL) {
+        current = url.standardizedFileURL
+        backStack.removeAll()
+        forwardStack.removeAll()
+    }
+
     /// Navigate to a new directory: push the current one onto the back stack and
     /// clear the forward stack. No-op when it's the same directory.
     public mutating func go(to url: URL) {

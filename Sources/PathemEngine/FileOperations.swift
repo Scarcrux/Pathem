@@ -72,18 +72,27 @@ public enum FileOperations {
     }
 
     static func byteCount(of url: URL) -> Int64 {
-        let keys: Set<URLResourceKey> = [.isDirectoryKey, .fileSizeKey]
+        let keys: Set<URLResourceKey> = [.isDirectoryKey, .isSymbolicLinkKey, .fileSizeKey]
         guard let values = try? url.resourceValues(forKeys: keys) else { return 0 }
+        // A symlink is copied as the link itself (copyItem does not follow it), so it
+        // transfers ~0 bytes; counting its target would wildly inflate the denominator
+        // (isDirectoryKey resolves a link-to-directory to `true` and would recurse the
+        // whole target tree). Treat it as zero.
+        if values.isSymbolicLink == true { return 0 }
         if values.isDirectory != true { return Int64(values.fileSize ?? 0) }
         let fm = FileManager.default
-        // Include hidden files: copyItem copies them, so they count toward the total.
+        // Include hidden files (copyItem copies them); skip symlink descendants, which
+        // FileManager surfaces but copyItem recreates as links rather than their targets.
         guard
             let enumerator = fm.enumerator(
-                at: url, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey], options: [])
+                at: url,
+                includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey],
+                options: [])
         else { return 0 }
         var total: Int64 = 0
         for case let child as URL in enumerator {
-            let v = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            let v = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
+            if v?.isSymbolicLink == true { continue }
             if v?.isRegularFile == true { total += Int64(v?.fileSize ?? 0) }
         }
         return total
@@ -397,11 +406,14 @@ public enum FileOperations {
                 outcome.performed.append(
                     Performed(
                         action: action, source: from, destination: to, replacedOriginalTrashed: replacedTrash))
+                // Only a file that actually transferred advances the byte counter, so a
+                // failure doesn't inflate the bar the way a completed item would. Skips
+                // (handled by `continue` above) likewise never reach this line.
+                progress.completedBytes += itemBytes
             } catch {
                 outcome.failures.append(Failure(name: name, reason: error.localizedDescription))
             }
             progress.completedItems = index + 1
-            progress.completedBytes += itemBytes
             report(progress)
         }
         return outcome

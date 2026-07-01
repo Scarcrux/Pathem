@@ -2362,8 +2362,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let layout = DemoWorkspace.build()
             demoLayout = layout
             applyDemoSidebar(layout)
-            leftTabs.activePane?.navigate(to: layout.leftStart)
-            rightTabs.activePane?.navigate(to: layout.rightStart)
+            // resetHistory, not navigate: keep the throwaway temp path out of Back, and
+            // don't leave the user's real folder reachable via Back during a privacy demo.
+            leftTabs.activePane?.resetHistory(to: layout.leftStart)
+            rightTabs.activePane?.resetHistory(to: layout.rightStart)
         } else {
             demoLayout = nil
             sidebar.demoMode = false
@@ -2371,8 +2373,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             sidebar.demoVolumes = []
             BreadcrumbBar.demoRoot = nil
             sidebar.model = savedRealSidebar ?? .makeDefault(home: FileManager.default.homeDirectoryForCurrentUser)
-            if let url = savedPaneFolders?.left { leftTabs.activePane?.navigate(to: url) }
-            if let url = savedPaneFolders?.right { rightTabs.activePane?.navigate(to: url) }
+            // resetHistory so the (about-to-be-deleted) demo temp path can't be reached
+            // via Back after we leave demo mode.
+            if let url = savedPaneFolders?.left { leftTabs.activePane?.resetHistory(to: url) }
+            if let url = savedPaneFolders?.right { rightTabs.activePane?.resetHistory(to: url) }
         }
     }
 

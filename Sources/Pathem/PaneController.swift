@@ -1118,7 +1118,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 title: FileManager.default.displayName(atPath: appURL.path),
                 action: #selector(openWithApp(_:)), keyEquivalent: "")
             item.target = self
-            let icon = NSWorkspace.shared.icon(forFile: appURL.path)
+            // Copy before resizing: icon(forFile:) returns a shared cached NSImage, and
+            // mutating its size in place shrinks that app's icon elsewhere in the UI.
+            let icon = (NSWorkspace.shared.icon(forFile: appURL.path).copy() as? NSImage)
+                ?? NSWorkspace.shared.icon(forFile: appURL.path)
             icon.size = NSSize(width: 16, height: 16)
             item.image = icon
             item.representedObject = [url, appURL]
@@ -1433,6 +1436,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Jump to an arbitrary folder (used when restoring a layout).
     func navigate(to url: URL) {
         nav.go(to: url.standardizedFileURL)
+        enterDirectory()
+    }
+
+    /// Navigate without recording history (clears back/forward). Used by demo-mode
+    /// toggling so a throwaway temp path never lingers in the pane's Back stack.
+    func resetHistory(to url: URL) {
+        nav.reset(to: url.standardizedFileURL)
         enterDirectory()
     }
 
