@@ -81,9 +81,22 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         return host.unicodeScalars.allSatisfy { Self.hostAllowed.contains($0) }
     }
 
+    /// An empty user is allowed (anonymous). A non-empty user must be a plain login
+    /// name: no leading `-` (so it can't be parsed as an ssh/sftp option when it is
+    /// interpolated into the `user@host` argv token), and no `@`, whitespace, or
+    /// controls. Without this, a `user` like `-oProxyCommand=…` would smuggle an ssh
+    /// option and run an arbitrary command in a child of the app.
+    public static func isValidUser(_ user: String) -> Bool {
+        guard !user.isEmpty else { return true }
+        guard user.count <= 64, !user.hasPrefix("-") else { return false }
+        return user.unicodeScalars.allSatisfy { Self.userAllowed.contains($0) }
+    }
+
     private static let hostAllowed = CharacterSet(
         charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-")
     private static let ipv6Allowed = CharacterSet(charactersIn: "0123456789abcdefABCDEF:.%")
+    private static let userAllowed = CharacterSet(
+        charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-")
 
     // Tolerant decoding so a connections.json from an older build (or one bad
     // entry) doesn't fail the whole array and wipe every saved connection.

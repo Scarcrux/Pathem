@@ -214,6 +214,15 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 NSSound.beep()
                 return
             }
+            // SFTP interpolates the user into the "user@host" argv token, so it must be
+            // a plain login name. Other protocols pass the user via curl's stdin config
+            // (safely quoted), where email-style names with "@" are legitimate.
+            if chosen == .sftp,
+                !RemoteConnection.isValidUser(user.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+            {
+                NSSound.beep()
+                return
+            }
             let conn = RemoteConnection(
                 id: existing?.id ?? UUID(),
                 name: name.stringValue.isEmpty ? (host.isEmpty ? "Amazon S3" : host) : name.stringValue,

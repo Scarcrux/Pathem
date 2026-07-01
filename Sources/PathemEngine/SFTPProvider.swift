@@ -64,6 +64,11 @@ public struct SFTPProvider: RemoteProvider {
         guard c.hasValidHost else {
             throw RemoteError.unsupported("Invalid host \"\(c.host)\"")  // never pass a smuggled authority to ssh
         }
+        guard RemoteConnection.isValidUser(c.user) else {
+            // A user starting with "-" (or with @/whitespace) could be parsed by ssh
+            // as an option (e.g. -oProxyCommand=…) once it is joined as "user@host".
+            throw RemoteError.unsupported("Invalid user \"\(c.user)\"")
+        }
         let askpass = try Self.askpassScript()
         defer { try? FileManager.default.removeItem(at: askpass) }  // don't leave it lying around
         let parent = ProcessInfo.processInfo.environment

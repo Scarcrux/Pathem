@@ -22,6 +22,23 @@ import Testing
         #expect(!RemoteConnection.isValidHost(""))
     }
 
+    @Test func acceptsPlainLoginNames() {
+        #expect(RemoteConnection.isValidUser(""))  // empty -> anonymous
+        #expect(RemoteConnection.isValidUser("alice"))
+        #expect(RemoteConnection.isValidUser("build-bot_01"))
+        #expect(RemoteConnection.isValidUser("user.name"))
+    }
+
+    @Test func rejectsUserOptionSmuggling() {
+        // A user starting with "-" would be parsed by ssh/sftp as an option once it is
+        // interpolated into the "user@host" argv token (e.g. -oProxyCommand=... -> RCE).
+        #expect(!RemoteConnection.isValidUser("-oProxyCommand=touch /tmp/pwned;false"))
+        #expect(!RemoteConnection.isValidUser("-l"))
+        #expect(!RemoteConnection.isValidUser("a@b"))  // @ would split the authority
+        #expect(!RemoteConnection.isValidUser("has space"))
+        #expect(!RemoteConnection.isValidUser("line\nbreak"))
+    }
+
     @Test func tolerantDecodeKeepsOtherConnectionsAlive() throws {
         // A partial entry (only host) decodes with defaults instead of failing the array.
         let json = """
