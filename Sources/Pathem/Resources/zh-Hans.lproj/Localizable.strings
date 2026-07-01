@@ -726,3 +726,4 @@
 "info.commentLabel" = "注释";
 "info.hideExtensionLabel" = "隐藏扩展名";
 "info.otherApp" = "其他…";
+"info.aclLabel" = "共享";

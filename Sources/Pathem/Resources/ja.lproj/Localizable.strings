@@ -726,3 +726,4 @@
 "info.commentLabel" = "コメント";
 "info.hideExtensionLabel" = "拡張子を隠す";
 "info.otherApp" = "その他…";
+"info.aclLabel" = "共有";

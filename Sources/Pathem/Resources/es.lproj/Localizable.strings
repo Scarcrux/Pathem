@@ -726,3 +726,4 @@
 "info.commentLabel" = "Comentario";
 "info.hideExtensionLabel" = "Ocultar extensión";
 "info.otherApp" = "Otra…";
+"info.aclLabel" = "Compartir";

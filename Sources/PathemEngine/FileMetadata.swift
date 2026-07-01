@@ -45,6 +45,21 @@ public enum FileMetadata {
         return (version, copyright)
     }
 
+    /// The item's POSIX ACL entries as readable lines (Finder's "Sharing & Permissions"
+    /// list beyond owner/group/other), or nil if it has no extended ACL.
+    public static func aclEntries(of url: URL) -> [String]? {
+        guard let acl = acl_get_file(url.path, ACL_TYPE_EXTENDED) else { return nil }
+        defer { acl_free(UnsafeMutableRawPointer(acl)) }
+        var size: ssize_t = 0
+        guard let text = acl_to_text(acl, &size) else { return nil }
+        defer { acl_free(text) }
+        let lines = String(cString: text)
+            .split(separator: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("!") }  // drop the "!#acl 1" header line
+        return lines.isEmpty ? nil : lines
+    }
+
     // MARK: xattr
 
     private static func xattr(_ name: String, of url: URL) -> Data? {

@@ -245,6 +245,9 @@ final class InfoInspectorController: NSObject {
             }
             let ownerGroup = [info.owner, info.group].compactMap { $0 }.joined(separator: " : ")
             if !ownerGroup.isEmpty { addField(L("info.ownerLabel", "Owner"), ownerGroup) }
+            if let acl = FileMetadata.aclEntries(of: urls[0]) {
+                addField(L("info.aclLabel", "Sharing"), acl.joined(separator: "\n"))
+            }
             if !info.tags.isEmpty { addField(L("info.tagsLabel", "Tags"), info.tags.joined(separator: ", ")) }
             if let type = info.contentType, !info.isDirectory { addField(L("info.typeLabel", "Type"), type) }
             if urls[0].isFileURL, !info.isDataless {
