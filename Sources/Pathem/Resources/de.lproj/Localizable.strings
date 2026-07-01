@@ -717,3 +717,5 @@
 "update.notSetUpTitle" = "Für diesen Build sind keine Updates eingerichtet";
 "update.sourceBuild" = "Dies ist ein Quell- oder unsignierter Build. Lade die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.";
 "update.viaSparkle" = "Updates werden automatisch über Sparkle bereitgestellt.";
+"progress.ofBytes" = "%@ von %@";
+"progress.timeLeft" = "noch %@";

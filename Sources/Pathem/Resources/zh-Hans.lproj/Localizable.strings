@@ -717,3 +717,5 @@
 "update.notSetUpTitle" = "此构建版本尚未设置更新";
 "update.sourceBuild" = "这是源码或未签名的构建版本。请从 GitHub 下载最新的公证版本；那些版本会自行更新。";
 "update.viaSparkle" = "更新通过 Sparkle 自动提供。";
+"progress.ofBytes" = "%@ / %@";
+"progress.timeLeft" = "剩余 %@";

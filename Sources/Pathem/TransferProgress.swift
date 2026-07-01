@@ -1,51 +1,63 @@
 import AppKit
+import PathemEngine
 
-/// Thread-safe shared state for a running transfer: the background op writes
-/// `completed` and reads `cancelled`; the main thread polls `completed` for the
-/// progress bar and sets `cancelled` from the Cancel button.
+/// Thread-safe shared state for a running transfer: the background op writes the
+/// latest `progress`, the main thread reads it for the bar/labels and sets
+/// `cancelled` from the Cancel button.
 final class TransferState: @unchecked Sendable {
-    let total: Int
     private let lock = NSLock()
-    private var _completed = 0
+    private var _progress = FileOperations.Progress()
     private var _cancelled = false
 
-    init(total: Int) { self.total = total }
-
-    var completed: Int {
+    var progress: FileOperations.Progress {
         lock.lock(); defer { lock.unlock() }
-        return _completed
+        return _progress
     }
     var isCancelled: Bool {
         lock.lock(); defer { lock.unlock() }
         return _cancelled
     }
-    func setCompleted(_ value: Int) {
-        lock.lock(); _completed = value; lock.unlock()
+    func setProgress(_ value: FileOperations.Progress) {
+        lock.lock(); _progress = value; lock.unlock()
     }
     func cancel() {
         lock.lock(); _cancelled = true; lock.unlock()
     }
 }
 
-/// A progress sheet for copy/move: a determinate bar, a count label, and Cancel.
-/// Shown only when a transfer runs long enough to matter (the browser defers it),
-/// so quick operations never flash a sheet.
+/// A progress sheet for copy/move: a determinate byte bar, the current file, a
+/// "42 MB of 380 MB", the live transfer speed, and an ETA, plus Cancel. Shown only
+/// when a transfer runs long enough to matter (the browser defers it), so quick
+/// operations never flash a sheet.
 @MainActor
 final class TransferProgress: NSObject {
     private let panel: NSPanel
     private let bar = NSProgressIndicator()
-    private let label = NSTextField(labelWithString: "")
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let detailLabel = NSTextField(labelWithString: "")
     private let cancelButton = NSButton(title: L("common.cancel", "Cancel"), target: nil, action: nil)
 
     private weak var host: NSWindow?
     private var showing = false
     private var verb = ""
-    private var total = 0
-    private var onCancel: (() -> Void)?
+
+    private static let byteFormatter: ByteCountFormatter = {
+        let f = ByteCountFormatter()
+        f.countStyle = .file
+        return f
+    }()
+    private static let etaFormatter: DateComponentsFormatter = {
+        let f = DateComponentsFormatter()
+        f.unitsStyle = .full
+        f.allowedUnits = [.hour, .minute, .second]
+        f.maximumUnitCount = 2
+        f.includesApproximationPhrase = false
+        return f
+    }()
 
     override init() {
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 440, height: 130),
+            contentRect: NSRect(x: 0, y: 0, width: 460, height: 148),
             styleMask: [.titled], backing: .buffered, defer: true)
         super.init()
         build()
@@ -53,8 +65,13 @@ final class TransferProgress: NSObject {
 
     private func build() {
         panel.title = L("progress.windowTitle", "Transferring")
-        label.font = .systemFont(ofSize: 13)
-        label.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        titleLabel.lineBreakMode = .byTruncatingMiddle
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        detailLabel.font = .systemFont(ofSize: 11)
+        detailLabel.textColor = .secondaryLabelColor
+        detailLabel.lineBreakMode = .byTruncatingTail
+        detailLabel.translatesAutoresizingMaskIntoConstraints = false
         bar.style = .bar
         bar.isIndeterminate = false
         bar.translatesAutoresizingMaskIntoConstraints = false
@@ -64,31 +81,32 @@ final class TransferProgress: NSObject {
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
 
         let content = panel.contentView!
-        content.addSubview(label)
-        content.addSubview(bar)
-        content.addSubview(cancelButton)
+        [titleLabel, bar, detailLabel, cancelButton].forEach(content.addSubview)
         NSLayoutConstraint.activate([
-            label.topAnchor.constraint(equalTo: content.topAnchor, constant: 18),
-            label.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
-            label.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
-            bar.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 12),
+            titleLabel.topAnchor.constraint(equalTo: content.topAnchor, constant: 18),
+            titleLabel.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
+            titleLabel.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
+            bar.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 12),
             bar.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
             bar.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
-            cancelButton.topAnchor.constraint(equalTo: bar.bottomAnchor, constant: 14),
+            detailLabel.topAnchor.constraint(equalTo: bar.bottomAnchor, constant: 8),
+            detailLabel.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 18),
+            detailLabel.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
+            cancelButton.topAnchor.constraint(equalTo: detailLabel.bottomAnchor, constant: 12),
             cancelButton.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -18),
         ])
     }
 
-    func begin(verb: String, total: Int, over window: NSWindow?, onCancel: @escaping () -> Void) {
+    func begin(verb: String, over window: NSWindow?, onCancel: @escaping () -> Void) {
         self.verb = verb
-        self.total = total
-        self.onCancel = onCancel
         self.host = window
+        self.onCancel = onCancel
         cancelButton.isEnabled = true
         bar.minValue = 0
-        bar.maxValue = Double(max(total, 1))
+        bar.maxValue = 1
         bar.doubleValue = 0
-        update(completed: 0)
+        titleLabel.stringValue = verb
+        detailLabel.stringValue = ""
         showing = true
         if let window {
             window.beginSheet(panel)
@@ -97,10 +115,29 @@ final class TransferProgress: NSObject {
         }
     }
 
-    func update(completed: Int) {
+    private var onCancel: (() -> Void)?
+
+    /// Update from the latest snapshot. `bytesPerSecond` is the smoothed transfer rate
+    /// (0 if not yet known), used for the speed readout and ETA.
+    func update(_ progress: FileOperations.Progress, bytesPerSecond: Double) {
         guard showing else { return }
-        bar.doubleValue = Double(completed)
-        label.stringValue = String(format: L("progress.countStatus", "%@ %d of %d…"), verb, completed, total)
+        let total = max(progress.totalBytes, 1)
+        bar.doubleValue = min(1, Double(progress.completedBytes) / Double(total))
+
+        let file = progress.currentFile.isEmpty ? "" : " " + progress.currentFile
+        titleLabel.stringValue = verb + file
+
+        let done = Self.byteFormatter.string(fromByteCount: progress.completedBytes)
+        let all = Self.byteFormatter.string(fromByteCount: progress.totalBytes)
+        var parts = [String(format: L("progress.ofBytes", "%@ of %@"), done, all)]
+        if bytesPerSecond > 1 {
+            parts.append(Self.byteFormatter.string(fromByteCount: Int64(bytesPerSecond)) + "/s")
+            let remaining = Double(progress.totalBytes - progress.completedBytes)
+            if remaining > 0, let eta = Self.etaFormatter.string(from: remaining / bytesPerSecond) {
+                parts.append(String(format: L("progress.timeLeft", "%@ left"), eta))
+            }
+        }
+        detailLabel.stringValue = parts.joined(separator: "  ·  ")
     }
 
     func end() {
@@ -116,7 +153,7 @@ final class TransferProgress: NSObject {
 
     @objc private func cancelClicked() {
         cancelButton.isEnabled = false
-        label.stringValue = L("progress.cancelling", "Cancelling…")
+        titleLabel.stringValue = L("progress.cancelling", "Cancelling…")
         onCancel?()
     }
 }

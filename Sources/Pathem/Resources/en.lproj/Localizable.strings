@@ -717,3 +717,5 @@
 "update.notSetUpTitle" = "Updates aren't set up for this build";
 "update.sourceBuild" = "This is a source or unsigned build. Download the latest notarized release from GitHub; those builds update themselves.";
 "update.viaSparkle" = "Updates are delivered automatically via Sparkle.";
+"progress.ofBytes" = "%@ of %@";
+"progress.timeLeft" = "%@ left";

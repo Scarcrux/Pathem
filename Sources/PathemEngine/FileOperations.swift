@@ -45,6 +45,50 @@ public enum FileOperations {
         public init() {}
     }
 
+    /// A running snapshot of a transfer, for a byte-based progress bar with speed/ETA.
+    public struct Progress: Sendable {
+        public var completedBytes: Int64
+        public var totalBytes: Int64
+        public var completedItems: Int
+        public var totalItems: Int
+        /// The item currently being transferred (its last path component).
+        public var currentFile: String
+        public init(
+            completedBytes: Int64 = 0, totalBytes: Int64 = 0, completedItems: Int = 0,
+            totalItems: Int = 0, currentFile: String = ""
+        ) {
+            self.completedBytes = completedBytes
+            self.totalBytes = totalBytes
+            self.completedItems = completedItems
+            self.totalItems = totalItems
+            self.currentFile = currentFile
+        }
+    }
+
+    /// Total logical size of these items (recursing into folders), for a transfer's
+    /// progress denominator. Unreadable items count as zero rather than failing.
+    public static func totalBytes(of urls: [URL]) -> Int64 {
+        urls.reduce(0) { $0 + byteCount(of: $1) }
+    }
+
+    static func byteCount(of url: URL) -> Int64 {
+        let keys: Set<URLResourceKey> = [.isDirectoryKey, .fileSizeKey]
+        guard let values = try? url.resourceValues(forKeys: keys) else { return 0 }
+        if values.isDirectory != true { return Int64(values.fileSize ?? 0) }
+        let fm = FileManager.default
+        // Include hidden files: copyItem copies them, so they count toward the total.
+        guard
+            let enumerator = fm.enumerator(
+                at: url, includingPropertiesForKeys: [.fileSizeKey, .isRegularFileKey], options: [])
+        else { return 0 }
+        var total: Int64 = 0
+        for case let child as URL in enumerator {
+            let v = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+            if v?.isRegularFile == true { total += Int64(v?.fileSize ?? 0) }
+        }
+        return total
+    }
+
     // MARK: Conflict detection
 
     public static func conflicts(_ names: [String], from source: URL, to destination: URL) -> [String]
@@ -221,11 +265,11 @@ public enum FileOperations {
     @discardableResult
     public static func copy(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
-        shouldCancel: () -> Bool = { false }, progress: (Int) -> Void = { _ in }
+        shouldCancel: () -> Bool = { false }, report: (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .copied, onConflict: onConflict,
-            shouldCancel: shouldCancel, progress: progress
+            shouldCancel: shouldCancel, report: report
         ) {
             try FileManager.default.copyItem(at: $0, to: $1)
         }
@@ -234,11 +278,11 @@ public enum FileOperations {
     @discardableResult
     public static func move(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
-        shouldCancel: () -> Bool = { false }, progress: (Int) -> Void = { _ in }
+        shouldCancel: () -> Bool = { false }, report: (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .moved, onConflict: onConflict,
-            shouldCancel: shouldCancel, progress: progress
+            shouldCancel: shouldCancel, report: report
         ) {
             try FileManager.default.moveItem(at: $0, to: $1)
         }
@@ -312,14 +356,19 @@ public enum FileOperations {
     private static func apply(
         _ sources: [URL], into destination: URL,
         action: Action, onConflict: ConflictResolution,
-        shouldCancel: () -> Bool, progress: (Int) -> Void,
+        shouldCancel: () -> Bool, report: (Progress) -> Void,
         _ op: (URL, URL) throws -> Void
     ) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
+        let totalBytes = totalBytes(of: sources)
+        var progress = Progress(totalBytes: totalBytes, totalItems: sources.count)
         for (index, from) in sources.enumerated() {
             if shouldCancel() { break }  // stop; items already done remain in `performed`
             let name = from.lastPathComponent
+            progress.currentFile = name
+            report(progress)  // name the item before the (possibly slow) copy starts
+            let itemBytes = byteCount(of: from)
             var to = destination.appendingPathComponent(name)
             var replacedTrash: URL?  // where a Replace put the overwritten file (for undo)
             do {
@@ -351,7 +400,9 @@ public enum FileOperations {
             } catch {
                 outcome.failures.append(Failure(name: name, reason: error.localizedDescription))
             }
-            progress(index + 1)
+            progress.completedItems = index + 1
+            progress.completedBytes += itemBytes
+            report(progress)
         }
         return outcome
     }

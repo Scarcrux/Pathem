@@ -3109,18 +3109,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     ) {
         guard !transferInFlight else { NSSound.beep(); return }
         transferInFlight = true
-        let total = urls.count
         let verb = move ? L("bvc.moving", "Moving") : L("bvc.copying", "Copying")
-        let state = TransferState(total: total)
+        let state = TransferState()
 
-        // Main-actor monitor: wait 0.25s before showing the sheet (so quick ops
-        // never flash it), then poll progress until cancelled by the worker.
+        // Main-actor monitor: wait 0.25s before showing the sheet (so quick ops never flash
+        // it), then poll progress, deriving a smoothed transfer speed and ETA, until the
+        // worker finishes and cancels us.
         let monitor = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(250))
             guard let self, !Task.isCancelled else { return }
-            self.transferProgress.begin(verb: verb, total: total, over: self.view.window) { state.cancel() }
+            self.transferProgress.begin(verb: verb, over: self.view.window) { state.cancel() }
+            var lastSample = Date()
+            var lastBytes: Int64 = 0
+            var speed = 0.0  // bytes/sec, exponentially smoothed
             while !Task.isCancelled {
-                self.transferProgress.update(completed: state.completed)
+                let progress = state.progress
+                let now = Date()
+                let dt = now.timeIntervalSince(lastSample)
+                if dt >= 0.2 {
+                    let instant = Double(progress.completedBytes - lastBytes) / dt
+                    speed = speed == 0 ? instant : speed * 0.6 + instant * 0.4
+                    lastSample = now
+                    lastBytes = progress.completedBytes
+                }
+                self.transferProgress.update(progress, bytesPerSecond: max(0, speed))
                 try? await Task.sleep(for: .milliseconds(100))
             }
         }
@@ -3130,11 +3142,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 if move {
                     return FileOperations.move(
                         urls: urls, into: destination, onConflict: resolution,
-                        shouldCancel: { state.isCancelled }, progress: { state.setCompleted($0) })
+                        shouldCancel: { state.isCancelled }, report: { state.setProgress($0) })
                 }
                 return FileOperations.copy(
                     urls: urls, into: destination, onConflict: resolution,
-                    shouldCancel: { state.isCancelled }, progress: { state.setCompleted($0) })
+                    shouldCancel: { state.isCancelled }, report: { state.setProgress($0) })
             }.value
             monitor.cancel()
             self?.transferProgress.end()

@@ -717,3 +717,5 @@
 "update.notSetUpTitle" = "Les mises à jour ne sont pas configurées pour cette version";
 "update.sourceBuild" = "Il s’agit d’une version source ou non signée. Téléchargez la dernière version notariée depuis GitHub ; ces versions se mettent à jour automatiquement.";
 "update.viaSparkle" = "Les mises à jour sont livrées automatiquement via Sparkle.";
+"progress.ofBytes" = "%@ sur %@";
+"progress.timeLeft" = "%@ restant";

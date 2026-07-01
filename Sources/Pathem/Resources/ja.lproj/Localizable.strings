@@ -717,3 +717,5 @@
 "update.notSetUpTitle" = "このビルドではアップデートが設定されていません";
 "update.sourceBuild" = "これはソースまたは署名なしのビルドです。最新の公証済みリリースを GitHub からダウンロードしてください。それらのビルドは自動更新されます。";
 "update.viaSparkle" = "アップデートは Sparkle を通じて自動的に配信されます。";
+"progress.ofBytes" = "%@ / %@";
+"progress.timeLeft" = "残り %@";
