@@ -117,9 +117,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var cachedIndex: FolderSemanticIndex?
     private var cachedEntries: [FileEntry]?
 
-    init(start: URL) {
-        leftTabs = TabbedPaneController(start: start)
-        rightTabs = TabbedPaneController(start: start)
+    /// Set when launched in privacy-safe demo mode, so session restore is skipped and the
+    /// sidebar/panes use the fake workspace instead of the user's real data.
+    private let demoLayout: DemoWorkspace.Layout?
+
+    init(start: URL, demo: DemoWorkspace.Layout? = nil) {
+        demoLayout = demo
+        leftTabs = TabbedPaneController(start: demo?.leftStart ?? start)
+        rightTabs = TabbedPaneController(start: demo?.rightStart ?? start)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -2317,6 +2322,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func loadSidebar() {
+        if let demoLayout {  // fake favorites/cloud/volumes; no real accounts, hosts, or paths
+            sidebar.demoMode = true
+            sidebar.demoCloud = demoLayout.cloud
+            sidebar.demoVolumes = demoLayout.volumes
+            sidebar.model = Sidebar(groups: [
+                Sidebar.Group(
+                    title: L("sidebar.favoritesDefaultName", "Favorites"),
+                    items: demoLayout.favorites.map { Sidebar.Item(name: $0.name, icon: $0.icon, path: $0.url.path) })
+            ])
+            return
+        }
         if let saved = loadConfig(Sidebar.self, from: Self.sidebarURL) {
             sidebar.model = saved
         } else {
@@ -2327,6 +2343,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func saveSidebar(_ model: Sidebar) {
         saveConfig(model, to: Self.sidebarURL)
     }
+
 
     // MARK: - Terminal theme
 
@@ -2379,6 +2396,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func restoreSession() {
         isRestoringSession = true
         defer { isRestoringSession = false }
+        if demoLayout != nil {  // demo mode: fresh tabs on the fake workspace, never the real session
+            // Open the tabs on the run loop, not synchronously in viewDidLoad (early navigation
+            // deadlocks Launch Services); demo sessions are never persisted.
+            DispatchQueue.main.async { [self] in
+                leftTabs.openInitialTab()
+                rightTabs.openInitialTab()
+                if let pane = leftTabs.activePane { setActiveSide(leftTabs, pane: pane) }
+            }
+            return
+        }
         if let session = loadConfig(SessionState.self, from: Self.sessionURL),
             !(session.left.isEmpty && session.right.isEmpty)
         {
@@ -2406,6 +2433,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Persist the session immediately (called on quit).
     func saveSessionNow() {
+        if demoLayout != nil { return }  // never persist a throwaway demo session over the real one
         let state = SessionState(
             left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
             right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex,

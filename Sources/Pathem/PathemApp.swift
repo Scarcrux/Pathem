@@ -87,8 +87,10 @@ enum PathemApp {
         // Normal mode: a dual-pane browser rooted at the home directory (or a sample
         // folder when rendering view-mode screenshots).
         let viewShot = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
+        // Privacy-safe demo mode (PATHEM_DEMO=1): a fake workspace + sidebar for screenshots.
+        let demoLayout = ProcessInfo.processInfo.environment["PATHEM_DEMO"] != nil ? DemoWorkspace.build() : nil
         let start = viewShot ? Self.makeSampleFolder() : FileManager.default.homeDirectoryForCurrentUser
-        let browser = BrowserViewController(start: start)
+        let browser = BrowserViewController(start: start, demo: demoLayout)
         window.contentViewController = browser
         // Assigning a contentViewController makes the window adopt the content's
         // Auto Layout fitting size, which collapses to a sliver here (the panes
@@ -113,6 +115,7 @@ enum PathemApp {
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
+
 
         // Headless render of gallery / column / icon views over a sample folder.
         if viewShot {

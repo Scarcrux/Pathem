@@ -27,6 +27,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         didSet { reload() }
     }
     var onModelChange: ((Sidebar) -> Void)?
+    /// Demo mode: replace the auto-detected Cloud/Volumes/Devices/Shared/Connections (which leak
+    /// real names) with generic fakes, for privacy-safe screenshots.
+    var demoMode = false
+    var demoCloud: [(name: String, url: URL)] = []
+    var demoVolumes: [(name: String, url: URL)] = []
     var onSelect: ((URL) -> Void)?
     /// Open Settings (the gear shortcut at the bottom of the sidebar).
     var onOpenSettings: (() -> Void)?
@@ -273,11 +278,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 })
         }
         roots.append(locationsNode())
-        if let cloud = cloudNode() { roots.append(cloud) }
-        roots.append(volumesNode())
-        if let devicesSection = devicesNode() { roots.append(devicesSection) }
-        if let shared = sharedNode() { roots.append(shared) }
-        roots.append(connectionsNode())
+        if demoMode {
+            // Demo mode: fake, generic Cloud/Volumes so screenshots never leak real account
+            // emails, machine names, connected servers, or the user's phone.
+            if let cloud = demoSection(L("sidebar.cloudHeader", "Cloud"), demoCloud) { roots.append(cloud) }
+            if let volumes = demoSection(L("sidebar.volumesHeader", "Volumes"), demoVolumes) { roots.append(volumes) }
+        } else {
+            if let cloud = cloudNode() { roots.append(cloud) }
+            roots.append(volumesNode())
+            if let devicesSection = devicesNode() { roots.append(devicesSection) }
+            if let shared = sharedNode() { roots.append(shared) }
+            roots.append(connectionsNode())
+        }
         roots.append(smartNode())
         roots.append(tagsNode())
         outline.reloadData()
@@ -361,6 +373,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return Node(
             kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil, icon: nil,
             children: [airdrop, trash])
+    }
+
+    /// A demo Cloud/Volumes section from generic (name, folder) pairs.
+    private func demoSection(_ title: String, _ items: [(name: String, url: URL)]) -> Node? {
+        guard !items.isEmpty else { return nil }
+        let children = items.map {
+            Node(kind: .systemItem, title: $0.name, url: $0.url, icon: nil, isFolder: true)
+        }
+        return Node(kind: .systemHeader, title: title, url: nil, icon: nil, children: children)
     }
 
     /// Spotlight-backed smart locations (currently Recents).
