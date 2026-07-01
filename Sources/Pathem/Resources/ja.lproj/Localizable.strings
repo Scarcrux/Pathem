@@ -719,3 +719,10 @@
 "update.viaSparkle" = "アップデートは Sparkle を通じて自動的に配信されます。";
 "progress.ofBytes" = "%@ / %@";
 "progress.timeLeft" = "残り %@";
+"info.whereFromLabel" = "入手先";
+"info.versionLabel" = "バージョン";
+"info.copyrightLabel" = "著作権";
+"info.openWithLabel" = "このアプリで開く";
+"info.commentLabel" = "コメント";
+"info.hideExtensionLabel" = "拡張子を隠す";
+"info.otherApp" = "その他…";

@@ -10,6 +10,7 @@ import PathemTerminal
 @MainActor
 enum PathemApp {
     static var liveSettings: SettingsWindowController?  // holds the PATHEM_SETTINGS_SHOT window
+    static var liveInspector: InfoInspectorController?  // holds the PATHEM_INFO_SHOT panel
 
     static func main() {
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
@@ -133,6 +134,23 @@ enum PathemApp {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // Live screenshot of the Get Info inspector for a sample app (PATHEM_INFO_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_INFO_SHOT"] != nil {
+            let inspector = InfoInspectorController()
+            Self.liveInspector = inspector
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                inspector.present(urls: [URL(fileURLWithPath: "/System/Applications/Calculator.app")], over: nil)
+                let number = inspector.debugWindowNumber
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let capture = Process()
+                    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                    capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/info_live.png"]
+                    try? capture.run(); capture.waitUntilExit()
+                    exit(0)
                 }
             }
         }

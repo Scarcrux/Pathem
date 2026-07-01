@@ -719,3 +719,10 @@
 "update.viaSparkle" = "更新通过 Sparkle 自动提供。";
 "progress.ofBytes" = "%@ / %@";
 "progress.timeLeft" = "剩余 %@";
+"info.whereFromLabel" = "来源";
+"info.versionLabel" = "版本";
+"info.copyrightLabel" = "版权";
+"info.openWithLabel" = "打开方式";
+"info.commentLabel" = "注释";
+"info.hideExtensionLabel" = "隐藏扩展名";
+"info.otherApp" = "其他…";

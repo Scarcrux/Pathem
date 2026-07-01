@@ -3594,6 +3594,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "drag-has-legacy-filenames", keepsFileURL && filenames == dragURLs.map(\.path),
             "fileURL=\(keepsFileURL) names=\(filenames ?? [])")
+        // Get Info: presenting the inspector builds every field (metadata reads, open-with,
+        // toggles) without crashing, and populates a reasonable number of them.
+        let inspector = InfoInspectorController()
+        let infoTmp = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-info-\(UUID().uuidString).txt")
+        try? "hi".write(to: infoTmp, atomically: true, encoding: .utf8)
+        inspector.present(urls: [infoTmp], over: nil)
+        check("get-info-populates", inspector.debugFieldCount >= 5, "\(inspector.debugFieldCount) fields")
+        inspector.debugClose()
+        try? FileManager.default.removeItem(at: infoTmp)
         return (ok, lines)
     }
 }

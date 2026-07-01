@@ -719,3 +719,10 @@
 "update.viaSparkle" = "Updates werden automatisch über Sparkle bereitgestellt.";
 "progress.ofBytes" = "%@ von %@";
 "progress.timeLeft" = "noch %@";
+"info.whereFromLabel" = "Herkunft";
+"info.versionLabel" = "Version";
+"info.copyrightLabel" = "Copyright";
+"info.openWithLabel" = "Öffnen mit";
+"info.commentLabel" = "Kommentar";
+"info.hideExtensionLabel" = "Endung ausblenden";
+"info.otherApp" = "Andere…";
