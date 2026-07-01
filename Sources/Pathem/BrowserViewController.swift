@@ -70,6 +70,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Natural-language command bar (Cmd-Shift-A): Foundation Model when
     /// available, the engine heuristic otherwise.
     private lazy var aiBar = AICommandBar()
+    /// Floating quick-action buttons shown over the panes when items are selected.
+    private let quickBar = QuickActionsBar()
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
     private lazy var settings = SettingsWindowController()
@@ -188,6 +190,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         shelfHiddenConstraint = vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor)
         shelfShownConstraint = vSplit.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
         shelfHiddenConstraint?.isActive = true
+        // Floating quick-actions bar, centered near the bottom of the panes (above any terminal).
+        host.addSubview(quickBar)
+        NSLayoutConstraint.activate([
+            quickBar.centerXAnchor.constraint(equalTo: split.centerXAnchor),
+            quickBar.bottomAnchor.constraint(equalTo: split.bottomAnchor, constant: -18),
+        ])
+        quickBar.onAction = { [weak self] id in self?.commands.perform(id) }
         view = host
         configureShelf()
     }
@@ -267,7 +276,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.onOpenRemoteFile = { [weak self] connection, remotePath, password, name in
                     self?.openRemoteFile(connection, remotePath: remotePath, password: password, name: name)
                 }
-                pane.onSelectionChanged = { [weak self] in self?.updatePreview() }
+                pane.onSelectionChanged = { [weak self] in
+                    self?.updatePreview()
+                    self?.updateQuickActions()
+                }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -1603,6 +1615,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         previewView.previewItem = activePane?.singleSelectedURL as NSURL?
     }
 
+    /// Show/hide the floating quick-actions bar for the active pane's selection.
+    private func updateQuickActions() {
+        quickBar.update(selectionCount: activePane?.selectedEntries.count ?? 0)
+    }
+
     /// Set the active pane's view mode, then sync the auto-preview pane.
     private func setActiveViewMode(_ mode: ViewFormat.ViewMode) {
         activePane?.setViewMode(mode)
@@ -2926,6 +2943,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // pane re-focus.
         if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
         syncAutoPreview()  // follow the newly active pane's view mode + selection
+        updateQuickActions()  // the quick-actions bar follows the active pane's selection
         saveSessionSoon()
     }
 

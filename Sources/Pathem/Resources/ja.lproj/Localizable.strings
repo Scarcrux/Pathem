@@ -730,3 +730,9 @@
 "aibar.ex1" = "ファイルの種類で整理";
 "aibar.ex2" = "重複ファイルを探す";
 "aibar.ex3" = "サイズ順（大きい順）";
+"quick.open" = "開く";
+"quick.rename" = "名称変更";
+"quick.copy" = "コピー";
+"quick.compress" = "圧縮";
+"quick.getInfo" = "情報を見る";
+"quick.trash" = "ゴミ箱に入れる";

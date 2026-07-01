@@ -730,3 +730,9 @@
 "aibar.ex1" = "nach Dateityp ordnen";
 "aibar.ex2" = "doppelte Dateien finden";
 "aibar.ex3" = "nach Größe sortieren, größte zuerst";
+"quick.open" = "Öffnen";
+"quick.rename" = "Umbenennen";
+"quick.copy" = "Kopieren";
+"quick.compress" = "Komprimieren";
+"quick.getInfo" = "Informationen";
+"quick.trash" = "In den Papierkorb";

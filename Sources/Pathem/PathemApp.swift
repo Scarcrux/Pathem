@@ -139,6 +139,34 @@ enum PathemApp {
             }
         }
 
+        // Live screenshot of the quick-actions bar (PATHEM_QUICKBAR_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_QUICKBAR_SHOT"] != nil {
+            let host = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 320, height: 90),
+                styleMask: [.borderless], backing: .buffered, defer: true)
+            host.isOpaque = false
+            host.backgroundColor = .clear
+            let bar = QuickActionsBar()
+            let content = NSView(frame: host.contentRect(forFrameRect: host.frame))
+            content.addSubview(bar)
+            host.contentView = content
+            NSLayoutConstraint.activate([
+                bar.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+                bar.centerYAnchor.constraint(equalTo: content.centerYAnchor),
+            ])
+            bar.update(selectionCount: 3)
+            host.center()
+            host.makeKeyAndOrderFront(nil)
+            let number = host.windowNumber
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                let capture = Process()
+                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                capture.arguments = ["-x", "-l\(number)", "/tmp/quickbar_live.png"]
+                try? capture.run(); capture.waitUntilExit()
+                exit(0)
+            }
+        }
+
         // Live screenshot of the AI command bar (PATHEM_AI_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_AI_SHOT"] != nil {
             let bar = AICommandBar()

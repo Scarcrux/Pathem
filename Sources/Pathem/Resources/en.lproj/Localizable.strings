@@ -730,3 +730,9 @@
 "aibar.ex1" = "organize by file type";
 "aibar.ex2" = "find duplicate files";
 "aibar.ex3" = "sort by size largest first";
+"quick.open" = "Open";
+"quick.rename" = "Rename";
+"quick.copy" = "Copy";
+"quick.compress" = "Compress";
+"quick.getInfo" = "Get Info";
+"quick.trash" = "Move to Trash";

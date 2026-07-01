@@ -730,3 +730,9 @@
 "aibar.ex1" = "按文件类型整理";
 "aibar.ex2" = "查找重复文件";
 "aibar.ex3" = "按大小排序，最大在前";
+"quick.open" = "打开";
+"quick.rename" = "重命名";
+"quick.copy" = "复制";
+"quick.compress" = "压缩";
+"quick.getInfo" = "显示简介";
+"quick.trash" = "移到废纸篓";

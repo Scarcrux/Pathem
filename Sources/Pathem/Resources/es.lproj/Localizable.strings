@@ -730,3 +730,9 @@
 "aibar.ex1" = "organizar por tipo de archivo";
 "aibar.ex2" = "buscar archivos duplicados";
 "aibar.ex3" = "ordenar por tamaño, mayor primero";
+"quick.open" = "Abrir";
+"quick.rename" = "Renombrar";
+"quick.copy" = "Copiar";
+"quick.compress" = "Comprimir";
+"quick.getInfo" = "Obtener información";
+"quick.trash" = "Mover a la papelera";

@@ -730,3 +730,9 @@
 "aibar.ex1" = "organiser par type de fichier";
 "aibar.ex2" = "trouver les fichiers en double";
 "aibar.ex3" = "trier par taille, plus grand d’abord";
+"quick.open" = "Ouvrir";
+"quick.rename" = "Renommer";
+"quick.copy" = "Copier";
+"quick.compress" = "Compresser";
+"quick.getInfo" = "Lire les informations";
+"quick.trash" = "Placer dans la corbeille";
