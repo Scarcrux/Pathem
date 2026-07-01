@@ -737,3 +737,5 @@
 "quick.getInfo" = "Lire les informations";
 "quick.trash" = "Placer dans la corbeille";
 "quick.openWith" = "Ouvrir avec";
+"breadcrumb.home" = "Départ";
+"bvc.cmd.demoMode" = "Mode démo (données fictives pour captures)";

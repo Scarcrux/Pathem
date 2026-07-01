@@ -117,9 +117,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var cachedIndex: FolderSemanticIndex?
     private var cachedEntries: [FileEntry]?
 
-    /// Set when launched in privacy-safe demo mode, so session restore is skipped and the
-    /// sidebar/panes use the fake workspace instead of the user's real data.
-    private let demoLayout: DemoWorkspace.Layout?
+    /// Set in privacy-safe demo mode (launch flag or the View menu), so session restore is
+    /// skipped and the sidebar/panes use the fake workspace instead of the user's real data.
+    private var demoLayout: DemoWorkspace.Layout?
+    /// Real state saved when demo mode is toggled on, to restore when it's toggled off.
+    private var savedRealSidebar: Sidebar?
+    private var savedPaneFolders: (left: URL?, right: URL?)?
 
     init(start: URL, demo: DemoWorkspace.Layout? = nil) {
         demoLayout = demo
@@ -626,6 +629,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("view.previewPane", L("bvc.cmd.previewPane", "Preview Pane"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.togglePreviewPane()
+        }
+        add("view.demoMode", L("bvc.cmd.demoMode", "Demo Mode (fake data for screenshots)")) {
+            [weak self] in self?.toggleDemoMode()
         }
         add("files.findDuplicates", L("bvc.cmd.findDuplicates", "Find Duplicates"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findDuplicates()
@@ -1895,6 +1901,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asColumn": menuItem.state = activePane?.viewMode == .column ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
+        case "view.demoMode": menuItem.state = isDemoMode ? .on : .off
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
         case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
@@ -2323,20 +2330,49 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private func loadSidebar() {
         if let demoLayout {  // fake favorites/cloud/volumes; no real accounts, hosts, or paths
-            sidebar.demoMode = true
-            sidebar.demoCloud = demoLayout.cloud
-            sidebar.demoVolumes = demoLayout.volumes
-            sidebar.model = Sidebar(groups: [
-                Sidebar.Group(
-                    title: L("sidebar.favoritesDefaultName", "Favorites"),
-                    items: demoLayout.favorites.map { Sidebar.Item(name: $0.name, icon: $0.icon, path: $0.url.path) })
-            ])
+            applyDemoSidebar(demoLayout)
             return
         }
         if let saved = loadConfig(Sidebar.self, from: Self.sidebarURL) {
             sidebar.model = saved
         } else {
             sidebar.model = .makeDefault(home: FileManager.default.homeDirectoryForCurrentUser)
+        }
+    }
+
+    private func applyDemoSidebar(_ layout: DemoWorkspace.Layout) {
+        sidebar.demoMode = true
+        sidebar.demoCloud = layout.cloud
+        sidebar.demoVolumes = layout.volumes
+        sidebar.model = Sidebar(groups: [
+            Sidebar.Group(
+                title: L("sidebar.favoritesDefaultName", "Favorites"),
+                items: layout.favorites.map { Sidebar.Item(name: $0.name, icon: $0.icon, path: $0.url.path) })
+        ])
+        BreadcrumbBar.demoRoot = layout.root  // clean "Home ▸ …" path, hiding the temp prefix
+    }
+
+    var isDemoMode: Bool { demoLayout != nil }
+
+    /// Toggle privacy-safe demo mode from the View menu, live (no relaunch).
+    func toggleDemoMode() {
+        if demoLayout == nil {
+            savedRealSidebar = sidebar.model
+            savedPaneFolders = (leftTabs.activePane?.currentURL, rightTabs.activePane?.currentURL)
+            let layout = DemoWorkspace.build()
+            demoLayout = layout
+            applyDemoSidebar(layout)
+            leftTabs.activePane?.navigate(to: layout.leftStart)
+            rightTabs.activePane?.navigate(to: layout.rightStart)
+        } else {
+            demoLayout = nil
+            sidebar.demoMode = false
+            sidebar.demoCloud = []
+            sidebar.demoVolumes = []
+            BreadcrumbBar.demoRoot = nil
+            sidebar.model = savedRealSidebar ?? .makeDefault(home: FileManager.default.homeDirectoryForCurrentUser)
+            if let url = savedPaneFolders?.left { leftTabs.activePane?.navigate(to: url) }
+            if let url = savedPaneFolders?.right { rightTabs.activePane?.navigate(to: url) }
         }
     }
 

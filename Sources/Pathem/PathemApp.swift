@@ -495,6 +495,8 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Commit…", "git.commit"))
         viewMenu.addItem(commandItem("Push", "git.push"))
         viewMenu.addItem(commandItem("Pull", "git.pull"))
+        viewMenu.addItem(.separator())
+        viewMenu.addItem(commandItem("Demo Mode (fake data for screenshots)", "view.demoMode"))
 
         let goItem = NSMenuItem()
         mainMenu.addItem(goItem)

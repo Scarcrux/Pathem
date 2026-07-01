@@ -737,3 +737,5 @@
 "quick.getInfo" = "显示简介";
 "quick.trash" = "移到废纸篓";
 "quick.openWith" = "打开方式";
+"breadcrumb.home" = "个人";
+"bvc.cmd.demoMode" = "演示模式（用于截图的虚构数据）";

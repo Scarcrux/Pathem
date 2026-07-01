@@ -15,6 +15,10 @@ final class BreadcrumbBar: NSView {
     private let stack = NSStackView()
     private var current: URL?
 
+    /// In demo mode, breadcrumbs show the path from this fake root (labeled "Home"), hiding the
+    /// real temp-directory prefix so screenshots look clean.
+    static var demoRoot: URL?
+
     override init(frame: NSRect) {
         super.init(frame: frame)
         stack.orientation = .horizontal
@@ -43,7 +47,16 @@ final class BreadcrumbBar: NSView {
         current = url
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         guard let url else { return }
-        for (index, folder) in Self.ancestors(of: url).enumerated() {
+        var ancestors = Self.ancestors(of: url)
+        // Demo mode: drop everything above the fake root and label the root "Home".
+        var rootLabel: String?
+        if let demoRoot = Self.demoRoot?.standardizedFileURL,
+            let rootIndex = ancestors.firstIndex(where: { $0.standardizedFileURL == demoRoot })
+        {
+            ancestors = Array(ancestors[rootIndex...])
+            rootLabel = L("breadcrumb.home", "Home")
+        }
+        for (index, folder) in ancestors.enumerated() {
             if index > 0 {
                 let separator = NSTextField(labelWithString: "›")
                 separator.font = .systemFont(ofSize: 12)
@@ -51,7 +64,7 @@ final class BreadcrumbBar: NSView {
                 stack.addArrangedSubview(separator)
             }
             let segment = BreadcrumbSegment(folder: folder)
-            segment.title = FileManager.default.displayName(atPath: folder.path)
+            segment.title = index == 0 && rootLabel != nil ? rootLabel! : FileManager.default.displayName(atPath: folder.path)
             segment.onClick = { [weak self] in self?.onNavigate?(folder) }
             segment.onDropURLs = { [weak self] urls, move in self?.onDropURLs?(urls, folder, move) }
             stack.addArrangedSubview(segment)
