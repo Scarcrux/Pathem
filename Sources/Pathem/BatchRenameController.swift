@@ -111,7 +111,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
         let buttons = NSStackView(views: [warnLabel, NSView(), cancel, applyButton])
         buttons.orientation = .horizontal
-        buttons.spacing = 8
+        buttons.spacing = 12
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
         let content = panel.contentView!
@@ -119,16 +119,16 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         content.addSubview(scroll)
         content.addSubview(buttons)
         NSLayoutConstraint.activate([
-            form.topAnchor.constraint(equalTo: content.topAnchor, constant: 14),
-            form.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 14),
-            form.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
+            form.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            form.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            form.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             scroll.topAnchor.constraint(equalTo: form.bottomAnchor, constant: 10),
-            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 14),
-            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
+            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             buttons.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 10),
-            buttons.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 14),
-            buttons.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
-            buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -14),
+            buttons.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            buttons.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20),
         ])
         findField.widthAnchor.constraint(greaterThanOrEqualToConstant: 220).isActive = true
     }

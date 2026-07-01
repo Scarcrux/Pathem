@@ -11,6 +11,7 @@ import PathemTerminal
 enum PathemApp {
     static var liveSettings: SettingsWindowController?  // holds the PATHEM_SETTINGS_SHOT window
     static var liveInspector: InfoInspectorController?  // holds the PATHEM_INFO_SHOT panel
+    static var liveDialog: AnyObject?  // holds the PATHEM_DIALOG_SHOT window
 
     static func main() {
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
@@ -134,6 +135,26 @@ enum PathemApp {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // Live screenshot of the archive-contents dialog (PATHEM_DIALOG_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_DIALOG_SHOT"] != nil {
+            let dialog = ArchiveContentsController()
+            Self.liveDialog = dialog
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                dialog.present(
+                    over: window, archiveName: "photos.zip",
+                    entries: ["IMG_0001.jpg", "IMG_0002.jpg", "notes/todo.txt", "notes/ideas.md", "cover.png"],
+                    onExtractAll: {})
+                let number = dialog.debugWindowNumber
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let capture = Process()
+                    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                    capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/dialog_archive.png"]
+                    try? capture.run(); capture.waitUntilExit()
+                    exit(0)
                 }
             }
         }

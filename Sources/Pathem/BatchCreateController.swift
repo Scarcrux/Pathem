@@ -97,10 +97,10 @@ final class BatchCreateController: NSObject, NSTextViewDelegate {
         let content = panel.contentView!
         content.addSubview(stack)
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 16),
-            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -16),
-            stack.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -16),
+            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            stack.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20),
             inputScroll.widthAnchor.constraint(equalTo: stack.widthAnchor),
             inputScroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
             buttons.widthAnchor.constraint(equalTo: stack.widthAnchor),

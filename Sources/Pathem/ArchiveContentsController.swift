@@ -6,6 +6,7 @@ import PathemEngine
 @MainActor
 final class ArchiveContentsController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     private let panel: NSPanel
+    var debugWindowNumber: Int { panel.windowNumber }
     private let table = NSTableView()
     private let countLabel = NSTextField(labelWithString: "")
     private var entries: [String] = []
@@ -52,14 +53,15 @@ final class ArchiveContentsController: NSObject, NSTableViewDataSource, NSTableV
         let close = NSButton(title: L("common.close", "Close"), target: self, action: #selector(closeTapped))
         close.bezelStyle = .rounded
         close.keyEquivalent = "\u{1b}"
+        extractAll.keyEquivalent = "\r"  // default action, highlighted
         let buttons = NSStackView(views: [countLabel, NSView(), close, extractAll])
         buttons.orientation = .horizontal
-        buttons.spacing = 8
+        buttons.spacing = 12
 
         let stack = NSStackView(views: [scroll, buttons])
         stack.orientation = .vertical
-        stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
+        stack.spacing = 14
+        stack.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         stack.translatesAutoresizingMaskIntoConstraints = false
         panel.contentView?.addSubview(stack)
         if let content = panel.contentView {

@@ -138,12 +138,12 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         diskStats.spacing = 3
         let actions = NSStackView(views: [aiButton, systemSettings, NSView(), reveal, trashButton])
         actions.orientation = .horizontal
-        actions.spacing = 8
+        actions.spacing = 12
 
         let root = NSStackView(views: [header, diskStats, scroll, actions])
         root.orientation = .vertical
         root.spacing = 10
-        root.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
+        root.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         root.translatesAutoresizingMaskIntoConstraints = false
         panel.contentView?.addSubview(root)
         if let content = panel.contentView {

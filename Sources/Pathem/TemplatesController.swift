@@ -55,28 +55,30 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
             b.bezelStyle = .rounded
             return b
         }
+        let run = button(L("templates.run", "Run"), #selector(runTapped))
+        run.keyEquivalent = "\r"  // default action, highlighted
         let buttons = NSStackView(views: [
             button(L("templates.new", "New…"), #selector(newTapped)),
             button(L("templates.edit", "Edit…"), #selector(editTapped)),
             button(L("templates.delete", "Delete"), #selector(deleteTapped)),
             NSView(),
-            button(L("templates.run", "Run"), #selector(runTapped)),
+            run,
         ])
         buttons.orientation = .horizontal
-        buttons.spacing = 8
+        buttons.spacing = 12
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
         let content = panel.contentView!
         content.addSubview(scroll)
         content.addSubview(buttons)
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: content.topAnchor, constant: 14),
-            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 14),
-            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
+            scroll.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             buttons.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 10),
             buttons.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
             buttons.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
-            buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -14),
+            buttons.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20),
         ])
     }
 

@@ -52,20 +52,20 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         let close = button(L("common.done", "Done"), #selector(closePanel))
         let bar = NSStackView(views: [add, edit, remove, importFZ, spacer, connect, close])
         bar.orientation = .horizontal
-        bar.spacing = 8
+        bar.spacing = 12
         bar.translatesAutoresizingMaskIntoConstraints = false
 
         let content = panel.contentView!
         content.addSubview(scroll)
         content.addSubview(bar)
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: content.topAnchor, constant: 12),
-            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 12),
-            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -12),
+            scroll.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             bar.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 8),
-            bar.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 12),
-            bar.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -12),
-            bar.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -12),
+            bar.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            bar.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            bar.bottomAnchor.constraint(equalTo: content.bottomAnchor, constant: -20),
         ])
     }
 

@@ -194,11 +194,11 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 
         let buttons = NSStackView(views: [statusLabel, NSView(), cancelButton, cancelAllButton, clearButton])
         buttons.orientation = .horizontal
-        buttons.spacing = 8
+        buttons.spacing = 12
         let stack = NSStackView(views: [scroll, buttons])
         stack.orientation = .vertical
         stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
+        stack.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
         stack.translatesAutoresizingMaskIntoConstraints = false
         window.contentView?.addSubview(stack)
         if let content = window.contentView {
