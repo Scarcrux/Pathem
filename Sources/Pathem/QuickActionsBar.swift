@@ -7,6 +7,8 @@ import AppKit
 final class QuickActionsBar: NSView {
     /// Perform the command with this id (wired to the browser's command table).
     var onAction: ((String) -> Void)?
+    /// Pop up the "Open With" apps menu, anchored to the given button.
+    var onOpenWith: ((NSView) -> Void)?
 
     private let blur = NSVisualEffectView()
     private let stack = NSStackView()
@@ -16,6 +18,7 @@ final class QuickActionsBar: NSView {
     /// id, SF Symbol, tooltip, needs a single selection.
     private static let actions: [(String, String, String, Bool)] = [
         ("files.open", "arrow.up.forward.app", L("quick.open", "Open"), false),
+        ("files.openWith", "square.grid.2x2", L("quick.openWith", "Open With"), false),
         ("files.rename", "pencil", L("quick.rename", "Rename"), true),
         ("files.copy", "doc.on.doc", L("quick.copy", "Copy"), false),
         ("files.compress", "archivebox", L("quick.compress", "Compress"), false),
@@ -108,6 +111,11 @@ final class QuickActionsBar: NSView {
 
     @objc private func tapped(_ sender: NSButton) {
         guard sender.tag < buttons.count else { return }
-        onAction?(buttons[sender.tag].id)
+        let id = buttons[sender.tag].id
+        if id == "files.openWith" {
+            onOpenWith?(sender)  // opens a menu of apps rather than running a single command
+        } else {
+            onAction?(id)
+        }
     }
 }

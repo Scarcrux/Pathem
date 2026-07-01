@@ -197,6 +197,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             quickBar.bottomAnchor.constraint(equalTo: split.bottomAnchor, constant: -18),
         ])
         quickBar.onAction = { [weak self] id in self?.commands.perform(id) }
+        quickBar.onOpenWith = { [weak self] anchor in self?.showQuickOpenWith(from: anchor) }
         view = host
         configureShelf()
     }
@@ -1618,6 +1619,57 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Show/hide the floating quick-actions bar for the active pane's selection.
     private func updateQuickActions() {
         quickBar.update(selectionCount: activePane?.selectedEntries.count ?? 0)
+    }
+
+    /// Pop up an "Open With" apps menu for the active selection, anchored to the quick-bar button.
+    private func showQuickOpenWith(from anchor: NSView) {
+        guard let urls = activePane?.selectedLocalURLs(), let first = urls.first else { NSSound.beep(); return }
+        let menu = NSMenu()
+        var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
+        if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first), let index = apps.firstIndex(of: preferred) {
+            apps.remove(at: index)
+            apps.insert(preferred, at: 0)  // default app first
+        }
+        if apps.isEmpty {
+            let none = NSMenuItem(title: L("list.noApplications", "No applications"), action: nil, keyEquivalent: "")
+            none.isEnabled = false
+            menu.addItem(none)
+        } else {
+            for app in apps {
+                let item = NSMenuItem(
+                    title: FileManager.default.displayName(atPath: app.path),
+                    action: #selector(quickOpenSelection(with:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = app
+                let icon = (NSWorkspace.shared.icon(forFile: app.path).copy() as? NSImage) ?? NSImage()
+                icon.size = NSSize(width: 16, height: 16)
+                item.image = icon
+                menu.addItem(item)
+            }
+            menu.addItem(.separator())
+            let other = NSMenuItem(title: L("list.other", "Other…"), action: #selector(quickOpenSelectionWithOther), keyEquivalent: "")
+            other.target = self
+            menu.addItem(other)
+        }
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: anchor.bounds.height + 4), in: anchor)
+    }
+
+    @objc private func quickOpenSelection(with sender: NSMenuItem) {
+        guard let app = sender.representedObject as? URL,
+            let urls = activePane?.selectedLocalURLs(), !urls.isEmpty
+        else { return }
+        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    @objc private func quickOpenSelectionWithOther() {
+        let panel = NSOpenPanel()
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let app = panel.url,
+            let urls = activePane?.selectedLocalURLs(), !urls.isEmpty
+        else { return }
+        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
     /// Set the active pane's view mode, then sync the auto-preview pane.

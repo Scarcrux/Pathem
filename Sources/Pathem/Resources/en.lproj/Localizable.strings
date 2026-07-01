@@ -736,3 +736,4 @@
 "quick.compress" = "Compress";
 "quick.getInfo" = "Get Info";
 "quick.trash" = "Move to Trash";
+"quick.openWith" = "Open With";
