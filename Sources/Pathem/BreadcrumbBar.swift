@@ -64,8 +64,11 @@ final class BreadcrumbBar: NSView {
         var folder = url.standardizedFileURL
         while true {
             result.insert(folder, at: 0)
-            let parent = folder.deletingLastPathComponent()
-            if parent.path == folder.path { break }  // reached "/"
+            if folder.path == "/" { break }  // reached root; stop before "/" -> "/.." loops
+            // Standardize the parent: for a directory URL (trailing slash), deletingLastPathComponent
+            // can yield "/../" chains that never equal their child, so normalize and guard on length.
+            let parent = folder.deletingLastPathComponent().standardizedFileURL
+            guard parent.path != folder.path, parent.path.count < folder.path.count else { break }
             folder = parent
         }
         return result
