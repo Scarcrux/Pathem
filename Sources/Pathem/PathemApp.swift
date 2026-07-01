@@ -139,6 +139,29 @@ enum PathemApp {
             }
         }
 
+        // Live screenshot of the transfer queue with an in-progress download (PATHEM_QUEUE_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_QUEUE_SHOT"] != nil {
+            let queue = TransferQueueController()
+            Self.liveDialog = queue
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-queue-demo.bin")
+            try? Data(repeating: 0, count: 46_000).write(to: tmp)  // 46% of 100k
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                let running = TransferQueueController.Item(name: "vacation-4k.mov", totalBytes: 100_000, progressFile: tmp) {
+                    try? await Task.sleep(for: .seconds(4))
+                }
+                let queued = TransferQueueController.Item(name: "photos.zip", totalBytes: 5_000_000, progressFile: tmp) {}
+                queue.run([running, queued], title: "Downloading from example.com", over: window) { _, _ in }
+                let number = queue.debugWindowNumber
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let capture = Process()
+                    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                    capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/queue_live.png"]
+                    try? capture.run(); capture.waitUntilExit()
+                    exit(0)
+                }
+            }
+        }
+
         // Live screenshot of the archive-contents dialog (PATHEM_DIALOG_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_DIALOG_SHOT"] != nil {
             let dialog = ArchiveContentsController()

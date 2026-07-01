@@ -2521,7 +2521,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let items = entries.map { entry -> TransferQueueController.Item in
                 let remotePath = PaneController.joinRemote(ctx.path, entry.name)
                 let local = self.uniqueLocalURL(dir.appendingPathComponent(entry.name))
-                return TransferQueueController.Item(name: entry.name) {
+                return TransferQueueController.Item(name: entry.name, totalBytes: entry.size, progressFile: local) {
                     try await provider.download(
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
@@ -2553,7 +2553,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let provider = RemoteProviders.make(for: connection.proto)
         let items = files.map { url -> TransferQueueController.Item in
             let dest = PaneController.joinRemote(remotePath, url.lastPathComponent)
-            return TransferQueueController.Item(name: url.lastPathComponent) {
+            let size = Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+            // No local target to poll for an upload, so progressFile is nil (indeterminate bar);
+            // totalBytes is still carried for the queue's summary.
+            return TransferQueueController.Item(name: url.lastPathComponent, totalBytes: size, progressFile: nil) {
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
         }

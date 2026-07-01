@@ -12,6 +12,11 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 {
     struct Item {
         let name: String
+        /// Total bytes (0 if unknown), for a determinate per-job bar.
+        var totalBytes: Int64 = 0
+        /// A local file whose growing size tracks progress (downloads write here). nil for
+        /// uploads, where there's no local target to poll, so the bar stays indeterminate.
+        var progressFile: URL? = nil
         let run: () async throws -> Void
     }
 
@@ -21,14 +26,20 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         let id = UUID()
         let name: String
         let batch: UUID
+        let totalBytes: Int64
+        let progressFile: URL?
         let run: () async throws -> Void
         var state: State = .queued
-        init(name: String, batch: UUID, run: @escaping () async throws -> Void) {
+        var transferred: Int64 = 0  // updated by the poll timer while running
+        init(name: String, batch: UUID, totalBytes: Int64, progressFile: URL?, run: @escaping () async throws -> Void) {
             self.name = name
             self.batch = batch
+            self.totalBytes = totalBytes
+            self.progressFile = progressFile
             self.run = run
         }
     }
+    private var progressTimer: Timer?
 
     private struct Batch {
         var remaining: Int
@@ -38,6 +49,7 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     private let window: NSWindow
+    var debugWindowNumber: Int { window.windowNumber }
     private let table = NSTableView()
     private let statusLabel = NSTextField(labelWithString: "")
     private var jobs: [Job] = []
@@ -69,7 +81,10 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         }
         let batchID = UUID()
         batches[batchID] = Batch(remaining: items.count, completion: completion)
-        jobs.append(contentsOf: items.map { Job(name: $0.name, batch: batchID, run: $0.run) })
+        jobs.append(
+            contentsOf: items.map {
+                Job(name: $0.name, batch: batchID, totalBytes: $0.totalBytes, progressFile: $0.progressFile, run: $0.run)
+            })
         statusLabel.stringValue = title
         table.reloadData()
         if !self.window.isVisible { self.window.center() }
@@ -96,6 +111,7 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         currentJob = next
         table.reloadData()
         updateStatus()
+        startProgressTimer(for: next)
         currentTask = Task { @MainActor in
             var failure: Error?
             do { try await next.run() } catch { failure = error }
@@ -103,7 +119,32 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         }
     }
 
+    /// While a pollable job runs, poll its output file's size and refresh its row so the
+    /// per-job progress bar advances. Only downloads (which write a known local file) are
+    /// pollable; uploads have no local target, so their bar stays indeterminate.
+    private func startProgressTimer(for job: Job) {
+        progressTimer?.invalidate()
+        progressTimer = nil
+        guard job.progressFile != nil, job.totalBytes > 0 else { return }
+        // Capture only `self` (a Sendable @MainActor class); re-fetch the job from currentJob
+        // inside so no non-Sendable value crosses into the @Sendable timer block.
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let job = self.currentJob, job.state == .running,
+                    let file = job.progressFile
+                else { return }
+                let size = (try? file.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+                job.transferred = Int64(size)
+                if let row = self.jobs.firstIndex(where: { $0 === job }) {
+                    self.table.reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
+                }
+            }
+        }
+    }
+
     private func finish(_ job: Job, failure: Error?, cancelled: Bool) {
+        progressTimer?.invalidate()
+        progressTimer = nil
         job.state = cancelled ? .cancelled : (failure == nil ? .done : .failed)
         if var batch = batches[job.batch] {
             batch.remaining -= 1
@@ -239,10 +280,56 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         if tableColumn.identifier.rawValue == "name" {
             cell.textField?.stringValue = job.name
             cell.textField?.textColor = .labelColor
-        } else {
-            cell.textField?.stringValue = statusText(job.state)
-            cell.textField?.textColor = statusColor(job.state)
+            return cell
         }
+        // Status column: a determinate bar for a running, pollable (download) job; else text.
+        if job.state == .running, job.totalBytes > 0, job.progressFile != nil {
+            return progressCell(for: job, in: tableView)
+        }
+        cell.textField?.stringValue = statusText(job.state)
+        cell.textField?.textColor = statusColor(job.state)
+        return cell
+    }
+
+    private func progressCell(for job: Job, in tableView: NSTableView) -> NSView {
+        let id = NSUserInterfaceItemIdentifier("progress")
+        let cell: NSTableCellView
+        let bar: NSProgressIndicator
+        if let reused = tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView,
+            let existing = reused.subviews.compactMap({ $0 as? NSProgressIndicator }).first
+        {
+            cell = reused
+            bar = existing
+        } else {
+            cell = NSTableCellView()
+            cell.identifier = id
+            bar = NSProgressIndicator()
+            bar.isIndeterminate = false
+            bar.minValue = 0
+            bar.maxValue = 1
+            bar.controlSize = .small
+            bar.style = .bar
+            bar.translatesAutoresizingMaskIntoConstraints = false
+            let pct = NSTextField(labelWithString: "")
+            pct.font = .systemFont(ofSize: 10)
+            pct.textColor = .secondaryLabelColor
+            pct.alignment = .right
+            pct.translatesAutoresizingMaskIntoConstraints = false
+            cell.addSubview(bar)
+            cell.addSubview(pct)
+            cell.textField = pct
+            NSLayoutConstraint.activate([
+                bar.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
+                bar.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                pct.leadingAnchor.constraint(equalTo: bar.trailingAnchor, constant: 6),
+                pct.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
+                pct.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                pct.widthAnchor.constraint(equalToConstant: 30),
+            ])
+        }
+        let fraction = min(1, Double(job.transferred) / Double(job.totalBytes))
+        bar.doubleValue = fraction
+        cell.textField?.stringValue = "\(Int(fraction * 100))%"
         return cell
     }
 
