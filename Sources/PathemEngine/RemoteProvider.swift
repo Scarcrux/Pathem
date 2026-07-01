@@ -180,9 +180,16 @@ public struct CurlFTPProvider: RemoteProvider {
 }
 
 /// Runs a subprocess off the main actor. Returns (stdout, exit code, stderr).
-/// Drains stdout and stderr concurrently so a large transfer can't deadlock the
-/// pipe, and honors Task cancellation by terminating the process (so a transfer
-/// can be cancelled mid-flight).
+///
+/// Reads stdout/stderr with event-driven readability handlers rather than a
+/// blocking `readDataToEndOfFile()`, and completes on the child's own exit
+/// (`terminationHandler`). That matters when a grandchild inherits the pipe's
+/// write end and outlives the child we spawned (the classic case is the `adb`
+/// daemon, but any tool that forks a persistent helper or a ProxyCommand does
+/// it): a blocking read would wait for EOF that never comes and hang forever.
+/// Cancellation terminates the child (SIGTERM, then SIGKILL if it lingers), so a
+/// transfer can be cancelled mid-flight even against a process that ignores
+/// SIGTERM.
 enum RemoteRunner {
     nonisolated static func run(
         _ executable: String, _ args: [String], input: String? = nil, env: [String: String]? = nil,
@@ -203,37 +210,59 @@ enum RemoteRunner {
                     process.standardError = err
                     let stdin = Pipe()
                     if input != nil { process.standardInput = stdin }
+
+                    // Accumulate both streams as data arrives, off the pipe's own queue,
+                    // so nothing ever blocks waiting for an EOF that a lingering grandchild
+                    // could withhold. An empty read is EOF; drop the handler then.
+                    let sink = OutputSink()
+                    out.fileHandleForReading.readabilityHandler = { h in
+                        let d = h.availableData
+                        if d.isEmpty { h.readabilityHandler = nil } else { sink.appendOut(d) }
+                    }
+                    err.fileHandleForReading.readabilityHandler = { h in
+                        let d = h.availableData
+                        if d.isEmpty { h.readabilityHandler = nil } else { sink.appendErr(d) }
+                    }
+
+                    // Fires once, on a background queue, when the direct child is reaped
+                    // (even if the pipe never sees EOF). Give the readers a brief window to
+                    // drain whatever is still buffered, then stop reading and report.
+                    process.terminationHandler = { proc in
+                        DispatchQueue.global().asyncAfter(deadline: .now() + 0.2) {
+                            out.fileHandleForReading.readabilityHandler = nil
+                            err.fileHandleForReading.readabilityHandler = nil
+                            box.finish()  // release the process; disarm the SIGKILL escalation
+                            let (o, e) = sink.snapshot()
+                            cont.resume(
+                                returning: (o, proc.terminationStatus, String(decoding: e, as: UTF8.self)))
+                        }
+                    }
+
                     guard box.adopt(process) else {  // cancelled before we could start
+                        out.fileHandleForReading.readabilityHandler = nil
+                        err.fileHandleForReading.readabilityHandler = nil
+                        process.terminationHandler = nil
                         cont.resume(throwing: CancellationError())
                         return
                     }
                     do {
                         try process.run()
                     } catch {
+                        out.fileHandleForReading.readabilityHandler = nil
+                        err.fileHandleForReading.readabilityHandler = nil
+                        process.terminationHandler = nil
                         cont.resume(throwing: error)
                         return
                     }
                     box.markLaunched()  // safe to terminate now (handles a cancel that raced run)
                     if let input {  // feed stdin (config / batch), then close so the tool proceeds
                         // Use the throwing API and swallow a broken pipe: if the child
-                        // already exited or was cancelled mid-write, fall through to
-                        // draining + waitUntilExit rather than raising an uncatchable
-                        // NSException (SIGPIPE is ignored process-wide at startup).
+                        // already exited or was cancelled mid-write, let the termination
+                        // handler report rather than raising an uncatchable NSException
+                        // (SIGPIPE is ignored process-wide at startup).
                         try? stdin.fileHandleForWriting.write(contentsOf: Data(input.utf8))
                         try? stdin.fileHandleForWriting.close()
                     }
-                    // Drain stdout and stderr concurrently so a large stream on either
-                    // pipe can't fill its buffer and deadlock the process.
-                    let group = DispatchGroup()
-                    var errData = Data()
-                    DispatchQueue.global().async(group: group) {
-                        errData = err.fileHandleForReading.readDataToEndOfFile()
-                    }
-                    let outData = out.fileHandleForReading.readDataToEndOfFile()
-                    group.wait()
-                    process.waitUntilExit()
-                    cont.resume(
-                        returning: (outData, process.terminationStatus, String(decoding: errData, as: UTF8.self)))
                 }
             }
         } onCancel: {
@@ -244,7 +273,9 @@ enum RemoteRunner {
 
 /// Lock-guarded holder so a cancellation handler (on another thread) can
 /// terminate the running process. Tracks launch state because Process.terminate()
-/// on a task that has not been launched raises an uncatchable exception.
+/// on a task that has not been launched raises an uncatchable exception, and
+/// escalates SIGTERM to SIGKILL so a child that ignores SIGTERM can't hang the
+/// awaiting task forever.
 private final class ProcessBox: @unchecked Sendable {
     private let lock = NSLock()
     private var process: Process?
@@ -267,7 +298,7 @@ private final class ProcessBox: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         launched = true
-        if cancelled, process?.isRunning == true { process?.terminate() }
+        if cancelled { killNow() }
     }
 
     /// Request termination; only ever touches a process that has launched.
@@ -275,6 +306,43 @@ private final class ProcessBox: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         cancelled = true
-        if launched, process?.isRunning == true { process?.terminate() }
+        if launched { killNow() }
+    }
+
+    /// The child has exited and been reported; release it so a later SIGKILL
+    /// escalation can't land on a reused pid.
+    func finish() {
+        lock.lock()
+        defer { lock.unlock() }
+        process = nil
+    }
+
+    /// SIGTERM now, then SIGKILL after a grace period if it is still alive. Caller
+    /// holds the lock.
+    private func killNow() {
+        guard let process, process.isRunning else { return }
+        process.terminate()  // SIGTERM: let it clean up
+        let pid = process.processIdentifier
+        DispatchQueue.global().asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self else { return }
+            self.lock.lock()
+            defer { self.lock.unlock() }
+            if self.process?.isRunning == true { kill(pid, SIGKILL) }
+        }
+    }
+}
+
+/// Thread-safe accumulator for a subprocess's stdout/stderr, written from the
+/// pipes' readability queues and read once the process exits.
+private final class OutputSink: @unchecked Sendable {
+    private let lock = NSLock()
+    private var out = Data()
+    private var err = Data()
+    func appendOut(_ d: Data) { lock.lock(); out.append(d); lock.unlock() }
+    func appendErr(_ d: Data) { lock.lock(); err.append(d); lock.unlock() }
+    func snapshot() -> (Data, Data) {
+        lock.lock()
+        defer { lock.unlock() }
+        return (out, err)
     }
 }
