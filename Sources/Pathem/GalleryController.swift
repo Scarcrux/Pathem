@@ -263,6 +263,17 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     }
 
     func collectionView(
+        _ collectionView: NSCollectionView, draggingSession session: NSDraggingSession,
+        willBeginAt screenPoint: NSPoint, forItemsAt indexPaths: Set<IndexPath>
+    ) {
+        let urls = indexPaths.compactMap { path -> URL? in
+            guard path.item < entries.count, !entries[path.item].isDataless else { return nil }
+            return fileURL(for: entries[path.item])
+        }
+        FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
+    }
+
+    func collectionView(
         _ collectionView: NSCollectionView, validateDrop draggingInfo: NSDraggingInfo,
         proposedIndexPath: AutoreleasingUnsafeMutablePointer<NSIndexPath>,
         dropOperation proposedDropOperation: UnsafeMutablePointer<NSCollectionView.DropOperation>

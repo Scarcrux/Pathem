@@ -3569,6 +3569,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "split-stable-on-view-switch", abs(beforeRight - afterRight) < 5,
             "right pane \(Int(beforeRight)) -> \(Int(afterRight))")
+        // Dragging out must advertise both file URLs (modern apps) and legacy filenames (VMware
+        // etc.) on the same pasteboard; adding the legacy type must not drop the file URLs.
+        let scratch = NSPasteboard(name: NSPasteboard.Name("com.scarcrux.pathem.dragcheck"))
+        scratch.clearContents()
+        let dragURLs = [URL(fileURLWithPath: "/tmp/a.txt"), URL(fileURLWithPath: "/tmp/b.txt")]
+        scratch.writeObjects(dragURLs.map { $0 as NSURL })
+        FileDrag.addLegacyFilenames(dragURLs, to: scratch)
+        let keepsFileURL = scratch.canReadObject(
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+        let filenames = scratch.propertyList(forType: FileDrag.filenamesType) as? [String]
+        check(
+            "drag-has-legacy-filenames", keepsFileURL && filenames == dragURLs.map(\.path),
+            "fileURL=\(keepsFileURL) names=\(filenames ?? [])")
         return (ok, lines)
     }
 }

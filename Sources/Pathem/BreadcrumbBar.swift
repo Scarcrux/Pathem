@@ -133,6 +133,10 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
         context == .outsideApplication ? [.copy] : [.copy, .move]
     }
 
+    nonisolated func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
+        FileDrag.addLegacyFilenames([folder], to: session.draggingPasteboard)  // legacy apps read this
+    }
+
     // MARK: Drop target
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }

@@ -466,6 +466,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     func tableView(
+        _ tableView: NSTableView, draggingSession session: NSDraggingSession,
+        willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
+    ) {
+        guard let dir = directoryURL else { return }
+        let urls = rowIndexes.compactMap { row -> URL? in
+            guard row < entries.count, !entries[row].isDataless else { return nil }
+            return dir.appendingPathComponent(entries[row].name)
+        }
+        FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
+    }
+
+    func tableView(
         _ tableView: NSTableView, validateDrop info: NSDraggingInfo,
         proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation
     ) -> NSDragOperation {

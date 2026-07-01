@@ -387,6 +387,18 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     }
 
     func collectionView(
+        _ collectionView: NSCollectionView, draggingSession session: NSDraggingSession,
+        willBeginAt screenPoint: NSPoint, forItemsAt indexPaths: Set<IndexPath>
+    ) {
+        guard let dir = directoryURL else { return }
+        let urls = indexPaths.compactMap { path -> URL? in
+            guard path.item < entries.count, !entries[path.item].isDataless else { return nil }
+            return dir.appendingPathComponent(entries[path.item].name)
+        }
+        FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
+    }
+
+    func collectionView(
         _ collectionView: NSCollectionView, validateDrop draggingInfo: NSDraggingInfo,
         proposedIndexPath: AutoreleasingUnsafeMutablePointer<NSIndexPath>,
         dropOperation proposedDropOperation: UnsafeMutablePointer<NSCollectionView.DropOperation>
