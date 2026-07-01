@@ -727,3 +727,6 @@
 "info.hideExtensionLabel" = "Ocultar extensión";
 "info.otherApp" = "Otra…";
 "info.aclLabel" = "Compartir";
+"aibar.ex1" = "organizar por tipo de archivo";
+"aibar.ex2" = "buscar archivos duplicados";
+"aibar.ex3" = "ordenar por tamaño, mayor primero";

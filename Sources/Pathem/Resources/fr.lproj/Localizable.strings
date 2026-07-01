@@ -727,3 +727,6 @@
 "info.hideExtensionLabel" = "Masquer l’extension";
 "info.otherApp" = "Autre…";
 "info.aclLabel" = "Partage";
+"aibar.ex1" = "organiser par type de fichier";
+"aibar.ex2" = "trouver les fichiers en double";
+"aibar.ex3" = "trier par taille, plus grand d’abord";

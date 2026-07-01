@@ -727,3 +727,6 @@
 "info.hideExtensionLabel" = "拡張子を隠す";
 "info.otherApp" = "その他…";
 "info.aclLabel" = "共有";
+"aibar.ex1" = "ファイルの種類で整理";
+"aibar.ex2" = "重複ファイルを探す";
+"aibar.ex3" = "サイズ順（大きい順）";

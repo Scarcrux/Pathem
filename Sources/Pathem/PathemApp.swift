@@ -139,6 +139,23 @@ enum PathemApp {
             }
         }
 
+        // Live screenshot of the AI command bar (PATHEM_AI_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_AI_SHOT"] != nil {
+            let bar = AICommandBar()
+            Self.liveDialog = bar
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                bar.present(over: window, resolve: { _ in nil }, run: { _ in })
+                let number = bar.debugWindowNumber
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let capture = Process()
+                    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                    capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/ai_live.png"]
+                    try? capture.run(); capture.waitUntilExit()
+                    exit(0)
+                }
+            }
+        }
+
         // Live screenshot of the transfer queue with an in-progress download (PATHEM_QUEUE_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_QUEUE_SHOT"] != nil {
             let queue = TransferQueueController()

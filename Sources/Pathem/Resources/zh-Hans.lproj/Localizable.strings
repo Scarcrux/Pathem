@@ -727,3 +727,6 @@
 "info.hideExtensionLabel" = "隐藏扩展名";
 "info.otherApp" = "其他…";
 "info.aclLabel" = "共享";
+"aibar.ex1" = "按文件类型整理";
+"aibar.ex2" = "查找重复文件";
+"aibar.ex3" = "按大小排序，最大在前";
