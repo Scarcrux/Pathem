@@ -418,6 +418,7 @@ enum PathemApp {
         fileMenu.addItem(linkItem)
         fileMenu.addItem(commandItem("Split File…", "files.split"))
         fileMenu.addItem(commandItem("Merge Parts", "files.merge"))
+        fileMenu.addItem(commandItem("Convert Images…", "files.convertImages"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Secure Delete…", "files.secureDelete"))

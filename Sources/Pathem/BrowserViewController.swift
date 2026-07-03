@@ -575,6 +575,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let ext = (entry.name as NSString).pathExtension
             return !ext.isEmpty && ext.allSatisfy(\.isNumber)  // a ".001"-style part
         }) { [weak self] in self?.mergeSelection() }
+        add("files.convertImages", L("bvc.cmd.convertImages", "Convert Images…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.contains { Self.isImageName($0.name) }
+        }) { [weak self] in self?.convertImagesSelection() }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1410,6 +1414,66 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    static let imageExtensions: Set<String> = [
+        "png", "jpg", "jpeg", "heic", "heif", "gif", "tiff", "tif", "bmp", "webp",
+    ]
+    static func isImageName(_ name: String) -> Bool {
+        imageExtensions.contains((name as NSString).pathExtension.lowercased())
+    }
+
+    /// Convert/resize the selected images via sips (out-of-process), after a small dialog
+    /// for the target format and maximum pixel size.
+    private func convertImagesSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter { Self.isImageName($0.lastPathComponent) }
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+
+        let formatPopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 200, height: 25))
+        formatPopup.addItem(withTitle: L("convert.keepFormat", "Keep format"))
+        for format in ImageConverter.Format.allCases { formatPopup.addItem(withTitle: format.rawValue.uppercased()) }
+        let sizeField = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 22))
+        sizeField.placeholderString = L("convert.maxPixels", "Max pixels (optional)")
+        func row(_ label: String, _ control: NSView) -> NSStackView {
+            let name = NSTextField(labelWithString: label)
+            name.font = .systemFont(ofSize: 12)
+            name.alignment = .right
+            name.widthAnchor.constraint(equalToConstant: 90).isActive = true
+            let stack = NSStackView(views: [name, control])
+            stack.orientation = .horizontal
+            stack.spacing = 8
+            return stack
+        }
+        let accessory = NSStackView(views: [
+            row(L("convert.formatLabel", "Format"), formatPopup),
+            row(L("convert.sizeLabel", "Max size"), sizeField),
+        ])
+        accessory.orientation = .vertical
+        accessory.alignment = .leading
+        accessory.spacing = 8
+        accessory.frame = NSRect(x: 0, y: 0, width: 300, height: 66)
+
+        let alert = NSAlert()
+        alert.messageText = String(format: L("bvc.convertImagesQ", "Convert %d image(s)"), urls.count)
+        alert.accessoryView = accessory
+        alert.addButton(withTitle: L("common.convert", "Convert"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            let index = formatPopup.indexOfSelectedItem
+            let format = index > 0 ? ImageConverter.Format.allCases[index - 1] : nil
+            let maxDim = Int(sizeField.stringValue.trimmingCharacters(in: .whitespaces))
+            let options = ImageConverter.Options(format: format, maxDimension: maxDim.flatMap { $0 > 0 ? $0 : nil })
+            guard !options.isNoOp else { return }
+            Task { @MainActor in
+                let result = await ImageConverter.process(urls, options: options)
+                self.activePane?.reloadIfShowingListing()
+                if !result.failures.isEmpty {
+                    self.presentFailures(result.failures, title: L("bvc.convertFailed", "Couldn’t convert"))
+                }
+            }
+        }
     }
 
     /// Split the selected file into fixed-size parts (asks for a size in MB), off-main.
