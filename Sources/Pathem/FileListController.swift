@@ -466,6 +466,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.highlightedTableColumn = sorted
     }
 
+    /// The union of the selected rows' rects, clipped to the visible area, in window
+    /// coordinates. Nil when nothing is selected or the selection is scrolled out of view.
+    func selectionRectInWindow() -> NSRect? {
+        let rows = tableView.selectedRowIndexes
+        guard !rows.isEmpty else { return nil }
+        var union = NSRect.null
+        for row in rows { union = union.union(tableView.rect(ofRow: row)) }
+        let visible = union.intersection(tableView.visibleRect)
+        guard !visible.isNull, visible.height > 1 else { return nil }  // scrolled out of view
+        return tableView.convert(visible, to: nil)
+    }
+
     /// The real header state (which column is marked, its direction, and whether the
     /// triangle is actually drawn), for the layout smoke check.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? {

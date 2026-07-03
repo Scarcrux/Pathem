@@ -35,6 +35,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Header sort-indicator state (list view only), for the layout smoke check.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { content.debugSortIndicator }
+
+    /// The current selection's bounding rect in window coordinates (for floating the
+    /// quick-actions bar next to it), and the pane's scrolling clip view (to reposition
+    /// the bar as the list scrolls).
+    var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
+    var contentClipView: NSClipView { content.scrollView.contentView }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)

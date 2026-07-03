@@ -37,6 +37,10 @@ protocol PaneContentView: AnyObject {
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool)
     /// Header sort-indicator state (list view only), for the layout smoke check.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { get }
+    /// The bounding rect of the current selection in window coordinates, clipped to the
+    /// visible area (nil when nothing is selected or it is scrolled out of view). Lets the
+    /// quick-actions bar float next to the selected items.
+    func selectionRectInWindow() -> NSRect?
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
@@ -72,6 +76,8 @@ extension PaneContentView {
     func setGitStates(_ states: [String: GitFileState]) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
+    /// Views without a row-rect concept fall back to no anchor (the bar centers on the pane).
+    func selectionRectInWindow() -> NSRect? { nil }
     /// Only the list view distinguishes drag copy vs move for now.
     var dragMovesByDefault: Bool {
         get { false }

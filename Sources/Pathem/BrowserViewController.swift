@@ -204,12 +204,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         shelfHiddenConstraint = vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor)
         shelfShownConstraint = vSplit.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
         shelfHiddenConstraint?.isActive = true
-        // Floating quick-actions bar, centered near the bottom of the panes (above any terminal).
+        // Floating quick-actions bar, positioned next to the selection (see positionQuickBar).
         host.addSubview(quickBar)
-        NSLayoutConstraint.activate([
-            quickBar.centerXAnchor.constraint(equalTo: split.centerXAnchor),
-            quickBar.bottomAnchor.constraint(equalTo: split.bottomAnchor, constant: -18),
-        ])
+        quickBar.translatesAutoresizingMaskIntoConstraints = true
         quickBar.onAction = { [weak self] id in self?.commands.perform(id) }
         quickBar.onOpenWith = { [weak self] anchor in self?.showQuickOpenWith(from: anchor) }
         // Ambient download chip, floating at the top-center of the panes.
@@ -1645,9 +1642,65 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         previewView.previewItem = activePane?.singleSelectedURL as NSURL?
     }
 
-    /// Show/hide the floating quick-actions bar for the active pane's selection.
+    private var quickBarScrollObserver: NSObjectProtocol?
+    private weak var quickBarObservedClip: NSClipView?
+
+    /// Show/hide the floating quick-actions bar for the active pane's selection, and place
+    /// it next to the selected rows.
     private func updateQuickActions() {
         quickBar.update(selectionCount: activePane?.selectedEntries.count ?? 0)
+        observeActivePaneScroll()
+        positionQuickBar()
+    }
+
+    /// Reposition the bar while the active pane scrolls, so it stays next to the selection.
+    private func observeActivePaneScroll() {
+        guard let clip = activePane?.contentClipView else { return }
+        if quickBarObservedClip === clip { return }
+        if let token = quickBarScrollObserver { NotificationCenter.default.removeObserver(token) }
+        clip.postsBoundsChangedNotifications = true
+        quickBarScrollObserver = NotificationCenter.default.addObserver(
+            forName: NSView.boundsDidChangeNotification, object: clip, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.positionQuickBar() }
+        }
+        quickBarObservedClip = clip
+    }
+
+    /// Float the bar next to the selection (all rects in host coordinates), clamped inside
+    /// the pane; falls back to the pane's top-center when the selection is scrolled out.
+    private func positionQuickBar() {
+        guard !quickBar.isHidden else { return }
+        let host = view
+        quickBar.layoutSubtreeIfNeeded()
+        let size = quickBar.fittingSize
+        let pane =
+            activePane.map { host.convert($0.contentClipView.bounds, from: $0.contentClipView) }
+            ?? host.convert(split.bounds, from: split)
+        let selection = activePane?.selectionRectInWindow.map { host.convert($0, from: nil) }
+        let origin = Self.quickBarOrigin(barSize: size, selection: selection, pane: pane, margin: 8)
+        quickBar.frame = NSRect(origin: origin, size: size)
+    }
+
+    /// Pure geometry (so it is testable without a laid-out window): the bar sits just below
+    /// the selection, or above it when there is no room, centered on the selection and
+    /// clamped inside the pane. In a non-flipped host, lower on screen is a smaller y.
+    static func quickBarOrigin(barSize size: NSSize, selection: NSRect?, pane: NSRect, margin: CGFloat)
+        -> NSPoint
+    {
+        var x: CGFloat
+        var y: CGFloat
+        if let r = selection {
+            x = r.midX - size.width / 2
+            y = r.minY - margin - size.height  // just below the selection
+            if y < pane.minY + margin { y = r.maxY + margin }  // no room below, place above
+        } else {
+            x = pane.midX - size.width / 2
+            y = pane.maxY - size.height - 16  // top-center of the pane
+        }
+        x = min(max(x, pane.minX + margin), pane.maxX - size.width - margin)
+        y = min(max(y, pane.minY + margin), pane.maxY - size.height - margin)
+        return NSPoint(x: x.rounded(), y: y.rounded())
     }
 
     /// Pop up an "Open With" apps menu for the active selection, anchored to the quick-bar button.
@@ -1803,10 +1856,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: Ambient download suggestions
 
+    /// Test override for the watched folder (the smoke points this at a temp dir).
+    var debugDownloadsOverride: URL?
+
     private var downloadsFolder: URL {
-        FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+        debugDownloadsOverride
+            ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
     }
+
+    /// Seed the known set and run one change pass, for the smoke integration check.
+    func debugRunDownloadsCheck(seedKnown: Set<String> = []) {
+        downloadKnown = seedKnown
+        downloadsDidChange()
+    }
+
+    var debugDownloadChipText: String? { downloadBar.debugVisibleText }
 
     /// Watch Downloads so a newly-arrived file can be filed in one click. Off in demo mode
     /// and under the smoke harness (which must stay deterministic).
@@ -3921,6 +3986,31 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let chip = DownloadSuggestionBar()
         chip.show(fileURL: URL(fileURLWithPath: "/tmp/invoice.pdf"), destinationName: "PDFs")
         check("download-chip-builds", chip.debugVisibleText?.contains("PDFs") == true, chip.debugVisibleText ?? "nil")
+        // End-to-end ambient path: point Downloads at a temp dir, drop a file, run one change
+        // pass, and confirm the chip offers to move it (catches wiring bugs the unit tests can't).
+        let dlDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dl-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dlDir, withIntermediateDirectories: true)
+        try? Data("x".utf8).write(to: dlDir.appendingPathComponent("receipt.pdf"))
+        debugDownloadsOverride = dlDir
+        debugRunDownloadsCheck(seedKnown: [])  // empty seed => receipt.pdf reads as newly arrived
+        check(
+            "download-suggestion-fires", debugDownloadChipText?.contains("receipt.pdf") == true,
+            debugDownloadChipText ?? "no chip")
+        downloadBar.hide()
+        currentDownloadSuggestion = nil
+        pendingDownloadSuggestions = []
+        debugDownloadsOverride = nil
+        try? FileManager.default.removeItem(at: dlDir)
+        // The quick-actions bar geometry must place the bar next to the selection, not at a
+        // fixed spot (verified as pure math; the live layout is confirmed visually).
+        let qbPane = NSRect(x: 0, y: 0, width: 500, height: 700)
+        let qbSel = NSRect(x: 100, y: 400, width: 200, height: 24)
+        let qbOrigin = Self.quickBarOrigin(
+            barSize: NSSize(width: 240, height: 38), selection: qbSel, pane: qbPane, margin: 8)
+        let qbMidY = qbOrigin.y + 19
+        check(
+            "quickbar-near-selection", abs(qbMidY - qbSel.midY) < 80,
+            "bar midY \(Int(qbMidY)) vs selection \(Int(qbSel.midY))")
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list
