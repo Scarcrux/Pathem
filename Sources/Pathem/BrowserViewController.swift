@@ -30,6 +30,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var sizeBrowser = SizeBrowserController()
     private lazy var cleanup = CleanupController()
     private lazy var xattrController = XattrController()
+    private lazy var diffViewer = DiffViewerController()
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -587,6 +588,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.removeQuarantine", L("bvc.cmd.removeQuarantine", "Remove Quarantine"), enabled: hasLocalSelection) {
             [weak self] in self?.removeQuarantineFromSelection()
         }
+        add("files.diff", L("bvc.cmd.diff", "Compare Files"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            let entries = pane.selectedEntries
+            return entries.count == 2 && entries.allSatisfy { !$0.isDirectory }
+        }) { [weak self] in self?.compareSelection() }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1422,6 +1428,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Compare the two selected files side by side.
+    private func compareSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let entries = pane.selectedEntries
+        guard entries.count == 2, entries.allSatisfy({ !$0.isDirectory }) else { NSSound.beep(); return }
+        diffViewer.present(
+            left: pane.currentURL.appendingPathComponent(entries[0].name),
+            right: pane.currentURL.appendingPathComponent(entries[1].name), over: view.window)
     }
 
     /// Show the extended-attributes panel for the single selected item.

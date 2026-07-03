@@ -531,6 +531,7 @@ enum PathemApp {
         toolsMenu.addItem(commandItem("Transfers", "tools.transfers"))
         toolsMenu.addItem(commandItem("Eject Volume", "files.ejectVolume"))
         toolsMenu.addItem(.separator())
+        toolsMenu.addItem(commandItem("Compare Files", "files.diff"))
         toolsMenu.addItem(commandItem("Extended Attributes…", "files.xattrs"))
         toolsMenu.addItem(commandItem("Remove Quarantine", "files.removeQuarantine"))
 
