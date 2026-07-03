@@ -1808,8 +1808,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let review = OrganizeReviewController(
                 feedbackURL: Self.organizeFeedbackURL ?? folder.appendingPathComponent(".pathem-feedback.json"))
             self.organizeReview = review  // retain while the sheet is up
-            review.present(suggestions: suggestions, folderName: folder.lastPathComponent, over: window) {
-                [weak self] finalized in
+            review.present(
+                suggestions: suggestions, folderName: folder.lastPathComponent, destinations: destinations,
+                over: window
+            ) { [weak self] finalized in
                 self?.organizeReview = nil
                 self?.runOrganize(finalized)
             }

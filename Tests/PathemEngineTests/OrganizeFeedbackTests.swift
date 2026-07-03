@@ -49,6 +49,18 @@ import Testing
         #expect(OrganizeFeedback().confidenceBias(ruleID: "by-kind", ext: "pdf", destination: "PDFs") == 0)
     }
 
+    @Test func preferredDestinationTracksMostRecentReroute() {
+        var log = OrganizeFeedback()
+        log.entries = [
+            .init(ruleID: "by-kind", destination: "Finance", ext: "pdf", verdict: .routed, destinationPath: "/Users/x/Documents/Finance"),
+            .init(ruleID: "by-kind", destination: "Taxes", ext: "pdf", verdict: .routed, destinationPath: "/Users/x/Documents/Taxes"),
+        ]
+        // Most recent correction wins.
+        #expect(log.preferredDestinationPath(ruleID: "by-kind", ext: "pdf") == "/Users/x/Documents/Taxes")
+        #expect(log.preferredDestinationPath(ruleID: "by-kind", ext: "png") == nil)  // different type
+        #expect(log.preferredDestinationPath(ruleID: "screenshots", ext: "pdf") == nil)  // different rule
+    }
+
     @Test func missingFileLoadsEmpty() {
         let log = OrganizeFeedback.load(from: tempURL())
         #expect(log.entries.isEmpty)

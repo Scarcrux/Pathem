@@ -193,6 +193,25 @@ import Testing
         #expect(pdf.rationale.contains("skip"))
     }
 
+    @Test func learnedRoutingSendsFileToPreferredDestination() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try makeFile("invoice.pdf", in: dir)
+        let finance = dir.appendingPathComponent("Finance")
+        var memory = OrganizeFeedback()
+        // The user re-routed a pdf to Finance before; future pdfs should follow.
+        memory.entries = [
+            .init(
+                ruleID: "by-kind", destination: "Finance", ext: "pdf", verdict: .routed,
+                destinationPath: finance.path)
+        ]
+
+        let plan = OrganizePlanner.suggestions(for: dir, destinations: FilingDestinations(), memory: memory)
+        let pdf = try #require(suggestion(for: "invoice.pdf", in: plan))
+        #expect(pdf.destination?.path == finance.path)  // not the default PDFs subfolder
+        #expect(pdf.rationale.contains("file these in Finance"))
+    }
+
     @Test func emptyMemoryLeavesDefaultsUnchanged() throws {
         let dir = try tempDir()
         defer { try? FileManager.default.removeItem(at: dir) }

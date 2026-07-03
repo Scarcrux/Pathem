@@ -154,9 +154,20 @@ public enum OrganizePlanner {
         // so every rule stays confidence-only and personalization lives in one place.
         return out.map { base in
             var s = base
+            let ext = s.file.pathExtension.lowercased()
+            // Learned routing: if the user has re-routed this (rule, extension) before, send
+            // future files of that kind to the same destination.
+            if case .move(let current) = s.kind,
+                let preferred = memory.preferredDestinationPath(ruleID: s.ruleID, ext: ext)
+            {
+                let target = URL(fileURLWithPath: preferred)
+                if target.standardizedFileURL != current.standardizedFileURL {
+                    s.kind = .move(to: target)
+                    s.rationale += "  (learned: you file these in \(target.lastPathComponent))"
+                }
+            }
             let bias = memory.confidenceBias(
-                ruleID: s.ruleID, ext: s.file.pathExtension.lowercased(),
-                destination: s.destination?.lastPathComponent)
+                ruleID: s.ruleID, ext: ext, destination: s.destination?.lastPathComponent)
             let defaultAccepted = s.confidence >= config.autoAcceptConfidence
             s.confidence = min(1, max(0, s.confidence + bias))
             s.accepted = s.confidence >= config.autoAcceptConfidence

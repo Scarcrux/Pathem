@@ -22,10 +22,12 @@ final class OrganizeReviewController: NSObject, NSTableViewDataSource, NSTableVi
     private let detailWhy = NSTextField(wrappingLabelWithString: "")
     private let feedbackNote = NSTextField(labelWithString: "")
     private let revealButton = NSButton()
+    private let moveButton = NSButton()
     private let goodButton = NSButton()
     private let badButton = NSButton()
 
     private var suggestions: [OrganizePlanner.Suggestion] = []
+    private var destinations = FilingDestinations()
     private var onApply: (([OrganizePlanner.Suggestion]) -> Void)?
     private let feedbackURL: URL
 
@@ -44,10 +46,11 @@ final class OrganizeReviewController: NSObject, NSTableViewDataSource, NSTableVi
     /// Present as a sheet over `window`. `onApply` receives the suggestions with the
     /// user's final checked state (apply then filters to the accepted ones).
     func present(
-        suggestions: [OrganizePlanner.Suggestion], folderName: String, over window: NSWindow,
-        onApply: @escaping ([OrganizePlanner.Suggestion]) -> Void
+        suggestions: [OrganizePlanner.Suggestion], folderName: String, destinations: FilingDestinations,
+        over window: NSWindow, onApply: @escaping ([OrganizePlanner.Suggestion]) -> Void
     ) {
         self.suggestions = Self.sortedForReview(suggestions)
+        self.destinations = destinations
         self.onApply = onApply
         panel.title = String(format: L("organize.review.title", "Organize %@"), folderName)
         table.reloadData()
@@ -145,23 +148,24 @@ final class OrganizeReviewController: NSObject, NSTableViewDataSource, NSTableVi
         feedbackNote.textColor = .tertiaryLabelColor
 
         revealButton.title = L("organize.review.reveal", "Reveal in Finder")
+        moveButton.title = L("organize.review.moveTo", "Move to…")
         goodButton.title = L("organize.review.good", "Good")
         badButton.title = L("organize.review.bad", "Not helpful")
         for (button, action) in [
-            (revealButton, #selector(revealSelected)), (goodButton, #selector(markGood)),
-            (badButton, #selector(markBad)),
+            (revealButton, #selector(revealSelected)), (moveButton, #selector(showMoveMenu(_:))),
+            (goodButton, #selector(markGood)), (badButton, #selector(markBad)),
         ] {
             button.bezelStyle = .rounded
             button.controlSize = .small
             button.target = self
             button.action = action
         }
+        moveButton.image = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
         goodButton.image = NSImage(systemSymbolName: "hand.thumbsup", accessibilityDescription: nil)
         badButton.image = NSImage(systemSymbolName: "hand.thumbsdown", accessibilityDescription: nil)
-        goodButton.imagePosition = .imageLeading
-        badButton.imagePosition = .imageLeading
+        for button in [moveButton, goodButton, badButton] { button.imagePosition = .imageLeading }
 
-        let buttons = NSStackView(views: [revealButton, goodButton, badButton, feedbackNote])
+        let buttons = NSStackView(views: [revealButton, moveButton, goodButton, badButton, feedbackNote])
         buttons.spacing = 8
         buttons.alignment = .centerY
 
@@ -208,7 +212,7 @@ final class OrganizeReviewController: NSObject, NSTableViewDataSource, NSTableVi
             format: L("organize.review.why", "Why: %@  (rule: %@, confidence %d%%)"),
             s.rationale, s.ruleID, confidence)
         feedbackNote.stringValue = ""
-        [revealButton, goodButton, badButton].forEach { $0.isEnabled = true }
+        [revealButton, moveButton, goodButton, badButton].forEach { $0.isEnabled = true }
     }
 
     private func clearDetail() {
@@ -216,7 +220,7 @@ final class OrganizeReviewController: NSObject, NSTableViewDataSource, NSTableVi
         detailPath.stringValue = ""
         detailWhy.stringValue = ""
         feedbackNote.stringValue = ""
-        [revealButton, goodButton, badButton].forEach { $0.isEnabled = false }
+        [revealButton, moveButton, goodButton, badButton].forEach { $0.isEnabled = false }
     }
 
     // MARK: Actions
@@ -237,6 +241,73 @@ final class OrganizeReviewController: NSObject, NSTableViewDataSource, NSTableVi
     @objc private func revealSelected() {
         guard suggestions.indices.contains(table.selectedRow) else { return }
         NSWorkspace.shared.activateFileViewerSelecting([suggestions[table.selectedRow].file])
+    }
+
+    /// Pop up the destinations menu for the selected row: the designated folders, common
+    /// in-folder subfolders, then Other… to pick any folder.
+    @objc private func showMoveMenu(_ sender: NSButton) {
+        let row = table.selectedRow
+        guard suggestions.indices.contains(row) else { return }
+        let folder = suggestions[row].file.deletingLastPathComponent()
+        let menu = NSMenu()
+        for dest in destinations.destinations {
+            let item = NSMenuItem(
+                title: dest.name, action: #selector(chooseDestination(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = dest.url
+            menu.addItem(item)
+        }
+        menu.addItem(.separator())
+        for name in ["Images", "PDFs", "Documents", "Movies", "Audio", "Archives"] {
+            let item = NSMenuItem(
+                title: String(format: L("organize.review.hereSubfolder", "Here / %@"), name),
+                action: #selector(chooseDestination(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = folder.appendingPathComponent(name)
+            menu.addItem(item)
+        }
+        menu.addItem(.separator())
+        let other = NSMenuItem(
+            title: L("organize.review.other", "Other…"), action: #selector(chooseOther), keyEquivalent: "")
+        other.target = self
+        menu.addItem(other)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 2), in: sender)
+    }
+
+    @objc private func chooseDestination(_ item: NSMenuItem) {
+        guard let url = item.representedObject as? URL else { return }
+        reroute(to: url)
+    }
+
+    @objc private func chooseOther() {
+        let picker = NSOpenPanel()
+        picker.canChooseDirectories = true
+        picker.canChooseFiles = false
+        picker.allowsMultipleSelection = false
+        picker.prompt = L("organize.review.choose", "Choose")
+        guard picker.runModal() == .OK, let url = picker.url else { return }
+        reroute(to: url)
+    }
+
+    /// Send the selected suggestion to `destination` this run, keep it checked, and record
+    /// the correction as a strong learning signal (the planner will route this file-type
+    /// there next time).
+    private func reroute(to destination: URL) {
+        let row = table.selectedRow
+        guard suggestions.indices.contains(row) else { return }
+        let s = suggestions[row]
+        OrganizeFeedback.record(
+            .init(
+                ruleID: s.ruleID, destination: destination.lastPathComponent,
+                ext: s.file.pathExtension.lowercased(), verdict: .routed, destinationPath: destination.path),
+            to: feedbackURL)
+        suggestions[row].kind = .move(to: destination)
+        suggestions[row].accepted = true
+        table.reloadData(forRowIndexes: [row], columnIndexes: [0])
+        tableViewSelectionDidChange(Notification(name: NSTableView.selectionDidChangeNotification))
+        updateCounts()
+        feedbackNote.stringValue = String(
+            format: L("organize.review.rerouted", "Will move to %@"), destination.lastPathComponent)
     }
 
     @objc private func markGood() { recordFeedback(.good) }

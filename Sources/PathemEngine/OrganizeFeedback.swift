@@ -9,20 +9,28 @@ import Foundation
 /// the app owns, so it is unit-tested against a temp file.
 public struct OrganizeFeedback: Codable, Sendable, Equatable {
     /// Explicit ratings (`good`/`bad`) count double; the implicit per-apply decision
-    /// (`applied`/`skipped`) counts single.
-    public enum Verdict: String, Codable, Sendable, Equatable { case good, bad, applied, skipped }
+    /// (`applied`/`skipped`) counts single. `routed` is an explicit correction of a
+    /// suggestion's destination (the strongest signal: it says where these belong).
+    public enum Verdict: String, Codable, Sendable, Equatable { case good, bad, applied, skipped, routed }
 
     public struct Entry: Codable, Sendable, Equatable {
         public var ruleID: String
         /// The move destination's folder name, or nil for a trash suggestion.
         public var destination: String?
+        /// The full destination path the user re-routed to (for `.routed`), so the planner
+        /// can send future files of this kind to the same place.
+        public var destinationPath: String?
         /// The file's lowercased extension, so signals can be scoped by kind.
         public var ext: String
         public var verdict: Verdict
 
-        public init(ruleID: String, destination: String?, ext: String, verdict: Verdict) {
+        public init(
+            ruleID: String, destination: String?, ext: String, verdict: Verdict,
+            destinationPath: String? = nil
+        ) {
             self.ruleID = ruleID
             self.destination = destination
+            self.destinationPath = destinationPath
             self.ext = ext
             self.verdict = verdict
         }
@@ -60,11 +68,19 @@ public struct OrganizeFeedback: Codable, Sendable, Equatable {
 
     private static func weight(_ verdict: Verdict) -> Int {
         switch verdict {
-        case .good: return 2
+        case .good, .routed: return 2  // routing to a destination is a strong positive for it
         case .applied: return 1
         case .skipped: return -1
         case .bad: return -2
         }
+    }
+
+    /// The destination the user has most recently re-routed this (rule, extension) to, if
+    /// any. Most-recent wins, so a fresh correction supersedes an older one.
+    public func preferredDestinationPath(ruleID: String, ext: String) -> String? {
+        entries.last {
+            $0.verdict == .routed && $0.ruleID == ruleID && $0.ext == ext && $0.destinationPath != nil
+        }?.destinationPath
     }
 
     /// Weighted net signal for a rule (across all extensions).
