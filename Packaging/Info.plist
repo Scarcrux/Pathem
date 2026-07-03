@@ -41,6 +41,19 @@
 	<string>Copyright © 2026 Scarcrux. Open source under the MIT License.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Per-folder access rationales shown in the system prompts the first time Pathem
+	     reads each location. A file manager needs these; clear text raises trust and the
+	     grant rate. (Full Disk Access is separate and can only be granted by hand.) -->
+	<key>NSDownloadsFolderUsageDescription</key>
+	<string>Pathem browses and organizes your Downloads, and can offer to file new downloads into place.</string>
+	<key>NSDesktopFolderUsageDescription</key>
+	<string>Pathem browses and organizes the files on your Desktop.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Pathem browses and organizes the files in your Documents.</string>
+	<key>NSRemovableVolumesUsageDescription</key>
+	<string>Pathem browses and manages files on connected drives, memory cards, and phones.</string>
+	<key>NSNetworkVolumesUsageDescription</key>
+	<string>Pathem browses and manages files on mounted network shares.</string>
 	<!-- Sparkle auto-update. The updater stays dormant until SUPublicEDKey is a
 	     real EdDSA key (run Sparkle's generate_keys, paste the public key here).
 	     SUFeedURL points at the appcast attached to GitHub Releases. -->
