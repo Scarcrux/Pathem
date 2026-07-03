@@ -559,6 +559,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.makeHardlink", L("bvc.cmd.makeHardlink", "Make Hard Link"), enabled: hasLocalSelection) {
             [weak self] in self?.makeLinks(kind: .hardlink)
         }
+        add("files.secureDelete", L("bvc.cmd.secureDelete", "Secure Delete…"), enabled: hasLocalSelection) {
+            [weak self] in self?.secureDeleteSelection()
+        }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1394,6 +1397,33 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Overwrite the selected files with random data and delete them, after a strong
+    /// confirmation. Irreversible, and there is no Trash.
+    private func secureDeleteSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = String(
+            format: L("bvc.secureDeleteQ", "Securely erase %d item(s)?"), urls.count)
+        alert.informativeText = L(
+            "bvc.secureDeleteBody",
+            "The files are overwritten with random data and deleted. This cannot be undone and does not use the Trash. On SSD or APFS storage, secure erasure is best-effort.")
+        alert.addButton(withTitle: L("bvc.secureDeleteConfirm", "Erase"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            Task { @MainActor in
+                let result = await Task.detached { SecureDelete.shred(urls) }.value
+                self.activePane?.reloadIfShowingListing()
+                if !result.failures.isEmpty {
+                    self.presentFailures(result.failures, title: L("bvc.secureDeleteFailed", "Couldn’t erase"))
+                }
+            }
+        }
     }
 
     /// Create a symlink, alias, or hard link next to each selected item (undoable).
