@@ -2356,12 +2356,26 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         applyCompactSidebar()
         applyAppearance()
+        applyTooltipDelay()
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
         saveConfig(prefs, to: Self.preferencesURL)
         cachedDir = nil
         cachedIndex = nil
         cachedEntries = nil
         if let directory = activePane?.currentURL { preIndex(directory) }
+    }
+
+    /// AppKit shows a tooltip after `NSInitialToolTipDelay` milliseconds (a long system
+    /// default). Register a near-zero delay for instant tooltips, or clear our override to
+    /// restore the default. A live toggle applies to tooltips shown after this point;
+    /// AppKit may cache the value, so a relaunch guarantees it.
+    private func applyTooltipDelay() {
+        let key = "NSInitialToolTipDelay"
+        if prefs.instantTooltips {
+            UserDefaults.standard.set(1, forKey: key)  // 1 ms, effectively instant
+        } else {
+            UserDefaults.standard.removeObject(forKey: key)
+        }
     }
 
     /// Open the natural-language command bar.

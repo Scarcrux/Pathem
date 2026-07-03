@@ -46,5 +46,14 @@ import Testing
         #expect(prefs.openConnectionsInNewTab == false)  // defaulted
         #expect(prefs.calculateFolderSizes == false)  // defaulted
         #expect(prefs.compactSidebar == false)  // defaulted
+        #expect(prefs.instantTooltips == false)  // defaulted
+    }
+
+    @Test func instantTooltipsDefaultsOffAndRoundTrips() throws {
+        #expect(Preferences.default.instantTooltips == false)
+        var prefs = Preferences.default
+        prefs.instantTooltips = true
+        let data = try JSONEncoder().encode(prefs)
+        #expect(try JSONDecoder().decode(Preferences.self, from: data).instantTooltips == true)
     }
 }

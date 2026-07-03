@@ -51,6 +51,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var singleClickToOpen: Bool
     /// Underline the item name under the pointer while hovering.
     public var underlineOnHover: Bool
+    /// Show tooltips immediately instead of after the system hover delay.
+    public var instantTooltips: Bool
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -62,10 +64,11 @@ public struct Preferences: Codable, Sendable, Equatable {
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
-        underlineOnHover: Bool = false
+        underlineOnHover: Bool = false, instantTooltips: Bool = false
     ) {
         self.singleClickToOpen = singleClickToOpen
         self.underlineOnHover = underlineOnHover
+        self.instantTooltips = instantTooltips
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -129,5 +132,7 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .singleClickToOpen) ?? d.singleClickToOpen
         underlineOnHover =
             try c.decodeIfPresent(Bool.self, forKey: .underlineOnHover) ?? d.underlineOnHover
+        instantTooltips =
+            try c.decodeIfPresent(Bool.self, forKey: .instantTooltips) ?? d.instantTooltips
     }
 }
