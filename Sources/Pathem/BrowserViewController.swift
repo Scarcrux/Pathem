@@ -562,6 +562,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.secureDelete", L("bvc.cmd.secureDelete", "Secure Delete…"), enabled: hasLocalSelection) {
             [weak self] in self?.secureDeleteSelection()
         }
+        add("files.split", L("bvc.cmd.split", "Split File…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
+                pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first
+            else { return false }
+            return !entry.isDirectory
+        }) { [weak self] in self?.splitSelection() }
+        add("files.merge", L("bvc.cmd.mergeParts", "Merge Parts"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
+                let entry = pane.selectedEntries.first
+            else { return false }
+            let ext = (entry.name as NSString).pathExtension
+            return !ext.isEmpty && ext.allSatisfy(\.isNumber)  // a ".001"-style part
+        }) { [weak self] in self?.mergeSelection() }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1397,6 +1410,45 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Split the selected file into fixed-size parts (asks for a size in MB), off-main.
+    private func splitSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first, !entry.isDirectory
+        else { NSSound.beep(); return }
+        let file = pane.currentURL.appendingPathComponent(entry.name)
+        guard
+            let input = promptForName(
+                title: L("bvc.splitTitle", "Split into parts of how many MB?"), default: "100"),
+            let mb = Double(input.trimmingCharacters(in: .whitespaces)), mb > 0
+        else { return }
+        let partSize = Int64(mb * 1_000_000)
+        Task { @MainActor in
+            do {
+                _ = try await Task.detached { try FileSplitter.split(file, partSize: partSize) }.value
+                self.activePane?.reloadIfShowingListing()
+            } catch {
+                self.presentInfo(L("bvc.splitFailed", "Couldn’t split the file"), error.localizedDescription)
+            }
+        }
+    }
+
+    /// Merge the ".001/.002/…" parts starting at the selected part back into the whole.
+    private func mergeSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            let entry = pane.selectedEntries.first
+        else { NSSound.beep(); return }
+        let part = pane.currentURL.appendingPathComponent(entry.name)
+        Task { @MainActor in
+            do {
+                let merged = try await Task.detached { try FileSplitter.merge(firstPart: part) }.value
+                self.activePane?.reloadIfShowingListing()
+                self.activePane?.select(name: merged.lastPathComponent)
+            } catch {
+                self.presentInfo(L("bvc.mergeFailed", "Couldn’t merge the parts"), error.localizedDescription)
+            }
+        }
     }
 
     /// Overwrite the selected files with random data and delete them, after a strong
