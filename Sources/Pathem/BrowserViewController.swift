@@ -29,6 +29,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var previewVisible = false
     private lazy var sizeBrowser = SizeBrowserController()
     private lazy var cleanup = CleanupController()
+    private lazy var xattrController = XattrController()
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -579,6 +580,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.contains { Self.isImageName($0.name) }
         }) { [weak self] in self?.convertImagesSelection() }
+        add("files.xattrs", L("bvc.cmd.xattrs", "Extended Attributes…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.count == 1
+        }) { [weak self] in self?.showXattrs() }
+        add("files.removeQuarantine", L("bvc.cmd.removeQuarantine", "Remove Quarantine"), enabled: hasLocalSelection) {
+            [weak self] in self?.removeQuarantineFromSelection()
+        }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1414,6 +1422,28 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Show the extended-attributes panel for the single selected item.
+    private func showXattrs() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            let entry = pane.selectedEntries.first
+        else { NSSound.beep(); return }
+        xattrController.present(for: pane.currentURL.appendingPathComponent(entry.name), over: view.window)
+    }
+
+    /// Strip com.apple.quarantine from the selection (recursively for folders/bundles).
+    private func removeQuarantineFromSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let total = urls.reduce(0) { $0 + ExtendedAttributes.removeQuarantine(from: $1) }
+        pane.reloadIfShowingListing()
+        presentInfo(
+            L("bvc.quarantineDone", "Quarantine"),
+            total > 0
+                ? String(format: L("bvc.quarantineRemoved", "Cleared the download flag from %d item(s)."), total)
+                : L("bvc.quarantineNone", "No quarantine flags were set."))
     }
 
     static let imageExtensions: Set<String> = [
