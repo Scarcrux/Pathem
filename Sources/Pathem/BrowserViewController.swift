@@ -563,6 +563,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.organizeAI", L("bvc.cmd.organizeWithAI", "Organize with AI…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.organizeWithAI()
         }
+        add("files.organize", L("bvc.cmd.organize", "Organize Folder…"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.organizeFolder()
+        }
         add("files.copySHA256", L("bvc.cmd.copySHA256", "Copy SHA-256"), enabled: hasSelection) { [weak self] in self?.copyChecksums() }
         add("files.verifyChecksum", L("bvc.cmd.verifyChecksum", "Verify Checksum…"), enabled: hasSelection) {
             [weak self] in self?.verifyChecksum()
@@ -1773,6 +1776,65 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.informativeText = text
         alert.addButton(withTitle: L("common.ok", "OK"))
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } }
+    }
+
+    // MARK: - Organize Folder (deterministic rules; no model required)
+
+    private var organizeReview: OrganizeReviewController?
+
+    private static var organizeFeedbackURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("organize-feedback.json")
+    }
+
+    /// Propose a rules-based organization for the active pane's folder and present the
+    /// review sheet: every suggestion is a row the user can inspect, skip, or rate, and
+    /// only the checked ones are applied (undoable, like every other local file op).
+    private func organizeFolder() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let window = view.window else { return }
+        let folder = pane.currentURL
+        let destinations = FilingDestinations.defaults(home: FileManager.default.homeDirectoryForCurrentUser)
+        Task { @MainActor in
+            let suggestions = await Task.detached {
+                OrganizePlanner.suggestions(for: folder, destinations: destinations)
+            }.value
+            guard !suggestions.isEmpty else {
+                self.presentInfo(
+                    L("organize.none.title", "Nothing to organize"),
+                    L("organize.none.body", "No suggestions for this folder (files you touched in the last day, and anything inside a git repo, are left alone)."))
+                return
+            }
+            let review = OrganizeReviewController(
+                feedbackURL: Self.organizeFeedbackURL ?? folder.appendingPathComponent(".pathem-feedback.json"))
+            self.organizeReview = review  // retain while the sheet is up
+            review.present(suggestions: suggestions, folderName: folder.lastPathComponent, over: window) {
+                [weak self] finalized in
+                self?.organizeReview = nil
+                self?.runOrganize(finalized)
+            }
+        }
+    }
+
+    /// Apply the accepted suggestions (apply filters to the checked ones), reload, and
+    /// register undo, then report what happened.
+    private func runOrganize(_ suggestions: [OrganizePlanner.Suggestion]) {
+        guard suggestions.contains(where: \.accepted) else { return }  // user unchecked everything
+        Task { @MainActor in
+            let outcome = await Task.detached { OrganizePlanner.apply(suggestions) }.value
+            self.reloadBothSides()
+            if !outcome.performed.isEmpty {
+                self.registerUndo(outcome.performed, actionName: L("organize.action", "Organize"))
+            }
+            if !outcome.trashedItems.isEmpty { self.registerTrashUndo(outcome.trashedItems) }
+            self.presentInfo(
+                L("organize.done.title", "Organized"),
+                String(
+                    format: L("organize.done.body", "Moved %d, trashed %d"), outcome.moved, outcome.trashed)
+                    + (outcome.failures.isEmpty
+                        ? ""
+                        : String(
+                            format: L("organize.done.skipped", ", %d skipped"), outcome.failures.count)))
+        }
     }
 
     /// Apply (toggle) the named label carried by a "Label" menu item to the selection.
@@ -3721,6 +3783,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 follows: terminalFollows, onSelectTheme: { _ in }, onToggleFollows: { _ in }),
             onChange: { _ in }, onKeymapChange: { _ in }, onGestureChange: { _ in })
         check("settings-embeds", !settingsView.subviews.isEmpty, "\(settingsView.subviews.count) subviews")
+        // Organize review sheet: build it with synthetic suggestions (a move and a trash)
+        // so a crash in the row/detail layout is caught headlessly.
+        let review = OrganizeReviewController(
+            feedbackURL: FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fb-smoke.json"))
+        review.debugLoad([
+            .init(file: URL(fileURLWithPath: "/tmp/a.png"), kind: .move(to: URL(fileURLWithPath: "/tmp/Images")),
+                ruleID: "by-kind", rationale: "Image to Images", confidence: 0.8, size: 1234, accepted: true),
+            .init(file: URL(fileURLWithPath: "/tmp/.DS_Store"), kind: .trash, ruleID: "junk",
+                rationale: "System junk file", confidence: 0.9, size: 6, accepted: true),
+        ])
+        check("organize-review-builds", review.debugRowCount == 2, "\(review.debugRowCount) rows")
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list
