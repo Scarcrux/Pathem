@@ -3794,6 +3794,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 rationale: "System junk file", confidence: 0.9, size: 6, accepted: true),
         ])
         check("organize-review-builds", review.debugRowCount == 2, "\(review.debugRowCount) rows")
+        // Cleanup panel (with its new detail pane) must construct without a layout crash.
+        check("cleanup-builds", CleanupController().debugContentReady, "content ready")
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list

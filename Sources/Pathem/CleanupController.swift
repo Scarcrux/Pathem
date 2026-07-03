@@ -24,6 +24,14 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private let trashButton = NSButton()
     private let gen = GenerationBox()
     private var rows: [Row] = []
+
+    // Detail pane for the selected item.
+    private let detailName = NSTextField(labelWithString: "")
+    private let detailPath = NSTextField(labelWithString: "")
+    private let detailWhy = NSTextField(wrappingLabelWithString: "")
+    private let feedbackNote = NSTextField(labelWithString: "")
+    private let goodButton = NSButton()
+    private let badButton = NSButton()
     private var root = URL(fileURLWithPath: NSHomeDirectory())
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
@@ -39,6 +47,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         panel.title = L("cleanup.panelTitle", "Cleanup")
         build()
     }
+
+    /// True once the panel's content (including the detail pane) has been built, for the
+    /// layout smoke check.
+    var debugContentReady: Bool { (panel.contentView?.subviews.isEmpty == false) }
 
     func present(for url: URL, over window: NSWindow?) {
         root = url
@@ -140,7 +152,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         actions.orientation = .horizontal
         actions.spacing = 12
 
-        let root = NSStackView(views: [header, diskStats, scroll, actions])
+        let detail = buildDetailPane()
+
+        let root = NSStackView(views: [header, diskStats, scroll, detail, actions])
         root.orientation = .vertical
         root.spacing = 10
         root.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
@@ -154,9 +168,65 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 root.bottomAnchor.constraint(equalTo: content.bottomAnchor),
                 scroll.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
                 diskStats.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
+                detail.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
                 diskBar.widthAnchor.constraint(equalTo: diskStats.widthAnchor),
             ])
         }
+        clearDetail()
+    }
+
+    /// A detail pane below the list: the selected item's full path, why it was flagged,
+    /// and good/bad feedback (the same learning signal the organizer records).
+    private func buildDetailPane() -> NSView {
+        let box = NSBox()
+        box.boxType = .custom
+        box.fillColor = .quaternaryLabelColor.withAlphaComponent(0.25)
+        box.borderColor = .separatorColor
+        box.cornerRadius = 8
+        box.titlePosition = .noTitle
+        box.contentViewMargins = NSSize(width: 12, height: 10)
+
+        detailName.font = .systemFont(ofSize: 13, weight: .semibold)
+        detailName.lineBreakMode = .byTruncatingMiddle
+        detailPath.font = .systemFont(ofSize: 11)
+        detailPath.textColor = .secondaryLabelColor
+        detailPath.lineBreakMode = .byTruncatingMiddle
+        detailPath.isSelectable = true
+        detailWhy.font = .systemFont(ofSize: 11)
+        detailWhy.textColor = .secondaryLabelColor
+        detailWhy.maximumNumberOfLines = 2
+        feedbackNote.font = .systemFont(ofSize: 11)
+        feedbackNote.textColor = .tertiaryLabelColor
+
+        goodButton.title = L("organize.review.good", "Good")
+        goodButton.image = NSImage(systemSymbolName: "hand.thumbsup", accessibilityDescription: nil)
+        badButton.title = L("cleanup.keep", "Keep it")
+        badButton.image = NSImage(systemSymbolName: "hand.thumbsdown", accessibilityDescription: nil)
+        for (button, action) in [(goodButton, #selector(markGood)), (badButton, #selector(markBad))] {
+            button.bezelStyle = .rounded
+            button.controlSize = .small
+            button.imagePosition = .imageLeading
+            button.target = self
+            button.action = action
+        }
+
+        let buttons = NSStackView(views: [goodButton, badButton, feedbackNote])
+        buttons.spacing = 8
+        buttons.alignment = .centerY
+        let stack = NSStackView(views: [detailName, detailPath, detailWhy, buttons])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 4
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        box.contentView = stack
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: box.contentView!.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: box.contentView!.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: box.contentView!.topAnchor),
+            detailWhy.widthAnchor.constraint(equalTo: stack.widthAnchor),
+        ])
+        box.heightAnchor.constraint(equalToConstant: 104).isActive = true
+        return box
     }
 
     // MARK: Scan
@@ -277,6 +347,81 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         guard sender.tag < rows.count else { return }
         rows[sender.tag].checked = (sender.state == .on)
         updateSummary()
+    }
+
+    // MARK: Detail pane
+
+    func tableViewSelectionDidChange(_ notification: Notification) {
+        let selected = table.selectedRow
+        guard rows.indices.contains(selected) else { clearDetail(); return }
+        let item = rows[selected].item
+        detailName.stringValue = (item.path as NSString).lastPathComponent
+        detailPath.stringValue = item.path
+        detailWhy.stringValue = whyText(for: item)
+        feedbackNote.stringValue = ""
+        goodButton.isEnabled = true
+        badButton.isEnabled = true
+    }
+
+    private func clearDetail() {
+        detailName.stringValue = L("cleanup.selectRow", "Select an item to see details")
+        detailPath.stringValue = ""
+        detailWhy.stringValue = ""
+        feedbackNote.stringValue = ""
+        goodButton.isEnabled = false
+        badButton.isEnabled = false
+    }
+
+    /// The reasoning line: category, why it was flagged, size, and whether it is safe to
+    /// remove (junk/duplicate) or should be reviewed first (large/old).
+    private func whyText(for item: StorageScan.Item) -> String {
+        let safe = item.category == .junk || item.category == .duplicate
+        let disposition =
+            safe
+            ? L("cleanup.safeToRemove", "safe to remove")
+            : L("cleanup.reviewFirst", "review before deleting")
+        return String(
+            format: L("cleanup.whyDetail", "%@ · %@ · %@ · %@"), item.category.rawValue, item.reason,
+            byteFormatter.string(fromByteCount: item.size), disposition)
+    }
+
+    @objc private func markGood() { recordFeedback(.good) }
+    @objc private func markBad() { recordFeedback(.bad) }
+
+    private func recordFeedback(_ verdict: OrganizeFeedback.Verdict) {
+        let selected = table.selectedRow
+        guard rows.indices.contains(selected) else { return }
+        let item = rows[selected].item
+        if let url = Self.feedbackURL() {
+            OrganizeFeedback.record(
+                .init(
+                    ruleID: "cleanup:\(item.category.rawValue)", destination: nil,
+                    ext: (item.path as NSString).pathExtension.lowercased(), verdict: verdict),
+                to: url)
+        }
+        // "Keep it" also unchecks the row so it isn't trashed this pass.
+        if verdict == .bad {
+            rows[selected].checked = false
+            table.reloadData(
+                forRowIndexes: [selected], columnIndexes: IndexSet(0..<table.numberOfColumns))
+            updateSummary()
+        }
+        feedbackNote.stringValue =
+            verdict == .good
+            ? L("cleanup.notedGood", "Noted as good")
+            : L("cleanup.notedKeep", "Noted, and unchecked")
+    }
+
+    /// The shared feedback log (same file the organizer writes), so verdicts from both
+    /// surfaces feed one behavior signal.
+    private static func feedbackURL() -> URL? {
+        let fm = FileManager.default
+        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let dir = base.appendingPathComponent("Pathem", isDirectory: true)
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("organize-feedback.json")
     }
 
     // MARK: Actions
