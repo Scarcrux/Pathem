@@ -24,6 +24,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private let trashButton = NSButton()
     private let gen = GenerationBox()
     private var rows: [Row] = []
+    /// The shared behavior log, loaded at scan time so pre-checking reflects what the
+    /// user tends to remove vs keep.
+    private var memory = OrganizeFeedback()
 
     // Detail pane for the selected item.
     private let detailName = NSTextField(labelWithString: "")
@@ -241,6 +244,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         summaryLabel.stringValue = L("cleanup.phaseScanning", "Scanning files…")
         rows = []
         quickReport = nil
+        memory = Self.feedbackURL().map { OrganizeFeedback.load(from: $0) } ?? OrganizeFeedback()
         table.reloadData()
         trashButton.isEnabled = false
         spinner.startAnimation(nil)
@@ -284,15 +288,32 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             return
         }
         let priorChecked = Dictionary(rows.map { ($0.item.path, $0.checked) }, uniquingKeysWith: { a, _ in a })
-        func row(_ item: StorageScan.Item, _ defaultChecked: Bool) -> Row {
-            Row(item: item, checked: priorChecked[item.path] ?? defaultChecked)
+        func row(_ item: StorageScan.Item) -> Row {
+            // Keep any toggle the user already made; otherwise use the learned default.
+            Row(item: item, checked: priorChecked[item.path] ?? defaultChecked(for: item))
         }
-        rows =
-            report.junk.map { row($0, true) }
-            + report.duplicates.map { row($0, true) }
-            + report.large.map { row($0, false) }
-            + report.old.map { row($0, false) }
+        rows = (report.junk + report.duplicates + report.large + report.old).map(row)
         table.reloadData()
+    }
+
+    /// Junk and duplicates start checked; large and old start unchecked. The learned
+    /// signal for the category nudges that, so a category you consistently remove becomes
+    /// pre-checked and one you consistently keep does not.
+    private func defaultChecked(for item: StorageScan.Item) -> Bool {
+        base(for: item.category) + learnedBias(for: item.category) >= 0.5
+    }
+
+    private func base(for category: StorageScan.Category) -> Double {
+        switch category {
+        case .junk, .duplicate: return 0.8
+        case .large, .old: return 0.2
+        }
+    }
+
+    /// Positive means the user tends to remove this category (nudge toward checked);
+    /// negative means they tend to keep it. Bounded like the organizer's nudge.
+    private func learnedBias(for category: StorageScan.Category) -> Double {
+        min(0.35, max(-0.35, Double(memory.score(ruleID: "cleanup:\(category.rawValue)")) * 0.04))
     }
 
     private func updateSummary(extra: String = "") {
@@ -380,9 +401,17 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             safe
             ? L("cleanup.safeToRemove", "safe to remove")
             : L("cleanup.reviewFirst", "review before deleting")
-        return String(
+        var text = String(
             format: L("cleanup.whyDetail", "%@ · %@ · %@ · %@"), item.category.rawValue, item.reason,
             byteFormatter.string(fromByteCount: item.size), disposition)
+        // Surface the learned lean when it is strong enough to have moved the default.
+        let bias = learnedBias(for: item.category)
+        if bias >= 0.1 {
+            text += L("cleanup.learnedRemove", " · learned: you usually remove these")
+        } else if bias <= -0.1 {
+            text += L("cleanup.learnedKeep", " · learned: you usually keep these")
+        }
+        return text
     }
 
     @objc private func markGood() { recordFeedback(.good) }
@@ -429,6 +458,17 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     @objc private func trashChecked() {
         let urls = rows.filter(\.checked).map { URL(fileURLWithPath: $0.item.path) }
         guard !urls.isEmpty else { NSSound.beep(); return }
+        // Record the accept/skip decision as behavioral signal (checked = removed), so the
+        // next scan's pre-checking reflects what the user actually does.
+        if let url = Self.feedbackURL() {
+            OrganizeFeedback.record(
+                rows.map {
+                    .init(
+                        ruleID: "cleanup:\($0.item.category.rawValue)", destination: nil,
+                        ext: ($0.item.path as NSString).pathExtension.lowercased(),
+                        verdict: $0.checked ? .applied : .skipped)
+                }, to: url)
+        }
         let result = FileOperations.trash(urls: urls)
         let trashed = Set(result.trashed.map(\.original.path))
         rows.removeAll { trashed.contains($0.item.path) }
