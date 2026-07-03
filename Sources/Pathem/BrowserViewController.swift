@@ -1794,9 +1794,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let window = view.window else { return }
         let folder = pane.currentURL
         let destinations = FilingDestinations.defaults(home: FileManager.default.homeDirectoryForCurrentUser)
+        let memory = Self.organizeFeedbackURL.map { OrganizeFeedback.load(from: $0) } ?? OrganizeFeedback()
         Task { @MainActor in
             let suggestions = await Task.detached {
-                OrganizePlanner.suggestions(for: folder, destinations: destinations)
+                OrganizePlanner.suggestions(for: folder, destinations: destinations, memory: memory)
             }.value
             guard !suggestions.isEmpty else {
                 self.presentInfo(
@@ -1818,6 +1819,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Apply the accepted suggestions (apply filters to the checked ones), reload, and
     /// register undo, then report what happened.
     private func runOrganize(_ suggestions: [OrganizePlanner.Suggestion]) {
+        // Record the user's accept/skip decision as behavioral signal (this is what the
+        // planner learns from next time), whether or not anything is applied.
+        if let url = Self.organizeFeedbackURL {
+            OrganizeFeedback.record(
+                suggestions.map {
+                    .init(
+                        ruleID: $0.ruleID, destination: $0.destination?.lastPathComponent,
+                        ext: $0.file.pathExtension.lowercased(), verdict: $0.accepted ? .applied : .skipped)
+                }, to: url)
+        }
         guard suggestions.contains(where: \.accepted) else { return }  // user unchecked everything
         Task { @MainActor in
             let outcome = await Task.detached { OrganizePlanner.apply(suggestions) }.value

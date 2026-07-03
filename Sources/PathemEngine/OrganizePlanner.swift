@@ -112,7 +112,7 @@ public enum OrganizePlanner {
     /// bounded. Never returns anything for a folder inside a git repo (when configured).
     public static func suggestions(
         for folder: URL, destinations: FilingDestinations, rules: [Rule] = Rule.defaults,
-        config: Config = Config(), now: Date = Date()
+        config: Config = Config(), memory: OrganizeFeedback = OrganizeFeedback(), now: Date = Date()
     ) -> [Suggestion] {
         let fm = FileManager.default
         if config.skipGitRepos, isInsideGitRepo(folder) { return [] }
@@ -150,10 +150,24 @@ public enum OrganizePlanner {
             }
         }
 
-        // Apply the acceptance policy centrally, so every rule stays confidence-only.
-        return out.map {
-            var s = $0
+        // Fold in the learned behavior signal, then apply the acceptance policy centrally,
+        // so every rule stays confidence-only and personalization lives in one place.
+        return out.map { base in
+            var s = base
+            let bias = memory.confidenceBias(
+                ruleID: s.ruleID, ext: s.file.pathExtension.lowercased(),
+                destination: s.destination?.lastPathComponent)
+            let defaultAccepted = s.confidence >= config.autoAcceptConfidence
+            s.confidence = min(1, max(0, s.confidence + bias))
             s.accepted = s.confidence >= config.autoAcceptConfidence
+            // When the learned signal flips the default, say so (transparency: the user
+            // can always see why a suggestion is checked or not).
+            if s.accepted != defaultAccepted {
+                s.rationale +=
+                    s.accepted
+                    ? "  (learned: you usually keep these)"
+                    : "  (learned: you usually skip these)"
+            }
             return s
         }
     }

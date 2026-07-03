@@ -161,6 +161,48 @@ import Testing
         #expect(plan.allSatisfy { !$0.rationale.isEmpty })
     }
 
+    // MARK: Learned behavior (memory)
+
+    @Test func memoryRaisesLowConfidenceToAccepted() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try makeFile("Some App.dmg", in: dir)  // installer: unchecked by default
+        var memory = OrganizeFeedback()
+        // The user has kept installer suggestions before; learn to pre-check them.
+        memory.entries = Array(
+            repeating: .init(ruleID: "installer", destination: nil, ext: "dmg", verdict: .good), count: 4)
+
+        let plan = OrganizePlanner.suggestions(for: dir, destinations: FilingDestinations(), memory: memory)
+        let installer = try #require(suggestion(for: "Some App.dmg", in: plan))
+        #expect(installer.accepted)
+        #expect(installer.rationale.contains("keep"))
+    }
+
+    @Test func memoryLowersDefaultToSkipped() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try makeFile("report.pdf", in: dir)  // by-kind: checked by default
+        var memory = OrganizeFeedback()
+        // The user keeps skipping PDF filing; learn to stop pre-checking it.
+        memory.entries = Array(
+            repeating: .init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .skipped), count: 3)
+
+        let plan = OrganizePlanner.suggestions(for: dir, destinations: FilingDestinations(), memory: memory)
+        let pdf = try #require(suggestion(for: "report.pdf", in: plan))
+        #expect(!pdf.accepted)
+        #expect(pdf.rationale.contains("skip"))
+    }
+
+    @Test func emptyMemoryLeavesDefaultsUnchanged() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try makeFile("report.pdf", in: dir)
+        let plan = OrganizePlanner.suggestions(for: dir, destinations: FilingDestinations())
+        let pdf = try #require(suggestion(for: "report.pdf", in: plan))
+        #expect(pdf.accepted)
+        #expect(!pdf.rationale.contains("learned"))  // no annotation without signal
+    }
+
     // MARK: Apply
 
     @Test func applyMovesTrashesAndIsUndoable() throws {
