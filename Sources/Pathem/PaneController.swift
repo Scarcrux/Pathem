@@ -32,6 +32,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
     func debugColumnDrill(row: Int) { (content as? ColumnBrowserController)?.debugSelect(row: row) }
+
+    /// Header sort-indicator state (list view only), for the layout smoke check.
+    var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { content.debugSortIndicator }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)

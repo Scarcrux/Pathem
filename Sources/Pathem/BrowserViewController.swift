@@ -3681,6 +3681,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("right-pane-visible", rightTabs.containerView.frame.width > 50, "\(Int(rightTabs.containerView.frame.width))")
         check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
         lines.append("info left-folder (\(leftTabs.activePane?.currentURL.path ?? "?"))")
+        // The sorted column must show its indicator on load, not only after a header
+        // click (setting sortDescriptors programmatically doesn't draw the triangle).
+        if let sort = leftTabs.activePane?.debugSortIndicator {
+            check(
+                "sort-indicator-drawn", sort.drawn,
+                "column=\(sort.column) \(sort.ascending ? "ascending" : "descending")")
+        } else {
+            lines.append("info sort-indicator (active pane is not a list view)")
+        }
         // Open the terminal only if needed (a prior run may have persisted it
         // open), check, then undo exactly what we changed so the run leaves no
         // state behind (pref, visibility, or a spawned shell).

@@ -35,6 +35,8 @@ protocol PaneContentView: AnyObject {
     func select(name: String)
     func selectNames(_ names: Set<String>)
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool)
+    /// Header sort-indicator state (list view only), for the layout smoke check.
+    var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { get }
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
@@ -68,6 +70,8 @@ extension PaneContentView {
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {}
     /// Only the list view draws git overlays for now.
     func setGitStates(_ states: [String: GitFileState]) {}
+    /// Only the list view has a sortable header; other views report no indicator.
+    var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
     /// Only the list view distinguishes drag copy vs move for now.
     var dragMovesByDefault: Bool {
         get { false }

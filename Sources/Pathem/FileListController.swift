@@ -445,11 +445,34 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.selectRowIndexes(rows, byExtendingSelection: false)
     }
 
-    /// Show the sort indicator on the header without triggering onSortChanged.
+    /// Reflect the active sort in the header: the sorted column shows an up/down
+    /// triangle and is highlighted. Setting `sortDescriptors` alone does NOT draw the
+    /// triangle (AppKit only does that in response to a live header click), so on load
+    /// and after a menu-driven sort the indicator would be missing. Set the indicator
+    /// image and highlighted column explicitly, and do it without re-firing onSortChanged.
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {
         suppressSortCallback = true
         tableView.sortDescriptors = [NSSortDescriptor(key: key.rawValue, ascending: ascending)]
         suppressSortCallback = false
+        let sorted = tableView.tableColumn(withIdentifier: .init(key.rawValue))
+        // The system sort-indicator triangles (public named images, not exposed as Swift
+        // static members): up for ascending, down for descending.
+        let arrow = NSImage(
+            named: ascending ? NSImage.Name("NSAscendingSortIndicator")
+                : NSImage.Name("NSDescendingSortIndicator"))
+        for column in tableView.tableColumns {
+            tableView.setIndicatorImage(column === sorted ? arrow : nil, in: column)
+        }
+        tableView.highlightedTableColumn = sorted
+    }
+
+    /// The real header state (which column is marked, its direction, and whether the
+    /// triangle is actually drawn), for the layout smoke check.
+    var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? {
+        guard let column = tableView.highlightedTableColumn else { return nil }
+        return (
+            column.identifier.rawValue, tableView.sortDescriptors.first?.ascending ?? true,
+            tableView.indicatorImage(in: column) != nil)
     }
 
     // MARK: NSTableViewDataSource
