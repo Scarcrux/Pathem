@@ -222,6 +222,42 @@ import Testing
         #expect(!pdf.rationale.contains("learned"))  // no annotation without signal
     }
 
+    // MARK: Single-file (ambient) suggestion
+
+    @Test func singleFileSuggestionActsOnFreshFile() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        // Fresh: the batch planner would skip it, but the ambient path acts on arrival.
+        let png = try makeFile("just-downloaded.png", in: dir, daysOld: 0)
+        let suggestion = try #require(
+            OrganizePlanner.suggestion(for: png, destinations: FilingDestinations()))
+        #expect(suggestion.ruleID == "by-kind")
+        #expect(suggestion.destination?.lastPathComponent == "Images")
+    }
+
+    @Test func singleFileSuggestionIsNilForUnknownType() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let mystery = try makeFile("mystery.xyz", in: dir, daysOld: 0)
+        #expect(OrganizePlanner.suggestion(for: mystery, destinations: FilingDestinations()) == nil)
+    }
+
+    @Test func singleFileSuggestionFollowsLearnedRoute() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let pdf = try makeFile("statement.pdf", in: dir, daysOld: 0)
+        let finance = dir.appendingPathComponent("Finance")
+        var memory = OrganizeFeedback()
+        memory.entries = [
+            .init(
+                ruleID: "by-kind", destination: "Finance", ext: "pdf", verdict: .routed,
+                destinationPath: finance.path)
+        ]
+        let suggestion = try #require(
+            OrganizePlanner.suggestion(for: pdf, destinations: FilingDestinations(), memory: memory))
+        #expect(suggestion.destination?.path == finance.path)
+    }
+
     // MARK: Apply
 
     @Test func applyMovesTrashesAndIsUndoable() throws {

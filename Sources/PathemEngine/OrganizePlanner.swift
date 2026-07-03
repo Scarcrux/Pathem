@@ -150,37 +150,63 @@ public enum OrganizePlanner {
             }
         }
 
-        // Fold in the learned behavior signal, then apply the acceptance policy centrally,
-        // so every rule stays confidence-only and personalization lives in one place.
-        return out.map { base in
-            var s = base
-            let ext = s.file.pathExtension.lowercased()
-            // Learned routing: if the user has re-routed this (rule, extension) before, send
-            // future files of that kind to the same destination.
-            if case .move(let current) = s.kind,
-                let preferred = memory.preferredDestinationPath(ruleID: s.ruleID, ext: ext)
-            {
-                let target = URL(fileURLWithPath: preferred)
-                if target.standardizedFileURL != current.standardizedFileURL {
-                    s.kind = .move(to: target)
-                    s.rationale += "  (learned: you file these in \(target.lastPathComponent))"
-                }
-            }
-            let bias = memory.confidenceBias(
-                ruleID: s.ruleID, ext: ext, destination: s.destination?.lastPathComponent)
-            let defaultAccepted = s.confidence >= config.autoAcceptConfidence
-            s.confidence = min(1, max(0, s.confidence + bias))
-            s.accepted = s.confidence >= config.autoAcceptConfidence
-            // When the learned signal flips the default, say so (transparency: the user
-            // can always see why a suggestion is checked or not).
-            if s.accepted != defaultAccepted {
-                s.rationale +=
-                    s.accepted
-                    ? "  (learned: you usually keep these)"
-                    : "  (learned: you usually skip these)"
-            }
-            return s
+        // Fold in the learned behavior signal (routing + confidence) per suggestion, so
+        // every rule stays confidence-only and personalization lives in one place.
+        return out.map { personalized($0, memory: memory, config: config) }
+    }
+
+    /// A single-file classifier for the ambient "move to" suggestion (a newly-arrived
+    /// download). Unlike `suggestions(for:)`, this does NOT apply the freshness guard,
+    /// since the whole point is to react the moment a file lands; it still skips
+    /// directories, packages, symlinks, locked/dataless items, and files in a git repo.
+    /// Returns nil when no rule matches the file.
+    public static func suggestion(
+        for file: URL, destinations: FilingDestinations, memory: OrganizeFeedback = OrganizeFeedback(),
+        config: Config = Config(), now: Date = Date()
+    ) -> Suggestion? {
+        guard let facts = gatherFacts(file, now: now) else { return nil }
+        if facts.isDirectory || facts.isPackage || facts.isSymlink || facts.isLocked || facts.isDataless {
+            return nil
         }
+        if config.skipGitRepos, isInsideGitRepo(facts.folder) { return nil }
+        for rule in Rule.defaults {
+            if let base = rule.evaluate(facts, destinations) {
+                return personalized(base, memory: memory, config: config)
+            }
+        }
+        return nil
+    }
+
+    /// Apply the learned signal to one suggestion: re-route to a learned destination, nudge
+    /// the confidence, and annotate the rationale when either changes the default.
+    private static func personalized(
+        _ base: Suggestion, memory: OrganizeFeedback, config: Config
+    ) -> Suggestion {
+        var s = base
+        let ext = s.file.pathExtension.lowercased()
+        // Learned routing: if the user has re-routed this (rule, extension) before, send
+        // future files of that kind to the same destination.
+        if case .move(let current) = s.kind,
+            let preferred = memory.preferredDestinationPath(ruleID: s.ruleID, ext: ext)
+        {
+            let target = URL(fileURLWithPath: preferred)
+            if target.standardizedFileURL != current.standardizedFileURL {
+                s.kind = .move(to: target)
+                s.rationale += "  (learned: you file these in \(target.lastPathComponent))"
+            }
+        }
+        let bias = memory.confidenceBias(
+            ruleID: s.ruleID, ext: ext, destination: s.destination?.lastPathComponent)
+        let defaultAccepted = s.confidence >= config.autoAcceptConfidence
+        s.confidence = min(1, max(0, s.confidence + bias))
+        s.accepted = s.confidence >= config.autoAcceptConfidence
+        if s.accepted != defaultAccepted {
+            s.rationale +=
+                s.accepted
+                ? "  (learned: you usually keep these)"
+                : "  (learned: you usually skip these)"
+        }
+        return s
     }
 
     /// Execute the accepted suggestions via the existing file operations and return the
