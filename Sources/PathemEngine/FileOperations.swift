@@ -452,4 +452,61 @@ public enum FileOperations {
         }
         return result
     }
+
+    // MARK: Links
+
+    public enum LinkKind: String, Sendable, CaseIterable {
+        case symlink, alias, hardlink
+    }
+
+    /// Create a link of `kind` next to each item (named "<name> symlink/alias/hardlink"),
+    /// pointing at the original. Symlinks and aliases work for files and folders. A
+    /// hardlink must be same-volume; for a folder, FileManager recursively hardlinks the
+    /// contents (a shared-inode clone). Records each created link as a `.copied` op, so
+    /// undo trashes it like a copy.
+    @discardableResult
+    public static func makeLinks(_ urls: [URL], kind: LinkKind) -> Outcome {
+        let fm = FileManager.default
+        var outcome = Outcome()
+        for url in urls {
+            let link = suffixedName(url, suffix: kind.rawValue)
+            do {
+                switch kind {
+                case .symlink:
+                    try fm.createSymbolicLink(at: link, withDestinationURL: url)
+                case .hardlink:
+                    try fm.linkItem(at: url, to: link)
+                case .alias:
+                    let data = try url.bookmarkData(
+                        options: .suitableForBookmarkFile, includingResourceValuesForKeys: nil,
+                        relativeTo: nil)
+                    try URL.writeBookmarkData(data, to: link)
+                }
+                outcome.performed.append(Performed(action: .copied, source: url, destination: link))
+            } catch {
+                outcome.failures.append(Failure(name: url.lastPathComponent, reason: error.localizedDescription))
+            }
+        }
+        return outcome
+    }
+
+    /// A non-colliding "<base> <suffix>[.ext]" next to `url` (e.g. "report symlink.pdf").
+    static func suffixedName(_ url: URL, suffix: String) -> URL {
+        let fm = FileManager.default
+        let dir = url.deletingLastPathComponent()
+        let ext = url.pathExtension
+        let base = url.deletingPathExtension().lastPathComponent
+        func candidate(_ n: Int?) -> URL {
+            let extra = n.map { " \($0)" } ?? ""
+            let name = ext.isEmpty ? "\(base) \(suffix)\(extra)" : "\(base) \(suffix)\(extra).\(ext)"
+            return dir.appendingPathComponent(name)
+        }
+        var result = candidate(nil)
+        var n = 2
+        while fm.fileExists(atPath: result.path) {
+            result = candidate(n)
+            n += 1
+        }
+        return result
+    }
 }

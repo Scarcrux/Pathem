@@ -409,6 +409,13 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(commandItem("Duplicate", "files.duplicate"))  // chord owned by the keymap
+        let linkMenu = NSMenu()
+        linkMenu.addItem(commandItem("Symlink", "files.makeSymlink"))
+        linkMenu.addItem(commandItem("Alias", "files.makeAlias"))
+        linkMenu.addItem(commandItem("Hard Link", "files.makeHardlink"))
+        let linkItem = NSMenuItem(title: L("menu.makeLink", "Make Link"), action: nil, keyEquivalent: "")
+        linkItem.submenu = linkMenu
+        fileMenu.addItem(linkItem)
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))

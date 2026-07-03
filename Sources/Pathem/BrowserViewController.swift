@@ -546,6 +546,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane else { return false }
             return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty
         }) { [weak self] in self?.duplicateSelection() }
+        let hasLocalSelection: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty
+        }
+        add("files.makeSymlink", L("bvc.cmd.makeSymlink", "Make Symlink"), enabled: hasLocalSelection) {
+            [weak self] in self?.makeLinks(kind: .symlink)
+        }
+        add("files.makeAlias", L("bvc.cmd.makeAlias", "Make Alias"), enabled: hasLocalSelection) {
+            [weak self] in self?.makeLinks(kind: .alias)
+        }
+        add("files.makeHardlink", L("bvc.cmd.makeHardlink", "Make Hard Link"), enabled: hasLocalSelection) {
+            [weak self] in self?.makeLinks(kind: .hardlink)
+        }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1381,6 +1394,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Create a symlink, alias, or hard link next to each selected item (undoable).
+    private func makeLinks(kind: FileOperations.LinkKind) {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let outcome = FileOperations.makeLinks(urls, kind: kind)
+        pane.reloadIfShowingListing()
+        let createdNames = outcome.performed.map { $0.destination.lastPathComponent }
+        if let first = createdNames.first { pane.select(name: first) }
+        if !createdNames.isEmpty {
+            registerCreatedUndo(
+                names: createdNames, in: pane.currentURL, actionName: L("bvc.makeLinkAction", "Make Link"))
+        }
+        if !outcome.failures.isEmpty {
+            presentFailures(outcome.failures, title: L("bvc.makeLinkFailed", "Couldn’t create the link"))
+        }
     }
 
     /// Attach a disk image (.dmg etc.) out-of-process and navigate the pane into it.
