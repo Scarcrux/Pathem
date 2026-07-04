@@ -383,7 +383,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         guard let dir = directoryURL, indexPath.item < entries.count else { return nil }
         let entry = entries[indexPath.item]
         guard !entry.isDataless else { return nil }
-        return dir.appendingPathComponent(entry.name) as NSURL
+        return FileDrag.item(for: dir.appendingPathComponent(entry.name))  // promise + file URL
     }
 
     func collectionView(

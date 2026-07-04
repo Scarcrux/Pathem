@@ -4766,6 +4766,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "drag-has-legacy-filenames", keepsFileURL && filenames == dragURLs.map(\.path),
             "fileURL=\(keepsFileURL) names=\(filenames ?? [])")
+        // A dragged file must also advertise a file PROMISE (alongside its file URL), or
+        // browser upload zones and sandboxed apps -- which materialize the promise into
+        // DataTransfer.files -- silently reject the drop.
+        let promiseScratch = NSPasteboard(name: NSPasteboard.Name("com.scarcrux.pathem.promisecheck"))
+        promiseScratch.clearContents()
+        promiseScratch.writeObjects([FileDrag.item(for: URL(fileURLWithPath: "/tmp/a.txt"))])
+        let promiseType = NSPasteboard.PasteboardType("com.apple.pasteboard.promised-file-content-type")
+        let hasPromise = promiseScratch.types?.contains(promiseType) ?? false
+        let promiseFileURL = promiseScratch.canReadObject(
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+        check(
+            "drag-has-file-promise", hasPromise && promiseFileURL,
+            "promise=\(hasPromise) fileURL=\(promiseFileURL)")
         // Get Info: presenting the inspector builds every field (metadata reads, open-with,
         // toggles) without crashing, and populates a reasonable number of them.
         let inspector = InfoInspectorController()

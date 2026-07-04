@@ -258,8 +258,10 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     func collectionView(_ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath)
         -> NSPasteboardWriting?
     {
-        guard indexPath.item < entries.count, !entries[indexPath.item].isDataless else { return nil }
-        return fileURL(for: entries[indexPath.item]) as NSURL?
+        guard indexPath.item < entries.count, !entries[indexPath.item].isDataless,
+            let url = fileURL(for: entries[indexPath.item])
+        else { return nil }
+        return FileDrag.item(for: url)  // promise + file URL, so browser upload zones accept it
     }
 
     func collectionView(

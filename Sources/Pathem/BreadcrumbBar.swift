@@ -136,7 +136,7 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     }
 
     private func beginDrag(with event: NSEvent) {
-        let item = NSDraggingItem(pasteboardWriter: folder as NSURL)
+        let item = NSDraggingItem(pasteboardWriter: FileDrag.item(for: folder))
         let icon = NSWorkspace.shared.icon(forFile: folder.path)
         icon.size = NSSize(width: 16, height: 16)
         item.setDraggingFrame(bounds, contents: icon)

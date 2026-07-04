@@ -540,7 +540,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard let dir = directoryURL, row < entries.count else { return nil }
         let entry = entries[row]
         guard !entry.isDataless else { return nil }  // don't drag online-only placeholders
-        return dir.appendingPathComponent(entry.name) as NSURL
+        // A promise + file URL, so the drag lands in browsers/sandboxed apps and Finder alike.
+        return FileDrag.item(for: dir.appendingPathComponent(entry.name))
     }
 
     func tableView(
