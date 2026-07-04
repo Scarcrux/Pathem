@@ -48,7 +48,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// True while restoring the saved session, so restore activity doesn't trigger
     /// a (partial) save.
     private var isRestoringSession = false
-    private var pendingSessionSave: DispatchWorkItem?
+    /// Persists the restore session, saved workspaces, and named view Styles.
+    let windowState = WindowStateStore()
 
     /// Cap on items embedded per search, to bound the cost on huge folders.
     /// The scale path (background incremental indexing and a cached vector
@@ -2913,18 +2914,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private static func appSupportDirectory() -> URL? {
-        let fm = FileManager.default
-        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
-            return nil
-        }
-        let dir = base.appendingPathComponent("Pathem", isDirectory: true)
-        do {
-            try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        } catch {
-            NSLog("Pathem: cannot create Application Support directory: %@", String(describing: error))
-            return nil  // callers stop rather than write into a nonexistent dir
-        }
-        return dir
+        ConfigStore.directory()
     }
 
     /// Decode config from `url`. A missing file returns nil (use defaults). A
@@ -2932,23 +2922,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// moved aside to <name>.corrupt and returns nil, so the next save cannot
     /// silently overwrite and destroy still-recoverable config.
     private func loadConfig<T: Decodable>(_ type: T.Type, from url: URL?) -> T? {
-        guard let url, let data = try? Data(contentsOf: url) else { return nil }
-        if let decoded = try? JSONDecoder().decode(T.self, from: data) { return decoded }
-        let fm = FileManager.default
-        let aside = url.appendingPathExtension("corrupt")
-        try? fm.removeItem(at: aside)
-        try? fm.moveItem(at: url, to: aside)
-        NSLog("Pathem: %@ was unreadable; moved aside to %@", url.lastPathComponent, aside.lastPathComponent)
-        return nil
+        ConfigStore.load(type, from: url)
     }
 
-    /// Encode and write config atomically (temp file + rename), so a crash or
-    /// power loss mid-write never truncates the existing file.
     private func saveConfig<T: Encodable>(_ value: T, to url: URL?) {
-        guard let url else { return }
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        if let data = try? encoder.encode(value) { try? data.write(to: url, options: .atomic) }
+        ConfigStore.save(value, to: url)
     }
 
     // MARK: - Per-folder view formats
@@ -3083,65 +3061,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    // MARK: - Session restoration
-
-    /// The last window session: each side's tab folders, active tab, active side.
-    private struct SessionState: Codable, Equatable {
-        var left: [String]
-        var leftActive: Int
-        var right: [String]
-        var rightActive: Int
-        var leftIsActive: Bool
-
-        init(left: [String], leftActive: Int, right: [String], rightActive: Int, leftIsActive: Bool) {
-            self.left = left
-            self.leftActive = leftActive
-            self.right = right
-            self.rightActive = rightActive
-            self.leftIsActive = leftIsActive
-        }
-
-        // Tolerant: a partial/older session.json restores what it can instead of
-        // failing the whole decode (which would discard the session entirely).
-        init(from decoder: Decoder) throws {
-            let c = try decoder.container(keyedBy: CodingKeys.self)
-            left = try c.decodeIfPresent([String].self, forKey: .left) ?? []
-            leftActive = try c.decodeIfPresent(Int.self, forKey: .leftActive) ?? 0
-            right = try c.decodeIfPresent([String].self, forKey: .right) ?? []
-            rightActive = try c.decodeIfPresent(Int.self, forKey: .rightActive) ?? 0
-            leftIsActive = try c.decodeIfPresent(Bool.self, forKey: .leftIsActive) ?? true
-        }
-    }
-    private var lastSavedSession: SessionState?
-
-    private static var sessionURL: URL? {
-        appSupportDirectory()?.appendingPathComponent("session.json")
-    }
-
-    // MARK: Saved workspaces
-
-    private struct Workspace: Codable, Equatable {
-        var name: String
-        var left: [String]
-        var leftActive: Int
-        var right: [String]
-        var rightActive: Int
-    }
-
-    private static var workspacesURL: URL? {
-        appSupportDirectory()?.appendingPathComponent("workspaces.json")
-    }
-
-    // MARK: View Styles (named view-format presets)
-
-    private struct ViewStyle: Codable, Equatable {
-        var name: String
-        var format: ViewFormat
-    }
-
-    private static var stylesURL: URL? {
-        appSupportDirectory()?.appendingPathComponent("styles.json")
-    }
+    // MARK: - Window state (session, workspaces, styles)
 
     /// Save the active pane's current view format (mode, sort, hidden, folders-first) as a
     /// named Style.
@@ -3151,15 +3071,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let name = promptForName(title: L("bvc.saveStyleTitle", "Save style as:"), default: ""),
             !name.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
-        var all = loadConfig([ViewStyle].self, from: Self.stylesURL) ?? []
-        all.removeAll { $0.name == name }
-        all.append(ViewStyle(name: name, format: pane.format))
-        saveConfig(all, to: Self.stylesURL)
+        windowState.saveStyle(WindowStateStore.Style(name: name, format: pane.format))
     }
 
     /// Pick a saved Style and apply it to the active pane.
     private func applyStyle() {
-        let all = loadConfig([ViewStyle].self, from: Self.stylesURL) ?? []
+        let all = windowState.styles()
         guard let window = view.window else { return }
         guard !all.isEmpty else {
             presentInfo(
@@ -3201,18 +3118,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let name = promptForName(title: L("bvc.saveWorkspaceTitle", "Save workspace as:"), default: ""),
             !name.trimmingCharacters(in: .whitespaces).isEmpty
         else { return }
-        var all = loadConfig([Workspace].self, from: Self.workspacesURL) ?? []
-        all.removeAll { $0.name == name }  // replace a same-named one
-        all.append(
-            Workspace(
+        windowState.saveWorkspace(
+            WindowStateStore.Workspace(
                 name: name, left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
                 right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex))
-        saveConfig(all, to: Self.workspacesURL)
     }
 
     /// Pick a saved workspace and switch both panes to its layout.
     private func openWorkspace() {
-        let all = loadConfig([Workspace].self, from: Self.workspacesURL) ?? []
+        let all = windowState.workspaces()
         guard let window = view.window else { return }
         guard !all.isEmpty else {
             presentInfo(
@@ -3252,7 +3166,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             return
         }
-        if let session = loadConfig(SessionState.self, from: Self.sessionURL),
+        if let session = windowState.loadSession(),
             !(session.left.isEmpty && session.right.isEmpty)
         {
             leftTabs.restoreTabs(session.left, active: session.leftActive)
@@ -3271,22 +3185,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Persist the session a moment after a change (coalesces navigation bursts).
     private func saveSessionSoon() {
         guard !isRestoringSession else { return }
-        pendingSessionSave?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.saveSessionNow() }
-        pendingSessionSave = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
+        windowState.scheduleSessionSave { [weak self] in self?.captureSession() }
     }
 
     /// Persist the session immediately (called on quit).
     func saveSessionNow() {
-        if demoLayout != nil { return }  // never persist a throwaway demo session over the real one
-        let state = SessionState(
+        guard let state = captureSession() else { return }
+        windowState.saveSession(state)
+    }
+
+    /// The current dual-pane, multi-tab layout as a Session, or nil in demo mode (which is
+    /// never persisted over the real session).
+    private func captureSession() -> WindowStateStore.Session? {
+        guard demoLayout == nil else { return nil }
+        return WindowStateStore.Session(
             left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
             right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex,
             leftIsActive: activeSide === leftTabs)
-        guard state != lastSavedSession else { return }  // skip no-op writes (e.g. watcher ticks)
-        lastSavedSession = state
-        saveConfig(state, to: Self.sessionURL)
     }
 
     // MARK: - Remote connections
