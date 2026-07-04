@@ -105,8 +105,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var updater: UpdaterController?
     /// User preferences (density, font, alternating rows, search OCR).
     var prefs = Preferences.default
-    /// Progress sheet for copy/move; one transfer at a time.
-    private lazy var transferProgress = TransferProgress()
+    /// Runs a local copy/move with a progress sheet; one transfer at a time.
+    private let transferRunner = TransferRunner()
     private var transferInFlight = false
     /// Whether a copy/move is running (so the app can warn before quitting).
     var isTransferring: Bool { transferInFlight }
@@ -4091,49 +4091,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         resolution: FileOperations.ConflictResolution,
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
-        guard !transferInFlight else { NSSound.beep(); return }
-        transferInFlight = true
-        let verb = move ? L("bvc.moving", "Moving") : L("bvc.copying", "Copying")
-        let state = TransferState()
-
-        // Main-actor monitor: wait 0.25s before showing the sheet (so quick ops never flash
-        // it), then poll progress, deriving a smoothed transfer speed and ETA, until the
-        // worker finishes and cancels us.
-        let monitor = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(250))
-            guard let self, !Task.isCancelled else { return }
-            self.transferProgress.begin(verb: verb, over: self.view.window) { state.cancel() }
-            var lastSample = Date()
-            var lastBytes: Int64 = 0
-            var speed = 0.0  // bytes/sec, exponentially smoothed
-            while !Task.isCancelled {
-                let progress = state.progress
-                let now = Date()
-                let dt = now.timeIntervalSince(lastSample)
-                if dt >= 0.2 {
-                    let instant = Double(progress.completedBytes - lastBytes) / dt
-                    speed = speed == 0 ? instant : speed * 0.6 + instant * 0.4
-                    lastSample = now
-                    lastBytes = progress.completedBytes
-                }
-                self.transferProgress.update(progress, bytesPerSecond: max(0, speed))
-                try? await Task.sleep(for: .milliseconds(100))
-            }
-        }
-
-        Task { @MainActor [weak self] in
-            let outcome = await Task.detached(priority: .userInitiated) { () -> FileOperations.Outcome in
-                if move {
-                    return FileOperations.move(
-                        urls: urls, into: destination, onConflict: resolution,
-                        shouldCancel: { state.isCancelled }, report: { state.setProgress($0) })
-                }
-                return FileOperations.copy(
-                    urls: urls, into: destination, onConflict: resolution,
-                    shouldCancel: { state.isCancelled }, report: { state.setProgress($0) })
-            }.value
-            monitor.cancel()
-            self?.transferProgress.end()
+        guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
+        transferInFlight = true  // so Quit warns mid-transfer
+        transferRunner.run(
+            urls: urls, into: destination, move: move, resolution: resolution, over: view.window
+        ) { [weak self] outcome in
             self?.transferInFlight = false
             completion(outcome)
         }
