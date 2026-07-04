@@ -61,4 +61,35 @@ import Testing
         defer { try? FileManager.default.removeItem(at: dir) }
         #expect(await GitStatus.status(for: dir) == nil)  // not a repo
     }
+
+    /// Reading status must NOT mutate the repo. Without `--no-optional-locks`, `git status`
+    /// refreshes and rewrites `.git/index` when a tracked file's stat is stale, which makes
+    /// the pane's watcher fire, reload, and re-poll status forever (the list flickers). Here
+    /// we deliberately stale the index (same content, older mtime) and assert the index bytes
+    /// are byte-identical before and after a status read. This fails on the pre-fix code.
+    @Test func statusDoesNotRewriteTheIndex() async throws {
+        guard FileManager.default.isExecutableFile(atPath: Self.git) else { return }
+        let repo = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-gitidx-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: repo, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: repo) }
+
+        try run(["-c", "init.defaultBranch=main", "init"], in: repo)
+        try run(["config", "user.email", "t@example.com"], in: repo)
+        try run(["config", "user.name", "Test"], in: repo)
+        let file = repo.appendingPathComponent("tracked.txt")
+        try Data("hello world".utf8).write(to: file)
+        try run(["add", "."], in: repo)
+        try run(["commit", "-m", "init"], in: repo)
+
+        // Same content, older mtime: a normal `git status` would refresh the index stat
+        // cache and rewrite .git/index. --no-optional-locks must suppress that write.
+        try FileManager.default.setAttributes(
+            [.modificationDate: Date(timeIntervalSince1970: 100_000)], ofItemAtPath: file.path)
+
+        let indexURL = repo.appendingPathComponent(".git/index")
+        let before = try Data(contentsOf: indexURL)
+        _ = await GitStatus.status(for: repo)
+        let after = try Data(contentsOf: indexURL)
+        #expect(before == after)  // status did not rewrite the index
+    }
 }

@@ -37,9 +37,14 @@ public enum GitStatus {
         else { return nil }  // not a repository
         let rootPath = String(decoding: root.0, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !rootPath.isEmpty else { return nil }
+        // `--no-optional-locks` keeps `git status` from refreshing/rewriting `.git/index`
+        // as a side effect. Without it, polling status mutates the repo, the pane's FSEvents
+        // watcher sees the `.git` change, reloads, polls status again, and the list flickers
+        // in an endless loop. Read-only status still reports the same state.
         guard
             let result = try? await RemoteRunner.run(
-                git, ["-C", folder.path, "status", "--porcelain=v2", "--branch", "-z"]),
+                git,
+                ["--no-optional-locks", "-C", folder.path, "status", "--porcelain=v2", "--branch", "-z"]),
             result.1 == 0
         else { return nil }
         return parse(porcelainZ: String(decoding: result.0, as: UTF8.self), repoRoot: URL(fileURLWithPath: rootPath))
