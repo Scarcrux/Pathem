@@ -642,13 +642,13 @@ command id and fills typed args; it never runs free-form code.
 
 ### Status (built)
 
-Phases 0 to 5 are implemented and on `main`, each behind the engine where the
-logic is testable:
+Phases 0 to 5 are implemented and on `main`, and the Phase 6 extension seam is
+built (gated off), each behind the engine where the logic is testable:
 
 - 0: `CommandRegistry` (engine), browser actions dispatch by id.
 - 1: `Keymap` (engine, config-as-data); keys resolve to commands, rebindable via
-  `keymap.json`. Configurable toolbars/context-menu/themes from this phase are
-  not done yet.
+  `keymap.json`. Configurable toolbar (native NSToolbar customization over the
+  registry), customizable context menu, and themes are done.
 - 2: `ViewFormat` and `FolderFormats` (engine): sortable columns, hidden toggle,
   per-folder exact/subtree view cascade with apply-to-subfolders, and `Layouts`.
   Declarative custom columns and Styles are not done yet.
@@ -660,6 +660,12 @@ logic is testable:
 - 5: `CommandResolver` (engine heuristic, always works) plus `FoundationModelMatcher`
   (on-device LLM on macOS 26 + Apple Intelligence) behind an async AI command bar
   (Cmd-Shift-A).
+- 6 (seam only): `ExtensionManifest` (the stable "contributes" schema), the
+  line-delimited-JSON `ExtensionProtocol`, and `ExtensionHost` (discover, validate,
+  Team-ID signature gate, out-of-process invoke with a timeout and crash isolation),
+  with `pathem-ext-example` as the reference helper. Fully unit-tested end to end.
+  The app loader stays OFF unless `PATHEM_ENABLE_EXTENSIONS=1`, so no shipping build
+  exposes any extension surface until real demand justifies enabling it.
 
 Two confirmed-bug adversarial-review passes (customization layer, then the
 palette/AI glue) have been run against this code.

@@ -58,5 +58,10 @@ let package = Package(
         // lockdown + TLS + AFC). The app invokes this binary so untrusted device parsing
         // stays out of the Full-Disk-Access process. Bundled + signed by package.sh.
         .executableTarget(name: "pathem-afc", dependencies: ["PathemEngine"]),
+
+        // Reference out-of-process Swift extension helper. Not shipped in the app; it is the
+        // canonical example an extension author copies, and it exercises the ExtensionHost
+        // wire protocol (line-delimited JSON over stdio) so the seam can't rot.
+        .executableTarget(name: "pathem-ext-example", dependencies: ["PathemEngine"]),
     ]
 )
