@@ -32,6 +32,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var xattrController = XattrController()
     private lazy var diffViewer = DiffViewerController()
     private lazy var bulkAttributes = BulkAttributesController()
+    private lazy var automationRules = AutomationRulesController()
+    private lazy var automation: AutomationManager = {
+        let manager = AutomationManager(storeURL: Self.automationRulesURL)
+        manager.onApplied = { [weak self] _ in self?.reloadBothSides() }
+        return manager
+    }()
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -223,6 +229,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view = host
         configureShelf()
         startDownloadWatch()
+        setupAutomation()
     }
 
     // Constrain the sidebar width (outer split) and the terminal drawer height
@@ -657,6 +664,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("workspace.save", L("bvc.cmd.saveWorkspace", "Save Workspace…")) { [weak self] in self?.saveWorkspace() }
         add("workspace.open", L("bvc.cmd.openWorkspace", "Open Workspace…")) { [weak self] in self?.openWorkspace() }
+        add("tools.automation", L("bvc.cmd.automation", "Automation Rules…")) { [weak self] in self?.showAutomationRules() }
         add("view.applyToSubfolders", L("bvc.cmd.applyViewToSubfolders", "Apply View to Subfolders"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
         }
@@ -2954,6 +2962,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         appSupportDirectory()?.appendingPathComponent("workspaces.json")
     }
 
+    private static var automationRulesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("automation-rules.json")
+    }
+
+    /// Start the automation folder watchers (off in demo mode and under the smoke harness).
+    private func setupAutomation() {
+        guard demoLayout == nil, ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == nil else { return }
+        _ = automation  // lazy init loads the rules and starts the watchers
+    }
+
+    private func showAutomationRules() {
+        automationRules.present(manager: automation, over: view.window)
+    }
+
     /// Capture the current dual-pane, multi-tab layout under a name.
     private func saveWorkspace() {
         guard
@@ -4303,6 +4325,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let chip = DownloadSuggestionBar()
         chip.show(fileURL: URL(fileURLWithPath: "/tmp/invoice.pdf"), destinationName: "PDFs")
         check("download-chip-builds", chip.debugVisibleText?.contains("PDFs") == true, chip.debugVisibleText ?? "nil")
+        // The new superuser/developer panels must construct without a layout crash.
+        _ = DiffViewerController()
+        let panelsOK =
+            XattrController().debugRowCount == 0 && BulkAttributesController().debugContentReady
+            && AutomationRulesController().debugContentReady
+        check("aux-panels-build", panelsOK, "diff/xattr/attrs/automation")
         // End-to-end ambient path: point Downloads at a temp dir, drop a file, run one change
         // pass, and confirm the chip offers to move it (catches wiring bugs the unit tests can't).
         let dlDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dl-\(UUID().uuidString)")
