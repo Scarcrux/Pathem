@@ -322,6 +322,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let origin = scrollView.contentView.bounds.origin
         self.entries = entries
         tableView.reloadData()
+        // Re-tile now so the table's frame matches the new (possibly much smaller) row
+        // count before we clamp and scroll. Right after reloadData the frame is still the
+        // OLD height, so both our clamp and the clip view's own bounds constraint would use
+        // a stale, too-large size, leaving the view stranded scrolled into empty space
+        // below the remaining rows (the "panels scroll down after a change" bug).
+        tableView.layoutSubtreeIfNeeded()
         if !selectedNames.isEmpty {
             var rows = IndexSet()
             for (index, entry) in entries.enumerated() where selectedNames.contains(entry.name) {
@@ -331,12 +337,28 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             // instead of leaving NSTableView's stale index-based highlight).
             tableView.selectRowIndexes(rows, byExtendingSelection: false)
         }
-        // Clamp to the new document bounds so a shrunk listing never leaves the
-        // view scrolled past the last row into empty space.
-        let maxY = max(0, tableView.bounds.height - scrollView.contentView.bounds.height)
+        let maxY = max(0, tableView.frame.height - scrollView.contentView.bounds.height)
         scrollView.contentView.scroll(to: NSPoint(x: origin.x, y: min(max(origin.y, 0), maxY)))
         scrollView.reflectScrolledClipView(scrollView.contentView)
     }
+
+    // MARK: - Scroll-clamp diagnostics (the shrink-while-scrolled regression check)
+
+    /// Lay the list out at a fixed size so a headless scroll test has real geometry.
+    func debugLayout(width: CGFloat, height: CGFloat) {
+        scrollView.frame = NSRect(x: 0, y: 0, width: width, height: height)
+        scrollView.layoutSubtreeIfNeeded()
+    }
+
+    /// Scroll to the very bottom of the content (for the shrink test).
+    func debugScrollToBottom() {
+        let y = max(0, tableView.frame.height - scrollView.contentView.bounds.height)
+        scrollView.contentView.scroll(to: NSPoint(x: 0, y: y))
+        scrollView.reflectScrolledClipView(scrollView.contentView)
+    }
+
+    /// The current vertical scroll offset (0 == top).
+    func debugScrollOriginY() -> CGFloat { scrollView.contentView.bounds.origin.y }
 
     @objc private func handleDoubleClick() {
         let row = tableView.clickedRow

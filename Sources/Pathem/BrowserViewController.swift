@@ -4249,6 +4249,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "context-menu-icons", iconlessCommands.isEmpty,
             iconlessCommands.isEmpty ? "all present" : "missing: \(iconlessCommands.map(\.id))")
+        // Shrinking a listing must clamp the scroll back to the top, not strand the view
+        // scrolled into empty space below the few remaining rows (the "panels scroll down
+        // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it
+        // to two rows, and assert the offset returns to zero.
+        let tallList = (0..<40).map {
+            FileEntry(
+                name: String(format: "row-%02d.txt", $0), isDirectory: false, size: 0, modificationDate: nil)
+        }
+        let shrink = FileListController()
+        shrink.debugLayout(width: 300, height: 100)  // small viewport so the list overflows
+        shrink.setEntries(tallList, preserveState: false)
+        shrink.debugLayout(width: 300, height: 100)
+        shrink.debugScrollToBottom()
+        let scrolled = shrink.debugScrollOriginY()
+        shrink.setEntries(Array(tallList.prefix(2)), preserveState: true)  // shrink to 2 rows
+        let after = shrink.debugScrollOriginY()
+        check(
+            "scroll-clamps-on-shrink", scrolled > 0 && after == 0,
+            "scrolled=\(Int(scrolled)) after=\(Int(after)) (want after=0)")
         // Embedded Settings: build the in-pane settings view (catches a crash in that path).
         let settingsView = settings.makeEmbedded(
             prefs: prefs, commands: commands.all.map { (id: $0.id, title: $0.title) },
