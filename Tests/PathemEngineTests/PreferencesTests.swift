@@ -47,6 +47,7 @@ import Testing
         #expect(prefs.calculateFolderSizes == false)  // defaulted
         #expect(prefs.compactSidebar == false)  // defaulted
         #expect(prefs.instantTooltips == false)  // defaulted
+        #expect(prefs.toolbarIconSize == .medium)  // defaulted
     }
 
     @Test func instantTooltipsDefaultsOffAndRoundTrips() throws {

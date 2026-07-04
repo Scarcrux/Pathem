@@ -126,6 +126,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private var backButton = NSButton()
     private var forwardButton = NSButton()
     private var upButton = NSButton()
+    /// Point size for the navigation button icons (from the toolbar-icon-size preference).
+    var iconPointSize: CGFloat = 13 { didSet { applyIconSize() } }
     private var viewSwitcher = NSSegmentedControl()
     private let sortButton = NSPopUpButton(frame: .zero, pullsDown: true)
     private let actionButton = NSPopUpButton(frame: .zero, pullsDown: true)
@@ -1024,7 +1026,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     private func iconButton(_ symbol: String, _ action: Selector) -> NSButton {
         let button = NSButton()
-        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+        let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
+        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
+            .withSymbolConfiguration(config)
         button.bezelStyle = .texturedRounded
         button.setButtonType(.momentaryPushIn)
         button.imagePosition = .imageOnly
@@ -1032,6 +1036,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         button.action = action
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }
+
+    /// Re-render the navigation icons at the current point size (toolbar-icon-size pref).
+    private func applyIconSize() {
+        let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
+        backButton.image = Self.symbol("chevron.backward").withSymbolConfiguration(config)
+        forwardButton.image = Self.symbol("chevron.forward").withSymbolConfiguration(config)
+        upButton.image = Self.symbol("chevron.up").withSymbolConfiguration(config)
     }
 
     private static func symbol(_ name: String) -> NSImage {

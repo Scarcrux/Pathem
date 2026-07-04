@@ -2670,11 +2670,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.showHiddenByDefault = prefs.showHiddenByDefault
                 if wasHidden != prefs.showHiddenByDefault { pane.reloadIfShowingListing() }
                 pane.iconZoom = CGFloat(prefs.iconZoom)
+                pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
             }
         }
         applyCompactSidebar()
         applyAppearance()
         applyTooltipDelay()
+        applyToolbarIconSize()
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
         saveConfig(prefs, to: Self.preferencesURL)
         cachedDir = nil
@@ -2687,6 +2689,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// default). Register a near-zero delay for instant tooltips, or clear our override to
     /// restore the default. A live toggle applies to tooltips shown after this point;
     /// AppKit may cache the value, so a relaunch guarantees it.
+    /// Resize the window toolbar's icon(s) to match the toolbar-icon-size preference.
+    private func applyToolbarIconSize() {
+        guard let toolbar = view.window?.toolbar else { return }
+        let config = NSImage.SymbolConfiguration(
+            pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular)
+        for item in toolbar.items where item.itemIdentifier == Self.cleanupItemID {
+            item.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: item.label)?
+                .withSymbolConfiguration(config)
+        }
+    }
+
     private func applyTooltipDelay() {
         let key = "NSInitialToolTipDelay"
         if prefs.instantTooltips {
@@ -4473,7 +4486,8 @@ extension BrowserViewController: NSToolbarDelegate {
             let item = NSToolbarItem(itemIdentifier: identifier)
             item.label = L("toolbar.cleanup", "Cleanup")
             item.toolTip = L("toolbar.cleanup.tip", "Find and remove reclaimable files")
-            item.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: item.label)
+            item.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: item.label)?
+                .withSymbolConfiguration(.init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
             item.isBordered = true
             item.target = self
             item.action = #selector(cleanupFromToolbar)

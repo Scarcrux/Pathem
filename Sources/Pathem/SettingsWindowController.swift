@@ -261,6 +261,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
             labeled(L("prefs.densityLabel", "Density"), densityControl()),
             labeled(L("prefs.fontSizeLabel", "Font size"), fontControl()),
+            labeled(L("prefs.iconSizeLabel", "Toolbar icon size"), iconSizeControl()),
             check(L("prefs.alternatingRows", "Alternating row colors"), \.alternatingRows),
         ])
         case .layout: return form([
@@ -402,6 +403,21 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func densityChanged(_ sender: NSPopUpButton) {
         prefs.density = sender.indexOfSelectedItem == 1 ? .compact : .comfortable
+        onChange?(prefs)
+    }
+
+    private func iconSizeControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.iconSmall", "Small"), L("prefs.iconMedium", "Medium"), L("prefs.iconLarge", "Large"),
+        ])
+        popup.selectItem(at: Preferences.IconSize.allCases.firstIndex(of: prefs.toolbarIconSize) ?? 1)
+        popup.target = self
+        popup.action = #selector(iconSizeChanged(_:))
+        return popup
+    }
+    @objc private func iconSizeChanged(_ sender: NSPopUpButton) {
+        prefs.toolbarIconSize = Preferences.IconSize.allCases[sender.indexOfSelectedItem]
         onChange?(prefs)
     }
 

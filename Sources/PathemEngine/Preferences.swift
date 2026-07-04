@@ -7,6 +7,18 @@ public struct Preferences: Codable, Sendable, Equatable {
     public enum Density: String, Codable, Sendable, CaseIterable { case compact, comfortable }
     /// App appearance: follow the system, or force Light/Dark.
     public enum Appearance: String, Codable, Sendable, CaseIterable { case system, light, dark }
+    /// Size of the navigation/toolbar button icons.
+    public enum IconSize: String, Codable, Sendable, CaseIterable {
+        case small, medium, large
+        /// SF Symbol point size for the toolbar/navigation buttons.
+        public var pointSize: Double {
+            switch self {
+            case .small: return 11
+            case .medium: return 13  // the historical default look
+            case .large: return 18
+            }
+        }
+    }
 
     /// Row spacing for the file list.
     public var density: Density
@@ -53,6 +65,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var underlineOnHover: Bool
     /// Show tooltips immediately instead of after the system hover delay.
     public var instantTooltips: Bool
+    /// Size of the navigation/toolbar button icons.
+    public var toolbarIconSize: IconSize
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -64,11 +78,13 @@ public struct Preferences: Codable, Sendable, Equatable {
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
-        underlineOnHover: Bool = false, instantTooltips: Bool = false
+        underlineOnHover: Bool = false, instantTooltips: Bool = false,
+        toolbarIconSize: IconSize = .medium
     ) {
         self.singleClickToOpen = singleClickToOpen
         self.underlineOnHover = underlineOnHover
         self.instantTooltips = instantTooltips
+        self.toolbarIconSize = toolbarIconSize
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -134,5 +150,6 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .underlineOnHover) ?? d.underlineOnHover
         instantTooltips =
             try c.decodeIfPresent(Bool.self, forKey: .instantTooltips) ?? d.instantTooltips
+        toolbarIconSize = (try? c.decode(IconSize.self, forKey: .toolbarIconSize)) ?? d.toolbarIconSize
     }
 }
