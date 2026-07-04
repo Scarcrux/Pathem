@@ -19,3 +19,7 @@ DerivedData/
 *.private
 sparkle_eddsa_private.key
 dsa_priv.pem
+
+# Release output (DMGs, appcast, per-item fragments): regenerated, uploaded to
+# GitHub Releases, never served from the repo.
+dist/
