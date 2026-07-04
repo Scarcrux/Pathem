@@ -474,7 +474,24 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         rows.removeAll { trashed.contains($0.item.path) }
         table.reloadData()
         updateSummary()
-        if !result.failures.isEmpty { NSSound.beep() }
+        if !result.failures.isEmpty { presentTrashFailures(result.failures) }
+    }
+
+    /// Tell the user which items couldn't be removed, instead of a bare beep that leaves
+    /// them thinking the space was reclaimed when some files are still there.
+    private func presentTrashFailures(_ failures: [FileOperations.Failure]) {
+        let detail = failures.prefix(8).map { "• \($0.name): \($0.reason)" }.joined(separator: "\n")
+        let more =
+            failures.count > 8
+            ? "\n" + String(format: L("cleanup.moreFailures", "…and %d more."), failures.count - 8) : ""
+        let alert = NSAlert()
+        alert.messageText = String(
+            format: L("cleanup.trashFailedTitle", "%d item(s) couldn’t be removed"), failures.count)
+        alert.informativeText =
+            detail + more + "\n\n"
+            + L("cleanup.trashFailedHint", "They may be in use, or Pathem may need Full Disk Access to delete them.")
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.beginSheetModal(for: panel) { _ in }
     }
 
     /// Open Storage in System Settings, which shows app/photo/system categories and

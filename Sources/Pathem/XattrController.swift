@@ -131,11 +131,16 @@ final class XattrController: NSObject, NSTableViewDataSource, NSTableViewDelegat
     @objc private func removeSelected() {
         let row = table.selectedRow
         guard let url, attrs.indices.contains(row) else { NSSound.beep(); return }
+        let name = attrs[row].name
         do {
-            try ExtendedAttributes.remove(attrs[row].name, from: url)
+            try ExtendedAttributes.remove(name, from: url)
             reload()
         } catch {
-            NSSound.beep()
+            let alert = NSAlert()
+            alert.messageText = String(format: L("xattr.removeFailedTitle", "Couldn’t remove “%@”"), name)
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: L("common.ok", "OK"))
+            if let window = table.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
         }
     }
 

@@ -151,18 +151,34 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     /// Add imported sites that aren't already present (by proto+host+port+user).
     private func merge(_ imported: [RemoteConnection]) {
         guard !imported.isEmpty else {
-            NSSound.beep()
+            info(
+                L("conn.importEmptyTitle", "No sites found"),
+                L("conn.importEmptyBody", "That FileZilla file didn’t contain any sites Pathem could import."))
             return
         }
         func key(_ c: RemoteConnection) -> String { "\(c.proto.rawValue)|\(c.host)|\(c.effectivePort)|\(c.user)" }
         var existing = Set(connections.map(key))
         let before = connections.count
         for site in imported where existing.insert(key(site)).inserted { connections.append(site) }
-        if connections.count > before {
+        let added = connections.count - before
+        if added > 0 {
             commit()  // only write when something actually changed
         } else {
-            NSSound.beep()  // everything was already present
+            info(
+                L("conn.importNoneNewTitle", "Already imported"),
+                String(
+                    format: L("conn.importNoneNewBody", "All %d site(s) in that file are already in your list."),
+                    imported.count))
         }
+    }
+
+    /// Show a simple informational sheet over the connections panel.
+    private func info(_ title: String, _ body: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = body
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.beginSheetModal(for: panel) { _ in }
     }
 
     /// Add (row == nil) or edit a connection via a compact form sheet.

@@ -1418,7 +1418,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     return files.count == 1 ? hash : "\(hash)  \(url.lastPathComponent)"
                 }
             }.value
-            guard !lines.isEmpty else { NSSound.beep(); return }
+            guard !lines.isEmpty else {
+                self.presentInfo(
+                    L("checksum.failedTitle", "Couldn’t hash the selection"),
+                    L("checksum.failedBody", "None of the selected files could be read. They may be unreadable without Full Disk Access, or they may have been removed."))
+                return
+            }
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
         }
@@ -2583,8 +2588,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         let config = NSWorkspace.OpenConfiguration()
         config.promptsUserIfNeeded = true
-        NSWorkspace.shared.open([target], withApplicationAt: editor, configuration: config) { _, error in
-            if error != nil { DispatchQueue.main.async { NSSound.beep() } }
+        NSWorkspace.shared.open([target], withApplicationAt: editor, configuration: config) { [weak self] _, error in
+            guard let error else { return }
+            DispatchQueue.main.async {
+                self?.presentInfo(
+                    String(
+                        format: L("editor.failedTitle", "Couldn’t open in %@"),
+                        editor.deletingPathExtension().lastPathComponent),
+                    error.localizedDescription)
+            }
         }
     }
 
@@ -3512,7 +3524,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func connectToShared(_ name: String) {
         sharedDiscovery.resolveHost(named: name) { [weak self] host in
             guard let self, let host else {
-                NSSound.beep()
+                self?.presentInfo(
+                    L("smb.unreachableTitle", "Can’t reach that computer"),
+                    String(
+                        format: L("smb.unreachableBody", "Couldn’t resolve “%@” on the network. It may have gone offline."),
+                        name))
                 return
             }
             self.mountSMB(host: host)
@@ -3537,19 +3553,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
         Task { [weak self] in
-            let mount = await Self.mountShare(url)
+            let result = await Self.mountShare(url)
             guard let self else { return }
-            if let mount {
+            if let mount = result.mount {
                 self.activePane?.navigate(to: mount)
-            } else {
-                NSSound.beep()
+            } else if result.status != ECANCELED {
+                // nil with ECANCELED means the user dismissed the OS credential prompt;
+                // only a real failure (unreachable host, wrong password, share gone) warrants
+                // an alert.
+                self.presentInfo(
+                    L("smb.failedTitle", "Couldn’t connect"),
+                    String(
+                        format: L("smb.failedBody", "Couldn’t mount “%@”. Check that the share is available and your credentials are correct."),
+                        host))
             }
         }
     }
 
-    /// Off-main NetFS mount. Returns the mount point, or nil on failure/cancel.
-    nonisolated private static func mountShare(_ url: URL) async -> URL? {
-        await withCheckedContinuation { (cont: CheckedContinuation<URL?, Never>) in
+    /// Off-main NetFS mount. Returns the mount point (nil on failure/cancel) plus the
+    /// NetFS status, so the caller can tell a user cancel (ECANCELED) from a real failure.
+    nonisolated private static func mountShare(_ url: URL) async -> (mount: URL?, status: Int32) {
+        await withCheckedContinuation { (cont: CheckedContinuation<(URL?, Int32), Never>) in
             DispatchQueue.global(qos: .userInitiated).async {
                 let openOptions = NSMutableDictionary()
                 openOptions[kNAUIOptionKey] = kNAUIOptionAllowUI  // let the OS prompt for credentials
@@ -3557,7 +3581,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 let status = NetFSMountURLSync(
                     url as CFURL, nil, nil, nil, openOptions as CFMutableDictionary, nil, &mountpoints)
                 let paths = (mountpoints?.takeRetainedValue() as? [String]) ?? []
-                cont.resume(returning: status == 0 ? paths.first.map { URL(fileURLWithPath: $0) } : nil)
+                cont.resume(
+                    returning: (status == 0 ? paths.first.map { URL(fileURLWithPath: $0) } : nil, status))
             }
         }
     }
@@ -3615,8 +3640,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory != true
         }
         guard !files.isEmpty else {
-            NSSound.beep()  // folder upload isn't supported yet
+            presentInfo(
+                L("upload.foldersUnsupportedTitle", "Can’t upload folders yet"),
+                L("upload.foldersUnsupportedBody", "Uploading whole folders to a remote server isn’t supported yet. Select individual files to upload them."))
             return
+        }
+        if files.count < urls.count {
+            // A mixed drop: the folders were dropped silently. Say so, but still upload the files.
+            presentInfo(
+                L("upload.foldersSkippedTitle", "Folders skipped"),
+                L("upload.foldersSkippedBody", "Folder upload isn’t supported yet, so only the files in this drop will be uploaded."))
         }
         let provider = RemoteProviders.make(for: connection.proto)
         let items = files.map { url -> TransferQueueController.Item in

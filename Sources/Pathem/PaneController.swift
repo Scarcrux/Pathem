@@ -1275,7 +1275,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             return
         }
         let allHave = urls.allSatisfy { FileTags.tags(of: $0).contains { $0.color == color } }
-        var failed = false
+        var failures = 0
         for url in urls {
             do {
                 var tags = FileTags.tags(of: url)
@@ -1288,10 +1288,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 }
                 try FileTags.setTags(tags, on: url)
             } catch {
-                failed = true
+                failures += 1
             }
         }
-        if failed { NSSound.beep() }
+        if failures > 0 { presentTagWriteFailure(failures) }
         content.invalidateTagCache()
         reload()
     }
@@ -1310,7 +1310,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let allHave = urls.allSatisfy {
             FileTags.tags(of: $0).contains { $0.name.caseInsensitiveCompare(label.name) == .orderedSame }
         }
-        var failed = false
+        var failures = 0
         for url in urls {
             do {
                 if allHave {
@@ -1323,10 +1323,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     _ = try FileTags.toggle(label.tag, on: url)
                 }
             } catch {
-                failed = true
+                failures += 1
             }
         }
-        if failed { NSSound.beep() }
+        if failures > 0 { presentTagWriteFailure(failures) }
         content.invalidateTagCache()
         reload()
     }
@@ -1344,11 +1344,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             NSSound.beep()
             return
         }
-        var failed = false
+        var failures = 0
         for url in urls {
-            do { try FileTags.setTags([], on: url) } catch { failed = true }
+            do { try FileTags.setTags([], on: url) } catch { failures += 1 }
         }
-        if failed { NSSound.beep() }
+        if failures > 0 { presentTagWriteFailure(failures) }
         content.invalidateTagCache()
         reload()
     }
@@ -1549,6 +1549,19 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             enterDirectory()
             content.select(name: url.lastPathComponent)
         }
+    }
+
+    /// Report that some tag writes didn't stick, instead of failing with only a beep. The
+    /// usual causes are a read-only volume or a missing Full Disk Access grant.
+    private func presentTagWriteFailure(_ count: Int) {
+        guard let window = containerView.window else { NSSound.beep(); return }
+        let alert = NSAlert()
+        alert.messageText = L("pane.tagFailedTitle", "Couldn’t change tags")
+        alert.informativeText = String(
+            format: L("pane.tagFailedBody", "%d item(s) couldn’t be updated. They may be on a read-only volume, or Pathem may need Full Disk Access."),
+            count)
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.beginSheetModal(for: window) { _ in }
     }
 
     /// Offer a "did you mean" correction for a path that doesn't exist.
