@@ -572,6 +572,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.secureDelete", L("bvc.cmd.secureDelete", "Secure Delete…"), enabled: hasLocalSelection) {
             [weak self] in self?.secureDeleteSelection()
         }
+        add("files.encryptDMG", L("bvc.cmd.encryptDMG", "New Encrypted Disk Image…"), enabled: hasLocalSelection) {
+            [weak self] in self?.encryptToDiskImage()
+        }
         add("files.split", L("bvc.cmd.split", "Split File…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
                 pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first
@@ -1522,14 +1525,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             stack.spacing = 8
             return stack
         }
+        let stripCheck = NSButton(
+            checkboxWithTitle: L("convert.strip", "Strip metadata (EXIF, GPS)"), target: nil, action: nil)
         let accessory = NSStackView(views: [
             row(L("convert.formatLabel", "Format"), formatPopup),
             row(L("convert.sizeLabel", "Max size"), sizeField),
+            stripCheck,
         ])
         accessory.orientation = .vertical
         accessory.alignment = .leading
         accessory.spacing = 8
-        accessory.frame = NSRect(x: 0, y: 0, width: 300, height: 66)
+        accessory.frame = NSRect(x: 0, y: 0, width: 320, height: 92)
 
         let alert = NSAlert()
         alert.messageText = String(format: L("bvc.convertImagesQ", "Convert %d image(s)"), urls.count)
@@ -1541,7 +1547,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let index = formatPopup.indexOfSelectedItem
             let format = index > 0 ? ImageConverter.Format.allCases[index - 1] : nil
             let maxDim = Int(sizeField.stringValue.trimmingCharacters(in: .whitespaces))
-            let options = ImageConverter.Options(format: format, maxDimension: maxDim.flatMap { $0 > 0 ? $0 : nil })
+            let options = ImageConverter.Options(
+                format: format, maxDimension: maxDim.flatMap { $0 > 0 ? $0 : nil },
+                stripMetadata: stripCheck.state == .on)
             guard !options.isNoOp else { return }
             Task { @MainActor in
                 let result = await ImageConverter.process(urls, options: options)
@@ -1588,6 +1596,62 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.activePane?.select(name: merged.lastPathComponent)
             } catch {
                 self.presentInfo(L("bvc.mergeFailed", "Couldn’t merge the parts"), error.localizedDescription)
+            }
+        }
+    }
+
+    /// Create an AES-256 encrypted disk image containing the selection, after prompting for
+    /// a volume name and password.
+    private func encryptToDiskImage() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        let folder = pane.currentURL
+
+        let nameField = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+        nameField.stringValue = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Encrypted"
+        let passField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
+        passField.placeholderString = L("dmg.password", "Password")
+        func labeledRow(_ label: String, _ control: NSView) -> NSStackView {
+            let name = NSTextField(labelWithString: label)
+            name.alignment = .right
+            name.widthAnchor.constraint(equalToConstant: 80).isActive = true
+            let row = NSStackView(views: [name, control])
+            row.orientation = .horizontal
+            row.spacing = 8
+            return row
+        }
+        let accessory = NSStackView(views: [
+            labeledRow(L("dmg.name", "Name"), nameField), labeledRow(L("dmg.passwordLabel", "Password"), passField),
+        ])
+        accessory.orientation = .vertical
+        accessory.alignment = .leading
+        accessory.spacing = 8
+        accessory.frame = NSRect(x: 0, y: 0, width: 340, height: 66)
+
+        let alert = NSAlert()
+        alert.messageText = String(
+            format: L("dmg.title", "New Encrypted Disk Image (%d item(s))"), urls.count)
+        alert.accessoryView = accessory
+        alert.addButton(withTitle: L("dmg.create", "Create"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            let name = nameField.stringValue.isEmpty ? "Encrypted" : nameField.stringValue
+            let password = passField.stringValue
+            guard !password.isEmpty else { NSSound.beep(); return }
+            Task { @MainActor in
+                do {
+                    let dmg = try await Task.detached {
+                        try await DiskImage.createEncrypted(
+                            from: urls, volumeName: name, password: password, in: folder)
+                    }.value
+                    self.activePane?.reloadIfShowingListing()
+                    self.activePane?.select(name: dmg.lastPathComponent)
+                } catch {
+                    self.presentInfo(
+                        L("dmg.failed", "Couldn’t create the disk image"), error.localizedDescription)
+                }
             }
         }
     }

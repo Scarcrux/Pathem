@@ -66,6 +66,44 @@ import UniformTypeIdentifiers
         #expect(pixelWidth(png) == 200)  // original untouched
     }
 
+    private func writeJPEGWithGPS(_ url: URL, size: Int) throws {
+        let space = CGColorSpaceCreateDeviceRGB()
+        guard
+            let ctx = CGContext(
+                data: nil, width: size, height: size, bitsPerComponent: 8, bytesPerRow: 0,
+                space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
+            let dest = CGImageDestinationCreateWithURL(
+                url as CFURL, UTType.jpeg.identifier as CFString, 1, nil)
+        else { throw CocoaError(.fileWriteUnknown) }
+        ctx.setFillColor(CGColor(red: 0, green: 0, blue: 1, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: size, height: size))
+        guard let image = ctx.makeImage() else { throw CocoaError(.fileWriteUnknown) }
+        let gps: [CFString: Any] = [kCGImagePropertyGPSLatitude: 37.77, kCGImagePropertyGPSLongitude: 122.41]
+        CGImageDestinationAddImage(dest, image, [kCGImagePropertyGPSDictionary: gps] as CFDictionary)
+        CGImageDestinationFinalize(dest)
+    }
+
+    private func hasGPS(_ url: URL) -> Bool {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+            let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any]
+        else { return false }
+        return props[kCGImagePropertyGPSDictionary] != nil
+    }
+
+    @Test func stripsMetadata() async throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let jpg = dir.appendingPathComponent("geo.jpg")
+        try writeJPEGWithGPS(jpg, size: 40)
+        #expect(hasGPS(jpg))  // sanity: it starts with GPS
+
+        let result = await ImageConverter.process([jpg], options: .init(stripMetadata: true))
+        let out = try #require(result.outputs.first)
+        #expect(out.lastPathComponent == "geo clean.jpg")
+        #expect(!hasGPS(out))  // stripped
+        #expect(hasGPS(jpg))  // original untouched
+    }
+
     @Test func noOpProducesNothing() async {
         let result = await ImageConverter.process(
             [URL(fileURLWithPath: "/tmp/whatever.png")], options: .init())

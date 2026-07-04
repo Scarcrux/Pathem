@@ -43,4 +43,28 @@ import Testing
             """
         #expect(DiskImage.parseMountPoint(Data(xml.utf8)) == nil)
     }
+
+    @Test(.timeLimit(.minutes(1))) func createsEncryptedImage() async throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dmg-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("secret.txt")
+        try Data("classified".utf8).write(to: file)
+
+        let dmg = try await DiskImage.createEncrypted(
+            from: [file], volumeName: "Vault", password: "hunter2", in: dir)
+        #expect(FileManager.default.fileExists(atPath: dmg.path))
+        #expect(dmg.lastPathComponent == "Vault.dmg")
+
+        // hdiutil confirms the image is encrypted.
+        let check = Process()
+        check.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+        check.arguments = ["isencrypted", dmg.path]
+        let pipe = Pipe()
+        check.standardOutput = pipe
+        try check.run()
+        check.waitUntilExit()
+        let output = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        #expect(output.contains("YES"))
+    }
 }

@@ -420,6 +420,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Merge Parts", "files.merge"))
         fileMenu.addItem(commandItem("Convert Images…", "files.convertImages"))
         fileMenu.addItem(commandItem("Set Attributes…", "files.setAttributes"))
+        fileMenu.addItem(commandItem("New Encrypted Disk Image…", "files.encryptDMG"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Secure Delete…", "files.secureDelete"))
