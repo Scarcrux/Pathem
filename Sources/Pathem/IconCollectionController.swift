@@ -245,7 +245,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         collection.register(IconItem.self, forItemWithIdentifier: Self.itemID)
         collection.registerForDraggedTypes([.fileURL])
         collection.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
-        collection.setDraggingSourceOperationMask([.copy], forLocal: false)
+        collection.setDraggingSourceOperationMask(.every, forLocal: false)  // effectAllowed="all", like Finder
         collection.onActivate = { [weak self] indexPath in
             guard let self else { return }
             if let indexPath, indexPath.item < self.entries.count {

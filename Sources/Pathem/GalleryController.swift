@@ -64,7 +64,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         filmstrip.register(IconItem.self, forItemWithIdentifier: Self.itemID)
         filmstrip.registerForDraggedTypes([.fileURL])
         filmstrip.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
-        filmstrip.setDraggingSourceOperationMask([.copy], forLocal: false)
+        filmstrip.setDraggingSourceOperationMask(.every, forLocal: false)  // effectAllowed="all", like Finder
         filmstrip.onActivate = { [weak self] indexPath in
             guard let self, let item = (indexPath ?? self.filmstrip.selectionIndexPaths.first)?.item,
                 item < self.entries.count

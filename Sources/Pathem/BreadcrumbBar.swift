@@ -146,7 +146,7 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     nonisolated func draggingSession(
         _ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext
     ) -> NSDragOperation {
-        context == .outsideApplication ? [.copy] : [.copy, .move]
+        context == .outsideApplication ? .every : [.copy, .move]  // "all" outside, like Finder
     }
 
     nonisolated func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {

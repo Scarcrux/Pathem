@@ -183,7 +183,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         // file drops into this folder.
         tableView.registerForDraggedTypes([.fileURL])
         tableView.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
-        tableView.setDraggingSourceOperationMask([.copy], forLocal: false)
+        // Advertise every operation to other apps (effectAllowed = "all"), exactly as Finder
+        // does. Some browser upload drop zones (e.g. Google Colab) gate acceptance on a broad
+        // effectAllowed during dragover and silently refuse a copy-only drag. We never delete a
+        // source on an outside move (no move-completion handler), so this stays non-destructive.
+        tableView.setDraggingSourceOperationMask(.every, forLocal: false)
 
         placeholder.alignment = .center
         placeholder.textColor = .secondaryLabelColor
