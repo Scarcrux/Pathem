@@ -196,6 +196,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         outline.autoresizesOutlineColumn = false
         outline.dataSource = self
         outline.delegate = self
+        // Double-click a folder (or group header) to expand/collapse it. The default
+        // double-click doesn't reliably toggle a lazily-loaded folder (its children aren't
+        // there yet at click time), so drive it explicitly.
+        outline.target = self
+        outline.doubleAction = #selector(outlineDoubleClicked)
         outline.registerForDraggedTypes([Self.itemType, Self.groupType, .fileURL])
         outline.setDraggingSourceOperationMask(.move, forLocal: true)
 
@@ -555,6 +560,20 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     func outlineViewItemDidExpand(_ notification: Notification) {
         guard let node = notification.userInfo?["NSObject"] as? Node, node.isHeader else { return }
         collapsedHeaderKeys.remove(Self.key(node))
+    }
+
+    /// Toggle expansion when a folder (or group header) row is double-clicked. Selecting the
+    /// row already navigated to it; this also opens its subfolders in the tree. Expanding a
+    /// folder lazily lists its subfolders, which then appear when the read finishes.
+    @objc private func outlineDoubleClicked() {
+        let row = outline.clickedRow
+        guard row >= 0, let node = outline.item(atRow: row) as? Node, node.isFolder || node.isHeader
+        else { return }
+        if outline.isItemExpanded(node) {
+            outline.collapseItem(node)
+        } else {
+            outline.expandItem(node)
+        }
     }
 
     /// Subfolders of a directory, off the main actor. nonisolated + async means an
