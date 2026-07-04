@@ -76,10 +76,20 @@ enum FileDrag {
     /// that also carries the file URL (in-app drops, Finder). Use from `pasteboardWriterForRow`
     /// / `pasteboardWriterForItemAt`.
     static func item(for url: URL) -> NSPasteboardWriting {
-        let type = UTType(filenameExtension: url.pathExtension)?.identifier ?? UTType.data.identifier
-        let item = FileDragItem(fileType: type, delegate: FilePromiseFulfiller.shared)
+        let item = FileDragItem(fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
         item.sourceURL = url
         return item
+    }
+
+    /// The file's real Uniform Type, so the promised drop advertises an accurate type (and
+    /// MIME, where one exists) rather than a generic blob. Prefer the type the file system
+    /// resolves (which honors the actual file, not just its extension), then the extension,
+    /// then a plain-data fallback.
+    static func contentType(of url: URL) -> UTType {
+        if let resolved = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType {
+            return resolved
+        }
+        return UTType(filenameExtension: url.pathExtension) ?? .data
     }
 
     /// Advertise the dragged files under the legacy filenames type, alongside the per-item
