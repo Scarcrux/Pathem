@@ -289,6 +289,9 @@ enum PathemApp {
         // Headless sidebar render for layout inspection (PATHEM_SIDEBAR_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 520))  // a realistic short window
+            if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_COMPACT"] != nil {
+                browser.debugSetCompactSidebar(true)
+            }
             var attempts = 0
             func tick() {
                 attempts += 1

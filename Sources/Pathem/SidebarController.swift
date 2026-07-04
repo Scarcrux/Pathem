@@ -251,6 +251,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     func setShowsLabels(_ on: Bool) {
         guard on != showsLabels else { return }
         showsLabels = on
+        // Drop the per-level indentation in compact mode so child rows aren't pushed off
+        // the narrow column, and the centered icons stay fully visible.
+        outline.indentationPerLevel = on ? 12 : 0
         configureSettingsButton()
         outline.reloadData()
     }
@@ -591,6 +594,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         let id = NSUserInterfaceItemIdentifier("place")
         let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makePlaceCell(id)
+        (cell as? PlaceCellView)?.setCompact(!showsLabels)  // center the icon when icons-only
         cell.textField?.stringValue = showsLabels ? node.title : ""  // compact: icons only
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
@@ -958,29 +962,50 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return cell
     }
 
-    private static func makePlaceCell(_ id: NSUserInterfaceItemIdentifier) -> NSTableCellView {
-        let cell = NSTableCellView()
+    private static func makePlaceCell(_ id: NSUserInterfaceItemIdentifier) -> PlaceCellView {
+        let cell = PlaceCellView()
         cell.identifier = id
-        let icon = NSImageView()
+        return cell
+    }
+}
+
+/// A sidebar place row that lays out for either mode: icon-plus-label normally, or a
+/// horizontally-centered icon (label hidden) in compact/icons-only mode, so the icon is
+/// centered in the narrow column instead of pinned to the leading edge and clipped.
+final class PlaceCellView: NSTableCellView {
+    private let icon = NSImageView()
+    private let label = NSTextField(labelWithString: "")
+    private var iconLeading: NSLayoutConstraint!
+    private var iconCentered: NSLayoutConstraint!
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
         icon.translatesAutoresizingMaskIntoConstraints = false
         icon.imageScaling = .scaleProportionallyDown
-        let field = NSTextField(labelWithString: "")
-        field.translatesAutoresizingMaskIntoConstraints = false
-        field.lineBreakMode = .byTruncatingTail
-        field.font = .systemFont(ofSize: 13)
-        cell.addSubview(icon)
-        cell.addSubview(field)
-        cell.imageView = icon
-        cell.textField = field
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.lineBreakMode = .byTruncatingTail
+        label.font = .systemFont(ofSize: 13)
+        addSubview(icon)
+        addSubview(label)
+        imageView = icon
+        textField = label
+        iconLeading = icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4)
+        iconCentered = icon.centerXAnchor.constraint(equalTo: centerXAnchor)
         NSLayoutConstraint.activate([
-            icon.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 2),
-            icon.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            icon.centerYAnchor.constraint(equalTo: centerYAnchor),
             icon.widthAnchor.constraint(equalToConstant: 16),
             icon.heightAnchor.constraint(equalToConstant: 16),
-            field.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
-            field.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
-            field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+            label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
         ])
-        return cell
+        setCompact(false)
+    }
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    func setCompact(_ compact: Bool) {
+        iconLeading.isActive = !compact
+        iconCentered.isActive = compact
+        label.isHidden = compact
     }
 }

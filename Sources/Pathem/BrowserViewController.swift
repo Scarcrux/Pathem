@@ -115,7 +115,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// pane to a content-light view (gallery) can't make the split re-divide and collapse it.
     private let paneSplitDelegate = PaneRatioSplitDelegate()
     private var compactSidebar = false
-    private static let compactSidebarWidth: CGFloat = 56
+    private static let compactSidebarWidth: CGFloat = 60
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
@@ -239,7 +239,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         _ splitView: NSSplitView, constrainMinCoordinate proposedMin: CGFloat, ofSubviewAt dividerIndex: Int
     ) -> CGFloat {
         // Compact mode lets the sidebar shrink to an icons-only width.
-        if splitView === outerSplit, dividerIndex == 0 { return compactSidebar ? 48 : 140 }
+        if splitView === outerSplit, dividerIndex == 0 { return compactSidebar ? 52 : 140 }
         if splitView === vSplit, dividerIndex == 0 { return 160 }  // min browser height
         return proposedMin
     }
@@ -4303,6 +4303,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             try? data.write(to: URL(fileURLWithPath: path))
             print("VIEW SHOT: \(path) \(Int(bounds.width))x\(Int(bounds.height))")
         }
+    }
+
+    /// Force compact (icons-only) sidebar for a render check (PATHEM_SIDEBAR_COMPACT).
+    func debugSetCompactSidebar(_ on: Bool) {
+        prefs.compactSidebar = on
+        applyCompactSidebar()
+        view.layoutSubtreeIfNeeded()
     }
 
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).
