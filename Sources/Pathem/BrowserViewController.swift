@@ -2130,14 +2130,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    /// Mirror `source` onto `target` (recompute the diff fresh, then apply off-main).
+    /// Mirror `source` onto `target`. Recompute the diff fresh, and when the mirror would
+    /// DELETE files from the target (deleteExtras), show exactly which ones and require
+    /// explicit confirmation before touching anything. Then apply off-main.
     private func runMirror(source: URL, target: URL, deleteExtras: Bool) {
         Task { @MainActor [weak self] in
-            let result = await Task.detached { () -> FolderCompare.MirrorResult in
-                let diffs = FolderCompare.compare(left: source, right: target)
-                return FolderCompare.mirror(from: source, to: target, differences: diffs, deleteExtras: deleteExtras)
-            }.value
+            let diffs = await Task.detached { FolderCompare.compare(left: source, right: target) }.value
             guard let self else { return }
+            let plan = FolderCompare.mirrorPlan(diffs, deleteExtras: deleteExtras)
+            if plan.copies.isEmpty && plan.deletes.isEmpty {
+                self.presentInfo(
+                    L("bvc.mirrorNothing", "Already mirrored"),
+                    String(format: L("bvc.mirrorNothingBody", "%@ already matches the source."), target.lastPathComponent))
+                return
+            }
+            // Deletions are destructive: preview them and require a second confirmation.
+            if !plan.deletes.isEmpty {
+                guard await self.confirmMirrorDeletions(plan, target: target) else { return }
+            }
+            let result = await Task.detached {
+                FolderCompare.mirror(from: source, to: target, differences: diffs, deleteExtras: deleteExtras)
+            }.value
             self.reloadBothSides()
             let alert = NSAlert()
             alert.messageText = L("bvc.mirrorComplete", "Mirror complete")
@@ -2146,6 +2159,34 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 + (result.failures.isEmpty ? "" : String(format: L("bvc.mirrorFailedSuffix", ", %d failed"), result.failures.count))
             alert.addButton(withTitle: L("common.ok", "OK"))
             if let window = self.view.window { alert.beginSheetModal(for: window) { _ in } }
+        }
+    }
+
+    /// Show the itemized deletions a mirror will perform (the files trashed on the target),
+    /// plus the copy count, and return whether the user confirmed.
+    private func confirmMirrorDeletions(
+        _ plan: (copies: [String], deletes: [String]), target: URL
+    ) async -> Bool {
+        guard let window = view.window else { return false }
+        let shown = plan.deletes.prefix(12).map { "• \($0)" }.joined(separator: "\n")
+        let more =
+            plan.deletes.count > 12
+            ? "\n" + String(format: L("bvc.mirrorMore", "…and %d more."), plan.deletes.count - 12) : ""
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(
+            format: L("bvc.mirrorConfirmTitle", "Mirror will delete %d item(s) from %@"),
+            plan.deletes.count, target.lastPathComponent)
+        alert.informativeText =
+            String(
+                format: L("bvc.mirrorConfirmBody", "These files exist in %@ but not in the source, so mirroring moves them to the Trash. %d file(s) will also be copied.\n\n%@%@"),
+                target.lastPathComponent, plan.copies.count, shown, more)
+        alert.addButton(withTitle: L("bvc.mirrorConfirmGo", "Mirror and Delete"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return await withCheckedContinuation { continuation in
+            alert.beginSheetModal(for: window) { response in
+                continuation.resume(returning: response == .alertFirstButtonReturn)
+            }
         }
     }
 

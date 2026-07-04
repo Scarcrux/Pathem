@@ -105,6 +105,26 @@ public enum FolderCompare {
         return result
     }
 
+    /// The itemized plan a one-way mirror would carry out, derived purely from a comparison:
+    /// which relative paths get copied into the target (only-on-source or differing), and
+    /// which get deleted from the target (only-on-target, when deleting extras). This lets the
+    /// UI preview a mirror -- especially the deletions -- before anything runs. It mirrors the
+    /// exact cases `mirror(...)` acts on.
+    public static func mirrorPlan(_ differences: [Difference], deleteExtras: Bool)
+        -> (copies: [String], deletes: [String])
+    {
+        var copies: [String] = []
+        var deletes: [String] = []
+        for diff in differences {
+            switch diff.kind {
+            case .onlyLeft, .differs: copies.append(diff.relativePath)
+            case .onlyRight where deleteExtras: deletes.append(diff.relativePath)
+            default: break
+            }
+        }
+        return (copies, deletes)
+    }
+
     /// A summary tally for a confirmation dialog.
     public static func summary(_ diffs: [Difference]) -> (onlyLeft: Int, onlyRight: Int, differs: Int, identical: Int) {
         var s = (onlyLeft: 0, onlyRight: 0, differs: 0, identical: 0)

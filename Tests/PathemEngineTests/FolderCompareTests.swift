@@ -17,6 +17,23 @@ import Testing
         diffs.first { $0.relativePath == rel }?.kind
     }
 
+    @Test func mirrorPlanItemizesCopiesAndDeletes() {
+        let diffs = [
+            FolderCompare.Difference(relativePath: "keep.txt", kind: .identical),
+            FolderCompare.Difference(relativePath: "new.txt", kind: .onlyLeft),
+            FolderCompare.Difference(relativePath: "changed.txt", kind: .differs),
+            FolderCompare.Difference(relativePath: "extra.txt", kind: .onlyRight),
+        ]
+        // Deleting extras: copy the new + changed, delete the target-only file.
+        let withDelete = FolderCompare.mirrorPlan(diffs, deleteExtras: true)
+        #expect(withDelete.copies.sorted() == ["changed.txt", "new.txt"])
+        #expect(withDelete.deletes == ["extra.txt"])
+        // Additive: same copies, but nothing is deleted.
+        let additive = FolderCompare.mirrorPlan(diffs, deleteExtras: false)
+        #expect(additive.copies.sorted() == ["changed.txt", "new.txt"])
+        #expect(additive.deletes.isEmpty)
+    }
+
     @Test func classifiesByRelativePath() throws {
         let left = try dir(), right = try dir()
         defer { try? FileManager.default.removeItem(at: left); try? FileManager.default.removeItem(at: right) }
