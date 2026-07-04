@@ -31,6 +31,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var cleanup = CleanupController()
     private lazy var xattrController = XattrController()
     private lazy var diffViewer = DiffViewerController()
+    private lazy var bulkAttributes = BulkAttributesController()
     private let sidebar = SidebarController()
     private let terminal = TerminalController()
     private let searchField = NSSearchField()
@@ -593,6 +594,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let entries = pane.selectedEntries
             return entries.count == 2 && entries.allSatisfy { !$0.isDirectory }
         }) { [weak self] in self?.compareSelection() }
+        add("files.setAttributes", L("bvc.cmd.setAttributes", "Set Attributes…"), enabled: hasLocalSelection) {
+            [weak self] in self?.setAttributesSelection()
+        }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -1428,6 +1432,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let first = created.first { pane.select(name: first) }
         registerCreatedUndo(names: created, in: folder, actionName: L("bvc.duplicateAction", "Duplicate"))
         if !failures.isEmpty { presentFailures(failures, title: L("bvc.duplicateFailed", "Couldn’t duplicate")) }
+    }
+
+    /// Set metadata (dates, permissions, tags) across the whole selection at once.
+    private func setAttributesSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        bulkAttributes.present(count: urls.count, over: window) { [weak self] changes in
+            guard !changes.isEmpty else { return }
+            Task { @MainActor in
+                let result = await Task.detached { BulkAttributes.apply(changes, to: urls) }.value
+                self?.activePane?.reloadIfShowingListing()
+                if !result.failures.isEmpty {
+                    self?.presentFailures(result.failures, title: L("bvc.setAttrsFailed", "Couldn’t set attributes"))
+                }
+            }
+        }
     }
 
     /// Compare the two selected files side by side.
