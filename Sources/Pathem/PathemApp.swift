@@ -412,6 +412,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(commandItem("Duplicate", "files.duplicate"))  // chord owned by the keymap
+        fileMenu.addItem(commandItem("Copy To…", "files.copyTo"))
+        fileMenu.addItem(commandItem("Move To…", "files.moveTo"))
         let linkMenu = NSMenu()
         linkMenu.addItem(commandItem("Symlink", "files.makeSymlink"))
         linkMenu.addItem(commandItem("Alias", "files.makeAlias"))
