@@ -218,8 +218,8 @@ public final class AFCSession {
         if let buid = record["SystemBUID"] as? String { start["SystemBUID"] = buid }
         try lockdownSend(lockdown, start)
         let session = try lockdownReceive(lockdown)
-        trace("StartSession ssl=\(isTrue(session["EnableSessionSSL"]))")
-        if isTrue(session["EnableSessionSSL"]) {
+        trace("StartSession ssl=\(LockdownFraming.isTrue(session["EnableSessionSSL"]))")
+        if LockdownFraming.isTrue(session["EnableSessionSSL"]) {
             try lockdown.startTLS(identity: DeviceIdentity.make(certPEM: certPEM, keyPEM: keyPEM))
             trace("session TLS up")
         }
@@ -229,9 +229,9 @@ public final class AFCSession {
         guard let port = service["Port"] as? Int else {
             throw IOSDeviceError.handshake("StartService returned no port")
         }
-        trace("StartService port=\(port) ssl=\(isTrue(service["EnableServiceSSL"]))")
+        trace("StartService port=\(port) ssl=\(LockdownFraming.isTrue(service["EnableServiceSSL"]))")
         let afc = DeviceChannel(try USBMux.connect(deviceID: device.deviceID, port: port))
-        if isTrue(service["EnableServiceSSL"]) {
+        if LockdownFraming.isTrue(service["EnableServiceSSL"]) {
             try afc.startTLS(identity: DeviceIdentity.make(certPEM: certPEM, keyPEM: keyPEM))
         }
         trace("afc connected")
@@ -355,22 +355,39 @@ public final class AFCSession {
 
 private func lockdownSend(_ channel: DeviceChannel, _ plist: [String: Any]) throws {
     let payload = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
-    var frame = Data()
-    var beLength = UInt32(payload.count).bigEndian
-    withUnsafeBytes(of: &beLength) { frame.append(contentsOf: $0) }
-    frame.append(payload)
-    try channel.write(frame)
+    try channel.write(LockdownFraming.frame(payload))
 }
 
 private func lockdownReceive(_ channel: DeviceChannel) throws -> [String: Any] {
     let header = try channel.read(4)
-    let length = (UInt32(header[0]) << 24) | (UInt32(header[1]) << 16) | (UInt32(header[2]) << 8) | UInt32(header[3])
-    let payload = try channel.read(Int(length))
+    let payload = try channel.read(LockdownFraming.payloadLength(Array(header)))
     return (try PropertyListSerialization.propertyList(from: payload, format: nil) as? [String: Any]) ?? [:]
 }
 
-private func isTrue(_ value: Any?) -> Bool {
-    if let flag = value as? Bool { return flag }
-    if let number = value as? Int { return number != 0 }
-    return false
+/// The lockdown wire framing: a 4-byte big-endian length prefix followed by an XML-plist
+/// payload. Extracted so the byte math is unit-tested; a framing bug desyncs the whole
+/// session (every subsequent read is off by the mistake).
+enum LockdownFraming {
+    /// Prefix `payload` with its length as a 4-byte big-endian header.
+    static func frame(_ payload: Data) -> Data {
+        var out = Data()
+        var beLength = UInt32(payload.count).bigEndian
+        withUnsafeBytes(of: &beLength) { out.append(contentsOf: $0) }
+        out.append(payload)
+        return out
+    }
+
+    /// Decode the payload length from a 4-byte big-endian header.
+    static func payloadLength(_ header: [UInt8]) -> Int {
+        Int(
+            (UInt32(header[0]) << 24) | (UInt32(header[1]) << 16) | (UInt32(header[2]) << 8)
+                | UInt32(header[3]))
+    }
+
+    /// Coerce a plist value to a boolean: lockdown replies use both real booleans and 0/1.
+    static func isTrue(_ value: Any?) -> Bool {
+        if let flag = value as? Bool { return flag }
+        if let number = value as? Int { return number != 0 }
+        return false
+    }
 }
