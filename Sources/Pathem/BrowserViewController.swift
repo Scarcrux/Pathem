@@ -53,7 +53,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Cap on items embedded per search, to bound the cost on huge folders.
     /// The scale path (background incremental indexing and a cached vector
     /// store) is in DESIGN.md section 2.
-    private static let maxSemanticItems = 5_000
+    let semanticSearch = SemanticSearchController()  // owns the per-folder index cache
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
     private static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
     static let searchItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.search")
@@ -131,11 +131,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
 
-    /// Per-folder semantic index cache: pre-built when a pane enters a folder,
-    /// invalidated when that folder changes on disk, so searches are instant.
-    private var cachedDir: URL?
-    private var cachedIndex: FolderSemanticIndex?
-    private var cachedEntries: [FileEntry]?
 
     /// Set in privacy-safe demo mode (launch flag or the View menu), so session restore is
     /// skipped and the sidebar/panes use the fake workspace instead of the user's real data.
@@ -2929,9 +2924,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         applyToolbarIconSize()
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
         saveConfig(prefs, to: Self.preferencesURL)
-        cachedDir = nil
-        cachedIndex = nil
-        cachedEntries = nil
+        semanticSearch.includeOCR = prefs.searchOCR
+        semanticSearch.invalidate()  // a pref (e.g. OCR) may change how folders index
         if let directory = activePane?.currentURL { preIndex(directory) }
     }
 
@@ -4034,7 +4028,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // Note: the search field is cleared on navigation (onDidNavigate), not on
         // every focus change, so a mid-typed query or visible results survive a
         // pane re-focus.
-        if pane.currentURL != cachedDir { preIndex(pane.currentURL) }
+        if pane.currentURL != semanticSearch.cachedDirectory { preIndex(pane.currentURL) }
         syncAutoPreview()  // follow the newly active pane's view mode + selection
         updateQuickActions()  // the quick-actions bar follows the active pane's selection
         saveSessionSoon()
@@ -4531,52 +4525,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
         let directory = pane.currentURL
-        Task {
-            await ensureIndex(for: directory)
-            guard let index = cachedIndex, let entries = cachedEntries, cachedDir == directory
-            else { return }
-            let order = await Task.detached { SemanticSearcher.rank(query: query, in: index) }.value
-            let ranked = order.compactMap { $0 < entries.count ? entries[$0] : nil }
+        Task { [weak self] in
+            guard let self else { return }
+            let ranked = await self.semanticSearch.rank(
+                query: query, in: directory,
+                isCurrent: { [weak self] in self?.activePane?.currentURL == directory })
             // Only adopt results if the very pane we searched is still active and
             // on that folder (not merely some pane that shares the path).
-            if activePane === pane, pane.currentURL == directory { pane.showResults(ranked) }
+            guard let ranked, self.activePane === pane, pane.currentURL == directory else { return }
+            pane.showResults(ranked)
         }
     }
 
     /// Build the semantic index for `directory` in the background (if not already
     /// cached for it), so the next search there is instant.
     private func preIndex(_ directory: URL) {
-        Task { await ensureIndex(for: directory) }
-    }
-
-    /// Ensure the cache holds a fresh index for `directory`. Enumerates and
-    /// embeds off the main thread; only adopts the result if the active pane is
-    /// still on that folder.
-    private func ensureIndex(for directory: URL) async {
-        guard cachedDir != directory || cachedIndex == nil else { return }
-        let maxItems = Self.maxSemanticItems
-        let dirEntries = await Task.detached {
-            (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
-        }.value
-        let ocr = prefs.searchOCR
-        let built = await Task.detached {
-            SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr)
-        }.value
-        if activePane?.currentURL == directory {
-            cachedDir = directory
-            cachedEntries = dirEntries
-            cachedIndex = built
-        }
+        semanticSearch.preIndex(
+            directory, isCurrent: { [weak self] in self?.activePane?.currentURL == directory })
     }
 
     /// A pane's folder changed (navigation or on-disk edit): drop a stale cache
     /// for it, and rebuild in the background if it is the active pane.
     private func directoryChanged(_ pane: PaneController, _ url: URL) {
-        if cachedDir == url {
-            cachedDir = nil
-            cachedIndex = nil
-            cachedEntries = nil
-        }
+        if semanticSearch.cachedDirectory == url { semanticSearch.invalidate() }  // this folder changed on disk
         if pane === activePane {
             preIndex(url)
             updateWindowTitle()
