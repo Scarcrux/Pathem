@@ -43,6 +43,12 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
   first.
 - Cloud-aware. It browses iCloud, Dropbox, Drive, and OneDrive folders and never
   silently downloads online-only files just to list or index them.
+- Remote and cloud transfer, built in: connect to S3 (and S3-compatible stores),
+  WebDAV, SFTP, and FTP, and copy to and from them with a progress and cancel
+  sheet. Every network backend runs out-of-process.
+- Git-aware. Files in a repository show status badges (modified, staged,
+  untracked), and "Reclaim in Repo" tells regenerable build output (safe to
+  clean) from precious untracked data (worth backing up).
 - Copy and move never overwrite silently. When a name already exists you choose
   to skip, replace, or keep both, and a same-folder drop can never trash a file
   onto itself.
@@ -65,6 +71,21 @@ cell views built per scroll jump:       ~100
 ```
 
 Jumping to the last row costs about the same as jumping to the tenth.
+
+## Built to be trustworthy
+
+Pathem needs Full Disk Access to be a real file manager, so it treats that access
+carefully. Anything that parses untrusted input, talks to the network, or drives
+an external tool, the S3/WebDAV/SFTP/FTP backends, archive extraction, and the
+iOS-device (AFC) browser, runs **out-of-process** in a short-lived helper, not in
+the app that holds your grant. There is no embedded scripting engine and no
+in-process third-party code, so the app keeps a **clean Hardened Runtime with no
+opt-outs** (no `allow-jit`, no `disable-library-validation`). If code-backed
+extensions ever land, they are out-of-process Swift helpers, signed and
+crash-isolated, that inherit none of the app's access. Credentials go to tools
+over stdin, never on a command line, and remote paths and names are escaped so a
+crafted filename can't smuggle a shell or protocol option (there are tests for
+each of these).
 
 ## Install
 
@@ -165,12 +186,15 @@ Access" rather than a blank pane.
 
 ## Status
 
-Already useful day to day: a fast dual-pane file manager with tabs per pane, a
-fully customizable sidebar, drag and drop, an embedded themeable terminal,
+Useful day to day: a fast dual-pane file manager with tabs per pane, a fully
+customizable sidebar, toolbar, and context menu, drag and drop (files land in
+Finder, other apps, and browser upload zones), an embedded themeable terminal,
 per-folder saved views, saved layouts, Quick Look, batch rename, a command
-palette, on-device semantic search, and a watcher that keeps the view in sync
-with the disk. Remote/cloud transfer (S3, WebDAV, SFTP) is the planned
-fast-follow. DESIGN.md and ROADMAP.md have the full plan.
+palette, on-device semantic search, git-status badges, a cleanup view and an
+active file organizer, and a watcher that keeps the view in sync with the disk.
+Remote and cloud transfer (S3, WebDAV, SFTP, FTP) runs out-of-process and is
+built in. Auto-update ships via Sparkle. DESIGN.md and ROADMAP.md have the full
+plan.
 
 ## License
 

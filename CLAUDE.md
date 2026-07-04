@@ -39,14 +39,20 @@ polaris init . && polaris add . && polaris brief --apply    # constellation
 ```
 
 ## Current state
-Scaffold only. `PathemEngine` has a `FileEntry` value type and a
-`FoundationEnumerator` (the correct-but-slow reference impl + test oracle); the
-app is a stub window.
+Well past scaffold; a working dual-pane manager. `PathemEngine` has the
+`getattrlistbulk` `BulkEnumerator` (contract-tested against
+`FoundationEnumerator`), plus file ops with undo, FSEvents watching, on-device
+semantic search, git status, an out-of-process extension seam, and the remote
+backends (S3, WebDAV, SFTP, FTP). The `Pathem` app has tabs per pane, a
+customizable sidebar / toolbar / context menu, drag and drop (with file
+promises, so drags land in browsers too), an embedded themeable terminal,
+per-folder saved views + Layouts, a command palette + on-device AI bar over the
+command registry, cleanup + an active organizer, remote transfers, and Sparkle
+auto-update. See **DESIGN.md** ("Status (built)") and **ROADMAP.md** for detail;
+Gate A (1M-row virtualization) is met.
 
-## Next milestones (DESIGN.md §5)
-1. **`BulkEnumerator`** — the `getattrlistbulk` hot path, contract-tested
-   against `FoundationEnumerator`.
-2. **Gate A** — view-based `NSTableView` scrolling a synthetic 1M-entry
-   directory at 120fps.
-3. **Gate B** — lazy `NSOutlineView` expanding a 100k-child node with no
-   main-thread stall.
+## Next up
+Track the living plan in **ROADMAP.md**. Candidate follow-ups: finish dissolving
+the `BrowserViewController` god-object (toolbar and the split delegate are
+already extracted), broaden localization, and enable the extension runtime once
+there is real demand (the seam and manifest schema are in place but gated off).

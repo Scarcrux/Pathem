@@ -14,6 +14,13 @@ Everything is gated: any step whose credential is missing is skipped, so a bare
 `scripts/release.sh` still produces a DMG and appcast in `dist/` for inspection.
 A real, installable release needs the credentials below.
 
+There is also a CI path: `.github/workflows/release.yml` runs the same
+build/sign/notarize/appcast flow on a pushed `v*` tag, using repo secrets (the
+Developer ID certificate, notary credentials, and `SPARKLE_PRIVATE_KEY`). Use
+whichever fits: the scripts here for a local release, the workflow for a
+tag-triggered one. The one-time Sparkle key setup below is shared (CI reads the
+private key from the secret; a local run reads it from your Keychain).
+
 ## What you need once
 
 ### 1. Sparkle update-signing key (no Apple account required)
