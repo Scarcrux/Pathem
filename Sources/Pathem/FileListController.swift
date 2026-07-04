@@ -45,6 +45,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var tagCache: [String: [FileTag.Color]] = [:]
     /// Bumped per listing so a stale background tag read can't clobber a newer one.
     private var tagReadGeneration = 0
+    /// Values for the metadata-derived columns (dimensions, permissions, …), keyed by path,
+    /// computed off-main only when such a column is visible.
+    private var extendedInfo: [String: FileColumns.Extended] = [:]
+    private var extendedGeneration = 0
     /// Git state per absolute path (set by the pane after an off-main `git status`).
     private var gitStates: [String: GitFileState] = [:]
     /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
@@ -89,6 +93,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     private enum Column: String, CaseIterable {
         case name, size, kind, date, dateCreated, dateAccessed, ext, git, path
+        case dimensions, permissions, owner, whereFrom, comment
         var title: String {
             switch self {
             case .name: return L("list.columnName", "Name")
@@ -100,6 +105,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .ext: return L("list.columnExt", "Extension")
             case .git: return L("list.columnGit", "Git")
             case .path: return L("list.columnPath", "Path")
+            case .dimensions: return L("list.columnDimensions", "Dimensions")
+            case .permissions: return L("list.columnPermissions", "Permissions")
+            case .owner: return L("list.columnOwner", "Owner")
+            case .whereFrom: return L("list.columnWhereFrom", "Where From")
+            case .comment: return L("list.columnComment", "Comment")
             }
         }
         var width: CGFloat {
@@ -111,12 +121,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .ext: return 90
             case .git: return 56
             case .path: return 280
+            case .dimensions, .permissions: return 110
+            case .owner: return 120
+            case .whereFrom: return 160
+            case .comment: return 200
             }
         }
         /// Only columns backed by a ViewFormat sort key get a clickable header.
         var isSortable: Bool { [.name, .size, .date, .dateCreated, .dateAccessed].contains(self) }
         /// Shown by default; the rest are opt-in via the header menu (persisted).
         var defaultVisible: Bool { [.name, .size, .date].contains(self) }
+        /// Metadata-derived columns whose values are computed off-main and cached.
+        var isExtended: Bool { [.dimensions, .permissions, .owner, .whereFrom, .comment].contains(self) }
     }
 
     override init() {
@@ -259,6 +275,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         defer {
             refreshTagsAsync()  // read tag colors off the main thread, then redraw
             refreshFolderSizesAsync()  // and folder sizes if enabled
+            refreshExtendedColumnsAsync()  // and any metadata columns that are shown
         }
         guard preserveState else {
             self.entries = entries
@@ -653,6 +670,19 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         case .path:
             cell.textField?.stringValue = entry.location ?? directoryURL?.path ?? ""
             cell.textField?.textColor = .secondaryLabelColor
+        case .dimensions, .permissions, .owner, .whereFrom, .comment:
+            let info = extendedInfo[Self.key(base: entry.location ?? directoryURL?.path, name: entry.name)]
+            let value: String?
+            switch Column(rawValue: id.rawValue) {
+            case .dimensions: value = info?.dimensions
+            case .permissions: value = info?.permissions
+            case .owner: value = info?.owner
+            case .whereFrom: value = info?.whereFrom
+            case .comment: value = info?.comment
+            default: value = nil
+            }
+            cell.textField?.stringValue = value ?? ""
+            cell.textField?.textColor = .secondaryLabelColor
         case .none:
             break
         }
@@ -702,6 +732,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let column = tableView.tableColumn(withIdentifier: .init(id))
         else { return }
         column.isHidden.toggle()
+        // Showing a metadata column needs its values computed; hiding one lets the pass stop.
+        if Column(rawValue: id)?.isExtended == true { refreshExtendedColumnsAsync() }
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -924,6 +956,49 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 if hadDots || result.contains(where: { !$0.value.isEmpty }) {
                     self.tableView.reloadData()
                 }
+            }
+        }
+    }
+
+    /// Which metadata columns are currently visible (so the pass only does needed work).
+    private func visibleExtendedRequest() -> FileColumns.Request {
+        var request: FileColumns.Request = []
+        func on(_ column: Column, _ flag: FileColumns.Request) {
+            if let col = tableView.tableColumn(withIdentifier: .init(column.rawValue)), !col.isHidden {
+                request.insert(flag)
+            }
+        }
+        on(.dimensions, .dimensions)
+        on(.permissions, .permissions)
+        on(.owner, .owner)
+        on(.whereFrom, .whereFrom)
+        on(.comment, .comment)
+        return request
+    }
+
+    /// Compute the visible metadata columns off-main, then cache and redraw. Skips entirely
+    /// when none are shown (the common case), so it costs nothing by default.
+    func refreshExtendedColumnsAsync() {
+        let request = visibleExtendedRequest()
+        guard !request.isEmpty else {
+            if !extendedInfo.isEmpty { extendedInfo = [:] }
+            return
+        }
+        extendedGeneration += 1
+        let generation = extendedGeneration
+        let base = directoryURL?.path
+        let items = entries.map { (name: $0.name, location: $0.location) }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var result: [String: FileColumns.Extended] = [:]
+            result.reserveCapacity(items.count)
+            for item in items {
+                let path = Self.key(base: item.location ?? base, name: item.name)
+                result[path] = FileColumns.gather(URL(fileURLWithPath: path), request)
+            }
+            DispatchQueue.main.async {
+                guard let self, self.extendedGeneration == generation else { return }
+                self.extendedInfo = result
+                self.tableView.reloadData()
             }
         }
     }
