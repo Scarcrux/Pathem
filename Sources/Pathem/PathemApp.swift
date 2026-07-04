@@ -254,7 +254,11 @@ enum PathemApp {
             let mode = ProcessInfo.processInfo.environment["PATHEM_MAIN_MODE"]
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 if let mode {
-                    let target = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
+                    // In demo mode use the fake Photos folder (privacy-safe for README shots);
+                    // otherwise the real ~/Pictures.
+                    let target =
+                        demoLayout?.rightStart
+                        ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
                     browser.debugNavigateActive(to: target)
                     let viewMode: ViewFormat.ViewMode =
                         mode == "gallery" ? .gallery : (mode == "column" ? .column : .icon)

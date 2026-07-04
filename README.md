@@ -10,7 +10,9 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 ![Platform](https://img.shields.io/badge/platform-macOS%2015%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-6-orange)
 
-<!-- TODO: a short demo GIF (a big folder scrolling, plus a semantic search). -->
+![Pathem: a dual-pane window with tabs, a customizable sidebar, and a dark theme](docs/screenshots/dual-pane.png)
+
+<sub>Dual pane, tabs per pane, a customizable sidebar, and colored tags. (Screenshots use a built-in demo workspace, so no real files are shown.)</sub>
 
 ## What it does
 
@@ -52,6 +54,10 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 - Copy and move never overwrite silently. When a name already exists you choose
   to skip, replace, or keep both, and a same-folder drop can never trash a file
   onto itself.
+
+List, icon, gallery, and column views, set per folder and remembered:
+
+![Icon and gallery views shown side by side across the two panes](docs/screenshots/views.png)
 
 ## Why it's fast
 
