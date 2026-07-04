@@ -539,6 +539,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.paste", L("bvc.cmd.paste", "Paste")) { [weak self] in self?.paste(nil) }
         add("files.open", L("bvc.cmd.open", "Open"), enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("files.batchRename", L("bvc.cmd.batchRename", "Batch Rename…"), enabled: hasSelection) { [weak self] in self?.showBatchRename() }
+        add("files.selectByPattern", L("bvc.cmd.selectByPattern", "Select by Pattern…"), enabled: { [weak self] in
+            self?.activePane != nil
+        }) { [weak self] in self?.selectByPattern() }
         add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in self?.newFolder() }
         add("files.newFile", L("bvc.cmd.newFile", "New File")) { [weak self] in self?.newFile() }
         add("files.batchCreate", L("bvc.cmd.batchCreate", "Batch Create…")) { [weak self] in self?.showBatchCreate() }
@@ -885,6 +888,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let existing = Set(pane.entries.map(\.name))
         batchRename.present(names: names, in: pane.currentURL, existing: existing, over: window) {
             [weak self] in self?.activePane?.reloadIfShowingListing()
+        }
+    }
+
+    /// Select items in the active pane by a name pattern (glob / regex / substring),
+    /// replacing, extending, or trimming the current selection.
+    private func selectByPattern() {
+        guard let pane = activePane, let window = view.window else { NSSound.beep(); return }
+        SelectByPatternSheet.present(over: window) { query, mode in
+            pane.applySelection(query, mode: mode)
         }
     }
 

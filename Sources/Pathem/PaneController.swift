@@ -234,6 +234,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Entries currently shown (directory listing, or ranked search results).
     var entries: [FileEntry] { content.entries }
 
+    /// Select the shown entries matching `query`, combining with the current selection per
+    /// `mode` (replace / add / subtract). Powers "Select by Pattern…".
+    func applySelection(_ query: SelectionQuery, mode: SelectionMode) {
+        let isMatch = query.predicate()
+        let matching = Set(entries.filter(isMatch).map(\.name))
+        let current = Set(selectedEntries.map(\.name))
+        let result: Set<String>
+        switch mode {
+        case .replace: result = matching
+        case .add: result = current.union(matching)
+        case .subtract: result = current.subtracting(matching)
+        }
+        content.selectNames(result)
+    }
+
     /// The single funnel every listing passes through, so the live filter applies
     /// uniformly (local, smart, flat, remote). A context change (preserveState ==
     /// false, i.e. navigation or a new smart/remote view) clears the filter; an
