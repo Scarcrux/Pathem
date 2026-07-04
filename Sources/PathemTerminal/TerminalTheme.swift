@@ -101,7 +101,50 @@ public struct TerminalTheme: Codable, Sendable, Equatable {
         name: "Solarized Light", foreground: "#657B83", background: "#FDF6E3", cursor: "#586E75",
         ansi: solarizedANSI)
 
+    public static let gruvboxDark = TerminalTheme(
+        name: "Gruvbox Dark", foreground: "#EBDBB2", background: "#282828", cursor: "#EBDBB2",
+        ansi: [
+            "#282828", "#CC241D", "#98971A", "#D79921", "#458588", "#B16286", "#689D6A", "#A89984",
+            "#928374", "#FB4934", "#B8BB26", "#FABD2F", "#83A598", "#D3869B", "#8EC07C", "#EBDBB2",
+        ])
+
+    public static let monokai = TerminalTheme(
+        name: "Monokai", foreground: "#F8F8F2", background: "#272822", cursor: "#F8F8F0",
+        ansi: [
+            "#272822", "#F92672", "#A6E22E", "#F4BF75", "#66D9EF", "#AE81FF", "#A1EFE4", "#F8F8F2",
+            "#75715E", "#F92672", "#A6E22E", "#F4BF75", "#66D9EF", "#AE81FF", "#A1EFE4", "#F9F8F5",
+        ])
+
+    public static let oneDark = TerminalTheme(
+        name: "One Dark", foreground: "#ABB2BF", background: "#282C34", cursor: "#528BFF",
+        ansi: [
+            "#282C34", "#E06C75", "#98C379", "#E5C07B", "#61AFEF", "#C678DD", "#56B6C2", "#ABB2BF",
+            "#5C6370", "#E06C75", "#98C379", "#E5C07B", "#61AFEF", "#C678DD", "#56B6C2", "#FFFFFF",
+        ])
+
+    public static let tokyoNight = TerminalTheme(
+        name: "Tokyo Night", foreground: "#C0CAF5", background: "#1A1B26", cursor: "#C0CAF5",
+        ansi: [
+            "#15161E", "#F7768E", "#9ECE6A", "#E0AF68", "#7AA2F7", "#BB9AF7", "#7DCFFF", "#A9B1D6",
+            "#414868", "#F7768E", "#9ECE6A", "#E0AF68", "#7AA2F7", "#BB9AF7", "#7DCFFF", "#C0CAF5",
+        ])
+
+    public static let catppuccinMocha = TerminalTheme(
+        name: "Catppuccin Mocha", foreground: "#CDD6F4", background: "#1E1E2E", cursor: "#F5E0DC",
+        ansi: [
+            "#45475A", "#F38BA8", "#A6E3A1", "#F9E2AF", "#89B4FA", "#F5C2E7", "#94E2D5", "#BAC2DE",
+            "#585B70", "#F38BA8", "#A6E3A1", "#F9E2AF", "#89B4FA", "#F5C2E7", "#94E2D5", "#A6ADC8",
+        ])
+
+    public static let githubLight = TerminalTheme(
+        name: "GitHub Light", foreground: "#24292E", background: "#FFFFFF", cursor: "#24292E",
+        ansi: [
+            "#24292E", "#D73A49", "#28A745", "#DBAB09", "#0366D6", "#5A32A3", "#0598BC", "#6A737D",
+            "#959DA5", "#CB2431", "#22863A", "#B08800", "#005CC5", "#5A32A3", "#3192AA", "#D1D5DA",
+        ])
+
     public static let presets: [TerminalTheme] = [
         system, dracula, nord, solarizedDark, solarizedLight,
+        gruvboxDark, monokai, oneDark, tokyoNight, catppuccinMocha, githubLight,
     ]
 }
