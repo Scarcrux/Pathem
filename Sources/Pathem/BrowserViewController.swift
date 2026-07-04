@@ -71,7 +71,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Stroke -> command id, defaults overlaid with any user gestures.json.
     private var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
-    private var folderFormats = FolderFormats()
+    var folderFormats = FolderFormats()
     /// Scoped default-opener rules (by file / folder / type), persisted.
     private var openerRules = OpenerRules()
     /// Session-only opener overrides, keyed by lowercased extension (not persisted).
@@ -2913,7 +2913,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    private static func appSupportDirectory() -> URL? {
+    static func appSupportDirectory() -> URL? {
         ConfigStore.directory()
     }
 
@@ -2921,55 +2921,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// present-but-undecodable file (corrupt, hand-edit typo, newer schema) is
     /// moved aside to <name>.corrupt and returns nil, so the next save cannot
     /// silently overwrite and destroy still-recoverable config.
-    private func loadConfig<T: Decodable>(_ type: T.Type, from url: URL?) -> T? {
+    func loadConfig<T: Decodable>(_ type: T.Type, from url: URL?) -> T? {
         ConfigStore.load(type, from: url)
     }
 
-    private func saveConfig<T: Encodable>(_ value: T, to url: URL?) {
+    func saveConfig<T: Encodable>(_ value: T, to url: URL?) {
         ConfigStore.save(value, to: url)
-    }
-
-    // MARK: - Per-folder view formats
-
-    private static var folderFormatsURL: URL? {
-        appSupportDirectory()?.appendingPathComponent("formats.json")
-    }
-
-    private func loadFolderFormats() {
-        if let saved = loadConfig(FolderFormats.self, from: Self.folderFormatsURL) { folderFormats = saved }
-    }
-
-    private func saveFolderFormats() {
-        saveConfig(folderFormats, to: Self.folderFormatsURL)
-    }
-
-    /// Auto-remember: the active folder gets its own exact-path format.
-    private func rememberFormat(_ url: URL, _ format: ViewFormat) {
-        folderFormats.setExact(url.path, format)
-        saveFolderFormats()
-    }
-
-    /// Make the active pane's current view (mode + sort) the global default for
-    /// folders that don't have their own remembered format.
-    private func useCurrentViewAsDefault() {
-        guard let pane = activePane else { return }
-        folderFormats.defaultFormat = pane.format
-        saveFolderFormats()
-        leftTabs.activePane?.reloadIfShowingListing()
-        rightTabs.activePane?.reloadIfShowingListing()
-    }
-
-    /// Apply the active pane's current view to its whole subtree, then refresh
-    /// both panes so any visible descendants pick up the new format. Descendant
-    /// exact rules are cleared first, otherwise they would shadow the new subtree
-    /// rule and silently keep their old view.
-    private func applyViewToSubfolders() {
-        guard let pane = activePane else { return }
-        folderFormats.clearExactRulesUnder(pane.currentURL.path)
-        folderFormats.setSubtree(pane.currentURL.path, pane.format)
-        saveFolderFormats()
-        leftTabs.activePane?.reloadIfShowingListing()
-        rightTabs.activePane?.reloadIfShowingListing()
     }
 
     // MARK: - Layouts
