@@ -479,6 +479,8 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Calculate All Sizes", "view.calculateSizes"))
         viewMenu.addItem(commandItem("Compact Sidebar", "view.compactSidebar"))
         viewMenu.addItem(commandItem("Sync Browsing", "view.syncBrowsing"))
+        viewMenu.addItem(commandItem("Save Workspace…", "workspace.save"))
+        viewMenu.addItem(commandItem("Open Workspace…", "workspace.open"))
         viewMenu.addItem(commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
         viewMenu.addItem(commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]))

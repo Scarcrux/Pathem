@@ -655,6 +655,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self.syncBrowsing.toggle()
             if self.syncBrowsing, let url = self.activePane?.currentURL { self.mirrorNavigationIfSyncing(to: url) }
         }
+        add("workspace.save", L("bvc.cmd.saveWorkspace", "Save Workspace…")) { [weak self] in self?.saveWorkspace() }
+        add("workspace.open", L("bvc.cmd.openWorkspace", "Open Workspace…")) { [weak self] in self?.openWorkspace() }
         add("view.applyToSubfolders", L("bvc.cmd.applyViewToSubfolders", "Apply View to Subfolders"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
         }
@@ -2936,6 +2938,63 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private static var sessionURL: URL? {
         appSupportDirectory()?.appendingPathComponent("session.json")
+    }
+
+    // MARK: Saved workspaces
+
+    private struct Workspace: Codable, Equatable {
+        var name: String
+        var left: [String]
+        var leftActive: Int
+        var right: [String]
+        var rightActive: Int
+    }
+
+    private static var workspacesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("workspaces.json")
+    }
+
+    /// Capture the current dual-pane, multi-tab layout under a name.
+    private func saveWorkspace() {
+        guard
+            let name = promptForName(title: L("bvc.saveWorkspaceTitle", "Save workspace as:"), default: ""),
+            !name.trimmingCharacters(in: .whitespaces).isEmpty
+        else { return }
+        var all = loadConfig([Workspace].self, from: Self.workspacesURL) ?? []
+        all.removeAll { $0.name == name }  // replace a same-named one
+        all.append(
+            Workspace(
+                name: name, left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
+                right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex))
+        saveConfig(all, to: Self.workspacesURL)
+    }
+
+    /// Pick a saved workspace and switch both panes to its layout.
+    private func openWorkspace() {
+        let all = loadConfig([Workspace].self, from: Self.workspacesURL) ?? []
+        guard let window = view.window else { return }
+        guard !all.isEmpty else {
+            presentInfo(
+                L("bvc.noWorkspaces", "No workspaces"),
+                L("bvc.noWorkspacesBody", "Save one first with Save Workspace."))
+            return
+        }
+        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 260, height: 25))
+        for workspace in all { popup.addItem(withTitle: workspace.name) }
+        let alert = NSAlert()
+        alert.messageText = L("bvc.openWorkspaceTitle", "Open Workspace")
+        alert.accessoryView = popup
+        alert.addButton(withTitle: L("common.open", "Open"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self,
+                all.indices.contains(popup.indexOfSelectedItem)
+            else { return }
+            let workspace = all[popup.indexOfSelectedItem]
+            self.leftTabs.restoreTabs(workspace.left, active: workspace.leftActive)
+            self.rightTabs.restoreTabs(workspace.right, active: workspace.rightActive)
+            if let pane = self.leftTabs.activePane { self.setActiveSide(self.leftTabs, pane: pane) }
+        }
     }
 
     /// Reopen the last session's tabs/folders, or open initial tabs if none.

@@ -79,17 +79,22 @@ final class TabbedPaneController: NSObject {
     var tabFolders: [String] { tabs.map { $0.rootURL.path } }
     var activeTabIndex: Int { activeIndex }
 
-    /// Reopen tabs at the given folders (skipping ones that no longer exist).
-    /// Falls back to the start folder if none are valid.
+    /// Open tabs at the given folders (skipping ones that no longer exist), replacing any
+    /// current tabs. Falls back to the start folder if none are valid. Used for session
+    /// restore (from empty) and for switching to a saved workspace (replacing a layout).
     func restoreTabs(_ folders: [String], active: Int) {
         let fm = FileManager.default
+        // Tear down any existing tabs so this replaces the layout rather than appending.
+        for tab in tabs { tab.teardown() }
+        tabs.removeAll()
+        activeIndex = 0
         // Keep original indices so the saved active index maps correctly even when
         // some folders were dropped (deleted on disk).
         let survivors = folders.enumerated().filter {
             var isDir: ObjCBool = false
             return fm.fileExists(atPath: $0.element, isDirectory: &isDir) && isDir.boolValue
         }
-        guard !survivors.isEmpty else { openInitialTab(); return }
+        guard !survivors.isEmpty else { openInitialTab(); showActivePane(); refreshTabBar(); return }
         for survivor in survivors { newTab(at: URL(fileURLWithPath: survivor.element), focus: false) }
         // Map the saved active index (an original offset) to the surviving tab at
         // or after it, falling back to the last tab.
