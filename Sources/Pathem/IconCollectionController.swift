@@ -278,9 +278,19 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
 
     /// Right-click menu mirroring the list's (registry commands dispatched up the
     /// responder chain to BrowserViewController). Open With is list-only for now.
+    /// Command ids hidden from the context menu (from the Settings ▸ Menus preference),
+    /// honored the same way the list view does so the reveal/hide choice applies everywhere.
+    private var hiddenContextItems: Set<String> = []
+    func setHiddenContextItems(_ ids: Set<String>) {
+        guard ids != hiddenContextItems else { return }
+        hiddenContextItems = ids
+        collection.menu = makeContextMenu()
+    }
+
     private func makeContextMenu() -> NSMenu {
         let menu = NSMenu()
         func add(_ title: String, _ id: String) {
+            guard !hiddenContextItems.contains(id) else { return }
             let item = NSMenuItem(
                 title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
             item.representedObject = id
@@ -291,6 +301,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         add(L("icons.getInfo", "Get Info"), "files.getInfo")
         add(L("icons.download", "Download"), "files.download")
         add(L("icons.revealInFinder", "Reveal in Finder"), "files.reveal")
+        add(L("icons.revealInPathem", "Reveal in Pathem"), "files.revealInPathem")
         add(L("icons.rename", "Rename…"), "files.rename")
         add(L("icons.moveToTrash", "Move to Trash"), "files.trash")
         menu.addItem(.separator())

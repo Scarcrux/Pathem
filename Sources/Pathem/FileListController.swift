@@ -224,6 +224,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             ("files.getInfo", L("list.getInfo", "Get Info")),
             ("files.download", L("list.download", "Download")),
             ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
+            ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
             ("files.rename", L("list.rename", "Rename…")),
             ("files.trash", L("list.moveToTrash", "Move to Trash")),
             ("files.newFolder", L("list.newFolder", "New Folder")),
@@ -260,6 +261,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         add("files.getInfo")
         add("files.download")
         add("files.reveal")
+        add("files.revealInPathem")
         add("files.rename")
         add("files.trash")
         menu.addItem(.separator())

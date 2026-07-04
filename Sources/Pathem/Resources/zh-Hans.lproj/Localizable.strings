@@ -121,6 +121,7 @@
 "bvc.cmd.redo" = "重做";
 "bvc.cmd.rename" = "重新命名…";
 "bvc.cmd.revealInFinder" = "在 Finder 中显示";
+"bvc.cmd.revealInPathem" = "在 Pathem 中显示";
 "bvc.cmd.saveLayout" = "存储布局…";
 "bvc.cmd.sendViaAirDrop" = "通过 AirDrop 发送";
 "bvc.cmd.showFullPathInTitleBar" = "在标题栏中显示完整路径";
@@ -343,6 +344,7 @@
 "icons.paste" = "粘贴";
 "icons.rename" = "重新命名…";
 "icons.revealInFinder" = "在 Finder 中显示";
+"icons.revealInPathem" = "在 Pathem 中显示";
 "info.accessedLabel" = "上次打开";
 "info.addedLabel" = "添加于";
 "info.aliasSymlink" = "替身 / 符号链接";
@@ -397,6 +399,7 @@
 "list.paste" = "粘贴";
 "list.rename" = "重新命名…";
 "list.revealInFinder" = "在 Finder 中显示";
+"list.revealInPathem" = "在 Pathem 中显示";
 "list.tags" = "标记";
 "menu.about" = "关于 Pathem";
 "menu.ai.run" = "询问 Pathem…";
@@ -520,6 +523,7 @@
 "pane.openWithOther" = "其他…";
 "pane.rename" = "重新命名…";
 "pane.revealInFinder" = "在 Finder 中显示";
+"pane.revealInPathem" = "在 Pathem 中显示";
 "pane.selectedOf" = "已选择 %d 个，共 %d 个";
 "pane.sendViaAirDrop" = "通过 AirDrop 发送";
 "pane.sftpError" = "sftp 错误 %d";

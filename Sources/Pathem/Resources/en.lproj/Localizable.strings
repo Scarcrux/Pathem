@@ -121,6 +121,7 @@
 "bvc.cmd.redo" = "Redo";
 "bvc.cmd.rename" = "Rename…";
 "bvc.cmd.revealInFinder" = "Reveal in Finder";
+"bvc.cmd.revealInPathem" = "Reveal in Pathem";
 "bvc.cmd.saveLayout" = "Save Layout…";
 "bvc.cmd.sendViaAirDrop" = "Send via AirDrop";
 "bvc.cmd.showFullPathInTitleBar" = "Show Full Path in Title Bar";
@@ -343,6 +344,7 @@
 "icons.paste" = "Paste";
 "icons.rename" = "Rename…";
 "icons.revealInFinder" = "Reveal in Finder";
+"icons.revealInPathem" = "Reveal in Pathem";
 "info.accessedLabel" = "Last opened";
 "info.addedLabel" = "Added";
 "info.aliasSymlink" = "Alias / Symlink";
@@ -397,6 +399,7 @@
 "list.paste" = "Paste";
 "list.rename" = "Rename…";
 "list.revealInFinder" = "Reveal in Finder";
+"list.revealInPathem" = "Reveal in Pathem";
 "list.tags" = "Tags";
 "menu.about" = "About Pathem";
 "menu.ai.run" = "Ask Pathem…";
@@ -520,6 +523,7 @@
 "pane.openWithOther" = "Other…";
 "pane.rename" = "Rename…";
 "pane.revealInFinder" = "Reveal in Finder";
+"pane.revealInPathem" = "Reveal in Pathem";
 "pane.selectedOf" = "%d of %d selected";
 "pane.sendViaAirDrop" = "Send via AirDrop";
 "pane.sftpError" = "sftp error %d";

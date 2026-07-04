@@ -121,6 +121,7 @@
 "bvc.cmd.redo" = "Rehacer";
 "bvc.cmd.rename" = "Renombrar…";
 "bvc.cmd.revealInFinder" = "Mostrar en el Finder";
+"bvc.cmd.revealInPathem" = "Mostrar en Pathem";
 "bvc.cmd.saveLayout" = "Guardar disposición…";
 "bvc.cmd.sendViaAirDrop" = "Enviar por AirDrop";
 "bvc.cmd.showFullPathInTitleBar" = "Mostrar la ruta completa en la barra de título";
@@ -343,6 +344,7 @@
 "icons.paste" = "Pegar";
 "icons.rename" = "Renombrar…";
 "icons.revealInFinder" = "Mostrar en el Finder";
+"icons.revealInPathem" = "Mostrar en Pathem";
 "info.accessedLabel" = "Último acceso";
 "info.addedLabel" = "Añadido";
 "info.aliasSymlink" = "Alias / Enlace simbólico";
@@ -397,6 +399,7 @@
 "list.paste" = "Pegar";
 "list.rename" = "Renombrar…";
 "list.revealInFinder" = "Mostrar en el Finder";
+"list.revealInPathem" = "Mostrar en Pathem";
 "list.tags" = "Etiquetas";
 "menu.about" = "Acerca de Pathem";
 "menu.ai.run" = "Preguntar a Pathem…";
@@ -520,6 +523,7 @@
 "pane.openWithOther" = "Otra…";
 "pane.rename" = "Renombrar…";
 "pane.revealInFinder" = "Mostrar en el Finder";
+"pane.revealInPathem" = "Mostrar en Pathem";
 "pane.selectedOf" = "%d de %d seleccionados";
 "pane.sendViaAirDrop" = "Enviar por AirDrop";
 "pane.sftpError" = "error de sftp %d";

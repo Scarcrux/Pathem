@@ -64,6 +64,7 @@ extension BrowserViewController: NSToolbarDelegate {
         .init(commandID: "files.compress", symbol: "archivebox", label: "Compress"),
         .init(commandID: "files.trash", symbol: "trash", label: "Move to Trash"),
         .init(commandID: "files.reveal", symbol: "arrow.up.forward.square", label: "Reveal in Finder"),
+        .init(commandID: "files.revealInPathem", symbol: "dot.viewfinder", label: "Reveal in Pathem"),
         .init(commandID: "files.organize", symbol: "wand.and.stars", label: "Organize"),
         .init(commandID: "view.cleanup", symbol: "sparkles", label: "Cleanup"),
         .init(commandID: "files.repoReclaim", symbol: "internaldrive", label: "Reclaim in Repo"),

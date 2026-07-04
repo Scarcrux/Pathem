@@ -121,6 +121,7 @@
 "bvc.cmd.redo" = "やり直す";
 "bvc.cmd.rename" = "名称変更…";
 "bvc.cmd.revealInFinder" = "Finderに表示";
+"bvc.cmd.revealInPathem" = "Pathemに表示";
 "bvc.cmd.saveLayout" = "レイアウトを保存…";
 "bvc.cmd.sendViaAirDrop" = "AirDropで送信";
 "bvc.cmd.showFullPathInTitleBar" = "タイトルバーにフルパスを表示";
@@ -343,6 +344,7 @@
 "icons.paste" = "ペースト";
 "icons.rename" = "名称変更…";
 "icons.revealInFinder" = "Finderに表示";
+"icons.revealInPathem" = "Pathemに表示";
 "info.accessedLabel" = "最終オープン";
 "info.addedLabel" = "追加日";
 "info.aliasSymlink" = "エイリアス／シンボリックリンク";
@@ -397,6 +399,7 @@
 "list.paste" = "ペースト";
 "list.rename" = "名称変更…";
 "list.revealInFinder" = "Finderに表示";
+"list.revealInPathem" = "Pathemに表示";
 "list.tags" = "タグ";
 "menu.about" = "Pathemについて";
 "menu.ai.run" = "Pathemに質問…";
@@ -520,6 +523,7 @@
 "pane.openWithOther" = "その他…";
 "pane.rename" = "名称変更…";
 "pane.revealInFinder" = "Finderに表示";
+"pane.revealInPathem" = "Pathemに表示";
 "pane.selectedOf" = "%d / %d項目を選択中";
 "pane.sendViaAirDrop" = "AirDropで送信";
 "pane.sftpError" = "sftpエラー %d";

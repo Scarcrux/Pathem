@@ -1225,6 +1225,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         add(L("bvc.cmd.duplicate", "Duplicate"), command: "files.duplicate")
         menu.addItem(.separator())
         add(L("pane.revealInFinder", "Reveal in Finder"), command: "files.reveal")
+        add(L("pane.revealInPathem", "Reveal in Pathem"), command: "files.revealInPathem")
         let share = NSMenuItem(title: L("pane.share", "Share…"), action: #selector(shareSelection), keyEquivalent: "")
         share.target = self
         menu.addItem(share)
@@ -1486,6 +1487,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func navigate(to url: URL) {
         nav.go(to: url.standardizedFileURL)
         enterDirectory()
+    }
+
+    /// In-app "reveal": navigate to `url`'s enclosing folder and select `url` there. The
+    /// pendingSelection is applied by reload() after the (synchronous, local) enumeration,
+    /// so the file ends up selected and scrolled into view in the fresh folder. Useful from
+    /// search and smart-result views, where the file lives outside the folder on screen.
+    func reveal(_ url: URL) {
+        pendingSelection = [url.lastPathComponent]
+        navigate(to: url.deletingLastPathComponent())
     }
 
     /// Navigate without recording history (clears back/forward). Used by demo-mode

@@ -676,6 +676,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.reveal", L("bvc.cmd.revealInFinder", "Reveal in Finder"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.revealSelection()
         }
+        add(
+            "files.revealInPathem", L("bvc.cmd.revealInPathem", "Reveal in Pathem"),
+            enabled: { [weak self] in self?.activePane?.selectedLocalURLs().isEmpty == false }
+        ) { [weak self] in self?.revealSelectionInPathem() }
         add("files.getInfo", L("bvc.cmd.getInfo", "Get Info"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.showInfo()
         }
@@ -2569,6 +2573,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         let urls = pane.selectedLocalURLs()  // location-aware (reveals the real file in smart views)
         NSWorkspace.shared.activateFileViewerSelecting(urls.isEmpty ? [pane.currentURL] : urls)
+    }
+
+    /// Reveal the selection in place: navigate the active pane to the file's real folder and
+    /// select it there, instead of handing off to Finder. Most useful from search and smart
+    /// views, where the file lives outside the folder currently on screen.
+    private func revealSelectionInPathem() {
+        if blockedByRemote() { return }
+        guard let pane = activePane, let target = pane.selectedLocalURLs().first else { return }
+        pane.reveal(target)
     }
 
     /// Get Info on the selection, or on the current folder when nothing is selected.

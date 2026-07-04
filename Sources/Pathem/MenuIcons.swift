@@ -11,6 +11,7 @@ enum MenuIcons {
         case "files.getInfo": return "info.circle"
         case "files.download": return "arrow.down.circle"
         case "files.reveal": return "arrow.up.forward.square"
+        case "files.revealInPathem": return "dot.viewfinder"
         case "files.rename": return "pencil"
         case "files.trash": return "trash"
         case "files.newFolder": return "folder.badge.plus"

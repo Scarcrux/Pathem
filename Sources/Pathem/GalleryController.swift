@@ -128,9 +128,19 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         fill.isActive = true
     }
 
+    /// Command ids hidden from the context menu (from the Settings ▸ Menus preference),
+    /// honored the same way the list view does so the reveal/hide choice applies everywhere.
+    private var hiddenContextItems: Set<String> = []
+    func setHiddenContextItems(_ ids: Set<String>) {
+        guard ids != hiddenContextItems else { return }
+        hiddenContextItems = ids
+        filmstrip.menu = makeContextMenu()
+    }
+
     private func makeContextMenu() -> NSMenu {
         let menu = NSMenu()
         func add(_ title: String, _ id: String) {
+            guard !hiddenContextItems.contains(id) else { return }
             let item = NSMenuItem(
                 title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
             item.representedObject = id
@@ -140,6 +150,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         add(L("common.open", "Open"), "files.open")
         add(L("icons.getInfo", "Get Info"), "files.getInfo")
         add(L("icons.revealInFinder", "Reveal in Finder"), "files.reveal")
+        add(L("icons.revealInPathem", "Reveal in Pathem"), "files.revealInPathem")
         add(L("icons.rename", "Rename…"), "files.rename")
         add(L("icons.moveToTrash", "Move to Trash"), "files.trash")
         return menu

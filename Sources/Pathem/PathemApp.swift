@@ -437,6 +437,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Secure Delete…", "files.secureDelete"))
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
+        fileMenu.addItem(commandItem("Reveal in Pathem", "files.revealInPathem"))
         fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
         fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
         fileMenu.addItem(commandItem("Copy SHA-256", "files.copySHA256"))
