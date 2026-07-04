@@ -2114,29 +2114,90 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// and newer files to the other; never deletes.
     private func runSync(left: URL, right: URL) {
         Task { @MainActor [weak self] in
-            let result = await Task.detached { () -> FolderSync.Result in
-                let actions = FolderSync.plan(left: left, right: right, conflict: .newerWins)
-                return FolderSync.execute(actions, left: left, right: right)
+            let actions = await Task.detached {
+                FolderSync.plan(left: left, right: right, conflict: .newerWins)
             }.value
             guard let self else { return }
+            let toRight = actions.filter { $0.direction == .toRight }
+            let toLeft = actions.filter { $0.direction == .toLeft }
+            let conflicts = actions.filter { $0.direction == nil && $0.wasConflict }
+            if toRight.isEmpty && toLeft.isEmpty {
+                self.presentInfo(
+                    L("sync.upToDateTitle", "Already in sync"),
+                    conflicts.isEmpty
+                        ? L("sync.upToDateBody", "Both folders already match.")
+                        : String(
+                            format: L("sync.upToDateConflicts", "Both folders match except %d file(s) that changed on both sides at the same time; those are left untouched."),
+                            conflicts.count))
+                return
+            }
+            // Two-way sync copies files across; show exactly what will move before doing it.
+            guard await self.confirmSync(toRight: toRight, toLeft: toLeft, conflicts: conflicts, left: left, right: right)
+            else { return }
+            let result = await Task.detached { FolderSync.execute(actions, left: left, right: right) }.value
             self.reloadBothSides()
-            let alert = NSAlert()
-            alert.messageText = L("bvc.syncComplete", "Sync complete")
-            var info = String(
-                format: L("bvc.syncCopied", "Copied %d to the right, %d to the left"),
-                result.copiedToRight, result.copiedToLeft)
-            if result.conflictsSkipped > 0 {
-                info += String(
-                    format: L("bvc.syncConflicts", "\n%d conflicts skipped (same time on both sides)"),
-                    result.conflictsSkipped)
-            }
-            if !result.failures.isEmpty {
-                info += String(format: L("bvc.mirrorFailedSuffix", ", %d failed"), result.failures.count)
-            }
-            alert.informativeText = info
-            alert.addButton(withTitle: L("common.ok", "OK"))
-            if let window = self.view.window { alert.beginSheetModal(for: window) { _ in } }
+            self.presentSyncResult(result)
         }
+    }
+
+    /// Preview what a two-way sync will copy in each direction (with a sample of file names)
+    /// and how many conflicts it will leave alone, and return whether the user confirmed.
+    private func confirmSync(
+        toRight: [FolderSync.Action], toLeft: [FolderSync.Action], conflicts: [FolderSync.Action],
+        left: URL, right: URL
+    ) async -> Bool {
+        guard let window = view.window else { return false }
+        func sample(_ actions: [FolderSync.Action], _ arrow: String) -> String {
+            var lines = actions.prefix(6).map { "  \(arrow) \($0.relativePath)" }
+            if actions.count > 6 {
+                lines.append("  " + String(format: L("sync.more", "…and %d more"), actions.count - 6))
+            }
+            return lines.joined(separator: "\n")
+        }
+        var body = ""
+        if !toRight.isEmpty {
+            body += String(format: L("sync.toRightHeader", "Copy %d into %@:"), toRight.count, right.lastPathComponent)
+            body += "\n" + sample(toRight, "→") + "\n\n"
+        }
+        if !toLeft.isEmpty {
+            body += String(format: L("sync.toLeftHeader", "Copy %d into %@:"), toLeft.count, left.lastPathComponent)
+            body += "\n" + sample(toLeft, "←") + "\n\n"
+        }
+        if !conflicts.isEmpty {
+            body += String(
+                format: L("sync.conflictsNote", "%d file(s) changed on both sides at the same time; those are left untouched.\n\n"),
+                conflicts.count)
+        }
+        body += L("sync.nothingDeleted", "Nothing is deleted — only newer and missing files are copied.")
+
+        let alert = NSAlert()
+        alert.messageText = String(
+            format: L("sync.confirmTitle", "Sync %@ ↔ %@"), left.lastPathComponent, right.lastPathComponent)
+        alert.informativeText = body
+        alert.addButton(withTitle: L("sync.confirmGo", "Sync"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return await withCheckedContinuation { continuation in
+            alert.beginSheetModal(for: window) { continuation.resume(returning: $0 == .alertFirstButtonReturn) }
+        }
+    }
+
+    private func presentSyncResult(_ result: FolderSync.Result) {
+        let alert = NSAlert()
+        alert.messageText = L("bvc.syncComplete", "Sync complete")
+        var info = String(
+            format: L("bvc.syncCopied", "Copied %d to the right, %d to the left"),
+            result.copiedToRight, result.copiedToLeft)
+        if result.conflictsSkipped > 0 {
+            info += String(
+                format: L("bvc.syncConflicts", "\n%d conflicts skipped (same time on both sides)"),
+                result.conflictsSkipped)
+        }
+        if !result.failures.isEmpty {
+            info += String(format: L("bvc.mirrorFailedSuffix", ", %d failed"), result.failures.count)
+        }
+        alert.informativeText = info
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        if let window = view.window { alert.beginSheetModal(for: window) { _ in } }
     }
 
     /// Mirror `source` onto `target`. Recompute the diff fresh, and when the mirror would
