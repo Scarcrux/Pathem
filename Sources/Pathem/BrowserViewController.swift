@@ -575,6 +575,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.encryptDMG", L("bvc.cmd.encryptDMG", "New Encrypted Disk Image…"), enabled: hasLocalSelection) {
             [weak self] in self?.encryptToDiskImage()
         }
+        add("files.offload", L("bvc.cmd.offload", "Offload to iCloud"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedLocalURLs().contains { Backup.isOffloadable($0) }
+        }) { [weak self] in self?.offloadSelection() }
+        add("files.backupTo", L("bvc.cmd.backupTo", "Back Up To…"), enabled: hasLocalSelection) {
+            [weak self] in self?.backupSelection()
+        }
         add("files.split", L("bvc.cmd.split", "Split File…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
                 pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first
@@ -1608,6 +1615,51 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self.activePane?.select(name: merged.lastPathComponent)
             } catch {
                 self.presentInfo(L("bvc.mergeFailed", "Couldn’t merge the parts"), error.localizedDescription)
+            }
+        }
+    }
+
+    /// Offload the selected downloaded iCloud files (evict the local copy; the cloud copy
+    /// stays and the file becomes online-only).
+    private func offloadSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter { Backup.isOffloadable($0) }
+        guard !urls.isEmpty else {
+            presentInfo(
+                L("offload.none", "Nothing to offload"),
+                L("offload.noneBody", "Select downloaded iCloud files to free their local space."))
+            return
+        }
+        let result = Backup.offload(urls)
+        pane.reloadIfShowingListing()
+        if !result.failures.isEmpty {
+            presentFailures(result.failures, title: L("offload.failed", "Couldn’t offload"))
+        }
+    }
+
+    /// Copy the selection to a chosen destination as a backup (originals kept).
+    private func backupSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        let picker = NSOpenPanel()
+        picker.canChooseDirectories = true
+        picker.canChooseFiles = false
+        picker.prompt = L("backup.choose", "Back Up Here")
+        picker.message = L("backup.message", "Choose a destination for the backup copy")
+        picker.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let destination = picker.url, let self else { return }
+            Task { @MainActor in
+                let result = await Task.detached { Backup.backup(urls, to: destination) }.value
+                if !result.failures.isEmpty {
+                    self.presentFailures(result.failures, title: L("backup.failed", "Couldn’t back up"))
+                } else {
+                    self.presentInfo(
+                        L("backup.done", "Backed up"),
+                        String(
+                            format: L("backup.doneBody", "Copied %d item(s) to %@."),
+                            result.succeeded.count, destination.lastPathComponent))
+                }
             }
         }
     }
