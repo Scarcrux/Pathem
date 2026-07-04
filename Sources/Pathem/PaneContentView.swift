@@ -74,6 +74,8 @@ extension PaneContentView {
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {}
     /// Only the list view draws git overlays for now.
     func setGitStates(_ states: [String: GitFileState]) {}
+    /// Only the list view has a customizable right-click menu for now.
+    func setHiddenContextItems(_ ids: Set<String>) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
     /// Views without a row-rect concept fall back to no anchor (the bar centers on the pane).

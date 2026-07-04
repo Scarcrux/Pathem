@@ -67,6 +67,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var instantTooltips: Bool
     /// Size of the navigation/toolbar button icons.
     public var toolbarIconSize: IconSize
+    /// Command ids hidden from the file list's right-click menu (config-as-data
+    /// customization). Empty = the full default menu.
+    public var hiddenContextItems: [String]
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -79,12 +82,13 @@ public struct Preferences: Codable, Sendable, Equatable {
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
-        toolbarIconSize: IconSize = .medium
+        toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = []
     ) {
         self.singleClickToOpen = singleClickToOpen
         self.underlineOnHover = underlineOnHover
         self.instantTooltips = instantTooltips
         self.toolbarIconSize = toolbarIconSize
+        self.hiddenContextItems = hiddenContextItems
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -151,5 +155,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         instantTooltips =
             try c.decodeIfPresent(Bool.self, forKey: .instantTooltips) ?? d.instantTooltips
         toolbarIconSize = (try? c.decode(IconSize.self, forKey: .toolbarIconSize)) ?? d.toolbarIconSize
+        hiddenContextItems =
+            try c.decodeIfPresent([String].self, forKey: .hiddenContextItems) ?? d.hiddenContextItems
     }
 }

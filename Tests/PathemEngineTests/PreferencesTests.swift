@@ -48,6 +48,7 @@ import Testing
         #expect(prefs.compactSidebar == false)  // defaulted
         #expect(prefs.instantTooltips == false)  // defaulted
         #expect(prefs.toolbarIconSize == .medium)  // defaulted
+        #expect(prefs.hiddenContextItems.isEmpty)  // defaulted
     }
 
     @Test func instantTooltipsDefaultsOffAndRoundTrips() throws {

@@ -9,12 +9,13 @@ import PathemEngine
 @MainActor
 final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, search, terminal, transfers, shortcuts, gestures, updates
+        case general, appearance, layout, menus, search, terminal, transfers, shortcuts, gestures, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
             case .appearance: return L("settings.appearance", "Appearance")
             case .layout: return L("settings.layout", "Layout")
+            case .menus: return L("settings.menus", "Menus")
             case .search: return L("settings.search", "Search")
             case .terminal: return L("settings.terminal", "Terminal")
             case .transfers: return L("settings.transfers", "Transfers")
@@ -28,6 +29,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             case .general: return "gearshape"
             case .appearance: return "paintbrush"
             case .layout: return "sidebar.squares.left"
+            case .menus: return "contextualmenu.and.cursorarrow"
             case .search: return "magnifyingglass"
             case .terminal: return "terminal"
             case .transfers: return "arrow.up.arrow.down"
@@ -272,6 +274,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.underlineOnHover", "Underline the item under the pointer"), \.underlineOnHover),
             check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
         ])
+        case .menus: return menusPane()
         case .search: return form([
             check(L("prefs.searchOCR", "Search image contents (OCR, slower)"), \.searchOCR),
             hint(L("prefs.searchOCRHint", "Text and PDF contents are always indexed; image OCR is extra.")),
@@ -418,6 +421,28 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func iconSizeChanged(_ sender: NSPopUpButton) {
         prefs.toolbarIconSize = Preferences.IconSize.allCases[sender.indexOfSelectedItem]
+        onChange?(prefs)
+    }
+
+    /// The customizable file right-click menu: a checkbox per command (checked = shown).
+    private func menusPane() -> NSView {
+        var rows: [NSView] = [
+            hint(L("prefs.contextMenuHint", "Show these commands in the file right-click menu:"))
+        ]
+        for command in FileListController.contextCommands {
+            let button = NSButton(
+                checkboxWithTitle: command.title, target: self, action: #selector(contextItemToggled(_:)))
+            button.identifier = NSUserInterfaceItemIdentifier(command.id)
+            button.state = prefs.hiddenContextItems.contains(command.id) ? .off : .on
+            rows.append(button)
+        }
+        return form(rows)
+    }
+    @objc private func contextItemToggled(_ sender: NSButton) {
+        guard let id = sender.identifier?.rawValue else { return }
+        var hidden = Set(prefs.hiddenContextItems)
+        if sender.state == .on { hidden.remove(id) } else { hidden.insert(id) }
+        prefs.hiddenContextItems = Array(hidden).sorted()
         onChange?(prefs)
     }
 

@@ -674,6 +674,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("workspace.save", L("bvc.cmd.saveWorkspace", "Save Workspace…")) { [weak self] in self?.saveWorkspace() }
         add("workspace.open", L("bvc.cmd.openWorkspace", "Open Workspace…")) { [weak self] in self?.openWorkspace() }
+        add("view.saveStyle", L("bvc.cmd.saveStyle", "Save Style…"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.saveStyle()
+        }
+        add("view.applyStyle", L("bvc.cmd.applyStyle", "Apply Style…"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.applyStyle()
+        }
         add("tools.automation", L("bvc.cmd.automation", "Automation Rules…")) { [weak self] in self?.showAutomationRules() }
         add("view.applyToSubfolders", L("bvc.cmd.applyViewToSubfolders", "Apply View to Subfolders"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
@@ -2735,6 +2741,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 if wasHidden != prefs.showHiddenByDefault { pane.reloadIfShowingListing() }
                 pane.iconZoom = CGFloat(prefs.iconZoom)
                 pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
+                pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
             }
         }
         applyCompactSidebar()
@@ -3101,6 +3108,55 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private static var workspacesURL: URL? {
         appSupportDirectory()?.appendingPathComponent("workspaces.json")
+    }
+
+    // MARK: View Styles (named view-format presets)
+
+    private struct ViewStyle: Codable, Equatable {
+        var name: String
+        var format: ViewFormat
+    }
+
+    private static var stylesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("styles.json")
+    }
+
+    /// Save the active pane's current view format (mode, sort, hidden, folders-first) as a
+    /// named Style.
+    private func saveStyle() {
+        guard let pane = activePane else { NSSound.beep(); return }
+        guard
+            let name = promptForName(title: L("bvc.saveStyleTitle", "Save style as:"), default: ""),
+            !name.trimmingCharacters(in: .whitespaces).isEmpty
+        else { return }
+        var all = loadConfig([ViewStyle].self, from: Self.stylesURL) ?? []
+        all.removeAll { $0.name == name }
+        all.append(ViewStyle(name: name, format: pane.format))
+        saveConfig(all, to: Self.stylesURL)
+    }
+
+    /// Pick a saved Style and apply it to the active pane.
+    private func applyStyle() {
+        let all = loadConfig([ViewStyle].self, from: Self.stylesURL) ?? []
+        guard let window = view.window else { return }
+        guard !all.isEmpty else {
+            presentInfo(
+                L("bvc.noStyles", "No styles"), L("bvc.noStylesBody", "Save one first with Save Style."))
+            return
+        }
+        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 260, height: 25))
+        for style in all { popup.addItem(withTitle: style.name) }
+        let alert = NSAlert()
+        alert.messageText = L("bvc.applyStyleTitle", "Apply Style")
+        alert.accessoryView = popup
+        alert.addButton(withTitle: L("bvc.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self,
+                all.indices.contains(popup.indexOfSelectedItem)
+            else { return }
+            self.activePane?.applyFormat(all[popup.indexOfSelectedItem].format)
+        }
     }
 
     private static var automationRulesURL: URL? {

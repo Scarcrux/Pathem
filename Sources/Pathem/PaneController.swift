@@ -41,6 +41,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// the bar as the list scrolls).
     var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
     var contentClipView: NSClipView { content.scrollView.contentView }
+    func setHiddenContextItems(_ ids: Set<String>) { content.setHiddenContextItems(ids) }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)
@@ -968,6 +969,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Switch this folder's view mode (list / icon / gallery), persist it, and
     /// reload (which swaps the content view).
+    /// Apply a whole saved view format (a Style): sort, hidden, folders-first, and view
+    /// mode, then re-list and update the sort indicator.
+    func applyFormat(_ style: ViewFormat) {
+        format.sortKey = style.sortKey
+        format.ascending = style.ascending
+        format.showHidden = style.showHidden
+        format.foldersFirst = style.foldersFirst
+        setViewMode(style.viewMode)  // swaps the content controller when the mode changes
+        reload()  // re-list with the new sort/hidden/folders-first
+        content.showSortIndicator(key: style.sortKey, ascending: style.ascending)
+    }
+
     func setViewMode(_ mode: ViewFormat.ViewMode) {
         guard mode != format.viewMode else { return }
         format.viewMode = mode

@@ -212,24 +212,50 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// The right-click menu: thin bindings to the command registry (validated and
     /// dispatched by BrowserViewController, same as the menu bar).
+    /// The command-backed items that may appear in the right-click menu, in default order.
+    /// Config-as-data: the user can hide any of these (Settings > Menus).
+    static var contextCommands: [(id: String, title: String)] {
+        [
+            ("files.open", L("common.open", "Open")),
+            ("files.getInfo", L("list.getInfo", "Get Info")),
+            ("files.download", L("list.download", "Download")),
+            ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
+            ("files.rename", L("list.rename", "Rename…")),
+            ("files.trash", L("list.moveToTrash", "Move to Trash")),
+            ("files.newFolder", L("list.newFolder", "New Folder")),
+            ("files.newFile", L("bvc.cmd.newFile", "New File")),
+            ("files.copy", L("list.copy", "Copy")),
+            ("files.cut", L("list.cut", "Cut")),
+            ("files.paste", L("list.paste", "Paste")),
+        ]
+    }
+
+    /// Command ids hidden from the context menu (from the preference); rebuilds the menu.
+    var hiddenContextItems: Set<String> = [] {
+        didSet { if oldValue != hiddenContextItems { tableView.menu = makeContextMenu() } }
+    }
+    func setHiddenContextItems(_ ids: Set<String>) { hiddenContextItems = ids }
+
     private func makeContextMenu() -> NSMenu {
         let menu = NSMenu()
-        func add(_ title: String, _ commandID: String) {
+        let titles = Dictionary(uniqueKeysWithValues: Self.contextCommands.map { ($0.id, $0.title) })
+        func add(_ commandID: String) {
+            guard !hiddenContextItems.contains(commandID), let title = titles[commandID] else { return }
             let item = NSMenuItem(
                 title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
             item.representedObject = commandID
             menu.addItem(item)
         }
-        add(L("common.open", "Open"), "files.open")
+        add("files.open")
         let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
         openWithMenu.delegate = self
         openWith.submenu = openWithMenu
         menu.addItem(openWith)
-        add(L("list.getInfo", "Get Info"), "files.getInfo")
-        add(L("list.download", "Download"), "files.download")
-        add(L("list.revealInFinder", "Reveal in Finder"), "files.reveal")
-        add(L("list.rename", "Rename…"), "files.rename")
-        add(L("list.moveToTrash", "Move to Trash"), "files.trash")
+        add("files.getInfo")
+        add("files.download")
+        add("files.reveal")
+        add("files.rename")
+        add("files.trash")
         menu.addItem(.separator())
         let tags = NSMenuItem(title: L("list.tags", "Tags"), action: nil, keyEquivalent: "")
         let tagsMenu = NSMenu()
@@ -249,12 +275,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tags.submenu = tagsMenu
         menu.addItem(tags)
         menu.addItem(.separator())
-        add(L("list.newFolder", "New Folder"), "files.newFolder")
-        add(L("bvc.cmd.newFile", "New File"), "files.newFile")
+        add("files.newFolder")
+        add("files.newFile")
         menu.addItem(.separator())
-        add(L("list.copy", "Copy"), "files.copy")
-        add(L("list.cut", "Cut"), "files.cut")
-        add(L("list.paste", "Paste"), "files.paste")
+        add("files.copy")
+        add("files.cut")
+        add("files.paste")
         return menu
     }
 
