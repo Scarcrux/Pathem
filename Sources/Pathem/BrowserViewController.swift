@@ -84,12 +84,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var aiBar = AICommandBar()
     /// Floating quick-action buttons shown over the panes when items are selected.
     private let quickBar = QuickActionsBar()
-    /// Ambient "move to" chip shown when a file lands in Downloads.
-    private let downloadBar = DownloadSuggestionBar()
-    private var downloadWatcher: DirectoryWatcher?
-    private var downloadKnown: Set<String> = []
-    private var pendingDownloadSuggestions: [OrganizePlanner.Suggestion] = []
-    private var currentDownloadSuggestion: OrganizePlanner.Suggestion?
+    /// Watches Downloads and floats a one-click "move to" chip; owns its own watcher + queue.
+    let downloadSuggestions = DownloadSuggestionsController()
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
     private lazy var settings = SettingsWindowController()
@@ -219,16 +215,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         quickBar.onAction = { [weak self] id in self?.commands.perform(id) }
         quickBar.onOpenWith = { [weak self] anchor in self?.showQuickOpenWith(from: anchor) }
         // Ambient download chip, floating at the top-center of the panes.
-        host.addSubview(downloadBar)
+        let downloadChip = downloadSuggestions.view
+        host.addSubview(downloadChip)
         NSLayoutConstraint.activate([
-            downloadBar.centerXAnchor.constraint(equalTo: split.centerXAnchor),
-            downloadBar.topAnchor.constraint(equalTo: split.topAnchor, constant: 12),
+            downloadChip.centerXAnchor.constraint(equalTo: split.centerXAnchor),
+            downloadChip.topAnchor.constraint(equalTo: split.topAnchor, constant: 12),
         ])
-        downloadBar.onMove = { [weak self] in self?.applyDownloadSuggestion() }
-        downloadBar.onDismiss = { [weak self] in self?.dismissDownloadSuggestion() }
+        downloadSuggestions.onApplied = { [weak self] performed in
+            if !performed.isEmpty {
+                self?.registerUndo(performed, actionName: L("organize.action", "Organize"))
+            }
+            self?.reloadBothSides()
+        }
         view = host
         configureShelf()
-        startDownloadWatch()
+        // Watch Downloads for one-click filing, except in demo mode and under the smoke
+        // harness (which must stay deterministic).
+        if demoLayout == nil, ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == nil {
+            downloadSuggestions.start(feedbackURL: Self.organizeFeedbackURL)
+        }
         setupAutomation()
     }
 
@@ -2407,111 +2412,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private static var organizeFeedbackURL: URL? {
         appSupportDirectory()?.appendingPathComponent("organize-feedback.json")
-    }
-
-    // MARK: Ambient download suggestions
-
-    /// Test override for the watched folder (the smoke points this at a temp dir).
-    var debugDownloadsOverride: URL?
-
-    private var downloadsFolder: URL {
-        debugDownloadsOverride
-            ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")
-    }
-
-    /// Seed the known set and run one change pass, for the smoke integration check.
-    func debugRunDownloadsCheck(seedKnown: Set<String> = []) {
-        downloadKnown = seedKnown
-        downloadsDidChange()
-    }
-
-    var debugDownloadChipText: String? { downloadBar.debugVisibleText }
-
-    /// Watch Downloads so a newly-arrived file can be filed in one click. Off in demo mode
-    /// and under the smoke harness (which must stay deterministic).
-    private func startDownloadWatch() {
-        guard demoLayout == nil, ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == nil else { return }
-        let folder = downloadsFolder
-        downloadKnown = Self.downloadNames(in: folder)  // seed: only later arrivals are "new"
-        downloadWatcher = DirectoryWatcher(path: folder.path) { [weak self] in
-            Task { @MainActor in self?.downloadsDidChange() }
-        }
-    }
-
-    private static func downloadNames(in folder: URL) -> Set<String> {
-        Set((try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [])
-    }
-
-    private func downloadsDidChange() {
-        guard demoLayout == nil else { return }
-        let folder = downloadsFolder
-        let current = Self.downloadNames(in: folder)
-        let arrived = current.subtracting(downloadKnown)
-        downloadKnown = current
-        guard !arrived.isEmpty else { return }
-        let destinations = FilingDestinations.defaults(home: FileManager.default.homeDirectoryForCurrentUser)
-        let memory = Self.organizeFeedbackURL.map { OrganizeFeedback.load(from: $0) } ?? OrganizeFeedback()
-        for name in arrived.sorted() {
-            let ext = (name as NSString).pathExtension.lowercased()
-            // Ignore partial downloads and dotfiles; wait for the finished file.
-            if name.hasPrefix(".") || ["crdownload", "part", "download", "partial"].contains(ext) { continue }
-            let url = folder.appendingPathComponent(name)
-            // Only offer to MOVE an arrival (never auto-prompt to trash a download).
-            guard let suggestion = OrganizePlanner.suggestion(for: url, destinations: destinations, memory: memory),
-                case .move = suggestion.kind
-            else { continue }
-            pendingDownloadSuggestions.append(suggestion)
-        }
-        showNextDownloadSuggestion()
-    }
-
-    private func showNextDownloadSuggestion() {
-        guard downloadBar.isHidden else { return }  // one chip at a time
-        while !pendingDownloadSuggestions.isEmpty {
-            let next = pendingDownloadSuggestions.removeFirst()
-            // The file may already have been moved or deleted since it was queued.
-            guard FileManager.default.fileExists(atPath: next.file.path), let dest = next.destination
-            else { continue }
-            currentDownloadSuggestion = next
-            downloadBar.show(fileURL: next.file, destinationName: dest.lastPathComponent)
-            return
-        }
-    }
-
-    private func applyDownloadSuggestion() {
-        guard let suggestion = currentDownloadSuggestion else { return }
-        downloadBar.hide()
-        currentDownloadSuggestion = nil
-        Task { @MainActor in
-            var forced = suggestion  // the user clicked Move, so apply regardless of the default
-            forced.accepted = true
-            let outcome = await Task.detached { OrganizePlanner.apply([forced]) }.value
-            if let url = Self.organizeFeedbackURL {
-                OrganizeFeedback.record(
-                    .init(
-                        ruleID: suggestion.ruleID, destination: suggestion.destination?.lastPathComponent,
-                        ext: suggestion.file.pathExtension.lowercased(), verdict: .applied), to: url)
-            }
-            if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: L("organize.action", "Organize"))
-            }
-            self.reloadBothSides()
-            self.showNextDownloadSuggestion()
-        }
-    }
-
-    private func dismissDownloadSuggestion() {
-        guard let suggestion = currentDownloadSuggestion else { return }
-        if let url = Self.organizeFeedbackURL {
-            OrganizeFeedback.record(
-                .init(
-                    ruleID: suggestion.ruleID, destination: suggestion.destination?.lastPathComponent,
-                    ext: suggestion.file.pathExtension.lowercased(), verdict: .skipped), to: url)
-        }
-        downloadBar.hide()
-        currentDownloadSuggestion = nil
-        showNextDownloadSuggestion()
     }
 
     /// Propose a rules-based organization for the active pane's folder and present the
@@ -4745,15 +4645,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let dlDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dl-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: dlDir, withIntermediateDirectories: true)
         try? Data("x".utf8).write(to: dlDir.appendingPathComponent("receipt.pdf"))
-        debugDownloadsOverride = dlDir
-        debugRunDownloadsCheck(seedKnown: [])  // empty seed => receipt.pdf reads as newly arrived
+        downloadSuggestions.debugRunCheck(  // empty seed => receipt.pdf reads as newly arrived
+            folder: dlDir, seedKnown: [], feedbackURL: Self.organizeFeedbackURL)
         check(
-            "download-suggestion-fires", debugDownloadChipText?.contains("receipt.pdf") == true,
-            debugDownloadChipText ?? "no chip")
-        downloadBar.hide()
-        currentDownloadSuggestion = nil
-        pendingDownloadSuggestions = []
-        debugDownloadsOverride = nil
+            "download-suggestion-fires", downloadSuggestions.debugChipText?.contains("receipt.pdf") == true,
+            downloadSuggestions.debugChipText ?? "no chip")
+        downloadSuggestions.debugReset()
         try? FileManager.default.removeItem(at: dlDir)
         // The quick-actions bar geometry must place the bar next to the selection, not at a
         // fixed spot (verified as pure math; the live layout is confirmed visually).
