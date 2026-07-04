@@ -87,14 +87,14 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
             })
         statusLabel.stringValue = title
         table.reloadData()
-        if !self.window.isVisible { self.window.center() }
+        if !self.window.isVisible { self.window.centerOverMainWindow() }
         self.window.makeKeyAndOrderFront(nil)
         pump()
     }
 
     /// Bring the transfer manager forward (Tools menu).
     func showWindow() {
-        if !window.isVisible { window.center() }
+        if !window.isVisible { window.centerOverMainWindow() }
         window.makeKeyAndOrderFront(nil)
         updateStatus()
     }

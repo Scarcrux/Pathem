@@ -1,0 +1,28 @@
+import AppKit
+
+extension NSWindow {
+    /// Center this window over the app's main window (the browser), so a dialog appears where
+    /// the user is looking even after the browser has been moved or resized off the screen
+    /// center. Falls back to screen-centering when there is no host window (e.g. the main
+    /// window itself). The origin is clamped to the host's visible screen so a dialog never
+    /// lands partly off-screen when the browser sits near an edge.
+    func centerOverMainWindow() {
+        // The panel is usually not yet key/main when this runs, so the browser is still the
+        // main window; exclude self defensively in case it is already front.
+        let host = [NSApp.mainWindow, NSApp.keyWindow].compactMap { $0 }.first { $0 !== self }
+        guard let host else {
+            center()
+            return
+        }
+        let hostFrame = host.frame
+        let size = frame.size
+        var origin = NSPoint(
+            x: hostFrame.midX - size.width / 2,
+            y: hostFrame.midY - size.height / 2)
+        if let visible = (host.screen ?? screen ?? NSScreen.main)?.visibleFrame {
+            origin.x = min(max(origin.x, visible.minX), max(visible.minX, visible.maxX - size.width))
+            origin.y = min(max(origin.y, visible.minY), max(visible.minY, visible.maxY - size.height))
+        }
+        setFrameOrigin(origin)
+    }
+}

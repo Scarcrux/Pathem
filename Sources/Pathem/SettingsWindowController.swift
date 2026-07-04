@@ -799,7 +799,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         if let query = ProcessInfo.processInfo.environment["PATHEM_SETTINGS_QUERY"], !query.isEmpty {
             sidebar.debugSearch(query)
         }
-        window.center()
+        window.centerOverMainWindow()
         window.makeKeyAndOrderFront(nil)
         return window.windowNumber
     }

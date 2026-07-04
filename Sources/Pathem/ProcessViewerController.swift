@@ -31,7 +31,7 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     func present() {
-        if !window.isVisible { window.center() }
+        if !window.isVisible { window.centerOverMainWindow() }
         window.makeKeyAndOrderFront(nil)
         reload()
         timer?.invalidate()

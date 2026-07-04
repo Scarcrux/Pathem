@@ -82,7 +82,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 let s = panel.frame.size
                 panel.setFrameOrigin(NSPoint(x: f.midX - s.width / 2, y: f.midY - s.height / 2))
             } else {
-                panel.center()
+                panel.centerOverMainWindow()
             }
         }
         panel.makeKeyAndOrderFront(nil)

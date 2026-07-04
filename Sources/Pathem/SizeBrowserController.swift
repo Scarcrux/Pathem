@@ -34,7 +34,7 @@ final class SizeBrowserController: NSObject {
         root = url
         // A normal closable utility window (not a sheet), so its close button works and
         // re-presenting just brings it forward instead of beginSheet-ing twice.
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
         load(url)
     }

@@ -57,7 +57,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     func present(for url: URL, over window: NSWindow?) {
         root = url
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
         updateDiskStats()  // instant: overall capacity/used/free, before the scan runs
         scan()

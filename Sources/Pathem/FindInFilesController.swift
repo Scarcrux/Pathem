@@ -44,7 +44,7 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         matches = []
         statusLabel.stringValue = ""
         table.reloadData()
-        panel.center()
+        panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(queryField)
     }

@@ -29,7 +29,7 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
         self.onChange = onChange
         self.onRun = onRun
         table.reloadData()
-        panel.center()
+        panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
     }
 

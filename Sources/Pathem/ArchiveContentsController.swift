@@ -26,7 +26,7 @@ final class ArchiveContentsController: NSObject, NSTableViewDataSource, NSTableV
         panel.title = archiveName
         countLabel.stringValue = String(format: L("archive.count", "%d items"), entries.count)
         table.reloadData()
-        panel.center()
+        panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
     }
 

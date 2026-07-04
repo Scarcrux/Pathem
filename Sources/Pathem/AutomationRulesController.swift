@@ -25,7 +25,7 @@ final class AutomationRulesController: NSObject, NSTableViewDataSource, NSTableV
         self.manager = manager
         rules = manager.rules
         table.reloadData()
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
     }
 

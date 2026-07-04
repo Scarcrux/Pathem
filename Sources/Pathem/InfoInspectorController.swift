@@ -172,7 +172,7 @@ final class InfoInspectorController: NSObject {
         panel.layoutIfNeeded()
         let fitting = stack.fittingSize
         panel.setContentSize(NSSize(width: max(340, fitting.width + 40), height: fitting.height + 36))
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
     }
 

@@ -28,7 +28,7 @@ final class DiffViewerController: NSObject, NSTableViewDataSource, NSTableViewDe
         header.stringValue = L("diff.computing", "Comparing…")
         lines = []
         table.reloadData()
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
         Task { @MainActor in
             let outcome = await Task.detached { () -> TextDiff.Result? in

@@ -35,7 +35,7 @@ final class BatchCreateController: NSObject, NSTextViewDelegate {
         self.saveTemplate = saveTemplate
         input.string = ""
         updatePreview()
-        panel.center()
+        panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(input)
     }
