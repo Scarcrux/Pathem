@@ -90,6 +90,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         column.width = columnWidth - 4
         table.addTableColumn(column)
         table.registerForDraggedTypes([.fileURL])  // accept file drops into this column
+        table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)  // drag to the other pane
+        table.setDraggingSourceOperationMask(.every, forLocal: false)  // and to Finder / other apps
 
         let scroll = NSScrollView()
         scroll.documentView = table
@@ -273,6 +275,29 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             info.stringValue = lines.joined(separator: "\n")
         }
         return box
+    }
+
+    // MARK: Drag source (drag files OUT of a column to the other pane, Finder, other apps)
+
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        guard let index = columnIndex(of: tableView), row < columns[index].entries.count else { return nil }
+        let entry = columns[index].entries[row]
+        guard !entry.isDataless else { return nil }  // don't drag online-only placeholders
+        // A promise + file URL, so the drag lands in browsers/sandboxed apps and Finder alike.
+        return FileDrag.item(for: columns[index].folder.appendingPathComponent(entry.name))
+    }
+
+    func tableView(
+        _ tableView: NSTableView, draggingSession session: NSDraggingSession,
+        willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
+    ) {
+        guard let index = columnIndex(of: tableView) else { return }
+        let folder = columns[index].folder
+        let urls = rowIndexes.compactMap { row -> URL? in
+            guard row < columns[index].entries.count, !columns[index].entries[row].isDataless else { return nil }
+            return folder.appendingPathComponent(columns[index].entries[row].name)
+        }
+        FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
     }
 
     // MARK: Drops (into a column's folder, or onto a folder row within it)
