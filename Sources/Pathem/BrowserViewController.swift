@@ -27,6 +27,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var shelfShownConstraint: NSLayoutConstraint?
     private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     private var previewVisible = false
+    /// Durably pins the preview pane's width so it (and the panes) can't collapse; see
+    /// togglePreviewPane(). Mirrors sidebarWidthConstraint.
+    private var previewWidthConstraint: NSLayoutConstraint?
     private lazy var sizeBrowser = SizeBrowserController()
     private lazy var cleanup = CleanupController()
     private lazy var xattrController = XattrController()
@@ -2183,17 +2186,37 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func togglePreviewPane() {
         previewVisible.toggle()
         if previewVisible {
-            previewView.translatesAutoresizingMaskIntoConstraints = true
+            // Auto-layout, like the sidebar and panes -- a TAMIC arranged subview in an
+            // auto-layout NSSplitView breaks the split's width distribution and collapses
+            // the panes to zero (blanking both panes).
+            previewView.translatesAutoresizingMaskIntoConstraints = false
             outerSplit.addArrangedSubview(previewView)  // [sidebar | panes | preview]
             outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(255), forSubviewAt: 2)
-            if previewView.frame.width < 100 {
-                outerSplit.setPosition(outerSplit.bounds.width - 300, ofDividerAt: outerSplit.arrangedSubviews.count - 2)
-            }
+            // Durably pin the preview to a sane width so the panes always keep the rest. A
+            // bare setPosition() is transient in an auto-layout split and lets the preview
+            // (and the panes with it) collapse to zero; this constraint stays put and is
+            // still draggable (its priority is below the divider-drag priority).
+            let width = previewWidthConstraint ?? previewView.widthAnchor.constraint(equalToConstant: 300)
+            width.priority = NSLayoutConstraint.Priority(255)
+            width.isActive = true
+            previewWidthConstraint = width
+            // Seed the divider once so the split gives the preview its width now; the
+            // constraint then holds it durably across resizes and view swaps.
+            outerSplit.layoutSubtreeIfNeeded()
+            outerSplit.setPosition(
+                outerSplit.bounds.width - 300, ofDividerAt: outerSplit.arrangedSubviews.count - 2)
             updatePreview()
         } else {
             previewView.previewItem = nil
+            previewWidthConstraint?.isActive = false
             outerSplit.removeArrangedSubview(previewView)
             previewView.removeFromSuperview()
+            // Hand the freed width back to the panes now: pin the sidebar|panes divider at the
+            // sidebar width so the panes fill the rest (removeArrangedSubview leaves a stale
+            // divider position otherwise, stranding the freed strip as dead space).
+            outerSplit.layoutSubtreeIfNeeded()
+            outerSplit.setPosition(sidebarWidthConstraint?.constant ?? 200, ofDividerAt: 0)
+            outerSplit.layoutSubtreeIfNeeded()
         }
     }
 
@@ -4109,6 +4132,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Navigate the active pane (PATHEM_VIEW_SHOT diagnostics, bypassing session restore).
     func debugNavigateActive(to url: URL) { activePane?.navigate(to: url) }
 
+    /// Toggle the preview pane and report whether both panes kept a real width (the
+    /// regression guard for the auto-preview layout collapse). Used by the smoke self-check.
+    func debugPreviewToggleKeepsPanes() -> Bool {
+        let before = split.frame.width
+        togglePreviewPane()  // show
+        view.layoutSubtreeIfNeeded()
+        let shown = split.frame.width
+        togglePreviewPane()  // hide
+        view.layoutSubtreeIfNeeded()
+        let hidden = split.frame.width
+        // With the preview open the panes must keep most of their width (not collapse to
+        // zero), and closing it must restore them.
+        return shown > 200 && hidden > before - 20
+    }
+
     /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
     func debugDrillActive(row: Int) { activePane?.debugColumnDrill(row: row) }
 
@@ -4189,6 +4227,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         galleryView.directoryURL = leftTabs.activePane?.currentURL
         galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
+        // Preview pane must not collapse the panes to zero (the auto-preview layout bug):
+        // toggling it on keeps the panes wide, and toggling it off restores their width.
+        check("preview-pane-keeps-panes", debugPreviewToggleKeepsPanes(), "panes survive preview toggle")
         // Embedded Settings: build the in-pane settings view (catches a crash in that path).
         let settingsView = settings.makeEmbedded(
             prefs: prefs, commands: commands.all.map { (id: $0.id, title: $0.title) },
