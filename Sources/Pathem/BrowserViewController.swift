@@ -582,6 +582,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.backupTo", L("bvc.cmd.backupTo", "Back Up To…"), enabled: hasLocalSelection) {
             [weak self] in self?.backupSelection()
         }
+        add("files.repoReclaim", L("bvc.cmd.repoReclaim", "Reclaim in Repo…"), enabled: { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.isRemote && !pane.isShowingSmartResults
+        }) { [weak self] in self?.repoReclaim() }
         add("files.split", L("bvc.cmd.split", "Split File…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
                 pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first
@@ -1648,6 +1652,77 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let urls = pane.selectedLocalURLs()
         guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        backup(urls, over: window)
+    }
+
+    /// Inside a git repository, split the current folder's contents into what git already
+    /// protects (tracked), what's safe to reclaim (regenerable build output/caches), and what
+    /// git ISN'T protecting and is worth backing up (precious untracked data). Then offer to
+    /// clean the first and back up the second.
+    private func repoReclaim() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        guard let window = view.window else { return }
+        Task { @MainActor in
+            let items = await RepoScan.classify(folder)
+            guard !items.isEmpty else {
+                self.presentInfo(
+                    L("repo.notRepo", "Not a git repository"),
+                    L("repo.notRepoBody", "Reclaim only runs inside a git repository, where it can tell tracked files from regenerable junk and precious untracked data."))
+                return
+            }
+            let regenerable = items.filter { $0.disposition == .regenerable }
+            let precious = items.filter { $0.disposition == .precious }
+            let tracked = items.filter { $0.disposition == .tracked }
+            let bytes = ByteCountFormatter()
+            func size(_ list: [RepoScan.Item]) -> String {
+                bytes.string(fromByteCount: list.reduce(0) { $0 + $1.size })
+            }
+            func urls(_ list: [RepoScan.Item]) -> [URL] {
+                list.map { folder.appendingPathComponent($0.name) }
+            }
+
+            let alert = NSAlert()
+            alert.messageText = String(
+                format: L("repo.title", "Reclaim in %@"), folder.lastPathComponent)
+            alert.informativeText = String(
+                format: L(
+                    "repo.summary",
+                    "Regenerable (safe to clean): %d, %@\nPrecious (untracked, worth backing up): %d, %@\nTracked (git already has these): %d"),
+                regenerable.count, size(regenerable), precious.count, size(precious), tracked.count)
+
+            // Offer only the actions that apply, mapped by button order.
+            var actions: [() -> Void] = []
+            if !regenerable.isEmpty {
+                alert.addButton(
+                    withTitle: String(format: L("repo.clean", "Clean Regenerable (%d)"), regenerable.count))
+                let toTrash = urls(regenerable)
+                actions.append { [weak self] in self?.performLocalTrash(toTrash) }
+            }
+            if !precious.isEmpty {
+                alert.addButton(
+                    withTitle: String(format: L("repo.backup", "Back Up Precious… (%d)"), precious.count))
+                let toBackUp = urls(precious)
+                actions.append { [weak self] in self?.backup(toBackUp, over: window) }
+            }
+            if actions.isEmpty {
+                self.presentInfo(
+                    L("repo.nothing", "Nothing to reclaim"),
+                    L("repo.nothingBody", "Everything here is tracked by git. There's no regenerable junk to clean and no untracked data to back up."))
+                return
+            }
+            alert.addButton(withTitle: L("common.close", "Close"))
+            alert.beginSheetModal(for: window) { response in
+                let index = response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+                if index >= 0 && index < actions.count { actions[index]() }
+            }
+        }
+    }
+
+    /// Copy the given files to a chosen destination as a backup (originals kept). Shared by
+    /// the selection backup and the repo-reclaim precious-data backup.
+    private func backup(_ urls: [URL], over window: NSWindow) {
+        guard !urls.isEmpty else { return }
         let picker = NSOpenPanel()
         picker.canChooseDirectories = true
         picker.canChooseFiles = false

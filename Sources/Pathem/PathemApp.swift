@@ -477,6 +477,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Compare Panes…", "files.comparePanes"))
         viewMenu.addItem(commandItem("Size Browser…", "view.sizeBrowser"))
         viewMenu.addItem(commandItem("Cleanup…", "view.cleanup"))
+        viewMenu.addItem(commandItem("Reclaim in Repo…", "files.repoReclaim"))
         viewMenu.addItem(commandItem("Use as Default View", "view.useAsDefault"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
