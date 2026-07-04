@@ -12,8 +12,8 @@ import Quartz
 final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource,
     NSSplitViewDelegate, NSMenuItemValidation
 {
-    private let leftTabs: TabbedPaneController
-    private let rightTabs: TabbedPaneController
+    let leftTabs: TabbedPaneController
+    let rightTabs: TabbedPaneController
     weak var activePane: PaneController?
     private weak var activeSide: TabbedPaneController?
     /// When on, navigating one pane navigates the other to the same folder.
@@ -56,7 +56,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// store) is in DESIGN.md section 2.
     let semanticSearch = SemanticSearchController()  // owns the per-folder index cache
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
-    private static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
+    static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
     static let searchItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.search")
     /// A toolbar item that runs a registered command carries the command id in its
     /// identifier (this prefix + the id), so the button is stateless and the id
@@ -111,7 +111,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Whether a copy/move is running (so the app can warn before quitting).
     var isTransferring: Bool { transferInFlight }
     /// File paths currently marked for cut (dimmed until pasted or cleared).
-    private var cutPaths: Set<String> = []
+    var cutPaths: Set<String> = []
     private var sidebarWidthConstraint: NSLayoutConstraint!
     /// Lays out the two panes at a fixed ratio (and tracks divider drags), so switching a
     /// pane to a content-light view (gallery) can't make the split re-divide and collapse it.
@@ -926,7 +926,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Ops that need one destination folder (paste, new folder) can't run in a
     /// remote pane or a cross-folder smart-result view (there's no single "here").
-    private func blockedByRemoteOrSmart() -> Bool {
+    func blockedByRemoteOrSmart() -> Bool {
         if activePane?.isRemote == true || activePane?.isShowingSmartResults == true {
             NSSound.beep()
             return true
@@ -2527,7 +2527,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Prune the given paths from every pane's smart-result list (after a file op
     /// removed/moved them), so smart views don't keep stale rows.
-    private func pruneSmartEntries(_ paths: Set<String>) {
+    func pruneSmartEntries(_ paths: Set<String>) {
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs { pane.pruneSmartEntries(paths: paths) }
         }
@@ -3907,7 +3907,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Run a copy/move off the main thread with a deferred progress sheet (so the
     /// window never freezes and quick ops never flash a sheet), then hand the
     /// outcome back on the main actor. One transfer at a time.
-    private func runTransfer(
+    func runTransfer(
         urls: [URL], into destination: URL, move: Bool,
         resolution: FileOperations.ConflictResolution,
         completion: @escaping (FileOperations.Outcome) -> Void
@@ -3922,7 +3922,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    private func askConflictResolution(conflictCount: Int, move: Bool)
+    func askConflictResolution(conflictCount: Int, move: Bool)
         -> FileOperations.ConflictResolution?
     {
         let alert = NSAlert()
@@ -3944,7 +3944,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    private func registerUndo(_ performed: [FileOperations.Performed], actionName: String) {
+    func registerUndo(_ performed: [FileOperations.Performed], actionName: String) {
         guard let undoManager = view.window?.undoManager else { return }
         undoManager.registerUndo(withTarget: self) { target in
             let result = FileOperations.undo(performed)
@@ -3980,80 +3980,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
         undoManager.redo()
-    }
-
-    // MARK: - File clipboard (cut / copy / paste)
-    //
-    // Routed via the Edit menu's cut:/copy:/paste:. When the search field is
-    // focused the field editor handles them as text editing; when a pane's table
-    // is focused they reach here and act on files.
-
-    @objc func copy(_ sender: Any?) { writeSelectionToPasteboard(cut: false) }
-    @objc func cut(_ sender: Any?) { writeSelectionToPasteboard(cut: true) }
-
-    @objc func paste(_ sender: Any?) {
-        if blockedByRemoteOrSmart() { return }  // needs a single destination folder
-        guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
-        guard let pane = activePane else { return }
-        let pasteboard = NSPasteboard.general
-        let urls =
-            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
-            as? [URL] ?? []
-        guard !urls.isEmpty else { NSSound.beep(); return }
-
-        let isMove = pasteboard.data(forType: Self.cutPasteboardType) != nil
-        let destination = pane.currentURL
-
-        var resolution = FileOperations.ConflictResolution.skip
-        let conflicts = FileOperations.conflicts(urls: urls, into: destination)
-        if !conflicts.isEmpty {
-            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: isMove) else {
-                return
-            }
-            resolution = chosen
-        }
-
-        runTransfer(urls: urls, into: destination, move: isMove, resolution: resolution) {
-            [weak self] outcome in
-            guard let self else { return }
-            self.leftTabs.activePane?.reloadIfShowingListing()
-            self.rightTabs.activePane?.reloadIfShowingListing()
-            if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: isMove ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
-            }
-            if isMove {
-                pasteboard.clearContents()  // cut items are gone; don't move them twice
-                self.cutPaths = []
-                self.applyCutPaths()  // clear the dimming
-                self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))  // drop moved rows
-            }
-            if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: L("bvc.pasteFailed", "Paste failed")) }
-        }
-    }
-
-    private func writeSelectionToPasteboard(cut: Bool) {
-        guard let pane = activePane else { return }
-        // Copy/cut only writes URLs (no mutation), so it's safe in smart-result views;
-        // selectedLocalURLs resolves each item to its real folder. Remote has no local URL.
-        guard !pane.isRemote else { NSSound.beep(); return }
-        let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty else { NSSound.beep(); return }
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.writeObjects(urls as [NSURL])
-        if cut {
-            pasteboard.addTypes([Self.cutPasteboardType], owner: nil)
-            pasteboard.setData(Data(), forType: Self.cutPasteboardType)
-        }
-        cutPaths = cut ? Set(urls.map(\.path)) : []  // dim cut items; a copy clears any prior cut
-        applyCutPaths()
-    }
-
-    /// Show the current cut-dimming in every pane.
-    private func applyCutPaths() {
-        for side in [leftTabs, rightTabs] {
-            for pane in side.tabs { pane.setCutPaths(cutPaths) }
-        }
     }
 
     func presentFailures(_ failures: [FileOperations.Failure], title: String) {
