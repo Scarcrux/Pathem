@@ -134,6 +134,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             let item = NSMenuItem(
                 title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
             item.representedObject = id
+            item.image = MenuIcons.image(forCommand: id)
             menu.addItem(item)
         }
         add(L("common.open", "Open"), "files.open")

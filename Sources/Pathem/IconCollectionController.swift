@@ -284,6 +284,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             let item = NSMenuItem(
                 title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
             item.representedObject = id
+            item.image = MenuIcons.image(forCommand: id)
             menu.addItem(item)
         }
         add(L("common.open", "Open"), "files.open")

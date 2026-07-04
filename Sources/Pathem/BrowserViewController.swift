@@ -4230,6 +4230,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // Preview pane must not collapse the panes to zero (the auto-preview layout bug):
         // toggling it on keeps the panes wide, and toggling it off restores their width.
         check("preview-pane-keeps-panes", debugPreviewToggleKeepsPanes(), "panes survive preview toggle")
+        // Every context-menu command resolves to an icon (a mistyped SF Symbol name would
+        // silently drop the glyph, leaving the item icon-less).
+        let iconlessCommands = FileListController.contextCommands.filter { MenuIcons.image(forCommand: $0.id) == nil }
+        check(
+            "context-menu-icons", iconlessCommands.isEmpty,
+            iconlessCommands.isEmpty ? "all present" : "missing: \(iconlessCommands.map(\.id))")
         // Embedded Settings: build the in-pane settings view (catches a crash in that path).
         let settingsView = settings.makeEmbedded(
             prefs: prefs, commands: commands.all.map { (id: $0.id, title: $0.title) },

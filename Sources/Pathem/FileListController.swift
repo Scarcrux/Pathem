@@ -248,10 +248,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let item = NSMenuItem(
                 title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
             item.representedObject = commandID
+            item.image = MenuIcons.image(forCommand: commandID)
             menu.addItem(item)
         }
         add("files.open")
         let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
+        openWith.image = MenuIcons.image("app.dashed")
         openWithMenu.delegate = self
         openWith.submenu = openWithMenu
         menu.addItem(openWith)
@@ -262,6 +264,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         add("files.trash")
         menu.addItem(.separator())
         let tags = NSMenuItem(title: L("list.tags", "Tags"), action: nil, keyEquivalent: "")
+        tags.image = MenuIcons.image("tag")
         let tagsMenu = NSMenu()
         for color in FileTag.Color.displayOrder {
             let item = NSMenuItem(
