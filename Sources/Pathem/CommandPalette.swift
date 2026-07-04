@@ -1,12 +1,14 @@
 import AppKit
 import PathemEngine
 
-/// A floating command palette (DESIGN.md section 10, Phase 3): type to fuzzy-find
-/// any registered command and run it. Because every action is a Command in the
-/// registry, the palette lists the whole surface for free, which doubles as the
-/// app's discoverability mechanism. Driven entirely from the search field via
-/// the field editor's command selectors, so up/down/return/escape work while you
-/// keep typing.
+/// A floating multi-mode command bar (DESIGN.md section 10, Phase 3). One widget, four
+/// modes chosen by the first character:
+///   - bare text (or a leading ">") fuzzy-finds and runs any registered command,
+///   - "/" or "~/" jumps to a filesystem path (with directory completion),
+///   - "?" runs the on-device semantic search in the active folder.
+/// Because every action is a Command in the registry, the command mode lists the whole
+/// surface for free. Driven entirely from the field editor's command selectors, so
+/// up/down/return/escape work while typing.
 @MainActor
 final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
     private let panel: NSPanel
@@ -17,6 +19,16 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     private var all: [(id: String, title: String)] = []
     private var filtered: [(id: String, title: String)] = []
     private var onRun: ((String) -> Void)?
+    private var onNavigate: ((URL) -> Void)?
+    private var onSemantic: ((String) -> Void)?
+
+    private enum Mode { case command, path, semantic }
+    private var mode: Mode {
+        let s = field.stringValue
+        if s.hasPrefix("/") || s.hasPrefix("~/") { return .path }
+        if s.hasPrefix("?") { return .semantic }
+        return .command
+    }
 
     override init() {
         panel = NSPanel(
@@ -28,13 +40,13 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     }
 
     private func configure() {
-        panel.title = L("palette.runCommandTitle", "Run Command")
+        panel.title = L("palette.runCommandTitle", "Command Bar")
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
-        field.placeholderString = L("palette.searchPlaceholder", "Type a command…")
+        field.placeholderString = L("palette.multiPlaceholder", "Command, /path, or ?search")
         field.delegate = self
         field.font = .systemFont(ofSize: 15)
         field.translatesAutoresizingMaskIntoConstraints = false
@@ -68,15 +80,19 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         ])
     }
 
-    /// Show the palette over `window`, listing `commands`; `onRun` is called with
-    /// the chosen command id (the palette closes first).
+    /// Show the bar over `window`. The three callbacks route the three non-command modes;
+    /// command mode uses `onRun` with the chosen command id.
     func present(
         commands: [(id: String, title: String)],
         onRun: @escaping (String) -> Void,
+        onNavigate: @escaping (URL) -> Void,
+        onSemantic: @escaping (String) -> Void,
         over window: NSWindow
     ) {
         all = commands
         self.onRun = onRun
+        self.onNavigate = onNavigate
+        self.onSemantic = onSemantic
         field.stringValue = ""
         refilter()
 
@@ -89,9 +105,42 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     }
 
     private func refilter() {
-        filtered = FuzzyMatch.rank(all, query: field.stringValue, key: { $0.title })
+        switch mode {
+        case .command:
+            let query = field.stringValue.hasPrefix(">")
+                ? String(field.stringValue.dropFirst()) : field.stringValue
+            filtered = FuzzyMatch.rank(all, query: query, key: { $0.title })
+        case .path:
+            filtered = pathCompletions(field.stringValue)
+        case .semantic:
+            let query = String(field.stringValue.dropFirst()).trimmingCharacters(in: .whitespaces)
+            filtered =
+                query.isEmpty
+                ? []
+                : [(id: query, title: String(format: L("palette.searchFor", "Search for “%@”"), query))]
+        }
         table.reloadData()
         if !filtered.isEmpty { select(0) }
+    }
+
+    /// Child directories of the path's parent that match its trailing component.
+    private func pathCompletions(_ input: String) -> [(id: String, title: String)] {
+        let expanded = (input as NSString).expandingTildeInPath
+        let endsWithSlash = expanded.hasSuffix("/")
+        let dir = endsWithSlash ? expanded : (expanded as NSString).deletingLastPathComponent
+        let prefix = endsWithSlash ? "" : (expanded as NSString).lastPathComponent
+        let entries =
+            (try? FileManager.default.contentsOfDirectory(
+                at: URL(fileURLWithPath: dir), includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles])) ?? []
+        return entries
+            .filter { url in
+                (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+                    && (prefix.isEmpty || url.lastPathComponent.lowercased().hasPrefix(prefix.lowercased()))
+            }
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            .prefix(60)
+            .map { (id: $0.path, title: $0.path) }
     }
 
     private func select(_ row: Int) {
@@ -105,22 +154,39 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     }
 
     private func runSelected() {
-        let row = table.selectedRow
-        guard row >= 0, row < filtered.count else { return }
-        let id = filtered[row].id
-        close()
-        onRun?(id)
+        switch mode {
+        case .command:
+            let row = table.selectedRow
+            guard row >= 0, row < filtered.count else { return }
+            let id = filtered[row].id
+            close()
+            onRun?(id)
+        case .path:
+            // A fully-typed existing directory wins; otherwise the selected completion.
+            let typed = (field.stringValue as NSString).expandingTildeInPath
+            var isDir: ObjCBool = false
+            if FileManager.default.fileExists(atPath: typed, isDirectory: &isDir), isDir.boolValue {
+                close()
+                onNavigate?(URL(fileURLWithPath: typed))
+                return
+            }
+            let row = table.selectedRow
+            guard row >= 0, row < filtered.count else { return }
+            close()
+            onNavigate?(URL(fileURLWithPath: filtered[row].id))
+        case .semantic:
+            let query = String(field.stringValue.dropFirst()).trimmingCharacters(in: .whitespaces)
+            guard !query.isEmpty else { return }
+            close()
+            onSemantic?(query)
+        }
     }
 
     @objc private func runClicked() {
-        // Use the clicked row, not the selection: a double-click on empty space
-        // reports clickedRow == -1 and must do nothing (the keyboard path uses
-        // runSelected). Mirrors FileListController.handleDoubleClick.
         let row = table.clickedRow
         guard row >= 0, row < filtered.count else { return }
-        let id = filtered[row].id
-        close()
-        onRun?(id)
+        select(row)
+        runSelected()
     }
 
     private func close() { panel.orderOut(nil) }
@@ -158,6 +224,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         let field = NSTextField(labelWithString: "")
         field.translatesAutoresizingMaskIntoConstraints = false
         field.font = .systemFont(ofSize: 14)
+        field.lineBreakMode = .byTruncatingMiddle
         cell.addSubview(field)
         cell.textField = field
         NSLayoutConstraint.activate([

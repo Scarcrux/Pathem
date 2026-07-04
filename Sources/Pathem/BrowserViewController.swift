@@ -773,7 +773,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func showPalette() {
         guard let window = view.window else { return }
         let items = commands.all.map { (id: $0.id, title: $0.title) }
-        palette.present(commands: items, onRun: { [weak self] id in self?.commands.perform(id) }, over: window)
+        palette.present(
+            commands: items,
+            onRun: { [weak self] id in self?.commands.perform(id) },
+            onNavigate: { [weak self] url in self?.activePane?.navigate(to: url) },
+            onSemantic: { [weak self] query in self?.runSemanticSearch(query) },
+            over: window)
+    }
+
+    /// Run the on-device semantic search in the active pane for `query` (routes the command
+    /// bar's "?" mode through the same path as the toolbar search field).
+    private func runSemanticSearch(_ query: String) {
+        searchField.stringValue = query
+        runSearch(searchField)
     }
 
     /// Open the batch-rename sheet for the active pane's selection.
