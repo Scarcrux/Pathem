@@ -508,6 +508,7 @@
 "pane.goButton" = "Los";
 "pane.goToPathPlaceholder" = "Gehe zu Pfad";
 "pane.itemCountPlural" = "%d Objekte";
+"pane.hiddenShown" = "Versteckte Dateien eingeblendet";
 "pane.itemCountSingular" = "%d Objekt";
 "pane.itemsWithSize" = "%@ · %@";
 "pane.loadingHost" = "%@ wird geladen…";

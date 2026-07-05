@@ -376,6 +376,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         item.configure(
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL)
+        // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
+        // as Finder does. Set on every configure (cells are reused) so it never sticks.
+        item.view.alphaValue = entry.isHidden ? 0.5 : 1.0
         return item
     }
 

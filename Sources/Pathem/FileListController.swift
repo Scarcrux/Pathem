@@ -671,7 +671,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         let entry = entries[row]
         cell.textField?.font = .systemFont(ofSize: listFontSize)
-        cell.alphaValue = isCut(entry) ? 0.45 : 1.0  // dim items marked for cut
+        // Dim items marked for cut, then hidden (dotfile) items -- so when "show hidden
+        // files" is on you can tell the hidden ones apart from ordinary files, as Finder does.
+        cell.alphaValue = isCut(entry) ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
         switch Column(rawValue: id.rawValue) {
         case .name:
             // Online-only (dataless) items: a cloud badge + dimmed name.

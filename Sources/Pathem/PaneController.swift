@@ -1048,6 +1048,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     format: L("pane.itemsWithSize", "%@ · %@"), prefix, byteFormatter.string(fromByteCount: size))
                 : prefix
         }
+        // Note when hidden files are on view, so the mode is legible even in a folder with
+        // no hidden files (where the dimmed-row cue alone wouldn't show it).
+        if format.showHidden || showHiddenByDefault {
+            text += "   " + L("pane.hiddenShown", "Hidden files shown")
+        }
         if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
         statusLabel.stringValue = text
     }

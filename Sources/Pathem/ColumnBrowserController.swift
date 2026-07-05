@@ -198,6 +198,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
         let url = columns[index].folder.appendingPathComponent(entry.name)
         cell.imageView?.image = NSWorkspace.shared.icon(forFile: url.path)
+        // Dim hidden (dotfile) entries so they read as hidden when "show hidden files" is on.
+        cell.alphaValue = entry.isHidden ? 0.5 : 1.0
         return cell
     }
 

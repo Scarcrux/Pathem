@@ -508,6 +508,7 @@
 "pane.goButton" = "前往";
 "pane.goToPathPlaceholder" = "前往路径";
 "pane.itemCountPlural" = "%d 个项目";
+"pane.hiddenShown" = "显示隐藏文件";
 "pane.itemCountSingular" = "%d 个项目";
 "pane.itemsWithSize" = "%@ · %@";
 "pane.loadingHost" = "正在载入 %@…";

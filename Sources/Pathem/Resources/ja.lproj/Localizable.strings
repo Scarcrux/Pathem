@@ -508,6 +508,7 @@
 "pane.goButton" = "移動";
 "pane.goToPathPlaceholder" = "パスへ移動";
 "pane.itemCountPlural" = "%d項目";
+"pane.hiddenShown" = "隠しファイルを表示中";
 "pane.itemCountSingular" = "%d項目";
 "pane.itemsWithSize" = "%@ · %@";
 "pane.loadingHost" = "%@を読み込み中…";

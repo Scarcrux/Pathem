@@ -29,6 +29,10 @@ public struct FileEntry: Sendable, Hashable {
     /// entries and remote names that are already valid UTF-8.
     public let rawName: Data?
 
+    /// A hidden entry (a dotfile). These only appear in a listing when "show hidden files"
+    /// is on, so the UI dims them to set them apart from ordinary files (as Finder does).
+    public var isHidden: Bool { name.hasPrefix(".") }
+
     public init(
         name: String, isDirectory: Bool, size: Int64, modificationDate: Date?,
         creationDate: Date? = nil, accessDate: Date? = nil,
