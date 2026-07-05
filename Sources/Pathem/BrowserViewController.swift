@@ -4335,6 +4335,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             deadFlicks.isEmpty
                 ? "\(DragGestureMap.standard.bindings.count) flicks -> commands"
                 : "dead: \(deadFlicks.map { "\($0.key)=\($0.value)" }.sorted())")
+        // The super-drag handler drives the trail: a synthetic drag shows it on begin and
+        // hides it on end (the drawing itself is only visible during a live drag).
+        let savedFlick = prefs.dragFlickActions
+        prefs.dragFlickActions = true
+        handleDragSession(.began(screen: .zero))
+        handleDragSession(.moved(screen: NSPoint(x: 60, y: 60)))
+        let trailShown = !dragTrail.isHidden
+        handleDragSession(.ended(flick: nil))
+        prefs.dragFlickActions = savedFlick
+        check("super-drag-trail", trailShown && dragTrail.isHidden, "shown=\(trailShown)")
         // Shrinking a listing must clamp the scroll back to the top, not strand the view
         // scrolled into empty space below the few remaining rows (the "panels scroll down
         // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it

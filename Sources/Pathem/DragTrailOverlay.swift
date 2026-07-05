@@ -34,6 +34,7 @@ final class DragTrailOverlay: NSView {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
+        wantsLayer = true  // layer-backed so it composites reliably over the drag image
         isHidden = true
     }
 
@@ -45,14 +46,15 @@ final class DragTrailOverlay: NSView {
     func begin() {
         points = []
         isHidden = false
-        needsDisplay = true
     }
 
-    /// Append a point (in this view's coordinates) to the head of the trail.
+    /// Append a point (in this view's coordinates) to the head of the trail. Draws
+    /// synchronously: during a drag the run loop is in event-tracking mode and a deferred
+    /// needsDisplay would not flush until the drag ended, so nothing would show mid-drag.
     func add(_ point: NSPoint) {
         points.append(point)
         if points.count > maxPoints { points.removeFirst(points.count - maxPoints) }
-        needsDisplay = true
+        display()
     }
 
     func end() {
