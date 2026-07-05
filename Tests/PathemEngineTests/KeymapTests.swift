@@ -40,6 +40,11 @@ import Testing
         #expect(keymap.commandID(for: KeyChord(key: "f5")) == "files.copyToOtherPane")
         #expect(keymap.commandID(for: KeyChord(key: "up", cmd: true)) == "nav.up")
         #expect(keymap.commandID(for: KeyChord(key: "x")) == nil)  // plain letter is unbound
+        // Common hotkeys: plain Delete trashes, F2 renames, Cmd+L / Cmd+Shift+G go to a path.
+        #expect(keymap.commandID(for: KeyChord(key: "delete")) == "files.trash")
+        #expect(keymap.commandID(for: KeyChord(key: "f2")) == "files.rename")
+        #expect(keymap.commandID(for: KeyChord(key: "l", cmd: true)) == "nav.editPath")
+        #expect(keymap.commandID(for: KeyChord(key: "g", cmd: true, shift: true)) == "nav.editPath")
     }
 
     @Test func userBindingsOverrideAndUnbind() {

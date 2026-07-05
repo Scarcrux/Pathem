@@ -82,6 +82,10 @@ public struct Keymap: Codable, Sendable {
         "cmd+up": "nav.up",
         "cmd+[": "nav.back",
         "cmd+]": "nav.forward",
+        "delete": "files.trash",  // plain Delete trashes the selection (Cmd+Delete also works, via the menu)
+        "f2": "files.rename",  // Windows-style rename (the menu's Rename has no default chord)
+        "cmd+l": "nav.editPath",  // browser-style "go to path"
+        "cmd+shift+g": "nav.editPath",  // Finder's "Go to Folder"
         "f5": "files.copyToOtherPane",
         "f6": "files.moveToOtherPane",
         "cmd+shift+.": "view.toggleHidden",
