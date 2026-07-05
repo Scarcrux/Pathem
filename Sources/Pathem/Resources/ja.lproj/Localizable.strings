@@ -564,6 +564,7 @@
 "prefs.dragFlickActions" = "スーパードラッグ：項目をフリックして操作（スワイプ軌跡付き）";
 "prefs.dragTrailLabel" = "スワイプ軌跡";
 "prefs.dragTrailWidth" = "幅";
+"prefs.dragTrailDecay" = "軌跡時間";
 "prefs.densityComfortable" = "ゆったり";
 "prefs.densityCompact" = "コンパクト";
 "prefs.densityLabel" = "密度";

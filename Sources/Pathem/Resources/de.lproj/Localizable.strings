@@ -564,6 +564,7 @@
 "prefs.dragFlickActions" = "Super-Ziehen: Element schnippen, um darauf zu wirken, mit Wischspur";
 "prefs.dragTrailLabel" = "Wischspur";
 "prefs.dragTrailWidth" = "Breite";
+"prefs.dragTrailDecay" = "Dauer";
 "prefs.densityComfortable" = "Komfortabel";
 "prefs.densityCompact" = "Kompakt";
 "prefs.densityLabel" = "Dichte";

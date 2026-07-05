@@ -77,6 +77,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var dragTrailColor: String
     /// The swipe trail's line width in points.
     public var dragTrailWidth: Double
+    /// How long (seconds) a point stays on the swipe trail before it fades out. Longer = a
+    /// longer, more visible trail.
+    public var dragTrailDecay: Double
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -91,11 +94,12 @@ public struct Preferences: Codable, Sendable, Equatable {
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
-        dragTrailWidth: Double = 6
+        dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6
     ) {
         self.dragFlickActions = dragFlickActions
         self.dragTrailColor = dragTrailColor
         self.dragTrailWidth = dragTrailWidth
+        self.dragTrailDecay = dragTrailDecay
         self.singleClickToOpen = singleClickToOpen
         self.underlineOnHover = underlineOnHover
         self.instantTooltips = instantTooltips
@@ -175,5 +179,7 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(String.self, forKey: .dragTrailColor) ?? d.dragTrailColor
         dragTrailWidth =
             try c.decodeIfPresent(Double.self, forKey: .dragTrailWidth) ?? d.dragTrailWidth
+        dragTrailDecay =
+            try c.decodeIfPresent(Double.self, forKey: .dragTrailDecay) ?? d.dragTrailDecay
     }
 }

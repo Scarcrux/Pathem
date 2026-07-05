@@ -442,13 +442,28 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         stepper.action = #selector(dragTrailWidthChanged(_:))
         dragTrailWidthValue.stringValue = "\(Int(prefs.dragTrailWidth))"
         dragTrailWidthValue.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        let decay = NSStepper()
+        decay.minValue = 0.1
+        decay.maxValue = 2.5
+        decay.increment = 0.1
+        decay.doubleValue = prefs.dragTrailDecay
+        decay.target = self
+        decay.action = #selector(dragTrailDecayChanged(_:))
+        dragTrailDecayValue.stringValue = String(format: "%.1fs", prefs.dragTrailDecay)
+        dragTrailDecayValue.widthAnchor.constraint(equalToConstant: 32).isActive = true
         let stack = NSStackView(views: [
             well, NSTextField(labelWithString: L("prefs.dragTrailWidth", "Width")), stepper,
-            dragTrailWidthValue,
+            dragTrailWidthValue, NSTextField(labelWithString: L("prefs.dragTrailDecay", "Trail time")),
+            decay, dragTrailDecayValue,
         ])
         stack.orientation = .horizontal
         stack.spacing = 6
         return stack
+    }
+    @objc private func dragTrailDecayChanged(_ sender: NSStepper) {
+        prefs.dragTrailDecay = sender.doubleValue
+        dragTrailDecayValue.stringValue = String(format: "%.1fs", sender.doubleValue)
+        onChange?(prefs)
     }
     @objc private func dragTrailColorChanged(_ sender: NSColorWell) {
         prefs.dragTrailColor = sender.color.hexString
@@ -484,6 +499,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private let fontValue = NSTextField(labelWithString: "13")
     private let dragTrailWidthValue = NSTextField(labelWithString: "6")
+    private let dragTrailDecayValue = NSTextField(labelWithString: "0.6s")
     private func fontControl() -> NSView {
         let stepper = NSStepper()
         stepper.minValue = 10

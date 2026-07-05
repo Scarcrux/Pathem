@@ -2989,6 +2989,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             dragStartScreen = screen
             dragTrail.color = NSColor(hex: prefs.dragTrailColor) ?? .systemBlue
             dragTrail.trailWidth = max(1, CGFloat(prefs.dragTrailWidth))
+            dragTrail.decaySeconds = max(0.1, prefs.dragTrailDecay)
             dragTrail.hint = ""
             dragTrail.begin()
         case .moved(let screen):

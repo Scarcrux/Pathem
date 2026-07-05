@@ -564,6 +564,7 @@
 "prefs.dragFlickActions" = "Súper-arrastre: desliza un elemento para actuar sobre él, con estela";
 "prefs.dragTrailLabel" = "Estela";
 "prefs.dragTrailWidth" = "Ancho";
+"prefs.dragTrailDecay" = "Duración";
 "prefs.densityComfortable" = "Cómoda";
 "prefs.densityCompact" = "Compacta";
 "prefs.densityLabel" = "Densidad";

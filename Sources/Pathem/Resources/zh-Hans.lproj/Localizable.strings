@@ -564,6 +564,7 @@
 "prefs.dragFlickActions" = "超级拖拽：轻甩项目以对其操作，并显示滑动轨迹";
 "prefs.dragTrailLabel" = "滑动轨迹";
 "prefs.dragTrailWidth" = "宽度";
+"prefs.dragTrailDecay" = "轨迹时长";
 "prefs.densityComfortable" = "宽松";
 "prefs.densityCompact" = "紧凑";
 "prefs.densityLabel" = "密度";

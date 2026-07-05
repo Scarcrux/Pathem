@@ -564,6 +564,7 @@
 "prefs.dragFlickActions" = "Super-glisser : lancez un élément pour agir dessus, avec une traînée";
 "prefs.dragTrailLabel" = "Traînée";
 "prefs.dragTrailWidth" = "Largeur";
+"prefs.dragTrailDecay" = "Durée";
 "prefs.densityComfortable" = "Confortable";
 "prefs.densityCompact" = "Compacte";
 "prefs.densityLabel" = "Densité";
