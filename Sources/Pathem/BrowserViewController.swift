@@ -4282,6 +4282,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "context-menu-icons", iconlessCommands.isEmpty,
             iconlessCommands.isEmpty ? "all present" : "missing: \(iconlessCommands.map(\.id))")
+        // Every default hotkey resolves to a registered command -- catches a binding that
+        // points at a renamed or removed command id (a silently dead key). The wiring check
+        // between the keymap and the command registry.
+        let deadHotkeys = Keymap.standard.bindings.filter { commands.command($0.value) == nil }
+        check(
+            "keymap-bindings-resolve", deadHotkeys.isEmpty,
+            deadHotkeys.isEmpty
+                ? "\(Keymap.standard.bindings.count) hotkeys -> commands"
+                : "dead: \(deadHotkeys.map { "\($0.key)=\($0.value)" }.sorted())")
+        // The whole hotkey dispatch path works end to end: a Delete chord resolves through the
+        // keymap to files.trash and would fire (routed the same way KeyTableView.keyDown does).
+        let deleteCmd = keymap.commandID(for: KeyChord(key: "delete"))
+        check(
+            "keymap-dispatch", deleteCmd == "files.trash" && commands.command("files.trash") != nil,
+            "delete -> \(deleteCmd ?? "nil")")
         // Shrinking a listing must clamp the scroll back to the top, not strand the view
         // scrolled into empty space below the few remaining rows (the "panels scroll down
         // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it
