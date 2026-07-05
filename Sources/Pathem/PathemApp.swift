@@ -520,6 +520,7 @@ enum PathemApp {
         editMenu.addItem(commandItem("Copy as File URL", "files.copyURL"))
         editMenu.addItem(commandItem("Copy Name", "files.copyName"))
         editMenu.addItem(.separator())
+        editMenu.addItem(commandItem("Show Clipboard…", "view.clipboard"))
         editMenu.addItem(commandItem("Select by Pattern…", "files.selectByPattern"))
 
         let viewItem = NSMenuItem()

@@ -13,6 +13,25 @@ extension BrowserViewController {
     @objc func copy(_ sender: Any?) { writeSelectionToPasteboard(cut: false) }
     @objc func cut(_ sender: Any?) { writeSelectionToPasteboard(cut: true) }
 
+    /// Open the clipboard viewer on the current file clipboard: the copied/cut items and
+    /// whether a paste copies or moves them, with paste-here and clear.
+    func showClipboard() {
+        let pasteboard = NSPasteboard.general
+        let urls =
+            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            as? [URL] ?? []
+        let isCut = pasteboard.data(forType: Self.cutPasteboardType) != nil
+        clipboardViewer.present(
+            items: urls, isCut: isCut, over: view.window,
+            onPaste: { [weak self] in self?.paste(nil) },
+            onClear: { [weak self] in
+                guard let self else { return }
+                pasteboard.clearContents()
+                self.cutPaths = []
+                self.applyCutPaths()
+            })
+    }
+
     @objc func paste(_ sender: Any?) {
         if blockedByRemoteOrSmart() { return }  // needs a single destination folder
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op

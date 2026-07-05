@@ -31,6 +31,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// togglePreviewPane(). Mirrors sidebarWidthConstraint.
     private var previewWidthConstraint: NSLayoutConstraint?
     private lazy var sizeBrowser = SizeBrowserController()
+    lazy var clipboardViewer = ClipboardViewerController()
     private lazy var cleanup = CleanupController()
     private lazy var xattrController = XattrController()
     private lazy var diffViewer = DiffViewerController()
@@ -555,6 +556,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.cut", L("bvc.cmd.cut", "Cut"), enabled: hasSelection) {
             [weak self] in self?.writeSelectionToPasteboard(cut: true)
         }
+        add("view.clipboard", L("bvc.cmd.showClipboard", "Show Clipboard…")) { [weak self] in self?.showClipboard() }
         add("view.asList", L("bvc.cmd.asList", "as List")) { [weak self] in self?.setActiveViewMode(.list) }
         add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.setActiveViewMode(.icon) }
         add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.setActiveViewMode(.gallery) }
