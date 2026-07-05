@@ -258,7 +258,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
             check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
             check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),
-            check(L("prefs.dragFlickActions", "Super-drag: flick an item to act on it, with a swipe trail"), \.dragFlickActions),
+            check(L("prefs.dragFlickActions", "Super-drag: right-drag an item to flick it (with a swipe trail)"), \.dragFlickActions),
             labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
         ])
         case .appearance: return form([

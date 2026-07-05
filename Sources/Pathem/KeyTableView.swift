@@ -12,23 +12,51 @@ final class KeyTableView: NSTableView {
     /// Return true if the right-button stroke was handled (then the menu is suppressed).
     var onMouseGesture: ((String) -> Bool)?
     var onBecomeActive: (() -> Void)?
-    /// The moving screen point during a row drag (for the super-drag swipe trail). NSTableView
-    /// forwards willBegin/ended to its delegate but not movedTo, so we take it here at the source.
-    var onDragMoved: ((NSPoint) -> Void)?
+    /// A right-drag that started on a row: the super-drag flick + its swipe trail. Kept on the
+    /// right button so it never collides with a left-drag (which is normal drag-and-drop).
+    var onSuperDrag: ((DragSessionEvent) -> Void)?
 
     private let gestureTracker = MouseGestureTracker()
+    private var superDragStartRow = -1  // >= 0 means the right-drag began on a file row
+    private var superDragStartWindow: NSPoint?
 
-    override func draggingSession(_ session: NSDraggingSession, movedTo screenPoint: NSPoint) {
-        onDragMoved?(screenPoint)
-        super.draggingSession(session, movedTo: screenPoint)
+    // The right button: a drag starting on a row is a super-drag flick (acting on that row); a
+    // drag on empty space is a navigation stroke; a plain click shows the context menu.
+    override func rightMouseDown(with event: NSEvent) {
+        gestureTracker.begin(event)
+        superDragStartWindow = event.locationInWindow
+        superDragStartRow = row(at: convert(event.locationInWindow, from: nil))
+        guard superDragStartRow >= 0 else { return }
+        if !selectedRowIndexes.contains(superDragStartRow) {
+            selectRowIndexes([superDragStartRow], byExtendingSelection: false)  // the flick acts on it
+        }
+        if let screen = window?.convertPoint(toScreen: event.locationInWindow) {
+            onSuperDrag?(.began(screen: screen))
+        }
     }
-
-    // Take over the right button so a stroke gesture can be recognized; a plain
-    // right-click (no meaningful drag) falls through to the context menu on mouse-up.
-    override func rightMouseDown(with event: NSEvent) { gestureTracker.begin(event) }
-    override func rightMouseDragged(with event: NSEvent) { gestureTracker.append(event) }
+    override func rightMouseDragged(with event: NSEvent) {
+        gestureTracker.append(event)
+        if superDragStartRow >= 0, let screen = window?.convertPoint(toScreen: event.locationInWindow) {
+            onSuperDrag?(.moved(screen: screen))
+        }
+    }
     override func rightMouseUp(with event: NSEvent) {
-        if let stroke = gestureTracker.end(event), onMouseGesture?(stroke) == true { return }
+        let navStroke = gestureTracker.end(event)
+        if superDragStartRow >= 0 {
+            // Reduce start->end to a single cardinal (same threshold as the trail's live hint).
+            let flick = superDragStartWindow.map {
+                MouseGesture.reduce([$0, event.locationInWindow], minSegment: 44)
+            } ?? ""
+            onSuperDrag?(.ended(flick: flick.isEmpty ? nil : flick))
+            superDragStartRow = -1
+            superDragStartWindow = nil
+            if flick.isEmpty, let menu = menu(for: event) {  // no flick: treat as a plain right-click
+                NSMenu.popUpContextMenu(menu, with: event, for: self)
+            }
+            return
+        }
+        superDragStartWindow = nil
+        if let navStroke, onMouseGesture?(navStroke) == true { return }
         if let menu = menu(for: event) { NSMenu.popUpContextMenu(menu, with: event, for: self) }
     }
 
