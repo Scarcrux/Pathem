@@ -164,6 +164,92 @@ Quality of life:
   after copy).
 - **Vim-style, fully keyboard-driven** navigation mode.
 
+## Finder parity audit (2026-07-05)
+
+A pass over Finder's own File / Go / View / context menus against Pathem's
+command registry. Most table stakes are already covered: open + open-with,
+trash + restore, duplicate, make alias / symlink / hardlink, compress + extract,
+Get Info plus a live-updating inspector, color tags, Quick Look, Reveal in
+Finder, batch rename, saved searches, path / status bars, a customizable
+toolbar, AirDrop, Share, and Connect to Server. The gaps below are the ones a
+Finder user would actually reach for and miss, ranked by effort.
+
+Quick wins (compose existing FileOperations; each is a command plus menu wiring):
+
+- **New Folder with Selection (N Items)** -- move the current selection into a
+  fresh folder and immediately inline-rename it; the File and context-menu item
+  shows the live selection count ("New Folder with Selection (3 Items)"). This is
+  Finder's Ctrl-Cmd-N. FileOperations already has newFolder + move + undo, so it
+  is a compose plus a count-aware, pluralized title. (The motivating request.)
+- **Empty Trash**, and a first-class Trash location with per-item **Put Back**
+  (restore to original path) and **Delete Immediately**. The restore logic
+  already exists as the undo of trash; this promotes it to a browsable place.
+- **Open a folder in a new tab / new window** from the context menu and via a
+  Cmd / Opt-click modifier, matching Finder's double-click options. The per-pane
+  tab infrastructure exists; only the folder-level action is missing.
+- **Recent Folders** in the Go menu (a most-recently-visited folder list,
+  distinct from the sidebar Recents, which surfaces recent files).
+- **Set Desktop Picture** from a selected image (a single NSWorkspace call).
+- **Delete Immediately** (Cmd-Opt-Delete): bypass the Trash behind a confirm, as
+  a named command separate from secure delete.
+
+Larger (new UI or a view-layer change):
+
+- **Group By / Arrange By** -- visually group rows under section headers (Kind,
+  Date, Size, Tag, Application), not merely sort. A view-model change in the list
+  and icon controllers, which today only sort.
+- **Slideshow** -- a full-screen Quick Look slideshow of the selected images.
+- **Built-in image / document Quick Actions** -- Rotate Left / Right, Create PDF,
+  Markup, Trim, beyond the existing Convert Images / Compress. Overlaps the
+  Services / Quick Actions candidate above; these are Finder's bundled ones.
+- **Show Original** for an alias or symlink (jump to the target and select it).
+- **Spring-loaded folders** -- hover a drag over a folder to spring it open, so a
+  drag can descend a tree without dropping first.
+- **Merge All Windows** once multi-window lands (folds into the multi-window
+  candidate).
+
+Deliberately skipped: Burn Folder / Burn to Disc (obsolete); a dedicated New
+Smart Folder builder is already covered by saved searches plus the planned
+advanced-find / smart-folder item above.
+
+## View parity: icon / gallery / column vs list (audit + progress, 2026-07-05)
+
+The list view was the most complete; the other three had accumulated gaps. The
+`PaneContentView` protocol's no-op defaults are the precise inventory. Closing
+them modularly (shared helpers, not per-view copies), tracked here.
+
+Done:
+
+- **Right-click menu** -- all four views now share one `FileContextMenuController`
+  (structure + Open With + Tags + archive-gated Extract), so they can never drift
+  again. Column view had no menu at all before.
+- **Cut dimming** (`setCutPaths`) -- icon, gallery, and column now grey cut items
+  until pasted, keyed via a shared `PaneItemKey`.
+- **Quick-actions bar anchored to the selection** (`selectionRectInWindow`) --
+  icon, gallery, and column now report their selection rect, so the bar hugs the
+  selection instead of centering on the pane.
+- **Git status letters** (`setGitStates`) -- the column view now prefixes the
+  colored git letter, via a shared `FileNameDecoration` the list also uses.
+
+Remaining:
+
+- **Tag color dots** -- still list only; needs the async tag-color cache
+  (`invalidateTagCache`) wired into the grid/column cells, then reuse
+  `FileNameDecoration` (grids need a badge overlay rather than an attributed
+  string).
+- **Git letters in the grids** -- icon/gallery need a small badge overlay on the
+  item rather than the attributed-string prefix the tables use.
+- **Single-click open + hover underline** (`setClickBehavior`): list only.
+- **Super-drag flick + swipe trail** (`onDragSession`): list only (also under
+  "Super-drag follow-ups").
+- **Drag move-by-default** (`dragMovesByDefault`): list and gallery move between
+  folders by default; icon and column always copy (needs each view's drop logic
+  to resolve the operation like the list's `resolvedDragOperation`).
+
+Inherent to the layout (not gaps to close): the list's sortable column header +
+sort indicator and its extended metadata columns (size / date / kind / xattrs),
+and the grids' thumbnail zoom.
+
 ## Hard rules (unchanged)
 
 Non-sandboxed + Full Disk Access; clean Hardened Runtime (no
