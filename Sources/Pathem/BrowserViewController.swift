@@ -961,6 +961,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// A modal single-line name prompt; nil if cancelled or empty.
+    /// Present `alert` as a sheet attached to the window -- so it appears on the window
+    /// (dropping from its title bar), not centered on the whole screen -- but block and
+    /// return the response synchronously, so the many synchronous callers (rename, New
+    /// Folder, Save Style, ...) don't need restructuring. A short modal session runs until
+    /// the sheet's button dismisses it (which always fires the completion, so it never
+    /// hangs). Falls back to a screen-centered app-modal alert when there is no window yet.
+    @discardableResult
+    func runSheet(_ alert: NSAlert) -> NSApplication.ModalResponse {
+        guard let window = view.window, window.isVisible else { return alert.runModal() }
+        var response: NSApplication.ModalResponse = .cancel
+        alert.beginSheetModal(for: window) { code in
+            response = code
+            NSApp.stopModal()
+        }
+        NSApp.runModal(for: alert.window)
+        return response
+    }
+
     private func promptForName(title: String, default value: String) -> String? {
         let alert = NSAlert()
         alert.messageText = title
@@ -970,7 +988,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         field.stringValue = value
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
-        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        guard runSheet(alert) == .alertFirstButtonReturn else { return nil }
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         return name.isEmpty ? nil : name
     }
@@ -1172,7 +1190,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         field.stringValue = entry.name
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard runSheet(alert) == .alertFirstButtonReturn else { return }
         let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newName.isEmpty, newName != entry.name else { return }
         if pane.isRemote {
@@ -3526,7 +3544,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         field.stringValue = String(format: L("bvc.layoutDefaultName", "Layout %d"), layouts.names.count + 1)
         alert.accessoryView = field
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard runSheet(alert) == .alertFirstButtonReturn else { return }
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         layouts.save(captureLayout(name: name))
@@ -3938,7 +3956,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.addButton(withTitle: L("bvc.keepBoth", "Keep Both"))
         alert.addButton(withTitle: L("bvc.skip", "Skip"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        switch alert.runModal() {
+        switch runSheet(alert) {
         case .alertFirstButtonReturn: return .replace
         case .alertSecondButtonReturn: return .keepBoth
         case .alertThirdButtonReturn: return .skip
@@ -3990,7 +4008,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.messageText = String(format: L("bvc.failuresForItems", "%@ for %d item(s)"), title, failures.count)
         alert.informativeText =
             failures.prefix(8).map { "\($0.name): \($0.reason)" }.joined(separator: "\n")
-        alert.runModal()
+        runSheet(alert)
     }
 
     // MARK: - Semantic search (on-device, free)
@@ -4342,6 +4360,28 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "quickbar-column-bottom", qbBottom.y < qbTop.y,
             "bottom.y=\(Int(qbBottom.y)) top.y=\(Int(qbTop.y))")
+        // The sheet-modal helper (rename, New Folder, Save Style, ...) must present on the
+        // window and return synchronously without hanging. Present it, then dismiss the
+        // sheet from a timer scheduled in the MODAL run-loop mode (dispatch timers don't
+        // fire during a modal loop; a button click -- a UI event -- would), and confirm
+        // runSheet returns that response.
+        if let win = view.window, win.isVisible {
+            let sheetAlert = NSAlert()
+            sheetAlert.messageText = "smoke"
+            sheetAlert.addButton(withTitle: "OK")
+            let dismiss = Timer(timeInterval: 0.2, repeats: false) { _ in
+                MainActor.assumeIsolated {  // the timer fires on the main run loop
+                    if let sheet = win.attachedSheet {
+                        win.endSheet(sheet, returnCode: .alertFirstButtonReturn)
+                    } else {
+                        NSApp.abortModal()  // never hang the smoke run
+                    }
+                }
+            }
+            RunLoop.main.add(dismiss, forMode: .modalPanel)
+            let r = runSheet(sheetAlert)
+            check("sheet-modal-returns", r == .alertFirstButtonReturn, "response=\(r.rawValue)")
+        }
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list
