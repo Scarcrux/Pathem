@@ -377,7 +377,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             kind: .airdrop, title: L("sidebar.airdrop", "AirDrop"), url: nil,
             icon: "dot.radiowaves.left.and.right")
         let trashURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
-        let trash = Node(kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: nil)
+        let trash = Node(kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: "trash")
         return Node(
             kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil, icon: nil,
             children: [airdrop, trash])
@@ -387,7 +387,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private func demoSection(_ title: String, _ items: [(name: String, url: URL)]) -> Node? {
         guard !items.isEmpty else { return nil }
         let children = items.map {
-            Node(kind: .systemItem, title: $0.name, url: $0.url, icon: nil, isFolder: true)
+            Node(
+                kind: .systemItem, title: $0.name, url: $0.url,
+                icon: $0.name.localizedCaseInsensitiveContains("iCloud") ? "icloud" : "cloud", isFolder: true)
         }
         return Node(kind: .systemHeader, title: title, url: nil, icon: nil, children: children)
     }
@@ -414,7 +416,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
-            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: nil, isFolder: true))
+            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: "icloud", isFolder: true))
         }
         // Modern Dropbox/Google Drive/OneDrive/Box etc. mount here via the File Provider.
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
@@ -426,7 +428,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 guard isDir else { continue }
                 // iCloud is already listed from Mobile Documents above; don't list it twice.
                 if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
-                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: nil, isFolder: true))
+                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: "cloud", isFolder: true))
             }
         }
         // Legacy/home-level cloud folders not under CloudStorage (older Dropbox, OneDrive,
@@ -449,7 +451,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             guard fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue,
                 !alreadyHasProvider(entry.keyword)
             else { continue }
-            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: nil, isFolder: true))
+            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: "cloud", isFolder: true))
         }
         guard !children.isEmpty else { return nil }
         return Node(kind: .systemHeader, title: L("sidebar.cloudHeader", "Cloud"), url: nil, icon: nil, children: children)
