@@ -2265,17 +2265,25 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let pane =
             activePane.map { host.convert($0.contentClipView.bounds, from: $0.contentClipView) }
             ?? host.convert(split.bounds, from: split)
-        let selection = activePane?.selectionRectInWindow.map { host.convert($0, from: nil) }
-        let origin = Self.quickBarOrigin(barSize: size, selection: selection, pane: pane, margin: 8)
+        // Column view drills into columns to the right, so a bar floating next to the
+        // selection covers the very columns you're browsing. Pin it to the pane's
+        // bottom-center there (out of the browsing area) instead of tracking the selection.
+        let selection =
+            activePane?.viewMode == .column
+            ? nil : activePane?.selectionRectInWindow.map { host.convert($0, from: nil) }
+        let origin = Self.quickBarOrigin(
+            barSize: size, selection: selection, pane: pane, margin: 8,
+            noSelectionAtBottom: activePane?.viewMode == .column)
         quickBar.frame = NSRect(origin: origin, size: size)
     }
 
     /// Pure geometry (so it is testable without a laid-out window): the bar sits just below
     /// the selection, or above it when there is no room, centered on the selection and
     /// clamped inside the pane. In a non-flipped host, lower on screen is a smaller y.
-    static func quickBarOrigin(barSize size: NSSize, selection: NSRect?, pane: NSRect, margin: CGFloat)
-        -> NSPoint
-    {
+    static func quickBarOrigin(
+        barSize size: NSSize, selection: NSRect?, pane: NSRect, margin: CGFloat,
+        noSelectionAtBottom: Bool = false
+    ) -> NSPoint {
         var x: CGFloat
         var y: CGFloat
         if let r = selection {
@@ -2284,7 +2292,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             if y < pane.minY + margin { y = r.maxY + margin }  // no room below, place above
         } else {
             x = pane.midX - size.width / 2
-            y = pane.maxY - size.height - 16  // top-center of the pane
+            // Bottom-center (column view, to clear the drilled columns) or top-center.
+            y = noSelectionAtBottom ? (pane.minY + margin) : (pane.maxY - size.height - 16)
         }
         x = min(max(x, pane.minX + margin), pane.maxX - size.width - margin)
         y = min(max(y, pane.minY + margin), pane.maxY - size.height - margin)
@@ -4322,6 +4331,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "quickbar-near-selection", abs(qbMidY - qbSel.midY) < 80,
             "bar midY \(Int(qbMidY)) vs selection \(Int(qbSel.midY))")
+        // Column view instead pins the bar to the pane's bottom (clear of the drilled
+        // columns), so a no-selection bottom placement sits lower than the top-center one.
+        let qbBottom = Self.quickBarOrigin(
+            barSize: NSSize(width: 240, height: 38), selection: nil, pane: qbPane, margin: 8,
+            noSelectionAtBottom: true)
+        let qbTop = Self.quickBarOrigin(
+            barSize: NSSize(width: 240, height: 38), selection: nil, pane: qbPane, margin: 8,
+            noSelectionAtBottom: false)
+        check(
+            "quickbar-column-bottom", qbBottom.y < qbTop.y,
+            "bottom.y=\(Int(qbBottom.y)) top.y=\(Int(qbTop.y))")
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list
