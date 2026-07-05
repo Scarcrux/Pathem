@@ -28,6 +28,8 @@ extension NSColor {
 final class DragTrailOverlay: NSView {
     var color: NSColor = .systemBlue
     var trailWidth: CGFloat = 6
+    /// What the current flick will do (e.g. "Move to Trash  ⌫"), shown as a badge at the head.
+    var hint: String = ""
 
     private var points: [NSPoint] = []
     private let maxPoints = 22  // the streak length that follows the cursor
@@ -83,5 +85,27 @@ final class DragTrailOverlay: NSView {
         let r = trailWidth * 0.7
         ctx.setFillColor(color.withAlphaComponent(0.95).cgColor)
         ctx.fillEllipse(in: CGRect(x: head.x - r, y: head.y - r, width: r * 2, height: r * 2))
+        drawHint(near: head)
+    }
+
+    /// A rounded badge at the head naming the action + its keyboard shortcut, so the gesture
+    /// reads as a shortcut for that command. Clamped to stay inside the overlay.
+    private func drawHint(near head: NSPoint) {
+        guard !hint.isEmpty else { return }
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
+            .foregroundColor: NSColor.white,
+        ]
+        let text = hint as NSString
+        let textSize = text.size(withAttributes: attrs)
+        let padX: CGFloat = 8, padY: CGFloat = 4
+        var box = CGRect(
+            x: head.x + 16, y: head.y + 16, width: textSize.width + padX * 2, height: textSize.height + padY * 2)
+        box.origin.x = min(max(box.origin.x, 4), bounds.maxX - box.width - 4)
+        box.origin.y = min(max(box.origin.y, 4), bounds.maxY - box.height - 4)
+        let path = NSBezierPath(roundedRect: box, xRadius: 7, yRadius: 7)
+        color.blended(withFraction: 0.15, of: .black)?.withAlphaComponent(0.95).setFill()
+        path.fill()
+        text.draw(at: CGPoint(x: box.minX + padX, y: box.minY + padY), withAttributes: attrs)
     }
 }

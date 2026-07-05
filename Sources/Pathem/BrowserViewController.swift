@@ -74,6 +74,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Super-drag: direction -> command for a flick, and the swipe-trail overlay.
     private var dragGestures = DragGestureMap.standard
     private let dragTrail = DragTrailOverlay()
+    private var dragStartScreen: NSPoint?  // to name the live flick as it changes direction
     /// Stroke -> command id, defaults overlaid with any user gestures.json.
     private var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
@@ -2984,21 +2985,40 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func handleDragSession(_ event: DragSessionEvent) {
         guard prefs.dragFlickActions else { return }
         switch event {
-        case .began:
+        case .began(let screen):
+            dragStartScreen = screen
             dragTrail.color = NSColor(hex: prefs.dragTrailColor) ?? .systemBlue
             dragTrail.trailWidth = max(1, CGFloat(prefs.dragTrailWidth))
+            dragTrail.hint = ""
             dragTrail.begin()
         case .moved(let screen):
             guard let window = view.window else { return }
+            // Name the flick this direction would trigger (same threshold as the release),
+            // so the trail shows what it's shortcutting; blank until it's a clear flick.
+            if let start = dragStartScreen {
+                let direction = MouseGesture.reduce([start, screen], minSegment: 44)
+                dragTrail.hint = direction.isEmpty ? "" : flickHint(for: direction)
+            }
             let windowPoint = window.convertPoint(fromScreen: screen)
             dragTrail.add(dragTrail.convert(windowPoint, from: nil))
         case .ended(let flick):
+            dragStartScreen = nil
             dragTrail.end()
             guard let flick, let id = dragGestures.commandID(for: flick),
                 commands.command(id)?.isEnabled() == true
             else { return }
             commands.perform(id)
         }
+    }
+
+    /// The command a flick `direction` maps to, as "Title  ⌘K" (its keyboard equivalent), for
+    /// the trail's live hint. The shortcut is the simplest keymap chord bound to that command.
+    private func flickHint(for direction: String) -> String {
+        guard let id = dragGestures.commandID(for: direction), let title = commands.command(id)?.title
+        else { return "" }
+        let chord = keymap.bindings.filter { $0.value == id }.keys.sorted().first
+        let shortcut = chord.map { ChordFormat.display($0) } ?? ""
+        return shortcut.isEmpty ? title : "\(title)   \(shortcut)"
     }
 
     private static var gesturesURL: URL? {
@@ -4346,11 +4366,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let savedFlick = prefs.dragFlickActions
         prefs.dragFlickActions = true
         handleDragSession(.began(screen: .zero))
-        handleDragSession(.moved(screen: NSPoint(x: 60, y: 60)))
+        handleDragSession(.moved(screen: NSPoint(x: 90, y: 8)))  // a clear rightward flick
         let trailShown = !dragTrail.isHidden
+        let hint = dragTrail.hint  // names the mapped command + its shortcut
         handleDragSession(.ended(flick: nil))
         prefs.dragFlickActions = savedFlick
         check("super-drag-trail", trailShown && dragTrail.isHidden, "shown=\(trailShown)")
+        check("super-drag-hint", !hint.isEmpty, "hint=\"\(hint)\"")
         // Shrinking a listing must clamp the scroll back to the top, not strand the view
         // scrolled into empty space below the few remaining rows (the "panels scroll down
         // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it
