@@ -118,6 +118,52 @@ Tier 3 (breadth and niceties):
 - **Super-drag follow-ups:** make the flick-to-command map user-editable, and
   extend the gesture beyond the list view (icon / gallery / column).
 
+## Candidate features (demand-ranked, added 2026-07-05)
+
+Broader backlog beyond the site-manager and in-flight items, ranked by how much
+each would move power users to switch. Not yet scheduled.
+
+Automation hub (most switch-driving):
+
+- **User-defined external commands:** run your own scripts / CLI tools on the
+  selection with placeholders (`%F`, `%P`, the selection list), bound to the
+  toolbar / menu / keymap. External tools, not embedded scripting, so within the
+  hard rules.
+- **macOS Shortcuts integration:** expose Pathem actions to the Shortcuts app,
+  and run a Shortcut on the selection.
+
+Search:
+
+- **Advanced find / filter builder** (name, size, date, kind, content, tag) over
+  Spotlight / `mdfind`, savable as a smart folder. The deterministic complement
+  to semantic search.
+- **Global instant filename search:** indexed, whole-disk, sub-100 ms
+  ("Everything"-style).
+
+AI (the on-device differentiator):
+
+- **AI rename** (names from content / EXIF), **summarize this folder**, and
+  **semantic dedup** (near-duplicate detection beyond byte-identical), built on
+  the existing on-device model + embeddings.
+
+Batch and metadata:
+
+- **Batch permissions / ownership** (chmod / chown / ACL) across a selection.
+- **Batch Finder-comment editing.**
+
+Connectivity:
+
+- **One-click SMB / AFP mount** from discovered network shares.
+- **Services / Quick Actions** exposure and a proper "Open with Pathem" target.
+
+Quality of life:
+
+- **Detachable / multi-window** and drag-a-tab-out.
+- **App-wide theming** (accent / skins) beyond the terminal themes.
+- **Transfer queue:** pause / resume / retry plus copy verification (checksum
+  after copy).
+- **Vim-style, fully keyboard-driven** navigation mode.
+
 ## Hard rules (unchanged)
 
 Non-sandboxed + Full Disk Access; clean Hardened Runtime (no
