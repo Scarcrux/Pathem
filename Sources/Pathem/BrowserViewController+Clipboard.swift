@@ -32,10 +32,14 @@ extension BrowserViewController {
             })
     }
 
-    @objc func paste(_ sender: Any?) {
-        if blockedByRemoteOrSmart() { return }  // needs a single destination folder
+    @objc func paste(_ sender: Any?) { pasteInto(activePane) }
+
+    /// Paste the file clipboard into a specific pane's folder: the active pane for the
+    /// Edit-menu Paste, or the other pane for the quick-bar "Paste in Other Pane" follow-up.
+    func pasteInto(_ pane: PaneController?) {
+        guard let pane else { NSSound.beep(); return }
+        if pane.isRemote || pane.isShowingSmartResults { NSSound.beep(); return }  // needs one dest folder
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
-        guard let pane = activePane else { return }
         let pasteboard = NSPasteboard.general
         let urls =
             pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])

@@ -477,6 +477,8 @@ enum PathemApp {
                     commandItem("Compress", "files.compress"),
                     commandItem("Compress to 7-Zip", "files.compress7z"),
                     commandItem("Extract", "files.extract"),
+                    commandItem("Extract Here", "files.extractHere"),
+                    commandItem("Extract to Folder…", "files.extractTo"),
                     commandItem("Show Archive Contents", "files.peekArchive"),
                 ]))
         fileMenu.addItem(

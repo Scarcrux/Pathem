@@ -19,6 +19,9 @@ enum MenuIcons {
         case "files.copy": return "doc.on.doc"
         case "files.cut": return "scissors"
         case "files.paste": return "doc.on.clipboard"
+        case "files.extract": return "shippingbox"
+        case "files.extractHere": return "arrow.down.doc"
+        case "files.extractTo": return "folder"
         default: return nil
         }
     }

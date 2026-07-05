@@ -16,6 +16,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let rightTabs: TabbedPaneController
     weak var activePane: PaneController?
     private weak var activeSide: TabbedPaneController?
+    /// The active pane's counterpart on the opposite side (for "paste in other pane", etc.).
+    var otherPane: PaneController? {
+        guard let activeSide else { return nil }
+        return (activeSide === leftTabs ? rightTabs : leftTabs).activePane
+    }
     /// When on, navigating one pane navigates the other to the same folder.
     private var syncBrowsing = false
     private var isSyncingPanes = false  // re-entrancy guard for the mirror navigation
@@ -227,6 +232,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         quickBar.translatesAutoresizingMaskIntoConstraints = true
         quickBar.onAction = { [weak self] id in self?.commands.perform(id) }
         quickBar.onOpenWith = { [weak self] anchor in self?.showQuickOpenWith(from: anchor) }
+        quickBar.onCopiedShowPaste = { [weak self] anchor in self?.showQuickPasteFollowUp(from: anchor) }
         // Ambient download chip, floating at the top-center of the panes.
         let downloadChip = downloadSuggestions.view
         host.addSubview(downloadChip)
@@ -569,6 +575,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.toggleTerminalFollows()
         }
         add("files.paste", L("bvc.cmd.paste", "Paste")) { [weak self] in self?.paste(nil) }
+        add(
+            "files.pasteOtherPane", L("bvc.cmd.pasteOtherPane", "Paste in Other Pane"),
+            enabled: { [weak self] in self?.otherPane != nil }
+        ) { [weak self] in self?.pasteInto(self?.otherPane) }
         add("files.open", L("bvc.cmd.open", "Open"), enabled: hasSelection) { [weak self] in self?.activePane?.openSelection() }
         add("files.batchRename", L("bvc.cmd.batchRename", "Batch Rename…"), enabled: hasSelection) { [weak self] in self?.showBatchRename() }
         add("files.selectByPattern", L("bvc.cmd.selectByPattern", "Select by Pattern…"), enabled: { [weak self] in
@@ -792,12 +802,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasSelection) { [weak self] in self?.compressSelection() }
         add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: hasSelection) { [weak self] in self?.compress7zSelection() }
+        let hasArchive: () -> Bool = { [weak self] in
+            (self?.activePane?.selectedLocalURLs() ?? []).contains { Archiver.canExtract($0) }
+        }
         add(
-            "files.extract", L("bvc.cmd.extract", "Extract"),
-            enabled: { [weak self] in
-                (self?.activePane?.selectedLocalURLs() ?? []).contains { Archiver.canExtract($0) }
-            }
+            "files.extract", L("bvc.cmd.extract", "Extract"), enabled: hasArchive
         ) { [weak self] in self?.extractSelection() }
+        add(
+            "files.extractHere", L("bvc.cmd.extractHere", "Extract Here"), enabled: hasArchive
+        ) { [weak self] in self?.extractHereSelection() }
+        add(
+            "files.extractTo", L("bvc.cmd.extractTo", "Extract to Folder…"), enabled: hasArchive
+        ) { [weak self] in self?.extractToSelection() }
         add("shelf.add", L("bvc.cmd.addToShelf", "Add to Shelf"), enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
         add("shelf.toggle", L("bvc.cmd.showShelf", "Show Shelf")) { [weak self] in self?.toggleShelf() }
@@ -1492,6 +1508,52 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             self.reloadBothSides()
             if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+        }
+    }
+
+    /// Extract each selected archive's contents directly into the current directory
+    /// (no per-archive subfolder), matching a manager's "Extract Here".
+    private func extractHereSelection() {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        let archives = pane.selectedLocalURLs().filter { Archiver.canExtract($0) }
+        guard !archives.isEmpty else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            var failed = false
+            for archive in archives {
+                do { try await Archiver.extract(archive, to: folder) } catch { failed = true }
+            }
+            self.reloadBothSides()
+            if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+        }
+    }
+
+    /// Choose a destination folder, then extract each selected archive into its own
+    /// subfolder there ("Extract to Folder…").
+    private func extractToSelection() {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        let archives = pane.selectedLocalURLs().filter { Archiver.canExtract($0) }
+        guard !archives.isEmpty, let window = view.window else { NSSound.beep(); return }
+        let picker = NSOpenPanel()
+        picker.canChooseDirectories = true
+        picker.canChooseFiles = false
+        picker.canCreateDirectories = true
+        picker.prompt = L("extract.choose", "Extract Here")
+        picker.message = L("extract.message", "Choose a folder to extract into")
+        picker.directoryURL = pane.currentURL
+        picker.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let destination = picker.url, let self else { return }
+            Task { @MainActor in
+                var failed = false
+                for archive in archives {
+                    let name = (archive.lastPathComponent as NSString).deletingPathExtension
+                    let out = self.uniqueLocalURL(destination.appendingPathComponent(name))
+                    do { try await Archiver.extract(archive, to: out) } catch { failed = true }
+                }
+                self.reloadBothSides()
+                if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+            }
         }
     }
 
@@ -2385,6 +2447,37 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         else { return }
         NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
+
+    /// Right after a quick-bar Copy/Cut, offer where to drop it: this pane's folder or the
+    /// other pane's. Only shown if the clipboard actually holds files, and the other-pane item
+    /// only when a valid other pane exists (so a single-pane layout just shows "Paste Here").
+    private func showQuickPasteFollowUp(from anchor: NSView) {
+        let pasteboard = NSPasteboard.general
+        let items =
+            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            as? [URL] ?? []
+        guard !items.isEmpty else { return }  // copy beeped (remote / nothing selected)
+        let menu = NSMenu()
+        let here = NSMenuItem(
+            title: L("quick.pasteHere", "Paste in This Pane"), action: #selector(quickPasteHere), keyEquivalent: "")
+        here.target = self
+        here.image = MenuIcons.image("doc.on.clipboard")
+        menu.addItem(here)
+        if let other = otherPane, !other.isRemote, !other.isShowingSmartResults {
+            let there = NSMenuItem(
+                title: String(
+                    format: L("quick.pasteOther", "Paste in Other Pane (%@)"),
+                    other.currentURL.lastPathComponent),
+                action: #selector(quickPasteOtherPane), keyEquivalent: "")
+            there.target = self
+            there.image = MenuIcons.image("rectangle.righthalf.inset.filled")
+            menu.addItem(there)
+        }
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: anchor.bounds.height + 4), in: anchor)
+    }
+
+    @objc private func quickPasteHere() { paste(nil) }
+    @objc private func quickPasteOtherPane() { pasteInto(otherPane) }
 
     /// Set the active pane's view mode, then sync the auto-preview pane.
     private func setActiveViewMode(_ mode: ViewFormat.ViewMode) {

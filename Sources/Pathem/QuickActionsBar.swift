@@ -9,6 +9,8 @@ final class QuickActionsBar: NSView {
     var onAction: ((String) -> Void)?
     /// Pop up the "Open With" apps menu, anchored to the given button.
     var onOpenWith: ((NSView) -> Void)?
+    /// After a Copy/Cut, offer a follow-up paste menu anchored to the given button.
+    var onCopiedShowPaste: ((NSView) -> Void)?
 
     private let blur = NSVisualEffectView()
     private let stack = NSStackView()
@@ -116,6 +118,8 @@ final class QuickActionsBar: NSView {
             onOpenWith?(sender)  // opens a menu of apps rather than running a single command
         } else {
             onAction?(id)
+            // A copy/cut has no visible result; immediately offer where to paste it.
+            if id == "files.copy" || id == "files.cut" { onCopiedShowPaste?(sender) }
         }
     }
 }
