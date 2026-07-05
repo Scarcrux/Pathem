@@ -136,11 +136,19 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         if let url = FileZillaImporter.defaultSiteManagerURL() {
             merge(FileZillaImporter.importSites(from: url))
         } else {
-            // Let the user point at sitemanager.xml.
+            // Let the user point at sitemanager.xml. Start in FileZilla's config folder and
+            // show hidden files -- it lives in ~/.config/filezilla, which the panel hides by
+            // default, so otherwise the user lands in a random folder with no way to reach it.
             let openPanel = NSOpenPanel()
-            openPanel.message = L("conn.chooseSiteManager", "Choose FileZilla's sitemanager.xml")
+            openPanel.message = L(
+                "conn.chooseSiteManager",
+                "Choose FileZilla's sitemanager.xml (usually in ~/.config/filezilla). It imports your saved sites, not passwords.")
             openPanel.allowedContentTypes = [.xml]
             openPanel.allowsMultipleSelection = false
+            openPanel.showsHiddenFiles = true
+            openPanel.directoryURL =
+                FileZillaImporter.defaultConfigDirectory()
+                ?? FileManager.default.homeDirectoryForCurrentUser
             openPanel.beginSheetModal(for: panel) { [weak self] response in
                 guard response == .OK, let url = openPanel.url else { return }
                 self?.merge(FileZillaImporter.importSites(from: url))

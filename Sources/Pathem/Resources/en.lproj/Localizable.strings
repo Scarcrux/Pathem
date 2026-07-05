@@ -268,7 +268,7 @@
 "common.remove" = "Remove";
 "common.save" = "Save";
 "conn.addButton" = "Add";
-"conn.chooseSiteManager" = "Choose FileZilla's sitemanager.xml";
+"conn.chooseSiteManager" = "Choose FileZilla's sitemanager.xml (usually in ~/.config/filezilla). It imports your saved sites, not passwords.";
 "conn.connectButton" = "Connect";
 "conn.editButton" = "Edit";
 "conn.editConnectionTitle" = "Edit Connection";

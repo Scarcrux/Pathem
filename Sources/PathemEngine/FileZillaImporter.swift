@@ -16,6 +16,21 @@ public enum FileZillaImporter {
         return candidates.first { FileManager.default.fileExists(atPath: $0.path) }
     }
 
+    /// The FileZilla config folder to open a file picker in (the first that exists), so the
+    /// user lands where sitemanager.xml lives instead of a random folder. nil if none exist.
+    public static func defaultConfigDirectory() -> URL? {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let dirs = [
+            home.appendingPathComponent(".config/filezilla"),
+            home.appendingPathComponent(".filezilla"),
+            home.appendingPathComponent("Library/Application Support/FileZilla"),
+        ]
+        return dirs.first { url in
+            var isDir: ObjCBool = false
+            return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) && isDir.boolValue
+        }
+    }
+
     public static func importSites(from url: URL) -> [RemoteConnection] {
         guard let data = try? Data(contentsOf: url) else { return [] }
         return parse(data)
