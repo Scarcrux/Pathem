@@ -325,8 +325,25 @@ enum PathemApp {
                 let report = browser.smokeReport()
                 print("=== SMOKE: Pathem UI invariants ===")
                 report.lines.forEach { print($0) }
-                print("RESULT: \(report.ok ? "PASS" : "FAIL")")
-                exit(report.ok ? 0 : 1)
+                // Verify the async sheet primitive (rename, New Folder, ...) presents on the
+                // window and resolves. Async sheets don't run a nested modal loop, so a plain
+                // dispatch dismissal fires normally -- dismiss it, then check presentSheet's
+                // continuation returned the response.
+                let sheetAlert = NSAlert()
+                sheetAlert.messageText = "smoke"
+                sheetAlert.addButton(withTitle: "OK")
+                Task { @MainActor in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        if let sheet = window.attachedSheet {
+                            window.endSheet(sheet, returnCode: .alertFirstButtonReturn)
+                        }
+                    }
+                    let response = await browser.presentSheet(sheetAlert)
+                    let sheetOK = response == .alertFirstButtonReturn
+                    print(sheetOK ? "ok   async-sheet-returns" : "FAIL async-sheet-returns (\(response.rawValue))")
+                    print("RESULT: \(report.ok && sheetOK ? "PASS" : "FAIL")")
+                    exit(report.ok && sheetOK ? 0 : 1)
+                }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
         }

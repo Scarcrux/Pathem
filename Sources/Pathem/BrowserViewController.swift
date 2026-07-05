@@ -457,11 +457,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Add the selection to a collection (prompting for / creating the name).
     private func addToCollection() {
         guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
-        guard let name = promptForName(title: L("bvc.addToCollectionPrompt", "Add to Collection"), default: L("bvc.collectionDefaultName", "Collection")) else { return }
-        let isNew = collectionsStore.collection(named: name) == nil
-        collectionsStore.add(urls.map(\.path), to: name)
-        saveConfig(collectionsStore, to: Self.collectionsConfigURL)
-        if isNew { registerCollectionCommand(name) }
+        Task { @MainActor in
+            guard let name = await self.promptForName(title: L("bvc.addToCollectionPrompt", "Add to Collection"), default: L("bvc.collectionDefaultName", "Collection")) else { return }
+            let isNew = self.collectionsStore.collection(named: name) == nil
+            self.collectionsStore.add(urls.map(\.path), to: name)
+            self.saveConfig(self.collectionsStore, to: Self.collectionsConfigURL)
+            if isNew { self.registerCollectionCommand(name) }
+        }
     }
 
     /// Register each saved search (searches.json) as a command that runs its mdfind
@@ -962,24 +964,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// A modal single-line name prompt; nil if cancelled or empty.
     /// Present `alert` as a sheet attached to the window -- so it appears on the window
-    /// (dropping from its title bar), not centered on the whole screen -- but block and
-    /// return the response synchronously, so the many synchronous callers (rename, New
-    /// Folder, Save Style, ...) don't need restructuring. A short modal session runs until
-    /// the sheet's button dismisses it (which always fires the completion, so it never
-    /// hangs). Falls back to a screen-centered app-modal alert when there is no window yet.
-    @discardableResult
-    func runSheet(_ alert: NSAlert) -> NSApplication.ModalResponse {
+    /// (dropping from its title bar), not centered on the whole screen -- and await its
+    /// response. Falls back to a screen-centered app-modal alert when there is no window yet.
+    func presentSheet(_ alert: NSAlert) async -> NSApplication.ModalResponse {
         guard let window = view.window, window.isVisible else { return alert.runModal() }
-        var response: NSApplication.ModalResponse = .cancel
-        alert.beginSheetModal(for: window) { code in
-            response = code
-            NSApp.stopModal()
+        return await withCheckedContinuation { continuation in
+            alert.beginSheetModal(for: window) { continuation.resume(returning: $0) }
         }
-        NSApp.runModal(for: alert.window)
-        return response
     }
 
-    private func promptForName(title: String, default value: String) -> String? {
+    private func promptForName(title: String, default value: String) async -> String? {
         let alert = NSAlert()
         alert.messageText = title
         alert.addButton(withTitle: L("common.ok", "OK"))
@@ -988,7 +982,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         field.stringValue = value
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
-        guard runSheet(alert) == .alertFirstButtonReturn else { return nil }
+        guard await presentSheet(alert) == .alertFirstButtonReturn else { return nil }
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         return name.isEmpty ? nil : name
     }
@@ -997,10 +991,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         if pane.isShowingSmartResults { NSSound.beep(); return }  // no single destination
         if pane.isRemote {
-            guard let name = promptForName(title: L("bvc.newFolderPrompt", "New Folder"), default: L("bvc.untitledFolder", "untitled folder")) else { return }
-            performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) { provider, connection, path, password in
-                try await provider.makeDirectory(
-                    connection, path: PaneController.joinRemote(path, name), password: password)
+            Task { @MainActor in
+                guard let name = await self.promptForName(title: L("bvc.newFolderPrompt", "New Folder"), default: L("bvc.untitledFolder", "untitled folder")) else { return }
+                self.performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) { provider, connection, path, password in
+                    try await provider.makeDirectory(
+                        connection, path: PaneController.joinRemote(path, name), password: password)
+                }
             }
             return
         }
@@ -1088,13 +1084,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func saveBatchAsTemplate(_ names: [String], kind: BatchCreate.Kind) {
-        guard let name = promptForName(
-            title: L("batch.saveTemplateTitle", "Save as Template"),
-            default: L("batch.templateDefaultName", "My Template"))
-        else { return }
-        let entries = names.map { kind == .folders ? "\($0)/" : $0 }
-        createTemplates.append(CreateTemplate(id: UUID().uuidString, name: name, entries: entries))
-        saveTemplates()
+        Task { @MainActor in
+            guard let name = await self.promptForName(
+                title: L("batch.saveTemplateTitle", "Save as Template"),
+                default: L("batch.templateDefaultName", "My Template"))
+            else { return }
+            let entries = names.map { kind == .folders ? "\($0)/" : $0 }
+            self.createTemplates.append(CreateTemplate(id: UUID().uuidString, name: name, entries: entries))
+            self.saveTemplates()
+        }
     }
 
     private func showTemplatesManager() {
@@ -1190,34 +1188,36 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         field.stringValue = entry.name
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
-        guard runSheet(alert) == .alertFirstButtonReturn else { return }
-        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !newName.isEmpty, newName != entry.name else { return }
-        if pane.isRemote {
-            guard entry.rawName == nil else {
-                presentInfo(
-                    L("bvc.cantRenameTitle", "Can’t rename this item"),
-                    L("bvc.cantRenameBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !newName.isEmpty, newName != entry.name else { return }
+            if pane.isRemote {
+                guard entry.rawName == nil else {
+                    self.presentInfo(
+                        L("bvc.cantRenameTitle", "Can’t rename this item"),
+                        L("bvc.cantRenameBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
+                    return
+                }
+                self.performRemoteOp(pane, verb: L("bvc.renameVerb", "Rename")) { provider, connection, path, password in
+                    try await provider.rename(
+                        connection, from: PaneController.joinRemote(path, entry.name),
+                        to: PaneController.joinRemote(path, newName), password: password)
+                }
                 return
             }
-            performRemoteOp(pane, verb: L("bvc.renameVerb", "Rename")) { provider, connection, path, password in
-                try await provider.rename(
-                    connection, from: PaneController.joinRemote(path, entry.name),
-                    to: PaneController.joinRemote(path, newName), password: password)
+            // The file's real folder: its own location in a smart view, else current.
+            let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
+            do {
+                try FileOperations.rename(entry.name, to: newName, in: directory)
+                self.registerRenameUndo(from: newName, to: entry.name, in: directory)
+                pane.reloadIfShowingListing()
+                pane.select(name: newName)
+            } catch {
+                self.presentFailures(
+                    [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
+                    title: L("bvc.renameFailed", "Rename failed"))
             }
-            return
-        }
-        // The file's real folder: its own location in a smart view, else current.
-        let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
-        do {
-            try FileOperations.rename(entry.name, to: newName, in: directory)
-            registerRenameUndo(from: newName, to: entry.name, in: directory)
-            pane.reloadIfShowingListing()
-            pane.select(name: newName)
-        } catch {
-            presentFailures(
-                [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
-                title: L("bvc.renameFailed", "Rename failed"))
         }
     }
 
@@ -1617,13 +1617,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first, !entry.isDirectory
         else { NSSound.beep(); return }
         let file = pane.currentURL.appendingPathComponent(entry.name)
-        guard
-            let input = promptForName(
-                title: L("bvc.splitTitle", "Split into parts of how many MB?"), default: "100"),
-            let mb = Double(input.trimmingCharacters(in: .whitespaces)), mb > 0
-        else { return }
-        let partSize = Int64(mb * 1_000_000)
         Task { @MainActor in
+            guard
+                let input = await self.promptForName(
+                    title: L("bvc.splitTitle", "Split into parts of how many MB?"), default: "100"),
+                let mb = Double(input.trimmingCharacters(in: .whitespaces)), mb > 0
+            else { return }
+            let partSize = Int64(mb * 1_000_000)
             do {
                 _ = try await Task.detached { try FileSplitter.split(file, partSize: partSize) }.value
                 self.activePane?.reloadIfShowingListing()
@@ -2407,13 +2407,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let folder = pane.currentURL
         let files = pane.selectedEntries.isEmpty ? pane.entries.map(\.name) : pane.selectedEntries.map(\.name)
         guard !files.isEmpty else { NSSound.beep(); return }
-        guard let instruction = promptForName(
-            title: L("ai.organize.title", "Organize with AI"), default: "group by file type")
-        else { return }
+        Task { @MainActor in
+            guard let instruction = await self.promptForName(
+                title: L("ai.organize.title", "Organize with AI"), default: "group by file type")
+            else { return }
 
-        #if canImport(FoundationModels)
-            if #available(macOS 26, *) {
-                Task { @MainActor in
+            #if canImport(FoundationModels)
+                if #available(macOS 26, *) {
                     guard let plan = await proposeOrganizePlan(instruction: instruction, files: files),
                         !plan.steps.isEmpty
                     else {
@@ -2424,8 +2424,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     }
                     self.confirmAndRun(plan, in: folder)
                 }
-            }
-        #endif
+            #endif
+        }
     }
 
     /// Preview the plan, then execute it on confirmation (off-main) and report.
@@ -3087,11 +3087,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// named Style.
     private func saveStyle() {
         guard let pane = activePane else { NSSound.beep(); return }
-        guard
-            let name = promptForName(title: L("bvc.saveStyleTitle", "Save style as:"), default: ""),
-            !name.trimmingCharacters(in: .whitespaces).isEmpty
-        else { return }
-        windowState.saveStyle(WindowStateStore.Style(name: name, format: pane.format))
+        Task { @MainActor in
+            guard
+                let name = await self.promptForName(title: L("bvc.saveStyleTitle", "Save style as:"), default: ""),
+                !name.trimmingCharacters(in: .whitespaces).isEmpty
+            else { return }
+            self.windowState.saveStyle(WindowStateStore.Style(name: name, format: pane.format))
+        }
     }
 
     /// Pick a saved Style and apply it to the active pane.
@@ -3134,14 +3136,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Capture the current dual-pane, multi-tab layout under a name.
     private func saveWorkspace() {
-        guard
-            let name = promptForName(title: L("bvc.saveWorkspaceTitle", "Save workspace as:"), default: ""),
-            !name.trimmingCharacters(in: .whitespaces).isEmpty
-        else { return }
-        windowState.saveWorkspace(
-            WindowStateStore.Workspace(
-                name: name, left: leftTabs.tabFolders, leftActive: leftTabs.activeTabIndex,
-                right: rightTabs.tabFolders, rightActive: rightTabs.activeTabIndex))
+        Task { @MainActor in
+            guard
+                let name = await self.promptForName(title: L("bvc.saveWorkspaceTitle", "Save workspace as:"), default: ""),
+                !name.trimmingCharacters(in: .whitespaces).isEmpty
+            else { return }
+            self.windowState.saveWorkspace(
+                WindowStateStore.Workspace(
+                    name: name, left: self.leftTabs.tabFolders, leftActive: self.leftTabs.activeTabIndex,
+                    right: self.rightTabs.tabFolders, rightActive: self.rightTabs.activeTabIndex))
+        }
     }
 
     /// Pick a saved workspace and switch both panes to its layout.
@@ -3544,11 +3548,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         field.stringValue = String(format: L("bvc.layoutDefaultName", "Layout %d"), layouts.names.count + 1)
         alert.accessoryView = field
-        guard runSheet(alert) == .alertFirstButtonReturn else { return }
-        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        layouts.save(captureLayout(name: name))
-        saveLayouts()
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return }
+            self.layouts.save(self.captureLayout(name: name))
+            self.saveLayouts()
+        }
     }
 
     private func captureLayout(name: String) -> Layout {
@@ -3682,12 +3688,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let conflicts = urls.filter {
             fm.fileExists(atPath: destination.appendingPathComponent($0.lastPathComponent).path)
         }
-        var resolution = FileOperations.ConflictResolution.skip
-        if !conflicts.isEmpty {
-            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else { return }
-            resolution = chosen
-        }
-        runTransfer(urls: urls, into: destination, move: move, resolution: resolution) { [weak self] outcome in
+        resolveThenTransfer(urls: urls, into: destination, move: move, conflictCount: conflicts.count) { [weak self] outcome in
             guard let self else { return }
             self.leftTabs.activePane?.reloadIfShowingListing()
             self.rightTabs.activePane?.reloadIfShowingListing()
@@ -3749,13 +3750,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let sources = urls.filter { $0.deletingLastPathComponent().standardizedFileURL != destinationURL.standardizedFileURL }
         guard !sources.isEmpty else { NSSound.beep(); return }
 
-        var resolution = FileOperations.ConflictResolution.skip
         let conflicts = FileOperations.conflicts(urls: sources, into: destinationURL)
-        if !conflicts.isEmpty {
-            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else { return }
-            resolution = chosen
-        }
-        runTransfer(urls: sources, into: destinationURL, move: move, resolution: resolution) {
+        resolveThenTransfer(urls: sources, into: destinationURL, move: move, conflictCount: conflicts.count) {
             [weak self] outcome in
             guard let self else { return }
             self.reloadBothSides()
@@ -3794,17 +3790,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard !urls.isEmpty else { NSSound.beep(); return }
 
         let destinationURL = destination.currentURL
-
-        var resolution = FileOperations.ConflictResolution.skip
         let conflicts = FileOperations.conflicts(urls: urls, into: destinationURL)
-        if !conflicts.isEmpty {
-            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else {
-                return  // user cancelled
-            }
-            resolution = chosen
-        }
-
-        runTransfer(urls: urls, into: destinationURL, move: move, resolution: resolution) {
+        resolveThenTransfer(urls: urls, into: destinationURL, move: move, conflictCount: conflicts.count) {
             [weak self] outcome in
             guard let self else { return }
             if move { source.reloadIfShowingListing() }
@@ -3895,13 +3882,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
 
-        var resolution = FileOperations.ConflictResolution.skip
         let conflicts = FileOperations.conflicts(urls: urls, into: destination)
-        if !conflicts.isEmpty {
-            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: move) else { return }
-            resolution = chosen
-        }
-        runTransfer(urls: urls, into: destination, move: move, resolution: resolution) { [weak self] outcome in
+        resolveThenTransfer(urls: urls, into: destination, move: move, conflictCount: conflicts.count) { [weak self] outcome in
             guard let self else { return }
             self.reloadBothSides()
             if move { self.pruneSmartEntries(Set(outcome.performed.map(\.source.path))) }
@@ -3942,7 +3924,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    func askConflictResolution(conflictCount: Int, move: Bool)
+    func askConflictResolution(conflictCount: Int, move: Bool) async
         -> FileOperations.ConflictResolution?
     {
         let alert = NSAlert()
@@ -3956,11 +3938,31 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.addButton(withTitle: L("bvc.keepBoth", "Keep Both"))
         alert.addButton(withTitle: L("bvc.skip", "Skip"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        switch runSheet(alert) {
+        switch await presentSheet(alert) {
         case .alertFirstButtonReturn: return .replace
         case .alertSecondButtonReturn: return .keepBoth
         case .alertThirdButtonReturn: return .skip
         default: return nil
+        }
+    }
+
+    /// Ask how to resolve the `conflictCount` conflicts (if any), then run the transfer --
+    /// centralizing the conflict prompt so the transfer flows don't each repeat the
+    /// ask-then-run dance. With no conflicts the resolution is moot, so it runs straight away.
+    func resolveThenTransfer(
+        urls: [URL], into destination: URL, move: Bool, conflictCount: Int,
+        completion: @escaping (FileOperations.Outcome) -> Void
+    ) {
+        func run(_ resolution: FileOperations.ConflictResolution) {
+            runTransfer(
+                urls: urls, into: destination, move: move, resolution: resolution, completion: completion)
+        }
+        guard conflictCount > 0 else { return run(.skip) }
+        Task { @MainActor in
+            guard let chosen = await askConflictResolution(conflictCount: conflictCount, move: move) else {
+                return  // user cancelled
+            }
+            run(chosen)
         }
     }
 
@@ -4008,7 +4010,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.messageText = String(format: L("bvc.failuresForItems", "%@ for %d item(s)"), title, failures.count)
         alert.informativeText =
             failures.prefix(8).map { "\($0.name): \($0.reason)" }.joined(separator: "\n")
-        runSheet(alert)
+        if let window = view.window {
+            alert.beginSheetModal(for: window, completionHandler: nil)
+        } else {
+            alert.runModal()
+        }
     }
 
     // MARK: - Semantic search (on-device, free)
@@ -4360,28 +4366,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "quickbar-column-bottom", qbBottom.y < qbTop.y,
             "bottom.y=\(Int(qbBottom.y)) top.y=\(Int(qbTop.y))")
-        // The sheet-modal helper (rename, New Folder, Save Style, ...) must present on the
-        // window and return synchronously without hanging. Present it, then dismiss the
-        // sheet from a timer scheduled in the MODAL run-loop mode (dispatch timers don't
-        // fire during a modal loop; a button click -- a UI event -- would), and confirm
-        // runSheet returns that response.
-        if let win = view.window, win.isVisible {
-            let sheetAlert = NSAlert()
-            sheetAlert.messageText = "smoke"
-            sheetAlert.addButton(withTitle: "OK")
-            let dismiss = Timer(timeInterval: 0.2, repeats: false) { _ in
-                MainActor.assumeIsolated {  // the timer fires on the main run loop
-                    if let sheet = win.attachedSheet {
-                        win.endSheet(sheet, returnCode: .alertFirstButtonReturn)
-                    } else {
-                        NSApp.abortModal()  // never hang the smoke run
-                    }
-                }
-            }
-            RunLoop.main.add(dismiss, forMode: .modalPanel)
-            let r = runSheet(sheetAlert)
-            check("sheet-modal-returns", r == .alertFirstButtonReturn, "response=\(r.rawValue)")
-        }
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list

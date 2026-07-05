@@ -26,16 +26,8 @@ extension BrowserViewController {
         let isMove = pasteboard.data(forType: Self.cutPasteboardType) != nil
         let destination = pane.currentURL
 
-        var resolution = FileOperations.ConflictResolution.skip
         let conflicts = FileOperations.conflicts(urls: urls, into: destination)
-        if !conflicts.isEmpty {
-            guard let chosen = askConflictResolution(conflictCount: conflicts.count, move: isMove) else {
-                return
-            }
-            resolution = chosen
-        }
-
-        runTransfer(urls: urls, into: destination, move: isMove, resolution: resolution) {
+        resolveThenTransfer(urls: urls, into: destination, move: isMove, conflictCount: conflicts.count) {
             [weak self] outcome in
             guard let self else { return }
             self.leftTabs.activePane?.reloadIfShowingListing()
