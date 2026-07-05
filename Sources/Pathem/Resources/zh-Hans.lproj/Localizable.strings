@@ -410,6 +410,9 @@
 "menu.cut" = "剪切";
 "menu.edit" = "编辑";
 "menu.file" = "文件";
+"menu.transform" = "转换";
+"menu.checksumEncrypt" = "校验与加密";
+"menu.storage" = "存储";
 "menu.files.addToCollection" = "添加到收藏集…";
 "menu.files.airdrop" = "通过 AirDrop 发送";
 "menu.files.batchCreate" = "批量创建…";

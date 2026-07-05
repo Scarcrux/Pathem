@@ -410,6 +410,9 @@
 "menu.cut" = "Cortar";
 "menu.edit" = "Edición";
 "menu.file" = "Archivo";
+"menu.transform" = "Transformar";
+"menu.checksumEncrypt" = "Sumas y cifrado";
+"menu.storage" = "Almacenamiento";
 "menu.files.addToCollection" = "Añadir a la colección…";
 "menu.files.airdrop" = "Enviar por AirDrop";
 "menu.files.batchCreate" = "Crear en lote…";

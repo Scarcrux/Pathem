@@ -421,48 +421,84 @@ enum PathemApp {
         mainMenu.addItem(fileItem)
         let fileMenu = NSMenu(title: L("menu.file", "File"))
         fileItem.submenu = fileMenu
+        // A submenu grouping several command items under one title, to keep the File menu
+        // scannable instead of a flat wall of items.
+        func submenu(_ title: String, _ items: [NSMenuItem]) -> NSMenuItem {
+            let menu = NSMenu()
+            items.forEach { menu.addItem($0) }
+            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            item.submenu = menu
+            return item
+        }
+
+        // New
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
+        fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
         fileMenu.addItem(commandItem("New File", "files.newFile"))  // chord owned by the keymap
         fileMenu.addItem(commandItem("Batch Create…", "files.batchCreate"))
         fileMenu.addItem(commandItem("Manage Templates…", "templates.manage"))
+        // Open & inspect
+        fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
-        fileMenu.addItem(applyLabelMenuItem())
-        fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
+        fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
+        fileMenu.addItem(commandItem("Reveal in Pathem", "files.revealInPathem"))
+        // Organize
+        fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
         fileMenu.addItem(commandItem("Duplicate", "files.duplicate"))  // chord owned by the keymap
         fileMenu.addItem(commandItem("Copy To…", "files.copyTo"))
         fileMenu.addItem(commandItem("Move To…", "files.moveTo"))
-        let linkMenu = NSMenu()
-        linkMenu.addItem(commandItem("Symlink", "files.makeSymlink"))
-        linkMenu.addItem(commandItem("Alias", "files.makeAlias"))
-        linkMenu.addItem(commandItem("Hard Link", "files.makeHardlink"))
-        let linkItem = NSMenuItem(title: L("menu.makeLink", "Make Link"), action: nil, keyEquivalent: "")
-        linkItem.submenu = linkMenu
-        fileMenu.addItem(linkItem)
-        fileMenu.addItem(commandItem("Split File…", "files.split"))
-        fileMenu.addItem(commandItem("Merge Parts", "files.merge"))
-        fileMenu.addItem(commandItem("Convert Images…", "files.convertImages"))
-        fileMenu.addItem(commandItem("Set Attributes…", "files.setAttributes"))
-        fileMenu.addItem(commandItem("New Encrypted Disk Image…", "files.encryptDMG"))
-        fileMenu.addItem(commandItem("Offload to iCloud", "files.offload"))
-        fileMenu.addItem(commandItem("Back Up To…", "files.backupTo"))
+        fileMenu.addItem(applyLabelMenuItem())
+        fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
+        fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
+        fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
+        // Power operations, grouped into submenus
+        fileMenu.addItem(.separator())
+        fileMenu.addItem(
+            submenu(
+                L("menu.makeLink", "Make Link"),
+                [
+                    commandItem("Symlink", "files.makeSymlink"),
+                    commandItem("Alias", "files.makeAlias"),
+                    commandItem("Hard Link", "files.makeHardlink"),
+                ]))
+        fileMenu.addItem(
+            submenu(
+                L("menu.transform", "Transform"),
+                [
+                    commandItem("Split File…", "files.split"),
+                    commandItem("Merge Parts", "files.merge"),
+                    commandItem("Convert Images…", "files.convertImages"),
+                    commandItem("Set Attributes…", "files.setAttributes"),
+                    .separator(),
+                    commandItem("Compress", "files.compress"),
+                    commandItem("Compress to 7-Zip", "files.compress7z"),
+                    commandItem("Extract", "files.extract"),
+                    commandItem("Show Archive Contents", "files.peekArchive"),
+                ]))
+        fileMenu.addItem(
+            submenu(
+                L("menu.checksumEncrypt", "Checksums & Encryption"),
+                [
+                    commandItem("Copy SHA-256", "files.copySHA256"),
+                    commandItem("Verify Checksum…", "files.verifyChecksum"),
+                    commandItem("New Encrypted Disk Image…", "files.encryptDMG"),
+                ]))
+        fileMenu.addItem(
+            submenu(
+                L("menu.storage", "Storage"),
+                [
+                    commandItem("Offload to iCloud", "files.offload"),
+                    commandItem("Back Up To…", "files.backupTo"),
+                ]))
+        // Delete
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
         fileMenu.addItem(commandItem("Secure Delete…", "files.secureDelete"))
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))
-        fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
-        fileMenu.addItem(commandItem("Reveal in Pathem", "files.revealInPathem"))
-        fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
-        fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
-        fileMenu.addItem(commandItem("Copy SHA-256", "files.copySHA256"))
-        fileMenu.addItem(commandItem("Verify Checksum…", "files.verifyChecksum"))
-        fileMenu.addItem(commandItem("Compress", "files.compress"))
-        fileMenu.addItem(commandItem("Compress to 7-Zip", "files.compress7z"))
-        fileMenu.addItem(commandItem("Extract", "files.extract"))
-        fileMenu.addItem(commandItem("Show Archive Contents", "files.peekArchive"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Close Tab", "tab.close"))
 

@@ -410,6 +410,9 @@
 "menu.cut" = "カット";
 "menu.edit" = "編集";
 "menu.file" = "ファイル";
+"menu.transform" = "変換";
+"menu.checksumEncrypt" = "チェックサムと暗号化";
+"menu.storage" = "ストレージ";
 "menu.files.addToCollection" = "コレクションに追加…";
 "menu.files.airdrop" = "AirDropで送信";
 "menu.files.batchCreate" = "一括作成…";
