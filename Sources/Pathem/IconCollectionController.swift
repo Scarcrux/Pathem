@@ -255,7 +255,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             }
         }
         collection.onSelectionMutated = { [weak self] in self?.onSelectionChanged?() }
-        collection.menu = makeContextMenu()
+        contextMenu.selectedURLs = { [weak self] in self?.contextSelectionURLs() ?? [] }
+        collection.menu = contextMenu.menu
 
         scrollView.documentView = collection
         scrollView.hasVerticalScroller = true
@@ -276,46 +277,65 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         ])
     }
 
-    /// Right-click menu mirroring the list's (registry commands dispatched up the
-    /// responder chain to BrowserViewController). Open With is list-only for now.
-    /// Command ids hidden from the context menu (from the Settings ▸ Menus preference),
-    /// honored the same way the list view does so the reveal/hide choice applies everywhere.
-    private var hiddenContextItems: Set<String> = []
-    func setHiddenContextItems(_ ids: Set<String>) {
-        guard ids != hiddenContextItems else { return }
-        hiddenContextItems = ids
-        collection.menu = makeContextMenu()
-    }
-
-    private func makeContextMenu() -> NSMenu {
-        let menu = NSMenu()
-        func add(_ title: String, _ id: String) {
-            guard !hiddenContextItems.contains(id) else { return }
-            let item = NSMenuItem(
-                title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
-            item.representedObject = id
-            item.image = MenuIcons.image(forCommand: id)
-            menu.addItem(item)
-        }
-        add(L("common.open", "Open"), "files.open")
-        add(L("icons.getInfo", "Get Info"), "files.getInfo")
-        add(L("icons.download", "Download"), "files.download")
-        add(L("icons.revealInFinder", "Reveal in Finder"), "files.reveal")
-        add(L("icons.revealInPathem", "Reveal in Pathem"), "files.revealInPathem")
-        add(L("icons.rename", "Rename…"), "files.rename")
-        add(L("icons.moveToTrash", "Move to Trash"), "files.trash")
-        menu.addItem(.separator())
-        add(L("icons.newFolder", "New Folder"), "files.newFolder")
-        add(L("bvc.cmd.newFile", "New File"), "files.newFile")
-        menu.addItem(.separator())
-        add(L("icons.copy", "Copy"), "files.copy")
-        add(L("icons.cut", "Cut"), "files.cut")
-        add(L("icons.paste", "Paste"), "files.paste")
-        return menu
-    }
+    /// The one shared file context menu, identical across every pane view (list, icon,
+    /// gallery, column) so the icon view gets Open With, Tags, and Extract for free and can
+    /// never drift from the others. Honors the Settings ▸ Menus hide/show choice.
+    private let contextMenu = FileContextMenuController()
+    func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
 
     var selectedEntries: [FileEntry] {
         collection.selectionIndexPaths.compactMap { $0.item < entries.count ? entries[$0.item] : nil }
+    }
+
+    /// The selection as file URLs, for the shared menu's archive gating and Open With.
+    private func contextSelectionURLs() -> [URL] {
+        let base = directoryURL
+        return selectedEntries.compactMap { entry in
+            if let location = entry.location {
+                return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+            }
+            return base?.appendingPathComponent(entry.name)
+        }
+    }
+
+    // MARK: - Cut dimming + selection anchor (parity with the list view)
+
+    /// Paths currently marked for cut, dimmed until pasted or the cut is cleared.
+    private var cutPaths: Set<String> = []
+    private func isCut(_ entry: FileEntry) -> Bool {
+        !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: directoryURL))
+    }
+    /// Cut items dim most, then hidden (dotfile) items; everything else is opaque.
+    private func alpha(for entry: FileEntry) -> CGFloat {
+        isCut(entry) ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
+    }
+
+    func setCutPaths(_ paths: Set<String>) {
+        guard paths != cutPaths else { return }
+        let changed = paths.symmetricDifference(cutPaths)  // only these items change appearance
+        cutPaths = paths
+        // Re-dim just the items whose cut state flipped; leave selection and scroll untouched.
+        // Off-screen items pick up the right alpha when they are next configured.
+        for (i, entry) in entries.enumerated()
+        where changed.contains(PaneItemKey.path(for: entry, in: directoryURL)) {
+            (collection.item(at: IndexPath(item: i, section: 0)) as? IconItem)?.view.alphaValue =
+                alpha(for: entry)
+        }
+    }
+
+    /// The selection's bounding rect in window coordinates so the quick-actions bar hugs the
+    /// selected icons instead of centering on the pane.
+    func selectionRectInWindow() -> NSRect? {
+        let paths = collection.selectionIndexPaths
+        guard !paths.isEmpty else { return nil }
+        var union = NSRect.null
+        for path in paths {
+            if let attrs = collection.layoutAttributesForItem(at: path) { union = union.union(attrs.frame) }
+        }
+        guard !union.isNull else { return nil }
+        let visible = union.intersection(collection.visibleRect)
+        guard !visible.isNull, visible.height > 1 else { return nil }  // scrolled out of view
+        return collection.convert(visible, to: nil)
     }
 
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
@@ -377,8 +397,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL)
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
-        // as Finder does. Set on every configure (cells are reused) so it never sticks.
-        item.view.alphaValue = entry.isHidden ? 0.5 : 1.0
+        // as Finder does, and dim cut items until pasted. Set on every configure (cells are
+        // reused) so it never sticks.
+        item.view.alphaValue = alpha(for: entry)
         return item
     }
 

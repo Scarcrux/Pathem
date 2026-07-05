@@ -11,6 +11,18 @@ enum DragSessionEvent {
     case ended(flick: String?)
 }
 
+/// The absolute path that keys a pane view's per-item state (cut dimming, tags, git). One
+/// definition every view shares: a smart-result row carries its own folder in `location`,
+/// otherwise the item lives in the view's folder. Built with `NSString` so it is cheap enough
+/// to call per cell in the scroll hot path.
+enum PaneItemKey {
+    static func path(for entry: FileEntry, in directory: URL?) -> String {
+        let base = entry.location ?? directory?.path
+        guard let base else { return entry.name }
+        return (base as NSString).appendingPathComponent(entry.name)
+    }
+}
+
 /// The pluggable contents of a pane: the dense list table, or an icon/gallery
 /// grid. PaneController drives whichever one conforms, so switching view modes is
 /// just swapping the object behind this one API.
@@ -77,7 +89,7 @@ extension PaneContentView {
     /// Only column view re-sorts its own drilled columns; list/icon/gallery are
     /// (re)sorted by the pane before setEntries.
     func setSortFormat(_ format: ViewFormat) {}
-    /// Only the list view dims cut items for now.
+    /// Every view now dims cut items; this default is only a fallback.
     func setCutPaths(_ paths: Set<String>) {}
     /// Only column view has drilled columns to re-enumerate after a file op.
     func refreshDrilledColumns() {}
@@ -85,13 +97,15 @@ extension PaneContentView {
     func adjustZoom(_ delta: CGFloat) {}
     /// Only the list view implements single-click / hover-underline for now.
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {}
-    /// Only the list view draws git overlays for now.
+    /// The list and column views draw git status letters; the icon/gallery grids don't yet.
     func setGitStates(_ states: [String: GitFileState]) {}
-    /// Only the list view has a customizable right-click menu for now.
+    /// Every pane view now shares one right-click menu (FileContextMenuController) and wires
+    /// this up; the default stays as a fallback for any future view that doesn't.
     func setHiddenContextItems(_ ids: Set<String>) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
-    /// Views without a row-rect concept fall back to no anchor (the bar centers on the pane).
+    /// List, icon, gallery, and column all report a selection rect now; this default is only a
+    /// fallback (the bar then centers on the pane).
     func selectionRectInWindow() -> NSRect? { nil }
     /// Only the list view distinguishes drag copy vs move for now.
     var dragMovesByDefault: Bool {

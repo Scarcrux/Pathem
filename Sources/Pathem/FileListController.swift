@@ -12,8 +12,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     let scrollView = NSScrollView()
     let tableView = KeyTableView()
     private let placeholder = NSTextField(labelWithString: "")
-    /// Populated on demand with the apps that can open the selection.
-    private let openWithMenu = NSMenu()
 
     private(set) var entries: [FileEntry] = []
 
@@ -180,7 +178,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
 
-        tableView.menu = makeContextMenu()
+        contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
+        tableView.menu = contextMenu.menu
 
         // Drag rows out (to Finder, the other pane, or the sidebar) and accept
         // file drops into this folder.
@@ -219,82 +218,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// The right-click menu: thin bindings to the command registry (validated and
     /// dispatched by BrowserViewController, same as the menu bar).
-    /// The command-backed items that may appear in the right-click menu, in default order.
-    /// Config-as-data: the user can hide any of these (Settings > Menus).
-    static var contextCommands: [(id: String, title: String)] {
-        [
-            ("files.open", L("common.open", "Open")),
-            ("files.getInfo", L("list.getInfo", "Get Info")),
-            ("files.download", L("list.download", "Download")),
-            ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
-            ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
-            ("files.rename", L("list.rename", "Rename…")),
-            ("files.trash", L("list.moveToTrash", "Move to Trash")),
-            ("files.newFolder", L("list.newFolder", "New Folder")),
-            ("files.newFile", L("bvc.cmd.newFile", "New File")),
-            ("files.copy", L("list.copy", "Copy")),
-            ("files.cut", L("list.cut", "Cut")),
-            ("files.paste", L("list.paste", "Paste")),
-        ]
-    }
+    /// The command-backed items that may appear in the right-click menu (for the Settings
+    /// toggles and the smoke icon check). The menu itself is built by the shared
+    /// `FileContextMenuController`; this stays as the canonical list's public name.
+    static var contextCommands: [(id: String, title: String)] { FileContextMenuController.hideableCommands }
 
-    /// Command ids hidden from the context menu (from the preference); rebuilds the menu.
-    var hiddenContextItems: Set<String> = [] {
-        didSet { if oldValue != hiddenContextItems { tableView.menu = makeContextMenu() } }
-    }
-    func setHiddenContextItems(_ ids: Set<String>) { hiddenContextItems = ids }
-
-    private func makeContextMenu() -> NSMenu {
-        let menu = NSMenu()
-        let titles = Dictionary(uniqueKeysWithValues: Self.contextCommands.map { ($0.id, $0.title) })
-        func add(_ commandID: String) {
-            guard !hiddenContextItems.contains(commandID), let title = titles[commandID] else { return }
-            let item = NSMenuItem(
-                title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
-            item.representedObject = commandID
-            item.image = MenuIcons.image(forCommand: commandID)
-            menu.addItem(item)
-        }
-        add("files.open")
-        let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
-        openWith.image = MenuIcons.image("app.dashed")
-        openWithMenu.delegate = self
-        openWith.submenu = openWithMenu
-        menu.addItem(openWith)
-        add("files.getInfo")
-        add("files.download")
-        add("files.reveal")
-        add("files.revealInPathem")
-        add("files.rename")
-        add("files.trash")
-        menu.addItem(.separator())
-        let tags = NSMenuItem(title: L("list.tags", "Tags"), action: nil, keyEquivalent: "")
-        tags.image = MenuIcons.image("tag")
-        let tagsMenu = NSMenu()
-        for color in FileTag.Color.displayOrder {
-            let item = NSMenuItem(
-                title: color.label, action: #selector(BrowserViewController.performMenuCommand(_:)),
-                keyEquivalent: "")
-            item.representedObject = "tags.toggle.\(color.rawValue)"
-            item.image = TagColors.dot(color)
-            tagsMenu.addItem(item)
-        }
-        tagsMenu.addItem(.separator())
-        let clearTags = NSMenuItem(
-            title: L("list.clearTags", "Clear Tags"), action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
-        clearTags.representedObject = "tags.clear"
-        tagsMenu.addItem(clearTags)
-        tags.submenu = tagsMenu
-        menu.addItem(tags)
-        menu.addItem(.separator())
-        add("files.newFolder")
-        add("files.newFile")
-        menu.addItem(.separator())
-        add("files.copy")
-        add("files.cut")
-        add("files.paste")
-        return menu
-    }
+    /// The one shared file context menu, used by every pane view so they never drift.
+    private let contextMenu = FileContextMenuController()
+    func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
 
     /// Apply display preferences (density-derived row height, font size,
     /// alternating rows). Reloads so recycled cells pick up the new font.
@@ -430,68 +361,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
             }
             return resolutionURL?.appendingPathComponent(entry.name)
-        }
-    }
-
-    /// Populate the Open With submenu with the apps that can open the selection
-    /// (the default app first), plus "Other…".
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        guard menu === openWithMenu else { return }
-        menu.removeAllItems()
-        func disabled(_ title: String) {
-            let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-            item.isEnabled = false
-            menu.addItem(item)
-        }
-        guard let first = selectedFileURLs().first else { disabled(L("list.noSelection", "No selection")); return }
-        var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
-        if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first),
-            let index = apps.firstIndex(of: preferred)
-        {
-            apps.remove(at: index)
-            apps.insert(preferred, at: 0)
-        }
-        guard !apps.isEmpty else { disabled(L("list.noApplications", "No applications")); return }
-        for app in apps {
-            let item = NSMenuItem(title: FileManager.default.displayName(atPath: app.path),
-                action: #selector(openWithApp(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = app
-            // Copy before resizing: mutating the shared cached icon corrupts it process-wide.
-            let icon = (NSWorkspace.shared.icon(forFile: app.path).copy() as? NSImage) ?? NSImage()
-            icon.size = NSSize(width: 16, height: 16)
-            item.image = icon
-            menu.addItem(item)
-        }
-        menu.addItem(.separator())
-        let other = NSMenuItem(title: L("list.other", "Other…"), action: #selector(openWithOther(_:)), keyEquivalent: "")
-        other.target = self
-        menu.addItem(other)
-        // Set a persistent/scoped default (handled by BrowserViewController via the
-        // responder chain, since it owns the opener rules).
-        let setDefault = NSMenuItem(
-            title: L("list.alwaysOpenWith", "Always Open With…"), action: #selector(BrowserViewController.setDefaultOpener(_:)),
-            keyEquivalent: "")
-        menu.addItem(setDefault)
-    }
-
-    @objc private func openWithApp(_ sender: NSMenuItem) {
-        guard let app = sender.representedObject as? URL else { return }
-        let urls = selectedFileURLs()
-        guard !urls.isEmpty else { return }
-        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
-    }
-
-    @objc private func openWithOther(_ sender: NSMenuItem) {
-        let urls = selectedFileURLs()
-        guard !urls.isEmpty else { return }
-        let panel = NSOpenPanel()
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.allowedContentTypes = [.application]
-        panel.allowsMultipleSelection = false
-        panel.begin { response in
-            guard response == .OK, let app = panel.url else { return }
-            NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
         }
     }
 
@@ -687,7 +556,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             if colors.isEmpty, git == nil {
                 cell.textField?.stringValue = entry.name
             } else {
-                cell.textField?.attributedStringValue = Self.decoratedName(
+                cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
                     entry.name, git: git, dots: colors, size: listFontSize)
             }
             if underlineOnHover, row == hoveredRow, let field = cell.textField {
@@ -729,7 +598,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.stringValue =
                 entry.isDirectory ? "" : (entry.name as NSString).pathExtension.lowercased()
         case .git:
-            cell.textField?.stringValue = gitState(for: entry).map { Self.gitBadge($0).letter } ?? ""
+            cell.textField?.stringValue = gitState(for: entry).map { FileNameDecoration.gitBadge($0).letter } ?? ""
         case .path:
             cell.textField?.stringValue = entry.location ?? directoryURL?.path ?? ""
             cell.textField?.textColor = .secondaryLabelColor
@@ -1066,59 +935,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
     }
 
-    /// The filename followed by a small colored dot for each tag color.
-    /// Color + letter for a git state badge.
-    private static func gitBadge(_ state: GitFileState) -> (letter: String, color: NSColor) {
-        switch state {
-        case .modified: return ("M", .systemOrange)
-        case .added: return ("A", .systemGreen)
-        case .deleted: return ("D", .systemRed)
-        case .renamed: return ("R", .systemBlue)
-        case .untracked: return ("?", .systemGray)
-        case .conflicted: return ("!", .systemRed)
-        }
-    }
-
-    /// The name cell content: an optional colored git-state letter, the name, then a
-    /// colored dot per tag.
-    private static func decoratedName(
-        _ name: String, git: GitFileState?, dots colors: [FileTag.Color], size: CGFloat
-    ) -> NSAttributedString {
-        let result = NSMutableAttributedString()
-        if let git {
-            let badge = gitBadge(git)
-            result.append(
-                NSAttributedString(
-                    string: "\(badge.letter) ",
-                    attributes: [.font: NSFont.boldSystemFont(ofSize: size), .foregroundColor: badge.color]))
-        }
-        result.append(
-            NSAttributedString(string: name, attributes: [.font: NSFont.systemFont(ofSize: size)]))
-        appendDots(colors, to: result, size: size)
-        return result
-    }
-
-    private static func name(_ name: String, withDots colors: [FileTag.Color], size: CGFloat)
-        -> NSAttributedString
-    {
-        let result = NSMutableAttributedString(
-            string: name, attributes: [.font: NSFont.systemFont(ofSize: size)])
-        appendDots(colors, to: result, size: size)
-        return result
-    }
-
-    private static func appendDots(
-        _ colors: [FileTag.Color], to result: NSMutableAttributedString, size: CGFloat
-    ) {
-        let diameter = size - 2
-        for color in colors {
-            let attachment = NSTextAttachment()
-            attachment.image = TagColors.dot(color, diameter: diameter)
-            attachment.bounds = NSRect(x: 0, y: -1, width: diameter, height: diameter)
-            result.append(NSAttributedString(string: " "))
-            result.append(NSAttributedString(attachment: attachment))
-        }
-    }
+    // Name decoration (git badge + tag dots) lives in the shared `FileNameDecoration` so the
+    // list and column views render identically.
 
     /// Badge for online-only (dataless) cloud placeholders.
     private static let cloudIcon: NSImage =

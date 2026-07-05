@@ -72,7 +72,10 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             self.onOpen?(self.entries[item])
         }
         filmstrip.onSelectionMutated = { [weak self] in self?.selectionChanged() }
-        filmstrip.menu = makeContextMenu()
+        contextMenu.selectedURLs = { [weak self] in
+            self?.selectedEntries.compactMap { self?.fileURL(for: $0) } ?? []
+        }
+        filmstrip.menu = contextMenu.menu
         scrollView.documentView = filmstrip
         scrollView.hasHorizontalScroller = true
         scrollView.hasVerticalScroller = false
@@ -128,32 +131,44 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         fill.isActive = true
     }
 
-    /// Command ids hidden from the context menu (from the Settings ▸ Menus preference),
-    /// honored the same way the list view does so the reveal/hide choice applies everywhere.
-    private var hiddenContextItems: Set<String> = []
-    func setHiddenContextItems(_ ids: Set<String>) {
-        guard ids != hiddenContextItems else { return }
-        hiddenContextItems = ids
-        filmstrip.menu = makeContextMenu()
+    /// The one shared file context menu, identical across every pane view so the gallery
+    /// gains Open With, Tags, New Folder, clipboard, and Extract instead of its old reduced
+    /// set. Honors the Settings ▸ Menus hide/show choice.
+    private let contextMenu = FileContextMenuController()
+    func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
+
+    // MARK: - Cut dimming + selection anchor (parity with the list view)
+
+    private var cutPaths: Set<String> = []
+    private func isCut(_ entry: FileEntry) -> Bool {
+        !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: directoryURL))
+    }
+    private func alpha(for entry: FileEntry) -> CGFloat { isCut(entry) ? 0.45 : 1.0 }
+
+    func setCutPaths(_ paths: Set<String>) {
+        guard paths != cutPaths else { return }
+        let changed = paths.symmetricDifference(cutPaths)
+        cutPaths = paths
+        for (i, entry) in entries.enumerated()
+        where changed.contains(PaneItemKey.path(for: entry, in: directoryURL)) {
+            (filmstrip.item(at: IndexPath(item: i, section: 0)) as? IconItem)?.view.alphaValue =
+                alpha(for: entry)
+        }
     }
 
-    private func makeContextMenu() -> NSMenu {
-        let menu = NSMenu()
-        func add(_ title: String, _ id: String) {
-            guard !hiddenContextItems.contains(id) else { return }
-            let item = NSMenuItem(
-                title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
-            item.representedObject = id
-            item.image = MenuIcons.image(forCommand: id)
-            menu.addItem(item)
+    /// The selected thumbnails' bounding rect in window coordinates, so the quick-actions bar
+    /// anchors to them rather than centering on the pane.
+    func selectionRectInWindow() -> NSRect? {
+        let paths = filmstrip.selectionIndexPaths
+        guard !paths.isEmpty else { return nil }
+        var union = NSRect.null
+        for path in paths {
+            if let attrs = filmstrip.layoutAttributesForItem(at: path) { union = union.union(attrs.frame) }
         }
-        add(L("common.open", "Open"), "files.open")
-        add(L("icons.getInfo", "Get Info"), "files.getInfo")
-        add(L("icons.revealInFinder", "Reveal in Finder"), "files.reveal")
-        add(L("icons.revealInPathem", "Reveal in Pathem"), "files.revealInPathem")
-        add(L("icons.rename", "Rename…"), "files.rename")
-        add(L("icons.moveToTrash", "Move to Trash"), "files.trash")
-        return menu
+        guard !union.isNull else { return nil }
+        let visible = union.intersection(filmstrip.visibleRect)
+        guard !visible.isNull, visible.width > 1 else { return nil }
+        return filmstrip.convert(visible, to: nil)
     }
 
     private func fileURL(for entry: FileEntry) -> URL? {
@@ -257,6 +272,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         item.configure(
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
             iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless, thumbnailURL: thumbnailURL)
+        item.view.alphaValue = alpha(for: entry)  // dim cut items until pasted
         return item
     }
 

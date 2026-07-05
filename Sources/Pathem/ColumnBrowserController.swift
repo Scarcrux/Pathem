@@ -26,6 +26,10 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private var trailingConstraint: NSLayoutConstraint?
     private var sortFormat = ViewFormat.default  // how every column (incl. drilled) is sorted
     private let columnWidth: CGFloat = 220
+    /// The one shared file context menu, same as every other pane view. Column view had no
+    /// right-click menu at all before; now it gets the full set (Open With, Tags, Extract, ...).
+    private let contextMenu = FileContextMenuController()
+    func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
 
     // PaneContentView callbacks.
     var onOpen: ((FileEntry) -> Void)?
@@ -39,6 +43,53 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     override init() {
         super.init()
         build()
+        // The active column's selection drives the shared menu's archive gating + Open With.
+        contextMenu.selectedURLs = { [weak self] in self?.contextSelectionURLs() ?? [] }
+    }
+
+    /// The active column's selection as file URLs, for the shared context menu.
+    private func contextSelectionURLs() -> [URL] {
+        guard columns.indices.contains(activeColumn) else { return [] }
+        let col = columns[activeColumn]
+        return col.table.selectedRowIndexes.compactMap {
+            $0 < col.entries.count ? col.folder.appendingPathComponent(col.entries[$0].name) : nil
+        }
+    }
+
+    // MARK: - Cut dimming + selection anchor (parity with the list view)
+
+    /// Paths marked for cut, dimmed until pasted. A cut can span any open column.
+    private var cutPaths: Set<String> = []
+    func setCutPaths(_ paths: Set<String>) {
+        guard paths != cutPaths else { return }
+        cutPaths = paths
+        // Redraw every column: a cut/clear elsewhere can affect any of them, and there are few.
+        for column in columns { column.table.reloadData() }
+    }
+
+    /// Git working-tree states keyed by absolute path; drives the per-name status letter.
+    private var gitStates: [String: GitFileState] = [:]
+    func setGitStates(_ states: [String: GitFileState]) {
+        guard states != gitStates else { return }
+        let hadAny = !gitStates.isEmpty
+        gitStates = states
+        if hadAny || !states.isEmpty {
+            for column in columns { column.table.reloadData() }
+        }
+    }
+
+    /// The active column's selected rows in window coordinates, so the quick-actions bar hugs
+    /// the selection rather than centering on the whole column scroller.
+    func selectionRectInWindow() -> NSRect? {
+        guard columns.indices.contains(activeColumn) else { return nil }
+        let table = columns[activeColumn].table
+        let rows = table.selectedRowIndexes
+        guard !rows.isEmpty else { return nil }
+        var union = NSRect.null
+        for row in rows { union = union.union(table.rect(ofRow: row)) }
+        let visible = union.intersection(table.visibleRect)
+        guard !visible.isNull, visible.height > 1 else { return nil }
+        return table.convert(visible, to: nil)
     }
 
     private func build() {
@@ -92,6 +143,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         table.registerForDraggedTypes([.fileURL])  // accept file drops into this column
         table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)  // drag to the other pane
         table.setDraggingSourceOperationMask(.every, forLocal: false)  // and to Finder / other apps
+        table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first
 
         let scroll = NSScrollView()
         scroll.documentView = table
@@ -194,12 +246,21 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let entry = columns[index].entries[row]
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
-        cell.textField?.stringValue = entry.name
         cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
+        // Prefix a colored git-status letter when this file has one (shared with the list view).
+        let git = gitStates.isEmpty ? nil : gitStates[PaneItemKey.path(for: entry, in: columns[index].folder)]
+        if let git {
+            cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
+                entry.name, git: git, dots: [], size: 13)
+        } else {
+            cell.textField?.stringValue = entry.name
+        }
         let url = columns[index].folder.appendingPathComponent(entry.name)
         cell.imageView?.image = NSWorkspace.shared.icon(forFile: url.path)
-        // Dim hidden (dotfile) entries so they read as hidden when "show hidden files" is on.
-        cell.alphaValue = entry.isHidden ? 0.5 : 1.0
+        // Dim cut items (until pasted), then hidden (dotfile) entries. Keyed on this column's
+        // own folder, since a cut can live in any drilled column.
+        let isCut = !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: columns[index].folder))
+        cell.alphaValue = isCut ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
         return cell
     }
 
@@ -456,7 +517,15 @@ extension ColumnBrowserController: PaneContentView {
         let column = columns[activeColumn]
         guard let row = column.entries.firstIndex(where: { $0.name == name }) else { return }
         column.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        column.table.scrollRowToVisible(row)
+        // Only scroll when the row is actually off screen. An operation on a visible
+        // file (rename, new-folder-with-selection) reloads the column, and forcing
+        // scrollRowToVisible would snap the file to the top edge even though it never
+        // left the viewport. Following it only when it genuinely scrolled away keeps
+        // the column steady.
+        let visible = column.table.rows(in: column.table.visibleRect)
+        if visible.length == 0 || !NSLocationInRange(row, visible) {
+            column.table.scrollRowToVisible(row)
+        }
     }
 
     func selectNames(_ names: Set<String>) {
@@ -481,6 +550,10 @@ extension ColumnBrowserController: PaneContentView {
             columns.removeLast()  // the folder this column showed was deleted/moved
         }
         if activeColumn >= columns.count { activeColumn = max(0, columns.count - 1) }
+        // relayout() below tears down and re-adds every column's scroll view, which can
+        // reset the vertical offset. Capture each column's scroll position so a file op
+        // in a drilled column doesn't jump that column back to the top.
+        var savedOffsets: [Int: NSPoint] = [:]
         for index in columns.indices where index > 0 {
             let folder = columns[index].folder
             let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
@@ -488,6 +561,7 @@ extension ColumnBrowserController: PaneContentView {
             let names = Set(columns[index].table.selectedRowIndexes.compactMap {
                 $0 < columns[index].entries.count ? columns[index].entries[$0].name : nil
             })
+            savedOffsets[index] = columns[index].scroll.contentView.bounds.origin
             columns[index].entries = sorted
             columns[index].table.reloadData()
             var rows = IndexSet()
@@ -495,6 +569,11 @@ extension ColumnBrowserController: PaneContentView {
             columns[index].table.selectRowIndexes(rows, byExtendingSelection: false)
         }
         relayout()
+        for (index, origin) in savedOffsets where columns.indices.contains(index) {
+            let clip = columns[index].scroll.contentView
+            clip.scroll(to: origin)
+            columns[index].scroll.reflectScrolledClipView(clip)
+        }
     }
 
     /// Adopt the pane's sort and re-sort every open column (including drilled ones)
