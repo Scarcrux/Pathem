@@ -71,6 +71,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let commands = CommandRegistry()
     /// Chord -> command id, defaults overlaid with any user keymap.json.
     private var keymap = Keymap.standard
+    /// Super-drag: direction -> command for a flick, and the swipe-trail overlay.
+    private var dragGestures = DragGestureMap.standard
+    private let dragTrail = DragTrailOverlay()
     /// Stroke -> command id, defaults overlaid with any user gestures.json.
     private var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
@@ -213,6 +216,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         shelfHiddenConstraint = vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor)
         shelfShownConstraint = vSplit.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
         shelfHiddenConstraint?.isActive = true
+        // Super-drag swipe trail, filling the window overlay above the panes (non-interactive).
+        dragTrail.frame = host.bounds
+        dragTrail.autoresizingMask = [.width, .height]
+        host.addSubview(dragTrail)
         // Floating quick-actions bar, positioned next to the selection (see positionQuickBar).
         host.addSubview(quickBar)
         quickBar.translatesAutoresizingMaskIntoConstraints = true
@@ -291,6 +298,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.configurePane = { [weak self] pane in
                 pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
                 pane.onMouseGestureHandler = { [weak self] stroke in self?.handleGesture(stroke) ?? false }
+                pane.onDragSessionHandler = { [weak self] event in self?.handleDragSession(event) }
                 pane.onBrowseArchive = { [weak self, weak pane] archive in
                     guard let self, let pane else { return }
                     self.browseArchive(archive, in: pane, origin: pane.currentURL)
@@ -2964,6 +2972,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return true
     }
 
+    /// Super-drag: draw the swipe trail as a row drag moves, and on a flick release (the drag
+    /// ended past the threshold without a drop target) run its mapped command on the selection.
+    /// Gated on the preference; when off, drags behave exactly as before.
+    private func handleDragSession(_ event: DragSessionEvent) {
+        guard prefs.dragFlickActions else { return }
+        switch event {
+        case .began:
+            dragTrail.color = NSColor(hex: prefs.dragTrailColor) ?? .systemBlue
+            dragTrail.trailWidth = max(1, CGFloat(prefs.dragTrailWidth))
+            dragTrail.begin()
+        case .moved(let screen):
+            guard let window = view.window else { return }
+            let windowPoint = window.convertPoint(fromScreen: screen)
+            dragTrail.add(dragTrail.convert(windowPoint, from: nil))
+        case .ended(let flick):
+            dragTrail.end()
+            guard let flick, let id = dragGestures.commandID(for: flick),
+                commands.command(id)?.isEnabled() == true
+            else { return }
+            commands.perform(id)
+        }
+    }
+
     private static var gesturesURL: URL? {
         appSupportDirectory()?.appendingPathComponent("gestures.json")
     }
@@ -4297,6 +4328,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "keymap-dispatch", deleteCmd == "files.trash" && commands.command("files.trash") != nil,
             "delete -> \(deleteCmd ?? "nil")")
+        // Every super-drag flick direction maps to a registered command (same wiring check).
+        let deadFlicks = DragGestureMap.standard.bindings.filter { commands.command($0.value) == nil }
+        check(
+            "drag-gestures-resolve", deadFlicks.isEmpty,
+            deadFlicks.isEmpty
+                ? "\(DragGestureMap.standard.bindings.count) flicks -> commands"
+                : "dead: \(deadFlicks.map { "\($0.key)=\($0.value)" }.sorted())")
         // Shrinking a listing must clamp the scroll back to the top, not strand the view
         // scrolled into empty space below the few remaining rows (the "panels scroll down
         // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it

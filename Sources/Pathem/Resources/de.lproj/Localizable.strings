@@ -561,6 +561,9 @@
 "prefs.singleClickToOpen" = "Objekte mit einem einzelnen Klick öffnen";
 "prefs.underlineOnHover" = "Objekt unter dem Zeiger unterstreichen";
 "prefs.confirmBeforeDelete" = "Vor dem Verschieben in den Papierkorb nachfragen";
+"prefs.dragFlickActions" = "Super-Ziehen: Element schnippen, um darauf zu wirken, mit Wischspur";
+"prefs.dragTrailLabel" = "Wischspur";
+"prefs.dragTrailWidth" = "Breite";
 "prefs.densityComfortable" = "Komfortabel";
 "prefs.densityCompact" = "Kompakt";
 "prefs.densityLabel" = "Dichte";

@@ -561,6 +561,9 @@
 "prefs.singleClickToOpen" = "单击打开项目";
 "prefs.underlineOnHover" = "为指针下方的项目添加下划线";
 "prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";
+"prefs.dragFlickActions" = "超级拖拽：轻甩项目以对其操作，并显示滑动轨迹";
+"prefs.dragTrailLabel" = "滑动轨迹";
+"prefs.dragTrailWidth" = "宽度";
 "prefs.densityComfortable" = "宽松";
 "prefs.densityCompact" = "紧凑";
 "prefs.densityLabel" = "密度";

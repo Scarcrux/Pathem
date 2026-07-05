@@ -258,6 +258,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
             check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
             check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),
+            check(L("prefs.dragFlickActions", "Super-drag: flick an item to act on it, with a swipe trail"), \.dragFlickActions),
+            labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
         ])
         case .appearance: return form([
             labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
@@ -424,6 +426,40 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         onChange?(prefs)
     }
 
+    /// Color + width for the super-drag swipe trail.
+    private func dragTrailControl() -> NSView {
+        let well = NSColorWell()
+        well.color = NSColor(hex: prefs.dragTrailColor) ?? .systemBlue
+        well.target = self
+        well.action = #selector(dragTrailColorChanged(_:))
+        well.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        let stepper = NSStepper()
+        stepper.minValue = 2
+        stepper.maxValue = 16
+        stepper.increment = 1
+        stepper.doubleValue = prefs.dragTrailWidth
+        stepper.target = self
+        stepper.action = #selector(dragTrailWidthChanged(_:))
+        dragTrailWidthValue.stringValue = "\(Int(prefs.dragTrailWidth))"
+        dragTrailWidthValue.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        let stack = NSStackView(views: [
+            well, NSTextField(labelWithString: L("prefs.dragTrailWidth", "Width")), stepper,
+            dragTrailWidthValue,
+        ])
+        stack.orientation = .horizontal
+        stack.spacing = 6
+        return stack
+    }
+    @objc private func dragTrailColorChanged(_ sender: NSColorWell) {
+        prefs.dragTrailColor = sender.color.hexString
+        onChange?(prefs)
+    }
+    @objc private func dragTrailWidthChanged(_ sender: NSStepper) {
+        prefs.dragTrailWidth = sender.doubleValue
+        dragTrailWidthValue.stringValue = "\(Int(sender.doubleValue))"
+        onChange?(prefs)
+    }
+
     /// The customizable file right-click menu: a checkbox per command (checked = shown).
     private func menusPane() -> NSView {
         var rows: [NSView] = [
@@ -447,6 +483,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     private let fontValue = NSTextField(labelWithString: "13")
+    private let dragTrailWidthValue = NSTextField(labelWithString: "6")
     private func fontControl() -> NSView {
         let stepper = NSStepper()
         stepper.minValue = 10

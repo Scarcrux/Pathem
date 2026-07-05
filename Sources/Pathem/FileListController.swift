@@ -30,6 +30,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
     /// The row selection changed (used to update the status bar).
     var onSelectionChanged: (() -> Void)?
+    /// Row-drag phases, for the super-drag flick + swipe trail (PaneContentView).
+    var onDragSession: ((DragSessionEvent) -> Void)?
+    /// Where a row drag started, in screen coordinates, so its end can be reduced to a flick.
+    private var dragStartScreen: NSPoint?
     private var suppressSortCallback = false
     /// Open a row on a single click (Finder's single-click mode).
     private var singleClickToOpen = false
@@ -171,6 +175,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.target = self
         tableView.doubleAction = #selector(handleDoubleClick)
         tableView.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
+        tableView.onDragMoved = { [weak self] screen in self?.onDragSession?(.moved(screen: screen)) }
 
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
@@ -579,12 +584,30 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         _ tableView: NSTableView, draggingSession session: NSDraggingSession,
         willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
     ) {
+        dragStartScreen = screenPoint
+        onDragSession?(.began(screen: screenPoint))
         guard let dir = directoryURL else { return }
         let urls = rowIndexes.compactMap { row -> URL? in
             guard row < entries.count, !entries[row].isDataless else { return nil }
             return dir.appendingPathComponent(entries[row].name)
         }
         FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
+    }
+
+    func tableView(
+        _ tableView: NSTableView, draggingSession session: NSDraggingSession,
+        endedAt screenPoint: NSPoint, operation: NSDragOperation
+    ) {
+        // A super-drag flick is the start->end direction past a threshold, but only when no
+        // drop target accepted the drag (else a real copy/move already ran). reduce with a
+        // larger minSegment yields a single cardinal, or "" when the movement was too small.
+        var flick: String? = nil
+        if operation.isEmpty, let start = dragStartScreen {
+            let direction = MouseGesture.reduce([start, screenPoint], minSegment: 44)
+            flick = direction.isEmpty ? nil : direction
+        }
+        dragStartScreen = nil
+        onDragSession?(.ended(flick: flick))
     }
 
     func tableView(

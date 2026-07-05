@@ -70,3 +70,33 @@ public struct GestureMap: Codable, Sendable {
         return overlay
     }
 }
+
+/// Maps a super-drag flick direction ("U"/"D"/"L"/"R") to a command id: the file-manager
+/// analog of the "Super Drag" browser gesture -- flick the selection a short way and release
+/// without a drop target to fire a quick action on it. Mirrors GestureMap (overlaid on the
+/// defaults, hand-editable JSON), so it's config-as-data and unit-tested.
+public struct DragGestureMap: Codable, Sendable {
+    public var bindings: [String: String]
+
+    public init(bindings: [String: String]) { self.bindings = bindings }
+
+    public func commandID(for direction: String) -> String? { bindings[direction] }
+
+    public static let defaultBindings: [String: String] = [
+        "U": "files.open",  // flick up: open
+        "R": "files.copyToOtherPane",  // flick right: copy to the other pane
+        "L": "files.moveToOtherPane",  // flick left: move to the other pane
+        "D": "files.trash",  // flick down: move to Trash
+    ]
+
+    public static var standard: DragGestureMap { DragGestureMap(bindings: defaultBindings) }
+
+    /// Overlay user bindings; an empty command id unbinds a direction.
+    public func merging(userBindings: [String: String]) -> DragGestureMap {
+        var merged = bindings
+        for (direction, command) in userBindings {
+            if command.isEmpty { merged[direction] = nil } else { merged[direction] = command }
+        }
+        return DragGestureMap(bindings: merged)
+    }
+}

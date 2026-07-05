@@ -561,6 +561,9 @@
 "prefs.singleClickToOpen" = "Abrir elementos con un solo clic";
 "prefs.underlineOnHover" = "Subrayar el elemento bajo el puntero";
 "prefs.confirmBeforeDelete" = "Confirmar antes de mover elementos a la papelera";
+"prefs.dragFlickActions" = "Súper-arrastre: desliza un elemento para actuar sobre él, con estela";
+"prefs.dragTrailLabel" = "Estela";
+"prefs.dragTrailWidth" = "Ancho";
 "prefs.densityComfortable" = "Cómoda";
 "prefs.densityCompact" = "Compacta";
 "prefs.densityLabel" = "Densidad";

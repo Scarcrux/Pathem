@@ -561,6 +561,9 @@
 "prefs.singleClickToOpen" = "Open items with a single click";
 "prefs.underlineOnHover" = "Underline the item under the pointer";
 "prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";
+"prefs.dragFlickActions" = "Super-drag: flick an item to act on it, with a swipe trail";
+"prefs.dragTrailLabel" = "Swipe trail";
+"prefs.dragTrailWidth" = "Width";
 "prefs.densityComfortable" = "Comfortable";
 "prefs.densityCompact" = "Compact";
 "prefs.densityLabel" = "Density";

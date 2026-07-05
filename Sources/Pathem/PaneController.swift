@@ -54,6 +54,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         didSet { content.onKeyChord = onKeyChordHandler }
     }
     /// Mouse-gesture handler, re-applied to whichever content is active.
+    var onDragSessionHandler: ((DragSessionEvent) -> Void)? {
+        didSet { content.onDragSession = onDragSessionHandler }
+    }
     var onMouseGestureHandler: ((String) -> Bool)? {
         didSet { content.onMouseGesture = onMouseGestureHandler }
     }
@@ -979,6 +982,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         content.onKeyChord = onKeyChordHandler
         content.onMouseGesture = onMouseGestureHandler
+        content.onDragSession = onDragSessionHandler
         content.dragMovesByDefault = dragMovesByDefault
     }
 

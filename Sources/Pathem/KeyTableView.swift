@@ -12,8 +12,16 @@ final class KeyTableView: NSTableView {
     /// Return true if the right-button stroke was handled (then the menu is suppressed).
     var onMouseGesture: ((String) -> Bool)?
     var onBecomeActive: (() -> Void)?
+    /// The moving screen point during a row drag (for the super-drag swipe trail). NSTableView
+    /// forwards willBegin/ended to its delegate but not movedTo, so we take it here at the source.
+    var onDragMoved: ((NSPoint) -> Void)?
 
     private let gestureTracker = MouseGestureTracker()
+
+    override func draggingSession(_ session: NSDraggingSession, movedTo screenPoint: NSPoint) {
+        onDragMoved?(screenPoint)
+        super.draggingSession(session, movedTo: screenPoint)
+    }
 
     // Take over the right button so a stroke gesture can be recognized; a plain
     // right-click (no meaningful drag) falls through to the context menu on mouse-up.

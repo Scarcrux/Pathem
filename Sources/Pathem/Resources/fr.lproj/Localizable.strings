@@ -561,6 +561,9 @@
 "prefs.singleClickToOpen" = "Ouvrir les éléments d’un simple clic";
 "prefs.underlineOnHover" = "Souligner l’élément sous le pointeur";
 "prefs.confirmBeforeDelete" = "Demander confirmation avant de placer des éléments dans la corbeille";
+"prefs.dragFlickActions" = "Super-glisser : lancez un élément pour agir dessus, avec une traînée";
+"prefs.dragTrailLabel" = "Traînée";
+"prefs.dragTrailWidth" = "Largeur";
 "prefs.densityComfortable" = "Confortable";
 "prefs.densityCompact" = "Compacte";
 "prefs.densityLabel" = "Densité";
