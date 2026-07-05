@@ -72,6 +72,52 @@ Cloud-**aware**, not cloud-mounting (verified on this machine).
 - Sparkle auto-update appcast (EdDSA).
 - Torrents: far-future optional add-on (BSD libtorrent-rasterbar, out-of-process helper).
 
+## Site manager / remote (FileZilla Pro parity, added 2026-07-05)
+
+The remote backends (S3, WebDAV, SFTP, FTP) and a FileZilla site import ship
+today, but the site manager itself is minimal: name, protocol, host, port, user,
+initial remote path, S3 region, with the password prompted each connect and one
+global speed cap. Closing the gap toward FileZilla Pro, by priority.
+
+Tier 1 (auth and security; cheap on the existing SFTP/FTP code):
+
+- **SFTP private key file + passphrase** (the EC2 / `.pem` case). The SFTP
+  backend already shells to system ssh, so this is a key-file field plus `-i
+  <key>` and an askpass path for the passphrase. Works today only via a manual
+  `~/.ssh/config` `IdentityFile` entry.
+- **Save passwords in the Keychain**, optional per site (today every connect
+  re-prompts, the biggest friction).
+- **FTPS** (FTP over TLS), explicit and implicit.
+
+Tier 2 (organization and power):
+
+- **Folders / groups + search** in the site list.
+- **Per-site color labels.**
+- **Per-site default local directory** and **synchronized browsing** (both panes
+  move together).
+- **Bookmarks:** saved local-to-remote path pairs per site.
+
+Tier 3 (breadth and niceties):
+
+- More cloud backends: **Backblaze B2, Azure Blob, Google Cloud Storage** (the S3
+  code is the template).
+- FTP **passive / active** mode and charset / encoding.
+- Per-site speed limits, keep-alive / reconnect, SOCKS / HTTP proxy.
+
+## Recently requested (in flight / backlog, 2026-07-05)
+
+- **Undo history + selective undo:** an authoritative `ActionHistory` replacing
+  NSUndoManager, recording each action's path footprint, with a recent-actions
+  panel; then selectively undo an action that no newer action depends on
+  (footprint-overlap check). Model landed; registration-site rewiring in progress.
+- **Easy folder-icon change from folder properties** (Get Info).
+- **Cloud folder badges:** keep the real folder icon (an iCloud "Documents" still
+  shows the Documents glyph) and overlay a small cloud-service badge, iCloud via
+  SF Symbol plus bundled brand logos for Dropbox / Drive / OneDrive under
+  nominative use, generic cloud fallback otherwise.
+- **Super-drag follow-ups:** make the flick-to-command map user-editable, and
+  extend the gesture beyond the list view (icon / gallery / column).
+
 ## Hard rules (unchanged)
 
 Non-sandboxed + Full Disk Access; clean Hardened Runtime (no
