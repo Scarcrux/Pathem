@@ -39,6 +39,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onToggleCompact: (() -> Void)?
     private let settingsButton = NSButton()
     private let collapseButton = NSButton()
+    private var settingsButtonHeight: NSLayoutConstraint?
+    private var collapseButtonHeight: NSLayoutConstraint?
     /// When false, sidebar rows show icons only (compact mode); labels are the tooltip.
     private var showsLabels = true
     /// A smart location (Recents / a tag filter) was selected.
@@ -230,65 +232,76 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         collapseButton.imagePosition = .imageOnly
         collapseButton.target = self
         collapseButton.action = #selector(toggleCompact)
-        collapseButton.translatesAutoresizingMaskIntoConstraints = false
+
+        // A vertical bottom bar: Settings, then the expand button (which shows only in the
+        // icons-only mode). A stack so hiding the expand button reclaims its space cleanly.
+        let bottomBar = NSStackView(views: [settingsButton, collapseButton])
+        bottomBar.orientation = .vertical
+        bottomBar.spacing = 2
+        bottomBar.alignment = .centerX
+        bottomBar.translatesAutoresizingMaskIntoConstraints = false
+        settingsButtonHeight = settingsButton.heightAnchor.constraint(equalToConstant: 22)
+        collapseButtonHeight = collapseButton.heightAnchor.constraint(equalToConstant: 24)
         configureBottomBar()
 
         containerView.addSubview(scrollView)
-        containerView.addSubview(settingsButton)
-        containerView.addSubview(collapseButton)
+        containerView.addSubview(bottomBar)
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: containerView.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: settingsButton.topAnchor, constant: -2),
-            settingsButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
-            settingsButton.trailingAnchor.constraint(
-                lessThanOrEqualTo: containerView.trailingAnchor, constant: -8),
-            settingsButton.bottomAnchor.constraint(equalTo: collapseButton.topAnchor, constant: -2),
-            settingsButton.heightAnchor.constraint(equalToConstant: 22),
-            // The expand/collapse toggle spans the bottom, so it's reachable in the narrow
-            // icons-only sidebar too.
-            collapseButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 6),
-            collapseButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -6),
-            collapseButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
-            collapseButton.heightAnchor.constraint(equalToConstant: 24),
+            scrollView.bottomAnchor.constraint(equalTo: bottomBar.topAnchor, constant: -2),
+            bottomBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 6),
+            bottomBar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -6),
+            bottomBar.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
+            settingsButtonHeight!, collapseButtonHeight!,
         ])
     }
 
-    /// The Settings button shows a "Settings" label like every other sidebar row, or just the
-    /// gear when labels are hidden (compact mode); the collapse chevron flips to point the way
-    /// the sidebar will move.
+    /// The Settings row shows a labeled gear when expanded, or a big centered gear matching the
+    /// icon buttons when compact. The expand chevron shows only in the icons-only mode (you
+    /// collapse from View > Compact Sidebar or Settings).
     private func configureBottomBar() {
-        settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: L("sidebar.settingsAccessibility", "Settings"))
-        if showsLabels {
-            settingsButton.title = L("sidebar.settingsTitle", "Settings")
-            settingsButton.imagePosition = .imageLeading
-        } else {
+        let compact = !showsLabels
+        let gearSize: CGFloat = compact ? 24 : 13
+        settingsButton.image = NSImage(
+            systemSymbolName: "gearshape",
+            accessibilityDescription: L("sidebar.settingsAccessibility", "Settings"))?
+            .withSymbolConfiguration(.init(pointSize: gearSize, weight: .regular))
+        if compact {
             settingsButton.title = ""
             settingsButton.imagePosition = .imageOnly
+        } else {
+            settingsButton.title = L("sidebar.settingsTitle", "Settings")
+            settingsButton.imagePosition = .imageLeading
         }
-        let chevron = showsLabels ? "chevron.left" : "chevron.right"  // collapse vs. expand
-        collapseButton.image = NSImage(systemSymbolName: chevron, accessibilityDescription: nil)
-        collapseButton.toolTip =
-            showsLabels
-            ? L("sidebar.collapseTooltip", "Collapse to icons") : L("sidebar.expandTooltip", "Expand sidebar")
+        collapseButton.isHidden = !compact  // the toggle is only an expand affordance, icons-only
+        collapseButton.image = NSImage(systemSymbolName: "chevron.right", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 18, weight: .regular))
+        collapseButton.toolTip = L("sidebar.expandTooltip", "Expand sidebar")
+        settingsButtonHeight?.constant = compact ? 40 : 22
+        collapseButtonHeight?.constant = compact ? 32 : 24
     }
 
     /// Hide row labels (icons only) for a compact sidebar, or show them.
     func setShowsLabels(_ on: Bool) {
         guard on != showsLabels else { return }
-        if expandedRowHeight == nil { expandedRowHeight = outline.rowHeight }  // capture the default once
         showsLabels = on
         // Drop the per-level indentation in compact mode so child rows aren't pushed off
-        // the narrow column, and the centered icons stay fully visible.
+        // the narrow column, and the centered icons stay fully visible. Row heights come from
+        // outlineView(_:heightOfRowByItem:), re-queried by reloadData below.
         outline.indentationPerLevel = on ? 12 : 0
-        // Taller rows in icons-only mode so the big standalone icon buttons have room.
-        outline.rowHeight = on ? (expandedRowHeight ?? outline.rowHeight) : 46
         configureBottomBar()
         outline.reloadData()
     }
 
-    private var expandedRowHeight: CGFloat?
+    /// Row heights: place rows are taller in icons-only mode (big icon buttons); section
+    /// headers are short -- and nearly a hairline when compact (their text is hidden then) --
+    /// so there's no dead space between sections.
+    func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
+        if (item as? Node)?.isHeader == true { return showsLabels ? 22 : 6 }
+        return showsLabels ? 24 : 44
+    }
 
     @objc private func openSettings() { onOpenSettings?() }
     @objc private func toggleCompact() { onToggleCompact?() }

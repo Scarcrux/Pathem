@@ -2855,6 +2855,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let width: CGFloat = compactSidebar ? Self.compactSidebarWidth : 200
         sidebarWidthConstraint?.constant = width
         if didSetInitialSplit { outerSplit.setPosition(width, ofDividerAt: 0) }  // resize live
+        // In icons-only mode the labels are hidden, so tooltips are how you identify an icon --
+        // make them instant. Otherwise honor the preference.
+        if compactSidebar {
+            UserDefaults.standard.set(1, forKey: "NSInitialToolTipDelay")
+        } else {
+            applyTooltipDelay()
+        }
     }
 
     private func togglePathBarPosition() {
