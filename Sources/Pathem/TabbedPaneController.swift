@@ -216,15 +216,16 @@ final class TabbedPaneController: NSObject {
     }
 
     private func makeChip(title: String, index: Int, active: Bool, closable: Bool) -> NSView {
-        let chip = NSView()
+        let chip = TabChipView()
         chip.wantsLayer = true
         chip.layer?.cornerRadius = 5
         chip.layer?.backgroundColor =
             active ? NSColor.controlAccentColor.withAlphaComponent(0.22).cgColor : NSColor.clear.cgColor
+        // The whole chip selects the tab, not just the label -- clicking its padding or empty
+        // space is what a user expects. Only the close button (below) is carved out.
+        chip.onSelect = { [weak self] in self?.selectTab(index) }
 
-        let name = NSButton(title: title, target: self, action: #selector(tabClicked(_:)))
-        name.tag = index
-        name.isBordered = false
+        let name = NSTextField(labelWithString: title)
         name.font = .systemFont(ofSize: 12, weight: active ? .semibold : .regular)
         name.lineBreakMode = .byTruncatingTail
         name.translatesAutoresizingMaskIntoConstraints = false
@@ -245,6 +246,7 @@ final class TabbedPaneController: NSObject {
             close.isBordered = false
             close.translatesAutoresizingMaskIntoConstraints = false
             chip.addSubview(close)
+            chip.closeButton = close  // carve it out of the chip's click area
             NSLayoutConstraint.activate([
                 close.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
                 close.trailingAnchor.constraint(equalTo: chip.trailingAnchor, constant: -4),
@@ -258,11 +260,27 @@ final class TabbedPaneController: NSObject {
     }
 
     @objc private func addTabClicked() { newTab(duplicatingCurrent: true) }
-    @objc private func tabClicked(_ sender: NSButton) { selectTab(sender.tag) }
     @objc private func closeClicked(_ sender: NSButton) { closeTab(at: sender.tag) }
 
     static func title(for url: URL) -> String {
         let name = url.lastPathComponent
         return (name.isEmpty || name == "/") ? L("tabs.macintoshHD", "Macintosh HD") : name
     }
+}
+
+/// A tab chip whose entire area selects the tab -- clicking the padding, background, or label
+/// all count, so you never have to hit the text exactly. The close button (when present) is
+/// the only carved-out target; the non-interactive label never swallows the click.
+private final class TabChipView: NSView {
+    var onSelect: (() -> Void)?
+    weak var closeButton: NSButton?
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        let local = convert(point, from: superview)
+        guard bounds.contains(local) else { return nil }
+        if let close = closeButton, !close.isHidden, close.frame.contains(local) { return close }
+        return self  // the label and empty space both resolve to the chip, which selects
+    }
+
+    override func mouseDown(with event: NSEvent) { onSelect?() }
 }

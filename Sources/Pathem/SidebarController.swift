@@ -197,6 +197,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         outline.outlineTableColumn = column
         outline.headerView = nil
         outline.style = .sourceList
+        // The top group ("Favorites") otherwise pins to the top and AppKit draws a hairline
+        // separator under it -- an underline no other header has. Don't float group rows.
+        outline.floatsGroupRows = false
         outline.indentationPerLevel = 12
         outline.autoresizesOutlineColumn = false
         outline.dataSource = self
