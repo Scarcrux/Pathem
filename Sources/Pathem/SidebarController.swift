@@ -35,7 +35,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onSelect: ((URL) -> Void)?
     /// Open Settings (the gear shortcut at the bottom of the sidebar).
     var onOpenSettings: (() -> Void)?
+    /// Toggle the sidebar between the full and icons-only (compact) widths.
+    var onToggleCompact: (() -> Void)?
     private let settingsButton = NSButton()
+    private let collapseButton = NSButton()
     /// When false, sidebar rows show icons only (compact mode); labels are the tooltip.
     private var showsLabels = true
     /// A smart location (Recents / a tag filter) was selected.
@@ -222,10 +225,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         settingsButton.action = #selector(openSettings)
         settingsButton.toolTip = L("sidebar.settingsTooltip", "Settings")
         settingsButton.translatesAutoresizingMaskIntoConstraints = false
-        configureSettingsButton()
+        collapseButton.bezelStyle = .texturedRounded
+        collapseButton.isBordered = false
+        collapseButton.imagePosition = .imageOnly
+        collapseButton.target = self
+        collapseButton.action = #selector(toggleCompact)
+        collapseButton.translatesAutoresizingMaskIntoConstraints = false
+        configureBottomBar()
 
         containerView.addSubview(scrollView)
         containerView.addSubview(settingsButton)
+        containerView.addSubview(collapseButton)
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: containerView.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -234,14 +244,21 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             settingsButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
             settingsButton.trailingAnchor.constraint(
                 lessThanOrEqualTo: containerView.trailingAnchor, constant: -8),
-            settingsButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
+            settingsButton.bottomAnchor.constraint(equalTo: collapseButton.topAnchor, constant: -2),
             settingsButton.heightAnchor.constraint(equalToConstant: 22),
+            // The expand/collapse toggle spans the bottom, so it's reachable in the narrow
+            // icons-only sidebar too.
+            collapseButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 6),
+            collapseButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -6),
+            collapseButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
+            collapseButton.heightAnchor.constraint(equalToConstant: 24),
         ])
     }
 
-    /// The Settings button shows a "Settings" label like every other sidebar row,
-    /// or just the gear when labels are hidden (compact mode).
-    private func configureSettingsButton() {
+    /// The Settings button shows a "Settings" label like every other sidebar row, or just the
+    /// gear when labels are hidden (compact mode); the collapse chevron flips to point the way
+    /// the sidebar will move.
+    private func configureBottomBar() {
         settingsButton.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: L("sidebar.settingsAccessibility", "Settings"))
         if showsLabels {
             settingsButton.title = L("sidebar.settingsTitle", "Settings")
@@ -250,20 +267,31 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             settingsButton.title = ""
             settingsButton.imagePosition = .imageOnly
         }
+        let chevron = showsLabels ? "chevron.left" : "chevron.right"  // collapse vs. expand
+        collapseButton.image = NSImage(systemSymbolName: chevron, accessibilityDescription: nil)
+        collapseButton.toolTip =
+            showsLabels
+            ? L("sidebar.collapseTooltip", "Collapse to icons") : L("sidebar.expandTooltip", "Expand sidebar")
     }
 
     /// Hide row labels (icons only) for a compact sidebar, or show them.
     func setShowsLabels(_ on: Bool) {
         guard on != showsLabels else { return }
+        if expandedRowHeight == nil { expandedRowHeight = outline.rowHeight }  // capture the default once
         showsLabels = on
         // Drop the per-level indentation in compact mode so child rows aren't pushed off
         // the narrow column, and the centered icons stay fully visible.
         outline.indentationPerLevel = on ? 12 : 0
-        configureSettingsButton()
+        // Taller rows in icons-only mode so the big standalone icon buttons have room.
+        outline.rowHeight = on ? (expandedRowHeight ?? outline.rowHeight) : 46
+        configureBottomBar()
         outline.reloadData()
     }
 
+    private var expandedRowHeight: CGFloat?
+
     @objc private func openSettings() { onOpenSettings?() }
+    @objc private func toggleCompact() { onToggleCompact?() }
 
     // MARK: Build the tree
 
@@ -621,10 +649,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.delegate = self
         cell.toolTip = node.title  // name on hover when compact
         if let tagColor = node.tagColor {
-            cell.imageView?.image = TagColors.dot(tagColor, diameter: 12)
+            cell.imageView?.image = TagColors.dot(tagColor, diameter: showsLabels ? 12 : 22)
             cell.imageView?.contentTintColor = nil
         } else if let icon = node.icon {
-            cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)
+            // Render the SF Symbol at the cell's icon point size so it stays crisp when the
+            // icons-only mode blows it up.
+            let pointSize = showsLabels ? PlaceCellView.expandedIconSize : PlaceCellView.compactIconSize
+            cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: pointSize, weight: .regular))
             cell.imageView?.contentTintColor = nil
         } else if let url = node.url {
             cell.imageView?.image = NSWorkspace.shared.icon(forFile: url.path)
@@ -994,15 +1026,21 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 /// horizontally-centered icon (label hidden) in compact/icons-only mode, so the icon is
 /// centered in the narrow column instead of pinned to the leading edge and clipped.
 final class PlaceCellView: NSTableCellView {
+    /// Icon size in points: small beside a label, large as a standalone button (icons-only).
+    static let expandedIconSize: CGFloat = 16
+    static let compactIconSize: CGFloat = 30
+
     private let icon = NSImageView()
     private let label = NSTextField(labelWithString: "")
     private var iconLeading: NSLayoutConstraint!
     private var iconCentered: NSLayoutConstraint!
+    private var iconWidth: NSLayoutConstraint!
+    private var iconHeight: NSLayoutConstraint!
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         icon.translatesAutoresizingMaskIntoConstraints = false
-        icon.imageScaling = .scaleProportionallyDown
+        icon.imageScaling = .scaleProportionallyUpOrDown
         label.translatesAutoresizingMaskIntoConstraints = false
         label.lineBreakMode = .byTruncatingTail
         label.font = .systemFont(ofSize: 13)
@@ -1012,10 +1050,11 @@ final class PlaceCellView: NSTableCellView {
         textField = label
         iconLeading = icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4)
         iconCentered = icon.centerXAnchor.constraint(equalTo: centerXAnchor)
+        iconWidth = icon.widthAnchor.constraint(equalToConstant: Self.expandedIconSize)
+        iconHeight = icon.heightAnchor.constraint(equalToConstant: Self.expandedIconSize)
         NSLayoutConstraint.activate([
             icon.centerYAnchor.constraint(equalTo: centerYAnchor),
-            icon.widthAnchor.constraint(equalToConstant: 16),
-            icon.heightAnchor.constraint(equalToConstant: 16),
+            iconWidth, iconHeight,
             label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
             label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
             label.centerYAnchor.constraint(equalTo: centerYAnchor),
@@ -1028,5 +1067,8 @@ final class PlaceCellView: NSTableCellView {
         iconLeading.isActive = !compact
         iconCentered.isActive = compact
         label.isHidden = compact
+        let size = compact ? Self.compactIconSize : Self.expandedIconSize
+        iconWidth.constant = size
+        iconHeight.constant = size
     }
 }

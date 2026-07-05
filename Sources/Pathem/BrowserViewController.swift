@@ -383,6 +383,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onAirDropFiles = { [weak self] urls in self?.airDrop(urls) }
         sidebar.onTrashFiles = { [weak self] urls in self?.performLocalTrash(urls) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
+        sidebar.onToggleCompact = { [weak self] in
+            guard let self else { return }
+            self.prefs.compactSidebar.toggle()
+            self.applyCompactSidebar()
+            saveConfig(self.prefs, to: Self.preferencesURL)
+        }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
         sharedDiscovery.onChange = { [weak self] hosts in self?.sidebar.setSharedHosts(hosts) }
