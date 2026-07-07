@@ -39,13 +39,20 @@ final class FilePromiseFulfiller: NSObject, NSFilePromiseProviderDelegate, @unch
         return q
     }()
 
-    func filePromiseProvider(
+    // These three are marked `nonisolated` on purpose. `NSFilePromiseProviderDelegate` is
+    // @MainActor in the SDK, but Foundation actually invokes them OFF the main thread when
+    // another app pulls the promise through file-provider XPC (Messages does this on the
+    // com.apple.FileCoordination queue). Left main-actor-isolated, Swift's runtime executor
+    // check traps (EXC_BREAKPOINT) the moment that happens. The bodies only touch immutable
+    // state (a set-once sourceURL, the shared queue) and copy a file, so running off-main is
+    // safe -- which is what `@unchecked Sendable` above asserts.
+    nonisolated func filePromiseProvider(
         _ provider: NSFilePromiseProvider, fileNameForType fileType: String
     ) -> String {
         (provider as? FileDragItem)?.sourceURL?.lastPathComponent ?? "file"
     }
 
-    func filePromiseProvider(
+    nonisolated func filePromiseProvider(
         _ provider: NSFilePromiseProvider, writePromiseTo destination: URL,
         completionHandler: @escaping (Error?) -> Void
     ) {
@@ -61,7 +68,7 @@ final class FilePromiseFulfiller: NSObject, NSFilePromiseProviderDelegate, @unch
         }
     }
 
-    func operationQueue(for provider: NSFilePromiseProvider) -> OperationQueue { queue }
+    nonisolated func operationQueue(for provider: NSFilePromiseProvider) -> OperationQueue { queue }
 }
 
 /// Shared helpers for dragging files out to other apps.

@@ -4596,6 +4596,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "drag-has-file-promise", hasPromise && promiseFileURL,
             "promise=\(hasPromise) fileURL=\(promiseFileURL)")
+        // The promise delegate is pulled OFF the main thread by other apps (Messages fetches it
+        // via file-provider XPC on a FileCoordination queue). Exercise it off-main: if the
+        // delegate methods were main-actor-isolated the Swift concurrency check would trap the
+        // whole process, so this also fails to compile if the `nonisolated` markers regress.
+        let promiseItem = FileDragItem(
+            fileType: "public.plain-text", delegate: FilePromiseFulfiller.shared)
+        promiseItem.sourceURL = URL(fileURLWithPath: "/tmp/a.txt")
+        let fulfiller = FilePromiseFulfiller.shared
+        var offMainName = ""
+        let promiseSem = DispatchSemaphore(value: 0)
+        DispatchQueue.global(qos: .userInitiated).async {
+            _ = fulfiller.operationQueue(for: promiseItem)  // the exact call that trapped
+            offMainName = fulfiller.filePromiseProvider(promiseItem, fileNameForType: "public.plain-text")
+            promiseSem.signal()
+        }
+        promiseSem.wait()
+        check("promise-delegate-offmain", offMainName == "a.txt", "name=\(offMainName)")
         // Get Info: presenting the inspector builds every field (metadata reads, open-with,
         // toggles) without crashing, and populates a reasonable number of them.
         let inspector = InfoInspectorController()
