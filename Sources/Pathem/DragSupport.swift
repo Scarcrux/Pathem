@@ -39,28 +39,42 @@ final class FilePromiseFulfiller: NSObject, NSFilePromiseProviderDelegate, @unch
         return q
     }()
 
+    /// The source file for a promise. Read from `userInfo`, NOT from a FileDragItem cast:
+    /// when another app pulls the promise through file-provider XPC (Messages), Foundation
+    /// hands the delegate a fresh NSFilePromiseProvider it built itself, not our subclass, so
+    /// `provider as? FileDragItem` is nil there. `userInfo` is the documented channel that
+    /// survives that reconstruction; the subclass `sourceURL` is only a fallback.
+    private nonisolated static func source(from provider: NSFilePromiseProvider) -> URL? {
+        (provider.userInfo as? URL) ?? (provider as? FileDragItem)?.sourceURL
+    }
+
     // These three are marked `nonisolated` on purpose. `NSFilePromiseProviderDelegate` is
     // @MainActor in the SDK, but Foundation actually invokes them OFF the main thread when
     // another app pulls the promise through file-provider XPC (Messages does this on the
     // com.apple.FileCoordination queue). Left main-actor-isolated, Swift's runtime executor
     // check traps (EXC_BREAKPOINT) the moment that happens. The bodies only touch immutable
-    // state (a set-once sourceURL, the shared queue) and copy a file, so running off-main is
+    // state (a set-once source, the shared queue) and copy a file, so running off-main is
     // safe -- which is what `@unchecked Sendable` above asserts.
     nonisolated func filePromiseProvider(
         _ provider: NSFilePromiseProvider, fileNameForType fileType: String
     ) -> String {
-        (provider as? FileDragItem)?.sourceURL?.lastPathComponent ?? "file"
+        Self.source(from: provider)?.lastPathComponent ?? "file"
     }
 
     nonisolated func filePromiseProvider(
         _ provider: NSFilePromiseProvider, writePromiseTo destination: URL,
         completionHandler: @escaping (Error?) -> Void
     ) {
-        guard let source = (provider as? FileDragItem)?.sourceURL else {
-            completionHandler(nil)
+        guard let source = Self.source(from: provider) else {
+            completionHandler(CocoaError(.fileNoSuchFile))  // signal failure, don't "succeed" empty
             return
         }
         do {
+            // A receiver may pre-create an empty placeholder at the destination; replacing it
+            // (rather than letting copyItem throw "file exists") is what makes the drop land.
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
             try FileManager.default.copyItem(at: source, to: destination)
             completionHandler(nil)
         } catch {
@@ -85,6 +99,9 @@ enum FileDrag {
     static func item(for url: URL) -> NSPasteboardWriting {
         let item = FileDragItem(fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
         item.sourceURL = url
+        // userInfo is what survives when Foundation rebuilds the provider for file-provider XPC
+        // fulfillment (Messages); the delegate reads the source from here. See source(from:).
+        item.userInfo = url
         return item
     }
 

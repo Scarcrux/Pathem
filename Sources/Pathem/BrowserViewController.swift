@@ -4600,19 +4600,38 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // via file-provider XPC on a FileCoordination queue). Exercise it off-main: if the
         // delegate methods were main-actor-isolated the Swift concurrency check would trap the
         // whole process, so this also fails to compile if the `nonisolated` markers regress.
-        let promiseItem = FileDragItem(
+        let promiseSrc = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-promise-\(UUID().uuidString).txt")
+        try? "promise payload".write(to: promiseSrc, atomically: true, encoding: .utf8)
+        // Reproduce the Messages path: Foundation hands the delegate a fresh, plain provider
+        // (not our FileDragItem) carrying the source only in userInfo. If the delegate can't
+        // resolve the source from userInfo it writes nothing and the drop silently does nothing.
+        let promiseItem = NSFilePromiseProvider(
             fileType: "public.plain-text", delegate: FilePromiseFulfiller.shared)
-        promiseItem.sourceURL = URL(fileURLWithPath: "/tmp/a.txt")
+        promiseItem.userInfo = promiseSrc
         let fulfiller = FilePromiseFulfiller.shared
-        var offMainName = ""
+        let promiseDest = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-promise-dst-\(UUID().uuidString)")
+            .appendingPathComponent(promiseSrc.lastPathComponent)
+        try? FileManager.default.createDirectory(
+            at: promiseDest.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let promiseBox = SmokePromiseResult()
         let promiseSem = DispatchSemaphore(value: 0)
         DispatchQueue.global(qos: .userInitiated).async {
             _ = fulfiller.operationQueue(for: promiseItem)  // the exact call that trapped
-            offMainName = fulfiller.filePromiseProvider(promiseItem, fileNameForType: "public.plain-text")
-            promiseSem.signal()
+            promiseBox.name = fulfiller.filePromiseProvider(promiseItem, fileNameForType: "public.plain-text")
+            // Actually fulfill the promise, exactly as a receiver (Messages) triggers it.
+            fulfiller.filePromiseProvider(promiseItem, writePromiseTo: promiseDest) { err in
+                promiseBox.error = err
+                promiseSem.signal()
+            }
         }
         promiseSem.wait()
-        check("promise-delegate-offmain", offMainName == "a.txt", "name=\(offMainName)")
+        let wrote = promiseBox.error == nil && FileManager.default.fileExists(atPath: promiseDest.path)
+        check("promise-fulfills-offmain", promiseBox.name == promiseSrc.lastPathComponent && wrote,
+            "name=\(promiseBox.name) wrote=\(wrote) err=\(promiseBox.error.map { "\($0)" } ?? "nil")")
+        try? FileManager.default.removeItem(at: promiseSrc)
+        try? FileManager.default.removeItem(at: promiseDest.deletingLastPathComponent())
         // Get Info: presenting the inspector builds every field (metadata reads, open-with,
         // toggles) without crashing, and populates a reasonable number of them.
         let inspector = InfoInspectorController()
@@ -4625,4 +4644,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         try? FileManager.default.removeItem(at: infoTmp)
         return (ok, lines)
     }
+}
+
+/// Cross-thread result box for the smoke promise check (the fulfillment completion runs on a
+/// background OperationQueue). Reference type so the closures mutate one shared instance.
+private final class SmokePromiseResult: @unchecked Sendable {
+    var name = ""
+    var error: Error?
 }
