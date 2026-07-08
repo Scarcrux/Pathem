@@ -447,6 +447,22 @@ enum PathemApp {
             }
         }
 
+        // Render the icon grid grouped by kind so the section headers can be inspected.
+        if ProcessInfo.processInfo.environment["PATHEM_ICONGROUP_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: FileManager.default.homeDirectoryForCurrentUser)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                browser.debugSetActiveViewMode(.icon)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    browser.debugSetActiveGroupKey(.kind)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        browser.debugRender(to: "/tmp/icongroup.png")
+                        exit(0)
+                    }
+                }
+            }
+        }
+
         // Render the icon grid with the "Vivid" icon set so the themed file icons can be inspected.
         if ProcessInfo.processInfo.environment["PATHEM_ICONSET_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 700))

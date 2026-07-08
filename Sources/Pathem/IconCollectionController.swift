@@ -274,6 +274,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private let collection = KeyCollectionView()
     private let placeholder = NSTextField(labelWithString: "")
     private static let itemID = NSUserInterfaceItemIdentifier("icon-item")
+    private static let headerID = NSUserInterfaceItemIdentifier("grid-header")
 
     private(set) var entries: [FileEntry] = []
     private let gallery: Bool
@@ -291,6 +292,75 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     var onZoomChanged: ((CGFloat) -> Void)?
     /// Shared tag-color + git-state cache, so grid items show the same decorations as the list.
     private let decorations = PaneDecorationCache()
+
+    // MARK: - Grouping (Arrange By)
+    //
+    // When `grouping` is `.none` the grid is one flat section and an item's `indexPath.item` is its
+    // entry index (unchanged). When grouping, entries are split into `sections` (a header title +
+    // the entry indices under it), and every row<->entry touch point goes through the two mappings
+    // below, so the flat path stays byte-for-byte identical.
+    private var grouping: ViewFormat.GroupKey = .none
+    private var sections: [(title: String, entryIndices: [Int])] = []
+    private var isGrouped: Bool { grouping != .none && !sections.isEmpty }
+
+    private func rebuildSections() {
+        guard grouping != .none else { sections = []; return }
+        let rows = FileGrouping.rows(entries, by: grouping, now: Date(), tagColors: { [weak self] in
+            self?.decorations.tagColors(for: $0, in: self?.directoryURL) ?? []
+        })
+        var built: [(title: String, entryIndices: [Int])] = []
+        for row in rows {
+            switch row {
+            case .header(let title): built.append((title, []))
+            case .item(let index): if !built.isEmpty { built[built.count - 1].entryIndices.append(index) }
+            }
+        }
+        sections = built
+    }
+
+    /// The entry index a collection indexPath refers to, or nil if out of range.
+    private func entryIndex(at indexPath: IndexPath) -> Int? {
+        if isGrouped {
+            guard indexPath.section < sections.count, indexPath.item < sections[indexPath.section].entryIndices.count
+            else { return nil }
+            return sections[indexPath.section].entryIndices[indexPath.item]
+        }
+        return indexPath.item < entries.count ? indexPath.item : nil
+    }
+
+    /// The collection indexPath showing entry `index`, or nil if it isn't currently displayed.
+    private func indexPath(forEntry index: Int) -> IndexPath? {
+        if isGrouped {
+            for (section, group) in sections.enumerated() {
+                if let item = group.entryIndices.firstIndex(of: index) { return IndexPath(item: item, section: section) }
+            }
+            return nil
+        }
+        return index < entries.count ? IndexPath(item: index, section: 0) : nil
+    }
+
+    func setGroupKey(_ key: ViewFormat.GroupKey) {
+        guard key != grouping else { return }
+        let selectedNames = Set(selectedEntries.map(\.name))
+        grouping = key
+        rebuildSections()
+        updateHeaderLayout()
+        collection.reloadData()
+        selectNames(selectedNames)
+    }
+
+    /// Smoke: group by kind, confirm the sections cover every entry and a selection round-trips
+    /// through the section<->entry mapping, then return to flat.
+    func debugGroupRoundTrips() -> Bool {
+        guard let first = entries.first else { return true }
+        setGroupKey(.kind)
+        let grouped = isGrouped
+        let coversAll = sections.reduce(0) { $0 + $1.entryIndices.count } == entries.count
+        select(name: first.name)
+        let mapped = selectedEntries.count == 1 && selectedEntries.first?.name == first.name
+        setGroupKey(.none)
+        return grouped && coversAll && mapped && !isGrouped
+    }
 
     var directoryURL: URL?
     var resolutionURL: URL?
@@ -317,8 +387,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         super.init()
         build()
         collection.onZoom = { [weak self] delta in self?.adjustZoom(delta * 0.0125) }  // Cmd-scroll
-        decorations.onTagsChanged = { [weak self] in self?.collection.reloadData() }
-        collection.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
+        decorations.onTagsChanged = { [weak self] in self?.tagsDidChange() }
+        collection.onHover = { [weak self] indexPath in
+            self?.setHovered(indexPath.flatMap { self?.entryIndex(at: $0) } ?? -1)
+        }
         collection.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
         collection.onDragExited = { [weak self] in self?.springLoader.cancel() }
         ThemeManager.shared.onChange(owner: self) { [weak self] in self?.collection.reloadData() }
@@ -327,17 +399,31 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     /// Right-drag flick + swipe trail (super-drag), forwarded from the collection view.
     var onDragSession: ((DragSessionEvent) -> Void)?
 
-    /// Which item the pointer is over (-1 = none), underlined when hover-to-open is on.
+    /// Which entry the pointer is over (-1 = none), underlined when hover-to-open is on.
     private var hoveredItem = -1
 
-    private func setHovered(_ index: Int) {
-        guard index != hoveredItem else { return }
+    private func setHovered(_ entryIndex: Int) {
+        guard entryIndex != hoveredItem else { return }
         let old = hoveredItem
-        hoveredItem = index
+        hoveredItem = entryIndex
         var paths = Set<IndexPath>()
-        if old >= 0, old < entries.count { paths.insert(IndexPath(item: old, section: 0)) }
-        if index >= 0, index < entries.count { paths.insert(IndexPath(item: index, section: 0)) }
+        if old >= 0, let path = indexPath(forEntry: old) { paths.insert(path) }
+        if entryIndex >= 0, let path = indexPath(forEntry: entryIndex) { paths.insert(path) }
         if !paths.isEmpty { collection.reloadItems(at: paths) }
+    }
+
+    /// When grouping by tag, the newly-read tags change the buckets, so rebuild the sections
+    /// (preserving selection); otherwise just redraw the dots.
+    private func tagsDidChange() {
+        if grouping == .tag {
+            let names = Set(selectedEntries.map(\.name))
+            rebuildSections()
+            updateHeaderLayout()
+            collection.reloadData()
+            selectNames(names)
+        } else {
+            collection.reloadData()
+        }
     }
 
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
@@ -359,6 +445,13 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         onZoomChanged?(scale)
     }
 
+    /// Give the flow layout room for section headers when grouping, none otherwise.
+    private func updateHeaderLayout() {
+        guard let layout = collection.collectionViewLayout as? NSCollectionViewFlowLayout else { return }
+        layout.headerReferenceSize = isGrouped ? NSSize(width: 0, height: 26) : .zero
+        layout.invalidateLayout()
+    }
+
     private func build() {
         let layout = NSCollectionViewFlowLayout()
         layout.itemSize = cellSize
@@ -374,13 +467,16 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         collection.allowsEmptySelection = true
         collection.backgroundColors = [.clear]
         collection.register(IconItem.self, forItemWithIdentifier: Self.itemID)
+        collection.register(
+            GridHeaderView.self, forSupplementaryViewOfKind: NSCollectionView.elementKindSectionHeader,
+            withIdentifier: Self.headerID)
         collection.registerForDraggedTypes([.fileURL])
         collection.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
         collection.setDraggingSourceOperationMask(.every, forLocal: false)  // effectAllowed="all", like Finder
         collection.onActivate = { [weak self] indexPath in
             guard let self else { return }
-            if let indexPath, indexPath.item < self.entries.count {
-                self.onOpen?(self.entries[indexPath.item])  // the double-clicked item
+            if let indexPath, let ei = self.entryIndex(at: indexPath) {
+                self.onOpen?(self.entries[ei])  // the double-clicked item
             } else if let first = self.selectedEntries.first {
                 self.onOpen?(first)  // Return with a selection
             }
@@ -415,7 +511,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
 
     var selectedEntries: [FileEntry] {
-        collection.selectionIndexPaths.compactMap { $0.item < entries.count ? entries[$0.item] : nil }
+        collection.selectionIndexPaths.compactMap { entryIndex(at: $0).map { entries[$0] } }
     }
 
     /// The selection as file URLs, for the shared menu's archive gating and Open With.
@@ -449,8 +545,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         // Off-screen items pick up the right alpha when they are next configured.
         for (i, entry) in entries.enumerated()
         where changed.contains(PaneItemKey.path(for: entry, in: directoryURL)) {
-            (collection.item(at: IndexPath(item: i, section: 0)) as? IconItem)?.view.alphaValue =
-                alpha(for: entry)
+            if let path = indexPath(forEntry: i) {
+                (collection.item(at: path) as? IconItem)?.view.alphaValue = alpha(for: entry)
+            }
         }
     }
 
@@ -472,14 +569,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
         let selectedNames = preserveState ? Set(selectedEntries.map(\.name)) : []
         self.entries = entries
+        rebuildSections()
+        updateHeaderLayout()
         collection.reloadData()
-        if !selectedNames.isEmpty {
-            var paths = Set<IndexPath>()
-            for (index, entry) in entries.enumerated() where selectedNames.contains(entry.name) {
-                paths.insert(IndexPath(item: index, section: 0))
-            }
-            collection.selectionIndexPaths = paths
-        }
+        if !selectedNames.isEmpty { selectNames(selectedNames) }
         // Read tag colors off-main, then redraw once if any item shows a dot (untagged is free).
         decorations.refreshTags(entries: entries, directory: directoryURL)
     }
@@ -504,8 +597,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     }
 
     func select(name: String) {
-        guard let index = entries.firstIndex(where: { $0.name == name }) else { return }
-        let path = IndexPath(item: index, section: 0)
+        guard let index = entries.firstIndex(where: { $0.name == name }), let path = indexPath(forEntry: index) else { return }
         collection.selectionIndexPaths = [path]
         collection.scrollToItems(at: [path], scrollPosition: .centeredVertically)
     }
@@ -513,7 +605,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     func selectNames(_ names: Set<String>) {
         var paths = Set<IndexPath>()
         for (index, entry) in entries.enumerated() where names.contains(entry.name) {
-            paths.insert(IndexPath(item: index, section: 0))
+            if let path = indexPath(forEntry: index) { paths.insert(path) }
         }
         collection.selectionIndexPaths = paths
     }
@@ -527,15 +619,30 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
 
     // MARK: NSCollectionViewDataSource
 
+    func numberOfSections(in collectionView: NSCollectionView) -> Int {
+        isGrouped ? sections.count : 1
+    }
+
     func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
-        entries.count
+        isGrouped ? sections[section].entryIndices.count : entries.count
+    }
+
+    /// A section-header supplementary view showing the group title (only when grouping).
+    func collectionView(
+        _ collectionView: NSCollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath
+    ) -> NSView {
+        let view = collectionView.makeSupplementaryView(
+            ofKind: kind, withIdentifier: Self.headerID, for: indexPath) as! GridHeaderView
+        view.title = indexPath.section < sections.count ? sections[indexPath.section].title : ""
+        return view
     }
 
     func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath)
         -> NSCollectionViewItem
     {
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
-        let entry = entries[indexPath.item]
+        guard let ei = entryIndex(at: indexPath) else { return item }
+        let entry = entries[ei]
         let image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
         // Real content thumbnails for files only; never for folders or online-only
         // (dataless) items, where generating one could fault a download.
@@ -545,7 +652,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
-            underlined: indexPath.item == hoveredItem)
+            underlined: ei == hoveredItem)
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
         // as Finder does, and dim cut items until pasted. Set on every configure (cells are
         // reused) so it never sticks.
@@ -566,8 +673,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     func collectionView(_ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath)
         -> NSPasteboardWriting?
     {
-        guard let dir = directoryURL, indexPath.item < entries.count else { return nil }
-        let entry = entries[indexPath.item]
+        guard let dir = directoryURL, let ei = entryIndex(at: indexPath) else { return nil }
+        let entry = entries[ei]
         guard !entry.isDataless else { return nil }
         return FileDrag.item(for: dir.appendingPathComponent(entry.name))  // promise + file URL
     }
@@ -578,8 +685,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     ) {
         guard let dir = directoryURL else { return }
         let urls = indexPaths.compactMap { path -> URL? in
-            guard path.item < entries.count, !entries[path.item].isDataless else { return nil }
-            return dir.appendingPathComponent(entries[path.item].name)
+            guard let ei = entryIndex(at: path), !entries[ei].isDataless else { return nil }
+            return dir.appendingPathComponent(entries[ei].name)
         }
         FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
     }
@@ -592,10 +699,11 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         guard let urls = draggedURLs(from: draggingInfo), !urls.isEmpty else { return [] }
         // Over a folder item -> drop ONTO it (highlighted). Else a "before end" drop into
         // this folder so drops onto empty grid space are still delivered to acceptDrop.
-        if let path = folderIndexPath(under: draggingInfo, in: collectionView, excluding: urls) {
+        if let path = folderIndexPath(under: draggingInfo, in: collectionView, excluding: urls),
+            let ei = entryIndex(at: path) {
             proposedDropOperation.pointee = .on
             proposedIndexPath.pointee = path as NSIndexPath
-            let entry = entries[path.item]  // dwell here to spring the folder open
+            let entry = entries[ei]  // dwell here to spring the folder open
             if let folder = fileURL(for: entry) {
                 springLoader.arm(key: folder.path) { [weak self] in self?.onOpen?(entry) }
             }
@@ -603,7 +711,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             springLoader.cancel()
             guard !incomingURLs(urls, into: directoryURL).isEmpty else { return [] }
             proposedDropOperation.pointee = .before
-            proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
+            // A valid "append to the end" target in the last section (works grouped or flat).
+            let lastSection = max(0, (isGrouped ? sections.count : 1) - 1)
+            let itemsInLast = isGrouped ? (sections.last?.entryIndices.count ?? 0) : entries.count
+            proposedIndexPath.pointee = NSIndexPath(forItem: itemsInLast, inSection: lastSection)
         }
         return resolvedDragOperation(draggingInfo)
     }
@@ -618,8 +729,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: draggingInfo), !urls.isEmpty else { return false }
         var folder: URL?
-        if dropOperation == .on, indexPath.item < entries.count, entries[indexPath.item].isDirectory {
-            folder = fileURL(for: entries[indexPath.item])
+        if dropOperation == .on, let ei = entryIndex(at: indexPath), entries[ei].isDirectory {
+            folder = fileURL(for: entries[ei])
         }
         let incoming = incomingURLs(urls, into: folder ?? directoryURL)
         guard !incoming.isEmpty else { return false }
@@ -632,8 +743,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         under info: NSDraggingInfo, in collectionView: NSCollectionView, excluding dragged: [URL]
     ) -> IndexPath? {
         let point = collectionView.convert(info.draggingLocation, from: nil)
-        guard let path = collectionView.indexPathForItem(at: point), path.item < entries.count,
-            entries[path.item].isDirectory, let folder = fileURL(for: entries[path.item])
+        guard let path = collectionView.indexPathForItem(at: point), let ei = entryIndex(at: path),
+            entries[ei].isDirectory, let folder = fileURL(for: entries[ei])
         else { return nil }
         let folderPath = folder.resolvingSymlinksInPath().standardizedFileURL.path
         if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == folderPath }) {
@@ -696,4 +807,26 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         iconCache[key] = image
         return image
     }
+}
+
+/// A section-header supplementary view for the grouped icon grid: the group title, styled to match
+/// the list view's group headers.
+final class GridHeaderView: NSView, NSCollectionViewElement {
+    var title: String = "" { didSet { label.stringValue = title } }
+    private let label = NSTextField(labelWithString: "")
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        label.font = .systemFont(ofSize: 11, weight: .semibold)
+        label.textColor = .secondaryLabelColor
+        label.lineBreakMode = .byTruncatingTail
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            label.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -12),
+            label.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 }

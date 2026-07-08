@@ -5559,6 +5559,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Set the active pane's arrange-by key (PATHEM_ICONGROUP_SHOT).
+    func debugSetActiveGroupKey(_ key: ViewFormat.GroupKey) {
+        activePane?.setGroupKey(key)
+        view.layoutSubtreeIfNeeded()
+    }
+
     /// Switch the active icon set and reload (PATHEM_ICONSET_SHOT).
     func debugSetIconSet(_ name: String) {
         prefs.iconSetName = name
@@ -6055,6 +6061,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         IconSetManager.shared.setCurrent(named: prefs.iconSetName)  // restore
         check("icon-set-renders", themedIcon != nil && (themedIcon?.size.width ?? 0) > 0 && systemIcon == nil,
             "themed=\(themedIcon != nil) system=\(systemIcon == nil)")
+        // Icon-view grouping: sections cover every entry and a selection maps back through the
+        // section<->entry mapping.
+        let gridGroup = IconCollectionController(gallery: false)
+        gridGroup.directoryURL = URL(fileURLWithPath: "/tmp")
+        gridGroup.setEntries([
+            FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil),
+            FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil),
+            FileEntry(name: "c.txt", isDirectory: false, size: 10, modificationDate: nil),
+        ], preserveState: false)
+        check("icon-view-grouping", gridGroup.debugGroupRoundTrips(), "")
         return (ok, lines)
     }
 }
