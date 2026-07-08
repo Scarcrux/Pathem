@@ -90,6 +90,32 @@ Four clusters, built in order. Nearly all shipped; a few items deferred with rea
   theming already ships. *Deferred:* chown/ACL editing (limited without privilege
   escalation); per-app accent/skins (no clean public API).
 
+## Round 3.5 (shipped 2026-07-08) -- theming + deferred cleanup
+
+Cleared the tractable deferrals from round 3, plus theming the user asked for.
+
+- **App-wide skins** -- `ThemePreset` (10 presets) + `ThemeManager`; the accent
+  tints every Pathem-drawn element (list/grid selection, active pane border, active
+  tab, breadcrumb), a window tint, and a Settings picker with custom color wells.
+- **Per-folder backgrounds** -- a color or picture behind the list per folder
+  (`FolderBackground`, View ▸ Folder Background), across all four views.
+- **Icon sets** -- swappable icon themes (`IconSet` + `IconSetManager`): System,
+  Monochrome, Vivid, Blueprint; overrides the NSWorkspace lookup in all views.
+- **Spring-load in the icon grid** -- the grid already dropped onto folders, so it
+  now springs too.
+- **Trim** -- `TrimController` (AVPlayerView.beginTrimming + passthrough
+  AVAssetExportSession), File ▸ Transform ▸ Trim Media.
+- **ACL editing** -- `ACLEditor` (chmod +a/-a#) + a panel; adds/removes access
+  control entries. Complements the existing ACL reader.
+- **Group By in the icon view** -- the deferred sectioned-NSCollectionView refactor,
+  done: a section model + a two-way indexPath<->entry mapping.
+
+*Still deferred:* **chown** to another user (needs a signed privileged helper via
+`SMAppService` -- a security subsystem of its own; a lighter change-group that works
+without root is an option). Markup (needs an in-app annotation editor). Per-app
+accent for *standard* AppKit controls (no public API; only Pathem-drawn chrome is
+themed).
+
 ## Round 4 (scheduled, 2026-07-08) -- new views
 
 Each new view is a `PaneContentView` conformer plus a `ViewMode` case, so they don't
