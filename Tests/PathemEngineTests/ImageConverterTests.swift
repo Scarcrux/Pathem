@@ -38,6 +38,54 @@ import UniformTypeIdentifiers
         return width
     }
 
+    /// Write a solid-color PNG of the given pixel dimensions (for rotation dimension checks).
+    private func writePNG(_ url: URL, width: Int, height: Int) throws {
+        let space = CGColorSpaceCreateDeviceRGB()
+        guard
+            let ctx = CGContext(
+                data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
+            let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil)
+        else { throw CocoaError(.fileWriteUnknown) }
+        ctx.setFillColor(CGColor(red: 0, green: 0, blue: 1, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        guard let image = ctx.makeImage() else { throw CocoaError(.fileWriteUnknown) }
+        CGImageDestinationAddImage(dest, image, nil)
+        CGImageDestinationFinalize(dest)
+    }
+
+    private func pixelHeight(_ url: URL) -> Int? {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+            let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any],
+            let height = props[kCGImagePropertyPixelHeight] as? Int
+        else { return nil }
+        return height
+    }
+
+    @Test func rotateSwapsDimensionsInPlace() async throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let png = dir.appendingPathComponent("wide.png")
+        try writePNG(png, width: 120, height: 60)
+        #expect(pixelWidth(png) == 120)
+
+        let result = await ImageConverter.rotate([png], clockwiseDegrees: 90)
+        #expect(result.failures.isEmpty)
+        #expect(result.outputs == [png])  // rotates in place, same URL
+        #expect(pixelWidth(png) == 60)  // 120x60 -> 60x120
+        #expect(pixelHeight(png) == 120)
+    }
+
+    @Test func rotateZeroIsANoOp() async throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let png = dir.appendingPathComponent("still.png")
+        try writePNG(png, width: 40, height: 20)
+        let result = await ImageConverter.rotate([png], clockwiseDegrees: 360)  // normalizes to 0
+        #expect(result.outputs.isEmpty && result.failures.isEmpty)
+        #expect(pixelWidth(png) == 40)  // untouched
+    }
+
     @Test func convertsFormat() async throws {
         let dir = try tempDir()
         defer { try? FileManager.default.removeItem(at: dir) }

@@ -37,6 +37,30 @@ public enum ImageConverter {
         public init() {}
     }
 
+    /// Rotate each image in place by `clockwiseDegrees` (a multiple of 90) via `sips -r`. Used by
+    /// the Rotate Left / Rotate Right quick actions. A per-item failure is recorded and the batch
+    /// continues; rotating the opposite way is the manual undo (sips re-encodes, so it isn't
+    /// registered with the undo history).
+    public static func rotate(_ urls: [URL], clockwiseDegrees: Int) async -> Result {
+        var result = Result()
+        let degrees = ((clockwiseDegrees % 360) + 360) % 360  // sips wants a positive 0…359 value
+        guard degrees != 0 else { return result }
+        for url in urls {
+            do {
+                let (_, code, stderr) = try await RemoteRunner.run("/usr/bin/sips", ["-r", "\(degrees)", url.path])
+                if code == 0 {
+                    result.outputs.append(url)
+                } else {
+                    result.failures.append(
+                        .init(name: url.lastPathComponent, reason: stderr.isEmpty ? "sips exited \(code)" : stderr))
+                }
+            } catch {
+                result.failures.append(.init(name: url.lastPathComponent, reason: error.localizedDescription))
+            }
+        }
+        return result
+    }
+
     /// Convert/resize each image. Sequential (each `sips` call is quick), off-main via the
     /// subprocess runner. A per-item failure is recorded and the batch continues.
     public static func process(_ urls: [URL], options: Options) async -> Result {

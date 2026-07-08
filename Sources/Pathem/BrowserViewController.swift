@@ -847,6 +847,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.contains { Self.isImageName($0.name) }
         }) { [weak self] in self?.convertImagesSelection() }
+        let hasSelectedImage: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.contains { Self.isImageName($0.name) }
+        }
+        add("image.rotateLeft", L("bvc.cmd.rotateLeft", "Rotate Left"), enabled: hasSelectedImage) {
+            [weak self] in self?.rotateSelection(clockwiseDegrees: 270)
+        }
+        add("image.rotateRight", L("bvc.cmd.rotateRight", "Rotate Right"), enabled: hasSelectedImage) {
+            [weak self] in self?.rotateSelection(clockwiseDegrees: 90)
+        }
+        add("image.createPDF", L("bvc.cmd.createPDF", "Create PDF"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.contains { Self.isImageName($0.name) || ($0.name as NSString).pathExtension.lowercased() == "pdf" }
+        }) { [weak self] in self?.createPDFFromSelection() }
         add("files.xattrs", L("bvc.cmd.xattrs", "Extended Attributes…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.count == 1
@@ -2213,6 +2227,75 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard !folderImages.isEmpty else { NSSound.beep(); return }
         let start = selected.first.flatMap { folderImages.firstIndex(of: $0) } ?? 0
         slideshow.start(urls: folderImages, startAt: start)
+    }
+
+    /// Rotate the selected images in place (270 = left, 90 = right) via sips. Not undoable (sips
+    /// re-encodes); rotating the other way restores the orientation.
+    private func rotateSelection(clockwiseDegrees: Int) {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter { Self.isImageName($0.lastPathComponent) }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        Task { @MainActor in
+            let result = await ImageConverter.rotate(urls, clockwiseDegrees: clockwiseDegrees)
+            self.activePane?.reloadIfShowingListing()
+            self.invalidateThumbnails(urls)  // the on-disk pixels changed; drop stale thumbnails
+            if !result.failures.isEmpty {
+                self.presentFailures(result.failures, title: L("bvc.rotateFailed", "Couldn’t rotate"))
+            }
+        }
+    }
+
+    /// Combine the selected images and PDFs into one new PDF in the folder, then select it.
+    private func createPDFFromSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter {
+            Self.isImageName($0.lastPathComponent) || $0.pathExtension.lowercased() == "pdf"
+        }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        Task { @MainActor in
+            let out = await Task.detached { Self.buildPDF(from: urls, in: folder) }.value
+            self.activePane?.reloadIfShowingListing()
+            if let out {
+                self.activePane?.select(name: out.lastPathComponent)
+            } else {
+                self.presentInfo(
+                    L("bvc.createPDFFailedTitle", "Couldn’t create PDF"),
+                    L("bvc.createPDFFailedBody", "None of the selected files could be added to a PDF."))
+            }
+        }
+    }
+
+    /// Build a single PDF from images (one page each) and PDFs (all their pages), in selection
+    /// order, written to a uniquely-named file in `folder`. Returns the URL, or nil on failure.
+    nonisolated static func buildPDF(from urls: [URL], in folder: URL) -> URL? {
+        let document = PDFDocument()
+        var pageIndex = 0
+        for url in urls {
+            if url.pathExtension.lowercased() == "pdf", let source = PDFDocument(url: url) {
+                for i in 0..<source.pageCount where source.page(at: i) != nil {
+                    document.insert(source.page(at: i)!, at: pageIndex)
+                    pageIndex += 1
+                }
+            } else if let image = NSImage(contentsOf: url), let page = PDFPage(image: image) {
+                document.insert(page, at: pageIndex)
+                pageIndex += 1
+            }
+        }
+        guard document.pageCount > 0 else { return nil }
+        let fm = FileManager.default
+        var out = folder.appendingPathComponent("Combined.pdf")
+        var n = 2
+        while fm.fileExists(atPath: out.path) {
+            out = folder.appendingPathComponent("Combined \(n).pdf")
+            n += 1
+        }
+        return document.write(to: out) ? out : nil
+    }
+
+    /// Drop cached thumbnails for files whose pixels changed on disk, so the grids regenerate them.
+    private func invalidateThumbnails(_ urls: [URL]) {
+        for url in urls { ThumbnailProvider.shared.evict(url) }
     }
 
     /// Convert/resize the selected images via sips (out-of-process), after a small dialog
@@ -5608,6 +5691,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // smoke must not pop a full-screen window, so we don't call start()).
         check("slideshow-ready", cmdIDs.contains("view.slideshow") && !slideshow.isActive,
             "registered=\(cmdIDs.contains("view.slideshow")) active=\(slideshow.isActive)")
+        // Create PDF: two images combine into a real 2-page PDF.
+        let pdfDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-pdf-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: pdfDir, withIntermediateDirectories: true)
+        var pdfImages: [URL] = []
+        for i in 0..<2 {
+            let image = NSImage(size: NSSize(width: 60, height: 40))
+            image.lockFocus()
+            NSColor.systemGreen.setFill()
+            NSRect(x: 0, y: 0, width: 60, height: 40).fill()
+            image.unlockFocus()
+            if let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                let png = rep.representation(using: .png, properties: [:]) {
+                let url = pdfDir.appendingPathComponent("p\(i).png")
+                try? png.write(to: url)
+                pdfImages.append(url)
+            }
+        }
+        let pdfOut = BrowserViewController.buildPDF(from: pdfImages, in: pdfDir)
+        let pdfPages = pdfOut.flatMap { PDFDocument(url: $0)?.pageCount } ?? 0
+        check("create-pdf-builds", pdfPages == 2, "pages=\(pdfPages)")
+        try? FileManager.default.removeItem(at: pdfDir)
         return (ok, lines)
     }
 }

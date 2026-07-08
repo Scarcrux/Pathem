@@ -13,9 +13,24 @@ final class ThumbnailProvider {
 
     private let cache = NSCache<NSString, NSImage>()
     private let noPreview = NSCache<NSString, NSNumber>()  // negative cache, bounded
+    /// Keys we've populated, so `evict(_:)` can drop every size for a file (NSCache can't
+    /// enumerate). Bounded implicitly by the same churn that bounds the caches.
+    private var liveKeys: Set<String> = []
     private init() {
         cache.countLimit = 4000
         noPreview.countLimit = 8000
+    }
+
+    /// Drop every cached size (and the negative-cache entry) for a file whose pixels changed on
+    /// disk (e.g. after a rotate), so the grids regenerate its thumbnail instead of showing stale.
+    func evict(_ url: URL) {
+        let prefix = url.path + "|"
+        let stale = liveKeys.filter { $0.hasPrefix(prefix) }
+        for key in stale {
+            cache.removeObject(forKey: key as NSString)
+            noPreview.removeObject(forKey: key as NSString)
+            liveKeys.remove(key)
+        }
     }
 
     private func key(_ url: URL, _ size: CGSize) -> String {
@@ -41,7 +56,10 @@ final class ThumbnailProvider {
         QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { [weak self] representation, _ in
             guard let representation else {
                 // Remember there's no preview so we don't re-request it on every scroll.
-                Task { @MainActor in self?.noPreview.setObject(1, forKey: cacheKey as NSString) }
+                Task { @MainActor in
+                    self?.noPreview.setObject(1, forKey: cacheKey as NSString)
+                    self?.liveKeys.insert(cacheKey)
+                }
                 return
             }
             // QuickLook calls back off the main actor; box the non-Sendable image +
@@ -49,6 +67,7 @@ final class ThumbnailProvider {
             let result = Delivery(image: representation.nsImage, key: cacheKey, completion: completion)
             Task { @MainActor in
                 self?.cache.setObject(result.image, forKey: result.key as NSString)
+                self?.liveKeys.insert(result.key)
                 result.completion(result.image)
             }
         }
