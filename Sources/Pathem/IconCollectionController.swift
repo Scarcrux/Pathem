@@ -123,15 +123,21 @@ final class IconItem: NSCollectionViewItem {
 
     func configure(
         name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
-        thumbnailURL: URL?
+        thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = []
     ) {
         loadViewIfNeeded()
         icon.image = image  // type icon shows immediately; a thumbnail replaces it when ready
         iconWidth?.constant = iconSize
         iconHeight?.constant = iconSize
-        label.stringValue = name
         label.font = .systemFont(ofSize: fontSize)
         label.textColor = dimmed ? .secondaryLabelColor : .labelColor
+        // Middle truncation keeps both the leading git letter and the trailing tag dots even when
+        // a long name is clipped, so the grid shows the same decorations as the list and column.
+        if git != nil || !tags.isEmpty {
+            label.attributedStringValue = FileNameDecoration.decoratedName(name, git: git, dots: tags, size: fontSize)
+        } else {
+            label.stringValue = name
+        }
         updateHighlight()
 
         representedURL = thumbnailURL
@@ -187,6 +193,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private var labelFontSize: CGFloat = 12
     /// Reports a new zoom scale so the pane can persist it across view switches/launches.
     var onZoomChanged: ((CGFloat) -> Void)?
+    /// Shared tag-color + git-state cache, so grid items show the same decorations as the list.
+    private let decorations = PaneDecorationCache()
 
     var directoryURL: URL?
     var resolutionURL: URL?
@@ -213,6 +221,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         super.init()
         build()
         collection.onZoom = { [weak self] delta in self?.adjustZoom(delta * 0.0125) }  // Cmd-scroll
+        decorations.onTagsChanged = { [weak self] in self?.collection.reloadData() }
     }
 
     /// Zoom by an absolute step (Cmd +/-) or a scroll-derived delta; clamps and persists.
@@ -349,7 +358,15 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             }
             collection.selectionIndexPaths = paths
         }
+        // Read tag colors off-main, then redraw once if any item shows a dot (untagged is free).
+        decorations.refreshTags(entries: entries, directory: directoryURL)
     }
+
+    func setGitStates(_ states: [String: GitFileState]) {
+        if decorations.setGitStates(states) { collection.reloadData() }
+    }
+
+    func invalidateTagCache() { decorations.invalidateTags() }
 
     func showPlaceholder(_ text: String?) {
         placeholder.stringValue = text ?? ""
@@ -395,7 +412,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
         item.configure(
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
-            dimmed: entry.isDataless, thumbnailURL: thumbnailURL)
+            dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
+            git: decorations.gitState(for: entry, in: directoryURL),
+            tags: decorations.tagColors(for: entry, in: directoryURL))
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
         // as Finder does, and dim cut items until pasted. Set on every configure (cells are
         // reused) so it never sticks.

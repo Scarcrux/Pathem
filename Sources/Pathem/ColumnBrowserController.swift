@@ -67,6 +67,21 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         for column in columns { column.table.reloadData() }
     }
 
+    /// Shared tag-color cache, so every open column shows the same dots the list does.
+    private lazy var decorations: PaneDecorationCache = {
+        let cache = PaneDecorationCache()
+        cache.onTagsChanged = { [weak self] in
+            for column in self?.columns ?? [] { column.table.reloadData() }
+        }
+        return cache
+    }()
+    func invalidateTagCache() { decorations.invalidateTags() }
+
+    /// Re-read tag colors across every open column, then redraw if the visible dots changed.
+    private func refreshColumnTags() {
+        decorations.refreshTags(groups: columns.map { (entries: $0.entries, directory: $0.folder) })
+    }
+
     /// Git working-tree states keyed by absolute path; drives the per-name status letter.
     private var gitStates: [String: GitFileState] = [:]
     func setGitStates(_ states: [String: GitFileState]) {
@@ -194,6 +209,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         }
         trailingConstraint?.isActive = true
         container.layoutSubtreeIfNeeded()
+        refreshColumnTags()  // structural change: re-read tag dots across the open columns
     }
 
     /// Load a folder's children off the main thread, then append the next column,
@@ -247,11 +263,14 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
         cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
-        // Prefix a colored git-status letter when this file has one (shared with the list view).
-        let git = gitStates.isEmpty ? nil : gitStates[PaneItemKey.path(for: entry, in: columns[index].folder)]
-        if let git {
+        // Prefix a colored git-status letter and suffix tag dots when present (shared with the
+        // list view). Middle truncation keeps both ends even when a long name is clipped.
+        let folder = columns[index].folder
+        let git = gitStates.isEmpty ? nil : gitStates[PaneItemKey.path(for: entry, in: folder)]
+        let dots = decorations.tagColors(for: entry, in: folder)
+        if git != nil || !dots.isEmpty {
             cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
-                entry.name, git: git, dots: [], size: 13)
+                entry.name, git: git, dots: dots, size: 13)
         } else {
             cell.textField?.stringValue = entry.name
         }
@@ -428,7 +447,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         cell.imageView = icon
         let field = NSTextField(labelWithString: "")
         field.translatesAutoresizingMaskIntoConstraints = false
-        field.lineBreakMode = .byTruncatingTail
+        field.lineBreakMode = .byTruncatingMiddle  // keep the leading git letter and trailing tag dots
         field.font = .systemFont(ofSize: 13)
         cell.addSubview(field)
         cell.textField = field
@@ -484,6 +503,7 @@ extension ColumnBrowserController: PaneContentView {
             var rows = IndexSet()
             for (index, entry) in entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
             first.table.selectRowIndexes(rows, byExtendingSelection: false)
+            refreshColumnTags()  // a watcher tick may include external tag edits
             return
         }
         let wasFocused = outerScroll.window?.firstResponder === container

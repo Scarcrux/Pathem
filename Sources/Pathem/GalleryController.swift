@@ -22,6 +22,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     private var labelFontSize: CGFloat = 11
     private var previewURL: URL?  // guards an async thumbnail against a newer selection
 
+    /// Shared tag-color + git-state cache, so the filmstrip shows the same decorations as the list.
+    private let decorations = PaneDecorationCache()
+
     var directoryURL: URL?
     var resolutionURL: URL?
     var onOpen: ((FileEntry) -> Void)?
@@ -45,7 +48,14 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     override init() {
         super.init()
         build()
+        decorations.onTagsChanged = { [weak self] in self?.filmstrip.reloadData() }
     }
+
+    func setGitStates(_ states: [String: GitFileState]) {
+        if decorations.setGitStates(states) { filmstrip.reloadData() }
+    }
+
+    func invalidateTagCache() { decorations.invalidateTags() }
 
     private func build() {
         let layout = NSCollectionViewFlowLayout()
@@ -227,6 +237,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         if paths.isEmpty, !entries.isEmpty { paths = [IndexPath(item: 0, section: 0)] }  // preview the first
         filmstrip.selectionIndexPaths = paths
         selectionChanged()
+        decorations.refreshTags(entries: entries, directory: directoryURL)
     }
 
     func showPlaceholder(_ text: String?) {
@@ -271,7 +282,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
         item.configure(
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
-            iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless, thumbnailURL: thumbnailURL)
+            iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
+            git: decorations.gitState(for: entry, in: directoryURL),
+            tags: decorations.tagColors(for: entry, in: directoryURL))
         item.view.alphaValue = alpha(for: entry)  // dim cut items until pasted
         return item
     }
