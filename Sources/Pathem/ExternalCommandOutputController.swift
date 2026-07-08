@@ -25,7 +25,8 @@ final class ExternalCommandOutputController: NSObject {
         build()
     }
 
-    /// Show the panel, run `command` on `files` in `directory` off-main, then display its output.
+    /// Show the panel and run `command` on `files` in `directory` off-main, streaming its combined
+    /// output into the view as it arrives (so long-running commands aren't silent until the end).
     func run(_ command: ExternalCommand, files: [URL], directory: URL) {
         panel.title = command.name
         textView.string = ""
@@ -38,20 +39,28 @@ final class ExternalCommandOutputController: NSObject {
         let box = ProcessBox()
         self.box = box
         Task { @MainActor in
-            let output = await Task.detached(priority: .userInitiated) {
-                ExternalCommandRunner.run(command, files: files, directory: directory, process: box.process)
+            let exitCode = await Task.detached(priority: .userInitiated) {
+                ExternalCommandRunner.runStreaming(command, files: files, directory: directory, process: box.process) {
+                    chunk in
+                    Task { @MainActor in self.append(chunk, for: box) }
+                }
             }.value
             guard self.box === box else { return }  // a newer run replaced us
             self.box = nil
-            self.textView.string = output.text
-            self.textView.scrollToEndOfDocument(nil)
             self.stopButton.isEnabled = false
             self.statusLabel.stringValue =
-                output.succeeded
+                exitCode == 0
                 ? L("extcmd.finished", "Finished")
-                : String(format: L("extcmd.exitCode", "Exited with code %d"), Int(output.exitCode))
-            self.statusLabel.textColor = output.succeeded ? .secondaryLabelColor : .systemRed
+                : String(format: L("extcmd.exitCode", "Exited with code %d"), Int(exitCode))
+            self.statusLabel.textColor = exitCode == 0 ? .secondaryLabelColor : .systemRed
         }
+    }
+
+    /// Append a streamed chunk, ignoring output from a superseded run, and keep the view scrolled.
+    private func append(_ text: String, for box: ProcessBox) {
+        guard self.box === box else { return }
+        textView.string += text
+        textView.scrollToEndOfDocument(nil)
     }
 
     /// Show the panel with a loading line, await an async text producer (e.g. an on-device AI

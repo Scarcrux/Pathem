@@ -82,4 +82,39 @@ public enum ExternalCommandRunner {
         process.waitUntilExit()
         return Output(text: String(data: data, encoding: .utf8) ?? "", exitCode: process.terminationStatus)
     }
+
+    /// Like `run`, but delivers combined stdout/stderr incrementally via `onOutput` as it arrives
+    /// (on a background queue), so a long-running command's output appears live instead of only at
+    /// the end. Blocks until exit (call off the main thread); returns the exit code. `onOutput` may
+    /// be called from any thread, so callers hop to the main actor to touch UI.
+    @discardableResult
+    public static func runStreaming(
+        _ command: ExternalCommand, files: [URL], directory: URL, process: Process = Process(),
+        onOutput: @escaping @Sendable (String) -> Void
+    ) -> Int32 {
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = ["-c", expand(command.command, files: files, directory: directory)]
+        process.currentDirectoryURL = directory
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+        let handle = pipe.fileHandleForReading
+        handle.readabilityHandler = { fh in
+            let data = fh.availableData
+            if !data.isEmpty, let chunk = String(data: data, encoding: .utf8) { onOutput(chunk) }
+        }
+        do {
+            try process.run()
+        } catch {
+            handle.readabilityHandler = nil
+            onOutput(error.localizedDescription)
+            return -1
+        }
+        process.waitUntilExit()
+        handle.readabilityHandler = nil
+        // Deliver anything buffered between the last read and exit.
+        let remainder = handle.readDataToEndOfFile()
+        if !remainder.isEmpty, let chunk = String(data: remainder, encoding: .utf8) { onOutput(chunk) }
+        return process.terminationStatus
+    }
 }

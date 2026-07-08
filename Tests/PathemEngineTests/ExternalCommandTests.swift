@@ -9,6 +9,34 @@ import Testing
         [dir.appendingPathComponent("a b.txt"), dir.appendingPathComponent("c.txt")]
     }
 
+    /// Thread-safe accumulator: runStreaming's onOutput fires from a background queue.
+    private final class Collected: @unchecked Sendable {
+        private let lock = NSLock()
+        private var buffer = ""
+        func append(_ s: String) { lock.lock(); buffer += s; lock.unlock() }
+        var text: String { lock.lock(); defer { lock.unlock() }; return buffer }
+    }
+
+    @Test func streamsCombinedOutputAndExitCode() {
+        let collected = Collected()
+        let exit = ExternalCommandRunner.runStreaming(
+            .init(id: "t", name: "echo", command: "echo out; echo err 1>&2"),
+            files: [], directory: FileManager.default.temporaryDirectory
+        ) { collected.append($0) }
+        #expect(exit == 0)
+        #expect(collected.text.contains("out"))
+        #expect(collected.text.contains("err"))  // stderr is merged into the same stream
+    }
+
+    @Test func streamingReportsNonZeroExit() {
+        let collected = Collected()
+        let exit = ExternalCommandRunner.runStreaming(
+            .init(id: "t", name: "fail", command: "exit 3"),
+            files: [], directory: FileManager.default.temporaryDirectory
+        ) { collected.append($0) }
+        #expect(exit == 3)
+    }
+
     @Test func expandsPlaceholdersShellQuoted() {
         let out = ExternalCommandRunner.expand("tool %F in %D", files: files, directory: dir)
         #expect(out == "tool '/tmp/pathem work/a b.txt' '/tmp/pathem work/c.txt' in '/tmp/pathem work'")
