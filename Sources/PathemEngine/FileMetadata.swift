@@ -23,6 +23,29 @@ public enum FileMetadata {
         return comment
     }
 
+    /// Set (or clear, when empty) the Finder/Spotlight comment, written in the same binary-plist
+    /// form Finder uses (`com.apple.metadata:kMDItemFinderComment`), so Finder and Spotlight both
+    /// read it back. Throws on the underlying setxattr/removexattr failure.
+    public static func setFinderComment(_ comment: String, on url: URL) throws {
+        let name = "com.apple.metadata:kMDItemFinderComment"
+        let trimmed = comment.trimmingCharacters(in: .whitespacesAndNewlines)
+        let result: Int32 = url.withUnsafeFileSystemRepresentation { fsr in
+            guard let fsr else { return -1 }
+            if trimmed.isEmpty {
+                let code = removexattr(fsr, name, XATTR_NOFOLLOW)
+                return (code == 0 || errno == ENOATTR) ? 0 : code  // clearing an absent comment is fine
+            }
+            guard let data = try? PropertyListSerialization.data(fromPropertyList: comment, format: .binary, options: 0)
+            else { return -1 }
+            return data.withUnsafeBytes { setxattr(fsr, name, $0.baseAddress, data.count, 0, XATTR_NOFOLLOW) }
+        }
+        if result != 0 {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno == 0 ? EIO : errno), userInfo: [
+                NSLocalizedDescriptionKey: "Couldn’t set the Finder comment on \(url.lastPathComponent)."
+            ])
+        }
+    }
+
     /// Whether Finder hides this item's extension.
     public static func hidesExtension(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.hasHiddenExtensionKey]))?.hasHiddenExtension ?? false

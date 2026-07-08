@@ -887,6 +887,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.setAttributes", L("bvc.cmd.setAttributes", "Set Attributes…"), enabled: hasLocalSelection) {
             [weak self] in self?.setAttributesSelection()
         }
+        add("files.setFinderComment", L("bvc.cmd.setFinderComment", "Set Finder Comment…"), enabled: hasLocalSelection) {
+            [weak self] in self?.setFinderCommentSelection()
+        }
+        add("files.connectToServer", L("bvc.cmd.connectToServer", "Connect to Server…")) {
+            [weak self] in self?.connectToServer()
+        }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
             return pane.selectedLocalURLs().first.map(Archiver.canExtract) ?? false
@@ -2221,6 +2227,46 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     ]
     static func isImageName(_ name: String) -> Bool {
         imageExtensions.contains((name as NSString).pathExtension.lowercased())
+    }
+
+    /// Set (or clear) the Finder comment on every selected item, prefilled with the shared comment
+    /// when they all match. Applied off-main through the engine writer.
+    private func setFinderCommentSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        let existing = Set(urls.map { FileMetadata.finderComment(of: $0) ?? "" })
+        let prefill = existing.count == 1 ? (existing.first ?? "") : ""
+
+        let alert = NSAlert()
+        alert.messageText =
+            urls.count == 1
+            ? String(format: L("comment.titleOne", "Finder comment for “%@”"), urls[0].lastPathComponent)
+            : String(format: L("comment.titleMany", "Finder comment for %d items"), urls.count)
+        alert.informativeText = L("comment.hint", "Leave empty to remove the comment.")
+        alert.addButton(withTitle: L("common.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        field.stringValue = prefill
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let comment = field.stringValue
+            let failures = await Task.detached { () -> [FileOperations.Failure] in
+                var failures: [FileOperations.Failure] = []
+                for url in urls {
+                    do { try FileMetadata.setFinderComment(comment, on: url) } catch {
+                        failures.append(.init(name: url.lastPathComponent, reason: error.localizedDescription))
+                    }
+                }
+                return failures
+            }.value
+            self.activePane?.reloadIfShowingListing()
+            if !failures.isEmpty {
+                self.presentFailures(failures, title: L("comment.failed", "Couldn’t set the comment"))
+            }
+        }
     }
 
     /// Full-screen slideshow: 2+ selected images play as-is; otherwise every image in the folder
@@ -4355,6 +4401,43 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Finder-style "Connect to Server": prompt for an smb/afp/nfs address, mount it via NetFS
+    /// (the OS handles auth), and navigate the active pane to the mount point.
+    private func connectToServer() {
+        guard let window = view.window else { return }
+        let alert = NSAlert()
+        alert.messageText = L("connect.title", "Connect to Server")
+        alert.informativeText = L("connect.hint", "Enter a server address, for example smb://host/share or afp://host.")
+        alert.addButton(withTitle: L("connect.connect", "Connect"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 24))
+        field.placeholderString = "smb://host/share"
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            var text = field.stringValue.trimmingCharacters(in: .whitespaces)
+            guard !text.isEmpty else { return }
+            if !text.contains("://") { text = "smb://" + text }  // bare host defaults to SMB
+            guard let url = URL(string: text), let scheme = url.scheme?.lowercased(),
+                ["smb", "afp", "nfs"].contains(scheme)
+            else {
+                self.presentInfo(
+                    L("connect.badTitle", "Unsupported address"),
+                    L("connect.badBody", "Use an smb://, afp://, or nfs:// address."))
+                return
+            }
+            let result = await Self.mountShare(url)
+            if let mount = result.mount {
+                self.activePane?.navigate(to: mount)
+            } else if result.status != ECANCELED {  // ECANCELED = user dismissed the OS prompt
+                self.presentInfo(
+                    L("smb.failedTitle", "Couldn’t connect"),
+                    String(format: L("connect.failedBody", "Couldn’t mount “%@”. Check the address and your credentials."), text))
+            }
+        }
+    }
+
     /// Mount smb://host via NetFS (the OS handles auth/Keychain and shows its own
     /// prompt when needed), then navigate the active pane to the mount point.
     private func mountSMB(host: String) {
@@ -5766,6 +5849,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("show-original-resolves", resolvedLink?.lastPathComponent == "target.txt" && resolvedPlain == nil,
             "link=\(resolvedLink?.lastPathComponent ?? "nil") plain=\(resolvedPlain?.lastPathComponent ?? "nil")")
         try? FileManager.default.removeItem(at: soDir)
+        // Batch metadata + server: the new commands are registered, and the Finder-comment writer
+        // round-trips (set, read back, clear) through the engine.
+        check("batch-commands-registered",
+            cmdIDs.isSuperset(of: ["files.setFinderComment", "files.connectToServer"]),
+            "have=\(["files.setFinderComment", "files.connectToServer"].filter(cmdIDs.contains).count)/2")
+        let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
+        try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
+        try? FileMetadata.setFinderComment("smoke note", on: fcFile)
+        let fcRead = FileMetadata.finderComment(of: fcFile)
+        try? FileMetadata.setFinderComment("", on: fcFile)
+        let fcCleared = FileMetadata.finderComment(of: fcFile) == nil
+        check("finder-comment-roundtrips", fcRead == "smoke note" && fcCleared, "read=\(fcRead ?? "nil") cleared=\(fcCleared)")
+        try? FileManager.default.removeItem(at: fcFile)
         return (ok, lines)
     }
 }

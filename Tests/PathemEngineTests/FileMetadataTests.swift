@@ -21,6 +21,20 @@ import Testing
         }
     }
 
+    @Test func finderCommentRoundTrips() throws {
+        let url = try tempFile("noted.txt")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        #expect(FileMetadata.finderComment(of: url) == nil)  // none to start
+
+        try FileMetadata.setFinderComment("Review before Friday", on: url)
+        #expect(FileMetadata.finderComment(of: url) == "Review before Friday")
+
+        try FileMetadata.setFinderComment("", on: url)  // empty clears it
+        #expect(FileMetadata.finderComment(of: url) == nil)
+
+        try FileMetadata.setFinderComment("", on: url)  // clearing an absent comment is not an error
+    }
+
     @Test func whereFromsParsesTheBinaryPlistArray() throws {
         let url = try tempFile("download.zip")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }

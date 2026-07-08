@@ -539,6 +539,7 @@ enum PathemApp {
                     commandItem("Rotate Right", "image.rotateRight"),
                     commandItem("Create PDF", "image.createPDF"),
                     commandItem("Set Attributes…", "files.setAttributes"),
+                    commandItem("Set Finder Comment…", "files.setFinderComment"),
                     .separator(),
                     commandItem("Compress", "files.compress"),
                     commandItem("Compress to 7-Zip", "files.compress7z"),
@@ -679,6 +680,7 @@ enum PathemApp {
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
         goMenu.addItem(commandItem("Find Files Everywhere…", "nav.findFiles", "o", [.command, .shift]))
         goMenu.addItem(.separator())
+        goMenu.addItem(commandItem("Connect to Server…", "files.connectToServer", "k"))
         goMenu.addItem(commandItem("Connections…", "connections.manage", "k", [.command, .shift]))
         goMenu.addItem(commandItem("Open Connections in a New Tab", "connections.newTabToggle"))
         goMenu.addItem(commandItem("Download from Server…", "remote.download"))
