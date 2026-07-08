@@ -256,6 +256,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.calculateFolderSizes", "Calculate folder sizes"), \.calculateFolderSizes),
             check(L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"), \.confirmBeforeDelete),
             labeled(L("prefs.conflictDefault", "When files already exist"), conflictDefaultControl()),
+            check(L("prefs.verifyCopies", "Verify copies with a checksum (slower)"), \.verifyCopies),
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
             check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
             check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),

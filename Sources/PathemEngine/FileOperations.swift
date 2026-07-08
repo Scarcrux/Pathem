@@ -271,16 +271,35 @@ public enum FileOperations {
         move(urls: names.map { source.appendingPathComponent($0) }, into: destination, onConflict: onConflict)
     }
 
+    /// A copy whose SHA-256 didn't match the source (verification was on). The bad copy is
+    /// removed before this is thrown, so no corrupt file is left behind.
+    public struct CopyVerificationError: LocalizedError {
+        public let name: String
+        public var errorDescription: String? {
+            "Verification failed: the copy of \(name) doesn’t match the original."
+        }
+    }
+
     @discardableResult
     public static func copy(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
+        verify: Bool = false,
         shouldCancel: () -> Bool = { false }, report: (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .copied, onConflict: onConflict,
             shouldCancel: shouldCancel, report: report
-        ) {
-            try FileManager.default.copyItem(at: $0, to: $1)
+        ) { source, dest in
+            try FileManager.default.copyItem(at: source, to: dest)
+            // Verify files by SHA-256 (a directory hashes to nil on both sides, so it passes
+            // through); a mismatch means a corrupt copy -- remove it and fail that item.
+            if verify {
+                let matched = (try? FileHasher.hash(source)) == (try? FileHasher.hash(dest))
+                if !matched {
+                    try? FileManager.default.removeItem(at: dest)
+                    throw CopyVerificationError(name: source.lastPathComponent)
+                }
+            }
         }
     }
 

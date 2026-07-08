@@ -49,6 +49,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// What to do when a move/copy hits a name collision. `.ask` prompts (the default); the
     /// others resolve automatically so no dialog appears.
     public var conflictDefault: ConflictDefault
+    /// Verify each copied file by SHA-256 after copying (slower: re-reads both files). Off by
+    /// default. Applies to copies only; a move leaves no source to compare against.
+    public var verifyCopies: Bool
     /// Dragging items between folders moves them by default (hold Command to copy).
     /// Off keeps the Finder-like default of copy (hold Command to move).
     public var dragMovesByDefault: Bool
@@ -90,7 +93,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
-        conflictDefault: ConflictDefault = .ask,
+        conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
@@ -126,6 +129,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.compactSidebar = compactSidebar
         self.confirmBeforeDelete = confirmBeforeDelete
         self.conflictDefault = conflictDefault
+        self.verifyCopies = verifyCopies
         self.dragMovesByDefault = dragMovesByDefault
     }
 
@@ -158,6 +162,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         confirmBeforeDelete =
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
         conflictDefault = (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault
+        verifyCopies = try c.decodeIfPresent(Bool.self, forKey: .verifyCopies) ?? d.verifyCopies
         dragMovesByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .dragMovesByDefault) ?? d.dragMovesByDefault
         appearance = (try? c.decode(Appearance.self, forKey: .appearance)) ?? d.appearance

@@ -14,7 +14,7 @@ final class TransferRunner {
     /// operations never flash it. `completion` is called on the main actor with the outcome.
     func run(
         urls: [URL], into destination: URL, move: Bool,
-        resolution: FileOperations.ConflictResolution, over window: NSWindow?,
+        resolution: FileOperations.ConflictResolution, verify: Bool = false, over window: NSWindow?,
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
         let verb = move ? L("bvc.moving", "Moving") : L("bvc.copying", "Copying")
@@ -53,7 +53,7 @@ final class TransferRunner {
                         shouldCancel: { state.isCancelled }, report: { state.setProgress($0) })
                 }
                 return FileOperations.copy(
-                    urls: urls, into: destination, onConflict: resolution,
+                    urls: urls, into: destination, onConflict: resolution, verify: verify,
                     shouldCancel: { state.isCancelled }, report: { state.setProgress($0) })
             }.value
             monitor.cancel()
