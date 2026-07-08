@@ -10,10 +10,13 @@ public struct SavedSearch: Codable, Sendable, Equatable {
     public var minSizeBytes: Int64?
     public var modifiedWithinDays: Int?
     public var contentType: String?  // a UTI tree, e.g. "public.image"
+    public var contentContains: String?  // full-text content match (Spotlight-indexed)
+    public var tag: String?  // a Finder color/label tag name
 
     public init(
         name: String, nameContains: String? = nil, fileExtension: String? = nil,
-        minSizeBytes: Int64? = nil, modifiedWithinDays: Int? = nil, contentType: String? = nil
+        minSizeBytes: Int64? = nil, modifiedWithinDays: Int? = nil, contentType: String? = nil,
+        contentContains: String? = nil, tag: String? = nil
     ) {
         self.name = name
         self.nameContains = nameContains
@@ -21,6 +24,8 @@ public struct SavedSearch: Codable, Sendable, Equatable {
         self.minSizeBytes = minSizeBytes
         self.modifiedWithinDays = modifiedWithinDays
         self.contentType = contentType
+        self.contentContains = contentContains
+        self.tag = tag
     }
 
     public init(from decoder: Decoder) throws {
@@ -31,10 +36,13 @@ public struct SavedSearch: Codable, Sendable, Equatable {
         minSizeBytes = try c.decodeIfPresent(Int64.self, forKey: .minSizeBytes)
         modifiedWithinDays = try c.decodeIfPresent(Int.self, forKey: .modifiedWithinDays)
         contentType = try c.decodeIfPresent(String.self, forKey: .contentType)
+        contentContains = try c.decodeIfPresent(String.self, forKey: .contentContains)
+        tag = try c.decodeIfPresent(String.self, forKey: .tag)
     }
 
     private enum CodingKeys: String, CodingKey {
         case name, nameContains, fileExtension, minSizeBytes, modifiedWithinDays, contentType
+        case contentContains, tag
     }
 
     /// The mdfind predicate for these criteria (empty if no criteria are set).
@@ -57,6 +65,12 @@ public struct SavedSearch: Codable, Sendable, Equatable {
         }
         if let contentType, !contentType.isEmpty {
             clauses.append("kMDItemContentTypeTree == \"\(esc(contentType))\"")
+        }
+        if let contentContains, !contentContains.isEmpty {
+            clauses.append("kMDItemTextContent == \"*\(esc(contentContains))*\"cd")  // c/d = case/diacritic-insensitive
+        }
+        if let tag, !tag.isEmpty {
+            clauses.append("kMDItemUserTags == \"\(esc(tag))\"c")
         }
         return clauses.joined(separator: " && ")
     }

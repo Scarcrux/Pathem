@@ -48,9 +48,12 @@ this is the running plan.
    (via the existing SSH_ASKPASS path) instead of a password. The site manager has
    a Key File field + Choose… (opens in ~/.ssh, shows hidden files). Keychain
    password/passphrase saving already existed (the Remember checkbox).
-4. **Advanced find / smart folders.** A find/filter builder (name, size, date, kind,
-   content, tag) over Spotlight `mdfind`, savable as a smart folder in the sidebar --
-   the deterministic complement to the existing semantic search.
+4. **Advanced find / smart folders** -- SHIPPED (2026-07-08). View > Advanced Find
+   (Cmd-Opt-F): a builder over Spotlight `mdfind` -- name, extension, kind, content,
+   tag, min size, modified-within -- with Search (results in the active pane) or
+   Save as Smart Folder (persisted to searches.json, re-registered as a palette /
+   bindable command). SavedSearch gained content + tag criteria (unit-tested).
+   Follow-up: surface saved smart folders in the sidebar.
 
 Bigger bets deliberately left for after these: macOS Shortcuts integration, AI
 rename / summarize / dedup, multi-window, SMB/AFP mount, app-wide theming.
@@ -166,9 +169,8 @@ Automation hub (most switch-driving):
 
 Search:
 
-- **Advanced find / filter builder** (name, size, date, kind, content, tag) over
-  Spotlight / `mdfind`, savable as a smart folder. The deterministic complement
-  to semantic search.
+- **Advanced find / filter builder** -- SHIPPED (2026-07-08, View > Advanced
+  Find). See "Next up". Remaining polish: show saved smart folders in the sidebar.
 - **Global instant filename search:** indexed, whole-disk, sub-100 ms
   ("Everything"-style).
 
