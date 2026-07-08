@@ -52,15 +52,26 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
     var debugWindowNumber: Int { window.windowNumber }
     private let table = NSTableView()
     private let statusLabel = NSTextField(labelWithString: "")
+    private let pauseButton = NSButton()
+    private let retryButton = NSButton()
     private var jobs: [Job] = []
     private var batches: [UUID: Batch] = [:]
     private var currentJob: Job?
     private var currentTask: Task<Void, Never>?
+    /// When paused, the running job finishes but no new one starts (queue-level pause; pausing
+    /// an in-flight transfer to resume mid-stream needs provider range/reget support).
+    private var isPaused = false
+    /// A Clear All is waiting on the running job's async cancellation before dropping its row.
+    private var clearAllPending = false
+    /// Called when a retried job's (fresh single-item) batch finishes, so the browser can
+    /// reload the affected panes and report any failure -- the original batch completion has
+    /// already fired and been discarded by then.
+    var onRetryComplete: (([(String, Error)], Bool) -> Void)?
     private static let dragType = NSPasteboard.PasteboardType("com.scarcrux.pathem.transferRow")
 
     override init() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 320),
+            contentRect: NSRect(x: 0, y: 0, width: 780, height: 320),
             styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
         super.init()
         window.title = L("queue.title", "Transfers")
@@ -103,6 +114,7 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 
     private func pump() {
         guard currentJob == nil else { return }  // one at a time
+        guard !isPaused else { updateStatus(); return }  // hold the queue; don't start the next
         guard let next = jobs.first(where: { $0.state == .queued }) else {
             updateStatus()
             return
@@ -161,6 +173,14 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         currentTask = nil
         table.reloadData()
         pump()
+        // A Clear All is waiting on the running job's cancellation to land; now that it has,
+        // drop this row too so the queue ends up empty.
+        if clearAllPending, job.state != .queued, job.state != .running {
+            jobs.removeAll { $0 === job }
+            clearAllPending = false
+            table.reloadData()
+            updateStatus()
+        }
     }
 
     /// Cancel a queued or running job.
@@ -186,21 +206,103 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         currentTask?.cancel()
     }
 
+    /// Hold the queue (finish the running job, start no more) or resume it.
+    @objc private func togglePause() {
+        isPaused.toggle()
+        updateStatus()  // refreshes the button title + status text
+        if !isPaused { pump() }
+    }
+
+    /// Re-queue every failed or cancelled job for another attempt.
+    @objc private func retryFailed() {
+        for job in jobs where job.state == .failed || job.state == .cancelled { retry(job) }
+    }
+
+    /// Re-queue one failed/cancelled job as a fresh single-item batch (the original batch
+    /// already reported and was discarded). Clears any partial download so it restarts clean.
+    private func retry(_ job: Job) {
+        guard job.state == .failed || job.state == .cancelled else { return }
+        if let partial = job.progressFile { try? FileManager.default.removeItem(at: partial) }
+        let batchID = UUID()
+        batches[batchID] = Batch(
+            remaining: 1, completion: { [weak self] failures, cancelled in
+                self?.onRetryComplete?(failures, cancelled)
+            })
+        let fresh = Job(
+            name: job.name, batch: batchID, totalBytes: job.totalBytes,
+            progressFile: job.progressFile, run: job.run)
+        if let index = jobs.firstIndex(where: { $0 === job }) {
+            jobs[index] = fresh
+        } else {
+            jobs.append(fresh)
+        }
+        table.reloadData()
+        pump()
+    }
+
     @objc private func clearFinished() {
         jobs.removeAll { $0.state == .done || $0.state == .failed || $0.state == .cancelled }
         table.reloadData()
         updateStatus()
     }
 
+    /// Empty the whole queue in one click: cancel anything still active (firing each batch's
+    /// completion so the browser's in-flight gate releases), then drop every row. A running
+    /// job cancels asynchronously, so its row is removed by finish() once cancellation lands.
+    @objc private func clearAll() {
+        // Cancel queued jobs first (synchronous finish), before arming clearAllPending, so their
+        // finish() calls don't consume the flag meant for the running job.
+        for job in jobs where job.state == .queued { finish(job, failure: nil, cancelled: true) }
+        jobs.removeAll { $0.state != .running }  // drop everything already terminal
+        if currentJob != nil {
+            clearAllPending = true
+            currentTask?.cancel()  // finish() removes the running row when it lands
+        }
+        isPaused = false
+        table.reloadData()
+        updateStatus()
+    }
+
     private func updateStatus() {
         let active = jobs.filter { $0.state == .queued || $0.state == .running }.count
-        statusLabel.stringValue =
-            active == 0
-            ? L("queue.idle", "No active transfers")
-            : String(format: L("queue.active", "%d in progress"), active)
+        if isPaused && active > 0 {
+            statusLabel.stringValue = String(format: L("queue.paused", "Paused (%d waiting)"), active)
+        } else if active == 0 {
+            statusLabel.stringValue = L("queue.idle", "No active transfers")
+        } else {
+            statusLabel.stringValue = String(format: L("queue.active", "%d in progress"), active)
+        }
+        updateButtons()
+    }
+
+    private func updateButtons() {
+        pauseButton.title = isPaused ? L("queue.resume", "Resume") : L("queue.pause", "Pause")
+        retryButton.isEnabled = jobs.contains { $0.state == .failed || $0.state == .cancelled }
     }
 
     func windowWillClose(_ notification: Notification) {}  // keep jobs; window just hides
+
+    /// Smoke check: while paused (so nothing runs), inject a failed job, retry it, and confirm
+    /// it is queued again -- exercises both the pause hold and the retry re-queue deterministically.
+    func debugPauseRetry() -> Bool {
+        isPaused = true  // hold the queue so the retried job stays queued instead of running
+        let batchID = UUID()
+        batches[batchID] = Batch(remaining: 1, completion: { _, _ in })
+        let job = Job(name: "smoke-retry", batch: batchID, totalBytes: 0, progressFile: nil, run: {})
+        job.state = .failed
+        jobs.append(job)
+        let failedBefore = jobs.contains { $0.name == "smoke-retry" && $0.state == .failed }
+        retryFailed()
+        // pump() must NOT have started it (pause), so it is queued, not running/done.
+        let queuedAfter = jobs.contains { $0.name == "smoke-retry" && $0.state == .queued }
+        let didNotRun = !jobs.contains { $0.name == "smoke-retry" && $0.state == .running }
+        // Clean up the injected + retried jobs and their batches so the smoke run leaves nothing.
+        for job in jobs where job.name == "smoke-retry" { batches[job.batch] = nil }
+        batches[batchID] = nil
+        jobs.removeAll { $0.name == "smoke-retry" }
+        isPaused = false
+        return failedBefore && queuedAfter && didNotRun
+    }
 
     // MARK: UI
 
@@ -209,10 +311,19 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         statusLabel.textColor = .secondaryLabelColor
         updateStatus()
 
+        pauseButton.title = L("queue.pause", "Pause")
+        pauseButton.target = self
+        pauseButton.action = #selector(togglePause)
+        retryButton.title = L("queue.retry", "Retry Failed")
+        retryButton.target = self
+        retryButton.action = #selector(retryFailed)
         let cancelButton = NSButton(title: L("queue.cancel", "Cancel"), target: self, action: #selector(cancelSelected))
         let cancelAllButton = NSButton(title: L("queue.cancelAll", "Cancel All"), target: self, action: #selector(cancelAll))
         let clearButton = NSButton(title: L("queue.clear", "Clear Finished"), target: self, action: #selector(clearFinished))
-        for button in [cancelButton, cancelAllButton, clearButton] { button.bezelStyle = .rounded }
+        let clearAllButton = NSButton(title: L("queue.clearAll", "Clear All"), target: self, action: #selector(clearAll))
+        for button in [pauseButton, retryButton, cancelButton, cancelAllButton, clearButton, clearAllButton] {
+            button.bezelStyle = .rounded
+        }
 
         for (id, title, width) in [
             ("status", L("queue.statusColumn", "Status"), CGFloat(120)),
@@ -233,9 +344,12 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
 
-        let buttons = NSStackView(views: [statusLabel, NSView(), cancelButton, cancelAllButton, clearButton])
+        let buttons = NSStackView(views: [
+            statusLabel, NSView(), pauseButton, retryButton, cancelButton, cancelAllButton,
+            clearButton, clearAllButton,
+        ])
         buttons.orientation = .horizontal
-        buttons.spacing = 12
+        buttons.spacing = 8
         let stack = NSStackView(views: [scroll, buttons])
         stack.orientation = .vertical
         stack.spacing = 10
