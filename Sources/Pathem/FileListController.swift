@@ -342,10 +342,36 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Apply display preferences (density-derived row height, font size,
     /// alternating rows). Reloads so recycled cells pick up the new font.
+    /// The configured alternating-rows setting, remembered so it can be restored when a folder
+    /// background (which forces a uniform background) is cleared.
+    private var configuredAlternating = true
+
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
         listFontSize = fontSize
+        configuredAlternating = alternatingRows
         tableView.rowHeight = rowHeight
-        tableView.usesAlternatingRowBackgroundColors = alternatingRows
+        if backgroundColor == nil { tableView.usesAlternatingRowBackgroundColors = alternatingRows }
+        tableView.reloadData()
+    }
+
+    /// The active folder-background color (nil = default). Kept so applyStyle doesn't re-enable
+    /// alternating rows while a background is showing.
+    private var backgroundColor: NSColor?
+
+    func setBackgroundColor(_ color: NSColor?) {
+        backgroundColor = color
+        if let color {
+            let transparent = color.alphaComponent < 0.02  // a picture is behind; show through
+            tableView.backgroundColor = transparent ? .clear : color
+            scrollView.backgroundColor = transparent ? .clear : color
+            scrollView.drawsBackground = !transparent
+            tableView.usesAlternatingRowBackgroundColors = false  // uniform under a folder background
+        } else {
+            tableView.backgroundColor = .controlBackgroundColor
+            scrollView.backgroundColor = .controlBackgroundColor
+            scrollView.drawsBackground = true
+            tableView.usesAlternatingRowBackgroundColors = configuredAlternating
+        }
         tableView.reloadData()
     }
 

@@ -173,7 +173,22 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             // a hairline separator look via the scroll's background
             scroll.drawsBackground = false
         }
-        return Column(folder: folder, entries: entries, scroll: scroll, table: table)
+        let made = Column(folder: folder, entries: entries, scroll: scroll, table: table)
+        applyBackground(to: made)  // a newly drilled column inherits the folder background
+        return made
+    }
+
+    /// The active folder-background color (nil = default), applied to every column.
+    private var backgroundColor: NSColor?
+    func setBackgroundColor(_ color: NSColor?) {
+        backgroundColor = color
+        for column in columns { applyBackground(to: column) }
+    }
+    private func applyBackground(to column: Column) {
+        let transparent = (backgroundColor?.alphaComponent ?? 1) < 0.02
+        column.table.backgroundColor = transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
+        column.scroll.backgroundColor = transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
+        column.scroll.drawsBackground = !transparent
     }
 
     /// Rebuild the columns' layout (left to right, full height). The container's

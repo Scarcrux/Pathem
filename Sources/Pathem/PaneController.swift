@@ -747,6 +747,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         contentRequestToken += 1  // invalidate any pending async smart load
         smartEntries = []
         startWatching()  // arm before snapshotting, to narrow the listing/watch gap
+        applyFolderBackground()  // show this folder's background (color/picture), if any
         reload(preserveState: false)  // navigation resets selection + scroll
         onDidNavigate?()
         onDirectoryDidChange?(nav.current)
@@ -920,17 +921,56 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Put the active content's scroll view into the content container, replacing
     /// any previous one.
+    /// A folder's background picture, drawn behind the content view (which goes clear) when the
+    /// current folder has one set. Hidden otherwise.
+    private let folderBackgroundView: NSImageView = {
+        let view = NSImageView()
+        view.imageScaling = .scaleProportionallyUpOrDown
+        view.imageAlignment = .alignCenter
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.isHidden = true
+        return view
+    }()
+    /// Supplies the background configured for a folder (set by the browser from its store).
+    var backgroundFor: ((URL) -> FolderBackground?)?
+
     private func embedContent() {
         for sub in contentContainer.subviews { sub.removeFromSuperview() }
+        // The background picture sits behind the content, which is made transparent to reveal it.
+        contentContainer.addSubview(folderBackgroundView)
         let view = content.contentView
         view.translatesAutoresizingMaskIntoConstraints = false
-        contentContainer.addSubview(view)
+        contentContainer.addSubview(view)  // on top of the background
         NSLayoutConstraint.activate([
+            folderBackgroundView.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+            folderBackgroundView.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+            folderBackgroundView.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            folderBackgroundView.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
             view.topAnchor.constraint(equalTo: contentContainer.topAnchor),
             view.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
             view.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
             view.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
         ])
+        applyFolderBackground()  // the new content view must pick up the current folder's background
+    }
+
+    /// Apply the current folder's background: a picture (content goes clear over it), a solid color,
+    /// or neither (restore the default). Called on navigation and after a view-mode swap.
+    func applyFolderBackground() {
+        let background = backgroundFor?(nav.current)
+        if let path = background?.imagePath, !path.isEmpty, let image = NSImage(contentsOfFile: path) {
+            folderBackgroundView.image = image
+            folderBackgroundView.isHidden = false
+            content.setBackgroundColor(.clear)
+        } else if let hex = background?.colorHex, !hex.isEmpty, let color = ThemeManager.color(fromHex: hex) {
+            folderBackgroundView.image = nil
+            folderBackgroundView.isHidden = true
+            content.setBackgroundColor(color)
+        } else {
+            folderBackgroundView.image = nil
+            folderBackgroundView.isHidden = true
+            content.setBackgroundColor(nil)
+        }
     }
 
     /// Swap the content view when the folder's view mode changes, carrying over

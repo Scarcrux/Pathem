@@ -406,6 +406,30 @@ enum PathemApp {
             }
         }
 
+        // Render a folder background (a tinted picture behind the list) for headless inspection.
+        if ProcessInfo.processInfo.environment["PATHEM_FOLDERBG_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: FileManager.default.homeDirectoryForCurrentUser)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                // A soft gradient picture behind the pane proves the image path end to end.
+                let img = NSImage(size: NSSize(width: 400, height: 400))
+                img.lockFocus()
+                let gradient = NSGradient(starting: NSColor.systemTeal, ending: NSColor.systemIndigo)
+                gradient?.draw(in: NSRect(x: 0, y: 0, width: 400, height: 400), angle: 45)
+                img.unlockFocus()
+                let path = "/tmp/pathem-folderbg.png"
+                if let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                    let png = rep.representation(using: .png, properties: [:]) {
+                    try? png.write(to: URL(fileURLWithPath: path))
+                }
+                browser.debugSetFolderBackground(colorHex: "", imagePath: path)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    browser.debugRender(to: "/tmp/folderbg.png")
+                    exit(0)
+                }
+            }
+        }
+
         // End-to-end multi-window check: actually open a second window through the same path the
         // New Window command uses, then assert both windows laid out with independent sessions.
         // Tears the second window's shell down so the run leaves nothing orphaned.
@@ -624,6 +648,12 @@ enum PathemApp {
             commandItem("Size", "view.arrangeSize"),
             commandItem("Date Modified", "view.arrangeDate"),
             commandItem("Tag", "view.arrangeTag"),
+        ]))
+        viewMenu.addItem(submenu("Folder Background", [
+            commandItem("Background Color…", "files.setFolderBgColor"),
+            commandItem("Background Picture…", "files.setFolderBgPicture"),
+            .separator(),
+            commandItem("Remove Background", "files.clearFolderBg"),
         ]))
         viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
         viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))

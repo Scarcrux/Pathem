@@ -365,6 +365,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         Self.cleanupRemoteTemp()
         registerCommands()
         loadSavedSearches()  // register before macros so a macro can run a search
+        loadFolderBackgrounds()
         loadCollections()
         loadMacros()  // after base commands, so macros can chain them
         loadTemplates()  // register template commands so they appear in the shortcut editor
@@ -401,6 +402,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 }
                 pane.resolveFormat = { [weak self] url in self?.folderFormats.format(for: url.path) ?? .default }
                 pane.hasExplicitFormat = { [weak self] url in self?.folderFormats.hasRule(for: url.path) ?? false }
+                pane.backgroundFor = { [weak self] url in self?.folderBackgrounds.background(for: url.path) }
                 pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
                 pane.runCommand = { [weak self] id in self?.commands.perform(id) }
@@ -524,6 +526,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
     private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
     private static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
+    private static var folderBackgroundsURL: URL? { appSupportDirectory()?.appendingPathComponent("folder-backgrounds.json") }
+    private var folderBackgrounds = FolderBackgrounds.default
+    private func loadFolderBackgrounds() {
+        folderBackgrounds = loadConfig(FolderBackgrounds.self, from: Self.folderBackgroundsURL) ?? .default
+    }
+    private func reapplyFolderBackgrounds() {
+        for side in [leftTabs, rightTabs] { for pane in side.tabs { pane.applyFolderBackground() } }
+    }
     private static var collectionsConfigURL: URL? {
         appSupportDirectory()?.appendingPathComponent("collections.json")
     }
@@ -892,6 +902,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.connectToServer", L("bvc.cmd.connectToServer", "Connect to Server…")) {
             [weak self] in self?.connectToServer()
+        }
+        let localFolder: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.isRemote && !pane.isShowingSmartResults
+        }
+        add("files.setFolderBgColor", L("bvc.cmd.setFolderBgColor", "Background Color…"), enabled: localFolder) {
+            [weak self] in self?.setFolderBackgroundColor()
+        }
+        add("files.setFolderBgPicture", L("bvc.cmd.setFolderBgPicture", "Background Picture…"), enabled: localFolder) {
+            [weak self] in self?.setFolderBackgroundPicture()
+        }
+        add("files.clearFolderBg", L("bvc.cmd.clearFolderBg", "Remove Background"), enabled: localFolder) {
+            [weak self] in self?.clearFolderBackground()
         }
         add("files.peekArchive", L("bvc.cmd.peekArchive", "Show Archive Contents"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
@@ -4410,6 +4433,59 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Set the current folder's background to a solid color (a color well in a sheet), applied
+    /// immediately and persisted; a color replaces any picture.
+    private func setFolderBackgroundColor() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults, let window = view.window else { NSSound.beep(); return }
+        _ = window
+        let folder = pane.currentURL
+        let alert = NSAlert()
+        alert.messageText = String(format: L("folderbg.colorTitle", "Background color for “%@”"), folder.lastPathComponent)
+        alert.addButton(withTitle: L("common.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let well = NSColorWell(frame: NSRect(x: 0, y: 0, width: 64, height: 44))
+        if let hex = folderBackgrounds.background(for: folder.path)?.colorHex, let color = ThemeManager.color(fromHex: hex) {
+            well.color = color
+        }
+        alert.accessoryView = well
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            var background = self.folderBackgrounds.background(for: folder.path) ?? FolderBackground()
+            background.colorHex = ThemeManager.hex(from: well.color)
+            background.imagePath = ""  // a color replaces a picture
+            self.folderBackgrounds.set(background, for: folder.path)
+            self.saveConfig(self.folderBackgrounds, to: Self.folderBackgroundsURL)
+            self.reapplyFolderBackgrounds()
+        }
+    }
+
+    /// Set the current folder's background to a picture chosen from disk; a picture replaces any color.
+    private func setFolderBackgroundPicture() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults, let window = view.window else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.prompt = L("folderbg.choose", "Choose")
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url, let self else { return }
+            var background = self.folderBackgrounds.background(for: folder.path) ?? FolderBackground()
+            background.imagePath = url.path
+            background.colorHex = ""
+            self.folderBackgrounds.set(background, for: folder.path)
+            self.saveConfig(self.folderBackgrounds, to: Self.folderBackgroundsURL)
+            self.reapplyFolderBackgrounds()
+        }
+    }
+
+    /// Remove the current folder's background (restore the default).
+    private func clearFolderBackground() {
+        guard let pane = activePane, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        folderBackgrounds.set(nil, for: pane.currentURL.path)
+        saveConfig(folderBackgrounds, to: Self.folderBackgroundsURL)
+        reapplyFolderBackgrounds()
+    }
+
     /// Finder-style "Connect to Server": prompt for an smb/afp/nfs address, mount it via NetFS
     /// (the OS handles auth), and navigate the active pane to the mount point.
     private func connectToServer() {
@@ -5442,6 +5518,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Set a folder background on the active folder and apply it (PATHEM_FOLDERBG_SHOT).
+    func debugSetFolderBackground(colorHex: String, imagePath: String) {
+        guard let pane = activePane else { return }
+        folderBackgrounds.set(FolderBackground(colorHex: colorHex, imagePath: imagePath), for: pane.currentURL.path)
+        pane.applyFolderBackground()
+        view.layoutSubtreeIfNeeded()
+    }
+
+    /// Round-trip a folder background through the store (PATHEM_SMOKE): set, read, clear.
+    func debugFolderBackgroundRoundTrips() -> Bool {
+        let path = "/tmp/pathem-bg-\(UUID().uuidString)"
+        folderBackgrounds.set(FolderBackground(colorHex: "#112233"), for: path)
+        let got = folderBackgrounds.background(for: path)?.colorHex == "#112233"
+        folderBackgrounds.set(nil, for: path)
+        let cleared = folderBackgrounds.background(for: path) == nil
+        return got && cleared
+    }
+
     /// Force compact (icons-only) sidebar for a render check (PATHEM_SIDEBAR_COMPACT).
     func debugSetCompactSidebar(_ on: Bool) {
         prefs.compactSidebar = on
@@ -5891,6 +5985,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("skinning-applies",
             parsedAccent != nil && emptyParse == nil && presetName == "Dracula" && accentApplied,
             "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)")
+        // Folder backgrounds: the per-folder store round-trips (set, read, clear).
+        check("folder-background-roundtrips", debugFolderBackgroundRoundTrips(), "")
         return (ok, lines)
     }
 }

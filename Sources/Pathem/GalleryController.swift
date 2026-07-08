@@ -63,6 +63,12 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     func invalidateTagCache() { decorations.invalidateTags() }
 
+    func setBackgroundColor(_ color: NSColor?) {
+        let transparent = (color?.alphaComponent ?? 1) < 0.02
+        scrollView.backgroundColor = transparent ? .clear : (color ?? .controlBackgroundColor)
+        scrollView.drawsBackground = !transparent
+    }
+
     /// Which filmstrip item the pointer is over (-1 = none), underlined when hover-to-open is on.
     private var hoveredItem = -1
 

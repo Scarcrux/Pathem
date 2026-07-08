@@ -478,6 +478,14 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
 
     func invalidateTagCache() { decorations.invalidateTags() }
 
+    func setBackgroundColor(_ color: NSColor?) {
+        // The collection stays clear, so the scroll view's background (or, when transparent, the
+        // folder background image behind the pane) shows through the grid.
+        let transparent = (color?.alphaComponent ?? 1) < 0.02
+        scrollView.backgroundColor = transparent ? .clear : (color ?? .controlBackgroundColor)
+        scrollView.drawsBackground = !transparent
+    }
+
     func showPlaceholder(_ text: String?) {
         placeholder.stringValue = text ?? ""
         placeholder.isHidden = text == nil

@@ -79,6 +79,9 @@ protocol PaneContentView: AnyObject {
     func adjustZoom(_ delta: CGFloat)
     /// Open on a single click, and/or underline the item under the pointer.
     func setClickBehavior(singleClick: Bool, underlineHover: Bool)
+    /// Paint the view's background with `color` (a folder background), `.clear` to let a picture
+    /// behind it show through, or `nil` to restore the default system background.
+    func setBackgroundColor(_ color: NSColor?)
 }
 
 extension PaneContentView {
@@ -101,6 +104,8 @@ extension PaneContentView {
     func adjustZoom(_ delta: CGFloat) {}
     /// Only the list view implements single-click / hover-underline for now.
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {}
+    /// Views that don't paint a custom background ignore the folder background.
+    func setBackgroundColor(_ color: NSColor?) {}
     /// The list and column views draw git status letters; the icon/gallery grids don't yet.
     func setGitStates(_ states: [String: GitFileState]) {}
     /// Every pane view now shares one right-click menu (FileContextMenuController) and wires
