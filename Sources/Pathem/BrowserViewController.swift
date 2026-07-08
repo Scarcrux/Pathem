@@ -159,6 +159,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var externalOutput = ExternalCommandOutputController()
     let slideshow = SlideshowController()
     private lazy var trimController = TrimController()
+    private lazy var aclEditor = ACLEditorController()
     private lazy var undoHistoryController = UndoHistoryController()
     private lazy var globalSearchController = GlobalSearchController()
     private var externalCommands: [ExternalCommand] = []
@@ -907,6 +908,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.setFinderComment", L("bvc.cmd.setFinderComment", "Set Finder Comment…"), enabled: hasLocalSelection) {
             [weak self] in self?.setFinderCommentSelection()
         }
+        add("files.editACL", L("bvc.cmd.editACL", "Permissions…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.count == 1
+        }) { [weak self] in self?.editACLSelection() }
         add("files.connectToServer", L("bvc.cmd.connectToServer", "Connect to Server…")) {
             [weak self] in self?.connectToServer()
         }
@@ -4508,6 +4513,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Edit the selected item's POSIX ACL (add/remove access-control entries).
+    private func editACLSelection() {
+        guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first else { NSSound.beep(); return }
+        aclEditor.present(url: url, over: view.window)
+    }
+
     /// Remove the current folder's background (restore the default).
     private func clearFolderBackground() {
         guard let pane = activePane, !pane.isShowingSmartResults else { NSSound.beep(); return }
@@ -6011,6 +6022,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let fcCleared = FileMetadata.finderComment(of: fcFile) == nil
         check("finder-comment-roundtrips", fcRead == "smoke note" && fcCleared, "read=\(fcRead ?? "nil") cleared=\(fcCleared)")
         try? FileManager.default.removeItem(at: fcFile)
+        // ACL editor: the command is registered, the panel constructs, and the engine adds then
+        // removes an entry on a real file (no privileges needed for your own file).
+        _ = ACLEditorController()
+        let aclFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-acl-\(UUID().uuidString).txt")
+        try? "x".write(to: aclFile, atomically: true, encoding: .utf8)
+        let added = ACLEditor.add(principal: NSUserName(), allow: true, permissions: ["read"], to: aclFile) == nil
+        let listed = FileMetadata.aclEntries(of: aclFile)?.contains { $0.contains(NSUserName()) } ?? false
+        let removed = ACLEditor.removeEntry(at: 0, from: aclFile) == nil && FileMetadata.aclEntries(of: aclFile) == nil
+        check("acl-edit-roundtrips", cmdIDs.contains("files.editACL") && added && listed && removed,
+            "registered=\(cmdIDs.contains("files.editACL")) added=\(added) listed=\(listed) removed=\(removed)")
+        try? FileManager.default.removeItem(at: aclFile)
         // Skinning: hex parsing, preset lookup, and an accent apply (restored afterward so the
         // running window keeps its configured skin).
         let parsedAccent = ThemeManager.color(fromHex: "#BD93F9")
