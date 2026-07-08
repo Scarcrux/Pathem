@@ -248,8 +248,8 @@ final class IconItem: NSCollectionViewItem {
 
     private func updateHighlight() {
         view.layer?.cornerRadius = 6
-        view.layer?.backgroundColor =
-            isSelected ? NSColor.selectedContentBackgroundColor.cgColor : NSColor.clear.cgColor
+        let selectedColor = ThemeManager.shared.customAccent ?? .selectedContentBackgroundColor
+        view.layer?.backgroundColor = isSelected ? selectedColor.cgColor : NSColor.clear.cgColor
     }
 }
 
@@ -309,6 +309,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         decorations.onTagsChanged = { [weak self] in self?.collection.reloadData() }
         collection.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
         collection.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.collection.reloadData() }
     }
 
     /// Right-drag flick + swipe trail (super-drag), forwarded from the collection view.

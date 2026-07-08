@@ -37,6 +37,7 @@ final class BreadcrumbBar: NSView {
             height,
         ])
         setContentHuggingPriority(.init(1), for: .horizontal)
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.needsDisplay = true }
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
@@ -193,7 +194,7 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
 
     override func draw(_ dirtyRect: NSRect) {
         if isDropTarget {
-            NSColor.controlAccentColor.withAlphaComponent(0.25).setFill()
+            ThemeManager.shared.accent.withAlphaComponent(0.25).setFill()
             NSBezierPath(roundedRect: bounds, xRadius: 4, yRadius: 4).fill()
         }
         super.draw(dirtyRect)

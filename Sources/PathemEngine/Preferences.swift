@@ -87,6 +87,14 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// longer, more visible trail.
     public var dragTrailDecay: Double
 
+    /// The selected theme preset name (or "Custom" when the colors were edited by hand).
+    public var themeName: String
+    /// Accent color for Pathem-drawn chrome (list/sidebar selection, active pane/tab, breadcrumb),
+    /// as "#RRGGBB". Empty means "use the system accent" (the default look).
+    public var accentColorHex: String
+    /// Optional window/pane background tint as "#RRGGBB". Empty means the system background.
+    public var windowTintHex: String
+
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
         alternatingRows: Bool = true, searchOCR: Bool = false,
@@ -101,8 +109,12 @@ public struct Preferences: Codable, Sendable, Equatable {
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
-        dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6
+        dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
+        themeName: String = "System", accentColorHex: String = "", windowTintHex: String = ""
     ) {
+        self.themeName = themeName
+        self.accentColorHex = accentColorHex
+        self.windowTintHex = windowTintHex
         self.dragFlickActions = dragFlickActions
         self.dragTrailColor = dragTrailColor
         self.dragTrailWidth = dragTrailWidth
@@ -192,6 +204,9 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Double.self, forKey: .dragTrailWidth) ?? d.dragTrailWidth
         dragTrailDecay =
             try c.decodeIfPresent(Double.self, forKey: .dragTrailDecay) ?? d.dragTrailDecay
+        themeName = try c.decodeIfPresent(String.self, forKey: .themeName) ?? d.themeName
+        accentColorHex = try c.decodeIfPresent(String.self, forKey: .accentColorHex) ?? d.accentColorHex
+        windowTintHex = try c.decodeIfPresent(String.self, forKey: .windowTintHex) ?? d.windowTintHex
     }
 }
 

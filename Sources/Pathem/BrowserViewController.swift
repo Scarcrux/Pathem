@@ -3839,6 +3839,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Push the skin's colors into the theme manager (which notifies the themed chrome) and tint
+    /// the window/pane background. The accent is honored by Pathem-drawn elements via ThemeManager.
+    private func applyTheme() {
+        ThemeManager.shared.apply(accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)
+        let tint = ThemeManager.shared.windowTint
+        view.window?.backgroundColor = tint ?? .windowBackgroundColor
+    }
+
     private func applyCompactSidebar() {
         compactSidebar = prefs.compactSidebar
         sidebar.setShowsLabels(!compactSidebar)
@@ -3896,6 +3904,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         applyCompactSidebar()
         applyAppearance()
+        applyTheme()
         applyTooltipDelay()
         applyToolbarIconSize()
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
@@ -5424,6 +5433,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Apply a skin and select the first row so a render shows the accent (PATHEM_THEME_SHOT).
+    func debugApplyTheme(accentHex: String, tintHex: String) {
+        prefs.accentColorHex = accentHex
+        prefs.windowTintHex = tintHex
+        applyTheme()
+        if let first = activePane?.entries.first { activePane?.select(name: first.name) }
+        view.layoutSubtreeIfNeeded()
+    }
+
     /// Force compact (icons-only) sidebar for a render check (PATHEM_SIDEBAR_COMPACT).
     func debugSetCompactSidebar(_ on: Bool) {
         prefs.compactSidebar = on
@@ -5862,6 +5880,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let fcCleared = FileMetadata.finderComment(of: fcFile) == nil
         check("finder-comment-roundtrips", fcRead == "smoke note" && fcCleared, "read=\(fcRead ?? "nil") cleared=\(fcCleared)")
         try? FileManager.default.removeItem(at: fcFile)
+        // Skinning: hex parsing, preset lookup, and an accent apply (restored afterward so the
+        // running window keeps its configured skin).
+        let parsedAccent = ThemeManager.color(fromHex: "#BD93F9")
+        let emptyParse = ThemeManager.color(fromHex: "")
+        let presetName = ThemePreset.matching(accentHex: "#BD93F9", backgroundHex: "#282A36", appearance: .dark)?.name
+        ThemeManager.shared.apply(accentHex: "#FF0000", windowTintHex: "")
+        let accentApplied = ThemeManager.shared.customAccent != nil
+        ThemeManager.shared.apply(accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)  // restore
+        check("skinning-applies",
+            parsedAccent != nil && emptyParse == nil && presetName == "Dracula" && accentApplied,
+            "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)")
         return (ok, lines)
     }
 }

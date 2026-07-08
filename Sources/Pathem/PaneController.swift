@@ -217,6 +217,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         super.init()
         build()
         wireContent()
+        ThemeManager.shared.onChange(owner: self) { [weak self] in guard let self else { return }; self.setActive(self.isActivePane) }
         enterDirectory()
     }
 
@@ -780,9 +781,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         onDirectoryDidChange?(nav.current)
     }
 
+    private var isActivePane = false
     func setActive(_ active: Bool) {
+        isActivePane = active
         containerView.layer?.borderColor =
-            (active ? NSColor.controlAccentColor : NSColor.separatorColor).cgColor
+            (active ? ThemeManager.shared.accent : NSColor.separatorColor).cgColor
     }
 
     // MARK: - Build

@@ -51,6 +51,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         decorations.onTagsChanged = { [weak self] in self?.filmstrip.reloadData() }
         filmstrip.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
         filmstrip.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.filmstrip.reloadData() }
     }
 
     /// Right-drag flick + swipe trail (super-drag), forwarded from the filmstrip.

@@ -264,6 +264,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
         ])
         case .appearance: return form([
+            labeled(L("prefs.themeLabel", "Skin"), themeControl()),
+            labeled(L("prefs.accentLabel", "Accent color"), accentColorControl()),
+            labeled(L("prefs.windowTintLabel", "Window tint"), windowTintControl()),
+            hint(L("prefs.themeHint", "The skin tints Pathem’s own selection, panes, tabs, and breadcrumb. Standard buttons still use the system accent.")),
             labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
             labeled(L("prefs.densityLabel", "Density"), densityControl()),
             labeled(L("prefs.fontSizeLabel", "Font size"), fontControl()),
@@ -413,6 +417,77 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func appearanceChanged(_ sender: NSPopUpButton) {
         prefs.appearance = [.system, .light, .dark][sender.indexOfSelectedItem]
+        onChange?(prefs)
+    }
+
+    // MARK: Skins (theming)
+
+    private let themePopup = NSPopUpButton()
+    private func themeControl() -> NSView {
+        themePopup.removeAllItems()
+        themePopup.addItems(withTitles: ThemePreset.presets.map(\.name) + [L("prefs.themeCustom", "Custom")])
+        let selected =
+            ThemePreset.matching(
+                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)?
+            .name ?? L("prefs.themeCustom", "Custom")
+        themePopup.selectItem(withTitle: selected)
+        themePopup.target = self
+        themePopup.action = #selector(themeChanged(_:))
+        return themePopup
+    }
+    @objc private func themeChanged(_ sender: NSPopUpButton) {
+        guard let preset = ThemePreset.presets.first(where: { $0.name == sender.titleOfSelectedItem }) else { return }
+        prefs.themeName = preset.name
+        prefs.accentColorHex = preset.accentHex
+        prefs.windowTintHex = preset.backgroundHex
+        prefs.appearance = preset.appearance
+        onChange?(prefs)
+    }
+
+    private func accentColorControl() -> NSView {
+        let well = NSColorWell()
+        well.color = ThemeManager.color(fromHex: prefs.accentColorHex) ?? .controlAccentColor
+        well.target = self
+        well.action = #selector(accentColorChanged(_:))
+        well.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        return well
+    }
+    @objc private func accentColorChanged(_ sender: NSColorWell) {
+        prefs.accentColorHex = ThemeManager.hex(from: sender.color)
+        prefs.themeName = ThemePreset.matching(
+            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)?.name
+            ?? L("prefs.themeCustom", "Custom")
+        themePopup.selectItem(withTitle: prefs.themeName)
+        onChange?(prefs)
+    }
+
+    private func windowTintControl() -> NSView {
+        let well = NSColorWell()
+        well.color = ThemeManager.color(fromHex: prefs.windowTintHex) ?? .windowBackgroundColor
+        well.target = self
+        well.action = #selector(windowTintChanged(_:))
+        well.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        // A button to clear the tint back to the system background (a color well can't be "empty").
+        let clear = NSButton(title: L("prefs.themeClearTint", "None"), target: self, action: #selector(clearWindowTint))
+        clear.bezelStyle = .rounded
+        let stack = NSStackView(views: [well, clear])
+        stack.orientation = .horizontal
+        stack.spacing = 8
+        return stack
+    }
+    @objc private func windowTintChanged(_ sender: NSColorWell) {
+        prefs.windowTintHex = ThemeManager.hex(from: sender.color)
+        prefs.themeName = ThemePreset.matching(
+            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)?.name
+            ?? L("prefs.themeCustom", "Custom")
+        themePopup.selectItem(withTitle: prefs.themeName)
+        onChange?(prefs)
+    }
+    @objc private func clearWindowTint() {
+        prefs.windowTintHex = ""
+        themePopup.selectItem(withTitle: ThemePreset.matching(
+            accentHex: prefs.accentColorHex, backgroundHex: "", appearance: prefs.appearance)?.name
+            ?? L("prefs.themeCustom", "Custom"))
         onChange?(prefs)
     }
 

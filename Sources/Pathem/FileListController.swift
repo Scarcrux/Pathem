@@ -248,6 +248,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     override init() {
         super.init()
         configure()
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.tableView.reloadData() }
     }
 
     private func configure() {
@@ -1178,6 +1179,16 @@ final class TintRowView: NSTableRowView {
         super.drawBackground(in: dirtyRect)
         guard let tint, !isSelected else { return }
         tint.withAlphaComponent(0.16).setFill()
+        dirtyRect.fill()
+    }
+
+    /// Recolor the selection with the skin's accent when one is set; otherwise the stock look.
+    override func drawSelection(in dirtyRect: NSRect) {
+        guard isSelected, let accent = ThemeManager.shared.customAccent else {
+            super.drawSelection(in: dirtyRect)
+            return
+        }
+        (isEmphasized ? accent : accent.withAlphaComponent(0.55)).setFill()
         dirtyRect.fill()
     }
 }

@@ -392,6 +392,20 @@ enum PathemApp {
             }
         #endif
 
+        // Render the main window with a distinctive skin (purple accent + dark tint) so the
+        // themed selection/border/tab can be inspected headlessly.
+        if ProcessInfo.processInfo.environment["PATHEM_THEME_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: FileManager.default.homeDirectoryForCurrentUser)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                browser.debugApplyTheme(accentHex: "#BD93F9", tintHex: "#282A36")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    browser.debugRender(to: "/tmp/theme.png")
+                    exit(0)
+                }
+            }
+        }
+
         // End-to-end multi-window check: actually open a second window through the same path the
         // New Window command uses, then assert both windows laid out with independent sessions.
         // Tears the second window's shell down so the run leaves nothing orphaned.

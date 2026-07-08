@@ -37,6 +37,7 @@ final class TabbedPaneController: NSObject {
         self.start = start
         super.init()
         build()
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.refreshTabBar() }
     }
 
     private func build() {
@@ -223,7 +224,7 @@ final class TabbedPaneController: NSObject {
         chip.wantsLayer = true
         chip.layer?.cornerRadius = 5
         chip.layer?.backgroundColor =
-            active ? NSColor.controlAccentColor.withAlphaComponent(0.22).cgColor : NSColor.clear.cgColor
+            active ? ThemeManager.shared.accent.withAlphaComponent(0.22).cgColor : NSColor.clear.cgColor
         // The whole chip selects the tab, not just the label -- clicking its padding or empty
         // space is what a user expects. Only the close button (below) is carved out.
         chip.onSelect = { [weak self] in self?.selectTab(index) }
