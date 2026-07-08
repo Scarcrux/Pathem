@@ -95,6 +95,17 @@ final class KeyCollectionView: NSCollectionView {
     }
     override func mouseExited(with event: NSEvent) { onHover?(nil) }
 
+    /// A drag left the grid or ended; cancels a pending spring-loaded-folder open.
+    var onDragExited: (() -> Void)?
+    override func draggingExited(_ sender: (any NSDraggingInfo)?) {
+        onDragExited?()
+        super.draggingExited(sender)
+    }
+    override func draggingEnded(_ sender: any NSDraggingInfo) {
+        onDragExited?()
+        super.draggingEnded(sender)
+    }
+
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
         if ok { onBecomeActive?() }
@@ -309,6 +320,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         decorations.onTagsChanged = { [weak self] in self?.collection.reloadData() }
         collection.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
         collection.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
+        collection.onDragExited = { [weak self] in self?.springLoader.cancel() }
         ThemeManager.shared.onChange(owner: self) { [weak self] in self?.collection.reloadData() }
     }
 
@@ -583,7 +595,12 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         if let path = folderIndexPath(under: draggingInfo, in: collectionView, excluding: urls) {
             proposedDropOperation.pointee = .on
             proposedIndexPath.pointee = path as NSIndexPath
+            let entry = entries[path.item]  // dwell here to spring the folder open
+            if let folder = fileURL(for: entry) {
+                springLoader.arm(key: folder.path) { [weak self] in self?.onOpen?(entry) }
+            }
         } else {
+            springLoader.cancel()
             guard !incomingURLs(urls, into: directoryURL).isEmpty else { return [] }
             proposedDropOperation.pointee = .before
             proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
@@ -591,10 +608,14 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         return resolvedDragOperation(draggingInfo)
     }
 
+    /// Spring-loaded folders: dwelling a drag over a folder item opens it (via onOpen).
+    private let springLoader = SpringLoader()
+
     func collectionView(
         _ collectionView: NSCollectionView, acceptDrop draggingInfo: NSDraggingInfo,
         indexPath: IndexPath, dropOperation: NSCollectionView.DropOperation
     ) -> Bool {
+        springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: draggingInfo), !urls.isEmpty else { return false }
         var folder: URL?
         if dropOperation == .on, indexPath.item < entries.count, entries[indexPath.item].isDirectory {
