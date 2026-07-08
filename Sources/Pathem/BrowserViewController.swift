@@ -810,6 +810,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.makeAlias", L("bvc.cmd.makeAlias", "Make Alias"), enabled: hasLocalSelection) {
             [weak self] in self?.makeLinks(kind: .alias)
         }
+        add(
+            "files.showOriginal", L("bvc.cmd.showOriginal", "Show Original"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1 else { return false }
+                return true
+            }
+        ) { [weak self] in self?.showOriginal() }
         add("files.makeHardlink", L("bvc.cmd.makeHardlink", "Make Hard Link"), enabled: hasLocalSelection) {
             [weak self] in self?.makeLinks(kind: .hardlink)
         }
@@ -3513,6 +3520,32 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         pane.reveal(target)
     }
 
+    /// Jump to the original of a selected alias or symlink: resolve its target and reveal it
+    /// (navigate to the target's folder and select it), like Finder's Show Original.
+    private func showOriginal() {
+        guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first else { NSSound.beep(); return }
+        guard let target = Self.resolveOriginal(of: url) else {
+            presentInfo(
+                L("bvc.showOriginalNoneTitle", "No original to show"),
+                L("bvc.showOriginalNoneBody", "This item isn’t an alias or symlink, or its original can’t be found (it may have been moved or deleted)."))
+            return
+        }
+        pane.reveal(target)
+    }
+
+    /// Resolve an alias file or symlink to its target URL, or nil if it's neither (or unresolvable).
+    static func resolveOriginal(of url: URL) -> URL? {
+        let values = try? url.resourceValues(forKeys: [.isSymbolicLinkKey, .isAliasFileKey])
+        if values?.isAliasFile == true {
+            return try? URL(resolvingAliasFileAt: url, options: [])
+        }
+        if values?.isSymbolicLink == true {
+            let resolved = url.resolvingSymlinksInPath()
+            return resolved.path == url.path ? nil : resolved
+        }
+        return nil
+    }
+
     /// Get Info on the selection, or on the current folder when nothing is selected.
     private func showInfo() {
         if blockedByRemote() { return }
@@ -5712,6 +5745,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let pdfPages = pdfOut.flatMap { PDFDocument(url: $0)?.pageCount } ?? 0
         check("create-pdf-builds", pdfPages == 2, "pages=\(pdfPages)")
         try? FileManager.default.removeItem(at: pdfDir)
+        // Show Original: a symlink resolves to its target; a plain file resolves to nil.
+        let soDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-showorig-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: soDir, withIntermediateDirectories: true)
+        let soTarget = soDir.appendingPathComponent("target.txt")
+        let soLink = soDir.appendingPathComponent("link.txt")
+        try? "x".write(to: soTarget, atomically: true, encoding: .utf8)
+        try? FileManager.default.createSymbolicLink(at: soLink, withDestinationURL: soTarget)
+        let resolvedLink = BrowserViewController.resolveOriginal(of: soLink)
+        let resolvedPlain = BrowserViewController.resolveOriginal(of: soTarget)
+        check("show-original-resolves", resolvedLink?.lastPathComponent == "target.txt" && resolvedPlain == nil,
+            "link=\(resolvedLink?.lastPathComponent ?? "nil") plain=\(resolvedPlain?.lastPathComponent ?? "nil")")
+        try? FileManager.default.removeItem(at: soDir)
         return (ok, lines)
     }
 }

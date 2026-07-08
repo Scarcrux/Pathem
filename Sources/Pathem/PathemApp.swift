@@ -525,6 +525,8 @@ enum PathemApp {
                     commandItem("Symlink", "files.makeSymlink"),
                     commandItem("Alias", "files.makeAlias"),
                     commandItem("Hard Link", "files.makeHardlink"),
+                    .separator(),
+                    commandItem("Show Original", "files.showOriginal"),
                 ]))
         fileMenu.addItem(
             submenu(
