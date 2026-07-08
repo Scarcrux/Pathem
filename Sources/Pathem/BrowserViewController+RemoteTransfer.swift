@@ -161,7 +161,7 @@ extension BrowserViewController {
         }
     }
 
-    private func reportTransfer(_ failures: [(String, Error)], cancelled: Bool, verb: String) {
+    func reportTransfer(_ failures: [(String, Error)], cancelled: Bool, verb: String) {
         guard !failures.isEmpty, let window = view.window else { return }  // success/cancel is silent
         let alert = NSAlert()
         alert.messageText = failures.count == 1 ? "A \(verb) failed" : "\(failures.count) \(verb)s failed"

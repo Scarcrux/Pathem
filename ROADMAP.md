@@ -160,8 +160,10 @@ Quality of life:
 
 - **Detachable / multi-window** and drag-a-tab-out.
 - **App-wide theming** (accent / skins) beyond the terminal themes.
-- **Transfer queue:** pause / resume / retry plus copy verification (checksum
-  after copy).
+- **Transfer queue:** queue-level **pause/resume** and **retry failed** shipped
+  (2026-07-07) in the Transfers window. Remaining: pausing an in-flight transfer
+  to resume mid-stream (needs provider range/reget support) and copy verification
+  (checksum after copy).
 - **Vim-style, fully keyboard-driven** navigation mode.
 
 ## Finder parity audit (2026-07-05)
@@ -176,11 +178,11 @@ Finder user would actually reach for and miss, ranked by effort.
 
 Quick wins (compose existing FileOperations; each is a command plus menu wiring):
 
-- **New Folder with Selection (N Items)** -- move the current selection into a
-  fresh folder and immediately inline-rename it; the File and context-menu item
-  shows the live selection count ("New Folder with Selection (3 Items)"). This is
-  Finder's Ctrl-Cmd-N. FileOperations already has newFolder + move + undo, so it
-  is a compose plus a count-aware, pluralized title. (The motivating request.)
+- **New Folder with Selection (N Items)** -- SHIPPED (2026-07-07). Ctrl-Cmd-N,
+  in the File and (shared) context menus with a live pluralized count
+  ("New Folder with Selection (3 Items)"); one undoable action (create + move,
+  undo moves back out and trashes the folder). Follow-up: auto-enter inline
+  rename on the new folder (today it just selects it, matching plain New Folder).
 - **Empty Trash**, and a first-class Trash location with per-item **Put Back**
   (restore to original path) and **Delete Immediately**. The restore logic
   already exists as the undo of trash; this promotes it to a browsable place.

@@ -135,8 +135,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
     private lazy var connectionsController = ConnectionsController()
-    lazy var transferController = TransferQueueController()
+    lazy var transferController: TransferQueueController = {
+        let controller = TransferQueueController()
+        // A retried transfer finishes outside its original batch, so reload the panes and
+        // surface any failure the way the first attempt did.
+        controller.onRetryComplete = { [weak self] failures, cancelled in
+            guard let self else { return }
+            self.leftTabs.activePane?.reloadIfShowingListing()  // handles remote + local re-list
+            self.rightTabs.activePane?.reloadIfShowingListing()
+            self.reportTransfer(failures, cancelled: cancelled, verb: "transfer")
+        }
+        return controller
+    }()
     private let sharedDiscovery = SharedDiscovery()
+    /// Confirmations shown as a popover at the pointer (move/copy conflicts, Trash) rather than
+    /// a sheet pinned to the title bar.
+    let cursorConfirm = CursorConfirm()
     private var deviceTimer: Timer?
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
@@ -585,6 +599,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self?.activePane != nil
         }) { [weak self] in self?.selectByPattern() }
         add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in self?.newFolder() }
+        add(
+            "files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane else { return false }
+                return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty
+            }
+        ) { [weak self] in self?.newFolderWithSelection() }
         add("files.newFile", L("bvc.cmd.newFile", "New File")) { [weak self] in self?.newFile() }
         add("files.batchCreate", L("bvc.cmd.batchCreate", "Batch Create…")) { [weak self] in self?.showBatchCreate() }
         add("templates.manage", L("bvc.cmd.manageTemplates", "Manage Templates…")) { [weak self] in self?.showTemplatesManager() }
@@ -1045,6 +1066,64 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Move the current selection into a fresh folder here, in one undoable action (Finder's
+    /// Ctrl-Cmd-N "New Folder with Selection"). Falls back to a plain New Folder when nothing
+    /// is selected.
+    private func newFolderWithSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let names = pane.selectedEntries.map(\.name)
+        guard !names.isEmpty else { newFolder(); return }
+        let directory = pane.currentURL
+        do {
+            let folderName = try FileOperations.makeFolder(
+                in: directory, baseName: L("bvc.newFolderWithItems", "New Folder With Items"))
+            let outcome = FileOperations.move(
+                names, from: directory, to: directory.appendingPathComponent(folderName), onConflict: .keepBoth)
+            pane.reloadIfShowingListing()
+            pane.select(name: folderName)
+            registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
+            if !outcome.failures.isEmpty {
+                presentFailures(outcome.failures, title: L("bvc.moveIntoFolderFailed", "Couldn’t move some items into the folder"))
+            }
+        } catch {
+            presentFailures(
+                [FileOperations.Failure(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
+                title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
+        }
+    }
+
+    /// Undo of New Folder with Selection: move the items back out, then trash the emptied folder.
+    private func registerFolderWithSelectionUndo(
+        folderName: String, in directory: URL, moved: [FileOperations.Performed]
+    ) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            FileOperations.undo(moved)  // items back to their original spot in `directory`
+            let trash = FileOperations.trash([folderName], in: directory)  // remove the now-empty folder
+            target.reloadBothSides()
+            if !trash.failures.isEmpty {
+                target.presentFailures(trash.failures, title: L("bvc.undoFailed", "Undo failed"))
+            }
+            target.registerFolderWithSelectionRedo(folderName: folderName, in: directory, moved: moved)
+        }
+        undoManager.setActionName(L("bvc.newFolderWithSelectionAction", "New Folder with Selection"))
+    }
+
+    private func registerFolderWithSelectionRedo(
+        folderName: String, in directory: URL, moved: [FileOperations.Performed]
+    ) {
+        guard let undoManager = view.window?.undoManager else { return }
+        undoManager.registerUndo(withTarget: self) { target in
+            let folderURL = directory.appendingPathComponent(folderName)
+            try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            let names = moved.map { $0.source.lastPathComponent }
+            let outcome = FileOperations.move(names, from: directory, to: folderURL, onConflict: .keepBoth)
+            target.reloadBothSides()
+            target.registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
+        }
+        undoManager.setActionName(L("bvc.newFolderWithSelectionAction", "New Folder with Selection"))
+    }
+
     /// Create a new empty file (local panes only); the Finder pain point this app fixes.
     private func newFile() {
         guard let pane = activePane else { return }
@@ -1284,19 +1363,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     L("bvc.cantDeleteBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
                 return
             }
-            // Remote delete is permanent (no Trash, no undo) — confirm explicitly.
+            // Remote delete is permanent (no Trash, no undo) — confirm explicitly, at the pointer.
             let host = pane.remoteContext?.connection.host ?? L("bvc.theServer", "the server")
-            let alert = NSAlert()
-            alert.alertStyle = .warning
-            alert.messageText =
-                "Permanently delete \(entries.count) item\(entries.count == 1 ? "" : "s") on \(host)?"
-            alert.informativeText = L("bvc.cantBeUndone", "This can’t be undone.")
-            alert.addButton(withTitle: L("common.delete", "Delete"))
-            alert.addButton(withTitle: L("common.cancel", "Cancel"))
-            guard let window = view.window else { return }
+            let message =
+                entries.count == 1
+                ? String(format: L("bvc.remoteDeleteOne", "Permanently delete this item on %@?"), host)
+                : String(format: L("bvc.remoteDeleteMany", "Permanently delete %d items on %@?"), entries.count, host)
             let names = entries.map { ($0.name, $0.isDirectory) }
-            alert.beginSheetModal(for: window) { [weak self] response in
-                guard response == .alertFirstButtonReturn, let self else { return }
+            Task { @MainActor in
+                let choice = await self.cursorConfirm.ask(
+                    message: message, info: L("bvc.cantBeUndone", "This can’t be undone."),
+                    buttons: [L("common.delete", "Delete"), L("common.cancel", "Cancel")], over: self.view)
+                guard choice == 0 else { return }
                 self.performRemoteOp(pane, verb: L("bvc.deleteVerb", "Delete")) { provider, connection, path, password in
                     for (name, isDir) in names {
                         try await provider.remove(
@@ -1309,17 +1387,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         let urls = pane.selectedLocalURLs()  // location-aware: trashes the real files in smart views
         guard !urls.isEmpty else { NSSound.beep(); return }
-        guard prefs.confirmBeforeDelete, let window = view.window else {
+        guard prefs.confirmBeforeDelete, view.window != nil else {
             performLocalTrash(urls)
             return
         }
-        let alert = NSAlert()
-        alert.messageText = L("bvc.confirmTrashTitle", "Move the selected items to the Trash?")
-        alert.informativeText = L("bvc.confirmTrashBody", "You can put them back from the Trash.")
-        alert.addButton(withTitle: L("bvc.moveToTrashAction", "Move to Trash"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        alert.beginSheetModal(for: window) { [weak self] response in
-            if response == .alertFirstButtonReturn { self?.performLocalTrash(urls) }
+        Task { @MainActor in
+            let choice = await cursorConfirm.ask(
+                message: L("bvc.confirmTrashTitle", "Move the selected items to the Trash?"),
+                info: L("bvc.confirmTrashBody", "You can put them back from the Trash."),
+                buttons: [L("bvc.moveToTrashAction", "Move to Trash"), L("common.cancel", "Cancel")],
+                over: view)
+            if choice == 0 { self.performLocalTrash(urls) }
         }
     }
 
@@ -2794,6 +2872,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             menuItem.state = shelf.view.isHidden ? .off : .on
             menuItem.title = shelf.view.isHidden ? L("bvc.showShelf", "Show Shelf") : L("bvc.hideShelf", "Hide Shelf")
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
+        case "files.newFolderWithSelection":
+            menuItem.title = FileContextMenuController.newFolderWithSelectionTitle(
+                count: activePane?.selectedEntries.count ?? 0)
         default: break
         }
         return commands.command(id)?.isEnabled() ?? true
@@ -4087,21 +4168,24 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func askConflictResolution(conflictCount: Int, move: Bool) async
         -> FileOperations.ConflictResolution?
     {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText =
-            "\(conflictCount) item\(conflictCount == 1 ? "" : "s") already exist at the destination"
-        alert.informativeText = String(
+        let message =
+            conflictCount == 1
+            ? L("bvc.conflictOne", "1 item already exists at the destination")
+            : String(format: L("bvc.conflictMany", "%d items already exist at the destination"), conflictCount)
+        let info = String(
             format: L("bvc.conflictHandle", "Choose how to handle the %@."),
             move ? L("bvc.moveNoun", "move") : L("bvc.copyNoun", "copy"))
-        alert.addButton(withTitle: L("bvc.replace", "Replace"))
-        alert.addButton(withTitle: L("bvc.keepBoth", "Keep Both"))
-        alert.addButton(withTitle: L("bvc.skip", "Skip"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        switch await presentSheet(alert) {
-        case .alertFirstButtonReturn: return .replace
-        case .alertSecondButtonReturn: return .keepBoth
-        case .alertThirdButtonReturn: return .skip
+        // A popover at the pointer, near the drop -- not a sheet at the title bar.
+        let choice = await cursorConfirm.ask(
+            message: message, info: info,
+            buttons: [
+                L("bvc.replace", "Replace"), L("bvc.keepBoth", "Keep Both"),
+                L("bvc.skip", "Skip"), L("common.cancel", "Cancel"),
+            ], over: view)
+        switch choice {
+        case 0: return .replace
+        case 1: return .keepBoth
+        case 2: return .skip
         default: return nil
         }
     }
@@ -4118,6 +4202,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 urls: urls, into: destination, move: move, resolution: resolution, completion: completion)
         }
         guard conflictCount > 0 else { return run(.skip) }
+        // A non-Ask default (Settings > General) skips the prompt and resolves automatically.
+        if let preset = prefs.conflictDefault.resolution { return run(preset) }
         Task { @MainActor in
             guard let chosen = await askConflictResolution(conflictCount: conflictCount, move: move) else {
                 return  // user cancelled
@@ -4521,6 +4607,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let chip = DownloadSuggestionBar()
         chip.show(fileURL: URL(fileURLWithPath: "/tmp/invoice.pdf"), destinationName: "PDFs")
         check("download-chip-builds", chip.debugVisibleText?.contains("PDFs") == true, chip.debugVisibleText ?? "nil")
+        // The transfer queue holds when paused and re-queues a failed job on retry.
+        check("transfer-queue-pause-retry", TransferQueueController().debugPauseRetry(), "")
+        // New Folder with Selection: create a folder, move items in, and undo back to the start.
+        let nfwsDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-nfws-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: nfwsDir, withIntermediateDirectories: true)
+        for name in ["a.txt", "b.txt"] { try? "x".write(to: nfwsDir.appendingPathComponent(name), atomically: true, encoding: .utf8) }
+        let nfwsFolder = (try? FileOperations.makeFolder(in: nfwsDir, baseName: "New Folder With Items")) ?? ""
+        let nfwsOutcome = FileOperations.move(
+            ["a.txt", "b.txt"], from: nfwsDir, to: nfwsDir.appendingPathComponent(nfwsFolder), onConflict: .keepBoth)
+        let movedIn = FileManager.default.fileExists(
+            atPath: nfwsDir.appendingPathComponent(nfwsFolder).appendingPathComponent("a.txt").path)
+        FileOperations.undo(nfwsOutcome.performed)  // move back out
+        _ = FileOperations.trash([nfwsFolder], in: nfwsDir)  // and remove the emptied folder
+        let backOut = FileManager.default.fileExists(atPath: nfwsDir.appendingPathComponent("a.txt").path)
+        check("new-folder-with-selection", !nfwsFolder.isEmpty && movedIn && backOut,
+            "folder=\(nfwsFolder) movedIn=\(movedIn) undone=\(backOut)")
+        try? FileManager.default.removeItem(at: nfwsDir)
+        // The cursor-anchored confirmation popover builds its content without a layout crash, and
+        // a non-Ask conflict default resolves without prompting.
+        check("cursor-confirm-builds",
+            cursorConfirm.debugBuildsController(buttons: ["Replace", "Keep Both", "Skip", "Cancel"]), "")
+        check("conflict-default-maps",
+            ConflictDefault.keepBoth.resolution == .keepBoth && ConflictDefault.ask.resolution == nil, "")
         // The new superuser/developer panels must construct without a layout crash.
         _ = DiffViewerController()
         let panelsOK =

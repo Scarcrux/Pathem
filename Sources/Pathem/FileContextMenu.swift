@@ -27,6 +27,16 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.extract", "files.extractHere", "files.extractTo",
     ]
 
+    /// The New Folder with Selection title, pluralized with the live selection count (Finder
+    /// shows "(3 Items)"). Shared by the context menu and the File menu.
+    static func newFolderWithSelectionTitle(count: Int) -> String {
+        switch count {
+        case 0: return L("bvc.newFolderWithSelectionAction", "New Folder with Selection")
+        case 1: return L("cmenu.nfws.one", "New Folder with Selection (1 Item)")
+        default: return String(format: L("cmenu.nfws.many", "New Folder with Selection (%d Items)"), count)
+        }
+    }
+
     /// The flat list of hideable commands, used by the Settings toggles and the smoke-test
     /// icon check. The single source of truth for what the menu can contain.
     static let hideableCommands: [(id: String, title: String)] = [
@@ -38,6 +48,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.rename", L("list.rename", "Rename…")),
         ("files.trash", L("list.moveToTrash", "Move to Trash")),
         ("files.newFolder", L("list.newFolder", "New Folder")),
+        ("files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection")),
         ("files.newFile", L("bvc.cmd.newFile", "New File")),
         ("files.copy", L("list.copy", "Copy")),
         ("files.cut", L("list.cut", "Cut")),
@@ -81,6 +92,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         menu.addItem(makeTagsItem())
         menu.addItem(.separator())
         add("files.newFolder")
+        add("files.newFolderWithSelection")
         add("files.newFile")
         menu.addItem(.separator())
         add("files.copy")
@@ -123,12 +135,19 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         if menu === self.menu {
             // Right-click already moved the selection to the clicked item, so this is current.
-            let show = selectedURLs().contains { Archiver.canExtract($0) }
+            let urls = selectedURLs()
+            let showArchive = urls.contains { Archiver.canExtract($0) }
             for item in menu.items {
-                if let id = item.representedObject as? String, Self.archiveCommandIDs.contains(id) {
-                    item.isHidden = !show
+                if let id = item.representedObject as? String {
+                    if Self.archiveCommandIDs.contains(id) {
+                        item.isHidden = !showArchive
+                    } else if id == "files.newFolderWithSelection" {
+                        // Only meaningful with a selection; show a live count when there is one.
+                        item.isHidden = urls.isEmpty
+                        item.title = Self.newFolderWithSelectionTitle(count: urls.count)
+                    }
                 } else if item.isSeparatorItem, item.tag == Self.archiveSeparatorTag {
-                    item.isHidden = !show
+                    item.isHidden = !showArchive
                 }
             }
             return

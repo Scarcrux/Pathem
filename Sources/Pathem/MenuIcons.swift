@@ -15,6 +15,7 @@ enum MenuIcons {
         case "files.rename": return "pencil"
         case "files.trash": return "trash"
         case "files.newFolder": return "folder.badge.plus"
+        case "files.newFolderWithSelection": return "plus.rectangle.on.folder"
         case "files.newFile": return "doc.badge.plus"
         case "files.copy": return "doc.on.doc"
         case "files.cut": return "scissors"

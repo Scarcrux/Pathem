@@ -435,6 +435,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
+        fileMenu.addItem(commandItem("New Folder with Selection", "files.newFolderWithSelection", "n", [.command, .control]))
         fileMenu.addItem(commandItem("New File", "files.newFile"))  // chord owned by the keymap
         fileMenu.addItem(commandItem("Batch Create…", "files.batchCreate"))
         fileMenu.addItem(commandItem("Manage Templates…", "templates.manage"))
