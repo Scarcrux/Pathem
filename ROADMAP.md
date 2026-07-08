@@ -18,11 +18,43 @@ tests.
 What is missing for a credible v1.0 is not architecture. It is a cluster of
 table-stakes actions and a few reliability fixes.
 
-## Next up (scheduled, 2026-07-08)
+## Next up -- round 2 (scheduled, 2026-07-08)
 
-The four picked to build next, in suggested order. Details for each live in their
-existing sections below (Candidate features / Recently requested / Site manager);
-this is the running plan.
+Round 1 (below) is fully shipped. The next set, in suggested build order (tractable
+first; the biggest, most architectural last):
+
+1. **Global instant filename search.** A whole-disk, sub-100ms filename palette
+   ("Everything"-style). Leverage Spotlight (`mdfind -name`, already instant for
+   indexed volumes) behind a dedicated search field (e.g. Cmd-Shift-O) that queries
+   by filename across a chosen scope and shows results in the active pane as a smart
+   list -- reusing SpotlightSearch + showSmartResults. Engine: a `filenameQuery`
+   helper (tested); app: a debounced live-results field. Fallback for non-indexed
+   locations: a bounded `find`.
+2. **macOS Shortcuts integration -- run a Shortcut on the selection.** A "Run
+   Shortcut…" action listing installed shortcuts (`shortcuts list`) and running the
+   chosen one on the selection (`shortcuts run <name> -i <files>`), out-of-process
+   like external commands, output in the same panel. External tool (the `shortcuts`
+   CLI) so within the hard rules. Exposing Pathem's own actions AS Shortcuts (App
+   Intents) is a larger follow-up (needs an App Intents target).
+3. **AI rename / summarize folder / semantic dedup.** Build on the on-device model +
+   embeddings already shipped. Start with **AI rename** (propose a filename from a
+   file's content / EXIF, a preview-then-apply batch reusing BatchRename's apply +
+   undo), then **summarize this folder**, then **semantic dedup** (extend the
+   byte-identical DuplicateFinder with near-duplicate detection via embeddings).
+   Engine-first where the model allows.
+4. **Multi-window / detachable tabs.** A second browser window and drag-a-tab-out.
+   The biggest: it lifts the single-window assumption (window/session management, the
+   menu-install hooks and app-delegate `browser` that assume one). Architectural --
+   scheduled last, likely its own multi-turn effort.
+
+Polish backlog from round 1: streamed (not buffered) external-command output;
+saved smart folders shown in the sidebar; Group By in the icon view; a Tag group
+key; collapsible group sections; git letters + tag dots in the grids.
+
+## Next up -- round 1 (shipped 2026-07-08)
+
+All four shipped, committed, and installed. Details for each live in their existing
+sections below (Candidate features / Recently requested / Site manager).
 
 1. **User-defined external commands** -- SHIPPED (2026-07-08). Tools > External
    Commands lists your commands (one click to run) with a Manage editor; each is
