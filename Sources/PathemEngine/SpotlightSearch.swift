@@ -30,6 +30,13 @@ public enum SpotlightSearch {
         "kMDItemUserTags == \"\(escape(tag))\"c"  // c = case-insensitive
     }
 
+    /// An mdfind predicate matching a filename substring (case-insensitive), for instant
+    /// "find files by name" search. Empty when the trimmed text is empty.
+    public static func filenameQuery(_ text: String) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty ? "" : "kMDItemFSName == \"*\(escape(trimmed))*\"c"
+    }
+
     static func recentQuery(days: Int) -> String {
         let seconds = max(1, days) * 86_400
         return "kMDItemFSContentChangeDate >= $time.now(-\(seconds))"

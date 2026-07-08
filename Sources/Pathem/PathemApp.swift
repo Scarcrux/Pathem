@@ -609,6 +609,7 @@ enum PathemApp {
         goMenu.addItem(commandItem("Forward", "nav.forward"))
         goMenu.addItem(commandItem("Enclosing Folder", "nav.up"))
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
+        goMenu.addItem(commandItem("Find Files Everywhere…", "nav.findFiles", "o", [.command, .shift]))
         goMenu.addItem(.separator())
         goMenu.addItem(commandItem("Connections…", "connections.manage", "k", [.command, .shift]))
         goMenu.addItem(commandItem("Open Connections in a New Tab", "connections.newTabToggle"))

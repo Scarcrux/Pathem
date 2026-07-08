@@ -23,13 +23,12 @@ table-stakes actions and a few reliability fixes.
 Round 1 (below) is fully shipped. The next set, in suggested build order (tractable
 first; the biggest, most architectural last):
 
-1. **Global instant filename search.** A whole-disk, sub-100ms filename palette
-   ("Everything"-style). Leverage Spotlight (`mdfind -name`, already instant for
-   indexed volumes) behind a dedicated search field (e.g. Cmd-Shift-O) that queries
-   by filename across a chosen scope and shows results in the active pane as a smart
-   list -- reusing SpotlightSearch + showSmartResults. Engine: a `filenameQuery`
-   helper (tested); app: a debounced live-results field. Fallback for non-indexed
-   locations: a bounded `find`.
+1. **Global instant filename search** -- SHIPPED (2026-07-08). Go > Find Files
+   Everywhere (Cmd-Shift-O): a floating palette that Spotlight-searches file names
+   as you type (debounced, stale-guarded), with results (name + location); Enter or
+   double-click reveals the file in the active pane (navigate + select).
+   `SpotlightSearch.filenameQuery` (tested). Follow-up: scope picker + a `find`
+   fallback for non-indexed locations.
 2. **macOS Shortcuts integration -- run a Shortcut on the selection.** A "Run
    Shortcut…" action listing installed shortcuts (`shortcuts list`) and running the
    chosen one on the selection (`shortcuts run <name> -i <files>`), out-of-process

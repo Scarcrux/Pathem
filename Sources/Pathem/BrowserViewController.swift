@@ -158,6 +158,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var externalCommandsController = ExternalCommandsController()
     private lazy var externalOutput = ExternalCommandOutputController()
     private lazy var undoHistoryController = UndoHistoryController()
+    private lazy var globalSearchController = GlobalSearchController()
     private var externalCommands: [ExternalCommand] = []
     /// Dynamic Tools > External Commands submenu (installed once the menu bar is up).
     private let externalCommandsMenu = NSMenu(title: "External Commands")
@@ -778,6 +779,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
         add("view.advancedFind", L("bvc.cmd.advancedFind", "Advanced Find…"), enabled: { [weak self] in self?.activePane?.isRemote == false }) { [weak self] in self?.showAdvancedFind() }
+        add("nav.findFiles", L("bvc.cmd.findFiles", "Find Files Everywhere…")) { [weak self] in self?.showGlobalSearch() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
         add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
         add("tools.externalCommands", L("bvc.cmd.externalCommands", "External Commands…")) { [weak self] in self?.showExternalCommandsManager() }
@@ -4773,6 +4775,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func showUndoHistory() {
         guard let window = view.window else { return }
         undoHistoryController.present(over: window, history: actionHistory)
+    }
+
+    /// Open the "find files everywhere" palette; revealing a result navigates the active pane to
+    /// its folder and selects it.
+    func showGlobalSearch() {
+        guard let window = view.window else { return }
+        globalSearchController.present(
+            over: window, scope: FileManager.default.homeDirectoryForCurrentUser
+        ) { [weak self] url in
+            guard let pane = self?.activePane else { return }
+            pane.navigate(to: url.deletingLastPathComponent())
+            pane.select(name: url.lastPathComponent)
+        }
     }
 
     func presentFailures(_ failures: [FileOperations.Failure], title: String) {
