@@ -1,5 +1,6 @@
 import AppKit
 import PathemEngine
+import UniformTypeIdentifiers
 
 /// The single file/selection context menu, shared by every pane view (list, icon, gallery,
 /// column) so the four can never drift apart. Add an item here once and it appears in all of
@@ -30,6 +31,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     private static func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
     }
+    private static func isImage(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .image) ?? false
+    }
     private static let trashPrefix =
         FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash").path + "/"
     private static func isInTrash(_ url: URL) -> Bool { url.path.hasPrefix(trashPrefix) }
@@ -53,6 +57,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.download", L("list.download", "Download")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
         ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
+        ("files.setDesktopPicture", L("bvc.cmd.setDesktopPicture", "Set Desktop Picture")),
         ("files.rename", L("list.rename", "Rename…")),
         ("files.trash", L("list.moveToTrash", "Move to Trash")),
         ("files.putBack", L("bvc.cmd.putBack", "Put Back")),
@@ -97,6 +102,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         add("files.download")
         add("files.reveal")
         add("files.revealInPathem")
+        add("files.setDesktopPicture")  // hidden unless a single image is selected
         add("files.rename")
         add("files.trash")
         add("files.putBack")  // hidden unless the selection is in the Trash
@@ -163,6 +169,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                         item.title = Self.newFolderWithSelectionTitle(count: urls.count)
                     case "files.openInNewTab":
                         item.isHidden = !singleFolder
+                    case "files.setDesktopPicture":
+                        item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
                     case "files.putBack", "files.deleteImmediately":
                         item.isHidden = !inTrash  // Trash-only actions
                     default:

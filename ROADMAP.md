@@ -194,15 +194,19 @@ Quick wins (compose existing FileOperations; each is a command plus menu wiring)
 - **Open a folder in a new tab** -- SHIPPED (2026-07-08), in the File and context
   menus (shown for a single selected folder). Open-in-**new-window** still waits
   on multi-window (a separate candidate).
-- **Recent Folders** in the Go menu (a most-recently-visited folder list,
-  distinct from the sidebar Recents, which surfaces recent files).
-- **Set Desktop Picture** from a selected image (a single NSWorkspace call).
+- **Recent Folders** -- SHIPPED (2026-07-08). Go > Recent Folders lists the last
+  20 visited folders (persisted, deduped), each navigates the active pane, with
+  Clear Menu.
+- **Set Desktop Picture** -- SHIPPED (2026-07-08). Context menu on a single
+  selected image sets it on every screen (NSWorkspace.setDesktopImageURL).
 
 Larger (new UI or a view-layer change):
 
 - **Group By / Arrange By** -- visually group rows under section headers (Kind,
-  Date, Size, Tag, Application), not merely sort. A view-model change in the list
-  and icon controllers, which today only sort.
+  Date, Size, Tag), not merely sort. A row-model change in the list controller
+  (header rows + selection/drag remapping), an Arrange-By menu, and ViewFormat
+  persistence. NEXT UP -- deferred from the 2026-07-08 batch to get a focused,
+  tested implementation rather than a rushed one in the primary view.
 - **Slideshow** -- a full-screen Quick Look slideshow of the selected images.
 - **Built-in image / document Quick Actions** -- Rotate Left / Right, Create PDF,
   Markup, Trim, beyond the existing Convert Images / Compress. Overlaps the

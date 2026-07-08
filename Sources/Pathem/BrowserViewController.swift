@@ -30,6 +30,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard entries.count == 1, entries[0].isDirectory else { return nil }
         return pane.selectedLocalURLs().first
     }
+    /// The one selected image's URL when exactly one local image file is selected (for "Set
+    /// Desktop Picture"); nil otherwise.
+    var singleSelectedImageURL: URL? {
+        guard let pane = activePane, !pane.isRemote else { return nil }
+        let entries = pane.selectedEntries
+        guard entries.count == 1, !entries[0].isDirectory, let url = pane.selectedLocalURLs().first
+        else { return nil }
+        let type = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+        return type?.conforms(to: .image) == true ? url : nil
+    }
+
+    /// Set the selected image as the desktop picture on every screen.
+    @objc private func setDesktopPicture() {
+        guard let url = singleSelectedImageURL else { NSSound.beep(); return }
+        var failed = false
+        for screen in NSScreen.screens {
+            do { try NSWorkspace.shared.setDesktopImageURL(url, for: screen, options: [:]) } catch { failed = true }
+        }
+        if failed {
+            presentInfo(
+                L("bvc.desktopFailedTitle", "Couldn’t set the desktop picture"),
+                L("bvc.desktopFailedBody", "The image may be in a format the desktop can’t use."))
+        }
+    }
     /// When on, navigating one pane navigates the other to the same folder.
     private var syncBrowsing = false
     private var isSyncingPanes = false  // re-entrancy guard for the mirror navigation
@@ -163,6 +187,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var deviceTimer: Timer?
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
+    /// The most-recently-visited folders (newest first), for the Go > Recent Folders submenu.
+    private let recentFoldersMenu = NSMenu(title: "Recent Folders")
+    private var didInstallRecentMenu = false
+    private var recentFolders: [URL] = []
 
 
     /// Set in privacy-safe demo mode (launch flag or the View menu), so session restore is
@@ -326,6 +354,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadTrashOrigins()
         loadConnections()
         installLayoutsMenu()
+        loadRecentFolders()
+        installRecentFoldersMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
                 pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
@@ -372,6 +402,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 guard pane === self?.activePane else { return }
                 self?.searchField.stringValue = ""
                 self?.updateWindowTitle()  // covers remote nav too
+                if !pane.isRemote { self?.recordRecentFolder(pane.currentURL) }
             }
             side.onPaneDropFiles = { [weak self] urls, move, destination in
                 self?.dropFiles(urls, move: move, into: destination)
@@ -723,6 +754,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             "files.emptyTrash", L("bvc.cmd.emptyTrash", "Empty Trash"),
             enabled: { [weak self] in self?.trashHasItems ?? false }
         ) { [weak self] in self?.emptyTrash() }
+        add(
+            "files.setDesktopPicture", L("bvc.cmd.setDesktopPicture", "Set Desktop Picture"),
+            enabled: { [weak self] in self?.singleSelectedImageURL != nil }
+        ) { [weak self] in self?.setDesktopPicture() }
         add("files.airdrop", L("bvc.cmd.sendViaAirDrop", "Send via AirDrop"), enabled: hasSelection) {
             [weak self] in self?.activePane?.airDropSelection()
         }
@@ -3923,6 +3958,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        if menu === recentFoldersMenu { populateRecentFoldersMenu(); return }
         guard menu === layoutsMenu else { return }
         menu.removeAllItems()
         let save = menu.addItem(withTitle: L("bvc.saveLayoutMenuItem", "Save Layout…"), action: #selector(saveLayoutMenu), keyEquivalent: "")
@@ -3934,6 +3970,75 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             item.target = self
             item.representedObject = name
         }
+    }
+
+    // MARK: - Recent folders (Go menu)
+
+    private static var recentFoldersURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("recent-folders.json")
+    }
+    private func loadRecentFolders() {
+        let paths = loadConfig([String].self, from: Self.recentFoldersURL) ?? []
+        recentFolders = paths.map { URL(fileURLWithPath: $0) }
+    }
+    private func saveRecentFolders() {
+        saveConfig(recentFolders.map(\.path), to: Self.recentFoldersURL)
+    }
+    /// Push a folder to the front of the recents (deduped, capped at 20).
+    private func recordRecentFolder(_ url: URL) {
+        guard url.isFileURL else { return }
+        let standardized = url.standardizedFileURL
+        recentFolders.removeAll { $0.standardizedFileURL == standardized }
+        recentFolders.insert(standardized, at: 0)
+        if recentFolders.count > 20 { recentFolders = Array(recentFolders.prefix(20)) }
+        saveRecentFolders()
+    }
+
+    /// Add "Recent Folders" to the existing Go menu (built in PathemApp before the browser
+    /// exists, so it's wired here once the menu bar is up).
+    private func installRecentFoldersMenu() {
+        guard !didInstallRecentMenu, let mainMenu = NSApp.mainMenu,
+            let goMenu = mainMenu.items.compactMap({ $0.submenu }).first(where: { $0.title == L("menu.go", "Go") })
+        else { return }
+        recentFoldersMenu.delegate = self
+        let item = NSMenuItem(title: L("menu.recentFolders", "Recent Folders"), action: nil, keyEquivalent: "")
+        item.submenu = recentFoldersMenu
+        goMenu.addItem(.separator())
+        goMenu.addItem(item)
+        didInstallRecentMenu = true
+    }
+
+    private func populateRecentFoldersMenu() {
+        recentFoldersMenu.removeAllItems()
+        guard !recentFolders.isEmpty else {
+            let none = recentFoldersMenu.addItem(
+                withTitle: L("menu.noRecentFolders", "No Recent Folders"), action: nil, keyEquivalent: "")
+            none.isEnabled = false
+            return
+        }
+        for url in recentFolders {
+            let item = recentFoldersMenu.addItem(
+                withTitle: url.lastPathComponent, action: #selector(openRecentFolder(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = url
+            item.toolTip = url.path
+            let icon = NSWorkspace.shared.icon(forFile: url.path)
+            icon.size = NSSize(width: 16, height: 16)
+            item.image = icon
+        }
+        recentFoldersMenu.addItem(.separator())
+        let clear = recentFoldersMenu.addItem(
+            withTitle: L("menu.clearMenu", "Clear Menu"), action: #selector(clearRecentFolders), keyEquivalent: "")
+        clear.target = self
+    }
+
+    @objc private func openRecentFolder(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        activePane?.navigate(to: url)
+    }
+    @objc private func clearRecentFolders() {
+        recentFolders = []
+        saveRecentFolders()
     }
 
     @objc private func saveLayoutMenu() { saveLayoutPrompt() }
