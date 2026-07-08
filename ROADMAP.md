@@ -160,10 +160,12 @@ Quality of life:
 
 - **Detachable / multi-window** and drag-a-tab-out.
 - **App-wide theming** (accent / skins) beyond the terminal themes.
-- **Transfer queue:** queue-level **pause/resume** and **retry failed** shipped
-  (2026-07-07) in the Transfers window. Remaining: pausing an in-flight transfer
-  to resume mid-stream (needs provider range/reget support) and copy verification
-  (checksum after copy).
+- **Transfer queue:** queue-level **pause/resume**, **retry failed**, and
+  **clear all** shipped (2026-07-07) in the Transfers window; **checksum
+  verification** of copies shipped (2026-07-08, opt-in via Settings > General,
+  SHA-256 re-read after each copied file). Remaining: pausing an in-flight
+  transfer to resume mid-stream (needs provider range/reget support), and
+  verifying remote downloads (needs a server-provided checksum).
 - **Vim-style, fully keyboard-driven** navigation mode.
 
 ## Finder parity audit (2026-07-05)
@@ -183,17 +185,18 @@ Quick wins (compose existing FileOperations; each is a command plus menu wiring)
   ("New Folder with Selection (3 Items)"); one undoable action (create + move,
   undo moves back out and trashes the folder). Follow-up: auto-enter inline
   rename on the new folder (today it just selects it, matching plain New Folder).
-- **Empty Trash**, and a first-class Trash location with per-item **Put Back**
-  (restore to original path) and **Delete Immediately**. The restore logic
-  already exists as the undo of trash; this promotes it to a browsable place.
-- **Open a folder in a new tab / new window** from the context menu and via a
-  Cmd / Opt-click modifier, matching Finder's double-click options. The per-pane
-  tab infrastructure exists; only the folder-level action is missing.
+- **Empty Trash + Put Back + Delete Immediately** -- SHIPPED (2026-07-08). The
+  Trash is a browsable sidebar location; in it, per-item **Put Back** restores to
+  the original path (via a persisted origin ledger Pathem writes when it trashes;
+  Finder-trashed items have no recorded origin), and **Delete Immediately**
+  (Cmd-Opt-Delete) / **Empty Trash** (Cmd-Shift-Delete) erase permanently behind a
+  cursor-anchored confirm.
+- **Open a folder in a new tab** -- SHIPPED (2026-07-08), in the File and context
+  menus (shown for a single selected folder). Open-in-**new-window** still waits
+  on multi-window (a separate candidate).
 - **Recent Folders** in the Go menu (a most-recently-visited folder list,
   distinct from the sidebar Recents, which surfaces recent files).
 - **Set Desktop Picture** from a selected image (a single NSWorkspace call).
-- **Delete Immediately** (Cmd-Opt-Delete): bypass the Trash behind a confirm, as
-  a named command separate from secure delete.
 
 Larger (new UI or a view-layer change):
 

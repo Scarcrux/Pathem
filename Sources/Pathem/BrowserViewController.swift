@@ -22,6 +22,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let activeSide else { return nil }
         return (activeSide === leftTabs ? rightTabs : leftTabs).activePane
     }
+    /// The one selected folder's URL when exactly one local folder is selected (for "Open in
+    /// New Tab"); nil otherwise.
+    var singleSelectedFolder: URL? {
+        guard let pane = activePane, !pane.isRemote else { return nil }
+        let entries = pane.selectedEntries
+        guard entries.count == 1, entries[0].isDirectory else { return nil }
+        return pane.selectedLocalURLs().first
+    }
     /// When on, navigating one pane navigates the other to the same folder.
     private var syncBrowsing = false
     private var isSyncingPanes = false  // re-entrancy guard for the mirror navigation
@@ -315,6 +323,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadSidebar()
         loadTerminalTheme()
         loadOpenerRules()
+        loadTrashOrigins()
         loadConnections()
         installLayoutsMenu()
         for side in [leftTabs, rightTabs] {
@@ -703,6 +712,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.renameSelection()
         }
         add("files.trash", L("bvc.cmd.moveToTrash", "Move to Trash"), enabled: hasSelection) { [weak self] in self?.trashSelection() }
+        add(
+            "files.putBack", L("bvc.cmd.putBack", "Put Back"),
+            enabled: { [weak self] in self?.selectionIsInTrash ?? false }
+        ) { [weak self] in self?.putBackSelection() }
+        add(
+            "files.deleteImmediately", L("bvc.cmd.deleteImmediately", "Delete Immediately"), enabled: hasSelection
+        ) { [weak self] in self?.deleteImmediatelySelection() }
+        add(
+            "files.emptyTrash", L("bvc.cmd.emptyTrash", "Empty Trash"),
+            enabled: { [weak self] in self?.trashHasItems ?? false }
+        ) { [weak self] in self?.emptyTrash() }
         add("files.airdrop", L("bvc.cmd.sendViaAirDrop", "Send via AirDrop"), enabled: hasSelection) {
             [weak self] in self?.activePane?.airDropSelection()
         }
@@ -772,6 +792,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("ai.run", L("bvc.cmd.askPathem", "Ask Pathem (Natural Language)…")) { [weak self] in self?.showAICommandBar() }
         add("view.quickLook", L("bvc.cmd.quickLook", "Quick Look"), enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
         add("tab.new", L("bvc.cmd.newTab", "New Tab")) { [weak self] in self?.activeSide?.newTab(duplicatingCurrent: true) }
+        add(
+            "files.openInNewTab", L("bvc.cmd.openInNewTab", "Open in New Tab"),
+            enabled: { [weak self] in self?.singleSelectedFolder != nil }
+        ) { [weak self] in
+            guard let self, let folder = self.singleSelectedFolder else { NSSound.beep(); return }
+            self.activeSide?.openTab(at: folder)
+        }
         add("tab.close", L("bvc.cmd.closeTab", "Close Tab"), enabled: { [weak self] in (self?.activeSide?.tabCount ?? 0) > 1 }) {
             [weak self] in self?.activeSide?.closeActiveTab()
         }
@@ -1420,8 +1447,125 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let result = FileOperations.trash(urls: urls)
         reloadBothSides()  // the trashed files may have lived in either visible folder
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
+        recordTrashOrigins(result.trashed)  // remember where each came from, for Put Back
         if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
         if !result.failures.isEmpty { presentFailures(result.failures, title: L("bvc.moveToTrashFailed", "Move to Trash failed")) }
+    }
+
+    // MARK: - Trash: origins ledger, Put Back, Delete Immediately, Empty Trash
+
+    private static var trashOriginsURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("trash-origins.json")
+    }
+    /// Where each Pathem-trashed item came from (trashed path -> original path), so Put Back can
+    /// restore it. Finder-trashed items aren't here (the OS keeps that info privately).
+    private var trashOrigins: [String: String] = [:]
+    private func loadTrashOrigins() {
+        trashOrigins = loadConfig([String: String].self, from: Self.trashOriginsURL) ?? [:]
+    }
+    private func recordTrashOrigins(_ trashed: [FileOperations.Trashed]) {
+        guard !trashed.isEmpty else { return }
+        for item in trashed { trashOrigins[item.trashed.path] = item.original.path }
+        saveConfig(trashOrigins, to: Self.trashOriginsURL)
+    }
+
+    private var homeTrashURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+    }
+    var trashHasItems: Bool {
+        !((try? FileManager.default.contentsOfDirectory(atPath: homeTrashURL.path)) ?? []).isEmpty
+    }
+    /// True when the whole selection lives inside the Trash (so Put Back / Delete Immediately apply).
+    var selectionIsInTrash: Bool {
+        guard let pane = activePane, !pane.isRemote else { return false }
+        let trashPrefix = homeTrashURL.path + "/"
+        let selected = pane.selectedLocalURLs()
+        return !selected.isEmpty && selected.allSatisfy { $0.path.hasPrefix(trashPrefix) }
+    }
+
+    /// Restore the selected trashed items to their original locations (recorded when Pathem
+    /// trashed them). Items with no recorded origin (e.g. trashed by Finder) are reported.
+    private func putBackSelection() {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        var failures: [FileOperations.Failure] = []
+        for url in urls {
+            guard let originalPath = trashOrigins[url.path] else {
+                failures.append(
+                    .init(
+                        name: url.lastPathComponent,
+                        reason: L("bvc.putBackUnknown", "Original location unknown (not trashed by Pathem).")))
+                continue
+            }
+            let destination = uniqueLocalURL(URL(fileURLWithPath: originalPath))
+            do {
+                try FileManager.default.createDirectory(
+                    at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try FileManager.default.moveItem(at: url, to: destination)
+                trashOrigins[url.path] = nil
+            } catch {
+                failures.append(.init(name: url.lastPathComponent, reason: error.localizedDescription))
+            }
+        }
+        saveConfig(trashOrigins, to: Self.trashOriginsURL)
+        reloadBothSides()
+        if !failures.isEmpty { presentFailures(failures, title: L("bvc.putBackFailed", "Couldn’t put back")) }
+    }
+
+    /// Permanently delete the selection, bypassing the Trash (Finder's Delete Immediately).
+    private func deleteImmediatelySelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, view.window != nil else { NSSound.beep(); return }
+        Task { @MainActor in
+            let message =
+                urls.count == 1
+                ? L("bvc.deleteNowOne", "Permanently delete this item?")
+                : String(format: L("bvc.deleteNowMany", "Permanently delete %d items?"), urls.count)
+            let choice = await self.cursorConfirm.ask(
+                message: message, info: L("bvc.cantBeUndone", "This can’t be undone."),
+                buttons: [L("common.delete", "Delete"), L("common.cancel", "Cancel")], over: self.view)
+            guard choice == 0 else { return }
+            var failures: [FileOperations.Failure] = []
+            for url in urls {
+                do { try FileManager.default.removeItem(at: url) } catch {
+                    failures.append(.init(name: url.lastPathComponent, reason: error.localizedDescription))
+                }
+                self.trashOrigins[url.path] = nil
+            }
+            saveConfig(self.trashOrigins, to: Self.trashOriginsURL)
+            self.reloadBothSides()
+            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.deleteFailed", "Delete failed")) }
+        }
+    }
+
+    /// Permanently erase everything in the (home) Trash, after a confirmation at the pointer.
+    private func emptyTrash() {
+        let items =
+            (try? FileManager.default.contentsOfDirectory(
+                at: homeTrashURL, includingPropertiesForKeys: nil)) ?? []
+        guard !items.isEmpty, view.window != nil else { NSSound.beep(); return }
+        Task { @MainActor in
+            let choice = await self.cursorConfirm.ask(
+                message: String(
+                    format: L("bvc.emptyTrashTitle", "Permanently erase %d item(s) in the Trash?"), items.count),
+                info: L("bvc.cantBeUndone", "This can’t be undone."),
+                buttons: [L("bvc.emptyTrashAction", "Empty Trash"), L("common.cancel", "Cancel")], over: self.view)
+            guard choice == 0 else { return }
+            var failed = 0
+            for item in items {
+                do { try FileManager.default.removeItem(at: item) } catch { failed += 1 }
+                self.trashOrigins[item.path] = nil
+            }
+            saveConfig(self.trashOrigins, to: Self.trashOriginsURL)
+            self.reloadBothSides()
+            if failed > 0 {
+                self.presentInfo(
+                    L("bvc.emptyTrashPartialTitle", "Some items couldn’t be erased"),
+                    L("bvc.emptyTrashPartialBody", "They may be locked or in use."))
+            }
+        }
     }
 
     func registerTrashUndo(_ trashed: [FileOperations.Trashed]) {
@@ -3638,7 +3782,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func loadOpenerRules() {
-        if let saved = loadConfig(OpenerRules.self, from: Self.openersURL) { openerRules = saved }
+        guard var saved = loadConfig(OpenerRules.self, from: Self.openersURL) else { return }
+        // One-time migration: per-kind defaults now live in the system (LaunchServices), so drop
+        // any legacy Pathem per-extension rules -- those kinds then defer to the system default,
+        // like Finder. Per-file and per-folder overlays are kept (the OS can't express them).
+        if !saved.byType.isEmpty {
+            saved.byType.removeAll()
+            saveConfig(saved, to: Self.openersURL)
+        }
+        openerRules = saved
     }
 
     /// Open a file with its resolved app: session override (by type) first, then
@@ -4169,7 +4321,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
         transferInFlight = true  // so Quit warns mid-transfer
         transferRunner.run(
-            urls: urls, into: destination, move: move, resolution: resolution, over: view.window
+            urls: urls, into: destination, move: move, resolution: resolution,
+            verify: !move && prefs.verifyCopies, over: view.window
         ) { [weak self] outcome in
             self?.transferInFlight = false
             completion(outcome)
@@ -4641,6 +4794,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cursorConfirm.debugBuildsController(buttons: ["Replace", "Keep Both", "Skip", "Cancel"]), "")
         check("conflict-default-maps",
             ConflictDefault.keepBoth.resolution == .keepBoth && ConflictDefault.ask.resolution == nil, "")
+        // Verified copy: copying a file with verify on succeeds (SHA-256 matches) and lands.
+        let vDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-verify-\(UUID().uuidString)")
+        let vSrcDir = vDir.appendingPathComponent("src")
+        let vDstDir = vDir.appendingPathComponent("dst")
+        try? FileManager.default.createDirectory(at: vSrcDir, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: vDstDir, withIntermediateDirectories: true)
+        let vSrc = vSrcDir.appendingPathComponent("v.txt")
+        try? String(repeating: "payload ", count: 2000).write(to: vSrc, atomically: true, encoding: .utf8)
+        let vOutcome = FileOperations.copy(urls: [vSrc], into: vDstDir, verify: true)
+        let vOK = vOutcome.failures.isEmpty
+            && FileManager.default.fileExists(atPath: vDstDir.appendingPathComponent("v.txt").path)
+        check("verified-copy", vOK, "performed=\(vOutcome.performed.count) failures=\(vOutcome.failures.count)")
+        try? FileManager.default.removeItem(at: vDir)
         // The new superuser/developer panels must construct without a layout crash.
         _ = DiffViewerController()
         let panelsOK =
