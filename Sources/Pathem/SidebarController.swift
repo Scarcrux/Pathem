@@ -45,6 +45,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private var showsLabels = true
     /// A smart location (Recents / a tag filter) was selected.
     var onSelectSmart: ((SmartQuery) -> Void)?
+    /// A saved smart folder was selected (run its query). Kept separate from SmartQuery so the
+    /// saved-search struct doesn't have to live inside that enum.
+    var onSelectSavedSearch: ((SavedSearch) -> Void)?
+    /// The user's saved smart folders, shown as their own sidebar section; set by the browser.
+    var savedSearches: [SavedSearch] = [] {
+        didSet { if savedSearches != oldValue { reload() } }
+    }
     /// A discovered shared computer (by display name) was selected.
     var onSelectShared: ((String) -> Void)?
     private var sharedHosts: [String] = []
@@ -121,6 +128,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case systemItem
         case folderChild  // a lazily-loaded subfolder of an expandable location
         case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
+        case savedSearch(SavedSearch)  // a user's saved smart folder (runs its mdfind query)
         case airdrop  // AirDrop send sheet (no filesystem path)
         case trash  // the user's Trash (navigable; drops trash the items)
         case shared(String)  // a discovered SMB host (by display name)
@@ -343,6 +351,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             roots.append(connectionsNode())
         }
         roots.append(smartNode())
+        if let savedSearches = savedSearchesNode() { roots.append(savedSearches) }
         roots.append(tagsNode())
         outline.reloadData()
         for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) { outline.expandItem(root) }
@@ -364,6 +373,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .systemItem: return "system:\(node.title):\(node.url?.path ?? "")"
         case .folderChild: return "folder:\(node.url?.path ?? "")"
         case .smart(let query): return "smart:\(query)"
+        case .savedSearch(let search): return "saved:\(search.name)"
         case .airdrop: return "airdrop"
         case .trash: return "trash"
         case .shared(let host): return "shared:\(host)"
@@ -442,6 +452,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private func smartNode() -> Node {
         let recents = Node(kind: .smart(.recents), title: L("sidebar.recents", "Recents"), url: nil, icon: "clock")
         return Node(kind: .systemHeader, title: L("sidebar.smartHeader", "Smart"), url: nil, icon: nil, children: [recents])
+    }
+
+    /// The user's saved smart folders, each running its saved query. nil when there are none.
+    private func savedSearchesNode() -> Node? {
+        let searches = savedSearches.filter { !$0.name.isEmpty }
+        guard !searches.isEmpty else { return nil }
+        let children = searches.map {
+            Node(kind: .savedSearch($0), title: $0.name, url: nil, icon: "magnifyingglass")
+        }
+        return Node(
+            kind: .systemHeader, title: L("sidebar.smartFoldersHeader", "Smart Folders"), url: nil, icon: nil,
+            children: children)
     }
 
     /// The seven Finder tag colors; selecting one filters to files with that tag.
@@ -686,6 +708,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         guard row >= 0, let node = outline.item(atRow: row) as? Node else { return }
         if case .smart(let query) = node.kind {
             onSelectSmart?(query)
+            return
+        }
+        if case .savedSearch(let search) = node.kind {
+            onSelectSavedSearch?(search)
             return
         }
         if case .shared(let host) = node.kind {

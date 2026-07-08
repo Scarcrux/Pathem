@@ -441,6 +441,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         restoreSession()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
+        sidebar.onSelectSavedSearch = { [weak self] search in self?.runSavedSearch(search.name, query: search.mdfindQuery()) }
+        sidebar.savedSearches = savedSearches.searches  // show saved smart folders in the sidebar
         sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }
         sidebar.onSelectConnection = { [weak self] connection in self?.connectToRemote(connection) }
         sidebar.onConnectConnectionInNewTab = { [weak self] connection in
@@ -596,6 +598,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         savedSearches.searches.append(search)
         saveConfig(savedSearches, to: Self.savedSearchesURL)
         registerSavedSearchCommands()
+        sidebar.savedSearches = savedSearches.searches  // reflect it in the sidebar section
     }
 
     /// Advanced Find: a builder over Spotlight (name / extension / kind / content / tag / size /
