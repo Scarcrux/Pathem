@@ -46,6 +46,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Ask for confirmation before moving local items to the Trash (off by default,
     /// since the Trash is reversible).
     public var confirmBeforeDelete: Bool
+    /// What to do when a move/copy hits a name collision. `.ask` prompts (the default); the
+    /// others resolve automatically so no dialog appears.
+    public var conflictDefault: ConflictDefault
     /// Dragging items between folders moves them by default (hold Command to copy).
     /// Off keeps the Finder-like default of copy (hold Command to move).
     public var dragMovesByDefault: Bool
@@ -87,6 +90,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
+        conflictDefault: ConflictDefault = .ask,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
@@ -121,6 +125,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.calculateFolderSizes = calculateFolderSizes
         self.compactSidebar = compactSidebar
         self.confirmBeforeDelete = confirmBeforeDelete
+        self.conflictDefault = conflictDefault
         self.dragMovesByDefault = dragMovesByDefault
     }
 
@@ -152,6 +157,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         compactSidebar = try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
         confirmBeforeDelete =
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
+        conflictDefault = (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault
         dragMovesByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .dragMovesByDefault) ?? d.dragMovesByDefault
         appearance = (try? c.decode(Appearance.self, forKey: .appearance)) ?? d.appearance
@@ -181,5 +187,21 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Double.self, forKey: .dragTrailWidth) ?? d.dragTrailWidth
         dragTrailDecay =
             try c.decodeIfPresent(Double.self, forKey: .dragTrailDecay) ?? d.dragTrailDecay
+    }
+}
+
+/// The default response to a name collision on move/copy. `.ask` prompts; the others resolve
+/// automatically so no confirmation appears.
+public enum ConflictDefault: String, Codable, Sendable, CaseIterable {
+    case ask, replace, keepBoth, skip
+
+    /// The resolution to apply without asking, or nil for `.ask` (prompt the user).
+    public var resolution: FileOperations.ConflictResolution? {
+        switch self {
+        case .ask: return nil
+        case .replace: return .replace
+        case .keepBoth: return .keepBoth
+        case .skip: return .skip
+        }
     }
 }

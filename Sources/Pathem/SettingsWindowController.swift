@@ -255,6 +255,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.openConnectionsNewTab", "Open connections in a new tab"), \.openConnectionsInNewTab),
             check(L("prefs.calculateFolderSizes", "Calculate folder sizes"), \.calculateFolderSizes),
             check(L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"), \.confirmBeforeDelete),
+            labeled(L("prefs.conflictDefault", "When files already exist"), conflictDefaultControl()),
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
             check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
             check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),
@@ -376,6 +377,24 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     @objc private func checkToggled(_ sender: NSButton) {
         guard let keyPath = boolPaths[ObjectIdentifier(sender)] else { return }
         prefs[keyPath: keyPath] = (sender.state == .on)
+        onChange?(prefs)
+    }
+
+    /// Order of the conflict-default popup, matching the ConflictDefault cases.
+    private let conflictOrder: [ConflictDefault] = [.ask, .replace, .keepBoth, .skip]
+    private func conflictDefaultControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.conflictAsk", "Ask each time"), L("prefs.conflictReplace", "Replace"),
+            L("prefs.conflictKeepBoth", "Keep both"), L("prefs.conflictSkip", "Skip"),
+        ])
+        popup.selectItem(at: conflictOrder.firstIndex(of: prefs.conflictDefault) ?? 0)
+        popup.target = self
+        popup.action = #selector(conflictDefaultChanged(_:))
+        return popup
+    }
+    @objc private func conflictDefaultChanged(_ sender: NSPopUpButton) {
+        prefs.conflictDefault = conflictOrder[sender.indexOfSelectedItem]
         onChange?(prefs)
     }
 
