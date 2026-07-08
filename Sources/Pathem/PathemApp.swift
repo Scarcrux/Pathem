@@ -406,6 +406,21 @@ enum PathemApp {
             }
         }
 
+        // Render the icon grid with the "Vivid" icon set so the themed file icons can be inspected.
+        if ProcessInfo.processInfo.environment["PATHEM_ICONSET_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: FileManager.default.homeDirectoryForCurrentUser)
+            browser.debugSetActiveViewMode(.list)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                browser.debugSetActiveViewMode(.list)
+                browser.debugSetIconSet("Vivid")  // themed icons show in the list (and every view)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    browser.debugRender(to: "/tmp/iconset.png")
+                    exit(0)
+                }
+            }
+        }
+
         // Render a folder background (a tinted picture behind the list) for headless inspection.
         if ProcessInfo.processInfo.environment["PATHEM_FOLDERBG_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 700))

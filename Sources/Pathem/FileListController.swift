@@ -1157,6 +1157,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// A type icon for the entry, cached by extension (or folder) so scrolling a
     /// huge directory never does per-row disk work.
     private static func icon(for entry: FileEntry) -> NSImage {
+        if let themed = IconSetManager.shared.icon(for: entry) { return themed }  // active icon set
         let key = entry.isDirectory ? "\u{0}folder" : (entry.name as NSString).pathExtension.lowercased()
         if let cached = iconCache[key] { return cached }
         let workspace = NSWorkspace.shared

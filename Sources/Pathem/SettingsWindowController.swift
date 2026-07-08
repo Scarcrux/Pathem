@@ -267,6 +267,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.themeLabel", "Skin"), themeControl()),
             labeled(L("prefs.accentLabel", "Accent color"), accentColorControl()),
             labeled(L("prefs.windowTintLabel", "Window tint"), windowTintControl()),
+            labeled(L("prefs.iconSetLabel", "File icons"), iconSetControl()),
             hint(L("prefs.themeHint", "The skin tints Pathem’s own selection, panes, tabs, and breadcrumb. Standard buttons still use the system accent.")),
             labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
             labeled(L("prefs.densityLabel", "Density"), densityControl()),
@@ -441,6 +442,19 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         prefs.accentColorHex = preset.accentHex
         prefs.windowTintHex = preset.backgroundHex
         prefs.appearance = preset.appearance
+        onChange?(prefs)
+    }
+
+    private func iconSetControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: IconSet.all.map(\.name))
+        popup.selectItem(withTitle: prefs.iconSetName)
+        popup.target = self
+        popup.action = #selector(iconSetChanged(_:))
+        return popup
+    }
+    @objc private func iconSetChanged(_ sender: NSPopUpButton) {
+        prefs.iconSetName = sender.titleOfSelectedItem ?? "System"
         onChange?(prefs)
     }
 

@@ -3870,6 +3870,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.window?.backgroundColor = tint ?? .windowBackgroundColor
     }
 
+    /// Adopt the selected icon set; reload every listing so the new icons appear.
+    private func applyIconSet() {
+        guard IconSetManager.shared.setCurrent(named: prefs.iconSetName) else { return }
+        for side in [leftTabs, rightTabs] { for pane in side.tabs { pane.reloadIfShowingListing() } }
+    }
+
     private func applyCompactSidebar() {
         compactSidebar = prefs.compactSidebar
         sidebar.setShowsLabels(!compactSidebar)
@@ -3928,6 +3934,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         applyCompactSidebar()
         applyAppearance()
         applyTheme()
+        applyIconSet()
         applyTooltipDelay()
         applyToolbarIconSize()
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
@@ -5518,6 +5525,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Switch the active icon set and reload (PATHEM_ICONSET_SHOT).
+    func debugSetIconSet(_ name: String) {
+        prefs.iconSetName = name
+        applyIconSet()
+        view.layoutSubtreeIfNeeded()
+    }
+
     /// Set a folder background on the active folder and apply it (PATHEM_FOLDERBG_SHOT).
     func debugSetFolderBackground(colorHex: String, imagePath: String) {
         guard let pane = activePane else { return }
@@ -5987,6 +6001,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)")
         // Folder backgrounds: the per-folder store round-trips (set, read, clear).
         check("folder-background-roundtrips", debugFolderBackgroundRoundTrips(), "")
+        // Icon sets: a themed set renders an icon; "System" returns nil (use the OS icon).
+        let sampleFolder = FileEntry(name: "docs", isDirectory: true, size: 0, modificationDate: nil)
+        IconSetManager.shared.setCurrent(named: "Vivid")
+        let themedIcon = IconSetManager.shared.icon(for: sampleFolder)
+        IconSetManager.shared.setCurrent(named: "System")
+        let systemIcon = IconSetManager.shared.icon(for: sampleFolder)
+        IconSetManager.shared.setCurrent(named: prefs.iconSetName)  // restore
+        check("icon-set-renders", themedIcon != nil && (themedIcon?.size.width ?? 0) > 0 && systemIcon == nil,
+            "themed=\(themedIcon != nil) system=\(systemIcon == nil)")
         return (ok, lines)
     }
 }

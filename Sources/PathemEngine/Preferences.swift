@@ -94,6 +94,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var accentColorHex: String
     /// Optional window/pane background tint as "#RRGGBB". Empty means the system background.
     public var windowTintHex: String
+    /// The active icon set name ("System" uses the OS icons; the others theme file icons).
+    public var iconSetName: String
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -110,11 +112,13 @@ public struct Preferences: Codable, Sendable, Equatable {
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
-        themeName: String = "System", accentColorHex: String = "", windowTintHex: String = ""
+        themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
+        iconSetName: String = "System"
     ) {
         self.themeName = themeName
         self.accentColorHex = accentColorHex
         self.windowTintHex = windowTintHex
+        self.iconSetName = iconSetName
         self.dragFlickActions = dragFlickActions
         self.dragTrailColor = dragTrailColor
         self.dragTrailWidth = dragTrailWidth
@@ -207,6 +211,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         themeName = try c.decodeIfPresent(String.self, forKey: .themeName) ?? d.themeName
         accentColorHex = try c.decodeIfPresent(String.self, forKey: .accentColorHex) ?? d.accentColorHex
         windowTintHex = try c.decodeIfPresent(String.self, forKey: .windowTintHex) ?? d.windowTintHex
+        iconSetName = try c.decodeIfPresent(String.self, forKey: .iconSetName) ?? d.iconSetName
     }
 }
 

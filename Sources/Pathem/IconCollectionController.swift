@@ -660,6 +660,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private static var iconCache: [String: NSImage] = [:]
 
     private static func icon(for entry: FileEntry) -> NSImage {
+        if let themed = IconSetManager.shared.icon(for: entry) { return themed }  // active icon set
         let key = entry.isDirectory ? "\u{0}folder" : (entry.name as NSString).pathExtension.lowercased()
         if let cached = iconCache[key] { return cached }
         let workspace = NSWorkspace.shared

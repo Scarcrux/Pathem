@@ -380,6 +380,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     private static let cloudIcon = NSImage(
         systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: nil) ?? NSImage()
     private static func icon(for entry: FileEntry) -> NSImage {
-        NSWorkspace.shared.icon(for: entry.isDirectory ? .folder : (UTType(filenameExtension: (entry.name as NSString).pathExtension) ?? .data))
+        if let themed = IconSetManager.shared.icon(for: entry) { return themed }  // active icon set
+        return NSWorkspace.shared.icon(for: entry.isDirectory ? .folder : (UTType(filenameExtension: (entry.name as NSString).pathExtension) ?? .data))
     }
 }
