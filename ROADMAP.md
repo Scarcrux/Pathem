@@ -18,10 +18,10 @@ tests.
 What is missing for a credible v1.0 is not architecture. It is a cluster of
 table-stakes actions and a few reliability fixes.
 
-## Next up -- round 2 (scheduled, 2026-07-08)
+## Round 2 (all shipped, 2026-07-08)
 
-Round 1 (below) is fully shipped. The next set, in suggested build order (tractable
-first; the biggest, most architectural last):
+Round 1 (below) and now all of round 2 are shipped, committed, and installed. Built
+in order (tractable first; the biggest, most architectural last):
 
 1. **Global instant filename search** -- SHIPPED (2026-07-08). Go > Find Files
    Everywhere (Cmd-Shift-O): a floating palette that Spotlight-searches file names
@@ -35,20 +35,34 @@ first; the biggest, most architectural last):
    (`shortcuts run <name> --input-path <file>`), out-of-process via `ShortcutsRunner`,
    output in the shared command-output panel. External tool only. Follow-up:
    exposing Pathem's own actions AS Shortcuts (App Intents target).
-3. **AI rename / summarize folder / semantic dedup.** Build on the on-device model +
-   embeddings already shipped. Start with **AI rename** (propose a filename from a
-   file's content / EXIF, a preview-then-apply batch reusing BatchRename's apply +
-   undo), then **summarize this folder**, then **semantic dedup** (extend the
-   byte-identical DuplicateFinder with near-duplicate detection via embeddings).
-   Engine-first where the model allows.
-4. **Multi-window / detachable tabs.** A second browser window and drag-a-tab-out.
-   The biggest: it lifts the single-window assumption (window/session management, the
-   menu-install hooks and app-delegate `browser` that assume one). Architectural --
-   scheduled last, likely its own multi-turn effort.
+3. **AI rename / summarize folder / semantic dedup** -- SHIPPED (2026-07-08).
+   **Semantic dedup**: View > Find Similar Names groups files with semantically
+   similar names via the on-device `NLEmbedder` (cosine over extension-stripped base
+   names), complementing the byte-identical `DuplicateFinder` -- new `SemanticDedup`
+   engine, 5 unit tests. **AI rename / summarize** (FoundationModels, gated on macOS
+   26 + model readiness, graceful "unavailable" otherwise): File > AI Rename proposes
+   a filename from a text preview and fills the normal rename sheet the moment it
+   lands (latency never blocks), applying through the existing rename + undo path;
+   View > Summarize Folder describes a folder from its item names in the output panel.
+   New `AIAssistant` engine (pure reply-sanitizer unit-tested). Verified available on
+   this Mac via the smoke availability probe.
+4. **Multi-window / detachable tabs** -- SHIPPED (2026-07-08). File > New Window
+   (Cmd-N) opens independent browser windows via a new `WindowManager`; each has its
+   own panes/tabs/terminal. Only the primary window restores/saves the session (new
+   `persistsSession` flag), so siblings never clobber its tabs. Move Tab to New Window
+   detaches the active tab; a shared tabbing identifier + a standard Window menu give
+   native Merge All Windows / drag-to-detach. Quit tears every window's shell down.
+   Covered by app smoke + a `PATHEM_MULTIWINDOW_SMOKE` end-to-end path.
 
-Polish backlog from round 1: streamed (not buffered) external-command output;
+Also shipped (2026-07-08, by request): **Copy Path / Copy Name in the right-click
+menu everywhere** -- both were previously only in the Edit menu + toolbar; now in the
+shared context menu across all views. Copy Path also handles remote panes
+(server-side paths); Copy Name reads entry names directly (local, remote, smart).
+
+Polish backlog from round 1/2: streamed (not buffered) external-command output;
 saved smart folders shown in the sidebar; Group By in the icon view; a Tag group
-key; collapsible group sections; git letters + tag dots in the grids.
+key; collapsible group sections; git letters + tag dots in the grids; filename-search
+scope picker + `find` fallback; Shortcuts as App Intents; AI-rename batch preview.
 
 ## Next up -- round 1 (shipped 2026-07-08)
 
