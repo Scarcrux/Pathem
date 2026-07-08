@@ -61,8 +61,42 @@ shared context menu across all views. Copy Path also handles remote panes
 
 Polish backlog from round 1/2: streamed (not buffered) external-command output;
 saved smart folders shown in the sidebar; Group By in the icon view; a Tag group
-key; collapsible group sections; git letters + tag dots in the grids; filename-search
-scope picker + `find` fallback; Shortcuts as App Intents; AI-rename batch preview.
+key; collapsible group sections; filename-search scope picker + `find` fallback;
+Shortcuts as App Intents; AI-rename batch preview.
+
+## Round 3 (in progress, 2026-07-08)
+
+Four clusters, built in order:
+
+- **3A View parity** -- make icon/gallery/column first-class. **Tag color dots +
+  git status badges in the grids/column** SHIPPED (shared `PaneDecorationCache` +
+  `FileNameDecoration`, middle-truncation keeps both ends). Remaining: single-click
+  open + hover underline in non-list views; super-drag flick + swipe trail
+  everywhere; drag-move-by-default for icon + column.
+- **3B Finder-parity features** -- Slideshow (full-screen Quick Look); image/doc
+  Quick Actions (Rotate / Create PDF / Markup / Trim); Show Original for an
+  alias/symlink; spring-loaded folders.
+- **3C Group By + polish** -- Group By in the icon view; a Tag group key;
+  collapsible sections; saved smart folders in the sidebar; streamed
+  external-command output; filename-search scope picker.
+- **3D Power-user batch** -- batch permissions/ownership (chmod/chown/ACL); batch
+  Finder-comment editing; one-click SMB/AFP mount; app-wide theming.
+
+## Round 4 (scheduled, 2026-07-08) -- new views
+
+Each new view is a `PaneContentView` conformer plus a `ViewMode` case, so they don't
+touch the rest of the app:
+
+- **Tree / outline view** -- expandable folders inline in the pane (NSOutlineView),
+  so a subtree is visible without losing the parent (Directory Opus-style).
+- **Flat / recursive view** -- every file under the current folder flattened into one
+  list, built on the existing `FlatEnumerator`; for bulk ops across a subtree.
+- **Commander mode** -- an orthodox function-key bar (F1-F8 hints) + an integrated
+  command line over the existing dual pane (F5 copy / F6 move already ship). A toggle,
+  not a new view.
+- **Save named view presets** -- first-class "save this view as a named preset"
+  (columns/sort/grouping/zoom) over Saved Views + `ViewFormat`; the precursor to true
+  plugin-defined custom views (which wait on the gated Swift extension runtime).
 
 ## Next up -- round 1 (shipped 2026-07-08)
 
