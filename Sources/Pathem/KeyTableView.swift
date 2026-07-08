@@ -15,6 +15,17 @@ final class KeyTableView: NSTableView {
     /// A right-drag that started on a row: the super-drag flick + its swipe trail. Kept on the
     /// right button so it never collides with a left-drag (which is normal drag-and-drop).
     var onSuperDrag: ((DragSessionEvent) -> Void)?
+    /// A drag left the table or ended; used to cancel a pending spring-loaded-folder open.
+    var onDragExited: (() -> Void)?
+
+    override func draggingExited(_ sender: (any NSDraggingInfo)?) {
+        onDragExited?()
+        super.draggingExited(sender)
+    }
+    override func draggingEnded(_ sender: any NSDraggingInfo) {
+        onDragExited?()
+        super.draggingEnded(sender)
+    }
 
     private let gestureTracker = MouseGestureTracker()
     private var superDragStartRow = -1  // >= 0 means the right-drag began on a file row

@@ -223,6 +223,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.doubleAction = #selector(handleDoubleClick)
         tableView.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
         tableView.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
+        tableView.onDragExited = { [weak self] in self?.springLoader.cancel() }
 
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
@@ -510,22 +511,34 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         _ tableView: NSTableView, validateDrop info: NSDraggingInfo,
         proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation
     ) -> NSDragOperation {
-        guard let urls = draggedURLs(from: info), !urls.isEmpty else { return [] }
+        guard let urls = draggedURLs(from: info), !urls.isEmpty else { springLoader.cancel(); return [] }
         // Over a folder row (that isn't one of the dragged items) -> drop INTO it, with
         // the row highlighted. Otherwise drop into the current folder.
         if let folder = folderRow(at: row, excluding: urls), !incomingURLs(urls, into: folder).isEmpty {
             tableView.setDropRow(row, dropOperation: .on)
+            armSpring(atRow: row, folder: folder)  // dwell here to spring the folder open
         } else {
+            springLoader.cancel()
             guard !incomingURLs(urls, into: directoryURL).isEmpty else { return [] }
             tableView.setDropRow(-1, dropOperation: .on)  // into this folder
         }
         return resolvedDragOperation(for: info)
     }
 
+    /// Spring-loaded folders: dwelling over a folder row during a drag opens it (via onOpen, which
+    /// descends), so a drag can walk into a tree without dropping.
+    private let springLoader = SpringLoader()
+    private func armSpring(atRow row: Int, folder: URL) {
+        guard let index = entryIndex(forRow: row) else { springLoader.cancel(); return }
+        let entry = entries[index]
+        springLoader.arm(key: folder.path) { [weak self] in self?.onOpen?(entry) }
+    }
+
     func tableView(
         _ tableView: NSTableView, acceptDrop info: NSDraggingInfo,
         row: Int, dropOperation: NSTableView.DropOperation
     ) -> Bool {
+        springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: info), !urls.isEmpty else { return false }
         let folder = folderRow(at: row, excluding: urls)  // a subfolder, or nil for this folder
         let incoming = incomingURLs(urls, into: folder ?? directoryURL)
