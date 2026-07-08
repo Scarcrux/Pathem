@@ -24,15 +24,15 @@ The four picked to build next, in suggested order. Details for each live in thei
 existing sections below (Candidate features / Recently requested / Site manager);
 this is the running plan.
 
-1. **User-defined external commands** (the most switch-driving item). Run a user's
-   own script / CLI tool on the selection with placeholders (`%F` full paths, `%P`
-   parent dir, `%N` names, `%D` current folder), configured as data (a small JSON
-   store like the create-templates / opener rules), each registered as a real
-   command so it shows in the palette and is bindable in Settings > Shortcuts and
-   the toolbar / context menu. Run out-of-process via `Process`, stream output to a
-   panel, honor cancel. External tools only -- no embedded scripting -- so within
-   the hard rules. Starts in the engine (an `ExternalCommand` model + runner,
-   `swift test`-able), then the app wires registration + a small editor UI.
+1. **User-defined external commands** -- SHIPPED (2026-07-08). Tools > External
+   Commands lists your commands (one click to run) with a Manage editor; each is
+   also a registry command (palette + bindable in Settings > Shortcuts). A command
+   is a shell template with `%F` (selected paths), `%N` (names), `%D` (this folder),
+   `%P` (parent), `%%` literal; paths are shell-quoted. Runs out-of-process via
+   `/bin/sh` off the main thread, output in a panel with a Stop button. Engine core
+   (`ExternalCommand` + `ExternalCommandRunner`, 5 unit tests) + app store /
+   registration / editor. Follow-up: streamed (not buffered) output, a
+   context-menu group.
 2. **Finish undo history + selective undo.** The `ActionHistory` model is scaffolded
    (footprint per action). Rewire the register sites off `NSUndoManager` onto it,
    add a recent-actions panel, and enable undoing an action no newer action depends

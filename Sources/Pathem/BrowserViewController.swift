@@ -144,6 +144,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var archiveContents = ArchiveContentsController()
     private lazy var findInFiles = FindInFilesController()
     private lazy var processViewer = ProcessViewerController()
+    private lazy var externalCommandsController = ExternalCommandsController()
+    private lazy var externalOutput = ExternalCommandOutputController()
+    private var externalCommands: [ExternalCommand] = []
+    /// Dynamic Tools > External Commands submenu (installed once the menu bar is up).
+    private let externalCommandsMenu = NSMenu(title: "External Commands")
+    private var didInstallExternalCommandsMenu = false
     private var createTemplates: [CreateTemplate] = []
     /// Folders recently used as a Copy To / Move To destination (most recent first).
     private var recentDestinations: [String] = []
@@ -352,6 +358,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadTerminalTheme()
         loadOpenerRules()
         loadTrashOrigins()
+        loadExternalCommands()
+        installExternalCommandsMenu()
         loadConnections()
         installLayoutsMenu()
         loadRecentFolders()
@@ -661,6 +669,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.findInFiles", L("bvc.cmd.findInFiles", "Find in Files…"), enabled: inLocalFolder) { [weak self] in self?.showFindInFiles() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
         add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
+        add("tools.externalCommands", L("bvc.cmd.externalCommands", "External Commands…")) { [weak self] in self?.showExternalCommandsManager() }
         add("files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote else { return false }
             let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
@@ -1241,6 +1250,92 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     run: { [weak self] in self?.runTemplate(template) }))
         }
     }
+
+    // MARK: - User-defined external commands
+
+    private static var externalCommandsURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("external-commands.json")
+    }
+    private func loadExternalCommands() {
+        externalCommands = loadConfig([ExternalCommand].self, from: Self.externalCommandsURL) ?? []
+        registerExternalCommandCommands()
+    }
+    private func saveExternalCommands() {
+        saveConfig(externalCommands, to: Self.externalCommandsURL)
+        registerExternalCommandCommands()
+    }
+
+    /// Register one command per external command so each shows in the palette and is bindable in
+    /// Settings > Shortcuts. Selection-referencing ones require a non-empty local selection.
+    private func registerExternalCommandCommands() {
+        for command in commands.all where command.id.hasPrefix("external.cmd.") {
+            commands.unregister(command.id)
+        }
+        for command in externalCommands {
+            commands.register(
+                .init(
+                    id: "external.cmd.\(command.id)",
+                    title: String(format: L("extcmd.commandTitle", "Command: %@"), command.name),
+                    isEnabled: { [weak self] in
+                        guard let pane = self?.activePane, !pane.isRemote else { return false }
+                        return !command.usesSelection || !pane.selectedEntries.isEmpty
+                    },
+                    run: { [weak self] in self?.runExternalCommand(command) }))
+        }
+    }
+
+    private func runExternalCommand(_ command: ExternalCommand) {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        if command.usesSelection && pane.selectedEntries.isEmpty { NSSound.beep(); return }
+        externalOutput.run(command, files: pane.selectedLocalURLs(), directory: pane.currentURL)
+    }
+
+    func showExternalCommandsManager() {
+        guard let window = view.window else { return }
+        externalCommandsController.present(
+            over: window, commands: externalCommands,
+            onChange: { [weak self] commands in
+                self?.externalCommands = commands
+                self?.saveExternalCommands()
+            },
+            onRun: { [weak self] command in self?.runExternalCommand(command) })
+    }
+
+    /// Add a "External Commands" submenu to the Tools menu (built in PathemApp before the browser
+    /// exists), listing each command plus a Manage entry.
+    private func installExternalCommandsMenu() {
+        guard !didInstallExternalCommandsMenu, let mainMenu = NSApp.mainMenu,
+            let toolsMenu = mainMenu.items.compactMap({ $0.submenu }).first(where: { $0.title == L("menu.tools", "Tools") })
+        else { return }
+        externalCommandsMenu.delegate = self
+        let item = NSMenuItem(title: L("menu.externalCommands", "External Commands"), action: nil, keyEquivalent: "")
+        item.submenu = externalCommandsMenu
+        toolsMenu.addItem(.separator())
+        toolsMenu.addItem(item)
+        didInstallExternalCommandsMenu = true
+    }
+
+    private func populateExternalCommandsMenu() {
+        externalCommandsMenu.removeAllItems()
+        for command in externalCommands {
+            let item = externalCommandsMenu.addItem(
+                withTitle: command.name, action: #selector(runExternalCommandMenu(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = command.id
+        }
+        if !externalCommands.isEmpty { externalCommandsMenu.addItem(.separator()) }
+        let manage = externalCommandsMenu.addItem(
+            withTitle: L("extcmd.manage", "Manage Commands…"), action: #selector(manageExternalCommandsMenu), keyEquivalent: "")
+        manage.target = self
+    }
+
+    @objc private func runExternalCommandMenu(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+            let command = externalCommands.first(where: { $0.id == id })
+        else { return }
+        runExternalCommand(command)
+    }
+    @objc private func manageExternalCommandsMenu() { showExternalCommandsManager() }
 
     private func showBatchCreate() {
         guard let window = view.window, let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults
@@ -3967,6 +4062,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         if menu === recentFoldersMenu { populateRecentFoldersMenu(); return }
+        if menu === externalCommandsMenu { populateExternalCommandsMenu(); return }
         guard menu === layoutsMenu else { return }
         menu.removeAllItems()
         let save = menu.addItem(withTitle: L("bvc.saveLayoutMenuItem", "Save Layout…"), action: #selector(saveLayoutMenu), keyEquivalent: "")
@@ -4936,6 +5032,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             "flat=\(flat.count) groupedHeaders=\(headers(grouped)) groupedItems=\(items(grouped))")
         // And against the real list view: grouping + selection maps back to the right entry.
         check("arrange-by-selection", leftTabs.activePane?.debugGroupedSelectionRoundTrips() ?? true, "")
+        // External commands: the manager + output panel construct, and a command runs via the engine.
+        _ = ExternalCommandsController()
+        _ = ExternalCommandOutputController()
+        let ecOut = ExternalCommandRunner.run(
+            ExternalCommand(id: "smoke", name: "echo", command: "echo ok"),
+            files: [], directory: FileManager.default.temporaryDirectory)
+        check("external-command-runs", ecOut.succeeded && ecOut.text.contains("ok"), "exit=\(ecOut.exitCode)")
         // The new superuser/developer panels must construct without a layout crash.
         _ = DiffViewerController()
         let panelsOK =
