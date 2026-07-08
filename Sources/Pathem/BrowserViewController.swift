@@ -998,6 +998,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.findSimilarNames", L("bvc.cmd.findSimilarNames", "Find Similar Names"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findSimilarNames()
         }
+        add(
+            "ai.renameSelection", L("bvc.cmd.aiRename", "AI Rename…"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+                return pane.selectedEntries.count == 1 && !(pane.selectedEntries.first?.isDirectory ?? true)
+            }
+        ) { [weak self] in self?.aiRenameSelection() }
+        add(
+            "ai.summarizeFolder", L("bvc.cmd.aiSummarize", "Summarize Folder"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+                return true
+            }
+        ) { [weak self] in self?.aiSummarizeFolder() }
         add("view.sizeBrowser", L("bvc.cmd.sizeBrowser", "Size Browser…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in
             guard let self, let url = self.activePane?.currentURL else { return }
@@ -2824,6 +2838,95 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 : "Similar names: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
             pane.showSmartResults(files, title: title)
         }
+    }
+
+    /// Suggest a new name for the single selected file with the on-device model, prefilling a
+    /// standard rename sheet. The sheet opens immediately (name preselected) and the suggestion
+    /// fills in when it lands, so the model's latency never blocks the UI. Applying goes through
+    /// the normal rename + undo path.
+    private func aiRenameSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first, !entry.isDirectory
+        else { NSSound.beep(); return }
+        guard AIAssistant.isAvailable else {
+            presentInfo(L("ai.unavailableTitle", "On-device AI unavailable"), AIAssistant.availability.reason)
+            return
+        }
+        let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
+        let url = directory.appendingPathComponent(entry.name)
+        let ext = (entry.name as NSString).pathExtension
+
+        let alert = NSAlert()
+        alert.messageText = String(format: L("ai.renameTitle", "AI Rename “%@”"), entry.name)
+        alert.informativeText = L("ai.renameHint", "Suggesting a name… you can edit it or type your own.")
+        alert.addButton(withTitle: L("bvc.renameButton", "Rename"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        field.stringValue = entry.name
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        // Fetch the suggestion concurrently and drop it into the field when it arrives.
+        Task { @MainActor in
+            let preview = await Task.detached { Self.textPreview(of: url) }.value
+            guard let base = await AIAssistant.suggestName(currentName: entry.name, content: preview) else { return }
+            guard field.window != nil else { return }  // sheet already dismissed
+            field.stringValue = ext.isEmpty ? base : "\(base).\(ext)"
+            field.selectText(nil)
+        }
+
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !newName.isEmpty, newName != entry.name else { return }
+            do {
+                try FileOperations.rename(entry.name, to: newName, in: directory)
+                self.registerRenameUndo(from: newName, to: entry.name, in: directory)
+                pane.reloadIfShowingListing()
+                pane.select(name: newName)
+            } catch {
+                self.presentFailures(
+                    [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
+                    title: L("bvc.renameFailed", "Rename failed"))
+            }
+        }
+    }
+
+    /// Summarize the current folder's contents with the on-device model, shown in the output panel.
+    private func aiSummarizeFolder() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard AIAssistant.isAvailable else {
+            presentInfo(L("ai.unavailableTitle", "On-device AI unavailable"), AIAssistant.availability.reason)
+            return
+        }
+        let folder = pane.currentURL
+        let names = pane.entries.map(\.name)
+        externalOutput.present(
+            title: String(format: L("ai.summaryTitle", "Summary of %@"), folder.lastPathComponent),
+            loading: L("ai.summarizing", "Summarizing…")
+        ) {
+            await AIAssistant.summarizeFolder(folderName: folder.lastPathComponent, itemNames: names)
+                ?? L("ai.summaryFailed", "Couldn’t generate a summary.")
+        }
+    }
+
+    /// A short text preview of a file for AI naming: up to 4 KB of a text-like file, else `nil`.
+    /// Kept conservative (by extension) so we never read a huge binary into memory.
+    nonisolated static func textPreview(of url: URL) -> String? {
+        let textExtensions: Set<String> = [
+            "txt", "md", "markdown", "csv", "tsv", "json", "xml", "yaml", "yml", "log",
+            "swift", "py", "js", "ts", "rb", "go", "rs", "c", "h", "cpp", "java", "sh",
+            "html", "css", "rtf", "tex", "org", "ini", "toml", "conf",
+        ]
+        guard textExtensions.contains(url.pathExtension.lowercased()),
+            let handle = try? FileHandle(forReadingFrom: url)
+        else { return nil }
+        defer { try? handle.close() }
+        let data = (try? handle.read(upToCount: 4096)) ?? Data()
+        guard let text = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+            !text.isEmpty
+        else { return nil }
+        return text
     }
 
     /// Show/hide the QuickLook preview pane docked at the right of the window.
@@ -5416,6 +5519,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("get-info-populates", inspector.debugFieldCount >= 5, "\(inspector.debugFieldCount) fields")
         inspector.debugClose()
         try? FileManager.default.removeItem(at: infoTmp)
+        // Semantic dedup + AI: the new commands are registered, clustering is crash-safe on empty
+        // input, and the AI availability probe returns a defined value (whatever this Mac reports).
+        let cmdIDs = Set(commands.all.map(\.id))
+        check("ai-commands-registered",
+            cmdIDs.isSuperset(of: ["files.findSimilarNames", "ai.renameSelection", "ai.summarizeFolder"]),
+            "have=\(["files.findSimilarNames", "ai.renameSelection", "ai.summarizeFolder"].filter(cmdIDs.contains).count)/3")
+        check("semantic-dedup-empty-safe", SemanticDedup.similarGroups([]).isEmpty, "no groups for no files")
+        check("ai-availability-defined", AIAssistant.availability.reason.isEmpty == AIAssistant.isAvailable,
+            "availability=\(AIAssistant.availability) reason=\"\(AIAssistant.availability.reason)\"")
         return (ok, lines)
     }
 }

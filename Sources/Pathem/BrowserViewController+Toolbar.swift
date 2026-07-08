@@ -57,6 +57,8 @@ extension BrowserViewController: NSToolbarDelegate {
         .init(commandID: "files.getInfo", symbol: "info.circle", label: "Get Info"),
         .init(commandID: "files.open", symbol: "arrow.up.forward.app", label: "Open"),
         .init(commandID: "files.rename", symbol: "pencil", label: "Rename"),
+        .init(commandID: "ai.renameSelection", symbol: "wand.and.stars", label: "AI Rename"),
+        .init(commandID: "ai.summarizeFolder", symbol: "text.append", label: "Summarize Folder"),
         .init(commandID: "files.duplicate", symbol: "plus.square.on.square", label: "Duplicate"),
         .init(commandID: "files.copy", symbol: "doc.on.doc", label: "Copy"),
         .init(commandID: "files.paste", symbol: "doc.on.clipboard", label: "Paste"),

@@ -450,6 +450,7 @@ enum PathemApp {
         // Organize
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
+        fileMenu.addItem(commandItem("AI Rename…", "ai.renameSelection"))
         fileMenu.addItem(commandItem("Duplicate", "files.duplicate"))  // chord owned by the keymap
         fileMenu.addItem(commandItem("Copy To…", "files.copyTo"))
         fileMenu.addItem(commandItem("Move To…", "files.moveTo"))
@@ -594,6 +595,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
         viewMenu.addItem(commandItem("Organize Folder…", "files.organize"))
         viewMenu.addItem(commandItem("Organize with AI…", "files.organizeAI"))
+        viewMenu.addItem(commandItem("Summarize Folder", "ai.summarizeFolder"))
         viewMenu.addItem(commandItem("Batch Rename…", "files.batchRename"))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Commit…", "git.commit"))

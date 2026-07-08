@@ -14,6 +14,8 @@ final class ExternalCommandOutputController: NSObject {
     private let statusLabel = NSTextField(labelWithString: "")
     private let stopButton = NSButton()
     private var box: ProcessBox?
+    /// Identifies the in-flight async producer so a superseding call ignores the stale result.
+    private var currentAsync: UUID?
 
     override init() {
         panel = NSPanel(
@@ -49,6 +51,30 @@ final class ExternalCommandOutputController: NSObject {
                 ? L("extcmd.finished", "Finished")
                 : String(format: L("extcmd.exitCode", "Exited with code %d"), Int(output.exitCode))
             self.statusLabel.textColor = output.succeeded ? .secondaryLabelColor : .systemRed
+        }
+    }
+
+    /// Show the panel with a loading line, await an async text producer (e.g. an on-device AI
+    /// call), then display its text. Not cancelable; for producers that don't own a Process.
+    func present(title: String, loading: String, work: @escaping @Sendable () async -> String) {
+        panel.title = title
+        textView.string = ""
+        statusLabel.stringValue = loading
+        statusLabel.textColor = .secondaryLabelColor
+        stopButton.isEnabled = false
+        box = nil
+        let token = UUID()
+        currentAsync = token
+        panel.centerOverMainWindow()
+        panel.makeKeyAndOrderFront(nil)
+        Task { @MainActor in
+            let text = await work()
+            guard self.currentAsync == token else { return }  // a newer run replaced us
+            self.currentAsync = nil
+            self.textView.string = text
+            self.textView.scrollToEndOfDocument(nil)
+            self.statusLabel.stringValue = L("extcmd.finished", "Finished")
+            self.statusLabel.textColor = .secondaryLabelColor
         }
     }
 
