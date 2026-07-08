@@ -54,6 +54,20 @@ final class ActionHistory {
     func undo() { run(&undoStack, phase: .undoing) }
     func redo() { run(&redoStack, phase: .redoing) }
 
+    /// Selectively undo the action at `index` (from a recent-actions panel) when it's independent
+    /// of everything newer. Removes it from the undo stack and runs its reverse, which records the
+    /// opposite onto the redo stack. Returns false (no-op) if it isn't independently undoable.
+    @discardableResult
+    func undo(at index: Int) -> Bool {
+        guard isIndependentlyUndoable(at: index) else { return false }
+        let action = undoStack.remove(at: index)
+        phase = .undoing
+        action.perform()  // reverses, and records the opposite onto the redo stack
+        phase = .idle
+        onChange?()
+        return true
+    }
+
     private func run(_ stack: inout [Action], phase newPhase: Phase) {
         guard let action = stack.popLast() else { return }
         phase = newPhase

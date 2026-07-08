@@ -33,10 +33,14 @@ this is the running plan.
    (`ExternalCommand` + `ExternalCommandRunner`, 5 unit tests) + app store /
    registration / editor. Follow-up: streamed (not buffered) output, a
    context-menu group.
-2. **Finish undo history + selective undo.** The `ActionHistory` model is scaffolded
-   (footprint per action). Rewire the register sites off `NSUndoManager` onto it,
-   add a recent-actions panel, and enable undoing an action no newer action depends
-   on (the footprint-overlap check already drafted). Cleanest continuity win.
+2. **Undo history + selective undo** -- SHIPPED (2026-07-08). All six file-op
+   register sites (move/copy, trash, new-item, rename, created-batch,
+   new-folder-with-selection) plus the Edit menu and Cmd-Z/⇧Cmd-Z now run through
+   `ActionHistory` instead of `NSUndoManager` (text-field editing keeps its own
+   field-editor undo, routed by `isEditingText`). Each action records a path
+   footprint; **Edit > Undo History…** lists recent actions with **Undo This** --
+   a selective undo of an action nothing newer touched (footprint-overlap check).
+   Smoke covers the model, selective undo, and a real move -> undo round-trip.
 3. **SFTP private key file + passphrase** (the EC2 / `.pem` case). Add a key-file
    field to `RemoteConnection` + the site manager; pass `-i <key>` to the SFTP
    backend and an askpass path for the passphrase. Optional stretch: save passwords
@@ -137,10 +141,7 @@ Tier 3 (breadth and niceties):
 
 ## Recently requested (in flight / backlog, 2026-07-05)
 
-- **Undo history + selective undo:** an authoritative `ActionHistory` replacing
-  NSUndoManager, recording each action's path footprint, with a recent-actions
-  panel; then selectively undo an action that no newer action depends on
-  (footprint-overlap check). Model landed; registration-site rewiring in progress.
+- **Undo history + selective undo** -- SHIPPED (2026-07-08). See "Next up".
 - **Easy folder-icon change from folder properties** (Get Info).
 - **Cloud folder badges:** keep the real folder icon (an iCloud "Documents" still
   shows the Documents glyph) and overlay a small cloud-service badge, iCloud via

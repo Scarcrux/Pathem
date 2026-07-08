@@ -17,6 +17,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let rightTabs: TabbedPaneController
     weak var activePane: PaneController?
     private weak var activeSide: TabbedPaneController?
+    /// The app's file-operation undo/redo history (replaces the window's NSUndoManager for file
+    /// ops; text-field editing keeps its own). Drives Cmd-Z, the Edit menu, and a recent-actions
+    /// panel with selective undo.
+    let actionHistory = ActionHistory()
+    /// Absolute paths a set of performed ops touched, used as an action's footprint.
+    static func paths(of performed: [FileOperations.Performed]) -> Set<String> {
+        Set(performed.flatMap { [$0.source.path, $0.destination.path] })
+    }
+    static func paths(_ names: [String], in directory: URL) -> Set<String> {
+        Set(names.map { directory.appendingPathComponent($0).path })
+    }
     /// The active pane's counterpart on the opposite side (for "paste in other pane", etc.).
     var otherPane: PaneController? {
         guard let activeSide else { return nil }
@@ -146,6 +157,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var processViewer = ProcessViewerController()
     private lazy var externalCommandsController = ExternalCommandsController()
     private lazy var externalOutput = ExternalCommandOutputController()
+    private lazy var undoHistoryController = UndoHistoryController()
     private var externalCommands: [ExternalCommand] = []
     /// Dynamic Tools > External Commands submenu (installed once the menu bar is up).
     private let externalCommandsMenu = NSMenu(title: "External Commands")
@@ -935,12 +947,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 return pane.selectedEntries.contains { !$0.isDirectory }
             }
         ) { [weak self] in self?.downloadSelectedRemote() }
-        add("edit.undo", L("bvc.cmd.undo", "Undo"), enabled: { [weak self] in self?.view.window?.undoManager?.canUndo ?? false }) {
+        add("edit.undo", L("bvc.cmd.undo", "Undo"), enabled: { [weak self] in self?.actionHistory.canUndo ?? false }) {
             [weak self] in self?.undo(nil)
         }
-        add("edit.redo", L("bvc.cmd.redo", "Redo"), enabled: { [weak self] in self?.view.window?.undoManager?.canRedo ?? false }) {
+        add("edit.redo", L("bvc.cmd.redo", "Redo"), enabled: { [weak self] in self?.actionHistory.canRedo ?? false }) {
             [weak self] in self?.redo(nil)
         }
+        add("edit.showHistory", L("bvc.cmd.showHistory", "Undo History…")) { [weak self] in self?.showUndoHistory() }
         loadExtensionsIfEnabled()
     }
 
@@ -1172,32 +1185,38 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private func registerFolderWithSelectionUndo(
         folderName: String, in directory: URL, moved: [FileOperations.Performed]
     ) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths(of: moved).union([directory.appendingPathComponent(folderName).path])
+        actionHistory.record(
+            name: L("bvc.newFolderWithSelectionAction", "New Folder with Selection"),
+            footprint: paths, undoFootprint: paths
+        ) { [weak self] in
+            guard let self else { return }
             FileOperations.undo(moved)  // items back to their original spot in `directory`
             let trash = FileOperations.trash([folderName], in: directory)  // remove the now-empty folder
-            target.reloadBothSides()
+            self.reloadBothSides()
             if !trash.failures.isEmpty {
-                target.presentFailures(trash.failures, title: L("bvc.undoFailed", "Undo failed"))
+                self.presentFailures(trash.failures, title: L("bvc.undoFailed", "Undo failed"))
             }
-            target.registerFolderWithSelectionRedo(folderName: folderName, in: directory, moved: moved)
+            self.registerFolderWithSelectionRedo(folderName: folderName, in: directory, moved: moved)
         }
-        undoManager.setActionName(L("bvc.newFolderWithSelectionAction", "New Folder with Selection"))
     }
 
     private func registerFolderWithSelectionRedo(
         folderName: String, in directory: URL, moved: [FileOperations.Performed]
     ) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths(of: moved).union([directory.appendingPathComponent(folderName).path])
+        actionHistory.record(
+            name: L("bvc.newFolderWithSelectionAction", "New Folder with Selection"),
+            footprint: paths, undoFootprint: paths
+        ) { [weak self] in
+            guard let self else { return }
             let folderURL = directory.appendingPathComponent(folderName)
             try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
             let names = moved.map { $0.source.lastPathComponent }
             let outcome = FileOperations.move(names, from: directory, to: folderURL, onConflict: .keepBoth)
-            target.reloadBothSides()
-            target.registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
+            self.reloadBothSides()
+            self.registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
         }
-        undoManager.setActionName(L("bvc.newFolderWithSelectionAction", "New Folder with Selection"))
     }
 
     /// Create a new empty file (local panes only); the Finder pain point this app fixes.
@@ -1395,59 +1414,60 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Undo support for a set of freshly-created items: trashing them reverses it.
     private func registerCreatedUndo(names: [String], in directory: URL, actionName: String) {
-        guard !names.isEmpty, let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        guard !names.isEmpty else { return }
+        let paths = Self.paths(names, in: directory)
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+            guard let self else { return }
             let result = FileOperations.trash(names, in: directory)
-            target.reloadBothSides()
+            self.reloadBothSides()
             if !result.failures.isEmpty {
-                target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed"))
+                self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed"))
             }
             if !result.trashed.isEmpty {
-                target.registerCreatedRedo(
+                self.registerCreatedRedo(
                     names: names, in: directory, trashed: result.trashed, actionName: actionName)
             }
         }
-        undoManager.setActionName(actionName)
     }
 
     private func registerCreatedRedo(
         names: [String], in directory: URL, trashed: [FileOperations.Trashed], actionName: String
     ) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths(names, in: directory)
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+            guard let self else { return }
             let failures = FileOperations.untrash(trashed)
-            target.reloadBothSides()
-            if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
-            target.registerCreatedUndo(names: names, in: directory, actionName: actionName)
+            self.reloadBothSides()
+            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
+            self.registerCreatedUndo(names: names, in: directory, actionName: actionName)
         }
-        undoManager.setActionName(actionName)
     }
 
     private func registerNewItemUndo(name: String, in directory: URL, actionName: String) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths([name], in: directory)
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+            guard let self else { return }
             let result = FileOperations.trash([name], in: directory)  // undo = trash the new item
-            target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
+            self.reloadBothSides()
+            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
             if !result.trashed.isEmpty {
-                target.registerNewItemRedo(name: name, in: directory, trashed: result.trashed, actionName: actionName)
+                self.registerNewItemRedo(name: name, in: directory, trashed: result.trashed, actionName: actionName)
             }
         }
-        undoManager.setActionName(actionName)
     }
 
     private func registerNewItemRedo(
         name: String, in directory: URL, trashed: [FileOperations.Trashed], actionName: String
     ) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths([name], in: directory)
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+            guard let self else { return }
             let failures = FileOperations.untrash(trashed)  // redo = restore the item
-            target.reloadBothSides()
-            target.paneShowing(directory)?.select(name: name)
-            if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
-            target.registerNewItemUndo(name: name, in: directory, actionName: actionName)
+            self.reloadBothSides()
+            self.paneShowing(directory)?.select(name: name)
+            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
+            self.registerNewItemUndo(name: name, in: directory, actionName: actionName)
         }
-        undoManager.setActionName(actionName)
     }
 
     private func renameSelection() {
@@ -1496,20 +1516,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     private func registerRenameUndo(from current: String, to original: String, in directory: URL) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths: Set<String> = [
+            directory.appendingPathComponent(current).path, directory.appendingPathComponent(original).path,
+        ]
+        actionHistory.record(name: L("bvc.renameVerb", "Rename"), footprint: paths, undoFootprint: paths) {
+            [weak self] in
+            guard let self else { return }
             do {
                 try FileOperations.rename(current, to: original, in: directory)
-                target.reloadBothSides()
-                target.paneShowing(directory)?.select(name: original)
-                target.registerRenameUndo(from: original, to: current, in: directory)  // redo
+                self.reloadBothSides()
+                self.paneShowing(directory)?.select(name: original)
+                self.registerRenameUndo(from: original, to: current, in: directory)  // redo
             } catch {
-                target.presentFailures(
+                self.presentFailures(
                     [FileOperations.Failure(name: current, reason: error.localizedDescription)],
                     title: L("bvc.undoFailed", "Undo failed"))
             }
         }
-        undoManager.setActionName(L("bvc.renameVerb", "Rename"))
     }
 
     private func trashSelection() {
@@ -1703,26 +1726,30 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     func registerTrashUndo(_ trashed: [FileOperations.Trashed]) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Set(trashed.flatMap { [$0.original.path, $0.trashed.path] })
+        actionHistory.record(
+            name: L("bvc.moveToTrashAction", "Move to Trash"), footprint: paths, undoFootprint: paths
+        ) { [weak self] in
+            guard let self else { return }
             let failures = FileOperations.untrash(trashed)
-            target.reloadBothSides()
-            if !failures.isEmpty { target.presentFailures(failures, title: L("bvc.undoFailed", "Undo failed")) }
-            target.registerTrashRedo(trashed)  // redo = move them back to the Trash
+            self.reloadBothSides()
+            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.undoFailed", "Undo failed")) }
+            self.registerTrashRedo(trashed)  // redo = move them back to the Trash
         }
-        undoManager.setActionName(L("bvc.moveToTrashAction", "Move to Trash"))
     }
 
     private func registerTrashRedo(_ trashed: [FileOperations.Trashed]) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Set(trashed.flatMap { [$0.original.path, $0.trashed.path] })
+        actionHistory.record(
+            name: L("bvc.moveToTrashAction", "Move to Trash"), footprint: paths, undoFootprint: paths
+        ) { [weak self] in
+            guard let self else { return }
             // Trash by original URL so cross-folder selections redo correctly.
             let result = FileOperations.trash(urls: trashed.map(\.original))
-            target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
-            if !result.trashed.isEmpty { target.registerTrashUndo(result.trashed) }
+            self.reloadBothSides()
+            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
+            if !result.trashed.isEmpty { self.registerTrashUndo(result.trashed) }
         }
-        undoManager.setActionName(L("bvc.moveToTrashAction", "Move to Trash"))
     }
 
     /// Refresh the active pane on each side (used by undo/redo handlers).
@@ -3130,6 +3157,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if menuItem.action == #selector(selectTerminalTheme(_:)) {
             menuItem.state = (menuItem.representedObject as? String == terminal.theme.name) ? .on : .off
             return true
+        }
+        // The Edit menu's Undo/Redo reflect the file-op history -- unless a text field is being
+        // edited, in which case its own field-editor undo drives them.
+        if menuItem.action == Selector(("undo:")) {
+            if isEditingText { menuItem.title = L("menu.undo", "Undo"); return view.window?.undoManager?.canUndo ?? false }
+            menuItem.title = actionHistory.undoActionName.map { String(format: L("menu.undoNamed", "Undo %@"), $0) } ?? L("menu.undo", "Undo")
+            return actionHistory.canUndo
+        }
+        if menuItem.action == Selector(("redo:")) {
+            if isEditingText { menuItem.title = L("menu.redo", "Redo"); return view.window?.undoManager?.canRedo ?? false }
+            menuItem.title = actionHistory.redoActionName.map { String(format: L("menu.redoNamed", "Redo %@"), $0) } ?? L("menu.redo", "Redo")
+            return actionHistory.canRedo
         }
         guard menuItem.action == #selector(performMenuCommand(_:)),
             let id = menuItem.representedObject as? String
@@ -4586,41 +4625,47 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     func registerUndo(_ performed: [FileOperations.Performed], actionName: String) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths(of: performed)
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+            guard let self else { return }
             let result = FileOperations.undo(performed)
-            target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
-            target.registerTransferRedo(performed, actionName: actionName)  // wire up redo
+            self.reloadBothSides()
+            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
+            self.registerTransferRedo(performed, actionName: actionName)  // wire up redo
         }
-        undoManager.setActionName(actionName)
     }
 
     private func registerTransferRedo(_ performed: [FileOperations.Performed], actionName: String) {
-        guard let undoManager = view.window?.undoManager else { return }
-        undoManager.registerUndo(withTarget: self) { target in
+        let paths = Self.paths(of: performed)
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+            guard let self else { return }
             let result = FileOperations.redo(performed)
-            target.reloadBothSides()
-            if !result.failures.isEmpty { target.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
-            target.registerUndo(performed, actionName: actionName)  // back to undo
+            self.reloadBothSides()
+            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
+            self.registerUndo(performed, actionName: actionName)  // back to undo
         }
-        undoManager.setActionName(actionName)
     }
 
+    /// A focused text field (inline rename) owns its own undo via the window's field editor;
+    /// let it undo text first, else undo a file operation from the history.
+    private var isEditingText: Bool { view.window?.firstResponder is NSText }
+
     @objc func undo(_ sender: Any?) {
-        guard let undoManager = view.window?.undoManager, undoManager.canUndo else {
-            NSSound.beep()
-            return
-        }
-        undoManager.undo()
+        if isEditingText, let um = view.window?.undoManager, um.canUndo { um.undo(); return }
+        guard actionHistory.canUndo else { NSSound.beep(); return }
+        actionHistory.undo()
     }
 
     @objc func redo(_ sender: Any?) {
-        guard let undoManager = view.window?.undoManager, undoManager.canRedo else {
-            NSSound.beep()
-            return
-        }
-        undoManager.redo()
+        if isEditingText, let um = view.window?.undoManager, um.canRedo { um.redo(); return }
+        guard actionHistory.canRedo else { NSSound.beep(); return }
+        actionHistory.redo()
+    }
+
+    /// Open the recent-actions panel (Undo History) over the file-operation history.
+    func showUndoHistory() {
+        guard let window = view.window else { return }
+        undoHistoryController.present(over: window, history: actionHistory)
     }
 
     func presentFailures(_ failures: [FileOperations.Failure], title: String) {
@@ -5039,6 +5084,37 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             ExternalCommand(id: "smoke", name: "echo", command: "echo ok"),
             files: [], directory: FileManager.default.temporaryDirectory)
         check("external-command-runs", ecOut.succeeded && ecOut.text.contains("ok"), "exit=\(ecOut.exitCode)")
+        // Undo history: two path-disjoint actions; the older is independently undoable, and a
+        // selective undo runs just its reverse and enables redo.
+        let history = ActionHistory()
+        var undoLog: [String] = []
+        history.record(name: "A", footprint: ["/a"], undoFootprint: ["/a"]) {
+            undoLog.append("undoA")
+            history.record(name: "A'", footprint: ["/a"], undoFootprint: ["/a"], perform: {})
+        }
+        history.record(name: "B", footprint: ["/b"], undoFootprint: ["/b"]) {
+            undoLog.append("undoB")
+            history.record(name: "B'", footprint: ["/b"], undoFootprint: ["/b"], perform: {})
+        }
+        let indepA = history.isIndependentlyUndoable(at: 0)
+        let didUndoA = history.undo(at: 0)
+        check("undo-history-selective", indepA && didUndoA && undoLog == ["undoA"] && history.canRedo,
+            "indep=\(indepA) undid=\(didUndoA) log=\(undoLog) canRedo=\(history.canRedo)")
+        // The real file-op undo path: move a file, register it in the live history, then undo it.
+        let uDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-undo-\(UUID().uuidString)")
+        let uSrc = uDir.appendingPathComponent("src")
+        let uDst = uDir.appendingPathComponent("dst")
+        try? FileManager.default.createDirectory(at: uSrc, withIntermediateDirectories: true)
+        try? FileManager.default.createDirectory(at: uDst, withIntermediateDirectories: true)
+        try? "x".write(to: uSrc.appendingPathComponent("f.txt"), atomically: true, encoding: .utf8)
+        let uOutcome = FileOperations.move(["f.txt"], from: uSrc, to: uDst, onConflict: .keepBoth)
+        registerUndo(uOutcome.performed, actionName: "Move")
+        let movedOK = FileManager.default.fileExists(atPath: uDst.appendingPathComponent("f.txt").path)
+        actionHistory.undo()  // reverses the move
+        let undoneOK = FileManager.default.fileExists(atPath: uSrc.appendingPathComponent("f.txt").path)
+            && !FileManager.default.fileExists(atPath: uDst.appendingPathComponent("f.txt").path)
+        check("undo-file-move", movedOK && undoneOK, "moved=\(movedOK) undone=\(undoneOK)")
+        try? FileManager.default.removeItem(at: uDir)
         // The new superuser/developer panels must construct without a layout crash.
         _ = DiffViewerController()
         let panelsOK =
