@@ -5127,8 +5127,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// its folder and selects it.
     func showGlobalSearch() {
         guard let window = view.window else { return }
+        let folder = activePane.map { !$0.isRemote ? $0.currentURL : nil } ?? nil
         globalSearchController.present(
-            over: window, scope: FileManager.default.homeDirectoryForCurrentUser
+            over: window, currentFolder: folder ?? FileManager.default.homeDirectoryForCurrentUser
         ) { [weak self] url in
             guard let pane = self?.activePane else { return }
             pane.navigate(to: url.deletingLastPathComponent())

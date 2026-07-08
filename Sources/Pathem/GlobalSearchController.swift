@@ -10,10 +10,21 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     private let searchField = NSSearchField()
     private let table = NSTableView()
     private let statusLabel = NSTextField(labelWithString: "")
+    private let scopePopup = NSPopUpButton()
     private var results: [URL] = []
-    private var scope: URL?
+    /// The active pane's folder, offered as the "This Folder" scope.
+    private var currentFolder: URL?
     private var onReveal: ((URL) -> Void)?
     private var generation = 0
+
+    /// The mdfind scope for the selected picker item: whole index, Home, or the current folder.
+    private var scope: URL? {
+        switch scopePopup.indexOfSelectedItem {
+        case 1: return FileManager.default.homeDirectoryForCurrentUser
+        case 2: return currentFolder
+        default: return nil  // This Mac (the whole Spotlight index)
+        }
+    }
 
     override init() {
         panel = NSPanel(
@@ -23,8 +34,8 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         build()
     }
 
-    func present(over window: NSWindow, scope: URL, onReveal: @escaping (URL) -> Void) {
-        self.scope = scope
+    func present(over window: NSWindow, currentFolder: URL, onReveal: @escaping (URL) -> Void) {
+        self.currentFolder = currentFolder
         self.onReveal = onReveal
         searchField.stringValue = ""
         results = []
@@ -35,14 +46,16 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         panel.makeFirstResponder(searchField)
     }
 
-    func controlTextDidChange(_ obj: Notification) {
+    func controlTextDidChange(_ obj: Notification) { performSearch() }
+
+    /// Re-run the current query (from a keystroke or a scope change), debounced + stale-guarded.
+    private func performSearch() {
         generation += 1
         let gen = generation
-        let text = searchField.stringValue
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(150))  // debounce: only the last keystroke searches
+            try? await Task.sleep(for: .milliseconds(150))  // debounce: only the last change searches
             guard gen == self.generation else { return }
-            let query = SpotlightSearch.filenameQuery(text)
+            let query = SpotlightSearch.filenameQuery(self.searchField.stringValue)
             guard !query.isEmpty else {
                 self.setResults([])
                 self.statusLabel.stringValue = L("gsearch.hint", "Type a file name to search everywhere.")
@@ -53,6 +66,8 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
             self.setResults(urls.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending })
         }
     }
+
+    @objc private func scopeChanged() { performSearch() }
 
     private func setResults(_ urls: [URL]) {
         results = urls
@@ -102,17 +117,31 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        // Scope picker: whole index, Home, or the current folder. Re-runs on change.
+        scopePopup.addItems(withTitles: [
+            L("gsearch.scopeMac", "This Mac"),
+            L("gsearch.scopeHome", "Home"),
+            L("gsearch.scopeFolder", "This Folder"),
+        ])
+        scopePopup.target = self
+        scopePopup.action = #selector(scopeChanged)
+        scopePopup.translatesAutoresizingMaskIntoConstraints = false
+        scopePopup.setContentHuggingPriority(.required, for: .horizontal)
+
         let content = panel.contentView!
         content.addSubview(searchField)
         content.addSubview(scroll)
         content.addSubview(statusLabel)
+        content.addSubview(scopePopup)
         NSLayoutConstraint.activate([
             searchField.topAnchor.constraint(equalTo: content.topAnchor, constant: 14),
             searchField.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 14),
-            searchField.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
+            searchField.trailingAnchor.constraint(equalTo: scopePopup.leadingAnchor, constant: -8),
+            scopePopup.centerYAnchor.constraint(equalTo: searchField.centerYAnchor),
+            scopePopup.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
             scroll.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 10),
-            scroll.leadingAnchor.constraint(equalTo: searchField.leadingAnchor),
-            scroll.trailingAnchor.constraint(equalTo: searchField.trailingAnchor),
+            scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 14),
+            scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -14),
             statusLabel.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 8),
             statusLabel.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
             statusLabel.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
