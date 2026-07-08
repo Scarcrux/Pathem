@@ -346,8 +346,13 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else { return [] }
         proposedDropOperation.pointee = .before
         proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
-        let command = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        return command && draggingInfo.draggingSourceOperationMask.contains(.move) ? .move : .copy
+        return dropMovesByDefault(draggingInfo) ? .move : .copy
+    }
+
+    /// Move by default (else copy) between folders, with Command inverting it, matching the list.
+    private func dropMovesByDefault(_ info: NSDraggingInfo) -> Bool {
+        let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
+        return (dragMovesByDefault != commandHeld) && info.draggingSourceOperationMask.contains(.move)
     }
 
     func collectionView(
@@ -357,8 +362,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         guard let urls = draggingInfo.draggingPasteboard.readObjects(
             forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty
         else { return false }
-        let command = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        onDropFiles?(urls, command, nil)
+        onDropFiles?(urls, dropMovesByDefault(draggingInfo), nil)
         return true
     }
 

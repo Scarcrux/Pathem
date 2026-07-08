@@ -594,9 +594,14 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         }
     }
 
+    /// Move dragged items between folders by default (else copy); Command inverts it, matching
+    /// the list. Driven by the pref via PaneController.
+    var dragMovesByDefault = false
+
     private func resolvedDragOperation(_ info: NSDraggingInfo) -> NSDragOperation {
         let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        return commandHeld && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
+        let wantMove = dragMovesByDefault != commandHeld  // Command inverts the default
+        return wantMove && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
     }
 
     // MARK: Icons
