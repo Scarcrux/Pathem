@@ -111,6 +111,9 @@ final class TabbedPaneController: NSObject {
         newTab(at: url, focus: true)
     }
 
+    /// Open `url` in a new, focused tab (used by "Open in New Tab" on a folder).
+    func openTab(at url: URL) { newTab(at: url, focus: true) }
+
     @discardableResult
     private func newTab(at url: URL, focus: Bool) -> PaneController {
         let pane = PaneController(start: url)

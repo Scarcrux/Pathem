@@ -27,6 +27,13 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.extract", "files.extractHere", "files.extractTo",
     ]
 
+    private static func isDirectory(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+    }
+    private static let trashPrefix =
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash").path + "/"
+    private static func isInTrash(_ url: URL) -> Bool { url.path.hasPrefix(trashPrefix) }
+
     /// The New Folder with Selection title, pluralized with the live selection count (Finder
     /// shows "(3 Items)"). Shared by the context menu and the File menu.
     static func newFolderWithSelectionTitle(count: Int) -> String {
@@ -41,12 +48,15 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// icon check. The single source of truth for what the menu can contain.
     static let hideableCommands: [(id: String, title: String)] = [
         ("files.open", L("common.open", "Open")),
+        ("files.openInNewTab", L("bvc.cmd.openInNewTab", "Open in New Tab")),
         ("files.getInfo", L("list.getInfo", "Get Info")),
         ("files.download", L("list.download", "Download")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
         ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
         ("files.rename", L("list.rename", "Rename…")),
         ("files.trash", L("list.moveToTrash", "Move to Trash")),
+        ("files.putBack", L("bvc.cmd.putBack", "Put Back")),
+        ("files.deleteImmediately", L("bvc.cmd.deleteImmediately", "Delete Immediately")),
         ("files.newFolder", L("list.newFolder", "New Folder")),
         ("files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection")),
         ("files.newFile", L("bvc.cmd.newFile", "New File")),
@@ -77,6 +87,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             menu.addItem(item)
         }
         add("files.open")
+        add("files.openInNewTab")  // hidden unless a single folder is selected
         // Open With: a submenu populated live in menuNeedsUpdate with the apps for the selection.
         let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
         openWith.image = MenuIcons.image("app.dashed")
@@ -88,6 +99,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         add("files.revealInPathem")
         add("files.rename")
         add("files.trash")
+        add("files.putBack")  // hidden unless the selection is in the Trash
+        add("files.deleteImmediately")  // hidden unless the selection is in the Trash
         menu.addItem(.separator())
         menu.addItem(makeTagsItem())
         menu.addItem(.separator())
@@ -137,14 +150,23 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             // Right-click already moved the selection to the clicked item, so this is current.
             let urls = selectedURLs()
             let showArchive = urls.contains { Archiver.canExtract($0) }
+            let singleFolder = urls.count == 1 && Self.isDirectory(urls[0])
+            let inTrash = !urls.isEmpty && urls.allSatisfy { Self.isInTrash($0) }
             for item in menu.items {
                 if let id = item.representedObject as? String {
-                    if Self.archiveCommandIDs.contains(id) {
+                    switch id {
+                    case _ where Self.archiveCommandIDs.contains(id):
                         item.isHidden = !showArchive
-                    } else if id == "files.newFolderWithSelection" {
+                    case "files.newFolderWithSelection":
                         // Only meaningful with a selection; show a live count when there is one.
                         item.isHidden = urls.isEmpty
                         item.title = Self.newFolderWithSelectionTitle(count: urls.count)
+                    case "files.openInNewTab":
+                        item.isHidden = !singleFolder
+                    case "files.putBack", "files.deleteImmediately":
+                        item.isHidden = !inTrash  // Trash-only actions
+                    default:
+                        break
                     }
                 } else if item.isSeparatorItem, item.tag == Self.archiveSeparatorTag {
                     item.isHidden = !showArchive

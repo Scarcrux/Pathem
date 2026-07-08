@@ -442,6 +442,7 @@ enum PathemApp {
         // Open & inspect
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
+        fileMenu.addItem(commandItem("Open in New Tab", "files.openInNewTab"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
@@ -500,6 +501,9 @@ enum PathemApp {
         // Delete
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
+        fileMenu.addItem(commandItem("Delete Immediately…", "files.deleteImmediately", "\u{8}", [.command, .option]))
+        fileMenu.addItem(commandItem("Put Back", "files.putBack"))
+        fileMenu.addItem(commandItem("Empty Trash…", "files.emptyTrash", "\u{8}", [.command, .shift]))
         fileMenu.addItem(commandItem("Secure Delete…", "files.secureDelete"))
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))
         fileMenu.addItem(.separator())

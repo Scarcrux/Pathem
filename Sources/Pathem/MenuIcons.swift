@@ -8,6 +8,9 @@ enum MenuIcons {
     static func symbol(for commandID: String) -> String? {
         switch commandID {
         case "files.open": return "arrow.up.forward.app"
+        case "files.openInNewTab": return "plus.square.on.square"
+        case "files.putBack": return "arrow.uturn.backward"
+        case "files.deleteImmediately": return "trash.slash"
         case "files.getInfo": return "info.circle"
         case "files.download": return "arrow.down.circle"
         case "files.reveal": return "arrow.up.forward.square"
