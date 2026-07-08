@@ -3824,11 +3824,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         guard let window = view.window else { return }
         let who = connection.user.isEmpty ? L("bvc.anonymous", "anonymous") : connection.user
+        let usingKey = connection.proto == .sftp && !connection.keyFile.isEmpty
         let alert = NSAlert()
         alert.messageText = String(format: L("bvc.connectTo", "Connect to %@"), connection.host)
-        alert.informativeText = String(format: L("bvc.enterPasswordFor", "Enter the password for %@@%@."), who, connection.host)
+        alert.informativeText =
+            usingKey
+            ? L("bvc.enterPassphrase", "Enter the private key’s passphrase (leave blank if it has none).")
+            : String(format: L("bvc.enterPasswordFor", "Enter the password for %@@%@."), who, connection.host)
         let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        let remember = NSButton(checkboxWithTitle: L("bvc.rememberPasswordInKeychain", "Remember password in Keychain"), target: nil, action: nil)
+        let remember = NSButton(
+            checkboxWithTitle: usingKey
+                ? L("bvc.rememberPassphraseInKeychain", "Remember passphrase in Keychain")
+                : L("bvc.rememberPasswordInKeychain", "Remember password in Keychain"),
+            target: nil, action: nil)
         let accessory = NSStackView(views: [field, remember])
         accessory.orientation = .vertical
         accessory.alignment = .leading

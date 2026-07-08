@@ -41,11 +41,13 @@ this is the running plan.
    footprint; **Edit > Undo History…** lists recent actions with **Undo This** --
    a selective undo of an action nothing newer touched (footprint-overlap check).
    Smoke covers the model, selective undo, and a real move -> undo round-trip.
-3. **SFTP private key file + passphrase** (the EC2 / `.pem` case). Add a key-file
-   field to `RemoteConnection` + the site manager; pass `-i <key>` to the SFTP
-   backend and an askpass path for the passphrase. Optional stretch: save passwords
-   in the Keychain per site (kills the biggest friction: re-prompting every
-   connect).
+3. **SFTP private key file + passphrase** -- SHIPPED (2026-07-08). `RemoteConnection`
+   gains a `keyFile` (forward-compatible decode); the SFTP backend passes
+   `-i <key> -oIdentitiesOnly=yes` (tilde-expanded, argv-separated so a path can't
+   smuggle an ssh option), and the connect prompt asks for the key's passphrase
+   (via the existing SSH_ASKPASS path) instead of a password. The site manager has
+   a Key File field + Choose… (opens in ~/.ssh, shows hidden files). Keychain
+   password/passphrase saving already existed (the Remember checkbox).
 4. **Advanced find / smart folders.** A find/filter builder (name, size, date, kind,
    content, tag) over Spotlight `mdfind`, savable as a smart folder in the sidebar --
    the deterministic complement to the existing semantic search.
@@ -116,12 +118,10 @@ global speed cap. Closing the gap toward FileZilla Pro, by priority.
 
 Tier 1 (auth and security; cheap on the existing SFTP/FTP code):
 
-- **SFTP private key file + passphrase** (the EC2 / `.pem` case). The SFTP
-  backend already shells to system ssh, so this is a key-file field plus `-i
-  <key>` and an askpass path for the passphrase. Works today only via a manual
-  `~/.ssh/config` `IdentityFile` entry.
-- **Save passwords in the Keychain**, optional per site (today every connect
-  re-prompts, the biggest friction).
+- **SFTP private key file + passphrase** -- SHIPPED (2026-07-08). Key File field
+  in the site manager; `-i <key> -oIdentitiesOnly=yes`; passphrase via SSH_ASKPASS.
+- **Save passwords in the Keychain** -- already shipped (the "Remember password"
+  checkbox on connect, per connection id via KeychainStore).
 - **FTPS** (FTP over TLS), explicit and implicit.
 
 Tier 2 (organization and power):

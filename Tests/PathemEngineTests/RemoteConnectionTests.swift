@@ -53,4 +53,15 @@ import Testing
         #expect(conns[1].proto == .ftps)
         #expect(conns[1].effectivePort == 990)
     }
+
+    @Test func keyFileRoundTripsAndDefaultsEmpty() throws {
+        // An older connections.json (no keyFile) decodes to "" (password/agent auth).
+        let old = try JSONDecoder().decode(
+            RemoteConnection.self, from: Data(#"{ "host": "ec2.example.com", "proto": "sftp" }"#.utf8))
+        #expect(old.keyFile == "")
+        // A saved key file round-trips.
+        let conn = RemoteConnection(name: "EC2", proto: .sftp, host: "ec2.example.com", keyFile: "~/.ssh/ec2.pem")
+        let back = try JSONDecoder().decode(RemoteConnection.self, from: JSONEncoder().encode(conn))
+        #expect(back.keyFile == "~/.ssh/ec2.pem")
+    }
 }

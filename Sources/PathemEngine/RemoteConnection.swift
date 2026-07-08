@@ -42,10 +42,13 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public var user: String
     public var path: String  // initial remote directory
     public var region: String  // S3 region for SigV4 signing (e.g. "us-east-1"); unused otherwise
+    /// Path to an SFTP private key (e.g. an EC2 `.pem`), or empty for password / agent auth.
+    /// Only the path is stored; any passphrase is prompted at connect and never persisted.
+    public var keyFile: String
 
     public init(
         id: UUID = UUID(), name: String, proto: Proto, host: String, port: Int = 0,
-        user: String = "", path: String = "/", region: String = ""
+        user: String = "", path: String = "/", region: String = "", keyFile: String = ""
     ) {
         self.id = id
         self.name = name
@@ -55,6 +58,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         self.user = user
         self.path = path
         self.region = region
+        self.keyFile = keyFile
     }
 
     public var effectivePort: Int { port > 0 ? port : proto.defaultPort }
@@ -112,5 +116,6 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         user = try c.decodeIfPresent(String.self, forKey: .user) ?? ""
         path = try c.decodeIfPresent(String.self, forKey: .path) ?? "/"
         region = try c.decodeIfPresent(String.self, forKey: .region) ?? ""
+        keyFile = try c.decodeIfPresent(String.self, forKey: .keyFile) ?? ""
     }
 }

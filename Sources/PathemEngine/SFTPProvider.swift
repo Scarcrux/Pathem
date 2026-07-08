@@ -84,6 +84,13 @@ public struct SFTPProvider: RemoteProvider {
             "DISPLAY": parent["DISPLAY"] ?? ":0",  // older ssh only uses askpass when DISPLAY is set
         ]
         let user = c.user.isEmpty ? "anonymous" : c.user
+        // A private key (EC2 .pem case): pass it as the sole identity; any passphrase still comes
+        // through SSH_ASKPASS. `-i` takes the next argv as its value, so a key path can't smuggle
+        // an ssh option. Tilde is expanded here since this is a plain argv, not a shell word.
+        let keyArgs =
+            c.keyFile.isEmpty
+            ? []
+            : ["-i", (c.keyFile as NSString).expandingTildeInPath, "-oIdentitiesOnly=yes"]
         let args = [
             "-q",  // suppress the banner/warnings
             "-oBatchMode=no",  // BatchMode=yes would disable password auth entirely
@@ -91,7 +98,7 @@ public struct SFTPProvider: RemoteProvider {
             "-oConnectTimeout=20",
             "-oNumberOfPasswordPrompts=1",  // don't loop on a bad password
             "-oPort=\(c.effectivePort)",
-        ] + RemoteLimits.sftpArgs + [  // -l <Kbit/s> when a bandwidth cap is set
+        ] + keyArgs + RemoteLimits.sftpArgs + [  // -l <Kbit/s> when a bandwidth cap is set
             "-b", "-",  // read batch commands from stdin
             "\(user)@\(c.host)",
         ]
