@@ -32,6 +32,8 @@ public struct OpenerRules: Codable, Sendable, Equatable {
     public mutating func setFile(_ path: String, app: String) { byFile[path] = app }
     public mutating func setFolder(_ path: String, app: String) { byFolder[path] = app }
     public mutating func setType(_ ext: String, app: String) { byType[ext.lowercased()] = app }
+    /// Drop any per-extension rule so the system default becomes authoritative for that kind.
+    public mutating func clearType(_ ext: String) { byType[ext.lowercased()] = nil }
 
     /// The persisted default app for a file at `path`, by precedence: the file's
     /// own rule, then the most specific (longest) enclosing folder rule, then its

@@ -3,6 +3,7 @@ import NetFS
 import PathemEngine
 import PathemTerminal
 import Quartz
+import UniformTypeIdentifiers
 
 /// The dual-pane browser: two independent panes side by side in a split view,
 /// one "active" pane (accent border), and one-key copy/move between them
@@ -3690,7 +3691,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let scopePopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 320, height: 26))
         scopePopup.addItem(withTitle: L("bvc.scopeThisFile", "This file"))
         scopePopup.addItem(withTitle: L("bvc.scopeThisFolder", "Files in this folder"))
-        scopePopup.addItem(withTitle: ext.isEmpty ? L("bvc.scopeThisKind", "Files of this kind") : String(format: L("bvc.scopeAllExt", "All .%@ files"), ext))
+        scopePopup.addItem(
+            withTitle: ext.isEmpty
+                ? L("bvc.scopeThisKind", "Files of this kind (system-wide)")
+                : String(format: L("bvc.scopeAllExt", "All .%@ files (system-wide)"), ext))
         scopePopup.addItem(withTitle: L("bvc.scopeThisSession", "Just this session"))
 
         let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 64))
@@ -3733,7 +3737,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         switch scope {
         case .file: openerRules.setFile(fileURL.path, app: appPath)
         case .folder: openerRules.setFolder(fileURL.deletingLastPathComponent().path, app: appPath)
-        case .type: openerRules.setType(ext, app: appPath)
+        case .type:
+            // "Files of this kind" is Finder's "Change All": set the real system default
+            // (LaunchServices) so Pathem, Finder, and every other app agree, and drop any local
+            // per-type rule so the system stays authoritative even if the default changes later.
+            let type = (try? fileURL.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+                ?? UTType(filenameExtension: ext) ?? .data
+            NSWorkspace.shared.setDefaultApplication(at: URL(fileURLWithPath: appPath), toOpen: type) { _ in }
+            openerRules.clearType(ext)
         case .session: sessionOpenersByType[ext] = appPath
         }
         if scope != .session { saveConfig(openerRules, to: Self.openersURL) }
