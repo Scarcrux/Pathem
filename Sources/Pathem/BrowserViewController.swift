@@ -783,6 +783,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
         add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
         add("tools.externalCommands", L("bvc.cmd.externalCommands", "External Commands…")) { [weak self] in self?.showExternalCommandsManager() }
+        add("tools.runShortcut", L("bvc.cmd.runShortcut", "Run Shortcut on Selection…")) { [weak self] in self?.showShortcutPicker() }
         add("files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote else { return false }
             let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
@@ -1456,6 +1457,39 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         runExternalCommand(command)
     }
     @objc private func manageExternalCommandsMenu() { showExternalCommandsManager() }
+
+    // MARK: - macOS Shortcuts (run a Shortcut on the selection)
+
+    /// List installed shortcuts (off-main), then pick one and run it on the selection.
+    func showShortcutPicker() {
+        guard let window = view.window else { return }
+        Task { @MainActor in
+            let names = await Task.detached { ShortcutsRunner.list() }.value
+            guard !names.isEmpty else {
+                self.presentInfo(
+                    L("shortcut.noneTitle", "No Shortcuts found"),
+                    L("shortcut.noneBody", "Create shortcuts in the Shortcuts app first (or the Shortcuts tool is unavailable)."))
+                return
+            }
+            let alert = NSAlert()
+            alert.messageText = L("shortcut.pickTitle", "Run Shortcut on Selection")
+            alert.informativeText = L("shortcut.pickBody", "The chosen shortcut runs once per selected file.")
+            let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 280, height: 26))
+            popup.addItems(withTitles: names)
+            alert.accessoryView = popup
+            alert.addButton(withTitle: L("shortcut.run", "Run"))
+            alert.addButton(withTitle: L("common.cancel", "Cancel"))
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            self.runShortcut(names[popup.indexOfSelectedItem])
+        }
+    }
+
+    private func runShortcut(_ name: String) {
+        let files = activePane?.selectedLocalURLs() ?? []
+        externalOutput.run(title: String(format: L("shortcut.title", "Shortcut: %@"), name)) {
+            ShortcutsRunner.runOnFiles(name: name, files: files)
+        }
+    }
 
     private func showBatchCreate() {
         guard let window = view.window, let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults

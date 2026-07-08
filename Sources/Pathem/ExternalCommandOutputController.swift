@@ -54,6 +54,29 @@ final class ExternalCommandOutputController: NSObject {
 
     @objc private func stop() { box?.process.terminate() }
 
+    /// Show the panel and run arbitrary `work` off-main (e.g. running a Shortcut per file), then
+    /// display its output. Not cancelable (Stop is disabled), for work that doesn't own a Process.
+    func run(title: String, work: @escaping @Sendable () -> ExternalCommandRunner.Output) {
+        panel.title = title
+        textView.string = ""
+        statusLabel.stringValue = L("extcmd.running", "Running…")
+        statusLabel.textColor = .secondaryLabelColor
+        stopButton.isEnabled = false
+        box = nil
+        panel.centerOverMainWindow()
+        panel.makeKeyAndOrderFront(nil)
+        Task { @MainActor in
+            let output = await Task.detached(priority: .userInitiated, operation: work).value
+            self.textView.string = output.text.isEmpty ? L("extcmd.noOutput", "(no output)") : output.text
+            self.textView.scrollToEndOfDocument(nil)
+            self.statusLabel.stringValue =
+                output.succeeded
+                ? L("extcmd.finished", "Finished")
+                : String(format: L("extcmd.exitCode", "Exited with code %d"), Int(output.exitCode))
+            self.statusLabel.textColor = output.succeeded ? .secondaryLabelColor : .systemRed
+        }
+    }
+
     private func build() {
         panel.title = L("extcmd.outputTitle", "Command Output")
         textView.isEditable = false

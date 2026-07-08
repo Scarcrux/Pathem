@@ -29,12 +29,12 @@ first; the biggest, most architectural last):
    double-click reveals the file in the active pane (navigate + select).
    `SpotlightSearch.filenameQuery` (tested). Follow-up: scope picker + a `find`
    fallback for non-indexed locations.
-2. **macOS Shortcuts integration -- run a Shortcut on the selection.** A "Run
-   Shortcut…" action listing installed shortcuts (`shortcuts list`) and running the
-   chosen one on the selection (`shortcuts run <name> -i <files>`), out-of-process
-   like external commands, output in the same panel. External tool (the `shortcuts`
-   CLI) so within the hard rules. Exposing Pathem's own actions AS Shortcuts (App
-   Intents) is a larger follow-up (needs an App Intents target).
+2. **macOS Shortcuts -- run a Shortcut on the selection** -- SHIPPED (2026-07-08).
+   Tools > Run Shortcut on Selection lists installed shortcuts (`shortcuts list`,
+   loaded off-main) and runs the chosen one once per selected file
+   (`shortcuts run <name> --input-path <file>`), out-of-process via `ShortcutsRunner`,
+   output in the shared command-output panel. External tool only. Follow-up:
+   exposing Pathem's own actions AS Shortcuts (App Intents target).
 3. **AI rename / summarize folder / semantic dedup.** Build on the on-device model +
    embeddings already shipped. Start with **AI rename** (propose a filename from a
    file's content / EXIF, a preview-then-apply batch reusing BatchRename's apply +

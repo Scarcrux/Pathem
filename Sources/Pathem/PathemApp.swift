@@ -623,6 +623,7 @@ enum PathemApp {
         toolsMenu.addItem(commandItem("Transfers", "tools.transfers"))
         toolsMenu.addItem(commandItem("Eject Volume", "files.ejectVolume"))
         toolsMenu.addItem(.separator())
+        toolsMenu.addItem(commandItem("Run Shortcut on Selection…", "tools.runShortcut"))
         toolsMenu.addItem(commandItem("Automation Rules…", "tools.automation"))
         toolsMenu.addItem(commandItem("Compare Files", "files.diff"))
         toolsMenu.addItem(commandItem("Extended Attributes…", "files.xattrs"))
