@@ -219,8 +219,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var savedRealSidebar: Sidebar?
     private var savedPaneFolders: (left: URL?, right: URL?)?
 
-    init(start: URL, demo: DemoWorkspace.Layout? = nil) {
+    /// Whether this browser owns the persisted session. The primary window restores and saves
+    /// it; additional windows (File ▸ New Window) open fresh at their start folder and never
+    /// touch the shared session, so they can't clobber the primary's tabs.
+    let persistsSession: Bool
+
+    init(start: URL, demo: DemoWorkspace.Layout? = nil, persistsSession: Bool = true) {
         demoLayout = demo
+        self.persistsSession = persistsSession
         leftTabs = TabbedPaneController(start: demo?.leftStart ?? start)
         rightTabs = TabbedPaneController(start: demo?.rightStart ?? start)
         super.init(nibName: nil, bundle: nil)
@@ -954,6 +960,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("ai.run", L("bvc.cmd.askPathem", "Ask Pathem (Natural Language)…")) { [weak self] in self?.showAICommandBar() }
         add("view.quickLook", L("bvc.cmd.quickLook", "Quick Look"), enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
         add("tab.new", L("bvc.cmd.newTab", "New Tab")) { [weak self] in self?.activeSide?.newTab(duplicatingCurrent: true) }
+        add("window.new", L("bvc.cmd.newWindow", "New Window")) { [weak self] in
+            WindowManager.shared.openWindow(start: self?.newWindowStartFolder() ?? FileManager.default.homeDirectoryForCurrentUser)
+        }
+        add(
+            "window.moveTabToNew", L("bvc.cmd.moveTabToNewWindow", "Move Tab to New Window"),
+            enabled: { [weak self] in
+                guard let side = self?.activeSide, let pane = side.activePane else { return false }
+                return !pane.isRemote  // a remote session can't be re-hosted in a fresh window
+            }
+        ) { [weak self] in self?.moveActiveTabToNewWindow() }
         add(
             "files.openInNewTab", L("bvc.cmd.openInNewTab", "Open in New Tab"),
             enabled: { [weak self] in self?.singleSelectedFolder != nil }
@@ -2935,6 +2951,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return text
     }
 
+    /// The folder a new window should open at: the active pane's folder when it's a local
+    /// listing, otherwise Home (a remote/smart pane has no plain local folder to reopen).
+    private func newWindowStartFolder() -> URL {
+        if let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults { return pane.currentURL }
+        return FileManager.default.homeDirectoryForCurrentUser
+    }
+
+    /// Detach the active tab into its own window: open a new window at that folder and, if the
+    /// side still has other tabs, close the one we moved (so nothing is duplicated in place).
+    private func moveActiveTabToNewWindow() {
+        guard let side = activeSide, let pane = side.activePane, !pane.isRemote else { NSSound.beep(); return }
+        WindowManager.shared.openWindow(start: pane.currentURL)
+        if side.tabCount > 1 { side.closeActiveTab() }
+    }
+
     /// Show/hide the QuickLook preview pane docked at the right of the window.
     private func togglePreviewPane() {
         previewVisible.toggle()
@@ -4022,7 +4053,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             return
         }
-        if let session = windowState.loadSession(),
+        if persistsSession, let session = windowState.loadSession(),
             !(session.left.isEmpty && session.right.isEmpty)
         {
             leftTabs.restoreTabs(session.left, active: session.leftActive)
@@ -4040,12 +4071,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Persist the session a moment after a change (coalesces navigation bursts).
     private func saveSessionSoon() {
-        guard !isRestoringSession else { return }
+        guard persistsSession, !isRestoringSession else { return }
         windowState.scheduleSessionSave { [weak self] in self?.captureSession() }
     }
 
     /// Persist the session immediately (called on quit).
     func saveSessionNow() {
+        guard persistsSession else { return }
         guard let state = captureSession() else { return }
         windowState.saveSession(state)
     }
@@ -5539,6 +5571,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("semantic-dedup-empty-safe", SemanticDedup.similarGroups([]).isEmpty, "no groups for no files")
         check("ai-availability-defined", AIAssistant.availability.reason.isEmpty == AIAssistant.isAvailable,
             "availability=\(AIAssistant.availability) reason=\"\(AIAssistant.availability.reason)\"")
+        // Multi-window: the primary is registered, the window commands exist, and a second browser
+        // constructs as an independent (non-persisting) session so it can't clobber the primary's.
+        check("window-commands-registered", cmdIDs.isSuperset(of: ["window.new", "window.moveTabToNew"]),
+            "have=\(["window.new", "window.moveTabToNew"].filter(cmdIDs.contains).count)/2")
+        let secondary = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser, persistsSession: false)
+        check("new-window-independent-session",
+            !secondary.persistsSession && self.persistsSession && WindowManager.shared.windowCount >= 1,
+            "secondaryPersists=\(secondary.persistsSession) primaryPersists=\(self.persistsSession) windows=\(WindowManager.shared.windowCount)")
         return (ok, lines)
     }
 }

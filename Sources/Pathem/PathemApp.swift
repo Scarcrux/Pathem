@@ -113,6 +113,10 @@ enum PathemApp {
         delegate.updater = updater  // keep the updater alive for the app's lifetime
         browser.updater = updater  // surfaced in Settings > Updates
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
+        // Register this as the primary window so File ▸ New Window can spawn siblings and quit
+        // tears every window down cleanly. Only the primary restores/saves the session.
+        WindowManager.shared.updater = updater
+        WindowManager.shared.adoptPrimary(window: window, browser: browser)
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
 
@@ -387,6 +391,25 @@ enum PathemApp {
                 }
             }
         #endif
+
+        // End-to-end multi-window check: actually open a second window through the same path the
+        // New Window command uses, then assert both windows laid out with independent sessions.
+        // Tears the second window's shell down so the run leaves nothing orphaned.
+        if ProcessInfo.processInfo.environment["PATHEM_MULTIWINDOW_SMOKE"] != nil {
+            let home = FileManager.default.homeDirectoryForCurrentUser
+            let second = WindowManager.shared.openWindow(start: home)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                let count = WindowManager.shared.windowCount
+                let bothLaidOut = browser.layoutSettled() && second.layoutSettled()
+                let independent = browser.persistsSession && !second.persistsSession
+                print("=== MULTIWINDOW SMOKE ===")
+                print("windows=\(count) bothLaidOut=\(bothLaidOut) independentSession=\(independent)")
+                let pass = count == 2 && bothLaidOut && independent
+                print("RESULT: \(pass ? "PASS" : "FAIL")")
+                WindowManager.shared.terminateAllTerminals()
+                exit(pass ? 0 : 1)
+            }
+        }
         app.run()
     }
 
@@ -432,7 +455,9 @@ enum PathemApp {
         }
 
         // New
+        fileMenu.addItem(commandItem("New Window", "window.new", "n"))
         fileMenu.addItem(commandItem("New Tab", "tab.new"))
+        fileMenu.addItem(commandItem("Move Tab to New Window", "window.moveTabToNew"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
         fileMenu.addItem(commandItem("New Folder with Selection", "files.newFolderWithSelection", "n", [.command, .control]))
@@ -632,6 +657,24 @@ enum PathemApp {
         toolsMenu.addItem(commandItem("Extended Attributes…", "files.xattrs"))
         toolsMenu.addItem(commandItem("Remove Quarantine", "files.removeQuarantine"))
 
+        // Window: standard AppKit window management. Assigning it as the app's windowsMenu makes
+        // AppKit keep the open-window list current and add the native tabbing items ("Merge All
+        // Windows", "Move Tab to New Window", "Show Next/Previous Tab") when windows are tabbed.
+        let windowItem = NSMenuItem()
+        mainMenu.addItem(windowItem)
+        let windowMenu = NSMenu(title: L("menu.window", "Window"))
+        windowItem.submenu = windowMenu
+        windowMenu.addItem(
+            withTitle: L("menu.minimize", "Minimize"),
+            action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        windowMenu.addItem(
+            withTitle: L("menu.zoom", "Zoom"), action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+        windowMenu.addItem(.separator())
+        windowMenu.addItem(
+            withTitle: L("menu.bringAllToFront", "Bring All to Front"),
+            action: #selector(NSApplication.arrangeInFront(_:)), keyEquivalent: "")
+        NSApplication.shared.windowsMenu = windowMenu
+
         return mainMenu
     }
 
@@ -791,9 +834,9 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     func applicationWillTerminate(_ notification: Notification) {
-        browser?.saveSessionNow()  // persist tabs/folders for next launch
-        // Hang up the embedded shell so it (and any job it launched) is not orphaned.
-        browser?.terminateTerminal()
+        WindowManager.shared.primaryBrowser?.saveSessionNow()  // persist tabs/folders for next launch
+        // Hang up every window's embedded shell so none (and the jobs they launched) is orphaned.
+        WindowManager.shared.terminateAllTerminals()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
