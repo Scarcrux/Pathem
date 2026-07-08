@@ -64,23 +64,31 @@ saved smart folders shown in the sidebar; Group By in the icon view; a Tag group
 key; collapsible group sections; filename-search scope picker + `find` fallback;
 Shortcuts as App Intents; AI-rename batch preview.
 
-## Round 3 (in progress, 2026-07-08)
+## Round 3 (shipped 2026-07-08)
 
-Four clusters, built in order:
+Four clusters, built in order. Nearly all shipped; a few items deferred with reasons.
 
-- **3A View parity** -- make icon/gallery/column first-class. **Tag color dots +
-  git status badges in the grids/column** SHIPPED (shared `PaneDecorationCache` +
-  `FileNameDecoration`, middle-truncation keeps both ends). Remaining: single-click
-  open + hover underline in non-list views; super-drag flick + swipe trail
-  everywhere; drag-move-by-default for icon + column.
-- **3B Finder-parity features** -- Slideshow (full-screen Quick Look); image/doc
-  Quick Actions (Rotate / Create PDF / Markup / Trim); Show Original for an
-  alias/symlink; spring-loaded folders.
-- **3C Group By + polish** -- Group By in the icon view; a Tag group key;
-  collapsible sections; saved smart folders in the sidebar; streamed
-  external-command output; filename-search scope picker.
-- **3D Power-user batch** -- batch permissions/ownership (chmod/chown/ACL); batch
-  Finder-comment editing; one-click SMB/AFP mount; app-wide theming.
+- **3A View parity** -- SHIPPED. Tag color dots + git status badges in the
+  grids/column (shared `PaneDecorationCache` + `FileNameDecoration`); single-click
+  open + hover underline in the grids; super-drag flick + swipe trail in
+  icon/gallery/column; drag-move-by-default for icon + column. Every non-list view
+  is now first-class.
+- **3B Finder-parity features** -- SHIPPED. Slideshow (`SlideshowController`,
+  full-screen, timer + keys); Quick Actions Rotate Left/Right + Create PDF (PDFKit);
+  Show Original for an alias/symlink; spring-loaded folders (list). *Deferred:*
+  Markup + Trim (need interactive Quick Look markup / AVFoundation UIs); spring-load
+  in the grids (they drop into the current folder, not sub-items).
+- **3C Group By + polish** -- SHIPPED. Collapsible group sections (disclosure +
+  count); a Tag arrange key; saved smart folders in the sidebar; streamed
+  external-command output (`runStreaming`); filename-search scope picker (This
+  Mac / Home / This Folder). *Deferred:* Group By in the icon view (needs a
+  sectioned NSCollectionView refactor of the flat indexPath model).
+- **3D Power-user batch** -- SHIPPED (gaps only). Batch Finder-comment editing
+  (`FileMetadata.setFinderComment`) and Connect to Server (Cmd-K, arbitrary
+  smb/afp/nfs URL via NetFS). Batch chmod already shipped (Set Attributes),
+  discovered-share SMB mount already shipped, and light/dark/system appearance
+  theming already ships. *Deferred:* chown/ACL editing (limited without privilege
+  escalation); per-app accent/skins (no clean public API).
 
 ## Round 4 (scheduled, 2026-07-08) -- new views
 
