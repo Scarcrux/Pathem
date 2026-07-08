@@ -33,6 +33,31 @@ final class KeyCollectionView: NSCollectionView {
     /// Called when a right-click changes the selection (programmatic selection
     /// changes don't fire the delegate's didSelect/didDeselect).
     var onSelectionMutated: (() -> Void)?
+    /// Open on a single click (Finder's "single click to open" behavior) when set.
+    var singleClickToOpen = false
+    /// Reports the item under the pointer (nil when outside any item) for hover underlining.
+    var onHover: ((IndexPath?) -> Void)?
+    private var hoverArea: NSTrackingArea?
+
+    /// Turn hover tracking on/off; when on, `onHover` fires as the pointer moves over items.
+    func setHoverTracking(_ on: Bool) {
+        if on, hoverArea == nil {
+            let area = NSTrackingArea(
+                rect: .zero, options: [.mouseMoved, .mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+                owner: self, userInfo: nil)
+            addTrackingArea(area)
+            hoverArea = area
+        } else if !on, let area = hoverArea {
+            removeTrackingArea(area)
+            hoverArea = nil
+            onHover?(nil)
+        }
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        onHover?(indexPathForItem(at: convert(event.locationInWindow, from: nil)))
+    }
+    override func mouseExited(with event: NSEvent) { onHover?(nil) }
 
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
@@ -61,7 +86,17 @@ final class KeyCollectionView: NSCollectionView {
             onActivate?(indexPath)
             return
         }
-        super.mouseDown(with: event)
+        let start = event.locationInWindow
+        super.mouseDown(with: event)  // runs the selection/drag tracking loop until mouse-up
+        // Single-click-to-open: after the loop, treat a click that barely moved (not a drag) on an
+        // item as an open, matching Finder's "single click to open" preference.
+        if singleClickToOpen {
+            let end = window?.mouseLocationOutsideOfEventStream ?? start
+            if hypot(end.x - start.x, end.y - start.y) < 4,
+                let indexPath = indexPathForItem(at: convert(start, from: nil)) {
+                onActivate?(indexPath)
+            }
+        }
     }
 
     override func menu(for event: NSEvent) -> NSMenu? {
@@ -123,7 +158,7 @@ final class IconItem: NSCollectionViewItem {
 
     func configure(
         name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
-        thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = []
+        thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = [], underlined: Bool = false
     ) {
         loadViewIfNeeded()
         icon.image = image  // type icon shows immediately; a thumbnail replaces it when ready
@@ -134,7 +169,12 @@ final class IconItem: NSCollectionViewItem {
         // Middle truncation keeps both the leading git letter and the trailing tag dots even when
         // a long name is clipped, so the grid shows the same decorations as the list and column.
         if git != nil || !tags.isEmpty {
-            label.attributedStringValue = FileNameDecoration.decoratedName(name, git: git, dots: tags, size: fontSize)
+            let decorated = FileNameDecoration.decoratedName(name, git: git, dots: tags, size: fontSize)
+            label.attributedStringValue = underlined ? Self.underline(decorated) : decorated
+        } else if underlined {
+            label.attributedStringValue = NSAttributedString(
+                string: name,
+                attributes: [.font: NSFont.systemFont(ofSize: fontSize), .underlineStyle: NSUnderlineStyle.single.rawValue])
         } else {
             label.stringValue = name
         }
@@ -152,6 +192,15 @@ final class IconItem: NSCollectionViewItem {
             guard let self, self.representedURL == url else { return }  // cell wasn't reused
             self.icon.image = image
         }
+    }
+
+    /// Add a single underline across an already-decorated name (for hover-to-open feedback).
+    private static func underline(_ string: NSAttributedString) -> NSAttributedString {
+        let copy = NSMutableAttributedString(attributedString: string)
+        copy.addAttribute(
+            .underlineStyle, value: NSUnderlineStyle.single.rawValue,
+            range: NSRange(location: 0, length: copy.length))
+        return copy
     }
 
     override func prepareForReuse() {
@@ -222,6 +271,26 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         build()
         collection.onZoom = { [weak self] delta in self?.adjustZoom(delta * 0.0125) }  // Cmd-scroll
         decorations.onTagsChanged = { [weak self] in self?.collection.reloadData() }
+        collection.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
+    }
+
+    /// Which item the pointer is over (-1 = none), underlined when hover-to-open is on.
+    private var hoveredItem = -1
+
+    private func setHovered(_ index: Int) {
+        guard index != hoveredItem else { return }
+        let old = hoveredItem
+        hoveredItem = index
+        var paths = Set<IndexPath>()
+        if old >= 0, old < entries.count { paths.insert(IndexPath(item: old, section: 0)) }
+        if index >= 0, index < entries.count { paths.insert(IndexPath(item: index, section: 0)) }
+        if !paths.isEmpty { collection.reloadItems(at: paths) }
+    }
+
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
+        collection.singleClickToOpen = singleClick
+        collection.setHoverTracking(underlineHover)
+        if !underlineHover { setHovered(-1) }
     }
 
     /// Zoom by an absolute step (Cmd +/-) or a scroll-derived delta; clamps and persists.
@@ -414,7 +483,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
-            tags: decorations.tagColors(for: entry, in: directoryURL))
+            tags: decorations.tagColors(for: entry, in: directoryURL),
+            underlined: indexPath.item == hoveredItem)
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
         // as Finder does, and dim cut items until pasted. Set on every configure (cells are
         // reused) so it never sticks.

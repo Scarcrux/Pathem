@@ -49,6 +49,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         super.init()
         build()
         decorations.onTagsChanged = { [weak self] in self?.filmstrip.reloadData() }
+        filmstrip.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
     }
 
     func setGitStates(_ states: [String: GitFileState]) {
@@ -56,6 +57,25 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     }
 
     func invalidateTagCache() { decorations.invalidateTags() }
+
+    /// Which filmstrip item the pointer is over (-1 = none), underlined when hover-to-open is on.
+    private var hoveredItem = -1
+
+    private func setHovered(_ index: Int) {
+        guard index != hoveredItem else { return }
+        let old = hoveredItem
+        hoveredItem = index
+        var paths = Set<IndexPath>()
+        if old >= 0, old < entries.count { paths.insert(IndexPath(item: old, section: 0)) }
+        if index >= 0, index < entries.count { paths.insert(IndexPath(item: index, section: 0)) }
+        if !paths.isEmpty { filmstrip.reloadItems(at: paths) }
+    }
+
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
+        filmstrip.singleClickToOpen = singleClick
+        filmstrip.setHoverTracking(underlineHover)
+        if !underlineHover { setHovered(-1) }
+    }
 
     private func build() {
         let layout = NSCollectionViewFlowLayout()
@@ -284,7 +304,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
             iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
-            tags: decorations.tagColors(for: entry, in: directoryURL))
+            tags: decorations.tagColors(for: entry, in: directoryURL),
+            underlined: indexPath.item == hoveredItem)
         item.view.alphaValue = alpha(for: entry)  // dim cut items until pasted
         return item
     }
