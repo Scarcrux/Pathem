@@ -202,11 +202,13 @@ Quick wins (compose existing FileOperations; each is a command plus menu wiring)
 
 Larger (new UI or a view-layer change):
 
-- **Group By / Arrange By** -- visually group rows under section headers (Kind,
-  Date, Size, Tag), not merely sort. A row-model change in the list controller
-  (header rows + selection/drag remapping), an Arrange-By menu, and ViewFormat
-  persistence. NEXT UP -- deferred from the 2026-07-08 batch to get a focused,
-  tested implementation rather than a rushed one in the primary view.
+- **Group By / Arrange By** -- SHIPPED (2026-07-08) for the list view. View >
+  Arrange By groups rows under section headers by Kind / Size / Date Modified (or
+  None), persisted per folder in ViewFormat. Implemented as a display-row model
+  (`FileGrouping`): `entries` stays the ungrouped source and every row<->entry
+  touch point (selection, drag, hover, per-row reloads) maps through it, so the
+  ungrouped path is unchanged. Follow-ups: group in the icon view too, a Tag
+  group key, and collapsible sections.
 - **Slideshow** -- a full-screen Quick Look slideshow of the selected images.
 - **Built-in image / document Quick Actions** -- Rotate Left / Right, Create PDF,
   Markup, Trim, beyond the existing Convert Images / Compress. Overlaps the

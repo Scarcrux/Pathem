@@ -414,6 +414,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.directoryURL = nav.current  // rows in this folder are draggable
         content.resolutionURL = nav.current
         content.setSortFormat(format)  // column view re-sorts its drilled columns to match
+        content.setGroupKey(format.groupKey)  // list view groups under section headers (else no-op)
         do {
             let entries = try BulkEnumerator().entries(
                 of: nav.current, includingHidden: format.showHidden || showHiddenByDefault)
@@ -1025,6 +1026,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// The mode actually on screen (not the persisted format), so the View menu and
     /// the toolbar switcher agree even when a remote/smart pane clamps Column to list.
     var viewMode: ViewFormat.ViewMode { currentMode }
+
+    /// The list view's grouping key (for the Arrange By menu's checkmarks).
+    var groupKey: ViewFormat.GroupKey { format.groupKey }
+    /// Change the Arrange By grouping key, persist the folder's format, and reload.
+    func setGroupKey(_ key: ViewFormat.GroupKey) {
+        guard format.groupKey != key else { return }
+        format.groupKey = key
+        rememberFormat?(nav.current, format)
+        reload()
+    }
+
+    /// Smoke hook: exercise grouped selection round-trip on the list view (no-op elsewhere).
+    func debugGroupedSelectionRoundTrips() -> Bool {
+        (content as? FileListController)?.debugGroupedSelectionRoundTrips() ?? true
+    }
 
     /// Update the bottom status line: item count, or the selection count and its
     /// total size when something is selected.

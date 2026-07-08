@@ -538,6 +538,12 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
         viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
+        viewMenu.addItem(submenu("Arrange By", [
+            commandItem("None", "view.arrangeNone"),
+            commandItem("Kind", "view.arrangeKind"),
+            commandItem("Size", "view.arrangeSize"),
+            commandItem("Date Modified", "view.arrangeDate"),
+        ]))
         viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
         viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))
         viewMenu.addItem(commandItem("Flat View", "view.flatView", "f", [.command, .control]))

@@ -8,6 +8,10 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     public enum SortKey: String, Codable, Sendable, CaseIterable {
         case name, size, date, dateCreated, dateAccessed
     }
+    /// How the list view groups rows under section headers (`none` = flat, the default).
+    public enum GroupKey: String, Codable, Sendable, CaseIterable {
+        case none, kind, size, dateModified
+    }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
     /// grid views (gallery uses larger thumbnails); `column` is miller columns.
     public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery, column }
@@ -17,20 +21,23 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     public var showHidden: Bool
     public var foldersFirst: Bool
     public var viewMode: ViewMode
+    public var groupKey: GroupKey
 
     public init(
         sortKey: SortKey = .name, ascending: Bool = true,
-        showHidden: Bool = false, foldersFirst: Bool = true, viewMode: ViewMode = .list
+        showHidden: Bool = false, foldersFirst: Bool = true, viewMode: ViewMode = .list,
+        groupKey: GroupKey = .none
     ) {
         self.sortKey = sortKey
         self.ascending = ascending
         self.showHidden = showHidden
         self.foldersFirst = foldersFirst
         self.viewMode = viewMode
+        self.groupKey = groupKey
     }
 
     private enum CodingKeys: String, CodingKey {
-        case sortKey, ascending, showHidden, foldersFirst, viewMode
+        case sortKey, ascending, showHidden, foldersFirst, viewMode, groupKey
     }
 
     // Decode each key if present so older formats.json (without viewMode, etc.)
@@ -44,6 +51,7 @@ public struct ViewFormat: Codable, Sendable, Equatable {
         showHidden = try c.decodeIfPresent(Bool.self, forKey: .showHidden) ?? false
         foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? true
         viewMode = (try? c.decode(ViewMode.self, forKey: .viewMode)) ?? .list
+        groupKey = (try? c.decode(GroupKey.self, forKey: .groupKey)) ?? .none
     }
 
     public static let `default` = ViewFormat()

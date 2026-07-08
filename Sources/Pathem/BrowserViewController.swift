@@ -622,6 +622,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.setActiveViewMode(.icon) }
         add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.setActiveViewMode(.gallery) }
         add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.setActiveViewMode(.column) }
+        add("view.arrangeNone", L("bvc.cmd.arrangeNone", "None")) { [weak self] in self?.activePane?.setGroupKey(.none) }
+        add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")) { [weak self] in self?.activePane?.setGroupKey(.kind) }
+        add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")) { [weak self] in self?.activePane?.setGroupKey(.size) }
+        add("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified")) { [weak self] in self?.activePane?.setGroupKey(.dateModified) }
         add("view.zoomIn", L("bvc.cmd.zoomIn", "Zoom In")) { [weak self] in self?.activePane?.zoomContent(0.15) }
         add("view.zoomOut", L("bvc.cmd.zoomOut", "Zoom Out")) { [weak self] in self?.activePane?.zoomContent(-0.15) }
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
@@ -3041,6 +3045,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asIcons": menuItem.state = activePane?.viewMode == .icon ? .on : .off
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
         case "view.asColumn": menuItem.state = activePane?.viewMode == .column ? .on : .off
+        case "view.arrangeNone": menuItem.state = (activePane?.groupKey ?? .none) == .none ? .on : .off
+        case "view.arrangeKind": menuItem.state = activePane?.groupKey == .kind ? .on : .off
+        case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
+        case "view.arrangeDate": menuItem.state = activePane?.groupKey == .dateModified ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.demoMode": menuItem.state = isDemoMode ? .on : .off
@@ -4912,6 +4920,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             && FileManager.default.fileExists(atPath: vDstDir.appendingPathComponent("v.txt").path)
         check("verified-copy", vOK, "performed=\(vOutcome.performed.count) failures=\(vOutcome.failures.count)")
         try? FileManager.default.removeItem(at: vDir)
+        // Arrange By: ungrouped is 1:1 items; grouping by kind adds section headers and keeps
+        // every item, mapping each display row back to an entry.
+        let gEntries = [
+            FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil, location: nil),
+            FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil, location: nil),
+            FileEntry(name: "c.txt", isDirectory: false, size: 10, modificationDate: nil, location: nil),
+        ]
+        let flat = FileGrouping.rows(gEntries, by: .none, now: Date())
+        let grouped = FileGrouping.rows(gEntries, by: .kind, now: Date())
+        func headers(_ r: [FileGrouping.Row]) -> Int { r.filter { if case .header = $0 { return true }; return false }.count }
+        func items(_ r: [FileGrouping.Row]) -> Int { r.filter { if case .item = $0 { return true }; return false }.count }
+        check("arrange-by-grouping",
+            flat.count == 3 && headers(flat) == 0 && items(grouped) == 3 && headers(grouped) >= 2,
+            "flat=\(flat.count) groupedHeaders=\(headers(grouped)) groupedItems=\(items(grouped))")
+        // And against the real list view: grouping + selection maps back to the right entry.
+        check("arrange-by-selection", leftTabs.activePane?.debugGroupedSelectionRoundTrips() ?? true, "")
         // The new superuser/developer panels must construct without a layout crash.
         _ = DiffViewerController()
         let panelsOK =

@@ -67,6 +67,8 @@ protocol PaneContentView: AnyObject {
     /// quick-actions bar float next to the selected items.
     func selectionRectInWindow() -> NSRect?
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
+    /// Group the list under section headers by this key (list view only; others ignore it).
+    func setGroupKey(_ key: ViewFormat.GroupKey)
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
     func setSortFormat(_ format: ViewFormat)
@@ -82,6 +84,8 @@ protocol PaneContentView: AnyObject {
 extension PaneContentView {
     /// Most views embed their scroll view directly; the gallery overrides this.
     var contentView: NSView { scrollView }
+    /// Only the list view groups rows under headers; the others ignore the key.
+    func setGroupKey(_ key: ViewFormat.GroupKey) {}
     /// Grid views don't render tag dots yet, so dropping the cache is a no-op.
     func invalidateTagCache() {}
     /// Only the list view shows a size column, so others ignore this.
