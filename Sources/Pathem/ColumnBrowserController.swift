@@ -39,6 +39,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
     var onKeyChord: ((KeyChord) -> Bool)?
     var onMouseGesture: ((String) -> Bool)?
+    /// Right-drag flick + swipe trail (super-drag), forwarded from each column's KeyTableView.
+    var onDragSession: ((DragSessionEvent) -> Void)?
 
     override init() {
         super.init()
@@ -147,6 +149,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         table.doubleAction = #selector(doubleClicked(_:))
         table.onKeyChord = { [weak self] chord in self?.onKeyChord?(chord) ?? false }
         table.onMouseGesture = { [weak self] stroke in self?.onMouseGesture?(stroke) ?? false }
+        table.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }  // right-drag flick + trail
         table.onBecomeActive = { [weak self, weak table] in
             guard let self, let table, let i = self.columnIndex(of: table) else { return }
             self.activeColumn = i

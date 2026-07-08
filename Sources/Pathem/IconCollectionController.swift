@@ -21,11 +21,47 @@ final class KeyCollectionView: NSCollectionView {
     var onBecomeActive: (() -> Void)?
 
     private let gestureTracker = MouseGestureTracker()
+    /// A right-drag that started on an item: the super-drag flick + its swipe trail. Kept on the
+    /// right button so it never collides with a left-drag (normal drag-and-drop), matching the list.
+    var onSuperDrag: ((DragSessionEvent) -> Void)?
+    private var superDragStartItem: IndexPath?
+    private var superDragStartWindow: NSPoint?
 
-    override func rightMouseDown(with event: NSEvent) { gestureTracker.begin(event) }
-    override func rightMouseDragged(with event: NSEvent) { gestureTracker.append(event) }
+    override func rightMouseDown(with event: NSEvent) {
+        gestureTracker.begin(event)
+        superDragStartWindow = event.locationInWindow
+        superDragStartItem = indexPathForItem(at: convert(event.locationInWindow, from: nil))
+        guard superDragStartItem != nil else { return }
+        if let item = superDragStartItem, !selectionIndexPaths.contains(item) {
+            selectionIndexPaths = [item]  // the flick acts on it
+            onSelectionMutated?()
+        }
+        if let screen = window?.convertPoint(toScreen: event.locationInWindow) {
+            onSuperDrag?(.began(screen: screen))
+        }
+    }
+    override func rightMouseDragged(with event: NSEvent) {
+        gestureTracker.append(event)
+        if superDragStartItem != nil, let screen = window?.convertPoint(toScreen: event.locationInWindow) {
+            onSuperDrag?(.moved(screen: screen))
+        }
+    }
     override func rightMouseUp(with event: NSEvent) {
-        if let stroke = gestureTracker.end(event), onMouseGesture?(stroke) == true { return }
+        let navStroke = gestureTracker.end(event)
+        if superDragStartItem != nil {
+            let flick = superDragStartWindow.map {
+                MouseGesture.reduce([$0, event.locationInWindow], minSegment: 44)
+            } ?? ""
+            onSuperDrag?(.ended(flick: flick.isEmpty ? nil : flick))
+            superDragStartItem = nil
+            superDragStartWindow = nil
+            if flick.isEmpty, let menu = menu(for: event) {  // no flick: a plain right-click
+                NSMenu.popUpContextMenu(menu, with: event, for: self)
+            }
+            return
+        }
+        superDragStartWindow = nil
+        if let stroke = navStroke, onMouseGesture?(stroke) == true { return }
         if let menu = menu(for: event) { NSMenu.popUpContextMenu(menu, with: event, for: self) }
     }
     /// Double-click (carries the clicked item) or Return (nil = the selection).
@@ -272,7 +308,11 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         collection.onZoom = { [weak self] delta in self?.adjustZoom(delta * 0.0125) }  // Cmd-scroll
         decorations.onTagsChanged = { [weak self] in self?.collection.reloadData() }
         collection.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
+        collection.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
     }
+
+    /// Right-drag flick + swipe trail (super-drag), forwarded from the collection view.
+    var onDragSession: ((DragSessionEvent) -> Void)?
 
     /// Which item the pointer is over (-1 = none), underlined when hover-to-open is on.
     private var hoveredItem = -1

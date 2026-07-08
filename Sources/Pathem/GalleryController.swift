@@ -50,7 +50,11 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         build()
         decorations.onTagsChanged = { [weak self] in self?.filmstrip.reloadData() }
         filmstrip.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
+        filmstrip.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
     }
+
+    /// Right-drag flick + swipe trail (super-drag), forwarded from the filmstrip.
+    var onDragSession: ((DragSessionEvent) -> Void)?
 
     func setGitStates(_ states: [String: GitFileState]) {
         if decorations.setGitStates(states) { filmstrip.reloadData() }
