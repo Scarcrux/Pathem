@@ -158,6 +158,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var externalCommandsController = ExternalCommandsController()
     private lazy var externalOutput = ExternalCommandOutputController()
     let slideshow = SlideshowController()
+    private lazy var trimController = TrimController()
     private lazy var undoHistoryController = UndoHistoryController()
     private lazy var globalSearchController = GlobalSearchController()
     private var externalCommands: [ExternalCommand] = []
@@ -882,6 +883,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.contains { Self.isImageName($0.name) || ($0.name as NSString).pathExtension.lowercased() == "pdf" }
         }) { [weak self] in self?.createPDFFromSelection() }
+        add("files.trimMedia", L("bvc.cmd.trimMedia", "Trim…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
+                pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first, !entry.isDirectory
+            else { return false }
+            return TrimController.trimmableExtensions.contains((entry.name as NSString).pathExtension.lowercased())
+        }) { [weak self] in self?.trimSelection() }
         add("files.xattrs", L("bvc.cmd.xattrs", "Extended Attributes…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.count == 1
@@ -2376,6 +2383,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Drop cached thumbnails for files whose pixels changed on disk, so the grids regenerate them.
     private func invalidateThumbnails(_ urls: [URL]) {
         for url in urls { ThumbnailProvider.shared.evict(url) }
+    }
+
+    /// Trim the selected audio/video file: show the native trim UI, then export the range to a
+    /// new "<name> trimmed" file and select it.
+    private func trimSelection() {
+        guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first,
+            TrimController.trimmableExtensions.contains(url.pathExtension.lowercased())
+        else { NSSound.beep(); return }
+        trimController.onExported = { [weak self] output in
+            self?.activePane?.reloadIfShowingListing()
+            self?.activePane?.select(name: output.lastPathComponent)
+        }
+        trimController.onFailed = { [weak self] message in
+            self?.presentInfo(L("trim.failedTitle", "Couldn’t trim"), message)
+        }
+        trimController.trim(url)
     }
 
     /// Convert/resize the selected images via sips (out-of-process), after a small dialog

@@ -1,3 +1,4 @@
+import AVFoundation
 import AppKit
 import PathemEngine
 import PathemTerminal
@@ -406,6 +407,46 @@ enum PathemApp {
             }
         }
 
+        // End-to-end trim export: generate a 3-second silent m4a, export the first second, and
+        // assert the output exists and is shorter (the trim UI itself is interactive, not headless).
+        if ProcessInfo.processInfo.environment["PATHEM_TRIM_SMOKE"] != nil {
+            Task { @MainActor in
+                let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-trim-\(UUID().uuidString)")
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                let src = dir.appendingPathComponent("tone.m4a")
+                var ok = false
+                let settings: [String: Any] = [
+                    AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100.0, AVNumberOfChannelsKey: 1,
+                ]
+                print("=== TRIM SMOKE ===")
+                do {
+                    // Write (and finalize, by scoping the file so it deallocs) 3s of silent AAC.
+                    do {
+                        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+                        let file = try AVAudioFile(forWriting: src, settings: settings)
+                        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(44100 * 3))!
+                        buffer.frameLength = AVAudioFrameCount(44100 * 3)
+                        try file.write(from: buffer)
+                    }
+                    let srcDur = CMTimeGetSeconds(AVURLAsset(url: src).duration)
+                    print("wrote src dur=\(String(format: "%.2f", srcDur))s")
+                    let out = await TrimController.debugExport(from: src, startSeconds: 0, endSeconds: 1)
+                    if let out {
+                        let dur = CMTimeGetSeconds(AVURLAsset(url: out).duration)
+                        ok = FileManager.default.fileExists(atPath: out.path) && dur < srcDur && dur > 0.4
+                        print("exported out dur=\(String(format: "%.2f", dur))s")
+                    } else {
+                        print("export returned nil")
+                    }
+                } catch {
+                    print("generate failed: \(error.localizedDescription)")
+                }
+                try? FileManager.default.removeItem(at: dir)
+                print("RESULT: \(ok ? "PASS" : "FAIL")")
+                exit(ok ? 0 : 1)
+            }
+        }
+
         // Render the icon grid with the "Vivid" icon set so the themed file icons can be inspected.
         if ProcessInfo.processInfo.environment["PATHEM_ICONSET_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 700))
@@ -591,6 +632,7 @@ enum PathemApp {
                     commandItem("Rotate Left", "image.rotateLeft"),
                     commandItem("Rotate Right", "image.rotateRight"),
                     commandItem("Create PDF", "image.createPDF"),
+                    commandItem("Trim Media…", "files.trimMedia"),
                     commandItem("Set Attributes…", "files.setAttributes"),
                     commandItem("Set Finder Comment…", "files.setFinderComment"),
                     .separator(),
