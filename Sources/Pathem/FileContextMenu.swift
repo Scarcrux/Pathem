@@ -66,6 +66,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection")),
         ("files.newFile", L("bvc.cmd.newFile", "New File")),
         ("files.copy", L("list.copy", "Copy")),
+        ("files.copyPath", L("bvc.cmd.copyPath", "Copy Path")),
+        ("files.copyName", L("bvc.cmd.copyName", "Copy Name")),
         ("files.cut", L("list.cut", "Cut")),
         ("files.paste", L("list.paste", "Paste")),
         ("files.extract", L("bvc.cmd.extract", "Extract")),
@@ -115,6 +117,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         add("files.newFile")
         menu.addItem(.separator())
         add("files.copy")
+        add("files.copyPath")
+        add("files.copyName")
         add("files.cut")
         add("files.paste")
         // Archive actions: always added, but the separator + items stay hidden unless an

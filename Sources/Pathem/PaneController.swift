@@ -1401,6 +1401,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.selectedEntries.map(urlFor)
     }
 
+    /// Copy-able path strings for the current selection: server-side paths on a remote pane,
+    /// otherwise local filesystem paths (location-aware, so smart-results resolve correctly).
+    func selectedPathStrings() -> [String] {
+        if let remote {
+            return content.selectedEntries.map { Self.joinRemote(remote.path, $0.name) }
+        }
+        return selectedLocalURLs().map(\.path)
+    }
+
     @objc private func shareSelection() {
         onBecomeActive?()
         guard remote == nil else {

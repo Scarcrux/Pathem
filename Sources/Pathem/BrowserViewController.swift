@@ -1912,10 +1912,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Copy the selection's paths (POSIX or file://) to the clipboard, one per line.
     private func copyPaths(asURL: Bool) {
-        guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
-        let lines = urls.map { asURL ? $0.absoluteString : $0.path }.joined(separator: "\n")
+        guard let pane = activePane else { NSSound.beep(); return }
+        let lines: [String]
+        if pane.isRemote {
+            lines = pane.selectedPathStrings()  // server-side paths; a file:// URL doesn't apply
+        } else {
+            lines = pane.selectedLocalURLs().map { asURL ? $0.absoluteString : $0.path }
+        }
+        guard !lines.isEmpty else { NSSound.beep(); return }
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(lines, forType: .string)
+        NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
     }
 
     /// Hash the selected file(s) off the main thread and copy the digests (one per
@@ -3327,12 +3333,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    /// Copy the selection's file names to the clipboard, one per line.
+    /// Copy the selection's file names to the clipboard, one per line. Uses the entries' own
+    /// names so it works everywhere — local, remote, and smart results.
     private func copyNames() {
-        guard let urls = activePane?.selectedLocalURLs(), !urls.isEmpty else { NSSound.beep(); return }
+        let names = activePane?.selectedEntries.map(\.name) ?? []
+        guard !names.isEmpty else { NSSound.beep(); return }
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(
-            urls.map { $0.lastPathComponent }.joined(separator: "\n"), forType: .string)
+        NSPasteboard.general.setString(names.joined(separator: "\n"), forType: .string)
     }
 
     /// Prune the given paths from every pane's smart-result list (after a file op
@@ -5229,6 +5236,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check(
             "context-menu-icons", iconlessCommands.isEmpty,
             iconlessCommands.isEmpty ? "all present" : "missing: \(iconlessCommands.map(\.id))")
+        // Copy Path / Copy Name are offered in the right-click menu everywhere (all views share it).
+        let ctxIDs = Set(FileListController.contextCommands.map(\.id))
+        check("copy-path-in-context-menu", ctxIDs.isSuperset(of: ["files.copyPath", "files.copyName"]),
+            "copyPath=\(ctxIDs.contains("files.copyPath")) copyName=\(ctxIDs.contains("files.copyName"))")
         // Every default hotkey resolves to a registered command -- catches a binding that
         // points at a renamed or removed command id (a silently dead key). The wiring check
         // between the keymap and the command registry.
