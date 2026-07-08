@@ -157,6 +157,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var processViewer = ProcessViewerController()
     private lazy var externalCommandsController = ExternalCommandsController()
     private lazy var externalOutput = ExternalCommandOutputController()
+    let slideshow = SlideshowController()
     private lazy var undoHistoryController = UndoHistoryController()
     private lazy var globalSearchController = GlobalSearchController()
     private var externalCommands: [ExternalCommand] = []
@@ -959,6 +960,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in self?.showPalette() }
         add("ai.run", L("bvc.cmd.askPathem", "Ask Pathem (Natural Language)…")) { [weak self] in self?.showAICommandBar() }
         add("view.quickLook", L("bvc.cmd.quickLook", "Quick Look"), enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
+        add(
+            "view.slideshow", L("bvc.cmd.slideshow", "Slideshow"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+                return pane.entries.contains { !$0.isDirectory && BrowserViewController.isImageName($0.name) }
+            }
+        ) { [weak self] in self?.startSlideshow() }
         add("tab.new", L("bvc.cmd.newTab", "New Tab")) { [weak self] in self?.activeSide?.newTab(duplicatingCurrent: true) }
         add("window.new", L("bvc.cmd.newWindow", "New Window")) { [weak self] in
             WindowManager.shared.openWindow(start: self?.newWindowStartFolder() ?? FileManager.default.homeDirectoryForCurrentUser)
@@ -2188,6 +2196,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     ]
     static func isImageName(_ name: String) -> Bool {
         imageExtensions.contains((name as NSString).pathExtension.lowercased())
+    }
+
+    /// Full-screen slideshow: 2+ selected images play as-is; otherwise every image in the folder
+    /// plays, starting at the one selected (if any). Non-image selections are ignored.
+    private func startSlideshow() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let selected = pane.selectedLocalURLs().filter { Self.isImageName($0.lastPathComponent) }
+        if selected.count >= 2 {
+            slideshow.start(urls: selected)
+            return
+        }
+        let folderImages = pane.entries
+            .filter { !$0.isDirectory && Self.isImageName($0.name) }
+            .map { pane.currentURL.appendingPathComponent($0.name) }
+        guard !folderImages.isEmpty else { NSSound.beep(); return }
+        let start = selected.first.flatMap { folderImages.firstIndex(of: $0) } ?? 0
+        slideshow.start(urls: folderImages, startAt: start)
     }
 
     /// Convert/resize the selected images via sips (out-of-process), after a small dialog
@@ -5579,6 +5604,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("new-window-independent-session",
             !secondary.persistsSession && self.persistsSession && WindowManager.shared.windowCount >= 1,
             "secondaryPersists=\(secondary.persistsSession) primaryPersists=\(self.persistsSession) windows=\(WindowManager.shared.windowCount)")
+        // Slideshow: the command is registered and the controller starts inactive (a headless
+        // smoke must not pop a full-screen window, so we don't call start()).
+        check("slideshow-ready", cmdIDs.contains("view.slideshow") && !slideshow.isActive,
+            "registered=\(cmdIDs.contains("view.slideshow")) active=\(slideshow.isActive)")
         return (ok, lines)
     }
 }

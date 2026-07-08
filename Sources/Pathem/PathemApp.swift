@@ -410,6 +410,39 @@ enum PathemApp {
                 exit(pass ? 0 : 1)
             }
         }
+        // End-to-end slideshow check: build two real images, present the full-screen slideshow,
+        // then close it, asserting it went active and back inactive without leaving a window up.
+        if ProcessInfo.processInfo.environment["PATHEM_SLIDESHOW_SMOKE"] != nil {
+            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-slideshow-smoke")
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            var urls: [URL] = []
+            for (i, color) in [NSColor.systemRed, NSColor.systemBlue].enumerated() {
+                let image = NSImage(size: NSSize(width: 200, height: 200))
+                image.lockFocus()
+                color.setFill()
+                NSRect(x: 0, y: 0, width: 200, height: 200).fill()
+                image.unlockFocus()
+                if let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+                    let png = rep.representation(using: .png, properties: [:]) {
+                    let url = dir.appendingPathComponent("img\(i).png")
+                    try? png.write(to: url)
+                    urls.append(url)
+                }
+            }
+            let show = SlideshowController()
+            show.start(urls: urls)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                let activeAfterStart = show.isActive
+                show.close()
+                let closed = !show.isActive
+                print("=== SLIDESHOW SMOKE ===")
+                print("images=\(urls.count) activeAfterStart=\(activeAfterStart) closed=\(closed)")
+                try? FileManager.default.removeItem(at: dir)
+                let pass = urls.count == 2 && activeAfterStart && closed
+                print("RESULT: \(pass ? "PASS" : "FAIL")")
+                exit(pass ? 0 : 1)
+            }
+        }
         app.run()
     }
 
@@ -598,6 +631,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Apply Style…", "view.applyStyle"))
         viewMenu.addItem(commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]))
         viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
+        viewMenu.addItem(commandItem("Slideshow", "view.slideshow"))
         viewMenu.addItem(commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))

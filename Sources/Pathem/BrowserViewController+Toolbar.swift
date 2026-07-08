@@ -74,6 +74,7 @@ extension BrowserViewController: NSToolbarDelegate {
         .init(commandID: "files.findDuplicates", symbol: "square.on.square.dashed", label: "Find Duplicates"),
         .init(commandID: "files.findSimilarNames", symbol: "rectangle.on.rectangle.angled", label: "Find Similar Names"),
         .init(commandID: "view.quickLook", symbol: "eye", label: "Quick Look"),
+        .init(commandID: "view.slideshow", symbol: "play.rectangle", label: "Slideshow"),
         .init(commandID: "view.filter", symbol: "line.3.horizontal.decrease.circle", label: "Filter"),
         .init(commandID: "view.toggleHidden", symbol: "eye.slash", label: "Show Hidden Files"),
         .init(commandID: "view.sizeBrowser", symbol: "chart.pie", label: "Size Browser"),
