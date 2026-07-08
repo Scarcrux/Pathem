@@ -1042,6 +1042,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         (content as? FileListController)?.debugGroupedSelectionRoundTrips() ?? true
     }
 
+    func debugCollapseHidesItems() -> Bool {
+        (content as? FileListController)?.debugCollapseHidesItems() ?? true
+    }
+
     /// Update the bottom status line: item count, or the selection count and its
     /// total size when something is selected.
     private func updateStatus() {

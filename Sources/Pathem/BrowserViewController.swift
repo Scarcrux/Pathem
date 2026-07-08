@@ -752,6 +752,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")) { [weak self] in self?.activePane?.setGroupKey(.kind) }
         add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")) { [weak self] in self?.activePane?.setGroupKey(.size) }
         add("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified")) { [weak self] in self?.activePane?.setGroupKey(.dateModified) }
+        add("view.arrangeTag", L("bvc.cmd.arrangeTag", "Tag")) { [weak self] in self?.activePane?.setGroupKey(.tag) }
         add("view.zoomIn", L("bvc.cmd.zoomIn", "Zoom In")) { [weak self] in self?.activePane?.zoomContent(0.15) }
         add("view.zoomOut", L("bvc.cmd.zoomOut", "Zoom Out")) { [weak self] in self?.activePane?.zoomContent(-0.15) }
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
@@ -3624,6 +3625,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.arrangeKind": menuItem.state = activePane?.groupKey == .kind ? .on : .off
         case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
         case "view.arrangeDate": menuItem.state = activePane?.groupKey == .dateModified ? .on : .off
+        case "view.arrangeTag": menuItem.state = activePane?.groupKey == .tag ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.demoMode": menuItem.state = isDemoMode ? .on : .off
@@ -5544,6 +5546,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             "flat=\(flat.count) groupedHeaders=\(headers(grouped)) groupedItems=\(items(grouped))")
         // And against the real list view: grouping + selection maps back to the right entry.
         check("arrange-by-selection", leftTabs.activePane?.debugGroupedSelectionRoundTrips() ?? true, "")
+        // Collapsible sections: collapsing a group hides its items but keeps the header, and
+        // re-expanding restores the rows.
+        check("collapsible-sections", leftTabs.activePane?.debugCollapseHidesItems() ?? true, "")
         // External commands: the manager + output panel construct, and a command runs via the engine.
         _ = ExternalCommandsController()
         _ = ExternalCommandOutputController()

@@ -13,14 +13,19 @@ enum FileGrouping {
     }
 
     /// Flat display rows for `entries` grouped by `key`. With `.none` the result is 1:1 with
-    /// entries (identity), so the ungrouped path is unchanged.
-    static func rows(_ entries: [FileEntry], by key: ViewFormat.GroupKey, now: Date) -> [Row] {
+    /// entries (identity), so the ungrouped path is unchanged. `tagColors` supplies each entry's
+    /// Finder tag colors for the `.tag` key (from the view's async tag cache); it's ignored for
+    /// the other keys.
+    static func rows(
+        _ entries: [FileEntry], by key: ViewFormat.GroupKey, now: Date,
+        tagColors: (FileEntry) -> [FileTag.Color] = { _ in [] }
+    ) -> [Row] {
         guard key != .none else { return entries.indices.map { .item($0) } }
         // Bucket entries, preserving their incoming (already-sorted) order within each bucket.
         var buckets: [(order: Int, title: String, items: [Int])] = []
         var indexByTitle: [String: Int] = [:]
         for (i, entry) in entries.enumerated() {
-            let (order, title) = bucket(for: entry, key: key, now: now)
+            let (order, title) = bucket(for: entry, key: key, now: now, tagColors: tagColors)
             if let bi = indexByTitle[title] {
                 buckets[bi].items.append(i)
             } else {
@@ -37,7 +42,10 @@ enum FileGrouping {
     }
 
     /// The (ordering, section title) for one entry under a group key.
-    private static func bucket(for entry: FileEntry, key: ViewFormat.GroupKey, now: Date) -> (Int, String) {
+    private static func bucket(
+        for entry: FileEntry, key: ViewFormat.GroupKey, now: Date,
+        tagColors: (FileEntry) -> [FileTag.Color]
+    ) -> (Int, String) {
         switch key {
         case .none:
             return (0, "")
@@ -51,6 +59,10 @@ enum FileGrouping {
             return sizeBucket(entry.size)
         case .dateModified:
             return dateBucket(entry.modificationDate, now: now)
+        case .tag:
+            // Group by the first tag color; untagged files fall into a trailing "No Tag" bucket.
+            guard let color = tagColors(entry).first else { return (1, L("group.noTag", "No Tag")) }
+            return (0, color.label)
         }
     }
 

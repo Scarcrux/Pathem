@@ -608,6 +608,7 @@ enum PathemApp {
             commandItem("Kind", "view.arrangeKind"),
             commandItem("Size", "view.arrangeSize"),
             commandItem("Date Modified", "view.arrangeDate"),
+            commandItem("Tag", "view.arrangeTag"),
         ]))
         viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
         viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))

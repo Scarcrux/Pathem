@@ -24,7 +24,47 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // rows(forNames:).
     private var groupKey: ViewFormat.GroupKey = .none
     private var displayRows: [FileGrouping.Row] = []
-    private func rebuildDisplayRows() { displayRows = FileGrouping.rows(entries, by: groupKey, now: Date()) }
+    /// Group titles the user has collapsed (their items are hidden until re-expanded). Reset on
+    /// navigation and on a group-key change, so it never carries stale titles across folders.
+    private var collapsedGroups: Set<String> = []
+    /// Item count per group title, from the full grouping (so a collapsed header still shows it).
+    private var groupCounts: [String: Int] = [:]
+    private func rebuildDisplayRows() {
+        let full = FileGrouping.rows(entries, by: groupKey, now: Date(), tagColors: { [weak self] in
+            self?.tagColors(for: $0) ?? []
+        })
+        var counts: [String: Int] = [:]
+        var currentTitle = ""
+        for row in full {
+            switch row {
+            case .header(let title): currentTitle = title; counts[title] = 0
+            case .item: counts[currentTitle, default: 0] += 1
+            }
+        }
+        groupCounts = counts
+        guard !collapsedGroups.isEmpty else { displayRows = full; return }
+        // Drop the item rows under any collapsed header, keeping the header itself.
+        var result: [FileGrouping.Row] = []
+        var hidingItems = false
+        for row in full {
+            if case .header(let title) = row {
+                hidingItems = collapsedGroups.contains(title)
+                result.append(row)
+            } else if !hidingItems {
+                result.append(row)
+            }
+        }
+        displayRows = result
+    }
+
+    /// Toggle a group's collapsed state (from a click on its header), preserving the selection.
+    private func toggleGroupCollapsed(_ title: String) {
+        let names = Set(tableView.selectedRowIndexes.compactMap { entryIndex(forRow: $0).map { entries[$0].name } })
+        if collapsedGroups.contains(title) { collapsedGroups.remove(title) } else { collapsedGroups.insert(title) }
+        rebuildDisplayRows()
+        tableView.reloadData()
+        tableView.selectRowIndexes(rows(forNames: names), byExtendingSelection: false)
+    }
     /// The entries index a table row shows, or nil for a group-header row.
     private func entryIndex(forRow row: Int) -> Int? {
         guard row >= 0, row < displayRows.count, case .item(let index) = displayRows[row] else { return nil }
@@ -47,6 +87,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard key != groupKey else { return }
         let selected = Set(selectedEntries.map(\.name))
         groupKey = key
+        collapsedGroups.removeAll()  // titles differ per key; don't carry collapsed state across
         rebuildDisplayRows()
         tableView.reloadData()
         tableView.selectRowIndexes(rows(forNames: selected), byExtendingSelection: false)
@@ -64,6 +105,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let sameCount = displayRows.filter { if case .item = $0 { return true }; return false }.count == entries.count
         setGroupKey(original)
         return hasHeaders && mapped && sameCount
+    }
+
+    /// Smoke: group by kind, collapse the first group, and confirm its items vanish from the
+    /// display rows while the header stays; restore afterward.
+    func debugCollapseHidesItems() -> Bool {
+        let original = groupKey
+        setGroupKey(.kind)
+        let before = displayRows.count
+        guard let headerRow = displayRows.firstIndex(where: { if case .header = $0 { return true }; return false }),
+            case .header(let title) = displayRows[headerRow]
+        else { setGroupKey(original); return false }
+        toggleGroupCollapsed(title)
+        let after = displayRows.count
+        let headerStays = displayRows.contains { if case .header(let t) = $0 { return t == title }; return false }
+        toggleGroupCollapsed(title)  // re-expand
+        let restored = displayRows.count == before
+        setGroupKey(original)
+        return after < before && headerStays && restored
     }
 
     /// Count of `viewFor` calls — i.e. how many cell views the table has asked
@@ -221,6 +280,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.delegate = self
         tableView.target = self
         tableView.doubleAction = #selector(handleDoubleClick)
+        tableView.action = #selector(handleSingleClick)  // header collapse (+ single-click-open when on)
         tableView.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
         tableView.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
         tableView.onDragExited = { [weak self] in self?.springLoader.cancel() }
@@ -300,6 +360,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         guard preserveState else {
             self.entries = entries
+            collapsedGroups.removeAll()  // a fresh folder: don't carry collapsed titles across
             rebuildDisplayRows()
             tableView.reloadData()
             if !displayRows.isEmpty { tableView.scrollRowToVisible(0) }
@@ -350,18 +411,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         onOpen?(entries[index])
     }
 
-    /// Single click opens, in single-click mode, on a plain click of one row.
+    /// A plain single click: toggle a group header's collapsed state, or (in single-click-to-open
+    /// mode) open the clicked row. Wired to the table's action unconditionally so header toggling
+    /// always works, independent of the single-click-open preference.
     @objc private func handleSingleClick() {
+        let row = tableView.clickedRow
+        guard row >= 0, row < displayRows.count else { return }
+        if case .header(let title) = displayRows[row] { toggleGroupCollapsed(title); return }
         guard singleClickToOpen else { return }
         let flags = NSApp.currentEvent?.modifierFlags ?? []
         if flags.contains(.shift) || flags.contains(.command) { return }  // extending a selection
-        guard let index = entryIndex(forRow: tableView.clickedRow) else { return }
+        guard let index = entryIndex(forRow: row) else { return }
         onOpen?(entries[index])
     }
 
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
         singleClickToOpen = singleClick
-        tableView.action = singleClick ? #selector(handleSingleClick) : nil
+        // The table's action stays wired (see setup) so header-collapse clicks always work; the
+        // handler itself consults singleClickToOpen for the open-on-click behavior.
         if underlineHover != underlineOnHover {
             underlineOnHover = underlineHover
             if underlineHover {
@@ -723,7 +790,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 ])
                 return view
             }()
-        cell.textField?.stringValue = title
+        let collapsed = collapsedGroups.contains(title)
+        let count = groupCounts[title] ?? 0
+        cell.textField?.stringValue = "\(collapsed ? "▸" : "▾")  \(title)  (\(count))"
         return cell
     }
 
@@ -989,9 +1058,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 guard let self, self.tagReadGeneration == generation else { return }
                 let hadDots = self.tagCache.contains { !$0.value.isEmpty }
                 self.tagCache = result
-                // Only redraw if any row actually shows a dot, so the common
-                // untagged case never triggers a second reload.
-                if hadDots || result.contains(where: { !$0.value.isEmpty }) {
+                // When grouping by tag, the buckets depend on the tags we just read, so rebuild
+                // the display rows (preserving selection) and reload.
+                if self.groupKey == .tag {
+                    let selected = Set(self.selectedEntries.map(\.name))
+                    self.rebuildDisplayRows()
+                    self.tableView.reloadData()
+                    self.tableView.selectRowIndexes(self.rows(forNames: selected), byExtendingSelection: false)
+                } else if hadDots || result.contains(where: { !$0.value.isEmpty }) {
+                    // Only redraw if any row actually shows a dot, so the common
+                    // untagged case never triggers a second reload.
                     self.tableView.reloadData()
                 }
             }

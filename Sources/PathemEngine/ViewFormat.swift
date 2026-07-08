@@ -10,7 +10,7 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     }
     /// How the list view groups rows under section headers (`none` = flat, the default).
     public enum GroupKey: String, Codable, Sendable, CaseIterable {
-        case none, kind, size, dateModified
+        case none, kind, size, dateModified, tag
     }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
     /// grid views (gallery uses larger thumbnails); `column` is miller columns.
