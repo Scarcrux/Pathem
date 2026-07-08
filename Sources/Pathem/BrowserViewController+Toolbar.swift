@@ -70,6 +70,7 @@ extension BrowserViewController: NSToolbarDelegate {
         .init(commandID: "files.repoReclaim", symbol: "internaldrive", label: "Reclaim in Repo"),
         .init(commandID: "files.findInFiles", symbol: "doc.text.magnifyingglass", label: "Find in Files"),
         .init(commandID: "files.findDuplicates", symbol: "square.on.square.dashed", label: "Find Duplicates"),
+        .init(commandID: "files.findSimilarNames", symbol: "rectangle.on.rectangle.angled", label: "Find Similar Names"),
         .init(commandID: "view.quickLook", symbol: "eye", label: "Quick Look"),
         .init(commandID: "view.filter", symbol: "line.3.horizontal.decrease.circle", label: "Filter"),
         .init(commandID: "view.toggleHidden", symbol: "eye.slash", label: "Show Hidden Files"),

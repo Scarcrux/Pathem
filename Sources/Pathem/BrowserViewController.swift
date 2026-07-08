@@ -995,6 +995,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.findDuplicates", L("bvc.cmd.findDuplicates", "Find Duplicates"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findDuplicates()
         }
+        add("files.findSimilarNames", L("bvc.cmd.findSimilarNames", "Find Similar Names"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.findSimilarNames()
+        }
         add("view.sizeBrowser", L("bvc.cmd.sizeBrowser", "Size Browser…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in
             guard let self, let url = self.activePane?.currentURL else { return }
@@ -2798,6 +2801,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 groups.isEmpty
                 ? String(format: L("bvc.noDuplicates", "No duplicates in %@"), root.lastPathComponent)
                 : "Duplicates: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
+            pane.showSmartResults(files, title: title)
+        }
+    }
+
+    /// Group files in the folder whose names are semantically similar (via the on-device
+    /// embedder) and show them as smart results — the near-duplicate complement to Find
+    /// Duplicates (which matches byte-identical content). Runs off the main thread.
+    private func findSimilarNames() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let root = pane.currentURL
+        let entries = pane.entries
+        let token = pane.beginContentRequest()
+        pane.showSmartResults([], title: String(format: L("bvc.findingSimilar", "Finding similar names in %@…"), root.lastPathComponent))
+        Task { @MainActor [weak self] in
+            let groups = await Task.detached { SemanticDedup.similarGroups(entries) }.value
+            guard let self, self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
+            let files = groups.flatMap { $0.files }
+            let title =
+                groups.isEmpty
+                ? String(format: L("bvc.noSimilar", "No similar names in %@"), root.lastPathComponent)
+                : "Similar names: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
             pane.showSmartResults(files, title: title)
         }
     }
