@@ -18,6 +18,37 @@ tests.
 What is missing for a credible v1.0 is not architecture. It is a cluster of
 table-stakes actions and a few reliability fixes.
 
+## Next up (scheduled, 2026-07-08)
+
+The four picked to build next, in suggested order. Details for each live in their
+existing sections below (Candidate features / Recently requested / Site manager);
+this is the running plan.
+
+1. **User-defined external commands** (the most switch-driving item). Run a user's
+   own script / CLI tool on the selection with placeholders (`%F` full paths, `%P`
+   parent dir, `%N` names, `%D` current folder), configured as data (a small JSON
+   store like the create-templates / opener rules), each registered as a real
+   command so it shows in the palette and is bindable in Settings > Shortcuts and
+   the toolbar / context menu. Run out-of-process via `Process`, stream output to a
+   panel, honor cancel. External tools only -- no embedded scripting -- so within
+   the hard rules. Starts in the engine (an `ExternalCommand` model + runner,
+   `swift test`-able), then the app wires registration + a small editor UI.
+2. **Finish undo history + selective undo.** The `ActionHistory` model is scaffolded
+   (footprint per action). Rewire the register sites off `NSUndoManager` onto it,
+   add a recent-actions panel, and enable undoing an action no newer action depends
+   on (the footprint-overlap check already drafted). Cleanest continuity win.
+3. **SFTP private key file + passphrase** (the EC2 / `.pem` case). Add a key-file
+   field to `RemoteConnection` + the site manager; pass `-i <key>` to the SFTP
+   backend and an askpass path for the passphrase. Optional stretch: save passwords
+   in the Keychain per site (kills the biggest friction: re-prompting every
+   connect).
+4. **Advanced find / smart folders.** A find/filter builder (name, size, date, kind,
+   content, tag) over Spotlight `mdfind`, savable as a smart folder in the sidebar --
+   the deterministic complement to the existing semantic search.
+
+Bigger bets deliberately left for after these: macOS Shortcuts integration, AI
+rename / summarize / dedup, multi-window, SMB/AFP mount, app-wide theming.
+
 ## v1.0 must-haves (this week)
 
 - **Open a file in its default app** (today a non-folder double-click/Return is a
