@@ -294,6 +294,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
             labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
             check(L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"), \.middleClickOpensNewTab),
+            labeled(L("prefs.commanderLabel", "Commander F-keys"), commanderEditButton()),
         ])
         case .menus: return menusPane()
         case .labels: return labelsPane()
@@ -613,6 +614,54 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             self.prefs.newTabLocation = .fixed  // choosing a folder implies using it
             self.fixedFolderButton.title = url.lastPathComponent
             self.newTabPopup.selectItem(at: 2)
+            self.onChange?(self.prefs)
+        }
+    }
+
+    private func commanderEditButton() -> NSView {
+        let button = NSButton(
+            title: L("prefs.commanderEdit", "Customize…"), target: self, action: #selector(editCommanderKeys))
+        button.bezelStyle = .rounded
+        return button
+    }
+    @objc private func editCommanderKeys() {
+        let current =
+            prefs.commanderCommands.count == 6 ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
+        let sorted = commandList.sorted {
+            $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
+        }
+        let popups: [NSPopUpButton] = (0..<6).map { index in
+            let popup = NSPopUpButton()
+            for command in sorted {
+                let item = NSMenuItem(title: command.title, action: nil, keyEquivalent: "")
+                item.representedObject = command.id
+                popup.menu?.addItem(item)
+            }
+            if let match = sorted.firstIndex(where: { $0.id == current[index] }) {
+                popup.selectItem(at: match)
+            }
+            return popup
+        }
+        let rows = (0..<6).map { labeled("F\(3 + $0)", popups[$0]) }
+        let form = NSStackView(views: rows)
+        form.orientation = .vertical
+        form.alignment = .leading
+        form.spacing = 8
+        form.translatesAutoresizingMaskIntoConstraints = false
+        form.widthAnchor.constraint(equalToConstant: 320).isActive = true
+
+        let alert = NSAlert()
+        alert.messageText = L("prefs.commanderSheetTitle", "Commander F-keys")
+        alert.informativeText = L(
+            "prefs.commanderSheetBody", "Choose the command each F-key runs in Commander mode.")
+        alert.accessoryView = form
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            self.prefs.commanderCommands = popups.map {
+                ($0.selectedItem?.representedObject as? String) ?? ""
+            }
             self.onChange?(self.prefs)
         }
     }

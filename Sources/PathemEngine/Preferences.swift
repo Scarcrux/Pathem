@@ -37,6 +37,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var fixedStartFolder: String
     /// Middle-clicking a folder opens it in a new tab.
     public var middleClickOpensNewTab: Bool
+    /// The command ids bound to the Commander bar's F3–F8 buttons (six entries). Empty = the
+    /// orthodox defaults (View / Edit / Copy / Move / MkDir / Delete).
+    public var commanderCommands: [String]
     /// File-size units (decimal vs binary).
     public var sizeFormat: SizeFormat
     /// Date column format (relative / short / medium).
@@ -154,7 +157,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         defaultViewMode: ViewFormat.ViewMode = .list, defaultSortKey: ViewFormat.SortKey = .name,
         defaultSortAscending: Bool = true,
         newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
-        middleClickOpensNewTab: Bool = true,
+        middleClickOpensNewTab: Bool = true, commanderCommands: [String] = [],
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -183,6 +186,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.newTabLocation = newTabLocation
         self.fixedStartFolder = fixedStartFolder
         self.middleClickOpensNewTab = middleClickOpensNewTab
+        self.commanderCommands = commanderCommands
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -267,6 +271,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         fixedStartFolder = try c.decodeIfPresent(String.self, forKey: .fixedStartFolder) ?? d.fixedStartFolder
         middleClickOpensNewTab =
             try c.decodeIfPresent(Bool.self, forKey: .middleClickOpensNewTab) ?? d.middleClickOpensNewTab
+        commanderCommands =
+            try c.decodeIfPresent([String].self, forKey: .commanderCommands) ?? d.commanderCommands
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

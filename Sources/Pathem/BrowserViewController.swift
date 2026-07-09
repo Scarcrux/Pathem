@@ -352,6 +352,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         commanderShownConstraint = vSplit.bottomAnchor.constraint(equalTo: commanderBar.topAnchor)
         commanderBar.onCommand = { [weak self] id in self?.commands.perform(id) }
         commanderBar.onRunCommand = { [weak self] command in self?.runCommanderCommand(command) }
+        commanderBar.titleForCommand = { [weak self] id in self?.commands.command(id)?.title ?? id }
+        applyCommanderCommands()
         // Super-drag swipe trail, filling the window overlay above the panes (non-interactive).
         dragTrail.frame = host.bounds
         dragTrail.autoresizingMask = [.width, .height]
@@ -4159,6 +4161,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
         }
         applyCompactSidebar()
+        applyCommanderCommands()
         applyAppearance()
         applyTheme()
         applyIconSet()
@@ -5991,6 +5994,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Show or hide the embedded terminal drawer. On first show it starts a login
     /// shell in the active folder and gives the drawer a reasonable height.
     /// Show/hide the commander bar (orthodox F-key bar + command line) across the window bottom.
+    /// Bind the Commander F3–F8 buttons to the user's chosen commands (or the defaults).
+    private func applyCommanderCommands() {
+        commanderBar.commandIDs =
+            prefs.commanderCommands.count == 6 ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
+    }
+
     private func toggleCommander() {
         let show = commanderBar.isHidden
         commanderBar.isHidden = !show

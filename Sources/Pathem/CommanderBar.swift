@@ -6,22 +6,32 @@ import AppKit
 /// A toggle over the dual pane (Total/Midnight Commander style), not a new view.
 @MainActor
 final class CommanderBar: NSView {
-    /// (F-key label, tooltip, command id) for each function-key button.
-    static let functions: [(key: String, label: String, command: String)] = [
-        ("F3", "View", "view.quickLook"),
-        ("F4", "Edit", "files.openInEditor"),
-        ("F5", "Copy", "files.copyToOtherPane"),
-        ("F6", "Move", "files.moveToOtherPane"),
-        ("F7", "MkDir", "files.newFolder"),
-        ("F8", "Delete", "files.trash"),
+    /// The default F3–F8 command ids (orthodox: View / Edit / Copy / Move / MkDir / Delete).
+    static let defaultCommandIDs = [
+        "view.quickLook", "files.openInEditor", "files.copyToOtherPane",
+        "files.moveToOtherPane", "files.newFolder", "files.trash",
+    ]
+    /// Short labels for the defaults; a reassigned key falls back to the command's own title.
+    private static let shortLabels: [String: String] = [
+        "view.quickLook": "View", "files.openInEditor": "Edit", "files.copyToOtherPane": "Copy",
+        "files.moveToOtherPane": "Move", "files.newFolder": "MkDir", "files.trash": "Delete",
     ]
 
     private let promptLabel = NSTextField(labelWithString: "")
     private let commandField = NSTextField()
+    private let strip = NSStackView()
+    private var functionButtons: [NSButton] = []
     /// Run a typed command line (in the current folder).
     var onRunCommand: ((String) -> Void)?
     /// Run a function-key command by id.
     var onCommand: ((String) -> Void)?
+    /// Resolve a command id to its display title (used to label a reassigned F-key).
+    var titleForCommand: ((String) -> String)?
+
+    /// The command bound to each of the six F-keys; setting it rebuilds the button row.
+    var commandIDs: [String] = defaultCommandIDs {
+        didSet { if oldValue != commandIDs { rebuildFunctionButtons() } }
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -45,8 +55,32 @@ final class CommanderBar: NSView {
     }
 
     @objc private func functionTapped(_ sender: NSButton) {
-        guard sender.tag >= 0, sender.tag < Self.functions.count else { return }
-        onCommand?(Self.functions[sender.tag].command)
+        guard sender.tag >= 0, sender.tag < commandIDs.count else { return }
+        onCommand?(commandIDs[sender.tag])
+    }
+
+    /// The label for the F-key at `index`: the orthodox short label for a default command, else
+    /// the command's own title.
+    private func label(for id: String) -> String {
+        if let short = Self.shortLabels[id] { return L("commander.\(short)", short) }
+        return titleForCommand?(id) ?? id
+    }
+
+    /// Rebuild the six function-key buttons from the current `commandIDs`.
+    func rebuildFunctionButtons() {
+        functionButtons.forEach { strip.removeArrangedSubview($0); $0.removeFromSuperview() }
+        functionButtons = []
+        for (index, id) in commandIDs.prefix(6).enumerated() {
+            let button = NSButton(
+                title: "F\(3 + index) \(label(for: id))", target: self, action: #selector(functionTapped(_:)))
+            button.tag = index
+            button.bezelStyle = .rounded
+            button.font = .systemFont(ofSize: 11)
+            button.toolTip = label(for: id)
+            button.setContentHuggingPriority(.required, for: .horizontal)
+            strip.addArrangedSubview(button)
+            functionButtons.append(button)
+        }
     }
 
     private func build() {
@@ -62,18 +96,7 @@ final class CommanderBar: NSView {
         commandField.bezelStyle = .roundedBezel
         commandField.setContentHuggingPriority(.init(1), for: .horizontal)  // absorb slack
 
-        var views: [NSView] = [promptLabel, commandField]
-        for (index, fn) in Self.functions.enumerated() {
-            let button = NSButton(title: "\(fn.key) \(L("commander.\(fn.label)", fn.label))", target: self, action: #selector(functionTapped(_:)))
-            button.tag = index
-            button.bezelStyle = .rounded
-            button.font = .systemFont(ofSize: 11)
-            button.toolTip = L("commander.\(fn.label)", fn.label)
-            button.setContentHuggingPriority(.required, for: .horizontal)
-            views.append(button)
-        }
-
-        let strip = NSStackView(views: views)
+        strip.setViews([promptLabel, commandField], in: .leading)
         strip.orientation = .horizontal
         strip.spacing = 6
         strip.edgeInsets = NSEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
@@ -85,5 +108,6 @@ final class CommanderBar: NSView {
             strip.trailingAnchor.constraint(equalTo: trailingAnchor),
             strip.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
+        rebuildFunctionButtons()
     }
 }
