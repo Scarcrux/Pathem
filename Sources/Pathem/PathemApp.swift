@@ -640,6 +640,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Open in New Tab", "files.openInNewTab"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
+        fileMenu.addItem(commandItem("Set Custom Icon…", "files.setCustomIcon"))
+        fileMenu.addItem(commandItem("Remove Custom Icon", "files.removeCustomIcon"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
         fileMenu.addItem(commandItem("Reveal in Pathem", "files.revealInPathem"))
         // Organize

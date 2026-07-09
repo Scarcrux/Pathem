@@ -53,6 +53,32 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// Set the selected image as the desktop picture on every screen.
+    /// Set a chosen image as the selected item's custom icon (folder or file), via NSWorkspace.
+    private func setCustomIcon() {
+        guard let pane = activePane, !pane.isRemote, let target = pane.selectedLocalURLs().first, let window = view.window else { NSSound.beep(); return }
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.prompt = L("customicon.choose", "Set Icon")
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let iconURL = panel.url, let icon = NSImage(contentsOf: iconURL), let self else { return }
+            if NSWorkspace.shared.setIcon(icon, forFile: target.path, options: []) {
+                self.activePane?.reloadIfShowingListing()
+            } else {
+                self.presentInfo(
+                    L("customicon.failedTitle", "Couldn’t set the icon"),
+                    L("customicon.failedBody", "The custom icon couldn’t be applied. You may not have permission to change this item."))
+            }
+        }
+    }
+
+    /// Remove the custom icon from the selection (restore the default).
+    private func removeCustomIcon() {
+        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        for url in pane.selectedLocalURLs() { NSWorkspace.shared.setIcon(nil, forFile: url.path, options: []) }
+        pane.reloadIfShowingListing()
+    }
+
     @objc private func setDesktopPicture() {
         guard let url = singleSelectedImageURL else { NSSound.beep(); return }
         var failed = false
@@ -1043,6 +1069,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             "files.setDesktopPicture", L("bvc.cmd.setDesktopPicture", "Set Desktop Picture"),
             enabled: { [weak self] in self?.singleSelectedImageURL != nil }
         ) { [weak self] in self?.setDesktopPicture() }
+        add("files.setCustomIcon", L("bvc.cmd.setCustomIcon", "Set Custom Icon…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.count == 1
+        }) { [weak self] in self?.setCustomIcon() }
+        add("files.removeCustomIcon", L("bvc.cmd.removeCustomIcon", "Remove Custom Icon"), enabled: hasLocalSelection) {
+            [weak self] in self?.removeCustomIcon()
+        }
         add("files.airdrop", L("bvc.cmd.sendViaAirDrop", "Send via AirDrop"), enabled: hasSelection) {
             [weak self] in self?.activePane?.airDropSelection()
         }
@@ -6360,6 +6393,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cmdIDs.contains("files.changeOwner") && chownCmd == "sudo chown 'bob:staff' '/tmp/a b'" && grpOK,
             "registered=\(cmdIDs.contains("files.changeOwner")) cmd=\(chownCmd == "sudo chown 'bob:staff' '/tmp/a b'") group=\(grpOK)")
         try? FileManager.default.removeItem(at: ownFile)
+        // Custom icon: the commands register and NSWorkspace applies then clears a custom icon.
+        let iconDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-icon-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: iconDir, withIntermediateDirectories: true)
+        let customImage = NSImage(size: NSSize(width: 32, height: 32))
+        customImage.lockFocus(); NSColor.systemPink.setFill(); NSRect(x: 0, y: 0, width: 32, height: 32).fill(); customImage.unlockFocus()
+        let iconSet = NSWorkspace.shared.setIcon(customImage, forFile: iconDir.path, options: [])
+        NSWorkspace.shared.setIcon(nil, forFile: iconDir.path, options: [])
+        check("custom-icon",
+            cmdIDs.isSuperset(of: ["files.setCustomIcon", "files.removeCustomIcon"]) && iconSet,
+            "registered=\(cmdIDs.isSuperset(of: ["files.setCustomIcon", "files.removeCustomIcon"])) set=\(iconSet)")
+        try? FileManager.default.removeItem(at: iconDir)
         // Skinning: hex parsing, preset lookup, and an accent apply (restored afterward so the
         // running window keeps its configured skin).
         let parsedAccent = ThemeManager.color(fromHex: "#BD93F9")
