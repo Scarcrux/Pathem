@@ -918,3 +918,5 @@
 "torrents.addMagnet.title" = "Añadir enlace magnet";
 "torrents.addMagnet.message" = "Pega un enlace magnet. Pathem obtiene sus detalles de los pares y descarga a tu carpeta Descargas.";
 "torrents.addMagnet.invalid" = "Eso no parece un enlace magnet.";
+
+"torrents.col.up" = "Subida";

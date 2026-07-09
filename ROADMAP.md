@@ -230,11 +230,17 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   verifies it against the info hash, then downloads normally. Magnet, extended-message,
   and metadata-assembly logic is unit-tested; the daemon shows a magnet as "checking"
   until its metadata resolves.
-- **Honest boundary / next up.** Downloads from `.torrent` files and magnet links over
-  HTTP trackers work today. Not yet at full standalone-client parity: there's no DHT
-  (BEP 5), so a magnet with no working trackers can't find peers; no incoming-peer
-  listener (so it doesn't yet seed to others); and no uTP/PEX/encryption. Nearest-value
-  follow-ups, in order: seeding (incoming connections), then DHT, then PEX.
+- **Seeding** -- SHIPPED. Peer connections are bidirectional: we serve blocks peers request
+  from storage (counting an upload rate, shown in a new "Up" column), broadcast `have` as
+  pieces finish, and a `PeerListener` accepts incoming peers so peers can dial us, not just
+  us them. Proven by a loopback end-to-end test: a real leecher downloads a file from a real
+  seeder over TCP and verifies it byte-for-byte -- the first test that transfers actual bytes
+  through the whole stack (listener, handshake, request pipeline, serving, verification, storage).
+- **Honest boundary / next up.** `.torrent` and magnet downloads, and seeding, work over HTTP
+  trackers today. Not yet at full standalone-client parity: there's no DHT (BEP 5), so a magnet
+  with no working trackers can't find peers; no UPnP/NAT-PMP port mapping, so inbound peers only
+  reach us on open networks and LANs; and no uTP/PEX/encryption. Nearest-value follow-ups, in
+  order: DHT, then port mapping, then PEX.
 
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 

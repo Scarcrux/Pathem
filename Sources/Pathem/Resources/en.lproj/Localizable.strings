@@ -787,3 +787,5 @@
 "torrents.addMagnet.title" = "Add Magnet Link";
 "torrents.addMagnet.message" = "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder.";
 "torrents.addMagnet.invalid" = "That doesn’t look like a magnet link.";
+
+"torrents.col.up" = "Up";

@@ -552,14 +552,17 @@ import Testing
     @Test func eventCarriesStatuses() throws {
         let status = TorrentSession.Status(
             infoHash: "abc", name: "x", totalLength: 10, downloaded: 5, fractionComplete: 0.5,
-            downloadRate: 1024, peersConnected: 2, state: .downloading, savePath: "/dl")
+            downloadRate: 1024, uploadRate: 512, uploaded: 4096, peersConnected: 2,
+            state: .seeding, savePath: "/dl")
         let event = TorrentControl.Event(kind: .status, ok: true, torrents: [status])
         var line = TorrentControl.encodeLine(event)
         line.removeLast()
         let decoded = try JSONDecoder().decode(TorrentControl.Event.self, from: line)
         #expect(decoded.kind == .status)
         #expect(decoded.torrents?.first?.fractionComplete == 0.5)
-        #expect(decoded.torrents?.first?.state == .downloading)
+        #expect(decoded.torrents?.first?.state == .seeding)
+        #expect(decoded.torrents?.first?.uploadRate == 512)  // upload fields survive the wire
+        #expect(decoded.torrents?.first?.uploaded == 4096)
     }
 }
 

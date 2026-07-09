@@ -77,8 +77,9 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         let columns: [(String, String, CGFloat)] = [
             ("name", L("torrents.col.name", "Name"), 240),
             ("size", L("torrents.col.size", "Size"), 80),
-            ("progress", L("torrents.col.progress", "Progress"), 150),
-            ("down", L("torrents.col.down", "Down"), 84),
+            ("progress", L("torrents.col.progress", "Progress"), 140),
+            ("down", L("torrents.col.down", "Down"), 78),
+            ("up", L("torrents.col.up", "Up"), 78),
             ("peers", L("torrents.col.peers", "Peers"), 54),
             ("state", L("torrents.col.state", "Status"), 90),
         ]
@@ -289,6 +290,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case "size": return Self.size.string(fromByteCount: status.totalLength)
         case "down":
             return status.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
+        case "up":
+            return status.uploadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.uploadRate)))/s" : "—"
         case "peers": return "\(status.peersConnected)"
         case "state": return stateLabel(status.state)
         default: return ""

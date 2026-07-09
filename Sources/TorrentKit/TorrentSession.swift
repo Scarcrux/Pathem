@@ -17,9 +17,29 @@ public actor TorrentSession {
         public var downloaded: Int64
         public var fractionComplete: Double
         public var downloadRate: Double   // bytes/sec, smoothed
+        public var uploadRate: Double      // bytes/sec, smoothed
+        public var uploaded: Int64         // total bytes served to peers this session
         public var peersConnected: Int
         public var state: State
         public var savePath: String
+
+        public init(
+            infoHash: String, name: String, totalLength: Int64, downloaded: Int64,
+            fractionComplete: Double, downloadRate: Double, uploadRate: Double = 0,
+            uploaded: Int64 = 0, peersConnected: Int, state: State, savePath: String
+        ) {
+            self.infoHash = infoHash
+            self.name = name
+            self.totalLength = totalLength
+            self.downloaded = downloaded
+            self.fractionComplete = fractionComplete
+            self.downloadRate = downloadRate
+            self.uploadRate = uploadRate
+            self.uploaded = uploaded
+            self.peersConnected = peersConnected
+            self.state = state
+            self.savePath = savePath
+        }
     }
 
     public let torrent: TorrentFile
@@ -34,15 +54,20 @@ public actor TorrentSession {
     private var connectedPeers = 0
     private var globalInFlight: Set<PieceManager.BlockRequest> = []
     private var knownPeers: Set<Tracker.Peer> = []
+    private var activePeers: [PeerConnection] = []  // connected peers, for have-broadcast + serving
     private var announceTask: Task<Void, Never>?
 
     private let maxPeers = 30
     private let maxInFlightPerPeer = 8
+    private let maxServedBlock = 32 * 1024  // reject absurd block requests from peers
 
-    // Rate estimate.
+    // Rate estimates (download and upload), sampled in status().
     private var lastSampleBytes: Int64 = 0
     private var lastSampleTime = Date()
     private var smoothedRate: Double = 0
+    private var uploadedBytes: Int64 = 0
+    private var lastUploadBytes: Int64 = 0
+    private var smoothedUploadRate: Double = 0
 
     public init(torrent: TorrentFile, downloadRoot: URL, peerID: Data = Tracker.makePeerID()) throws {
         self.torrent = torrent
@@ -82,24 +107,29 @@ public actor TorrentSession {
         for t in peerTasks { t.cancel() }
         peerTasks.removeAll()
         globalInFlight.removeAll()
+        activePeers.removeAll()
         connectedPeers = 0
     }
 
     public func status() -> Status {
-        // Smooth the rate over the interval since the last sample (exponential moving average).
+        // Smooth both rates over the interval since the last sample (exponential moving average).
         let now = Date()
         let elapsed = now.timeIntervalSince(lastSampleTime)
         if elapsed >= 0.5 {
-            let delta = Double(pieces.downloadedBytes - lastSampleBytes)
-            let instant = delta / elapsed
-            smoothedRate = smoothedRate * 0.6 + instant * 0.4
+            let downInstant = Double(pieces.downloadedBytes - lastSampleBytes) / elapsed
+            smoothedRate = smoothedRate * 0.6 + downInstant * 0.4
             lastSampleBytes = pieces.downloadedBytes
+            let upInstant = Double(uploadedBytes - lastUploadBytes) / elapsed
+            smoothedUploadRate = smoothedUploadRate * 0.6 + upInstant * 0.4
+            lastUploadBytes = uploadedBytes
             lastSampleTime = now
         }
+        let active = state == .downloading || state == .seeding
         return Status(
             infoHash: torrent.infoHashHex, name: torrent.name, totalLength: torrent.totalLength,
             downloaded: pieces.downloadedBytes, fractionComplete: pieces.fractionComplete,
             downloadRate: state == .downloading ? max(0, smoothedRate) : 0,
+            uploadRate: active ? max(0, smoothedUploadRate) : 0, uploaded: uploadedBytes,
             peersConnected: connectedPeers, state: state, savePath: downloadRoot.path)
     }
 
@@ -173,44 +203,95 @@ public actor TorrentSession {
         }
         do {
             try await peer.connect()
-            connectedPeers += 1
-            defer { connectedPeers -= 1 }
-
-            if pieces.completedCount > 0 { try await peer.send(.bitfield(pieces.bitfield())) }
-            try await peer.send(.interested)
-
-            var choked = true
-            var peerBits: [Bool] = []
-            var mine: Set<PieceManager.BlockRequest> = []
-
-            while !Task.isCancelled && state != .paused && state != .stopped {
-                topUp(choked: choked, peerBits: peerBits, mine: &mine, peer: peer)
-
-                let message = try await peer.receive()
-                switch message {
-                case .choke:
-                    choked = true
-                    for r in mine { globalInFlight.remove(r) }
-                    mine.removeAll()
-                case .unchoke:
-                    choked = false
-                case .bitfield(let data):
-                    peerBits = pieces.decodeBitfield(data)
-                case .have(let index):
-                    let i = Int(index)
-                    if i >= peerBits.count { peerBits += Array(repeating: false, count: i - peerBits.count + 1) }
-                    if i >= 0 && i < peerBits.count { peerBits[i] = true }
-                case .piece(let index, let begin, let block):
-                    handlePiece(index: Int(index), begin: Int(begin), block: block, mine: &mine)
-                default:
-                    break
-                }
-            }
-            // Release this peer's in-flight reservations.
-            for r in mine { globalInFlight.remove(r) }
+            try await pump(peer)
         } catch {
             // Connection dropped or timed out; the roster shrinks and the tracker refills it.
         }
+    }
+
+    /// Accept an incoming peer (from the PeerListener): reply to its handshake, then run the same
+    /// bidirectional loop as an outgoing peer. Enables seeding to peers that dial us.
+    public func acceptIncomingPeer(_ peer: PeerConnection) {
+        guard state == .downloading || state == .seeding, connectedPeers < maxPeers else {
+            Task { await peer.close() }
+            return
+        }
+        let task = Task { [weak self] in
+            guard let self else { return }
+            defer { Task { await peer.close() } }
+            do {
+                try await peer.replyHandshake()
+                try await self.pump(peer)
+            } catch {}
+        }
+        peerTasks.append(task)
+    }
+
+    /// The bidirectional message loop shared by outgoing and incoming peers: advertise our pieces,
+    /// request blocks we still need, and serve blocks peers ask us for.
+    private func pump(_ peer: PeerConnection) async throws {
+        connectedPeers += 1
+        activePeers.append(peer)
+        defer {
+            connectedPeers -= 1
+            activePeers.removeAll { $0 === peer }
+        }
+
+        if pieces.completedCount > 0 { try await peer.send(.bitfield(pieces.bitfield())) }
+        try await peer.send(.interested)
+
+        var choked = true
+        var peerBits: [Bool] = []
+        var mine: Set<PieceManager.BlockRequest> = []
+
+        while !Task.isCancelled && state != .paused && state != .stopped {
+            topUp(choked: choked, peerBits: peerBits, mine: &mine, peer: peer)
+
+            let message = try await peer.receive()
+            switch message {
+            case .choke:
+                choked = true
+                for r in mine { globalInFlight.remove(r) }
+                mine.removeAll()
+            case .unchoke:
+                choked = false
+            case .bitfield(let data):
+                peerBits = pieces.decodeBitfield(data)
+            case .have(let index):
+                let i = Int(index)
+                if i >= peerBits.count { peerBits += Array(repeating: false, count: i - peerBits.count + 1) }
+                if i >= 0 && i < peerBits.count { peerBits[i] = true }
+            case .piece(let index, let begin, let block):
+                handlePiece(index: Int(index), begin: Int(begin), block: block, mine: &mine)
+            case .interested:
+                // A peer wants our pieces: unchoke so it can request from us (seeding).
+                Task { try? await peer.send(.unchoke) }
+            case .request(let index, let begin, let length):
+                serveBlock(index: Int(index), begin: Int(begin), length: Int(length), to: peer)
+            default:
+                break
+            }
+        }
+        for r in mine { globalInFlight.remove(r) }  // release this peer's in-flight reservations
+    }
+
+    /// Serve a block a peer requested, if we have that verified piece. Reads from storage and
+    /// sends a `piece` message, counting the bytes toward our upload total. This is how we
+    /// reciprocate (upload while downloading) and seed to still-connected peers after completion.
+    private func serveBlock(index: Int, begin: Int, length: Int, to peer: PeerConnection) {
+        guard pieces.hasPiece(index), length > 0, length <= maxServedBlock, begin >= 0 else { return }
+        guard begin + length <= pieces.pieceSize(index) else { return }
+        let offset = Int64(index) * Int64(pieces.pieceLength) + Int64(begin)
+        guard let block = try? storage.read(at: offset, length: length), block.count == length else { return }
+        uploadedBytes += Int64(length)
+        let message = PeerMessage.piece(index: UInt32(index), begin: UInt32(begin), block: block)
+        Task { try? await peer.send(message) }
+    }
+
+    /// Tell every connected peer we now have a piece, so they can request it from us.
+    private func broadcastHave(_ index: Int) {
+        let message = PeerMessage.have(pieceIndex: UInt32(index))
+        for peer in activePeers { Task { try? await peer.send(message) } }
     }
 
     /// Keep this peer's request pipeline full while it isn't choking us.
@@ -237,10 +318,9 @@ public actor TorrentSession {
             try? storage.write(
                 pieceIndex: pieceIndex, pieceLength: pieces.pieceLength,
                 pieceSize: pieces.pieceSize(pieceIndex), data: data)
-            if pieces.isComplete {
-                state = .seeding
-                storage.close()
-            }
+            broadcastHave(pieceIndex)  // let connected peers know they can request this from us
+            if pieces.isComplete { state = .seeding }
+            // Storage stays open so we can serve pieces to peers; it closes on stop().
         case .hashMismatch:
             break  // the piece was reset; its blocks become requestable again
         default:

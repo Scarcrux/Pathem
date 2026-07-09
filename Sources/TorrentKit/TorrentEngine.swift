@@ -30,6 +30,7 @@ public actor TorrentEngine {
     private var meta: [String: Persisted]
     private var pending: [String: PendingMagnet] = [:]
     private var resolverTasks: [String: Task<Void, Never>] = [:]
+    private var listener: PeerListener?
 
     public init(stateDir: URL) {
         self.stateDir = stateDir
@@ -38,11 +39,29 @@ public actor TorrentEngine {
         self.meta = Self.loadState(from: stateDir.appendingPathComponent("state.json"))
     }
 
+    /// Start accepting incoming peers so we can seed to peers that dial us. Idempotent; safe to
+    /// call on every add. Failure to bind (e.g. port in use) is non-fatal: outbound still works.
+    private func ensureListener() async {
+        guard listener == nil else { return }
+        let l = PeerListener(peerID: peerID) { [weak self] hex, peer in
+            guard let self, let session = await self.session(forHash: hex) else {
+                await peer.close()
+                return
+            }
+            await session.acceptIncomingPeer(peer)
+        }
+        listener = l
+        _ = try? await l.start(port: 6881)
+    }
+
+    private func session(forHash hex: String) -> TorrentSession? { sessions[hex] }
+
     // MARK: commands
 
     /// Add a torrent from a .torrent file, copying it into the state directory and starting it.
     @discardableResult
     public func addTorrentFile(at path: String, savePath: String) async throws -> TorrentSession.Status {
+        await ensureListener()
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
         let torrent = try TorrentFile.parse(data)
         let hash = torrent.infoHashHex
@@ -196,6 +215,7 @@ public actor TorrentEngine {
     /// Turn a resolved magnet into a persisted, running download.
     private func promote(hash: String, resolved: MetadataExchange.ResolvedTorrent, savePath: String) async {
         guard pending[hash] != nil, sessions[hash] == nil else { return }
+        await ensureListener()
         pending[hash] = nil
         resolverTasks[hash] = nil
         let storedName = "\(hash).torrent"
@@ -225,6 +245,7 @@ public actor TorrentEngine {
     /// Recreate sessions from persisted metadata, marking already-downloaded pieces and resuming
     /// any that weren't paused. Called once at daemon startup.
     public func restoreAll() async {
+        await ensureListener()
         for persisted in meta.values {
             let fileURL = torrentsDir.appendingPathComponent(persisted.torrentFileName)
             guard let data = try? Data(contentsOf: fileURL),

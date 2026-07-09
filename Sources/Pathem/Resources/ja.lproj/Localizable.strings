@@ -918,3 +918,5 @@
 "torrents.addMagnet.title" = "マグネットリンクを追加";
 "torrents.addMagnet.message" = "マグネットリンクを貼り付けてください。Pathem がピアから詳細を取得し、「ダウンロード」フォルダに保存します。";
 "torrents.addMagnet.invalid" = "マグネットリンクではないようです。";
+
+"torrents.col.up" = "上り";

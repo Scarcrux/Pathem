@@ -96,9 +96,12 @@ its files. Magnet links fetch their metadata from peers first (ut_metadata), the
 download like any torrent. Downloads persist and resume across restarts. All of the
 peer and network code runs in a separate `pathem-torrentd` process, so it never runs
 inside the Full-Disk-Access app, the same model Pathem uses for its other risky work.
-The engine (tracker client, peer wire protocol, metadata exchange, SHA-1 piece
-verification, sparse file storage) is unit-tested. Downloads over HTTP trackers work
-today; DHT and seeding to other peers are on the roadmap.
+Pathem also seeds: connections are bidirectional, so it serves pieces to peers (an
+"Up" column shows the upload rate) and accepts incoming peers. The engine (tracker
+client, peer wire protocol, metadata exchange, SHA-1 piece verification, sparse file
+storage, seeding) is unit-tested, including an end-to-end test where a real leecher
+downloads a file from a real seeder over TCP and verifies it byte-for-byte. Downloads
+and seeding work over HTTP trackers today; DHT and NAT port mapping are on the roadmap.
 
 ## Why it's fast
 

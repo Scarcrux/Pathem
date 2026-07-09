@@ -17,7 +17,7 @@ import Foundation
 
         public let host: String
         public let port: UInt16
-        private let infoHash: Data
+        private var infoHash: Data  // for incoming connections, learned from the peer's handshake
         private let myPeerID: Data
         private let advertiseExtensions: Bool
 
@@ -42,13 +42,53 @@ import Foundation
         /// Whether the peer's handshake advertised BEP 10 extension support (set after connect()).
         public private(set) var peerSupportsExtensions = false
 
+        /// Wrap a connection accepted by a PeerListener. The info hash is not known until the peer
+        /// sends its handshake (`acceptHandshake`).
+        public init(incoming connection: NWConnection, peerID: Data) {
+            self.host = "\(connection.endpoint)"
+            self.port = 0
+            self.infoHash = Data()
+            self.myPeerID = peerID
+            self.advertiseExtensions = false
+            self.connection = connection
+        }
+
         /// Open the TCP connection and exchange handshakes. Throws on failure or timeout.
         public func connect(timeout: TimeInterval = 15) async throws {
             let params = NWParameters.tcp
             let conn = NWConnection(
                 host: .init(host), port: .init(rawValue: port) ?? .any, using: params)
             self.connection = conn
+            try await waitReady(conn, timeout: timeout)
 
+            let reserved = advertiseExtensions ? PeerHandshake.extensionReserved : Data(count: 8)
+            let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID, reserved: reserved)
+            try await rawSend(handshake.encoded)
+            try await readHandshake(timeout: timeout)
+        }
+
+        /// For an incoming connection: start it, read the peer's handshake, and return the info
+        /// hash it wants (so the listener can find the matching torrent). Does not reply yet.
+        public func acceptHandshake(timeout: TimeInterval = 15) async throws -> Data {
+            guard let conn = connection else { throw PeerError.closed }
+            try await waitReady(conn, timeout: timeout)
+            while inbound.count < 68 { try await readMore(timeout: timeout) }
+            guard let hs = PeerHandshake.parse(inbound) else { throw PeerError.handshakeMismatch }
+            infoHash = hs.infoHash
+            remotePeerID = hs.peerID
+            peerSupportsExtensions = hs.supportsExtensions
+            inbound.removeFirst(68)
+            return hs.infoHash
+        }
+
+        /// Send our handshake back on an incoming connection (after the caller picked the torrent).
+        public func replyHandshake() async throws {
+            let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID)
+            try await rawSend(handshake.encoded)
+        }
+
+        /// Await the connection reaching `.ready`, or throw on failure/timeout.
+        private func waitReady(_ conn: NWConnection, timeout: TimeInterval) async throws {
             let _: Void = try await withThrowingContinuation(timeout: timeout) { done in
                 conn.stateUpdateHandler = { state in
                     switch state {
@@ -60,11 +100,6 @@ import Foundation
                 }
                 conn.start(queue: Self.queue)
             }
-
-            let reserved = advertiseExtensions ? PeerHandshake.extensionReserved : Data(count: 8)
-            let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID, reserved: reserved)
-            try await rawSend(handshake.encoded)
-            try await readHandshake(timeout: timeout)
         }
 
         /// Read exactly the 68-byte handshake, validating the info hash matches.
