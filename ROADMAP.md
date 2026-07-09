@@ -169,13 +169,22 @@ committed, and installed.
   saved back through the normal write + undo path.
 - **Custom file/folder icon** -- SHIPPED. Set or remove a custom icon on any file or
   folder from Get Info, via `NSWorkspace.setIcon`.
+- **Azure Blob Storage** -- SHIPPED (Round 6). A new `.azure` backend (`AzureBlobProvider`),
+  run out-of-process via curl. curl has no built-in Azure signing (unlike S3's
+  `--aws-sigv4`), so requests are signed here with `AzureSharedKey` (HMAC-SHA256 over the
+  canonicalized request, sent as an Authorization header; only the signature, never the
+  key, reaches the argument list). User = storage account, password = account key, host
+  blank -> `<account>.blob.core.windows.net`. The signer (checked against an RFC 4231
+  vector), the list parser, and derivation are unit-tested (15 tests).
+- **Synchronized (delta) browsing** -- SHIPPED (Round 6). Upgraded from a same-path lock
+  to relative mirroring, so two different roots track in step. `SyncBrowse.mirroredPath`
+  (9 tests).
 
 *Deferred, with reasons:* **cloud folder badges** (an overlay on iCloud/Dropbox-style
 CloudStorage folders) -- correct per-path icon compositing across every view is a lot
 of surface for a cosmetic cue; **formal site groups** -- the per-site color label
 already clusters sites visually and the filter covers find, so a full group model is
-low return; **Azure Blob** (not S3-compatible, needs its own SharedKey signer);
-plugin-*rendered* custom views (gated Swift extension runtime); a signed
+low return; plugin-*rendered* custom views (gated Swift extension runtime); a signed
 `SMAppService` privileged helper (only needed to avoid the terminal `sudo` route for
 chown).
 
@@ -300,8 +309,8 @@ Tier 2 (organization and power): mostly SHIPPED (Round 5).
 Tier 3 (breadth and niceties):
 
 - More cloud backends: **Backblaze B2, Google Cloud Storage** and other S3-compatible
-  endpoints -- SHIPPED (Round 5, endpoint picker). **Azure Blob** still open (not
-  S3-compatible; needs its own SharedKey signer).
+  endpoints -- SHIPPED (Round 5, endpoint picker). **Azure Blob** -- SHIPPED (Round 6):
+  its own Shared Key (HMAC-SHA256) signer, since it isn't S3-compatible.
 - FTP **passive / active** mode and charset / encoding.
 - Per-site speed limits, keep-alive / reconnect, SOCKS / HTTP proxy.
 
