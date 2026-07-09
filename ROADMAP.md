@@ -109,12 +109,15 @@ Cleared the tractable deferrals from round 3, plus theming the user asked for.
   control entries. Complements the existing ACL reader.
 - **Group By in the icon view** -- the deferred sectioned-NSCollectionView refactor,
   done: a section model + a two-way indexPath<->entry mapping.
+- **Ownership** -- Set Attributes ▸ Group changes the group without root
+  (`BulkAttributes.groupOwnerName`); Change Owner (Admin)… types a `sudo chown` line
+  into the embedded terminal (`OwnershipEditor` + `TerminalController.typeCommand`),
+  so chown-to-another-user works without a bundled privileged helper.
 
-*Still deferred:* **chown** to another user (needs a signed privileged helper via
-`SMAppService` -- a security subsystem of its own; a lighter change-group that works
-without root is an option). Markup (needs an in-app annotation editor). Per-app
-accent for *standard* AppKit controls (no public API; only Pathem-drawn chrome is
-themed).
+*Still deferred:* a signed `SMAppService` privileged helper (only needed to avoid the
+terminal password prompt; the terminal route covers the use case). Markup (needs an
+in-app annotation editor). Per-app accent for *standard* AppKit controls (no public
+API; only Pathem-drawn chrome is themed).
 
 ## Round 4 (scheduled, 2026-07-08) -- new views
 
