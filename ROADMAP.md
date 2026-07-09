@@ -236,11 +236,17 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   us them. Proven by a loopback end-to-end test: a real leecher downloads a file from a real
   seeder over TCP and verifies it byte-for-byte -- the first test that transfers actual bytes
   through the whole stack (listener, handshake, request pipeline, serving, verification, storage).
-- **Honest boundary / next up.** `.torrent` and magnet downloads, and seeding, work over HTTP
-  trackers today. Not yet at full standalone-client parity: there's no DHT (BEP 5), so a magnet
-  with no working trackers can't find peers; no UPnP/NAT-PMP port mapping, so inbound peers only
-  reach us on open networks and LANs; and no uTP/PEX/encryption. Nearest-value follow-ups, in
-  order: DHT, then port mapping, then PEX.
+- **DHT (BEP 5)** -- SHIPPED. A lookup-only mainline DHT node: 160-bit ids + XOR distance, the
+  KRPC codec (ping / find_node / get_peers / announce_peer), and a UDP client that bootstraps
+  from the well-known routers and iteratively queries the closest nodes for peers. The session
+  runs it whenever peers are scarce (skipping private torrents), so a trackerless magnet finds
+  peers. The codec is unit-tested; a gated live test (PATHEM_DHT_LIVE=1) confirms it finds real
+  peers for a well-seeded torrent against the actual network.
+- **Honest boundary / next up.** `.torrent` and magnet downloads, seeding, and DHT peer discovery
+  work today. Not yet at full standalone-client parity: no UPnP/NAT-PMP port mapping, so inbound
+  peers only reach us on open networks and LANs; the DHT is lookup-only (doesn't serve queries or
+  keep a persistent routing table); and no uTP/PEX/encryption. Nearest-value follow-ups, in order:
+  port mapping, then PEX, then a persistent DHT routing table.
 
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 

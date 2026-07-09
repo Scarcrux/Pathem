@@ -112,4 +112,18 @@ import Testing
         #expect(code == 201)
         #expect(text == "A Generic Error")
     }
+
+    #if canImport(Network)
+        /// A live end-to-end DHT lookup against the real network, opt-in via PATHEM_DHT_LIVE=1 so
+        /// normal/offline test runs skip it. Bootstraps and finds peers for a well-seeded
+        /// public-domain torrent (Big Buck Bunny).
+        @Test func liveDHTFindsPeers() async {
+            guard ProcessInfo.processInfo.environment["PATHEM_DHT_LIVE"] != nil else { return }
+            let infoHash = Magnet.dataFromHex("dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c")!
+            let client = DHTClient()
+            let peers = await client.findPeers(infoHash: infoHash, maxPeers: 10, timeout: 25)
+            print("DHT live: found \(peers.count) peers: \(peers.prefix(5))")
+            #expect(!peers.isEmpty)
+        }
+    #endif
 }

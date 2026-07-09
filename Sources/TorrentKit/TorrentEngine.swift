@@ -25,6 +25,7 @@ public actor TorrentEngine {
     private let stateDir: URL
     private let torrentsDir: URL
     private let peerID = Tracker.makePeerID()
+    private let dht = DHTClient()  // shared across sessions for trackerless peer discovery
 
     private var sessions: [String: TorrentSession] = [:]
     private var meta: [String: Persisted]
@@ -71,7 +72,7 @@ public actor TorrentEngine {
         try data.write(to: torrentsDir.appendingPathComponent(storedName))
 
         let session = try TorrentSession(
-            torrent: torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID)
+            torrent: torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht)
         sessions[hash] = session
         meta[hash] = Persisted(
             infoHashHex: hash, torrentFileName: storedName, savePath: savePath,
@@ -221,7 +222,7 @@ public actor TorrentEngine {
         let storedName = "\(hash).torrent"
         try? resolved.torrentBytes.write(to: torrentsDir.appendingPathComponent(storedName))
         guard let session = try? TorrentSession(
-            torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID)
+            torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht)
         else { return }
         sessions[hash] = session
         meta[hash] = Persisted(
@@ -251,7 +252,7 @@ public actor TorrentEngine {
             guard let data = try? Data(contentsOf: fileURL),
                 let torrent = try? TorrentFile.parse(data),
                 let session = try? TorrentSession(
-                    torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath), peerID: peerID)
+                    torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath), peerID: peerID, dht: dht)
             else { continue }
             await session.loadResume(havePieces: persisted.completedPieces)
             sessions[persisted.infoHashHex] = session

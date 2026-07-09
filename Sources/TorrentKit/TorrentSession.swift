@@ -48,6 +48,7 @@ public actor TorrentSession {
     private let pieces: PieceManager
     private let layout: FileLayout
     private let storage: TorrentStorage
+    private let dht: DHTClient?
 
     private var state: State = .stopped
     private var peerTasks: [Task<Void, Never>] = []
@@ -69,10 +70,14 @@ public actor TorrentSession {
     private var lastUploadBytes: Int64 = 0
     private var smoothedUploadRate: Double = 0
 
-    public init(torrent: TorrentFile, downloadRoot: URL, peerID: Data = Tracker.makePeerID()) throws {
+    public init(
+        torrent: TorrentFile, downloadRoot: URL, peerID: Data = Tracker.makePeerID(),
+        dht: DHTClient? = nil
+    ) throws {
         self.torrent = torrent
         self.downloadRoot = downloadRoot
         self.peerID = peerID
+        self.dht = dht
         self.pieces = PieceManager(torrent: torrent)
         self.layout = FileLayout(torrent: torrent)
         // Multi-file torrents nest their files under the torrent name; single-file already has it.
@@ -156,12 +161,19 @@ public actor TorrentSession {
         }
     }
 
-    /// One pass over the torrent's HTTP trackers. Returns whether any were present.
+    /// One pass over the torrent's HTTP trackers, plus a DHT lookup when peers are scarce.
+    /// Returns whether any HTTP trackers were present.
     private func announceRound() async -> Bool {
         let trackers = torrent.trackers.filter { $0.hasPrefix("http") }
         for tracker in trackers {
             if Task.isCancelled { break }
             await announceOnce(tracker)
+        }
+        // The DHT finds peers without trackers; run it when we're short of peers (this is what
+        // makes a trackerless magnet work). Skip for private torrents (BEP 27).
+        if let dht, !torrent.isPrivate, connectedPeers < 10, !Task.isCancelled {
+            let peers = await dht.findPeers(infoHash: torrent.infoHash)
+            for peer in peers { considerPeer(peer) }
         }
         return !trackers.isEmpty
     }

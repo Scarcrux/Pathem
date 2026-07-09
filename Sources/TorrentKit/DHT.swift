@@ -124,7 +124,7 @@ public enum DHT {
 
     /// The useful parts of a get_peers response: a token, plus either peers (`values`) or closer
     /// `nodes` to query next.
-    public struct GetPeersResult {
+    public struct GetPeersResult: Sendable {
         public let nodeID: Data?
         public let token: Data?
         public let peers: [Tracker.Peer]

@@ -99,9 +99,11 @@ inside the Full-Disk-Access app, the same model Pathem uses for its other risky 
 Pathem also seeds: connections are bidirectional, so it serves pieces to peers (an
 "Up" column shows the upload rate) and accepts incoming peers. The engine (tracker
 client, peer wire protocol, metadata exchange, SHA-1 piece verification, sparse file
-storage, seeding) is unit-tested, including an end-to-end test where a real leecher
-downloads a file from a real seeder over TCP and verifies it byte-for-byte. Downloads
-and seeding work over HTTP trackers today; DHT and NAT port mapping are on the roadmap.
+storage, seeding, DHT) is unit-tested, including an end-to-end test where a real
+leecher downloads a file from a real seeder over TCP and verifies it byte-for-byte.
+Peers come from HTTP trackers and from the mainline DHT (BEP 5), so a trackerless
+magnet still finds peers. NAT port mapping (so peers behind a router can reach you)
+is on the roadmap.
 
 ## Why it's fast
 
