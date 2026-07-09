@@ -63,5 +63,19 @@ let package = Package(
         // canonical example an extension author copies, and it exercises the ExtensionHost
         // wire protocol (line-delimited JSON over stdio) so the seam can't rot.
         .executableTarget(name: "pathem-ext-example", dependencies: ["PathemEngine"]),
+
+        // TorrentKit: a pure-Foundation bencode decoder + .torrent metadata reader (name,
+        // files, size, trackers, info hash, magnet link). No AppKit, no networking -- it only
+        // parses a local metadata file -- so it is fully unit-tested.
+        .target(name: "TorrentKit"),
+
+        // The Torrent Inspector plugin: the first real Pathem extension. An out-of-process
+        // Swift helper that inspects a selected .torrent (via TorrentKit) and returns its
+        // contents / magnet link over the ExtensionHost wire protocol. Built + installed to
+        // the Extensions folder by scripts/install-torrents-plugin.sh, not bundled in the app.
+        .executableTarget(name: "pathem-torrents", dependencies: ["PathemEngine", "TorrentKit"]),
+
+        // TorrentKit tests (bencode + .torrent parsing against real fixtures).
+        .testTarget(name: "TorrentKitTests", dependencies: ["TorrentKit"]),
     ]
 )
