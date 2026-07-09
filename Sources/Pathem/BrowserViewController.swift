@@ -1496,12 +1496,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return name.isEmpty ? nil : name
     }
 
+    /// The user's default New Folder / New File base name (falling back if they cleared it).
+    private var defaultNewFolderName: String {
+        let name = prefs.newFolderName.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? L("bvc.untitledFolder", "untitled folder") : name
+    }
+    private var defaultNewFileName: String {
+        let name = prefs.newFileName.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? "untitled file" : name
+    }
+
     private func newFolder() {
         guard let pane = activePane else { return }
         if pane.isShowingSmartResults { NSSound.beep(); return }  // no single destination
         if pane.isRemote {
             Task { @MainActor in
-                guard let name = await self.promptForName(title: L("bvc.newFolderPrompt", "New Folder"), default: L("bvc.untitledFolder", "untitled folder")) else { return }
+                guard let name = await self.promptForName(title: L("bvc.newFolderPrompt", "New Folder"), default: self.defaultNewFolderName) else { return }
                 self.performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) { provider, connection, path, password in
                     try await provider.makeDirectory(
                         connection, path: PaneController.joinRemote(path, name), password: password)
@@ -1510,7 +1520,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             return
         }
         do {
-            let name = try FileOperations.makeFolder(in: pane.currentURL)
+            let name = try FileOperations.makeFolder(in: pane.currentURL, baseName: defaultNewFolderName)
             pane.reloadIfShowingListing()
             pane.select(name: name)
             registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.newFolderVerb", "New Folder"))
@@ -1590,7 +1600,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane else { return }
         if pane.isShowingSmartResults || pane.isRemote { NSSound.beep(); return }
         do {
-            let name = try FileOperations.makeFile(in: pane.currentURL)
+            let name = try FileOperations.makeFile(in: pane.currentURL, baseName: defaultNewFileName)
             pane.reloadIfShowingListing()
             pane.select(name: name)
             registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.cmd.newFile", "New File"))
@@ -4162,6 +4172,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     prefs.statusShowItemCount, prefs.statusShowSize, prefs.statusShowFreeSpace)
             }
         }
+        for side in [leftTabs, rightTabs] { side.newTabAtEnd = prefs.newTabAtEnd }
         applyCompactSidebar()
         applyCommanderCommands()
         applyAppearance()

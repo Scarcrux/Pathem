@@ -113,6 +113,8 @@ final class TabbedPaneController: NSObject {
     /// Resolves where a fresh tab opens (the "New tab opens to" preference): nil means the
     /// current folder (browser-style), a URL means Home or a fixed folder.
     var newTabLocation: (() -> URL?)?
+    /// New tabs go at the end of the bar (true, the default) or right after the current tab.
+    var newTabAtEnd = true
 
     /// Open a new tab. `duplicatingCurrent` opens it at the active tab's folder
     /// (browser-style) or the user's preferred location; otherwise at this side's start folder.
@@ -147,8 +149,15 @@ final class TabbedPaneController: NSObject {
         pane.onDropFiles = { [weak self] urls, move, destination in
             self?.onPaneDropFiles?(urls, move, destination)
         }
-        tabs.append(pane)
-        activeIndex = tabs.count - 1
+        // Insert at the end, or right after the current tab (browser-style) when configured.
+        if newTabAtEnd || tabs.isEmpty {
+            tabs.append(pane)
+            activeIndex = tabs.count - 1
+        } else {
+            let at = min(activeIndex + 1, tabs.count)
+            tabs.insert(pane, at: at)
+            activeIndex = at
+        }
         showActivePane()
         pane.refresh()  // apply formats + fire onDirectoryDidChange now that it is wired
         refreshTabBar()

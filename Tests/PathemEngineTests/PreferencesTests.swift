@@ -23,6 +23,23 @@ import Testing
         #expect(old.sizeFormat == .decimal && old.dateDisplay == .medium)
     }
 
+    @Test func commanderStatusAndNewItemRoundTrip() throws {
+        let prefs = Preferences(
+            commanderCommands: ["a", "b", "c", "d", "e", "f"],
+            statusShowItemCount: false, statusShowSize: true, statusShowFreeSpace: true,
+            newFolderName: "New Directory", newFileName: "scratch.txt", newTabAtEnd: false)
+        let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))
+        #expect(decoded.commanderCommands == ["a", "b", "c", "d", "e", "f"])
+        #expect(decoded.statusShowItemCount == false && decoded.statusShowFreeSpace == true)
+        #expect(decoded.newFolderName == "New Directory" && decoded.newFileName == "scratch.txt")
+        #expect(decoded.newTabAtEnd == false)
+        // Defaults: standard names, tabs at end, status shows count+size.
+        let d = Preferences.default
+        #expect(d.newFolderName == "untitled folder" && d.newTabAtEnd == true)
+        #expect(d.statusShowItemCount && d.statusShowSize && !d.statusShowFreeSpace)
+        #expect(d.commanderCommands.isEmpty)  // empty = the orthodox defaults
+    }
+
     @Test func defaultViewAndSortRoundTrip() throws {
         let prefs = Preferences(defaultViewMode: .icon, defaultSortKey: .date, defaultSortAscending: false)
         let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))

@@ -44,6 +44,11 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var statusShowItemCount: Bool
     public var statusShowSize: Bool
     public var statusShowFreeSpace: Bool
+    /// Default base names for New Folder / New File (a number is appended if taken).
+    public var newFolderName: String
+    public var newFileName: String
+    /// New tabs open at the end of the bar (true) or right after the current tab.
+    public var newTabAtEnd: Bool
     /// File-size units (decimal vs binary).
     public var sizeFormat: SizeFormat
     /// Date column format (relative / short / medium).
@@ -163,6 +168,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
         middleClickOpensNewTab: Bool = true, commanderCommands: [String] = [],
         statusShowItemCount: Bool = true, statusShowSize: Bool = true, statusShowFreeSpace: Bool = false,
+        newFolderName: String = "untitled folder", newFileName: String = "untitled file",
+        newTabAtEnd: Bool = true,
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -195,6 +202,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.statusShowItemCount = statusShowItemCount
         self.statusShowSize = statusShowSize
         self.statusShowFreeSpace = statusShowFreeSpace
+        self.newFolderName = newFolderName
+        self.newFileName = newFileName
+        self.newTabAtEnd = newTabAtEnd
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -286,6 +296,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         statusShowSize = try c.decodeIfPresent(Bool.self, forKey: .statusShowSize) ?? d.statusShowSize
         statusShowFreeSpace =
             try c.decodeIfPresent(Bool.self, forKey: .statusShowFreeSpace) ?? d.statusShowFreeSpace
+        newFolderName = try c.decodeIfPresent(String.self, forKey: .newFolderName) ?? d.newFolderName
+        newFileName = try c.decodeIfPresent(String.self, forKey: .newFileName) ?? d.newFileName
+        newTabAtEnd = try c.decodeIfPresent(Bool.self, forKey: .newTabAtEnd) ?? d.newTabAtEnd
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

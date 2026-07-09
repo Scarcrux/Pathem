@@ -292,7 +292,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.defaultViewLabel", "New folders open as"), defaultViewControl()),
             labeled(L("prefs.defaultSortLabel", "Default sort"), defaultSortControl()),
             labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
+            labeled(L("prefs.newTabPosLabel", "New tab position"), newTabPositionControl()),
             labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
+            labeled(L("prefs.newFolderNameLabel", "New Folder name"), textField(\.newFolderName, width: 180)),
+            labeled(L("prefs.newFileNameLabel", "New File name"), textField(\.newFileName, width: 180)),
             check(L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"), \.middleClickOpensNewTab),
             labeled(L("prefs.commanderLabel", "Commander F-keys"), commanderEditButton()),
             hint(L("prefs.statusBarHint", "Status bar shows:")),
@@ -397,6 +400,37 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         return button
     }
     private var boolPaths: [ObjectIdentifier: WritableKeyPath<Preferences, Bool>] = [:]
+
+    /// A text field bound to a String preference; commits on edit.
+    private func textField(_ keyPath: WritableKeyPath<Preferences, String>, width: CGFloat) -> NSView {
+        let field = NSTextField(string: prefs[keyPath: keyPath])
+        field.target = self
+        field.action = #selector(stringFieldCommitted(_:))
+        field.widthAnchor.constraint(equalToConstant: width).isActive = true
+        stringPaths[ObjectIdentifier(field)] = keyPath
+        return field
+    }
+    private var stringPaths: [ObjectIdentifier: WritableKeyPath<Preferences, String>] = [:]
+    @objc private func stringFieldCommitted(_ sender: NSTextField) {
+        guard let keyPath = stringPaths[ObjectIdentifier(sender)] else { return }
+        prefs[keyPath: keyPath] = sender.stringValue
+        onChange?(prefs)
+    }
+
+    private func newTabPositionControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.newTabAfter", "After current tab"), L("prefs.newTabEnd", "At the end"),
+        ])
+        popup.selectItem(at: prefs.newTabAtEnd ? 1 : 0)
+        popup.target = self
+        popup.action = #selector(newTabPositionChanged(_:))
+        return popup
+    }
+    @objc private func newTabPositionChanged(_ sender: NSPopUpButton) {
+        prefs.newTabAtEnd = sender.indexOfSelectedItem == 1
+        onChange?(prefs)
+    }
 
     @objc private func checkToggled(_ sender: NSButton) {
         guard let keyPath = boolPaths[ObjectIdentifier(sender)] else { return }
