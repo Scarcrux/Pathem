@@ -17,7 +17,8 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 ## What it does
 
 - Two panes side by side, with tabs per pane, and copy and move between them
-  (F5 and F6).
+  (F5 and F6). Synchronized browsing keeps the two panes in step: descend into a
+  subfolder on one side and the other follows into its own matching subfolder.
 - Stays fast in large folders. Only the rows on screen are built, so 100k or even
   a million files scroll without lag.
 - Drag and drop: drag files between panes, to and from Finder, or onto the
@@ -43,11 +44,14 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 - Quick navigation: an editable path bar, back, forward, up, and double-click or
   Return to open a folder. Sortable columns (name, size, date modified), folders
   first.
-- Cloud-aware. It browses iCloud, Dropbox, Drive, and OneDrive folders and never
-  silently downloads online-only files just to list or index them.
-- Remote and cloud transfer, built in: connect to S3 (and S3-compatible stores),
-  WebDAV, SFTP, and FTP, and copy to and from them with a progress and cancel
-  sheet. Every network backend runs out-of-process.
+- Cloud-aware. It browses iCloud, Dropbox, Drive, and OneDrive folders (each shown
+  with a small service badge so a "Documents" in iCloud reads apart from one in
+  Drive) and never silently downloads online-only files just to list or index them.
+- Remote and cloud transfer, built in: connect to S3 (and S3-compatible stores like
+  Backblaze B2, Google Cloud Storage, and Wasabi), Azure Blob, WebDAV, SFTP, and
+  FTP, and copy to and from them with a progress and cancel sheet. Saved sites carry
+  color labels, groups, per-site path bookmarks, and a paired local folder. Every
+  network backend runs out-of-process.
 - Git-aware. Files in a repository show status badges (modified, staged,
   untracked), and "Reclaim in Repo" tells regenerable build output (safe to
   clean) from precious untracked data (worth backing up).
@@ -58,6 +62,29 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 List, icon, gallery, and column views, set per folder and remembered:
 
 ![Icon and gallery views shown side by side across the two panes](docs/screenshots/views.png)
+
+## Make it yours
+
+Nearly every surface is customizable, in the spirit of Directory Opus:
+
+- **Color rules (labels)** color and style filenames by rules: extension, name
+  pattern, size, or folder-vs-file, with a color plus bold or italic. The first
+  matching rule wins, and it applies across list, icon, column, and tree views.
+- **The right-click menu** is a drag-to-reorder editor (uncheck to hide, reset to
+  default), and the **toolbar** takes any command, including your own external
+  commands.
+- **The sidebar** reorders items, user groups, and whole sections by drag.
+- **Commander mode** (Total Commander-style F-keys) is rebindable, and the status
+  bar shows what you pick (item count, size, free space).
+- **Defaults you set once**: the view mode and sort new folders open in, decimal or
+  binary file sizes, relative or absolute dates, where new tabs open, and default
+  names for New File and New Folder.
+- Every command is rebindable and reachable from the command palette, and the UI is
+  localized into English, Japanese, German, Spanish, Chinese, and French.
+
+You can also make Pathem the default app for opening folders (fully reversible), and
+a Reset Pathem Data command restores Finder and clears Pathem's data for a clean
+uninstall.
 
 ## Why it's fast
 
