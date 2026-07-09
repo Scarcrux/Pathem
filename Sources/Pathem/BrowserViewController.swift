@@ -474,6 +474,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     self?.updatePreview()
                     self?.updateQuickActions()
                 }
+                pane.onBreadcrumbAction = { [weak self] folder, action in
+                    self?.handleBreadcrumbAction(folder, action)
+                }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -5810,6 +5813,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             mirrorNavigationIfSyncing(to: url)
         }
         saveSessionSoon()
+    }
+
+    /// A breadcrumb ancestor's right-click action: open that folder into a pane or a new tab,
+    /// or copy its path.
+    private func handleBreadcrumbAction(_ folder: URL, _ action: BreadcrumbBar.Action) {
+        switch action {
+        case .newTab: activeSide?.openTab(at: folder)
+        case .leftPane: leftTabs.activePane?.navigate(to: folder)
+        case .rightPane: rightTabs.activePane?.navigate(to: folder)
+        case .leftPaneNewTab: leftTabs.openTab(at: folder)
+        case .rightPaneNewTab: rightTabs.openTab(at: folder)
+        case .copyPath:
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(folder.path, forType: .string)
+        }
     }
 
     /// Sync browsing: replay the active pane's relative move on the other side's pane,

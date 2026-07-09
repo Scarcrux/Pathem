@@ -188,6 +188,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var onDidNavigate: (() -> Void)?
     /// Files were dropped onto this pane: copy/move them into its folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
+    /// A right-click action on a breadcrumb ancestor segment (open into a pane/tab, copy path).
+    var onBreadcrumbAction: ((_ folder: URL, _ action: BreadcrumbBar.Action) -> Void)?
     /// Opens a (non-folder) file, applying the browser's scoped opener rules.
     /// Falls back to the system default when unset.
     var openFile: ((URL) -> Void)?
@@ -831,6 +833,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         breadcrumb.onClickBackground = { [weak self] in self?.beginEditingPath() }
         breadcrumb.onDropURLs = { [weak self] urls, folder, move in self?.onDropFiles?(urls, move, folder) }
+        breadcrumb.onContextAction = { [weak self] folder, action in self?.onBreadcrumbAction?(folder, action) }
 
         addressField.placeholderString = L("pane.goToPathPlaceholder", "Go to path")
         addressField.font = .systemFont(ofSize: 12)

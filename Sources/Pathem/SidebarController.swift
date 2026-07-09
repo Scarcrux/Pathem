@@ -938,6 +938,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             menu.addItem(item)
         }
 
+        if let node, node.url != nil {
+            add(L("sidebar.copyPath", "Copy Path"), #selector(copyPathTarget))
+            menu.addItem(.separator())
+        }
         if let node {
             switch node.kind {
             case .userItem:
@@ -988,6 +992,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     @objc private func manageConnectionsTarget() { onManageConnections?() }
     @objc private func ejectTarget() {
         if let url = menuTargetNode?.url { onEjectVolume?(url) }
+    }
+    @objc private func copyPathTarget() {
+        guard let url = menuTargetNode?.url else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url.path, forType: .string)
     }
 
     private func iconSubmenuItem() -> NSMenuItem {

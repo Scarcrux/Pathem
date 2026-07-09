@@ -90,6 +90,10 @@ final class KeyTableView: NSTableView {
         super.keyDown(with: event)
     }
 
+    /// A menu for right-clicking the empty area below the rows (folder-level actions like
+    /// Copy Path of the current folder). Falls back to the item menu when nil.
+    var onBackgroundMenu: (() -> NSMenu?)?
+
     override func menu(for event: NSEvent) -> NSMenu? {
         window?.makeFirstResponder(self)  // the right-clicked pane becomes active
         let row = self.row(at: convert(event.locationInWindow, from: nil))
@@ -99,6 +103,7 @@ final class KeyTableView: NSTableView {
             }
         } else {
             deselectAll(nil)  // empty space: folder-level actions only
+            if let background = onBackgroundMenu?() { return background }
         }
         return super.menu(for: event)
     }

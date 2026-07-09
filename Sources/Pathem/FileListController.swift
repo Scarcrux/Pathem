@@ -293,6 +293,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
         tableView.menu = contextMenu.menu
+        tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }
 
         // Drag rows out (to Finder, the other pane, or the sidebar) and accept
         // file drops into this folder.
@@ -340,6 +341,44 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
     func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
+
+    /// The right-click menu for empty space: folder-level actions on the current directory
+    /// (copy its path/name, plus New Folder / New File / Paste). nil for a remote or smart
+    /// listing, so the normal item menu shows instead.
+    private func makeBackgroundMenu() -> NSMenu? {
+        guard let dir = directoryURL else { return nil }
+        let menu = NSMenu()
+        let copyPath = menu.addItem(withTitle: L("bvc.cmd.copyPath", "Copy Path"), action: #selector(copyFolderPath), keyEquivalent: "")
+        copyPath.target = self
+        copyPath.image = MenuIcons.image(forCommand: "files.copyPath")
+        let copyName = menu.addItem(withTitle: L("bvc.cmd.copyName", "Copy Name"), action: #selector(copyFolderName), keyEquivalent: "")
+        copyName.target = self
+        copyName.image = MenuIcons.image(forCommand: "files.copyName")
+        menu.addItem(.separator())
+        for (id, title) in [
+            ("files.newFolder", L("list.newFolder", "New Folder")),
+            ("files.newFile", L("bvc.cmd.newFile", "New File")),
+            ("files.paste", L("list.paste", "Paste")),
+        ] {
+            let item = menu.addItem(
+                withTitle: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+            item.representedObject = id
+            item.image = MenuIcons.image(forCommand: id)
+        }
+        _ = dir
+        return menu
+    }
+    @objc private func copyFolderPath() {
+        guard let dir = directoryURL else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(dir.path, forType: .string)
+    }
+    @objc private func copyFolderName() {
+        guard let dir = directoryURL else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(dir.lastPathComponent, forType: .string)
+    }
+
     private var colorRules = ColorRules()
     func setColorRules(_ rules: ColorRules) {
         guard rules != colorRules else { return }

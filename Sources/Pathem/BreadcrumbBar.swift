@@ -11,6 +11,13 @@ final class BreadcrumbBar: NSView {
     var onDropURLs: ((_ urls: [URL], _ folder: URL, _ move: Bool) -> Void)?
     /// A click on the bar's empty area (not a segment) opens the editable path field.
     var onClickBackground: (() -> Void)?
+    /// A right-click action on a path segment (open it into a pane / tab, or copy its path).
+    var onContextAction: ((URL, Action) -> Void)?
+
+    /// What a breadcrumb segment's context menu can do with that ancestor folder.
+    enum Action {
+        case newTab, leftPane, rightPane, leftPaneNewTab, rightPaneNewTab, copyPath
+    }
 
     private let stack = NSStackView()
     private var current: URL?
@@ -68,6 +75,7 @@ final class BreadcrumbBar: NSView {
             segment.title = index == 0 && rootLabel != nil ? rootLabel! : FileManager.default.displayName(atPath: folder.path)
             segment.onClick = { [weak self] in self?.onNavigate?(folder) }
             segment.onDropURLs = { [weak self] urls, move in self?.onDropURLs?(urls, folder, move) }
+            segment.onContextAction = { [weak self] action in self?.onContextAction?(folder, action) }
             stack.addArrangedSubview(segment)
         }
     }
@@ -95,6 +103,30 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     let folder: URL
     var onClick: (() -> Void)?
     var onDropURLs: ((_ urls: [URL], _ move: Bool) -> Void)?
+    var onContextAction: ((BreadcrumbBar.Action) -> Void)?
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = NSMenu()
+        func add(_ title: String, _ action: BreadcrumbBar.Action) {
+            let item = menu.addItem(withTitle: title, action: #selector(contextSelected(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = action
+        }
+        add(L("crumb.newTab", "Open in New Tab"), .newTab)
+        menu.addItem(.separator())
+        add(L("crumb.leftPane", "Open in Left Pane"), .leftPane)
+        add(L("crumb.rightPane", "Open in Right Pane"), .rightPane)
+        add(L("crumb.leftPaneNewTab", "Open in Left Pane (New Tab)"), .leftPaneNewTab)
+        add(L("crumb.rightPaneNewTab", "Open in Right Pane (New Tab)"), .rightPaneNewTab)
+        menu.addItem(.separator())
+        add(L("crumb.copyPath", "Copy Path"), .copyPath)
+        return menu
+    }
+
+    @objc private func contextSelected(_ sender: NSMenuItem) {
+        guard let action = sender.representedObject as? BreadcrumbBar.Action else { return }
+        onContextAction?(action)
+    }
     private var isDropTarget = false { didSet { needsDisplay = true } }
 
     init(folder: URL) {
