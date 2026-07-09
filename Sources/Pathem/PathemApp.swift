@@ -114,6 +114,7 @@ enum PathemApp {
         delegate.updater = updater  // keep the updater alive for the app's lifetime
         browser.updater = updater  // surfaced in Settings > Updates
         app.delegate = delegate  // kept alive by this frame for the lifetime of app.run()
+        app.servicesProvider = delegate  // the "Open in Pathem" Services item routes here
         // Register this as the primary window so File ▸ New Window can spawn siblings and quit
         // tears every window down cleanly. Only the primary restores/saves the session.
         WindowManager.shared.updater = updater
@@ -1022,6 +1023,28 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     var updater: UpdaterController?
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+
+    /// Finder's "Open With ▸ Pathem" (and `open -a Pathem <folder>`) delivers folders here.
+    func application(_ application: NSApplication, open urls: [URL]) {
+        openInPrimaryBrowser(urls)
+    }
+
+    /// The "Open in Pathem" Services item: open the sent files/folders.
+    @objc func openInPathem(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString>?) {
+        let urls = (pboard.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
+        openInPrimaryBrowser(urls)
+    }
+
+    /// Route opened URLs to the primary window, retrying once if it isn't up yet (open events can
+    /// arrive during launch).
+    private func openInPrimaryBrowser(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        if let browser = WindowManager.shared.primaryBrowser {
+            for url in urls { browser.openExternalFolder(url) }
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.openInPrimaryBrowser(urls) }
+        }
+    }
 
     func applicationWillTerminate(_ notification: Notification) {
         WindowManager.shared.primaryBrowser?.saveSessionNow()  // persist tabs/folders for next launch

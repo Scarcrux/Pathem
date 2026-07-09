@@ -5744,6 +5744,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Navigate the active pane (PATHEM_VIEW_SHOT diagnostics, bypassing session restore).
     func debugNavigateActive(to url: URL) { activePane?.navigate(to: url) }
 
+    /// Open a folder (or reveal a file) handed to Pathem by Finder's "Open With" or the Services
+    /// menu, and bring the window forward.
+    func openExternalFolder(_ url: URL) {
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else { return }
+        if isDir.boolValue {
+            activePane?.navigate(to: url)
+        } else {
+            activePane?.reveal(url)  // a file: show it in its folder
+        }
+        view.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     /// Toggle the preview pane and report whether both panes kept a real width (the
     /// regression guard for the auto-preview layout collapse). Used by the smoke self-check.
     func debugPreviewToggleKeepsPanes() -> Bool {
@@ -6356,6 +6370,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cmdIDs.contains("view.saveViewPreset") && presetStore.presets.count == 1
                 && savedPreset?.format.viewMode == .gallery,
             "registered=\(cmdIDs.contains("view.saveViewPreset")) count=\(presetStore.presets.count) mode=\(savedPreset?.format.viewMode.rawValue ?? "nil")")
+        // Open with Pathem / Services: openExternalFolder navigates the active pane. (Last check,
+        // since it changes the active folder.)
+        let openDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-open-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: openDir, withIntermediateDirectories: true)
+        openExternalFolder(openDir)
+        let navigated = activePane?.currentURL.standardizedFileURL == openDir.standardizedFileURL
+        check("open-external-folder", navigated, "at=\(activePane?.currentURL.lastPathComponent ?? "nil")")
+        try? FileManager.default.removeItem(at: openDir)
         return (ok, lines)
     }
 }
