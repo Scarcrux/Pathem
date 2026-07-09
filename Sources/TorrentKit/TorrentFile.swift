@@ -13,8 +13,10 @@ public struct TorrentFile: Equatable, Sendable {
     public let files: [Entry]  // one entry for a single-file torrent
     public let pieceLength: Int64
     public let pieceCount: Int
+    public let pieceHashes: [Data]  // 20-byte SHA-1 per piece, in order (for verification)
     public let trackers: [String]  // announce + flattened announce-list, de-duplicated
-    public let infoHashHex: String  // SHA-1 of the raw info dict, lowercase hex
+    public let infoHash: Data  // SHA-1 of the raw info dict (20 raw bytes; for tracker/peer wire)
+    public let infoHashHex: String  // the same hash as lowercase hex
     public let comment: String?
     public let createdBy: String?
     public let isPrivate: Bool
@@ -41,7 +43,15 @@ public struct TorrentFile: Equatable, Sendable {
         guard let info = top["info"] else { throw ParseError.notATorrent("missing info dictionary") }
         let name = info["name"]?.string ?? "unnamed"
         let pieceLength = info["piece length"]?.intValue ?? 0
-        let pieceCount = (info["pieces"].flatMap { if case .bytes(let d) = $0 { return d.count / 20 } else { return nil } }) ?? 0
+        var pieceHashes: [Data] = []
+        if case .bytes(let d)? = info["pieces"] {
+            var j = 0
+            while j + 20 <= d.count {
+                pieceHashes.append(d.subdata(in: j..<(j + 20)))
+                j += 20
+            }
+        }
+        let pieceCount = pieceHashes.count
         let isPrivate = (info["private"]?.intValue ?? 0) != 0
 
         var files: [Entry] = []
@@ -66,11 +76,14 @@ public struct TorrentFile: Equatable, Sendable {
         var seen = Set<String>()
         trackers = trackers.filter { seen.insert($0).inserted }  // de-dupe, keep order
 
-        let hash = Insecure.SHA1.hash(data: infoBytes).map { String(format: "%02x", $0) }.joined()
+        let digest = Insecure.SHA1.hash(data: infoBytes)
+        let hashData = Data(digest)
+        let hashHex = digest.map { String(format: "%02x", $0) }.joined()
 
         return TorrentFile(
             name: name, totalLength: total, files: files, pieceLength: pieceLength,
-            pieceCount: pieceCount, trackers: trackers, infoHashHex: hash,
+            pieceCount: pieceCount, pieceHashes: pieceHashes, trackers: trackers,
+            infoHash: hashData, infoHashHex: hashHex,
             comment: top["comment"]?.string, createdBy: top["created by"]?.string,
             isPrivate: isPrivate)
     }
