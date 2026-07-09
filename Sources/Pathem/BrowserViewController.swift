@@ -4324,10 +4324,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         ConfigStore.directory()
     }
 
-    /// Clean-uninstall helper: remove everything Pathem persisted (its Application Support
-    /// config, its user defaults, and its Keychain passwords) and restore Finder as the
-    /// default folder app, then quit -- so dragging Pathem to the Trash leaves nothing behind.
-    /// Files are never touched.
+    /// Clean-uninstall helper: restore Finder as the default folder app, and (unless the user
+    /// opts to keep it) remove everything Pathem persisted -- its Application Support config,
+    /// its user defaults, and its Keychain passwords -- then quit, so dragging Pathem to the
+    /// Trash leaves nothing behind. Files are never touched.
     private func resetPathemData() {
         guard let window = view.window else { return }
         let alert = NSAlert()
@@ -4336,18 +4336,45 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             "bvc.resetDataBody",
             "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall.")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: L("bvc.resetDataConfirm", "Reset and Quit"))
+        // Off by default = a full clean uninstall. Checked keeps the config/passwords in place
+        // so a reinstall picks up where you left off; only the folder default is restored.
+        let keepData = NSButton(
+            checkboxWithTitle: L("bvc.resetKeepData", "Keep my Pathem settings and data (for a future reinstall)"),
+            target: nil, action: nil)
+        keepData.state = .off
+        alert.accessoryView = keepData
+        alert.addButton(withTitle: L("bvc.resetDataConfirm", "Continue and Quit"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         Task { @MainActor in
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
-            if FolderHandler.isPathem { try? await FolderHandler.setDefault(toPathem: false) }
-            if let dir = Self.appSupportDirectory() { try? FileManager.default.removeItem(at: dir) }
-            KeychainStore.removeAll()
-            if let bundleID = Bundle.main.bundleIdentifier {
-                UserDefaults.standard.removePersistentDomain(forName: bundleID)
+            let keep = keepData.state == .on
+            let wasFolderHandler = FolderHandler.isPathem
+            if wasFolderHandler { try? await FolderHandler.setDefault(toPathem: false) }  // always restore Finder
+            if !keep {
+                if let dir = Self.appSupportDirectory() { try? FileManager.default.removeItem(at: dir) }
+                KeychainStore.removeAll()
+                if let bundleID = Bundle.main.bundleIdentifier {
+                    UserDefaults.standard.removePersistentDomain(forName: bundleID)
+                }
+                persistsSession = false  // don't re-save a session into the just-removed folder
             }
-            persistsSession = false  // don't re-save a session on the way out
             _ = window
+
+            // A closing note on how to finish removing Pathem: the two leftovers Reset can't
+            // handle for you (the app bundle itself, and the system Full Disk Access grant).
+            let removed = keep
+                ? L("bvc.resetKept", "Your settings and data were kept")
+                : L("bvc.resetRemoved", "Your settings, saved passwords, and customization were removed")
+            let done = NSAlert()
+            done.messageText = L("bvc.resetDoneTitle", "Pathem Data Reset")
+            done.informativeText = String(
+                format: L(
+                    "bvc.resetDoneBody",
+                    "%@%@.\n\nTo finish uninstalling:\n1. Drag Pathem from Applications to the Trash.\n2. Optionally remove Pathem under System Settings ▸ Privacy & Security ▸ Full Disk Access — macOS keeps that grant until you clear it."),
+                removed,
+                wasFolderHandler ? L("bvc.resetFinderRestored", ", and Finder is again the default for folders") : "")
+            done.addButton(withTitle: L("bvc.resetDoneQuit", "Quit Pathem"))
+            _ = await self.presentSheet(done)
             NSApp.terminate(nil)
         }
     }
