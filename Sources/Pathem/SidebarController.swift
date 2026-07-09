@@ -350,8 +350,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             if let shared = sharedNode() { roots.append(shared) }
             roots.append(connectionsNode())
         }
-        roots.append(smartNode())
-        if let savedSearches = savedSearchesNode() { roots.append(savedSearches) }
+        roots.append(smartFoldersNode())
         roots.append(tagsNode())
         outline.reloadData()
         for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) { outline.expandItem(root) }
@@ -450,22 +449,19 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return Node(kind: .systemHeader, title: title, url: nil, icon: nil, children: children)
     }
 
-    /// Spotlight-backed smart locations (currently Recents).
-    private func smartNode() -> Node {
-        let recents = Node(kind: .smart(.recents), title: L("sidebar.recents", "Recents"), url: nil, icon: "clock")
-        return Node(kind: .systemHeader, title: L("sidebar.smartHeader", "Smart"), url: nil, icon: nil, children: [recents])
-    }
-
-    /// The user's saved smart folders, each running its saved query. nil when there are none.
-    private func savedSearchesNode() -> Node? {
-        let searches = savedSearches.filter { !$0.name.isEmpty }
-        guard !searches.isEmpty else { return nil }
-        let children = searches.map {
+    /// One "Smart Folders" section: the built-in Recents location, then the user's saved
+    /// smart folders (each running its saved Spotlight query). Recents is itself a built-in
+    /// smart folder, so they share a single section rather than two near-identically named ones.
+    private func smartFoldersNode() -> Node {
+        var children = [
+            Node(kind: .smart(.recents), title: L("sidebar.recents", "Recents"), url: nil, icon: "clock")
+        ]
+        children += savedSearches.filter { !$0.name.isEmpty }.map {
             Node(kind: .savedSearch($0), title: $0.name, url: nil, icon: "magnifyingglass")
         }
         return Node(
-            kind: .systemHeader, title: L("sidebar.smartFoldersHeader", "Smart Folders"), url: nil, icon: nil,
-            children: children)
+            kind: .systemHeader, title: L("sidebar.smartFoldersHeader", "Smart Folders"), url: nil,
+            icon: nil, children: children)
     }
 
     /// The seven Finder tag colors; selecting one filters to files with that tag.
