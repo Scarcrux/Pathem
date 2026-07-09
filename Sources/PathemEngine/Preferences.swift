@@ -26,8 +26,17 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// How dates are shown: relative ("Yesterday at 3:14 PM"), short numeric, or medium.
     public enum DateDisplay: String, Codable, Sendable, CaseIterable { case relative, short, medium }
 
+    /// Where a new tab or window opens: the current folder, Home, or a fixed folder.
+    public enum NewTabLocation: String, Codable, Sendable, CaseIterable { case lastFolder, home, fixed }
+
     /// Row spacing for the file list.
     public var density: Density
+    /// Where new tabs/windows open.
+    public var newTabLocation: NewTabLocation
+    /// The folder new tabs/windows open to when `newTabLocation` is `.fixed`.
+    public var fixedStartFolder: String
+    /// Middle-clicking a folder opens it in a new tab.
+    public var middleClickOpensNewTab: Bool
     /// File-size units (decimal vs binary).
     public var sizeFormat: SizeFormat
     /// Date column format (relative / short / medium).
@@ -129,6 +138,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
         contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
         sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .medium,
+        newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
+        middleClickOpensNewTab: Bool = true,
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -151,6 +162,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.colorRules = colorRules
         self.sizeFormat = sizeFormat
         self.dateDisplay = dateDisplay
+        self.newTabLocation = newTabLocation
+        self.fixedStartFolder = fixedStartFolder
+        self.middleClickOpensNewTab = middleClickOpensNewTab
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -228,6 +242,10 @@ public struct Preferences: Codable, Sendable, Equatable {
         colorRules = try c.decodeIfPresent(ColorRules.self, forKey: .colorRules) ?? d.colorRules
         sizeFormat = (try? c.decode(SizeFormat.self, forKey: .sizeFormat)) ?? d.sizeFormat
         dateDisplay = (try? c.decode(DateDisplay.self, forKey: .dateDisplay)) ?? d.dateDisplay
+        newTabLocation = (try? c.decode(NewTabLocation.self, forKey: .newTabLocation)) ?? d.newTabLocation
+        fixedStartFolder = try c.decodeIfPresent(String.self, forKey: .fixedStartFolder) ?? d.fixedStartFolder
+        middleClickOpensNewTab =
+            try c.decodeIfPresent(Bool.self, forKey: .middleClickOpensNewTab) ?? d.middleClickOpensNewTab
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

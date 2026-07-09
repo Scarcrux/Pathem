@@ -315,6 +315,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
         tableView.menu = contextMenu.menu
         tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }
+        tableView.onMiddleClick = { [weak self] row in self?.middleClicked(row) }
 
         // Drag rows out (to Finder, the other pane, or the sidebar) and accept
         // file drops into this folder.
@@ -405,6 +406,19 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard rules != colorRules else { return }
         colorRules = rules
         tableView.reloadData()  // re-color the visible rows
+    }
+
+    private var middleClickNewTab = false
+    private var openInNewTabHandler: ((URL) -> Void)?
+    func setMiddleClickOpensNewTab(_ enabled: Bool) { middleClickNewTab = enabled }
+    func setOpenInNewTabHandler(_ handler: ((URL) -> Void)?) { openInNewTabHandler = handler }
+
+    /// Middle-clicking a folder opens it in a new tab (when the preference is on).
+    private func middleClicked(_ row: Int) {
+        guard middleClickNewTab, let index = entryIndex(forRow: row) else { return }
+        let entry = entries[index]
+        guard entry.isDirectory else { return }
+        openInNewTabHandler?(URL(fileURLWithPath: PaneItemKey.path(for: entry, in: directoryURL)))
     }
 
     /// Apply display preferences (density-derived row height, font size,

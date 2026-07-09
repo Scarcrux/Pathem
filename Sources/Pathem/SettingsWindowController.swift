@@ -288,6 +288,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
             labeled(L("prefs.sizeFormatLabel", "File sizes"), sizeFormatControl()),
             labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
+            labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
+            labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
+            check(L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"), \.middleClickOpensNewTab),
         ])
         case .menus: return menusPane()
         case .labels: return labelsPane()
@@ -525,6 +528,49 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     @objc private func densityChanged(_ sender: NSPopUpButton) {
         prefs.density = sender.indexOfSelectedItem == 1 ? .compact : .comfortable
         onChange?(prefs)
+    }
+
+    private let newTabPopup = NSPopUpButton()
+    private let fixedFolderButton = NSButton()
+
+    private func newTabLocationControl() -> NSView {
+        newTabPopup.removeAllItems()
+        newTabPopup.addItems(withTitles: [
+            L("prefs.newTabLast", "Last folder"), L("prefs.newTabHome", "Home"),
+            L("prefs.newTabFixed", "Fixed folder"),
+        ])
+        newTabPopup.selectItem(at: Preferences.NewTabLocation.allCases.firstIndex(of: prefs.newTabLocation) ?? 0)
+        newTabPopup.target = self
+        newTabPopup.action = #selector(newTabLocationChanged(_:))
+        return newTabPopup
+    }
+    @objc private func newTabLocationChanged(_ sender: NSPopUpButton) {
+        prefs.newTabLocation = Preferences.NewTabLocation.allCases[sender.indexOfSelectedItem]
+        onChange?(prefs)
+    }
+
+    private func fixedFolderControl() -> NSView {
+        let name = prefs.fixedStartFolder.isEmpty
+            ? L("prefs.chooseFolder", "Choose…") : (prefs.fixedStartFolder as NSString).lastPathComponent
+        fixedFolderButton.title = name
+        fixedFolderButton.bezelStyle = .rounded
+        fixedFolderButton.target = self
+        fixedFolderButton.action = #selector(chooseFixedFolder)
+        return fixedFolderButton
+    }
+    @objc private func chooseFixedFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.prompt = L("prefs.chooseFolder", "Choose…")
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard let self, response == .OK, let url = panel.url else { return }
+            self.prefs.fixedStartFolder = url.path
+            self.prefs.newTabLocation = .fixed  // choosing a folder implies using it
+            self.fixedFolderButton.title = url.lastPathComponent
+            self.newTabPopup.selectItem(at: 2)
+            self.onChange?(self.prefs)
+        }
     }
 
     private func sizeFormatControl() -> NSView {

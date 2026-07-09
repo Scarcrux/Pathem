@@ -117,6 +117,10 @@ extension PaneContentView {
     func setColorRules(_ rules: ColorRules) {}
     /// Size (decimal/binary) and date (relative/short/medium) display formats; list-only.
     func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {}
+    /// Whether a middle-click on a folder opens it in a new tab.
+    func setMiddleClickOpensNewTab(_ enabled: Bool) {}
+    /// The handler that opens a folder URL in a new tab (invoked on a middle-click).
+    func setOpenInNewTabHandler(_ handler: ((URL) -> Void)?) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
     /// List, icon, gallery, and column all report a selection rect now; this default is only a

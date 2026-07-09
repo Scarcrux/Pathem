@@ -110,10 +110,15 @@ final class TabbedPaneController: NSObject {
         refreshTabBar()
     }
 
+    /// Resolves where a fresh tab opens (the "New tab opens to" preference): nil means the
+    /// current folder (browser-style), a URL means Home or a fixed folder.
+    var newTabLocation: (() -> URL?)?
+
     /// Open a new tab. `duplicatingCurrent` opens it at the active tab's folder
-    /// (browser-style), otherwise at this side's start folder.
+    /// (browser-style) or the user's preferred location; otherwise at this side's start folder.
     func newTab(duplicatingCurrent: Bool) {
-        let url = (duplicatingCurrent ? activePane?.currentURL : nil) ?? start
+        let preferred = duplicatingCurrent ? newTabLocation?() : nil
+        let url = preferred ?? (duplicatingCurrent ? activePane?.currentURL : nil) ?? start
         newTab(at: url, focus: true)
     }
 

@@ -23,6 +23,18 @@ import Testing
         #expect(old.sizeFormat == .decimal && old.dateDisplay == .medium)
     }
 
+    @Test func startupAndOpenBehaviorRoundTrip() throws {
+        let prefs = Preferences(
+            newTabLocation: .fixed, fixedStartFolder: "/Users/me/Work", middleClickOpensNewTab: false)
+        let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))
+        #expect(decoded.newTabLocation == .fixed)
+        #expect(decoded.fixedStartFolder == "/Users/me/Work")
+        #expect(decoded.middleClickOpensNewTab == false)
+        // Defaults: last folder, middle-click on.
+        #expect(Preferences.default.newTabLocation == .lastFolder)
+        #expect(Preferences.default.middleClickOpensNewTab == true)
+    }
+
     @Test func compactIsShorter() {
         let compact = Preferences(density: .compact, fontSize: 13)
         let comfortable = Preferences(density: .comfortable, fontSize: 13)

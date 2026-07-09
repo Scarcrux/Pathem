@@ -48,6 +48,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         lastFormats = (size, date)
         content.setFormats(size: size, date: date)
     }
+    func setMiddleClickOpensNewTab(_ enabled: Bool) {
+        lastMiddleClickNewTab = enabled
+        content.setMiddleClickOpensNewTab(enabled)
+    }
+    /// Fired when a folder should open in a new tab (a middle-click); the browser handles it.
+    var onOpenInNewTab: ((URL) -> Void)?
+    private var lastMiddleClickNewTab = false
     // Cross-view settings, remembered so they carry across a view-mode swap (the new content
     // starts empty).
     private var lastHiddenContextItems: Set<String> = []
@@ -1038,6 +1045,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.setHiddenContextItems(lastHiddenContextItems)  // carry menu + color customization
         content.setContextMenuOrder(lastContextMenuOrder)
         content.setColorRules(lastColorRules)
+        content.setMiddleClickOpensNewTab(lastMiddleClickNewTab)
         if let f = lastFormats { content.setFormats(size: f.size, date: f.date) }
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }
@@ -1046,6 +1054,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func wireContent() {
         content.onOpen = { [weak self] entry in self?.descend(into: entry) }
         content.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
+        content.setOpenInNewTabHandler { [weak self] url in self?.onOpenInNewTab?(url) }
         content.onSortChanged = { [weak self] key, ascending in
             guard let self else { return }
             self.format.sortKey = key

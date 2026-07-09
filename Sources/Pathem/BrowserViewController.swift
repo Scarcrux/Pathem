@@ -477,6 +477,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.onBreadcrumbAction = { [weak self] folder, action in
                     self?.handleBreadcrumbAction(folder, action)
                 }
+                pane.onOpenInNewTab = { [weak self] url in self?.activeSide?.openTab(at: url) }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -493,6 +494,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.onPaneDropFiles = { [weak self] urls, move, destination in
                 self?.dropFiles(urls, move: move, into: destination)
             }
+            side.newTabLocation = { [weak self] in self?.preferredNewTabFolder() }
         }
         // Restore the last session's tabs/folders (or open initial tabs) now that
         // configurePane + callbacks are set, so each pane is fully wired.
@@ -4148,6 +4150,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.setContextMenuOrder(prefs.contextMenuOrder)
                 pane.setColorRules(prefs.colorRules)
                 pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)
+                pane.setMiddleClickOpensNewTab(prefs.middleClickOpensNewTab)
             }
         }
         applyCompactSidebar()
@@ -5814,6 +5817,22 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             mirrorNavigationIfSyncing(to: url)
         }
         saveSessionSoon()
+    }
+
+    /// Where a new tab should open per the "New tab opens to" preference: nil = the current
+    /// folder (browser-style), else Home or the configured fixed folder (if it exists).
+    private func preferredNewTabFolder() -> URL? {
+        switch prefs.newTabLocation {
+        case .lastFolder: return nil
+        case .home: return FileManager.default.homeDirectoryForCurrentUser
+        case .fixed:
+            let path = prefs.fixedStartFolder
+            var isDir: ObjCBool = false
+            guard !path.isEmpty,
+                FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue
+            else { return nil }
+            return URL(fileURLWithPath: path)
+        }
     }
 
     /// A breadcrumb ancestor's right-click action: open that folder into a pane or a new tab,

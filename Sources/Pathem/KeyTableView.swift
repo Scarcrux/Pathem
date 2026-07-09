@@ -93,6 +93,19 @@ final class KeyTableView: NSTableView {
     /// A menu for right-clicking the empty area below the rows (folder-level actions like
     /// Copy Path of the current folder). Falls back to the item menu when nil.
     var onBackgroundMenu: (() -> NSMenu?)?
+    /// A middle-click on a row (used to open a folder in a new tab).
+    var onMiddleClick: ((Int) -> Void)?
+
+    override func otherMouseUp(with event: NSEvent) {
+        if event.buttonNumber == 2 {  // the middle button
+            let row = self.row(at: convert(event.locationInWindow, from: nil))
+            if row >= 0 {
+                onMiddleClick?(row)
+                return
+            }
+        }
+        super.otherMouseUp(with: event)
+    }
 
     override func menu(for event: NSEvent) -> NSMenu? {
         window?.makeFirstResponder(self)  // the right-clicked pane becomes active
