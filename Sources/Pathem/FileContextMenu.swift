@@ -32,9 +32,10 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// The default order of the menu's entries: command ids plus the two submenu tokens.
     /// Separators aren't listed; they're auto-inserted between groups (see `group`).
     static let defaultEntries: [String] = [
-        "files.open", "files.openInNewTab", "@openWith", "files.getInfo", "files.download",
-        "files.reveal", "files.revealInPathem", "files.setDesktopPicture", "files.rename",
-        "files.trash", "files.putBack", "files.deleteImmediately",
+        "files.open", "files.openInNewTab", "@openWith",
+        "files.trash", "files.putBack", "files.deleteImmediately",  // near the top, set apart, like Finder
+        "files.getInfo", "files.download", "files.reveal", "files.revealInPathem",
+        "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
         "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
@@ -46,11 +47,12 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// separator management.
     private static func group(_ token: String) -> Int {
         switch token {
+        case "files.trash", "files.putBack", "files.deleteImmediately": return 5  // set apart, like Finder
         case "@tags": return 1
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste": return 3
         case "files.extract", "files.extractHere", "files.extractTo": return 4
-        default: return 0  // open / edit actions
+        default: return 0  // open / info / rename actions
         }
     }
 
