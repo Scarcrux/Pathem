@@ -19,6 +19,19 @@ import Testing
         let decoded = try JSONDecoder().decode(RemoteConnection.self, from: Data(json.utf8))
         #expect(decoded.colorLabel.isEmpty)  // defaults, not a decode failure
         #expect(decoded.localPath.isEmpty)
+        #expect(decoded.bookmarks.isEmpty)  // absent bookmarks default to none
+    }
+
+    @Test func bookmarksRoundTrip() throws {
+        var original = RemoteConnection(name: "Site", proto: .sftp, host: "example.com")
+        original.bookmarks = [
+            RemoteBookmark(name: "Logs", remotePath: "/var/log"),
+            RemoteBookmark(name: "Releases", remotePath: "/srv/www/releases"),
+        ]
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(RemoteConnection.self, from: data)
+        #expect(decoded.bookmarks == original.bookmarks)
+        #expect(decoded.bookmarks[1].remotePath == "/srv/www/releases")
     }
 
     @Test func tagColorNameKeyRoundTrips() {

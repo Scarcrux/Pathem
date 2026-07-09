@@ -240,6 +240,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var didInstallLayoutsMenu = false
     private let savedViewsMenu = NSMenu(title: "Saved Views")
     private var didInstallSavedViewsMenu = false
+    private let bookmarksMenu = NSMenu(title: "Bookmarks")
+    private var didInstallBookmarksMenu = false
     /// The most-recently-visited folders (newest first), for the Go > Recent Folders submenu.
     private let recentFoldersMenu = NSMenu(title: "Recent Folders")
     private var didInstallRecentMenu = false
@@ -1025,6 +1027,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("files.connectToServer", L("bvc.cmd.connectToServer", "Connect to Server…")) {
             [weak self] in self?.connectToServer()
+        }
+        add(
+            "files.addBookmark", L("bvc.cmd.addBookmark", "Bookmark This Remote Folder…"),
+            enabled: { [weak self] in self?.activePane?.remoteContext != nil }
+        ) {
+            [weak self] in self?.addBookmark()
         }
         let localFolder: () -> Bool = { [weak self] in
             guard let pane = self?.activePane else { return false }
@@ -4810,6 +4818,58 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    // MARK: - Remote bookmarks
+
+    /// Save the active remote pane's current path as a named bookmark on its
+    /// connection, so it can be jumped back to from the Bookmarks menu.
+    private func addBookmark() {
+        guard let ctx = activePane?.remoteContext else {
+            NSSound.beep()
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = L("bookmark.title", "Bookmark This Folder")
+        alert.informativeText = String(
+            format: L("bookmark.hint", "Save “%@” on %@ so you can jump back to it later."),
+            ctx.path, ctx.connection.name)
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        let leaf = (ctx.path as NSString).lastPathComponent
+        field.stringValue = leaf.isEmpty || leaf == "/" ? ctx.connection.name : leaf
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let name = field.stringValue.trimmingCharacters(in: .whitespaces)
+            guard !name.isEmpty else { return }
+            guard
+                let idx = self.connectionsController.connections.firstIndex(where: {
+                    $0.id == ctx.connection.id
+                })
+            else {
+                NSSound.beep()
+                return
+            }
+            self.connectionsController.connections[idx].bookmarks.removeAll { $0.name == name }
+            self.connectionsController.connections[idx].bookmarks.append(
+                RemoteBookmark(name: name, remotePath: ctx.path))
+            self.connectionsController.onChange?(self.connectionsController.connections)
+        }
+    }
+
+    /// Reconnect the active remote pane at a saved bookmark's path, reusing the
+    /// live session password so there's no re-prompt.
+    private func jumpToBookmark(_ bookmark: RemoteBookmark) {
+        guard let pane = activePane, let ctx = pane.remoteContext else {
+            NSSound.beep()
+            return
+        }
+        var target = ctx.connection
+        target.path = bookmark.remotePath
+        openRemoteConnection(target, password: ctx.password, forceNewTab: false, fallback: pane)
+    }
+
     /// Mount smb://host via NetFS (the OS handles auth/Keychain and shows its own
     /// prompt when needed), then navigate the active pane to the mount point.
     private func mountSMB(host: String) {
@@ -5018,11 +5078,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         savedViewsMenu.delegate = self
         mainMenu.addItem(item)
         didInstallSavedViewsMenu = true
+        installBookmarksMenu()
+    }
+
+    private func installBookmarksMenu() {
+        guard !didInstallBookmarksMenu, let mainMenu = NSApp.mainMenu else { return }
+        let item = NSMenuItem()
+        item.title = L("bvc.bookmarksMenu", "Bookmarks")
+        item.submenu = bookmarksMenu
+        bookmarksMenu.delegate = self
+        mainMenu.addItem(item)
+        didInstallBookmarksMenu = true
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         if menu === recentFoldersMenu { populateRecentFoldersMenu(); return }
         if menu === externalCommandsMenu { populateExternalCommandsMenu(); return }
+        if menu === bookmarksMenu { populateBookmarksMenu(); return }
         if menu === savedViewsMenu {
             menu.removeAllItems()
             let save = menu.addItem(withTitle: L("bvc.saveViewMenuItem", "Save Current View As…"), action: #selector(saveViewPreset), keyEquivalent: "")
@@ -5054,6 +5126,44 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let preset = viewPresets.presets.first(where: { $0.name == name })
         else { return }
         applyViewPreset(preset.format)
+    }
+
+    /// The Bookmarks menu lists the current remote site's saved paths, plus a
+    /// "Bookmark This Folder…" item. Off a remote pane it shows a single hint.
+    private func populateBookmarksMenu() {
+        bookmarksMenu.removeAllItems()
+        let add = bookmarksMenu.addItem(
+            withTitle: L("bvc.bookmarkThisFolder", "Bookmark This Folder…"),
+            action: #selector(addBookmarkMenu), keyEquivalent: "")
+        add.target = self
+        guard let ctx = activePane?.remoteContext else {
+            add.action = nil  // greyed out: nothing to bookmark off a local pane
+            let hint = bookmarksMenu.addItem(
+                withTitle: L("bvc.bookmarksHint", "Connect to a server to add bookmarks."),
+                action: nil, keyEquivalent: "")
+            hint.isEnabled = false
+            return
+        }
+        // Read the live connection so a just-added bookmark shows immediately.
+        let bookmarks =
+            connectionsController.connections.first { $0.id == ctx.connection.id }?.bookmarks
+            ?? ctx.connection.bookmarks
+        guard !bookmarks.isEmpty else { return }
+        bookmarksMenu.addItem(.separator())
+        for bookmark in bookmarks {
+            let item = bookmarksMenu.addItem(
+                withTitle: bookmark.name, action: #selector(jumpBookmarkMenu(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = bookmark.remotePath
+            item.toolTip = bookmark.remotePath
+        }
+    }
+
+    @objc private func addBookmarkMenu() { addBookmark() }
+
+    @objc private func jumpBookmarkMenu(_ sender: NSMenuItem) {
+        guard let path = sender.representedObject as? String else { return }
+        jumpToBookmark(RemoteBookmark(name: sender.title, remotePath: path))
     }
 
     // MARK: - Recent folders (Go menu)
@@ -6363,6 +6473,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("batch-commands-registered",
             cmdIDs.isSuperset(of: ["files.setFinderComment", "files.connectToServer"]),
             "have=\(["files.setFinderComment", "files.connectToServer"].filter(cmdIDs.contains).count)/2")
+        // Remote bookmarks: the command is registered and a bookmark survives a save/jump
+        // round-trip on a connection (mirrors what addBookmark writes into the store).
+        var bmConn = RemoteConnection(name: "Site", proto: .sftp, host: "h.example.com")
+        bmConn.bookmarks.append(RemoteBookmark(name: "Logs", remotePath: "/var/log"))
+        let bmData = (try? JSONEncoder().encode(bmConn)).flatMap {
+            try? JSONDecoder().decode(RemoteConnection.self, from: $0)
+        }
+        check("remote-bookmarks",
+            cmdIDs.contains("files.addBookmark") && bmData?.bookmarks.first?.remotePath == "/var/log",
+            "cmd=\(cmdIDs.contains("files.addBookmark")) path=\(bmData?.bookmarks.first?.remotePath ?? "nil")")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)

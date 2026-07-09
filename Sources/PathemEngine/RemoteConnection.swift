@@ -51,11 +51,13 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     /// An optional default local directory: on connect, the other pane opens here (a saved
     /// local-to-remote pairing). Empty leaves the local pane where it is.
     public var localPath: String
+    /// Saved remote paths on this site, jumped to from the Bookmarks menu.
+    public var bookmarks: [RemoteBookmark]
 
     public init(
         id: UUID = UUID(), name: String, proto: Proto, host: String, port: Int = 0,
         user: String = "", path: String = "/", region: String = "", keyFile: String = "",
-        colorLabel: String = "", localPath: String = ""
+        colorLabel: String = "", localPath: String = "", bookmarks: [RemoteBookmark] = []
     ) {
         self.id = id
         self.name = name
@@ -68,6 +70,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         self.keyFile = keyFile
         self.colorLabel = colorLabel
         self.localPath = localPath
+        self.bookmarks = bookmarks
     }
 
     public var effectivePort: Int { port > 0 ? port : proto.defaultPort }
@@ -128,5 +131,16 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         keyFile = try c.decodeIfPresent(String.self, forKey: .keyFile) ?? ""
         colorLabel = try c.decodeIfPresent(String.self, forKey: .colorLabel) ?? ""
         localPath = try c.decodeIfPresent(String.self, forKey: .localPath) ?? ""
+        bookmarks = (try? c.decodeIfPresent([RemoteBookmark].self, forKey: .bookmarks)) ?? []
+    }
+}
+
+/// A saved remote path on a site, jumped to from the Bookmarks menu.
+public struct RemoteBookmark: Codable, Sendable, Equatable {
+    public var name: String
+    public var remotePath: String
+    public init(name: String, remotePath: String) {
+        self.name = name
+        self.remotePath = remotePath
     }
 }
