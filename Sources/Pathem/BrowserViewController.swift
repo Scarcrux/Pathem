@@ -74,6 +74,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private let shelf = ShelfController()  // stash shelf / drop stack across the bottom
     private var shelfHiddenConstraint: NSLayoutConstraint?
     private var shelfShownConstraint: NSLayoutConstraint?
+    private let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
+    private var commanderShownConstraint: NSLayoutConstraint?
     private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     private var previewVisible = false
     /// Durably pins the preview pane's width so it (and the panes) can't collapse; see
@@ -302,6 +304,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         shelfHiddenConstraint = vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor)
         shelfShownConstraint = vSplit.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
         shelfHiddenConstraint?.isActive = true
+        // Commander bar docks across the very bottom; when shown, the browser ends above it.
+        commanderBar.translatesAutoresizingMaskIntoConstraints = false
+        commanderBar.isHidden = true
+        host.addSubview(commanderBar)
+        NSLayoutConstraint.activate([
+            commanderBar.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            commanderBar.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            commanderBar.bottomAnchor.constraint(equalTo: host.bottomAnchor),
+            commanderBar.heightAnchor.constraint(equalToConstant: 38),  // a single compact strip
+        ])
+        commanderShownConstraint = vSplit.bottomAnchor.constraint(equalTo: commanderBar.topAnchor)
+        commanderBar.onCommand = { [weak self] id in self?.commands.perform(id) }
+        commanderBar.onRunCommand = { [weak self] command in self?.runCommanderCommand(command) }
         // Super-drag swipe trail, filling the window overlay above the panes (non-interactive).
         dragTrail.frame = host.bounds
         dragTrail.autoresizingMask = [.width, .height]
@@ -772,6 +787,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.zoomIn", L("bvc.cmd.zoomIn", "Zoom In")) { [weak self] in self?.activePane?.zoomContent(0.15) }
         add("view.zoomOut", L("bvc.cmd.zoomOut", "Zoom Out")) { [weak self] in self?.activePane?.zoomContent(-0.15) }
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
+        add("commander.toggle", L("bvc.cmd.commanderMode", "Commander Mode")) { [weak self] in self?.toggleCommander() }
         add("terminal.here", L("bvc.cmd.openTerminalHere", "Open Terminal Here")) { [weak self] in self?.openTerminalHere() }
         add("terminal.toggleFollow", L("bvc.cmd.terminalFollowsFolder", "Terminal Follows Folder")) {
             [weak self] in self?.toggleTerminalFollows()
@@ -5507,6 +5523,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// when the preference is on, or the server location for a remote pane. Also
     /// sets representedURL so the title gets a proxy icon and path popup.
     private func updateWindowTitle() {
+        updateCommanderPrompt()  // keep the commander prompt in sync with the active folder
         guard let window = view.window else { return }
         guard let pane = activePane else {
             window.title = "Pathem"
@@ -5528,6 +5545,37 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Show or hide the embedded terminal drawer. On first show it starts a login
     /// shell in the active folder and gives the drawer a reasonable height.
+    /// Show/hide the commander bar (orthodox F-key bar + command line) across the window bottom.
+    private func toggleCommander() {
+        let show = commanderBar.isHidden
+        commanderBar.isHidden = !show
+        if show {
+            shelf.view.isHidden = true  // the commander bar takes the bottom slot
+            shelfHiddenConstraint?.isActive = false
+            shelfShownConstraint?.isActive = false
+            commanderShownConstraint?.isActive = true
+            commanderBar.setPrompt(activePane?.currentURL.lastPathComponent ?? "")
+            commanderBar.focusCommandLine()
+        } else {
+            commanderShownConstraint?.isActive = false
+            shelfHiddenConstraint?.isActive = true
+        }
+        view.layoutSubtreeIfNeeded()
+    }
+
+    /// Run a commander command line in the embedded terminal (revealed if hidden), in the folder.
+    private func runCommanderCommand(_ command: String) {
+        let folder = activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser
+        if terminal.view.isHidden { toggleTerminal() }
+        terminal.runInline(command, in: folder)
+    }
+
+    /// Keep the commander prompt in sync with the active folder (when the bar is showing).
+    private func updateCommanderPrompt() {
+        guard !commanderBar.isHidden else { return }
+        commanderBar.setPrompt(activePane?.currentURL.lastPathComponent ?? "")
+    }
+
     func toggleTerminal() {
         let show = terminal.view.isHidden
         terminal.view.isHidden = !show
@@ -5637,6 +5685,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         applyTheme()
         if let first = activePane?.entries.first { activePane?.select(name: first.name) }
         view.layoutSubtreeIfNeeded()
+    }
+
+    /// Toggle commander mode (PATHEM_COMMANDER_SHOT); returns whether it's now visible.
+    @discardableResult
+    func debugToggleCommander() -> Bool {
+        toggleCommander()
+        view.layoutSubtreeIfNeeded()
+        return !commanderBar.isHidden
     }
 
     /// Set the active pane's arrange-by key (PATHEM_ICONGROUP_SHOT).
@@ -6189,6 +6245,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cmdIDs.contains("view.asTree") && tree.entries.count == 2
                 && selected?.name == "b.txt" && selected?.location == "/tmp",
             "registered=\(cmdIDs.contains("view.asTree")) entries=\(tree.entries.count) sel=\(selected?.name ?? "nil") loc=\(selected?.location ?? "nil")")
+        // Commander mode: registered, and toggling shows then hides the bar.
+        let commanderShown = debugToggleCommander()
+        let commanderHidden = !debugToggleCommander()
+        check("commander-mode", cmdIDs.contains("commander.toggle") && commanderShown && commanderHidden,
+            "registered=\(cmdIDs.contains("commander.toggle")) shown=\(commanderShown) hidden=\(commanderHidden)")
         return (ok, lines)
     }
 }

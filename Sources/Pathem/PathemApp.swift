@@ -447,6 +447,19 @@ enum PathemApp {
             }
         }
 
+        // Render commander mode (the F-key bar + command line docked at the bottom).
+        if ProcessInfo.processInfo.environment["PATHEM_COMMANDER_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: FileManager.default.homeDirectoryForCurrentUser)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                browser.debugToggleCommander()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    browser.debugRender(to: "/tmp/commander.png")
+                    exit(0)
+                }
+            }
+        }
+
         // Render the tree/outline view over the home folder.
         if ProcessInfo.processInfo.environment["PATHEM_TREE_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 700))
@@ -776,6 +789,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
+        viewMenu.addItem(commandItem("Commander Mode", "commander.toggle"))
         viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
         viewMenu.addItem(commandItem("Terminal Follows Folder", "terminal.toggleFollow"))
         let themeItem = NSMenuItem(

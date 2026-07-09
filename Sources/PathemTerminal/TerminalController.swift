@@ -83,6 +83,14 @@ public final class TerminalController: NSObject, LocalProcessTerminalViewDelegat
         term.window?.makeFirstResponder(term)
     }
 
+    /// Run `command` in the shell (clears any half-typed line, then sends it with a newline). Used
+    /// by the commander command line. Skips a full-screen TUI so it never injects into one.
+    public func runInline(_ command: String, in directory: URL) {
+        ensureStarted(in: directory)
+        guard !term.getTerminal().isCurrentBufferAlternate else { return }
+        term.send(txt: "\u{15}\(command)\n")
+    }
+
     /// Type `command` into the shell without running it (no trailing newline), clearing any
     /// half-typed line first, so the user can review it and press Return. Used for the privileged
     /// `sudo chown` route: the shell prompts for the password interactively. Skips a full-screen
