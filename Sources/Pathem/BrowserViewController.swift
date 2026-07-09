@@ -211,6 +211,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private var deviceTimer: Timer?
     private let layoutsMenu = NSMenu(title: "Layouts")
     private var didInstallLayoutsMenu = false
+    private let savedViewsMenu = NSMenu(title: "Saved Views")
+    private var didInstallSavedViewsMenu = false
     /// The most-recently-visited folders (newest first), for the Go > Recent Folders submenu.
     private let recentFoldersMenu = NSMenu(title: "Recent Folders")
     private var didInstallRecentMenu = false
@@ -383,6 +385,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         registerCommands()
         loadSavedSearches()  // register before macros so a macro can run a search
         loadFolderBackgrounds()
+        loadViewPresets()
         loadCollections()
         loadMacros()  // after base commands, so macros can chain them
         loadTemplates()  // register template commands so they appear in the shortcut editor
@@ -543,6 +546,54 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
     private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
     private static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
+    private static var viewPresetsURL: URL? { appSupportDirectory()?.appendingPathComponent("view-presets.json") }
+    private var viewPresets = ViewPresets.default
+    private func loadViewPresets() {
+        viewPresets = loadConfig(ViewPresets.self, from: Self.viewPresetsURL) ?? .default
+        registerViewPresetCommands()
+    }
+    /// Register each saved view as a command (so it appears in the palette and is bindable).
+    private func registerViewPresetCommands() {
+        for command in commands.all where command.id.hasPrefix("viewpreset.") { commands.unregister(command.id) }
+        for preset in viewPresets.presets where !preset.name.isEmpty {
+            let format = preset.format
+            let name = preset.name
+            commands.register(
+                .init(
+                    id: "viewpreset.\(name)", title: String(format: L("bvc.viewPresetCmd", "View: %@"), name),
+                    isEnabled: { [weak self] in self?.activePane != nil },
+                    run: { [weak self] in self?.applyViewPreset(format) }))
+        }
+    }
+    private func applyViewPreset(_ format: ViewFormat) {
+        guard let pane = activePane else { NSSound.beep(); return }
+        pane.applyFormat(format)
+        pane.setGroupKey(format.groupKey)  // applyFormat doesn't touch grouping
+    }
+    /// Prompt for a name and save the active pane's current view as a reusable preset.
+    @objc private func saveViewPreset() {
+        guard let pane = activePane, let window = view.window else { NSSound.beep(); return }
+        _ = window
+        let format = pane.format
+        let alert = NSAlert()
+        alert.messageText = L("viewpreset.saveTitle", "Save Current View As")
+        alert.informativeText = L("viewpreset.saveHint", "Captures the view mode, sort, grouping, and hidden / folders-first, to apply to any folder.")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.placeholderString = L("viewpreset.name", "preset name")
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let name = field.stringValue.trimmingCharacters(in: .whitespaces)
+            guard !name.isEmpty else { return }
+            self.viewPresets.save(.init(name: name, format: format))
+            self.saveConfig(self.viewPresets, to: Self.viewPresetsURL)
+            self.registerViewPresetCommands()
+        }
+    }
+
     private static var folderBackgroundsURL: URL? { appSupportDirectory()?.appendingPathComponent("folder-backgrounds.json") }
     private var folderBackgrounds = FolderBackgrounds.default
     private func loadFolderBackgrounds() {
@@ -779,6 +830,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.setActiveViewMode(.gallery) }
         add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.setActiveViewMode(.column) }
         add("view.asTree", L("bvc.cmd.asTree", "as Tree")) { [weak self] in self?.setActiveViewMode(.tree) }
+        add("view.saveViewPreset", L("bvc.cmd.saveViewPreset", "Save Current View As…"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.saveViewPreset()
+        }
         add("view.arrangeNone", L("bvc.cmd.arrangeNone", "None")) { [weak self] in self?.activePane?.setGroupKey(.none) }
         add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")) { [weak self] in self?.activePane?.setGroupKey(.kind) }
         add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")) { [weak self] in self?.activePane?.setGroupKey(.size) }
@@ -4857,11 +4911,35 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         layoutsMenu.delegate = self
         mainMenu.addItem(item)
         didInstallLayoutsMenu = true
+        installSavedViewsMenu()
+    }
+
+    private func installSavedViewsMenu() {
+        guard !didInstallSavedViewsMenu, let mainMenu = NSApp.mainMenu else { return }
+        let item = NSMenuItem()
+        item.title = L("bvc.savedViewsMenu", "Saved Views")
+        item.submenu = savedViewsMenu
+        savedViewsMenu.delegate = self
+        mainMenu.addItem(item)
+        didInstallSavedViewsMenu = true
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         if menu === recentFoldersMenu { populateRecentFoldersMenu(); return }
         if menu === externalCommandsMenu { populateExternalCommandsMenu(); return }
+        if menu === savedViewsMenu {
+            menu.removeAllItems()
+            let save = menu.addItem(withTitle: L("bvc.saveViewMenuItem", "Save Current View As…"), action: #selector(saveViewPreset), keyEquivalent: "")
+            save.target = self
+            guard !viewPresets.presets.isEmpty else { return }
+            menu.addItem(.separator())
+            for preset in viewPresets.presets {
+                let item = menu.addItem(withTitle: preset.name, action: #selector(applyViewPresetMenu(_:)), keyEquivalent: "")
+                item.target = self
+                item.representedObject = preset.name
+            }
+            return
+        }
         guard menu === layoutsMenu else { return }
         menu.removeAllItems()
         let save = menu.addItem(withTitle: L("bvc.saveLayoutMenuItem", "Save Layout…"), action: #selector(saveLayoutMenu), keyEquivalent: "")
@@ -4873,6 +4951,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             item.target = self
             item.representedObject = name
         }
+    }
+
+    @objc private func applyViewPresetMenu(_ sender: NSMenuItem) {
+        guard let name = sender.representedObject as? String,
+            let preset = viewPresets.presets.first(where: { $0.name == name })
+        else { return }
+        applyViewPreset(preset.format)
     }
 
     // MARK: - Recent folders (Go menu)
@@ -6250,6 +6335,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let commanderHidden = !debugToggleCommander()
         check("commander-mode", cmdIDs.contains("commander.toggle") && commanderShown && commanderHidden,
             "registered=\(cmdIDs.contains("commander.toggle")) shown=\(commanderShown) hidden=\(commanderHidden)")
+        // Saved view presets: the store saves/replaces by name and round-trips the captured format,
+        // and the save command is registered.
+        var presetStore = ViewPresets.default
+        presetStore.save(.init(name: "Photos", format: .init(viewMode: .icon, groupKey: .kind)))
+        presetStore.save(.init(name: "Photos", format: .init(viewMode: .gallery, groupKey: .none)))  // replace by name
+        let savedPreset = presetStore.presets.first { $0.name == "Photos" }
+        check("view-presets",
+            cmdIDs.contains("view.saveViewPreset") && presetStore.presets.count == 1
+                && savedPreset?.format.viewMode == .gallery,
+            "registered=\(cmdIDs.contains("view.saveViewPreset")) count=\(presetStore.presets.count) mode=\(savedPreset?.format.viewMode.rawValue ?? "nil")")
         return (ok, lines)
     }
 }
