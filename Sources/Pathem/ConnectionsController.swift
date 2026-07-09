@@ -8,6 +8,9 @@ import PathemEngine
 final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     private let panel: NSPanel
     private let table = NSTableView()
+    private let search = NSSearchField()
+    /// The live filter text; the table shows only sites matching it (see `displayed`).
+    private var filterText = ""
     /// The key-file field of the connection editor currently open, so "Choose…" can fill it.
     private weak var editingKeyFileField: NSTextField?
     private weak var editingLocalPathField: NSTextField?
@@ -29,6 +32,19 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     var connections: [RemoteConnection] = [] { didSet { table.reloadData() } }
+
+    /// The sites currently shown in the table: all of them, or those matching the
+    /// filter (by name, host, user, or protocol). Row actions map back to
+    /// `connections` by identity, so a filter never touches the wrong site.
+    private var displayed: [RemoteConnection] {
+        let q = filterText.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !q.isEmpty else { return connections }
+        return connections.filter {
+            $0.name.lowercased().contains(q) || $0.host.lowercased().contains(q)
+                || $0.user.lowercased().contains(q) || $0.proto.label.lowercased().contains(q)
+        }
+    }
+
     /// Called whenever the list changes, so the browser can persist it.
     var onChange: (([RemoteConnection]) -> Void)?
     /// Open the chosen server (the browser prompts for a password and connects).
@@ -55,6 +71,12 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         table.doubleAction = #selector(connectSelected)
         table.target = self
 
+        search.placeholderString = L("conn.filterPlaceholder", "Filter sites")
+        search.translatesAutoresizingMaskIntoConstraints = false
+        search.target = self
+        search.action = #selector(filterChanged)
+        search.sendsWholeSearchString = false  // filter live as the user types
+
         let scroll = NSScrollView()
         scroll.documentView = table
         scroll.hasVerticalScroller = true
@@ -75,10 +97,14 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         bar.translatesAutoresizingMaskIntoConstraints = false
 
         let content = panel.contentView!
+        content.addSubview(search)
         content.addSubview(scroll)
         content.addSubview(bar)
         NSLayoutConstraint.activate([
-            scroll.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            search.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+            search.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
+            search.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
+            scroll.topAnchor.constraint(equalTo: search.bottomAnchor, constant: 8),
             scroll.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
             scroll.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             bar.topAnchor.constraint(equalTo: scroll.bottomAnchor, constant: 8),
@@ -111,20 +137,25 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     // MARK: Actions
 
+    @objc private func filterChanged() {
+        filterText = search.stringValue
+        table.reloadData()
+    }
+
     @objc private func addNew() {
         editConnection(nil)
     }
 
     @objc private func editSelected() {
         let row = table.selectedRow
-        guard row >= 0, row < connections.count else { return }
-        editConnection(row)
+        guard row >= 0, row < displayed.count else { return }
+        editConnection(displayed[row])
     }
 
     @objc private func removeSelected() {
         let row = table.selectedRow
-        guard row >= 0, row < connections.count else { return }
-        connections.remove(at: row)
+        guard row >= 0, row < displayed.count else { return }
+        connections.removeAll { $0.id == displayed[row].id }
         commit()
     }
 
@@ -136,15 +167,22 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     /// Open the edit sheet for a specific connection (the panel must be visible).
     func beginEdit(_ connection: RemoteConnection) {
-        guard let row = connections.firstIndex(where: { $0.id == connection.id }) else { return }
-        table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        editConnection(row)
+        // Clear any active filter so the site is visible and its row selectable.
+        if !filterText.isEmpty {
+            filterText = ""
+            search.stringValue = ""
+            table.reloadData()
+        }
+        if let row = displayed.firstIndex(where: { $0.id == connection.id }) {
+            table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        }
+        editConnection(connection)
     }
 
     @objc private func connectSelected() {
         let row = table.selectedRow
-        guard row >= 0, row < connections.count else { return }
-        let conn = connections[row]
+        guard row >= 0, row < displayed.count else { return }
+        let conn = displayed[row]
         panel.orderOut(nil)
         onConnect?(conn)
     }
@@ -236,10 +274,9 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         }
     }
 
-    private func editConnection(_ row: Int?) {
-        let existing = row.map { connections[$0] }
+    private func editConnection(_ existing: RemoteConnection?) {
         let alert = NSAlert()
-        alert.messageText = row == nil ? L("conn.newConnectionTitle", "New Connection") : L("conn.editConnectionTitle", "Edit Connection")
+        alert.messageText = existing == nil ? L("conn.newConnectionTitle", "New Connection") : L("conn.editConnectionTitle", "Edit Connection")
 
         let proto = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
         proto.addItems(withTitles: RemoteConnection.Proto.allCases.map(\.label))
@@ -330,7 +367,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 region: region.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
                 keyFile: keyFile.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
                 colorLabel: colorNames[colorPopup.indexOfSelectedItem],
-                localPath: localPath.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+                localPath: localPath.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                bookmarks: existing?.bookmarks ?? [])  // edits keep the site's saved bookmarks
             // Resolve the target by identity, not the captured row index, which can
             // go stale if the list changed while this modeless sheet was open.
             if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id }) {
@@ -357,12 +395,12 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     // MARK: Table
 
-    func numberOfRows(in tableView: NSTableView) -> Int { connections.count }
+    func numberOfRows(in tableView: NSTableView) -> Int { displayed.count }
 
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
-        let conn = connections[row]
+        let conn = displayed[row]
         cell.textField?.stringValue = "\(conn.name)\n\(conn.proto.label)  \(conn.displayURL)"
         return cell
     }
