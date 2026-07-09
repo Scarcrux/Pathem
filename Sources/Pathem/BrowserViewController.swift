@@ -4475,8 +4475,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// Prompt for a password and open the server in the active pane.
+    /// If the site has a default local directory, point the other (local) pane at it, pairing the
+    /// local and remote sides on connect.
+    private func openLocalPairing(_ connection: RemoteConnection) {
+        guard !connection.localPath.isEmpty else { return }
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: connection.localPath, isDirectory: &isDir), isDir.boolValue else { return }
+        let otherSide = (activeSide === leftTabs) ? rightTabs : leftTabs
+        otherSide.activePane?.navigate(to: URL(fileURLWithPath: connection.localPath))
+    }
+
     private func connectToRemote(_ connection: RemoteConnection, forceNewTab: Bool = false) {
         guard let pane = activePane else { return }
+        openLocalPairing(connection)  // point the other pane at the site's default local dir
         // USB devices (adb / iOS) have no password; connect straight through.
         if connection.proto.isDevice {
             openRemoteConnection(connection, password: "", forceNewTab: forceNewTab, fallback: pane)

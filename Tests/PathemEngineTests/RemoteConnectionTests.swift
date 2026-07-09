@@ -4,6 +4,30 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct RemoteConnectionTests {
+    @Test func colorLabelAndLocalPathRoundTrip() throws {
+        let original = RemoteConnection(
+            name: "Site", proto: .sftp, host: "example.com", colorLabel: "blue", localPath: "/Users/me/site")
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(RemoteConnection.self, from: data)
+        #expect(decoded.colorLabel == "blue")
+        #expect(decoded.localPath == "/Users/me/site")
+        #expect(FileTag.Color(nameKey: decoded.colorLabel) == .blue)
+    }
+
+    @Test func olderJSONWithoutNewFieldsStillDecodes() throws {
+        let json = #"{"name":"Old","proto":"ftp","host":"h.example.com"}"#
+        let decoded = try JSONDecoder().decode(RemoteConnection.self, from: Data(json.utf8))
+        #expect(decoded.colorLabel.isEmpty)  // defaults, not a decode failure
+        #expect(decoded.localPath.isEmpty)
+    }
+
+    @Test func tagColorNameKeyRoundTrips() {
+        for color in FileTag.Color.allCases {
+            #expect(FileTag.Color(nameKey: color.nameKey) == color)
+        }
+        #expect(FileTag.Color(nameKey: "bogus") == nil)
+    }
+
     @Test func acceptsPlainHosts() {
         #expect(RemoteConnection.isValidHost("ftp.example.com"))
         #expect(RemoteConnection.isValidHost("192.168.1.10"))

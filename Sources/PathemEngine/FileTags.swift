@@ -24,6 +24,24 @@ public struct FileTag: Sendable, Equatable, Hashable {
 
         /// The order Finder presents the colors in.
         public static let displayOrder: [Color] = [.red, .orange, .yellow, .green, .blue, .purple, .gray]
+
+        /// A stable string identifier for persistence (unlike `label`, which is localized).
+        public var nameKey: String {
+            switch self {
+            case .none: "none"
+            case .gray: "gray"
+            case .green: "green"
+            case .purple: "purple"
+            case .blue: "blue"
+            case .yellow: "yellow"
+            case .red: "red"
+            case .orange: "orange"
+            }
+        }
+        public init?(nameKey: String) {
+            guard let match = Self.allCases.first(where: { $0.nameKey == nameKey }) else { return nil }
+            self = match
+        }
     }
 
     public var name: String

@@ -394,7 +394,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// are discoverable; click a server to connect.
     private func connectionsNode() -> Node {
         var children = connections.map { connection in
-            Node(kind: .connection(connection), title: connection.name, url: nil, icon: "network")
+            Node(
+                kind: .connection(connection), title: connection.name, url: nil, icon: "network",
+                tagColor: FileTag.Color(nameKey: connection.colorLabel))  // per-site color label tints the icon
         }
         children.append(
             Node(
@@ -686,15 +688,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
         cell.toolTip = node.title  // name on hover when compact
-        if let tagColor = node.tagColor {
-            cell.imageView?.image = TagColors.dot(tagColor, diameter: showsLabels ? 12 : 22)
-            cell.imageView?.contentTintColor = nil
-        } else if let icon = node.icon {
+        if let icon = node.icon {
             // Render the SF Symbol at the cell's icon point size so it stays crisp when the
-            // icons-only mode blows it up.
+            // icons-only mode blows it up. A per-site color label tints the icon.
             let pointSize = showsLabels ? PlaceCellView.expandedIconSize : PlaceCellView.compactIconSize
             cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: pointSize, weight: .regular))
+            cell.imageView?.contentTintColor = node.tagColor.map { TagColors.nsColor($0) }
+        } else if let tagColor = node.tagColor {
+            cell.imageView?.image = TagColors.dot(tagColor, diameter: showsLabels ? 12 : 22)
             cell.imageView?.contentTintColor = nil
         } else if let url = node.url {
             cell.imageView?.image = NSWorkspace.shared.icon(forFile: url.path)

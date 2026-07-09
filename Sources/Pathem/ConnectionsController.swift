@@ -10,6 +10,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     private let table = NSTableView()
     /// The key-file field of the connection editor currently open, so "Choose…" can fill it.
     private weak var editingKeyFileField: NSTextField?
+    private weak var editingLocalPathField: NSTextField?
 
     var connections: [RemoteConnection] = [] { didSet { table.reloadData() } }
     /// Called whenever the list changes, so the browser can persist it.
@@ -208,6 +209,17 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         }
     }
 
+    @objc private func chooseLocalPath() {
+        let openPanel = NSOpenPanel()
+        openPanel.canChooseFiles = false
+        openPanel.canChooseDirectories = true
+        openPanel.prompt = L("conn.chooseLocalPrompt", "Choose")
+        openPanel.beginSheetModal(for: panel) { [weak self] response in
+            guard response == .OK, let url = openPanel.url else { return }
+            self?.editingLocalPathField?.stringValue = url.path
+        }
+    }
+
     private func editConnection(_ row: Int?) {
         let existing = row.map { connections[$0] }
         let alert = NSAlert()
@@ -238,15 +250,30 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         keyRow.orientation = .horizontal
         keyRow.spacing = 6
 
+        // Per-site color label (a sidebar dot) and default local directory.
+        let colorPopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
+        let colorNames = [""] + FileTag.Color.displayOrder.map(\.nameKey)
+        colorPopup.addItems(withTitles: [L("conn.colorNone", "None")] + FileTag.Color.displayOrder.map(\.label))
+        colorPopup.selectItem(at: max(0, colorNames.firstIndex(of: existing?.colorLabel ?? "") ?? 0))
+        let localPath = field(L("conn.localPathPlaceholder", "Local folder to open on connect (optional)"), existing?.localPath ?? "")
+        let chooseLocal = NSButton(title: L("conn.chooseLocal", "Choose…"), target: self, action: #selector(chooseLocalPath))
+        chooseLocal.bezelStyle = .rounded
+        editingLocalPathField = localPath
+        localPath.widthAnchor.constraint(equalToConstant: 250).isActive = true
+        let localRow = NSStackView(views: [localPath, chooseLocal])
+        localRow.orientation = .horizontal
+        localRow.spacing = 6
+
         let rows = NSStackView(views: [
             labeled(L("conn.protocolLabel", "Protocol"), proto), labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
             labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
             labeled(L("conn.regionLabel", "Region"), region), labeled(L("conn.keyFileLabel", "Key File"), keyRow),
+            labeled(L("conn.colorLabel2", "Color"), colorPopup), labeled(L("conn.localLabel", "Local dir"), localRow),
         ])
         rows.orientation = .vertical
         rows.alignment = .leading
         rows.spacing = 6
-        rows.frame = NSRect(x: 0, y: 0, width: 360, height: 264)
+        rows.frame = NSRect(x: 0, y: 0, width: 360, height: 320)
         alert.accessoryView = rows
         alert.addButton(withTitle: L("common.save", "Save"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
@@ -279,7 +306,9 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 proto: chosen, host: host, port: Int(port.stringValue) ?? 0,
                 user: user.stringValue, path: path.stringValue.isEmpty ? "/" : path.stringValue,
                 region: region.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
-                keyFile: keyFile.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+                keyFile: keyFile.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                colorLabel: colorNames[colorPopup.indexOfSelectedItem],
+                localPath: localPath.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             // Resolve the target by identity, not the captured row index, which can
             // go stale if the list changed while this modeless sheet was open.
             if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id }) {

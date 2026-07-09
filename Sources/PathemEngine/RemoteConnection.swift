@@ -45,10 +45,17 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     /// Path to an SFTP private key (e.g. an EC2 `.pem`), or empty for password / agent auth.
     /// Only the path is stored; any passphrase is prompted at connect and never persisted.
     public var keyFile: String
+    /// An optional color-label name for the site (shown as a dot in the sidebar), one of
+    /// FileTag.Color's names, or empty for none.
+    public var colorLabel: String
+    /// An optional default local directory: on connect, the other pane opens here (a saved
+    /// local-to-remote pairing). Empty leaves the local pane where it is.
+    public var localPath: String
 
     public init(
         id: UUID = UUID(), name: String, proto: Proto, host: String, port: Int = 0,
-        user: String = "", path: String = "/", region: String = "", keyFile: String = ""
+        user: String = "", path: String = "/", region: String = "", keyFile: String = "",
+        colorLabel: String = "", localPath: String = ""
     ) {
         self.id = id
         self.name = name
@@ -59,6 +66,8 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         self.path = path
         self.region = region
         self.keyFile = keyFile
+        self.colorLabel = colorLabel
+        self.localPath = localPath
     }
 
     public var effectivePort: Int { port > 0 ? port : proto.defaultPort }
@@ -117,5 +126,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         path = try c.decodeIfPresent(String.self, forKey: .path) ?? "/"
         region = try c.decodeIfPresent(String.self, forKey: .region) ?? ""
         keyFile = try c.decodeIfPresent(String.self, forKey: .keyFile) ?? ""
+        colorLabel = try c.decodeIfPresent(String.self, forKey: .colorLabel) ?? ""
+        localPath = try c.decodeIfPresent(String.self, forKey: .localPath) ?? ""
     }
 }
