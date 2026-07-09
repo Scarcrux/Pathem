@@ -30,6 +30,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     /// right-click menu at all before; now it gets the full set (Open With, Tags, Extract, ...).
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
+    func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
 
     // PaneContentView callbacks.
     var onOpen: ((FileEntry) -> Void)?

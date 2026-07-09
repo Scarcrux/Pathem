@@ -42,6 +42,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
     var contentClipView: NSClipView { content.scrollView.contentView }
     func setHiddenContextItems(_ ids: Set<String>) { content.setHiddenContextItems(ids) }
+    func setContextMenuOrder(_ order: [String]) { content.setContextMenuOrder(order) }
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)

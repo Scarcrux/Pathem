@@ -177,6 +177,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     /// set. Honors the Settings ▸ Menus hide/show choice.
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
+    func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
 
     // MARK: - Cut dimming + selection anchor (parity with the list view)
 

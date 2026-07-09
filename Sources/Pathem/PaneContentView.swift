@@ -111,6 +111,8 @@ extension PaneContentView {
     /// Every pane view now shares one right-click menu (FileContextMenuController) and wires
     /// this up; the default stays as a fallback for any future view that doesn't.
     func setHiddenContextItems(_ ids: Set<String>) {}
+    /// The user's right-click menu entry order (empty = default); paired with the hidden set.
+    func setContextMenuOrder(_ order: [String]) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
     /// List, icon, gallery, and column all report a selection rect now; this default is only a

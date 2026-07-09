@@ -339,6 +339,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The one shared file context menu, used by every pane view so they never drift.
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
+    func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
 
     /// Apply display preferences (density-derived row height, font size,
     /// alternating rows). Reloads so recycled cells pick up the new font.

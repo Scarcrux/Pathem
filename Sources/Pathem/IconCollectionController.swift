@@ -509,6 +509,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     /// never drift from the others. Honors the Settings ▸ Menus hide/show choice.
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
+    func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
 
     var selectedEntries: [FileEntry] {
         collection.selectionIndexPaths.compactMap { entryIndex(at: $0).map { entries[$0] } }

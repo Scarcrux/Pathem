@@ -46,6 +46,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     let rootView = NSView()
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
+    private var contextMenuEditor: ContextMenuEditorController?  // retains the Menus pane editor
 
     // Shortcut editor state.
     private var commandList: [(id: String, title: String)] = []
@@ -584,26 +585,20 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         onChange?(prefs)
     }
 
-    /// The customizable file right-click menu: a checkbox per command (checked = shown).
+    /// The customizable file right-click menu: a reorderable list with a show/hide checkbox
+    /// per entry (drag to reorder, uncheck to hide).
     private func menusPane() -> NSView {
-        var rows: [NSView] = [
-            hint(L("prefs.contextMenuHint", "Show these commands in the file right-click menu:"))
-        ]
-        for command in FileListController.contextCommands {
-            let button = NSButton(
-                checkboxWithTitle: command.title, target: self, action: #selector(contextItemToggled(_:)))
-            button.identifier = NSUserInterfaceItemIdentifier(command.id)
-            button.state = prefs.hiddenContextItems.contains(command.id) ? .off : .on
-            rows.append(button)
+        let editor = ContextMenuEditorController(
+            order: prefs.contextMenuOrder, hidden: prefs.hiddenContextItems)
+        editor.onChange = { [weak self] order, hidden in
+            guard let self else { return }
+            // A full default layout persists as empty, so it stays in sync with future defaults.
+            self.prefs.contextMenuOrder = order == FileContextMenuController.defaultEntries ? [] : order
+            self.prefs.hiddenContextItems = hidden
+            self.onChange?(self.prefs)
         }
-        return form(rows)
-    }
-    @objc private func contextItemToggled(_ sender: NSButton) {
-        guard let id = sender.identifier?.rawValue else { return }
-        var hidden = Set(prefs.hiddenContextItems)
-        if sender.state == .on { hidden.remove(id) } else { hidden.insert(id) }
-        prefs.hiddenContextItems = Array(hidden).sorted()
-        onChange?(prefs)
+        contextMenuEditor = editor  // retain it; the pane view doesn't own the controller
+        return form([editor.view])
     }
 
     private let fontValue = NSTextField(labelWithString: "13")
@@ -956,8 +951,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         currentTerminalTheme = "Dark"
         buildChrome()
         buildAllPanesAndIndex()
-        sidebar.select(key: Pane.general.rawValue)
-        select(.general)
+        let startPane =
+            ProcessInfo.processInfo.environment["PATHEM_SETTINGS_PANE"]
+            .flatMap(Pane.init(rawValue:)) ?? .general
+        sidebar.select(key: startPane.rawValue)
+        select(startPane)
         if let query = ProcessInfo.processInfo.environment["PATHEM_SETTINGS_QUERY"], !query.isEmpty {
             sidebar.debugSearch(query)
         }

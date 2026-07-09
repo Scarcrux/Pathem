@@ -76,6 +76,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Command ids hidden from the file list's right-click menu (config-as-data
     /// customization). Empty = the full default menu.
     public var hiddenContextItems: [String]
+    /// The order of the file right-click menu's entries (command ids and the "@openWith" /
+    /// "@tags" submenu tokens). Empty = the default order. Separators are auto-inserted
+    /// between groups, so they aren't stored here.
+    public var contextMenuOrder: [String]
     /// "Super-drag": flick the selection a short way and release (off a drop target) to fire
     /// a directional quick action, with a swipe trail for feedback. Off by default.
     public var dragFlickActions: Bool
@@ -110,6 +114,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
+        contextMenuOrder: [String] = [],
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -128,6 +133,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.instantTooltips = instantTooltips
         self.toolbarIconSize = toolbarIconSize
         self.hiddenContextItems = hiddenContextItems
+        self.contextMenuOrder = contextMenuOrder
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -200,6 +206,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         toolbarIconSize = (try? c.decode(IconSize.self, forKey: .toolbarIconSize)) ?? d.toolbarIconSize
         hiddenContextItems =
             try c.decodeIfPresent([String].self, forKey: .hiddenContextItems) ?? d.hiddenContextItems
+        contextMenuOrder =
+            try c.decodeIfPresent([String].self, forKey: .contextMenuOrder) ?? d.contextMenuOrder
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

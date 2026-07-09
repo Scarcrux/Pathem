@@ -14,6 +14,10 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     var hiddenItems: Set<String> = [] {
         didSet { if oldValue != hiddenItems { rebuild() } }
     }
+    /// The user's saved entry order (command ids + "@openWith"/"@tags"); empty = default.
+    var menuOrder: [String] = [] {
+        didSet { if oldValue != menuOrder { rebuild() } }
+    }
     /// The current selection as file URLs (location-aware). Set by the owning view.
     var selectedURLs: () -> [URL] = { [] }
 
@@ -21,12 +25,45 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     let menu = NSMenu()
     private let openWithMenu = NSMenu()
 
-    /// Extract items appear only when the selection holds an extractable archive; this tags
-    /// their separator so it hides with them.
-    private static let archiveSeparatorTag = 7701
     private static let archiveCommandIDs: Set<String> = [
         "files.extract", "files.extractHere", "files.extractTo",
     ]
+
+    /// The default order of the menu's entries: command ids plus the two submenu tokens.
+    /// Separators aren't listed; they're auto-inserted between groups (see `group`).
+    static let defaultEntries: [String] = [
+        "files.open", "files.openInNewTab", "@openWith", "files.getInfo", "files.download",
+        "files.reveal", "files.revealInPathem", "files.setDesktopPicture", "files.rename",
+        "files.trash", "files.putBack", "files.deleteImmediately",
+        "@tags",
+        "files.newFolder", "files.newFolderWithSelection", "files.newFile",
+        "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
+        "files.extract", "files.extractHere", "files.extractTo",
+    ]
+
+    /// The group an entry belongs to. A separator is auto-inserted wherever the group changes
+    /// between two visible entries, so reordering keeps sensible dividers with no manual
+    /// separator management.
+    private static func group(_ token: String) -> Int {
+        switch token {
+        case "@tags": return 1
+        case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
+        case "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste": return 3
+        case "files.extract", "files.extractHere", "files.extractTo": return 4
+        default: return 0  // open / edit actions
+        }
+    }
+
+    /// The display title for any entry token (a command or a submenu), for the editor.
+    static func title(for token: String) -> String {
+        switch token {
+        case "@openWith": return L("list.openWith", "Open With")
+        case "@tags": return L("list.tags", "Tags")
+        default:
+            return Dictionary(uniqueKeysWithValues: hideableCommands.map { ($0.id, $0.title) })[token]
+                ?? token
+        }
+    }
 
     private static func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
@@ -85,50 +122,31 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     private func rebuild() {
         menu.removeAllItems()
         let titles = Dictionary(uniqueKeysWithValues: Self.hideableCommands.map { ($0.id, $0.title) })
-        func add(_ id: String) {
-            guard !hiddenItems.contains(id), let title = titles[id] else { return }
-            let item = NSMenuItem(
-                title: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
-            item.representedObject = id
-            item.image = MenuIcons.image(forCommand: id)
-            menu.addItem(item)
+        var lastGroup: Int?
+        for token in ContextMenuLayout.ordered(default: Self.defaultEntries, user: menuOrder) {
+            if hiddenItems.contains(token) { continue }  // user hid this entry
+            let g = Self.group(token)
+            if let lastGroup, lastGroup != g { menu.addItem(.separator()) }  // divide groups
+            switch token {
+            case "@openWith":
+                // A submenu populated live in menuNeedsUpdate with the apps for the selection.
+                let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
+                openWith.image = MenuIcons.image("app.dashed")
+                openWith.submenu = openWithMenu
+                menu.addItem(openWith)
+            case "@tags":
+                menu.addItem(makeTagsItem())
+            default:
+                guard let title = titles[token] else { continue }  // unknown id: skip
+                let item = NSMenuItem(
+                    title: title, action: #selector(BrowserViewController.performMenuCommand(_:)),
+                    keyEquivalent: "")
+                item.representedObject = token
+                item.image = MenuIcons.image(forCommand: token)
+                menu.addItem(item)
+            }
+            lastGroup = g
         }
-        add("files.open")
-        add("files.openInNewTab")  // hidden unless a single folder is selected
-        // Open With: a submenu populated live in menuNeedsUpdate with the apps for the selection.
-        let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
-        openWith.image = MenuIcons.image("app.dashed")
-        openWith.submenu = openWithMenu
-        menu.addItem(openWith)
-        add("files.getInfo")
-        add("files.download")
-        add("files.reveal")
-        add("files.revealInPathem")
-        add("files.setDesktopPicture")  // hidden unless a single image is selected
-        add("files.rename")
-        add("files.trash")
-        add("files.putBack")  // hidden unless the selection is in the Trash
-        add("files.deleteImmediately")  // hidden unless the selection is in the Trash
-        menu.addItem(.separator())
-        menu.addItem(makeTagsItem())
-        menu.addItem(.separator())
-        add("files.newFolder")
-        add("files.newFolderWithSelection")
-        add("files.newFile")
-        menu.addItem(.separator())
-        add("files.copy")
-        add("files.copyPath")
-        add("files.copyName")
-        add("files.cut")
-        add("files.paste")
-        // Archive actions: always added, but the separator + items stay hidden unless an
-        // archive is selected (toggled in menuNeedsUpdate).
-        let archiveSep = NSMenuItem.separator()
-        archiveSep.tag = Self.archiveSeparatorTag
-        menu.addItem(archiveSep)
-        add("files.extract")
-        add("files.extractHere")
-        add("files.extractTo")
     }
 
     private func makeTagsItem() -> NSMenuItem {
@@ -163,31 +181,48 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             let singleFolder = urls.count == 1 && Self.isDirectory(urls[0])
             let inTrash = !urls.isEmpty && urls.allSatisfy { Self.isInTrash($0) }
             for item in menu.items {
-                if let id = item.representedObject as? String {
-                    switch id {
-                    case _ where Self.archiveCommandIDs.contains(id):
-                        item.isHidden = !showArchive
-                    case "files.newFolderWithSelection":
-                        // Only meaningful with a selection; show a live count when there is one.
-                        item.isHidden = urls.isEmpty
-                        item.title = Self.newFolderWithSelectionTitle(count: urls.count)
-                    case "files.openInNewTab":
-                        item.isHidden = !singleFolder
-                    case "files.setDesktopPicture":
-                        item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
-                    case "files.putBack", "files.deleteImmediately":
-                        item.isHidden = !inTrash  // Trash-only actions
-                    default:
-                        break
-                    }
-                } else if item.isSeparatorItem, item.tag == Self.archiveSeparatorTag {
+                guard let id = item.representedObject as? String else { continue }
+                switch id {
+                case _ where Self.archiveCommandIDs.contains(id):
                     item.isHidden = !showArchive
+                case "files.newFolderWithSelection":
+                    // Only meaningful with a selection; show a live count when there is one.
+                    item.isHidden = urls.isEmpty
+                    item.title = Self.newFolderWithSelectionTitle(count: urls.count)
+                case "files.openInNewTab":
+                    item.isHidden = !singleFolder
+                case "files.setDesktopPicture":
+                    item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
+                case "files.putBack", "files.deleteImmediately":
+                    item.isHidden = !inTrash  // Trash-only actions
+                default:
+                    break
                 }
             }
+            Self.tidySeparators(menu)  // hide dividers left dangling by the hides above
             return
         }
         guard menu === openWithMenu else { return }
         populateOpenWith(menu)
+    }
+
+    /// Hide separators that are leading, trailing, or adjacent to another separator once the
+    /// conditional items above are hidden, so the menu never shows a dangling or doubled
+    /// divider (e.g. the archive divider when nothing extractable is selected).
+    private static func tidySeparators(_ menu: NSMenu) {
+        var pending: NSMenuItem?  // a separator with a visible item before it, awaiting one after
+        var sawVisibleSinceSeparator = false
+        for item in menu.items {
+            if item.isSeparatorItem {
+                item.isHidden = true  // hidden until a following visible item justifies it
+                pending = sawVisibleSinceSeparator ? item : pending
+                sawVisibleSinceSeparator = false
+            } else if !item.isHidden {
+                pending?.isHidden = false  // a visible item follows: keep the pending divider
+                pending = nil
+                sawVisibleSinceSeparator = true
+            }
+        }
     }
 
     /// Fill the Open With submenu with the apps that can open the selection (default first),

@@ -4142,6 +4142,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.iconZoom = CGFloat(prefs.iconZoom)
                 pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
                 pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
+                pane.setContextMenuOrder(prefs.contextMenuOrder)
             }
         }
         applyCompactSidebar()
@@ -6560,6 +6561,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             badged !== baseIcon && plain === baseIcon
                 && CloudLocation.service(forFolderAt: cloudDir.appendingPathComponent("GoogleDrive-x@y.com").path, home: homeDir) == .googleDrive,
             "badged=\(badged !== baseIcon) plainUntouched=\(plain === baseIcon)")
+        // Context menu editor: a custom order reorders the right-click menu, and hiding drops
+        // an item. Build a menu with copy first and Rename hidden, then read it back.
+        let cmenu = FileContextMenuController()
+        cmenu.hiddenItems = ["files.rename"]
+        cmenu.menuOrder = ["files.copy", "files.open"]
+        let cmenuCommands = cmenu.menu.items.compactMap { $0.representedObject as? String }
+        check("context-menu-reorder",
+            Array(cmenuCommands.prefix(2)) == ["files.copy", "files.open"]
+                && !cmenuCommands.contains("files.rename"),
+            "first=\(Array(cmenuCommands.prefix(2))) hidRename=\(!cmenuCommands.contains("files.rename"))")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)
