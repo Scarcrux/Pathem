@@ -4147,6 +4147,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
                 pane.setContextMenuOrder(prefs.contextMenuOrder)
                 pane.setColorRules(prefs.colorRules)
+                pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)
             }
         }
         applyCompactSidebar()
@@ -6108,6 +6109,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         ])
         leftTabs.activePane?.setColorRules(rules)
         rightTabs.activePane?.setColorRules(rules)
+    }
+
+    /// Apply binary sizes + relative dates for a render, without persisting (PATHEM_FORMATS).
+    func debugSetBinaryRelativeFormats() {
+        leftTabs.activePane?.setFormats(size: .binary, date: .relative)
+        rightTabs.activePane?.setFormats(size: .binary, date: .relative)
     }
 
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).

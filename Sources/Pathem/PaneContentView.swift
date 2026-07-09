@@ -115,6 +115,8 @@ extension PaneContentView {
     func setContextMenuOrder(_ order: [String]) {}
     /// User color rules (Directory-Opus labels) that tint/style filenames; empty = none.
     func setColorRules(_ rules: ColorRules) {}
+    /// Size (decimal/binary) and date (relative/short/medium) display formats; list-only.
+    func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
     /// List, icon, gallery, and column all report a selection rect now; this default is only a

@@ -286,6 +286,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.singleClickToOpen", "Open items with a single click"), \.singleClickToOpen),
             check(L("prefs.underlineOnHover", "Underline the item under the pointer"), \.underlineOnHover),
             check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
+            labeled(L("prefs.sizeFormatLabel", "File sizes"), sizeFormatControl()),
+            labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
         ])
         case .menus: return menusPane()
         case .labels: return labelsPane()
@@ -522,6 +524,38 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func densityChanged(_ sender: NSPopUpButton) {
         prefs.density = sender.indexOfSelectedItem == 1 ? .compact : .comfortable
+        onChange?(prefs)
+    }
+
+    private func sizeFormatControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.sizeDecimal", "Decimal (KB, MB)"), L("prefs.sizeBinary", "Binary (KiB, MiB)"),
+        ])
+        popup.selectItem(at: prefs.sizeFormat == .binary ? 1 : 0)
+        popup.target = self
+        popup.action = #selector(sizeFormatChanged(_:))
+        return popup
+    }
+    @objc private func sizeFormatChanged(_ sender: NSPopUpButton) {
+        prefs.sizeFormat = sender.indexOfSelectedItem == 1 ? .binary : .decimal
+        onChange?(prefs)
+    }
+
+    private func dateFormatControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.dateRelative", "Relative (Yesterday at 3:14 PM)"),
+            L("prefs.dateShort", "Short (7/8/26, 3:14 PM)"),
+            L("prefs.dateMedium", "Medium (Jul 8, 2026)"),
+        ])
+        popup.selectItem(at: Preferences.DateDisplay.allCases.firstIndex(of: prefs.dateDisplay) ?? 2)
+        popup.target = self
+        popup.action = #selector(dateFormatChanged(_:))
+        return popup
+    }
+    @objc private func dateFormatChanged(_ sender: NSPopUpButton) {
+        prefs.dateDisplay = Preferences.DateDisplay.allCases[sender.indexOfSelectedItem]
         onChange?(prefs)
     }
 

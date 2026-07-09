@@ -9,6 +9,18 @@ import Testing
         #expect(prefs.density == .comfortable)
         #expect(prefs.searchOCR == false)
         #expect(prefs.rowHeight == 24)  // 13 + 11, matches the historical default
+        #expect(prefs.sizeFormat == .decimal)  // Finder-style KB/MB by default
+        #expect(prefs.dateDisplay == .medium)
+    }
+
+    @Test func sizeAndDateFormatsRoundTrip() throws {
+        let prefs = Preferences(sizeFormat: .binary, dateDisplay: .relative)
+        let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))
+        #expect(decoded.sizeFormat == .binary)
+        #expect(decoded.dateDisplay == .relative)
+        // An older prefs.json without the fields decodes to the defaults.
+        let old = try JSONDecoder().decode(Preferences.self, from: Data(#"{"fontSize":13}"#.utf8))
+        #expect(old.sizeFormat == .decimal && old.dateDisplay == .medium)
     }
 
     @Test func compactIsShorter() {

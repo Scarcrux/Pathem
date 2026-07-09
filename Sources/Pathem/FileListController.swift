@@ -198,6 +198,27 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return f
     }()
 
+    /// Apply the user's size (decimal/binary) and date (relative/short/medium) formats to the
+    /// size and date columns.
+    func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {
+        byteFormatter.countStyle = size == .binary ? .binary : .file
+        switch date {
+        case .relative:
+            dateFormatter.dateStyle = .medium
+            dateFormatter.timeStyle = .short
+            dateFormatter.doesRelativeDateFormatting = true  // "Today" / "Yesterday"
+        case .short:
+            dateFormatter.dateStyle = .short
+            dateFormatter.timeStyle = .short
+            dateFormatter.doesRelativeDateFormatting = false
+        case .medium:
+            dateFormatter.dateStyle = .medium
+            dateFormatter.timeStyle = .none
+            dateFormatter.doesRelativeDateFormatting = false
+        }
+        tableView.reloadData()
+    }
+
     /// Distinguishes each list's column-autosave key so concurrent panes don't share one.
     private static var instanceCount = 0
 

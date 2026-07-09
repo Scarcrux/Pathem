@@ -44,11 +44,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func setHiddenContextItems(_ ids: Set<String>) { lastHiddenContextItems = ids; content.setHiddenContextItems(ids) }
     func setContextMenuOrder(_ order: [String]) { lastContextMenuOrder = order; content.setContextMenuOrder(order) }
     func setColorRules(_ rules: ColorRules) { lastColorRules = rules; content.setColorRules(rules) }
+    func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {
+        lastFormats = (size, date)
+        content.setFormats(size: size, date: date)
+    }
     // Cross-view settings, remembered so they carry across a view-mode swap (the new content
     // starts empty).
     private var lastHiddenContextItems: Set<String> = []
     private var lastContextMenuOrder: [String] = []
     private var lastColorRules = ColorRules()
+    private var lastFormats: (size: Preferences.SizeFormat, date: Preferences.DateDisplay)?
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)
@@ -1033,6 +1038,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.setHiddenContextItems(lastHiddenContextItems)  // carry menu + color customization
         content.setContextMenuOrder(lastContextMenuOrder)
         content.setColorRules(lastColorRules)
+        if let f = lastFormats { content.setFormats(size: f.size, date: f.date) }
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }
 

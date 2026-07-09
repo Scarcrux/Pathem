@@ -20,8 +20,18 @@ public struct Preferences: Codable, Sendable, Equatable {
         }
     }
 
+    /// How file sizes are shown: decimal (KB, MB; 1000-based, like Finder) or binary
+    /// (KiB, MiB; 1024-based).
+    public enum SizeFormat: String, Codable, Sendable, CaseIterable { case decimal, binary }
+    /// How dates are shown: relative ("Yesterday at 3:14 PM"), short numeric, or medium.
+    public enum DateDisplay: String, Codable, Sendable, CaseIterable { case relative, short, medium }
+
     /// Row spacing for the file list.
     public var density: Density
+    /// File-size units (decimal vs binary).
+    public var sizeFormat: SizeFormat
+    /// Date column format (relative / short / medium).
+    public var dateDisplay: DateDisplay
     /// App appearance (System/Light/Dark).
     public var appearance: Appearance
     /// Base font size for list rows.
@@ -118,6 +128,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
         contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
+        sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .medium,
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -138,6 +149,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.hiddenContextItems = hiddenContextItems
         self.contextMenuOrder = contextMenuOrder
         self.colorRules = colorRules
+        self.sizeFormat = sizeFormat
+        self.dateDisplay = dateDisplay
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -213,6 +226,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         contextMenuOrder =
             try c.decodeIfPresent([String].self, forKey: .contextMenuOrder) ?? d.contextMenuOrder
         colorRules = try c.decodeIfPresent(ColorRules.self, forKey: .colorRules) ?? d.colorRules
+        sizeFormat = (try? c.decode(SizeFormat.self, forKey: .sizeFormat)) ?? d.sizeFormat
+        dateDisplay = (try? c.decode(DateDisplay.self, forKey: .dateDisplay)) ?? d.dateDisplay
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

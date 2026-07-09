@@ -266,6 +266,9 @@ enum PathemApp {
                 if ProcessInfo.processInfo.environment["PATHEM_COLOR_RULES"] != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSeedColorRules() }
                 }
+                if ProcessInfo.processInfo.environment["PATHEM_FORMATS"] != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSetBinaryRelativeFormats() }
+                }
                 if let mode {
                     // PATHEM_MAIN_PATH picks the folder; otherwise use the fake Photos folder
                     // in demo mode (privacy-safe for README shots) or the real ~/Pictures.
@@ -276,7 +279,8 @@ enum PathemApp {
                         browser.debugNavigateActive(to: target)
                     }
                     let viewMode: ViewFormat.ViewMode =
-                        mode == "gallery" ? .gallery : (mode == "column" ? .column : .icon)
+                        mode == "gallery"
+                        ? .gallery : (mode == "column" ? .column : (mode == "list" ? .list : .icon))
                     browser.debugSetActiveViewMode(viewMode)
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
