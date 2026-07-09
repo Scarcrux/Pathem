@@ -31,6 +31,12 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
     func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
+    private var colorRules = ColorRules()
+    func setColorRules(_ rules: ColorRules) {
+        guard rules != colorRules else { return }
+        colorRules = rules
+        for column in columns { column.table.reloadData() }
+    }
 
     // PaneContentView callbacks.
     var onOpen: ((FileEntry) -> Void)?
@@ -281,7 +287,9 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let entry = columns[index].entries[row]
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
-        cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
+        let ruleStyle = FileColorStyle.style(for: entry, rules: colorRules, baseFont: .systemFont(ofSize: 13))
+        cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: 13)
+        cell.textField?.textColor = ruleStyle?.color ?? (entry.isDataless ? .secondaryLabelColor : .labelColor)
         // Prefix a colored git-status letter and suffix tag dots when present (shared with the
         // list view). Middle truncation keeps both ends even when a long name is clipped.
         let folder = columns[index].folder
@@ -289,7 +297,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let dots = decorations.tagColors(for: entry, in: folder)
         if git != nil || !dots.isEmpty {
             cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
-                entry.name, git: git, dots: dots, size: 13)
+                entry.name, git: git, dots: dots, size: 13, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
         } else {
             cell.textField?.stringValue = entry.name
         }

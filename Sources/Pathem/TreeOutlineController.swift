@@ -188,8 +188,9 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
         cell.textField?.stringValue = node.entry.name
-        cell.textField?.font = .systemFont(ofSize: fontSize)
-        cell.textField?.textColor = node.entry.isDataless ? .secondaryLabelColor : .labelColor
+        let ruleStyle = FileColorStyle.style(for: node.entry, rules: colorRules, baseFont: .systemFont(ofSize: fontSize))
+        cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: fontSize)
+        cell.textField?.textColor = ruleStyle?.color ?? (node.entry.isDataless ? .secondaryLabelColor : .labelColor)
         let baseIcon = IconSetManager.shared.icon(for: node.entry) ?? NSWorkspace.shared.icon(forFile: node.url.path)
         cell.imageView?.image = CloudBadge.decorate(
             baseIcon, for: node.entry, in: node.url.deletingLastPathComponent())
@@ -220,6 +221,13 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     }
 
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
+    func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
+    private var colorRules = ColorRules()
+    func setColorRules(_ rules: ColorRules) {
+        guard rules != colorRules else { return }
+        colorRules = rules
+        outline.reloadData()
+    }
 
     // MARK: Build
 

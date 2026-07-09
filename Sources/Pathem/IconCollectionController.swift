@@ -205,23 +205,26 @@ final class IconItem: NSCollectionViewItem {
 
     func configure(
         name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
-        thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = [], underlined: Bool = false
+        thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = [], underlined: Bool = false,
+        nameFont: NSFont? = nil, nameColor: NSColor? = nil
     ) {
         loadViewIfNeeded()
         icon.image = image  // type icon shows immediately; a thumbnail replaces it when ready
         iconWidth?.constant = iconSize
         iconHeight?.constant = iconSize
-        label.font = .systemFont(ofSize: fontSize)
-        label.textColor = dimmed ? .secondaryLabelColor : .labelColor
+        let font = nameFont ?? .systemFont(ofSize: fontSize)  // a color rule can style the name
+        label.font = font
+        label.textColor = nameColor ?? (dimmed ? .secondaryLabelColor : .labelColor)
         // Middle truncation keeps both the leading git letter and the trailing tag dots even when
         // a long name is clipped, so the grid shows the same decorations as the list and column.
         if git != nil || !tags.isEmpty {
-            let decorated = FileNameDecoration.decoratedName(name, git: git, dots: tags, size: fontSize)
+            let decorated = FileNameDecoration.decoratedName(
+                name, git: git, dots: tags, size: fontSize, nameFont: nameFont, nameColor: nameColor)
             label.attributedStringValue = underlined ? Self.underline(decorated) : decorated
         } else if underlined {
             label.attributedStringValue = NSAttributedString(
                 string: name,
-                attributes: [.font: NSFont.systemFont(ofSize: fontSize), .underlineStyle: NSUnderlineStyle.single.rawValue])
+                attributes: [.font: font, .underlineStyle: NSUnderlineStyle.single.rawValue])
         } else {
             label.stringValue = name
         }
@@ -510,6 +513,12 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
     func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
+    private var colorRules = ColorRules()
+    func setColorRules(_ rules: ColorRules) {
+        guard rules != colorRules else { return }
+        colorRules = rules
+        collection.reloadData()
+    }
 
     var selectedEntries: [FileEntry] {
         collection.selectionIndexPaths.compactMap { entryIndex(at: $0).map { entries[$0] } }
@@ -650,12 +659,13 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         // Real content thumbnails for files only; never for folders or online-only
         // (dataless) items, where generating one could fault a download.
         let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
+        let ruleStyle = FileColorStyle.style(for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
         item.configure(
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
-            underlined: ei == hoveredItem)
+            underlined: ei == hoveredItem, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
         // as Finder does, and dim cut items until pasted. Set on every configure (cells are
         // reused) so it never sticks.
