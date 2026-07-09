@@ -9,13 +9,14 @@ import PathemEngine
 @MainActor
 final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, menus, search, terminal, transfers, shortcuts, gestures, updates
+        case general, appearance, layout, menus, labels, search, terminal, transfers, shortcuts, gestures, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
             case .appearance: return L("settings.appearance", "Appearance")
             case .layout: return L("settings.layout", "Layout")
             case .menus: return L("settings.menus", "Menus")
+            case .labels: return L("settings.labels", "Labels")
             case .search: return L("settings.search", "Search")
             case .terminal: return L("settings.terminal", "Terminal")
             case .transfers: return L("settings.transfers", "Transfers")
@@ -30,6 +31,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             case .appearance: return "paintbrush"
             case .layout: return "sidebar.squares.left"
             case .menus: return "contextualmenu.and.cursorarrow"
+            case .labels: return "tag"
             case .search: return "magnifyingglass"
             case .terminal: return "terminal"
             case .transfers: return "arrow.up.arrow.down"
@@ -47,6 +49,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
     private var contextMenuEditor: ContextMenuEditorController?  // retains the Menus pane editor
+    private var colorRulesEditor: ColorRulesEditorController?  // retains the Labels pane editor
 
     // Shortcut editor state.
     private var commandList: [(id: String, title: String)] = []
@@ -285,6 +288,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
         ])
         case .menus: return menusPane()
+        case .labels: return labelsPane()
         case .search: return form([
             check(L("prefs.searchOCR", "Search image contents (OCR, slower)"), \.searchOCR),
             hint(L("prefs.searchOCRHint", "Text and PDF contents are always indexed; image OCR is extra.")),
@@ -598,6 +602,18 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             self.onChange?(self.prefs)
         }
         contextMenuEditor = editor  // retain it; the pane view doesn't own the controller
+        return form([editor.view])
+    }
+
+    /// File color rules (Directory-Opus labels): a reorderable list of match -> style rules.
+    private func labelsPane() -> NSView {
+        let editor = ColorRulesEditorController(rules: prefs.colorRules.rules)
+        editor.onChange = { [weak self] rules in
+            guard let self else { return }
+            self.prefs.colorRules = ColorRules(rules: rules)
+            self.onChange?(self.prefs)
+        }
+        colorRulesEditor = editor  // retain it
         return form([editor.view])
     }
 
@@ -949,6 +965,14 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         gestureEffective = GestureMap.defaultBindings
         terminalThemes = ["Dark", "Light"]
         currentTerminalTheme = "Dark"
+        if ProcessInfo.processInfo.environment["PATHEM_COLOR_RULES"] != nil {
+            prefs.colorRules = ColorRules(rules: [
+                ColorRule(name: "Folders", field: .kind, op: .isAnyOf, value: "folder", colorHex: "#95D5B2", bold: true),
+                ColorRule(name: "Images", field: .ext, op: .isAnyOf, value: "png, jpg, gif", colorHex: "#8ECAE6"),
+                ColorRule(name: "Drafts", field: .name, op: .contains, value: "draft", colorHex: "#FFB703", italic: true),
+                ColorRule(name: "Big files", field: .size, op: .greaterThan, value: "50", colorHex: "#E76F51", bold: true),
+            ])
+        }
         buildChrome()
         buildAllPanesAndIndex()
         let startPane =

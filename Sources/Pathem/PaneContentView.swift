@@ -113,6 +113,8 @@ extension PaneContentView {
     func setHiddenContextItems(_ ids: Set<String>) {}
     /// The user's right-click menu entry order (empty = default); paired with the hidden set.
     func setContextMenuOrder(_ order: [String]) {}
+    /// User color rules (Directory-Opus labels) that tint/style filenames; empty = none.
+    func setColorRules(_ rules: ColorRules) {}
     /// Only the list view has a sortable header; other views report no indicator.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { nil }
     /// List, icon, gallery, and column all report a selection rect now; this default is only a

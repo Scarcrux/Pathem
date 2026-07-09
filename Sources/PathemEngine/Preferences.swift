@@ -80,6 +80,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// "@tags" submenu tokens). Empty = the default order. Separators are auto-inserted
     /// between groups, so they aren't stored here.
     public var contextMenuOrder: [String]
+    /// User rules that color and style filenames by extension, name, size, or kind
+    /// (Directory-Opus-style labels). Empty = no coloring.
+    public var colorRules: ColorRules
     /// "Super-drag": flick the selection a short way and release (off a drop target) to fire
     /// a directional quick action, with a swipe trail for feedback. Off by default.
     public var dragFlickActions: Bool
@@ -114,7 +117,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
-        contextMenuOrder: [String] = [],
+        contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -134,6 +137,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.toolbarIconSize = toolbarIconSize
         self.hiddenContextItems = hiddenContextItems
         self.contextMenuOrder = contextMenuOrder
+        self.colorRules = colorRules
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -208,6 +212,7 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent([String].self, forKey: .hiddenContextItems) ?? d.hiddenContextItems
         contextMenuOrder =
             try c.decodeIfPresent([String].self, forKey: .contextMenuOrder) ?? d.contextMenuOrder
+        colorRules = try c.decodeIfPresent(ColorRules.self, forKey: .colorRules) ?? d.colorRules
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =

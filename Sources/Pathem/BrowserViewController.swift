@@ -4143,6 +4143,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
                 pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
                 pane.setContextMenuOrder(prefs.contextMenuOrder)
+                pane.setColorRules(prefs.colorRules)
             }
         }
         applyCompactSidebar()
@@ -6078,6 +6079,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Seed sample color rules for a render, without persisting (PATHEM_COLOR_RULES).
+    func debugSeedColorRules() {
+        let rules = ColorRules(rules: [
+            ColorRule(name: "Folders", field: .kind, op: .isAnyOf, value: "folder", colorHex: "#95D5B2", bold: true),
+            ColorRule(name: "Images", field: .ext, op: .isAnyOf, value: "png, jpg, jpeg, gif, heic", colorHex: "#8ECAE6"),
+            ColorRule(name: "Docs", field: .ext, op: .isAnyOf, value: "pdf, doc, docx, txt, md", colorHex: "#FFB4A2"),
+            ColorRule(name: "Drafts", field: .name, op: .contains, value: "draft", colorHex: "#FFB703", italic: true),
+            ColorRule(name: "Big files", field: .size, op: .greaterThan, value: "50", colorHex: "#E76F51", bold: true),
+        ])
+        leftTabs.activePane?.setColorRules(rules)
+        rightTabs.activePane?.setColorRules(rules)
+    }
+
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).
     func debugRenderSidebar(to path: String) {
         let view = sidebar.containerView
@@ -6571,6 +6585,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             Array(cmenuCommands.prefix(2)) == ["files.copy", "files.open"]
                 && !cmenuCommands.contains("files.rename"),
             "first=\(Array(cmenuCommands.prefix(2))) hidRename=\(!cmenuCommands.contains("files.rename"))")
+        // Color rules (labels): a matching rule yields a color/font; a non-match yields nil.
+        let ruleSet = ColorRules(rules: [
+            ColorRule(field: .ext, op: .isAnyOf, value: "log", colorHex: "#FF0000", bold: true)
+        ])
+        let logStyle = FileColorStyle.style(
+            for: FileEntry(name: "a.log", isDirectory: false, size: 1, modificationDate: nil),
+            rules: ruleSet, baseFont: .systemFont(ofSize: 13))
+        let txtStyle = FileColorStyle.style(
+            for: FileEntry(name: "a.txt", isDirectory: false, size: 1, modificationDate: nil),
+            rules: ruleSet, baseFont: .systemFont(ofSize: 13))
+        check("color-rules", logStyle?.color != nil && txtStyle == nil,
+            "matched=\(logStyle?.color != nil) unmatched=\(txtStyle == nil)")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)

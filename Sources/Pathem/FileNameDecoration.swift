@@ -18,8 +18,11 @@ enum FileNameDecoration {
     }
 
     /// An optional leading colored git-state letter, the name, then a colored dot per tag.
+    /// `nameFont`/`nameColor` override the name run's style so a color rule's bold/italic and
+    /// color apply even alongside git and tag decorations.
     static func decoratedName(
-        _ name: String, git: GitFileState?, dots colors: [FileTag.Color], size: CGFloat
+        _ name: String, git: GitFileState?, dots colors: [FileTag.Color], size: CGFloat,
+        nameFont: NSFont? = nil, nameColor: NSColor? = nil
     ) -> NSAttributedString {
         let result = NSMutableAttributedString()
         if let git {
@@ -29,8 +32,9 @@ enum FileNameDecoration {
                     string: "\(badge.letter) ",
                     attributes: [.font: NSFont.boldSystemFont(ofSize: size), .foregroundColor: badge.color]))
         }
-        result.append(
-            NSAttributedString(string: name, attributes: [.font: NSFont.systemFont(ofSize: size)]))
+        var nameAttributes: [NSAttributedString.Key: Any] = [.font: nameFont ?? NSFont.systemFont(ofSize: size)]
+        if let nameColor { nameAttributes[.foregroundColor] = nameColor }
+        result.append(NSAttributedString(string: name, attributes: nameAttributes))
         appendDots(colors, to: result, size: size)
         return result
     }

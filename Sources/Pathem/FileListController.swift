@@ -340,6 +340,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private let contextMenu = FileContextMenuController()
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
     func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
+    private var colorRules = ColorRules()
+    func setColorRules(_ rules: ColorRules) {
+        guard rules != colorRules else { return }
+        colorRules = rules
+        tableView.reloadData()  // re-color the visible rows
+    }
 
     /// Apply display preferences (density-derived row height, font size,
     /// alternating rows). Reloads so recycled cells pick up the new font.
@@ -709,8 +715,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         cell.alphaValue = isCut(entry) ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
         switch Column(rawValue: id.rawValue) {
         case .name:
-            // Online-only (dataless) items: a cloud badge + dimmed name.
-            cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
+            // A matching color rule tints/styles the name; else the dataless/normal default.
+            let ruleStyle = FileColorStyle.style(
+                for: entry, rules: colorRules, baseFont: .systemFont(ofSize: listFontSize))
+            cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: listFontSize)
+            let defaultColor: NSColor = entry.isDataless ? .secondaryLabelColor : .labelColor
+            cell.textField?.textColor = ruleStyle?.color ?? defaultColor
             let baseIcon = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
             cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: directoryURL)
             let colors = tagColors(for: entry)
@@ -719,7 +729,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 cell.textField?.stringValue = entry.name
             } else {
                 cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
-                    entry.name, git: git, dots: colors, size: listFontSize)
+                    entry.name, git: git, dots: colors, size: listFontSize,
+                    nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
             }
             if underlineOnHover, row == hoveredRow, let field = cell.textField {
                 let text =

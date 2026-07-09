@@ -41,8 +41,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// the bar as the list scrolls).
     var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
     var contentClipView: NSClipView { content.scrollView.contentView }
-    func setHiddenContextItems(_ ids: Set<String>) { content.setHiddenContextItems(ids) }
-    func setContextMenuOrder(_ order: [String]) { content.setContextMenuOrder(order) }
+    func setHiddenContextItems(_ ids: Set<String>) { lastHiddenContextItems = ids; content.setHiddenContextItems(ids) }
+    func setContextMenuOrder(_ order: [String]) { lastContextMenuOrder = order; content.setContextMenuOrder(order) }
+    func setColorRules(_ rules: ColorRules) { lastColorRules = rules; content.setColorRules(rules) }
+    // Cross-view settings, remembered so they carry across a view-mode swap (the new content
+    // starts empty).
+    private var lastHiddenContextItems: Set<String> = []
+    private var lastContextMenuOrder: [String] = []
+    private var lastColorRules = ColorRules()
     private let contentContainer = NSView()
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)
@@ -1021,6 +1027,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.setClickBehavior(  // carry single-click / hover across the swap
             singleClick: clickBehavior.singleClick, underlineHover: clickBehavior.underlineHover)
         content.setCutPaths(cutPaths)  // carry cut-dimming across the swap
+        content.setHiddenContextItems(lastHiddenContextItems)  // carry menu + color customization
+        content.setContextMenuOrder(lastContextMenuOrder)
+        content.setColorRules(lastColorRules)
         if hadFocus { content.keyView.window?.makeFirstResponder(content.keyView) }
     }
 
