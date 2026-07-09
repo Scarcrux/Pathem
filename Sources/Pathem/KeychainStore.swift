@@ -39,4 +39,11 @@ enum KeychainStore {
     static func removePassword(for id: UUID) {
         SecItemDelete(base(id) as CFDictionary)
     }
+
+    /// Delete every Pathem-stored password (used by "Reset Pathem Data" for a clean uninstall).
+    static func removeAll() {
+        SecItemDelete(
+            [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service]
+                as CFDictionary)
+    }
 }

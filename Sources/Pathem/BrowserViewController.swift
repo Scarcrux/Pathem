@@ -262,7 +262,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Whether this browser owns the persisted session. The primary window restores and saves
     /// it; additional windows (File ▸ New Window) open fresh at their start folder and never
     /// touch the shared session, so they can't clobber the primary's tabs.
-    let persistsSession: Bool
+    private(set) var persistsSession: Bool  // cleared by Reset Pathem Data so quit won't re-save
 
     init(start: URL, demo: DemoWorkspace.Layout? = nil, persistsSession: Bool = true) {
         demoLayout = demo
@@ -1066,6 +1066,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let entry = self?.activePane?.selectedEntries, entry.count == 1 else { return false }
             return entry.first?.name.hasSuffix(".app") == true
         }) { [weak self] in self?.deleteAppWithLeftovers() }
+        add("app.resetData", L("bvc.cmd.resetData", "Reset Pathem Data…")) { [weak self] in self?.resetPathemData() }
         add("git.commit", L("bvc.cmd.gitCommit", "Commit…"), enabled: inLocalFolder) { [weak self] in self?.gitCommit() }
         add("git.push", L("bvc.cmd.gitPush", "Push"), enabled: inLocalFolder) { [weak self] in self?.gitPushPull(push: true) }
         add("git.pull", L("bvc.cmd.gitPull", "Pull"), enabled: inLocalFolder) { [weak self] in self?.gitPushPull(push: false) }
@@ -4323,6 +4324,34 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         ConfigStore.directory()
     }
 
+    /// Clean-uninstall helper: remove everything Pathem persisted (its Application Support
+    /// config, its user defaults, and its Keychain passwords) and restore Finder as the
+    /// default folder app, then quit -- so dragging Pathem to the Trash leaves nothing behind.
+    /// Files are never touched.
+    private func resetPathemData() {
+        guard let window = view.window else { return }
+        let alert = NSAlert()
+        alert.messageText = L("bvc.resetDataTitle", "Reset Pathem Data?")
+        alert.informativeText = L(
+            "bvc.resetDataBody",
+            "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall.")
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: L("bvc.resetDataConfirm", "Reset and Quit"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            if FolderHandler.isPathem { try? await FolderHandler.setDefault(toPathem: false) }
+            if let dir = Self.appSupportDirectory() { try? FileManager.default.removeItem(at: dir) }
+            KeychainStore.removeAll()
+            if let bundleID = Bundle.main.bundleIdentifier {
+                UserDefaults.standard.removePersistentDomain(forName: bundleID)
+            }
+            persistsSession = false  // don't re-save a session on the way out
+            _ = window
+            NSApp.terminate(nil)
+        }
+    }
+
     /// Decode config from `url`. A missing file returns nil (use defaults). A
     /// present-but-undecodable file (corrupt, hand-edit typo, newer schema) is
     /// moved aside to <name>.corrupt and returns nil, so the next save cannot
@@ -6671,6 +6700,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             paletteIDs.contains(Self.toolbarCmdPrefix + "view.syncBrowsing")
                 && paletteIDs.count > Self.toolbarCatalog.count + 3,
             "palette=\(paletteIDs.count) catalog=\(Self.toolbarCatalog.count)")
+        // Clean-uninstall + folder handler: the reset command is registered (never invoked
+        // here -- it would wipe data), and the folder-default query answers without crashing.
+        check("uninstall-hooks",
+            cmdIDs.contains("app.resetData") && (FolderHandler.isPathem || !FolderHandler.isPathem),
+            "reset=\(cmdIDs.contains("app.resetData"))")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)

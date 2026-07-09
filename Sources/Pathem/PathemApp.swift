@@ -620,6 +620,8 @@ enum PathemApp {
         appMenu.addItem(.separator())
         appMenu.addItem(commandItem("Settings…", "view.preferences", ","))
         appMenu.addItem(.separator())
+        appMenu.addItem(commandItem("Reset Pathem Data…", "app.resetData"))
+        appMenu.addItem(.separator())
         appMenu.addItem(
             withTitle: L("menu.quit", "Quit Pathem"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
