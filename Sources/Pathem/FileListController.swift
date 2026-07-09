@@ -663,23 +663,29 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // MARK: Drag and drop
 
     func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
-        guard let dir = directoryURL, let index = entryIndex(forRow: row) else { return nil }  // headers don't drag
+        guard let index = entryIndex(forRow: row) else { return nil }  // headers don't drag
         let entry = entries[index]
-        guard !entry.isDataless else { return nil }  // don't drag online-only placeholders
+        guard !entry.isDataless, let url = entryURL(entry) else { return nil }  // no location -> can't drag
         // A promise + file URL, so the drag lands in browsers/sandboxed apps and Finder alike.
-        return FileDrag.item(for: dir.appendingPathComponent(entry.name))
+        return FileDrag.item(for: url)
     }
 
     func tableView(
         _ tableView: NSTableView, draggingSession session: NSDraggingSession,
         willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
     ) {
-        guard let dir = directoryURL else { return }
         let urls = rowIndexes.compactMap { row -> URL? in
             guard let index = entryIndex(forRow: row), !entries[index].isDataless else { return nil }
-            return dir.appendingPathComponent(entries[index].name)
+            return entryURL(entries[index])
         }
         FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
+    }
+
+    /// The real file URL for an entry: its own `location` (smart/search results span folders)
+    /// or the listed `directoryURL`. nil when neither is known.
+    private func entryURL(_ entry: FileEntry) -> URL? {
+        let path = PaneItemKey.path(for: entry, in: directoryURL)
+        return path == entry.name ? nil : URL(fileURLWithPath: path)
     }
 
     func tableView(

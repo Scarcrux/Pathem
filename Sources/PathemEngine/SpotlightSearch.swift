@@ -73,6 +73,21 @@ public enum SpotlightSearch {
         }
     }
 
+    /// Whether Spotlight indexing is on for the boot volume. Smart folders and search all
+    /// depend on `mdfind`, which returns nothing when indexing is disabled -- so an empty
+    /// result plus this being false means "Spotlight is off", not "no matches". Runs
+    /// `mdutil -s /` off-main; assumes enabled if it can't tell.
+    public static func indexingEnabled() async -> Bool {
+        let mdutil = "/usr/bin/mdutil"
+        guard FileManager.default.isExecutableFile(atPath: mdutil),
+            let (data, _, _) = try? await RemoteRunner.run(mdutil, ["-s", "/"])
+        else { return true }
+        let output = String(decoding: data, as: UTF8.self)
+        // "Indexing enabled." when on; "Indexing disabled." when off. Anything else -> assume on.
+        if output.localizedCaseInsensitiveContains("Indexing disabled") { return false }
+        return true
+    }
+
     private static func modificationDate(_ url: URL) -> Date {
         (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
     }

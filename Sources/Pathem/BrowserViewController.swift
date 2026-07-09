@@ -812,7 +812,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let urls = await SpotlightSearch.matching(query, scope: nil, limit: 1000)
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
-            pane.showSmartResults(entries, title: String(format: L("bvc.searchCount", "Search: %@ (%d)"), name, entries.count))
+            let title = String(format: L("bvc.searchCount", "Search: %@ (%d)"), name, entries.count)
+            await self.presentSmartResults(entries, title: title, pane: pane, token: token)
         }
     }
 
@@ -4678,8 +4679,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }  // stale
-            pane.showSmartResults(entries, title: title)
+            await self.presentSmartResults(entries, title: title, pane: pane, token: token)
         }
+    }
+
+    /// Show smart-search results. When they're empty because Spotlight indexing is off (not
+    /// because there are no matches), show a clear message instead of a silent empty pane --
+    /// smart folders and search all rely on `mdfind`.
+    private func presentSmartResults(
+        _ entries: [FileEntry], title: String, pane: PaneController, token: Int
+    ) async {
+        if entries.isEmpty {
+            let indexed = await SpotlightSearch.indexingEnabled()
+            guard activePane === pane, pane.isContentRequestCurrent(token) else { return }
+            if !indexed {
+                pane.showSmartResults(
+                    [],
+                    title: L(
+                        "bvc.spotlightOff",
+                        "Spotlight indexing is off — smart folders and search need it. Enable it in Terminal: sudo mdutil -i on /"))
+                return
+            }
+        }
+        pane.showSmartResults(entries, title: title)
     }
 
     // MARK: - Shared (SMB) computers
