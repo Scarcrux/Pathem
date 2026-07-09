@@ -738,6 +738,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("Find in Files…", "files.findInFiles"))
         viewMenu.addItem(commandItem("Find Duplicates", "files.findDuplicates"))
         viewMenu.addItem(commandItem("Find Similar Names", "files.findSimilarNames"))
+        viewMenu.addItem(commandItem("Flatten Folder (Show All Items)", "view.flattenFolder"))
         viewMenu.addItem(commandItem("Compare Panes…", "files.comparePanes"))
         viewMenu.addItem(commandItem("Size Browser…", "view.sizeBrowser"))
         viewMenu.addItem(commandItem("Cleanup…", "view.cleanup"))

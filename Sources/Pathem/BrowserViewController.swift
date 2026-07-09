@@ -1092,6 +1092,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.findSimilarNames()
         }
         add(
+            "view.flattenFolder", L("bvc.cmd.flattenFolder", "Flatten Folder (Show All Items)"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+                return true
+            }
+        ) { [weak self] in self?.flattenFolder() }
+        add(
             "ai.renameSelection", L("bvc.cmd.aiRename", "AI Rename…"),
             enabled: { [weak self] in
                 guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
@@ -3078,6 +3085,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 ? String(format: L("bvc.noSimilar", "No similar names in %@"), root.lastPathComponent)
                 : "Similar names: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
             pane.showSmartResults(files, title: title)
+        }
+    }
+
+    /// Flat / recursive view: list every item under the current folder, flattened into one
+    /// location-aware smart-result view (each row carries its own subfolder). Runs off the main
+    /// thread; navigating away discards it, like the other smart views.
+    private func flattenFolder() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let root = pane.currentURL
+        let includingHidden = pane.showHiddenByDefault
+        let token = pane.beginContentRequest()
+        pane.showSmartResults([], title: String(format: L("bvc.flatteningLoading", "Listing everything in %@…"), root.lastPathComponent))
+        Task { @MainActor [weak self] in
+            let result = await Task.detached {
+                FlatEnumerator.entries(of: root, includingHidden: includingHidden, includeFolders: true)
+            }.value
+            guard let self, self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
+            let count = result.entries.count
+            let title =
+                result.truncated
+                ? String(format: L("bvc.flatCountTruncated", "All items in %@: %d+ (truncated)"), root.lastPathComponent, count)
+                : String(format: L("bvc.flatCount", "All items in %@: %d"), root.lastPathComponent, count)
+            pane.showSmartResults(result.entries, title: title)
         }
     }
 
@@ -6130,6 +6160,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             FileEntry(name: "c.txt", isDirectory: false, size: 10, modificationDate: nil),
         ], preserveState: false)
         check("icon-view-grouping", gridGroup.debugGroupRoundTrips(), "")
+        // Flat / recursive view: the command is registered and the enumerator flattens a subtree
+        // (a nested file appears with its own subfolder location).
+        let flatDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-flat-\(UUID().uuidString)")
+        let flatSub = flatDir.appendingPathComponent("sub")
+        try? FileManager.default.createDirectory(at: flatSub, withIntermediateDirectories: true)
+        try? "x".write(to: flatDir.appendingPathComponent("top.txt"), atomically: true, encoding: .utf8)
+        try? "y".write(to: flatSub.appendingPathComponent("deep.txt"), atomically: true, encoding: .utf8)
+        let flatResult = FlatEnumerator.entries(of: flatDir, includeFolders: true)
+        let hasDeep = flatResult.entries.contains { $0.name == "deep.txt" && ($0.location?.contains("sub") ?? false) }
+        let hasTop = flatResult.entries.contains { $0.name == "top.txt" }
+        check("flatten-folder", cmdIDs.contains("view.flattenFolder") && hasDeep && hasTop,
+            "registered=\(cmdIDs.contains("view.flattenFolder")) deep=\(hasDeep) top=\(hasTop)")
+        try? FileManager.default.removeItem(at: flatDir)
         return (ok, lines)
     }
 }
