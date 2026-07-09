@@ -91,9 +91,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 L("bvc.desktopFailedBody", "The image may be in a format the desktop can’t use."))
         }
     }
-    /// When on, navigating one pane navigates the other to the same folder.
+    /// When on, navigating one pane replays the same relative move on the other, so two
+    /// different roots stay in step (Directory-Opus-style synchronized browsing).
     private var syncBrowsing = false
     private var isSyncingPanes = false  // re-entrancy guard for the mirror navigation
+    /// Each pane's last-seen local folder, so a navigation's relative delta can be
+    /// computed (see `mirrorNavigationIfSyncing`). Keyed by pane identity.
+    private var syncBrowseAnchors: [ObjectIdentifier: URL] = [:]
     private let split = NSSplitView()  // the two sides
     private let outerSplit = NSSplitView()  // sidebar | panes
     private let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
@@ -1129,7 +1133,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.syncBrowsing", L("bvc.cmd.syncBrowsing", "Sync Browsing")) { [weak self] in
             guard let self else { return }
             self.syncBrowsing.toggle()
-            if self.syncBrowsing, let url = self.activePane?.currentURL { self.mirrorNavigationIfSyncing(to: url) }
+            // Seed both panes' anchors so the first move of either one mirrors relative
+            // to where they sit right now.
+            if self.syncBrowsing {
+                for side in [self.leftTabs, self.rightTabs] {
+                    if let pane = side.activePane, !pane.isRemote {
+                        self.syncBrowseAnchors[ObjectIdentifier(pane)] = pane.currentURL.standardizedFileURL
+                    }
+                }
+            }
         }
         add("workspace.save", L("bvc.cmd.saveWorkspace", "Save Workspace…")) { [weak self] in self?.saveWorkspace() }
         add("workspace.open", L("bvc.cmd.openWorkspace", "Open Workspace…")) { [weak self] in self?.openWorkspace() }
@@ -5798,15 +5810,36 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         saveSessionSoon()
     }
 
-    /// Sync browsing: point the other side's active pane at the same local folder.
+    /// Sync browsing: replay the active pane's relative move on the other side's pane,
+    /// so two different roots track together. Descending into a subfolder moves the
+    /// other pane into its same-named subfolder (if it exists); rising moves both up.
+    /// The other pane holds still when the mirrored folder doesn't exist.
     private func mirrorNavigationIfSyncing(to url: URL) {
-        guard syncBrowsing, !isSyncingPanes else { return }
+        guard let active = activePane else { return }
+        let here = url.standardizedFileURL
+        let key = ObjectIdentifier(active)
+        let previous = syncBrowseAnchors[key]
+        syncBrowseAnchors[key] = here  // keep the driver's anchor current for the next hop
+
+        guard syncBrowsing, !isSyncingPanes, !active.isRemote, let previous else { return }
         let other = activeSide === leftTabs ? rightTabs : leftTabs
         guard let otherPane = other.activePane, !otherPane.isRemote,
-            otherPane.currentURL.standardizedFileURL != url.standardizedFileURL
+            !otherPane.isShowingSmartResults
         else { return }
+        let otherHere = otherPane.currentURL.standardizedFileURL
+        guard
+            let targetPath = SyncBrowse.mirroredPath(
+                driverFrom: previous.path, driverTo: here.path, otherAt: otherHere.path)
+        else { return }
+        let target = URL(fileURLWithPath: targetPath).standardizedFileURL
+        guard target != otherHere else { return }  // already there
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: target.path, isDirectory: &isDir),
+            isDir.boolValue
+        else { return }  // no mirror folder over there: hold still
         isSyncingPanes = true
-        otherPane.navigate(to: url)
+        syncBrowseAnchors[ObjectIdentifier(otherPane)] = target  // so its own callback won't mirror back
+        otherPane.navigate(to: target)
         isSyncingPanes = false
     }
 
@@ -6483,6 +6516,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("remote-bookmarks",
             cmdIDs.contains("files.addBookmark") && bmData?.bookmarks.first?.remotePath == "/var/log",
             "cmd=\(cmdIDs.contains("files.addBookmark")) path=\(bmData?.bookmarks.first?.remotePath ?? "nil")")
+        // Sync browsing: the command is registered and a relative descend on one pane
+        // maps onto the other pane's parallel tree (delta mirroring, not same-path lock).
+        let syncDescend = SyncBrowse.mirroredPath(
+            driverFrom: "/a/projA", driverTo: "/a/projA/src", otherAt: "/a/projB")
+        let syncAscend = SyncBrowse.mirroredPath(
+            driverFrom: "/a/projA/src", driverTo: "/a/projA", otherAt: "/a/projB/src")
+        check("sync-browse-delta",
+            cmdIDs.contains("view.syncBrowsing") && syncDescend == "/a/projB/src"
+                && syncAscend == "/a/projB",
+            "cmd=\(cmdIDs.contains("view.syncBrowsing")) descend=\(syncDescend ?? "nil") ascend=\(syncAscend ?? "nil")")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)
