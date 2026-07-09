@@ -19,6 +19,7 @@ import Foundation
         public let port: UInt16
         private let infoHash: Data
         private let myPeerID: Data
+        private let advertiseExtensions: Bool
 
         private var connection: NWConnection?
         private var inbound = Data()  // bytes read but not yet parsed into a message
@@ -30,12 +31,16 @@ import Foundation
         public private(set) var peerBitfield: [Bool] = []
         public private(set) var remotePeerID: Data?
 
-        public init(host: String, port: UInt16, infoHash: Data, peerID: Data) {
+        public init(host: String, port: UInt16, infoHash: Data, peerID: Data, advertiseExtensions: Bool = false) {
             self.host = host
             self.port = port
             self.infoHash = infoHash
             self.myPeerID = peerID
+            self.advertiseExtensions = advertiseExtensions
         }
+
+        /// Whether the peer's handshake advertised BEP 10 extension support (set after connect()).
+        public private(set) var peerSupportsExtensions = false
 
         /// Open the TCP connection and exchange handshakes. Throws on failure or timeout.
         public func connect(timeout: TimeInterval = 15) async throws {
@@ -56,7 +61,8 @@ import Foundation
                 conn.start(queue: Self.queue)
             }
 
-            let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID)
+            let reserved = advertiseExtensions ? PeerHandshake.extensionReserved : Data(count: 8)
+            let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID, reserved: reserved)
             try await rawSend(handshake.encoded)
             try await readHandshake(timeout: timeout)
         }
@@ -68,6 +74,7 @@ import Foundation
                 throw PeerError.handshakeMismatch
             }
             remotePeerID = hs.peerID
+            peerSupportsExtensions = hs.supportsExtensions
             inbound.removeFirst(68)
         }
 

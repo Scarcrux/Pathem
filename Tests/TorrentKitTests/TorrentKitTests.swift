@@ -345,13 +345,15 @@ import Testing
         let metadata = Data(info.utf8)
         let infoHash = Data(Insecure.SHA1.hash(data: metadata))
 
-        let torrent = try #require(
+        let built = try #require(
             MetadataExchange.buildTorrent(
                 fromMetadata: metadata, infoHash: infoHash, trackers: ["http://tracker.test/announce"]))
-        #expect(torrent.name == "movie.mkv")
-        #expect(torrent.totalLength == 2048)
-        #expect(torrent.infoHash == infoHash)  // preserved exactly through the rebuild
-        #expect(torrent.trackers == ["http://tracker.test/announce"])
+        #expect(built.torrent.name == "movie.mkv")
+        #expect(built.torrent.totalLength == 2048)
+        #expect(built.torrent.infoHash == infoHash)  // preserved exactly through the rebuild
+        #expect(built.torrent.trackers == ["http://tracker.test/announce"])
+        // The returned bytes re-parse to the same torrent (they are what we persist).
+        #expect(try TorrentFile.parse(built.torrentBytes).infoHash == infoHash)
     }
 
     @Test func rejectsMetadataWithWrongHash() {

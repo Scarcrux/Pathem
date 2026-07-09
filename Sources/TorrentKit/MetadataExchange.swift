@@ -48,9 +48,12 @@ public enum MetadataExchange {
     }
 
     /// Verify assembled metadata against the expected info hash, and if it matches, wrap it into a
-    /// parseable .torrent (preserving the raw info bytes so the hash stays intact) and return the
-    /// TorrentFile. Returns nil on hash mismatch or parse failure.
-    public static func buildTorrent(fromMetadata metadata: Data, infoHash: Data, trackers: [String]) -> TorrentFile? {
+    /// parseable .torrent (preserving the raw info bytes so the hash stays intact). Returns both
+    /// the parsed TorrentFile and the .torrent bytes (so a resolved magnet can be persisted).
+    /// Returns nil on hash mismatch or parse failure.
+    public static func buildTorrent(
+        fromMetadata metadata: Data, infoHash: Data, trackers: [String]
+    ) -> (torrent: TorrentFile, torrentBytes: Data)? {
         guard Data(Insecure.SHA1.hash(data: metadata)) == infoHash else { return nil }
 
         // Assemble a top-level dict by hand so the info dict's exact bytes are preserved:
@@ -73,6 +76,7 @@ public enum MetadataExchange {
         bytes.append(metadata)
         bytes.append(Data("e".utf8))
 
-        return try? TorrentFile.parse(bytes)
+        guard let torrent = try? TorrentFile.parse(bytes) else { return nil }
+        return (torrent, bytes)
     }
 }
