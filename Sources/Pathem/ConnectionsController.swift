@@ -313,6 +313,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         let colorNames = [""] + FileTag.Color.displayOrder.map(\.nameKey)
         colorPopup.addItems(withTitles: [L("conn.colorNone", "None")] + FileTag.Color.displayOrder.map(\.label))
         colorPopup.selectItem(at: max(0, colorNames.firstIndex(of: existing?.colorLabel ?? "") ?? 0))
+        let group = field(L("conn.groupPlaceholder", "Group (organizes sites in the sidebar; optional)"), existing?.group ?? "")
         let localPath = field(L("conn.localPathPlaceholder", "Local folder to open on connect (optional)"), existing?.localPath ?? "")
         let chooseLocal = NSButton(title: L("conn.chooseLocal", "Choose…"), target: self, action: #selector(chooseLocalPath))
         chooseLocal.bezelStyle = .rounded
@@ -327,7 +328,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
             labeled(L("conn.regionLabel", "Region"), region), labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
             labeled(L("conn.keyFileLabel", "Key File"), keyRow),
-            labeled(L("conn.colorLabel2", "Color"), colorPopup), labeled(L("conn.localLabel", "Local dir"), localRow),
+            labeled(L("conn.colorLabel2", "Color"), colorPopup), labeled(L("conn.groupLabel", "Group"), group),
+            labeled(L("conn.localLabel", "Local dir"), localRow),
         ])
         rows.orientation = .vertical
         rows.alignment = .leading
@@ -369,7 +371,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 keyFile: keyFile.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
                 colorLabel: colorNames[colorPopup.indexOfSelectedItem],
                 localPath: localPath.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
-                bookmarks: existing?.bookmarks ?? [])  // edits keep the site's saved bookmarks
+                bookmarks: existing?.bookmarks ?? [],  // edits keep the site's saved bookmarks
+                group: group.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             // Resolve the target by identity, not the captured row index, which can
             // go stale if the list changed while this modeless sheet was open.
             if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id }) {

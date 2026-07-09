@@ -266,6 +266,9 @@ enum PathemApp {
                 if ProcessInfo.processInfo.environment["PATHEM_COLOR_RULES"] != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSeedColorRules() }
                 }
+                if ProcessInfo.processInfo.environment["PATHEM_SITE_GROUPS"] != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSeedGroupedConnections() }
+                }
                 if ProcessInfo.processInfo.environment["PATHEM_FORMATS"] != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSetBinaryRelativeFormats() }
                 }

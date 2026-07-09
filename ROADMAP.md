@@ -375,8 +375,9 @@ Tier 3 (breadth and niceties):
   tinted service badge (iCloud, Dropbox, Google Drive, OneDrive, Box) is composited in the
   corner across list / icon / column / tree. Tinted SF Symbol clouds rather than bundled
   brand logos (no trademark concerns), distinguished by color.
-- **Super-drag follow-ups:** make the flick-to-command map user-editable, and
-  extend the gesture beyond the list view (icon / gallery / column).
+- **Super-drag follow-ups:** the flick-to-command map is user-editable (Settings ▸ Gestures)
+  and the gesture works in list / icon / gallery / column. Only the tree outline lacks it
+  (hierarchical; a flick reads oddly there), which is the sole remaining gap.
 
 ## Candidate features (demand-ranked, added 2026-07-05)
 

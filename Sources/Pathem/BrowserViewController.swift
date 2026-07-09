@@ -6220,6 +6220,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Seed grouped connections for a render, without persisting (PATHEM_SITE_GROUPS).
+    func debugSeedGroupedConnections() {
+        let conns = [
+            RemoteConnection(name: "Web 1", proto: .sftp, host: "web1.example.com", group: "Production"),
+            RemoteConnection(name: "Web 2", proto: .sftp, host: "web2.example.com", group: "Production"),
+            RemoteConnection(name: "Backups", proto: .s3, host: "s3.example.com", group: "Storage"),
+            RemoteConnection(name: "Scratch", proto: .ftp, host: "ftp.example.com"),
+        ]
+        connectionsController.connections = conns  // reloads the manager table (no persistence)
+        sidebar.setConnections(conns)  // group them in the sidebar
+    }
+
     /// Seed sample color rules for a render, without persisting (PATHEM_COLOR_RULES).
     func debugSeedColorRules() {
         let rules = ColorRules(rules: [

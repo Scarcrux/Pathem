@@ -22,6 +22,17 @@ import Testing
         #expect(decoded.bookmarks.isEmpty)  // absent bookmarks default to none
     }
 
+    @Test func groupRoundTripAndBackwardCompat() throws {
+        var original = RemoteConnection(name: "Prod DB", proto: .sftp, host: "db.example.com")
+        original.group = "Production"
+        let decoded = try JSONDecoder().decode(
+            RemoteConnection.self, from: JSONEncoder().encode(original))
+        #expect(decoded.group == "Production")
+        // Older connections.json without a group decodes to ungrouped.
+        let old = #"{"name":"Old","proto":"ftp","host":"h.example.com"}"#
+        #expect(try JSONDecoder().decode(RemoteConnection.self, from: Data(old.utf8)).group.isEmpty)
+    }
+
     @Test func bookmarksRoundTrip() throws {
         var original = RemoteConnection(name: "Site", proto: .sftp, host: "example.com")
         original.bookmarks = [

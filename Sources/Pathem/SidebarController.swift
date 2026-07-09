@@ -136,6 +136,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case trash  // the user's Trash (navigable; drops trash the items)
         case shared(String)  // a discovered SMB host (by display name)
         case connection(RemoteConnection)  // a saved FTP/SFTP server
+        case connectionGroup(String)  // a named group of saved servers (expandable container)
         case device(RemoteConnection)  // a discovered USB phone (adb / iOS)
         case manageConnections  // the "Manage…" row
     }
@@ -169,6 +170,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             case .userGroup, .systemHeader: return true
             default: return false
             }
+        }
+        /// A connection-group container: expandable and non-selectable, but not a section header.
+        var isConnectionGroup: Bool {
+            if case .connectionGroup = kind { return true }
+            return false
         }
         var isEditable: Bool {
             switch kind {
@@ -381,6 +387,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .trash: return "trash"
         case .shared(let host): return "shared:\(host)"
         case .connection(let connection): return "conn:\(connection.id)"
+        case .connectionGroup(let name): return "cgroup:\(name)"
         case .device(let device): return "device:\(device.proto.rawValue):\(device.host)"
         case .manageConnections: return "manage"
         }
@@ -407,10 +414,25 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// Saved FTP/SFTP servers, always shown (with a Manage… row) so connections
     /// are discoverable; click a server to connect.
     private func connectionsNode() -> Node {
-        var children = connections.map { connection in
+        func connectionNode(_ connection: RemoteConnection) -> Node {
             Node(
                 kind: .connection(connection), title: connection.name, url: nil, icon: "network",
                 tagColor: FileTag.Color(nameKey: connection.colorLabel))  // per-site color label tints the icon
+        }
+        // Ungrouped sites list directly; grouped sites nest under an expandable group node,
+        // groups in first-seen order so the arrangement is stable.
+        var children = connections.filter { $0.group.isEmpty }.map(connectionNode)
+        var groupOrder: [String] = []
+        var byGroup: [String: [RemoteConnection]] = [:]
+        for connection in connections where !connection.group.isEmpty {
+            if byGroup[connection.group] == nil { groupOrder.append(connection.group) }
+            byGroup[connection.group, default: []].append(connection)
+        }
+        for group in groupOrder {
+            children.append(
+                Node(
+                    kind: .connectionGroup(group), title: group, url: nil, icon: "folder",
+                    children: (byGroup[group] ?? []).map(connectionNode)))
         }
         children.append(
             Node(
@@ -606,7 +628,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
         guard let node = item as? Node else { return false }
-        return node.isHeader || node.isFolder  // folders expand to their subfolders
+        return node.isHeader || node.isFolder || node.isConnectionGroup  // groups expand to their sites
     }
 
     /// Lazily list a folder node's subfolders (directories only, sorted) the first
@@ -681,7 +703,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     func outlineView(_ outlineView: NSOutlineView, shouldSelectItem item: Any) -> Bool {
-        !((item as? Node)?.isHeader ?? false)
+        guard let node = item as? Node else { return true }
+        return !(node.isHeader || node.isConnectionGroup)  // a group is a container, not a target
     }
 
     func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {

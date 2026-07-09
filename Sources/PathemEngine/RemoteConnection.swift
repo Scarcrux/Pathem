@@ -54,11 +54,14 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public var localPath: String
     /// Saved remote paths on this site, jumped to from the Bookmarks menu.
     public var bookmarks: [RemoteBookmark]
+    /// An optional group name for organizing sites in the sidebar and manager. Empty = ungrouped.
+    public var group: String
 
     public init(
         id: UUID = UUID(), name: String, proto: Proto, host: String, port: Int = 0,
         user: String = "", path: String = "/", region: String = "", keyFile: String = "",
-        colorLabel: String = "", localPath: String = "", bookmarks: [RemoteBookmark] = []
+        colorLabel: String = "", localPath: String = "", bookmarks: [RemoteBookmark] = [],
+        group: String = ""
     ) {
         self.id = id
         self.name = name
@@ -72,6 +75,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         self.colorLabel = colorLabel
         self.localPath = localPath
         self.bookmarks = bookmarks
+        self.group = group
     }
 
     public var effectivePort: Int { port > 0 ? port : proto.defaultPort }
@@ -133,6 +137,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
         colorLabel = try c.decodeIfPresent(String.self, forKey: .colorLabel) ?? ""
         localPath = try c.decodeIfPresent(String.self, forKey: .localPath) ?? ""
         bookmarks = (try? c.decodeIfPresent([RemoteBookmark].self, forKey: .bookmarks)) ?? []
+        group = try c.decodeIfPresent(String.self, forKey: .group) ?? ""
     }
 }
 
