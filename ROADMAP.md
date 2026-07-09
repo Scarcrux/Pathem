@@ -186,6 +186,23 @@ plugin-*rendered* custom views (gated Swift extension runtime); a signed `SMAppS
 privileged helper (only needed to avoid the terminal `sudo` route for chown). (Cloud
 folder badges, once deferred here, shipped in Round 7.)
 
+## Round 8 (shipped 2026-07-09) -- more customization + Finder handoff + clean uninstall
+
+- **Open folders in Pathem** -- SHIPPED. Settings ▸ General makes Pathem the system default
+  handler for `public.folder` (reversible; restores Finder). Redirects "open this folder";
+  cannot catch "Reveal in Finder" (no OS hook). `FolderHandler`.
+- **Reset Pathem Data (clean uninstall)** -- SHIPPED. Pathem menu ▸ Reset Pathem Data: restores
+  Finder as the folder default, and (unless you tick "keep my data") removes the app-support
+  config, user defaults, and Keychain passwords, then quits with a note on finishing the
+  uninstall (Trash the app; clear Full Disk Access). Files are never touched.
+- **Default view & sort** -- SHIPPED. A global view mode + sort for folders with no saved view.
+- **Commander F-keys** -- SHIPPED. Reassign each F3–F8 slot to any command.
+- **Status bar contents** -- SHIPPED. Toggle item count / size / free disk space.
+- **New-item + tab options** -- SHIPPED. Default New Folder/File names; new tab after-current or
+  at-end.
+- **Fixes** -- SHIPPED. Dragging out of a search/smart-result view (per-entry locations), and a
+  clear "Spotlight indexing is off" message when smart folders come back empty for that reason.
+
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 
 A "make everything customizable" pass (Directory-Opus-class), plus one important fix.
