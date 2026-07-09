@@ -1142,37 +1142,49 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Update the bottom status line: item count, or the selection count and its
     /// total size when something is selected.
+    /// Which fields the bottom status bar shows (item count, size, free space).
+    var statusOptions: (itemCount: Bool, size: Bool, freeSpace: Bool) = (true, true, false) {
+        didSet { if oldValue != statusOptions { updateStatus() } }
+    }
+
     private func updateStatus() {
         let all = content.entries
         let selected = content.selectedEntries
-        var text: String
-        if selected.isEmpty {
-            let size = all.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
-            let items =
-                all.count == 1
-                ? String(format: L("pane.itemCountSingular", "%d item"), all.count)
-                : String(format: L("pane.itemCountPlural", "%d items"), all.count)
-            text =
-                size > 0
-                ? String(
-                    format: L("pane.itemsWithSize", "%@ · %@"), items, byteFormatter.string(fromByteCount: size))
-                : items
-        } else {
-            let size = selected.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
-            let prefix = String(format: L("pane.selectedOf", "%d of %d selected"), selected.count, all.count)
-            text =
-                size > 0
-                ? String(
-                    format: L("pane.itemsWithSize", "%@ · %@"), prefix, byteFormatter.string(fromByteCount: size))
-                : prefix
+        var parts: [String] = []
+        if statusOptions.itemCount {
+            if selected.isEmpty {
+                parts.append(
+                    all.count == 1
+                        ? String(format: L("pane.itemCountSingular", "%d item"), all.count)
+                        : String(format: L("pane.itemCountPlural", "%d items"), all.count))
+            } else {
+                parts.append(
+                    String(format: L("pane.selectedOf", "%d of %d selected"), selected.count, all.count))
+            }
         }
+        if statusOptions.size {
+            let subset = selected.isEmpty ? all : selected
+            let size = subset.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
+            if size > 0 { parts.append(byteFormatter.string(fromByteCount: size)) }
+        }
+        if statusOptions.freeSpace, let free = freeSpaceString() { parts.append(free) }
+        var text = parts.joined(separator: " · ")
         // Note when hidden files are on view, so the mode is legible even in a folder with
         // no hidden files (where the dimmed-row cue alone wouldn't show it).
         if format.showHidden || showHiddenByDefault {
-            text += "   " + L("pane.hiddenShown", "Hidden files shown")
+            text += (text.isEmpty ? "" : "   ") + L("pane.hiddenShown", "Hidden files shown")
         }
         if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
         statusLabel.stringValue = text
+    }
+
+    /// Free space on the current folder's volume, e.g. "42 GB free". Local folders only.
+    private func freeSpaceString() -> String? {
+        guard remote == nil, let url = content.directoryURL,
+            let values = try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]),
+            let free = values.volumeAvailableCapacityForImportantUsage
+        else { return nil }
+        return String(format: L("pane.freeSpace", "%@ free"), byteFormatter.string(fromByteCount: free))
     }
 
     private func iconButton(_ symbol: String, _ action: Selector) -> NSButton {

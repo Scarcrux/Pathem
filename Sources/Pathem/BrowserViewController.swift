@@ -4158,6 +4158,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.setColorRules(prefs.colorRules)
                 pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)
                 pane.setMiddleClickOpensNewTab(prefs.middleClickOpensNewTab)
+                pane.statusOptions = (
+                    prefs.statusShowItemCount, prefs.statusShowSize, prefs.statusShowFreeSpace)
             }
         }
         applyCompactSidebar()

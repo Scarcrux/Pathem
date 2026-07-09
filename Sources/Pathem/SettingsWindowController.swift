@@ -295,6 +295,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
             check(L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"), \.middleClickOpensNewTab),
             labeled(L("prefs.commanderLabel", "Commander F-keys"), commanderEditButton()),
+            hint(L("prefs.statusBarHint", "Status bar shows:")),
+            check(L("prefs.statusItemCount", "Item count"), \.statusShowItemCount),
+            check(L("prefs.statusSize", "Size (of the folder, or the selection)"), \.statusShowSize),
+            check(L("prefs.statusFreeSpace", "Free disk space"), \.statusShowFreeSpace),
         ])
         case .menus: return menusPane()
         case .labels: return labelsPane()

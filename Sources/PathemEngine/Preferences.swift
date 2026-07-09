@@ -40,6 +40,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// The command ids bound to the Commander bar's F3–F8 buttons (six entries). Empty = the
     /// orthodox defaults (View / Edit / Copy / Move / MkDir / Delete).
     public var commanderCommands: [String]
+    /// What the pane's bottom status bar shows.
+    public var statusShowItemCount: Bool
+    public var statusShowSize: Bool
+    public var statusShowFreeSpace: Bool
     /// File-size units (decimal vs binary).
     public var sizeFormat: SizeFormat
     /// Date column format (relative / short / medium).
@@ -158,6 +162,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         defaultSortAscending: Bool = true,
         newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
         middleClickOpensNewTab: Bool = true, commanderCommands: [String] = [],
+        statusShowItemCount: Bool = true, statusShowSize: Bool = true, statusShowFreeSpace: Bool = false,
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
@@ -187,6 +192,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.fixedStartFolder = fixedStartFolder
         self.middleClickOpensNewTab = middleClickOpensNewTab
         self.commanderCommands = commanderCommands
+        self.statusShowItemCount = statusShowItemCount
+        self.statusShowSize = statusShowSize
+        self.statusShowFreeSpace = statusShowFreeSpace
         self.iconZoom = iconZoom
         self.showHiddenByDefault = showHiddenByDefault
         self.useFinderGetInfo = useFinderGetInfo
@@ -273,6 +281,11 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .middleClickOpensNewTab) ?? d.middleClickOpensNewTab
         commanderCommands =
             try c.decodeIfPresent([String].self, forKey: .commanderCommands) ?? d.commanderCommands
+        statusShowItemCount =
+            try c.decodeIfPresent(Bool.self, forKey: .statusShowItemCount) ?? d.statusShowItemCount
+        statusShowSize = try c.decodeIfPresent(Bool.self, forKey: .statusShowSize) ?? d.statusShowSize
+        statusShowFreeSpace =
+            try c.decodeIfPresent(Bool.self, forKey: .statusShowFreeSpace) ?? d.statusShowFreeSpace
         dragFlickActions =
             try c.decodeIfPresent(Bool.self, forKey: .dragFlickActions) ?? d.dragFlickActions
         dragTrailColor =
