@@ -6641,6 +6641,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             rules: ruleSet, baseFont: .systemFont(ofSize: 13))
         check("color-rules", logStyle?.color != nil && txtStyle == nil,
             "matched=\(logStyle?.color != nil) unmatched=\(txtStyle == nil)")
+        // Custom toolbar buttons: the customize palette exposes every registry command (not
+        // just the curated catalog), so any command can be dragged onto the toolbar.
+        let paletteIDs = Set(toolbarAllowedItemIdentifiers(NSToolbar(identifier: "smoke")).map(\.rawValue))
+        check("toolbar-any-command",
+            paletteIDs.contains(Self.toolbarCmdPrefix + "view.syncBrowsing")
+                && paletteIDs.count > Self.toolbarCatalog.count + 3,
+            "palette=\(paletteIDs.count) catalog=\(Self.toolbarCatalog.count)")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)

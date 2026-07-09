@@ -29,8 +29,9 @@ extension BrowserViewController {
         let config = NSImage.SymbolConfiguration(
             pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular)
         for item in toolbar.items {
-            guard let entry = Self.toolbarEntry(for: item.itemIdentifier) else { continue }
-            item.image = NSImage(systemSymbolName: entry.symbol, accessibilityDescription: item.label)?
+            guard let id = Self.toolbarCommandID(item.itemIdentifier) else { continue }
+            item.image = NSImage(
+                systemSymbolName: Self.toolbarSymbolName(for: id), accessibilityDescription: item.label)?
                 .withSymbolConfiguration(config)
         }
     }
@@ -91,6 +92,20 @@ extension BrowserViewController: NSToolbarDelegate {
         return toolbarCatalog.first { $0.commandID == id }
     }
 
+    /// The command id an item identifier carries, or nil if it isn't a command button.
+    static func toolbarCommandID(_ identifier: NSToolbarItem.Identifier) -> String? {
+        guard identifier.rawValue.hasPrefix(toolbarCmdPrefix) else { return nil }
+        return String(identifier.rawValue.dropFirst(toolbarCmdPrefix.count))
+    }
+
+    /// The SF Symbol for a command button: the curated catalog symbol, a bolt for a
+    /// user-defined external command, or a generic command glyph for anything else.
+    static func toolbarSymbolName(for commandID: String) -> String {
+        if let entry = toolbarCatalog.first(where: { $0.commandID == commandID }) { return entry.symbol }
+        if commandID.hasPrefix("external.cmd.") { return "bolt.fill" }
+        return "command.square"
+    }
+
     private static func identifier(for entry: ToolbarEntry) -> NSToolbarItem.Identifier {
         NSToolbarItem.Identifier(toolbarCmdPrefix + entry.commandID)
     }
@@ -106,11 +121,17 @@ extension BrowserViewController: NSToolbarDelegate {
             item.visibilityPriority = .high
             return item
         }
-        guard let entry = Self.toolbarEntry(for: identifier) else { return nil }
+        // A command button: the curated catalog entry, or any other registered command
+        // (external commands included) resolved dynamically -- so anything can go on the toolbar.
+        guard let commandID = Self.toolbarCommandID(identifier) else { return nil }
+        let entry = Self.toolbarCatalog.first { $0.commandID == commandID }
+        guard entry != nil || commands.command(commandID) != nil else { return nil }
+        let label = entry.map { L("toolbar.\($0.commandID)", $0.label) } ?? (commands.command(commandID)?.title ?? commandID)
         let item = NSToolbarItem(itemIdentifier: identifier)
-        item.label = L("toolbar.\(entry.commandID)", entry.label)
-        item.toolTip = item.label
-        item.image = NSImage(systemSymbolName: entry.symbol, accessibilityDescription: entry.label)?
+        item.label = label
+        item.toolTip = label
+        item.image = NSImage(
+            systemSymbolName: Self.toolbarSymbolName(for: commandID), accessibilityDescription: label)?
             .withSymbolConfiguration(.init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
         item.isBordered = true
         item.target = self
@@ -119,14 +140,14 @@ extension BrowserViewController: NSToolbarDelegate {
     }
 
     @objc private func runToolbarCommand(_ sender: NSToolbarItem) {
-        guard let entry = Self.toolbarEntry(for: sender.itemIdentifier) else { NSSound.beep(); return }
-        if !commands.perform(entry.commandID) { NSSound.beep() }
+        guard let id = Self.toolbarCommandID(sender.itemIdentifier) else { NSSound.beep(); return }
+        if !commands.perform(id) { NSSound.beep() }
     }
 
     /// Grey out a toolbar button when its command isn't currently applicable.
     func validateToolbarItem(_ item: NSToolbarItem) -> Bool {
-        guard let entry = Self.toolbarEntry(for: item.itemIdentifier) else { return true }
-        return commands.command(entry.commandID)?.isEnabled() ?? false
+        guard let id = Self.toolbarCommandID(item.itemIdentifier) else { return true }
+        return commands.command(id)?.isEnabled() ?? true
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -137,6 +158,15 @@ extension BrowserViewController: NSToolbarDelegate {
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        Self.toolbarCatalog.map(Self.identifier(for:)) + [.space, .flexibleSpace, Self.searchItemID]
+        // The curated catalog first, then user external commands, then every other registered
+        // command -- so the customization palette can put anything on the toolbar.
+        let catalog = Self.toolbarCatalog.map(\.commandID)
+        let known = Set(catalog)
+        let others = commands.all.map(\.id).filter { !known.contains($0) }
+        let external = others.filter { $0.hasPrefix("external.cmd.") }.sorted()
+        let rest = others.filter { !$0.hasPrefix("external.cmd.") }.sorted()
+        let ids = catalog + external + rest
+        return ids.map { NSToolbarItem.Identifier(Self.toolbarCmdPrefix + $0) }
+            + [.space, .flexibleSpace, Self.searchItemID]
     }
 }
