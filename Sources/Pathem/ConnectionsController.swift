@@ -11,6 +11,22 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     /// The key-file field of the connection editor currently open, so "Choose…" can fill it.
     private weak var editingKeyFileField: NSTextField?
     private weak var editingLocalPathField: NSTextField?
+    private weak var editingHostField: NSTextField?
+
+    /// Common S3-compatible endpoints, so B2 / GCS / Wasabi / Spaces are discoverable. "" = Amazon
+    /// (host derived from the region). Regions in the sample hosts are placeholders to edit.
+    private static let s3Endpoints: [(name: String, host: String)] = [
+        ("Amazon S3", ""),
+        ("Backblaze B2", "s3.us-west-002.backblazeb2.com"),
+        ("Google Cloud Storage", "storage.googleapis.com"),
+        ("Wasabi", "s3.wasabisys.com"),
+        ("DigitalOcean Spaces", "nyc3.digitaloceanspaces.com"),
+        ("Cloudflare R2", "<accountid>.r2.cloudflarestorage.com"),
+    ]
+    @objc private func s3EndpointChanged(_ sender: NSPopUpButton) {
+        guard sender.indexOfSelectedItem < Self.s3Endpoints.count else { return }
+        editingHostField?.stringValue = Self.s3Endpoints[sender.indexOfSelectedItem].host
+    }
 
     var connections: [RemoteConnection] = [] { didSet { table.reloadData() } }
     /// Called whenever the list changes, so the browser can persist it.
@@ -236,7 +252,12 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             return f
         }
         let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
-        let host = field(L("conn.hostPlaceholder", "Host"), existing?.host ?? "")
+        let host = field(L("conn.hostPlaceholder", "Host (S3: endpoint, blank = Amazon)"), existing?.host ?? "")
+        editingHostField = host
+        let s3Endpoint = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        s3Endpoint.addItems(withTitles: Self.s3Endpoints.map(\.name) + [L("conn.s3Other", "Other…")])
+        s3Endpoint.target = self
+        s3Endpoint.action = #selector(s3EndpointChanged(_:))
         let port = field(L("conn.portPlaceholder", "Port (blank = default)"), existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
         let user = field(L("conn.userPlaceholder", "User (S3: access key)"), existing?.user ?? "")
         let path = field(L("conn.pathPlaceholder", "Path (S3: /bucket)"), existing?.path ?? "/")
@@ -267,13 +288,14 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         let rows = NSStackView(views: [
             labeled(L("conn.protocolLabel", "Protocol"), proto), labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
             labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
-            labeled(L("conn.regionLabel", "Region"), region), labeled(L("conn.keyFileLabel", "Key File"), keyRow),
+            labeled(L("conn.regionLabel", "Region"), region), labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
+            labeled(L("conn.keyFileLabel", "Key File"), keyRow),
             labeled(L("conn.colorLabel2", "Color"), colorPopup), labeled(L("conn.localLabel", "Local dir"), localRow),
         ])
         rows.orientation = .vertical
         rows.alignment = .leading
         rows.spacing = 6
-        rows.frame = NSRect(x: 0, y: 0, width: 360, height: 320)
+        rows.frame = NSRect(x: 0, y: 0, width: 360, height: 356)
         alert.accessoryView = rows
         alert.addButton(withTitle: L("common.save", "Save"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
