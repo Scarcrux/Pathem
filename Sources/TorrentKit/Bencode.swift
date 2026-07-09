@@ -35,6 +35,36 @@ public indirect enum Bencode: Equatable, Sendable {
         guard case .dict(let pairs) = self else { return nil }
         return pairs.first { $0.0 == key }?.1
     }
+
+    /// Serialize to canonical bencode (dictionary keys sorted by raw bytes, as the spec requires).
+    /// Used to build the small extension-protocol messages we send; the info dict is never
+    /// re-encoded (its bytes are preserved from the wire so its hash stays intact).
+    public var encoded: Data {
+        switch self {
+        case .int(let n):
+            return Data("i\(n)e".utf8)
+        case .bytes(let d):
+            var out = Data("\(d.count):".utf8)
+            out.append(d)
+            return out
+        case .list(let items):
+            var out = Data("l".utf8)
+            for item in items { out.append(item.encoded) }
+            out.append(0x65)  // 'e'
+            return out
+        case .dict(let pairs):
+            var out = Data("d".utf8)
+            for (key, value) in pairs.sorted(by: { $0.0 < $1.0 }) {
+                out.append(Data("\(key.utf8.count):\(key)".utf8))
+                out.append(value.encoded)
+            }
+            out.append(0x65)  // 'e'
+            return out
+        }
+    }
+
+    /// Convenience for building a bencoded dictionary from key/value pairs.
+    public static func dictionary(_ pairs: [(String, Bencode)]) -> Bencode { .dict(pairs) }
 }
 
 /// A recursive-descent bencode decoder over raw bytes. Strict: malformed input throws
@@ -56,6 +86,14 @@ public struct BencodeDecoder {
         var d = BencodeDecoder(data)
         let value = try d.parseValue()
         return value
+    }
+
+    /// Decode the first bencoded value and report how many bytes it consumed. Used for the
+    /// ut_metadata data message, where a bencoded header is immediately followed by raw bytes.
+    public static func decodePrefix(_ data: Data) throws -> (value: Bencode, consumed: Int) {
+        var d = BencodeDecoder(data)
+        let value = try d.parseValue()
+        return (value, d.i)
     }
 
     /// Decode a .torrent's top dictionary, also returning the raw bytes of its `info` value

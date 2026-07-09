@@ -20,6 +20,22 @@ import Testing
         #expect(throws: (any Error).self) { try BencodeDecoder.decode(Data("5:ab".utf8)) }  // short string
         #expect(throws: (any Error).self) { try BencodeDecoder.decode(Data("x".utf8)) }  // bad type
     }
+
+    @Test func encodesCanonically() throws {
+        #expect(Bencode.int(42).encoded == Data("i42e".utf8))
+        #expect(Bencode.bytes(Data("spam".utf8)).encoded == Data("4:spam".utf8))
+        // Dictionary keys are sorted on encode, regardless of insertion order.
+        let dict = Bencode.dict([("spam", .int(1)), ("cow", .bytes(Data("moo".utf8)))])
+        #expect(dict.encoded == Data("d3:cow3:moo4:spami1ee".utf8))
+        // Round-trips through the decoder.
+        #expect(try BencodeDecoder.decode(dict.encoded) == BencodeDecoder.decode(Data("d3:cow3:moo4:spami1ee".utf8)))
+    }
+
+    @Test func decodePrefixReportsConsumed() throws {
+        let (value, consumed) = try BencodeDecoder.decodePrefix(Data("i7eEXTRA".utf8))
+        #expect(value == .int(7))
+        #expect(consumed == 3)  // "i7e", leaving "EXTRA"
+    }
 }
 
 @Suite struct TorrentFileTests {
@@ -205,6 +221,143 @@ import Testing
 
     @Test func keepAliveIsZeroLength() {
         #expect(PeerMessage.keepAlive.encoded == Data([0, 0, 0, 0]))
+    }
+
+    @Test func extendedMessageRoundTrips() {
+        let payload = Data("d1:vi1ee".utf8)  // an arbitrary bencoded extended-handshake body
+        let message = PeerMessage.extended(id: 0, payload: payload)
+        let parsed = PeerMessage.parse(message.encoded)
+        #expect(parsed?.message == message)
+        #expect(parsed?.consumed == message.encoded.count)
+    }
+
+    @Test func extensionReservedBitIsDetected() {
+        let hash = Data(count: 20)
+        let hs = PeerHandshake(infoHash: hash, peerID: Data(count: 20), reserved: PeerHandshake.extensionReserved)
+        let decoded = PeerHandshake.parse(hs.encoded)
+        #expect(decoded?.supportsExtensions == true)
+        let plain = PeerHandshake(infoHash: hash, peerID: Data(count: 20))
+        #expect(PeerHandshake.parse(plain.encoded)?.supportsExtensions == false)
+    }
+}
+
+@Suite struct MagnetTests {
+    @Test func parsesHexMagnet() throws {
+        let hex = "0123456789abcdef0123456789abcdef01234567"
+        let uri = "magnet:?xt=urn:btih:\(hex)&dn=My+File&tr=http%3A%2F%2Ftracker.test%2Fannounce"
+        let magnet = try #require(Magnet.parse(uri))
+        #expect(magnet.infoHashHex == hex)
+        #expect(magnet.infoHash.count == 20)
+        #expect(magnet.displayName == "My File")
+        #expect(magnet.trackers == ["http://tracker.test/announce"])
+    }
+
+    @Test func parsesBase32Magnet() throws {
+        // The 32-char base32 form must decode to the same 20 bytes as its hex.
+        let bytes = Data((0..<20).map { UInt8($0) })
+        let base32 = base32Encode(bytes)
+        let magnet = try #require(Magnet.parse("magnet:?xt=urn:btih:\(base32)"))
+        #expect(magnet.infoHash == bytes)
+    }
+
+    @Test func rejectsNonMagnet() {
+        #expect(Magnet.parse("https://example.com") == nil)
+        #expect(Magnet.parse("magnet:?dn=name") == nil)  // no info hash
+        #expect(Magnet.parse("magnet:?xt=urn:btih:tooshort") == nil)
+    }
+
+    @Test func roundTripsWithTorrentFileMagnetLink() throws {
+        // A TorrentFile's generated magnetLink must parse back to the same info hash.
+        func s(_ v: String) -> String { "\(v.utf8.count):\(v)" }
+        let pieces = String(repeating: "a", count: 20)
+        let info = "d" + s("length") + "i1024e" + s("name") + s("file.txt")
+            + s("piece length") + "i16384e" + s("pieces") + "20:\(pieces)e"
+        let torrent = try TorrentFile.parse(Data(("d" + s("info") + info + "e").utf8))
+        let magnet = try #require(Magnet.parse(torrent.magnetLink))
+        #expect(magnet.infoHashHex == torrent.infoHashHex)
+        #expect(magnet.displayName == "file.txt")
+    }
+
+    // A tiny base32 encoder for the test (RFC 4648, no padding).
+    private func base32Encode(_ data: Data) -> String {
+        let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567")
+        var bits = 0, value = 0, out = ""
+        for byte in data {
+            value = value << 8 | Int(byte)
+            bits += 8
+            while bits >= 5 {
+                bits -= 5
+                out.append(alphabet[(value >> bits) & 0x1f])
+            }
+        }
+        if bits > 0 { out.append(alphabet[(value << (5 - bits)) & 0x1f]) }
+        return out
+    }
+}
+
+@Suite struct MetadataExchangeTests {
+    @Test func extendedHandshakeRoundTrips() {
+        let payload = MetadataExchange.extendedHandshakePayload(utMetadataID: 3)
+        let (id, size) = MetadataExchange.parseExtendedHandshake(payload)
+        #expect(id == 3)
+        #expect(size == nil)  // we don't advertise a size as a downloader
+    }
+
+    @Test func parsesPeerExtendedHandshake() {
+        // A peer advertising ut_metadata=2 and a metadata size.
+        let dict = Bencode.dict([
+            ("m", .dict([("ut_metadata", .int(2))])),
+            ("metadata_size", .int(31000)),
+        ])
+        let (id, size) = MetadataExchange.parseExtendedHandshake(dict.encoded)
+        #expect(id == 2)
+        #expect(size == 31000)
+    }
+
+    @Test func requestAndDataMessages() {
+        let request = MetadataExchange.requestPayload(piece: 5)
+        let decoded = try? BencodeDecoder.decode(request)
+        #expect(decoded?["msg_type"]?.intValue == 0)
+        #expect(decoded?["piece"]?.intValue == 5)
+
+        // A data message: bencoded header immediately followed by raw block bytes.
+        let header = Bencode.dict([("msg_type", .int(1)), ("piece", .int(2)), ("total_size", .int(40))])
+        var message = header.encoded
+        let rawBlock = Data((0..<16).map { UInt8($0) })
+        message.append(rawBlock)
+        let parsed = MetadataExchange.parseDataMessage(message)
+        #expect(parsed?.piece == 2)
+        #expect(parsed?.block == rawBlock)
+    }
+
+    @Test func pieceCountRoundsUp() {
+        #expect(MetadataExchange.pieceCount(metadataSize: 16 * 1024) == 1)
+        #expect(MetadataExchange.pieceCount(metadataSize: 16 * 1024 + 1) == 2)
+        #expect(MetadataExchange.pieceCount(metadataSize: 40000) == 3)
+    }
+
+    @Test func buildsTorrentFromVerifiedMetadata() throws {
+        // The metadata IS the info dict. Take a real torrent's info bytes and rebuild from them.
+        func s(_ v: String) -> String { "\(v.utf8.count):\(v)" }
+        let pieces = String(repeating: "a", count: 20)
+        let info = "d" + s("length") + "i2048e" + s("name") + s("movie.mkv")
+            + s("piece length") + "i16384e" + s("pieces") + "20:\(pieces)e"
+        let metadata = Data(info.utf8)
+        let infoHash = Data(Insecure.SHA1.hash(data: metadata))
+
+        let torrent = try #require(
+            MetadataExchange.buildTorrent(
+                fromMetadata: metadata, infoHash: infoHash, trackers: ["http://tracker.test/announce"]))
+        #expect(torrent.name == "movie.mkv")
+        #expect(torrent.totalLength == 2048)
+        #expect(torrent.infoHash == infoHash)  // preserved exactly through the rebuild
+        #expect(torrent.trackers == ["http://tracker.test/announce"])
+    }
+
+    @Test func rejectsMetadataWithWrongHash() {
+        let metadata = Data("d4:name4:fakee".utf8)
+        let wrongHash = Data(repeating: 0xab, count: 20)
+        #expect(MetadataExchange.buildTorrent(fromMetadata: metadata, infoHash: wrongHash, trackers: []) == nil)
     }
 }
 

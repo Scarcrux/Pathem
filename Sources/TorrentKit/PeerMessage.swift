@@ -16,10 +16,12 @@ public enum PeerMessage: Equatable, Sendable {
     case piece(index: UInt32, begin: UInt32, block: Data)
     case cancel(index: UInt32, begin: UInt32, length: UInt32)
     case port(UInt16)  // DHT port (BEP 5)
+    case extended(id: UInt8, payload: Data)  // BEP 10 extension protocol (id 0 = handshake)
 
     enum ID: UInt8 {
         case choke = 0, unchoke = 1, interested = 2, notInterested = 3
         case have = 4, bitfield = 5, request = 6, piece = 7, cancel = 8, port = 9
+        case extended = 20
     }
 
     /// Serialize to wire bytes: a 4-byte big-endian length prefix, then (for non-keepalive) a
@@ -44,6 +46,8 @@ public enum PeerMessage: Equatable, Sendable {
             return message(.cancel, be32(index) + be32(begin) + be32(length))
         case .port(let p):
             return message(.port, Data([UInt8(p >> 8), UInt8(p & 0xff)]))
+        case .extended(let extID, let payload):
+            return message(.extended, Data([extID]) + payload)
         }
     }
 
@@ -77,6 +81,8 @@ public enum PeerMessage: Equatable, Sendable {
             return (.cancel(index: readBE32(payload, 0), begin: readBE32(payload, 4), length: readBE32(payload, 8)), consumed)
         case .port where payload.count >= 2:
             return (.port(UInt16(payload[0]) << 8 | UInt16(payload[1])), consumed)
+        case .extended where payload.count >= 1:
+            return (.extended(id: payload[0], payload: Data(payload.dropFirst())), consumed)
         default:
             return (.keepAlive, consumed)  // malformed payload: skip
         }
@@ -95,6 +101,18 @@ public enum PeerMessage: Equatable, Sendable {
 /// The peer handshake: <19>"BitTorrent protocol"<8 reserved><20 info hash><20 peer id> = 68 bytes.
 public struct PeerHandshake: Equatable, Sendable {
     public static let protocolString = "BitTorrent protocol"
+
+    /// Reserved bytes with the BEP 10 extension-protocol bit set (bit 20), so a peer knows we can
+    /// exchange extended messages (needed to fetch metadata for magnet links).
+    public static let extensionReserved: Data = {
+        var reserved = Data(count: 8)
+        reserved[5] = 0x10
+        return reserved
+    }()
+
+    /// Whether a handshake's reserved bytes advertise the extension protocol.
+    public var supportsExtensions: Bool { reserved.count == 8 && (reserved[5] & 0x10) != 0 }
+
     public let infoHash: Data
     public let peerID: Data
     public let reserved: Data
