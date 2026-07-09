@@ -913,3 +913,8 @@
 
 "bvc.cmd.selectFirst" = "最初の項目を選択";
 "bvc.cmd.selectLast" = "最後の項目を選択";
+
+"torrents.addMagnet" = "マグネットを追加…";
+"torrents.addMagnet.title" = "マグネットリンクを追加";
+"torrents.addMagnet.message" = "マグネットリンクを貼り付けてください。Pathem がピアから詳細を取得し、「ダウンロード」フォルダに保存します。";
+"torrents.addMagnet.invalid" = "マグネットリンクではないようです。";

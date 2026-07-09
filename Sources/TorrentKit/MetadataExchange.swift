@@ -7,6 +7,12 @@ import Foundation
 /// TorrentFile from it. These helpers are pure and unit-tested; the peer loop that uses them lives
 /// in MetadataFetcher.
 public enum MetadataExchange {
+    /// A verified magnet resolution: the parsed torrent plus the .torrent bytes to persist.
+    public struct ResolvedTorrent: Sendable {
+        public let torrent: TorrentFile
+        public let torrentBytes: Data
+    }
+
     /// The metadata block size (16 KiB), same as a normal piece block.
     public static let blockSize = 16 * 1024
 
@@ -53,7 +59,7 @@ public enum MetadataExchange {
     /// Returns nil on hash mismatch or parse failure.
     public static func buildTorrent(
         fromMetadata metadata: Data, infoHash: Data, trackers: [String]
-    ) -> (torrent: TorrentFile, torrentBytes: Data)? {
+    ) -> ResolvedTorrent? {
         guard Data(Insecure.SHA1.hash(data: metadata)) == infoHash else { return nil }
 
         // Assemble a top-level dict by hand so the info dict's exact bytes are preserved:
@@ -77,6 +83,6 @@ public enum MetadataExchange {
         bytes.append(Data("e".utf8))
 
         guard let torrent = try? TorrentFile.parse(bytes) else { return nil }
-        return (torrent, bytes)
+        return ResolvedTorrent(torrent: torrent, torrentBytes: bytes)
     }
 }

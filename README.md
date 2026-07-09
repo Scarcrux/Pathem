@@ -89,15 +89,16 @@ uninstall.
 ## Torrents
 
 Tools > Torrents is a built-in BitTorrent client, powered by our own native Swift
-engine (no third-party library bundled). Add a `.torrent` file and it downloads:
-a live list shows name, size, a progress bar, download rate, peers, and status,
-pause or resume any torrent, and remove one keeping or deleting its files.
-Downloads persist and resume across restarts. All of the peer and network code runs
-in a separate `pathem-torrentd` process, so it never runs inside the Full-Disk-Access
-app, the same model Pathem uses for its other risky work. The engine (tracker client,
-peer wire protocol, SHA-1 piece verification, sparse file storage) is unit-tested.
-Downloads from `.torrent` files over HTTP trackers work today; magnet links, DHT, and
-seeding are on the roadmap.
+engine (no third-party library bundled). Add a `.torrent` file or paste a magnet
+link and it downloads: a live list shows name, size, a progress bar, download rate,
+peers, and status, pause or resume any torrent, and remove one keeping or deleting
+its files. Magnet links fetch their metadata from peers first (ut_metadata), then
+download like any torrent. Downloads persist and resume across restarts. All of the
+peer and network code runs in a separate `pathem-torrentd` process, so it never runs
+inside the Full-Disk-Access app, the same model Pathem uses for its other risky work.
+The engine (tracker client, peer wire protocol, metadata exchange, SHA-1 piece
+verification, sparse file storage) is unit-tested. Downloads over HTTP trackers work
+today; DHT and seeding to other peers are on the roadmap.
 
 ## Why it's fast
 

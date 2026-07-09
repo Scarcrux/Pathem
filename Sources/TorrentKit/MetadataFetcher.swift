@@ -11,7 +11,7 @@ import Foundation
         public static func fetch(
             host: String, port: UInt16, infoHash: Data, peerID: Data, trackers: [String],
             timeout: TimeInterval = 20
-        ) async -> (torrent: TorrentFile, torrentBytes: Data)? {
+        ) async -> MetadataExchange.ResolvedTorrent? {
             let peer = PeerConnection(
                 host: host, port: port, infoHash: infoHash, peerID: peerID, advertiseExtensions: true)
             defer { Task { await peer.close() } }

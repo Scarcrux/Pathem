@@ -11,6 +11,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let window: NSWindow
     private let table = NSTableView()
     private let addButton = NSButton(title: "", target: nil, action: nil)
+    private let magnetButton = NSButton(title: "", target: nil, action: nil)
     private let pauseButton = NSButton(title: "", target: nil, action: nil)
     private let removeButton = NSButton(title: "", target: nil, action: nil)
     private let emptyLabel = NSTextField(labelWithString: "")
@@ -54,6 +55,11 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         addButton.target = self
         addButton.action = #selector(addTapped)
 
+        magnetButton.title = L("torrents.addMagnet", "Add Magnet…")
+        magnetButton.bezelStyle = .rounded
+        magnetButton.target = self
+        magnetButton.action = #selector(addMagnetTapped)
+
         pauseButton.title = L("torrents.pause", "Pause")
         pauseButton.bezelStyle = .rounded
         pauseButton.target = self
@@ -64,7 +70,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         removeButton.target = self
         removeButton.action = #selector(removeTapped)
 
-        let controls = NSStackView(views: [addButton, NSView(), pauseButton, removeButton])
+        let controls = NSStackView(views: [addButton, magnetButton, NSView(), pauseButton, removeButton])
         controls.orientation = .horizontal
         controls.spacing = 8
 
@@ -167,6 +173,33 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         for url in panel.urls {
             client.addTorrent(fileAt: url.path, savePath: savePath)
         }
+    }
+
+    @objc private func addMagnetTapped() {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
+        alert.informativeText = L("torrents.addMagnet.message", "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder.")
+        alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        field.placeholderString = "magnet:?xt=urn:btih:…"
+        // Pre-fill from the clipboard when it already holds a magnet link.
+        if let clip = NSPasteboard.general.string(forType: .string), clip.hasPrefix("magnet:") {
+            field.stringValue = clip
+        }
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let uri = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard uri.hasPrefix("magnet:") else {
+            if !uri.isEmpty { showError(L("torrents.addMagnet.invalid", "That doesn't look like a magnet link.")) }
+            return
+        }
+        client.startIfNeeded()
+        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        client.addMagnet(uri, savePath: savePath)
     }
 
     @objc private func pauseResumeTapped() {

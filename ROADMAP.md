@@ -224,11 +224,17 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   broadcasts. Add a `.torrent`, pause/resume, remove (keep or delete files), reveal in
   Finder. Bundled + codesigned by `package.sh`; verified end to end by
   `PATHEM_TORRENTS_SMOKE`.
-- **Honest boundary / next up.** Downloads from `.torrent` files over HTTP trackers work
-  today. Not yet at full standalone-client parity: magnet links need BEP 9 metadata
-  exchange; there's no DHT (BEP 5), no incoming-peer listener (so it doesn't yet seed to
-  others), and no uTP/PEX/encryption. Nearest-value follow-ups, in order: magnet metadata
-  exchange, then seeding (incoming connections), then DHT.
+- **Magnet links** -- SHIPPED. Paste a magnet (Tools > Torrents > Add Magnet, clipboard
+  pre-filled): the engine parses the URI (hex or base32 info hash), announces to its
+  trackers for peers, fetches the info dictionary over ut_metadata (BEP 9 / BEP 10),
+  verifies it against the info hash, then downloads normally. Magnet, extended-message,
+  and metadata-assembly logic is unit-tested; the daemon shows a magnet as "checking"
+  until its metadata resolves.
+- **Honest boundary / next up.** Downloads from `.torrent` files and magnet links over
+  HTTP trackers work today. Not yet at full standalone-client parity: there's no DHT
+  (BEP 5), so a magnet with no working trackers can't find peers; no incoming-peer
+  listener (so it doesn't yet seed to others); and no uTP/PEX/encryption. Nearest-value
+  follow-ups, in order: seeding (incoming connections), then DHT, then PEX.
 
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 

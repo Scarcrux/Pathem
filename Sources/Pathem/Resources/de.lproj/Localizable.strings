@@ -913,3 +913,8 @@
 
 "bvc.cmd.selectFirst" = "Erstes Objekt auswählen";
 "bvc.cmd.selectLast" = "Letztes Objekt auswählen";
+
+"torrents.addMagnet" = "Magnet-Link hinzufügen…";
+"torrents.addMagnet.title" = "Magnet-Link hinzufügen";
+"torrents.addMagnet.message" = "Füge einen Magnet-Link ein. Pathem holt die Details von Peers und lädt in deinen Download-Ordner.";
+"torrents.addMagnet.invalid" = "Das sieht nicht nach einem Magnet-Link aus.";

@@ -37,12 +37,16 @@ func handle(_ command: TorrentControl.Command) async {
                 let save = command.savePath ?? defaultSavePath()
                 let status = try await engine.addTorrentFile(at: path, savePath: save)
                 emit(.init(kind: .reply, replyTo: command.id, ok: true, message: status.name))
-            } else if command.magnet != nil {
-                // Magnet support needs BEP 9 metadata exchange, which isn't built yet.
-                emit(.init(kind: .reply, replyTo: command.id, ok: false,
-                    message: "Magnet links need metadata exchange, which isn't available yet. Add a .torrent file."))
+            } else if let magnet = command.magnet {
+                let save = command.savePath ?? defaultSavePath()
+                if let status = await engine.addMagnet(uri: magnet, savePath: save) {
+                    emit(.init(kind: .reply, replyTo: command.id, ok: true, message: status.name))
+                } else {
+                    emit(.init(kind: .reply, replyTo: command.id, ok: false,
+                        message: "That doesn't look like a valid magnet link."))
+                }
             } else {
-                emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "add needs a torrentPath"))
+                emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "add needs a torrentPath or magnet"))
             }
         } catch {
             emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "\(error)"))

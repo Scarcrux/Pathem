@@ -913,3 +913,8 @@
 
 "bvc.cmd.selectFirst" = "选择第一项";
 "bvc.cmd.selectLast" = "选择最后一项";
+
+"torrents.addMagnet" = "添加磁力链接…";
+"torrents.addMagnet.title" = "添加磁力链接";
+"torrents.addMagnet.message" = "粘贴一个磁力链接。Pathem 会从节点获取其详情，然后下载到“下载”文件夹。";
+"torrents.addMagnet.invalid" = "这看起来不是一个磁力链接。";

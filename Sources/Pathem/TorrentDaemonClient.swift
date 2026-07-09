@@ -114,6 +114,10 @@ final class TorrentDaemonClient {
         send(.init(op: .add, id: nextCommandID(), torrentPath: path, savePath: savePath))
     }
 
+    func addMagnet(_ uri: String, savePath: String?) {
+        send(.init(op: .add, id: nextCommandID(), magnet: uri, savePath: savePath))
+    }
+
     func pause(_ infoHash: String) { send(.init(op: .pause, id: nextCommandID(), infoHash: infoHash)) }
     func resume(_ infoHash: String) { send(.init(op: .resume, id: nextCommandID(), infoHash: infoHash)) }
 

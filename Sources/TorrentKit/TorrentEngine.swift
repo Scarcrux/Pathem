@@ -13,12 +13,23 @@ public actor TorrentEngine {
         var completedPieces: [Int]
     }
 
+    /// A magnet whose metadata we're still fetching from peers (no info dict yet).
+    private struct PendingMagnet {
+        var infoHashHex: String
+        var infoHash: Data
+        var name: String
+        var savePath: String
+        var trackers: [String]
+    }
+
     private let stateDir: URL
     private let torrentsDir: URL
     private let peerID = Tracker.makePeerID()
 
     private var sessions: [String: TorrentSession] = [:]
     private var meta: [String: Persisted]
+    private var pending: [String: PendingMagnet] = [:]
+    private var resolverTasks: [String: Task<Void, Never>] = [:]
 
     public init(stateDir: URL) {
         self.stateDir = stateDir
@@ -51,7 +62,32 @@ public actor TorrentEngine {
         return await session.status()
     }
 
+    /// Add a magnet link. Since a magnet carries no metadata, this registers a pending torrent
+    /// (shown as "checking") and kicks off a background resolver that fetches the info dict from
+    /// peers, then promotes it to a normal download. Returns a placeholder status, or nil if the
+    /// magnet URI is invalid.
+    @discardableResult
+    public func addMagnet(uri: String, savePath: String) -> TorrentSession.Status? {
+        guard let magnet = Magnet.parse(uri) else { return nil }
+        let hash = magnet.infoHashHex
+        if sessions[hash] != nil || pending[hash] != nil {
+            return pending[hash].map(pendingStatus)
+        }
+        let entry = PendingMagnet(
+            infoHashHex: hash, infoHash: magnet.infoHash, name: magnet.displayName ?? hash,
+            savePath: savePath, trackers: magnet.trackers)
+        pending[hash] = entry
+        resolverTasks[hash] = Task { [weak self] in await self?.resolveMagnet(hash) }
+        return pendingStatus(entry)
+    }
+
     public func remove(infoHash: String, deleteData: Bool) async {
+        if pending[infoHash] != nil {
+            resolverTasks[infoHash]?.cancel()
+            resolverTasks[infoHash] = nil
+            pending[infoHash] = nil
+            return
+        }
         guard let session = sessions[infoHash] else { return }
         let savePath = await session.status().savePath
         let name = session.torrent.name
@@ -83,11 +119,96 @@ public actor TorrentEngine {
         saveState()
     }
 
-    /// Snapshot every torrent for the UI.
+    /// Snapshot every torrent for the UI, including magnets still fetching their metadata.
     public func statuses() async -> [TorrentSession.Status] {
         var out: [TorrentSession.Status] = []
         for session in sessions.values { out.append(await session.status()) }
+        for entry in pending.values { out.append(pendingStatus(entry)) }
         return out.sorted { $0.name < $1.name }
+    }
+
+    private func pendingStatus(_ entry: PendingMagnet) -> TorrentSession.Status {
+        TorrentSession.Status(
+            infoHash: entry.infoHashHex, name: entry.name, totalLength: 0, downloaded: 0,
+            fractionComplete: 0, downloadRate: 0, peersConnected: 0, state: .checking,
+            savePath: entry.savePath)
+    }
+
+    // MARK: magnet resolution
+
+    /// Fetch a magnet's metadata from peers over several rounds (trackers and peers can be slow or
+    /// lack extension support), then promote it to a real session. Gives up quietly after a few
+    /// rounds, leaving the torrent shown as "checking" so the user can remove it.
+    private func resolveMagnet(_ hash: String) async {
+        for round in 0..<8 {
+            if Task.isCancelled { return }
+            guard let entry = pending[hash] else { return }
+            let peers = await gatherPeers(entry)
+            if let resolved = await fetchMetadata(entry, from: peers) {
+                await promote(hash: hash, resolved: resolved, savePath: entry.savePath)
+                return
+            }
+            if Task.isCancelled || pending[hash] == nil { return }
+            // Back off before re-announcing; a little longer each round.
+            try? await Task.sleep(nanoseconds: UInt64(10 + round * 5) * 1_000_000_000)
+        }
+    }
+
+    /// Announce to the magnet's HTTP trackers and return the de-duplicated peers.
+    private func gatherPeers(_ entry: PendingMagnet) async -> [Tracker.Peer] {
+        var peers: [Tracker.Peer] = []
+        for tracker in entry.trackers where tracker.hasPrefix("http") {
+            if let response = try? await Tracker.announce(
+                base: tracker, infoHash: entry.infoHash, peerID: peerID, port: 6881, left: 0,
+                event: .started)
+            {
+                peers.append(contentsOf: response.peers)
+            }
+        }
+        var seen = Set<Tracker.Peer>()
+        return peers.filter { seen.insert($0).inserted }
+    }
+
+    /// Race several peers for the metadata; keep the first that returns a verified torrent.
+    private func fetchMetadata(_ entry: PendingMagnet, from peers: [Tracker.Peer]) async
+        -> MetadataExchange.ResolvedTorrent?
+    {
+        guard !peers.isEmpty else { return nil }
+        let peerID = self.peerID
+        let infoHash = entry.infoHash
+        let trackers = entry.trackers
+        return await withTaskGroup(of: MetadataExchange.ResolvedTorrent?.self) { group in
+            for peer in peers.prefix(12) {
+                group.addTask {
+                    await MetadataFetcher.fetch(
+                        host: peer.host, port: UInt16(peer.port), infoHash: infoHash,
+                        peerID: peerID, trackers: trackers)
+                }
+            }
+            for await result in group where result != nil {
+                group.cancelAll()
+                return result
+            }
+            return nil
+        }
+    }
+
+    /// Turn a resolved magnet into a persisted, running download.
+    private func promote(hash: String, resolved: MetadataExchange.ResolvedTorrent, savePath: String) async {
+        guard pending[hash] != nil, sessions[hash] == nil else { return }
+        pending[hash] = nil
+        resolverTasks[hash] = nil
+        let storedName = "\(hash).torrent"
+        try? resolved.torrentBytes.write(to: torrentsDir.appendingPathComponent(storedName))
+        guard let session = try? TorrentSession(
+            torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID)
+        else { return }
+        sessions[hash] = session
+        meta[hash] = Persisted(
+            infoHashHex: hash, torrentFileName: storedName, savePath: savePath, paused: false,
+            completedPieces: [])
+        await session.start()
+        saveState()
     }
 
     /// Snapshot resume data (completed pieces) for all torrents and write state to disk. The

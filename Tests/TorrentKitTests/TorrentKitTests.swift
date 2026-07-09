@@ -604,4 +604,30 @@ import Testing
         await engine.remove(infoHash: status.infoHash, deleteData: false)
         #expect(await engine.statuses().isEmpty)
     }
+
+    @Test func magnetShowsAsCheckingThenRemovable() async throws {
+        let stateDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("engine-magnet-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: stateDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: stateDir) }
+
+        let engine = TorrentEngine(stateDir: stateDir)
+        // A trackerless magnet: the resolver finds no peers, so it stays "checking" (no network).
+        let hex = "0123456789abcdef0123456789abcdef01234567"
+        let status = try #require(await engine.addMagnet(uri: "magnet:?xt=urn:btih:\(hex)&dn=Big+Buck+Bunny", savePath: stateDir.path))
+        #expect(status.name == "Big Buck Bunny")
+        #expect(status.state == .checking)
+
+        let all = await engine.statuses()
+        #expect(all.count == 1)
+        #expect(all.first?.state == .checking)
+        #expect(all.first?.infoHash == hex)
+
+        // An invalid magnet is rejected.
+        #expect(await engine.addMagnet(uri: "not-a-magnet", savePath: stateDir.path) == nil)
+
+        // Removing a pending magnet cancels its resolver and clears it.
+        await engine.remove(infoHash: hex, deleteData: false)
+        #expect(await engine.statuses().isEmpty)
+    }
 }
