@@ -6096,6 +6096,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("sidebar-width", (100...360).contains(sidebarW), "\(Int(sidebarW))")
         check("left-pane-visible", leftTabs.containerView.frame.width > 50, "\(Int(leftTabs.containerView.frame.width))")
         check("right-pane-visible", rightTabs.containerView.frame.width > 50, "\(Int(rightTabs.containerView.frame.width))")
+        // The file list must actually have vertical room. A near-zero height with the pane at
+        // full width is the "blank panes" regression: the tab bar / toolbar stacks stretched and
+        // squeezed the list flat. Rows exist (data is fine) but nothing is visible.
+        let leftContentH = leftTabs.activePane?.debugContentHeight() ?? 0
+        let rightContentH = rightTabs.activePane?.debugContentHeight() ?? 0
+        check("pane-content-not-squished", leftContentH > 150 && rightContentH > 150,
+            "left=\(Int(leftContentH)) right=\(Int(rightContentH))")
         check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
         lines.append("info left-folder (\(leftTabs.activePane?.currentURL.path ?? "?"))")
         // The sorted column must show its indicator on load, not only after a header

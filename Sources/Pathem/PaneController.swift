@@ -936,6 +936,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         NSLayoutConstraint.activate(pathBarPositionConstraints)
     }
 
+    /// The laid-out height of the file-list area (PATHEM_SMOKE). A near-zero value means
+    /// the pane's chrome stretched and squeezed the list flat, which is the class of layout
+    /// regression that renders panes blank.
+    func debugContentHeight() -> CGFloat { contentContainer.frame.height }
+
     /// Put the active content's scroll view into the content container, replacing
     /// any previous one.
     /// A folder's background picture, drawn behind the content view (which goes clear) when the
