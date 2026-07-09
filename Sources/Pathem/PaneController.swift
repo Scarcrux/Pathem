@@ -238,6 +238,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Entries currently shown (directory listing, or ranked search results).
     var entries: [FileEntry] { content.entries }
 
+    /// Move the single selection by `delta` rows, clamped (used by vim-style j/k navigation).
+    func moveSelection(by delta: Int) {
+        let all = content.entries
+        guard !all.isEmpty else { return }
+        let currentName = content.selectedEntries.last?.name
+        let currentIndex = currentName.flatMap { name in all.firstIndex { $0.name == name } } ?? (delta > 0 ? -1 : all.count)
+        let next = max(0, min(all.count - 1, currentIndex + delta))
+        content.select(name: all[next].name)
+    }
+    func selectFirst() { if let first = content.entries.first { content.select(name: first.name) } }
+    func selectLast() { if let last = content.entries.last { content.select(name: last.name) } }
+
     /// Select the shown entries matching `query`, combining with the current selection per
     /// `mode` (replace / add / subtract). Powers "Select by Pattern…".
     func applySelection(_ query: SelectionQuery, mode: SelectionMode) {

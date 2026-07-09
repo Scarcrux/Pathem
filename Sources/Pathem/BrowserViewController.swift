@@ -842,6 +842,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.zoomOut", L("bvc.cmd.zoomOut", "Zoom Out")) { [weak self] in self?.activePane?.zoomContent(-0.15) }
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in self?.toggleTerminal() }
         add("commander.toggle", L("bvc.cmd.commanderMode", "Commander Mode")) { [weak self] in self?.toggleCommander() }
+        add("nav.vimMode", L("bvc.cmd.vimMode", "Vim Navigation")) { [weak self] in
+            self?.vimMode.toggle()
+            self?.vimPendingG = false
+        }
         add("terminal.here", L("bvc.cmd.openTerminalHere", "Open Terminal Here")) { [weak self] in self?.openTerminalHere() }
         add("terminal.toggleFollow", L("bvc.cmd.terminalFollowsFolder", "Terminal Follows Folder")) {
             [weak self] in self?.toggleTerminalFollows()
@@ -3826,6 +3830,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
         case "view.asColumn": menuItem.state = activePane?.viewMode == .column ? .on : .off
         case "view.asTree": menuItem.state = activePane?.viewMode == .tree ? .on : .off
+        case "nav.vimMode": menuItem.state = vimMode ? .on : .off
         case "view.arrangeNone": menuItem.state = (activePane?.groupKey ?? .none) == .none ? .on : .off
         case "view.arrangeKind": menuItem.state = activePane?.groupKey == .kind ? .on : .off
         case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
@@ -4118,13 +4123,38 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Resolve a key chord against the keymap and dispatch via the registry.
     /// Returns true if a binding existed (so the key is consumed even when the
     /// command is currently disabled).
+    /// Vim-style, keyboard-driven navigation (View ▸ Vim Navigation). Off by default.
+    private var vimMode = false
+    private var vimPendingG = false
+
     private func handleKeyChord(_ chord: KeyChord) -> Bool {
+        if vimMode, handleVimKey(chord) { return true }  // vim keys take precedence when enabled
         // Don't consume a chord whose command is currently disabled, so the event
         // falls through (e.g. Cmd-W with one tab should reach Close Window).
         guard let id = keymap.commandID(for: chord), commands.command(id)?.isEnabled() == true else {
             return false
         }
         commands.perform(id)
+        return true
+    }
+
+    /// Map a plain (unmodified) key to a navigation action in vim mode: h/j/k/l move, gg/G jump to
+    /// the top/bottom, / focuses the filter. Returns true when it consumed the key.
+    private func handleVimKey(_ chord: KeyChord) -> Bool {
+        guard !chord.cmd, !chord.ctrl, !chord.opt, !isEditingText else { vimPendingG = false; return false }
+        let hadPendingG = vimPendingG
+        vimPendingG = false
+        switch (chord.key, chord.shift) {
+        case ("j", false): activePane?.moveSelection(by: 1)
+        case ("k", false): activePane?.moveSelection(by: -1)
+        case ("h", false): if commands.command("nav.up")?.isEnabled() == true { commands.perform("nav.up") }
+        case ("l", false), ("l", true): if commands.command("files.open")?.isEnabled() == true { commands.perform("files.open") }
+        case ("g", false):
+            if hadPendingG { activePane?.selectFirst() } else { vimPendingG = true }
+        case ("g", true): activePane?.selectLast()  // Shift-G
+        case ("/", _): if commands.command("view.filter")?.isEnabled() == true { commands.perform("view.filter") }
+        default: return false
+        }
         return true
     }
 
@@ -6370,6 +6400,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cmdIDs.contains("view.saveViewPreset") && presetStore.presets.count == 1
                 && savedPreset?.format.viewMode == .gallery,
             "registered=\(cmdIDs.contains("view.saveViewPreset")) count=\(presetStore.presets.count) mode=\(savedPreset?.format.viewMode.rawValue ?? "nil")")
+        // Vim navigation: the command is registered and j/k selection movement steps the selection.
+        leftTabs.activePane?.selectFirst()
+        let vimFirst = leftTabs.activePane?.selectedEntries.first?.name
+        leftTabs.activePane?.moveSelection(by: 1)
+        let vimSecond = leftTabs.activePane?.selectedEntries.first?.name
+        check("vim-navigation",
+            cmdIDs.contains("nav.vimMode") && vimFirst != nil && vimSecond != nil && vimFirst != vimSecond,
+            "registered=\(cmdIDs.contains("nav.vimMode")) first=\(vimFirst ?? "nil") second=\(vimSecond ?? "nil")")
         // Open with Pathem / Services: openExternalFolder navigates the active pane. (Last check,
         // since it changes the active folder.)
         let openDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-open-\(UUID().uuidString)")

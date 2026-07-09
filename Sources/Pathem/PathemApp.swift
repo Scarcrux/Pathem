@@ -791,6 +791,7 @@ enum PathemApp {
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
         viewMenu.addItem(commandItem("Commander Mode", "commander.toggle"))
+        viewMenu.addItem(commandItem("Vim Navigation", "nav.vimMode"))
         viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
         viewMenu.addItem(commandItem("Terminal Follows Folder", "terminal.toggleFollow"))
         let themeItem = NSMenuItem(
