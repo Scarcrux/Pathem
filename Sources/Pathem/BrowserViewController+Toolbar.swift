@@ -81,6 +81,7 @@ extension BrowserViewController: NSToolbarDelegate {
         .init(commandID: "view.sizeBrowser", symbol: "chart.pie", label: "Size Browser"),
         .init(commandID: "view.previewPane", symbol: "sidebar.right", label: "Preview Pane"),
         .init(commandID: "tools.transfers", symbol: "arrow.left.arrow.right", label: "Transfers"),
+        .init(commandID: "tools.torrents", symbol: "arrow.down.circle", label: "Torrents"),
         .init(commandID: "terminal.toggle", symbol: "terminal", label: "Terminal"),
         .init(commandID: "git.commit", symbol: "checkmark.seal", label: "Commit"),
         .init(commandID: "palette.show", symbol: "command", label: "Command Palette"),

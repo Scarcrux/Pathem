@@ -55,15 +55,18 @@ APP="$BUILD_DIR/$APP_NAME.app"
 # (SwiftTerm compiles it at runtime), so this path needs no Metal toolchain.
 echo "==> Building $APP_NAME ($CONFIG; $ARCHS)"
 binaries=()
-helperBinaries=()  # the out-of-process iOS-device (AFC) helper
+archBinDirs=()  # per-arch bin dirs, so out-of-process helpers can be lipo'd across arches
 frameworkBinDir=""
+# Out-of-process helpers bundled next to the app: the iOS-device (AFC) client and the
+# torrent daemon. Both keep risky parsing / network code out of the Full-Disk-Access process.
+helperNames=(pathem-afc pathem-torrentd)
 for arch in $ARCHS; do
 	echo "    building $arch"
 	swift build -c "$CONFIG" --arch "$arch"
 	archBinDir="$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)"
 	[[ -x "$archBinDir/$APP_NAME" ]] || { echo "error: binary not found at $archBinDir/$APP_NAME" >&2; exit 1; }
 	binaries+=("$archBinDir/$APP_NAME")
-	[[ -x "$archBinDir/pathem-afc" ]] && helperBinaries+=("$archBinDir/pathem-afc")
+	archBinDirs+=("$archBinDir")
 	frameworkBinDir="$archBinDir"  # frameworks (Sparkle) are universal in the xcframework
 done
 
@@ -75,12 +78,18 @@ if [[ ${#binaries[@]} -gt 1 ]]; then
 else
 	cp "${binaries[0]}" "$APP/Contents/MacOS/$APP_NAME"
 fi
-# The iOS-device (AFC) helper, invoked out-of-process so device parsing stays out of the app.
-if [[ ${#helperBinaries[@]} -gt 1 ]]; then
-	lipo -create "${helperBinaries[@]}" -output "$APP/Contents/MacOS/pathem-afc"
-elif [[ ${#helperBinaries[@]} -eq 1 ]]; then
-	cp "${helperBinaries[0]}" "$APP/Contents/MacOS/pathem-afc"
-fi
+# Bundle each out-of-process helper next to the app (lipo across arches when universal).
+for helper in "${helperNames[@]}"; do
+	parts=()
+	for dir in "${archBinDirs[@]}"; do
+		[[ -x "$dir/$helper" ]] && parts+=("$dir/$helper")
+	done
+	if [[ ${#parts[@]} -gt 1 ]]; then
+		lipo -create "${parts[@]}" -output "$APP/Contents/MacOS/$helper"
+	elif [[ ${#parts[@]} -eq 1 ]]; then
+		cp "${parts[0]}" "$APP/Contents/MacOS/$helper"
+	fi
+done
 # Embed linked frameworks (Sparkle) and point the binary at them, or the app
 # can't launch outside the build tree. Note: we deliberately do not ship
 # SwiftTerm's resource bundle (only Shaders.metal for its optional Metal
@@ -130,8 +139,10 @@ done
 # so `codesign --verify --strict --deep` is satisfied.
 resourceBundleInApp="$APP/Contents/Resources/${APP_NAME}_${APP_NAME}.bundle"
 [[ -d "$resourceBundleInApp" ]] && codesign "${signargs[@]}" "$resourceBundleInApp"
-# Sign the nested AFC helper before the app (inside-out), like the frameworks.
-[[ -f "$APP/Contents/MacOS/pathem-afc" ]] && codesign "${signargs[@]}" "$APP/Contents/MacOS/pathem-afc"
+# Sign the nested helpers before the app (inside-out), like the frameworks.
+for helper in "${helperNames[@]}"; do
+	[[ -f "$APP/Contents/MacOS/$helper" ]] && codesign "${signargs[@]}" "$APP/Contents/MacOS/$helper"
+done
 codesign "${signargs[@]}" "$APP"
 # --deep here is for VERIFYING (a thorough recursive check, which is correct and not
 # deprecated); it is only discouraged for SIGNING, which we do inside-out above.

@@ -1,0 +1,324 @@
+import AppKit
+import TorrentKit
+
+/// The Torrents panel: a live list of downloads driven by the out-of-process daemon. Add a
+/// .torrent, pause/resume, or remove; rows update from the daemon's ~1 Hz status broadcasts
+/// (no local polling). Modeled on ProcessViewerController.
+@MainActor
+final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate,
+    NSWindowDelegate
+{
+    private let window: NSWindow
+    private let table = NSTableView()
+    private let addButton = NSButton(title: "", target: nil, action: nil)
+    private let pauseButton = NSButton(title: "", target: nil, action: nil)
+    private let removeButton = NSButton(title: "", target: nil, action: nil)
+    private let emptyLabel = NSTextField(labelWithString: "")
+
+    private var rows: [TorrentSession.Status] = []
+    private let client = TorrentDaemonClient.shared
+
+    override init() {
+        window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 760, height: 420),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
+        super.init()
+        window.title = L("torrents.title", "Torrents")
+        window.delegate = self
+        window.isReleasedWhenClosed = false
+        window.setFrameAutosaveName("PathemTorrentsWindow")
+        build()
+    }
+
+    func present() {
+        if !window.isVisible { window.centerOverMainWindow() }
+        window.makeKeyAndOrderFront(nil)
+        client.onUpdate = { [weak self] statuses in self?.apply(statuses) }
+        client.onError = { [weak self] message in self?.showError(message) }
+        client.startIfNeeded()
+        client.requestList()
+        apply(client.torrents)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        // Leave the daemon running so downloads continue; just stop receiving UI updates.
+        client.onUpdate = nil
+        client.onError = nil
+    }
+
+    // MARK: layout
+
+    private func build() {
+        addButton.title = L("torrents.add", "Add Torrent…")
+        addButton.bezelStyle = .rounded
+        addButton.target = self
+        addButton.action = #selector(addTapped)
+
+        pauseButton.title = L("torrents.pause", "Pause")
+        pauseButton.bezelStyle = .rounded
+        pauseButton.target = self
+        pauseButton.action = #selector(pauseResumeTapped)
+
+        removeButton.title = L("torrents.remove", "Remove…")
+        removeButton.bezelStyle = .rounded
+        removeButton.target = self
+        removeButton.action = #selector(removeTapped)
+
+        let controls = NSStackView(views: [addButton, NSView(), pauseButton, removeButton])
+        controls.orientation = .horizontal
+        controls.spacing = 8
+
+        let columns: [(String, String, CGFloat)] = [
+            ("name", L("torrents.col.name", "Name"), 240),
+            ("size", L("torrents.col.size", "Size"), 80),
+            ("progress", L("torrents.col.progress", "Progress"), 150),
+            ("down", L("torrents.col.down", "Down"), 84),
+            ("peers", L("torrents.col.peers", "Peers"), 54),
+            ("state", L("torrents.col.state", "Status"), 90),
+        ]
+        for (id, title, width) in columns {
+            let column = NSTableColumn(identifier: .init(id))
+            column.title = title
+            column.width = width
+            table.addTableColumn(column)
+        }
+        table.dataSource = self
+        table.delegate = self
+        table.usesAlternatingRowBackgroundColors = true
+        table.rowHeight = 24
+        table.target = self
+        table.doubleAction = #selector(revealInFinder)
+
+        let scroll = NSScrollView()
+        scroll.documentView = table
+        scroll.hasVerticalScroller = true
+        scroll.borderType = .bezelBorder
+
+        emptyLabel.stringValue = L("torrents.empty", "No torrents. Add a .torrent file to start downloading.")
+        emptyLabel.textColor = .secondaryLabelColor
+        emptyLabel.alignment = .center
+        emptyLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = NSStackView(views: [controls, scroll])
+        stack.orientation = .vertical
+        stack.spacing = 10
+        stack.edgeInsets = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        window.contentView?.addSubview(stack)
+        scroll.addSubview(emptyLabel)
+        if let content = window.contentView {
+            NSLayoutConstraint.activate([
+                stack.topAnchor.constraint(equalTo: content.topAnchor),
+                stack.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+                stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+                stack.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+                controls.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -28),
+                scroll.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -28),
+                emptyLabel.centerXAnchor.constraint(equalTo: scroll.centerXAnchor),
+                emptyLabel.centerYAnchor.constraint(equalTo: scroll.centerYAnchor),
+            ])
+        }
+        updateButtons()
+    }
+
+    // MARK: data
+
+    private func apply(_ statuses: [TorrentSession.Status]) {
+        let keep = selected()?.infoHash
+        rows = statuses
+        table.reloadData()
+        if let keep, let row = rows.firstIndex(where: { $0.infoHash == keep }) {
+            table.selectRowIndexes([row], byExtendingSelection: false)
+        }
+        emptyLabel.isHidden = !rows.isEmpty
+        updateButtons()
+    }
+
+    private func selected() -> TorrentSession.Status? {
+        let row = table.selectedRow
+        return (row >= 0 && row < rows.count) ? rows[row] : nil
+    }
+
+    func tableViewSelectionDidChange(_ notification: Notification) { updateButtons() }
+
+    private func updateButtons() {
+        let sel = selected()
+        pauseButton.isEnabled = sel != nil
+        removeButton.isEnabled = sel != nil
+        if let sel, sel.state == .paused {
+            pauseButton.title = L("torrents.resume", "Resume")
+        } else {
+            pauseButton.title = L("torrents.pause", "Pause")
+        }
+    }
+
+    // MARK: actions
+
+    @objc private func addTapped() {
+        let panel = NSOpenPanel()
+        panel.allowedFileTypes = ["torrent"]
+        panel.allowsMultipleSelection = true
+        panel.canChooseDirectories = false
+        panel.prompt = L("torrents.add.prompt", "Add")
+        panel.message = L("torrents.add.message", "Choose one or more .torrent files. Downloads go to your Downloads folder.")
+        guard panel.runModal() == .OK else { return }
+        client.startIfNeeded()
+        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        for url in panel.urls {
+            client.addTorrent(fileAt: url.path, savePath: savePath)
+        }
+    }
+
+    @objc private func pauseResumeTapped() {
+        guard let sel = selected() else { return }
+        if sel.state == .paused {
+            client.resume(sel.infoHash)
+        } else {
+            client.pause(sel.infoHash)
+        }
+    }
+
+    @objc private func removeTapped() {
+        guard let sel = selected() else { return }
+        let alert = NSAlert()
+        alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), sel.name)
+        alert.informativeText = L("torrents.remove.info", "You can keep the downloaded files or delete them.")
+        alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
+        alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: client.remove(sel.infoHash, deleteData: false)
+        case .alertSecondButtonReturn: client.remove(sel.infoHash, deleteData: true)
+        default: break
+        }
+    }
+
+    @objc private func revealInFinder() {
+        guard let sel = selected() else { return }
+        let target = URL(fileURLWithPath: sel.savePath).appendingPathComponent(sel.name)
+        NSWorkspace.shared.activateFileViewerSelecting([target])
+    }
+
+    private func showError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.error", "Couldn’t add torrent")
+        alert.informativeText = message
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.runModal()
+    }
+
+    // MARK: table view
+
+    func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
+
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        guard let tableColumn, row < rows.count else { return nil }
+        let status = rows[row]
+
+        if tableColumn.identifier.rawValue == "progress" {
+            let id = NSUserInterfaceItemIdentifier("progress")
+            let bar = (tableView.makeView(withIdentifier: id, owner: self) as? TorrentProgressBar) ?? {
+                let b = TorrentProgressBar()
+                b.identifier = id
+                return b
+            }()
+            bar.fraction = status.fractionComplete
+            bar.seeding = status.state == .seeding
+            return bar
+        }
+
+        let id = NSUserInterfaceItemIdentifier("cell")
+        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? {
+            let c = NSTableCellView()
+            c.identifier = id
+            let f = NSTextField(labelWithString: "")
+            f.lineBreakMode = .byTruncatingMiddle
+            f.translatesAutoresizingMaskIntoConstraints = false
+            c.addSubview(f)
+            c.textField = f
+            NSLayoutConstraint.activate([
+                f.leadingAnchor.constraint(equalTo: c.leadingAnchor, constant: 4),
+                f.trailingAnchor.constraint(equalTo: c.trailingAnchor, constant: -4),
+                f.centerYAnchor.constraint(equalTo: c.centerYAnchor),
+            ])
+            return c
+        }()
+        cell.textField?.stringValue = value(for: status, column: tableColumn.identifier.rawValue)
+        cell.textField?.font =
+            tableColumn.identifier.rawValue == "name"
+            ? .systemFont(ofSize: 12) : .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+        return cell
+    }
+
+    private func value(for status: TorrentSession.Status, column: String) -> String {
+        switch column {
+        case "name": return status.name
+        case "size": return Self.size.string(fromByteCount: status.totalLength)
+        case "down":
+            return status.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
+        case "peers": return "\(status.peersConnected)"
+        case "state": return stateLabel(status.state)
+        default: return ""
+        }
+    }
+
+    private func stateLabel(_ state: TorrentSession.State) -> String {
+        switch state {
+        case .downloading: return L("torrents.state.downloading", "Downloading")
+        case .seeding: return L("torrents.state.seeding", "Seeding")
+        case .paused: return L("torrents.state.paused", "Paused")
+        case .checking: return L("torrents.state.checking", "Checking")
+        case .stopped: return L("torrents.state.stopped", "Stopped")
+        case .error: return L("torrents.state.error", "Error")
+        }
+    }
+
+    private static let size: ByteCountFormatter = {
+        let f = ByteCountFormatter()
+        f.countStyle = .file
+        return f
+    }()
+}
+
+/// A small theme-tinted determinate progress bar with a centered percentage, used in the
+/// Progress column. Fills with the app accent (green once seeding).
+@MainActor
+final class TorrentProgressBar: NSView {
+    var fraction: Double = 0 { didSet { needsDisplay = true } }
+    var seeding: Bool = false { didSet { needsDisplay = true } }
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.needsDisplay = true }
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override var wantsUpdateLayer: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let inset = bounds.insetBy(dx: 4, dy: 6)
+        let radius = inset.height / 2
+        let track = NSBezierPath(roundedRect: inset, xRadius: radius, yRadius: radius)
+        NSColor.quaternaryLabelColor.setFill()
+        track.fill()
+
+        let clamped = max(0, min(1, fraction))
+        if clamped > 0 {
+            var fillRect = inset
+            fillRect.size.width = max(inset.height, inset.width * CGFloat(clamped))
+            let fill = NSBezierPath(roundedRect: fillRect, xRadius: radius, yRadius: radius)
+            (seeding ? NSColor.systemGreen : ThemeManager.shared.accent).setFill()
+            fill.fill()
+        }
+
+        let percent = String(format: "%.0f%%", clamped * 100)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .medium),
+            .foregroundColor: NSColor.labelColor,
+        ]
+        let textSize = percent.size(withAttributes: attrs)
+        let point = NSPoint(
+            x: bounds.midX - textSize.width / 2, y: bounds.midY - textSize.height / 2)
+        percent.draw(at: point, withAttributes: attrs)
+    }
+}

@@ -187,6 +187,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var archiveContents = ArchiveContentsController()
     private lazy var findInFiles = FindInFilesController()
     private lazy var processViewer = ProcessViewerController()
+    private lazy var torrents = TorrentsWindowController()
     private lazy var externalCommandsController = ExternalCommandsController()
     private lazy var externalOutput = ExternalCommandOutputController()
     let slideshow = SlideshowController()
@@ -911,6 +912,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.advancedFind", L("bvc.cmd.advancedFind", "Advanced Find…"), enabled: { [weak self] in self?.activePane?.isRemote == false }) { [weak self] in self?.showAdvancedFind() }
         add("nav.findFiles", L("bvc.cmd.findFiles", "Find Files Everywhere…")) { [weak self] in self?.showGlobalSearch() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
+        add("tools.torrents", L("bvc.cmd.torrents", "Torrents")) { [weak self] in self?.torrents.present() }
         add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
         add("tools.externalCommands", L("bvc.cmd.externalCommands", "External Commands…")) { [weak self] in self?.showExternalCommandsManager() }
         add("tools.runShortcut", L("bvc.cmd.runShortcut", "Run Shortcut on Selection…")) { [weak self] in self?.showShortcutPicker() }

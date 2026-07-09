@@ -42,7 +42,7 @@ let package = Package(
         .executableTarget(
             name: "Pathem",
             dependencies: [
-                "PathemEngine", "PathemTerminal",
+                "PathemEngine", "PathemTerminal", "TorrentKit",
                 .product(name: "Sparkle", package: "Sparkle"),
             ],
             resources: [.process("Resources")]  // localized .strings (en, es, …)

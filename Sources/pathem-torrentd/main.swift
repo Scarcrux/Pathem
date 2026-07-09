@@ -80,21 +80,30 @@ let ticker = Task {
     }
 }
 
-// Restore persisted torrents, then read commands until stdin closes (the app quit).
+// Restore persisted torrents, then announce readiness.
 Task {
     await engine.restoreAll()
     emit(.init(kind: .status, ok: true, message: "ready", torrents: await engine.statuses()))
+}
 
+// Read commands on a dedicated thread. `readLine` is a blocking syscall; running it inside a
+// Task would park a cooperative-pool thread and starve the async ticker, so it lives on its own
+// Thread and hands each decoded command to the async world.
+let reader = Thread {
     while let line = readLine(strippingNewline: true) {
         guard !line.isEmpty, let data = line.data(using: .utf8),
             let command = try? JSONDecoder().decode(TorrentControl.Command.self, from: data)
         else { continue }
-        await handle(command)
+        Task { await handle(command) }
     }
-    // stdin closed: persist and exit.
-    await engine.checkpoint()
-    ticker.cancel()
-    exit(0)
+    // stdin closed (the app quit): persist and exit.
+    Task {
+        await engine.checkpoint()
+        ticker.cancel()
+        exit(0)
+    }
 }
+reader.stackSize = 1 << 20
+reader.start()
 
 RunLoop.main.run()

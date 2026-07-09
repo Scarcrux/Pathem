@@ -370,6 +370,56 @@ enum PathemApp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
         }
 
+        // Headless torrents smoke: spawn the real pathem-torrentd via TorrentDaemonClient, add a
+        // trackerless fixture .torrent, and confirm it comes back in a status broadcast. Exercises
+        // the app-side spawn + JSON round-trip that the engine tests can't reach. Exits itself.
+        if ProcessInfo.processInfo.environment["PATHEM_TORRENTS_SMOKE"] != nil {
+            print("=== TORRENTS SMOKE: daemon spawn + add ===")
+            func bencodeLen(_ v: String) -> String { "\(v.utf8.count):\(v)" }
+            let pieces = String(repeating: "a", count: 20)
+            let info = "d" + bencodeLen("length") + "i1024e" + bencodeLen("name") + bencodeLen("smoke.bin")
+                + bencodeLen("piece length") + "i16384e" + bencodeLen("pieces") + "20:\(pieces)e"
+            let fixture = "d" + bencodeLen("info") + info + "e"
+            let fixtureURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("pathem-smoke-\(UUID().uuidString).torrent")
+            let client = TorrentDaemonClient.shared
+            do {
+                try Data(fixture.utf8).write(to: fixtureURL)
+                let spawned = client.startIfNeeded()
+                print(spawned ? "ok   daemon-spawned" : "FAIL daemon-spawned (helper not found)")
+                guard spawned else { print("RESULT: FAIL"); exit(1) }
+                client.addTorrent(fileAt: fixtureURL.path, savePath: fixtureURL.deletingLastPathComponent().path)
+                var attempts = 0
+                func poll() {
+                    attempts += 1
+                    if let smoke = client.torrents.first(where: { $0.name == "smoke.bin" }) {
+                        print("ok   torrent-appears-in-status")
+                        print("RESULT: PASS")
+                        // Remove the fixture so the smoke doesn't leave a torrent in real state.
+                        client.remove(smoke.infoHash, deleteData: true)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            client.shutdown()
+                            try? FileManager.default.removeItem(at: fixtureURL)
+                            exit(0)
+                        }
+                        return
+                    }
+                    if attempts >= 40 {
+                        print("FAIL torrent-appears-in-status (timed out, last count=\(client.torrents.count))")
+                        print("RESULT: FAIL")
+                        client.shutdown()
+                        exit(1)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: poll)
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: poll)
+            } catch {
+                print("FAIL fixture-write (\(error))")
+                print("RESULT: FAIL")
+                exit(1)
+            }
+        }
+
         // Headless AI smoke: run the on-device model through our real proposal path
         // and print the plan it proposes. Needs macOS 26 + Apple Intelligence.
         #if canImport(FoundationModels)
@@ -861,6 +911,7 @@ enum PathemApp {
         let toolsMenu = NSMenu(title: L("menu.tools", "Tools"))
         toolsItem.submenu = toolsMenu
         toolsMenu.addItem(commandItem("Process Viewer", "tools.processViewer"))
+        toolsMenu.addItem(commandItem("Torrents", "tools.torrents"))
         toolsMenu.addItem(commandItem("Transfers", "tools.transfers"))
         toolsMenu.addItem(commandItem("Eject Volume", "files.ejectVolume"))
         toolsMenu.addItem(.separator())
