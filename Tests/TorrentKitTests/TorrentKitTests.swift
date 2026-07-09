@@ -380,3 +380,73 @@ import Testing
         }
     }
 }
+
+@Suite struct TorrentControlTests {
+    @Test func commandRoundTripsAsJSONLine() throws {
+        let command = TorrentControl.Command(
+            op: .add, id: 3, torrentPath: "/tmp/a.torrent", savePath: "/tmp/dl")
+        var line = TorrentControl.encodeLine(command)
+        #expect(line.last == 0x0a)  // newline-terminated
+        line.removeLast()
+        let decoded = try JSONDecoder().decode(TorrentControl.Command.self, from: line)
+        #expect(decoded.op == .add)
+        #expect(decoded.id == 3)
+        #expect(decoded.torrentPath == "/tmp/a.torrent")
+    }
+
+    @Test func eventCarriesStatuses() throws {
+        let status = TorrentSession.Status(
+            infoHash: "abc", name: "x", totalLength: 10, downloaded: 5, fractionComplete: 0.5,
+            downloadRate: 1024, peersConnected: 2, state: .downloading, savePath: "/dl")
+        let event = TorrentControl.Event(kind: .status, ok: true, torrents: [status])
+        var line = TorrentControl.encodeLine(event)
+        line.removeLast()
+        let decoded = try JSONDecoder().decode(TorrentControl.Event.self, from: line)
+        #expect(decoded.kind == .status)
+        #expect(decoded.torrents?.first?.fractionComplete == 0.5)
+        #expect(decoded.torrents?.first?.state == .downloading)
+    }
+}
+
+@Suite struct TorrentEngineTests {
+    // A minimal valid trackerless single-file torrent, so adding it starts no network activity.
+    private func trackerlessTorrent(to url: URL) throws {
+        func s(_ v: String) -> String { "\(v.utf8.count):\(v)" }
+        let pieces = String(repeating: "a", count: 20)
+        let info = "d" + s("length") + "i1024e" + s("name") + s("data.bin")
+            + s("piece length") + "i16384e" + s("pieces") + "20:\(pieces)e"
+        try Data(("d" + s("info") + info + "e").utf8).write(to: url)
+    }
+
+    @Test func addPauseRemovePersists() async throws {
+        let stateDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("engine-test-\(UUID().uuidString)")
+        let saveDir = stateDir.appendingPathComponent("dl")
+        try FileManager.default.createDirectory(at: saveDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: stateDir) }
+
+        let torrentURL = stateDir.appendingPathComponent("t.torrent")
+        try trackerlessTorrent(to: torrentURL)
+
+        let engine = TorrentEngine(stateDir: stateDir)
+        let status = try await engine.addTorrentFile(at: torrentURL.path, savePath: saveDir.path)
+        #expect(status.name == "data.bin")
+        #expect(status.totalLength == 1024)
+
+        var all = await engine.statuses()
+        #expect(all.count == 1)
+        #expect(all.first?.state == .downloading)
+
+        await engine.pause(infoHash: status.infoHash)
+        all = await engine.statuses()
+        #expect(all.first?.state == .paused)
+
+        // State persisted: a fresh engine over the same dir sees the torrent.
+        let reopened = TorrentEngine(stateDir: stateDir)
+        await reopened.restoreAll()
+        #expect(await reopened.statuses().count == 1)
+
+        await engine.remove(infoHash: status.infoHash, deleteData: false)
+        #expect(await engine.statuses().isEmpty)
+    }
+}

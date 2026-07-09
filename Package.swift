@@ -64,16 +64,22 @@ let package = Package(
         // wire protocol (line-delimited JSON over stdio) so the seam can't rot.
         .executableTarget(name: "pathem-ext-example", dependencies: ["PathemEngine"]),
 
-        // TorrentKit: a pure-Foundation bencode decoder + .torrent metadata reader (name,
-        // files, size, trackers, info hash, magnet link). No AppKit, no networking -- it only
-        // parses a local metadata file -- so it is fully unit-tested.
+        // TorrentKit: our native Swift BitTorrent engine -- bencode + .torrent metadata,
+        // HTTP tracker client, peer wire protocol, piece manager with SHA-1 verification,
+        // file layout + sparse storage, peer connections (Network.framework), and the
+        // per-torrent download session. Foundation + Network only, no AppKit; the pure layers
+        // are fully unit-tested.
         .target(name: "TorrentKit"),
 
-        // The Torrent Inspector plugin: the first real Pathem extension. An out-of-process
-        // Swift helper that inspects a selected .torrent (via TorrentKit) and returns its
-        // contents / magnet link over the ExtensionHost wire protocol. Built + installed to
-        // the Extensions folder by scripts/install-torrents-plugin.sh, not bundled in the app.
+        // The Torrent Inspector plugin: an out-of-process Swift helper that inspects a selected
+        // .torrent (via TorrentKit) and returns its contents / magnet link over the ExtensionHost
+        // wire protocol. Built + installed by scripts/install-torrents-plugin.sh, not bundled.
         .executableTarget(name: "pathem-torrents", dependencies: ["PathemEngine", "TorrentKit"]),
+
+        // pathem-torrentd: the long-running torrent daemon. The Pathem app spawns it and drives
+        // the TorrentEngine over a line-delimited JSON control protocol (stdin/stdout), polling
+        // status for the Torrents panel. Downloads persist and resume across restarts.
+        .executableTarget(name: "pathem-torrentd", dependencies: ["TorrentKit"]),
 
         // TorrentKit tests (bencode + .torrent parsing against real fixtures).
         .testTarget(name: "TorrentKitTests", dependencies: ["TorrentKit"]),
