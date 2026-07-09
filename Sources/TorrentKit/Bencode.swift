@@ -78,6 +78,11 @@ public struct BencodeDecoder {
 
     private let data: [UInt8]
     private var i = 0
+    private var depth = 0
+
+    /// Cap on nested containers, so an adversarial `llll…` or `dddd…` from the network can't recurse
+    /// the parser into a stack overflow. Real torrents and KRPC messages nest only a few levels.
+    private static let maxDepth = 100
 
     public init(_ data: Data) { self.data = [UInt8](data) }
 
@@ -134,6 +139,12 @@ public struct BencodeDecoder {
         }
     }
 
+    /// Enter a nested container, enforcing the depth cap.
+    private mutating func enter() throws {
+        depth += 1
+        guard depth <= Self.maxDepth else { throw DecodeError.invalid("nesting too deep") }
+    }
+
     private mutating func parseInt() throws -> Int64 {
         i += 1  // 'i'
         var digits = [UInt8]()
@@ -160,6 +171,8 @@ public struct BencodeDecoder {
     }
 
     private mutating func parseList() throws -> [Bencode] {
+        try enter()
+        defer { depth -= 1 }
         i += 1  // 'l'
         var items = [Bencode]()
         while peek() != UInt8(ascii: "e") { items.append(try parseValue()) }
@@ -169,6 +182,8 @@ public struct BencodeDecoder {
     }
 
     private mutating func parseDict() throws -> Bencode {
+        try enter()
+        defer { depth -= 1 }
         i += 1  // 'd'
         var pairs = [(String, Bencode)]()
         while peek() != UInt8(ascii: "e") {

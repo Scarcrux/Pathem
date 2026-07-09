@@ -36,6 +36,15 @@ import Testing
         #expect(value == .int(7))
         #expect(consumed == 3)  // "i7e", leaving "EXTRA"
     }
+
+    @Test func rejectsPathologicalNesting() {
+        // A few hundred nested lists (no terminators) must be refused, not recurse to a crash.
+        let deep = Data(String(repeating: "l", count: 5000).utf8)
+        #expect(throws: (any Error).self) { try BencodeDecoder.decode(deep) }
+        // A modestly nested, well-formed value still parses.
+        let ok = Data("llli1eeee".utf8)  // [[[1]]]
+        #expect((try? BencodeDecoder.decode(ok)) != nil)
+    }
 }
 
 @Suite struct TorrentFileTests {

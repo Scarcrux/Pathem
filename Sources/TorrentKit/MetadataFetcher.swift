@@ -36,7 +36,9 @@ import Foundation
                         let (id, size) = MetadataExchange.parseExtendedHandshake(payload)
                         peerMetadataID = id
                         metadataSize = size
-                        if let id, let size, size > 0, !requested {
+                        // Cap the claimed size: real torrent metadata is a few MB at most, so a
+                        // huge value is a hostile peer trying to make us request unbounded pieces.
+                        if let id, let size, size > 0, size <= 8 * 1024 * 1024, !requested {
                             requested = true
                             expectedPieces = MetadataExchange.pieceCount(metadataSize: size)
                             for piece in 0..<expectedPieces! {

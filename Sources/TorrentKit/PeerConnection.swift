@@ -13,7 +13,13 @@ import Foundation
             case handshakeMismatch
             case closed
             case timedOut
+            case oversizedMessage
         }
+
+        /// The largest peer-wire message we'll buffer. The biggest legitimate messages are a piece
+        /// block (~16 KiB) or a bitfield for a huge torrent; 2 MiB is far above both. A peer that
+        /// declares more is treated as hostile and dropped, so it can't make us buffer to OOM.
+        private static let maxMessageLength: UInt32 = 2 * 1024 * 1024
 
         public let host: String
         public let port: UInt16
@@ -116,6 +122,10 @@ import Foundation
         /// Wait for and return the next parsed message, applying its effect to peer state.
         public func receive(timeout: TimeInterval = 120) async throws -> PeerMessage {
             while true {
+                // Reject an absurd declared length before buffering the whole (fake) message.
+                if inbound.count >= 4, readBE32([UInt8](inbound.prefix(4)), 0) > Self.maxMessageLength {
+                    throw PeerError.oversizedMessage
+                }
                 if let (message, consumed) = PeerMessage.parse(inbound) {
                     inbound.removeFirst(consumed)
                     apply(message)
