@@ -46,6 +46,11 @@ final class TabbedPaneController: NSObject {
         tabBar.alignment = .centerY
         tabBar.edgeInsets = NSEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
         tabBar.translatesAutoresizingMaskIntoConstraints = false
+        // Hug the chips' height: without this the stack (pinned top, with content filling
+        // below it) wins the pane's spare vertical space and stretches tall, floating its
+        // centerY chips mid-pane and squeezing the file list to nothing.
+        tabBar.setHuggingPriority(.required, for: .vertical)
+        tabBar.setClippingResistancePriority(.required, for: .vertical)
 
         plusButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: L("tabs.newTab", "New Tab"))
         plusButton.bezelStyle = .texturedRounded

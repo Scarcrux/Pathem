@@ -862,6 +862,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         toolbarStack.spacing = 4
         toolbarStack.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
         toolbarStack.translatesAutoresizingMaskIntoConstraints = false
+        // Hug the buttons' height so this row (pinned at the top of the pane, with the file
+        // list filling below it) stays its natural height instead of stretching to absorb the
+        // pane's spare vertical space, which would squeeze the file list to nothing.
+        toolbarStack.setHuggingPriority(.required, for: .vertical)
+        toolbarStack.setClippingResistancePriority(.required, for: .vertical)
 
         contentContainer.translatesAutoresizingMaskIntoConstraints = false
 
