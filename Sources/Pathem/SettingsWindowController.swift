@@ -266,6 +266,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),
             check(L("prefs.dragFlickActions", "Super-drag: right-drag an item to flick it (with a swipe trail)"), \.dragFlickActions),
             labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
+            folderHandlerControl(),
         ])
         case .appearance: return form([
             labeled(L("prefs.themeLabel", "Skin"), themeControl()),
@@ -532,6 +533,47 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private let newTabPopup = NSPopUpButton()
     private let fixedFolderButton = NSButton()
+    private let folderHandlerCheckbox = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+
+    /// A checkbox that makes Pathem (checked) or Finder (unchecked) the system's default app
+    /// for opening folders. Reflects the live system state; the change is fully reversible.
+    private func folderHandlerControl() -> NSView {
+        folderHandlerCheckbox.title = L("prefs.folderHandler", "Open folders in Pathem instead of Finder")
+        folderHandlerCheckbox.state = FolderHandler.isPathem ? .on : .off
+        folderHandlerCheckbox.target = self
+        folderHandlerCheckbox.action = #selector(folderHandlerToggled(_:))
+        return folderHandlerCheckbox
+    }
+    @objc private func folderHandlerToggled(_ sender: NSButton) {
+        guard sender.state == .on else {  // turning it off restores Finder immediately
+            applyFolderHandler(toPathem: false, checkbox: sender)
+            return
+        }
+        let alert = NSAlert()
+        alert.messageText = L("prefs.folderHandlerConfirmTitle", "Open folders in Pathem?")
+        alert.informativeText = L(
+            "prefs.folderHandlerConfirmBody",
+            "This makes Pathem the default app for opening folders system-wide, so a folder double-click or an app that opens a folder uses Pathem instead of Finder. It does not affect \u{201C}Reveal in Finder.\u{201D} You can switch back here anytime.")
+        alert.addButton(withTitle: L("prefs.folderHandlerUse", "Use Pathem"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn else { sender.state = .off; return }
+            self?.applyFolderHandler(toPathem: true, checkbox: sender)
+        }
+    }
+    private func applyFolderHandler(toPathem: Bool, checkbox: NSButton) {
+        Task { @MainActor in
+            do {
+                try await FolderHandler.setDefault(toPathem: toPathem)
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = L("prefs.folderHandlerFailed", "Couldn’t change the default folder app")
+                alert.informativeText = error.localizedDescription
+                alert.beginSheetModal(for: self.window) { _ in }
+            }
+            checkbox.state = FolderHandler.isPathem ? .on : .off  // reflect the real state either way
+        }
+    }
 
     private func newTabLocationControl() -> NSView {
         newTabPopup.removeAllItems()
