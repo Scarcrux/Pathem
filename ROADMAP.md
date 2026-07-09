@@ -119,21 +119,24 @@ terminal password prompt; the terminal route covers the use case). Markup (needs
 in-app annotation editor). Per-app accent for *standard* AppKit controls (no public
 API; only Pathem-drawn chrome is themed).
 
-## Round 4 (scheduled, 2026-07-08) -- new views
+## Round 4 (shipped 2026-07-08) -- new views
 
-Each new view is a `PaneContentView` conformer plus a `ViewMode` case, so they don't
-touch the rest of the app:
+All four shipped:
 
-- **Tree / outline view** -- expandable folders inline in the pane (NSOutlineView),
-  so a subtree is visible without losing the parent (Directory Opus-style).
-- **Flat / recursive view** -- every file under the current folder flattened into one
-  list, built on the existing `FlatEnumerator`; for bulk ops across a subtree.
-- **Commander mode** -- an orthodox function-key bar (F1-F8 hints) + an integrated
-  command line over the existing dual pane (F5 copy / F6 move already ship). A toggle,
-  not a new view.
-- **Save named view presets** -- first-class "save this view as a named preset"
-  (columns/sort/grouping/zoom) over Saved Views + `ViewFormat`; the precursor to true
-  plugin-defined custom views (which wait on the gated Swift extension runtime).
+- **Tree / outline view** -- SHIPPED. `TreeOutlineController` (a `PaneContentView`
+  over NSOutlineView, new `ViewMode.tree`, fifth view-switcher segment, Cmd-5):
+  expandable folders with lazy child loading and location-aware selection so file
+  ops resolve to the real path.
+- **Flat / recursive view** -- SHIPPED. View ▸ Flatten Folder lists every item under
+  the folder in one location-aware smart-result view, via `FlatEnumerator`.
+- **Commander mode** -- SHIPPED. `CommanderBar` (View ▸ Commander Mode): a bottom
+  strip with a folder prompt, a command line that runs in the embedded terminal
+  (`TerminalController.runInline`), and F3-F8 buttons mapped to existing commands.
+- **Save named view presets** -- SHIPPED. `ViewPreset` model + Save Current View
+  As… + a Saved Views menu; each preset is also a "View: name" command.
+
+Custom, plugin-*rendered* views still wait on the gated Swift extension runtime;
+named presets are the config-level version of the same idea.
 
 ## Next up -- round 1 (shipped 2026-07-08)
 
