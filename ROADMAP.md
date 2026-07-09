@@ -203,6 +203,33 @@ folder badges, once deferred here, shipped in Round 7.)
 - **Fixes** -- SHIPPED. Dragging out of a search/smart-result view (per-entry locations), and a
   clear "Spotlight indexing is off" message when smart folders come back empty for that reason.
 
+## Round 9 (shipped 2026-07-09) -- native Swift torrent client
+
+A full torrent system, built as our own native Swift engine rather than bundling a
+foreign binary (matching the Swift-only ethos of the AFC client). The engine is
+`TorrentKit`; the network/peer code runs out-of-process in `pathem-torrentd`, so it
+stays out of the Full-Disk-Access app, consistent with the AFC and extension model.
+
+- **Engine (`TorrentKit`, unit-tested)** -- SHIPPED. Bencode + `.torrent` metadata +
+  magnet; HTTP tracker client (announce, compact/dict peers); peer wire protocol
+  (handshake + message framing); piece manager with SHA-1 verification and
+  reset-on-mismatch; file layout + sparse storage with a path-traversal guard; peer
+  connections over Network.framework; and the per-torrent download `TorrentSession`
+  (announce -> connect -> pipelined block requests -> verify -> write -> seed state).
+- **Daemon + persistence** -- SHIPPED. `TorrentEngine` owns every torrent and
+  persists resume state (the `.torrent` files plus completed pieces); `pathem-torrentd`
+  drives it over a line-delimited JSON control protocol and restores/resumes on launch.
+- **Torrents panel** -- SHIPPED. Tools > Torrents (also toolbar + palette): a live list
+  (name, size, themed progress bar, rate, peers, status) driven by the daemon's ~1 Hz
+  broadcasts. Add a `.torrent`, pause/resume, remove (keep or delete files), reveal in
+  Finder. Bundled + codesigned by `package.sh`; verified end to end by
+  `PATHEM_TORRENTS_SMOKE`.
+- **Honest boundary / next up.** Downloads from `.torrent` files over HTTP trackers work
+  today. Not yet at full standalone-client parity: magnet links need BEP 9 metadata
+  exchange; there's no DHT (BEP 5), no incoming-peer listener (so it doesn't yet seed to
+  others), and no uTP/PEX/encryption. Nearest-value follow-ups, in order: magnet metadata
+  exchange, then seeding (incoming connections), then DHT.
+
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 
 A "make everything customizable" pass (Directory-Opus-class), plus one important fix.
@@ -332,7 +359,8 @@ Cloud-**aware**, not cloud-mounting (verified on this machine).
 - Get Info inspector; Open With submenu.
 - Unified title-bar NSToolbar; window-state restoration.
 - Sparkle auto-update appcast (EdDSA).
-- Torrents: far-future optional add-on (BSD libtorrent-rasterbar, out-of-process helper).
+- Torrents: SHIPPED as a native Swift engine (see Round 9), not a libtorrent bundle.
+  Remaining for standalone-client parity: magnet metadata exchange, seeding, DHT.
 
 ## Site manager / remote (FileZilla Pro parity, added 2026-07-05)
 

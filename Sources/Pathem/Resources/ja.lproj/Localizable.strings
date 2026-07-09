@@ -882,3 +882,31 @@
 "view.icons" = "アイコン";
 "view.list" = "リスト";
 "view.tree" = "ツリー";
+
+/* Torrents */
+"bvc.cmd.torrents" = "トレント";
+"torrents.title" = "トレント";
+"torrents.add" = "トレントを追加…";
+"torrents.add.prompt" = "追加";
+"torrents.add.message" = ".torrent ファイルを選択してください。ダウンロードは「ダウンロード」フォルダに保存されます。";
+"torrents.pause" = "一時停止";
+"torrents.resume" = "再開";
+"torrents.remove" = "削除…";
+"torrents.remove.confirm" = "「%@」を削除しますか？";
+"torrents.remove.info" = "ダウンロードしたファイルは残すことも削除することもできます。";
+"torrents.remove.keep" = "削除（ファイルは残す）";
+"torrents.remove.delete" = "削除してファイルも消去";
+"torrents.empty" = "トレントがありません。.torrent ファイルを追加してダウンロードを開始します。";
+"torrents.error" = "トレントを追加できませんでした";
+"torrents.col.name" = "名前";
+"torrents.col.size" = "サイズ";
+"torrents.col.progress" = "進捗";
+"torrents.col.down" = "下り";
+"torrents.col.peers" = "ピア";
+"torrents.col.state" = "状態";
+"torrents.state.downloading" = "ダウンロード中";
+"torrents.state.seeding" = "シード中";
+"torrents.state.paused" = "一時停止";
+"torrents.state.checking" = "確認中";
+"torrents.state.stopped" = "停止";
+"torrents.state.error" = "エラー";

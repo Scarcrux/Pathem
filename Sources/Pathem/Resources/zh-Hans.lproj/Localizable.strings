@@ -882,3 +882,31 @@
 "view.icons" = "图标";
 "view.list" = "列表";
 "view.tree" = "树";
+
+/* Torrents */
+"bvc.cmd.torrents" = "种子";
+"torrents.title" = "种子";
+"torrents.add" = "添加种子…";
+"torrents.add.prompt" = "添加";
+"torrents.add.message" = "选择一个或多个 .torrent 文件。下载内容会保存到“下载”文件夹。";
+"torrents.pause" = "暂停";
+"torrents.resume" = "继续";
+"torrents.remove" = "移除…";
+"torrents.remove.confirm" = "移除“%@”？";
+"torrents.remove.info" = "你可以保留已下载的文件，也可以将其删除。";
+"torrents.remove.keep" = "移除，保留文件";
+"torrents.remove.delete" = "移除并删除文件";
+"torrents.empty" = "暂无种子。添加一个 .torrent 文件即可开始下载。";
+"torrents.error" = "无法添加种子";
+"torrents.col.name" = "名称";
+"torrents.col.size" = "大小";
+"torrents.col.progress" = "进度";
+"torrents.col.down" = "下载";
+"torrents.col.peers" = "节点";
+"torrents.col.state" = "状态";
+"torrents.state.downloading" = "下载中";
+"torrents.state.seeding" = "做种中";
+"torrents.state.paused" = "已暂停";
+"torrents.state.checking" = "校验中";
+"torrents.state.stopped" = "已停止";
+"torrents.state.error" = "错误";

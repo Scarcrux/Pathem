@@ -751,3 +751,31 @@
 "quick.openWith" = "Open With";
 "breadcrumb.home" = "Home";
 "bvc.cmd.demoMode" = "Demo Mode (fake data for screenshots)";
+
+/* Torrents */
+"bvc.cmd.torrents" = "Torrents";
+"torrents.title" = "Torrents";
+"torrents.add" = "Add Torrent…";
+"torrents.add.prompt" = "Add";
+"torrents.add.message" = "Choose one or more .torrent files. Downloads go to your Downloads folder.";
+"torrents.pause" = "Pause";
+"torrents.resume" = "Resume";
+"torrents.remove" = "Remove…";
+"torrents.remove.confirm" = "Remove “%@”?";
+"torrents.remove.info" = "You can keep the downloaded files or delete them.";
+"torrents.remove.keep" = "Remove, Keep Files";
+"torrents.remove.delete" = "Remove and Delete Files";
+"torrents.empty" = "No torrents. Add a .torrent file to start downloading.";
+"torrents.error" = "Couldn’t add torrent";
+"torrents.col.name" = "Name";
+"torrents.col.size" = "Size";
+"torrents.col.progress" = "Progress";
+"torrents.col.down" = "Down";
+"torrents.col.peers" = "Peers";
+"torrents.col.state" = "Status";
+"torrents.state.downloading" = "Downloading";
+"torrents.state.seeding" = "Seeding";
+"torrents.state.paused" = "Paused";
+"torrents.state.checking" = "Checking";
+"torrents.state.stopped" = "Stopped";
+"torrents.state.error" = "Error";

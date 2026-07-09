@@ -86,6 +86,19 @@ You can also make Pathem the default app for opening folders (fully reversible),
 a Reset Pathem Data command restores Finder and clears Pathem's data for a clean
 uninstall.
 
+## Torrents
+
+Tools > Torrents is a built-in BitTorrent client, powered by our own native Swift
+engine (no third-party library bundled). Add a `.torrent` file and it downloads:
+a live list shows name, size, a progress bar, download rate, peers, and status,
+pause or resume any torrent, and remove one keeping or deleting its files.
+Downloads persist and resume across restarts. All of the peer and network code runs
+in a separate `pathem-torrentd` process, so it never runs inside the Full-Disk-Access
+app, the same model Pathem uses for its other risky work. The engine (tracker client,
+peer wire protocol, SHA-1 piece verification, sparse file storage) is unit-tested.
+Downloads from `.torrent` files over HTTP trackers work today; magnet links, DHT, and
+seeding are on the roadmap.
+
 ## Why it's fast
 
 Two things do most of the work. To read a folder, Pathem uses getattrlistbulk,

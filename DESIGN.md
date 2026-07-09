@@ -500,11 +500,13 @@ The detail below records the broader option space; the decision above is the pla
   (MIT / BSD / Apache-2.0 / curl). MIT lets you sell and close-source on top, but
   a single GPL/AGPL dependency or copied GPL snippet would make a closed Pro
   build non-distributable. Concretely: FTP/FTPS/SFTP via libcurl (curl license)
-  and/or SwiftNIO + swift-nio-ssh (Apache-2.0); S3/WebDAV via URLSession; if
-  torrents are ever pursued, libtorrent-rasterbar is BSD-3 (permissive). NEVER
-  copy code from FileZilla, Cyberduck, Transmission, or qBittorrent (all GPL),
-  reimplement from the protocol specs. This extends the day-one "no GPL in the
-  MIT tree" rule to the whole shipped dependency graph.
+  and/or SwiftNIO + swift-nio-ssh (Apache-2.0); S3/WebDAV via URLSession.
+  Torrents shipped as our own native Swift engine (`TorrentKit`), written from the
+  BitTorrent BEPs, with NO third-party engine bundled -- so the licensing question
+  never arises. NEVER copy code from FileZilla, Cyberduck, Transmission, or
+  qBittorrent (all GPL); reimplement from the protocol specs, as TorrentKit does.
+  This extends the day-one "no GPL in the MIT tree" rule to the whole shipped
+  dependency graph.
 - **A separate standalone, auto-updating build is already permitted** (two
   independent grounds, recorded so it is not re-litigated): you are the sole
   copyright holder, so you can license your own work under any terms for your own
