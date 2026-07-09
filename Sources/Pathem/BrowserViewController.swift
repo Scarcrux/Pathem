@@ -6541,6 +6541,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("azure-blob-backend",
             azureProvider && RemoteConnection.Proto.allCases.contains(.azure) && azureSig != nil,
             "provider=\(azureProvider) signer=\(azureSig != nil)")
+        // Cloud folder badges: a cloud folder's icon is decorated with a service glyph; a
+        // plain folder's is returned untouched (same instance).
+        let homeDir = NSHomeDirectory()
+        let cloudDir = URL(fileURLWithPath: homeDir).appendingPathComponent("Library/CloudStorage")
+        let baseIcon = NSWorkspace.shared.icon(forFile: "/")
+        let cloudFolder = FileEntry(name: "GoogleDrive-x@y.com", isDirectory: true, size: 0, modificationDate: nil)
+        let plainFolder = FileEntry(name: "Documents", isDirectory: true, size: 0, modificationDate: nil)
+        let badged = CloudBadge.decorate(baseIcon, for: cloudFolder, in: cloudDir)
+        let plain = CloudBadge.decorate(baseIcon, for: plainFolder, in: URL(fileURLWithPath: homeDir).appendingPathComponent("Code"))
+        check("cloud-folder-badge",
+            badged !== baseIcon && plain === baseIcon
+                && CloudLocation.service(forFolderAt: cloudDir.appendingPathComponent("GoogleDrive-x@y.com").path, home: homeDir) == .googleDrive,
+            "badged=\(badged !== baseIcon) plainUntouched=\(plain === baseIcon)")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)

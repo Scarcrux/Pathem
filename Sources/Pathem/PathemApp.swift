@@ -258,14 +258,18 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil {
             let number = window.windowNumber
             let mode = ProcessInfo.processInfo.environment["PATHEM_MAIN_MODE"]
+            let navPath = ProcessInfo.processInfo.environment["PATHEM_MAIN_PATH"]
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                if let navPath { browser.debugNavigateActive(to: URL(fileURLWithPath: navPath)) }
                 if let mode {
-                    // In demo mode use the fake Photos folder (privacy-safe for README shots);
-                    // otherwise the real ~/Pictures.
-                    let target =
-                        demoLayout?.rightStart
-                        ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
-                    browser.debugNavigateActive(to: target)
+                    // PATHEM_MAIN_PATH picks the folder; otherwise use the fake Photos folder
+                    // in demo mode (privacy-safe for README shots) or the real ~/Pictures.
+                    if navPath == nil {
+                        let target =
+                            demoLayout?.rightStart
+                            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
+                        browser.debugNavigateActive(to: target)
+                    }
                     let viewMode: ViewFormat.ViewMode =
                         mode == "gallery" ? .gallery : (mode == "column" ? .column : .icon)
                     browser.debugSetActiveViewMode(viewMode)

@@ -643,7 +643,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
         guard let ei = entryIndex(at: indexPath) else { return item }
         let entry = entries[ei]
-        let image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+        let base = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+        let image = CloudBadge.decorate(
+            base, for: entry, in: directoryURL, size: NSSize(width: iconSize, height: iconSize))
         // Real content thumbnails for files only; never for folders or online-only
         // (dataless) items, where generating one could fault a download.
         let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)

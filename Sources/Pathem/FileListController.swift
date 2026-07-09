@@ -710,7 +710,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         case .name:
             // Online-only (dataless) items: a cloud badge + dimmed name.
             cell.textField?.textColor = entry.isDataless ? .secondaryLabelColor : .labelColor
-            cell.imageView?.image = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+            let baseIcon = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+            cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: directoryURL)
             let colors = tagColors(for: entry)
             let git = gitState(for: entry)
             if colors.isEmpty, git == nil {

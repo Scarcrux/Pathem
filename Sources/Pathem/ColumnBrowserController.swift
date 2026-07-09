@@ -293,7 +293,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             cell.textField?.stringValue = entry.name
         }
         let url = columns[index].folder.appendingPathComponent(entry.name)
-        cell.imageView?.image = IconSetManager.shared.icon(for: entry) ?? NSWorkspace.shared.icon(forFile: url.path)
+        let baseIcon = IconSetManager.shared.icon(for: entry) ?? NSWorkspace.shared.icon(forFile: url.path)
+        cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: columns[index].folder)
         // Dim cut items (until pasted), then hidden (dotfile) entries. Keyed on this column's
         // own folder, since a cut can live in any drilled column.
         let isCut = !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: columns[index].folder))

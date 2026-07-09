@@ -190,7 +190,9 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         cell.textField?.stringValue = node.entry.name
         cell.textField?.font = .systemFont(ofSize: fontSize)
         cell.textField?.textColor = node.entry.isDataless ? .secondaryLabelColor : .labelColor
-        cell.imageView?.image = IconSetManager.shared.icon(for: node.entry) ?? NSWorkspace.shared.icon(forFile: node.url.path)
+        let baseIcon = IconSetManager.shared.icon(for: node.entry) ?? NSWorkspace.shared.icon(forFile: node.url.path)
+        cell.imageView?.image = CloudBadge.decorate(
+            baseIcon, for: node.entry, in: node.url.deletingLastPathComponent())
         cell.alphaValue = node.entry.isHidden ? 0.5 : 1.0
         return cell
     }
