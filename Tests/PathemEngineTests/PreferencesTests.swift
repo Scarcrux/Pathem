@@ -23,6 +23,17 @@ import Testing
         #expect(old.sizeFormat == .decimal && old.dateDisplay == .medium)
     }
 
+    @Test func defaultViewAndSortRoundTrip() throws {
+        let prefs = Preferences(defaultViewMode: .icon, defaultSortKey: .date, defaultSortAscending: false)
+        let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))
+        #expect(decoded.defaultViewMode == .icon)
+        #expect(decoded.defaultFormat.sortKey == .date)
+        #expect(decoded.defaultFormat.ascending == false)
+        #expect(decoded.defaultFormat.viewMode == .icon)
+        // Defaults reproduce the historical fallback (list, name, ascending).
+        #expect(Preferences.default.defaultFormat == ViewFormat.default)
+    }
+
     @Test func startupAndOpenBehaviorRoundTrip() throws {
         let prefs = Preferences(
             newTabLocation: .fixed, fixedStartFolder: "/Users/me/Work", middleClickOpensNewTab: false)

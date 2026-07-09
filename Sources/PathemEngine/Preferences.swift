@@ -41,6 +41,19 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var sizeFormat: SizeFormat
     /// Date column format (relative / short / medium).
     public var dateDisplay: DateDisplay
+    /// The view mode a folder opens in when it has no saved view of its own.
+    public var defaultViewMode: ViewFormat.ViewMode
+    /// The sort key/direction a folder uses when it has no saved view of its own.
+    public var defaultSortKey: ViewFormat.SortKey
+    public var defaultSortAscending: Bool
+
+    /// The view format for a folder with no saved view: the user's default view mode + sort,
+    /// with the global show-hidden setting.
+    public var defaultFormat: ViewFormat {
+        ViewFormat(
+            sortKey: defaultSortKey, ascending: defaultSortAscending,
+            showHidden: showHiddenByDefault, foldersFirst: true, viewMode: defaultViewMode)
+    }
     /// App appearance (System/Light/Dark).
     public var appearance: Appearance
     /// Base font size for list rows.
@@ -138,6 +151,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
         contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
         sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .medium,
+        defaultViewMode: ViewFormat.ViewMode = .list, defaultSortKey: ViewFormat.SortKey = .name,
+        defaultSortAscending: Bool = true,
         newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
         middleClickOpensNewTab: Bool = true,
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
@@ -162,6 +177,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.colorRules = colorRules
         self.sizeFormat = sizeFormat
         self.dateDisplay = dateDisplay
+        self.defaultViewMode = defaultViewMode
+        self.defaultSortKey = defaultSortKey
+        self.defaultSortAscending = defaultSortAscending
         self.newTabLocation = newTabLocation
         self.fixedStartFolder = fixedStartFolder
         self.middleClickOpensNewTab = middleClickOpensNewTab
@@ -242,6 +260,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         colorRules = try c.decodeIfPresent(ColorRules.self, forKey: .colorRules) ?? d.colorRules
         sizeFormat = (try? c.decode(SizeFormat.self, forKey: .sizeFormat)) ?? d.sizeFormat
         dateDisplay = (try? c.decode(DateDisplay.self, forKey: .dateDisplay)) ?? d.dateDisplay
+        defaultViewMode = (try? c.decode(ViewFormat.ViewMode.self, forKey: .defaultViewMode)) ?? d.defaultViewMode
+        defaultSortKey = (try? c.decode(ViewFormat.SortKey.self, forKey: .defaultSortKey)) ?? d.defaultSortKey
+        defaultSortAscending = try c.decodeIfPresent(Bool.self, forKey: .defaultSortAscending) ?? d.defaultSortAscending
         newTabLocation = (try? c.decode(NewTabLocation.self, forKey: .newTabLocation)) ?? d.newTabLocation
         fixedStartFolder = try c.decodeIfPresent(String.self, forKey: .fixedStartFolder) ?? d.fixedStartFolder
         middleClickOpensNewTab =

@@ -289,6 +289,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
             labeled(L("prefs.sizeFormatLabel", "File sizes"), sizeFormatControl()),
             labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
+            labeled(L("prefs.defaultViewLabel", "New folders open as"), defaultViewControl()),
+            labeled(L("prefs.defaultSortLabel", "Default sort"), defaultSortControl()),
             labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
             labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
             check(L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"), \.middleClickOpensNewTab),
@@ -613,6 +615,51 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             self.newTabPopup.selectItem(at: 2)
             self.onChange?(self.prefs)
         }
+    }
+
+    private func defaultViewControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("view.list", "List"), L("view.icons", "Icons"), L("view.gallery", "Gallery"),
+            L("view.column", "Column"), L("view.tree", "Tree"),
+        ])
+        popup.selectItem(at: ViewFormat.ViewMode.allCases.firstIndex(of: prefs.defaultViewMode) ?? 0)
+        popup.target = self
+        popup.action = #selector(defaultViewChanged(_:))
+        return popup
+    }
+    @objc private func defaultViewChanged(_ sender: NSPopUpButton) {
+        prefs.defaultViewMode = ViewFormat.ViewMode.allCases[sender.indexOfSelectedItem]
+        onChange?(prefs)
+    }
+
+    private let defaultSortKeyPopup = NSPopUpButton()
+    private let defaultSortDirPopup = NSPopUpButton()
+    private func defaultSortControl() -> NSView {
+        defaultSortKeyPopup.removeAllItems()
+        defaultSortKeyPopup.addItems(withTitles: [
+            L("sort.name", "Name"), L("sort.size", "Size"), L("sort.dateModified", "Date Modified"),
+            L("sort.dateCreated", "Date Created"), L("sort.dateAccessed", "Date Accessed"),
+        ])
+        defaultSortKeyPopup.selectItem(at: ViewFormat.SortKey.allCases.firstIndex(of: prefs.defaultSortKey) ?? 0)
+        defaultSortKeyPopup.target = self
+        defaultSortKeyPopup.action = #selector(defaultSortChanged)
+        defaultSortDirPopup.removeAllItems()
+        defaultSortDirPopup.addItems(withTitles: [
+            L("sort.ascending", "Ascending"), L("sort.descending", "Descending"),
+        ])
+        defaultSortDirPopup.selectItem(at: prefs.defaultSortAscending ? 0 : 1)
+        defaultSortDirPopup.target = self
+        defaultSortDirPopup.action = #selector(defaultSortChanged)
+        let stack = NSStackView(views: [defaultSortKeyPopup, defaultSortDirPopup])
+        stack.orientation = .horizontal
+        stack.spacing = 8
+        return stack
+    }
+    @objc private func defaultSortChanged() {
+        prefs.defaultSortKey = ViewFormat.SortKey.allCases[defaultSortKeyPopup.indexOfSelectedItem]
+        prefs.defaultSortAscending = defaultSortDirPopup.indexOfSelectedItem == 0
+        onChange?(prefs)
     }
 
     private func sizeFormatControl() -> NSView {
