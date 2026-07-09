@@ -297,3 +297,86 @@ import Testing
         #expect(m.completedCount == 2)
     }
 }
+
+@Suite struct FileLayoutTests {
+    @Test func singleFileIsOneSegment() {
+        let layout = FileLayout(entries: [.init(path: "movie.mkv", length: 1000)])
+        #expect(layout.totalLength == 1000)
+        let segs = layout.segments(at: 200, length: 300)
+        #expect(segs == [.init(fileIndex: 0, path: "movie.mkv", fileOffset: 200, length: 300)])
+    }
+
+    @Test func pieceSpanningFileBoundarySplits() {
+        // Three files: 100, 50, 200 bytes at offsets 0, 100, 150.
+        let layout = FileLayout(entries: [
+            .init(path: "a", length: 100),
+            .init(path: "b", length: 50),
+            .init(path: "c", length: 200),
+        ])
+        #expect(layout.totalLength == 350)
+        // A range [80, 260) touches all three files.
+        let segs = layout.segments(at: 80, length: 180)
+        #expect(segs == [
+            .init(fileIndex: 0, path: "a", fileOffset: 80, length: 20),   // a[80..100)
+            .init(fileIndex: 1, path: "b", fileOffset: 0, length: 50),    // b[0..50)
+            .init(fileIndex: 2, path: "c", fileOffset: 0, length: 110),   // c[0..110)
+        ])
+    }
+
+    @Test func pieceGeometryMapsToSegments() {
+        let layout = FileLayout(entries: [.init(path: "a", length: 100), .init(path: "b", length: 100)])
+        // piece length 64, piece index 1 covers global [64, 128): 36 bytes in a, 28 in b.
+        let segs = layout.segments(forPiece: 1, pieceLength: 64, pieceSize: 64)
+        #expect(segs == [
+            .init(fileIndex: 0, path: "a", fileOffset: 64, length: 36),
+            .init(fileIndex: 1, path: "b", fileOffset: 0, length: 28),
+        ])
+    }
+
+    @Test func emptyRangeYieldsNothing() {
+        let layout = FileLayout(entries: [.init(path: "a", length: 100)])
+        #expect(layout.segments(at: 50, length: 0).isEmpty)
+    }
+}
+
+@Suite struct TorrentStorageTests {
+    private func tempDir() throws -> URL {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("torrent-storage-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    @Test func writesAndReadsPieceSpanningTwoFiles() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        // Two files of 100 bytes each; piece length 64. Piece 1 covers global [64,128).
+        let layout = FileLayout(entries: [
+            .init(path: "sub/a.bin", length: 100), .init(path: "b.bin", length: 100),
+        ])
+        let storage = try TorrentStorage(root: root, layout: layout)
+        let piece = Data((0..<64).map { UInt8(($0 + 1) & 0xff) })
+        try storage.write(pieceIndex: 1, pieceLength: 64, pieceSize: 64, data: piece)
+
+        // The bytes should land 36 in a.bin (offset 64) and 28 in b.bin (offset 0).
+        #expect(try storage.read(at: 64, length: 64) == piece)
+        let aTail = try Data(contentsOf: root.appendingPathComponent("sub/a.bin")).suffix(36)
+        #expect(Array(aTail) == Array(piece.prefix(36)))
+        let bHead = try Data(contentsOf: root.appendingPathComponent("b.bin")).prefix(28)
+        #expect(Array(bHead) == Array(piece.suffix(28)))
+        storage.close()
+    }
+
+    @Test func rejectsPathTraversal() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let evil = FileLayout(entries: [.init(path: "../escape.txt", length: 10)])
+        #expect(throws: TorrentStorage.StorageError.self) {
+            _ = try TorrentStorage(root: root, layout: evil)
+        }
+        let absolute = FileLayout(entries: [.init(path: "/etc/passwd", length: 10)])
+        #expect(throws: TorrentStorage.StorageError.self) {
+            _ = try TorrentStorage(root: root, layout: absolute)
+        }
+    }
+}
