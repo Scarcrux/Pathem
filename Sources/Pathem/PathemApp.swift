@@ -447,6 +447,19 @@ enum PathemApp {
             }
         }
 
+        // Render the tree/outline view over the home folder.
+        if ProcessInfo.processInfo.environment["PATHEM_TREE_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            browser.debugNavigateActive(to: FileManager.default.homeDirectoryForCurrentUser)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                browser.debugSetActiveViewMode(.tree)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    browser.debugRender(to: "/tmp/tree.png")
+                    exit(0)
+                }
+            }
+        }
+
         // Render the icon grid grouped by kind so the section headers can be inspected.
         if ProcessInfo.processInfo.environment["PATHEM_ICONGROUP_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 700))
@@ -717,6 +730,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
         viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
+        viewMenu.addItem(commandItem("as Tree", "view.asTree", "5"))
         viewMenu.addItem(submenu("Arrange By", [
             commandItem("None", "view.arrangeNone"),
             commandItem("Kind", "view.arrangeKind"),

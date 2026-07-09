@@ -763,6 +763,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.asIcons", L("bvc.cmd.asIcons", "as Icons")) { [weak self] in self?.setActiveViewMode(.icon) }
         add("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")) { [weak self] in self?.setActiveViewMode(.gallery) }
         add("view.asColumn", L("bvc.cmd.asColumns", "as Columns")) { [weak self] in self?.setActiveViewMode(.column) }
+        add("view.asTree", L("bvc.cmd.asTree", "as Tree")) { [weak self] in self?.setActiveViewMode(.tree) }
         add("view.arrangeNone", L("bvc.cmd.arrangeNone", "None")) { [weak self] in self?.activePane?.setGroupKey(.none) }
         add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")) { [weak self] in self?.activePane?.setGroupKey(.kind) }
         add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")) { [weak self] in self?.activePane?.setGroupKey(.size) }
@@ -3754,6 +3755,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         case "view.asIcons": menuItem.state = activePane?.viewMode == .icon ? .on : .off
         case "view.asGallery": menuItem.state = activePane?.viewMode == .gallery ? .on : .off
         case "view.asColumn": menuItem.state = activePane?.viewMode == .column ? .on : .off
+        case "view.asTree": menuItem.state = activePane?.viewMode == .tree ? .on : .off
         case "view.arrangeNone": menuItem.state = (activePane?.groupKey ?? .none) == .none ? .on : .off
         case "view.arrangeKind": menuItem.state = activePane?.groupKey == .kind ? .on : .off
         case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
@@ -6173,6 +6175,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("flatten-folder", cmdIDs.contains("view.flattenFolder") && hasDeep && hasTop,
             "registered=\(cmdIDs.contains("view.flattenFolder")) deep=\(hasDeep) top=\(hasTop)")
         try? FileManager.default.removeItem(at: flatDir)
+        // Tree view: the mode is registered, and the outline controller exposes its entries and a
+        // location-aware selection (so file ops resolve to the real path).
+        let tree = TreeOutlineController()
+        tree.directoryURL = URL(fileURLWithPath: "/tmp")
+        tree.setEntries([
+            FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil),
+            FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil),
+        ], preserveState: false)
+        tree.select(name: "b.txt")
+        let selected = tree.selectedEntries.first
+        check("tree-view",
+            cmdIDs.contains("view.asTree") && tree.entries.count == 2
+                && selected?.name == "b.txt" && selected?.location == "/tmp",
+            "registered=\(cmdIDs.contains("view.asTree")) entries=\(tree.entries.count) sel=\(selected?.name ?? "nil") loc=\(selected?.location ?? "nil")")
         return (ok, lines)
     }
 }

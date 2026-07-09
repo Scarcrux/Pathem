@@ -14,7 +14,7 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
     /// grid views (gallery uses larger thumbnails); `column` is miller columns.
-    public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery, column }
+    public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery, column, tree }
 
     public var sortKey: SortKey
     public var ascending: Bool

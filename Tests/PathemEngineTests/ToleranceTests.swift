@@ -17,7 +17,7 @@ import Testing
     }
 
     @Test func viewFormatUnknownEnumsFallBack() throws {
-        let v = try decode(ViewFormat.self, #"{"viewMode":"tree","sortKey":"color","ascending":false}"#)
+        let v = try decode(ViewFormat.self, #"{"viewMode":"hologram","sortKey":"color","ascending":false}"#)
         #expect(v.viewMode == .list)
         #expect(v.sortKey == .name)
         #expect(v.ascending == false)  // preserved

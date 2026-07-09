@@ -987,6 +987,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         case .icon: content = makeIconContent(gallery: false)
         case .gallery: content = GalleryController()
         case .column: content = ColumnBrowserController()
+        case .tree: content = TreeOutlineController()
         }
         wireContent()
         embedContent()
@@ -1158,6 +1159,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         case .icon: 1
         case .gallery: 2
         case .column: 3
+        case .tree: 4
         }
     }
 
@@ -1166,6 +1168,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         case 1: .icon
         case 2: .gallery
         case 3: .column
+        case 4: .tree
         default: .list
         }
     }
@@ -1176,6 +1179,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             ("square.grid.2x2", L("pane.viewAsIcons", "as Icons")),
             ("square.grid.3x1.below.line.grid.1x2", L("pane.viewAsGallery", "as Gallery")),
             ("rectangle.split.3x1", L("pane.viewAsColumns", "as Columns")),
+            ("list.bullet.indent", L("pane.viewAsTree", "as Tree")),
         ]
         viewSwitcher = NSSegmentedControl(
             images: segments.map { Self.symbol($0.0) }, trackingMode: .selectOne,
