@@ -6071,6 +6071,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Reorder sidebar sections for a render, without persisting (PATHEM_SIDEBAR_ORDER).
+    func debugReorderSidebar(_ order: [String]) {
+        sidebar.debugSetSectionOrder(order)
+        view.layoutSubtreeIfNeeded()
+    }
+
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).
     func debugRenderSidebar(to path: String) {
         let view = sidebar.containerView

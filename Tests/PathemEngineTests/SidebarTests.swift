@@ -3,6 +3,38 @@ import Testing
 
 @testable import PathemEngine
 
+@Suite("Sidebar section order")
+struct SidebarSectionOrderTests {
+    @Test func savedOrderWinsAndUnknownSectionsAppendInDefaultOrder() {
+        // On screen: Favorites, Locations, Cloud, Tags. Saved order flips Tags to the top and
+        // omits Cloud (a section that appeared later); Cloud keeps its default slot at the end.
+        let onScreen = ["group:fav", "header:Locations", "header:Cloud", "header:Tags"]
+        let saved = ["header:Tags", "group:fav", "header:Locations"]
+        #expect(
+            Sidebar.orderedKeys(onScreen, by: saved)
+                == ["header:Tags", "group:fav", "header:Locations", "header:Cloud"])
+    }
+
+    @Test func emptyOrderKeepsDefault() {
+        let keys = ["a", "b", "c"]
+        #expect(Sidebar.orderedKeys(keys, by: []) == keys)
+    }
+
+    @Test func setSectionOrderRoundTrips() throws {
+        var sidebar = Sidebar(groups: [])
+        sidebar.setSectionOrder(["header:Tags", "header:Cloud"])
+        let data = try JSONEncoder().encode(sidebar)
+        let decoded = try JSONDecoder().decode(Sidebar.self, from: data)
+        #expect(decoded.sectionOrder == ["header:Tags", "header:Cloud"])
+    }
+
+    @Test func olderSidebarJSONWithoutSectionOrderDecodes() throws {
+        let json = #"{"groups":[]}"#
+        let decoded = try JSONDecoder().decode(Sidebar.self, from: Data(json.utf8))
+        #expect(decoded.sectionOrder.isEmpty)
+    }
+}
+
 @Suite("Sidebar model")
 struct SidebarTests {
     // Fixed ids so reordering assertions are deterministic.

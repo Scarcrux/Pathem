@@ -112,6 +112,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     private static let itemType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-item")
     private static let groupType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-group")
+    /// Dragging a whole section (a system header or a user group) to reorder it among the
+    /// other sections; carries the section's stable key.
+    private static let sectionType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-section")
 
     private static let iconChoices = [
         "house", "folder", "doc", "doc.text", "star", "heart", "flag", "tag",
@@ -217,7 +220,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         // there yet at click time), so drive it explicitly.
         outline.target = self
         outline.doubleAction = #selector(outlineDoubleClicked)
-        outline.registerForDraggedTypes([Self.itemType, Self.groupType, .fileURL])
+        outline.registerForDraggedTypes([Self.itemType, Self.groupType, Self.sectionType, .fileURL])
         outline.setDraggingSourceOperationMask(.move, forLocal: true)
 
         let menu = NSMenu()
@@ -352,6 +355,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         roots.append(smartFoldersNode())
         roots.append(tagsNode())
+        roots = Self.ordered(roots, by: model.sectionOrder)
         outline.reloadData()
         for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) { outline.expandItem(root) }
 
@@ -380,6 +384,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .device(let device): return "device:\(device.proto.rawValue):\(device.host)"
         case .manageConnections: return "manage"
         }
+    }
+
+    /// Reorder root sections to match the saved `order` of section keys. Sections whose key
+    /// is in `order` come in that order; any others keep their default relative order after
+    /// them (so a section that appears after the order was saved isn't dropped or hidden).
+    private static func ordered(_ roots: [Node], by order: [String]) -> [Node] {
+        guard !order.isEmpty else { return roots }
+        let position = Dictionary(
+            Sidebar.orderedKeys(roots.map(key), by: order).enumerated().map { ($1, $0) },
+            uniquingKeysWith: { first, _ in first })
+        return roots.sorted { (position[key($0)] ?? 0) < (position[key($1)] ?? 0) }
     }
 
     private func rowForKey(_ wanted: String) -> Int? {
@@ -565,6 +580,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     // MARK: Mutation
 
+    /// Set the section order in memory only (no persistence), for headless render checks.
+    func debugSetSectionOrder(_ order: [String]) { model.sectionOrder = order }
+
     private func mutate(_ change: (inout Sidebar) -> Void) {
         var copy = model
         change(&copy)
@@ -748,7 +766,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let pb = NSPasteboardItem()
         switch node.kind {
         case .userItem(let id): pb.setString(id.uuidString, forType: Self.itemType)
-        case .userGroup(let id): pb.setString(id.uuidString, forType: Self.groupType)
+        case .userGroup(let id):
+            pb.setString(id.uuidString, forType: Self.groupType)
+            pb.setString(Self.key(node), forType: Self.sectionType)  // also reorderable as a whole section
+        case .systemHeader: pb.setString(Self.key(node), forType: Self.sectionType)
         default: return nil
         }
         return pb
@@ -762,6 +783,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         // Reordering a user shortcut: destination must be a user group.
         if pb.availableType(from: [Self.itemType]) != nil {
             if let group = item as? Node, case .userGroup = group.kind { return .move }
+            return []
+        }
+        // Reordering a whole section (a system header or a user group) among the sections.
+        if pb.availableType(from: [Self.sectionType]) != nil {
+            // Dropped onto a section: retarget to the gap before it so the insertion line shows.
+            if let node = item as? Node, node.isHeader, let idx = roots.firstIndex(where: { $0 === node }) {
+                outlineView.setDropItem(nil, dropChildIndex: idx)
+                return .move
+            }
+            if item == nil, index >= 0 { return .move }  // a root gap between sections
             return []
         }
         // Reordering a user group: only at the root, among the user groups.
@@ -834,6 +865,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             let count = model.groups.first { $0.id == gid }?.items.count ?? 0
             let target = index < 0 ? count : index
             mutate { $0.moveItem(id, toGroup: gid, at: target) }
+            return true
+        }
+        // Reorder a whole section: move its key to the drop slot in the full section order.
+        if let key = pb.string(forType: Self.sectionType), item == nil {
+            var order = roots.map(Self.key)  // the current on-screen order of every section
+            guard let from = order.firstIndex(of: key) else { return false }
+            var target = min(max(index, 0), order.count)
+            order.remove(at: from)
+            if from < target { target -= 1 }  // account for the removed element
+            order.insert(key, at: min(target, order.count))
+            mutate { $0.setSectionOrder(order) }
             return true
         }
         if let str = pb.string(forType: Self.groupType), let id = UUID(uuidString: str), item == nil {

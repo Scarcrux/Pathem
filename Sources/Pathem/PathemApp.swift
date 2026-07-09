@@ -259,7 +259,9 @@ enum PathemApp {
             let number = window.windowNumber
             let mode = ProcessInfo.processInfo.environment["PATHEM_MAIN_MODE"]
             let navPath = ProcessInfo.processInfo.environment["PATHEM_MAIN_PATH"]
+            let sectionOrder = ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_ORDER"]
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                if let sectionOrder { browser.debugReorderSidebar(sectionOrder.split(separator: ",").map(String.init)) }
                 if let navPath { browser.debugNavigateActive(to: URL(fileURLWithPath: navPath)) }
                 if let mode {
                     // PATHEM_MAIN_PATH picks the folder; otherwise use the fake Photos folder

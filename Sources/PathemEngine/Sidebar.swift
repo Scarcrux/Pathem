@@ -53,15 +53,41 @@ public struct Sidebar: Codable, Sendable, Equatable {
     }
 
     public var groups: [Group]
+    /// The display order of the whole sidebar's sections, as stable section keys
+    /// ("header:Cloud", "group:<uuid>", ...). Empty means the default order. Sections
+    /// missing from the list fall to the end in their default order, so a newly
+    /// appearing section (a mounted volume, a connected device) isn't lost.
+    public var sectionOrder: [String]
 
-    public init(groups: [Group]) { self.groups = groups }
+    public init(groups: [Group], sectionOrder: [String] = []) {
+        self.groups = groups
+        self.sectionOrder = sectionOrder
+    }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         groups = try c.decodeIfPresent([Group].self, forKey: .groups) ?? []
+        sectionOrder = try c.decodeIfPresent([String].self, forKey: .sectionOrder) ?? []
     }
 
-    private enum CodingKeys: String, CodingKey { case groups }
+    private enum CodingKeys: String, CodingKey { case groups, sectionOrder }
+
+    /// Reorder the sidebar's sections to exactly `order` (a list of section keys).
+    public mutating func setSectionOrder(_ order: [String]) { sectionOrder = order }
+
+    /// Stable-sort `keys` so those present in `order` appear in that order, and any others
+    /// keep their original relative order after them. The sidebar uses this to arrange its
+    /// sections: a saved order wins, and a section not in it (a just-mounted volume, a newly
+    /// connected device) still shows, appended in its default position.
+    public static func orderedKeys(_ keys: [String], by order: [String]) -> [String] {
+        guard !order.isEmpty else { return keys }
+        let rank = Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        return keys.enumerated().sorted { a, b in
+            let ra = rank[a.element] ?? (order.count + a.offset)
+            let rb = rank[b.element] ?? (order.count + b.offset)
+            return ra != rb ? ra < rb : a.offset < b.offset
+        }.map(\.element)
+    }
 
     /// The seed for a fresh install: a Favorites group of the standard places.
     public static func makeDefault(home: URL) -> Sidebar {
