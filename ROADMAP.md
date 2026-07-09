@@ -12,7 +12,7 @@ The hard part is done and verified in source: getattrlistbulk fast enumeration
 Finder-style sidebar, per-folder saved views + apply-to-subfolders, Layouts, a
 command registry + rebindable keymap + command palette, on-device semantic
 search + an AI command bar, Quick Look, batch rename, preferences, and
-copy/move/cut/paste with undo. Universal .app packaging. Clean build, 470 engine
+copy/move/cut/paste with undo. Universal .app packaging. Clean build, 519 engine
 tests.
 
 What is missing for a credible v1.0 is not architecture. It is a cluster of
@@ -180,13 +180,49 @@ committed, and installed.
   to relative mirroring, so two different roots track in step. `SyncBrowse.mirroredPath`
   (9 tests).
 
-*Deferred, with reasons:* **cloud folder badges** (an overlay on iCloud/Dropbox-style
-CloudStorage folders) -- correct per-path icon compositing across every view is a lot
-of surface for a cosmetic cue; **formal site groups** -- the per-site color label
-already clusters sites visually and the filter covers find, so a full group model is
-low return; plugin-*rendered* custom views (gated Swift extension runtime); a signed
-`SMAppService` privileged helper (only needed to avoid the terminal `sudo` route for
-chown).
+*Deferred, with reasons:* **formal site groups** -- the per-site color label already
+clusters sites visually and the filter covers find, so a full group model is low return;
+plugin-*rendered* custom views (gated Swift extension runtime); a signed `SMAppService`
+privileged helper (only needed to avoid the terminal `sudo` route for chown). (Cloud
+folder badges, once deferred here, shipped in Round 7.)
+
+## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
+
+A "make everything customizable" pass (Directory-Opus-class), plus one important fix.
+
+- **Fix: blank panes** -- SHIPPED. The tab-bar and the pane's top toolbar stack views
+  weren't hugging their height, so they stretched and squeezed the file list to zero
+  height: panes showed correct item counts but no rows. Both now hug vertically; a new
+  `pane-content-not-squished` smoke check (asserts real list height) guards the class of
+  bug the old checks missed (they only looked at data + pane width).
+- **Cloud folder badges** -- SHIPPED. Cloud folders carry a small service badge (iCloud,
+  Dropbox, Google Drive, OneDrive, Box) so same-named folders across services read apart.
+  Pure path->service detection (`CloudLocation`, 8 tests) covers `~/Library/CloudStorage`
+  providers, iCloud Drive, and legacy `~/Dropbox` / `~/Google Drive`; a tinted-cloud
+  compositor badges list / icon / column / tree.
+- **Sidebar sections** -- SHIPPED. Drag any section (built-in header or user group) to
+  reorder it among the others; the order persists (`Sidebar.orderedKeys`, tested) and a
+  newly appearing section still shows. Also merged the redundant "Smart" and "Smart
+  Folders" headers into one.
+- **Context-menu editor** -- SHIPPED. Settings > Menus is now a reorderable list: drag to
+  reorder the file right-click menu, uncheck to hide, Reset to Default. Data-driven from a
+  saved order (`ContextMenuLayout`, tested); separators auto-insert between groups and a
+  tidy pass hides any left dangling by conditional items.
+- **File color rules (labels)** -- SHIPPED. Settings > Labels: color/style filenames by
+  rules (extension, name contains/begins/ends/glob, size, folder-vs-file) with color +
+  bold/italic; first enabled match wins. Engine `ColorRule`/`ColorRules` + a glob matcher
+  (7 tests); a shared `FileColorStyle` colors list / icon / column / tree.
+- **Size & date formats** -- SHIPPED. Decimal (KB/MB) vs binary (KiB/MiB) sizes; relative
+  / short / medium dates.
+- **Startup & open behavior** -- SHIPPED. New tabs/windows open to the last folder, Home,
+  or a fixed folder; middle-click opens a folder in a new tab.
+- **Custom toolbar buttons** -- SHIPPED. The Customize Toolbar palette now exposes every
+  registered command -- saved external commands (a bolt icon) and any other registry
+  command -- not just the curated catalog, so anything can go on the toolbar.
+- **Copy Path + navigation menus** -- SHIPPED. Copy Path from a sidebar item; a
+  folder-level right-click menu on empty pane space (Copy Path/Name of the current folder,
+  New Folder/File/Paste); and a context menu on breadcrumb segments *and* tabs (open that
+  folder in a new tab or the left/right pane, copy its path).
 
 ## Next up -- round 1 (shipped 2026-07-08)
 
@@ -318,11 +354,10 @@ Tier 3 (breadth and niceties):
 
 - **Undo history + selective undo** -- SHIPPED (2026-07-08). See "Next up".
 - **Easy folder-icon change from folder properties** (Get Info) -- SHIPPED (Round 5).
-- **Cloud folder badges** -- DEFERRED (see Round 5). Keep the real folder icon (an
-  iCloud "Documents" still shows the Documents glyph) and overlay a small cloud-
-  service badge, iCloud via SF Symbol plus bundled brand logos for Dropbox / Drive /
-  OneDrive under nominative use, generic cloud fallback otherwise. Correct per-path
-  compositing across every view is a lot of surface for a cosmetic cue.
+- **Cloud folder badges** -- SHIPPED (Round 7). The real folder icon is kept and a small
+  tinted service badge (iCloud, Dropbox, Google Drive, OneDrive, Box) is composited in the
+  corner across list / icon / column / tree. Tinted SF Symbol clouds rather than bundled
+  brand logos (no trademark concerns), distinguished by color.
 - **Super-drag follow-ups:** make the flick-to-command map user-editable, and
   extend the gesture beyond the list view (icon / gallery / column).
 
