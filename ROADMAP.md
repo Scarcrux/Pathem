@@ -12,7 +12,7 @@ The hard part is done and verified in source: getattrlistbulk fast enumeration
 Finder-style sidebar, per-folder saved views + apply-to-subfolders, Layouts, a
 command registry + rebindable keymap + command palette, on-device semantic
 search + an AI command bar, Quick Look, batch rename, preferences, and
-copy/move/cut/paste with undo. Universal .app packaging. Clean build, 88 engine
+copy/move/cut/paste with undo. Universal .app packaging. Clean build, 470 engine
 tests.
 
 What is missing for a credible v1.0 is not architecture. It is a cluster of
@@ -138,6 +138,47 @@ All four shipped:
 Custom, plugin-*rendered* views still wait on the gated Swift extension runtime;
 named presets are the config-level version of the same idea.
 
+## Round 5 (shipped 2026-07-09) -- site-manager depth + power-user polish
+
+The remote/site-manager cluster and the last power-user affordances. All shipped,
+committed, and installed.
+
+- **Site manager Tier 2** -- SHIPPED. Each saved connection gains an optional
+  **color label** (a dot in the sidebar Connections section) and a **default local
+  directory**, so connecting can open the paired local folder in the other pane.
+  Forward-compatible decode (older `connections.json` still loads).
+- **Discoverable S3-compatible backends** -- SHIPPED. The S3 backend already spoke
+  path-style + SigV4 to any host; the connection editor now has an endpoint picker
+  (Amazon, Backblaze B2, Google Cloud Storage, Wasabi, DigitalOcean Spaces,
+  Cloudflare R2) that fills the host, so those providers are reachable without hand-
+  typing an endpoint. `S3Provider.host` + `S3ProviderTests`.
+- **Remote path bookmarks** -- SHIPPED. Bookmark the current remote folder under a
+  name (stored on the connection in `connections.json`), then jump back to it from a
+  new **Bookmarks** menu. The jump reuses the live session password, so there is no
+  re-prompt. `RemoteBookmark` model (round-trip + backward-compat tested).
+- **Filter the Connections list** -- SHIPPED. A search field narrows the site list by
+  name, host, user, or protocol; row actions map back to the underlying site by
+  identity, so filtering never edits the wrong one, and editing keeps bookmarks.
+- **Open With Pathem + a Service** -- SHIPPED. A `CFBundleDocumentTypes` folder
+  handler (rank Alternate, so Finder stays the default) plus an "Open in Pathem"
+  Service and `application(_:open:)`, so folders can be opened into a pane from
+  outside the app.
+- **Vim-style navigation** -- SHIPPED. An optional mode where `hjkl`, `gg`/`G`, and
+  `/` drive selection and search without the mouse (text-field editing is exempt).
+- **In-app image Markup** -- SHIPPED. Freehand annotation of an image in a sheet,
+  saved back through the normal write + undo path.
+- **Custom file/folder icon** -- SHIPPED. Set or remove a custom icon on any file or
+  folder from Get Info, via `NSWorkspace.setIcon`.
+
+*Deferred, with reasons:* **cloud folder badges** (an overlay on iCloud/Dropbox-style
+CloudStorage folders) -- correct per-path icon compositing across every view is a lot
+of surface for a cosmetic cue; **formal site groups** -- the per-site color label
+already clusters sites visually and the filter covers find, so a full group model is
+low return; **Azure Blob** (not S3-compatible, needs its own SharedKey signer);
+plugin-*rendered* custom views (gated Swift extension runtime); a signed
+`SMAppService` privileged helper (only needed to avoid the terminal `sudo` route for
+chown).
+
 ## Next up -- round 1 (shipped 2026-07-08)
 
 All four shipped, committed, and installed. Details for each live in their existing
@@ -246,29 +287,32 @@ Tier 1 (auth and security; cheap on the existing SFTP/FTP code):
   checkbox on connect, per connection id via KeychainStore).
 - **FTPS** (FTP over TLS), explicit and implicit.
 
-Tier 2 (organization and power):
+Tier 2 (organization and power): mostly SHIPPED (Round 5).
 
-- **Folders / groups + search** in the site list.
-- **Per-site color labels.**
-- **Per-site default local directory** and **synchronized browsing** (both panes
-  move together).
-- **Bookmarks:** saved local-to-remote path pairs per site.
+- **Search** in the site list -- SHIPPED (filter by name/host/user/protocol).
+  *Formal groups* deferred (color labels already cluster sites; see Round 5).
+- **Per-site color labels** -- SHIPPED.
+- **Per-site default local directory** -- SHIPPED. *Synchronized browsing* (both panes
+  move together) is a separate follow-up.
+- **Bookmarks** -- SHIPPED (saved remote paths per site, via the Bookmarks menu).
 
 Tier 3 (breadth and niceties):
 
-- More cloud backends: **Backblaze B2, Azure Blob, Google Cloud Storage** (the S3
-  code is the template).
+- More cloud backends: **Backblaze B2, Google Cloud Storage** and other S3-compatible
+  endpoints -- SHIPPED (Round 5, endpoint picker). **Azure Blob** still open (not
+  S3-compatible; needs its own SharedKey signer).
 - FTP **passive / active** mode and charset / encoding.
 - Per-site speed limits, keep-alive / reconnect, SOCKS / HTTP proxy.
 
 ## Recently requested (in flight / backlog, 2026-07-05)
 
 - **Undo history + selective undo** -- SHIPPED (2026-07-08). See "Next up".
-- **Easy folder-icon change from folder properties** (Get Info).
-- **Cloud folder badges:** keep the real folder icon (an iCloud "Documents" still
-  shows the Documents glyph) and overlay a small cloud-service badge, iCloud via
-  SF Symbol plus bundled brand logos for Dropbox / Drive / OneDrive under
-  nominative use, generic cloud fallback otherwise.
+- **Easy folder-icon change from folder properties** (Get Info) -- SHIPPED (Round 5).
+- **Cloud folder badges** -- DEFERRED (see Round 5). Keep the real folder icon (an
+  iCloud "Documents" still shows the Documents glyph) and overlay a small cloud-
+  service badge, iCloud via SF Symbol plus bundled brand logos for Dropbox / Drive /
+  OneDrive under nominative use, generic cloud fallback otherwise. Correct per-path
+  compositing across every view is a lot of surface for a cosmetic cue.
 - **Super-drag follow-ups:** make the flick-to-command map user-editable, and
   extend the gesture beyond the list view (icon / gallery / column).
 
