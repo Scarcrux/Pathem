@@ -6526,6 +6526,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             cmdIDs.contains("view.syncBrowsing") && syncDescend == "/a/projB/src"
                 && syncAscend == "/a/projB",
             "cmd=\(cmdIDs.contains("view.syncBrowsing")) descend=\(syncDescend ?? "nil") ascend=\(syncAscend ?? "nil")")
+        // Azure Blob: the protocol dispatches to its provider and the Shared Key signer
+        // produces a signature (correctness is unit-tested against an HMAC vector).
+        let azureProvider = RemoteProviders.make(for: .azure) is AzureBlobProvider
+        let azureSig = AzureSharedKey.signature(
+            key: Data("Jefe".utf8).base64EncodedString(), stringToSign: "what do ya want for nothing?")
+        check("azure-blob-backend",
+            azureProvider && RemoteConnection.Proto.allCases.contains(.azure) && azureSig != nil,
+            "provider=\(azureProvider) signer=\(azureSig != nil)")
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)

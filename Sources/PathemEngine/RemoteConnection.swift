@@ -6,13 +6,13 @@ import Foundation
 /// Full-Disk-Access app process.
 public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
     public enum Proto: String, Codable, Sendable, CaseIterable {
-        case ftp, ftps, sftp, webdav, webdavs, s3, adb, afc
+        case ftp, ftps, sftp, webdav, webdavs, s3, azure, adb, afc
         public var defaultPort: Int {
             switch self {
             case .sftp: return 22
             case .ftp, .ftps: return 21
             case .webdav: return 80
-            case .webdavs, .s3: return 443
+            case .webdavs, .s3, .azure: return 443
             case .adb, .afc: return 0  // USB devices, no network port
             }
         }
@@ -24,6 +24,7 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
             case .webdav: return "WebDAV"
             case .webdavs: return "WebDAV (HTTPS)"
             case .s3: return "Amazon S3"
+            case .azure: return "Azure Blob"
             case .adb: return "Android (ADB)"
             case .afc: return "iOS (AFC)"
             }

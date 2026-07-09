@@ -38,6 +38,7 @@ public enum RemoteProviders {
         case .sftp: return SFTPProvider()
         case .webdav, .webdavs: return CurlWebDAVProvider()
         case .s3: return S3Provider()
+        case .azure: return AzureBlobProvider()
         case .adb: return ADBProvider()
         case .afc: return AFCProvider()
         }

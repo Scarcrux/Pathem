@@ -292,8 +292,9 @@ Tier 2 (organization and power): mostly SHIPPED (Round 5).
 - **Search** in the site list -- SHIPPED (filter by name/host/user/protocol).
   *Formal groups* deferred (color labels already cluster sites; see Round 5).
 - **Per-site color labels** -- SHIPPED.
-- **Per-site default local directory** -- SHIPPED. *Synchronized browsing* (both panes
-  move together) is a separate follow-up.
+- **Per-site default local directory** -- SHIPPED. **Synchronized browsing** (both
+  panes move together) -- SHIPPED (View ▸ Sync Browsing): relative/delta mirroring, so
+  two different roots track in step, not just a same-path lock. `SyncBrowse.mirroredPath`.
 - **Bookmarks** -- SHIPPED (saved remote paths per site, via the Bookmarks menu).
 
 Tier 3 (breadth and niceties):

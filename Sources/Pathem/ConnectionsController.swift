@@ -289,15 +289,15 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             return f
         }
         let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
-        let host = field(L("conn.hostPlaceholder", "Host (S3: endpoint, blank = Amazon)"), existing?.host ?? "")
+        let host = field(L("conn.hostPlaceholder", "Host (S3/Azure endpoint; blank = default)"), existing?.host ?? "")
         editingHostField = host
         let s3Endpoint = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
         s3Endpoint.addItems(withTitles: Self.s3Endpoints.map(\.name) + [L("conn.s3Other", "Other…")])
         s3Endpoint.target = self
         s3Endpoint.action = #selector(s3EndpointChanged(_:))
         let port = field(L("conn.portPlaceholder", "Port (blank = default)"), existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
-        let user = field(L("conn.userPlaceholder", "User (S3: access key)"), existing?.user ?? "")
-        let path = field(L("conn.pathPlaceholder", "Path (S3: /bucket)"), existing?.path ?? "/")
+        let user = field(L("conn.userPlaceholder", "User (S3 access key / Azure account)"), existing?.user ?? "")
+        let path = field(L("conn.pathPlaceholder", "Path (S3 /bucket, Azure /container)"), existing?.path ?? "/")
         let region = field(L("conn.regionPlaceholder", "Region (S3, e.g. us-east-1)"), existing?.region ?? "")
         let keyFile = field(L("conn.keyFilePlaceholder", "SFTP private key (e.g. ~/.ssh/id_ed25519)"), existing?.keyFile ?? "")
         editingKeyFileField = keyFile
@@ -342,9 +342,10 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             guard response == .alertFirstButtonReturn, let self else { return }
             let host = host.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             let chosen = RemoteConnection.Proto.allCases[proto.indexOfSelectedItem]
-            // S3 may leave the host blank (derived from the region: s3.<region>.amazonaws.com);
-            // every other protocol needs a valid, non-smuggling host.
-            if chosen == .s3 {
+            // S3 and Azure may leave the host blank (S3 derives it from the region,
+            // Azure from the account: <account>.blob.core.windows.net); every other
+            // protocol needs a valid, non-smuggling host.
+            if chosen == .s3 || chosen == .azure {
                 if !host.isEmpty, !RemoteConnection.isValidHost(host) { NSSound.beep(); return }
             } else if host.isEmpty || !RemoteConnection.isValidHost(host) {
                 NSSound.beep()
@@ -361,7 +362,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             }
             let conn = RemoteConnection(
                 id: existing?.id ?? UUID(),
-                name: name.stringValue.isEmpty ? (host.isEmpty ? "Amazon S3" : host) : name.stringValue,
+                name: name.stringValue.isEmpty ? (host.isEmpty ? chosen.label : host) : name.stringValue,
                 proto: chosen, host: host, port: Int(port.stringValue) ?? 0,
                 user: user.stringValue, path: path.stringValue.isEmpty ? "/" : path.stringValue,
                 region: region.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
