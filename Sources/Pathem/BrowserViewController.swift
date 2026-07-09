@@ -162,6 +162,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let slideshow = SlideshowController()
     private lazy var trimController = TrimController()
     private lazy var aclEditor = ACLEditorController()
+    private lazy var markupController = MarkupController()
     private lazy var undoHistoryController = UndoHistoryController()
     private lazy var globalSearchController = GlobalSearchController()
     private var externalCommands: [ExternalCommand] = []
@@ -965,6 +966,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             else { return false }
             return TrimController.trimmableExtensions.contains((entry.name as NSString).pathExtension.lowercased())
         }) { [weak self] in self?.trimSelection() }
+        add("image.markup", L("bvc.cmd.markup", "Markup…"), enabled: { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
+                pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first
+            else { return false }
+            return Self.isImageName(entry.name)
+        }) { [weak self] in self?.markupSelection() }
         add("files.xattrs", L("bvc.cmd.xattrs", "Extended Attributes…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.count == 1
@@ -2473,6 +2480,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Drop cached thumbnails for files whose pixels changed on disk, so the grids regenerate them.
     private func invalidateThumbnails(_ urls: [URL]) {
         for url in urls { ThumbnailProvider.shared.evict(url) }
+    }
+
+    /// Mark up the selected image (freehand annotations), saving a flattened copy.
+    private func markupSelection() {
+        guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first,
+            Self.isImageName(url.lastPathComponent)
+        else { NSSound.beep(); return }
+        markupController.onSaved = { [weak self] output in
+            self?.activePane?.reloadIfShowingListing()
+            self?.activePane?.select(name: output.lastPathComponent)
+        }
+        markupController.onFailed = { [weak self] message in
+            self?.presentInfo(L("markup.failedTitle", "Couldn’t mark up"), message)
+        }
+        markupController.markup(url)
     }
 
     /// Trim the selected audio/video file: show the native trim UI, then export the range to a
@@ -6278,6 +6300,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         let pdfOut = BrowserViewController.buildPDF(from: pdfImages, in: pdfDir)
         let pdfPages = pdfOut.flatMap { PDFDocument(url: $0)?.pageCount } ?? 0
         check("create-pdf-builds", pdfPages == 2, "pages=\(pdfPages)")
+        // Markup: draw a stroke over an image and flatten to a valid same-size PNG.
+        let mkFile = pdfDir.appendingPathComponent("markup-src.png")
+        let mkImage = NSImage(size: NSSize(width: 80, height: 60))
+        mkImage.lockFocus(); NSColor.white.setFill(); NSRect(x: 0, y: 0, width: 80, height: 60).fill(); mkImage.unlockFocus()
+        if let tiff = mkImage.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
+            let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: mkFile)
+        }
+        let mkOut = markupController.debugMarkupAndSave(mkFile)
+        let mkSize = mkOut.flatMap { NSImage(contentsOf: $0)?.size.width } ?? 0
+        check("markup-flattens", cmdIDs.contains("image.markup") && mkOut != nil && mkSize >= 80,
+            "registered=\(cmdIDs.contains("image.markup")) out=\(mkOut != nil) width=\(Int(mkSize))")
         try? FileManager.default.removeItem(at: pdfDir)
         // Show Original: a symlink resolves to its target; a plain file resolves to nil.
         let soDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-showorig-\(UUID().uuidString)")

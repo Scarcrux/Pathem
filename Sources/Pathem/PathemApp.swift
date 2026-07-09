@@ -675,6 +675,7 @@ enum PathemApp {
                     commandItem("Rotate Left", "image.rotateLeft"),
                     commandItem("Rotate Right", "image.rotateRight"),
                     commandItem("Create PDF", "image.createPDF"),
+                    commandItem("Markup…", "image.markup"),
                     commandItem("Trim Media…", "files.trimMedia"),
                     commandItem("Set Attributes…", "files.setAttributes"),
                     commandItem("Set Finder Comment…", "files.setFinderComment"),
