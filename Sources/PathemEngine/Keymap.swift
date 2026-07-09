@@ -80,6 +80,8 @@ public struct Keymap: Codable, Sendable {
         "enter": "files.open",
         "cmd+down": "files.open",
         "cmd+up": "nav.up",
+        "home": "nav.selectFirst",  // jump the selection to the first item (works in every view)
+        "end": "nav.selectLast",  // jump the selection to the last item
         "cmd+[": "nav.back",
         "cmd+]": "nav.forward",
         "delete": "files.trash",  // plain Delete trashes the selection (Cmd+Delete also works, via the menu)

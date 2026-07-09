@@ -45,6 +45,19 @@ import Testing
         #expect(keymap.commandID(for: KeyChord(key: "f2")) == "files.rename")
         #expect(keymap.commandID(for: KeyChord(key: "l", cmd: true)) == "nav.editPath")
         #expect(keymap.commandID(for: KeyChord(key: "g", cmd: true, shift: true)) == "nav.editPath")
+        // Home / End jump the selection to the first / last item.
+        #expect(keymap.commandID(for: KeyChord(key: "home")) == "nav.selectFirst")
+        #expect(keymap.commandID(for: KeyChord(key: "end")) == "nav.selectLast")
+    }
+
+    @Test func homeEndKeyCodesResolveToJumps() {
+        // Home = keyCode 115, End = 119, no modifiers -> the selection-jump commands.
+        let home = KeyChord.from(keyCode: 115, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
+        let end = KeyChord.from(keyCode: 119, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
+        #expect(home.canonical == "home")
+        #expect(end.canonical == "end")
+        #expect(Keymap.standard.commandID(for: home) == "nav.selectFirst")
+        #expect(Keymap.standard.commandID(for: end) == "nav.selectLast")
     }
 
     @Test func userBindingsOverrideAndUnbind() {

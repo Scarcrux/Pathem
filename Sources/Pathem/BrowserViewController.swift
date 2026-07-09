@@ -1210,6 +1210,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             [weak self] in self?.activePane?.goUp()
         }
         add("nav.editPath", L("bvc.cmd.goToPath", "Go to Path…")) { [weak self] in self?.activePane?.beginEditingPath() }
+        add("nav.selectFirst", L("bvc.cmd.selectFirst", "Select First Item"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.activePane?.selectFirst()
+        }
+        add("nav.selectLast", L("bvc.cmd.selectLast", "Select Last Item"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.activePane?.selectLast()
+        }
         add("view.flatView", L("bvc.cmd.flatView", "Flat View"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.activePane?.showFlatView()
         }

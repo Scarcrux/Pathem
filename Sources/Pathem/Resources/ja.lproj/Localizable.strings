@@ -910,3 +910,6 @@
 "torrents.state.checking" = "確認中";
 "torrents.state.stopped" = "停止";
 "torrents.state.error" = "エラー";
+
+"bvc.cmd.selectFirst" = "最初の項目を選択";
+"bvc.cmd.selectLast" = "最後の項目を選択";

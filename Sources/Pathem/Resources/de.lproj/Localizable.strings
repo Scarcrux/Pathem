@@ -910,3 +910,6 @@
 "torrents.state.checking" = "Wird geprüft";
 "torrents.state.stopped" = "Gestoppt";
 "torrents.state.error" = "Fehler";
+
+"bvc.cmd.selectFirst" = "Erstes Objekt auswählen";
+"bvc.cmd.selectLast" = "Letztes Objekt auswählen";

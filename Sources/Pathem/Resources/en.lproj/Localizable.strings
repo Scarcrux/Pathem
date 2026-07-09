@@ -779,3 +779,6 @@
 "torrents.state.checking" = "Checking";
 "torrents.state.stopped" = "Stopped";
 "torrents.state.error" = "Error";
+
+"bvc.cmd.selectFirst" = "Select First Item";
+"bvc.cmd.selectLast" = "Select Last Item";
