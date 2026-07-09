@@ -127,3 +127,45 @@ import Testing
         }
     #endif
 }
+
+@Suite struct NATPMPTests {
+    @Test func mapRequestHasCorrectLayout() {
+        // TCP map of internal 6881 -> suggested external 6881, 1-hour lease.
+        let request = NATPMP.mapRequest(internalPort: 6881, suggestedExternalPort: 6881, tcp: true, lifetime: 3600)
+        #expect([UInt8](request) == [
+            0, 2, 0, 0,  // version 0, opcode 2 (TCP), 2 reserved
+            0x1a, 0xe1,  // internal port 6881
+            0x1a, 0xe1,  // suggested external port 6881
+            0, 0, 0x0e, 0x10,  // lifetime 3600
+        ])
+        // UDP mapping uses opcode 1.
+        #expect([UInt8](NATPMP.mapRequest(internalPort: 1, suggestedExternalPort: 1, tcp: false))[1] == 1)
+    }
+
+    @Test func parsesMapResponse() {
+        // A success response: opcode 2+128, result 0, external port 40000, lifetime 3600.
+        let bytes: [UInt8] = [
+            0, 130, 0, 0,  // version, opcode 130 (TCP reply), result 0
+            0, 0, 0, 1,  // epoch
+            0x1a, 0xe1,  // internal port 6881
+            0x9c, 0x40,  // external port 40000
+            0, 0, 0x0e, 0x10,  // lifetime 3600
+        ]
+        let result = NATPMP.parseMapResponse(Data(bytes), tcp: true)
+        #expect(result?.ok == true)
+        #expect(result?.internalPort == 6881)
+        #expect(result?.externalPort == 40000)
+        #expect(result?.lifetime == 3600)
+        // Wrong protocol (asking as UDP) rejects a TCP reply.
+        #expect(NATPMP.parseMapResponse(Data(bytes), tcp: false) == nil)
+    }
+
+    @Test func parsesExternalAddress() {
+        let bytes: [UInt8] = [0, 128, 0, 0, 0, 0, 0, 1, 203, 0, 113, 5]  // 203.0.113.5
+        #expect(NATPMP.parseExternalAddress(Data(bytes)) == "203.0.113.5")
+        // A non-zero result code yields nil.
+        var errorBytes = bytes
+        errorBytes[3] = 3
+        #expect(NATPMP.parseExternalAddress(Data(errorBytes)) == nil)
+    }
+}

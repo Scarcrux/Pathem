@@ -242,11 +242,15 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   runs it whenever peers are scarce (skipping private torrents), so a trackerless magnet finds
   peers. The codec is unit-tested; a gated live test (PATHEM_DHT_LIVE=1) confirms it finds real
   peers for a well-seeded torrent against the actual network.
-- **Honest boundary / next up.** `.torrent` and magnet downloads, seeding, and DHT peer discovery
-  work today. Not yet at full standalone-client parity: no UPnP/NAT-PMP port mapping, so inbound
-  peers only reach us on open networks and LANs; the DHT is lookup-only (doesn't serve queries or
-  keep a persistent routing table); and no uTP/PEX/encryption. Nearest-value follow-ups, in order:
-  port mapping, then PEX, then a persistent DHT routing table.
+- **NAT-PMP port mapping (RFC 6886)** -- SHIPPED. When the listener starts, the engine finds the
+  default gateway and asks it to forward our TCP port, renewing before the lease expires, so peers
+  behind common home-router NAT can reach us. Best-effort: routers without NAT-PMP just don't
+  answer, and outbound connections work regardless. Codec unit-tested; gateway detection verified.
+- **Honest boundary / next up.** `.torrent` and magnet downloads, seeding (with NAT-PMP so inbound
+  peers can reach us), and DHT peer discovery work today. Not yet at full standalone-client parity:
+  no UPnP-IGD fallback for routers that speak only UPnP, not NAT-PMP; the DHT is lookup-only
+  (doesn't serve queries or keep a persistent routing table); and no uTP/PEX/encryption.
+  Nearest-value follow-ups, in order: PEX, then a persistent DHT routing table, then UPnP-IGD.
 
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 

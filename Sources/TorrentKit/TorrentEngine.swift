@@ -26,6 +26,7 @@ public actor TorrentEngine {
     private let torrentsDir: URL
     private let peerID = Tracker.makePeerID()
     private let dht = DHTClient()  // shared across sessions for trackerless peer discovery
+    private let natpmp = NATPMPClient()  // best-effort router port mapping for inbound peers
 
     private var sessions: [String: TorrentSession] = [:]
     private var meta: [String: Persisted]
@@ -53,6 +54,8 @@ public actor TorrentEngine {
         }
         listener = l
         _ = try? await l.start(port: 6881)
+        // Ask the router to forward our port so peers behind NAT can reach us (best-effort).
+        Task { [natpmp] in await natpmp.mapTCP(port: 6881) }
     }
 
     private func session(forHash hex: String) -> TorrentSession? { sessions[hex] }

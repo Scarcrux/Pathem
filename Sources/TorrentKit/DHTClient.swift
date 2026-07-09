@@ -70,70 +70,11 @@ import Foundation
         {
             let query = DHT.getPeersQuery(
                 transaction: nextTransaction(), nodeID: nodeID, infoHash: infoHash)
-            guard let reply = await Self.udpQuery(host: node.host, port: node.port, payload: query, timeout: timeout),
+            guard let reply = await UDP.query(host: node.host, port: node.port, payload: query, timeout: timeout),
                 let message = DHT.parseMessage(reply),
                 case .response(let response) = message.kind
             else { return nil }
             return DHT.parseGetPeersResponse(response)
-        }
-
-        /// One UDP request/response: send `payload` to host:port, return the first datagram back.
-        private static func udpQuery(host: String, port: UInt16, payload: Data, timeout: TimeInterval)
-            async -> Data?
-        {
-            guard let nwPort = NWEndpoint.Port(rawValue: port) else { return nil }
-            let conn = NWConnection(host: .init(host), port: nwPort, using: .udp)
-            let box = DatagramBox()
-            conn.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    conn.send(content: payload, completion: .contentProcessed { _ in })
-                    conn.receiveMessage { data, _, _, _ in box.resume(data) }
-                case .failed, .cancelled:
-                    box.resume(nil)
-                default:
-                    break
-                }
-            }
-            Self.queue.asyncAfter(deadline: .now() + timeout) { box.resume(nil) }
-            conn.start(queue: Self.queue)
-            let result = await box.value()
-            conn.cancel()
-            return result
-        }
-
-        private static let queue = DispatchQueue(label: "com.pathem.torrent.dht", attributes: .concurrent)
-    }
-
-    /// One-shot async box for a single UDP datagram (resumes with nil on timeout/failure).
-    private final class DatagramBox: @unchecked Sendable {
-        private let lock = NSLock()
-        private var continuation: CheckedContinuation<Data?, Never>?
-        private var settled = false
-        private var pending: Data??  // outer optional: was a value delivered before value() awaited
-
-        func value() async -> Data? {
-            await withCheckedContinuation { cont in
-                lock.lock()
-                if let pending {
-                    lock.unlock()
-                    cont.resume(returning: pending)
-                } else {
-                    continuation = cont
-                    lock.unlock()
-                }
-            }
-        }
-
-        func resume(_ data: Data?) {
-            lock.lock()
-            if settled { lock.unlock(); return }
-            settled = true
-            let cont = continuation
-            continuation = nil
-            if cont == nil { pending = .some(data) }
-            lock.unlock()
-            cont?.resume(returning: data)
         }
     }
 #endif
