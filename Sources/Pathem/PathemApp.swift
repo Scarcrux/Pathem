@@ -652,6 +652,7 @@ enum PathemApp {
                     commandItem("Set Attributes…", "files.setAttributes"),
                     commandItem("Set Finder Comment…", "files.setFinderComment"),
                     commandItem("Permissions…", "files.editACL"),
+                    commandItem("Change Owner (Admin)…", "files.changeOwner"),
                     .separator(),
                     commandItem("Compress", "files.compress"),
                     commandItem("Compress to 7-Zip", "files.compress7z"),

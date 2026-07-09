@@ -16,6 +16,8 @@ final class BulkAttributesController: NSObject {
     private let createPicker = NSDatePicker()
     private let permCheck = NSButton(checkboxWithTitle: "", target: nil, action: nil)
     private let permField = NSTextField()
+    private let groupCheck = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let groupField = NSTextField()
     private let addTagsField = NSTextField()
     private let removeTagsField = NSTextField()
     private var onApply: ((BulkAttributes.Changes) -> Void)?
@@ -41,6 +43,8 @@ final class BulkAttributesController: NSObject {
         }
         permField.placeholderString = "644"
         permField.widthAnchor.constraint(equalToConstant: 70).isActive = true
+        groupField.placeholderString = L("attrs.groupHint", "group name (e.g. staff)")
+        groupField.widthAnchor.constraint(equalToConstant: 140).isActive = true
         addTagsField.placeholderString = L("attrs.addTagsHint", "comma-separated")
         removeTagsField.placeholderString = L("attrs.removeTagsHint", "comma-separated")
 
@@ -60,6 +64,7 @@ final class BulkAttributesController: NSObject {
             labeled(L("attrs.modDate", "Modification date"), modPicker, check: modCheck),
             labeled(L("attrs.createDate", "Creation date"), createPicker, check: createCheck),
             labeled(L("attrs.permissions", "Permissions (octal)"), permField, check: permCheck),
+            labeled(L("attrs.group", "Group"), groupField, check: groupCheck),
             labeled(L("attrs.addTags", "Add tags"), addTagsField),
             labeled(L("attrs.removeTags", "Remove tags"), removeTagsField),
         ])
@@ -104,6 +109,10 @@ final class BulkAttributesController: NSObject {
         if createCheck.state == .on { changes.creationDate = createPicker.dateValue }
         if permCheck.state == .on, let mode = UInt16(permField.stringValue.trimmingCharacters(in: .whitespaces), radix: 8) {
             changes.posixPermissions = mode & 0o7777
+        }
+        if groupCheck.state == .on {
+            let group = groupField.stringValue.trimmingCharacters(in: .whitespaces)
+            if !group.isEmpty { changes.groupOwnerName = group }
         }
         changes.addTags = parseTags(addTagsField.stringValue)
         changes.removeTags = parseTags(removeTagsField.stringValue)

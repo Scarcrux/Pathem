@@ -8,23 +8,27 @@ public enum BulkAttributes {
         public var modificationDate: Date?
         public var creationDate: Date?
         public var posixPermissions: UInt16?  // low 12 bits, e.g. 0o644
+        /// A new group owner (settable without root when you own the file and belong to the group);
+        /// changing the *owner* to another user needs root and is handled via the terminal route.
+        public var groupOwnerName: String?
         public var addTags: [String]
         public var removeTags: [String]
 
         public init(
             modificationDate: Date? = nil, creationDate: Date? = nil, posixPermissions: UInt16? = nil,
-            addTags: [String] = [], removeTags: [String] = []
+            groupOwnerName: String? = nil, addTags: [String] = [], removeTags: [String] = []
         ) {
             self.modificationDate = modificationDate
             self.creationDate = creationDate
             self.posixPermissions = posixPermissions
+            self.groupOwnerName = groupOwnerName
             self.addTags = addTags
             self.removeTags = removeTags
         }
 
         public var isEmpty: Bool {
             modificationDate == nil && creationDate == nil && posixPermissions == nil
-                && addTags.isEmpty && removeTags.isEmpty
+                && groupOwnerName == nil && addTags.isEmpty && removeTags.isEmpty
         }
     }
 
@@ -44,6 +48,7 @@ public enum BulkAttributes {
                 if let date = changes.modificationDate { attributes[.modificationDate] = date }
                 if let date = changes.creationDate { attributes[.creationDate] = date }
                 if let mode = changes.posixPermissions { attributes[.posixPermissions] = NSNumber(value: mode) }
+                if let group = changes.groupOwnerName, !group.isEmpty { attributes[.groupOwnerAccountName] = group }
                 if !attributes.isEmpty { try fm.setAttributes(attributes, ofItemAtPath: url.path) }
 
                 if !changes.addTags.isEmpty || !changes.removeTags.isEmpty {

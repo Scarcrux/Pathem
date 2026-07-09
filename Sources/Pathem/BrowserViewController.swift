@@ -912,6 +912,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.count == 1
         }) { [weak self] in self?.editACLSelection() }
+        add("files.changeOwner", L("bvc.cmd.changeOwner", "Change Owner (Admin)…"), enabled: hasLocalSelection) {
+            [weak self] in self?.changeOwnerViaTerminal()
+        }
         add("files.connectToServer", L("bvc.cmd.connectToServer", "Connect to Server…")) {
             [weak self] in self?.connectToServer()
         }
@@ -4519,6 +4522,51 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         aclEditor.present(url: url, over: view.window)
     }
 
+    /// Change the owner of the selection. Because giving a file to another user needs root, Pathem
+    /// types a ready-to-run `sudo chown` command into the embedded terminal (which prompts for the
+    /// password) rather than bundling a privileged helper. Changing only the group is done without
+    /// root via Set Attributes ▸ Group.
+    private func changeOwnerViaTerminal() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let currentOwner = OwnershipEditor.read(urls[0])?.owner ?? ""
+
+        let alert = NSAlert()
+        alert.messageText = String(format: L("chown.title", "Change owner of %d item(s)"), urls.count)
+        alert.informativeText = L(
+            "chown.hint",
+            "Changing the owner needs administrator rights, so Pathem will type a sudo command into the terminal — review it and press Return to run it. (To change only the group, use Set Attributes.)")
+        alert.addButton(withTitle: L("chown.prepare", "Prepare in Terminal"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        let ownerField = NSTextField(string: currentOwner)
+        ownerField.placeholderString = L("chown.owner", "new owner (user)")
+        let groupField = NSTextField()
+        groupField.placeholderString = L("chown.group", "group (optional)")
+        let recursive = NSButton(checkboxWithTitle: L("chown.recursive", "Apply to folder contents (-R)"), target: nil, action: nil)
+        let fields = NSStackView(views: [ownerField, groupField, recursive])
+        fields.orientation = .vertical
+        fields.alignment = .leading
+        fields.spacing = 8
+        fields.frame = NSRect(x: 0, y: 0, width: 300, height: 84)
+        ownerField.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        groupField.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        alert.accessoryView = fields
+        alert.window.initialFirstResponder = ownerField
+
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let command = OwnershipEditor.sudoChownCommand(
+                owner: ownerField.stringValue, group: groupField.stringValue,
+                recursive: recursive.state == .on, paths: urls.map(\.path))
+            guard !command.isEmpty else { NSSound.beep(); return }
+            if self.terminal.view.isHidden { self.toggleTerminal() }  // reveal the terminal
+            self.terminal.typeCommand(command, in: self.activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser)
+            self.terminal.focus()
+        }
+    }
+
     /// Remove the current folder's background (restore the default).
     private func clearFolderBackground() {
         guard let pane = activePane, !pane.isShowingSmartResults else { NSSound.beep(); return }
@@ -6039,6 +6087,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         check("acl-edit-roundtrips", cmdIDs.contains("files.editACL") && added && listed && removed,
             "registered=\(cmdIDs.contains("files.editACL")) added=\(added) listed=\(listed) removed=\(removed)")
         try? FileManager.default.removeItem(at: aclFile)
+        // Ownership: change-owner command registered, the sudo command builds correctly, and a
+        // change-group applies without root (setting the file's own group is a valid no-op).
+        let ownFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-own-\(UUID().uuidString).txt")
+        try? "x".write(to: ownFile, atomically: true, encoding: .utf8)
+        let chownCmd = OwnershipEditor.sudoChownCommand(owner: "bob", group: "staff", recursive: false, paths: ["/tmp/a b"])
+        let group = OwnershipEditor.read(ownFile)?.group ?? ""
+        let grpOK = BulkAttributes.apply(.init(groupOwnerName: group), to: [ownFile]).failures.isEmpty && !group.isEmpty
+        check("ownership-tools",
+            cmdIDs.contains("files.changeOwner") && chownCmd == "sudo chown 'bob:staff' '/tmp/a b'" && grpOK,
+            "registered=\(cmdIDs.contains("files.changeOwner")) cmd=\(chownCmd == "sudo chown 'bob:staff' '/tmp/a b'") group=\(grpOK)")
+        try? FileManager.default.removeItem(at: ownFile)
         // Skinning: hex parsing, preset lookup, and an accent apply (restored afterward so the
         // running window keeps its configured skin).
         let parsedAccent = ThemeManager.color(fromHex: "#BD93F9")
