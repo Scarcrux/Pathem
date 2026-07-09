@@ -169,3 +169,32 @@ import Testing
         #expect(NATPMP.parseExternalAddress(Data(errorBytes)) == nil)
     }
 }
+
+@Suite struct PEXTests {
+    @Test func handshakeAdvertisesAndParsesUtPex() {
+        let payload = PEX.handshakePayload()
+        // A peer advertising ut_pex=5 in its handshake.
+        let peer = Bencode.dict([("m", .dict([("ut_pex", .int(5))]))]).encoded
+        #expect(PEX.peerPexID(fromHandshake: peer) == 5)
+        // Our own handshake advertises the id we use.
+        #expect(PEX.peerPexID(fromHandshake: payload) == UInt8(PEX.utPexID))
+    }
+
+    @Test func parsesAddedPeers() {
+        // Two peers in the compact `added` field; `dropped`/flags are ignored.
+        var added = Data([10, 0, 0, 1, 0x1a, 0xe1])  // 10.0.0.1:6881
+        added.append(contentsOf: [192, 168, 0, 5, 0xc8, 0xd5])  // 192.168.0.5:51413
+        let message = Bencode.dict([
+            ("added", .bytes(added)),
+            ("added.f", .bytes(Data([0x00, 0x02]))),
+            ("dropped", .bytes(Data([1, 1, 1, 1, 0, 80]))),
+        ]).encoded
+        let peers = PEX.parseAddedPeers(message)
+        #expect(peers == [.init(host: "10.0.0.1", port: 6881), .init(host: "192.168.0.5", port: 51413)])
+    }
+
+    @Test func toleratesMissingAdded() {
+        #expect(PEX.parseAddedPeers(Bencode.dict([("dropped", .bytes(Data()))]).encoded).isEmpty)
+        #expect(PEX.parseAddedPeers(Data("garbage".utf8)).isEmpty)
+    }
+}

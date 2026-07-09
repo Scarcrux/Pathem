@@ -246,11 +246,16 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   default gateway and asks it to forward our TCP port, renewing before the lease expires, so peers
   behind common home-router NAT can reach us. Best-effort: routers without NAT-PMP just don't
   answer, and outbound connections work regardless. Codec unit-tested; gateway detection verified.
+- **Peer exchange (BEP 11, ut_pex)** -- SHIPPED (receive side). Outgoing peers advertise ut_pex
+  over the extension protocol, and the peers others share in their `added` field are fed straight
+  into the session, so a healthy swarm keeps topping up peers without more tracker/DHT traffic.
+  Codec unit-tested; sending our own PEX deltas is a good-citizen follow-up.
 - **Honest boundary / next up.** `.torrent` and magnet downloads, seeding (with NAT-PMP so inbound
-  peers can reach us), and DHT peer discovery work today. Not yet at full standalone-client parity:
-  no UPnP-IGD fallback for routers that speak only UPnP, not NAT-PMP; the DHT is lookup-only
-  (doesn't serve queries or keep a persistent routing table); and no uTP/PEX/encryption.
-  Nearest-value follow-ups, in order: PEX, then a persistent DHT routing table, then UPnP-IGD.
+  peers can reach us), and peer discovery via trackers + DHT + PEX all work today. Not yet at full
+  standalone-client parity: no UPnP-IGD fallback for routers that speak only UPnP; the DHT is
+  lookup-only (doesn't serve queries or keep a persistent routing table); PEX is receive-only; and
+  no uTP or encryption. Nearest-value follow-ups: send-side PEX, a persistent DHT routing table,
+  then UPnP-IGD.
 
 ## Round 7 (shipped 2026-07-09) -- deep customization + a layout fix
 

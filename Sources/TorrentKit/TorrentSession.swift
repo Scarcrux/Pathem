@@ -208,7 +208,8 @@ public actor TorrentSession {
 
     private func runPeer(_ endpoint: Tracker.Peer) async {
         let peer = PeerConnection(
-            host: endpoint.host, port: UInt16(endpoint.port), infoHash: torrent.infoHash, peerID: peerID)
+            host: endpoint.host, port: UInt16(endpoint.port), infoHash: torrent.infoHash,
+            peerID: peerID, advertiseExtensions: true)
         defer {
             knownPeers.remove(endpoint)
             Task { await peer.close() }
@@ -251,6 +252,10 @@ public actor TorrentSession {
 
         if pieces.completedCount > 0 { try await peer.send(.bitfield(pieces.bitfield())) }
         try await peer.send(.interested)
+        // Advertise peer exchange so the peer sends us the peers it knows (BEP 11).
+        if await peer.peerSupportsExtensions {
+            try await peer.send(.extended(id: 0, payload: PEX.handshakePayload()))
+        }
 
         var choked = true
         var peerBits: [Bool] = []
@@ -280,6 +285,11 @@ public actor TorrentSession {
                 Task { try? await peer.send(.unchoke) }
             case .request(let index, let begin, let length):
                 serveBlock(index: Int(index), begin: Int(begin), length: Int(length), to: peer)
+            case .extended(let extID, let payload):
+                // A ut_pex message (sent with the id we advertised) carries more peers.
+                if extID == UInt8(PEX.utPexID) {
+                    for discovered in PEX.parseAddedPeers(payload) { considerPeer(discovered) }
+                }
             default:
                 break
             }
