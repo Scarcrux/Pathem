@@ -238,6 +238,7 @@ final class TabbedPaneController: NSObject {
         // The whole chip selects the tab, not just the label -- clicking its padding or empty
         // space is what a user expects. Only the close button (below) is carved out.
         chip.onSelect = { [weak self] in self?.selectTab(index) }
+        chip.menu = makeTabMenu(index: index, closable: closable)
 
         let name = NSTextField(labelWithString: title)
         name.font = .systemFont(ofSize: 12, weight: active ? .semibold : .regular)
@@ -275,6 +276,56 @@ final class TabbedPaneController: NSObject {
 
     @objc private func addTabClicked() { newTab(duplicatingCurrent: true) }
     @objc private func closeClicked(_ sender: NSButton) { closeTab(at: sender.tag) }
+
+    /// Open this tab's folder into a pane (or copy its path); the browser targets either side.
+    var onOpenFolderInPane: ((URL, BreadcrumbBar.Action) -> Void)?
+
+    /// The right-click menu for a tab: open its folder elsewhere or copy its path, plus the
+    /// usual tab actions.
+    private func makeTabMenu(index: Int, closable: Bool) -> NSMenu {
+        let menu = NSMenu()
+        func add(_ title: String, _ selector: Selector) {
+            let item = menu.addItem(withTitle: title, action: selector, keyEquivalent: "")
+            item.target = self
+            item.tag = index
+        }
+        add(L("crumb.copyPath", "Copy Path"), #selector(copyTabPath(_:)))
+        menu.addItem(.separator())
+        add(L("crumb.newTab", "Open in New Tab"), #selector(duplicateTab(_:)))
+        add(L("crumb.leftPane", "Open in Left Pane"), #selector(tabToLeftPane(_:)))
+        add(L("crumb.rightPane", "Open in Right Pane"), #selector(tabToRightPane(_:)))
+        menu.addItem(.separator())
+        if closable { add(L("tabs.closeTab", "Close Tab"), #selector(closeTabMenu(_:))) }
+        if tabs.count > 1 { add(L("tabs.closeOthers", "Close Other Tabs"), #selector(closeOtherTabs(_:))) }
+        return menu
+    }
+
+    private func tabURL(_ tag: Int) -> URL? { tabs.indices.contains(tag) ? tabs[tag].currentURL : nil }
+
+    @objc private func copyTabPath(_ sender: NSMenuItem) {
+        guard let url = tabURL(sender.tag) else { return }
+        onOpenFolderInPane?(url, .copyPath)
+    }
+    @objc private func duplicateTab(_ sender: NSMenuItem) {
+        if let url = tabURL(sender.tag) { openTab(at: url) }
+    }
+    @objc private func tabToLeftPane(_ sender: NSMenuItem) {
+        if let url = tabURL(sender.tag) { onOpenFolderInPane?(url, .leftPane) }
+    }
+    @objc private func tabToRightPane(_ sender: NSMenuItem) {
+        if let url = tabURL(sender.tag) { onOpenFolderInPane?(url, .rightPane) }
+    }
+    @objc private func closeTabMenu(_ sender: NSMenuItem) { closeTab(at: sender.tag) }
+    @objc private func closeOtherTabs(_ sender: NSMenuItem) {
+        // Remove every tab except the target, keeping it as the sole, active tab.
+        guard tabs.indices.contains(sender.tag) else { return }
+        let keep = tabs[sender.tag]
+        for tab in tabs where tab !== keep { tab.teardown() }
+        tabs = [keep]
+        activeIndex = 0
+        showActivePane()
+        refreshTabBar()
+    }
 
     static func title(for url: URL) -> String {
         let name = url.lastPathComponent

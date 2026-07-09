@@ -495,6 +495,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self?.dropFiles(urls, move: move, into: destination)
             }
             side.newTabLocation = { [weak self] in self?.preferredNewTabFolder() }
+            side.onOpenFolderInPane = { [weak self] url, action in self?.handleBreadcrumbAction(url, action) }
         }
         // Restore the last session's tabs/folders (or open initial tabs) now that
         // configurePane + callbacks are set, so each pane is fully wired.
