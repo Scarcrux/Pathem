@@ -48,6 +48,13 @@ import Foundation
         /// Whether the peer's handshake advertised BEP 10 extension support (set after connect()).
         public private(set) var peerSupportsExtensions = false
 
+        /// The id the peer advertised for ut_pex, and the peer set we last sent them (for delta
+        /// PEX). Session bookkeeping kept here so it lives and dies with the connection.
+        public private(set) var peerPexID: UInt8?
+        public private(set) var lastPexSent: Set<Tracker.Peer> = []
+        public func setPeerPexID(_ id: UInt8?) { peerPexID = id }
+        public func setLastPexSent(_ peers: Set<Tracker.Peer>) { lastPexSent = peers }
+
         /// Wrap a connection accepted by a PeerListener. The info hash is not known until the peer
         /// sends its handshake (`acceptHandshake`).
         public init(incoming connection: NWConnection, peerID: Data) {

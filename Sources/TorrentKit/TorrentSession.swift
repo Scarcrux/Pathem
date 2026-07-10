@@ -68,6 +68,7 @@ public actor TorrentSession {
     private var knownPeers: Set<Tracker.Peer> = []
     private var activePeers: [PeerConnection] = []  // connected peers, for have-broadcast + serving
     private var announceTask: Task<Void, Never>?
+    private var pexTask: Task<Void, Never>?
 
     private let maxPeers = 30
     private let maxInFlightPerPeer = 8
@@ -106,6 +107,34 @@ public actor TorrentSession {
         lastSampleTime = Date()
         lastSampleBytes = pieces.downloadedBytes
         startAnnouncing()
+        startPexBroadcasts()
+    }
+
+    /// Periodically tell each ut_pex-capable peer about the peers we've learned since we last told
+    /// it (send-side PEX, BEP 11). Skipped for private torrents.
+    private func startPexBroadcasts() {
+        guard !torrent.isPrivate else { return }
+        pexTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
+                guard let self else { return }
+                await self.broadcastPex()
+            }
+        }
+    }
+
+    private func broadcastPex() async {
+        let current = knownPeers
+        for peer in activePeers {
+            guard let pexID = await peer.peerPexID else { continue }
+            let lastSent = await peer.lastPexSent
+            let added = current.subtracting(lastSent)
+            let dropped = lastSent.subtracting(current)
+            guard !added.isEmpty || !dropped.isEmpty else { continue }
+            let payload = PEX.message(added: Array(added.prefix(50)), dropped: Array(dropped.prefix(50)))
+            try? await peer.send(.extended(id: pexID, payload: payload))
+            await peer.setLastPexSent(current)
+        }
     }
 
     public func pause() {
@@ -122,6 +151,8 @@ public actor TorrentSession {
     private func stopAllTasks() {
         announceTask?.cancel()
         announceTask = nil
+        pexTask?.cancel()
+        pexTask = nil
         for t in peerTasks { t.cancel() }
         peerTasks.removeAll()
         globalInFlight.removeAll()
@@ -326,8 +357,11 @@ public actor TorrentSession {
             case .request(let index, let begin, let length):
                 serveBlock(index: Int(index), begin: Int(begin), length: Int(length), to: peer)
             case .extended(let extID, let payload):
-                // A ut_pex message (sent with the id we advertised) carries more peers.
-                if extID == UInt8(PEX.utPexID) {
+                if extID == 0 {
+                    // The peer's extended handshake: learn its ut_pex id so we can send it PEX.
+                    await peer.setPeerPexID(PEX.peerPexID(fromHandshake: payload))
+                } else if extID == UInt8(PEX.utPexID) {
+                    // A ut_pex message (sent with the id we advertised) carries more peers.
                     for discovered in PEX.parseAddedPeers(payload) { considerPeer(discovered) }
                 }
             default:

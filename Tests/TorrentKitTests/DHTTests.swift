@@ -197,4 +197,21 @@ import Testing
         #expect(PEX.parseAddedPeers(Bencode.dict([("dropped", .bytes(Data()))]).encoded).isEmpty)
         #expect(PEX.parseAddedPeers(Data("garbage".utf8)).isEmpty)
     }
+
+    @Test func sendSideMessageRoundTrips() {
+        // A ut_pex message we build must parse back to the same added peers.
+        let added: [Tracker.Peer] = [.init(host: "10.0.0.1", port: 6881), .init(host: "203.0.113.9", port: 51413)]
+        let message = PEX.message(added: added, dropped: [.init(host: "1.2.3.4", port: 80)])
+        #expect(PEX.parseAddedPeers(message) == added)
+        // The dropped field is present and correctly sized (6 bytes/peer), and flags match added.
+        let dict = try? BencodeDecoder.decode(message)
+        if case .bytes(let dropped)? = dict?["dropped"] { #expect(dropped.count == 6) } else { Issue.record("no dropped") }
+        if case .bytes(let flags)? = dict?["added.f"] { #expect(flags.count == 2) } else { Issue.record("no flags") }
+    }
+
+    @Test func compactSkipsMalformedHosts() {
+        // Non-IPv4 hosts are skipped rather than corrupting the stream.
+        let data = PEX.compact([.init(host: "not.an.ip.addr", port: 1), .init(host: "8.8.8.8", port: 53)])
+        #expect(data.count == 6)  // only the valid one
+    }
 }

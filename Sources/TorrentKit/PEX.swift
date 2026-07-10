@@ -25,4 +25,26 @@ public enum PEX {
         else { return [] }
         return Tracker.parseCompactPeers(added)
     }
+
+    /// Build a ut_pex message advertising peers we've added and dropped since we last told a peer.
+    public static func message(added: [Tracker.Peer], dropped: [Tracker.Peer]) -> Data {
+        Bencode.dict([
+            ("added", .bytes(compact(added))),
+            ("added.f", .bytes(Data(repeating: 0, count: added.count))),  // per-peer flags, 0 = none
+            ("dropped", .bytes(compact(dropped))),
+        ]).encoded
+    }
+
+    /// Encode peers as compact IPv4 form (4 address bytes + 2-byte big-endian port each).
+    static func compact(_ peers: [Tracker.Peer]) -> Data {
+        var data = Data()
+        for peer in peers {
+            let octets = peer.host.split(separator: ".").compactMap { UInt8($0) }
+            guard octets.count == 4, peer.port >= 0, peer.port <= 0xffff else { continue }
+            data.append(contentsOf: octets)
+            data.append(UInt8(peer.port >> 8))
+            data.append(UInt8(peer.port & 0xff))
+        }
+        return data
+    }
 }
