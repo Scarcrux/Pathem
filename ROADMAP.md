@@ -261,6 +261,13 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   wanted piece is done. Torrents > Files opens a checkbox list; the selection applies live and
   persists. Wanted-set and file-to-piece mapping are unit-tested; the daemon files/setFiles round
   trip is verified.
+- **MSE/PE encryption** -- SHIPPED. Message Stream Encryption on outgoing connections: a native
+  768-bit Diffie-Hellman (a purpose-built BigUInt with Knuth-D long division, ~80x faster than
+  naive modexp) + RC4, then the obfuscated handshake (hash-sync, crypto negotiation). Verified end
+  to end: an initiator/responder loopback agrees on the ciphers, and a real encrypted TCP socket
+  exchanges a wire message that decrypts correctly. A "prefer encryption" toggle tries MSE and
+  falls back to plaintext. Crypto + handshake unit-tested.
+- **Peer exchange, DHT, NAT-PMP/UPnP, web seeds, super-seed** -- SHIPPED (see above).
 - **Speed limits** -- SHIPPED. Global download / upload caps via a token-bucket RateLimiter
   (injectable clock, unit-tested): the session paces its request pipeline and its block serving
   through the shared limiters, so throttling the ask throttles receipt. Set from Torrents > Speed
@@ -269,6 +276,12 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   over the extension protocol, and the peers others share in their `added` field are fed straight
   into the session, so a healthy swarm keeps topping up peers without more tracker/DHT traffic.
   Codec unit-tested; sending our own PEX deltas is a good-citizen follow-up.
+- **uTP transport (BEP 29)** -- SHIPPED (core). The uTP packet codec (20-byte header + extension
+  skipping) and a reliable connection: SYN handshake, sequence numbers, cumulative acks, reorder
+  buffering, and timeout retransmission. Verified with a lossy in-memory channel - an 8 KB transfer
+  arrives complete and in order, and recovers from 1-in-4 packet loss. Full LEDBAT delay-based
+  congestion control (currently a fixed window) and swapping it under PeerConnection as a transport
+  option are the remaining refinements.
 - **Honest boundary / next up.** `.torrent` and magnet downloads, seeding (with NAT-PMP so inbound
   peers can reach us), and peer discovery via trackers + DHT + PEX all work today. Not yet at full
   standalone-client parity: no UPnP-IGD fallback for routers that speak only UPnP; the DHT is
