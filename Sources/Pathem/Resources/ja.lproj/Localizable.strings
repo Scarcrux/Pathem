@@ -949,3 +949,5 @@
 "torrents.create.tracker" = "トラッカー URL（任意）";
 "torrents.create.private" = "プライベートトレント";
 "torrents.create.failed" = "トレントを作成できませんでした";
+
+"torrents.limits.superSeed" = "スーパーシード（効率的な初期シード）";

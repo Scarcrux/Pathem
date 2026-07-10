@@ -240,3 +240,23 @@ import Testing
         #expect(data.count == 6)  // only the valid one
     }
 }
+
+@Suite struct SuperSeedTests {
+    @Test func offersLeastDistributedPieceThePeerLacks() {
+        let complete = [true, true, true, true]  // we have all 4
+        let peerHas = [true, false, false, false]  // peer already has piece 0
+        // Piece 1 handed out twice, piece 2 once, piece 3 never -> offer piece 3 (least given).
+        let given = [1: 2, 2: 1]
+        #expect(SuperSeed.pick(complete: complete, peerHas: peerHas, offered: [], givenCount: given) == 3)
+        // Once 3 is offered, the next-least among what's left (piece 2) is chosen.
+        #expect(SuperSeed.pick(complete: complete, peerHas: peerHas, offered: [3], givenCount: given) == 2)
+    }
+
+    @Test func returnsNilWhenPeerHasEverythingWeCanOffer() {
+        let complete = [true, true]
+        // Peer has piece 0; piece 1 is already offered -> nothing left.
+        #expect(SuperSeed.pick(complete: complete, peerHas: [true, false], offered: [1], givenCount: [:]) == nil)
+        // We only have piece 0, peer has it -> nothing.
+        #expect(SuperSeed.pick(complete: [true, false], peerHas: [true, false], offered: [], givenCount: [:]) == nil)
+    }
+}

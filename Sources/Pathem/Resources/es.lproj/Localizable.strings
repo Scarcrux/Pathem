@@ -949,3 +949,5 @@
 "torrents.create.tracker" = "URL del tracker (opcional)";
 "torrents.create.private" = "Torrent privado";
 "torrents.create.failed" = "No se pudo crear el torrent";
+
+"torrents.limits.superSeed" = "Super-siembra (siembra inicial eficiente)";

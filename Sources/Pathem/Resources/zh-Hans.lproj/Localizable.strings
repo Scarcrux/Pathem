@@ -949,3 +949,5 @@
 "torrents.create.tracker" = "Tracker 网址（可选）";
 "torrents.create.private" = "私有种子";
 "torrents.create.failed" = "无法创建种子";
+
+"torrents.limits.superSeed" = "超级做种（高效的初始做种）";

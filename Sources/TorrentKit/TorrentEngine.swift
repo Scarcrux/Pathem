@@ -33,13 +33,22 @@ public actor TorrentEngine {
     private let uploadLimiter: RateLimiter
     private var limits: Limits
 
-    /// Global speed caps in bytes/second (0 = unlimited).
+    /// Global speed caps in bytes/second (0 = unlimited), plus the super-seed toggle.
     public struct Limits: Codable, Sendable, Equatable {
         public var down: Int
         public var up: Int
-        public init(down: Int = 0, up: Int = 0) {
+        public var superSeed: Bool
+        public init(down: Int = 0, up: Int = 0, superSeed: Bool = false) {
             self.down = down
             self.up = up
+            self.superSeed = superSeed
+        }
+        // Tolerate older limits.json that predates these keys.
+        public init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            down = try c.decodeIfPresent(Int.self, forKey: .down) ?? 0
+            up = try c.decodeIfPresent(Int.self, forKey: .up) ?? 0
+            superSeed = try c.decodeIfPresent(Bool.self, forKey: .superSeed) ?? false
         }
     }
 
@@ -60,11 +69,13 @@ public actor TorrentEngine {
         self.uploadLimiter = RateLimiter(bytesPerSecond: loaded.up)
     }
 
-    /// Set the global download / upload caps (bytes/second, 0 = unlimited) and persist them.
-    public func setLimits(down: Int, up: Int) async {
-        limits = Limits(down: down, up: up)
+    /// Set the global download / upload caps (bytes/second, 0 = unlimited) and the super-seed
+    /// toggle, apply them live, and persist.
+    public func setLimits(down: Int, up: Int, superSeed: Bool) async {
+        limits = Limits(down: down, up: up, superSeed: superSeed)
         await downLimiter.setRate(bytesPerSecond: down)
         await uploadLimiter.setRate(bytesPerSecond: up)
+        for session in sessions.values { await session.setSuperSeeding(superSeed) }
         if let data = try? JSONEncoder().encode(limits) {
             try? data.write(to: stateDir.appendingPathComponent("limits.json"))
         }
@@ -137,6 +148,7 @@ public actor TorrentEngine {
         meta[hash] = Persisted(
             infoHashHex: hash, torrentFileName: storedName, savePath: savePath,
             paused: false, completedPieces: [])
+        await session.setSuperSeeding(limits.superSeed)
         await session.start()
         saveState()
         return await session.status()
@@ -291,6 +303,7 @@ public actor TorrentEngine {
         meta[hash] = Persisted(
             infoHashHex: hash, torrentFileName: storedName, savePath: savePath, paused: false,
             completedPieces: [])
+        await session.setSuperSeeding(limits.superSeed)
         await session.start()
         saveState()
     }
@@ -326,6 +339,7 @@ public actor TorrentEngine {
             else { continue }
             await session.loadResume(havePieces: persisted.completedPieces)
             if let wanted = persisted.wantedFiles { await session.setWantedFiles(Set(wanted)) }
+            await session.setSuperSeeding(limits.superSeed)
             sessions[persisted.infoHashHex] = session
             if !persisted.paused { await session.start() }
         }

@@ -70,6 +70,11 @@ public actor TorrentSession {
     private var announceTask: Task<Void, Never>?
     private var pexTask: Task<Void, Never>?
     private var webSeedInFlight: Set<Int> = []  // pieces being fetched from web seeds
+    private var superSeeding = false
+    private var piecesGivenCount: [Int: Int] = [:]  // how often each piece was handed out (super-seed)
+
+    /// Enable/disable super-seeding (efficient initial seeding). Takes effect on new peers.
+    public func setSuperSeeding(_ on: Bool) { superSeeding = on }
 
     private let maxPeers = 30
     private let maxInFlightPerPeer = 8
@@ -372,7 +377,9 @@ public actor TorrentSession {
             activePeers.removeAll { $0 === peer }
         }
 
-        if pieces.completedCount > 0 { try await peer.send(.bitfield(pieces.bitfield())) }
+        // Super-seeding withholds the full bitfield and offers pieces one at a time (below).
+        let superSeed = superSeeding && pieces.isComplete
+        if !superSeed, pieces.completedCount > 0 { try await peer.send(.bitfield(pieces.bitfield())) }
         try await peer.send(.interested)
         // Advertise peer exchange so the peer sends us the peers it knows (BEP 11).
         if await peer.peerSupportsExtensions {
@@ -382,6 +389,7 @@ public actor TorrentSession {
         var choked = true
         var peerBits: [Bool] = []
         var mine: Set<PieceManager.BlockRequest> = []
+        var offeredPieces: Set<Int> = []  // super-seed: pieces we've advertised to this peer
 
         while !Task.isCancelled && state != .paused && state != .stopped {
             topUp(choked: choked, peerBits: peerBits, mine: &mine, peer: peer)
@@ -396,17 +404,26 @@ public actor TorrentSession {
                 choked = false
             case .bitfield(let data):
                 peerBits = pieces.decodeBitfield(data)
+                if superSeed { offerSuperSeedPiece(peerBits: peerBits, offered: &offeredPieces, to: peer) }
             case .have(let index):
                 let i = Int(index)
                 if i >= peerBits.count { peerBits += Array(repeating: false, count: i - peerBits.count + 1) }
                 if i >= 0 && i < peerBits.count { peerBits[i] = true }
+                // Super-seed: once the peer announces the piece we gave it, offer another.
+                if superSeed, offeredPieces.contains(i) {
+                    piecesGivenCount[i, default: 0] += 1
+                    offerSuperSeedPiece(peerBits: peerBits, offered: &offeredPieces, to: peer)
+                }
             case .piece(let index, let begin, let block):
                 handlePiece(index: Int(index), begin: Int(begin), block: block, mine: &mine)
             case .interested:
                 // A peer wants our pieces: unchoke so it can request from us (seeding).
                 Task { try? await peer.send(.unchoke) }
             case .request(let index, let begin, let length):
-                serveBlock(index: Int(index), begin: Int(begin), length: Int(length), to: peer)
+                // In super-seed mode only serve pieces we've actually offered this peer.
+                if !superSeed || offeredPieces.contains(Int(index)) {
+                    serveBlock(index: Int(index), begin: Int(begin), length: Int(length), to: peer)
+                }
             case .extended(let extID, let payload):
                 if extID == 0 {
                     // The peer's extended handshake: learn its ut_pex id so we can send it PEX.
@@ -436,6 +453,16 @@ public actor TorrentSession {
             await uploadLimiter?.consume(length)  // throttle upload to the global cap
             try? await peer.send(message)
         }
+    }
+
+    /// Super-seed: choose a piece this peer lacks (least-distributed first) and advertise just it.
+    private func offerSuperSeedPiece(peerBits: [Bool], offered: inout Set<Int>, to peer: PeerConnection) {
+        guard let piece = SuperSeed.pick(
+            complete: (0..<pieces.pieceCount).map { pieces.hasPiece($0) },
+            peerHas: peerBits, offered: offered, givenCount: piecesGivenCount)
+        else { return }
+        offered.insert(piece)
+        Task { try? await peer.send(.have(pieceIndex: UInt32(piece))) }
     }
 
     /// Tell every connected peer we now have a piece, so they can request it from us.

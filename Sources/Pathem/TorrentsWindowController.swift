@@ -275,18 +275,23 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         }
         let downField = field(client.downLimit)
         let upField = field(client.upLimit)
+        let superSeed = NSButton(checkboxWithTitle: L("torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil, action: nil)
+        superSeed.state = client.superSeed ? .on : .off
         let container = NSStackView(views: [
             labeledRow(L("torrents.limits.down", "Download"), downField),
             labeledRow(L("torrents.limits.up", "Upload"), upField),
+            superSeed,
         ])
         container.orientation = .vertical
         container.spacing = 8
-        container.frame = NSRect(x: 0, y: 0, width: 240, height: 60)
+        container.frame = NSRect(x: 0, y: 0, width: 300, height: 84)
         alert.accessoryView = container
         alert.window.initialFirstResponder = downField
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        client.setLimits(down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024)
+        client.setLimits(
+            down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024,
+            superSeed: superSeed.state == .on)
     }
 
     private func labeledRow(_ title: String, _ field: NSTextField) -> NSView {

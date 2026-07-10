@@ -16,6 +16,7 @@ final class TorrentDaemonClient {
     private(set) var torrents: [TorrentSession.Status] = []
     private(set) var downLimit = 0  // current global caps (bytes/sec, 0 = unlimited)
     private(set) var upLimit = 0
+    private(set) var superSeed = false
     var onUpdate: (([TorrentSession.Status]) -> Void)?
     var onError: ((String) -> Void)?
     var onFiles: ((String, [TorrentSession.FileInfo]) -> Void)?
@@ -130,9 +131,9 @@ final class TorrentDaemonClient {
 
     func requestList() { send(.init(op: .list, id: nextCommandID())) }
 
-    /// Set global speed caps in bytes/second (0 = unlimited).
-    func setLimits(down: Int, up: Int) {
-        send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up))
+    /// Set global speed caps in bytes/second (0 = unlimited) and the super-seed toggle.
+    func setLimits(down: Int, up: Int, superSeed: Bool) {
+        send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up, superSeed: superSeed))
     }
 
     /// Request a torrent's file list (answered via onFiles).
@@ -173,6 +174,7 @@ final class TorrentDaemonClient {
     private func handle(_ event: TorrentControl.Event) {
         if let down = event.downLimit { downLimit = down }
         if let up = event.upLimit { upLimit = up }
+        if let ss = event.superSeed { superSeed = ss }
         if let torrents = event.torrents {
             self.torrents = torrents
             onUpdate?(torrents)

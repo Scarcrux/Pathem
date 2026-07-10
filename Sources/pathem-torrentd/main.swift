@@ -67,11 +67,13 @@ func handle(_ command: TorrentControl.Command) async {
         let torrents = await engine.statuses()
         let limits = await engine.currentLimits()
         emit(.init(kind: .reply, replyTo: command.id, ok: true, torrents: torrents,
-            downLimit: limits.down, upLimit: limits.up))
+            downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed))
     case .setLimits:
-        await engine.setLimits(down: command.downLimit ?? 0, up: command.upLimit ?? 0)
+        await engine.setLimits(
+            down: command.downLimit ?? 0, up: command.upLimit ?? 0, superSeed: command.superSeed ?? false)
         let limits = await engine.currentLimits()
-        emit(.init(kind: .reply, replyTo: command.id, ok: true, downLimit: limits.down, upLimit: limits.up))
+        emit(.init(kind: .reply, replyTo: command.id, ok: true,
+            downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed))
     case .files:
         guard let hash = command.infoHash else {
             emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "files needs an infoHash"))
@@ -98,7 +100,8 @@ let ticker = Task {
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         let torrents = await engine.statuses()
         let limits = await engine.currentLimits()
-        emit(.init(kind: .status, ok: true, torrents: torrents, downLimit: limits.down, upLimit: limits.up))
+        emit(.init(kind: .status, ok: true, torrents: torrents,
+            downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed))
         await engine.checkpoint()
     }
 }
