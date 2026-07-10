@@ -1561,31 +1561,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    /// A modal single-line name prompt; nil if cancelled or empty.
-    /// Present `alert` as a sheet attached to the window -- so it appears on the window
-    /// (dropping from its title bar), not centered on the whole screen -- and await its
-    /// response. Falls back to a screen-centered app-modal alert when there is no window yet.
-    func presentSheet(_ alert: NSAlert) async -> NSApplication.ModalResponse {
-        guard let window = view.window, window.isVisible else { return alert.runModal() }
-        return await withCheckedContinuation { continuation in
-            alert.beginSheetModal(for: window) { continuation.resume(returning: $0) }
-        }
-    }
-
-    private func promptForName(title: String, default value: String) async -> String? {
-        let alert = NSAlert()
-        alert.messageText = title
-        alert.addButton(withTitle: L("common.ok", "OK"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        field.stringValue = value
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-        guard await presentSheet(alert) == .alertFirstButtonReturn else { return nil }
-        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? nil : name
-    }
-
     /// The user's default New Folder / New File base name (falling back if they cleared it).
     private var defaultNewFolderName: String {
         let name = prefs.newFolderName.trimmingCharacters(in: .whitespaces)
@@ -2332,14 +2307,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 text: "\(url.lastPathComponent)\n\n"
                     + String(format: L("bvc.checksumExpectedActual", "Expected: %@\nActual:   %@"), expected, actual))
         }
-    }
-
-    private func presentChecksumResult(title: String, text: String) {
-        let alert = NSAlert()
-        alert.messageText = title
-        alert.informativeText = text
-        alert.addButton(withTitle: L("common.ok", "OK"))
-        if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
     }
 
     /// Zip the selection into the current folder (off-main), then select the archive.
@@ -3755,14 +3722,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                         + (result.failures.isEmpty ? "" : String(format: L("bvc.organizedSkippedSuffix", ", %d skipped"), result.failures.count)))
             }
         }
-    }
-
-    func presentInfo(_ title: String, _ text: String) {
-        let alert = NSAlert()
-        alert.messageText = title
-        alert.informativeText = text
-        alert.addButton(withTitle: L("common.ok", "OK"))
-        if let window = view.window { alert.beginSheetModal(for: window) { _ in } }
     }
 
     // MARK: - Organize Folder (deterministic rules; no model required)
@@ -5813,19 +5772,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let pane = self?.activePane else { return }
             pane.navigate(to: url.deletingLastPathComponent())
             pane.select(name: url.lastPathComponent)
-        }
-    }
-
-    func presentFailures(_ failures: [FileOperations.Failure], title: String) {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = String(format: L("bvc.failuresForItems", "%@ for %d item(s)"), title, failures.count)
-        alert.informativeText =
-            failures.prefix(8).map { "\($0.name): \($0.reason)" }.joined(separator: "\n")
-        if let window = view.window {
-            alert.beginSheetModal(for: window, completionHandler: nil)
-        } else {
-            alert.runModal()
         }
     }
 
