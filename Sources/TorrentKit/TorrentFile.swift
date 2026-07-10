@@ -15,6 +15,7 @@ public struct TorrentFile: Equatable, Sendable {
     public let pieceCount: Int
     public let pieceHashes: [Data]  // 20-byte SHA-1 per piece, in order (for verification)
     public let trackers: [String]  // announce + flattened announce-list, de-duplicated
+    public let webSeeds: [String]  // url-list HTTP sources (BEP 19)
     public let infoHash: Data  // SHA-1 of the raw info dict (20 raw bytes; for tracker/peer wire)
     public let infoHashHex: String  // the same hash as lowercase hex
     public let comment: String?
@@ -76,13 +77,17 @@ public struct TorrentFile: Equatable, Sendable {
         var seen = Set<String>()
         trackers = trackers.filter { seen.insert($0).inserted }  // de-dupe, keep order
 
+        var webSeeds: [String] = []
+        if let single = top["url-list"]?.string { webSeeds = [single] }
+        else if let list = top["url-list"]?.list { webSeeds = list.compactMap { $0.string } }
+
         let digest = Insecure.SHA1.hash(data: infoBytes)
         let hashData = Data(digest)
         let hashHex = digest.map { String(format: "%02x", $0) }.joined()
 
         return TorrentFile(
             name: name, totalLength: total, files: files, pieceLength: pieceLength,
-            pieceCount: pieceCount, pieceHashes: pieceHashes, trackers: trackers,
+            pieceCount: pieceCount, pieceHashes: pieceHashes, trackers: trackers, webSeeds: webSeeds,
             infoHash: hashData, infoHashHex: hashHex,
             comment: top["comment"]?.string, createdBy: top["created by"]?.string,
             isPrivate: isPrivate)

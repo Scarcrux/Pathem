@@ -69,6 +69,7 @@ public actor TorrentSession {
     private var activePeers: [PeerConnection] = []  // connected peers, for have-broadcast + serving
     private var announceTask: Task<Void, Never>?
     private var pexTask: Task<Void, Never>?
+    private var webSeedInFlight: Set<Int> = []  // pieces being fetched from web seeds
 
     private let maxPeers = 30
     private let maxInFlightPerPeer = 8
@@ -108,6 +109,56 @@ public actor TorrentSession {
         lastSampleBytes = pieces.downloadedBytes
         startAnnouncing()
         startPexBroadcasts()
+        startWebSeeds()
+    }
+
+    /// Download pieces from any HTTP web seeds (BEP 19) in parallel with peers. A web seed has
+    /// everything, so it's a reliable fallback when peers are scarce.
+    private func startWebSeeds() {
+        guard state == .downloading else { return }
+        for base in torrent.webSeeds.filter({ $0.hasPrefix("http") }).prefix(4) {
+            let task = Task { [weak self] in
+                guard let self else { return }
+                await self.runWebSeed(base)
+            }
+            peerTasks.append(task)
+        }
+    }
+
+    private func runWebSeed(_ base: String) async {
+        while !Task.isCancelled, state == .downloading, !pieces.isComplete {
+            guard let index = pieces.nextWantedPiece(excluding: webSeedInFlight) else {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)  // nothing to fetch right now
+                continue
+            }
+            webSeedInFlight.insert(index)
+            let size = pieces.pieceSize(index)
+            let data = await WebSeed.fetchPiece(base: base, torrent: torrent, layout: layout, index: index, pieceSize: size)
+            webSeedInFlight.remove(index)
+            if let data, data.count == size {
+                ingestWholePiece(index: index, data: data)
+            } else {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)  // web seed failed; back off
+            }
+        }
+    }
+
+    /// Verify and store a whole piece fetched in one shot (from a web seed), reusing the block
+    /// verification path.
+    private func ingestWholePiece(index: Int, data: Data) {
+        var begin = 0
+        while begin < data.count {
+            let length = min(PieceManager.blockSize, data.count - begin)
+            let result = pieces.receiveBlock(index: index, begin: begin, block: data.subdata(in: begin..<(begin + length)))
+            if case .pieceComplete(let pieceIndex, let bytes) = result {
+                try? storage.write(
+                    pieceIndex: pieceIndex, pieceLength: pieces.pieceLength,
+                    pieceSize: pieces.pieceSize(pieceIndex), data: bytes)
+                broadcastHave(pieceIndex)
+                if pieces.isComplete { state = .seeding }
+            }
+            begin += length
+        }
     }
 
     /// Periodically tell each ut_pex-capable peer about the peers we've learned since we last told

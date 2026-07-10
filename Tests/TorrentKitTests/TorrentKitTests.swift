@@ -101,6 +101,31 @@ import Testing
     @Test func rejectsNonTorrent() {
         #expect(throws: (any Error).self) { try TorrentFile.parse(Data("i5e".utf8)) }
     }
+
+    @Test func parsesWebSeeds() throws {
+        func s(_ v: String) -> String { "\(v.utf8.count):\(v)" }
+        let pieces = String(repeating: "a", count: 20)
+        let info = "d" + s("length") + "i1024e" + s("name") + s("f.bin")
+            + s("piece length") + "i16384e" + s("pieces") + "20:\(pieces)e"
+        // url-list as a list of one URL.
+        let top = "d" + s("info") + info + s("url-list") + "l" + s("http://seed.test/f.bin") + "e" + "e"
+        let torrent = try TorrentFile.parse(Data(top.utf8))
+        #expect(torrent.webSeeds == ["http://seed.test/f.bin"])
+    }
+}
+
+@Suite struct WebSeedTests {
+    @Test func singleFileURL() {
+        // Base without trailing slash IS the file.
+        #expect(WebSeed.fileURL(base: "http://s.test/movie.mkv", torrentName: "movie.mkv", filePath: "movie.mkv", singleFile: true)?.absoluteString == "http://s.test/movie.mkv")
+        // Base with trailing slash appends the name.
+        #expect(WebSeed.fileURL(base: "http://s.test/dir/", torrentName: "movie.mkv", filePath: "movie.mkv", singleFile: true)?.absoluteString == "http://s.test/dir/movie.mkv")
+    }
+
+    @Test func multiFileURLAppendsNameAndPath() {
+        let url = WebSeed.fileURL(base: "http://s.test/pub", torrentName: "Bundle", filePath: "sub/a.bin", singleFile: false)
+        #expect(url?.absoluteString == "http://s.test/pub/Bundle/sub/a.bin")
+    }
 }
 
 @Suite struct TrackerTests {

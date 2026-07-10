@@ -129,6 +129,15 @@ public final class PieceManager {
         return nil
     }
 
+    /// The lowest-index piece we still want and don't have, skipping those in `inFlight`. Used by
+    /// the web-seed downloader, which fetches whole pieces rather than blocks.
+    public func nextWantedPiece(excluding inFlight: Set<Int>) -> Int? {
+        for index in 0..<pieceCount where !complete[index] && isWanted(index) && !inFlight.contains(index) {
+            return index
+        }
+        return nil
+    }
+
     private func firstNeededBlock(in index: Int, inFlight: Set<BlockRequest>) -> BlockRequest? {
         let have = received[index] ?? []
         var begin = 0
