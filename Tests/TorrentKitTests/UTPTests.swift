@@ -108,6 +108,46 @@ private actor LossyChannel {
         #expect(finished)
     }
 
+    @Test func congestionWindowGrowsBelowTargetShrinksAbove() async {
+        // The LEDBAT rule: below the queuing-delay target the window grows; sustained delay above it
+        // shrinks the window. Drive the controller directly with delay samples and acks.
+        let socket = UTPSocket(role: .initiator, connectionID: 1, sendDatagram: { _ in })
+        let start = await socket.congestionWindow
+        for _ in 0..<3 { await socket.recordDelay(1000) }   // base 1000, current 1000 -> queuing ~0
+        await socket.grow(bytesAcked: 1000)
+        let grown = await socket.congestionWindow
+        for _ in 0..<3 { await socket.recordDelay(1_000_000) }  // base stays 1000, current ~1s -> way over target
+        await socket.grow(bytesAcked: 1000)
+        let shrunk = await socket.congestionWindow
+        #expect(grown > start)
+        #expect(shrunk < grown)
+    }
+
+    @Test func congestionWindowOpensOverACleanTransfer() async {
+        // A real (lossless, low-delay) transfer should deliver every byte through the window AND end
+        // with the window wider than it started and nothing left in flight.
+        let channel = LossyChannel(dropEvery: 0)
+        let initiator = UTPSocket(role: .initiator, connectionID: 0x99, sendDatagram: { await channel.aToB($0) })
+        let responder = UTPSocket(role: .responder, connectionID: 0x99, sendDatagram: { await channel.bToA($0) })
+        await channel.setHandlers(a: { await initiator.handle($0) }, b: { await responder.handle($0) })
+
+        let before = await initiator.congestionWindow
+        await initiator.connect()
+        let payload = Data((0..<16000).map { UInt8(($0 &* 5 &+ 2) & 0xff) })  // ~16 packets -> ~16 acks
+        await initiator.write(payload)
+        await initiator.finish()
+
+        let got = await responder.received()
+        let after = await initiator.congestionWindow
+        let inflight = await initiator.bytesInFlightNow
+        await initiator.close()
+        await responder.close()
+
+        #expect(got == payload)   // windowed sending still delivers everything in order
+        #expect(after > before)   // low delay -> the window opened up
+        #expect(inflight == 0)    // every DATA packet was acknowledged
+    }
+
     @Test func streamingReadDeliversBytesThenEOF() async {
         // The streaming reader PeerConnection drives: readAvailable() yields in-order bytes and then
         // signals end-of-stream (empty) once the FIN is in and everything is drained.
