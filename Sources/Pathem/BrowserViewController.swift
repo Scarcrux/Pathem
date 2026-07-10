@@ -181,11 +181,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// computed (see `mirrorNavigationIfSyncing`). Keyed by pane identity.
     private var syncBrowseAnchors: [ObjectIdentifier: URL] = [:]
     private let split = NSSplitView()  // the two sides
-    private let outerSplit = NSSplitView()  // sidebar | panes
-    private let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
-    private let shelf = ShelfController()  // stash shelf / drop stack across the bottom
-    private var shelfHiddenConstraint: NSLayoutConstraint?
-    private var shelfShownConstraint: NSLayoutConstraint?
+    let outerSplit = NSSplitView()  // sidebar | panes
+    let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
+    let shelf = ShelfController()  // stash shelf / drop stack across the bottom
+    var shelfHiddenConstraint: NSLayoutConstraint?
+    var shelfShownConstraint: NSLayoutConstraint?
     private let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
     private var commanderShownConstraint: NSLayoutConstraint?
     private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
@@ -234,13 +234,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// command; keybindings, the palette, and the AI bar will dispatch by id.
     let commands = CommandRegistry()
     /// Chord -> command id, defaults overlaid with any user keymap.json.
-    private var keymap = Keymap.standard
+    var keymap = Keymap.standard
     /// Super-drag: direction -> command for a flick, and the swipe-trail overlay.
-    private var dragGestures = DragGestureMap.standard
-    private let dragTrail = DragTrailOverlay()
-    private var dragStartScreen: NSPoint?  // to name the live flick as it changes direction
+    var dragGestures = DragGestureMap.standard
+    let dragTrail = DragTrailOverlay()
+    var dragStartScreen: NSPoint?  // to name the live flick as it changes direction
     /// Stroke -> command id, defaults overlaid with any user gestures.json.
-    private var gestureMap = GestureMap.standard
+    var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
     var folderFormats = FolderFormats()
     /// Scoped default-opener rules (by file / folder / type), persisted.
@@ -270,18 +270,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var findInFiles = FindInFilesController()
     private lazy var processViewer = ProcessViewerController()
     private lazy var torrents = TorrentsWindowController()
-    private lazy var externalCommandsController = ExternalCommandsController()
-    private lazy var externalOutput = ExternalCommandOutputController()
+    lazy var externalCommandsController = ExternalCommandsController()
+    lazy var externalOutput = ExternalCommandOutputController()
     let slideshow = SlideshowController()
     private lazy var trimController = TrimController()
     private lazy var aclEditor = ACLEditorController()
     private lazy var markupController = MarkupController()
     private lazy var undoHistoryController = UndoHistoryController()
     private lazy var globalSearchController = GlobalSearchController()
-    private var externalCommands: [ExternalCommand] = []
+    var externalCommands: [ExternalCommand] = []
     /// Dynamic Tools > External Commands submenu (installed once the menu bar is up).
-    private let externalCommandsMenu = NSMenu(title: "External Commands")
-    private var didInstallExternalCommandsMenu = false
+    let externalCommandsMenu = NSMenu(title: "External Commands")
+    var didInstallExternalCommandsMenu = false
     private var createTemplates: [CreateTemplate] = []
     /// Folders recently used as a Copy To / Move To destination (most recent first).
     private var recentDestinations: [String] = []
@@ -300,7 +300,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Lays out the two panes at a fixed ratio (and tracks divider drags), so switching a
     /// pane to a content-light view (gallery) can't make the split re-divide and collapse it.
     private let paneSplitDelegate = PaneRatioSplitDelegate()
-    private var compactSidebar = false
+    var compactSidebar = false
     private static let compactSidebarWidth: CGFloat = 60
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
@@ -673,7 +673,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
     private static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
     private static var viewPresetsURL: URL? { appSupportDirectory()?.appendingPathComponent("view-presets.json") }
-    private var viewPresets = ViewPresets.default
+    var viewPresets = ViewPresets.default
     private func loadViewPresets() {
         viewPresets = loadConfig(ViewPresets.self, from: Self.viewPresetsURL) ?? .default
         registerViewPresetCommands()
@@ -2115,7 +2115,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
     /// Where each Pathem-trashed item came from (trashed path -> original path), so Put Back can
     /// restore it. Finder-trashed items aren't here (the OS keeps that info privately).
-    private var trashOrigins: [String: String] = [:]
+    var trashOrigins: [String: String] = [:]
     private func loadTrashOrigins() {
         trashOrigins = loadConfig([String: String].self, from: Self.trashOriginsURL) ?? [:]
     }
@@ -4319,8 +4319,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Returns true if a binding existed (so the key is consumed even when the
     /// command is currently disabled).
     /// Vim-style, keyboard-driven navigation (View ▸ Vim Navigation). Off by default.
-    private var vimMode = false
-    private var vimPendingG = false
+    var vimMode = false
+    var vimPendingG = false
 
     private func handleKeyChord(_ chord: KeyChord) -> Bool {
         if vimMode, handleVimKey(chord) { return true }  // vim keys take precedence when enabled
@@ -5782,7 +5782,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// A focused text field (inline rename) owns its own undo via the window's field editor;
     /// let it undo text first, else undo a file operation from the history.
-    private var isEditingText: Bool { view.window?.firstResponder is NSText }
+    var isEditingText: Bool { view.window?.firstResponder is NSText }
 
     @objc func undo(_ sender: Any?) {
         if isEditingText, let um = view.window?.undoManager, um.canUndo { um.undo(); return }
