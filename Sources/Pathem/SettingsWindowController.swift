@@ -267,6 +267,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.dragFlickActions", "Super-drag: right-drag an item to flick it (with a swipe trail)"), \.dragFlickActions),
             labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
             folderHandlerControl(),
+            magnetHandlerControl(),
         ])
         case .appearance: return form([
             labeled(L("prefs.themeLabel", "Skin"), themeControl()),
@@ -613,6 +614,46 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 alert.beginSheetModal(for: self.window) { _ in }
             }
             checkbox.state = FolderHandler.isPathem ? .on : .off  // reflect the real state either way
+        }
+    }
+
+    private let magnetHandlerButton = NSButton(title: "", target: nil, action: nil)
+    private let magnetHandlerStatus = NSTextField(labelWithString: "")
+
+    /// A button that makes Pathem the default app for magnet links (and .torrent files), with a live
+    /// status line. Reversible by setting another client back as the default in its own settings.
+    private func magnetHandlerControl() -> NSView {
+        magnetHandlerButton.title = L("prefs.magnetHandler.make", "Make Pathem the Default for Magnet Links")
+        magnetHandlerButton.bezelStyle = .rounded
+        magnetHandlerButton.target = self
+        magnetHandlerButton.action = #selector(makeMagnetHandlerDefault(_:))
+        magnetHandlerStatus.font = .systemFont(ofSize: 11)
+        magnetHandlerStatus.textColor = .secondaryLabelColor
+        let stack = NSStackView(views: [magnetHandlerButton, magnetHandlerStatus])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 4
+        refreshMagnetHandlerState()
+        return stack
+    }
+    private func refreshMagnetHandlerState() {
+        let isDefault = MagnetHandler.isPathem
+        magnetHandlerButton.isEnabled = !isDefault
+        magnetHandlerStatus.stringValue = isDefault
+            ? L("prefs.magnetHandler.isDefault", "Magnet links and .torrent files open in Pathem.")
+            : L("prefs.magnetHandler.notDefault", "Magnet links currently open in another app.")
+    }
+    @objc private func makeMagnetHandlerDefault(_ sender: NSButton) {
+        Task { @MainActor in
+            do {
+                try await MagnetHandler.makeDefault()
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = L("prefs.magnetHandler.failed", "Couldn’t change the default magnet app")
+                alert.informativeText = error.localizedDescription
+                alert.beginSheetModal(for: self.window) { _ in }
+            }
+            self.refreshMagnetHandlerState()  // reflect the real state either way
         }
     }
 
