@@ -17,7 +17,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let leftTabs: TabbedPaneController
     let rightTabs: TabbedPaneController
     weak var activePane: PaneController?
-    private weak var activeSide: TabbedPaneController?
+    weak var activeSide: TabbedPaneController?
     /// The app's file-operation undo/redo history (replaces the window's NSUndoManager for file
     /// ops; text-field editing keeps its own). Drives Cmd-Z, the Edit menu, and a recent-actions
     /// panel with selective undo.
@@ -82,7 +82,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var shelfHiddenConstraint: NSLayoutConstraint?
     var shelfShownConstraint: NSLayoutConstraint?
     let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
-    private var commanderShownConstraint: NSLayoutConstraint?
+    var commanderShownConstraint: NSLayoutConstraint?
     let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     var previewVisible = false
     /// Durably pins the preview pane's width so it (and the panes) can't collapse; see
@@ -91,11 +91,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     private lazy var sizeBrowser = SizeBrowserController()
     lazy var clipboardViewer = ClipboardViewerController()
     private lazy var cleanup = CleanupController()
-    private lazy var xattrController = XattrController()
-    private lazy var diffViewer = DiffViewerController()
-    private lazy var bulkAttributes = BulkAttributesController()
-    private lazy var automationRules = AutomationRulesController()
-    private lazy var automation: AutomationManager = {
+    lazy var xattrController = XattrController()
+    lazy var diffViewer = DiffViewerController()
+    lazy var bulkAttributes = BulkAttributesController()
+    lazy var automationRules = AutomationRulesController()
+    lazy var automation: AutomationManager = {
         let manager = AutomationManager(storeURL: Self.automationRulesURL)
         manager.onApplied = { [weak self] _ in self?.reloadBothSides() }
         return manager
@@ -162,7 +162,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var templatesManager = TemplatesController()
     lazy var commitController = CommitController()
     lazy var archiveContents = ArchiveContentsController()
-    private lazy var findInFiles = FindInFilesController()
+    lazy var findInFiles = FindInFilesController()
     private lazy var processViewer = ProcessViewerController()
     lazy var torrents = TorrentsWindowController()
     lazy var externalCommandsController = ExternalCommandsController()
@@ -213,7 +213,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         return controller
     }()
-    private let sharedDiscovery = SharedDiscovery()
+    let sharedDiscovery = SharedDiscovery()
     /// Confirmations shown as a popover at the pointer (move/copy conflicts, Trash) rather than
     /// a sheet pinned to the title bar.
     let cursorConfirm = CursorConfirm()
@@ -232,7 +232,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Set in privacy-safe demo mode (launch flag or the View menu), so session restore is
     /// skipped and the sidebar/panes use the fake workspace instead of the user's real data.
-    private var demoLayout: DemoWorkspace.Layout?
+    var demoLayout: DemoWorkspace.Layout?
     /// Real state saved when demo mode is toggled on, to restore when it's toggled off.
     private var savedRealSidebar: Sidebar?
     private var savedPaneFolders: (left: URL?, right: URL?)?
@@ -1361,7 +1361,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         service.perform(withItems: sendable)
     }
 
-    private func performLocalTrash(_ urls: [URL]) {
+    func performLocalTrash(_ urls: [URL]) {
         let result = FileOperations.trash(urls: urls)
         reloadBothSides()  // the trashed files may have lived in either visible folder
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
@@ -2791,7 +2791,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: - Remote connections
 
-    private static var connectionsURL: URL? {
+    static var connectionsURL: URL? {
         appSupportDirectory()?.appendingPathComponent("connections.json")
     }
 
@@ -3020,7 +3020,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Open a file with its resolved app: session override (by type) first, then
     /// the persisted file/folder/type rules, else the system default.
-    private func applyOpen(_ url: URL) {
+    func applyOpen(_ url: URL) {
         let ext = url.pathExtension.lowercased()
         // A .torrent opens in Pathem's own Torrents panel rather than handing off to another app.
         if ext == "torrent" {
@@ -3177,7 +3177,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Mark a pane (in some side) as the active one: move the accent border to it
     /// and remember which side it belongs to (so transfers target the other side).
-    private func setActiveSide(_ side: TabbedPaneController, pane: PaneController) {
+    func setActiveSide(_ side: TabbedPaneController, pane: PaneController) {
         if activePane !== pane { activePane?.setActive(false) }
         activePane = pane
         activeSide = side
