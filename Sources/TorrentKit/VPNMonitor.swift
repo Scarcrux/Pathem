@@ -69,46 +69,66 @@ import Foundation
             onChange?(boundName)
         }
 
-        /// The anonymizing VPN interface: the one carrying the default route, but only when it's a
-        /// confirmed VPN tunnel. Returns nil when the default route is a physical interface (no
-        /// full-tunnel VPN) or a split-tunnel overlay that isn't the default route.
+        /// The anonymizing VPN interface: the one actually carrying internet traffic, but only when
+        /// it's a confirmed VPN tunnel. Returns nil when the internet egress is a physical interface
+        /// (no full-tunnel VPN) or a split-tunnel overlay that doesn't carry general traffic.
         static func anonymizingVPNName() -> String? {
-            guard let route = defaultRouteInterfaceName(), isVPNName(route),
-                vpnInterfaces(from: enumerate()).contains(route)
+            guard let egress = internetEgressInterfaceName(), isVPNName(egress),
+                vpnInterfaces(from: enumerate()).contains(egress)
             else { return nil }
-            return route
+            return egress
         }
 
-        /// The name of the interface carrying the IPv4 default route (0.0.0.0/0), via the routing
-        /// table. This is the interface a full-tunnel VPN takes over when it connects.
-        static func defaultRouteInterfaceName() -> String? {
-            var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_GATEWAY]
-            var needed = 0
-            guard sysctl(&mib, u_int(mib.count), nil, &needed, nil, 0) == 0, needed > 0 else { return nil }
-            var buf = [UInt8](repeating: 0, count: needed)
-            guard sysctl(&mib, u_int(mib.count), &buf, &needed, nil, 0) == 0 else { return nil }
-            var result: String?
-            buf.withUnsafeBytes { raw in
-                var offset = 0
-                while offset + MemoryLayout<rt_msghdr>.size <= needed {
-                    let hdr = raw.loadUnaligned(fromByteOffset: offset, as: rt_msghdr.self)
-                    guard hdr.rtm_msglen > 0 else { break }
-                    // The first sockaddr after the header is the destination; 0.0.0.0 marks default.
-                    let saOffset = offset + MemoryLayout<rt_msghdr>.size
-                    if saOffset + MemoryLayout<sockaddr_in>.size <= needed {
-                        let dst = raw.loadUnaligned(fromByteOffset: saOffset, as: sockaddr_in.self)
-                        if dst.sin_family == UInt8(AF_INET), dst.sin_addr.s_addr == 0 {
-                            var name = [CChar](repeating: 0, count: Int(IFNAMSIZ))
-                            if if_indextoname(UInt32(hdr.rtm_index), &name) != nil {
-                                result = String(cString: name)
-                                return
-                            }
-                        }
-                    }
-                    offset += Int(hdr.rtm_msglen)
+        /// The interface that would actually carry a connection to the public internet right now.
+        ///
+        /// A connected (but never-sending) UDP socket to a public address lets the kernel pick the
+        /// egress, then getsockname reports the source it chose; we map that address back to an
+        /// interface. This respects the *real* routing -- including the split-default trick full-tunnel
+        /// VPNs like AdGuard use (they route public traffic through the tunnel via 0.0.0.0/1 +
+        /// 128.0.0.0/1 while leaving the literal default route on the physical interface). Reading the
+        /// literal default route would miss those and see the physical interface instead.
+        static func internetEgressInterfaceName() -> String? {
+            let fd = socket(AF_INET, SOCK_DGRAM, 0)
+            guard fd >= 0 else { return nil }
+            defer { close(fd) }
+            var dest = sockaddr_in()
+            dest.sin_family = sa_family_t(AF_INET)
+            dest.sin_port = in_port_t(53).bigEndian
+            inet_pton(AF_INET, "8.8.8.8", &dest.sin_addr)  // a public address; no packet is ever sent
+            let connected = withUnsafePointer(to: &dest) {
+                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                    connect(fd, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
                 }
             }
-            return result
+            guard connected == 0 else { return nil }
+            var local = sockaddr_in()
+            var len = socklen_t(MemoryLayout<sockaddr_in>.size)
+            let named = withUnsafeMutablePointer(to: &local) {
+                $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(fd, $0, &len) }
+            }
+            guard named == 0 else { return nil }
+            var buf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+            inet_ntop(AF_INET, &local.sin_addr, &buf, socklen_t(buf.count))
+            return interfaceName(forIPv4: String(cString: buf))
+        }
+
+        /// The interface that owns a given IPv4 address (via getifaddrs), or nil.
+        static func interfaceName(forIPv4 ip: String) -> String? {
+            var head: UnsafeMutablePointer<ifaddrs>?
+            guard getifaddrs(&head) == 0, let start = head else { return nil }
+            defer { freeifaddrs(head) }
+            var cursor: UnsafeMutablePointer<ifaddrs>? = start
+            while let ptr = cursor {
+                let ifa = ptr.pointee
+                cursor = ifa.ifa_next
+                guard let sa = ifa.ifa_addr, sa.pointee.sa_family == UInt8(AF_INET) else { continue }
+                var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                if getnameinfo(sa, socklen_t(sa.pointee.sa_len), &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST) == 0,
+                    String(cString: host) == ip {
+                    return String(cString: ifa.ifa_name)
+                }
+            }
+            return nil
         }
 
         // MARK: classification (pure, unit-tested)
