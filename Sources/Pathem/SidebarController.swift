@@ -155,6 +155,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let tagColor: FileTag.Color?
         /// An arbitrary tint for the icon (cloud providers use their brand color to read apart).
         let iconTint: NSColor?
+        /// A ready-made icon (e.g. a cloud provider's app icon), used verbatim instead of `icon`.
+        let customImage: NSImage?
         /// A mounted volume that can be ejected (covers non-/Volumes mounts like OrbStack).
         let isEjectable: Bool
         var children: [Node]
@@ -163,7 +165,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         init(
             kind: Kind, title: String, url: URL?, icon: String?, isFolder: Bool = false,
             tagColor: FileTag.Color? = nil, iconTint: NSColor? = nil, isEjectable: Bool = false,
-            children: [Node] = []
+            customImage: NSImage? = nil, children: [Node] = []
         ) {
             self.kind = kind
             self.title = title
@@ -173,6 +175,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             self.tagColor = tagColor
             self.iconTint = iconTint
             self.isEjectable = isEjectable
+            self.customImage = customImage
             self.children = children
         }
         var isHeader: Bool {
@@ -530,8 +533,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
-            let (sym, tint) = Self.cloudIcon(.iCloud)
-            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: sym, isFolder: true, iconTint: tint))
+            let ic = Self.cloudNodeIcon(.iCloud)
+            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
         }
         // Modern Dropbox/Google Drive/OneDrive/Box etc. mount here via the File Provider.
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
@@ -543,8 +546,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 guard isDir else { continue }
                 // iCloud is already listed from Mobile Documents above; don't list it twice.
                 if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
-                let (sym, tint) = Self.cloudIcon(CloudLocation.provider(fromDirectory: url.lastPathComponent))
-                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: sym, isFolder: true, iconTint: tint))
+                let ic = Self.cloudNodeIcon(CloudLocation.provider(fromDirectory: url.lastPathComponent))
+                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
             }
         }
         // Legacy/home-level cloud folders not under CloudStorage (older Dropbox, OneDrive,
@@ -567,8 +570,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             guard fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue,
                 !alreadyHasProvider(entry.keyword)
             else { continue }
-            let (sym, tint) = Self.cloudIcon(entry.service)
-            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: sym, isFolder: true, iconTint: tint))
+            let ic = Self.cloudNodeIcon(entry.service)
+            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
         }
         guard !children.isEmpty else { return nil }
         return Node(kind: .systemHeader, title: L("sidebar.cloudHeader", "Cloud"), url: nil, icon: nil, children: children)
@@ -576,9 +579,34 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     /// The SF Symbol + brand tint for a cloud service, so providers read apart in the sidebar
     /// (iCloud's own glyph in blue, a generic cloud tinted per provider -- SF Symbols has no brand
-    /// logos). Same source of truth the folder badge uses.
+    /// logos). The fallback when the provider's app (with the real logo) isn't installed.
     static func cloudIcon(_ service: CloudService) -> (String, NSColor) {
         (service.symbolName, ThemeManager.color(fromHex: service.tintHex) ?? .systemGray)
+    }
+
+    /// The real branded logo for a cloud service, taken from the provider's installed app icon
+    /// (macOS doesn't expose the File Provider icon Finder uses, but the app icon is the same logo).
+    /// nil when the app isn't installed (or for iCloud, which has no app -- use the SF glyph then).
+    static func brandIcon(_ service: CloudService) -> NSImage? {
+        let bundleID: String?
+        switch service {
+        case .googleDrive: bundleID = "com.google.drivefs"
+        case .dropbox: bundleID = "com.getdropbox.dropbox"
+        case .oneDrive: bundleID = "com.microsoft.OneDrive"
+        case .box: bundleID = "com.box.desktop"
+        case .iCloud, .generic: bundleID = nil
+        }
+        guard let bundleID,
+            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+        else { return nil }
+        return NSWorkspace.shared.icon(forFile: url.path)
+    }
+
+    /// The icon fields (SF symbol + tint, or a branded app image) for a cloud service node.
+    static func cloudNodeIcon(_ service: CloudService) -> (icon: String?, tint: NSColor?, image: NSImage?) {
+        if let brand = brandIcon(service) { return (nil, nil, brand) }
+        let (sym, tint) = cloudIcon(service)
+        return (sym, tint, nil)
     }
 
     private static let knownProviders = [
@@ -758,7 +786,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
         cell.toolTip = node.title  // name on hover when compact
-        if case .airdrop = node.kind, let airdrop = NSSharingService(named: .sendViaAirDrop)?.image {
+        if let image = node.customImage {
+            // A branded provider logo (the app icon) -- used verbatim, like Finder's cloud icons.
+            cell.imageView?.image = image
+            cell.imageView?.contentTintColor = nil
+        } else if case .airdrop = node.kind, let airdrop = NSSharingService(named: .sendViaAirDrop)?.image {
             // The real AirDrop glyph (there's no "airdrop" SF Symbol); the system service carries it.
             cell.imageView?.image = airdrop
             cell.imageView?.contentTintColor = nil
