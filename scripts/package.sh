@@ -166,6 +166,11 @@ if [[ -n "${INSTALL:-}" ]]; then
 	dest="/Applications/$APP_NAME.app"
 	echo "==> Installing to $dest"
 	pkill -f "$APP_NAME.app/Contents/MacOS/$APP_NAME" 2>/dev/null || true  # quit a running copy
+	# The out-of-process torrent daemon outlives the app by design, so it survives a plain app quit
+	# (and its name doesn't match the pattern above) -- kill it too, or a reinstall keeps running the
+	# OLD daemon binary. The app respawns a fresh one on next use; downloads resume from checkpoint.
+	pkill -f "pathem-torrentd" 2>/dev/null || true
+	pkill -f "pathem-afc" 2>/dev/null || true
 	sleep 1
 	rm -rf "$dest"
 	cp -R "$APP" "$dest"

@@ -21,6 +21,7 @@ import Foundation
         private var currentName: String?
         private var onChange: (@Sendable (String?) -> Void)?
         private var started = false
+        private var pollTask: Task<Void, Never>?
 
         public init() {}
 
@@ -36,6 +37,17 @@ import Foundation
                 Task { await self?.evaluate(path) }
             }
             monitor.start(queue: Self.queue)
+            // Poll the egress on a timer too: a full-tunnel VPN like AdGuard routes through a utun that
+            // NWPathMonitor never lists, so its callbacks miss the VPN coming up or dropping. Re-checking
+            // the actual internet egress every couple of seconds makes detection -- and the kill-switch
+            // reacting to a drop -- reliable regardless.
+            pollTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    guard let self else { return }
+                    await self.evaluate(self.monitor.currentPath)
+                }
+            }
         }
 
         /// Evaluate the current path right now and always notify (deterministic initial resolution:
@@ -48,6 +60,8 @@ import Foundation
         /// Stop watching and clear any binding this monitor set.
         public func stop() {
             monitor.cancel()
+            pollTask?.cancel()
+            pollTask = nil
             started = false
             currentName = nil
             NetworkBinding.shared.requiredInterface = nil
@@ -57,16 +71,19 @@ import Foundation
         public func activeVPNName() -> String? { Self.anonymizingVPNName() }
 
         private func evaluate(_ path: NWPath, force: Bool = false) {
+            // Whether a VPN is carrying our traffic is decided by the internet egress -- NOT by whether
+            // the path layer exposes the tunnel as a bindable NWInterface. Some full-tunnel VPNs
+            // (AdGuard) route everything through a utun that NWPath never lists, yet they're plainly the
+            // active VPN. When we *can* get the NWInterface we also hard-pin sockets to it; when we
+            // can't, the VPN is still present, its own routing keeps traffic on the tunnel, and the
+            // kill-switch relies on this egress detection.
             let name = Self.anonymizingVPNName()
-            // We can only enforce binding if the path layer exposes an NWInterface for the tunnel; if
-            // it doesn't, treat it as no-VPN so the kill-switch engages rather than running unbound.
             let iface = name.flatMap { n in path.availableInterfaces.first { $0.name == n } }
-            let boundName = iface != nil ? name : nil
             // `force` fires even on nil->nil so enabling with no VPN still engages the kill-switch.
-            guard force || boundName != currentName else { return }
-            currentName = boundName
-            NetworkBinding.shared.requiredInterface = iface  // pin new sockets to the tunnel (or unbind)
-            onChange?(boundName)
+            guard force || name != currentName else { return }
+            currentName = name
+            NetworkBinding.shared.requiredInterface = iface  // nil when unbindable -> soft (routing) protection
+            onChange?(name)
         }
 
         /// The anonymizing VPN interface: the one actually carrying internet traffic, but only when
