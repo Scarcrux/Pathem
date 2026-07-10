@@ -17,6 +17,7 @@ public final class PieceManager {
     private var complete: [Bool]                 // verified pieces
     private var buffers: [Int: [UInt8]]          // piece index -> assembled bytes (in progress)
     private var received: [Int: Set<Int>]        // piece index -> block-begin offsets we hold
+    private var wanted: Set<Int>?                // pieces we want (nil = all; for per-file selection)
 
     public init(pieceCount: Int, pieceLength: Int, totalLength: Int64, pieceHashes: [Data]) {
         self.pieceCount = pieceCount
@@ -57,7 +58,25 @@ public final class PieceManager {
 
     public func hasPiece(_ index: Int) -> Bool { index >= 0 && index < pieceCount && complete[index] }
     public var completedCount: Int { complete.lazy.filter { $0 }.count }
-    public var isComplete: Bool { completedCount == pieceCount }
+
+    /// Whether we want a given piece (per-file selection; all pieces when no selection is set).
+    private func isWanted(_ index: Int) -> Bool { wanted?.contains(index) ?? true }
+
+    /// The number of pieces we want (all, unless a file selection narrows it).
+    public var wantedPieceCount: Int { wanted?.count ?? pieceCount }
+
+    /// Completed pieces that we actually want.
+    public var completedWantedCount: Int {
+        (0..<pieceCount).lazy.filter { self.complete[$0] && self.isWanted($0) }.count
+    }
+
+    /// "Complete" means every wanted piece is verified (so a partial file selection can finish).
+    public var isComplete: Bool { completedWantedCount == wantedPieceCount }
+
+    /// Restrict downloading to the pieces in `pieces` (for per-file selection). Empty means want
+    /// nothing; call with the full set (or clearWanted) to want everything again.
+    public func setWanted(_ pieces: Set<Int>) { wanted = pieces }
+    public func clearWanted() { wanted = nil }
 
     /// Bytes verified so far (completed pieces only).
     public var downloadedBytes: Int64 {
@@ -66,7 +85,7 @@ public final class PieceManager {
         return total
     }
     public var fractionComplete: Double {
-        pieceCount == 0 ? 1 : Double(completedCount) / Double(pieceCount)
+        wantedPieceCount == 0 ? 1 : Double(completedWantedCount) / Double(wantedPieceCount)
     }
 
     /// Our have-set as a bitfield (BEP 3): bit 0 is the high bit of byte 0.
@@ -101,10 +120,10 @@ public final class PieceManager {
     /// the peer has. Returns nil when there is nothing left to ask this peer for.
     public func nextRequest(peerHas: [Bool], inFlight: Set<BlockRequest>) -> BlockRequest? {
         let started = buffers.keys.sorted()
-        for index in started where index < peerHas.count && peerHas[index] && !complete[index] {
+        for index in started where index < peerHas.count && peerHas[index] && !complete[index] && isWanted(index) {
             if let req = firstNeededBlock(in: index, inFlight: inFlight) { return req }
         }
-        for index in 0..<pieceCount where index < peerHas.count && peerHas[index] && !complete[index] {
+        for index in 0..<pieceCount where index < peerHas.count && peerHas[index] && !complete[index] && isWanted(index) {
             if let req = firstNeededBlock(in: index, inFlight: inFlight) { return req }
         }
         return nil

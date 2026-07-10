@@ -797,3 +797,13 @@
 "torrents.limits.down" = "Download";
 "torrents.limits.up" = "Upload";
 "torrents.limits.unit" = "KB/s";
+
+"torrents.files" = "Files…";
+"torrents.files.title" = "Select Files";
+"torrents.files.titleFor" = "Files in “%@”";
+"torrents.files.name" = "File";
+"torrents.files.size" = "Size";
+"torrents.files.all" = "Select All";
+"torrents.files.none" = "Deselect All";
+"torrents.files.apply" = "Apply";
+"torrents.files.single" = "This torrent has a single file, so there’s nothing to choose.";

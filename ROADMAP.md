@@ -246,6 +246,12 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   default gateway and asks it to forward our TCP port, renewing before the lease expires, so peers
   behind common home-router NAT can reach us. Best-effort: routers without NAT-PMP just don't
   answer, and outbound connections work regardless. Codec unit-tested; gateway detection verified.
+- **Per-file selection** -- SHIPPED. Download only some files of a multi-file torrent: the piece
+  manager honours a "wanted" set (FileLayout maps selected files to the pieces they overlap,
+  including straddling pieces), so unwanted pieces are never requested and "complete" means every
+  wanted piece is done. Torrents > Files opens a checkbox list; the selection applies live and
+  persists. Wanted-set and file-to-piece mapping are unit-tested; the daemon files/setFiles round
+  trip is verified.
 - **Speed limits** -- SHIPPED. Global download / upload caps via a token-bucket RateLimiter
   (injectable clock, unit-tested): the session paces its request pipeline and its block serving
   through the shared limiters, so throttling the ask throttles receipt. Set from Torrents > Speed

@@ -42,6 +42,14 @@ public actor TorrentSession {
         }
     }
 
+    /// A file within the torrent and whether it's selected for download (per-file selection).
+    public struct FileInfo: Sendable, Codable, Equatable {
+        public var index: Int
+        public var path: String
+        public var length: Int64
+        public var wanted: Bool
+    }
+
     public let torrent: TorrentFile
     private let downloadRoot: URL
     private let peerID: Data
@@ -49,6 +57,7 @@ public actor TorrentSession {
     private let layout: FileLayout
     private let storage: TorrentStorage
     private let dht: DHTClient?
+    private var wantedFiles: Set<Int>?  // nil = all files selected
     private let downLimiter: RateLimiter?  // shared global download cap (nil = unlimited)
     private let uploadLimiter: RateLimiter?
 
@@ -150,6 +159,33 @@ public actor TorrentSession {
 
     public func completedPieces() -> [Int] {
         (0..<pieces.pieceCount).filter { pieces.hasPiece($0) }
+    }
+
+    // MARK: per-file selection
+
+    /// The torrent's files and whether each is currently selected for download.
+    public func files() -> [FileInfo] {
+        torrent.files.enumerated().map { index, entry in
+            FileInfo(index: index, path: entry.path, length: entry.length,
+                wanted: wantedFiles?.contains(index) ?? true)
+        }
+    }
+
+    public func wantedFileIndices() -> [Int]? { wantedFiles.map { Array($0).sorted() } }
+
+    /// Restrict downloading to the given file indices (nil = all files). Recomputes the wanted
+    /// pieces and, if they're already on disk, flips to seeding.
+    public func setWantedFiles(_ indices: Set<Int>?) {
+        wantedFiles = indices
+        if let indices {
+            let wantedPieces = layout.pieces(
+                forFiles: indices, pieceLength: Int(torrent.pieceLength), pieceCount: pieces.pieceCount)
+            pieces.setWanted(wantedPieces)
+        } else {
+            pieces.clearWanted()
+        }
+        if pieces.isComplete, state == .downloading { state = .seeding }
+        else if !pieces.isComplete, state == .seeding { state = .downloading }
     }
 
     // MARK: trackers

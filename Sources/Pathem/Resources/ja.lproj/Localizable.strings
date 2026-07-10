@@ -928,3 +928,13 @@
 "torrents.limits.down" = "ダウンロード";
 "torrents.limits.up" = "アップロード";
 "torrents.limits.unit" = "KB/s";
+
+"torrents.files" = "ファイル…";
+"torrents.files.title" = "ファイルを選択";
+"torrents.files.titleFor" = "「%@」のファイル";
+"torrents.files.name" = "ファイル";
+"torrents.files.size" = "サイズ";
+"torrents.files.all" = "すべて選択";
+"torrents.files.none" = "すべて解除";
+"torrents.files.apply" = "適用";
+"torrents.files.single" = "このトレントは単一ファイルのため、選択する項目はありません。";

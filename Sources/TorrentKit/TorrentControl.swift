@@ -12,6 +12,8 @@ public enum TorrentControl {
         case resume
         case list         // request an immediate status snapshot
         case setLimits    // set global speed caps (downLimit / upLimit, bytes/sec, 0 = unlimited)
+        case files        // request a torrent's file list (infoHash)
+        case setFiles     // set which files to download (infoHash + wantedFiles)
     }
 
     public struct Command: Codable, Sendable {
@@ -23,10 +25,12 @@ public enum TorrentControl {
         public var savePath: String?
         public var downLimit: Int?
         public var upLimit: Int?
+        public var wantedFiles: [Int]?
 
         public init(
             op: Op, id: Int = 0, infoHash: String? = nil, torrentPath: String? = nil,
-            magnet: String? = nil, savePath: String? = nil, downLimit: Int? = nil, upLimit: Int? = nil
+            magnet: String? = nil, savePath: String? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
+            wantedFiles: [Int]? = nil
         ) {
             self.op = op
             self.id = id
@@ -36,6 +40,7 @@ public enum TorrentControl {
             self.savePath = savePath
             self.downLimit = downLimit
             self.upLimit = upLimit
+            self.wantedFiles = wantedFiles
         }
     }
 
@@ -53,10 +58,13 @@ public enum TorrentControl {
         public var torrents: [TorrentSession.Status]?
         public var downLimit: Int?   // current global caps (bytes/sec, 0 = unlimited)
         public var upLimit: Int?
+        public var infoHash: String?              // which torrent a files reply is for
+        public var files: [TorrentSession.FileInfo]?
 
         public init(
             kind: EventKind, replyTo: Int? = nil, ok: Bool = true, message: String? = nil,
-            torrents: [TorrentSession.Status]? = nil, downLimit: Int? = nil, upLimit: Int? = nil
+            torrents: [TorrentSession.Status]? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
+            infoHash: String? = nil, files: [TorrentSession.FileInfo]? = nil
         ) {
             self.kind = kind
             self.replyTo = replyTo
@@ -65,6 +73,8 @@ public enum TorrentControl {
             self.torrents = torrents
             self.downLimit = downLimit
             self.upLimit = upLimit
+            self.infoHash = infoHash
+            self.files = files
         }
     }
 

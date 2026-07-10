@@ -928,3 +928,13 @@
 "torrents.limits.down" = "Bajada";
 "torrents.limits.up" = "Subida";
 "torrents.limits.unit" = "KB/s";
+
+"torrents.files" = "Archivos…";
+"torrents.files.title" = "Seleccionar archivos";
+"torrents.files.titleFor" = "Archivos de “%@”";
+"torrents.files.name" = "Archivo";
+"torrents.files.size" = "Tamaño";
+"torrents.files.all" = "Seleccionar todo";
+"torrents.files.none" = "Deseleccionar todo";
+"torrents.files.apply" = "Aplicar";
+"torrents.files.single" = "Este torrent tiene un solo archivo, no hay nada que elegir.";

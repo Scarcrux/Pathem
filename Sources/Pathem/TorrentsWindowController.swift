@@ -15,6 +15,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let pauseButton = NSButton(title: "", target: nil, action: nil)
     private let removeButton = NSButton(title: "", target: nil, action: nil)
     private let limitsButton = NSButton(title: "", target: nil, action: nil)
+    private let filesButton = NSButton(title: "", target: nil, action: nil)
+    private let filesController = TorrentFilesController()
     private let emptyLabel = NSTextField(labelWithString: "")
 
     private var rows: [TorrentSession.Status] = []
@@ -46,6 +48,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         // Leave the daemon running so downloads continue; just stop receiving UI updates.
         client.onUpdate = nil
         client.onError = nil
+        client.onFiles = nil
     }
 
     // MARK: layout
@@ -76,7 +79,12 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         limitsButton.target = self
         limitsButton.action = #selector(limitsTapped)
 
-        let controls = NSStackView(views: [addButton, magnetButton, NSView(), limitsButton, pauseButton, removeButton])
+        filesButton.title = L("torrents.files", "Files…")
+        filesButton.bezelStyle = .rounded
+        filesButton.target = self
+        filesButton.action = #selector(filesTapped)
+
+        let controls = NSStackView(views: [addButton, magnetButton, NSView(), filesButton, limitsButton, pauseButton, removeButton])
         controls.orientation = .horizontal
         controls.spacing = 8
 
@@ -158,6 +166,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         let sel = selected()
         pauseButton.isEnabled = sel != nil
         removeButton.isEnabled = sel != nil
+        filesButton.isEnabled = sel != nil && sel?.state != .checking
         if let sel, sel.state == .paused {
             pauseButton.title = L("torrents.resume", "Resume")
         } else {
@@ -231,6 +240,23 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case .alertSecondButtonReturn: client.remove(sel.infoHash, deleteData: true)
         default: break
         }
+    }
+
+    @objc private func filesTapped() {
+        guard let sel = selected() else { return }
+        // The file list comes back asynchronously over the status stream.
+        client.onFiles = { [weak self] hash, files in
+            guard let self, hash == sel.infoHash else { return }
+            self.client.onFiles = nil
+            guard files.count > 1 else {
+                self.showError(L("torrents.files.single", "This torrent has a single file, so there's nothing to choose."))
+                return
+            }
+            self.filesController.present(name: sel.name, files: files, over: self.window) { [weak self] wanted in
+                self?.client.setFiles(sel.infoHash, wanted: wanted)
+            }
+        }
+        client.requestFiles(sel.infoHash)
     }
 
     @objc private func limitsTapped() {

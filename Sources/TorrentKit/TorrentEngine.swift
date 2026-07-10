@@ -11,6 +11,7 @@ public actor TorrentEngine {
         var savePath: String
         var paused: Bool
         var completedPieces: [Int]
+        var wantedFiles: [Int]?       // nil = all files (per-file selection)
     }
 
     /// A magnet whose metadata we're still fetching from peers (no info dict yet).
@@ -69,6 +70,20 @@ public actor TorrentEngine {
     }
 
     public func currentLimits() -> Limits { limits }
+
+    /// The files of a torrent and their selection state (empty if there's no such session).
+    public func files(infoHash: String) async -> [TorrentSession.FileInfo] {
+        guard let session = sessions[infoHash] else { return [] }
+        return await session.files()
+    }
+
+    /// Set which files of a torrent to download (nil = all), apply live, and persist.
+    public func setFiles(infoHash: String, wanted: [Int]?) async {
+        guard let session = sessions[infoHash] else { return }
+        await session.setWantedFiles(wanted.map(Set.init))
+        meta[infoHash]?.wantedFiles = wanted
+        saveState()
+    }
 
     private static func loadLimits(from file: URL) -> Limits {
         guard let data = try? Data(contentsOf: file),
@@ -294,6 +309,7 @@ public actor TorrentEngine {
                     torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
             else { continue }
             await session.loadResume(havePieces: persisted.completedPieces)
+            if let wanted = persisted.wantedFiles { await session.setWantedFiles(Set(wanted)) }
             sessions[persisted.infoHashHex] = session
             if !persisted.paused { await session.start() }
         }

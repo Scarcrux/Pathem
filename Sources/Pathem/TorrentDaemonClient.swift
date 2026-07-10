@@ -18,6 +18,7 @@ final class TorrentDaemonClient {
     private(set) var upLimit = 0
     var onUpdate: (([TorrentSession.Status]) -> Void)?
     var onError: ((String) -> Void)?
+    var onFiles: ((String, [TorrentSession.FileInfo]) -> Void)?
 
     private var process: Process?
     private var stdin: FileHandle?
@@ -134,6 +135,16 @@ final class TorrentDaemonClient {
         send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up))
     }
 
+    /// Request a torrent's file list (answered via onFiles).
+    func requestFiles(_ infoHash: String) {
+        send(.init(op: .files, id: nextCommandID(), infoHash: infoHash))
+    }
+
+    /// Set which files of a torrent to download.
+    func setFiles(_ infoHash: String, wanted: [Int]) {
+        send(.init(op: .setFiles, id: nextCommandID(), infoHash: infoHash, wantedFiles: wanted))
+    }
+
     private func send(_ command: TorrentControl.Command) {
         guard startIfNeeded(), let stdin else { return }
         // SIGPIPE is ignored process-wide; a write to a dead daemon fails harmlessly.
@@ -165,6 +176,9 @@ final class TorrentDaemonClient {
         if let torrents = event.torrents {
             self.torrents = torrents
             onUpdate?(torrents)
+        }
+        if let files = event.files, let hash = event.infoHash {
+            onFiles?(hash, files)
         }
         if !event.ok, let message = event.message, event.kind == .reply {
             onError?(message)

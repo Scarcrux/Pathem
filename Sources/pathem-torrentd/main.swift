@@ -72,6 +72,18 @@ func handle(_ command: TorrentControl.Command) async {
         await engine.setLimits(down: command.downLimit ?? 0, up: command.upLimit ?? 0)
         let limits = await engine.currentLimits()
         emit(.init(kind: .reply, replyTo: command.id, ok: true, downLimit: limits.down, upLimit: limits.up))
+    case .files:
+        guard let hash = command.infoHash else {
+            emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "files needs an infoHash"))
+            return
+        }
+        let files = await engine.files(infoHash: hash)
+        emit(.init(kind: .reply, replyTo: command.id, ok: true, infoHash: hash, files: files))
+    case .setFiles:
+        if let hash = command.infoHash {
+            await engine.setFiles(infoHash: hash, wanted: command.wantedFiles)
+        }
+        emit(.init(kind: .reply, replyTo: command.id, ok: true))
     }
 }
 

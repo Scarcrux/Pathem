@@ -460,6 +460,34 @@ import Testing
         #expect(!bits[1] && !bits[5])
         #expect(m.completedCount == 2)
     }
+
+    @Test func wantedSelectionLimitsRequestsAndCompletion() {
+        let content = Data(repeating: 7, count: 10)  // 10 one-byte pieces
+        let m = manager(for: content, pieceLength: 1)
+        let peerHasAll = Array(repeating: true, count: 10)
+        // Want only pieces 2, 3, 4.
+        m.setWanted([2, 3, 4])
+        #expect(m.wantedPieceCount == 3)
+        // nextRequest only offers wanted pieces.
+        var offered = Set<Int>()
+        var inFlight: Set<PieceManager.BlockRequest> = []
+        while let req = m.nextRequest(peerHas: peerHasAll, inFlight: inFlight) {
+            offered.insert(req.index)
+            inFlight.insert(req)
+        }
+        #expect(offered == [2, 3, 4])
+        // Completing the wanted pieces marks the torrent complete, even though 7 pieces are missing.
+        m.markComplete(2)
+        m.markComplete(3)
+        #expect(!m.isComplete)
+        m.markComplete(4)
+        #expect(m.isComplete)
+        #expect(abs(m.fractionComplete - 1.0) < 0.0001)
+        // Clearing the selection wants everything again.
+        m.clearWanted()
+        #expect(m.wantedPieceCount == 10)
+        #expect(!m.isComplete)
+    }
 }
 
 @Suite struct FileLayoutTests {
@@ -500,6 +528,20 @@ import Testing
     @Test func emptyRangeYieldsNothing() {
         let layout = FileLayout(entries: [.init(path: "a", length: 100)])
         #expect(layout.segments(at: 50, length: 0).isEmpty)
+    }
+
+    @Test func piecesForFilesCoversOverlap() {
+        // Three files of 100 bytes at offsets 0,100,200; piece length 64 -> pieces cover:
+        // file0 [0,100) -> pieces 0,1; file1 [100,200) -> pieces 1,2,3; file2 [200,300) -> 3,4.
+        let layout = FileLayout(entries: [
+            .init(path: "a", length: 100), .init(path: "b", length: 100), .init(path: "c", length: 100),
+        ])
+        let pieceCount = 5  // ceil(300/64)
+        #expect(layout.pieces(forFiles: [0], pieceLength: 64, pieceCount: pieceCount) == [0, 1])
+        #expect(layout.pieces(forFiles: [2], pieceLength: 64, pieceCount: pieceCount) == [3, 4])
+        // A piece straddling wanted+unwanted files (piece 1 spans a and b) is included for either.
+        #expect(layout.pieces(forFiles: [0, 2], pieceLength: 64, pieceCount: pieceCount) == [0, 1, 3, 4])
+        #expect(layout.pieces(forFiles: [], pieceLength: 64, pieceCount: pieceCount).isEmpty)
     }
 }
 

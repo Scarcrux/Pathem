@@ -58,4 +58,18 @@ public struct FileLayout: Equatable, Sendable {
     public func segments(forPiece index: Int, pieceLength: Int, pieceSize: Int) -> [Segment] {
         segments(at: Int64(index) * Int64(pieceLength), length: Int64(pieceSize))
     }
+
+    /// The set of piece indices that overlap any of the given files. A piece straddling a wanted
+    /// and an unwanted file is wanted (we must download it to get the wanted part). Used for
+    /// per-file selection: download only the pieces the selected files need.
+    public func pieces(forFiles wantedFileIndices: Set<Int>, pieceLength: Int, pieceCount: Int) -> Set<Int> {
+        guard pieceLength > 0 else { return [] }
+        var wanted = Set<Int>()
+        for file in files where wantedFileIndices.contains(file.index) && file.length > 0 {
+            let first = Int(file.offset / Int64(pieceLength))
+            let last = Int((file.offset + file.length - 1) / Int64(pieceLength))
+            for piece in first...last where piece >= 0 && piece < pieceCount { wanted.insert(piece) }
+        }
+        return wanted
+    }
 }

@@ -928,3 +928,13 @@
 "torrents.limits.down" = "Réception";
 "torrents.limits.up" = "Envoi";
 "torrents.limits.unit" = "Ko/s";
+
+"torrents.files" = "Fichiers…";
+"torrents.files.title" = "Sélectionner les fichiers";
+"torrents.files.titleFor" = "Fichiers de « %@ »";
+"torrents.files.name" = "Fichier";
+"torrents.files.size" = "Taille";
+"torrents.files.all" = "Tout sélectionner";
+"torrents.files.none" = "Tout désélectionner";
+"torrents.files.apply" = "Appliquer";
+"torrents.files.single" = "Ce torrent ne contient qu’un fichier, il n’y a rien à choisir.";

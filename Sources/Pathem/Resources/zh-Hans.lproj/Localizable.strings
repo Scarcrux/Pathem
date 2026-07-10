@@ -928,3 +928,13 @@
 "torrents.limits.down" = "下载";
 "torrents.limits.up" = "上传";
 "torrents.limits.unit" = "KB/s";
+
+"torrents.files" = "文件…";
+"torrents.files.title" = "选择文件";
+"torrents.files.titleFor" = "“%@”中的文件";
+"torrents.files.name" = "文件";
+"torrents.files.size" = "大小";
+"torrents.files.all" = "全选";
+"torrents.files.none" = "全不选";
+"torrents.files.apply" = "应用";
+"torrents.files.single" = "此种子只有一个文件，无需选择。";
