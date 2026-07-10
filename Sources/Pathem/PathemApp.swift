@@ -812,6 +812,7 @@ enum PathemApp {
         mainMenu.addItem(viewItem)
         let viewMenu = NSMenu(title: L("menu.view", "View"))
         viewItem.submenu = viewMenu
+        // View modes + arrangement stay at the top level (the most-used controls).
         viewMenu.addItem(commandItem("as List", "view.asList", "1"))
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
@@ -824,48 +825,63 @@ enum PathemApp {
             commandItem("Date Modified", "view.arrangeDate"),
             commandItem("Tag", "view.arrangeTag"),
         ]))
-        viewMenu.addItem(submenu("Folder Background", [
-            commandItem("Background Color…", "files.setFolderBgColor"),
-            commandItem("Background Picture…", "files.setFolderBgPicture"),
-            .separator(),
-            commandItem("Remove Background", "files.clearFolderBg"),
-        ]))
+        viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
         viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))
-        viewMenu.addItem(commandItem("Flat View", "view.flatView", "f", [.command, .control]))
-        viewMenu.addItem(commandItem("Filter…", "view.filter", "f"))
-        viewMenu.addItem(commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]))
-        viewMenu.addItem(commandItem("Find in Files…", "files.findInFiles"))
-        viewMenu.addItem(commandItem("Find Duplicates", "files.findDuplicates"))
-        viewMenu.addItem(commandItem("Find Similar Names", "files.findSimilarNames"))
-        viewMenu.addItem(commandItem("Flatten Folder (Show All Items)", "view.flattenFolder"))
-        viewMenu.addItem(commandItem("Compare Panes…", "files.comparePanes"))
-        viewMenu.addItem(commandItem("Size Browser…", "view.sizeBrowser"))
-        viewMenu.addItem(commandItem("Cleanup…", "view.cleanup"))
-        viewMenu.addItem(commandItem("Reclaim in Repo…", "files.repoReclaim"))
-        viewMenu.addItem(commandItem("Customize Toolbar…", "view.customizeToolbar"))
-        viewMenu.addItem(commandItem("Use as Default View", "view.useAsDefault"))
         viewMenu.addItem(.separator())
-        viewMenu.addItem(commandItem("Show Hidden Files", "view.toggleHidden"))
-        viewMenu.addItem(commandItem("Show Full Path in Title Bar", "view.fullPathTitle"))
-        viewMenu.addItem(commandItem("Show Path Bar at Bottom", "view.pathBarBottom"))
-        viewMenu.addItem(commandItem("Calculate All Sizes", "view.calculateSizes"))
-        viewMenu.addItem(commandItem("Compact Sidebar", "view.compactSidebar"))
-        viewMenu.addItem(commandItem("Sync Browsing", "view.syncBrowsing"))
-        viewMenu.addItem(commandItem("Save Workspace…", "workspace.save"))
-        viewMenu.addItem(commandItem("Open Workspace…", "workspace.open"))
-        viewMenu.addItem(commandItem("Save Style…", "view.saveStyle"))
-        viewMenu.addItem(commandItem("Apply Style…", "view.applyStyle"))
-        viewMenu.addItem(commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]))
-        viewMenu.addItem(commandItem("Quick Look", "view.quickLook"))
-        viewMenu.addItem(commandItem("Slideshow", "view.slideshow"))
-        viewMenu.addItem(commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]))
-        viewMenu.addItem(.separator())
-        viewMenu.addItem(commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]))
-        viewMenu.addItem(commandItem("Commander Mode", "commander.toggle"))
-        viewMenu.addItem(commandItem("Vim Navigation", "nav.vimMode"))
-        viewMenu.addItem(commandItem("Open Terminal Here", "terminal.here"))
-        viewMenu.addItem(commandItem("Terminal Follows Folder", "terminal.toggleFollow"))
+
+        // Everything else is grouped into submenus so the top level stays scannable
+        // instead of a 40-item wall. Shortcuts still work from inside a submenu.
+        viewMenu.addItem(submenu("Find", [
+            commandItem("Filter…", "view.filter", "f"),
+            commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]),
+            commandItem("Find in Files…", "files.findInFiles"),
+            commandItem("Find Duplicates", "files.findDuplicates"),
+            commandItem("Find Similar Names", "files.findSimilarNames"),
+            .separator(),
+            commandItem("Flat View", "view.flatView", "f", [.command, .control]),
+            commandItem("Flatten Folder (Show All Items)", "view.flattenFolder"),
+        ]))
+        viewMenu.addItem(submenu("Folder Tools", [
+            commandItem("Compare Panes…", "files.comparePanes"),
+            commandItem("Size Browser…", "view.sizeBrowser"),
+            commandItem("Calculate All Sizes", "view.calculateSizes"),
+            .separator(),
+            commandItem("Cleanup…", "view.cleanup"),
+            commandItem("Reclaim in Repo…", "files.repoReclaim"),
+        ]))
+        viewMenu.addItem(submenu("Show", [
+            commandItem("Show Hidden Files", "view.toggleHidden"),
+            commandItem("Show Full Path in Title Bar", "view.fullPathTitle"),
+            commandItem("Show Path Bar at Bottom", "view.pathBarBottom"),
+            commandItem("Compact Sidebar", "view.compactSidebar"),
+            commandItem("Sync Browsing", "view.syncBrowsing"),
+            commandItem("Vim Navigation", "nav.vimMode"),
+        ]))
+        viewMenu.addItem(submenu("Preview", [
+            commandItem("Quick Look", "view.quickLook"),
+            commandItem("Slideshow", "view.slideshow"),
+            commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]),
+            commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]),
+        ]))
+        viewMenu.addItem(submenu("Layout & Style", [
+            commandItem("Save Workspace…", "workspace.save"),
+            commandItem("Open Workspace…", "workspace.open"),
+            .separator(),
+            commandItem("Save Style…", "view.saveStyle"),
+            commandItem("Apply Style…", "view.applyStyle"),
+            commandItem("Use as Default View", "view.useAsDefault"),
+            .separator(),
+            submenu("Folder Background", [
+                commandItem("Background Color…", "files.setFolderBgColor"),
+                commandItem("Background Picture…", "files.setFolderBgPicture"),
+                .separator(),
+                commandItem("Remove Background", "files.clearFolderBg"),
+            ]),
+            commandItem("Customize Toolbar…", "view.customizeToolbar"),
+        ]))
+
+        // Terminal group, with the theme presets nested under it.
         let themeItem = NSMenuItem(
             title: L("menu.terminalTheme", "Terminal Theme"), action: nil, keyEquivalent: "")
         let themeMenu = NSMenu()
@@ -877,18 +893,30 @@ enum PathemApp {
             themeMenu.addItem(item)
         }
         themeItem.submenu = themeMenu
-        viewMenu.addItem(themeItem)
+        viewMenu.addItem(submenu("Terminal", [
+            commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]),
+            commandItem("Commander Mode", "commander.toggle"),
+            commandItem("Terminal Follows Folder", "terminal.toggleFollow"),
+            commandItem("Open Terminal Here", "terminal.here"),
+            .separator(),
+            themeItem,
+        ]))
         viewMenu.addItem(.separator())
+
+        // The AI bar stays top-level; the folder-organizing and git actions group up.
         viewMenu.addItem(commandItem("Command Palette…", "palette.show"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
-        viewMenu.addItem(commandItem("Organize Folder…", "files.organize"))
-        viewMenu.addItem(commandItem("Organize with AI…", "files.organizeAI"))
-        viewMenu.addItem(commandItem("Summarize Folder", "ai.summarizeFolder"))
-        viewMenu.addItem(commandItem("Batch Rename…", "files.batchRename"))
-        viewMenu.addItem(.separator())
-        viewMenu.addItem(commandItem("Commit…", "git.commit"))
-        viewMenu.addItem(commandItem("Push", "git.push"))
-        viewMenu.addItem(commandItem("Pull", "git.pull"))
+        viewMenu.addItem(submenu("Organize", [
+            commandItem("Organize Folder…", "files.organize"),
+            commandItem("Organize with AI…", "files.organizeAI"),
+            commandItem("Summarize Folder", "ai.summarizeFolder"),
+            commandItem("Batch Rename…", "files.batchRename"),
+        ]))
+        viewMenu.addItem(submenu("Git", [
+            commandItem("Commit…", "git.commit"),
+            commandItem("Push", "git.push"),
+            commandItem("Pull", "git.pull"),
+        ]))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Demo Mode (fake data for screenshots)", "view.demoMode"))
 
@@ -991,10 +1019,14 @@ enum PathemApp {
         _ title: String, _ commandID: String, _ key: String = "",
         _ mods: NSEvent.ModifierFlags = .command
     ) -> NSMenuItem {
+        // AppKit rule: a Shift-modified letter equivalent must use the UPPERCASE letter. With a
+        // lowercase key plus .shift in the mask the item can also match the *unshifted* key -- which
+        // is why Cmd+K was firing the Cmd+Shift+K "Connections…" item. Uppercase whenever shift is set.
+        let effectiveKey = mods.contains(.shift) ? key.uppercased() : key
         let item = NSMenuItem(
             title: L("menu.\(commandID)", title),  // localized by command id; English is the fallback
             action: #selector(BrowserViewController.performMenuCommand(_:)),
-            keyEquivalent: key)
+            keyEquivalent: effectiveKey)
         item.representedObject = commandID
         item.keyEquivalentModifierMask = key.isEmpty ? [] : mods
         return item
