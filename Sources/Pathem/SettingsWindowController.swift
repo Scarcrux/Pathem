@@ -610,7 +610,13 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             } catch {
                 let alert = NSAlert()
                 alert.messageText = L("prefs.folderHandlerFailed", "Couldn’t change the default folder app")
-                alert.informativeText = error.localizedDescription
+                // Recent macOS blocks replacing Finder as the default handler for folders and returns
+                // only a generic error; explain the likely cause rather than surface it raw.
+                alert.informativeText = String(
+                    format: L(
+                        "prefs.folderHandlerFailedBody",
+                        "This version of macOS may not allow replacing Finder as the default app for folders. You can still open folders in Pathem with drag-and-drop or “Open in Pathem.”\n\n(%@)"),
+                    error.localizedDescription)
                 alert.beginSheetModal(for: self.window) { _ in }
             }
             checkbox.state = FolderHandler.isPathem ? .on : .off  // reflect the real state either way
