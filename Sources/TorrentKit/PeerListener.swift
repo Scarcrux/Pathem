@@ -27,7 +27,8 @@ import Foundation
         public func start(port desired: UInt16 = 6881, timeout: TimeInterval = 10) async throws -> UInt16 {
             if let boundPort { return boundPort }
             let endpointPort: NWEndpoint.Port = desired == 0 ? .any : (NWEndpoint.Port(rawValue: desired) ?? .any)
-            let listener = try NWListener(using: .tcp, on: endpointPort)
+            // Bind to the VPN interface when one is set, so inbound peers only arrive over the tunnel.
+            let listener = try NWListener(using: NetworkBinding.shared.pin(.tcp), on: endpointPort)
             self.listener = listener
 
             listener.newConnectionHandler = { [weak self] conn in

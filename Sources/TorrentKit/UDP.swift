@@ -8,7 +8,8 @@ import Foundation
     enum UDP {
         static func query(host: String, port: UInt16, payload: Data, timeout: TimeInterval) async -> Data? {
             guard let nwPort = NWEndpoint.Port(rawValue: port) else { return nil }
-            let conn = NWConnection(host: .init(host), port: nwPort, using: .udp)
+            // DHT / NAT-PMP datagrams honor the VPN binding too, so lookups don't leak our real IP.
+            let conn = NWConnection(host: .init(host), port: nwPort, using: NetworkBinding.shared.pin(.udp))
             let box = DatagramBox()
             conn.stateUpdateHandler = { state in
                 switch state {

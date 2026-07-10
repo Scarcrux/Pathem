@@ -46,7 +46,7 @@ import Foundation
             guard let nwPort = NWEndpoint.Port(rawValue: port) else {
                 throw PeerConnection.PeerError.connectionFailed("bad port")
             }
-            let conn = NWConnection(host: .init(host), port: nwPort, using: .udp)
+            let conn = NWConnection(host: .init(host), port: nwPort, using: NetworkBinding.shared.pin(.udp))
             self.conn = conn
             try await waitReady(conn, timeout: timeout)
 

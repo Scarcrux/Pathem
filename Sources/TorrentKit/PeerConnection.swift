@@ -96,7 +96,8 @@ import Foundation
             switch transport {
             case .tcp:
                 let conn = NWConnection(
-                    host: .init(host), port: .init(rawValue: port) ?? .any, using: .tcp)
+                    host: .init(host), port: .init(rawValue: port) ?? .any,
+                    using: NetworkBinding.shared.pin(.tcp))
                 self.connection = conn
                 try await waitReady(conn, timeout: timeout)
             case .utp:

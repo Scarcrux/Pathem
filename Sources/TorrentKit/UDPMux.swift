@@ -45,7 +45,7 @@ import Foundation
             if let boundPort { return boundPort }
             let endpointPort: NWEndpoint.Port =
                 desired == 0 ? .any : (NWEndpoint.Port(rawValue: desired) ?? .any)
-            let listener = try NWListener(using: .udp, on: endpointPort)
+            let listener = try NWListener(using: NetworkBinding.shared.pin(.udp), on: endpointPort)
             self.listener = listener
             listener.newConnectionHandler = { [weak self] conn in
                 guard let self else { conn.cancel(); return }
