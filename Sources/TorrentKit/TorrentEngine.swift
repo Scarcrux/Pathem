@@ -27,6 +27,7 @@ public actor TorrentEngine {
     private let torrentsDir: URL
     private let peerID = Tracker.makePeerID()
     private let dht = DHTClient()  // shared across sessions for trackerless peer discovery
+    private lazy var dhtServer = DHTServer(client: dht)  // serves DHT queries: a full participant
     private let natpmp = NATPMPClient()  // best-effort router port mapping for inbound peers
     private let upnp = UPnPClient()      // fallback when the router speaks UPnP, not NAT-PMP
     private let downLimiter: RateLimiter  // global caps (0 = unlimited), shared by all sessions
@@ -123,6 +124,9 @@ public actor TorrentEngine {
         }
         listener = l
         _ = try? await l.start(port: 6881)
+        // Serve DHT queries on the same port (UDP), turning us from a lookup-only client into a
+        // full participant: other nodes can find peers through us and announce to us.
+        _ = try? await dhtServer.start(port: 6881)
         // Ask the router to forward our port so peers behind NAT can reach us (best-effort):
         // try NAT-PMP first, then fall back to UPnP-IGD if that gets no answer.
         Task { [natpmp, upnp] in

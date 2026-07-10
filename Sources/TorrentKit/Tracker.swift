@@ -53,6 +53,15 @@ public enum Tracker {
         return out
     }
 
+    /// Encode one peer as compact peer info (BEP 23): 4-byte IPv4 + 2-byte big-endian port. Returns
+    /// nil for a non-IPv4 host (a hostname or IPv6 has no 4-octet form). Used when serving DHT
+    /// `get_peers` responses.
+    public static func encodeCompactPeer(_ peer: Peer) -> Data? {
+        let octets = peer.host.split(separator: ".").compactMap { UInt8($0) }
+        guard octets.count == 4, peer.port >= 0, peer.port <= 0xffff else { return nil }
+        return Data(octets + [UInt8(peer.port >> 8), UInt8(peer.port & 0xff)])
+    }
+
     /// Parse a compact peer list (BEP 23): 6 bytes per peer, 4-byte IPv4 + 2-byte big-endian port.
     public static func parseCompactPeers(_ data: Data) -> [Peer] {
         let bytes = [UInt8](data)

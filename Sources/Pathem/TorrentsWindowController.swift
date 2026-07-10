@@ -24,7 +24,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     override init() {
         window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 760, height: 420),
+            contentRect: NSRect(x: 0, y: 0, width: 860, height: 420),
             styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
         super.init()
         window.title = L("torrents.title", "Torrents")
@@ -89,13 +89,15 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         controls.spacing = 8
 
         let columns: [(String, String, CGFloat)] = [
-            ("name", L("torrents.col.name", "Name"), 240),
-            ("size", L("torrents.col.size", "Size"), 80),
-            ("progress", L("torrents.col.progress", "Progress"), 140),
-            ("down", L("torrents.col.down", "Down"), 78),
-            ("up", L("torrents.col.up", "Up"), 78),
-            ("peers", L("torrents.col.peers", "Peers"), 54),
-            ("state", L("torrents.col.state", "Status"), 90),
+            ("name", L("torrents.col.name", "Name"), 200),
+            ("size", L("torrents.col.size", "Size"), 70),
+            ("progress", L("torrents.col.progress", "Progress"), 120),
+            ("down", L("torrents.col.down", "Down"), 74),
+            ("up", L("torrents.col.up", "Up"), 74),
+            ("eta", L("torrents.col.eta", "ETA"), 76),
+            ("ratio", L("torrents.col.ratio", "Ratio"), 58),
+            ("peers", L("torrents.col.peers", "Peers"), 46),
+            ("state", L("torrents.col.state", "Status"), 108),
         ]
         for (id, title, width) in columns {
             let column = NSTableColumn(identifier: .init(id))
@@ -372,15 +374,32 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             return status.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
         case "up":
             return status.uploadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.uploadRate)))/s" : "—"
+        case "eta": return Self.etaLabel(status.etaSeconds)
+        case "ratio": return status.downloaded > 0 ? String(format: "%.2f", status.ratio) : "—"
         case "peers": return "\(status.peersConnected)"
-        case "state": return stateLabel(status.state)
+        case "state": return stateLabel(status)
         default: return ""
         }
     }
 
-    private func stateLabel(_ state: TorrentSession.State) -> String {
-        switch state {
-        case .downloading: return L("torrents.state.downloading", "Downloading")
+    /// A compact, human ETA like "3m 12s", "1h 4m", "2d 3h", or "—" when unknown.
+    static func etaLabel(_ seconds: Int) -> String {
+        guard seconds >= 0 else { return "—" }
+        if seconds < 60 { return "\(seconds)s" }
+        let m = seconds / 60, h = seconds / 3600, d = seconds / 86400
+        if seconds < 3600 { return "\(m)m \(seconds % 60)s" }
+        if seconds < 86400 { return "\(h)h \((seconds % 3600) / 60)m" }
+        return "\(d)d \((seconds % 86400) / 3600)h"
+    }
+
+    private func stateLabel(_ status: TorrentSession.Status) -> String {
+        switch status.state {
+        case .downloading:
+            // Distinguish "connected and pulling bytes" from "still looking" so a stalled row
+            // reads as searching rather than a broken download.
+            return status.peersConnected == 0
+                ? L("torrents.state.findingPeers", "Finding peers…")
+                : L("torrents.state.downloading", "Downloading")
         case .seeding: return L("torrents.state.seeding", "Seeding")
         case .paused: return L("torrents.state.paused", "Paused")
         case .checking: return L("torrents.state.checking", "Checking")

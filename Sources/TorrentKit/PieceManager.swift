@@ -84,6 +84,13 @@ public final class PieceManager {
         for i in 0..<pieceCount where complete[i] { total += Int64(pieceSize(i)) }
         return total
     }
+
+    /// Bytes we still want but haven't verified yet (respects a partial file selection). Drives ETA.
+    public var wantedBytesRemaining: Int64 {
+        var total: Int64 = 0
+        for i in 0..<pieceCount where !complete[i] && isWanted(i) { total += Int64(pieceSize(i)) }
+        return total
+    }
     public var fractionComplete: Double {
         wantedPieceCount == 0 ? 1 : Double(completedWantedCount) / Double(wantedPieceCount)
     }

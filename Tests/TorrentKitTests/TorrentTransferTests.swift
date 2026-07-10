@@ -143,6 +143,7 @@ import Testing
             }
 
             let seederStatus = await seeder.status()
+            let leecherStatus = await leecher.status()
             await leecher.stop()
             await seeder.stop()
             await listener.stop()
@@ -153,6 +154,11 @@ import Testing
             #expect(downloaded == content)
             // The seeder actually uploaded (it served the pieces).
             #expect(seederStatus.uploaded >= Int64(content.count))
+            // A finished torrent reports no ETA (nothing left to download) and a defined ratio.
+            #expect(leecherStatus.etaSeconds == -1)
+            #expect(leecherStatus.ratio >= 0)
+            // The seeder took nothing and served everything, so its ratio is well above zero.
+            #expect(seederStatus.ratio > 0)
         }
     }
 #endif

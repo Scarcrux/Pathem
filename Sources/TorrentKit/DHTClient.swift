@@ -8,12 +8,20 @@ import Foundation
     /// until it collects peers or runs out of closer nodes. Enough to find peers for a trackerless
     /// magnet; it doesn't yet serve queries or keep a persistent routing table.
     public actor DHTClient {
-        private let nodeID = DHT.randomID()
+        public nonisolated let nodeID = DHT.randomID()
         private var txnCounter: UInt16 = 0
         private var goodNodes: [DHT.Node] = []  // nodes that have answered us (the routing table)
         private let maxGoodNodes = 400
 
         public init() {}
+
+        /// The closest known nodes to a target id, for answering find_node / get_peers as a server.
+        public func closestNodes(to target: Data, count: Int = 8) -> [DHT.Node] {
+            Array(goodNodes.sorted { DHT.closer($0.id, than: $1.id, to: target) < 0 }.prefix(count))
+        }
+
+        /// Record a node in the routing table (e.g. one that just queried us). Public wrapper.
+        public func note(_ node: DHT.Node) { remember(node) }
 
         /// Serialize the routing table (good nodes) so it can be persisted and reloaded, warm-
         /// starting future lookups instead of always hammering the bootstrap routers.
@@ -37,6 +45,40 @@ import Foundation
         public func findPeers(
             infoHash: Data, maxPeers: Int = 50, timeout: TimeInterval = 25
         ) async -> [Tracker.Peer] {
+            await lookup(infoHash: infoHash, maxPeers: maxPeers).peers
+        }
+
+        /// Announce that we're a peer for `infoHash` reachable on `port`, making us discoverable to
+        /// other DHT nodes (BEP 5). Runs a normal get_peers lookup to find the closest nodes and the
+        /// write tokens they hand out, then sends `announce_peer` to the closest few. Returns the
+        /// peers the lookup happened to find, so the caller gets discovery for free.
+        @discardableResult
+        public func announcePeer(
+            infoHash: Data, port: Int, maxPeers: Int = 50
+        ) async -> [Tracker.Peer] {
+            let result = await lookup(infoHash: infoHash, maxPeers: maxPeers)
+            // Announce to the closest nodes that gave us a token (up to 8, the BEP-5 convention).
+            let targets = result.tokenNodes
+                .sorted { DHT.closer($0.node.id, than: $1.node.id, to: infoHash) < 0 }
+                .prefix(8)
+            await withTaskGroup(of: Void.self) { group in
+                for (node, token) in targets {
+                    group.addTask {
+                        let query = await DHT.announcePeerQuery(
+                            transaction: self.nextTransaction(), nodeID: self.nodeID,
+                            infoHash: infoHash, port: port, token: token)
+                        _ = await UDP.query(host: node.host, port: node.port, payload: query, timeout: 4)
+                    }
+                }
+            }
+            return result.peers
+        }
+
+        /// The iterative get_peers search shared by findPeers and announcePeer: walk toward the
+        /// info hash, collecting peers and the (node, token) pairs needed to announce back.
+        private func lookup(
+            infoHash: Data, maxPeers: Int
+        ) async -> (peers: [Tracker.Peer], tokenNodes: [(node: DHT.Node, token: Data)]) {
             // Start from remembered good nodes (warm start) plus the bootstrap routers.
             var candidates: [DHT.Node] = goodNodes + DHT.bootstrapNodes.map {
                 DHT.Node(id: Data(count: DHT.idLength), host: $0.host, port: $0.port)
@@ -44,6 +86,7 @@ import Foundation
             var seen = Set(candidates.map(key))  // candidate keys, so we never enqueue a dup
             var queried = Set<String>()
             var found = Set<Tracker.Peer>()
+            var tokenNodes: [String: (node: DHT.Node, token: Data)] = [:]
             var queriesLeft = 80  // hard cap on total UDP queries per lookup
 
             while !candidates.isEmpty, found.count < maxPeers, queriesLeft > 0 {
@@ -68,6 +111,7 @@ import Foundation
                 for (node, result) in responses {
                     guard let result else { continue }
                     remember(node)  // it answered: keep it in the routing table
+                    if let token = result.token { tokenNodes[key(node)] = (node, token) }
                     for peer in result.peers { found.insert(peer) }
                     for node in result.nodes where seen.insert(key(node)).inserted {
                         candidates.append(node)  // only genuinely new nodes
@@ -77,7 +121,7 @@ import Foundation
                 candidates = Array(
                     candidates.sorted { DHT.closer($0.id, than: $1.id, to: infoHash) < 0 }.prefix(48))
             }
-            return Array(found.prefix(maxPeers))
+            return (Array(found.prefix(maxPeers)), Array(tokenNodes.values))
         }
 
         private func key(_ node: DHT.Node) -> String { "\(node.host):\(node.port)" }

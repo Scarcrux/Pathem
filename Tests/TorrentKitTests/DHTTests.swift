@@ -260,3 +260,131 @@ import Testing
         #expect(SuperSeed.pick(complete: [true, false], peerHas: [true, false], offered: [], givenCount: [:]) == nil)
     }
 }
+
+#if canImport(Network)
+    /// The DHT server half: peer store TTL, write-token validation, and the query responder.
+    @Suite struct DHTServerTests {
+        private func id(_ byte: UInt8) -> Data { Data(repeating: byte, count: 20) }
+        private let base = Date(timeIntervalSince1970: 1_700_000_000)
+
+        @Test func peerStoreHoldsAndExpires() {
+            var store = DHTPeerStore(ttl: 100, maxPerHash: 200)
+            let ih = id(0xAA)
+            store.add(infoHash: ih, peer: .init(host: "1.2.3.4", port: 6881), now: base)
+            // `peers` prunes as it reads (mutating), so pull results into lets before expecting.
+            let atBase = store.peers(infoHash: ih, now: base).count
+            let within = store.peers(infoHash: ih, now: base.addingTimeInterval(50)).count
+            let expired = store.peers(infoHash: ih, now: base.addingTimeInterval(200)).isEmpty
+            #expect(atBase == 1)
+            #expect(within == 1)   // within TTL
+            #expect(expired)        // past TTL
+            // A re-announce refreshes the entry rather than duplicating it.
+            store.add(infoHash: ih, peer: .init(host: "1.2.3.4", port: 6881), now: base)
+            store.add(infoHash: ih, peer: .init(host: "1.2.3.4", port: 6881), now: base.addingTimeInterval(10))
+            let deduped = store.peers(infoHash: ih, now: base.addingTimeInterval(10)).count
+            #expect(deduped == 1)
+        }
+
+        @Test func tokensAreHostBoundAndRotate() {
+            var tokens = DHTTokens(now: base, interval: 300)
+            let tok = tokens.issue(host: "1.2.3.4", now: base)
+            // `validate` rotates the secret (mutating), so evaluate in order into lets.
+            let sameSecret = tokens.validate(tok, host: "1.2.3.4", now: base)
+            let wrongHost = tokens.validate(tok, host: "9.9.9.9", now: base)
+            let oneRotation = tokens.validate(tok, host: "1.2.3.4", now: base.addingTimeInterval(400))
+            let twoRotations = tokens.validate(tok, host: "1.2.3.4", now: base.addingTimeInterval(1000))
+            #expect(sameSecret)
+            #expect(!wrongHost)
+            #expect(oneRotation)     // previous secret still accepted across one rotation
+            #expect(!twoRotations)   // gone after the secret rotates twice
+        }
+
+        @Test func respondsToPingAndRemembersQuerier() async {
+            let client = DHTClient()
+            let server = DHTServer(client: client, now: base)
+            let ping = DHT.parseMessage(DHT.pingQuery(transaction: Data([0, 1]), nodeID: id(0x11)))!
+            let reply = await server.respond(to: ping, fromHost: "1.2.3.4", fromPort: 6881, now: base)
+            guard let reply, case .response(let r)? = DHT.parseMessage(reply)?.kind else {
+                Issue.record("ping did not get a response"); return
+            }
+            #expect(r["id"] != nil)
+            // The querying node is now in the shared routing table (so serving warms our lookups).
+            #expect(await client.routingTableSize == 1)
+        }
+
+        @Test func getPeersThenAnnounceRoundTrips() async {
+            let client = DHTClient()
+            let server = DHTServer(client: client, now: base)
+            let qid = id(0x11)
+            let ih = id(0xAA)
+
+            // get_peers with nothing stored: a token, no peers yet.
+            let gp = DHT.parseMessage(DHT.getPeersQuery(transaction: Data([0, 2]), nodeID: qid, infoHash: ih))!
+            let gpReply = await server.respond(to: gp, fromHost: "1.2.3.4", fromPort: 6881, now: base)
+            guard let gpReply, case .response(let gpr)? = DHT.parseMessage(gpReply)?.kind else {
+                Issue.record("no get_peers response"); return
+            }
+            let first = DHT.parseGetPeersResponse(gpr)
+            #expect(first.token != nil)
+            #expect(first.peers.isEmpty)
+
+            // Announce with that token from the same host: accepted (a response, not an error).
+            let ann = DHT.parseMessage(DHT.announcePeerQuery(
+                transaction: Data([0, 3]), nodeID: qid, infoHash: ih, port: 6881, token: first.token!))!
+            let annReply = await server.respond(to: ann, fromHost: "1.2.3.4", fromPort: 6881, now: base)
+            guard let annReply, case .response? = DHT.parseMessage(annReply)?.kind else {
+                Issue.record("announce was rejected"); return
+            }
+
+            // Now get_peers (from a different host) returns the announced peer.
+            let gp2 = DHT.parseMessage(DHT.getPeersQuery(transaction: Data([0, 4]), nodeID: qid, infoHash: ih))!
+            let gp2Reply = await server.respond(to: gp2, fromHost: "5.6.7.8", fromPort: 12345, now: base)
+            guard let gp2Reply, case .response(let gpr2)? = DHT.parseMessage(gp2Reply)?.kind else {
+                Issue.record("no second get_peers response"); return
+            }
+            let second = DHT.parseGetPeersResponse(gpr2)
+            #expect(second.peers.contains { $0.host == "1.2.3.4" && $0.port == 6881 })
+        }
+
+        @Test func announceWithBadTokenIsRejected() async {
+            let client = DHTClient()
+            let server = DHTServer(client: client, now: base)
+            let ann = DHT.parseMessage(DHT.announcePeerQuery(
+                transaction: Data([0, 5]), nodeID: id(0x11), infoHash: id(0xAA), port: 6881,
+                token: Data([9, 9, 9, 9])))!
+            let reply = await server.respond(to: ann, fromHost: "5.6.7.8", fromPort: 6881, now: base)
+            guard let reply, case .error? = DHT.parseMessage(reply)?.kind else {
+                Issue.record("a forged token should be rejected"); return
+            }
+        }
+
+        @Test func findNodeReturnsNodesField() async {
+            let client = DHTClient()
+            let server = DHTServer(client: client, now: base)
+            let fn = DHT.parseMessage(DHT.findNodeQuery(
+                transaction: Data([0, 6]), nodeID: id(0x11), target: id(0x22)))!
+            let reply = await server.respond(to: fn, fromHost: "1.2.3.4", fromPort: 6881, now: base)
+            guard let reply, case .response(let r)? = DHT.parseMessage(reply)?.kind else {
+                Issue.record("no find_node response"); return
+            }
+            #expect(r["nodes"] != nil)
+        }
+
+        @Test func servesQueriesOverRealUDPSocket() async throws {
+            // Exercises the socket path the pure tests skip: bind, accept a datagram, parse the
+            // remote endpoint, answer it. Loopback only, so no external network is touched.
+            let client = DHTClient()
+            let server = DHTServer(client: client)
+            let port = try await server.start(port: 0)  // ephemeral
+            #expect(port != 0)
+            let query = DHT.pingQuery(transaction: Data([0xAB, 0xCD]), nodeID: id(0x11))
+            let reply = await UDP.query(host: "127.0.0.1", port: port, payload: query, timeout: 3)
+            await server.stop()
+            guard let reply, let msg = DHT.parseMessage(reply), case .response(let r) = msg.kind else {
+                Issue.record("no UDP ping response"); return
+            }
+            #expect(msg.transaction == Data([0xAB, 0xCD]))
+            #expect(r["id"] != nil)
+        }
+    }
+#endif

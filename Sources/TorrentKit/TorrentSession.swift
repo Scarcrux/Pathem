@@ -22,11 +22,14 @@ public actor TorrentSession {
         public var peersConnected: Int
         public var state: State
         public var savePath: String
+        public var etaSeconds: Int         // estimated time to finish; -1 = unknown/infinite
+        public var ratio: Double           // share ratio: uploaded / downloaded
 
         public init(
             infoHash: String, name: String, totalLength: Int64, downloaded: Int64,
             fractionComplete: Double, downloadRate: Double, uploadRate: Double = 0,
-            uploaded: Int64 = 0, peersConnected: Int, state: State, savePath: String
+            uploaded: Int64 = 0, peersConnected: Int, state: State, savePath: String,
+            etaSeconds: Int = -1, ratio: Double = 0
         ) {
             self.infoHash = infoHash
             self.name = name
@@ -39,6 +42,8 @@ public actor TorrentSession {
             self.peersConnected = peersConnected
             self.state = state
             self.savePath = savePath
+            self.etaSeconds = etaSeconds
+            self.ratio = ratio
         }
     }
 
@@ -57,6 +62,8 @@ public actor TorrentSession {
     private let layout: FileLayout
     private let storage: TorrentStorage
     private let dht: DHTClient?
+    private let listenPort: Int  // our inbound peer port, announced to the DHT so peers can reach us
+    private var lastDHTAnnounce: Date?
     private var wantedFiles: Set<Int>?  // nil = all files selected
     private let downLimiter: RateLimiter?  // shared global download cap (nil = unlimited)
     private let uploadLimiter: RateLimiter?
@@ -95,12 +102,14 @@ public actor TorrentSession {
 
     public init(
         torrent: TorrentFile, downloadRoot: URL, peerID: Data = Tracker.makePeerID(),
-        dht: DHTClient? = nil, downLimiter: RateLimiter? = nil, uploadLimiter: RateLimiter? = nil
+        dht: DHTClient? = nil, listenPort: Int = 6881,
+        downLimiter: RateLimiter? = nil, uploadLimiter: RateLimiter? = nil
     ) throws {
         self.torrent = torrent
         self.downloadRoot = downloadRoot
         self.peerID = peerID
         self.dht = dht
+        self.listenPort = listenPort
         self.downLimiter = downLimiter
         self.uploadLimiter = uploadLimiter
         self.pieces = PieceManager(torrent: torrent)
@@ -238,12 +247,26 @@ public actor TorrentSession {
             lastSampleTime = now
         }
         let active = state == .downloading || state == .seeding
+        let downloaded = pieces.downloadedBytes
+        // ETA from the smoothed rate and what's left of the wanted bytes. Only meaningful while
+        // actively downloading with forward progress; -1 signals "unknown" (stalled or seeding).
+        let rate = max(0, smoothedRate)
+        let remaining = pieces.wantedBytesRemaining
+        let eta: Int
+        if state == .downloading && rate > 1 && remaining > 0 {
+            eta = min(Int(Double(remaining) / rate), 100 * 365 * 24 * 3600)  // cap at ~a century
+        } else {
+            eta = -1
+        }
+        // Share ratio = bytes served / bytes taken. Guard the pre-download divide-by-zero.
+        let ratio = downloaded > 0 ? Double(uploadedBytes) / Double(downloaded) : 0
         return Status(
             infoHash: torrent.infoHashHex, name: torrent.name, totalLength: torrent.totalLength,
-            downloaded: pieces.downloadedBytes, fractionComplete: pieces.fractionComplete,
-            downloadRate: state == .downloading ? max(0, smoothedRate) : 0,
+            downloaded: downloaded, fractionComplete: pieces.fractionComplete,
+            downloadRate: state == .downloading ? rate : 0,
             uploadRate: active ? max(0, smoothedUploadRate) : 0, uploaded: uploadedBytes,
-            peersConnected: connectedPeers, state: state, savePath: downloadRoot.path)
+            peersConnected: connectedPeers, state: state, savePath: downloadRoot.path,
+            etaSeconds: eta, ratio: ratio)
     }
 
     /// Mark which pieces we already have on disk (call before start when resuming).
@@ -304,11 +327,21 @@ public actor TorrentSession {
             if Task.isCancelled { break }
             await announceOnce(tracker)
         }
-        // The DHT finds peers without trackers; run it when we're short of peers (this is what
-        // makes a trackerless magnet work). Skip for private torrents (BEP 27).
-        if let dht, !torrent.isPrivate, connectedPeers < 10, !Task.isCancelled {
-            let peers = await dht.findPeers(infoHash: torrent.infoHash)
-            for peer in peers { considerPeer(peer) }
+        // The DHT finds peers without trackers (what makes a trackerless magnet work) and also
+        // makes US discoverable via announce_peer. Skip for private torrents (BEP 27).
+        if let dht, !torrent.isPrivate, !Task.isCancelled {
+            // Re-announce our presence about every 15 minutes (the BEP-5 refresh cadence); the same
+            // lookup returns peers, so an announce round doubles as a discovery round.
+            let announceDue = lastDHTAnnounce.map { Date().timeIntervalSince($0) > 15 * 60 } ?? true
+            if announceDue {
+                let peers = await dht.announcePeer(infoHash: torrent.infoHash, port: listenPort)
+                lastDHTAnnounce = Date()
+                for peer in peers { considerPeer(peer) }
+            } else if connectedPeers < 10 {
+                // Between announces, still look for peers when we're short.
+                let peers = await dht.findPeers(infoHash: torrent.infoHash)
+                for peer in peers { considerPeer(peer) }
+            }
         }
         return !trackers.isEmpty
     }
@@ -317,7 +350,7 @@ public actor TorrentSession {
         let left = torrent.totalLength - pieces.downloadedBytes
         guard
             let response = try? await Tracker.announce(
-                base: tracker, infoHash: torrent.infoHash, peerID: peerID, port: 6881,
+                base: tracker, infoHash: torrent.infoHash, peerID: peerID, port: listenPort,
                 left: left, event: knownPeers.isEmpty ? .started : nil)
         else { return }
         for peer in response.peers { considerPeer(peer) }

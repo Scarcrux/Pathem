@@ -114,6 +114,49 @@ public enum DHT {
         ]).encoded
     }
 
+    // MARK: KRPC responses (for serving queries as a full DHT node)
+
+    /// Response to `ping` and `announce_peer`: just our node id (BEP 5).
+    public static func pingResponse(transaction: Data, nodeID: Data) -> Data {
+        response(transaction, [("id", .bytes(nodeID))])
+    }
+
+    /// Response to `find_node`: our id plus the closest nodes we know, as compact node info.
+    public static func findNodeResponse(transaction: Data, nodeID: Data, nodes: [Node]) -> Data {
+        response(transaction, [("id", .bytes(nodeID)), ("nodes", .bytes(encodeCompactNodes(nodes)))])
+    }
+
+    /// Response to `get_peers`: our id, a write token, and either the peers we hold for the info
+    /// hash (`values`, each a 6-byte compact peer) or the closest `nodes` to try next (BEP 5).
+    public static func getPeersResponse(
+        transaction: Data, nodeID: Data, token: Data, peers: [Tracker.Peer], nodes: [Node]
+    ) -> Data {
+        var fields: [(String, Bencode)] = [("id", .bytes(nodeID)), ("token", .bytes(token))]
+        if !peers.isEmpty {
+            fields.append(("values", .list(peers.compactMap { Tracker.encodeCompactPeer($0).map(Bencode.bytes) })))
+        } else {
+            fields.append(("nodes", .bytes(encodeCompactNodes(nodes))))
+        }
+        return response(transaction, fields)
+    }
+
+    /// A KRPC error (BEP 5): `e` is a list of [code, message].
+    public static func errorResponse(transaction: Data, code: Int, message: String) -> Data {
+        Bencode.dict([
+            ("t", .bytes(transaction)),
+            ("y", .bytes(Data("e".utf8))),
+            ("e", .list([.int(Int64(code)), .bytes(Data(message.utf8))])),
+        ]).encoded
+    }
+
+    private static func response(_ transaction: Data, _ fields: [(String, Bencode)]) -> Data {
+        Bencode.dict([
+            ("t", .bytes(transaction)),
+            ("y", .bytes(Data("r".utf8))),
+            ("r", .dict(fields)),
+        ]).encoded
+    }
+
     /// Parse a KRPC message (query, response, or error). Returns nil if it isn't well-formed.
     public static func parseMessage(_ data: Data) -> Message? {
         guard let dict = try? BencodeDecoder.decode(data),
