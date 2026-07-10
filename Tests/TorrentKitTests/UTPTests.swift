@@ -246,3 +246,54 @@ private actor LossyChannel {
         }
     }
 #endif
+
+#if canImport(Network)
+    /// Captures the info hash the mux routes, bridging the onPeer callback to the test.
+    private actor AcceptedBox {
+        private var hex: String?
+        private var cont: CheckedContinuation<String, Never>?
+        func set(_ value: String) {
+            if let cont { cont.resume(returning: value); self.cont = nil } else { hex = value }
+        }
+        func get() async -> String {
+            if let hex { return hex }
+            return await withCheckedContinuation { cont = $0 }
+        }
+    }
+
+    @Suite struct UDPMuxTests {
+        @Test func classifiesUTPVersusKRPC() {
+            let syn = UTPPacket(type: .syn, connectionID: 1, seqNr: 1, ackNr: 0).encoded
+            let krpc = DHT.pingQuery(transaction: Data([0, 1]), nodeID: Data(repeating: 0x11, count: 20))
+            #expect(UDPMux.isUTP(syn))          // a real µTP packet
+            #expect(!UDPMux.isUTP(krpc))        // bencode 'd...' isn't a valid µTP packet
+            #expect(!UDPMux.isUTP(Data()))      // empty
+            #expect(!UDPMux.isUTP(Data([0x64, 0x65])))  // 'de' (empty dict) -> DHT, not µTP
+        }
+
+        @Test func acceptsInboundUTPPeerAndCompletesHandshake() async throws {
+            let infoHash = Data(repeating: 0xB1, count: 20)
+            let serverPeerID = Tracker.makePeerID()
+            let clientPeerID = Tracker.makePeerID()
+            let accepted = AcceptedBox()
+
+            let mux = UDPMux(dht: DHTServer(client: DHTClient()), peerID: serverPeerID) { hex, peer in
+                try? await peer.replyHandshake()  // answer so the initiator's connect() can finish
+                await accepted.set(hex)
+            }
+            let port = try await mux.start(port: 0)
+
+            // Dial the mux over µTP; connect() runs the µTP handshake AND the BitTorrent handshake.
+            let client = PeerConnection(host: "127.0.0.1", port: port, infoHash: infoHash, peerID: clientPeerID)
+            try await client.connect(timeout: 5, transport: .utp)
+
+            let routedHex = await accepted.get()
+            let serverID = await client.remotePeerID
+            await client.close()
+            await mux.stop()
+
+            #expect(routedHex == infoHash.map { String(format: "%02x", $0) }.joined())
+            #expect(serverID == serverPeerID)  // the mux's peer replied with its id over µTP
+        }
+    }
+#endif

@@ -67,6 +67,7 @@ public actor TorrentEngine {
     private var pending: [String: PendingMagnet] = [:]
     private var resolverTasks: [String: Task<Void, Never>] = [:]
     private var listener: PeerListener?
+    private var mux: UDPMux?  // owns the shared UDP port: demuxes DHT KRPC vs inbound µTP peers
 
     public init(stateDir: URL) {
         self.stateDir = stateDir
@@ -134,9 +135,17 @@ public actor TorrentEngine {
         }
         listener = l
         _ = try? await l.start(port: 6881)
-        // Serve DHT queries on the same port (UDP), turning us from a lookup-only client into a
-        // full participant: other nodes can find peers through us and announce to us.
-        _ = try? await dhtServer.start(port: 6881)
+        // One mux owns the UDP side of the same port and demultiplexes it: DHT KRPC (making us a full
+        // DHT participant) and inbound µTP peer connections, which share the port with the DHT.
+        let m = UDPMux(dht: dhtServer, peerID: peerID) { [weak self] hex, peer in
+            guard let self, let session = await self.session(forHash: hex) else {
+                await peer.close()
+                return
+            }
+            await session.acceptIncomingPeer(peer)
+        }
+        mux = m
+        _ = try? await m.start(port: 6881)
         // Ask the router to forward our port so peers behind NAT can reach us (best-effort):
         // try NAT-PMP first, then fall back to UPnP-IGD if that gets no answer.
         Task { [natpmp, upnp] in

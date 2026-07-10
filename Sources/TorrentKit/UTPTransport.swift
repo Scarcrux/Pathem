@@ -3,14 +3,17 @@ import Foundation
 #if canImport(Network)
     import Network
 
-    /// An outbound µTP (BEP 29) transport for a single peer: a connected UDP socket carrying a
-    /// `UTPSocket`, exposing the same `send` / `recv` byte-stream that PeerConnection drives over
-    /// TCP. This is what lets a peer connection run over µTP instead of TCP; the BitTorrent
-    /// handshake, MSE, and wire messages all flow through it unchanged. Outbound only -- accepting
-    /// inbound µTP would mean demultiplexing the shared DHT UDP port, which we don't do yet.
+    /// A µTP (BEP 29) transport for a single peer: a UDP socket carrying a `UTPSocket`, exposing the
+    /// same `send` / `recv` byte-stream that PeerConnection drives over TCP, so the BitTorrent
+    /// handshake, MSE, and wire messages all flow through it unchanged.
+    ///
+    /// Two shapes: an *outbound* transport owns its own connected UDP socket and pumps it itself; an
+    /// *inbound* transport wraps a connection the UDPMux owns and is fed datagrams via `deliver`,
+    /// because inbound µTP shares the DHT's UDP port and the mux does the per-datagram demux.
     actor UTPTransport {
         private let host: String
         private let port: UInt16
+        private let inbound: Bool
         private var conn: NWConnection?
         private var socket: UTPSocket?
         private var running = false
@@ -18,7 +21,25 @@ import Foundation
         init(host: String, port: UInt16) {
             self.host = host
             self.port = port
+            self.inbound = false
         }
+
+        /// Inbound/responder transport. The mux has already run the µTP SYN through `socket` (so it's
+        /// connected) and owns `conn`; it demuxes the shared socket and hands us µTP datagrams via
+        /// `deliver`. We never arm our own receive pump here.
+        init(inbound socket: UTPSocket, conn: NWConnection, remoteHost: String) {
+            self.host = remoteHost
+            self.port = 0
+            self.inbound = true
+            self.socket = socket
+            self.conn = conn
+            self.running = true
+        }
+
+        /// Feed one incoming µTP datagram into the state machine (inbound path only).
+        func deliver(_ datagram: Data) async { await socket?.handle(datagram) }
+
+        var remoteHost: String { host }
 
         /// Open the UDP socket and complete the µTP handshake (SYN/ACK). Throws on timeout.
         func start(timeout: TimeInterval) async throws {

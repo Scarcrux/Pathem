@@ -76,6 +76,17 @@ import Foundation
             self.connection = connection
         }
 
+        /// Wrap an inbound µTP connection the UDPMux accepted (its SYN handshake already complete).
+        /// The peer's BitTorrent handshake arrives as µTP data, read through the transport.
+        init(incomingUTP transport: UTPTransport, peerID: Data, host: String, port: UInt16) {
+            self.host = host
+            self.port = port
+            self.infoHash = Data()
+            self.myPeerID = peerID
+            self.advertiseExtensions = false
+            self.utp = transport
+        }
+
         /// Open the connection and exchange handshakes. With `encrypted`, runs the MSE handshake
         /// first (carrying our BitTorrent handshake as its payload) and encrypts the rest. With
         /// `transport: .utp`, the whole exchange runs over µTP instead of TCP (outbound only).
@@ -136,8 +147,11 @@ import Foundation
         /// For an incoming connection: start it, read the peer's handshake, and return the info
         /// hash it wants (so the listener can find the matching torrent). Does not reply yet.
         public func acceptHandshake(timeout: TimeInterval = 15) async throws -> Data {
-            guard let conn = connection else { throw PeerError.closed }
-            try await waitReady(conn, timeout: timeout)
+            // Over µTP the mux already completed the transport handshake; only TCP needs waitReady.
+            if utp == nil {
+                guard let conn = connection else { throw PeerError.closed }
+                try await waitReady(conn, timeout: timeout)
+            }
             while inbound.count < 68 { try await readMore(timeout: timeout) }
             guard let hs = PeerHandshake.parse(inbound) else { throw PeerError.handshakeMismatch }
             infoHash = hs.infoHash
