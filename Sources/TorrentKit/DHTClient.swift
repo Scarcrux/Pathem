@@ -10,14 +10,35 @@ import Foundation
     public actor DHTClient {
         private let nodeID = DHT.randomID()
         private var txnCounter: UInt16 = 0
+        private var goodNodes: [DHT.Node] = []  // nodes that have answered us (the routing table)
+        private let maxGoodNodes = 400
 
         public init() {}
+
+        /// Serialize the routing table (good nodes) so it can be persisted and reloaded, warm-
+        /// starting future lookups instead of always hammering the bootstrap routers.
+        public func routingTableData() -> Data { DHT.encodeCompactNodes(goodNodes) }
+
+        public func loadRoutingTable(_ data: Data) {
+            for node in DHT.parseCompactNodes(data) where !node.id.allSatisfy({ $0 == 0 }) {
+                remember(node)
+            }
+        }
+
+        public var routingTableSize: Int { goodNodes.count }
+
+        private func remember(_ node: DHT.Node) {
+            guard !goodNodes.contains(where: { $0.host == node.host && $0.port == node.port }) else { return }
+            goodNodes.append(node)
+            if goodNodes.count > maxGoodNodes { goodNodes.removeFirst(goodNodes.count - maxGoodNodes) }
+        }
 
         /// Find peers for `infoHash`. Returns as soon as it has `maxPeers` or the search converges.
         public func findPeers(
             infoHash: Data, maxPeers: Int = 50, timeout: TimeInterval = 25
         ) async -> [Tracker.Peer] {
-            var candidates: [DHT.Node] = DHT.bootstrapNodes.map {
+            // Start from remembered good nodes (warm start) plus the bootstrap routers.
+            var candidates: [DHT.Node] = goodNodes + DHT.bootstrapNodes.map {
                 DHT.Node(id: Data(count: DHT.idLength), host: $0.host, port: $0.port)
             }
             var seen = Set(candidates.map(key))  // candidate keys, so we never enqueue a dup
@@ -35,16 +56,18 @@ import Foundation
                 for node in batch { queried.insert(key(node)) }
                 queriesLeft -= batch.count
 
-                let results = await withTaskGroup(of: DHT.GetPeersResult?.self) { group in
+                let responses = await withTaskGroup(of: (DHT.Node, DHT.GetPeersResult?).self) { group in
                     for node in batch {
-                        group.addTask { await self.getPeers(from: node, infoHash: infoHash, timeout: 4) }
+                        group.addTask { (node, await self.getPeers(from: node, infoHash: infoHash, timeout: 4)) }
                     }
-                    var out: [DHT.GetPeersResult] = []
-                    for await r in group { if let r { out.append(r) } }
+                    var out: [(DHT.Node, DHT.GetPeersResult?)] = []
+                    for await r in group { out.append(r) }
                     return out
                 }
 
-                for result in results {
+                for (node, result) in responses {
+                    guard let result else { continue }
+                    remember(node)  // it answered: keep it in the routing table
                     for peer in result.peers { found.insert(peer) }
                     for node in result.nodes where seen.insert(key(node)).inserted {
                         candidates.append(node)  // only genuinely new nodes

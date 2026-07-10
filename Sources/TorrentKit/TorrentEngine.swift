@@ -302,7 +302,12 @@ public actor TorrentEngine {
             meta[hash]?.completedPieces = await session.completedPieces()
         }
         saveState()
+        // Persist the DHT routing table so the next run warm-starts (small; written with state).
+        let routingTable = await dht.routingTableData()
+        if !routingTable.isEmpty { try? routingTable.write(to: dhtFile) }
     }
+
+    private var dhtFile: URL { stateDir.appendingPathComponent("dht.dat") }
 
     // MARK: restore
 
@@ -310,6 +315,8 @@ public actor TorrentEngine {
     /// any that weren't paused. Called once at daemon startup.
     public func restoreAll() async {
         await ensureListener()
+        // Warm-start the DHT from the routing table saved last run.
+        if let data = try? Data(contentsOf: dhtFile) { await dht.loadRoutingTable(data) }
         for persisted in meta.values {
             let fileURL = torrentsDir.appendingPathComponent(persisted.torrentFileName)
             guard let data = try? Data(contentsOf: fileURL),

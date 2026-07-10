@@ -22,6 +22,31 @@ import Testing
         #expect(a != DHT.randomID())  // astronomically unlikely to collide
     }
 
+    @Test func encodesAndParsesCompactNodesRoundTrip() {
+        let nodes = [
+            DHT.Node(id: Data(repeating: 0xAB, count: 20), host: "1.2.3.4", port: 6881),
+            DHT.Node(id: Data(repeating: 0xCD, count: 20), host: "10.0.0.9", port: 51413),
+        ]
+        let decoded = DHT.parseCompactNodes(DHT.encodeCompactNodes(nodes))
+        #expect(decoded == nodes)
+    }
+
+    @Test func routingTablePersistsGoodNodes() async {
+        let client = DHTClient()
+        var data = Data(repeating: 0x11, count: 20)  // one node's id
+        data.append(contentsOf: [8, 8, 8, 8, 0x1a, 0xe1])  // 8.8.8.8:6881
+        await client.loadRoutingTable(data)
+        #expect(await client.routingTableSize == 1)
+        // Round-trips: exporting and re-importing keeps the same node.
+        let exported = await client.routingTableSize
+        let fresh = DHTClient()
+        await fresh.loadRoutingTable(await client.routingTableData())
+        #expect(await fresh.routingTableSize == exported)
+        // All-zero ids (bootstrap placeholders) are not remembered.
+        await fresh.loadRoutingTable(Data(count: 26))
+        #expect(await fresh.routingTableSize == 1)
+    }
+
     @Test func parsesCompactNodes() {
         // One node: id 0xAB*20, 1.2.3.4:6881.
         var data = Data(repeating: 0xAB, count: 20)

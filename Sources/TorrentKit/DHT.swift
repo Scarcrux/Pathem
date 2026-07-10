@@ -54,6 +54,21 @@ public enum DHT {
         return nodes
     }
 
+    /// Encode nodes as compact node info (26 bytes each), for persisting the routing table.
+    public static func encodeCompactNodes(_ nodes: [Node]) -> Data {
+        var data = Data()
+        for node in nodes {
+            guard node.id.count == idLength else { continue }
+            let octets = node.host.split(separator: ".").compactMap { UInt8($0) }
+            guard octets.count == 4 else { continue }
+            data.append(node.id)
+            data.append(contentsOf: octets)
+            data.append(UInt8(node.port >> 8))
+            data.append(UInt8(node.port & 0xff))
+        }
+        return data
+    }
+
     // MARK: KRPC
 
     /// A decoded KRPC message.
