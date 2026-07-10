@@ -32,6 +32,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     var onSelectionChanged: (() -> Void)?
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
     var dragMovesByDefault = false
 
     var contentView: NSView { composite }

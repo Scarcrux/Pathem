@@ -372,6 +372,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     var onSelectionChanged: (() -> Void)?
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?  // grid has no column headers
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
 
     var keyView: NSView { collection }
     var onKeyChord: ((KeyChord) -> Bool)? {

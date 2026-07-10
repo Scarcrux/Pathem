@@ -44,6 +44,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     var onSelectionChanged: (() -> Void)?
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
     var onKeyChord: ((KeyChord) -> Bool)?
     var onMouseGesture: ((String) -> Bool)?
     /// Right-drag flick + swipe trail (super-drag), forwarded from each column's KeyTableView.

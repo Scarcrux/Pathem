@@ -63,6 +63,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     var onSelectionChanged: (() -> Void)?
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
     var onMouseGesture: ((String) -> Bool)?
 
     var keyView: NSView { outline }

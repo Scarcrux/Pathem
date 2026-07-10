@@ -29,6 +29,7 @@ final class TabbedPaneController: NSObject {
     var onPaneDidNavigate: ((PaneController) -> Void)?
     /// Files were dropped on a tab; the browser copies/moves them into its folder.
     var onPaneDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
+    var onPaneDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
 
     var activePane: PaneController? { tabs.indices.contains(activeIndex) ? tabs[activeIndex] : nil }
     var tabCount: Int { tabs.count }
@@ -148,6 +149,9 @@ final class TabbedPaneController: NSObject {
         }
         pane.onDropFiles = { [weak self] urls, move, destination in
             self?.onPaneDropFiles?(urls, move, destination)
+        }
+        pane.onDropOntoFile = { [weak self] dragged, target in
+            self?.onPaneDropOntoFile?(dragged, target)
         }
         // Insert at the end, or right after the current tab (browser-style) when configured.
         if newTabAtEnd || tabs.isEmpty {

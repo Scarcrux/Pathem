@@ -200,6 +200,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var onDidNavigate: (() -> Void)?
     /// Files were dropped onto this pane: copy/move them into its folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL) -> Void)?
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
     /// A right-click action on a breadcrumb ancestor segment (open into a pane/tab, copy path).
     var onBreadcrumbAction: ((_ folder: URL, _ action: BreadcrumbBar.Action) -> Void)?
     /// Opens a (non-folder) file, applying the browser's scoped opener rules.
@@ -1074,6 +1075,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             } else {
                 self.onDropFiles?(urls, move, destination ?? self.nav.current)
             }
+        }
+        content.onDropOntoFile = { [weak self] dragged, target in
+            guard let self, self.remote == nil else { return }  // local only
+            self.onDropOntoFile?(dragged, target)
         }
         content.onKeyChord = onKeyChordHandler
         content.onMouseGesture = onMouseGestureHandler

@@ -47,6 +47,9 @@ protocol PaneContentView: AnyObject {
     /// `destination` is a specific subfolder to drop into (when the drag is over a folder
     /// row/item), or nil for the view's own folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)? { get set }
+    /// A drop landed on another file (not a folder): show the drop menu. Only the list view fires
+    /// this today; other views leave it unset.
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)? { get set }
     var onKeyChord: ((KeyChord) -> Bool)? { get set }
     var onMouseGesture: ((String) -> Bool)? { get set }
     /// Row-drag phases, for the super-drag flick + swipe trail. Only the list view drives it

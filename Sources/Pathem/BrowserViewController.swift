@@ -487,6 +487,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.onPaneDropFiles = { [weak self] urls, move, destination in
                 self?.dropFiles(urls, move: move, into: destination)
             }
+            side.onPaneDropOntoFile = { [weak self] dragged, target in
+                self?.showDropOntoFileMenu(dragged: dragged, target: target)
+            }
             side.newTabLocation = { [weak self] in self?.preferredNewTabFolder() }
             side.onOpenFolderInPane = { [weak self] url, action in self?.handleBreadcrumbAction(url, action) }
         }
@@ -2351,7 +2354,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    private func dropFiles(_ allURLs: [URL], move: Bool, into destination: URL) {
+    /// The dragged items + target file for a file-onto-file drop, held while its menu is open.
+    var pendingDropContext: (dragged: [URL], target: URL)?
+
+    func dropFiles(_ allURLs: [URL], move: Bool, into destination: URL) {
         guard !transferInFlight else { NSSound.beep(); return }
         // Never copy/move a folder into itself or one of its own descendants.
         // Resolve symlinks and compare case-insensitively so a different spelling

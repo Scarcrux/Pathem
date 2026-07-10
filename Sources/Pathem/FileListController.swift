@@ -180,6 +180,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     var resolutionURL: URL?
     /// Files were dropped onto this list: copy (or move) them into this folder.
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
+    /// Files were dropped onto another file (target): show a menu (group / archive / replace / here).
+    var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
 
     /// Entries currently selected in the table.
     var selectedEntries: [FileEntry] {
@@ -735,6 +737,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         if let folder = folderRow(at: row, excluding: urls), !incomingURLs(urls, into: folder).isEmpty {
             tableView.setDropRow(row, dropOperation: .on)
             armSpring(atRow: row, folder: folder)  // dwell here to spring the folder open
+        } else if fileRow(at: row, excluding: urls) != nil {
+            // Dropping onto another file: highlight it: the drop offers a menu (group / archive /
+            // replace) rather than the meaningless "into a file".
+            springLoader.cancel()
+            tableView.setDropRow(row, dropOperation: .on)
         } else {
             springLoader.cancel()
             guard !incomingURLs(urls, into: directoryURL).isEmpty else { return [] }
@@ -758,11 +765,30 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     ) -> Bool {
         springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: info), !urls.isEmpty else { return false }
-        let folder = folderRow(at: row, excluding: urls)  // a subfolder, or nil for this folder
-        let incoming = incomingURLs(urls, into: folder ?? directoryURL)
+        if let folder = folderRow(at: row, excluding: urls) {
+            let incoming = incomingURLs(urls, into: folder)
+            guard !incoming.isEmpty else { return false }
+            onDropFiles?(incoming, resolvedDragOperation(for: info) == .move, folder)
+            return true
+        }
+        if let target = fileRow(at: row, excluding: urls) {
+            onDropOntoFile?(urls, target)  // dropped onto a file -> the drop menu decides what to do
+            return true
+        }
+        let incoming = incomingURLs(urls, into: directoryURL)
         guard !incoming.isEmpty else { return false }
-        onDropFiles?(incoming, resolvedDragOperation(for: info) == .move, folder)
+        onDropFiles?(incoming, resolvedDragOperation(for: info) == .move, nil)
         return true
+    }
+
+    /// The file URL at `row`, if it's a non-directory not among the dragged items (the target of a
+    /// file-onto-file drop).
+    private func fileRow(at row: Int, excluding dragged: [URL]) -> URL? {
+        guard let index = entryIndex(forRow: row), !entries[index].isDirectory, let dir = directoryURL else { return nil }
+        let file = dir.appendingPathComponent(entries[index].name)
+        let path = file.resolvingSymlinksInPath().standardizedFileURL.path
+        if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == path }) { return nil }
+        return file
     }
 
     /// The folder URL at `row`, if it's a directory not among the dragged items.
