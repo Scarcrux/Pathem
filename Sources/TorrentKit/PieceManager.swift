@@ -167,7 +167,10 @@ public final class PieceManager {
     public func receiveBlock(index: Int, begin: Int, block: Data) -> BlockResult {
         guard index >= 0, index < pieceCount, !complete[index] else { return .rejected }
         let size = pieceSize(index)
-        guard begin >= 0, begin + block.count <= size, begin % Self.blockSize == 0 else { return .rejected }
+        // Require a non-empty block: an empty block at begin == size would otherwise be recorded
+        // and, never matching blockCount, stall the piece forever.
+        guard !block.isEmpty, begin >= 0, begin + block.count <= size, begin % Self.blockSize == 0
+        else { return .rejected }
 
         if received[index]?.contains(begin) == true { return .duplicate }
 

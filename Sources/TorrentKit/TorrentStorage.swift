@@ -12,6 +12,7 @@ public final class TorrentStorage {
     private let root: URL
     private let layout: FileLayout
     private var handles: [Int: FileHandle] = [:]
+    private var closed = false  // once closed, refuse to reopen (prevents post-delete file resurrection)
 
     /// `root` is the download folder (the torrent's own name is already part of each file path for
     /// multi-file torrents). Validates every file path up front so nothing can be written outside.
@@ -38,6 +39,7 @@ public final class TorrentStorage {
     }
 
     private func handle(for index: Int) throws -> FileHandle {
+        if closed { throw StorageError.openFailed("storage closed") }
         if let h = handles[index] { return h }
         let file = layout.files[index]
         let url = try Self.safeURL(for: file.path, under: root)
@@ -77,8 +79,10 @@ public final class TorrentStorage {
         return out
     }
 
-    /// Flush and close all open file handles.
+    /// Flush and close all open file handles. After this, writes/reads are refused (no reopen), so
+    /// a straggling write after the torrent was removed can't resurrect a deleted file.
     public func close() {
+        closed = true
         for h in handles.values { try? h.close() }
         handles.removeAll()
     }

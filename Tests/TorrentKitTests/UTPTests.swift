@@ -64,7 +64,7 @@ private actor LossyChannel {
 }
 
 @Suite struct UTPSocketTests {
-    private func transfer(dropEvery: Int) async -> Data {
+    private func transfer(dropEvery: Int) async -> (Data, Bool) {
         let channel = LossyChannel(dropEvery: dropEvery)
         let initiator = UTPSocket(role: .initiator, connectionID: 0x4242, sendDatagram: { await channel.aToB($0) })
         let responder = UTPSocket(role: .responder, connectionID: 0x4242, sendDatagram: { await channel.bToA($0) })
@@ -77,24 +77,30 @@ private actor LossyChannel {
         await initiator.finish()
 
         // Wait (bounded) for the responder to receive everything, letting retransmission run.
+        var finished = false
         for _ in 0..<200 {
-            if await responder.isFinished { break }
+            if await responder.isFinished { finished = true; break }
             try? await Task.sleep(nanoseconds: 50_000_000)
         }
         let got = await responder.received()
         await initiator.close()
         await responder.close()
-        return got
+        return (got, finished)
     }
 
     @Test func reliableTransferNoLoss() async {
         let payload = Data((0..<8000).map { UInt8(($0 &* 17 &+ 3) & 0xff) })
-        #expect(await transfer(dropEvery: 0) == payload)  // in-order, complete
+        let (got, finished) = await transfer(dropEvery: 0)
+        #expect(got == payload)  // in-order, complete
+        #expect(finished)        // FIN received -> connection marked finished
     }
 
     @Test func recoversFromPacketLoss() async {
-        // Drop 1 in 4 datagrams; retransmission + reordering must still deliver every byte in order.
+        // Drop 1 in 4 datagrams; retransmission + reordering must still deliver every byte in order
+        // AND mark the connection finished (a reordered FIN must not lose its FIN semantics).
         let payload = Data((0..<8000).map { UInt8(($0 &* 17 &+ 3) & 0xff) })
-        #expect(await transfer(dropEvery: 4) == payload)
+        let (got, finished) = await transfer(dropEvery: 4)
+        #expect(got == payload)
+        #expect(finished)
     }
 }

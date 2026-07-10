@@ -62,7 +62,8 @@ public actor TorrentSession {
     private let uploadLimiter: RateLimiter?
 
     private var state: State = .stopped
-    private var peerTasks: [Task<Void, Never>] = []
+    private var peerTasks: [UUID: Task<Void, Never>] = [:]  // live peer/web-seed tasks, self-pruning
+    private func removePeerTask(_ id: UUID) { peerTasks[id] = nil }
     private var connectedPeers = 0
     private var globalInFlight: Set<PieceManager.BlockRequest> = []
     private var knownPeers: Set<Tracker.Peer> = []
@@ -126,11 +127,12 @@ public actor TorrentSession {
     private func startWebSeeds() {
         guard state == .downloading else { return }
         for base in torrent.webSeeds.filter({ $0.hasPrefix("http") }).prefix(4) {
-            let task = Task { [weak self] in
+            let id = UUID()
+            peerTasks[id] = Task { [weak self] in
                 guard let self else { return }
                 await self.runWebSeed(base)
+                await self.removePeerTask(id)
             }
-            peerTasks.append(task)
         }
     }
 
@@ -213,11 +215,13 @@ public actor TorrentSession {
         announceTask = nil
         pexTask?.cancel()
         pexTask = nil
-        for t in peerTasks { t.cancel() }
+        for t in peerTasks.values { t.cancel() }
         peerTasks.removeAll()
         globalInFlight.removeAll()
-        activePeers.removeAll()
-        connectedPeers = 0
+        // Close the connections so any pump blocked in receive() unblocks promptly (cancellation
+        // alone won't interrupt the socket read). Do NOT zero connectedPeers/activePeers here: each
+        // pump's own defer decrements from the true count, so zeroing would drive it negative.
+        for peer in activePeers { Task { await peer.close() } }
     }
 
     public func status() -> Status {
@@ -321,13 +325,17 @@ public actor TorrentSession {
 
     private func considerPeer(_ peer: Tracker.Peer) {
         guard state == .downloading || state == .seeding else { return }
-        guard !knownPeers.contains(peer), connectedPeers < maxPeers else { return }
+        // Gate on knownPeers (which counts in-flight dials too, incremented synchronously here);
+        // connectedPeers only rises after the handshake, so gating on it lets a peer burst spawn
+        // unbounded simultaneous connections.
+        guard !knownPeers.contains(peer), knownPeers.count < maxPeers else { return }
         knownPeers.insert(peer)
-        let task = Task { [weak self] in
+        let id = UUID()
+        peerTasks[id] = Task { [weak self] in
             guard let self else { return }
             await self.runPeer(peer)
+            await self.removePeerTask(id)
         }
-        peerTasks.append(task)
     }
 
     /// Feed peers discovered out of band (e.g. a magnet's tracker list, or PEX later).
@@ -363,15 +371,16 @@ public actor TorrentSession {
             Task { await peer.close() }
             return
         }
-        let task = Task { [weak self] in
+        let id = UUID()
+        peerTasks[id] = Task { [weak self] in
             guard let self else { return }
             defer { Task { await peer.close() } }
             do {
                 try await peer.replyHandshake()
                 try await self.pump(peer)
             } catch {}
+            await self.removePeerTask(id)
         }
-        peerTasks.append(task)
     }
 
     /// The bidirectional message loop shared by outgoing and incoming peers: advertise our pieces,

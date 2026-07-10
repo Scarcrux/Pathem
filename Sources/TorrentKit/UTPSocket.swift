@@ -17,7 +17,8 @@ public actor UTPSocket {
     private var seqNr: UInt16                 // next sequence number to send
     private var ackNr: UInt16                 // last in-order sequence we've received
     private var unacked: [UInt16: Data] = [:]  // seq -> encoded packet, awaiting ack
-    private var reorderBuffer: [UInt16: Data] = [:]  // future seq -> payload
+    private var reorderBuffer: [UInt16: (payload: Data, isFin: Bool)] = [:]  // future seq -> data
+    private let maxReorder = 2048  // cap buffered future packets (bounds memory under a stalling peer)
     private var delivered = Data()             // in-order payload delivered to the app
     private var finReceived = false
     private var retransmitTask: Task<Void, Never>?
@@ -127,8 +128,8 @@ public actor UTPSocket {
             if isFin { finReceived = true }
             ackNr = seq
             drainReorderBuffer()
-        } else if seq &- expected < 0x8000 {  // a future packet: buffer it
-            reorderBuffer[seq] = payload
+        } else if seq &- expected < 0x8000, reorderBuffer.count < maxReorder {  // a future packet: buffer it
+            reorderBuffer[seq] = (payload, isFin)  // keep the FIN flag, or a reordered FIN is lost
         }
         await sendState()  // always ack current progress
     }
@@ -137,7 +138,8 @@ public actor UTPSocket {
     private func drainReorderBuffer() {
         while let next = reorderBuffer[ackNr &+ 1] {
             reorderBuffer[ackNr &+ 1] = nil
-            if !next.isEmpty { delivered.append(next) }
+            if !next.payload.isEmpty { delivered.append(next.payload) }
+            if next.isFin { finReceived = true }
             ackNr &+= 1
         }
     }
@@ -149,7 +151,8 @@ public actor UTPSocket {
 
     private func acknowledge(upTo ack: UInt16) {
         // Drop every unacked sequence at or before `ack` in wrap-around order (ack - seq < 2^15).
-        for seq in unacked.keys where (ack &- seq) < 0x8000 { unacked[seq] = nil }
+        // Snapshot the keys so we're not mutating the dictionary we're iterating.
+        for seq in Array(unacked.keys) where (ack &- seq) < 0x8000 { unacked[seq] = nil }
     }
 
     private func startRetransmit() {

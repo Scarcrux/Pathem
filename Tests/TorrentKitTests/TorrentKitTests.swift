@@ -21,6 +21,16 @@ import Testing
         #expect(throws: (any Error).self) { try BencodeDecoder.decode(Data("x".utf8)) }  // bad type
     }
 
+    @Test func rejectsHugeStringLengthWithoutOverflow() {
+        // A length prefix near Int.max must throw, not trap on `i + len` overflow (remote DoS).
+        #expect(throws: (any Error).self) {
+            try BencodeDecoder.decode(Data("9223372036854775807:x".utf8))
+        }
+        #expect(throws: (any Error).self) {
+            try BencodeDecoder.decode(Data("d3:key9223372036854775800:ve".utf8))  // nested, also huge
+        }
+    }
+
     @Test func encodesCanonically() throws {
         #expect(Bencode.int(42).encoded == Data("i42e".utf8))
         #expect(Bencode.bytes(Data("spam".utf8)).encoded == Data("4:spam".utf8))
@@ -460,6 +470,9 @@ import Testing
         #expect(m.receiveBlock(index: 0, begin: 0, block: content.subdata(in: 0..<PieceManager.blockSize)) == .duplicate)
         #expect(m.receiveBlock(index: 5, begin: 0, block: Data([1])) == .rejected)  // no such piece
         #expect(m.receiveBlock(index: 0, begin: 999, block: Data([1])) == .rejected)  // misaligned begin
+        // An empty block at begin == pieceSize must be rejected (else it stalls the piece).
+        let full = manager(for: Data(repeating: 3, count: 32768), pieceLength: 32768)
+        #expect(full.receiveBlock(index: 0, begin: 32768, block: Data()) == .rejected)
     }
 
     @Test func requestSelectionSkipsHeldAndInFlightBlocks() {

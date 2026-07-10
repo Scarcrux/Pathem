@@ -162,8 +162,10 @@ public struct BencodeDecoder {
         while let c = peek(), c != UInt8(ascii: ":") { lenDigits.append(c); i += 1 }
         guard peek() == UInt8(ascii: ":") else { throw DecodeError.unexpectedEnd }
         i += 1  // ':'
+        // Compare without arithmetic: `i + len` would trap on an adversarial huge length (a
+        // length prefix near Int.max) before the bounds check, crashing on untrusted input.
         guard let len = Int(String(decoding: lenDigits, as: UTF8.self)), len >= 0,
-            i + len <= data.count
+            len <= data.count - i
         else { throw DecodeError.invalid("bad string length") }
         let bytes = Array(data[i..<(i + len)])
         i += len

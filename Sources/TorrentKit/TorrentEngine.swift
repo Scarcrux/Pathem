@@ -297,8 +297,11 @@ public actor TorrentEngine {
 
     /// Turn a resolved magnet into a persisted, running download.
     private func promote(hash: String, resolved: MetadataExchange.ResolvedTorrent, savePath: String) async {
-        guard pending[hash] != nil, sessions[hash] == nil else { return }
+        // Do the (possibly slow) listener setup BEFORE the guard, so the check-and-commit below is
+        // atomic on the actor. Otherwise a remove() during the ensureListener await could clear
+        // `pending[hash]` and this would resurrect the removed magnet.
         await ensureListener()
+        guard pending[hash] != nil, sessions[hash] == nil else { return }
         pending[hash] = nil
         resolverTasks[hash] = nil
         let storedName = "\(hash).torrent"
