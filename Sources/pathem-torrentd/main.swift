@@ -68,15 +68,18 @@ func handle(_ command: TorrentControl.Command) async {
         let limits = await engine.currentLimits()
         emit(.init(kind: .reply, replyTo: command.id, ok: true, torrents: torrents,
             downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed,
-            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP))
+            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP,
+            bindToVPN: limits.bindToVPN, vpnInterface: await engine.vpnStatus()))
     case .setLimits:
         await engine.setLimits(
             down: command.downLimit ?? 0, up: command.upLimit ?? 0, superSeed: command.superSeed ?? false,
-            encryptOutgoing: command.encryptOutgoing ?? false, preferUTP: command.preferUTP ?? false)
+            encryptOutgoing: command.encryptOutgoing ?? false, preferUTP: command.preferUTP ?? false,
+            bindToVPN: command.bindToVPN ?? false)
         let limits = await engine.currentLimits()
         emit(.init(kind: .reply, replyTo: command.id, ok: true,
             downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed,
-            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP))
+            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP,
+            bindToVPN: limits.bindToVPN, vpnInterface: await engine.vpnStatus()))
     case .files:
         guard let hash = command.infoHash else {
             emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "files needs an infoHash"))
@@ -105,7 +108,8 @@ let ticker = Task {
         let limits = await engine.currentLimits()
         emit(.init(kind: .status, ok: true, torrents: torrents,
             downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed,
-            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP))
+            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP,
+            bindToVPN: limits.bindToVPN, vpnInterface: await engine.vpnStatus()))
         await engine.checkpoint()
     }
 }

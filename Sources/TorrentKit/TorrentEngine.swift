@@ -41,15 +41,17 @@ public actor TorrentEngine {
         public var superSeed: Bool
         public var encryptOutgoing: Bool
         public var preferUTP: Bool
+        public var bindToVPN: Bool  // pin torrent traffic to a VPN tunnel, kill-switch when it drops
         public init(
             down: Int = 0, up: Int = 0, superSeed: Bool = false, encryptOutgoing: Bool = false,
-            preferUTP: Bool = false
+            preferUTP: Bool = false, bindToVPN: Bool = false
         ) {
             self.down = down
             self.up = up
             self.superSeed = superSeed
             self.encryptOutgoing = encryptOutgoing
             self.preferUTP = preferUTP
+            self.bindToVPN = bindToVPN
         }
         // Tolerate older limits.json that predates these keys.
         public init(from decoder: Decoder) throws {
@@ -59,6 +61,7 @@ public actor TorrentEngine {
             superSeed = try c.decodeIfPresent(Bool.self, forKey: .superSeed) ?? false
             encryptOutgoing = try c.decodeIfPresent(Bool.self, forKey: .encryptOutgoing) ?? false
             preferUTP = try c.decodeIfPresent(Bool.self, forKey: .preferUTP) ?? false
+            bindToVPN = try c.decodeIfPresent(Bool.self, forKey: .bindToVPN) ?? false
         }
     }
 
@@ -68,6 +71,11 @@ public actor TorrentEngine {
     private var resolverTasks: [String: Task<Void, Never>] = [:]
     private var listener: PeerListener?
     private var mux: UDPMux?  // owns the shared UDP port: demuxes DHT KRPC vs inbound µTP peers
+    private let vpnMonitor = VPNMonitor()
+    private var vpnMonitorStarted = false
+    private var killSwitchPaused: Set<String> = []  // torrents auto-paused by the kill-switch
+    private var vpnInterfaceName: String?  // the bound tunnel, surfaced for status
+    private var vpnEvaluated = false  // distinguishes "no VPN" from "not yet checked"
 
     public init(stateDir: URL) {
         self.stateDir = stateDir
@@ -83,10 +91,13 @@ public actor TorrentEngine {
     /// Set the global download / upload caps (bytes/second, 0 = unlimited) and the super-seed
     /// toggle, apply them live, and persist.
     public func setLimits(
-        down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool = false
+        down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool = false,
+        bindToVPN: Bool = false
     ) async {
+        let wasBinding = limits.bindToVPN
         limits = Limits(
-            down: down, up: up, superSeed: superSeed, encryptOutgoing: encryptOutgoing, preferUTP: preferUTP)
+            down: down, up: up, superSeed: superSeed, encryptOutgoing: encryptOutgoing,
+            preferUTP: preferUTP, bindToVPN: bindToVPN)
         await downLimiter.setRate(bytesPerSecond: down)
         await uploadLimiter.setRate(bytesPerSecond: up)
         for session in sessions.values {
@@ -97,6 +108,90 @@ public actor TorrentEngine {
         if let data = try? JSONEncoder().encode(limits) {
             try? data.write(to: stateDir.appendingPathComponent("limits.json"))
         }
+        if bindToVPN != wasBinding { await applyVPNBinding(bindToVPN) }
+    }
+
+    // MARK: VPN binding + kill-switch
+
+    /// Turn VPN binding on or off. On: start watching for a tunnel; bind new sockets to it and, if no
+    /// tunnel is up, engage the kill-switch (pause everything) so nothing leaks. Off: stop watching,
+    /// unbind, and release anything the kill-switch had paused.
+    private func applyVPNBinding(_ on: Bool) async {
+        if on {
+            guard !vpnMonitorStarted else { return }
+            vpnMonitorStarted = true
+            await vpnMonitor.start { [weak self] name in
+                Task { await self?.onVPNChanged(name) }
+            }
+            // The monitor fires an initial update shortly; also evaluate now so enabling with no VPN
+            // engages the kill-switch immediately rather than after the first network change.
+            let name = await vpnMonitor.activeVPNName()
+            await onVPNChanged(name)
+        } else {
+            await vpnMonitor.stop()
+            vpnMonitorStarted = false
+            vpnInterfaceName = nil
+            vpnEvaluated = false
+            NetworkBinding.shared.requiredInterface = nil
+            await releaseKillSwitch()
+        }
+    }
+
+    /// React to a tunnel appearing, changing, or dropping while binding is enabled.
+    private func onVPNChanged(_ name: String?) async {
+        guard limits.bindToVPN else { return }
+        // Skip genuine no-ops (path updates fire often), but always act on the first evaluation so
+        // enabling with no VPN engages the kill-switch instead of being mistaken for "no change".
+        if vpnEvaluated && name == vpnInterfaceName { return }
+        vpnEvaluated = true
+        vpnInterfaceName = name
+        if name != nil {
+            // A tunnel is up (the monitor already pinned new sockets to it). Rebind the inbound
+            // listeners onto it and release anything the kill-switch paused.
+            await rebindListeners()
+            await releaseKillSwitch()
+        } else {
+            // No tunnel: kill-switch. Pause everything that's running so no packet takes the real
+            // interface; remember what we paused so we can resume it when a tunnel returns.
+            for (hash, session) in sessions {
+                let state = await session.status().state
+                if state == .downloading || state == .seeding {
+                    await session.pause()
+                    killSwitchPaused.insert(hash)
+                }
+            }
+        }
+    }
+
+    /// Resume the torrents the kill-switch paused (unless the user has since paused them).
+    private func releaseKillSwitch() async {
+        for hash in killSwitchPaused where meta[hash]?.paused != true {
+            await sessions[hash]?.start()
+        }
+        killSwitchPaused.removeAll()
+    }
+
+    /// Recreate the inbound listeners so they bind to the current interface.
+    private func rebindListeners() async {
+        await listener?.stop()
+        listener = nil
+        await mux?.stop()
+        mux = nil
+        await ensureListener()
+    }
+
+    /// The bound VPN tunnel's name, or nil when binding is off or the kill-switch is engaged.
+    public func vpnStatus() -> String? { limits.bindToVPN ? vpnInterfaceName : nil }
+
+    /// True when binding is on but no tunnel is up: nothing may run (the kill-switch).
+    private var killSwitchEngaged: Bool { limits.bindToVPN && vpnInterfaceName == nil }
+
+    /// If the kill-switch is engaged, immediately pause a just-started session so it can't touch the
+    /// real interface; it resumes automatically when a tunnel returns.
+    private func holdIfKillSwitch(_ hash: String) async {
+        guard killSwitchEngaged, let session = sessions[hash] else { return }
+        await session.pause()
+        killSwitchPaused.insert(hash)
     }
 
     public func currentLimits() -> Limits { limits }
@@ -181,6 +276,7 @@ public actor TorrentEngine {
         await session.setPreferEncryption(limits.encryptOutgoing)
         await session.setPreferUTP(limits.preferUTP)
         await session.start()
+        await holdIfKillSwitch(hash)  // don't let a new torrent run while the VPN is down
         saveState()
         return await session.status()
     }
@@ -237,8 +333,14 @@ public actor TorrentEngine {
 
     public func resume(infoHash: String) async {
         guard let session = sessions[infoHash] else { return }
-        await session.start()
         meta[infoHash]?.paused = false
+        // While the kill-switch is engaged, honor the user's intent but keep it paused; it starts
+        // when a tunnel returns.
+        if killSwitchEngaged {
+            killSwitchPaused.insert(infoHash)
+        } else {
+            await session.start()
+        }
         saveState()
     }
 
@@ -341,6 +443,7 @@ public actor TorrentEngine {
         await session.setPreferEncryption(limits.encryptOutgoing)
         await session.setPreferUTP(limits.preferUTP)
         await session.start()
+        await holdIfKillSwitch(hash)
         saveState()
     }
 
@@ -379,8 +482,16 @@ public actor TorrentEngine {
         await session.setPreferEncryption(limits.encryptOutgoing)
         await session.setPreferUTP(limits.preferUTP)
             sessions[persisted.infoHashHex] = session
-            if !persisted.paused { await session.start() }
+            if !persisted.paused {
+                // With binding on we hold everything until the tunnel is confirmed (below); otherwise
+                // start normally.
+                if killSwitchEngaged { killSwitchPaused.insert(persisted.infoHashHex) }
+                else { await session.start() }
+            }
         }
+        // Now that torrents are loaded, engage binding if it was enabled: this confirms a tunnel and
+        // releases the held torrents, or keeps the kill-switch engaged if none is up.
+        if limits.bindToVPN { await applyVPNBinding(true) }
     }
 
     // MARK: persistence

@@ -57,5 +57,12 @@ import Testing
             #expect(addrs.contains { $0.name == "lo0" })
             _ = VPNMonitor.vpnInterfaces(from: addrs)
         }
+
+        @Test func activeVPNNameIsATunnelOrNil() async {
+            // Non-flaky live check: whatever the host's VPN state, the detected name (if any) must be
+            // a real tunnel name -- never a physical interface.
+            let name = await VPNMonitor().activeVPNName()
+            if let name { #expect(VPNMonitor.isVPNName(name)) }
+        }
     }
 #endif

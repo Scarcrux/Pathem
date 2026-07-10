@@ -28,13 +28,14 @@ public enum TorrentControl {
         public var superSeed: Bool?
         public var encryptOutgoing: Bool?
         public var preferUTP: Bool?
+        public var bindToVPN: Bool?
         public var wantedFiles: [Int]?
 
         public init(
             op: Op, id: Int = 0, infoHash: String? = nil, torrentPath: String? = nil,
             magnet: String? = nil, savePath: String? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
             superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, preferUTP: Bool? = nil,
-            wantedFiles: [Int]? = nil
+            bindToVPN: Bool? = nil, wantedFiles: [Int]? = nil
         ) {
             self.op = op
             self.id = id
@@ -47,6 +48,7 @@ public enum TorrentControl {
             self.superSeed = superSeed
             self.encryptOutgoing = encryptOutgoing
             self.preferUTP = preferUTP
+            self.bindToVPN = bindToVPN
             self.wantedFiles = wantedFiles
         }
     }
@@ -68,6 +70,8 @@ public enum TorrentControl {
         public var superSeed: Bool?
         public var encryptOutgoing: Bool?
         public var preferUTP: Bool?
+        public var bindToVPN: Bool?
+        public var vpnInterface: String?          // the bound tunnel's name, nil = none/kill-switch
         public var infoHash: String?              // which torrent a files reply is for
         public var files: [TorrentSession.FileInfo]?
 
@@ -75,6 +79,7 @@ public enum TorrentControl {
             kind: EventKind, replyTo: Int? = nil, ok: Bool = true, message: String? = nil,
             torrents: [TorrentSession.Status]? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
             superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, preferUTP: Bool? = nil,
+            bindToVPN: Bool? = nil, vpnInterface: String? = nil,
             infoHash: String? = nil, files: [TorrentSession.FileInfo]? = nil
         ) {
             self.kind = kind
@@ -87,6 +92,8 @@ public enum TorrentControl {
             self.superSeed = superSeed
             self.encryptOutgoing = encryptOutgoing
             self.preferUTP = preferUTP
+            self.bindToVPN = bindToVPN
+            self.vpnInterface = vpnInterface
             self.infoHash = infoHash
             self.files = files
         }

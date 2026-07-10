@@ -19,6 +19,8 @@ final class TorrentDaemonClient {
     private(set) var superSeed = false
     private(set) var encryptOutgoing = false
     private(set) var preferUTP = false
+    private(set) var bindToVPN = false
+    private(set) var vpnInterface: String?  // bound tunnel name, nil = none (kill-switch if bindToVPN)
     var onUpdate: (([TorrentSession.Status]) -> Void)?
     var onError: ((String) -> Void)?
     var onFiles: ((String, [TorrentSession.FileInfo]) -> Void)?
@@ -133,10 +135,10 @@ final class TorrentDaemonClient {
 
     func requestList() { send(.init(op: .list, id: nextCommandID())) }
 
-    /// Set global speed caps in bytes/second (0 = unlimited) and the seeding/encryption/µTP toggles.
-    func setLimits(down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool) {
+    /// Set global speed caps in bytes/second (0 = unlimited) and the seeding/encryption/µTP/VPN toggles.
+    func setLimits(down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool, bindToVPN: Bool) {
         send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up,
-            superSeed: superSeed, encryptOutgoing: encryptOutgoing, preferUTP: preferUTP))
+            superSeed: superSeed, encryptOutgoing: encryptOutgoing, preferUTP: preferUTP, bindToVPN: bindToVPN))
     }
 
     /// Request a torrent's file list (answered via onFiles).
@@ -180,6 +182,11 @@ final class TorrentDaemonClient {
         if let ss = event.superSeed { superSeed = ss }
         if let enc = event.encryptOutgoing { encryptOutgoing = enc }
         if let utp = event.preferUTP { preferUTP = utp }
+        // Only status/limits events carry VPN state; take the interface (which may be nil) with it.
+        if let vpn = event.bindToVPN {
+            bindToVPN = vpn
+            vpnInterface = event.vpnInterface
+        }
         if let torrents = event.torrents {
             self.torrents = torrents
             onUpdate?(torrents)

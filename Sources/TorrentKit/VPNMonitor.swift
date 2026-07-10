@@ -14,14 +14,16 @@ import Foundation
     public actor VPNMonitor {
         private let monitor = NWPathMonitor()
         private var currentName: String?
-        private var onChange: (@Sendable (NWInterface?) -> Void)?
+        private var onChange: (@Sendable (String?) -> Void)?
         private var started = false
 
         public init() {}
 
-        /// Start watching. `onChange` fires whenever the active VPN interface changes (including to
-        /// `nil` when the tunnel drops), on the monitor's queue. Idempotent.
-        public func start(onChange: @escaping @Sendable (NWInterface?) -> Void) {
+        /// Start watching. Whenever the active VPN tunnel changes, this updates `NetworkBinding`
+        /// (so new sockets pin to the tunnel) and calls `onChange` with the tunnel's name -- or `nil`
+        /// when it drops -- on the monitor's queue. Setting the binding here keeps the non-Sendable
+        /// `NWInterface` on this side of the actor boundary; only the name crosses. Idempotent.
+        public func start(onChange: @escaping @Sendable (String?) -> Void) {
             guard !started else { return }
             started = true
             self.onChange = onChange
@@ -31,9 +33,12 @@ import Foundation
             monitor.start(queue: Self.queue)
         }
 
+        /// Stop watching and clear any binding this monitor set.
         public func stop() {
             monitor.cancel()
             started = false
+            currentName = nil
+            NetworkBinding.shared.requiredInterface = nil
         }
 
         /// The active VPN interface name right now (nil if none), computed on demand from getifaddrs.
@@ -45,10 +50,10 @@ import Foundation
             let confirmed = Self.vpnInterfaces(from: Self.enumerate())
             // Bind only to a tunnel the path layer also exposes (so we have an NWInterface for it).
             let iface = path.availableInterfaces.first { confirmed.contains($0.name) }
-            if iface?.name != currentName {
-                currentName = iface?.name
-                onChange?(iface)
-            }
+            guard iface?.name != currentName else { return }
+            currentName = iface?.name
+            NetworkBinding.shared.requiredInterface = iface  // pin new sockets to the tunnel (or unbind)
+            onChange?(iface?.name)
         }
 
         // MARK: classification (pure, unit-tested)

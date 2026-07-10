@@ -283,16 +283,25 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         encrypt.state = client.encryptOutgoing ? .on : .off
         let utp = NSButton(checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"), target: nil, action: nil)
         utp.state = client.preferUTP ? .on : .off
+        let vpn = NSButton(checkboxWithTitle: L("torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"), target: nil, action: nil)
+        vpn.state = client.bindToVPN ? .on : .off
+        // Live status: which tunnel is bound, or a warning when the kill-switch has paused traffic.
+        let vpnStatus = NSTextField(labelWithString: vpnStatusLine())
+        vpnStatus.font = .systemFont(ofSize: 11)
+        vpnStatus.textColor = client.bindToVPN && client.vpnInterface == nil ? .systemRed : .secondaryLabelColor
         let container = NSStackView(views: [
             labeledRow(L("torrents.limits.down", "Download"), downField),
             labeledRow(L("torrents.limits.up", "Upload"), upField),
             superSeed,
             encrypt,
             utp,
+            vpn,
+            vpnStatus,
         ])
         container.orientation = .vertical
         container.spacing = 8
-        container.frame = NSRect(x: 0, y: 0, width: 320, height: 126)
+        container.alignment = .leading
+        container.frame = NSRect(x: 0, y: 0, width: 340, height: 168)
         alert.accessoryView = container
         alert.window.initialFirstResponder = downField
 
@@ -300,7 +309,18 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         client.setLimits(
             down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024,
             superSeed: superSeed.state == .on, encryptOutgoing: encrypt.state == .on,
-            preferUTP: utp.state == .on)
+            preferUTP: utp.state == .on, bindToVPN: vpn.state == .on)
+    }
+
+    /// A human line describing the current VPN binding for the Speed Limits sheet.
+    private func vpnStatusLine() -> String {
+        guard client.bindToVPN else {
+            return L("torrents.vpn.off", "Not bound. Torrents use your normal connection.")
+        }
+        if let iface = client.vpnInterface {
+            return String(format: L("torrents.vpn.bound", "Bound to %@. Traffic only leaves over the VPN."), iface)
+        }
+        return L("torrents.vpn.killed", "No VPN detected — torrents paused to prevent leaks.")
     }
 
     private func labeledRow(_ title: String, _ field: NSTextField) -> NSView {
