@@ -228,7 +228,8 @@ public actor TorrentEngine {
         }
     }
 
-    /// Announce to the magnet's HTTP trackers and return the de-duplicated peers.
+    /// Gather peers to fetch a magnet's metadata from: its HTTP trackers plus the DHT, so a
+    /// trackerless magnet still resolves.
     private func gatherPeers(_ entry: PendingMagnet) async -> [Tracker.Peer] {
         var peers: [Tracker.Peer] = []
         for tracker in entry.trackers where tracker.hasPrefix("http") {
@@ -239,6 +240,8 @@ public actor TorrentEngine {
                 peers.append(contentsOf: response.peers)
             }
         }
+        // The DHT is what makes a trackerless magnet work: it finds peers we can ask for metadata.
+        peers.append(contentsOf: await dht.findPeers(infoHash: entry.infoHash))
         var seen = Set<Tracker.Peer>()
         return peers.filter { seen.insert($0).inserted }
     }
