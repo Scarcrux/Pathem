@@ -789,3 +789,11 @@
 "torrents.addMagnet.invalid" = "That doesn’t look like a magnet link.";
 
 "torrents.col.up" = "Up";
+
+"torrents.limits" = "Speed Limits…";
+"torrents.limits.title" = "Speed Limits";
+"torrents.limits.message" = "Maximum download and upload speed in KB/s. Leave 0 for unlimited.";
+"torrents.limits.apply" = "Apply";
+"torrents.limits.down" = "Download";
+"torrents.limits.up" = "Upload";
+"torrents.limits.unit" = "KB/s";

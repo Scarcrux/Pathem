@@ -14,6 +14,8 @@ final class TorrentDaemonClient {
 
     /// Latest snapshot of every torrent, and a callback fired whenever it changes.
     private(set) var torrents: [TorrentSession.Status] = []
+    private(set) var downLimit = 0  // current global caps (bytes/sec, 0 = unlimited)
+    private(set) var upLimit = 0
     var onUpdate: (([TorrentSession.Status]) -> Void)?
     var onError: ((String) -> Void)?
 
@@ -127,6 +129,11 @@ final class TorrentDaemonClient {
 
     func requestList() { send(.init(op: .list, id: nextCommandID())) }
 
+    /// Set global speed caps in bytes/second (0 = unlimited).
+    func setLimits(down: Int, up: Int) {
+        send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up))
+    }
+
     private func send(_ command: TorrentControl.Command) {
         guard startIfNeeded(), let stdin else { return }
         // SIGPIPE is ignored process-wide; a write to a dead daemon fails harmlessly.
@@ -153,6 +160,8 @@ final class TorrentDaemonClient {
     }
 
     private func handle(_ event: TorrentControl.Event) {
+        if let down = event.downLimit { downLimit = down }
+        if let up = event.upLimit { upLimit = up }
         if let torrents = event.torrents {
             self.torrents = torrents
             onUpdate?(torrents)

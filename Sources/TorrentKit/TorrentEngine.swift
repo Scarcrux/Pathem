@@ -27,6 +27,19 @@ public actor TorrentEngine {
     private let peerID = Tracker.makePeerID()
     private let dht = DHTClient()  // shared across sessions for trackerless peer discovery
     private let natpmp = NATPMPClient()  // best-effort router port mapping for inbound peers
+    private let downLimiter: RateLimiter  // global caps (0 = unlimited), shared by all sessions
+    private let uploadLimiter: RateLimiter
+    private var limits: Limits
+
+    /// Global speed caps in bytes/second (0 = unlimited).
+    public struct Limits: Codable, Sendable, Equatable {
+        public var down: Int
+        public var up: Int
+        public init(down: Int = 0, up: Int = 0) {
+            self.down = down
+            self.up = up
+        }
+    }
 
     private var sessions: [String: TorrentSession] = [:]
     private var meta: [String: Persisted]
@@ -39,6 +52,29 @@ public actor TorrentEngine {
         self.torrentsDir = stateDir.appendingPathComponent("torrents")
         try? FileManager.default.createDirectory(at: torrentsDir, withIntermediateDirectories: true)
         self.meta = Self.loadState(from: stateDir.appendingPathComponent("state.json"))
+        let loaded = Self.loadLimits(from: stateDir.appendingPathComponent("limits.json"))
+        self.limits = loaded
+        self.downLimiter = RateLimiter(bytesPerSecond: loaded.down)
+        self.uploadLimiter = RateLimiter(bytesPerSecond: loaded.up)
+    }
+
+    /// Set the global download / upload caps (bytes/second, 0 = unlimited) and persist them.
+    public func setLimits(down: Int, up: Int) async {
+        limits = Limits(down: down, up: up)
+        await downLimiter.setRate(bytesPerSecond: down)
+        await uploadLimiter.setRate(bytesPerSecond: up)
+        if let data = try? JSONEncoder().encode(limits) {
+            try? data.write(to: stateDir.appendingPathComponent("limits.json"))
+        }
+    }
+
+    public func currentLimits() -> Limits { limits }
+
+    private static func loadLimits(from file: URL) -> Limits {
+        guard let data = try? Data(contentsOf: file),
+            let limits = try? JSONDecoder().decode(Limits.self, from: data)
+        else { return Limits() }
+        return limits
     }
 
     /// Start accepting incoming peers so we can seed to peers that dial us. Idempotent; safe to
@@ -75,7 +111,7 @@ public actor TorrentEngine {
         try data.write(to: torrentsDir.appendingPathComponent(storedName))
 
         let session = try TorrentSession(
-            torrent: torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht)
+            torrent: torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
         sessions[hash] = session
         meta[hash] = Persisted(
             infoHashHex: hash, torrentFileName: storedName, savePath: savePath,
@@ -225,7 +261,7 @@ public actor TorrentEngine {
         let storedName = "\(hash).torrent"
         try? resolved.torrentBytes.write(to: torrentsDir.appendingPathComponent(storedName))
         guard let session = try? TorrentSession(
-            torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht)
+            torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
         else { return }
         sessions[hash] = session
         meta[hash] = Persisted(
@@ -255,7 +291,7 @@ public actor TorrentEngine {
             guard let data = try? Data(contentsOf: fileURL),
                 let torrent = try? TorrentFile.parse(data),
                 let session = try? TorrentSession(
-                    torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath), peerID: peerID, dht: dht)
+                    torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
             else { continue }
             await session.loadResume(havePieces: persisted.completedPieces)
             sessions[persisted.infoHashHex] = session

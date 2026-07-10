@@ -246,6 +246,10 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   default gateway and asks it to forward our TCP port, renewing before the lease expires, so peers
   behind common home-router NAT can reach us. Best-effort: routers without NAT-PMP just don't
   answer, and outbound connections work regardless. Codec unit-tested; gateway detection verified.
+- **Speed limits** -- SHIPPED. Global download / upload caps via a token-bucket RateLimiter
+  (injectable clock, unit-tested): the session paces its request pipeline and its block serving
+  through the shared limiters, so throttling the ask throttles receipt. Set from Torrents > Speed
+  Limits (KB/s, 0 = unlimited), sent over the control protocol, applied live, and persisted.
 - **Peer exchange (BEP 11, ut_pex)** -- SHIPPED (receive side). Outgoing peers advertise ut_pex
   over the extension protocol, and the peers others share in their `added` field are fed straight
   into the session, so a healthy swarm keeps topping up peers without more tracker/DHT traffic.

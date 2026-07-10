@@ -65,7 +65,13 @@ func handle(_ command: TorrentControl.Command) async {
         emit(.init(kind: .reply, replyTo: command.id, ok: true))
     case .list:
         let torrents = await engine.statuses()
-        emit(.init(kind: .reply, replyTo: command.id, ok: true, torrents: torrents))
+        let limits = await engine.currentLimits()
+        emit(.init(kind: .reply, replyTo: command.id, ok: true, torrents: torrents,
+            downLimit: limits.down, upLimit: limits.up))
+    case .setLimits:
+        await engine.setLimits(down: command.downLimit ?? 0, up: command.upLimit ?? 0)
+        let limits = await engine.currentLimits()
+        emit(.init(kind: .reply, replyTo: command.id, ok: true, downLimit: limits.down, upLimit: limits.up))
     }
 }
 
@@ -79,7 +85,8 @@ let ticker = Task {
     while !Task.isCancelled {
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         let torrents = await engine.statuses()
-        emit(.init(kind: .status, ok: true, torrents: torrents))
+        let limits = await engine.currentLimits()
+        emit(.init(kind: .status, ok: true, torrents: torrents, downLimit: limits.down, upLimit: limits.up))
         await engine.checkpoint()
     }
 }

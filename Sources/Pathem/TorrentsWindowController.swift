@@ -14,6 +14,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let magnetButton = NSButton(title: "", target: nil, action: nil)
     private let pauseButton = NSButton(title: "", target: nil, action: nil)
     private let removeButton = NSButton(title: "", target: nil, action: nil)
+    private let limitsButton = NSButton(title: "", target: nil, action: nil)
     private let emptyLabel = NSTextField(labelWithString: "")
 
     private var rows: [TorrentSession.Status] = []
@@ -70,7 +71,12 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         removeButton.target = self
         removeButton.action = #selector(removeTapped)
 
-        let controls = NSStackView(views: [addButton, magnetButton, NSView(), pauseButton, removeButton])
+        limitsButton.title = L("torrents.limits", "Speed Limits…")
+        limitsButton.bezelStyle = .rounded
+        limitsButton.target = self
+        limitsButton.action = #selector(limitsTapped)
+
+        let controls = NSStackView(views: [addButton, magnetButton, NSView(), limitsButton, pauseButton, removeButton])
         controls.orientation = .horizontal
         controls.spacing = 8
 
@@ -225,6 +231,46 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case .alertSecondButtonReturn: client.remove(sel.infoHash, deleteData: true)
         default: break
         }
+    }
+
+    @objc private func limitsTapped() {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.limits.title", "Speed Limits")
+        alert.informativeText = L("torrents.limits.message", "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
+        alert.addButton(withTitle: L("torrents.limits.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        // Two labeled KB/s fields, pre-filled from the current caps.
+        func field(_ bytesPerSecond: Int) -> NSTextField {
+            let f = NSTextField(frame: NSRect(x: 70, y: 0, width: 90, height: 22))
+            f.integerValue = bytesPerSecond / 1024
+            f.alignment = .right
+            return f
+        }
+        let downField = field(client.downLimit)
+        let upField = field(client.upLimit)
+        let container = NSStackView(views: [
+            labeledRow(L("torrents.limits.down", "Download"), downField),
+            labeledRow(L("torrents.limits.up", "Upload"), upField),
+        ])
+        container.orientation = .vertical
+        container.spacing = 8
+        container.frame = NSRect(x: 0, y: 0, width: 240, height: 60)
+        alert.accessoryView = container
+        alert.window.initialFirstResponder = downField
+
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        client.setLimits(down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024)
+    }
+
+    private func labeledRow(_ title: String, _ field: NSTextField) -> NSView {
+        let label = NSTextField(labelWithString: title)
+        label.frame = NSRect(x: 0, y: 0, width: 80, height: 22)
+        let unit = NSTextField(labelWithString: L("torrents.limits.unit", "KB/s"))
+        let row = NSStackView(views: [label, field, unit])
+        row.orientation = .horizontal
+        row.spacing = 6
+        return row
     }
 
     @objc private func revealInFinder() {

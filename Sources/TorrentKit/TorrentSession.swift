@@ -49,6 +49,8 @@ public actor TorrentSession {
     private let layout: FileLayout
     private let storage: TorrentStorage
     private let dht: DHTClient?
+    private let downLimiter: RateLimiter?  // shared global download cap (nil = unlimited)
+    private let uploadLimiter: RateLimiter?
 
     private var state: State = .stopped
     private var peerTasks: [Task<Void, Never>] = []
@@ -72,12 +74,14 @@ public actor TorrentSession {
 
     public init(
         torrent: TorrentFile, downloadRoot: URL, peerID: Data = Tracker.makePeerID(),
-        dht: DHTClient? = nil
+        dht: DHTClient? = nil, downLimiter: RateLimiter? = nil, uploadLimiter: RateLimiter? = nil
     ) throws {
         self.torrent = torrent
         self.downloadRoot = downloadRoot
         self.peerID = peerID
         self.dht = dht
+        self.downLimiter = downLimiter
+        self.uploadLimiter = uploadLimiter
         self.pieces = PieceManager(torrent: torrent)
         self.layout = FileLayout(torrent: torrent)
         // Multi-file torrents nest their files under the torrent name; single-file already has it.
@@ -307,7 +311,10 @@ public actor TorrentSession {
         guard let block = try? storage.read(at: offset, length: length), block.count == length else { return }
         uploadedBytes += Int64(length)
         let message = PeerMessage.piece(index: UInt32(index), begin: UInt32(begin), block: block)
-        Task { try? await peer.send(message) }
+        Task { [uploadLimiter] in
+            await uploadLimiter?.consume(length)  // throttle upload to the global cap
+            try? await peer.send(message)
+        }
     }
 
     /// Tell every connected peer we now have a piece, so they can request it from us.
@@ -327,7 +334,11 @@ public actor TorrentSession {
             globalInFlight.insert(req)
             let request = PeerMessage.request(
                 index: UInt32(req.index), begin: UInt32(req.begin), length: UInt32(req.length))
-            Task { try? await peer.send(request) }
+            // Pace requests through the download limiter, so throttling the ask throttles receipt.
+            Task { [downLimiter] in
+                await downLimiter?.consume(req.length)
+                try? await peer.send(request)
+            }
         }
     }
 

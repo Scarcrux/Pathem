@@ -920,3 +920,11 @@
 "torrents.addMagnet.invalid" = "这看起来不是一个磁力链接。";
 
 "torrents.col.up" = "上传";
+
+"torrents.limits" = "速度限制…";
+"torrents.limits.title" = "速度限制";
+"torrents.limits.message" = "最大下载和上传速度（KB/s）。填 0 表示不限制。";
+"torrents.limits.apply" = "应用";
+"torrents.limits.down" = "下载";
+"torrents.limits.up" = "上传";
+"torrents.limits.unit" = "KB/s";

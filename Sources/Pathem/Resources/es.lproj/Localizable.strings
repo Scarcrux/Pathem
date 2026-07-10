@@ -920,3 +920,11 @@
 "torrents.addMagnet.invalid" = "Eso no parece un enlace magnet.";
 
 "torrents.col.up" = "Subida";
+
+"torrents.limits" = "Límites de velocidad…";
+"torrents.limits.title" = "Límites de velocidad";
+"torrents.limits.message" = "Velocidad máxima de bajada y subida en KB/s. Deja 0 para ilimitado.";
+"torrents.limits.apply" = "Aplicar";
+"torrents.limits.down" = "Bajada";
+"torrents.limits.up" = "Subida";
+"torrents.limits.unit" = "KB/s";

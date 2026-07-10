@@ -920,3 +920,11 @@
 "torrents.addMagnet.invalid" = "Das sieht nicht nach einem Magnet-Link aus.";
 
 "torrents.col.up" = "Up";
+
+"torrents.limits" = "Geschwindigkeitslimits…";
+"torrents.limits.title" = "Geschwindigkeitslimits";
+"torrents.limits.message" = "Maximale Download- und Upload-Geschwindigkeit in KB/s. 0 lassen für unbegrenzt.";
+"torrents.limits.apply" = "Anwenden";
+"torrents.limits.down" = "Download";
+"torrents.limits.up" = "Upload";
+"torrents.limits.unit" = "KB/s";

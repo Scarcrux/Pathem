@@ -920,3 +920,11 @@
 "torrents.addMagnet.invalid" = "Cela ne ressemble pas à un lien magnet.";
 
 "torrents.col.up" = "Envoi";
+
+"torrents.limits" = "Limites de vitesse…";
+"torrents.limits.title" = "Limites de vitesse";
+"torrents.limits.message" = "Vitesse maximale de réception et d’envoi en Ko/s. Laissez 0 pour illimité.";
+"torrents.limits.apply" = "Appliquer";
+"torrents.limits.down" = "Réception";
+"torrents.limits.up" = "Envoi";
+"torrents.limits.unit" = "Ko/s";

@@ -920,3 +920,11 @@
 "torrents.addMagnet.invalid" = "マグネットリンクではないようです。";
 
 "torrents.col.up" = "上り";
+
+"torrents.limits" = "速度制限…";
+"torrents.limits.title" = "速度制限";
+"torrents.limits.message" = "ダウンロードとアップロードの最大速度（KB/s）。0 で無制限です。";
+"torrents.limits.apply" = "適用";
+"torrents.limits.down" = "ダウンロード";
+"torrents.limits.up" = "アップロード";
+"torrents.limits.unit" = "KB/s";
