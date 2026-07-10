@@ -904,7 +904,7 @@ enum PathemApp {
         viewMenu.addItem(.separator())
 
         // The AI bar stays top-level; the folder-organizing and git actions group up.
-        viewMenu.addItem(commandItem("Command Palette…", "palette.show"))
+        viewMenu.addItem(commandItem("Command Palette…", "palette.show", "k"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
         viewMenu.addItem(submenu("Organize", [
             commandItem("Organize Folder…", "files.organize"),
@@ -930,7 +930,7 @@ enum PathemApp {
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
         goMenu.addItem(commandItem("Find Files Everywhere…", "nav.findFiles", "o", [.command, .shift]))
         goMenu.addItem(.separator())
-        goMenu.addItem(commandItem("Connect to Server…", "files.connectToServer", "k"))
+        goMenu.addItem(commandItem("Connect to Server…", "files.connectToServer"))
         goMenu.addItem(commandItem("Connections…", "connections.manage", "k", [.command, .shift]))
         goMenu.addItem(commandItem("Open Connections in a New Tab", "connections.newTabToggle"))
         goMenu.addItem(commandItem("Download from Server…", "remote.download"))
