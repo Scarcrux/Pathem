@@ -186,7 +186,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let shelf = ShelfController()  // stash shelf / drop stack across the bottom
     var shelfHiddenConstraint: NSLayoutConstraint?
     var shelfShownConstraint: NSLayoutConstraint?
-    private let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
+    let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
     private var commanderShownConstraint: NSLayoutConstraint?
     let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     var previewVisible = false
@@ -266,14 +266,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var batchCreate = BatchCreateController()
     lazy var templatesManager = TemplatesController()
     lazy var commitController = CommitController()
-    private lazy var archiveContents = ArchiveContentsController()
+    lazy var archiveContents = ArchiveContentsController()
     private lazy var findInFiles = FindInFilesController()
     private lazy var processViewer = ProcessViewerController()
-    private lazy var torrents = TorrentsWindowController()
+    lazy var torrents = TorrentsWindowController()
     lazy var externalCommandsController = ExternalCommandsController()
     lazy var externalOutput = ExternalCommandOutputController()
     let slideshow = SlideshowController()
-    private lazy var trimController = TrimController()
+    lazy var trimController = TrimController()
     private lazy var aclEditor = ACLEditorController()
     lazy var markupController = MarkupController()
     private lazy var undoHistoryController = UndoHistoryController()
@@ -651,21 +651,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Register every browser action as a named command. This is the spine the
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
     private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
-    private static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
+    static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
     var viewPresets = ViewPresets.default
 
-    private static var folderBackgroundsURL: URL? { appSupportDirectory()?.appendingPathComponent("folder-backgrounds.json") }
-    private var folderBackgrounds = FolderBackgrounds.default
+    static var folderBackgroundsURL: URL? { appSupportDirectory()?.appendingPathComponent("folder-backgrounds.json") }
+    var folderBackgrounds = FolderBackgrounds.default
     private func loadFolderBackgrounds() {
         folderBackgrounds = loadConfig(FolderBackgrounds.self, from: Self.folderBackgroundsURL) ?? .default
     }
     private func reapplyFolderBackgrounds() {
         for side in [leftTabs, rightTabs] { for pane in side.tabs { pane.applyFolderBackground() } }
     }
-    private static var collectionsConfigURL: URL? {
+    static var collectionsConfigURL: URL? {
         appSupportDirectory()?.appendingPathComponent("collections.json")
     }
-    private var collectionsStore = Collections()
+    var collectionsStore = Collections()
     /// Macros currently executing, to break a self/mutually-referential macro cycle.
     private var runningMacroIDs: Set<String> = []
 
@@ -713,7 +713,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// The saved smart-folder searches (searches.json); each is a command that runs its mdfind
     /// query and shows the results as a cross-folder smart list.
-    private var savedSearches = SavedSearches.default
+    var savedSearches = SavedSearches.default
     private func loadSavedSearches() {
         savedSearches = loadConfig(SavedSearches.self, from: Self.savedSearchesURL) ?? SavedSearches.default
         registerSavedSearchCommands()
@@ -4280,7 +4280,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             prefs.commanderCommands.count == 6 ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
     }
 
-    private func toggleCommander() {
+    func toggleCommander() {
         let show = commanderBar.isHidden
         commanderBar.isHidden = !show
         if show {
