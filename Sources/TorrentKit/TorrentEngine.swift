@@ -28,6 +28,7 @@ public actor TorrentEngine {
     private let peerID = Tracker.makePeerID()
     private let dht = DHTClient()  // shared across sessions for trackerless peer discovery
     private let natpmp = NATPMPClient()  // best-effort router port mapping for inbound peers
+    private let upnp = UPnPClient()      // fallback when the router speaks UPnP, not NAT-PMP
     private let downLimiter: RateLimiter  // global caps (0 = unlimited), shared by all sessions
     private let uploadLimiter: RateLimiter
     private var limits: Limits
@@ -105,8 +106,13 @@ public actor TorrentEngine {
         }
         listener = l
         _ = try? await l.start(port: 6881)
-        // Ask the router to forward our port so peers behind NAT can reach us (best-effort).
-        Task { [natpmp] in await natpmp.mapTCP(port: 6881) }
+        // Ask the router to forward our port so peers behind NAT can reach us (best-effort):
+        // try NAT-PMP first, then fall back to UPnP-IGD if that gets no answer.
+        Task { [natpmp, upnp] in
+            if await natpmp.mapTCP(port: 6881) == nil {
+                _ = await upnp.mapTCP(port: 6881)
+            }
+        }
     }
 
     private func session(forHash hex: String) -> TorrentSession? { sessions[hex] }
