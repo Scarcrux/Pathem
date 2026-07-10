@@ -76,6 +76,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// computed (see `mirrorNavigationIfSyncing`). Keyed by pane identity.
     private var syncBrowseAnchors: [ObjectIdentifier: URL] = [:]
     let split = NSSplitView()  // the two sides
+    let panesContainer = NSView()  // wraps `split` so the torrent detail can overlay without NSSplitView treating it as a pane
     let outerSplit = NSSplitView()  // sidebar | panes
     let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
     let shelf = ShelfController()  // stash shelf / drop stack across the bottom
@@ -103,6 +104,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let sidebar = SidebarController()
     let terminal = TerminalController()
     let torrentDrawer = TorrentDrawerController()  // FileZilla-style transfer drawer at the bottom
+    let torrentDetail = TorrentDetailView()  // overlays the panes when a torrent is opened
     let searchField = NSSearchField()
     var didSetInitialSplit = false
     /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
@@ -262,13 +264,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         split.delegate = paneSplitDelegate
         split.addArrangedSubview(leftTabs.containerView)
         split.addArrangedSubview(rightTabs.containerView)
+        // Wrap the panes split in a plain container so the torrent detail view can overlay it: an
+        // NSSplitView treats every direct subview as a pane, so the overlay must go on the container.
+        split.translatesAutoresizingMaskIntoConstraints = false
+        panesContainer.addSubview(split)
+        NSLayoutConstraint.activate([
+            split.topAnchor.constraint(equalTo: panesContainer.topAnchor),
+            split.leadingAnchor.constraint(equalTo: panesContainer.leadingAnchor),
+            split.trailingAnchor.constraint(equalTo: panesContainer.trailingAnchor),
+            split.bottomAnchor.constraint(equalTo: panesContainer.bottomAnchor),
+        ])
 
         outerSplit.isVertical = true
         outerSplit.dividerStyle = .thin
         outerSplit.delegate = self
         outerSplit.translatesAutoresizingMaskIntoConstraints = false
         outerSplit.addArrangedSubview(sidebar.containerView)
-        outerSplit.addArrangedSubview(split)
+        outerSplit.addArrangedSubview(panesContainer)
         // Keep the sidebar's width when the window resizes; the panes absorb it.
         outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 0)
         // Durably pin the sidebar to a sane default width so the panes always get
@@ -305,6 +317,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         terminal.view.isHidden = true
         torrentDrawer.view.isHidden = true
         torrentDrawer.onSelect = { [weak self] status in self?.torrentSelectionChanged(status) }
+        torrentDrawer.onOpen = { [weak self] status in self?.showTorrentDetail(status) }
+
+        // The torrent detail view overlays the pane area (sidebar stays visible), hidden until a
+        // torrent is opened from the drawer.
+        torrentDetail.translatesAutoresizingMaskIntoConstraints = false
+        torrentDetail.isHidden = true
+        torrentDetail.onClose = { [weak self] in self?.hideTorrentDetail() }
+        panesContainer.addSubview(torrentDetail)
+        NSLayoutConstraint.activate([
+            torrentDetail.topAnchor.constraint(equalTo: panesContainer.topAnchor),
+            torrentDetail.leadingAnchor.constraint(equalTo: panesContainer.leadingAnchor),
+            torrentDetail.trailingAnchor.constraint(equalTo: panesContainer.trailingAnchor),
+            torrentDetail.bottomAnchor.constraint(equalTo: panesContainer.bottomAnchor),
+        ])
 
         let host = NSView()
         host.addSubview(vSplit)

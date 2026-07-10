@@ -92,6 +92,14 @@ func handle(_ command: TorrentControl.Command) async {
             await engine.setFiles(infoHash: hash, wanted: command.wantedFiles)
         }
         emit(.init(kind: .reply, replyTo: command.id, ok: true))
+    case .details:
+        guard let hash = command.infoHash else {
+            emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "details needs an infoHash"))
+            return
+        }
+        let peers = await engine.peers(infoHash: hash)
+        let trackers = await engine.trackers(infoHash: hash)
+        emit(.init(kind: .reply, replyTo: command.id, ok: true, infoHash: hash, peers: peers, trackers: trackers))
     }
 }
 

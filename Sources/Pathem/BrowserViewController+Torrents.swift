@@ -119,8 +119,20 @@ extension BrowserViewController {
         }
     }
 
-    /// The selected torrent changed in the drawer. The detail view will follow this next.
+    /// The selected torrent changed in the drawer. If the detail view is open, follow the selection.
     func torrentSelectionChanged(_ status: TorrentSession.Status?) {
-        // Detail view wiring lands in the next stage; the selection is already surfaced here.
+        if !torrentDetail.isHidden, let status { torrentDetail.show(status) }
+    }
+
+    /// Open the detail view (Overview / Files / Peers / Trackers) over the pane area for a torrent.
+    func showTorrentDetail(_ status: TorrentSession.Status) {
+        torrentDetail.isHidden = false
+        torrentDetail.show(status)
+    }
+
+    /// Close the detail view and return to the file browser.
+    func hideTorrentDetail() {
+        torrentDetail.hide()
+        torrentDetail.isHidden = true
     }
 }

@@ -55,6 +55,44 @@ public actor TorrentSession {
         public var wanted: Bool
     }
 
+    /// A connected peer, for the detail view's Peers tab.
+    public struct PeerInfo: Sendable, Codable, Equatable {
+        public var address: String   // host:port
+        public var client: String    // decoded from the peer id (e.g. "qBittorrent 4.5.2")
+        public var progress: Double  // how much of the torrent they have (0...1)
+        public var choked: Bool      // are they choking us
+        public var encrypted: Bool
+
+        public init(address: String, client: String, progress: Double, choked: Bool, encrypted: Bool) {
+            self.address = address
+            self.client = client
+            self.progress = progress
+            self.choked = choked
+            self.encrypted = encrypted
+        }
+
+        /// Decode the client from a BitTorrent peer id. Handles the common Azureus style
+        /// ("-qB4520-..." -> qBittorrent 4.5.2) and falls back to a printable prefix.
+        public static func decodeClient(_ peerID: Data?) -> String {
+            guard let peerID, peerID.count >= 8 else { return "unknown" }
+            let bytes = [UInt8](peerID)
+            if bytes[0] == UInt8(ascii: "-") {
+                let code = String(bytes: bytes[1..<3], encoding: .ascii) ?? ""
+                let names = [
+                    "qB": "qBittorrent", "UT": "µTorrent", "TR": "Transmission", "DE": "Deluge",
+                    "LT": "libtorrent", "AZ": "Vuze", "BT": "BitTorrent", "PM": "Pathem",
+                ]
+                let v = bytes[3..<7].map { String(Character(UnicodeScalar($0))) }
+                let version = v.joined().trimmingCharacters(in: CharacterSet(charactersIn: "0")).isEmpty
+                    ? v.joined() : "\(v[0]).\(v[1]).\(v[2])\(v[3])".replacingOccurrences(of: ".0", with: "")
+                if let name = names[code] { return "\(name) \(version)" }
+                return code
+            }
+            let printable = bytes.prefix(8).map { (32...126).contains($0) ? Character(UnicodeScalar($0)) : "·" }
+            return String(printable)
+        }
+    }
+
     public let torrent: TorrentFile
     private let downloadRoot: URL
     private let peerID: Data
@@ -294,6 +332,17 @@ public actor TorrentSession {
     }
 
     public func wantedFileIndices() -> [Int]? { wantedFiles.map { Array($0).sorted() } }
+
+    /// A snapshot of every connected peer, for the detail view's Peers tab.
+    public func peers() async -> [PeerInfo] {
+        var out: [PeerInfo] = []
+        for peer in activePeers { out.append(await peer.snapshot(pieceCount: pieces.pieceCount)) }
+        return out.sorted { $0.address < $1.address }
+    }
+
+    /// The torrent's announce sources: HTTP/UDP trackers plus DHT / PEX unless it's private.
+    public func trackerURLs() -> [String] { torrent.trackers }
+    public var usesDHT: Bool { !torrent.isPrivate }
 
     /// Restrict downloading to the given file indices (nil = all files). Recomputes the wanted
     /// pieces and, if they're already on disk, flips to seeding.

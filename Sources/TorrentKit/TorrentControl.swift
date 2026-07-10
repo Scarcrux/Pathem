@@ -14,6 +14,7 @@ public enum TorrentControl {
         case setLimits    // set global speed caps (downLimit / upLimit, bytes/sec, 0 = unlimited)
         case files        // request a torrent's file list (infoHash)
         case setFiles     // set which files to download (infoHash + wantedFiles)
+        case details      // request a torrent's peers + trackers (infoHash), for the detail view
     }
 
     public struct Command: Codable, Sendable {
@@ -72,15 +73,18 @@ public enum TorrentControl {
         public var preferUTP: Bool?
         public var bindToVPN: Bool?
         public var vpnInterface: String?          // the bound tunnel's name, nil = none/kill-switch
-        public var infoHash: String?              // which torrent a files reply is for
+        public var infoHash: String?              // which torrent a files/details reply is for
         public var files: [TorrentSession.FileInfo]?
+        public var peers: [TorrentSession.PeerInfo]?   // details reply: connected peers
+        public var trackers: [String]?                 // details reply: announce sources
 
         public init(
             kind: EventKind, replyTo: Int? = nil, ok: Bool = true, message: String? = nil,
             torrents: [TorrentSession.Status]? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
             superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, preferUTP: Bool? = nil,
             bindToVPN: Bool? = nil, vpnInterface: String? = nil,
-            infoHash: String? = nil, files: [TorrentSession.FileInfo]? = nil
+            infoHash: String? = nil, files: [TorrentSession.FileInfo]? = nil,
+            peers: [TorrentSession.PeerInfo]? = nil, trackers: [String]? = nil
         ) {
             self.kind = kind
             self.replyTo = replyTo
@@ -96,6 +100,8 @@ public enum TorrentControl {
             self.vpnInterface = vpnInterface
             self.infoHash = infoHash
             self.files = files
+            self.peers = peers
+            self.trackers = trackers
         }
     }
 

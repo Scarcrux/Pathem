@@ -29,6 +29,7 @@ final class TorrentDaemonClient {
     var onUpdate: (([TorrentSession.Status]) -> Void)?
     var onError: ((String) -> Void)?
     var onFiles: ((String, [TorrentSession.FileInfo]) -> Void)?
+    var onDetails: ((String, [TorrentSession.PeerInfo], [String]) -> Void)?
 
     private var process: Process?
     private var stdin: FileHandle?
@@ -151,6 +152,11 @@ final class TorrentDaemonClient {
         send(.init(op: .files, id: nextCommandID(), infoHash: infoHash))
     }
 
+    /// Request a torrent's peers + trackers (answered via onDetails).
+    func requestDetails(_ infoHash: String) {
+        send(.init(op: .details, id: nextCommandID(), infoHash: infoHash))
+    }
+
     /// Set which files of a torrent to download.
     func setFiles(_ infoHash: String, wanted: [Int]) {
         send(.init(op: .setFiles, id: nextCommandID(), infoHash: infoHash, wantedFiles: wanted))
@@ -200,6 +206,9 @@ final class TorrentDaemonClient {
         }
         if let files = event.files, let hash = event.infoHash {
             onFiles?(hash, files)
+        }
+        if let peers = event.peers, let hash = event.infoHash {
+            onDetails?(hash, peers, event.trackers ?? [])
         }
         if !event.ok, let message = event.message, event.kind == .reply {
             onError?(message)

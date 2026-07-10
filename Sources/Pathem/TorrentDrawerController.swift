@@ -25,6 +25,8 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
 
     /// Fired when the selected torrent changes (nil = none) so the detail view can follow it.
     var onSelect: ((TorrentSession.Status?) -> Void)?
+    /// Fired when a torrent is opened (double-click) to show its detail view in the main area.
+    var onOpen: ((TorrentSession.Status) -> Void)?
     /// The window used to present add/remove sheets (the browser window).
     weak var hostWindow: NSWindow?
 
@@ -106,7 +108,7 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         table.backgroundColor = .clear
         table.rowHeight = 26
         table.target = self
-        table.doubleAction = #selector(revealInFinder)
+        table.doubleAction = #selector(openSelected)
         table.allowsEmptySelection = true
 
         scroll.documentView = table
@@ -331,10 +333,9 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         TorrentLimitsSheet.present(over: hostWindow ?? view.window, client: client)
     }
 
-    @objc private func revealInFinder() {
+    @objc private func openSelected() {
         guard let sel = selected() else { return }
-        let target = URL(fileURLWithPath: sel.savePath).appendingPathComponent(sel.name)
-        NSWorkspace.shared.activateFileViewerSelecting([target])
+        onOpen?(sel)
     }
 
     private func showError(_ message: String) {

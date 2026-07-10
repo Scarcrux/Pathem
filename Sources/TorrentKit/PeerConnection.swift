@@ -241,6 +241,18 @@ import Foundation
             try await rawSend(message.encoded)
         }
 
+        /// A point-in-time snapshot of this peer for the detail view (its address, decoded client,
+        /// how much of the torrent it has, and whether it's choking us / encrypted).
+        public func snapshot(pieceCount: Int) -> TorrentSession.PeerInfo {
+            let have = pieceCount > 0 ? peerBitfield.prefix(pieceCount).lazy.filter { $0 }.count : 0
+            return TorrentSession.PeerInfo(
+                address: "\(host):\(port)",
+                client: TorrentSession.PeerInfo.decodeClient(remotePeerID),
+                progress: pieceCount > 0 ? Double(have) / Double(pieceCount) : 0,
+                choked: peerChoking,
+                encrypted: isEncrypted)
+        }
+
         public func close() {
             closed = true
             connection?.cancel()

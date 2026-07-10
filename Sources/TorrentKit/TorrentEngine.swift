@@ -202,6 +202,21 @@ public actor TorrentEngine {
         return await session.files()
     }
 
+    /// The connected peers for a torrent (detail view's Peers tab).
+    public func peers(infoHash: String) async -> [TorrentSession.PeerInfo] {
+        guard let session = sessions[infoHash] else { return [] }
+        return await session.peers()
+    }
+
+    /// A torrent's announce sources: its trackers, plus a synthetic "DHT" / "Peer Exchange" entry
+    /// when it isn't private (detail view's Trackers tab).
+    public func trackers(infoHash: String) async -> [String] {
+        guard let session = sessions[infoHash] else { return [] }
+        var out = await session.trackerURLs()
+        if await session.usesDHT { out.append("DHT"); out.append("Peer Exchange") }
+        return out
+    }
+
     /// Set which files of a torrent to download (nil = all), apply live, and persist.
     public func setFiles(infoHash: String, wanted: [Int]?) async {
         guard let session = sessions[infoHash] else { return }
