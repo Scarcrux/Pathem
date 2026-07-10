@@ -245,10 +245,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         var width: CGFloat {
             switch self {
-            case .name: return 360
-            case .size: return 110
+            case .name: return 240
+            case .size: return 90
             case .kind: return 130
-            case .date, .dateCreated, .dateAccessed: return 180
+            case .date, .dateCreated, .dateAccessed: return 150
             case .ext: return 90
             case .git: return 56
             case .path: return 280
@@ -277,12 +277,23 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.usesAlternatingRowBackgroundColors = true
         tableView.allowsMultipleSelection = true
         tableView.style = .inset
-        tableView.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
+        // Name flexes to fill the pane (see fitNameColumn, driven by the clip-view frame change);
+        // the value columns stay fixed. We drive it ourselves because AppKit's column autoresize
+        // doesn't reconcile oversized columns on first layout.
+        tableView.columnAutoresizingStyle = .noColumnAutoresizing
 
         for column in Column.allCases {
             let col = NSTableColumn(identifier: .init(column.rawValue))
             col.title = column.title
             col.width = column.width
+            // Name flexes down in narrow panes (no forced h-scrollbar); the value columns keep a
+            // sensible cap so none can balloon.
+            switch column {
+            case .name: col.minWidth = 120
+            case .size, .kind, .ext, .git: col.maxWidth = column.width + 40
+            case .date, .dateCreated, .dateAccessed: col.maxWidth = 220
+            default: break
+            }
             col.sortDescriptorPrototype =
                 column.isSortable ? NSSortDescriptor(key: column.rawValue, ascending: true) : nil
             col.isHidden = !column.defaultVisible  // Kind/Extension/Git/Path are opt-in
@@ -294,7 +305,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.allowsColumnReordering = true
         tableView.allowsColumnResizing = true
         Self.instanceCount += 1
-        tableView.autosaveName = "PathemFileList.\(Self.instanceCount)"
+        // v2: bump the autosave key so the previously-persisted (Date-stretched) column widths are
+        // discarded and the sensible defaults above take effect.
+        tableView.autosaveName = "PathemFileList.v3.\(Self.instanceCount)"
         tableView.autosaveTableColumns = true
         tableView.headerView?.menu = makeHeaderMenu()
 
@@ -309,8 +322,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = true
+        // No horizontal scroller: the file list is meant to fit the pane (Name flexes), so a
+        // horizontal scrollbar is never wanted.
+        scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
+
+        // Flex the Name column to fill the pane whenever the pane resizes. Done off a clip-view
+        // frame-change notification (not in layout()) so setting the column width can't re-enter
+        // the layout pass.
+        let clip = scrollView.contentView
+        clip.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(fitNameColumn), name: NSView.frameDidChangeNotification, object: clip)
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
         tableView.menu = contextMenu.menu
@@ -659,6 +682,20 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // MARK: NSTableViewDataSource
 
     func numberOfRows(in tableView: NSTableView) -> Int { displayRows.count }
+
+    /// Size the Name column so all columns exactly fill the visible width (Finder-style: Name grows
+    /// and shrinks with the pane, value columns fixed). Runs on pane resize, so no column is ever
+    /// clipped and no horizontal scrollbar is needed.
+    @objc private func fitNameColumn() {
+        guard let name = tableView.tableColumns.first(where: { $0.identifier.rawValue == Column.name.rawValue && !$0.isHidden })
+        else { return }
+        let others = tableView.tableColumns
+            .filter { $0 !== name && !$0.isHidden }
+            .reduce(CGFloat(0)) { $0 + $1.width }
+        let available = scrollView.contentView.bounds.width
+        let target = max(name.minWidth, available - others)
+        if abs(name.width - target) > 0.5 { name.width = target }
+    }
 
     // MARK: Drag and drop
 
