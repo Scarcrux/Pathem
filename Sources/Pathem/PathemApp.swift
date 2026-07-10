@@ -121,6 +121,7 @@ enum PathemApp {
         WindowManager.shared.adoptPrimary(window: window, browser: browser)
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
+        delegate.vpnStatusItem = VPNStatusItem()  // shows only while VPN binding is enabled
 
 
         // Headless render of gallery / column / icon views over a sample folder.
@@ -1094,6 +1095,7 @@ enum PathemApp {
 final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     weak var browser: BrowserViewController?
     var updater: UpdaterController?
+    var vpnStatusItem: VPNStatusItem?  // menu-bar VPN kill-switch indicator (self-hides when off)
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 

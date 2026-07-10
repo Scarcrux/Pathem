@@ -123,10 +123,10 @@ public actor TorrentEngine {
             await vpnMonitor.start { [weak self] name in
                 Task { await self?.onVPNChanged(name) }
             }
-            // The monitor fires an initial update shortly; also evaluate now so enabling with no VPN
-            // engages the kill-switch immediately rather than after the first network change.
-            let name = await vpnMonitor.activeVPNName()
-            await onVPNChanged(name)
+            // Resolve the current tunnel immediately (and unconditionally), so enabling with no VPN
+            // engages the kill-switch now rather than after the first network change. This sets the
+            // binding, then drives onVPNChanged via the callback above.
+            await vpnMonitor.evaluateNow()
         } else {
             await vpnMonitor.stop()
             vpnMonitorStarted = false

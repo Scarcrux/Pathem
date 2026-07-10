@@ -1,6 +1,11 @@
 import Foundation
 import TorrentKit
 
+extension Notification.Name {
+    /// Posted (on the main actor) when the daemon's VPN binding state or bound interface changes.
+    static let torrentVPNStateChanged = Notification.Name("com.pathem.torrentVPNStateChanged")
+}
+
 /// The app-side driver for the out-of-process torrent daemon (`pathem-torrentd`). Spawns the
 /// helper on first use, sends commands as line-delimited JSON on its stdin, and reads the status
 /// events it streams back on stdout. Keeping the peer/network code in a separate process matches
@@ -184,8 +189,10 @@ final class TorrentDaemonClient {
         if let utp = event.preferUTP { preferUTP = utp }
         // Only status/limits events carry VPN state; take the interface (which may be nil) with it.
         if let vpn = event.bindToVPN {
+            let changed = bindToVPN != vpn || vpnInterface != event.vpnInterface
             bindToVPN = vpn
             vpnInterface = event.vpnInterface
+            if changed { NotificationCenter.default.post(name: .torrentVPNStateChanged, object: nil) }
         }
         if let torrents = event.torrents {
             self.torrents = torrents

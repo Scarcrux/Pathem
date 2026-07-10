@@ -3,14 +3,19 @@ import Foundation
 #if canImport(Network)
     import Network
 
-    /// Watches the network and reports which VPN tunnel, if any, is currently active -- so the engine
-    /// can bind torrent traffic to it and pull a kill-switch when it drops.
+    /// Watches the network and reports which VPN tunnel, if any, is currently the *anonymizing* VPN
+    /// -- so the engine can bind torrent traffic to it and pull a kill-switch when it drops.
     ///
-    /// Detecting a VPN on macOS is subtler than "the name starts with utun": a Mac routinely has half
-    /// a dozen `utunN` interfaces for Continuity, iCloud Private Relay, and the like, all carrying
-    /// only an IPv6 link-local address. A real tunnel is a **point-to-point, up interface with a
-    /// VPN-style name AND a routable (non-link-local) address**. We confirm that from `getifaddrs`,
-    /// then match it to an `NWInterface` that `NWPathMonitor` reports so it can actually be bound.
+    /// Detecting the right VPN on macOS takes two filters:
+    ///
+    /// 1. **It must carry the default route.** A full-tunnel anonymizing VPN (AdGuard, Nord, Proton,
+    ///    ...) takes over the default route so *all* traffic is tunneled. A split-tunnel overlay like
+    ///    Tailscale stays up but never becomes the default route -- binding torrents to it would be
+    ///    wrong, so it must be ignored. The default-route interface is the signal that separates them.
+    /// 2. **It must be a real tunnel.** The default-route interface then has to be a point-to-point,
+    ///    up interface with a VPN-style name and a routable address (not a physical `enN`), confirmed
+    ///    from `getifaddrs` -- and matched to an `NWInterface` the path layer exposes so it can be
+    ///    bound.
     public actor VPNMonitor {
         private let monitor = NWPathMonitor()
         private var currentName: String?
@@ -33,6 +38,13 @@ import Foundation
             monitor.start(queue: Self.queue)
         }
 
+        /// Evaluate the current path right now and always notify (deterministic initial resolution:
+        /// binding is set and the engine hears the result -- even "no VPN" -- immediately, rather than
+        /// waiting for the first async path callback).
+        public func evaluateNow() {
+            evaluate(monitor.currentPath, force: true)
+        }
+
         /// Stop watching and clear any binding this monitor set.
         public func stop() {
             monitor.cancel()
@@ -41,19 +53,62 @@ import Foundation
             NetworkBinding.shared.requiredInterface = nil
         }
 
-        /// The active VPN interface name right now (nil if none), computed on demand from getifaddrs.
-        public func activeVPNName() -> String? {
-            Self.vpnInterfaces(from: Self.enumerate()).sorted().first
+        /// The active anonymizing VPN's name right now (nil if none), computed on demand.
+        public func activeVPNName() -> String? { Self.anonymizingVPNName() }
+
+        private func evaluate(_ path: NWPath, force: Bool = false) {
+            let name = Self.anonymizingVPNName()
+            // We can only enforce binding if the path layer exposes an NWInterface for the tunnel; if
+            // it doesn't, treat it as no-VPN so the kill-switch engages rather than running unbound.
+            let iface = name.flatMap { n in path.availableInterfaces.first { $0.name == n } }
+            let boundName = iface != nil ? name : nil
+            // `force` fires even on nil->nil so enabling with no VPN still engages the kill-switch.
+            guard force || boundName != currentName else { return }
+            currentName = boundName
+            NetworkBinding.shared.requiredInterface = iface  // pin new sockets to the tunnel (or unbind)
+            onChange?(boundName)
         }
 
-        private func evaluate(_ path: NWPath) {
-            let confirmed = Self.vpnInterfaces(from: Self.enumerate())
-            // Bind only to a tunnel the path layer also exposes (so we have an NWInterface for it).
-            let iface = path.availableInterfaces.first { confirmed.contains($0.name) }
-            guard iface?.name != currentName else { return }
-            currentName = iface?.name
-            NetworkBinding.shared.requiredInterface = iface  // pin new sockets to the tunnel (or unbind)
-            onChange?(iface?.name)
+        /// The anonymizing VPN interface: the one carrying the default route, but only when it's a
+        /// confirmed VPN tunnel. Returns nil when the default route is a physical interface (no
+        /// full-tunnel VPN) or a split-tunnel overlay that isn't the default route.
+        static func anonymizingVPNName() -> String? {
+            guard let route = defaultRouteInterfaceName(), isVPNName(route),
+                vpnInterfaces(from: enumerate()).contains(route)
+            else { return nil }
+            return route
+        }
+
+        /// The name of the interface carrying the IPv4 default route (0.0.0.0/0), via the routing
+        /// table. This is the interface a full-tunnel VPN takes over when it connects.
+        static func defaultRouteInterfaceName() -> String? {
+            var mib: [Int32] = [CTL_NET, PF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_GATEWAY]
+            var needed = 0
+            guard sysctl(&mib, u_int(mib.count), nil, &needed, nil, 0) == 0, needed > 0 else { return nil }
+            var buf = [UInt8](repeating: 0, count: needed)
+            guard sysctl(&mib, u_int(mib.count), &buf, &needed, nil, 0) == 0 else { return nil }
+            var result: String?
+            buf.withUnsafeBytes { raw in
+                var offset = 0
+                while offset + MemoryLayout<rt_msghdr>.size <= needed {
+                    let hdr = raw.loadUnaligned(fromByteOffset: offset, as: rt_msghdr.self)
+                    guard hdr.rtm_msglen > 0 else { break }
+                    // The first sockaddr after the header is the destination; 0.0.0.0 marks default.
+                    let saOffset = offset + MemoryLayout<rt_msghdr>.size
+                    if saOffset + MemoryLayout<sockaddr_in>.size <= needed {
+                        let dst = raw.loadUnaligned(fromByteOffset: saOffset, as: sockaddr_in.self)
+                        if dst.sin_family == UInt8(AF_INET), dst.sin_addr.s_addr == 0 {
+                            var name = [CChar](repeating: 0, count: Int(IFNAMSIZ))
+                            if if_indextoname(UInt32(hdr.rtm_index), &name) != nil {
+                                result = String(cString: name)
+                                return
+                            }
+                        }
+                    }
+                    offset += Int(hdr.rtm_msglen)
+                }
+            }
+            return result
         }
 
         // MARK: classification (pure, unit-tested)
