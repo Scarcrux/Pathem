@@ -2337,6 +2337,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         reloadBothSides()
     }
 
+    /// After a drop lands, select and scroll to the items in whichever pane is showing the
+    /// destination folder, so you actually see where they landed (a plain reload keeps the old scroll,
+    /// leaving a new item stranded off-screen -- the "the drop didn't do anything" bug).
+    private func revealDropped(_ performed: [FileOperations.Performed], into destination: URL) {
+        let names = performed.map { $0.destination.lastPathComponent }.sorted()
+        guard let first = names.first else { return }
+        let dest = destination.standardizedFileURL
+        for side in [leftTabs, rightTabs] {
+            if let pane = side.activePane, pane.currentURL.standardizedFileURL == dest {
+                pane.select(name: first)
+            }
+        }
+    }
+
     private func dropFiles(_ allURLs: [URL], move: Bool, into destination: URL) {
         guard !transferInFlight else { NSSound.beep(); return }
         // Never copy/move a folder into itself or one of its own descendants.
@@ -2357,6 +2371,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let self else { return }
             self.leftTabs.activePane?.reloadIfShowingListing()
             self.rightTabs.activePane?.reloadIfShowingListing()
+            self.revealDropped(outcome.performed, into: destination)  // select + scroll to what landed
             if !outcome.performed.isEmpty {
                 self.registerUndo(outcome.performed, actionName: move ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
@@ -2384,6 +2399,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let self else { return }
             if move { source.reloadIfShowingListing() }
             destination.reloadIfShowingListing()
+            self.revealDropped(outcome.performed, into: destinationURL)  // reveal what landed
             if move {  // sources moved away: drop their rows from any smart view
                 self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))
             }
