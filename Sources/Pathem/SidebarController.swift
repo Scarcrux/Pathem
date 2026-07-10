@@ -613,6 +613,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return (sym, tint, nil)
     }
 
+    /// Finder's own AirDrop sidebar glyph -- the clean concentric-arcs "radar" mark, a monochrome
+    /// template that tints with the sidebar (gray at rest, white when selected), just like the other
+    /// place icons. There's no "airdrop" SF Symbol and the sharing service only vends a tiny 16pt
+    /// colored bitmap, so we load Finder's own resource. Cached; nil if the OS ever drops it (we fall
+    /// back to the sharing image then).
+    static let airDropGlyph: NSImage? = {
+        let path = "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/SidebarAirDrop.icns"
+        guard let img = NSImage(contentsOfFile: path) else { return nil }
+        img.isTemplate = true  // pure-black glyph -> tint it like the sidebar's other symbols
+        return img
+    }()
+
     private static let knownProviders = [
         "GoogleDrive": "Google Drive", "iCloudDrive": "iCloud Drive", "OneDrive": "OneDrive",
         "Dropbox": "Dropbox", "Box": "Box", "pCloud": "pCloud", "ProtonDrive": "Proton Drive",
@@ -645,7 +657,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private func volumesNode() -> Node {
         let fm = FileManager.default
         let keys: [URLResourceKey] = [
-            .volumeNameKey, .volumeIsBrowsableKey, .volumeIsInternalKey, .volumeIsRootFileSystemKey,
+            .volumeNameKey, .volumeIsBrowsableKey, .volumeIsLocalKey, .volumeIsRootFileSystemKey,
             .volumeIsRemovableKey, .volumeIsEjectableKey,
         ]
         let urls = fm.mountedVolumeURLs(includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
@@ -653,11 +665,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         for url in urls {
             let values = try? url.resourceValues(forKeys: Set(keys))
             if values?.volumeIsBrowsable == false { continue }
-            // Ejectable = the OS says so, OR it's a non-internal mount that isn't the boot volume
-            // (Finder's heuristic -- e.g. OrbStack mounts at ~/OrbStack, not /Volumes, and reports
-            // ejectable=false, yet Finder still offers Eject).
+            // Ejectable = the OS says so, OR it's a network mount that isn't the boot volume (Finder's
+            // heuristic -- e.g. OrbStack mounts an NFS share at ~/OrbStack, reports ejectable=false and
+            // internal=nil, yet Finder still offers Eject). `local == false` catches network mounts.
             let ejectable = (values?.volumeIsEjectable ?? false) || (values?.volumeIsRemovable ?? false)
-                || (values?.volumeIsInternal == false && values?.volumeIsRootFileSystem != true)
+                || (values?.volumeIsLocal == false && values?.volumeIsRootFileSystem != true)
             volumes.append(Node(
                 kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url,
                 icon: nil, isFolder: true, isEjectable: ejectable))
@@ -794,10 +806,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             // A branded provider logo (the app icon) -- used verbatim, like Finder's cloud icons.
             cell.imageView?.image = image
             cell.imageView?.contentTintColor = nil
-        } else if case .airdrop = node.kind, let airdrop = NSSharingService(named: .sendViaAirDrop)?.image {
-            // The real AirDrop glyph (there's no "airdrop" SF Symbol); the system service carries it.
-            cell.imageView?.image = airdrop
-            cell.imageView?.contentTintColor = nil
+        } else if case .airdrop = node.kind {
+            // Finder's own AirDrop sidebar glyph -- a clean monochrome template that tints with the
+            // sidebar. Fall back to the sharing service's colored bitmap only if the OS resource moves.
+            if let glyph = Self.airDropGlyph {
+                cell.imageView?.image = glyph
+                cell.imageView?.contentTintColor = node.iconTint ?? node.tagColor.map { TagColors.nsColor($0) }
+            } else {
+                cell.imageView?.image = NSSharingService(named: .sendViaAirDrop)?.image
+                cell.imageView?.contentTintColor = nil
+            }
         } else if let icon = node.icon {
             // Render the SF Symbol at the cell's icon point size so it stays crisp when the
             // icons-only mode blows it up. A cloud provider's brand tint / per-site color tints it.
