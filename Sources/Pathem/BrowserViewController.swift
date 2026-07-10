@@ -180,7 +180,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Each pane's last-seen local folder, so a navigation's relative delta can be
     /// computed (see `mirrorNavigationIfSyncing`). Keyed by pane identity.
     private var syncBrowseAnchors: [ObjectIdentifier: URL] = [:]
-    private let split = NSSplitView()  // the two sides
+    let split = NSSplitView()  // the two sides
     let outerSplit = NSSplitView()  // sidebar | panes
     let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
     let shelf = ShelfController()  // stash shelf / drop stack across the bottom
@@ -188,11 +188,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var shelfShownConstraint: NSLayoutConstraint?
     private let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
     private var commanderShownConstraint: NSLayoutConstraint?
-    private let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
-    private var previewVisible = false
+    let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
+    var previewVisible = false
     /// Durably pins the preview pane's width so it (and the panes) can't collapse; see
     /// togglePreviewPane(). Mirrors sidebarWidthConstraint.
-    private var previewWidthConstraint: NSLayoutConstraint?
+    var previewWidthConstraint: NSLayoutConstraint?
     private lazy var sizeBrowser = SizeBrowserController()
     lazy var clipboardViewer = ClipboardViewerController()
     private lazy var cleanup = CleanupController()
@@ -205,13 +205,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         manager.onApplied = { [weak self] _ in self?.reloadBothSides() }
         return manager
     }()
-    private let sidebar = SidebarController()
-    private let terminal = TerminalController()
+    let sidebar = SidebarController()
+    let terminal = TerminalController()
     let searchField = NSSearchField()
-    private var didSetInitialSplit = false
+    var didSetInitialSplit = false
     /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
     /// default so navigation never disturbs whatever you're running in the shell.
-    private var terminalFollows = UserDefaults.standard.bool(forKey: "pathem.terminalFollows")
+    var terminalFollows = UserDefaults.standard.bool(forKey: "pathem.terminalFollows")
     /// True while restoring the saved session, so restore activity doesn't trigger
     /// a (partial) save.
     private var isRestoringSession = false
@@ -248,23 +248,23 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Session-only opener overrides, keyed by lowercased extension (not persisted).
     private var sessionOpenersByType: [String: String] = [:]
     /// Saved workspace layouts (pane paths + split position).
-    private var layouts = Layouts()
+    var layouts = Layouts()
     /// Fuzzy command palette over the registry (Cmd-Shift-P).
     private lazy var palette = CommandPalette()
     /// Natural-language command bar (Cmd-Shift-A): Foundation Model when
     /// available, the engine heuristic otherwise.
     private lazy var aiBar = AICommandBar()
     /// Floating quick-action buttons shown over the panes when items are selected.
-    private let quickBar = QuickActionsBar()
+    let quickBar = QuickActionsBar()
     /// Watches Downloads and floats a one-click "move to" chip; owns its own watcher + queue.
     let downloadSuggestions = DownloadSuggestionsController()
     /// Batch-rename sheet for the active pane's selection.
     private lazy var batchRename = BatchRenameController()
-    private lazy var settings = SettingsWindowController()
+    lazy var settings = SettingsWindowController()
     /// Settings embedded over the right pane (so browsing continues in the left pane).
-    private var settingsPanel: NSView?
-    private lazy var batchCreate = BatchCreateController()
-    private lazy var templatesManager = TemplatesController()
+    var settingsPanel: NSView?
+    lazy var batchCreate = BatchCreateController()
+    lazy var templatesManager = TemplatesController()
     lazy var commitController = CommitController()
     private lazy var archiveContents = ArchiveContentsController()
     private lazy var findInFiles = FindInFilesController()
@@ -275,14 +275,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let slideshow = SlideshowController()
     private lazy var trimController = TrimController()
     private lazy var aclEditor = ACLEditorController()
-    private lazy var markupController = MarkupController()
+    lazy var markupController = MarkupController()
     private lazy var undoHistoryController = UndoHistoryController()
     private lazy var globalSearchController = GlobalSearchController()
     var externalCommands: [ExternalCommand] = []
     /// Dynamic Tools > External Commands submenu (installed once the menu bar is up).
     let externalCommandsMenu = NSMenu(title: "External Commands")
     var didInstallExternalCommandsMenu = false
-    private var createTemplates: [CreateTemplate] = []
+    var createTemplates: [CreateTemplate] = []
     /// Folders recently used as a Copy To / Move To destination (most recent first).
     private var recentDestinations: [String] = []
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
@@ -296,16 +296,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var isTransferring: Bool { transferInFlight }
     /// File paths currently marked for cut (dimmed until pasted or cleared).
     var cutPaths: Set<String> = []
-    private var sidebarWidthConstraint: NSLayoutConstraint!
+    var sidebarWidthConstraint: NSLayoutConstraint!
     /// Lays out the two panes at a fixed ratio (and tracks divider drags), so switching a
     /// pane to a content-light view (gallery) can't make the split re-divide and collapse it.
     private let paneSplitDelegate = PaneRatioSplitDelegate()
     var compactSidebar = false
-    private static let compactSidebarWidth: CGFloat = 60
+    static let compactSidebarWidth: CGFloat = 60
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
     private lazy var infoInspector = InfoInspectorController()
-    private lazy var connectionsController = ConnectionsController()
+    lazy var connectionsController = ConnectionsController()
     lazy var transferController: TransferQueueController = {
         let controller = TransferQueueController()
         // A retried transfer finishes outside its original batch, so reload the panes and
@@ -323,16 +323,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// a sheet pinned to the title bar.
     let cursorConfirm = CursorConfirm()
     private var deviceTimer: Timer?
-    private let layoutsMenu = NSMenu(title: "Layouts")
-    private var didInstallLayoutsMenu = false
-    private let savedViewsMenu = NSMenu(title: "Saved Views")
-    private var didInstallSavedViewsMenu = false
-    private let bookmarksMenu = NSMenu(title: "Bookmarks")
-    private var didInstallBookmarksMenu = false
+    let layoutsMenu = NSMenu(title: "Layouts")
+    var didInstallLayoutsMenu = false
+    let savedViewsMenu = NSMenu(title: "Saved Views")
+    var didInstallSavedViewsMenu = false
+    let bookmarksMenu = NSMenu(title: "Bookmarks")
+    var didInstallBookmarksMenu = false
     /// The most-recently-visited folders (newest first), for the Go > Recent Folders submenu.
-    private let recentFoldersMenu = NSMenu(title: "Recent Folders")
-    private var didInstallRecentMenu = false
-    private var recentFolders: [URL] = []
+    let recentFoldersMenu = NSMenu(title: "Recent Folders")
+    var didInstallRecentMenu = false
+    var recentFolders: [URL] = []
 
 
     /// Set in privacy-safe demo mode (launch flag or the View menu), so session restore is
@@ -472,7 +472,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Set the panes' divider to `fraction` (the right pane's share) and lay them out now.
     /// The delegate keeps that ratio across content swaps and window resizes.
-    private func setRightPaneFraction(_ fraction: Double) {
+    func setRightPaneFraction(_ fraction: Double) {
         paneSplitDelegate.fraction = max(0.15, min(0.85, fraction))
         paneSplitDelegate.layout(split)
     }
@@ -1477,7 +1477,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// Run a remote file operation off-main, refreshing the pane and reporting errors.
-    private func performRemoteOp(
+    func performRemoteOp(
         _ pane: PaneController, verb: String,
         _ op: @escaping @Sendable (RemoteProvider, RemoteConnection, String, String) async throws -> Void
     ) {
@@ -3214,8 +3214,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         previewView.previewItem = activePane?.singleSelectedURL as NSURL?
     }
 
-    private var quickBarScrollObserver: NSObjectProtocol?
-    private weak var quickBarObservedClip: NSClipView?
+    var quickBarScrollObserver: NSObjectProtocol?
+    weak var quickBarObservedClip: NSClipView?
 
     /// Show/hide the floating quick-actions bar for the active pane's selection, and place
     /// it next to the selected rows.
@@ -3372,7 +3372,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         syncAutoPreview()
     }
 
-    private var previewAutoShown = false
+    var previewAutoShown = false
 
     /// With the "preview in gallery/column" preference on, auto-open the preview pane while
     /// the active pane is in gallery or column view (and close it again when leaving).
@@ -3454,7 +3454,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private var organizeReview: OrganizeReviewController?
 
-    private static var organizeFeedbackURL: URL? {
+    static var organizeFeedbackURL: URL? {
         appSupportDirectory()?.appendingPathComponent("organize-feedback.json")
     }
 
@@ -3578,7 +3578,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
 
     /// The pane (on either side) currently showing `directory`, if any.
-    private func paneShowing(_ directory: URL) -> PaneController? {
+    func paneShowing(_ directory: URL) -> PaneController? {
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs where pane.currentURL == directory { return pane }
         }
@@ -3729,7 +3729,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: - Preferences
 
-    private static var preferencesURL: URL? {
+    static var preferencesURL: URL? {
         appSupportDirectory()?.appendingPathComponent("prefs.json")
     }
 
@@ -4093,7 +4093,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if let saved = loadConfig(Layouts.self, from: Self.layoutsURL) { layouts = saved }
     }
 
-    private func saveLayouts() {
+    func saveLayouts() {
         saveConfig(layouts, to: Self.layoutsURL)
     }
 
@@ -4162,7 +4162,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     // MARK: - Terminal theme
 
-    private static var terminalThemeURL: URL? {
+    static var terminalThemeURL: URL? {
         appSupportDirectory()?.appendingPathComponent("terminal.json")
     }
 
@@ -4534,7 +4534,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Save the active remote pane's current path as a named bookmark on its
     /// connection, so it can be jumped back to from the Bookmarks menu.
-    private func addBookmark() {
+    func addBookmark() {
         guard let ctx = activePane?.remoteContext else {
             NSSound.beep()
             return
@@ -4572,7 +4572,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Reconnect the active remote pane at a saved bookmark's path, reusing the
     /// live session password so there's no re-prompt.
-    private func jumpToBookmark(_ bookmark: RemoteBookmark) {
+    func jumpToBookmark(_ bookmark: RemoteBookmark) {
         guard let pane = activePane, let ctx = pane.remoteContext else {
             NSSound.beep()
             return
@@ -5348,7 +5348,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Build the semantic index for `directory` in the background (if not already
     /// cached for it), so the next search there is instant.
-    private func preIndex(_ directory: URL) {
+    func preIndex(_ directory: URL) {
         semanticSearch.preIndex(
             directory, isCurrent: { [weak self] in self?.activePane?.currentURL == directory })
     }
@@ -5435,7 +5435,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// The window title: folder name by default (like Finder), full POSIX path
     /// when the preference is on, or the server location for a remote pane. Also
     /// sets representedURL so the title gets a proxy icon and path popup.
-    private func updateWindowTitle() {
+    func updateWindowTitle() {
         updateCommanderPrompt()  // keep the commander prompt in sync with the active folder
         guard let window = view.window else { return }
         guard let pane = activePane else {
@@ -5460,7 +5460,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// shell in the active folder and gives the drawer a reasonable height.
     /// Show/hide the commander bar (orthodox F-key bar + command line) across the window bottom.
     /// Bind the Commander F3–F8 buttons to the user's chosen commands (or the defaults).
-    private func applyCommanderCommands() {
+    func applyCommanderCommands() {
         commanderBar.commandIDs =
             prefs.commanderCommands.count == 6 ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
     }
