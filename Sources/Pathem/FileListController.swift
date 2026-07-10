@@ -779,8 +779,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// All file URLs on the drag pasteboard.
     private func draggedURLs(from info: NSDraggingInfo) -> [URL]? {
-        info.draggingPasteboard.readObjects(
-            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        FileDrag.readFileURLs(from: info.draggingPasteboard)
     }
 
     /// Of `urls`, the ones not already directly inside `destination` (dropping onto their

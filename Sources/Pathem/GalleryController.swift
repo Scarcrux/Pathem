@@ -354,8 +354,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         proposedIndexPath: AutoreleasingUnsafeMutablePointer<NSIndexPath>,
         dropOperation proposedDropOperation: UnsafeMutablePointer<NSCollectionView.DropOperation>
     ) -> NSDragOperation {
-        guard draggingInfo.draggingPasteboard.canReadObject(
-            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) else { return [] }
+        guard FileDrag.hasFileURLs(draggingInfo.draggingPasteboard) else { return [] }
         proposedDropOperation.pointee = .before
         proposedIndexPath.pointee = NSIndexPath(forItem: entries.count, inSection: 0)
         return dropMovesByDefault(draggingInfo) ? .move : .copy
@@ -371,8 +370,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         _ collectionView: NSCollectionView, acceptDrop draggingInfo: NSDraggingInfo,
         indexPath: IndexPath, dropOperation: NSCollectionView.DropOperation
     ) -> Bool {
-        guard let urls = draggingInfo.draggingPasteboard.readObjects(
-            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty
+        guard let urls = FileDrag.readFileURLs(from: draggingInfo.draggingPasteboard), !urls.isEmpty
         else { return false }
         onDropFiles?(urls, dropMovesByDefault(draggingInfo), nil)
         return true

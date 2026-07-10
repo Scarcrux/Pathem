@@ -124,4 +124,27 @@ enum FileDrag {
         pasteboard.addTypes([filenamesType], owner: nil)
         pasteboard.setPropertyList(paths, forType: filenamesType)
     }
+
+    /// Read the dragged file URLs from a drop, tolerant of how the source wrote them. Modern
+    /// per-item `public.file-url` is preferred, but that read intermittently comes back empty when
+    /// a drag also carries a promise + the legacy filenames list (the pasteboard-level
+    /// `setPropertyList` can shadow the per-item URL reps), so fall back to the legacy filenames.
+    /// This is what makes an in-app pane-to-pane drop reliable.
+    static func readFileURLs(from pasteboard: NSPasteboard) -> [URL]? {
+        if let urls = pasteboard.readObjects(
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty
+        {
+            return urls
+        }
+        if let paths = pasteboard.propertyList(forType: filenamesType) as? [String], !paths.isEmpty {
+            return paths.map { URL(fileURLWithPath: $0) }
+        }
+        return nil
+    }
+
+    /// Whether a drop carries file URLs (modern or legacy). For validateDrop's can-accept check.
+    static func hasFileURLs(_ pasteboard: NSPasteboard) -> Bool {
+        pasteboard.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            || (pasteboard.propertyList(forType: filenamesType) as? [String])?.isEmpty == false
+    }
 }

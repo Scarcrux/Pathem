@@ -775,8 +775,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     }
 
     private func draggedURLs(from info: NSDraggingInfo) -> [URL]? {
-        info.draggingPasteboard.readObjects(
-            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        FileDrag.readFileURLs(from: info.draggingPasteboard)
     }
 
     private func incomingURLs(_ urls: [URL], into destination: URL?) -> [URL] {

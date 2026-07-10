@@ -449,8 +449,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     private func draggedURLs(_ info: NSDraggingInfo) -> [URL]? {
-        info.draggingPasteboard.readObjects(
-            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]
+        FileDrag.readFileURLs(from: info.draggingPasteboard)
     }
 
     /// Move dragged items between folders by default (else copy); Command inverts it, matching
