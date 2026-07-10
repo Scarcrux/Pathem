@@ -4,7 +4,7 @@ import Foundation
 /// RC4 stream cipher, as used by MSE/PE. RC4 is cryptographically weak, but MSE only uses it for
 /// connection obfuscation (evading naive traffic shaping), not real confidentiality, and the spec
 /// mandates it. Not provided by CryptoKit, so implemented here.
-public struct RC4 {
+public struct RC4: Sendable {
     private var s: [UInt8]
     private var i = 0
     private var j = 0

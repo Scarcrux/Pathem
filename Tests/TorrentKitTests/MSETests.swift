@@ -119,3 +119,81 @@ import Testing
         #expect(MSE.generateKeyPair().publicKeyBytes.count == 96)
     }
 }
+
+/// An in-memory duplex pipe so the MSE initiator and responder can run against each other.
+private actor Pipe {
+    private var buffer = Data()
+    private var waiters: [CheckedContinuation<Data, Error>] = []
+
+    func send(_ data: Data) {
+        buffer.append(data)
+        drain()
+    }
+
+    func recv() async throws -> Data {
+        if !buffer.isEmpty {
+            let out = buffer
+            buffer = Data()
+            return out
+        }
+        return try await withCheckedThrowingContinuation { waiters.append($0) }
+    }
+
+    private func drain() {
+        guard !buffer.isEmpty, !waiters.isEmpty else { return }
+        let out = buffer
+        buffer = Data()
+        let waiter = waiters.removeFirst()
+        waiter.resume(returning: out)
+    }
+}
+
+@Suite struct MSEHandshakeTests {
+    @Test func initiatorAndResponderAgreeAndExchangeEncryptedData() async throws {
+        let infoHash = Data((0..<20).map { UInt8($0 &+ 1) })
+        let aToB = Pipe()  // initiator -> responder
+        let bToA = Pipe()  // responder -> initiator
+
+        let initiatorStream = MSEHandshake.Stream(
+            send: { await aToB.send($0) }, recv: { try await bToA.recv() })
+        let responderStream = MSEHandshake.Stream(
+            send: { await bToA.send($0) }, recv: { try await aToB.recv() })
+
+        // Run both halves concurrently; the responder identifies the torrent from the req2 hash.
+        async let responder = MSEHandshake.respond(
+            torrentFor: { req2 in
+                req2 == Data(Insecure.SHA1.hash(data: Data("req2".utf8) + infoHash)) ? infoHash : nil
+            }, over: responderStream)
+        async let initiator = MSEHandshake.initiate(infoHash: infoHash, over: initiatorStream)
+
+        var initResult = try await initiator
+        let (recoveredHash, responderPair) = try await responder
+        var respResult = responderPair
+
+        #expect(recoveredHash == infoHash)  // responder identified the torrent
+        #expect(initResult.method == .rc4)
+        #expect(respResult.method == .rc4)
+
+        // The ciphers must be in sync: what the initiator encrypts, the responder decrypts.
+        let message = Data("BitTorrent payload after the encrypted handshake".utf8)
+        let onWire = initResult.send.process(message)
+        #expect(onWire != message)  // actually encrypted
+        #expect(respResult.recv.process(onWire) == message)  // and decrypts correctly the other side
+        // And the reverse direction.
+        let reply = Data("response bytes".utf8)
+        #expect(initResult.recv.process(respResult.send.process(reply)) == reply)
+    }
+
+    @Test func responderRejectsUnknownTorrent() async {
+        let aToB = Pipe(), bToA = Pipe()
+        let initiatorStream = MSEHandshake.Stream(send: { await aToB.send($0) }, recv: { try await bToA.recv() })
+        let responderStream = MSEHandshake.Stream(send: { await bToA.send($0) }, recv: { try await aToB.recv() })
+        // Drive the initiator in the background so the responder has bytes to read.
+        let initiator = Task { try? await MSEHandshake.initiate(infoHash: Data(count: 20), over: initiatorStream) }
+        var threw = false
+        do { _ = try await MSEHandshake.respond(torrentFor: { _ in nil }, over: responderStream) }  // hosts nothing
+        catch { threw = true }
+        initiator.cancel()
+        #expect(threw)
+    }
+}
