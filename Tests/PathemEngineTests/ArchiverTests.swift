@@ -38,4 +38,26 @@ import Testing
         #expect(
             try String(contentsOf: out.appendingPathComponent("src/nested/b.txt"), encoding: .utf8) == "world")
     }
+
+    @Test func compressItemsGathersFilesFromDifferentFolders() async throws {
+        let work = try tempDir()
+        defer { try? FileManager.default.removeItem(at: work) }
+        // Two files in two SEPARATE folders (the cross-pane drag case) -- plain compress would only
+        // catch the first item's folder; compressItems must stage both.
+        let f1 = work.appendingPathComponent("one", isDirectory: true)
+        let f2 = work.appendingPathComponent("two", isDirectory: true)
+        try FileManager.default.createDirectory(at: f1, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: f2, withIntermediateDirectories: true)
+        let a = f1.appendingPathComponent("a.txt"), b = f2.appendingPathComponent("b.txt")
+        try Data("aaa".utf8).write(to: a)
+        try Data("bbb".utf8).write(to: b)
+
+        let zip = work.appendingPathComponent("both.zip")
+        try await Archiver.compressItems([a, b], to: zip)
+
+        let out = work.appendingPathComponent("out", isDirectory: true)
+        try await Archiver.extract(zip, to: out)
+        #expect(try String(contentsOf: out.appendingPathComponent("a.txt"), encoding: .utf8) == "aaa")
+        #expect(try String(contentsOf: out.appendingPathComponent("b.txt"), encoding: .utf8) == "bbb")
+    }
 }

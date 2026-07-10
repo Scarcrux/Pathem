@@ -57,6 +57,37 @@ public enum Archiver {
         guard status == 0 else { throw ArchiveError.tool(code: status, message: err) }
     }
 
+    /// Zip items that may live in *different* folders (e.g. a drag from another pane onto a file).
+    /// `compress` assumes one shared parent and would silently miss the rest, so when the items span
+    /// folders, stage them into a temp directory first -- hardlinked where possible (instant, no extra
+    /// bytes), copied for directories or cross-volume items -- then archive that into a clean flat zip.
+    public static func compressItems(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {
+        guard !urls.isEmpty else { throw ArchiveError.nothingToCompress }
+        let parents = Set(urls.map { $0.deletingLastPathComponent().standardizedFileURL.path })
+        if parents.count == 1 { return try await compress(urls, to: destination, excludeGit: excludeGit) }
+
+        let fm = FileManager.default
+        let staging = fm.temporaryDirectory.appendingPathComponent("pathem-archive-\(UUID().uuidString)")
+        try fm.createDirectory(at: staging, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: staging) }
+        var used = Set<String>()
+        var staged: [URL] = []
+        for url in urls {
+            var name = url.lastPathComponent
+            var n = 2
+            while used.contains(name) {  // two items with the same name from different folders
+                let ext = url.pathExtension.isEmpty ? "" : ".\(url.pathExtension)"
+                name = "\(url.deletingPathExtension().lastPathComponent) \(n)\(ext)"
+                n += 1
+            }
+            used.insert(name)
+            let dest = staging.appendingPathComponent(name)
+            do { try fm.linkItem(at: url, to: dest) } catch { try fm.copyItem(at: url, to: dest) }
+            staged.append(dest)
+        }
+        try await compress(staged, to: destination, excludeGit: excludeGit)
+    }
+
     /// Create a 7-Zip archive from items sharing a parent. bsdtar (libarchive) writes 7z
     /// natively from the `.7z` extension, so no third-party tool is needed.
     public static func compress7z(_ urls: [URL], to destination: URL, excludeGit: Bool = false) async throws {

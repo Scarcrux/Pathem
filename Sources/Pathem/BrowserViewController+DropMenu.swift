@@ -82,7 +82,7 @@ extension BrowserViewController {
         let dest = uniqueLocalURL(folder.appendingPathComponent("Archive.zip"))
         Task { @MainActor [weak self] in
             do {
-                try await Archiver.compress(items, to: dest)
+                try await Archiver.compressItems(items, to: dest)  // handles items from different folders
                 self?.reloadBothSides()
                 self?.activePane?.select(name: dest.lastPathComponent)
             } catch {
