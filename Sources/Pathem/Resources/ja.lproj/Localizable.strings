@@ -941,3 +941,11 @@
 
 "bvc.cmd.addToTorrents" = "トレントに追加";
 "bvc.cmd.copyMagnetLink" = "マグネットリンクをコピー";
+
+"bvc.cmd.createTorrent" = "トレントを作成…";
+"torrents.create.title" = "「%@」からトレントを作成";
+"torrents.create.message" = "必要に応じてトラッカーを追加できます。プライベートトレントは DHT やピア交換を使用しません。";
+"torrents.create.next" = "場所を選択…";
+"torrents.create.tracker" = "トラッカー URL（任意）";
+"torrents.create.private" = "プライベートトレント";
+"torrents.create.failed" = "トレントを作成できませんでした";

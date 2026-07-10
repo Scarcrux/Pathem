@@ -941,3 +941,11 @@
 
 "bvc.cmd.addToTorrents" = "Zu Torrents hinzufügen";
 "bvc.cmd.copyMagnetLink" = "Magnet-Link kopieren";
+
+"bvc.cmd.createTorrent" = "Torrent erstellen…";
+"torrents.create.title" = "Torrent aus „%@“ erstellen";
+"torrents.create.message" = "Optional einen Tracker hinzufügen. Ein privater Torrent nutzt kein DHT und keinen Peer-Austausch.";
+"torrents.create.next" = "Speicherort wählen…";
+"torrents.create.tracker" = "Tracker-URL (optional)";
+"torrents.create.private" = "Privater Torrent";
+"torrents.create.failed" = "Torrent konnte nicht erstellt werden";

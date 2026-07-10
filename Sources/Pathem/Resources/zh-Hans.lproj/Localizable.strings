@@ -941,3 +941,11 @@
 
 "bvc.cmd.addToTorrents" = "添加到种子";
 "bvc.cmd.copyMagnetLink" = "复制磁力链接";
+
+"bvc.cmd.createTorrent" = "创建种子…";
+"torrents.create.title" = "从“%@”创建种子";
+"torrents.create.message" = "可选择添加 Tracker。私有种子不会使用 DHT 或节点交换。";
+"torrents.create.next" = "选择位置…";
+"torrents.create.tracker" = "Tracker 网址（可选）";
+"torrents.create.private" = "私有种子";
+"torrents.create.failed" = "无法创建种子";

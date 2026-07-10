@@ -246,6 +246,15 @@ stays out of the Full-Disk-Access app, consistent with the AFC and extension mod
   default gateway and asks it to forward our TCP port, renewing before the lease expires, so peers
   behind common home-router NAT can reach us. Best-effort: routers without NAT-PMP just don't
   answer, and outbound connections work regardless. Codec unit-tested; gateway detection verified.
+- **Torrent creation** -- SHIPPED. Right-click a file or folder > Create Torrent: TorrentCreator
+  walks the content, auto-picks a piece length, SHA-1s the pieces (spanning file boundaries), and
+  writes standard bencoded metadata (optional tracker, private flag, skips .DS_Store). Hashing
+  runs off the main thread. Output round-trips through the parser with a correct info hash, proven
+  by a test that verifies every created piece hash against the real bytes.
+- **Native .torrent / magnet handling** -- SHIPPED. Opening a .torrent (in a pane or from Finder)
+  or a magnet: URL adds it straight to the Torrents panel; context-menu Add to Torrents / Copy
+  Magnet Link for .torrent selections; Info.plist registers the document type + magnet: scheme.
+  The old one-shot inspector plugin was removed as redundant.
 - **Per-file selection** -- SHIPPED. Download only some files of a multi-file torrent: the piece
   manager honours a "wanted" set (FileLayout maps selected files to the pieces they overlap,
   including straddling pieces), so unwanted pieces are never requested and "complete" means every

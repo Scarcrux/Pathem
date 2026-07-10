@@ -40,7 +40,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
         "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
         "files.extract", "files.extractHere", "files.extractTo",
-        "files.addToTorrents", "files.copyMagnetLink",
+        "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
     ]
 
     /// The group an entry belongs to. A separator is auto-inserted wherever the group changes
@@ -53,7 +53,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste": return 3
         case "files.extract", "files.extractHere", "files.extractTo": return 4
-        case "files.addToTorrents", "files.copyMagnetLink": return 6  // .torrent-only actions
+        case "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink": return 6  // torrent actions
         default: return 0  // open / info / rename actions
         }
     }
@@ -114,6 +114,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.extract", L("bvc.cmd.extract", "Extract")),
         ("files.extractHere", L("bvc.cmd.extractHere", "Extract Here")),
         ("files.extractTo", L("bvc.cmd.extractTo", "Extract to Folder…")),
+        ("files.createTorrent", L("bvc.cmd.createTorrent", "Create Torrent…")),
         ("files.addToTorrents", L("bvc.cmd.addToTorrents", "Add to Torrents")),
         ("files.copyMagnetLink", L("bvc.cmd.copyMagnetLink", "Copy Magnet Link")),
     ]
@@ -204,6 +205,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = !inTrash  // Trash-only actions
                 case "files.addToTorrents", "files.copyMagnetLink":
                     item.isHidden = !allTorrents  // only for .torrent selections
+                case "files.createTorrent":
+                    item.isHidden = urls.count != 1  // make a torrent from one file/folder
                 default:
                     break
                 }

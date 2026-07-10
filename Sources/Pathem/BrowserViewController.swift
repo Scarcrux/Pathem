@@ -57,6 +57,61 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         for url in urls { addTorrentToPanel(url) }
     }
 
+    /// The single selected local file or folder (for "Create Torrent"), or nil.
+    var selectedSingleLocalURL: URL? {
+        guard let pane = activePane, !pane.isRemote else { return nil }
+        let urls = pane.selectedLocalURLs()
+        return urls.count == 1 ? urls[0] : nil
+    }
+
+    /// Create a .torrent from the selected file or folder: prompt for a tracker + private flag,
+    /// choose where to save, then hash off the main thread and reveal the result.
+    func createTorrentFromSelection() {
+        guard let source = selectedSingleLocalURL else { NSSound.beep(); return }
+
+        let alert = NSAlert()
+        alert.messageText = String(format: L("torrents.create.title", "Create Torrent from “%@”"), source.lastPathComponent)
+        alert.informativeText = L("torrents.create.message", "Optionally add a tracker. A private torrent won't use DHT or peer exchange.")
+        alert.addButton(withTitle: L("torrents.create.next", "Choose Location…"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let tracker = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 22))
+        tracker.placeholderString = L("torrents.create.tracker", "Tracker URL (optional)")
+        let privateCheck = NSButton(checkboxWithTitle: L("torrents.create.private", "Private torrent"), target: nil, action: nil)
+        let accessory = NSStackView(views: [tracker, privateCheck])
+        accessory.orientation = .vertical
+        accessory.spacing = 8
+        accessory.frame = NSRect(x: 0, y: 0, width: 340, height: 54)
+        alert.accessoryView = accessory
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let trackerText = tracker.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let options = TorrentCreator.Options(
+            trackers: trackerText.isEmpty ? [] : [trackerText],
+            isPrivate: privateCheck.state == .on,
+            creationDate: Date())
+
+        let save = NSSavePanel()
+        save.nameFieldStringValue = source.lastPathComponent + ".torrent"
+        save.allowedFileTypes = ["torrent"]
+        guard save.runModal() == .OK, let dest = save.url else { return }
+
+        // Hashing can be slow for large content, so run it off the main thread.
+        Task.detached {
+            do {
+                let data = try TorrentCreator.create(contentsOf: source, options: options)
+                try data.write(to: dest)
+                await MainActor.run { NSWorkspace.shared.activateFileViewerSelecting([dest]) }
+            } catch {
+                await MainActor.run {
+                    let fail = NSAlert()
+                    fail.messageText = L("torrents.create.failed", "Couldn't create the torrent")
+                    fail.informativeText = "\(error)"
+                    fail.runModal()
+                }
+            }
+        }
+    }
+
     /// Copy the magnet links of the selected .torrent files to the clipboard.
     func copySelectedMagnetLinks() {
         let links = selectedTorrentURLs.compactMap { url -> String? in
@@ -947,6 +1002,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.copyMagnetLink", L("bvc.cmd.copyMagnetLink", "Copy Magnet Link"),
             enabled: { [weak self] in !(self?.selectedTorrentURLs.isEmpty ?? true) }) {
             [weak self] in self?.copySelectedMagnetLinks()
+        }
+        add("files.createTorrent", L("bvc.cmd.createTorrent", "Create Torrent…"),
+            enabled: { [weak self] in self?.selectedSingleLocalURL != nil }) {
+            [weak self] in self?.createTorrentFromSelection()
         }
         add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
         add("tools.externalCommands", L("bvc.cmd.externalCommands", "External Commands…")) { [weak self] in self?.showExternalCommandsManager() }
