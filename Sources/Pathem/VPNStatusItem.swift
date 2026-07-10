@@ -67,7 +67,7 @@ final class VPNStatusItem {
     }
 
     @objc private func openTorrents() {
-        WindowManager.shared.primaryBrowser?.torrents.present()
+        WindowManager.shared.primaryBrowser?.showTorrentsDrawer()
     }
 
     @objc private func turnOff() {

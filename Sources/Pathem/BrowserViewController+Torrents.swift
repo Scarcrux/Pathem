@@ -69,17 +69,58 @@ extension BrowserViewController {
         NSPasteboard.general.setString(links.joined(separator: "\n"), forType: .string)
     }
 
-    /// Open the Torrents panel and add a .torrent (or magnet). Downloads go to the Downloads folder.
+    /// Open the Torrents drawer and add a .torrent (or magnet). Downloads go to the Downloads folder.
     func addTorrentToPanel(_ url: URL) {
-        torrents.present()
+        showTorrentsDrawer()
         let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
         TorrentDaemonClient.shared.addTorrent(fileAt: url.path, savePath: savePath)
     }
 
-    /// Open the Torrents panel and add a magnet: link (from the magnet: URL scheme).
+    /// Open the Torrents drawer and add a magnet: link (from the magnet: URL scheme).
     func addMagnetToPanel(_ uri: String) {
-        torrents.present()
+        showTorrentsDrawer()
         let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
         TorrentDaemonClient.shared.addMagnet(uri, savePath: savePath)
+    }
+
+    /// Show or hide the Torrents transfer drawer (docked at the bottom, like the terminal).
+    func toggleTorrentsDrawer() {
+        if torrentDrawer.view.isHidden { showTorrentsDrawer() } else { hideTorrentsDrawer() }
+    }
+
+    /// Reveal the drawer (idempotent) and start it receiving live updates.
+    func showTorrentsDrawer() {
+        guard torrentDrawer.view.isHidden else { return }
+        torrentDrawer.hostWindow = view.window
+        torrentDrawer.view.isHidden = false
+        torrentDrawer.activate()
+        sizeTorrentDrawer()
+    }
+
+    func hideTorrentsDrawer() {
+        guard !torrentDrawer.view.isHidden else { return }
+        torrentDrawer.deactivate()
+        torrentDrawer.view.isHidden = true
+        view.layoutSubtreeIfNeeded()
+    }
+
+    /// Give the drawer a fixed height at the very bottom; the browser (and terminal above) keep the
+    /// rest. Divider 1 sits above the drawer (index 2 in vSplit). Retry once if layout hasn't settled.
+    private func sizeTorrentDrawer() {
+        let height = vSplit.bounds.height
+        if height > 320 {
+            vSplit.setPosition(height - 220, ofDividerAt: 1)
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self, !self.torrentDrawer.view.isHidden else { return }
+                let h = self.vSplit.bounds.height
+                if h > 320 { self.vSplit.setPosition(h - 220, ofDividerAt: 1) }
+            }
+        }
+    }
+
+    /// The selected torrent changed in the drawer. The detail view will follow this next.
+    func torrentSelectionChanged(_ status: TorrentSession.Status?) {
+        // Detail view wiring lands in the next stage; the selection is already surfaced here.
     }
 }

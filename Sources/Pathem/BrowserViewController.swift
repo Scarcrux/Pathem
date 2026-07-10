@@ -102,6 +102,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }()
     let sidebar = SidebarController()
     let terminal = TerminalController()
+    let torrentDrawer = TorrentDrawerController()  // FileZilla-style transfer drawer at the bottom
     let searchField = NSSearchField()
     var didSetInitialSplit = false
     /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
@@ -296,10 +297,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         vSplit.translatesAutoresizingMaskIntoConstraints = false
         vSplit.addArrangedSubview(outerSplit)
         vSplit.addArrangedSubview(terminal.view)
+        vSplit.addArrangedSubview(torrentDrawer.view)  // FileZilla-style transfer drawer, bottom-most
         vSplit.delegate = self
-        // The terminal keeps its height; the browser absorbs window resize.
+        // The terminal and the torrents drawer keep their height; the browser absorbs window resize.
         vSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 1)
+        vSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 2)
         terminal.view.isHidden = true
+        torrentDrawer.view.isHidden = true
+        torrentDrawer.onSelect = { [weak self] status in self?.torrentSelectionChanged(status) }
 
         let host = NSView()
         host.addSubview(vSplit)
@@ -664,7 +669,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.advancedFind", L("bvc.cmd.advancedFind", "Advanced Find…"), enabled: { [weak self] in self?.activePane?.isRemote == false }) { [weak self] in self?.showAdvancedFind() }
         add("nav.findFiles", L("bvc.cmd.findFiles", "Find Files Everywhere…")) { [weak self] in self?.showGlobalSearch() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
-        add("tools.torrents", L("bvc.cmd.torrents", "Torrents")) { [weak self] in self?.torrents.present() }
+        add("tools.torrents", L("bvc.cmd.torrents", "Torrents")) { [weak self] in self?.toggleTorrentsDrawer() }
         add("files.addToTorrents", L("bvc.cmd.addToTorrents", "Add to Torrents"),
             enabled: { [weak self] in !(self?.selectedTorrentURLs.isEmpty ?? true) }) {
             [weak self] in self?.addSelectedTorrents()
