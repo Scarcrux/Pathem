@@ -584,22 +584,26 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         (service.symbolName, ThemeManager.color(fromHex: service.tintHex) ?? .systemGray)
     }
 
-    /// The real branded logo for a cloud service, taken from the provider's installed app icon
-    /// (macOS doesn't expose the File Provider icon Finder uses, but the app icon is the same logo).
-    /// nil when the app isn't installed (or for iCloud, which has no app -- use the SF glyph then).
+    /// The real branded logo for a cloud service. macOS doesn't expose the File Provider icon Finder
+    /// shows, but the provider ships it: prefer the clean transparent brand glyph in the app's
+    /// Resources (the bare logo, like Finder's sidebar) and fall back to the full app icon. nil when
+    /// the app isn't installed (or for iCloud, which has no app -- use the SF glyph then).
     static func brandIcon(_ service: CloudService) -> NSImage? {
-        let bundleID: String?
+        // (bundle id, clean transparent glyph resource name in the app's Resources, if known).
+        let map: (id: String, glyph: String?)?
         switch service {
-        case .googleDrive: bundleID = "com.google.drivefs"
-        case .dropbox: bundleID = "com.getdropbox.dropbox"
-        case .oneDrive: bundleID = "com.microsoft.OneDrive"
-        case .box: bundleID = "com.box.desktop"
-        case .iCloud, .generic: bundleID = nil
+        case .googleDrive: map = ("com.google.drivefs", "gdrive")
+        case .dropbox: map = ("com.getdropbox.dropbox", nil)
+        case .oneDrive: map = ("com.microsoft.OneDrive", nil)
+        case .box: map = ("com.box.desktop", nil)
+        case .iCloud, .generic: map = nil
         }
-        guard let bundleID,
-            let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
-        else { return nil }
-        return NSWorkspace.shared.icon(forFile: url.path)
+        guard let map, let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: map.id) else { return nil }
+        if let glyph = map.glyph {
+            let url = app.appendingPathComponent("Contents/Resources/\(glyph).icns")
+            if let clean = NSImage(contentsOf: url) { return clean }  // the bare logo Finder shows
+        }
+        return NSWorkspace.shared.icon(forFile: app.path)  // fall back to the full app icon
     }
 
     /// The icon fields (SF symbol + tint, or a branded app image) for a cloud service node.
