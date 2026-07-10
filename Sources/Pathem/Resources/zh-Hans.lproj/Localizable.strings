@@ -938,3 +938,6 @@
 "torrents.files.none" = "全不选";
 "torrents.files.apply" = "应用";
 "torrents.files.single" = "此种子只有一个文件，无需选择。";
+
+"bvc.cmd.addToTorrents" = "添加到种子";
+"bvc.cmd.copyMagnetLink" = "复制磁力链接";

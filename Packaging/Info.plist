@@ -54,6 +54,31 @@
 				<string>public.folder</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>BitTorrent File</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>org.bittorrent.torrent</string>
+				<string>com.bittorrent.torrent</string>
+			</array>
+		</dict>
+	</array>
+	<!-- Handle magnet: links so "open magnet URL" can hand off to Pathem's Torrents panel. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Magnet Link</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>magnet</string>
+			</array>
+		</dict>
 	</array>
 	<!-- A Services item so any app's Services menu can send a folder to Pathem. -->
 	<key>NSServices</key>

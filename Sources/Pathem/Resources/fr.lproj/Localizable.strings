@@ -938,3 +938,6 @@
 "torrents.files.none" = "Tout désélectionner";
 "torrents.files.apply" = "Appliquer";
 "torrents.files.single" = "Ce torrent ne contient qu’un fichier, il n’y a rien à choisir.";
+
+"bvc.cmd.addToTorrents" = "Ajouter aux torrents";
+"bvc.cmd.copyMagnetLink" = "Copier le lien magnet";

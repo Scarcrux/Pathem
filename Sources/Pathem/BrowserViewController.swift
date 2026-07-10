@@ -3,6 +3,7 @@ import NetFS
 import PathemEngine
 import PathemTerminal
 import Quartz
+import TorrentKit
 import UniformTypeIdentifiers
 
 /// The dual-pane browser: two independent panes side by side in a split view,
@@ -41,6 +42,32 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard entries.count == 1, entries[0].isDirectory else { return nil }
         return pane.selectedLocalURLs().first
     }
+    /// The selected local .torrent files (empty unless every selected item is a .torrent).
+    var selectedTorrentURLs: [URL] {
+        guard let pane = activePane, !pane.isRemote else { return [] }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, urls.allSatisfy({ $0.pathExtension.lowercased() == "torrent" }) else { return [] }
+        return urls
+    }
+
+    /// Add every selected .torrent to the Torrents panel.
+    func addSelectedTorrents() {
+        let urls = selectedTorrentURLs
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        for url in urls { addTorrentToPanel(url) }
+    }
+
+    /// Copy the magnet links of the selected .torrent files to the clipboard.
+    func copySelectedMagnetLinks() {
+        let links = selectedTorrentURLs.compactMap { url -> String? in
+            guard let data = try? Data(contentsOf: url), let torrent = try? TorrentFile.parse(data) else { return nil }
+            return torrent.magnetLink
+        }
+        guard !links.isEmpty else { NSSound.beep(); return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(links.joined(separator: "\n"), forType: .string)
+    }
+
     /// The one selected image's URL when exactly one local image file is selected (for "Set
     /// Desktop Picture"); nil otherwise.
     var singleSelectedImageURL: URL? {
@@ -913,6 +940,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("nav.findFiles", L("bvc.cmd.findFiles", "Find Files Everywhere…")) { [weak self] in self?.showGlobalSearch() }
         add("tools.processViewer", L("bvc.cmd.processViewer", "Process Viewer")) { [weak self] in self?.processViewer.present() }
         add("tools.torrents", L("bvc.cmd.torrents", "Torrents")) { [weak self] in self?.torrents.present() }
+        add("files.addToTorrents", L("bvc.cmd.addToTorrents", "Add to Torrents"),
+            enabled: { [weak self] in !(self?.selectedTorrentURLs.isEmpty ?? true) }) {
+            [weak self] in self?.addSelectedTorrents()
+        }
+        add("files.copyMagnetLink", L("bvc.cmd.copyMagnetLink", "Copy Magnet Link"),
+            enabled: { [weak self] in !(self?.selectedTorrentURLs.isEmpty ?? true) }) {
+            [weak self] in self?.copySelectedMagnetLinks()
+        }
         add("tools.transfers", L("bvc.cmd.transfers", "Transfers")) { [weak self] in self?.transferController.showWindow() }
         add("tools.externalCommands", L("bvc.cmd.externalCommands", "External Commands…")) { [weak self] in self?.showExternalCommandsManager() }
         add("tools.runShortcut", L("bvc.cmd.runShortcut", "Run Shortcut on Selection…")) { [weak self] in self?.showShortcutPicker() }
@@ -4928,6 +4963,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// the persisted file/folder/type rules, else the system default.
     private func applyOpen(_ url: URL) {
         let ext = url.pathExtension.lowercased()
+        // A .torrent opens in Pathem's own Torrents panel rather than handing off to another app.
+        if ext == "torrent" {
+            addTorrentToPanel(url)
+            return
+        }
         // Precedence: a specific file/folder rule, then a session-by-type override,
         // then a persisted type rule, else the system default.
         let appPath =
@@ -5988,11 +6028,27 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else { return }
         if isDir.boolValue {
             activePane?.navigate(to: url)
+        } else if url.pathExtension.lowercased() == "torrent" {
+            addTorrentToPanel(url)  // a .torrent opened from Finder goes straight into the Torrents panel
         } else {
-            activePane?.reveal(url)  // a file: show it in its folder
+            activePane?.reveal(url)  // any other file: show it in its folder
         }
         view.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Open the Torrents panel and add a .torrent (or magnet). Downloads go to the Downloads folder.
+    func addTorrentToPanel(_ url: URL) {
+        torrents.present()
+        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        TorrentDaemonClient.shared.addTorrent(fileAt: url.path, savePath: savePath)
+    }
+
+    /// Open the Torrents panel and add a magnet: link (from the magnet: URL scheme).
+    func addMagnetToPanel(_ uri: String) {
+        torrents.present()
+        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        TorrentDaemonClient.shared.addMagnet(uri, savePath: savePath)
     }
 
     /// Toggle the preview pane and report whether both panes kept a real width (the

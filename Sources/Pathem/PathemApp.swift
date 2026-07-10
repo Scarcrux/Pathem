@@ -1113,7 +1113,13 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     private func openInPrimaryBrowser(_ urls: [URL]) {
         guard !urls.isEmpty else { return }
         if let browser = WindowManager.shared.primaryBrowser {
-            for url in urls { browser.openExternalFolder(url) }
+            for url in urls {
+                if url.scheme == "magnet" {
+                    browser.addMagnetToPanel(url.absoluteString)  // magnet: link -> Torrents panel
+                } else {
+                    browser.openExternalFolder(url)  // routes .torrent files to the panel itself
+                }
+            }
         } else {
             DispatchQueue.main.async { [weak self] in self?.openInPrimaryBrowser(urls) }
         }

@@ -938,3 +938,6 @@
 "torrents.files.none" = "すべて解除";
 "torrents.files.apply" = "適用";
 "torrents.files.single" = "このトレントは単一ファイルのため、選択する項目はありません。";
+
+"bvc.cmd.addToTorrents" = "トレントに追加";
+"bvc.cmd.copyMagnetLink" = "マグネットリンクをコピー";

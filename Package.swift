@@ -71,11 +71,6 @@ let package = Package(
         // are fully unit-tested.
         .target(name: "TorrentKit"),
 
-        // The Torrent Inspector plugin: an out-of-process Swift helper that inspects a selected
-        // .torrent (via TorrentKit) and returns its contents / magnet link over the ExtensionHost
-        // wire protocol. Built + installed by scripts/install-torrents-plugin.sh, not bundled.
-        .executableTarget(name: "pathem-torrents", dependencies: ["PathemEngine", "TorrentKit"]),
-
         // pathem-torrentd: the long-running torrent daemon. The Pathem app spawns it and drives
         // the TorrentEngine over a line-delimited JSON control protocol (stdin/stdout), polling
         // status for the Torrents panel. Downloads persist and resume across restarts.

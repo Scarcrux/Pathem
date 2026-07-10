@@ -40,6 +40,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
         "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
         "files.extract", "files.extractHere", "files.extractTo",
+        "files.addToTorrents", "files.copyMagnetLink",
     ]
 
     /// The group an entry belongs to. A separator is auto-inserted wherever the group changes
@@ -52,6 +53,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste": return 3
         case "files.extract", "files.extractHere", "files.extractTo": return 4
+        case "files.addToTorrents", "files.copyMagnetLink": return 6  // .torrent-only actions
         default: return 0  // open / info / rename actions
         }
     }
@@ -112,6 +114,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.extract", L("bvc.cmd.extract", "Extract")),
         ("files.extractHere", L("bvc.cmd.extractHere", "Extract Here")),
         ("files.extractTo", L("bvc.cmd.extractTo", "Extract to Folder…")),
+        ("files.addToTorrents", L("bvc.cmd.addToTorrents", "Add to Torrents")),
+        ("files.copyMagnetLink", L("bvc.cmd.copyMagnetLink", "Copy Magnet Link")),
     ]
 
     override init() {
@@ -182,6 +186,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             let showArchive = urls.contains { Archiver.canExtract($0) }
             let singleFolder = urls.count == 1 && Self.isDirectory(urls[0])
             let inTrash = !urls.isEmpty && urls.allSatisfy { Self.isInTrash($0) }
+            let allTorrents = !urls.isEmpty && urls.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
             for item in menu.items {
                 guard let id = item.representedObject as? String else { continue }
                 switch id {
@@ -197,6 +202,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
                 case "files.putBack", "files.deleteImmediately":
                     item.isHidden = !inTrash  // Trash-only actions
+                case "files.addToTorrents", "files.copyMagnetLink":
+                    item.isHidden = !allTorrents  // only for .torrent selections
                 default:
                     break
                 }

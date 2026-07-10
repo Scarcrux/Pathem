@@ -807,3 +807,6 @@
 "torrents.files.none" = "Deselect All";
 "torrents.files.apply" = "Apply";
 "torrents.files.single" = "This torrent has a single file, so there’s nothing to choose.";
+
+"bvc.cmd.addToTorrents" = "Add to Torrents";
+"bvc.cmd.copyMagnetLink" = "Copy Magnet Link";
