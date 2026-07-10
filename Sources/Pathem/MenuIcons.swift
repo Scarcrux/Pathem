@@ -29,6 +29,9 @@ enum MenuIcons {
         case "files.extract": return "shippingbox"
         case "files.extractHere": return "arrow.down.doc"
         case "files.extractTo": return "folder"
+        case "files.createTorrent": return "square.and.arrow.up.on.square"
+        case "files.addToTorrents": return "arrow.down.circle"
+        case "files.copyMagnetLink": return "link.badge.plus"
         default: return nil
         }
     }
