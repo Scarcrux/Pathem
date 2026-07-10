@@ -951,3 +951,5 @@
 "torrents.create.failed" = "トレントを作成できませんでした";
 
 "torrents.limits.superSeed" = "スーパーシード（効率的な初期シード）";
+
+"torrents.limits.encrypt" = "送信接続を暗号化（MSE）";

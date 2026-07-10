@@ -951,3 +951,5 @@
 "torrents.create.failed" = "Torrent konnte nicht erstellt werden";
 
 "torrents.limits.superSeed" = "Super-Seeding (effizientes Erst-Seeding)";
+
+"torrents.limits.encrypt" = "Ausgehende Verbindungen verschlüsseln (MSE)";

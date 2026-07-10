@@ -30,6 +30,11 @@ import Foundation
         private var connection: NWConnection?
         private var inbound = Data()  // bytes read but not yet parsed into a message
         private var closed = false
+        private var sendCipher: RC4?  // set after an MSE handshake; nil = plaintext
+        private var recvCipher: RC4?
+
+        /// Whether this connection negotiated MSE encryption.
+        public private(set) var isEncrypted = false
 
         /// Peer state, updated as messages arrive (the session reads these).
         public private(set) var peerChoking = true
@@ -66,8 +71,9 @@ import Foundation
             self.connection = connection
         }
 
-        /// Open the TCP connection and exchange handshakes. Throws on failure or timeout.
-        public func connect(timeout: TimeInterval = 15) async throws {
+        /// Open the TCP connection and exchange handshakes. With `encrypted`, runs the MSE handshake
+        /// first (carrying our BitTorrent handshake as its payload) and encrypts the rest.
+        public func connect(timeout: TimeInterval = 15, encrypted: Bool = false) async throws {
             let params = NWParameters.tcp
             let conn = NWConnection(
                 host: .init(host), port: .init(rawValue: port) ?? .any, using: params)
@@ -76,8 +82,41 @@ import Foundation
 
             let reserved = advertiseExtensions ? PeerHandshake.extensionReserved : Data(count: 8)
             let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID, reserved: reserved)
+
+            if encrypted {
+                let stream = mseStream(timeout: timeout)
+                let result = try await MSEHandshake.initiate(
+                    infoHash: infoHash, initialPayload: handshake.encoded, over: stream)
+                sendCipher = result.send
+                recvCipher = result.recv
+                isEncrypted = true
+                inbound.append(await stream.drainBuffer())
+                try await readHandshake(timeout: timeout)  // the peer's BT handshake, now decrypted
+                return
+            }
+
             try await rawSend(handshake.encoded)
             try await readHandshake(timeout: timeout)
+        }
+
+        /// Responder side of an MSE-encrypted connection: run the MSE handshake, read the peer's
+        /// BitTorrent handshake (which arrived as the MSE payload), and reply with ours. `torrentFor`
+        /// maps the recovered req2 hash to one of our info hashes. Returns the matched info hash.
+        public func acceptEncryptedHandshake(
+            timeout: TimeInterval = 15, torrentFor: @escaping @Sendable (Data) -> Data?
+        ) async throws -> Data {
+            guard let conn = connection else { throw PeerError.closed }
+            try await waitReady(conn, timeout: timeout)
+            let stream = mseStream(timeout: timeout)
+            let (hash, result) = try await MSEHandshake.respond(torrentFor: torrentFor, over: stream)
+            infoHash = hash
+            sendCipher = result.send
+            recvCipher = result.recv
+            isEncrypted = true
+            inbound.append(result.initialData)          // the initiator's BT handshake (MSE payload)
+            inbound.append(await stream.drainBuffer())
+            try await readHandshake(timeout: timeout)     // validate it, set remotePeerID
+            return hash
         }
 
         /// For an incoming connection: start it, read the peer's handshake, and return the info
@@ -185,16 +224,18 @@ import Foundation
 
         private func rawSend(_ data: Data) async throws {
             guard let conn = connection, !closed else { throw PeerError.closed }
+            var payload = data
+            if sendCipher != nil { payload = sendCipher!.process(data) }  // RC4 once encryption is on
             let _: Void = try await withThrowingContinuation(timeout: 30) { done in
-                conn.send(content: data, completion: .contentProcessed { error in
+                conn.send(content: payload, completion: .contentProcessed { error in
                     if let error { done(.failure(PeerError.connectionFailed("\(error)"))) }
                     else { done(.success(())) }
                 })
             }
         }
 
-        /// Read one chunk from the socket into `inbound`, or throw on EOF/error/timeout.
-        private func readMore(timeout: TimeInterval) async throws {
+        /// Read (and decrypt, if encrypted) one chunk from the socket.
+        private func receiveRawChunk(timeout: TimeInterval) async throws -> Data {
             guard let conn = connection, !closed else { throw PeerError.closed }
             let chunk: Data = try await withThrowingContinuation(timeout: timeout) { done in
                 conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, isComplete, error in
@@ -204,7 +245,21 @@ import Foundation
                     done(.success(Data()))
                 }
             }
-            inbound.append(chunk)
+            if recvCipher != nil { return recvCipher!.process(chunk) }
+            return chunk
+        }
+
+        /// Read one chunk from the socket into `inbound`, or throw on EOF/error/timeout.
+        private func readMore(timeout: TimeInterval) async throws {
+            inbound.append(try await receiveRawChunk(timeout: timeout))
+        }
+
+        /// A byte-stream adapter over this connection for driving the MSE handshake (which runs
+        /// while the ciphers are still nil, so its reads/writes are plaintext on the wire).
+        private func mseStream(timeout: TimeInterval) -> MSEHandshake.Stream {
+            MSEHandshake.Stream(
+                send: { [weak self] data in try await self?.rawSend(data) },
+                recv: { [weak self] in try await self?.receiveRawChunk(timeout: timeout) ?? Data() })
         }
 
         // MARK: continuation with timeout

@@ -951,3 +951,5 @@
 "torrents.create.failed" = "No se pudo crear el torrent";
 
 "torrents.limits.superSeed" = "Super-siembra (siembra inicial eficiente)";
+
+"torrents.limits.encrypt" = "Cifrar conexiones salientes (MSE)";

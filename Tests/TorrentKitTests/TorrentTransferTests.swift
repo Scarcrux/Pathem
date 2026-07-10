@@ -1,8 +1,68 @@
 import CryptoKit
 import Foundation
+import Network
 import Testing
 
 @testable import TorrentKit
+
+#if canImport(Network)
+    /// A one-shot async box for handing a value (or error) out of a callback.
+    private actor ResultBox<T: Sendable> {
+        private var continuation: CheckedContinuation<T, Error>?
+        private var pending: Result<T, Error>?
+        func value() async throws -> T {
+            if let pending { return try pending.get() }
+            return try await withCheckedThrowingContinuation { continuation = $0 }
+        }
+        func set(_ value: T) { deliver(.success(value)) }
+        func fail(_ error: Error) { deliver(.failure(error)) }
+        private func deliver(_ result: Result<T, Error>) {
+            if let continuation { continuation.resume(with: result); self.continuation = nil }
+            else { pending = result }
+        }
+    }
+
+    @Suite struct MSEConnectionTests {
+        @Test func encryptedHandshakeAndMessageOverRealSocket() async throws {
+            let infoHash = Data((0..<20).map { UInt8($0 &+ 7) })
+            let serverID = Tracker.makePeerID()
+            let clientID = Tracker.makePeerID()
+            let req2Expected = Data(Insecure.SHA1.hash(data: Data("req2".utf8) + infoHash))
+
+            // A listener that MSE-accepts the first connection, replies, and sends one message.
+            let listener = try NWListener(using: .tcp, on: .any)
+            let serverDone = ResultBox<Bool>()
+            listener.newConnectionHandler = { conn in
+                let peer = PeerConnection(incoming: conn, peerID: serverID)
+                Task {
+                    do {
+                        _ = try await peer.acceptEncryptedHandshake(torrentFor: { $0 == req2Expected ? infoHash : nil })
+                        try await peer.replyHandshake()   // our BT handshake (encrypted)
+                        try await peer.send(.unchoke)     // a wire message over the encrypted channel
+                        await serverDone.set(true)
+                    } catch {
+                        await serverDone.fail(error)
+                    }
+                }
+            }
+            let portBox = ResultBox<UInt16>()
+            listener.stateUpdateHandler = { if case .ready = $0, let p = listener.port?.rawValue { Task { await portBox.set(p) } } }
+            listener.start(queue: .global())
+            let port = try await portBox.value()
+
+            // Client connects with encryption and reads the server's message.
+            let client = PeerConnection(host: "127.0.0.1", port: port, infoHash: infoHash, peerID: clientID)
+            try await client.connect(encrypted: true)
+            #expect(await client.isEncrypted)
+            let message = try await client.receive(timeout: 10)
+            #expect(message == .unchoke)  // decrypted correctly off the encrypted stream
+            #expect(try await serverDone.value())
+
+            await client.close()
+            listener.cancel()
+        }
+    }
+#endif
 
 #if canImport(Network)
     /// End-to-end integration: a real leecher downloads a real file from a real seeder over a

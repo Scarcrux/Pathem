@@ -72,9 +72,13 @@ public actor TorrentSession {
     private var webSeedInFlight: Set<Int> = []  // pieces being fetched from web seeds
     private var superSeeding = false
     private var piecesGivenCount: [Int: Int] = [:]  // how often each piece was handed out (super-seed)
+    private var preferEncryption = false
 
     /// Enable/disable super-seeding (efficient initial seeding). Takes effect on new peers.
     public func setSuperSeeding(_ on: Bool) { superSeeding = on }
+
+    /// Prefer MSE-encrypted outgoing connections (falling back to plaintext). Takes effect on new peers.
+    public func setPreferEncryption(_ on: Bool) { preferEncryption = on }
 
     private let maxPeers = 30
     private let maxInFlightPerPeer = 8
@@ -334,18 +338,21 @@ public actor TorrentSession {
     // MARK: per-peer download loop
 
     private func runPeer(_ endpoint: Tracker.Peer) async {
-        let peer = PeerConnection(
-            host: endpoint.host, port: UInt16(endpoint.port), infoHash: torrent.infoHash,
-            peerID: peerID, advertiseExtensions: true)
-        defer {
-            knownPeers.remove(endpoint)
-            Task { await peer.close() }
-        }
-        do {
-            try await peer.connect()
-            try await pump(peer)
-        } catch {
-            // Connection dropped or timed out; the roster shrinks and the tracker refills it.
+        defer { knownPeers.remove(endpoint) }
+        // Prefer an encrypted (MSE) connection, falling back to plaintext if the handshake fails.
+        for encrypted in (preferEncryption ? [true, false] : [false]) {
+            let peer = PeerConnection(
+                host: endpoint.host, port: UInt16(endpoint.port), infoHash: torrent.infoHash,
+                peerID: peerID, advertiseExtensions: true)
+            do {
+                try await peer.connect(encrypted: encrypted)
+            } catch {
+                await peer.close()
+                continue  // connect/handshake failed: try the next mode (plaintext)
+            }
+            do { try await pump(peer) } catch {}  // connected: run until it drops
+            await peer.close()
+            return
         }
     }
 

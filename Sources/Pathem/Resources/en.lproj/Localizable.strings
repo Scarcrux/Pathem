@@ -820,3 +820,5 @@
 "torrents.create.failed" = "Couldn’t create the torrent";
 
 "torrents.limits.superSeed" = "Super-seed (efficient initial seeding)";
+
+"torrents.limits.encrypt" = "Encrypt outgoing connections (MSE)";

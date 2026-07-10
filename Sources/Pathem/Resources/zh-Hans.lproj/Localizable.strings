@@ -951,3 +951,5 @@
 "torrents.create.failed" = "无法创建种子";
 
 "torrents.limits.superSeed" = "超级做种（高效的初始做种）";
+
+"torrents.limits.encrypt" = "加密对外连接（MSE）";

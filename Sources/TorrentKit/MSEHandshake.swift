@@ -44,6 +44,13 @@ public enum MSEHandshake {
             return Data(out)
         }
 
+        /// Any bytes read past the handshake, to hand back to the connection's normal reader.
+        func drainBuffer() -> Data {
+            let out = buffer
+            buffer = Data()
+            return out
+        }
+
         /// Read and discard bytes until `pattern` appears; return the bytes AFTER the pattern that
         /// were already buffered (usually none). Fails after scanning `maxExtra` bytes.
         func syncTo(_ pattern: Data, maxExtra: Int) async throws {
