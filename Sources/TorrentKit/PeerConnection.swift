@@ -27,7 +27,12 @@ import Foundation
         private let myPeerID: Data
         private let advertiseExtensions: Bool
 
+        /// Which wire transport a peer connection runs over. TCP is the default and universal;
+        /// µTP (BEP 29) is a UDP-based option that's friendlier to congestion.
+        public enum Transport: Sendable { case tcp, utp }
+
         private var connection: NWConnection?
+        private var utp: UTPTransport?  // set instead of `connection` when running over µTP
         private var inbound = Data()  // bytes read but not yet parsed into a message
         private var closed = false
         private var sendCipher: RC4?  // set after an MSE handshake; nil = plaintext
@@ -71,14 +76,23 @@ import Foundation
             self.connection = connection
         }
 
-        /// Open the TCP connection and exchange handshakes. With `encrypted`, runs the MSE handshake
-        /// first (carrying our BitTorrent handshake as its payload) and encrypts the rest.
-        public func connect(timeout: TimeInterval = 15, encrypted: Bool = false) async throws {
-            let params = NWParameters.tcp
-            let conn = NWConnection(
-                host: .init(host), port: .init(rawValue: port) ?? .any, using: params)
-            self.connection = conn
-            try await waitReady(conn, timeout: timeout)
+        /// Open the connection and exchange handshakes. With `encrypted`, runs the MSE handshake
+        /// first (carrying our BitTorrent handshake as its payload) and encrypts the rest. With
+        /// `transport: .utp`, the whole exchange runs over µTP instead of TCP (outbound only).
+        public func connect(
+            timeout: TimeInterval = 15, encrypted: Bool = false, transport: Transport = .tcp
+        ) async throws {
+            switch transport {
+            case .tcp:
+                let conn = NWConnection(
+                    host: .init(host), port: .init(rawValue: port) ?? .any, using: .tcp)
+                self.connection = conn
+                try await waitReady(conn, timeout: timeout)
+            case .utp:
+                let t = UTPTransport(host: host, port: port)
+                try await t.start(timeout: timeout)
+                self.utp = t
+            }
 
             let reserved = advertiseExtensions ? PeerHandshake.extensionReserved : Data(count: 8)
             let handshake = PeerHandshake(infoHash: infoHash, peerID: myPeerID, reserved: reserved)
@@ -216,6 +230,10 @@ import Foundation
             closed = true
             connection?.cancel()
             connection = nil
+            if let utp {
+                self.utp = nil
+                Task { await utp.close() }
+            }
         }
 
         // MARK: raw socket
@@ -223,9 +241,11 @@ import Foundation
         private static let queue = DispatchQueue(label: "com.pathem.torrent.peer", attributes: .concurrent)
 
         private func rawSend(_ data: Data) async throws {
-            guard let conn = connection, !closed else { throw PeerError.closed }
+            guard !closed else { throw PeerError.closed }
             var payload = data
             if sendCipher != nil { payload = sendCipher!.process(data) }  // RC4 once encryption is on
+            if let utp { try await utp.send(payload); return }
+            guard let conn = connection else { throw PeerError.closed }
             let _: Void = try await withThrowingContinuation(timeout: 30) { done in
                 conn.send(content: payload, completion: .contentProcessed { error in
                     if let error { done(.failure(PeerError.connectionFailed("\(error)"))) }
@@ -236,13 +256,19 @@ import Foundation
 
         /// Read (and decrypt, if encrypted) one chunk from the socket.
         private func receiveRawChunk(timeout: TimeInterval) async throws -> Data {
-            guard let conn = connection, !closed else { throw PeerError.closed }
-            let chunk: Data = try await withThrowingContinuation(timeout: timeout) { done in
-                conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, isComplete, error in
-                    if let error { done(.failure(PeerError.connectionFailed("\(error)"))); return }
-                    if let data, !data.isEmpty { done(.success(data)); return }
-                    if isComplete { done(.failure(PeerError.closed)); return }
-                    done(.success(Data()))
+            guard !closed else { throw PeerError.closed }
+            let chunk: Data
+            if let utp {
+                chunk = try await utp.recv(timeout: timeout)
+            } else {
+                guard let conn = connection else { throw PeerError.closed }
+                chunk = try await withThrowingContinuation(timeout: timeout) { done in
+                    conn.receive(minimumIncompleteLength: 1, maximumLength: 65536) { data, _, isComplete, error in
+                        if let error { done(.failure(PeerError.connectionFailed("\(error)"))); return }
+                        if let data, !data.isEmpty { done(.success(data)); return }
+                        if isComplete { done(.failure(PeerError.closed)); return }
+                        done(.success(Data()))
+                    }
                 }
             }
             if recvCipher != nil { return recvCipher!.process(chunk) }

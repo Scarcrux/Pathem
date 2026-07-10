@@ -1,6 +1,10 @@
 import Foundation
 import Testing
 
+#if canImport(Network)
+    import Network
+#endif
+
 @testable import TorrentKit
 
 @Suite struct UTPPacketTests {
@@ -103,4 +107,102 @@ private actor LossyChannel {
         #expect(got == payload)
         #expect(finished)
     }
+
+    @Test func streamingReadDeliversBytesThenEOF() async {
+        // The streaming reader PeerConnection drives: readAvailable() yields in-order bytes and then
+        // signals end-of-stream (empty) once the FIN is in and everything is drained.
+        let channel = LossyChannel(dropEvery: 0)
+        let initiator = UTPSocket(role: .initiator, connectionID: 0x55, sendDatagram: { await channel.aToB($0) })
+        let responder = UTPSocket(role: .responder, connectionID: 0x55, sendDatagram: { await channel.bToA($0) })
+        await channel.setHandlers(a: { await initiator.handle($0) }, b: { await responder.handle($0) })
+
+        await initiator.connect()
+        let payload = Data((0..<3000).map { UInt8(($0 &* 7 &+ 1) & 0xff) })
+        await initiator.write(payload)
+        await initiator.finish()  // over a lossless channel, everything is delivered synchronously
+
+        let chunk = await responder.readAvailable()   // all in-order bytes so far
+        let eof = await responder.readAvailable()      // FIN observed + drained -> EOF
+        #expect(chunk == payload)
+        #expect(eof.isEmpty)
+    }
 }
+
+#if canImport(Network)
+    /// A tiny UDP server that runs one responder-side uTP socket and echoes back whatever it
+    /// receives, so a real UTPTransport (initiator) can be driven over an actual socket.
+    private actor UTPEchoServer {
+        private var listener: NWListener?
+        private var responder: UTPSocket?
+        nonisolated let queue = DispatchQueue(label: "com.pathem.test.utpecho", attributes: .concurrent)
+
+        func start() async throws -> UInt16 {
+            let listener = try NWListener(using: .udp, on: .any)
+            self.listener = listener
+            listener.newConnectionHandler = { [weak self] conn in
+                guard let self else { conn.cancel(); return }
+                conn.stateUpdateHandler = { state in
+                    if case .ready = state { self.armReceive(conn) }
+                }
+                conn.start(queue: self.queue)
+            }
+            let port: UInt16 = try await withCheckedThrowingContinuation { cont in
+                listener.stateUpdateHandler = { state in
+                    switch state {
+                    case .ready: cont.resume(returning: listener.port?.rawValue ?? 0)
+                    case .failed(let e): cont.resume(throwing: e)
+                    default: break
+                    }
+                }
+                listener.start(queue: self.queue)
+            }
+            return port
+        }
+
+        func stop() { listener?.cancel(); listener = nil }
+
+        private nonisolated func armReceive(_ conn: NWConnection) {
+            conn.receiveMessage { [weak self] data, _, _, error in
+                guard let self else { return }
+                if let data, !data.isEmpty { Task { await self.onDatagram(data, from: conn) } }
+                if error == nil { self.armReceive(conn) }
+            }
+        }
+
+        private func onDatagram(_ data: Data, from conn: NWConnection) async {
+            if responder == nil, let packet = UTPPacket.decode(data) {
+                let socket = UTPSocket(role: .responder, connectionID: packet.connectionID, sendDatagram: { out in
+                    await withCheckedContinuation { (c: CheckedContinuation<Void, Never>) in
+                        conn.send(content: out, completion: .contentProcessed { _ in c.resume() })
+                    }
+                })
+                responder = socket
+                Task {  // echo loop: whatever the initiator sends, send straight back
+                    while true {
+                        let chunk = await socket.readAvailable()
+                        if chunk.isEmpty { break }
+                        await socket.write(chunk)
+                    }
+                }
+            }
+            await responder?.handle(data)
+        }
+    }
+
+    @Suite struct UTPTransportTests {
+        @Test func handshakesAndStreamsOverRealUDP() async throws {
+            let server = UTPEchoServer()
+            let port = try await server.start()
+            #expect(port != 0)
+
+            let transport = UTPTransport(host: "127.0.0.1", port: port)
+            try await transport.start(timeout: 5)   // completes the uTP SYN/ACK over the socket
+            try await transport.send(Data("hello µTP".utf8))
+            let echoed = try await transport.recv(timeout: 5)
+            await transport.close()
+            await server.stop()
+
+            #expect(echoed == Data("hello µTP".utf8))
+        }
+    }
+#endif

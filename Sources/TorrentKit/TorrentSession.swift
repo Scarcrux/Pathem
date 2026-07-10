@@ -81,12 +81,16 @@ public actor TorrentSession {
     private var superSeeding = false
     private var piecesGivenCount: [Int: Int] = [:]  // how often each piece was handed out (super-seed)
     private var preferEncryption = false
+    private var preferUTP = false
 
     /// Enable/disable super-seeding (efficient initial seeding). Takes effect on new peers.
     public func setSuperSeeding(_ on: Bool) { superSeeding = on }
 
     /// Prefer MSE-encrypted outgoing connections (falling back to plaintext). Takes effect on new peers.
     public func setPreferEncryption(_ on: Bool) { preferEncryption = on }
+
+    /// Prefer µTP (BEP 29) for outgoing connections, falling back to TCP. Takes effect on new peers.
+    public func setPreferUTP(_ on: Bool) { preferUTP = on }
 
     private let maxPeers = 30
     private let maxInFlightPerPeer = 8
@@ -380,20 +384,27 @@ public actor TorrentSession {
 
     private func runPeer(_ endpoint: Tracker.Peer) async {
         defer { knownPeers.remove(endpoint) }
-        // Prefer an encrypted (MSE) connection, falling back to plaintext if the handshake fails.
-        for encrypted in (preferEncryption ? [true, false] : [false]) {
-            let peer = PeerConnection(
-                host: endpoint.host, port: UInt16(endpoint.port), infoHash: torrent.infoHash,
-                peerID: peerID, advertiseExtensions: true)
-            do {
-                try await peer.connect(encrypted: encrypted)
-            } catch {
+        // Try the preferred transport/encryption first, falling back on failure: µTP before TCP
+        // (a peer that ignores our µTP SYN times out fast), MSE before plaintext.
+        let transports: [PeerConnection.Transport] = preferUTP ? [.utp, .tcp] : [.tcp]
+        let encModes = preferEncryption ? [true, false] : [false]
+        for transport in transports {
+            for encrypted in encModes {
+                let peer = PeerConnection(
+                    host: endpoint.host, port: UInt16(endpoint.port), infoHash: torrent.infoHash,
+                    peerID: peerID, advertiseExtensions: true)
+                do {
+                    // Short µTP dial timeout so we fall back to TCP quickly when a peer is TCP-only.
+                    try await peer.connect(
+                        timeout: transport == .utp ? 6 : 15, encrypted: encrypted, transport: transport)
+                } catch {
+                    await peer.close()
+                    continue  // this transport/mode failed: try the next
+                }
+                do { try await pump(peer) } catch {}  // connected: run until it drops
                 await peer.close()
-                continue  // connect/handshake failed: try the next mode (plaintext)
+                return
             }
-            do { try await pump(peer) } catch {}  // connected: run until it drops
-            await peer.close()
-            return
         }
     }
 

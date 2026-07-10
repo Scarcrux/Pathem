@@ -18,6 +18,7 @@ final class TorrentDaemonClient {
     private(set) var upLimit = 0
     private(set) var superSeed = false
     private(set) var encryptOutgoing = false
+    private(set) var preferUTP = false
     var onUpdate: (([TorrentSession.Status]) -> Void)?
     var onError: ((String) -> Void)?
     var onFiles: ((String, [TorrentSession.FileInfo]) -> Void)?
@@ -132,10 +133,10 @@ final class TorrentDaemonClient {
 
     func requestList() { send(.init(op: .list, id: nextCommandID())) }
 
-    /// Set global speed caps in bytes/second (0 = unlimited) and the seeding/encryption toggles.
-    func setLimits(down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool) {
+    /// Set global speed caps in bytes/second (0 = unlimited) and the seeding/encryption/µTP toggles.
+    func setLimits(down: Int, up: Int, superSeed: Bool, encryptOutgoing: Bool, preferUTP: Bool) {
         send(.init(op: .setLimits, id: nextCommandID(), downLimit: down, upLimit: up,
-            superSeed: superSeed, encryptOutgoing: encryptOutgoing))
+            superSeed: superSeed, encryptOutgoing: encryptOutgoing, preferUTP: preferUTP))
     }
 
     /// Request a torrent's file list (answered via onFiles).
@@ -178,6 +179,7 @@ final class TorrentDaemonClient {
         if let up = event.upLimit { upLimit = up }
         if let ss = event.superSeed { superSeed = ss }
         if let enc = event.encryptOutgoing { encryptOutgoing = enc }
+        if let utp = event.preferUTP { preferUTP = utp }
         if let torrents = event.torrents {
             self.torrents = torrents
             onUpdate?(torrents)

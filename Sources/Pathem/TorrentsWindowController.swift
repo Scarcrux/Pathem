@@ -281,22 +281,26 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         superSeed.state = client.superSeed ? .on : .off
         let encrypt = NSButton(checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"), target: nil, action: nil)
         encrypt.state = client.encryptOutgoing ? .on : .off
+        let utp = NSButton(checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"), target: nil, action: nil)
+        utp.state = client.preferUTP ? .on : .off
         let container = NSStackView(views: [
             labeledRow(L("torrents.limits.down", "Download"), downField),
             labeledRow(L("torrents.limits.up", "Upload"), upField),
             superSeed,
             encrypt,
+            utp,
         ])
         container.orientation = .vertical
         container.spacing = 8
-        container.frame = NSRect(x: 0, y: 0, width: 320, height: 104)
+        container.frame = NSRect(x: 0, y: 0, width: 320, height: 126)
         alert.accessoryView = container
         alert.window.initialFirstResponder = downField
 
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         client.setLimits(
             down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024,
-            superSeed: superSeed.state == .on, encryptOutgoing: encrypt.state == .on)
+            superSeed: superSeed.state == .on, encryptOutgoing: encrypt.state == .on,
+            preferUTP: utp.state == .on)
     }
 
     private func labeledRow(_ title: String, _ field: NSTextField) -> NSView {

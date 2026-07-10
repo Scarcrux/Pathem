@@ -68,15 +68,15 @@ func handle(_ command: TorrentControl.Command) async {
         let limits = await engine.currentLimits()
         emit(.init(kind: .reply, replyTo: command.id, ok: true, torrents: torrents,
             downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed,
-            encryptOutgoing: limits.encryptOutgoing))
+            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP))
     case .setLimits:
         await engine.setLimits(
             down: command.downLimit ?? 0, up: command.upLimit ?? 0, superSeed: command.superSeed ?? false,
-            encryptOutgoing: command.encryptOutgoing ?? false)
+            encryptOutgoing: command.encryptOutgoing ?? false, preferUTP: command.preferUTP ?? false)
         let limits = await engine.currentLimits()
         emit(.init(kind: .reply, replyTo: command.id, ok: true,
             downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed,
-            encryptOutgoing: limits.encryptOutgoing))
+            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP))
     case .files:
         guard let hash = command.infoHash else {
             emit(.init(kind: .reply, replyTo: command.id, ok: false, message: "files needs an infoHash"))
@@ -105,7 +105,7 @@ let ticker = Task {
         let limits = await engine.currentLimits()
         emit(.init(kind: .status, ok: true, torrents: torrents,
             downLimit: limits.down, upLimit: limits.up, superSeed: limits.superSeed,
-            encryptOutgoing: limits.encryptOutgoing))
+            encryptOutgoing: limits.encryptOutgoing, preferUTP: limits.preferUTP))
         await engine.checkpoint()
     }
 }

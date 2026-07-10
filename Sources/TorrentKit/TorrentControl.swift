@@ -27,12 +27,14 @@ public enum TorrentControl {
         public var upLimit: Int?
         public var superSeed: Bool?
         public var encryptOutgoing: Bool?
+        public var preferUTP: Bool?
         public var wantedFiles: [Int]?
 
         public init(
             op: Op, id: Int = 0, infoHash: String? = nil, torrentPath: String? = nil,
             magnet: String? = nil, savePath: String? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
-            superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, wantedFiles: [Int]? = nil
+            superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, preferUTP: Bool? = nil,
+            wantedFiles: [Int]? = nil
         ) {
             self.op = op
             self.id = id
@@ -44,6 +46,7 @@ public enum TorrentControl {
             self.upLimit = upLimit
             self.superSeed = superSeed
             self.encryptOutgoing = encryptOutgoing
+            self.preferUTP = preferUTP
             self.wantedFiles = wantedFiles
         }
     }
@@ -64,14 +67,15 @@ public enum TorrentControl {
         public var upLimit: Int?
         public var superSeed: Bool?
         public var encryptOutgoing: Bool?
+        public var preferUTP: Bool?
         public var infoHash: String?              // which torrent a files reply is for
         public var files: [TorrentSession.FileInfo]?
 
         public init(
             kind: EventKind, replyTo: Int? = nil, ok: Bool = true, message: String? = nil,
             torrents: [TorrentSession.Status]? = nil, downLimit: Int? = nil, upLimit: Int? = nil,
-            superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, infoHash: String? = nil,
-            files: [TorrentSession.FileInfo]? = nil
+            superSeed: Bool? = nil, encryptOutgoing: Bool? = nil, preferUTP: Bool? = nil,
+            infoHash: String? = nil, files: [TorrentSession.FileInfo]? = nil
         ) {
             self.kind = kind
             self.replyTo = replyTo
@@ -82,6 +86,7 @@ public enum TorrentControl {
             self.upLimit = upLimit
             self.superSeed = superSeed
             self.encryptOutgoing = encryptOutgoing
+            self.preferUTP = preferUTP
             self.infoHash = infoHash
             self.files = files
         }

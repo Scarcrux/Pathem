@@ -20,6 +20,8 @@ public actor UTPSocket {
     private var reorderBuffer: [UInt16: (payload: Data, isFin: Bool)] = [:]  // future seq -> data
     private let maxReorder = 2048  // cap buffered future packets (bounds memory under a stalling peer)
     private var delivered = Data()             // in-order payload delivered to the app
+    private var consumed = 0                    // how much of `delivered` a streaming reader took
+    private var reader: CheckedContinuation<Data, Never>?  // a recv() awaiting more bytes
     private var finReceived = false
     private var retransmitTask: Task<Void, Never>?
 
@@ -85,11 +87,41 @@ public actor UTPSocket {
     /// All in-order bytes delivered so far.
     public func received() -> Data { delivered }
     public var isFinished: Bool { finReceived && unacked.isEmpty }
+    public var isConnected: Bool { state == .connected }
+
+    /// Streaming read: return in-order bytes not yet handed out, suspending until some arrive.
+    /// Returns empty only at end of stream (the peer sent FIN, or the socket closed), which the
+    /// transport translates into a normal connection close. Feeds PeerConnection's chunk reader.
+    public func readAvailable() async -> Data {
+        if consumed < delivered.count { return take() }
+        if state == .closed || finReceived { return Data() }  // EOF
+        return await withCheckedContinuation { cont in
+            if consumed < delivered.count || state == .closed || finReceived {
+                cont.resume(returning: take())
+            } else {
+                reader = cont
+            }
+        }
+    }
+
+    private func take() -> Data {
+        guard consumed < delivered.count else { return Data() }
+        let out = delivered.subdata(in: consumed..<delivered.count)
+        consumed = delivered.count
+        return out
+    }
+
+    private func wakeReader() {
+        guard let r = reader, consumed < delivered.count || state == .closed || finReceived else { return }
+        reader = nil
+        r.resume(returning: take())
+    }
 
     public func close() {
         state = .closed
         retransmitTask?.cancel()
         retransmitTask = nil
+        wakeReader()  // let a suspended reader observe EOF instead of hanging
     }
 
     // MARK: incoming
@@ -131,6 +163,7 @@ public actor UTPSocket {
         } else if seq &- expected < 0x8000, reorderBuffer.count < maxReorder {  // a future packet: buffer it
             reorderBuffer[seq] = (payload, isFin)  // keep the FIN flag, or a reordered FIN is lost
         }
+        wakeReader()       // hand any newly in-order bytes (or EOF) to a waiting reader
         await sendState()  // always ack current progress
     }
 
