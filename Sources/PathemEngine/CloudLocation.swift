@@ -42,10 +42,9 @@ public enum CloudService: String, Sendable, CaseIterable, Equatable {
 /// Pure and testable: the caller passes the home directory so it doesn't read the
 /// environment.
 public enum CloudLocation {
-    /// The service for a folder at `path`, but only when it's a service root or one of its
-    /// top-level folders (the badge-worthy case: the folders you'd see side by side and
-    /// need to tell apart). Deeper folders return nil, so a folder deep inside Dropbox
-    /// isn't badged on every row. Returns nil for non-cloud paths.
+    /// The cloud service a folder at `path` belongs to -- its provider root or any folder inside it,
+    /// at any depth -- so cloud folders are marked consistently, not just at the top level. Returns
+    /// nil for non-cloud paths.
     public static func service(forFolderAt path: String, home: String) -> CloudService? {
         let p = normalize(path)
         let h = normalize(home)
@@ -53,29 +52,28 @@ public enum CloudLocation {
 
         // iCloud Drive: the container and its top-level folders (Documents, Desktop, apps).
         let iCloudRoot = h + "/Library/Mobile Documents/com~apple~CloudDocs"
-        if p == iCloudRoot || parent(of: p) == iCloudRoot { return .iCloud }
+        if p == iCloudRoot || p.hasPrefix(iCloudRoot + "/") { return .iCloud }
 
         // Third-party providers under ~/Library/CloudStorage/<Provider...>.
         let container = h + "/Library/CloudStorage"
         if p == container { return nil }  // the container itself is not a service
         if let rel = relativePath(of: p, under: container) {
             let comps = rel.split(separator: "/").map(String.init)
-            // comps[0] is the provider directory; badge it and its direct children only.
-            if comps.count >= 1, comps.count <= 2 { return provider(fromDirectory: comps[0]) }
+            if let first = comps.first { return provider(fromDirectory: first) }  // any folder inside the provider
             return nil
         }
 
-        // Legacy sync-folder roots in the home directory, and their top-level folders.
+        // Legacy sync-folder roots in the home directory, and anything inside them.
         for (name, service): (String, CloudService) in [("Dropbox", .dropbox), ("Google Drive", .googleDrive)] {
             let root = h + "/" + name
-            if p == root || parent(of: p) == root { return service }
+            if p == root || p.hasPrefix(root + "/") { return service }
         }
         return nil
     }
 
     /// Map a `~/Library/CloudStorage` provider directory name to a service. The names look
     /// like "Dropbox", "GoogleDrive-you@gmail.com", "OneDrive-Personal", "Box-Box".
-    static func provider(fromDirectory name: String) -> CloudService {
+    public static func provider(fromDirectory name: String) -> CloudService {
         let lower = name.lowercased()
         if lower.hasPrefix("icloud") { return .iCloud }  // e.g. "iCloudDrive-iCloudDrive (...)"
         if lower.hasPrefix("dropbox") { return .dropbox }

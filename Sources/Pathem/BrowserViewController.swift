@@ -531,6 +531,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self?.airDrop(urls)
         }
         sidebar.onAirDropFiles = { [weak self] urls in self?.airDrop(urls) }
+        sidebar.onNetwork = { [weak self] in self?.connectToServer() }
         sidebar.onTrashFiles = { [weak self] urls in self?.performLocalTrash(urls) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onToggleCompact = { [weak self] in

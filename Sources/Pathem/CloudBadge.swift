@@ -22,7 +22,7 @@ enum CloudBadge {
         base.draw(
             in: NSRect(origin: .zero, size: size), from: .zero, operation: .sourceOver, fraction: 1)
 
-        let badge = max(9, size.width * 0.62)
+        let badge = max(8, size.width * 0.42)  // a corner mark, not half the icon
         let rect = NSRect(x: size.width - badge, y: 0, width: badge, height: badge)
         let tint = ThemeManager.color(fromHex: service.tintHex) ?? .systemGray
         // Draw a white halo (the glyph, slightly larger, in white) so the colored badge

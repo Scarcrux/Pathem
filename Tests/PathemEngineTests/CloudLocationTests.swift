@@ -11,8 +11,8 @@ import Testing
         #expect(CloudLocation.service(forFolderAt: root, home: home) == .iCloud)
         #expect(CloudLocation.service(forFolderAt: "\(root)/Documents", home: home) == .iCloud)
         #expect(CloudLocation.service(forFolderAt: "\(root)/Desktop", home: home) == .iCloud)
-        // Deeper than a top-level folder: not badged (avoids noise inside iCloud).
-        #expect(CloudLocation.service(forFolderAt: "\(root)/Documents/Work", home: home) == nil)
+        // Any folder inside iCloud is marked, at any depth (consistent, not just the top level).
+        #expect(CloudLocation.service(forFolderAt: "\(root)/Documents/Work", home: home) == .iCloud)
     }
 
     @Test func cloudStorageProviders() {
@@ -30,10 +30,10 @@ import Testing
         #expect(CloudLocation.service(forFolderAt: "\(base)/SomethingElse-x", home: home) == .generic)
     }
 
-    @Test func cloudStorageTopLevelFolderIsBadgedButDeeperIsNot() {
+    @Test func cloudStorageFoldersBadgedAtAnyDepth() {
         let drive = "\(home)/Library/CloudStorage/GoogleDrive-me@gmail.com"
         #expect(CloudLocation.service(forFolderAt: "\(drive)/Projects", home: home) == .googleDrive)
-        #expect(CloudLocation.service(forFolderAt: "\(drive)/Projects/Sub", home: home) == nil)
+        #expect(CloudLocation.service(forFolderAt: "\(drive)/Projects/Sub", home: home) == .googleDrive)
     }
 
     @Test func cloudStorageContainerItselfIsNotAService() {

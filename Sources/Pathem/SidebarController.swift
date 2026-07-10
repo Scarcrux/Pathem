@@ -75,6 +75,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onAirDrop: (() -> Void)?
     /// Files were dropped onto AirDrop: send them with the AirDrop sheet.
     var onAirDropFiles: ((_ urls: [URL]) -> Void)?
+    /// The Network row was clicked: open Connect to Server.
+    var onNetwork: (() -> Void)?
     /// Files were dropped onto the Trash: move them to the Trash.
     var onTrashFiles: ((_ urls: [URL]) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
@@ -133,6 +135,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case smart(SmartQuery)  // Recents / a tag filter (Spotlight-backed)
         case savedSearch(SavedSearch)  // a user's saved smart folder (runs its mdfind query)
         case airdrop  // AirDrop send sheet (no filesystem path)
+        case network  // Network: opens Connect to Server (no filesystem path)
         case trash  // the user's Trash (navigable; drops trash the items)
         case shared(String)  // a discovered SMB host (by display name)
         case connection(RemoteConnection)  // a saved FTP/SFTP server
@@ -150,12 +153,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let isFolder: Bool
         /// A colored dot icon for a tag-filter row.
         let tagColor: FileTag.Color?
+        /// An arbitrary tint for the icon (cloud providers use their brand color to read apart).
+        let iconTint: NSColor?
+        /// A mounted volume that can be ejected (covers non-/Volumes mounts like OrbStack).
+        let isEjectable: Bool
         var children: [Node]
         /// Subfolders are loaded lazily the first time the node is expanded.
         var childrenLoaded = false
         init(
             kind: Kind, title: String, url: URL?, icon: String?, isFolder: Bool = false,
-            tagColor: FileTag.Color? = nil, children: [Node] = []
+            tagColor: FileTag.Color? = nil, iconTint: NSColor? = nil, isEjectable: Bool = false,
+            children: [Node] = []
         ) {
             self.kind = kind
             self.title = title
@@ -163,6 +171,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             self.icon = icon
             self.isFolder = isFolder
             self.tagColor = tagColor
+            self.iconTint = iconTint
+            self.isEjectable = isEjectable
             self.children = children
         }
         var isHeader: Bool {
@@ -384,6 +394,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .smart(let query): return "smart:\(query)"
         case .savedSearch(let search): return "saved:\(search.name)"
         case .airdrop: return "airdrop"
+        case .network: return "network"
         case .trash: return "trash"
         case .shared(let host): return "shared:\(host)"
         case .connection(let connection): return "conn:\(connection.id)"
@@ -468,11 +479,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let airdrop = Node(
             kind: .airdrop, title: L("sidebar.airdrop", "AirDrop"), url: nil,
             icon: "dot.radiowaves.left.and.right")
+        let network = Node(
+            kind: .network, title: L("sidebar.network", "Network"), url: nil, icon: "network")
         let trashURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
         let trash = Node(kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: "trash")
         return Node(
             kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil, icon: nil,
-            children: [airdrop, trash])
+            children: [airdrop, network, trash])
     }
 
     /// A demo Cloud/Volumes section from generic (name, folder) pairs.
@@ -517,7 +530,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
-            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: "icloud", isFolder: true))
+            let (sym, tint) = Self.cloudIcon(.iCloud)
+            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: sym, isFolder: true, iconTint: tint))
         }
         // Modern Dropbox/Google Drive/OneDrive/Box etc. mount here via the File Provider.
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
@@ -529,7 +543,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 guard isDir else { continue }
                 // iCloud is already listed from Mobile Documents above; don't list it twice.
                 if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
-                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: "cloud", isFolder: true))
+                let (sym, tint) = Self.cloudIcon(CloudLocation.provider(fromDirectory: url.lastPathComponent))
+                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: sym, isFolder: true, iconTint: tint))
             }
         }
         // Legacy/home-level cloud folders not under CloudStorage (older Dropbox, OneDrive,
@@ -537,13 +552,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let alreadyHasProvider: (String) -> Bool = { keyword in
             children.contains { $0.title.range(of: keyword, options: .caseInsensitive) != nil }
         }
-        var legacy: [(name: String, folder: String, keyword: String)] = [
-            ("Dropbox", "Dropbox", "Dropbox"), ("Google Drive", "Google Drive", "Google Drive"),
+        var legacy: [(name: String, folder: String, keyword: String, service: CloudService)] = [
+            ("Dropbox", "Dropbox", "Dropbox", .dropbox), ("Google Drive", "Google Drive", "Google Drive", .googleDrive),
         ]
         // OneDrive home folders are "OneDrive", "OneDrive - Personal", "OneDrive - <Org>".
         if let homeChildren = try? fm.contentsOfDirectory(atPath: home.path) {
             for name in homeChildren.sorted() where name == "OneDrive" || name.hasPrefix("OneDrive -") {
-                legacy.append((name, name, "OneDrive"))
+                legacy.append((name, name, "OneDrive", .oneDrive))
             }
         }
         for entry in legacy {
@@ -552,10 +567,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             guard fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue,
                 !alreadyHasProvider(entry.keyword)
             else { continue }
-            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: "cloud", isFolder: true))
+            let (sym, tint) = Self.cloudIcon(entry.service)
+            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: sym, isFolder: true, iconTint: tint))
         }
         guard !children.isEmpty else { return nil }
         return Node(kind: .systemHeader, title: L("sidebar.cloudHeader", "Cloud"), url: nil, icon: nil, children: children)
+    }
+
+    /// The SF Symbol + brand tint for a cloud service, so providers read apart in the sidebar
+    /// (iCloud's own glyph in blue, a generic cloud tinted per provider -- SF Symbols has no brand
+    /// logos). Same source of truth the folder badge uses.
+    static func cloudIcon(_ service: CloudService) -> (String, NSColor) {
+        (service.symbolName, ThemeManager.color(fromHex: service.tintHex) ?? .systemGray)
     }
 
     private static let knownProviders = [
@@ -589,13 +612,23 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     private func volumesNode() -> Node {
         let fm = FileManager.default
-        let keys: [URLResourceKey] = [.volumeNameKey, .volumeIsBrowsableKey]
+        let keys: [URLResourceKey] = [
+            .volumeNameKey, .volumeIsBrowsableKey, .volumeIsInternalKey, .volumeIsRootFileSystemKey,
+            .volumeIsRemovableKey, .volumeIsEjectableKey,
+        ]
         let urls = fm.mountedVolumeURLs(includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
         var volumes: [Node] = []
         for url in urls {
             let values = try? url.resourceValues(forKeys: Set(keys))
             if values?.volumeIsBrowsable == false { continue }
-            volumes.append(Node(kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url, icon: nil, isFolder: true))
+            // Ejectable = the OS says so, OR it's a non-internal mount that isn't the boot volume
+            // (Finder's heuristic -- e.g. OrbStack mounts at ~/OrbStack, not /Volumes, and reports
+            // ejectable=false, yet Finder still offers Eject).
+            let ejectable = (values?.volumeIsEjectable ?? false) || (values?.volumeIsRemovable ?? false)
+                || (values?.volumeIsInternal == false && values?.volumeIsRootFileSystem != true)
+            volumes.append(Node(
+                kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url,
+                icon: nil, isFolder: true, isEjectable: ejectable))
         }
         return Node(kind: .systemHeader, title: L("sidebar.volumesHeader", "Volumes"), url: nil, icon: nil, children: volumes)
     }
@@ -725,13 +758,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
         cell.toolTip = node.title  // name on hover when compact
-        if let icon = node.icon {
+        if case .airdrop = node.kind, let airdrop = NSSharingService(named: .sendViaAirDrop)?.image {
+            // The real AirDrop glyph (there's no "airdrop" SF Symbol); the system service carries it.
+            cell.imageView?.image = airdrop
+            cell.imageView?.contentTintColor = nil
+        } else if let icon = node.icon {
             // Render the SF Symbol at the cell's icon point size so it stays crisp when the
-            // icons-only mode blows it up. A per-site color label tints the icon.
+            // icons-only mode blows it up. A cloud provider's brand tint / per-site color tints it.
             let pointSize = showsLabels ? PlaceCellView.expandedIconSize : PlaceCellView.compactIconSize
             cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: pointSize, weight: .regular))
-            cell.imageView?.contentTintColor = node.tagColor.map { TagColors.nsColor($0) }
+            cell.imageView?.contentTintColor = node.iconTint ?? node.tagColor.map { TagColors.nsColor($0) }
         } else if let tagColor = node.tagColor {
             cell.imageView?.image = TagColors.dot(tagColor, diameter: showsLabels ? 12 : 22)
             cell.imageView?.contentTintColor = nil
@@ -776,6 +813,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if case .airdrop = node.kind {
             outline.deselectRow(row)  // an action (share the selection), not a persistent location
             onAirDrop?()
+            return
+        }
+        if case .network = node.kind {
+            outline.deselectRow(row)  // an action (Connect to Server), not a persistent location
+            onNetwork?()
             return
         }
         guard let url = node.url else { return }
@@ -988,7 +1030,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 add(connections.isEmpty ? L("sidebar.addConnection", "Add Connection…") : L("sidebar.manage", "Manage…"), #selector(manageConnectionsTarget))
                 return
             case .systemItem:
-                if let url = node.url, url.path.hasPrefix("/Volumes/") {
+                if node.isEjectable {
                     add(L("sidebar.eject", "Eject"), #selector(ejectTarget))
                     menu.addItem(.separator())
                 }
