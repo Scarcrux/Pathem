@@ -885,6 +885,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
         cell.toolTip = node.tooltip ?? node.title  // criteria for smart folders; name when compact
+        // Eject button on ejectable volume rows (Finder-style). Cells are reused, so
+        // non-ejectable rows must clear it. Compact (icons-only) mode has no room.
+        if let place = cell as? PlaceCellView {
+            if node.isEjectable, let url = node.url, showsLabels {
+                place.setEject(visible: true) { [weak self] in self?.onEjectVolume?(url) }
+            } else {
+                place.setEject(visible: false, action: nil)
+            }
+        }
         if let image = node.customImage {
             // A branded provider logo (the app icon) -- used verbatim, like Finder's cloud icons.
             cell.imageView?.image = image
@@ -1341,20 +1350,55 @@ final class PlaceCellView: NSTableCellView {
         addSubview(label)
         imageView = icon
         textField = label
+        // Finder-style eject button, shown only on ejectable volume rows (Volumes section,
+        // network mounts like OrbStack). Borderless template glyph that tints with the row.
+        eject.isBordered = false
+        eject.image = NSImage(systemSymbolName: "eject.fill", accessibilityDescription: L("sidebar.eject", "Eject"))?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
+        eject.contentTintColor = .secondaryLabelColor
+        eject.toolTip = L("sidebar.eject", "Eject")
+        eject.target = self
+        eject.action = #selector(ejectTapped)
+        eject.translatesAutoresizingMaskIntoConstraints = false
+        eject.isHidden = true
+        addSubview(eject)
+
         iconLeading = icon.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4)
         iconCentered = icon.centerXAnchor.constraint(equalTo: centerXAnchor)
         iconWidth = icon.widthAnchor.constraint(equalToConstant: Self.expandedIconSize)
         iconHeight = icon.heightAnchor.constraint(equalToConstant: Self.expandedIconSize)
+        labelToTrailing = label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4)
+        labelToEject = label.trailingAnchor.constraint(equalTo: eject.leadingAnchor, constant: -2)
         NSLayoutConstraint.activate([
             icon.centerYAnchor.constraint(equalTo: centerYAnchor),
             iconWidth, iconHeight,
             label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 6),
-            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            labelToTrailing,
             label.centerYAnchor.constraint(equalTo: centerYAnchor),
+            eject.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
+            eject.centerYAnchor.constraint(equalTo: centerYAnchor),
+            eject.widthAnchor.constraint(equalToConstant: 20),
+            eject.heightAnchor.constraint(equalToConstant: 20),
         ])
         setCompact(false)
     }
     required init?(coder: NSCoder) { fatalError("not used") }
+
+    private let eject = NSButton()
+    private var labelToTrailing: NSLayoutConstraint!
+    private var labelToEject: NSLayoutConstraint!
+    /// Fired when the row's eject button is clicked (set per row by the sidebar).
+    var onEject: (() -> Void)?
+
+    /// Show or hide the eject affordance. Rows are reused, so hiding must fully reset.
+    func setEject(visible: Bool, action: (() -> Void)?) {
+        eject.isHidden = !visible
+        onEject = action
+        labelToTrailing.isActive = !visible
+        labelToEject.isActive = visible
+    }
+
+    @objc private func ejectTapped() { onEject?() }
 
     func setCompact(_ compact: Bool) {
         iconLeading.isActive = !compact
