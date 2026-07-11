@@ -14,7 +14,7 @@
     --line: #28313f;
     --text: #e8ecf3;
     --muted: #97a3b7;
-    --faint: #67758b;
+    --faint: #8f9cb0;
     --accent: #58a4f8;
     --accent-ink: #0a1f38;
     --glow: rgba(88, 164, 248, .15);
@@ -36,7 +36,7 @@
       --line: #d7dee7;
       --text: #16202e;
       --muted: #4f5d70;
-      --faint: #8593a6;
+      --faint: #5e6a7c;
       --accent: #0b63c9;
       --accent-ink: #f4f9ff;
       --glow: rgba(11, 99, 201, .11);
@@ -53,7 +53,7 @@
     --line: #d7dee7;
     --text: #16202e;
     --muted: #4f5d70;
-    --faint: #8593a6;
+    --faint: #5e6a7c;
     --accent: #0b63c9;
     --accent-ink: #f4f9ff;
     --glow: rgba(11, 99, 201, .11);
@@ -68,7 +68,7 @@
     --line: #28313f;
     --text: #e8ecf3;
     --muted: #97a3b7;
-    --faint: #67758b;
+    --faint: #8f9cb0;
     --accent: #58a4f8;
     --accent-ink: #0a1f38;
     --glow: rgba(88, 164, 248, .15);
@@ -406,13 +406,29 @@
 <meta property="og:description" content="Dual-pane, keyboard-driven, and built to stay quick even in folders with a million files. Free and open source.">
 <meta property="og:url" content="https://pathem.app/">
 <meta property="og:image" content="https://pathem.app/assets/social-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pathem: a fast, native macOS file manager">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://pathem.app/assets/social-card.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pathem",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS 15",
+  "url": "https://pathem.app",
+  "description": "A fast, native, dual-pane file manager for macOS. A Finder alternative for people who want more control.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "license": "https://opensource.org/licenses/MIT"
+}
+</script>
 </head>
 <body>
 <header class="nav wrap">
   <div class="brand">
-    <img src="/assets/icon-256.png" alt="Pathem app icon" width="30" height="30" />
+    <img src="/assets/logo-64.png" alt="Pathem app icon" width="30" height="30" />
     <b class="wm">Path<i>em</i></b>
   </div>
   <nav class="nav-links">
@@ -439,7 +455,7 @@
         <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
         <span class="path">~/Projects &middot; two panes, tabs per pane, a customizable sidebar</span>
       </div>
-      <img src="/assets/hero.webp" alt="Pathem dual-pane window: a Projects list on the left, a Photos gallery with a large preview and filmstrip on the right, and a sidebar of favorites, clouds, volumes, smart folders, and tags" width="1280" height="852" />
+      <img src="/assets/hero.webp" fetchpriority="high" alt="Pathem dual-pane window: a Projects list on the left, a Photos gallery with a large preview and filmstrip on the right, and a sidebar of favorites, clouds, volumes, smart folders, and tags" width="1280" height="852" />
     </figure>
   </section>
 
@@ -481,8 +497,8 @@
             <p>An item named <b>Budget.numbers</b> already exists in this folder.</p>
             <div class="sbtns">
               <span class="sbtn">Skip</span>
-              <span class="sbtn">Replace</span>
-              <span class="sbtn primary">Keep Both</span>
+              <span class="sbtn primary">Replace</span>
+              <span class="sbtn">Keep Both</span>
             </div>
           </div>
         </div>
@@ -517,7 +533,7 @@
       <article class="card">
         <div class="k">On-device AI</div>
         <h3>Native AI that stays home</h3>
-        <p>An AI command bar, plus semantic search built on Apple's NaturalLanguage embeddings over file names and text, PDFs included. Runs entirely on your Mac, costs nothing, and does not need Apple Intelligence.</p>
+        <p>Semantic search built on Apple's NaturalLanguage embeddings over file names and text, PDFs included, plus an on-device AI command bar. It runs entirely on your Mac, costs nothing, and the search needs no Apple Intelligence.</p>
       </article>
       <article class="card">
         <div class="k">BitTorrent</div>
@@ -591,7 +607,7 @@
         </div>
       </div>
     </figure>
-    <p class="car-caption" id="car-caption"><b>List.</b> The dense table: sortable columns, inline rename, and a million rows without a stutter.</p>
+    <p class="car-caption" id="car-caption" aria-live="polite"><b>List.</b> The dense table: sortable columns, inline rename, and a million rows without a stutter.</p>
     <p class="car-hint">click a mode above, or use the arrow keys</p>
   </section>
 
@@ -617,7 +633,7 @@
 <footer class="wrap">
   <div class="foot-top">
     <div class="brand">
-      <img src="/assets/icon-256.png" alt="Pathem app icon" width="30" height="30" />
+      <img src="/assets/logo-64.png" alt="Pathem app icon" width="30" height="30" />
       <b class="wm">Path<i>em</i></b>
     </div>
     <div class="foot-links">
@@ -628,7 +644,7 @@
     </div>
   </div>
   <p class="foot-note">
-    Not on the Mac App Store. Notarized direct download, auto-updating through Sparkle, with user-granted Full Disk Access. Requires macOS 15 or later.<br />
+    Not on the Mac App Store. It will ship as a notarized direct download with Sparkle auto-updates and user-granted Full Disk Access. Requires macOS 15 or later.<br />
     &copy; 2026 Scarcrux &middot; pathem.app &middot; Built in Swift for macOS.
   </p>
 </footer>
@@ -679,13 +695,14 @@
         tab.tabIndex = on ? 0 : -1;
         frame.classList.toggle("active", on);
         frame.setAttribute("aria-hidden", on ? "false" : "true");
+        frame.tabIndex = on ? 0 : -1;  // the visible panel is Tab-reachable (WAI-ARIA APG)
       });
       pathEl.textContent = modes[current].path;
       capEl.innerHTML = modes[current].cap;
       if (focusTab) document.getElementById(modes[current].tab).focus();
     }
     modes.forEach(function (m, j) {
-      document.getElementById(m.tab).addEventListener("click", function () { go(j); });
+      document.getElementById(m.tab).addEventListener("click", function () { go(j, true); });
     });
     var tablist = document.querySelector(".seg");
     tablist.addEventListener("keydown", function (e) {
