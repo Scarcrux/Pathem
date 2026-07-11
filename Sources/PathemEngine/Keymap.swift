@@ -91,7 +91,8 @@ public struct Keymap: Codable, Sendable {
         "f5": "files.copyToOtherPane",
         "f6": "files.moveToOtherPane",
         "cmd+shift+.": "view.toggleHidden",
-        "cmd+shift+f": "files.findInFiles",
+        // Shift-Cmd-F is the View > Filter menu equivalent (since the Cmd-F search rework), which
+        // wins over this keymap entry anyway. Find in Files stays on the menu and command palette.
         "cmd+=": "view.zoomIn",
         "cmd+shift+=": "view.zoomIn",
         "cmd+-": "view.zoomOut",
