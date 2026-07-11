@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pathem, a fast native macOS file manager</title>
+<style>
+  :root {
+    /* palette: blue-biased graphite ground, clean azure accent (dark is the default) */
+    color-scheme: dark;
+    --ink: #0e131c;
+    --surface: #161c27;
+    --surface-2: #1c2432;
+    --line: #28313f;
+    --text: #e8ecf3;
+    --muted: #97a3b7;
+    --faint: #67758b;
+    --accent: #58a4f8;
+    --accent-ink: #0a1f38;
+    --glow: rgba(88, 164, 248, .15);
+    --shadow: rgba(2, 6, 12, .5);
+    --sel: rgba(88, 164, 248, .22);
+
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+    --maxw: 1080px;
+    --step: clamp(1rem, .8rem + .9vw, 1.15rem);
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --ink: #eef1f5;
+      --surface: #ffffff;
+      --surface-2: #f3f6fa;
+      --line: #d7dee7;
+      --text: #16202e;
+      --muted: #4f5d70;
+      --faint: #8593a6;
+      --accent: #0b63c9;
+      --accent-ink: #f4f9ff;
+      --glow: rgba(11, 99, 201, .11);
+      --shadow: rgba(22, 32, 46, .16);
+      --sel: rgba(11, 99, 201, .14);
+    }
+  }
+  /* the viewer's theme toggle stamps data-theme on :root and must win both ways */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --ink: #eef1f5;
+    --surface: #ffffff;
+    --surface-2: #f3f6fa;
+    --line: #d7dee7;
+    --text: #16202e;
+    --muted: #4f5d70;
+    --faint: #8593a6;
+    --accent: #0b63c9;
+    --accent-ink: #f4f9ff;
+    --glow: rgba(11, 99, 201, .11);
+    --shadow: rgba(22, 32, 46, .16);
+    --sel: rgba(11, 99, 201, .14);
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ink: #0e131c;
+    --surface: #161c27;
+    --surface-2: #1c2432;
+    --line: #28313f;
+    --text: #e8ecf3;
+    --muted: #97a3b7;
+    --faint: #67758b;
+    --accent: #58a4f8;
+    --accent-ink: #0a1f38;
+    --glow: rgba(88, 164, 248, .15);
+    --shadow: rgba(2, 6, 12, .5);
+    --sel: rgba(88, 164, 248, .22);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: var(--step);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  /* ambient wash behind the hero */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(60rem 40rem at 78% -10%, var(--glow), transparent 60%),
+      radial-gradient(50rem 30rem at 0% 0%, rgba(110, 150, 200, .07), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap { width: min(100% - 2.5rem, var(--maxw)); margin-inline: auto; }
+  section, header, footer { position: relative; z-index: 1; }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .18em;
+    color: var(--faint);
+  }
+
+  /* ---- nav ---- */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 0;
+  }
+  .brand { display: flex; align-items: center; gap: .6rem; letter-spacing: -.01em; }
+  .brand img { width: 30px; height: 30px; border-radius: 7px; box-shadow: 0 2px 8px var(--shadow); }
+  .wm { font-size: 1.12rem; font-weight: 750; }
+  .wm i { color: var(--accent); font-style: normal; }
+  .nav-links { display: flex; align-items: center; gap: 1.6rem; }
+  .nav-links a { color: var(--muted); font-size: .92rem; }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+  .nav-links .ghost {
+    border: 1px solid var(--line);
+    padding: .4rem .85rem;
+    border-radius: 8px;
+    color: var(--text);
+  }
+  .nav-links .ghost:hover { border-color: var(--accent); background: var(--glow); }
+  @media (max-width: 620px) { .nav-links a:not(.ghost) { display: none; } }
+
+  /* ---- hero ---- */
+  .hero { padding: clamp(2.5rem, 6vw, 5.5rem) 0 2rem; }
+  .crumb {
+    font-family: var(--mono);
+    font-size: .8rem;
+    color: var(--faint);
+    display: inline-flex;
+    gap: .5ch;
+    padding: .3rem .7rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+  }
+  .crumb i { color: var(--accent); font-style: normal; }
+  .crumb b { color: var(--muted); font-weight: 500; }
+  h1 {
+    font-size: clamp(2.4rem, 1.4rem + 4.6vw, 4.6rem);
+    line-height: 1.02;
+    letter-spacing: -.035em;
+    font-weight: 800;
+    margin: 1.3rem 0 0;
+    max-width: 15ch;
+    text-wrap: balance;
+  }
+  h1 .hl { color: var(--accent); }
+  .lede {
+    margin: 1.25rem 0 0;
+    max-width: 54ch;
+    color: var(--muted);
+    font-size: clamp(1.05rem, 1rem + .35vw, 1.28rem);
+  }
+  .lede b { color: var(--text); font-weight: 600; }
+  .cta { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: .5rem;
+    padding: .72rem 1.25rem;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: .96rem;
+    border: 1px solid transparent;
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px var(--glow); }
+  .btn-primary:hover { transform: translateY(-2px); text-decoration: none; box-shadow: 0 10px 28px var(--glow); }
+  .btn-ghost { border-color: var(--line); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); background: var(--glow); text-decoration: none; }
+  .cta small { color: var(--faint); font-size: .82rem; font-family: var(--mono); }
+  @media (prefers-reduced-motion: reduce) { .btn, .btn:hover { transition: none; transform: none; } }
+
+  /* ---- macOS window frame ---- */
+  .window {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 30px 70px -20px var(--shadow), 0 2px 0 rgba(255, 255, 255, .03) inset;
+  }
+  .hero .window { margin-top: 2.8rem; transition: transform .4s ease, box-shadow .4s ease; }
+  .hero .window:hover { transform: translateY(-4px); box-shadow: 0 40px 90px -24px var(--shadow); }
+  @media (prefers-reduced-motion: reduce) { .hero .window, .hero .window:hover { transition: none; transform: none; } }
+  .titlebar {
+    display: flex; align-items: center; gap: .9rem;
+    padding: .7rem 1rem;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .lights { display: flex; gap: .5rem; flex: none; }
+  .lights span { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .lights .r { background: #ec6a5e; } .lights .y { background: #f4bf4f; } .lights .g { background: #61c454; }
+  .titlebar .path { font-family: var(--mono); font-size: .78rem; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .window img { display: block; width: 100%; height: auto; }
+  figure.window { margin: 0; }
+
+  /* ---- stats strip ---- */
+  .stats {
+    display: flex; flex-wrap: wrap; gap: 1rem 2.4rem;
+    justify-content: center;
+    padding: 2.6rem 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    margin-top: 3.5rem;
+  }
+  .stat { text-align: center; }
+  .stat b { display: block; font-size: 1.5rem; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .stat span { font-family: var(--mono); font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+
+  /* ---- section heads ---- */
+  .sec { padding: clamp(3.5rem, 8vw, 6rem) 0; }
+  .sec-head { max-width: 46ch; }
+  .sec-head h2, .clip-copy h2 {
+    font-size: clamp(1.7rem, 1.2rem + 2vw, 2.6rem);
+    letter-spacing: -.03em;
+    line-height: 1.08;
+    font-weight: 780;
+    margin: .7rem 0 0;
+    text-wrap: balance;
+  }
+  .sec-head p { color: var(--muted); margin: .8rem 0 0; }
+
+  /* ---- clipboard band ---- */
+  .clip { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.8rem, 4vw, 3.5rem); align-items: center; }
+  @media (max-width: 820px) { .clip { grid-template-columns: 1fr; } }
+  .clip-copy p { color: var(--muted); margin: 1rem 0 0; }
+  .clip-copy p b { color: var(--text); font-weight: 600; }
+  .clip-keys { display: flex; gap: 1.2rem; margin-top: 1.6rem; flex-wrap: wrap; }
+  .clip-keys .keyrow span { font-family: var(--mono); font-size: .78rem; color: var(--faint); }
+  .clip-demo { position: relative; }
+  .clip-rows { padding: .5rem 0 8.5rem; }
+  .frow {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .5rem 1rem;
+    font-size: .88rem;
+  }
+  .frow:nth-child(odd) { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+  .frow .chip {
+    font-family: var(--mono); font-size: .58rem; letter-spacing: .06em;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: .18rem .3rem;
+    min-width: 2.4rem; text-align: center;
+    flex: none;
+    background: var(--surface-2);
+  }
+  .frow .fname { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .frow .fsize { font-family: var(--mono); font-size: .74rem; color: var(--faint); flex: none; }
+  .frow.cut { opacity: .42; }
+  .frow.cut .badge {
+    font-family: var(--mono); font-size: .6rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent);
+    border: 1px dashed var(--accent);
+    border-radius: 5px;
+    padding: .1rem .4rem;
+    flex: none;
+  }
+  .frow.sel { background: var(--sel); border-radius: 6px; }
+  .sheet {
+    position: absolute; left: 7%; right: 7%; bottom: 1.1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 18px 40px -12px var(--shadow);
+    padding: 1rem 1.2rem .95rem;
+  }
+  .sheet p { margin: 0 0 .8rem; font-size: .84rem; color: var(--text); }
+  .sheet p b { font-family: var(--mono); font-weight: 600; font-size: .8rem; }
+  .sheet .sbtns { display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; }
+  .sbtn {
+    font-size: .8rem; font-weight: 600;
+    padding: .34rem .8rem;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .sbtn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .clip-note { margin-top: .9rem; font-family: var(--mono); font-size: .74rem; color: var(--faint); }
+
+  /* ---- feature grid ---- */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 3rem; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  @media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); padding: 1.7rem 1.5rem; transition: background .2s ease; }
+  .card:hover { background: var(--surface-2); }
+  .card .k {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--accent); display: flex; align-items: center; gap: .55rem;
+  }
+  .card .k::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--glow); flex: none; }
+  .card h3 { margin: .9rem 0 .5rem; font-size: 1.12rem; letter-spacing: -.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.55; }
+
+  /* ---- views carousel ---- */
+  .car-controls { display: flex; align-items: center; gap: 1rem; margin-top: 2.2rem; flex-wrap: wrap; }
+  .seg {
+    display: inline-flex;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: .25rem;
+    gap: .15rem;
+    flex-wrap: wrap;
+  }
+  .seg button {
+    appearance: none;
+    font-family: var(--sans);
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    padding: .42rem .9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    transition: background .18s ease, color .18s ease;
+  }
+  .seg button i { font-family: var(--mono); font-style: normal; font-size: .66rem; color: var(--faint); font-weight: 500; }
+  .seg button:hover { color: var(--text); background: var(--glow); }
+  .seg button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+  .seg button[aria-selected="true"] i { color: var(--accent-ink); opacity: .75; }
+  .car-arrows { display: flex; gap: .5rem; margin-left: auto; }
+  .car-arrows button {
+    appearance: none;
+    width: 2.3rem; height: 2.3rem;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 1.05rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease;
+  }
+  .car-arrows button:hover { border-color: var(--accent); background: var(--glow); }
+  .stage { margin-top: 1.4rem; }
+  .frames { display: grid; }
+  .frame { grid-area: 1 / 1; opacity: 0; visibility: hidden; transition: opacity .38s ease, visibility .38s; }
+  .frame.active { opacity: 1; visibility: visible; }
+  @media (prefers-reduced-motion: reduce) { .frame { transition: none; } }
+  .car-caption { margin: 1rem 0 0; color: var(--muted); font-size: .92rem; min-height: 2.6em; }
+  .car-caption b { color: var(--text); font-weight: 600; }
+  .car-hint { font-family: var(--mono); font-size: .72rem; color: var(--faint); margin-top: .3rem; }
+
+  /* ---- keyboard row ---- */
+  .keys-sec { border-top: 1px solid var(--line); }
+  .keys { display: flex; flex-wrap: wrap; gap: 1.4rem 2rem; margin-top: 2.2rem; }
+  .keyrow { display: flex; align-items: center; gap: .7rem; }
+  kbd {
+    font-family: var(--mono); font-size: .82rem;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    padding: .28rem .55rem;
+    color: var(--text);
+    min-width: 2.1rem; text-align: center;
+  }
+  .keyrow span { color: var(--muted); font-size: .92rem; }
+
+  /* ---- footer ---- */
+  footer { border-top: 1px solid var(--line); padding: 3rem 0 3.5rem; margin-top: 1rem; }
+  .foot-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.5rem; }
+  .foot-links { display: flex; flex-wrap: wrap; gap: 1.4rem; }
+  .foot-links a { color: var(--muted); font-size: .92rem; }
+  .foot-links a:hover { color: var(--text); text-decoration: none; }
+  .foot-note { margin-top: 1.8rem; color: var(--faint); font-size: .82rem; font-family: var(--mono); line-height: 1.7; }
+
+  /* ---- scroll reveal ---- */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
+</style>
+<meta name="description" content="Pathem is a fast, native, dual-pane file manager for macOS. A Finder alternative for people who want more control, in the spirit of Directory Opus and Path Finder. Swift and AppKit, no Electron.">
+<link rel="canonical" href="https://pathem.app/">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e131c">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pathem">
+<meta property="og:title" content="Pathem, a fast native macOS file manager">
+<meta property="og:description" content="Dual-pane, keyboard-driven, and built to stay quick even in folders with a million files. Free and open source.">
+<meta property="og:url" content="https://pathem.app/">
+<meta property="og:image" content="https://pathem.app/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://pathem.app/assets/og.png">
+</head>
+<body>
+<header class="nav wrap">
+  <div class="brand">
+    <img src="/assets/icon-256.png" alt="Pathem app icon" width="30" height="30" />
+    <b class="wm">Path<i>em</i></b>
+  </div>
+  <nav class="nav-links">
+    <a href="#clipboard">Clipboard</a>
+    <a href="#features">Features</a>
+    <a href="#views">Views</a>
+    <a href="https://github.com/Scarcrux/Pathem" class="ghost">GitHub &#8599;</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <span class="crumb"><i>~</i><b>/</b>Applications<b>/</b><i>Pathem</i></span>
+    <h1>A faster way to move through your <span class="hl">files</span>.</h1>
+    <p class="lede">Pathem is a fast, native, dual-pane file manager for macOS. A <b>Finder alternative</b> for people who want more control, in the spirit of Directory Opus and Path Finder. Written in Swift and AppKit. <b>No Electron.</b></p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/Scarcrux/Pathem">&#9733; Star on GitHub</a>
+      <a class="btn btn-ghost" href="#views">See it in action</a>
+      <small>Free &amp; open source &middot; MIT &middot; macOS 15+ &middot; downloads soon</small>
+    </div>
+
+    <figure class="window reveal">
+      <div class="titlebar">
+        <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="path">~/Projects &middot; two panes, tabs per pane, a customizable sidebar</span>
+      </div>
+      <img src="/assets/hero.webp" alt="Pathem dual-pane window: a Projects list on the left, a Photos gallery with a large preview and filmstrip on the right, and a sidebar of favorites, clouds, volumes, smart folders, and tags" width="1280" height="852" />
+    </figure>
+  </section>
+
+  <section class="stats wrap">
+    <div class="stat"><b>Swift</b><span>native &middot; appkit</span></div>
+    <div class="stat"><b>1,000,000</b><span>rows, no lag</span></div>
+    <div class="stat"><b>0</b><span>electron</span></div>
+    <div class="stat"><b>100%</b><span>on-device ai</span></div>
+    <div class="stat"><b>MIT</b><span>free &amp; open source</span></div>
+  </section>
+
+  <section class="sec wrap" id="clipboard">
+    <div class="clip">
+      <div class="clip-copy">
+        <span class="eyebrow">~/clipboard</span>
+        <h2>Cut, copy, paste. For files, done right.</h2>
+        <p>Press <b>&#8984;X</b> and the files dim until you paste them somewhere else; nothing moves until you say where. When names clash, Pathem asks whether to <b>skip, replace, or keep both</b>, so a paste never overwrites anything silently. And the whole operation is one <b>&#8984;Z</b> away from never having happened.</p>
+        <div class="clip-keys">
+          <div class="keyrow"><kbd>&#8984;X</kbd><span>cut</span></div>
+          <div class="keyrow"><kbd>&#8984;C</kbd><span>copy</span></div>
+          <div class="keyrow"><kbd>&#8984;V</kbd><span>paste</span></div>
+          <div class="keyrow"><kbd>&#8984;Z</kbd><span>undo</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="clip-demo window reveal">
+          <div class="titlebar">
+            <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span class="path">~/Documents</span>
+          </div>
+          <div class="clip-rows" aria-hidden="true">
+            <div class="frow"><span class="chip">PDF</span><span class="fname">Quarterly Report.pdf</span><span class="fsize">2.4 MB</span></div>
+            <div class="frow cut"><span class="chip">NUM</span><span class="fname">Budget.numbers</span><span class="badge">cut</span><span class="fsize">340 KB</span></div>
+            <div class="frow sel"><span class="chip">PAG</span><span class="fname">Contract.pages</span><span class="fsize">88 KB</span></div>
+            <div class="frow"><span class="chip">TXT</span><span class="fname">Meeting Notes.txt</span><span class="fsize">4 KB</span></div>
+            <div class="frow"><span class="chip">MD</span><span class="fname">Welcome to Pathem.md</span><span class="fsize">1 KB</span></div>
+          </div>
+          <div class="sheet" aria-hidden="true">
+            <p>An item named <b>Budget.numbers</b> already exists in this folder.</p>
+            <div class="sbtns">
+              <span class="sbtn">Skip</span>
+              <span class="sbtn">Replace</span>
+              <span class="sbtn primary">Keep Both</span>
+            </div>
+          </div>
+        </div>
+        <p class="clip-note">cut items stay dimmed until you paste &middot; every paste is undoable</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="features" style="padding-top: 0;">
+    <div class="sec-head">
+      <span class="eyebrow">~/what-it-does</span>
+      <h2>Everything Finder holds back.</h2>
+      <p>The controls a power user reaches for, built in and fast, without leaving the keyboard.</p>
+    </div>
+
+    <div class="grid">
+      <article class="card">
+        <div class="k">Dual pane</div>
+        <h3>Two sides, in step</h3>
+        <p>Panes side by side with tabs in each. Copy and move between them with F5 and F6, and synchronized browsing keeps both sides walking the same subfolders.</p>
+      </article>
+      <article class="card">
+        <div class="k">Built for scale</div>
+        <h3>A million files, no lag</h3>
+        <p>Only the rows on screen are built, so a folder with 100k or even a million items scrolls as smoothly as one with ten.</p>
+      </article>
+      <article class="card">
+        <div class="k">Keyboard-first</div>
+        <h3>A command for everything</h3>
+        <p>Press &#8984;K and type. One palette over the whole command registry, and a keymap where every binding can be changed, so the app ends up fitting your hands.</p>
+      </article>
+      <article class="card">
+        <div class="k">On-device AI</div>
+        <h3>Native AI that stays home</h3>
+        <p>An AI command bar, plus semantic search built on Apple's NaturalLanguage embeddings over file names and text, PDFs included. Runs entirely on your Mac, costs nothing, and does not need Apple Intelligence.</p>
+      </article>
+      <article class="card">
+        <div class="k">BitTorrent</div>
+        <h3>A torrent client, built in</h3>
+        <p>Add a magnet link or a .torrent and Pathem downloads it natively: DHT, &micro;TP, and peer exchange, in an out-of-process daemon with a FileZilla-style transfer drawer.</p>
+      </article>
+      <article class="card">
+        <div class="k">Remote &amp; cloud</div>
+        <h3>Everywhere your files live</h3>
+        <p>Transfer to S3, Backblaze B2, Google Cloud Storage, Wasabi, Azure Blob, WebDAV, SFTP, and FTP. Browse iCloud, Dropbox, Drive, and OneDrive with per-service badges. Every network backend runs out of process.</p>
+      </article>
+      <article class="card">
+        <div class="k">Terminal</div>
+        <h3>A shell that follows you</h3>
+        <p>An embedded login shell that tracks the active folder. Runs vim, ssh, and REPLs in color, and themes to System, Dracula, Nord, or Solarized.</p>
+      </article>
+      <article class="card">
+        <div class="k">Git-aware</div>
+        <h3>A list that reads your repo</h3>
+        <p>Modified, staged, and untracked badges right in the file list. Reclaim in Repo separates regenerable build output from the untracked work you would hate to lose.</p>
+      </article>
+      <article class="card">
+        <div class="k">Organize</div>
+        <h3>Tools for a tidy disk</h3>
+        <p>Colored tags, batch rename, Quick Look on Space, sortable columns, and per-folder saved views and layouts that stick where you set them.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="sec wrap" id="views">
+    <div class="sec-head">
+      <span class="eyebrow">~/views</span>
+      <h2>Five views. Pick one per folder.</h2>
+      <p>List, Icons, Gallery, Columns, and Tree, on &#8984;1 through &#8984;5, and each folder remembers how you left it. Flat View flattens a whole subtree into a single list, Directory Opus style.</p>
+    </div>
+
+    <div class="car-controls">
+      <div class="seg" role="tablist" aria-label="View modes">
+        <button role="tab" id="tab-list" aria-selected="true" aria-controls="frame-list" tabindex="0">List <i>&#8984;1</i></button>
+        <button role="tab" id="tab-icons" aria-selected="false" aria-controls="frame-icons" tabindex="-1">Icons <i>&#8984;2</i></button>
+        <button role="tab" id="tab-gallery" aria-selected="false" aria-controls="frame-gallery" tabindex="-1">Gallery <i>&#8984;3</i></button>
+        <button role="tab" id="tab-columns" aria-selected="false" aria-controls="frame-columns" tabindex="-1">Columns <i>&#8984;4</i></button>
+        <button role="tab" id="tab-tree" aria-selected="false" aria-controls="frame-tree" tabindex="-1">Tree <i>&#8984;5</i></button>
+      </div>
+      <div class="car-arrows">
+        <button type="button" id="car-prev" aria-label="Previous view mode">&#8249;</button>
+        <button type="button" id="car-next" aria-label="Next view mode">&#8250;</button>
+      </div>
+    </div>
+
+    <figure class="stage window reveal">
+      <div class="titlebar">
+        <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="path" id="stage-path">~/Downloads &middot; as List (&#8984;1)</span>
+      </div>
+      <div class="frames">
+        <div class="frame active" role="tabpanel" id="frame-list" aria-labelledby="tab-list">
+          <img src="/assets/view-list.webp" alt="Pathem list view: a Projects list beside a Photos gallery pane" width="1280" height="852" loading="eager" />
+        </div>
+        <div class="frame" role="tabpanel" id="frame-icons" aria-labelledby="tab-icons" aria-hidden="true">
+          <img src="/assets/view-icons.webp" alt="Pathem icon view: a grid of photo thumbnails in the Photos folder" width="1280" height="852" loading="lazy" />
+        </div>
+        <div class="frame" role="tabpanel" id="frame-gallery" aria-labelledby="tab-gallery" aria-hidden="true">
+          <img src="/assets/view-gallery.webp" alt="Pathem gallery view: one large photo preview above a filmstrip of the rest of the folder" width="1280" height="852" loading="lazy" />
+        </div>
+        <div class="frame" role="tabpanel" id="frame-columns" aria-labelledby="tab-columns" aria-hidden="true">
+          <img src="/assets/view-columns.webp" alt="Pathem column view: the Photos folder as a column beside a preview column showing a thumbnail and file details" width="1280" height="852" loading="lazy" />
+        </div>
+        <div class="frame" role="tabpanel" id="frame-tree" aria-labelledby="tab-tree" aria-hidden="true">
+          <img src="/assets/view-tree.webp" alt="Pathem tree view: the home folder as an expandable outline with Music, Photos, and Projects expanded in place" width="1280" height="852" loading="lazy" />
+        </div>
+      </div>
+    </figure>
+    <p class="car-caption" id="car-caption"><b>List.</b> The dense table: sortable columns, inline rename, and a million rows without a stutter.</p>
+    <p class="car-hint">click a mode above, or use the arrow keys</p>
+  </section>
+
+  <section class="sec keys-sec wrap">
+    <div class="sec-head">
+      <span class="eyebrow">~/keyboard</span>
+      <h2>Hands stay home.</h2>
+    </div>
+    <div class="keys">
+      <div class="keyrow"><kbd>F5</kbd><span>Copy to other pane</span></div>
+      <div class="keyrow"><kbd>F6</kbd><span>Move to other pane</span></div>
+      <div class="keyrow"><kbd>&#8984;X</kbd><span>Cut files, dimmed until pasted</span></div>
+      <div class="keyrow"><kbd>&#8984;V</kbd><span>Paste, undoable</span></div>
+      <div class="keyrow"><kbd>&#8984;K</kbd><span>Command palette</span></div>
+      <div class="keyrow"><kbd>Space</kbd><span>Quick Look</span></div>
+      <div class="keyrow"><kbd>&#8963;`</kbd><span>Terminal here</span></div>
+      <div class="keyrow"><kbd>&#8984;1</kbd><kbd>&hellip;</kbd><kbd>&#8984;5</kbd><span>Switch view</span></div>
+      <div class="keyrow"><kbd>&#8984;Z</kbd><span>Undo any operation</span></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <div class="foot-top">
+    <div class="brand">
+      <img src="/assets/icon-256.png" alt="Pathem app icon" width="30" height="30" />
+      <b class="wm">Path<i>em</i></b>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/Scarcrux/Pathem">GitHub</a>
+      <a href="https://github.com/Scarcrux/Pathem/security/policy">Security</a>
+      <a href="https://github.com/Scarcrux/Pathem/blob/main/LICENSE">MIT License</a>
+      <a href="https://github.com/Scarcrux/Pathem/blob/main/ROADMAP.md">Roadmap</a>
+    </div>
+  </div>
+  <p class="foot-note">
+    Not on the Mac App Store. Notarized direct download, auto-updating through Sparkle, with user-granted Full Disk Access. Requires macOS 15 or later.<br />
+    &copy; 2026 Scarcrux &middot; pathem.app &middot; Built in Swift for macOS.
+  </p>
+</footer>
+
+<script>
+  (function () {
+    // scroll reveal
+    var els = document.querySelectorAll(".reveal");
+    if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      els.forEach(function (e) { e.classList.add("in"); });
+    } else {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+        });
+      }, { threshold: .12 });
+      els.forEach(function (e) { io.observe(e); });
+    }
+
+    // view-mode carousel
+    var modes = [
+      { tab: "tab-list", frame: "frame-list",
+        path: "~/Downloads · as List (⌘1)",
+        cap: "<b>List.</b> The dense table: sortable columns, inline rename, and a million rows without a stutter." },
+      { tab: "tab-icons", frame: "frame-icons",
+        path: "~/Photos · as Icons (⌘2)",
+        cap: "<b>Icons.</b> A thumbnail grid for visual folders, with zoom from tidy to poster-size." },
+      { tab: "tab-gallery", frame: "frame-gallery",
+        path: "~/Photos · as Gallery (⌘3)",
+        cap: "<b>Gallery.</b> One big preview with a filmstrip underneath, for flipping through shoots and scans." },
+      { tab: "tab-columns", frame: "frame-columns",
+        path: "~/Photos · as Columns (⌘4)",
+        cap: "<b>Columns.</b> Miller columns walk deep trees, and selecting a file adds a preview column: a thumbnail with kind, size, and dates." },
+      { tab: "tab-tree", frame: "frame-tree",
+        path: "~/ · as Tree (⌘5)",
+        cap: "<b>Tree.</b> The outline view: expand subtrees in place without losing the parent, Directory Opus style." }
+    ];
+    var current = 0;
+    var pathEl = document.getElementById("stage-path");
+    var capEl = document.getElementById("car-caption");
+    function go(i, focusTab) {
+      current = (i + modes.length) % modes.length;
+      modes.forEach(function (m, j) {
+        var tab = document.getElementById(m.tab);
+        var frame = document.getElementById(m.frame);
+        var on = j === current;
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.tabIndex = on ? 0 : -1;
+        frame.classList.toggle("active", on);
+        frame.setAttribute("aria-hidden", on ? "false" : "true");
+      });
+      pathEl.textContent = modes[current].path;
+      capEl.innerHTML = modes[current].cap;
+      if (focusTab) document.getElementById(modes[current].tab).focus();
+    }
+    modes.forEach(function (m, j) {
+      document.getElementById(m.tab).addEventListener("click", function () { go(j); });
+    });
+    var tablist = document.querySelector(".seg");
+    tablist.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); go(current + 1, true); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); go(current - 1, true); }
+      else if (e.key === "Home") { e.preventDefault(); go(0, true); }
+      else if (e.key === "End") { e.preventDefault(); go(modes.length - 1, true); }
+    });
+    document.getElementById("car-prev").addEventListener("click", function () { go(current - 1); });
+    document.getElementById("car-next").addEventListener("click", function () { go(current + 1); });
+  })();
+</script>
+</body>
+</html>

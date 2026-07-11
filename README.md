@@ -10,6 +10,8 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 ![Platform](https://img.shields.io/badge/platform-macOS%2015%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-6-orange)
 
+**Website:** [pathem.app](https://pathem.app)
+
 ![Pathem: a dual-pane window with tabs, a customizable sidebar, and a dark theme](docs/screenshots/dual-pane.png)
 
 <sub>Dual pane, tabs per pane, a customizable sidebar, and colored tags. (Screenshots use a built-in demo workspace, so no real files are shown.)</sub>
