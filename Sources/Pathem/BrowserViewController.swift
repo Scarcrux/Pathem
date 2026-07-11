@@ -2559,6 +2559,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
         guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
+        // Central backstop: never copy/move a folder into itself or its own subtree. Every entry
+        // point funnels through here (drop, F5/F6, clipboard paste, shelf), so guarding once
+        // covers them all -- a folder dropped into its own descendant would otherwise recurse and
+        // duplicate the tree into itself until the path length blows up.
+        let urls = Self.dropSelfContaining(urls, destination: destination)
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            presentInfo(
+                L("bvc.selfCopyTitle", "Can’t put a folder inside itself"),
+                L("bvc.selfCopyBody", "A folder can’t be copied or moved into itself or one of its own subfolders."))
+            return
+        }
         transferInFlight = true  // so Quit warns mid-transfer
         transferRunner.run(
             urls: urls, into: destination, move: move, resolution: resolution,
@@ -2566,6 +2578,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         ) { [weak self] outcome in
             self?.transferInFlight = false
             completion(outcome)
+        }
+    }
+
+    /// Drop any source that is the destination folder itself or an ancestor of it, so a transfer
+    /// can never nest a folder inside its own subtree. Symlink-resolved and case-insensitive
+    /// (the same comparison dropFiles used, hoisted here to cover every caller).
+    static func dropSelfContaining(_ urls: [URL], destination: URL) -> [URL] {
+        let destPath = destination.resolvingSymlinksInPath().standardizedFileURL.path
+        return urls.filter {
+            let src = $0.resolvingSymlinksInPath().standardizedFileURL.path
+            return destPath.compare(src, options: .caseInsensitive) != .orderedSame
+                && !destPath.lowercased().hasPrefix(src.lowercased() + "/")
         }
     }
 
@@ -2634,7 +2658,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let result = FileOperations.redo(performed)
             self.reloadBothSides()
             if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
-            self.registerUndo(performed, actionName: actionName)  // back to undo
+            // Re-register undo for exactly what redo re-applied, with the fresh trash locations
+            // redo recorded for any Replace. Using the stale original list would trash the wrong
+            // file on the next undo when a replace was involved or an op failed.
+            if !result.performed.isEmpty { self.registerUndo(result.performed, actionName: actionName) }
         }
     }
 

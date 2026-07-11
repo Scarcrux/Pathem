@@ -358,19 +358,34 @@ public enum FileOperations {
         return outcome
     }
 
-    /// Re-apply performed operations (the redo of `undo`): moves and copies go
-    /// from source to their recorded destination again.
+    /// Re-apply performed operations (the redo of `undo`): moves and copies go from source to
+    /// their recorded destination again. Replace-aware: if the op originally overwrote a file
+    /// (undo restored it to the destination), re-trash that restored file first and record the
+    /// new trash location, so the returned Performed can undo the redo correctly. Returns only
+    /// the ops that actually re-applied, so the caller re-registers undo for exactly those.
     @discardableResult
     public static func redo(_ performed: [Performed]) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
         for op in performed {
             do {
+                var replacedTrash: URL?
+                // Undo of a Replace restored the overwritten original to the destination. Redo must
+                // displace it again (to a fresh trash location), or the copy/move below fails
+                // "file exists" and a later undo would trash the restored original by mistake.
+                if op.replacedOriginalTrashed != nil, fm.fileExists(atPath: op.destination.path) {
+                    var landed: NSURL?
+                    try fm.trashItem(at: op.destination, resultingItemURL: &landed)
+                    replacedTrash = landed as URL?
+                }
                 switch op.action {
                 case .moved: try fm.moveItem(at: op.source, to: op.destination)
                 case .copied: try fm.copyItem(at: op.source, to: op.destination)
                 }
-                outcome.performed.append(op)
+                outcome.performed.append(
+                    Performed(
+                        action: op.action, source: op.source, destination: op.destination,
+                        replacedOriginalTrashed: replacedTrash))
             } catch {
                 outcome.failures.append(
                     Failure(name: op.destination.lastPathComponent, reason: error.localizedDescription))
@@ -408,6 +423,13 @@ public enum FileOperations {
                     outcome.skipped.append(name)
                     continue
                 }
+                // Never nest a folder inside its own subtree (the destination is `from` or lives
+                // under it). The app guards this too; this is the engine backstop so a copy can't
+                // recurse into itself and duplicate the tree until the path length blows up.
+                if Self.isDescendant(to, of: from) {
+                    outcome.failures.append(Failure(name: name, reason: "A folder can’t be moved inside itself."))
+                    continue
+                }
                 if fm.fileExists(atPath: to.path) {
                     switch onConflict {
                     case .skip:
@@ -421,7 +443,16 @@ public enum FileOperations {
                         to = uniqueDestination(to)
                     }
                 }
-                try op(from, to)
+                do {
+                    try op(from, to)
+                } catch {
+                    // Replace already trashed the old destination. If the op then fails, restore it
+                    // so a failed replace doesn't silently leave the user's file in the Trash.
+                    if let trashed = replacedTrash {
+                        try? fm.moveItem(at: trashed, to: to)
+                    }
+                    throw error
+                }
                 outcome.performed.append(
                     Performed(
                         action: action, source: from, destination: to, replacedOriginalTrashed: replacedTrash))
@@ -442,6 +473,15 @@ public enum FileOperations {
     /// resource identifier (authoritative across symlinks and case); falls back
     /// to a symlink-resolved, case-insensitive path compare when `to` does not
     /// exist yet.
+    /// Whether `inner` is the destination-side descendant of folder `ancestor` (or equal to it),
+    /// by symlink-resolved, case-insensitive path prefix. Used to refuse nesting a folder in
+    /// its own subtree; `inner` (the destination) may not exist yet, so this is path-based.
+    static func isDescendant(_ inner: URL, of ancestor: URL) -> Bool {
+        let a = ancestor.resolvingSymlinksInPath().standardizedFileURL.path.lowercased()
+        let i = inner.resolvingSymlinksInPath().standardizedFileURL.path.lowercased()
+        return i == a || i.hasPrefix(a + "/")
+    }
+
     private static func isSameItem(_ a: URL, _ b: URL) -> Bool {
         let idA = try? a.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier
         let idB = try? b.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier

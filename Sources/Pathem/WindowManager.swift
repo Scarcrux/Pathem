@@ -39,6 +39,7 @@ final class WindowManager {
 
     /// Adopt the primary window built in `main()` so it joins tab-merging and teardown.
     func adoptPrimary(window: NSWindow, browser: BrowserViewController) {
+        window.isReleasedWhenClosed = false  // Host owns the lifetime; the default extra release UAFs
         window.tabbingIdentifier = Self.tabbingIdentifier
         hosts.insert(Host(window: window, browser: browser), at: 0)
     }
@@ -52,6 +53,7 @@ final class WindowManager {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
             styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false  // Host owns the lifetime; the default extra release UAFs on Cmd-W
         window.title = "Pathem"
         window.tabbingIdentifier = Self.tabbingIdentifier
         window.contentViewController = browser

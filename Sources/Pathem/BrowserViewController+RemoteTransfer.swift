@@ -29,10 +29,14 @@ extension BrowserViewController {
         openPanel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let dir = openPanel.url, let self else { return }
             let provider = RemoteProviders.make(for: ctx.connection.proto)
-            let items = entries.map { entry -> TransferQueueController.Item in
+            let items = entries.compactMap { entry -> TransferQueueController.Item? in
                 let remotePath = PaneController.joinRemote(ctx.path, entry.name)
-                let local = self.uniqueLocalURL(dir.appendingPathComponent(entry.name))
-                return TransferQueueController.Item(name: entry.name, totalBytes: entry.size, progressFile: local) {
+                // A server-supplied listing name is untrusted: reduce it to a bare filename so a
+                // hostile FTP/SFTP/WebDAV server can't smuggle "../" and write outside the chosen
+                // folder. Skip a name that has no safe last component (e.g. "..").
+                guard let safeName = Self.safeLocalName(entry.name) else { return nil }
+                let local = self.uniqueLocalURL(dir.appendingPathComponent(safeName))
+                return TransferQueueController.Item(name: safeName, totalBytes: entry.size, progressFile: local) {
                     try await provider.download(
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
@@ -46,6 +50,16 @@ extension BrowserViewController {
                 self?.reportTransfer(failures, cancelled: cancelled, verb: "download")
             }
         }
+    }
+
+    /// The trustworthy last path component of a server-supplied name, for use as a LOCAL
+    /// filename. Returns nil for names that reduce to nothing safe ("", ".", ".."), so the
+    /// caller skips them rather than writing a traversal path. Strips both separators since a
+    /// hostile server may send either.
+    static func safeLocalName(_ raw: String) -> String? {
+        let base = ((raw.replacingOccurrences(of: "\\", with: "/")) as NSString).lastPathComponent
+        guard !base.isEmpty, base != ".", base != ".." else { return nil }
+        return base
     }
 
     /// Upload local files dropped onto a remote pane to its current folder.
@@ -127,7 +141,10 @@ extension BrowserViewController {
         guard let window = view.window else { return }
         let dir = Self.remoteTempDir
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let local = uniqueLocalURL(dir.appendingPathComponent(name))
+        // The name comes from a server listing: reduce it to a safe last component so it can't
+        // escape the temp dir (the file is then handed to NSWorkspace.open).
+        guard let safeName = Self.safeLocalName(name) else { NSSound.beep(); return }
+        let local = uniqueLocalURL(dir.appendingPathComponent(safeName))
         let provider = RemoteProviders.make(for: connection.proto)
         let item = TransferQueueController.Item(name: name) {
             try await provider.download(connection, remotePath: remotePath, to: local, password: password)

@@ -38,6 +38,44 @@ import Testing
         }
     }
 
+    @Test func refusesToCopyFolderIntoItsOwnSubtree() throws {
+        try withTwoDirs { src, _ in
+            // A folder "A" with a subfolder; copy A into A/sub must be refused, not recurse.
+            let a = src.appendingPathComponent("A")
+            let sub = a.appendingPathComponent("sub")
+            try FileManager.default.createDirectory(at: sub, withIntermediateDirectories: true)
+            try Data("x".utf8).write(to: a.appendingPathComponent("f.txt"))
+            let outcome = FileOperations.copy(urls: [a], into: sub)
+            #expect(outcome.performed.isEmpty)
+            #expect(outcome.failures.count == 1)
+            #expect(!exists(sub.appendingPathComponent("A")))  // nothing nested
+        }
+    }
+
+    @Test func failedReplaceRestoresTheOverwrittenFile() throws {
+        try withTwoDirs { src, dst in
+            // Destination has a file; replacing it with a directory-shaped source that fails the
+            // op must leave the original destination file intact, not stranded in the Trash.
+            try Data("original".utf8).write(to: dst.appendingPathComponent("x"))
+            // Source "x" is a nonexistent path so copyItem throws after the destination is trashed.
+            let ghost = src.appendingPathComponent("x")  // does not exist
+            let outcome = FileOperations.copy(urls: [ghost], into: dst, onConflict: .replace)
+            #expect(outcome.performed.isEmpty)
+            #expect(outcome.failures.count == 1)
+            let restored = dst.appendingPathComponent("x")
+            #expect(exists(restored))
+            #expect((try? Data(contentsOf: restored)) == Data("original".utf8))
+        }
+    }
+
+    @Test func isDescendantCatchesNestedAndEqualPaths() {
+        let base = URL(fileURLWithPath: "/tmp/A")
+        #expect(FileOperations.isDescendant(URL(fileURLWithPath: "/tmp/A"), of: base))
+        #expect(FileOperations.isDescendant(URL(fileURLWithPath: "/tmp/A/sub/A"), of: base))
+        #expect(!FileOperations.isDescendant(URL(fileURLWithPath: "/tmp/B"), of: base))
+        #expect(!FileOperations.isDescendant(URL(fileURLWithPath: "/tmp/AB"), of: base))  // prefix, not child
+    }
+
     /// Dropping a file into its own folder, even with .replace, must skip it and
     /// never trash the source onto itself (the data-loss backstop).
     @Test func sameFolderReplaceSkipsAndKeepsSource() throws {

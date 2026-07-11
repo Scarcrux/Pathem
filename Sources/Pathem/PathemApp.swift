@@ -36,6 +36,7 @@ enum PathemApp {
             defer: false
         )
         window.title = "Pathem"
+        window.isReleasedWhenClosed = false  // WindowManager.Host owns the lifetime (see adoptPrimary)
         window.center()
 
         if ProcessInfo.processInfo.environment["PATHEM_L10N_SMOKE"] != nil {
