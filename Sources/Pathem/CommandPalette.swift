@@ -11,7 +11,7 @@ import PathemEngine
 /// surface for free. Driven entirely from the field editor's command selectors, so
 /// up/down/return/escape work while typing.
 @MainActor
-final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate {
+final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, NSWindowDelegate {
     private let panel: NSPanel
     private let field = NSTextField()
     private let table = NSTableView()
@@ -29,8 +29,8 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     private var mode: Mode {
         let s = field.stringValue
         if s.hasPrefix("/") || s.hasPrefix("~/") { return .path }
-        if s.hasPrefix(">") || s.isEmpty { return .command }  // empty: browse all commands
-        return .semantic
+        if s.hasPrefix(">") { return .command }  // ">" is the explicit command prefix (Cmd-K prefills it)
+        return .semantic  // plain text (and empty) is search: Cmd-F opens here, not on the command list
     }
 
     override init() {
@@ -46,6 +46,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         panel.title = L("palette.runCommandTitle", "Command Bar")
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
+        panel.delegate = self  // cancel a pending live search when the bar auto-hides on deactivate
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
@@ -124,8 +125,12 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
             scheduleLiveSearch("")
         case .semantic:
             let query = field.stringValue.trimmingCharacters(in: .whitespaces)
-            filtered = [(id: query, title: String(format: L("palette.searchFor", "Search for “%@”"), query))]
-            scheduleLiveSearch(query)  // rank the pane live while typing
+            // An empty field (e.g. just after Cmd-F opens) has nothing to run: show no row so
+            // Return does nothing, rather than auto-selecting and firing an arbitrary action.
+            filtered = query.isEmpty
+                ? []
+                : [(id: query, title: String(format: L("palette.searchFor", "Search for “%@”"), query))]
+            scheduleLiveSearch(query)  // rank the pane live while typing (no-op when empty)
         }
         table.reloadData()
         if !filtered.isEmpty { select(0) }
@@ -218,7 +223,14 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         runSelected()
     }
 
-    private func close() { panel.orderOut(nil) }
+    private func close() {
+        liveSearch?.cancel()  // don't let a debounced search fire after the bar is gone
+        panel.orderOut(nil)
+    }
+
+    // hidesOnDeactivate hides the bar without routing through close(); cancel the pending
+    // live search here too so clicking away can't fire a search against a since-changed pane.
+    func windowDidResignKey(_ notification: Notification) { liveSearch?.cancel() }
 
     // MARK: NSTextFieldDelegate
 

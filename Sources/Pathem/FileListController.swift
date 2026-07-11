@@ -719,11 +719,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard let name = tableView.tableColumns.first(where: { $0.identifier.rawValue == Column.name.rawValue && !$0.isHidden })
         else { return }
         let others = tableView.tableColumns.filter { $0 !== name && !$0.isHidden }
-        // Seed wanted widths lazily from the current (autosave-restored) layout, and keep
-        // them fresh from user drags (columnResized), so compression is always computed
-        // from what the user asked for and space returns when the pane grows.
+        // Seed wanted widths lazily from each column's sensible default, NOT the current width:
+        // AppKit's autosave may have restored a squeezed width from last quit, and seeding from
+        // that would lock the column at its squeeze floor forever. User drags update wanted via
+        // columnResized, so deliberate in-session sizing is still honored.
         for col in others where wantedWidths[col.identifier.rawValue] == nil {
-            wantedWidths[col.identifier.rawValue] = col.width
+            wantedWidths[col.identifier.rawValue] = Column(rawValue: col.identifier.rawValue)?.width ?? col.width
         }
         func wanted(_ col: NSTableColumn) -> CGFloat { wantedWidths[col.identifier.rawValue] ?? col.width }
         func floorOf(_ col: NSTableColumn) -> CGFloat {

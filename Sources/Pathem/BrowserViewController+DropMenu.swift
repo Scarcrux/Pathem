@@ -91,18 +91,52 @@ extension BrowserViewController {
         }
     }
 
-    /// Replace the target file with the single dragged one (the target goes to the Trash).
+    /// Replace the target file with the single dragged one (the target goes to the Trash and the
+    /// dragged item takes its name and place). Rolls back if the move fails so a failed replace
+    /// never leaves the target stranded in the Trash, guards against a concurrent transfer, and
+    /// registers an undo that restores both files.
     @objc private func dropReplace() {
         guard let (dragged, target) = pendingDropContext, let source = dragged.first else { return }
+        guard !transferInFlight else { NSSound.beep(); return }
+        let fm = FileManager.default
+        var landed: NSURL?
         do {
-            try FileManager.default.trashItem(at: target, resultingItemURL: nil)
-            try FileManager.default.moveItem(at: source, to: target)  // dragged takes the target's name/place
-            reloadBothSides()
-            activePane?.select(name: target.lastPathComponent)
+            try fm.trashItem(at: target, resultingItemURL: &landed)
         } catch {
             presentFailures(
                 [FileOperations.Failure(name: target.lastPathComponent, reason: error.localizedDescription)],
                 title: L("drop.replaceFailed", "Couldn’t replace the file"))
+            return
+        }
+        do {
+            try fm.moveItem(at: source, to: target)  // dragged takes the target's name/place
+        } catch {
+            if let trashed = landed as URL? { try? fm.moveItem(at: trashed, to: target) }  // restore the target
+            presentFailures(
+                [FileOperations.Failure(name: target.lastPathComponent, reason: error.localizedDescription)],
+                title: L("drop.replaceFailed", "Couldn’t replace the file"))
+            return
+        }
+        reloadBothSides()
+        activePane?.select(name: target.lastPathComponent)
+        // Undo: put the dragged item back where it came from, and restore the original target from
+        // the Trash. Only offered while the trashed original is still recoverable.
+        if let trashed = landed as URL? {
+            let footprint: Set<String> = [source.path, target.path, trashed.path]
+            actionHistory.record(
+                name: L("drop.replaceAction", "Replace"), footprint: footprint, undoFootprint: footprint
+            ) { [weak self] in
+                guard let self else { return }
+                do {
+                    try fm.moveItem(at: target, to: source)  // dragged back to its origin
+                    try fm.moveItem(at: trashed, to: target)  // original restored from Trash
+                    self.reloadBothSides()
+                } catch {
+                    self.presentFailures(
+                        [FileOperations.Failure(name: target.lastPathComponent, reason: error.localizedDescription)],
+                        title: L("bvc.undoFailed", "Undo failed"))
+                }
+            }
         }
     }
 }

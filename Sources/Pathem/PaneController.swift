@@ -393,7 +393,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// resolves across folders. It's read-only: the browser blocks file ops here
     /// (they assume a single current folder). Back or selecting a folder leaves it.
-    func showSmartResults(_ entries: [FileEntry], title: String) {
+    func showSmartResults(_ entries: [FileEntry], title: String, preservingState: Bool = false) {
         networkHostNames = []  // a plain smart view carries no mountable hosts (Network sets them after)
         networkActive = false
         remote = nil
@@ -412,7 +412,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pendingSelection = nil
         content.directoryURL = nil  // not a single folder: disable drag
         content.resolutionURL = nil
-        displayEntries(format.sorted(entries), preserveState: false)
+        // A live refresh (e.g. the Network view re-rendering as Bonjour hosts come and go)
+        // keeps the selection and does not grab focus, so it never yanks the cursor or clears
+        // the highlight mid-interaction. A fresh open resets state and takes focus as usual.
+        displayEntries(format.sorted(entries), preserveState: preservingState)
         content.showPlaceholder(entries.isEmpty ? L("pane.noItems", "No items") : nil)
         breadcrumb.isHidden = true
         addressField.isHidden = true
@@ -423,14 +426,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         upButton.isEnabled = false
         updateStatus()
         onDidNavigate?()
-        containerView.window?.makeFirstResponder(content.keyView)
+        if !preservingState { containerView.window?.makeFirstResponder(content.keyView) }
     }
 
     /// Show the synthetic "Network" listing: real network-volume mounts (OrbStack, mounted SMB/AFP
     /// shares) that open by navigating into them, plus discovered-but-unmounted hosts named in
     /// `hostNames` that open by mounting (via onMountNetworkHost). Like Finder's Network view.
     func showNetworkResults(_ entries: [FileEntry], hostNames: Set<String>, title: String) {
-        showSmartResults(entries, title: title)  // clears the network flags, so set them after
+        // A refresh (already on the Network view) preserves selection and focus so Bonjour churn
+        // doesn't yank the cursor; the first open resets and takes focus.
+        showSmartResults(entries, title: title, preservingState: networkActive)
         networkHostNames = hostNames
         networkActive = true
     }

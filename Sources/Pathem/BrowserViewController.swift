@@ -2726,9 +2726,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let ranked = await self.semanticSearch.rank(
                 query: query, in: directory,
                 isCurrent: { [weak self] in self?.activePane?.currentURL == directory })
-            // Only adopt results if the very pane we searched is still active and
-            // on that folder (not merely some pane that shares the path).
-            guard let ranked, self.activePane === pane, pane.currentURL == directory else { return }
+            // Only adopt results if the very pane we searched is still active, on that folder,
+            // AND still on this query. Without the query check, a debounced search whose text was
+            // then cleared or changed would land stale results over the restored listing.
+            guard let ranked, self.activePane === pane, pane.currentURL == directory,
+                pane.searchQuery == query
+            else { return }
             pane.showResults(ranked)
         }
     }
