@@ -23,3 +23,7 @@ dsa_priv.pem
 # Release output (DMGs, appcast, per-item fragments): regenerated, uploaded to
 # GitHub Releases, never served from the repo.
 dist/
+
+# local secrets (never commit)
+.env
+.env.*
