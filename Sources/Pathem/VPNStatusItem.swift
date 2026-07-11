@@ -63,7 +63,7 @@ final class VPNStatusItem {
         if let bound {
             return String(format: L("vpn.status.bound", "Torrents bound to %@"), bound)
         }
-        return L("vpn.status.killed", "No VPN — torrents paused")
+        return L("vpn.status.killed", "No VPN, torrents paused")
     }
 
     @objc private func openTorrents() {

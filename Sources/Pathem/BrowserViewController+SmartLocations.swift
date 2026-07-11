@@ -55,7 +55,7 @@ extension BrowserViewController {
                     [],
                     title: L(
                         "bvc.spotlightOff",
-                        "Spotlight indexing is off — smart folders and search need it. Enable it in Terminal: sudo mdutil -i on /"))
+                        "Spotlight indexing is off. Smart folders and search need it. Enable it in Terminal: sudo mdutil -i on /"))
                 return
             }
         }

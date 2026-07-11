@@ -89,7 +89,7 @@ final class XattrController: NSObject, NSTableViewDataSource, NSTableViewDelegat
         quarantineButton.isEnabled = url.map { ExtendedAttributes.isQuarantined($0) } ?? false
         removeButton.isEnabled = !attrs.isEmpty
         panel.title =
-            url.map { String(format: L("xattr.titleFor", "Extended Attributes — %@"), $0.lastPathComponent) }
+            url.map { String(format: L("xattr.titleFor", "Extended Attributes: %@"), $0.lastPathComponent) }
             ?? L("xattr.title", "Extended Attributes")
         table.reloadData()
     }

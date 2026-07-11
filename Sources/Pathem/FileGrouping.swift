@@ -70,9 +70,9 @@ enum FileGrouping {
         switch size {
         case ..<1: return (1, L("group.sizeZero", "Zero bytes"))
         case ..<100_000: return (2, L("group.sizeTiny", "Tiny (under 100 KB)"))
-        case ..<1_000_000: return (3, L("group.sizeSmall", "Small (100 KB – 1 MB)"))
-        case ..<100_000_000: return (4, L("group.sizeMedium", "Medium (1 – 100 MB)"))
-        case ..<1_000_000_000: return (5, L("group.sizeLarge", "Large (100 MB – 1 GB)"))
+        case ..<1_000_000: return (3, L("group.sizeSmall", "Small (100 KB to 1 MB)"))
+        case ..<100_000_000: return (4, L("group.sizeMedium", "Medium (1 to 100 MB)"))
+        case ..<1_000_000_000: return (5, L("group.sizeLarge", "Large (100 MB to 1 GB)"))
         default: return (6, L("group.sizeHuge", "Huge (over 1 GB)"))
         }
     }

@@ -1941,7 +1941,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             done.informativeText = String(
                 format: L(
                     "bvc.resetDoneBody",
-                    "%@%@.\n\nTo finish uninstalling:\n1. Drag Pathem from Applications to the Trash.\n2. Optionally remove Pathem under System Settings ▸ Privacy & Security ▸ Full Disk Access — macOS keeps that grant until you clear it."),
+                    "%@%@.\n\nTo finish uninstalling:\n1. Drag Pathem from Applications to the Trash.\n2. Optionally remove Pathem under System Settings ▸ Privacy & Security ▸ Full Disk Access. macOS keeps that grant until you clear it."),
                 removed,
                 wasFolderHandler ? L("bvc.resetFinderRestored", ", and Finder is again the default for folders") : "")
             done.addButton(withTitle: L("bvc.resetDoneQuit", "Quit Pathem"))
@@ -2130,7 +2130,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.messageText = String(format: L("chown.title", "Change owner of %d item(s)"), urls.count)
         alert.informativeText = L(
             "chown.hint",
-            "Changing the owner needs administrator rights, so Pathem will type a sudo command into the terminal — review it and press Return to run it. (To change only the group, use Set Attributes.)")
+            "Changing the owner needs administrator rights, so Pathem will type a sudo command into the terminal. Review it and press Return to run it. (To change only the group, use Set Attributes.)")
         alert.addButton(withTitle: L("chown.prepare", "Prepare in Terminal"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
 

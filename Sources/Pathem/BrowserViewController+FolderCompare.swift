@@ -105,7 +105,7 @@ extension BrowserViewController {
                 format: L("sync.conflictsNote", "%d file(s) changed on both sides at the same time; those are left untouched.\n\n"),
                 conflicts.count)
         }
-        body += L("sync.nothingDeleted", "Nothing is deleted — only newer and missing files are copied.")
+        body += L("sync.nothingDeleted", "Nothing is deleted. Only newer and missing files are copied.")
 
         let alert = NSAlert()
         alert.messageText = String(

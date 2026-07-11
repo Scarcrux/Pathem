@@ -31,7 +31,7 @@ final class MarkupController: NSObject {
 
         let window = self.window ?? makeWindow()
         self.window = window
-        window.title = String(format: L("markup.title", "Markup — %@"), url.lastPathComponent)
+        window.title = String(format: L("markup.title", "Markup: %@"), url.lastPathComponent)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         window.makeFirstResponder(canvas)

@@ -74,6 +74,6 @@ enum TorrentLimitsSheet {
         if let iface = client.vpnInterface {
             return String(format: L("torrents.vpn.bound", "Bound to %@. Traffic only leaves over the VPN."), iface)
         }
-        return L("torrents.vpn.killed", "No VPN detected — torrents paused to prevent leaks.")
+        return L("torrents.vpn.killed", "No VPN detected. Torrents paused to prevent leaks.")
     }
 }
