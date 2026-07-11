@@ -260,6 +260,23 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .comment: return 200
             }
         }
+        /// The width the column can be squeezed to before the list gives up and scrolls
+        /// horizontally. Chosen so the value still reads (a truncated date beats a scrollbar).
+        var squeezeFloor: CGFloat {
+            switch self {
+            case .name: return 120
+            case .size: return 60
+            case .kind: return 80
+            case .date, .dateCreated, .dateAccessed: return 100
+            case .ext: return 56
+            case .git: return 44
+            case .path: return 120
+            case .dimensions: return 80
+            case .permissions: return 84
+            case .owner: return 80
+            case .whereFrom, .comment: return 100
+            }
+        }
         /// Only columns backed by a ViewFormat sort key get a clickable header.
         var isSortable: Bool { [.name, .size, .date, .dateCreated, .dateAccessed].contains(self) }
         /// Shown by default; the rest are opt-in via the header menu (persisted).
@@ -279,7 +296,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.usesAlternatingRowBackgroundColors = true
         tableView.allowsMultipleSelection = true
         tableView.style = .inset
-        // Name flexes to fill the pane (see fitNameColumn, driven by the clip-view frame change);
+        // Name flexes to fill the pane (see fitColumns, driven by the clip-view frame change);
         // the value columns stay fixed. We drive it ourselves because AppKit's column autoresize
         // doesn't reconcile oversized columns on first layout.
         tableView.columnAutoresizingStyle = .noColumnAutoresizing
@@ -288,10 +305,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let col = NSTableColumn(identifier: .init(column.rawValue))
             col.title = column.title
             col.width = column.width
-            // Name flexes down in narrow panes (no forced h-scrollbar); the value columns keep a
-            // sensible cap so none can balloon.
+            // Name flexes down in narrow panes, and the value columns squeeze toward their
+            // floors before any h-scrollbar appears (see fitColumns). Caps keep columns from
+            // ballooning; floors double as the manual-resize minimum.
+            col.minWidth = column.squeezeFloor
             switch column {
-            case .name: col.minWidth = 120
             case .size, .kind, .ext, .git: col.maxWidth = column.width + 40
             case .date, .dateCreated, .dateAccessed: col.maxWidth = 220
             default: break
@@ -337,7 +355,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let clip = scrollView.contentView
         clip.postsFrameChangedNotifications = true
         NotificationCenter.default.addObserver(
-            self, selector: #selector(fitNameColumn), name: NSView.frameDidChangeNotification, object: clip)
+            self, selector: #selector(fitColumns), name: NSView.frameDidChangeNotification, object: clip)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(columnResized(_:)), name: NSTableView.columnDidResizeNotification,
+            object: tableView)
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
         tableView.menu = contextMenu.menu
@@ -690,15 +711,72 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Size the Name column so all columns exactly fill the visible width (Finder-style: Name grows
     /// and shrinks with the pane, value columns fixed). Runs on pane resize, so no column is ever
     /// clipped and no horizontal scrollbar is needed.
-    @objc private func fitNameColumn() {
+    /// Fit the visible columns into the pane without a horizontal scrollbar wherever
+    /// possible: Name flexes first (down to its floor), then the value columns squeeze
+    /// proportionally from their wanted widths toward their floors. Only when every
+    /// column is floored does the table overflow and the scrollbar appear.
+    @objc private func fitColumns() {
         guard let name = tableView.tableColumns.first(where: { $0.identifier.rawValue == Column.name.rawValue && !$0.isHidden })
         else { return }
-        let others = tableView.tableColumns
-            .filter { $0 !== name && !$0.isHidden }
-            .reduce(CGFloat(0)) { $0 + $1.width }
-        let available = scrollView.contentView.bounds.width
-        let target = max(name.minWidth, available - others)
-        if abs(name.width - target) > 0.5 { name.width = target }
+        let others = tableView.tableColumns.filter { $0 !== name && !$0.isHidden }
+        // Seed wanted widths lazily from the current (autosave-restored) layout, and keep
+        // them fresh from user drags (columnResized), so compression is always computed
+        // from what the user asked for and space returns when the pane grows.
+        for col in others where wantedWidths[col.identifier.rawValue] == nil {
+            wantedWidths[col.identifier.rawValue] = col.width
+        }
+        func wanted(_ col: NSTableColumn) -> CGFloat { wantedWidths[col.identifier.rawValue] ?? col.width }
+        func floorOf(_ col: NSTableColumn) -> CGFloat {
+            Column(rawValue: col.identifier.rawValue)?.squeezeFloor ?? 80
+        }
+        // The table is wider than its columns: the .inset style pads both sides and each
+        // column adds intercell spacing. Measure that overhead from the live layout (it
+        // already includes every visible column) so the fit targets what actually renders,
+        // not just the column sum. Without this the last column always clipped by ~35 pt.
+        let sumVisible = name.width + others.reduce(CGFloat(0)) { $0 + $1.width }
+        let overhead = max(0, tableView.frame.width - sumVisible)
+        let available = scrollView.contentView.bounds.width - overhead
+        let wantedOthers = others.reduce(CGFloat(0)) { $0 + wanted($1) }
+
+        adjustingColumns = true
+        defer { adjustingColumns = false }
+
+        if available - wantedOthers >= name.minWidth {
+            // Roomy: every value column at its wanted width, Name takes the rest.
+            for col in others where abs(col.width - wanted(col)) > 0.5 { col.width = wanted(col) }
+            let target = available - wantedOthers
+            if abs(name.width - target) > 0.5 { name.width = target }
+            return
+        }
+        // Tight: Name at its floor; squeeze the value columns toward their floors in
+        // proportion to how much give each one has, so they land exactly on the pane
+        // width until even the floors no longer fit.
+        let sumFloors = others.reduce(CGFloat(0)) { $0 + floorOf($1) }
+        let remaining = available - name.minWidth
+        let give = wantedOthers - sumFloors
+        let t = give > 0 ? max(0, min(1, (remaining - sumFloors) / give)) : 0
+        for col in others {
+            let target = floorOf(col) + (wanted(col) - floorOf(col)) * t
+            if abs(col.width - target) > 0.5 { col.width = target }
+        }
+        if abs(name.width - name.minWidth) > 0.5 { name.width = name.minWidth }
+    }
+
+    /// The widths the user (or the defaults) asked for, keyed by column id; compression
+    /// works from these, never overwriting intent with squeezed values.
+    private var wantedWidths: [String: CGFloat] = [:]
+    /// True while fitColumns itself is writing widths, so its own resize notifications
+    /// aren't mistaken for user drags.
+    private var adjustingColumns = false
+
+    /// A user drag updates the column's wanted width and refits the rest around it.
+    @objc private func columnResized(_ note: Notification) {
+        guard !adjustingColumns,
+            let col = note.userInfo?["NSTableColumn"] as? NSTableColumn,
+            col.identifier.rawValue != Column.name.rawValue
+        else { return }
+        wantedWidths[col.identifier.rawValue] = col.width
+        fitColumns()
     }
 
     // MARK: Drag and drop
