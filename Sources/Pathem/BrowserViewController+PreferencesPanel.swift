@@ -163,6 +163,7 @@ extension BrowserViewController {
     func applyCompactSidebar() {
         compactSidebar = prefs.compactSidebar
         sidebar.setShowsLabels(!compactSidebar)
+        sidebar.setMonochromeIcons(prefs.monochromeSidebarIcons)
         let width: CGFloat = compactSidebar ? Self.compactSidebarWidth : 200
         sidebarWidthConstraint?.constant = width
         if didSetInitialSplit { outerSplit.setPosition(width, ofDividerAt: 0) }  // resize live

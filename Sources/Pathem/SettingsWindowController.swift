@@ -285,6 +285,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.showFullPath", "Show full path in the title bar"), \.showFullPathInTitle),
             check(L("prefs.pathBarBottom", "Show the path bar at the bottom"), \.pathBarAtBottom),
             check(L("prefs.compactSidebar", "Compact sidebar (icons only)"), \.compactSidebar),
+            check(L("prefs.monochromeSidebar", "Monochrome sidebar icons (Liquid Glass)"), \.monochromeSidebarIcons),
             check(L("prefs.singleClickToOpen", "Open items with a single click"), \.singleClickToOpen),
             check(L("prefs.underlineOnHover", "Underline the item under the pointer"), \.underlineOnHover),
             check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),

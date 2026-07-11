@@ -87,6 +87,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var calculateFolderSizes: Bool
     /// Hide sidebar row labels (icons only) and narrow it, for a compact sidebar.
     public var compactSidebar: Bool
+    /// Render sidebar place icons as monochrome templates that tint with the sidebar (a clean,
+    /// Liquid-Glass look) instead of full-color brand glyphs (Google Drive, AirDrop, etc.).
+    public var monochromeSidebarIcons: Bool
     /// Ask for confirmation before moving local items to the Trash (off by default,
     /// since the Trash is reversible).
     public var confirmBeforeDelete: Bool
@@ -153,7 +156,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         alternatingRows: Bool = true, searchOCR: Bool = false,
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
-        compactSidebar: Bool = false, confirmBeforeDelete: Bool = false,
+        compactSidebar: Bool = false, monochromeSidebarIcons: Bool = false,
+        confirmBeforeDelete: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
@@ -220,6 +224,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.openConnectionsInNewTab = openConnectionsInNewTab
         self.calculateFolderSizes = calculateFolderSizes
         self.compactSidebar = compactSidebar
+        self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
         self.conflictDefault = conflictDefault
         self.verifyCopies = verifyCopies
@@ -252,6 +257,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         calculateFolderSizes =
             try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes) ?? d.calculateFolderSizes
         compactSidebar = try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
+        monochromeSidebarIcons =
+            try c.decodeIfPresent(Bool.self, forKey: .monochromeSidebarIcons) ?? d.monochromeSidebarIcons
         confirmBeforeDelete =
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
         conflictDefault = (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault

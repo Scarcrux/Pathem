@@ -335,6 +335,9 @@ enum PathemApp {
             if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_COMPACT"] != nil {
                 browser.debugSetCompactSidebar(true)
             }
+            if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_MONO"] != nil {
+                browser.debugSetMonochromeSidebar(true)
+            }
             var attempts = 0
             func tick() {
                 attempts += 1

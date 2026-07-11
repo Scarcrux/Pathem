@@ -113,6 +113,13 @@ extension BrowserViewController {
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Force monochrome (template) sidebar icons for a render check (PATHEM_SIDEBAR_MONO).
+    func debugSetMonochromeSidebar(_ on: Bool) {
+        prefs.monochromeSidebarIcons = on
+        applyCompactSidebar()
+        view.layoutSubtreeIfNeeded()
+    }
+
     /// Reorder sidebar sections for a render, without persisting (PATHEM_SIDEBAR_ORDER).
     func debugReorderSidebar(_ order: [String]) {
         sidebar.debugSetSectionOrder(order)

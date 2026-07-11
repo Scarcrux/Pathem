@@ -43,6 +43,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private var collapseButtonHeight: NSLayoutConstraint?
     /// When false, sidebar rows show icons only (compact mode); labels are the tooltip.
     private var showsLabels = true
+    /// Render place icons as monochrome templates (Liquid-Glass look) instead of full-color brand
+    /// glyphs. Set from the preference; rebuilds the tree so cloud icons re-resolve.
+    private(set) var monochromeIcons = false
     /// A smart location (Recents / a tag filter) was selected.
     var onSelectSmart: ((SmartQuery) -> Void)?
     /// A saved smart folder was selected (run its query). Kept separate from SmartQuery so the
@@ -317,6 +320,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     /// Hide row labels (icons only) for a compact sidebar, or show them.
+    /// Toggle monochrome (template) place icons vs. full-color brand glyphs, then rebuild so the
+    /// cloud rows re-resolve their icons.
+    func setMonochromeIcons(_ on: Bool) {
+        guard on != monochromeIcons else { return }
+        monochromeIcons = on
+        reload()
+    }
+
     func setShowsLabels(_ on: Bool) {
         guard on != showsLabels else { return }
         showsLabels = on
@@ -533,7 +544,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
-            let ic = Self.cloudNodeIcon(.iCloud)
+            let ic = Self.cloudNodeIcon(.iCloud, monochrome: monochromeIcons)
             children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
         }
         // Modern Dropbox/Google Drive/OneDrive/Box etc. mount here via the File Provider.
@@ -546,7 +557,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 guard isDir else { continue }
                 // iCloud is already listed from Mobile Documents above; don't list it twice.
                 if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
-                let ic = Self.cloudNodeIcon(CloudLocation.provider(fromDirectory: url.lastPathComponent))
+                let ic = Self.cloudNodeIcon(CloudLocation.provider(fromDirectory: url.lastPathComponent), monochrome: monochromeIcons)
                 children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
             }
         }
@@ -570,7 +581,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             guard fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue,
                 !alreadyHasProvider(entry.keyword)
             else { continue }
-            let ic = Self.cloudNodeIcon(entry.service)
+            let ic = Self.cloudNodeIcon(entry.service, monochrome: monochromeIcons)
             children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
         }
         guard !children.isEmpty else { return nil }
@@ -606,11 +617,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return NSWorkspace.shared.icon(forFile: app.path)  // fall back to the full app icon
     }
 
-    /// The icon fields (SF symbol + tint, or a branded app image) for a cloud service node.
-    static func cloudNodeIcon(_ service: CloudService) -> (icon: String?, tint: NSColor?, image: NSImage?) {
-        if let brand = brandIcon(service) { return (nil, nil, brand) }
+    /// The icon fields (SF symbol + tint, or a branded app image) for a cloud service node. In
+    /// monochrome mode, skip the color brand glyph and the brand tint so the row renders as a
+    /// template SF symbol tinted by the sidebar, like the other place icons.
+    static func cloudNodeIcon(_ service: CloudService, monochrome: Bool = false)
+        -> (icon: String?, tint: NSColor?, image: NSImage?)
+    {
+        if !monochrome, let brand = brandIcon(service) { return (nil, nil, brand) }
         let (sym, tint) = cloudIcon(service)
-        return (sym, tint, nil)
+        return (sym, monochrome ? nil : tint, nil)
     }
 
     /// Finder's own AirDrop sidebar glyph -- the clean concentric-arcs "radar" mark, a monochrome
