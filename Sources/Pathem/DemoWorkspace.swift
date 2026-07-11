@@ -31,8 +31,8 @@ enum DemoWorkspace {
         text("Meeting Notes.txt", in: documents, "Standup: ship v1, polish transfers, write docs.")
 
         let projects = folder("Projects", in: root)
-        let pathem = folder("pathem", in: projects)
-        text("README.md", in: pathem, "# pathem\nDirectory-Opus-class Finder replacement.")
+        let pathem = folder("Pathem", in: projects)
+        text("README.md", in: pathem, "# Pathem\nDirectory-Opus-class Finder replacement.")
         text("main.swift", in: pathem, "@main enum App { static func main() { print(\"hi\") } }")
         file("logo.sketch", in: pathem, bytes: 1_800_000, daysAgo: 8)
         let site = folder("portfolio-site", in: projects)
