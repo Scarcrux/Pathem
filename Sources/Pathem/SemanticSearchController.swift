@@ -14,6 +14,8 @@ final class SemanticSearchController {
     private var cachedDir: URL?
     private var cachedIndex: FolderSemanticIndex?
     private var cachedEntries: [FileEntry]?
+    private var buildTask: Task<Void, Never>?  // the in-flight build, so bursts coalesce
+    private var buildingDir: URL?
     private static let maxItems = 5_000
 
     /// Include OCR'd image text when indexing (mirrors the search-OCR preference).
@@ -42,29 +44,41 @@ final class SemanticSearchController {
         return order.compactMap { $0 < entries.count ? entries[$0] : nil }
     }
 
-    /// Drop the cache (e.g. a preference that affects indexing changed).
+    /// Drop the cache (e.g. a preference that affects indexing changed, or the folder changed
+    /// on disk). Also drops the in-flight build so it can't adopt a now-stale result.
     func invalidate() {
+        buildTask?.cancel()
+        buildTask = nil
+        buildingDir = nil
         cachedDir = nil
         cachedIndex = nil
         cachedEntries = nil
     }
 
     /// Enumerate and embed `directory` off the main thread, adopting the result only if
-    /// `isCurrent()` still holds (the user hasn't navigated away).
+    /// `isCurrent()` still holds (the user hasn't navigated away). Concurrent calls for the same
+    /// folder (a burst of preIndex/rank) await the one in-flight build instead of each starting
+    /// their own embed of up to 5000 files.
     private func ensureIndex(for directory: URL, isCurrent: @escaping @MainActor () -> Bool) async {
         guard cachedDir != directory || cachedIndex == nil else { return }
+        if let task = buildTask, buildingDir == directory { await task.value; return }
         let maxItems = Self.maxItems
         let ocr = includeOCR
-        let dirEntries = await Task.detached {
-            (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
-        }.value
-        let built = await Task.detached {
-            SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr)
-        }.value
-        if isCurrent() {
-            cachedDir = directory
-            cachedEntries = dirEntries
-            cachedIndex = built
+        let task = Task { @MainActor [weak self] in
+            let dirEntries = await Task.detached {
+                (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
+            }.value
+            let built = await Task.detached {
+                SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr)
+            }.value
+            guard let self, !Task.isCancelled, isCurrent() else { return }
+            self.cachedDir = directory
+            self.cachedEntries = dirEntries
+            self.cachedIndex = built
         }
+        buildingDir = directory
+        buildTask = task
+        await task.value
+        if buildingDir == directory { buildTask = nil; buildingDir = nil }
     }
 }

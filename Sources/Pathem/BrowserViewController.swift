@@ -2745,6 +2745,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         searchButton.contentTintColor = query.isEmpty ? .secondaryLabelColor : .controlAccentColor
     }
 
+    private var reindexWork: DispatchWorkItem?
+    /// Rebuild the semantic index after ~1s of no further disk changes, so a stream of watcher
+    /// ticks (a copy or unzip into the folder) collapses into a single rebuild once it settles.
+    private func scheduleReindex(_ url: URL) {
+        reindexWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.activePane?.currentURL == url else { return }
+            self.preIndex(url)
+        }
+        reindexWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
+    }
+
     /// Build the semantic index for `directory` in the background (if not already
     /// cached for it), so the next search there is instant.
     func preIndex(_ directory: URL) {
@@ -2755,9 +2768,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// A pane's folder changed (navigation or on-disk edit): drop a stale cache
     /// for it, and rebuild in the background if it is the active pane.
     private func directoryChanged(_ pane: PaneController, _ url: URL) {
-        if semanticSearch.cachedDirectory == url { semanticSearch.invalidate() }  // this folder changed on disk
+        // A disk edit to the folder we've already indexed (vs a navigation to a new one) means
+        // the index is stale. Drop it, but rebuild only after the churn settles: a long copy into
+        // this folder fires a watcher tick per file, and re-embedding up to 5000 items on each
+        // would thrash the CPU. A navigation to a fresh folder still indexes eagerly.
+        let editedIndexedFolder = semanticSearch.cachedDirectory == url
+        if editedIndexedFolder { semanticSearch.invalidate() }
         if pane === activePane {
-            preIndex(url)
+            if editedIndexedFolder { scheduleReindex(url) } else { preIndex(url) }
             updateWindowTitle()
             // The terminal follows the active folder only when the user opted in
             // and the drawer is open (changeDirectory itself ignores TUIs).
