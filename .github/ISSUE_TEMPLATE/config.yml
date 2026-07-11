@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Scarcrux/Pathem/security/policy
+    about: Please do not file public issues for security problems. Read the security policy, or email security@pathem.app.
+  - name: Questions and ideas (Discussions)
+    url: https://github.com/Scarcrux/Pathem/discussions
+    about: Ask a question, share your setup, or float an idea that is not yet a concrete bug or feature request.

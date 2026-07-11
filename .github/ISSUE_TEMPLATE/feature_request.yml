@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an idea or an improvement for Pathem
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please search existing issues and the roadmap (ROADMAP.md) first, in case it is already planned or discussed.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve
+      description: The workflow or the pain point behind the request. What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: What you would like
+      description: How you imagine it working. If it helps, compare to Finder, Directory Opus, or Path Finder.
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you have considered
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and the roadmap, and this is not a duplicate.
+          required: true

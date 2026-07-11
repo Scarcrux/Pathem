@@ -1,0 +1,79 @@
+name: Bug report
+description: Something in Pathem is broken or behaves the wrong way
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please search existing issues first so we avoid duplicates.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: A clear description of the bug, and what you expected instead.
+      placeholder: When I do X, Pathem does Y. I expected Z.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The exact steps, so the bug can be reproduced.
+      placeholder: |
+        1. Open a folder with ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: pathem-version
+    attributes:
+      label: Pathem version
+      description: See Pathem > About Pathem.
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 15.5
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Pathem, if you know.
+      options:
+        - Not sure
+        - File list and panes
+        - Sidebar
+        - Tabs
+        - Search
+        - Drag and drop
+        - File operations (copy, move, delete)
+        - Remote connections (S3, SFTP, WebDAV, FTP)
+        - Torrents
+        - Terminal
+        - Settings
+        - Auto-update
+        - Other
+    validations:
+      required: false
+  - type: textarea
+    id: details
+    attributes:
+      label: Logs, screenshots, or a screen recording
+      description: Anything that helps. Drag files in to attach them. A crash report from Console helps a lot if Pathem crashed.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: This reproduces on the current release of Pathem.
+          required: false
