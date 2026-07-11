@@ -24,6 +24,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     // rows(forNames:).
     private var groupKey: ViewFormat.GroupKey = .none
     private var displayRows: [FileGrouping.Row] = []
+    /// Reverse index entryIndex -> table row, rebuilt once with displayRows (O(n)). Avoids the
+    /// O(n) firstIndex scan per lookup that made folder-size publishing and cut-marking O(n^2)
+    /// on 100k-row folders.
+    private var rowForEntry: [Int: Int] = [:]
     /// Group titles the user has collapsed (their items are hidden until re-expanded). Reset on
     /// navigation and on a group-key change, so it never carries stale titles across folders.
     private var collapsedGroups: Set<String> = []
@@ -42,7 +46,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
         }
         groupCounts = counts
-        guard !collapsedGroups.isEmpty else { displayRows = full; return }
+        guard !collapsedGroups.isEmpty else { displayRows = full; rebuildRowIndex(); return }
         // Drop the item rows under any collapsed header, keeping the header itself.
         var result: [FileGrouping.Row] = []
         var hidingItems = false
@@ -55,6 +59,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
         }
         displayRows = result
+        rebuildRowIndex()
+    }
+
+    /// Rebuild the entryIndex -> row map from the current displayRows (called whenever
+    /// displayRows changes: grouping, collapse, and the ungrouped fast path).
+    private func rebuildRowIndex() {
+        rowForEntry.removeAll(keepingCapacity: true)
+        for (row, dr) in displayRows.enumerated() {
+            if case .item(let idx) = dr { rowForEntry[idx] = row }
+        }
     }
 
     /// Toggle a group's collapsed state (from a click on its header), preserving the selection.
@@ -70,8 +84,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard row >= 0, row < displayRows.count, case .item(let index) = displayRows[row] else { return nil }
         return index
     }
-    /// The table row showing the entry at `index`, or nil if not currently displayed.
-    private func row(forEntryIndex index: Int) -> Int? { displayRows.firstIndex(of: .item(index)) }
+    /// The table row showing the entry at `index`, or nil if not currently displayed. O(1) via
+    /// the reverse index instead of an O(n) scan of displayRows.
+    private func row(forEntryIndex index: Int) -> Int? { rowForEntry[index] }
     /// The table rows (item rows) whose entry name is in `names`.
     private func rows(forNames names: Set<String>) -> IndexSet {
         var set = IndexSet()
@@ -1423,26 +1438,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: L("list.onlineOnly", "Online only"))
         ?? NSImage()
 
-    private static var iconCache: [String: NSImage] = [:]
-
-    /// A type icon for the entry, cached by extension (or folder) so scrolling a
-    /// huge directory never does per-row disk work.
-    private static func icon(for entry: FileEntry) -> NSImage {
-        if let themed = IconSetManager.shared.icon(for: entry) { return themed }  // active icon set
-        let key = entry.isDirectory ? "\u{0}folder" : (entry.name as NSString).pathExtension.lowercased()
-        if let cached = iconCache[key] { return cached }
-        let workspace = NSWorkspace.shared
-        let image: NSImage
-        if entry.isDirectory {
-            image = workspace.icon(for: .folder)
-        } else if !key.isEmpty, let type = UTType(filenameExtension: key) {
-            image = workspace.icon(for: type)
-        } else {
-            image = workspace.icon(for: .data)
-        }
-        iconCache[key] = image
-        return image
-    }
+    /// A type icon for the entry, cached by extension (via the shared FileIconCache so the
+    /// list, column, and tree views share one cache) so scrolling a huge directory never does
+    /// per-row disk work.
+    private static func icon(for entry: FileEntry) -> NSImage { FileIconCache.icon(for: entry) }
 }
 
 /// A lock-guarded generation counter, readable from a background queue so an

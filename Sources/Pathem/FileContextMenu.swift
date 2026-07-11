@@ -184,10 +184,15 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         if menu === self.menu {
             // Right-click already moved the selection to the clicked item, so this is current.
             let urls = selectedURLs()
-            let showArchive = urls.contains { Archiver.canExtract($0) }
-            let singleFolder = urls.count == 1 && Self.isDirectory(urls[0])
-            let inTrash = !urls.isEmpty && urls.allSatisfy { Self.isInTrash($0) }
-            let allTorrents = !urls.isEmpty && urls.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
+            let count = urls.count
+            // The per-URL flag scans (some stat the file, e.g. isInTrash) are bounded to a sample
+            // so right-clicking a 100k-item selection doesn't hang the menu; the archive/trash/
+            // torrent actions tolerate a mixed selection past the sample.
+            let sample = urls.prefix(2000)
+            let showArchive = sample.contains { Archiver.canExtract($0) }
+            let singleFolder = count == 1 && Self.isDirectory(urls[0])
+            let inTrash = !urls.isEmpty && sample.allSatisfy { Self.isInTrash($0) }
+            let allTorrents = !urls.isEmpty && sample.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
             for item in menu.items {
                 guard let id = item.representedObject as? String else { continue }
                 switch id {

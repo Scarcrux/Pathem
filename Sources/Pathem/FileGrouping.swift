@@ -24,8 +24,14 @@ enum FileGrouping {
         // Bucket entries, preserving their incoming (already-sorted) order within each bucket.
         var buckets: [(order: Int, title: String, items: [Int])] = []
         var indexByTitle: [String: Int] = [:]
+        // Per-call caches: a kind title per lowercased extension (avoids a Launch Services round
+        // trip per entry) and precomputed date boundaries (avoids Calendar math per entry). Both
+        // were per-entry costs that stalled the main thread on 100k-row Group By.
+        var kindByExt: [String: String] = [:]
+        let bounds = DateBounds(now: now)
         for (i, entry) in entries.enumerated() {
-            let (order, title) = bucket(for: entry, key: key, now: now, tagColors: tagColors)
+            let (order, title) = bucket(
+                for: entry, key: key, now: now, tagColors: tagColors, kindByExt: &kindByExt, bounds: bounds)
             if let bi = indexByTitle[title] {
                 buckets[bi].items.append(i)
             } else {
@@ -41,24 +47,46 @@ enum FileGrouping {
         return buckets.flatMap { [Row.header($0.title)] + $0.items.map { Row.item($0) } }
     }
 
+    /// Precomputed day boundaries so date bucketing is a few comparisons per entry, not
+    /// repeated Calendar.isDateInToday / dateComponents calls.
+    private struct DateBounds {
+        let now: Date
+        let startOfToday: Date
+        let startOfYesterday: Date
+        let sevenDaysAgo: Date
+        let thirtyDaysAgo: Date
+        init(now: Date) {
+            let cal = Calendar.current
+            self.now = now
+            let today = cal.startOfDay(for: now)
+            startOfToday = today
+            startOfYesterday = cal.date(byAdding: .day, value: -1, to: today) ?? today
+            sevenDaysAgo = cal.date(byAdding: .day, value: -7, to: today) ?? today
+            thirtyDaysAgo = cal.date(byAdding: .day, value: -30, to: today) ?? today
+        }
+    }
+
     /// The (ordering, section title) for one entry under a group key.
     private static func bucket(
         for entry: FileEntry, key: ViewFormat.GroupKey, now: Date,
-        tagColors: (FileEntry) -> [FileTag.Color]
+        tagColors: (FileEntry) -> [FileTag.Color],
+        kindByExt: inout [String: String], bounds: DateBounds
     ) -> (Int, String) {
         switch key {
         case .none:
             return (0, "")
         case .kind:
             if entry.isDirectory { return (0, L("group.folder", "Folder")) }
-            let ext = (entry.name as NSString).pathExtension
+            let ext = (entry.name as NSString).pathExtension.lowercased()
+            if let cached = kindByExt[ext] { return (1, cached) }
             let kind = UTType(filenameExtension: ext)?.localizedDescription ?? L("group.document", "Document")
+            kindByExt[ext] = kind
             return (1, kind)  // files share order 1, then sort by kind title
         case .size:
             if entry.isDirectory { return (0, L("group.folders", "Folders")) }
             return sizeBucket(entry.size)
         case .dateModified:
-            return dateBucket(entry.modificationDate, now: now)
+            return dateBucket(entry.modificationDate, bounds: bounds)
         case .tag:
             // Group by the first tag color; untagged files fall into a trailing "No Tag" bucket.
             guard let color = tagColors(entry).first else { return (1, L("group.noTag", "No Tag")) }
@@ -77,14 +105,12 @@ enum FileGrouping {
         }
     }
 
-    private static func dateBucket(_ date: Date?, now: Date) -> (Int, String) {
+    private static func dateBucket(_ date: Date?, bounds: DateBounds) -> (Int, String) {
         guard let date else { return (9, L("group.dateUnknown", "Unknown Date")) }
-        let calendar = Calendar.current
-        if date > now || calendar.isDateInToday(date) { return (0, L("group.today", "Today")) }
-        if calendar.isDateInYesterday(date) { return (1, L("group.yesterday", "Yesterday")) }
-        let days = calendar.dateComponents([.day], from: date, to: now).day ?? 0
-        if days < 7 { return (2, L("group.prev7", "Previous 7 Days")) }
-        if days < 30 { return (3, L("group.prev30", "Previous 30 Days")) }
+        if date >= bounds.startOfToday { return (0, L("group.today", "Today")) }
+        if date >= bounds.startOfYesterday { return (1, L("group.yesterday", "Yesterday")) }
+        if date >= bounds.sevenDaysAgo { return (2, L("group.prev7", "Previous 7 Days")) }
+        if date >= bounds.thirtyDaysAgo { return (3, L("group.prev30", "Previous 30 Days")) }
         return (4, L("group.earlier", "Earlier"))
     }
 }
