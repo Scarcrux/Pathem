@@ -48,6 +48,12 @@ final class TorrentDaemonClient {
     @discardableResult
     func startIfNeeded() -> Bool {
         if isRunning { return true }
+        // Tear down any leftover stream/continuation from a previous (dead) daemon before wiring
+        // up the new one, so an orphaned consumer can't ingest into the fresh process's state.
+        streamTask?.cancel()
+        streamTask = nil
+        continuation?.finish()
+        continuation = nil
         guard let path = Self.helperPath(), let stateDir = ConfigStore.directory() else { return false }
         let torrentsState = stateDir.appendingPathComponent("Torrents", isDirectory: true)
         try? FileManager.default.createDirectory(at: torrentsState, withIntermediateDirectories: true)
@@ -87,8 +93,10 @@ final class TorrentDaemonClient {
                 self?.ingest(chunk)
             }
         }
-        proc.terminationHandler = { [weak self] _ in
-            Task { @MainActor in self?.handleTermination() }
+        proc.terminationHandler = { [weak self] terminated in
+            // Only tear down if the process that died is still the current one. Otherwise a stale
+            // handler from a crashed daemon could wipe the state of a daemon we already relaunched.
+            Task { @MainActor in self?.handleTermination(of: terminated) }
         }
 
         do {
@@ -112,7 +120,8 @@ final class TorrentDaemonClient {
         streamTask = nil
     }
 
-    private func handleTermination() {
+    private func handleTermination(of terminated: Process) {
+        guard process === terminated else { return }  // a newer daemon is already running; leave it alone
         process = nil
         stdin = nil
         inbound.removeAll()

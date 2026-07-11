@@ -128,17 +128,26 @@ Task {
     emit(.init(kind: .status, ok: true, message: "ready", torrents: await engine.statuses()))
 }
 
+// Decoded commands flow through one AsyncStream, drained by a single consumer that awaits each
+// handle() before the next. A Task-per-line (as before) has no ordering guarantee, so a quick
+// Pause-then-Resume could apply as Resume-then-Pause and leave the torrent in the wrong state.
+let (commandStream, commandContinuation) = AsyncStream<TorrentControl.Command>.makeStream()
+Task {
+    for await command in commandStream { await handle(command) }
+}
+
 // Read commands on a dedicated thread. `readLine` is a blocking syscall; running it inside a
 // Task would park a cooperative-pool thread and starve the async ticker, so it lives on its own
-// Thread and hands each decoded command to the async world.
+// Thread and yields each decoded command (in arrival order) into the stream above.
 let reader = Thread {
     while let line = readLine(strippingNewline: true) {
         guard !line.isEmpty, let data = line.data(using: .utf8),
             let command = try? JSONDecoder().decode(TorrentControl.Command.self, from: data)
         else { continue }
-        Task { await handle(command) }
+        commandContinuation.yield(command)
     }
     // stdin closed (the app quit): persist and exit.
+    commandContinuation.finish()
     Task {
         await engine.checkpoint()
         ticker.cancel()

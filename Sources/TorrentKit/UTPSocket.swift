@@ -161,13 +161,29 @@ public actor UTPSocket {
     public func readAvailable() async -> Data {
         if consumed < delivered.count { return take() }
         if state == .closed || finReceived { return Data() }  // EOF
-        return await withCheckedContinuation { cont in
-            if consumed < delivered.count || state == .closed || finReceived {
-                cont.resume(returning: take())
-            } else {
-                reader = cont
+        // Cancellation-aware: recv() races this against a timeout and cancels the loser. Without a
+        // cancellation handler the parked continuation would never resume, and the throwing task
+        // group would hang waiting for this child, so the timeout could never actually fire.
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { cont in
+                if consumed < delivered.count || state == .closed || finReceived {
+                    cont.resume(returning: take())
+                } else {
+                    reader = cont
+                }
             }
+        } onCancel: {
+            Task { await self.cancelRead() }
         }
+    }
+
+    /// Resume a parked reader with whatever is buffered (empty on none), so a cancelled
+    /// readAvailable completes promptly. Guarded by niling `reader` first (the actor serializes
+    /// this with wakeReader, so the continuation is never resumed twice).
+    private func cancelRead() {
+        guard let r = reader else { return }
+        reader = nil
+        r.resume(returning: take())
     }
 
     private func take() -> Data {

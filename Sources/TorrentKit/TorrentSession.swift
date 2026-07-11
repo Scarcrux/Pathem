@@ -213,6 +213,7 @@ public actor TorrentSession {
             let length = min(PieceManager.blockSize, data.count - begin)
             let result = pieces.receiveBlock(index: index, begin: begin, block: data.subdata(in: begin..<(begin + length)))
             if case .pieceComplete(let pieceIndex, let bytes) = result {
+                guard state == .downloading else { break }  // paused/stopped mid-fetch: don't ingest
                 try? storage.write(
                     pieceIndex: pieceIndex, pieceLength: pieces.pieceLength,
                     pieceSize: pieces.pieceSize(pieceIndex), data: bytes)
@@ -605,6 +606,10 @@ public actor TorrentSession {
         globalInFlight.remove(key)
         switch pieces.receiveBlock(index: index, begin: begin, block: block) {
         case .pieceComplete(let pieceIndex, let data):
+            // A pump suspended in receive() can resume with a buffered final block AFTER the
+            // kill-switch (or the user) paused/stopped us. Don't write, announce, or flip to
+            // seeding then: that would resurrect a paused torrent and leak while the VPN is down.
+            guard state == .downloading else { break }
             try? storage.write(
                 pieceIndex: pieceIndex, pieceLength: pieces.pieceLength,
                 pieceSize: pieces.pieceSize(pieceIndex), data: data)

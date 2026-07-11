@@ -138,8 +138,14 @@ public actor TorrentEngine {
     }
 
     /// React to a tunnel appearing, changing, or dropping while binding is enabled.
-    private func onVPNChanged(_ name: String?) async {
+    private func onVPNChanged(_ delivered: String?) async {
         guard limits.bindToVPN else { return }
+        // The callback delivers names via independent unstructured Tasks with no FIFO guarantee,
+        // so a drop-then-reconnect pair can arrive reordered. Trust the monitor's LIVE truth
+        // instead of the delivered name: re-querying makes the reaction idempotent and
+        // order-independent (a late, stale task reads the current state and no-ops).
+        _ = delivered
+        let name = await vpnMonitor.activeVPNName()
         // Skip genuine no-ops (path updates fire often), but always act on the first evaluation so
         // enabling with no VPN engages the kill-switch instead of being mistaken for "no change".
         if vpnEvaluated && name == vpnInterfaceName { return }
