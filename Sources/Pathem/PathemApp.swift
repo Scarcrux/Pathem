@@ -23,7 +23,13 @@ enum PathemApp {
         let updater = UpdaterController()
         app.mainMenu = makeMainMenu(updater: updater)
 
-        let window = NSWindow(
+        // Screenshot runs use a window that always draws key chrome (colored traffic lights),
+        // since macOS denies programmatic activation while the user is typing elsewhere and a
+        // capture with gray lights reads as an inactive app.
+        let shotRun = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
+            || ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil
+        let windowType: NSWindow.Type = shotRun ? AlwaysKeyWindow.self : NSWindow.self
+        let window = windowType.init(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
@@ -133,6 +139,7 @@ enum PathemApp {
         if viewShot {
             window.setContentSize(NSSize(width: 1280, height: 800))
             window.center()
+            NSApp.activate(ignoringOtherApps: true)  // key window = colored traffic lights in captures
             let files = demoLayout.map { $0.root.appendingPathComponent("Downloads") } ?? start
             let photos = demoLayout.map { $0.root.appendingPathComponent("Photos") } ?? start
             let code = demoLayout.map { $0.root.appendingPathComponent("Projects") } ?? start
@@ -166,16 +173,32 @@ enum PathemApp {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
                 shoot("gallery")
+                // Column view is staged on Photos with the left pane widened: one column of
+                // files plus the preview column (a real thumbnail + metadata), nothing clipped.
+                // Park the right pane on Projects as a plain list first, so a saved gallery
+                // format (per-folder views persist) can't photobomb the capture.
+                browser.setRightPaneFraction(0.35)
+                browser.debugFocusOtherPane()
                 browser.debugNavigateActive(to: code)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.6) {
+                browser.debugSetActiveViewMode(.list)
+                browser.debugFocusOtherPane()
+                browser.debugNavigateActive(to: photos)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 11.4) {
                 browser.debugSetActiveViewMode(.column)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 12.0) {
-                browser.debugDrillActive(row: 1)  // drill a folder with real contents
+            DispatchQueue.main.asyncAfter(deadline: .now() + 12.2) {
+                browser.debugDrillActive(row: 0)  // select a file: the preview column appears
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 13.2) {
+                browser.debugHideQuickBar()  // selection pops the quick-actions bar; keep the shot clean
+                browser.debugRepaintAll()  // clear ghost pixels from the split move
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 13.5) {
                 shoot("column")
+                browser.setRightPaneFraction(0.5)  // restore halves for the remaining shots
                 browser.debugNavigateActive(to: home)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 14.5) {
@@ -195,11 +218,13 @@ enum PathemApp {
                 shoot("icon")
             }
             // Stage the dual-pane hero: right pane showing Photos as a gallery, left pane
-            // back on Projects as a list, focus on the left.
+            // back on Projects as a list, focus on the left. Navigate the right pane back to
+            // Photos explicitly: the column staging parked it on Projects.
             DispatchQueue.main.asyncAfter(deadline: .now() + 21.5) {
                 browser.debugFocusOtherPane()
+                browser.debugNavigateActive(to: photos)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 22.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 22.5) {
                 browser.debugSetActiveViewMode(.gallery)  // right pane is at Photos
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 23.5) {
@@ -208,6 +233,10 @@ enum PathemApp {
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 25.0) {
                 browser.debugSetActiveViewMode(.list)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 26.5) {
+                NSApp.activate(ignoringOtherApps: true)  // colored traffic lights, when macOS allows it
+                browser.debugRepaintAll()  // clear ghost pixels from the split move and mode swaps
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 27.0) {
                 shoot("hero")
@@ -1212,6 +1241,14 @@ enum PathemApp {
         }
         return dir
     }
+}
+
+/// A window that always reports key status, so screenshot runs draw colored traffic
+/// lights even when macOS won't let a background launch actually become active.
+/// Used only by the PATHEM_*_SHOT capture modes, never in a normal launch.
+final class AlwaysKeyWindow: NSWindow {
+    override var isKeyWindow: Bool { true }
+    override var isMainWindow: Bool { true }  // traffic lights consult main status as well
 }
 
 /// Warns before quitting while a copy/move is running, so Cmd-Q can't leave a

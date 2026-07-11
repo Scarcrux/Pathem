@@ -584,10 +584,12 @@ extension ColumnBrowserController: PaneContentView {
     }
 
     /// Programmatically select a row in the first column (PATHEM_VIEW_SHOT drill test).
-    func debugSelect(row: Int) {
-        guard let first = columns.first, row < first.entries.count else { return }
-        first.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        tableViewSelectionDidChange(Notification(name: NSTableView.selectionDidChangeNotification, object: first.table))
+    func debugSelect(row: Int, inColumn column: Int = 0) {
+        guard column < columns.count else { return }
+        let target = columns[column]
+        guard row < target.entries.count else { return }
+        target.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        tableViewSelectionDidChange(Notification(name: NSTableView.selectionDidChangeNotification, object: target.table))
     }
 
     func showPlaceholder(_ text: String?) {

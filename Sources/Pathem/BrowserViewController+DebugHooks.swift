@@ -43,8 +43,23 @@ extension BrowserViewController {
         return shown > 200 && hidden > before - 20
     }
 
-    /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
-    func debugDrillActive(row: Int) { activePane?.debugColumnDrill(row: row) }
+    /// Select row N of column M in the active column view (PATHEM_VIEW_SHOT staging).
+    /// Selecting a file in the last column surfaces the preview column.
+    func debugDrillActive(row: Int, column: Int = 0) { activePane?.debugColumnDrill(row: row, column: column) }
+
+    /// Hide the floating quick-actions bar so staged captures aren't photobombed by it.
+    func debugHideQuickBar() { quickBar.isHidden = true }
+
+    /// Mark every view dirty so stale layer pixels (ghost dividers after programmatic
+    /// split moves and view-mode swaps) are gone before a capture.
+    func debugRepaintAll() {
+        func walk(_ v: NSView) {
+            v.needsDisplay = true
+            v.subviews.forEach(walk)
+        }
+        walk(view)
+        view.displayIfNeeded()
+    }
 
     /// Expand named top-level folders in the active pane's tree outline (PATHEM_VIEW_SHOT).
     func debugTreeExpandActive(names: [String]) { activePane?.debugTreeExpand(names: names) }

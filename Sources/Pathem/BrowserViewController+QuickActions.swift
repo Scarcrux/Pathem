@@ -206,12 +206,14 @@ extension BrowserViewController {
         syncAutoPreview()
     }
 
-    /// With the "preview in gallery/column" preference on, auto-open the preview pane while
-    /// the active pane is in gallery or column view (and close it again when leaving).
+    /// With the "preview in gallery" preference on, auto-open the preview pane while the
+    /// active pane is in gallery view (and close it again when leaving). Column view used
+    /// to auto-open it too, but it draws its own preview column now, so the auto pane just
+    /// duplicated the selected file right beside it.
     func syncAutoPreview() {
         guard prefs.previewInGalleryView else { return }
         let mode = activePane?.viewMode
-        let wantsPreview = (mode == .gallery || mode == .column)
+        let wantsPreview = (mode == .gallery)
         if wantsPreview, !previewVisible {
             togglePreviewPane()
             previewAutoShown = true

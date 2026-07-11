@@ -31,7 +31,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func zoomContent(_ delta: CGFloat) { content.adjustZoom(delta) }
 
     /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
-    func debugColumnDrill(row: Int) { (content as? ColumnBrowserController)?.debugSelect(row: row) }
+    func debugColumnDrill(row: Int, column: Int = 0) {
+        (content as? ColumnBrowserController)?.debugSelect(row: row, inColumn: column)
+    }
 
     /// Expand named top-level folders of the tree outline (PATHEM_VIEW_SHOT tree render).
     func debugTreeExpand(names: [String]) { (content as? TreeOutlineController)?.debugExpand(names: names) }

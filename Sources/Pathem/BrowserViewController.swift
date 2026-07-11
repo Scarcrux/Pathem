@@ -426,6 +426,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func setRightPaneFraction(_ fraction: Double) {
         paneSplitDelegate.fraction = max(0.15, min(0.85, fraction))
         paneSplitDelegate.layout(split)
+        // Also drive the split's own machinery: the delegate layout sets subview frames
+        // directly, and without setPosition the split's internal divider layer stays put,
+        // leaving a full-height line at the old position.
+        if let left = split.arrangedSubviews.first {
+            split.setPosition(left.frame.width, ofDividerAt: 0)
+        }
+        split.needsDisplay = true
     }
 
     override func viewDidLoad() {
