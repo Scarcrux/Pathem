@@ -370,9 +370,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                     // Favorites are not expandable (like Finder): a disclosure triangle
                     // and drag-hover spring-loading would fight dropping a new favorite
                     // between existing ones. Drilling stays on the Cloud/Volumes sections.
-                    return Node(
-                        kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon,
-                        iconTint: monochromeIcons ? nil : Self.favoriteTint(forSymbol: $0.icon))
+                    // The color comes from the symbol at render time (placeTint), so favorites,
+                    // Locations, Volumes, and generic folders are all tinted the same way.
+                    return Node(kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon)
                 })
         }
         roots.append(locationsNode())
@@ -692,8 +692,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// symbols get a meaningful hue, System Settings style; generic symbols (plain folders,
     /// gears) return nil and stay quietly monochrome. The monochrome-sidebar preference
     /// suppresses all of these.
-    static func favoriteTint(forSymbol symbol: String?) -> NSColor? {
-        let hex: String?
+    static func favoriteTint(forSymbol symbol: String?) -> NSColor? { symbolTint(symbol) }
+
+    /// A semantic hue for a sidebar row, keyed by its SF symbol, so colored mode colors every
+    /// row (System Settings style). Known symbols get a meaningful color; anything else falls
+    /// back to a neutral folder blue so nothing is left gray. The monochrome-sidebar preference
+    /// suppresses all of this at the render layer (returning to uniform template icons).
+    static func symbolTint(_ symbol: String?) -> NSColor? {
+        let hex: String
         switch symbol {
         case "house": hex = "#5AA2F7"  // azure, the brand anchor
         case "menubar.dock.rectangle": hex = "#40C8E0"  // desktop: teal
@@ -708,10 +714,22 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case "book": hex = "#FF8A66"  // coral
         case "paintbrush": hex = "#E5559D"  // magenta
         case "cube": hex = "#9C8CF7"  // violet
-        case "cloud": hex = "#58A4F8"
-        default: hex = nil  // folder, briefcase, gearshape, network, externaldrive: stay quiet
+        case "cloud", "icloud", "icloud.fill", "cloud.fill": hex = "#58A4F8"
+        // Locations
+        case "network": hex = "#5AA2F7"  // network: azure
+        case "trash": hex = "#8A93A2"  // trash: neutral gray-blue (intentionally quiet)
+        // Volumes / drives
+        case "internaldrive", "externaldrive": hex = "#8FA0B6"  // drive: steel
+        case "clock.arrow.circlepath", "clock": hex = "#5FC8B0"  // Time Machine / recents: teal-green
+        // Smart-folder search glyphs
+        case "text.magnifyingglass", "magnifyingglass": hex = "#7E8FF7"
+        case "camera.viewfinder": hex = "#FF9F45"
+        case "tag": hex = "#4CD07D"
+        // Devices
+        case "iphone", "smartphone", "desktopcomputer": hex = "#9C8CF7"
+        default: hex = "#6E9BD8"  // generic folders and the rest: a neutral folder blue, never gray
         }
-        return hex.flatMap { ThemeManager.color(fromHex: $0) }
+        return ThemeManager.color(fromHex: hex)
     }
 
     /// The icon fields (SF symbol + tint, or a branded app image) for a cloud service node. In
@@ -790,6 +808,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     // MARK: Mutation
+
+    /// The tint for a place row's icon: an explicit brand/tag color if the node carries one,
+    /// otherwise (in colored mode) a semantic hue derived from the symbol so no row is left
+    /// gray. Monochrome mode returns nil so the icon renders as a uniform template that tints
+    /// with the sidebar. This is the single place the colored-vs-monochrome choice is applied.
+    private func placeTint(_ node: Node, symbol: String?) -> NSColor? {
+        if let explicit = node.iconTint ?? node.tagColor.map({ TagColors.nsColor($0) }) { return explicit }
+        return monochromeIcons ? nil : Self.symbolTint(symbol)
+    }
 
     /// Set the section order in memory only (no persistence), for headless render checks.
     func debugSetSectionOrder(_ order: [String]) { model.sectionOrder = order }
@@ -932,7 +959,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             // sidebar. Fall back to the sharing service's colored bitmap only if the OS resource moves.
             if let glyph = Self.airDropGlyph {
                 cell.imageView?.image = glyph
-                cell.imageView?.contentTintColor = node.iconTint ?? node.tagColor.map { TagColors.nsColor($0) }
+                cell.imageView?.contentTintColor = placeTint(node, symbol: "network")  // AirDrop reads as azure
             } else {
                 cell.imageView?.image = NSSharingService(named: .sendViaAirDrop)?.image
                 cell.imageView?.contentTintColor = nil
@@ -943,7 +970,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             let pointSize = showsLabels ? PlaceCellView.expandedIconSize : PlaceCellView.compactIconSize
             cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: pointSize, weight: .regular))
-            cell.imageView?.contentTintColor = node.iconTint ?? node.tagColor.map { TagColors.nsColor($0) }
+            cell.imageView?.contentTintColor = placeTint(node, symbol: icon)
         } else if let tagColor = node.tagColor {
             cell.imageView?.image = TagColors.dot(tagColor, diameter: showsLabels ? 12 : 22)
             cell.imageView?.contentTintColor = nil
