@@ -834,7 +834,9 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Move Tab to New Window", "window.moveTabToNew"))
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("New Folder", "files.newFolder", "n", [.command, .shift]))
-        fileMenu.addItem(commandItem("New Folder with Selection", "files.newFolderWithSelection", "n", [.command, .control]))
+        // No ⌃⌘N here: that chord is the keymap default for New File. The command stays available
+        // from the palette and the context menu; it just doesn't claim a colliding menu shortcut.
+        fileMenu.addItem(commandItem("New Folder with Selection", "files.newFolderWithSelection"))
         fileMenu.addItem(commandItem("New File", "files.newFile"))  // chord owned by the keymap
         fileMenu.addItem(commandItem("Batch Create…", "files.batchCreate"))
         fileMenu.addItem(commandItem("Manage Templates…", "templates.manage"))
@@ -953,7 +955,7 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
         viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
         viewMenu.addItem(commandItem("as Tree", "view.asTree", "5"))
-        viewMenu.addItem(submenu("Arrange By", [
+        viewMenu.addItem(submenu(L("menu.group.arrangeBy", "Arrange By"), [
             commandItem("None", "view.arrangeNone"),
             commandItem("Kind", "view.arrangeKind"),
             commandItem("Size", "view.arrangeSize"),
@@ -967,7 +969,7 @@ enum PathemApp {
 
         // Everything else is grouped into submenus so the top level stays scannable
         // instead of a 40-item wall. Shortcuts still work from inside a submenu.
-        viewMenu.addItem(submenu("Find", [
+        viewMenu.addItem(submenu(L("menu.group.find", "Find"), [
             // Cmd-F opens the search-and-command overlay in search mode (Cmd-K opens the same
             // overlay in command mode); the old Cmd-F live filter moves to Shift-Cmd-F.
             commandItem("Search This Folder…", "search.palette", "f"),
@@ -977,10 +979,11 @@ enum PathemApp {
             commandItem("Find Duplicates", "files.findDuplicates"),
             commandItem("Find Similar Names", "files.findSimilarNames"),
             .separator(),
-            commandItem("Flat View", "view.flatView", "f", [.command, .control]),
+            // ⌥⌘L, not ⌃⌘F: ⌃⌘F is the system Enter Full Screen shortcut, which this shadowed.
+            commandItem("Flat View", "view.flatView", "l", [.command, .option]),
             commandItem("Flatten Folder (Show All Items)", "view.flattenFolder"),
         ]))
-        viewMenu.addItem(submenu("Folder Tools", [
+        viewMenu.addItem(submenu(L("menu.group.folderTools", "Folder Tools"), [
             commandItem("Compare Panes…", "files.comparePanes"),
             commandItem("Size Browser…", "view.sizeBrowser"),
             commandItem("Calculate All Sizes", "view.calculateSizes"),
@@ -988,7 +991,7 @@ enum PathemApp {
             commandItem("Cleanup…", "view.cleanup"),
             commandItem("Reclaim in Repo…", "files.repoReclaim"),
         ]))
-        viewMenu.addItem(submenu("Show", [
+        viewMenu.addItem(submenu(L("menu.group.show", "Show"), [
             commandItem("Show Hidden Files", "view.toggleHidden"),
             commandItem("Show Full Path in Title Bar", "view.fullPathTitle"),
             commandItem("Show Path Bar at Bottom", "view.pathBarBottom"),
@@ -996,13 +999,13 @@ enum PathemApp {
             commandItem("Sync Browsing", "view.syncBrowsing"),
             commandItem("Vim Navigation", "nav.vimMode"),
         ]))
-        viewMenu.addItem(submenu("Preview", [
+        viewMenu.addItem(submenu(L("menu.group.preview", "Preview"), [
             commandItem("Quick Look", "view.quickLook"),
             commandItem("Slideshow", "view.slideshow"),
             commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]),
             commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]),
         ]))
-        viewMenu.addItem(submenu("Layout & Style", [
+        viewMenu.addItem(submenu(L("menu.group.layoutStyle", "Layout & Style"), [
             commandItem("Save Workspace…", "workspace.save"),
             commandItem("Open Workspace…", "workspace.open"),
             .separator(),
@@ -1010,7 +1013,7 @@ enum PathemApp {
             commandItem("Apply Style…", "view.applyStyle"),
             commandItem("Use as Default View", "view.useAsDefault"),
             .separator(),
-            submenu("Folder Background", [
+            submenu(L("menu.group.folderBackground", "Folder Background"), [
                 commandItem("Background Color…", "files.setFolderBgColor"),
                 commandItem("Background Picture…", "files.setFolderBgPicture"),
                 .separator(),
@@ -1031,7 +1034,7 @@ enum PathemApp {
             themeMenu.addItem(item)
         }
         themeItem.submenu = themeMenu
-        viewMenu.addItem(submenu("Terminal", [
+        viewMenu.addItem(submenu(L("menu.group.terminal", "Terminal"), [
             commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]),
             commandItem("Commander Mode", "commander.toggle"),
             commandItem("Terminal Follows Folder", "terminal.toggleFollow"),
@@ -1044,13 +1047,13 @@ enum PathemApp {
         // The AI bar stays top-level; the folder-organizing and git actions group up.
         viewMenu.addItem(commandItem("Command Palette…", "palette.show", "k"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
-        viewMenu.addItem(submenu("Organize", [
+        viewMenu.addItem(submenu(L("menu.group.organize", "Organize"), [
             commandItem("Organize Folder…", "files.organize"),
             commandItem("Organize with AI…", "files.organizeAI"),
             commandItem("Summarize Folder", "ai.summarizeFolder"),
             commandItem("Batch Rename…", "files.batchRename"),
         ]))
-        viewMenu.addItem(submenu("Git", [
+        viewMenu.addItem(submenu(L("menu.group.git", "Git"), [
             commandItem("Commit…", "git.commit"),
             commandItem("Push", "git.push"),
             commandItem("Pull", "git.pull"),

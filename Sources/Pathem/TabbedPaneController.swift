@@ -54,6 +54,7 @@ final class TabbedPaneController: NSObject {
         tabBar.setClippingResistancePriority(.required, for: .vertical)
 
         plusButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: L("tabs.newTab", "New Tab"))
+        plusButton.toolTip = L("tabs.newTab", "New Tab")  // icon-only: name on hover like every other control
         plusButton.bezelStyle = .texturedRounded
         plusButton.setButtonType(.momentaryPushIn)
         plusButton.imagePosition = .imageOnly

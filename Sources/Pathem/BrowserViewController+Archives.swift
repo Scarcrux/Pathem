@@ -178,7 +178,7 @@ extension BrowserViewController {
     func reportArchiveError(_ title: String, _ error: Error?) {
         let alert = NSAlert()
         alert.messageText = title
-        if let error { alert.informativeText = "\(error)" }
+        if let error { alert.informativeText = error.localizedDescription }  // not the raw Swift dump
         alert.addButton(withTitle: L("common.ok", "OK"))
         if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { NSSound.beep() }
     }

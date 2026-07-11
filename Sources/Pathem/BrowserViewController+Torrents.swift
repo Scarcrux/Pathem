@@ -51,7 +51,7 @@ extension BrowserViewController {
                 await MainActor.run {
                     let fail = NSAlert()
                     fail.messageText = L("torrents.create.failed", "Couldn't create the torrent")
-                    fail.informativeText = "\(error)"
+                    fail.informativeText = error.localizedDescription
                     fail.runModal()
                 }
             }
