@@ -370,7 +370,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                     // Favorites are not expandable (like Finder): a disclosure triangle
                     // and drag-hover spring-loading would fight dropping a new favorite
                     // between existing ones. Drilling stays on the Cloud/Volumes sections.
-                    return Node(kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon)
+                    return Node(
+                        kind: .userItem($0.id), title: $0.name, url: url, icon: $0.icon,
+                        iconTint: monochromeIcons ? nil : Self.favoriteTint(forSymbol: $0.icon))
                 })
         }
         roots.append(locationsNode())
@@ -683,6 +685,33 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             if let clean = NSImage(contentsOf: url) { return clean }  // the bare logo Finder shows
         }
         return NSWorkspace.shared.icon(forFile: app.path)  // fall back to the full app icon
+    }
+
+    /// A semantic tint for a favorites row, keyed by its SF symbol (so it follows whatever
+    /// icon the user picked, survives renames, and needs no localization). Known place
+    /// symbols get a meaningful hue, System Settings style; generic symbols (plain folders,
+    /// gears) return nil and stay quietly monochrome. The monochrome-sidebar preference
+    /// suppresses all of these.
+    static func favoriteTint(forSymbol symbol: String?) -> NSColor? {
+        let hex: String?
+        switch symbol {
+        case "house": hex = "#5AA2F7"  // azure, the brand anchor
+        case "menubar.dock.rectangle": hex = "#40C8E0"  // desktop: teal
+        case "doc", "doc.text", "doc.richtext": hex = "#7E8FF7"  // documents: indigo
+        case "arrow.down.circle": hex = "#4CD07D"  // downloads: green
+        case "photo": hex = "#FF6FA5"  // pictures: pink
+        case "film", "video": hex = "#B07AF7"  // movies: purple
+        case "music.note": hex = "#FF5D73"  // music: red
+        case "square.grid.2x2": hex = "#FFC554"  // applications: gold
+        case "hammer": hex = "#FF9F45"  // projects: orange
+        case "terminal": hex = "#47D6A0"  // mint
+        case "book": hex = "#FF8A66"  // coral
+        case "paintbrush": hex = "#E5559D"  // magenta
+        case "cube": hex = "#9C8CF7"  // violet
+        case "cloud": hex = "#58A4F8"
+        default: hex = nil  // folder, briefcase, gearshape, network, externaldrive: stay quiet
+        }
+        return hex.flatMap { ThemeManager.color(fromHex: $0) }
     }
 
     /// The icon fields (SF symbol + tint, or a branded app image) for a cloud service node. In
