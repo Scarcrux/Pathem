@@ -35,6 +35,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         (content as? ColumnBrowserController)?.debugSelect(row: row, inColumn: column)
     }
 
+    /// PATHEM_SMOKE: the list view's column fill ratio (nil when not in list view).
+    func debugColumnFillRatio() -> CGFloat? { (content as? FileListController)?.debugColumnFillRatio() }
+
     /// Expand named top-level folders of the tree outline (PATHEM_VIEW_SHOT tree render).
     func debugTreeExpand(names: [String]) { (content as? TreeOutlineController)?.debugExpand(names: names) }
 

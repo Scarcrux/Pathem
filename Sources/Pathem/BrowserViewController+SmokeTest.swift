@@ -29,6 +29,19 @@ extension BrowserViewController {
         check("pane-content-not-squished", leftContentH > 150 && rightContentH > 150,
             "left=\(Int(leftContentH)) right=\(Int(rightContentH))")
         check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
+        // Regression: squeeze the right pane narrow, widen it back, and the list columns
+        // must refill the pane. The old frame-based chrome measurement read the blank
+        // space as chrome and locked every column at its floor (tiny columns filling
+        // less than half the pane).
+        setRightPaneFraction(0.22)
+        view.layoutSubtreeIfNeeded()
+        setRightPaneFraction(0.5)
+        view.layoutSubtreeIfNeeded()
+        if let fill = rightTabs.activePane?.debugColumnFillRatio() {
+            check("list-columns-refill", fill >= 0.9, String(format: "fill=%.2f", fill))
+        } else {
+            lines.append("info list-columns-refill (right pane is not a list view)")
+        }
         lines.append("info left-folder (\(leftTabs.activePane?.currentURL.path ?? "?"))")
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).

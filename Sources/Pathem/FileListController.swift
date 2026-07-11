@@ -729,13 +729,27 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         func floorOf(_ col: NSTableColumn) -> CGFloat {
             Column(rawValue: col.identifier.rawValue)?.squeezeFloor ?? 80
         }
-        // The table is wider than its columns: the .inset style pads both sides and each
-        // column adds intercell spacing. Measure that overhead from the live layout (it
-        // already includes every visible column) so the fit targets what actually renders,
-        // not just the column sum. Without this the last column always clipped by ~35 pt.
+        // The table is wider than its columns: the .inset style pads the sides (32 pt) and
+        // each gap adds intercell spacing. Compute that overhead analytically, and only
+        // trust a live measurement when the table genuinely overflows the clip. Measuring
+        // `frame - columns` unconditionally was a trap: when the columns are NARROWER than
+        // the pane, AppKit stretches the table frame to the clip width, the blank space
+        // reads as "chrome", and every column gets locked at its floor (the tiny-columns
+        // bug in the right pane).
+        let clipWidth = scrollView.contentView.bounds.width
+        guard clipWidth > 60 else { return }  // mid-layout slivers would squeeze for nothing
+        let visibleCount = others.count + 1
         let sumVisible = name.width + others.reduce(CGFloat(0)) { $0 + $1.width }
-        let overhead = max(0, tableView.frame.width - sumVisible)
-        let available = scrollView.contentView.bounds.width - overhead
+        if tableView.frame.width > clipWidth + 0.5 {
+            measuredChrome = (max(0, tableView.frame.width - sumVisible), visibleCount)  // true overflow: exact
+        }
+        let overhead: CGFloat
+        if let m = measuredChrome, m.columns == visibleCount {
+            overhead = m.width  // chrome grows with column count, so only reuse a matching measurement
+        } else {
+            overhead = 32 + tableView.intercellSpacing.width * CGFloat(max(0, visibleCount - 1))
+        }
+        let available = clipWidth - overhead
         let wantedOthers = others.reduce(CGFloat(0)) { $0 + wanted($1) }
 
         adjustingColumns = true
@@ -765,9 +779,30 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The widths the user (or the defaults) asked for, keyed by column id; compression
     /// works from these, never overwriting intent with squeezed values.
     private var wantedWidths: [String: CGFloat] = [:]
+    /// The table's horizontal chrome (side padding + intercell gaps) measured the last
+    /// time the table truly overflowed the clip, with the visible column count it was
+    /// measured at; nil until then (an analytic estimate covers the gap).
+    private var measuredChrome: (width: CGFloat, columns: Int)?
     /// True while fitColumns itself is writing widths, so its own resize notifications
     /// aren't mistaken for user drags.
     private var adjustingColumns = false
+
+    /// PATHEM_SMOKE: how fully the visible columns (plus chrome) fill the clip after a
+    /// fit. ~1.0 = exact fit, > 1 = genuine overflow (scrollbar), well under 1 = the
+    /// tiny-columns regression.
+    func debugColumnFillRatio() -> CGFloat {
+        fitColumns()
+        let visible = tableView.tableColumns.filter { !$0.isHidden }
+        let sum = visible.reduce(CGFloat(0)) { $0 + $1.width }
+        let overhead: CGFloat
+        if let m = measuredChrome, m.columns == visible.count {
+            overhead = m.width
+        } else {
+            overhead = 32 + tableView.intercellSpacing.width * CGFloat(max(0, visible.count - 1))
+        }
+        let clip = scrollView.contentView.bounds.width
+        return clip > 0 ? (sum + overhead) / clip : 0
+    }
 
     /// A user drag updates the column's wanted width and refits the rest around it.
     @objc private func columnResized(_ note: Notification) {
