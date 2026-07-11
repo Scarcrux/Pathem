@@ -124,28 +124,94 @@ enum PathemApp {
         delegate.vpnStatusItem = VPNStatusItem()  // shows only while VPN binding is enabled
 
 
-        // Headless render of gallery / column / icon views over a sample folder.
+        // Live capture of every view mode (list, gallery, column, tree, icon) plus a
+        // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and
+        // thumbnails, unlike the offscreen cacheDisplay render). Runs over the sample
+        // folder, or over the demo workspace when PATHEM_DEMO=1 is also set (Downloads for
+        // the list, Photos for the grids, Projects for column drilling). Steps are
+        // scheduled at flat absolute offsets to stay readable.
         if viewShot {
-            window.setContentSize(NSSize(width: 1100, height: 700))
-            browser.debugNavigateActive(to: start)  // bypass session restore; show the sample folder
+            window.setContentSize(NSSize(width: 1280, height: 800))
+            window.center()
+            let files = demoLayout.map { $0.root.appendingPathComponent("Downloads") } ?? start
+            let photos = demoLayout.map { $0.root.appendingPathComponent("Photos") } ?? start
+            let code = demoLayout.map { $0.root.appendingPathComponent("Projects") } ?? start
+            let home = demoLayout.map { $0.root } ?? start
+            if demoLayout == nil {
+                browser.debugNavigateActive(to: start)  // bypass session restore; show the sample folder
+            }
+            let number = window.windowNumber
+            func shoot(_ name: String) {
+                let capture = Process()
+                capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/view-\(name).png"]
+                try? capture.run()
+                capture.waitUntilExit()
+                print("VIEW SHOT: /tmp/view-\(name).png")
+            }
+            // Always navigate first and set the mode afterward: navigation applies the
+            // destination folder's saved view format, which would stomp a mode set earlier.
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                browser.debugNavigateActive(to: files)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
+                browser.debugSetActiveViewMode(.list)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.5) {
+                shoot("list")
+                browser.debugNavigateActive(to: photos)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
                 browser.debugSetActiveViewMode(.gallery)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    browser.debugRender(to: "/tmp/view-gallery.png")
-                    browser.debugSetActiveViewMode(.column)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        browser.debugRender(to: "/tmp/view-column.png")
-                        browser.debugDrillActive(row: 0)  // drill the first folder
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                            browser.debugRender(to: "/tmp/view-column-drilled.png")
-                            browser.debugSetActiveViewMode(.icon)
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                browser.debugRender(to: "/tmp/view-icon.png")
-                                exit(0)
-                            }
-                        }
-                    }
-                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+                shoot("gallery")
+                browser.debugNavigateActive(to: code)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 11.0) {
+                browser.debugSetActiveViewMode(.column)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 12.0) {
+                browser.debugDrillActive(row: 1)  // drill a folder with real contents
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 13.5) {
+                shoot("column")
+                browser.debugNavigateActive(to: home)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 14.5) {
+                browser.debugSetActiveViewMode(.tree)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 15.5) {
+                browser.debugTreeExpandActive(names: ["Projects", "Photos", "Music"])
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 17.0) {
+                shoot("tree")
+                browser.debugNavigateActive(to: photos)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 18.0) {
+                browser.debugSetActiveViewMode(.icon)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 20.5) {
+                shoot("icon")
+            }
+            // Stage the dual-pane hero: right pane showing Photos as a gallery, left pane
+            // back on Projects as a list, focus on the left.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 21.5) {
+                browser.debugFocusOtherPane()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 22.0) {
+                browser.debugSetActiveViewMode(.gallery)  // right pane is at Photos
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 23.5) {
+                browser.debugFocusOtherPane()
+                browser.debugNavigateActive(to: code)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 25.0) {
+                browser.debugSetActiveViewMode(.list)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 27.0) {
+                shoot("hero")
+                exit(0)
             }
         }
 
@@ -1122,7 +1188,8 @@ enum PathemApp {
         exit(pass ? 0 : 1)
     }
 
-    /// Build a sample folder (subfolders, files, and solid-color PNGs) for PATHEM_VIEW_SHOT.
+    /// Build a sample folder (subfolders, files, and gradient landscape PNGs that read like
+    /// real photos in thumbnails) for PATHEM_VIEW_SHOT.
     private static func makeSampleFolder() -> URL {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-viewshot")
@@ -1135,26 +1202,12 @@ enum PathemApp {
         }
         try? "notes".write(to: dir.appendingPathComponent("notes.txt"), atomically: true, encoding: .utf8)
         try? "code".write(to: dir.appendingPathComponent("main.swift"), atomically: true, encoding: .utf8)
-        let colors: [NSColor] = [.systemRed, .systemBlue, .systemGreen, .systemOrange, .systemPurple, .systemTeal]
-        for (index, color) in colors.enumerated() {
-            writeSolidPNG(color, to: dir.appendingPathComponent("photo\(index + 1).png"), side: 256)
+        for name in ["Sunset.png", "Coastline.png", "Forest.png", "Mountains.png", "City.png", "Desert.png"] {
+            if let data = DemoWorkspace.landscapePNG(named: name, side: 256) {
+                try? data.write(to: dir.appendingPathComponent(name))
+            }
         }
         return dir
-    }
-
-    private static func writeSolidPNG(_ color: NSColor, to url: URL, side: Int) {
-        guard
-            let rep = NSBitmapImageRep(
-                bitmapDataPlanes: nil, pixelsWide: side, pixelsHigh: side, bitsPerSample: 8,
-                samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
-                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
-        else { return }
-        NSGraphicsContext.saveGraphicsState()
-        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-        color.setFill()
-        NSRect(x: 0, y: 0, width: side, height: side).fill()
-        NSGraphicsContext.restoreGraphicsState()
-        if let data = rep.representation(using: .png, properties: [:]) { try? data.write(to: url) }
     }
 }
 

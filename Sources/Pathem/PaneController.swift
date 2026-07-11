@@ -33,6 +33,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
     func debugColumnDrill(row: Int) { (content as? ColumnBrowserController)?.debugSelect(row: row) }
 
+    /// Expand named top-level folders of the tree outline (PATHEM_VIEW_SHOT tree render).
+    func debugTreeExpand(names: [String]) { (content as? TreeOutlineController)?.debugExpand(names: names) }
+
     /// Header sort-indicator state (list view only), for the layout smoke check.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { content.debugSortIndicator }
 

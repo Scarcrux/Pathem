@@ -46,6 +46,15 @@ extension BrowserViewController {
     /// Drill the first column's row N (PATHEM_VIEW_SHOT column-drill test).
     func debugDrillActive(row: Int) { activePane?.debugColumnDrill(row: row) }
 
+    /// Expand named top-level folders in the active pane's tree outline (PATHEM_VIEW_SHOT).
+    func debugTreeExpandActive(names: [String]) { activePane?.debugTreeExpand(names: names) }
+
+    /// Move focus to the opposite pane (PATHEM_VIEW_SHOT hero staging).
+    func debugFocusOtherPane() {
+        let side = activeSide === leftTabs ? rightTabs : leftTabs
+        if let pane = side.activePane { setActiveSide(side, pane: pane) }
+    }
+
     /// Render the whole browser to a PNG (PATHEM_VIEW_SHOT diagnostics).
     func debugRender(to path: String) {
         view.layoutSubtreeIfNeeded()

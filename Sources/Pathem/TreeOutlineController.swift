@@ -113,6 +113,13 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         outline.selectRowIndexes(rows, byExtendingSelection: false)
     }
 
+    /// Expand the top-level folders with the given names (PATHEM_VIEW_SHOT tree render).
+    func debugExpand(names: [String]) {
+        for node in roots where names.contains(node.entry.name) {
+            outline.expandItem(node)
+        }
+    }
+
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}  // no sortable header in the tree
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
         self.fontSize = fontSize
