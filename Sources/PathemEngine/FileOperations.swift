@@ -420,8 +420,14 @@ public enum FileOperations {
                 // volume would otherwise trash the source under .replace. This is the
                 // backstop for every caller (drag-drop, transfer commands, undo/redo).
                 if Self.isSameItem(from, to) {
-                    outcome.skipped.append(name)
-                    continue
+                    // Pasting/copying an item into its own folder with Keep Both should make a
+                    // duplicate ("file copy"), not silently no-op; any other resolution skips
+                    // (and .replace must never trash the source onto itself).
+                    guard onConflict == .keepBoth else {
+                        outcome.skipped.append(name)
+                        continue
+                    }
+                    to = uniqueDestination(to)
                 }
                 // Never nest a folder inside its own subtree (the destination is `from` or lives
                 // under it). The app guards this too; this is the engine backstop so a copy can't

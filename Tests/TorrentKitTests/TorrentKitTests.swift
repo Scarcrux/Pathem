@@ -88,6 +88,34 @@ import Testing
         #expect(t.infoHashHex.count == 40)
     }
 
+    private func s(_ v: String) -> String { "\(v.utf8.count):\(v)" }
+
+    @Test func rejectsZeroPieceLength() {
+        // A crafted torrent with pieces but piece length 0 would divide-by-zero in pieceSize.
+        let info = "d" + s("length") + "i1024e" + s("name") + s("x")
+            + s("piece length") + "i0e" + s("pieces") + "20:\(String(repeating: "a", count: 20))e"
+        let top = "d" + s("info") + info + "e"
+        #expect(throws: TorrentFile.ParseError.self) { try TorrentFile.parse(Data(top.utf8)) }
+    }
+
+    @Test func rejectsNegativeFileLength() {
+        let info = "d" + s("length") + "i-5e" + s("name") + s("x")
+            + s("piece length") + "i16384e" + s("pieces") + "20:\(String(repeating: "a", count: 20))e"
+        let top = "d" + s("info") + info + "e"
+        #expect(throws: TorrentFile.ParseError.self) { try TorrentFile.parse(Data(top.utf8)) }
+    }
+
+    @Test func rejectsOverflowingTotalLength() {
+        // Two files near Int64.max sum to an overflow; must throw, not trap.
+        let big = "\(Int64.max - 1)"
+        let entry = { (n: String) in "d" + self.s("length") + "i\(big)e" + self.s("path") + "l" + self.s(n) + "ee" }
+        let files = "l" + entry("a") + entry("b") + "e"
+        let info = "d" + s("files") + files + s("name") + s("B")
+            + s("piece length") + "i16384e" + s("pieces") + "20:\(String(repeating: "x", count: 20))e"
+        let top = "d" + s("info") + info + "e"
+        #expect(throws: TorrentFile.ParseError.self) { try TorrentFile.parse(Data(top.utf8)) }
+    }
+
     @Test func multiFileTorrent() throws {
         func s(_ v: String) -> String { "\(v.utf8.count):\(v)" }
         let files = "l" + "d" + s("length") + "i10e" + s("path") + "l" + s("a") + s("b.txt") + "ee"

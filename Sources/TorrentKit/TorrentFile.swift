@@ -55,6 +55,12 @@ public struct TorrentFile: Equatable, Sendable {
         let pieceCount = pieceHashes.count
         let isPrivate = (info["private"]?.intValue ?? 0) != 0
 
+        // A .torrent is attacker-controlled: a zero/negative piece length would divide-by-zero in
+        // pieceSize, and negative or overflowing file lengths would trap later. Reject them here.
+        guard pieceCount == 0 || pieceLength > 0 else {
+            throw ParseError.notATorrent("invalid piece length")
+        }
+
         var files: [Entry] = []
         if let length = info["length"]?.intValue {
             files = [Entry(path: name, length: length)]  // single-file torrent
@@ -65,7 +71,16 @@ public struct TorrentFile: Equatable, Sendable {
                 files.append(Entry(path: parts.joined(separator: "/"), length: len))
             }
         }
-        let total = files.reduce(Int64(0)) { $0 + $1.length }
+        guard files.allSatisfy({ $0.length >= 0 }) else {
+            throw ParseError.notATorrent("negative file length")
+        }
+        // Sum without trapping: a crafted set of huge lengths must not overflow-crash the parser.
+        var total: Int64 = 0
+        for f in files {
+            let (sum, overflow) = total.addingReportingOverflow(f.length)
+            guard !overflow else { throw ParseError.notATorrent("total length overflows") }
+            total = sum
+        }
 
         var trackers: [String] = []
         if let announce = top["announce"]?.string { trackers.append(announce) }
