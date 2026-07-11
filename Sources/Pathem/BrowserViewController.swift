@@ -79,6 +79,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let panesContainer = NSView()  // wraps `split` so the torrent detail can overlay without NSSplitView treating it as a pane
     let outerSplit = NSSplitView()  // sidebar | panes
     let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
+    let mainStack = NSStackView()  // vSplit (top) + torrents drawer (bottom dock)
     let shelf = ShelfController()  // stash shelf / drop stack across the bottom
     var shelfHiddenConstraint: NSLayoutConstraint?
     var shelfShownConstraint: NSLayoutConstraint?
@@ -309,13 +310,28 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         vSplit.translatesAutoresizingMaskIntoConstraints = false
         vSplit.addArrangedSubview(outerSplit)
         vSplit.addArrangedSubview(terminal.view)
-        vSplit.addArrangedSubview(torrentDrawer.view)  // FileZilla-style transfer drawer, bottom-most
         vSplit.delegate = self
-        // The terminal and the torrents drawer keep their height; the browser absorbs window resize.
+        // The terminal keeps its height; the browser absorbs window resize.
         vSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 1)
-        vSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 2)
         terminal.view.isHidden = true
+
+        // The torrents drawer docks below the whole split via a stack view rather than as a third
+        // split pane: two independently-toggled drawers in one NSSplitView can't both size reliably
+        // (a hidden middle pane collapses the divider index, leaving the other at 0 height -- the
+        // "full black single pane" bug). A stack view collapses a hidden arranged view cleanly and
+        // honors the drawer's fixed-height constraint.
+        torrentDrawer.view.translatesAutoresizingMaskIntoConstraints = false
+        torrentDrawer.view.heightAnchor.constraint(equalToConstant: 220).isActive = true
         torrentDrawer.view.isHidden = true
+        mainStack.orientation = .vertical
+        mainStack.spacing = 0
+        mainStack.distribution = .fill
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        mainStack.addArrangedSubview(vSplit)
+        mainStack.addArrangedSubview(torrentDrawer.view)
+        // The browser split absorbs resize; the drawer holds its constrained height.
+        vSplit.setContentHuggingPriority(.init(1), for: .vertical)
+        torrentDrawer.view.setContentHuggingPriority(.required, for: .vertical)
         torrentDrawer.onSelect = { [weak self] status in self?.torrentSelectionChanged(status) }
         torrentDrawer.onOpen = { [weak self] status in self?.showTorrentDetail(status) }
 
@@ -333,20 +349,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         ])
 
         let host = NSView()
-        host.addSubview(vSplit)
+        host.addSubview(mainStack)  // browser split + torrents drawer dock
         host.addSubview(shelf.view)  // the stash shelf docks across the bottom
         shelf.view.isHidden = true
         NSLayoutConstraint.activate([
-            vSplit.topAnchor.constraint(equalTo: host.topAnchor),
-            vSplit.leadingAnchor.constraint(equalTo: host.leadingAnchor),
-            vSplit.trailingAnchor.constraint(equalTo: host.trailingAnchor),
+            mainStack.topAnchor.constraint(equalTo: host.topAnchor),
+            mainStack.leadingAnchor.constraint(equalTo: host.leadingAnchor),
+            mainStack.trailingAnchor.constraint(equalTo: host.trailingAnchor),
             shelf.view.leadingAnchor.constraint(equalTo: host.leadingAnchor),
             shelf.view.trailingAnchor.constraint(equalTo: host.trailingAnchor),
             shelf.view.bottomAnchor.constraint(equalTo: host.bottomAnchor),
         ])
         // The browser fills the window; when the shelf shows, it gives up the bottom.
-        shelfHiddenConstraint = vSplit.bottomAnchor.constraint(equalTo: host.bottomAnchor)
-        shelfShownConstraint = vSplit.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
+        shelfHiddenConstraint = mainStack.bottomAnchor.constraint(equalTo: host.bottomAnchor)
+        shelfShownConstraint = mainStack.bottomAnchor.constraint(equalTo: shelf.view.topAnchor)
         shelfHiddenConstraint?.isActive = true
         // Commander bar docks across the very bottom; when shown, the browser ends above it.
         commanderBar.translatesAutoresizingMaskIntoConstraints = false
@@ -358,7 +374,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             commanderBar.bottomAnchor.constraint(equalTo: host.bottomAnchor),
             commanderBar.heightAnchor.constraint(equalToConstant: 38),  // a single compact strip
         ])
-        commanderShownConstraint = vSplit.bottomAnchor.constraint(equalTo: commanderBar.topAnchor)
+        commanderShownConstraint = mainStack.bottomAnchor.constraint(equalTo: commanderBar.topAnchor)
         commanderBar.onCommand = { [weak self] id in self?.commands.perform(id) }
         commanderBar.onRunCommand = { [weak self] command in self?.runCommanderCommand(command) }
         commanderBar.titleForCommand = { [weak self] id in self?.commands.command(id)?.title ?? id }

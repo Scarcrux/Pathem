@@ -332,6 +332,24 @@ enum PathemApp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
         }
 
+        // Diagnose the "torrents = full black single pane" report: open the drawer (and detail),
+        // dump the view frames, render a PNG (PATHEM_TORRENT_LAYOUT_SHOT=1; add DETAIL=1 for the overlay).
+        if ProcessInfo.processInfo.environment["PATHEM_TORRENT_LAYOUT_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            let detail = ProcessInfo.processInfo.environment["DETAIL"] != nil
+            var attempts = 0
+            func tick() {
+                attempts += 1
+                guard browser.layoutSettled() || attempts >= 30 else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+                    return
+                }
+                browser.debugTorrentLayout(openDetail: detail, pngPath: "/tmp/torrent-layout.png")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { exit(0) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+        }
+
         // Headless UI smoke test: once the window has laid out, assert the
         // structural invariants (window not collapsed, both panes visible) and
         // exit. Catches the layout regressions the engine tests can't see.

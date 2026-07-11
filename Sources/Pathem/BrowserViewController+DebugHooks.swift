@@ -1,5 +1,6 @@
 import AppKit
 import PathemEngine
+import TorrentKit
 
 // PATHEM_*_SHOT / PATHEM_SMOKE diagnostic hooks: headless render, state-poking, and
 // self-check entry points used only by PathemApp.swift's screenshot/demo dispatch and by
@@ -147,6 +148,39 @@ extension BrowserViewController {
     func debugSetBinaryRelativeFormats() {
         leftTabs.activePane?.setFormats(size: .binary, date: .relative)
         rightTabs.activePane?.setFormats(size: .binary, date: .relative)
+    }
+
+    /// Open the torrents drawer (and, if `openDetail`, the detail overlay for a fake torrent),
+    /// then dump the frames of every view in the stack and render a PNG. Diagnoses the
+    /// "full black single pane" report (PATHEM_TORRENT_LAYOUT_SHOT).
+    func debugTorrentLayout(openDetail: Bool, pngPath: String) {
+        showTorrentsDrawer()
+        view.layoutSubtreeIfNeeded()
+        if openDetail {
+            let fake = TorrentSession.Status(
+                infoHash: "0000000000000000000000000000000000000000", name: "smoke.bin",
+                totalLength: 1024, downloaded: 512, fractionComplete: 0.5, downloadRate: 1000,
+                peersConnected: 3, state: .downloading, savePath: NSHomeDirectory())
+            showTorrentDetail(fake)
+        }
+        view.layoutSubtreeIfNeeded()
+        func f(_ label: String, _ v: NSView?) {
+            guard let v else { print("  \(label): nil"); return }
+            let fr = v.frame
+            print("  \(label): x=\(Int(fr.minX)) y=\(Int(fr.minY)) w=\(Int(fr.width)) h=\(Int(fr.height)) hidden=\(v.isHidden)")
+        }
+        print("=== TORRENT LAYOUT (detail=\(openDetail)) ===")
+        f("vSplit", vSplit)
+        f("  outerSplit", outerSplit)
+        f("    sidebar", sidebar.containerView)
+        f("    panesContainer", panesContainer)
+        f("      split", split)
+        f("      torrentDetail", torrentDetail)
+        f("  terminal", terminal.view)
+        f("  torrentDrawer", torrentDrawer.view)
+        f("leftTabs", leftTabs.containerView)
+        f("rightTabs", rightTabs.containerView)
+        debugRender(to: pngPath)
     }
 
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).

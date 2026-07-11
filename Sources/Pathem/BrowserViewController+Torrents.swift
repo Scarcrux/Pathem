@@ -88,13 +88,15 @@ extension BrowserViewController {
         if torrentDrawer.view.isHidden { showTorrentsDrawer() } else { hideTorrentsDrawer() }
     }
 
-    /// Reveal the drawer (idempotent) and start it receiving live updates.
+    /// Reveal the drawer (idempotent) and start it receiving live updates. The drawer is a
+    /// fixed-height arranged view in `mainStack`, so unhiding it reflows the stack: the browser
+    /// split gives up the bottom 220pt and the drawer fills it. No divider math needed.
     func showTorrentsDrawer() {
         guard torrentDrawer.view.isHidden else { return }
         torrentDrawer.hostWindow = view.window
         torrentDrawer.view.isHidden = false
         torrentDrawer.activate()
-        sizeTorrentDrawer()
+        view.layoutSubtreeIfNeeded()
     }
 
     func hideTorrentsDrawer() {
@@ -102,21 +104,6 @@ extension BrowserViewController {
         torrentDrawer.deactivate()
         torrentDrawer.view.isHidden = true
         view.layoutSubtreeIfNeeded()
-    }
-
-    /// Give the drawer a fixed height at the very bottom; the browser (and terminal above) keep the
-    /// rest. Divider 1 sits above the drawer (index 2 in vSplit). Retry once if layout hasn't settled.
-    private func sizeTorrentDrawer() {
-        let height = vSplit.bounds.height
-        if height > 320 {
-            vSplit.setPosition(height - 220, ofDividerAt: 1)
-        } else {
-            DispatchQueue.main.async { [weak self] in
-                guard let self, !self.torrentDrawer.view.isHidden else { return }
-                let h = self.vSplit.bounds.height
-                if h > 320 { self.vSplit.setPosition(h - 220, ofDividerAt: 1) }
-            }
-        }
     }
 
     /// The selected torrent changed in the drawer. If the detail view is open, follow the selection.
