@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pathem"
+version = "0.0.1"
+description = "Name reserved for Pathem, a fast native macOS file manager. This package is not the app; get Pathem at https://pathem.app"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Scarcrux" }]
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+]
+
+[project.urls]
+Homepage = "https://pathem.app"
+Repository = "https://github.com/Scarcrux/Pathem"
+Issues = "https://github.com/Scarcrux/Pathem/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pathem"]
