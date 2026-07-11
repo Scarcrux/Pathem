@@ -218,6 +218,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return controller
     }()
     let sharedDiscovery = SharedDiscovery()
+    /// Bonjour-discovered SMB computers on the LAN (display names), kept so the Network view can
+    /// list them and re-render live as they come and go.
+    var discoveredHosts: [String] = []
     /// Confirmations shown as a popover at the pointer (move/copy conflicts, Trash) rather than
     /// a sheet pinned to the title bar.
     let cursorConfirm = CursorConfirm()
@@ -487,6 +490,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     self?.handleBreadcrumbAction(folder, action)
                 }
                 pane.onOpenInNewTab = { [weak self] url in self?.activeSide?.openTab(at: url) }
+                pane.onMountNetworkHost = { [weak self] host in self?.connectToShared(host) }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -547,7 +551,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self?.airDrop(urls)
         }
         sidebar.onAirDropFiles = { [weak self] urls in self?.airDrop(urls) }
-        sidebar.onNetwork = { [weak self] in self?.connectToServer() }
+        sidebar.onNetwork = { [weak self] in self?.showNetworkView() }
         sidebar.onTrashFiles = { [weak self] urls in self?.performLocalTrash(urls) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onToggleCompact = { [weak self] in
@@ -558,7 +562,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         sidebar.onModelChange = { [weak self] model in self?.saveSidebar(model) }
         sidebar.currentFolder = { [weak self] in self?.activePane?.currentURL }
-        sharedDiscovery.onChange = { [weak self] hosts in self?.sidebar.setSharedHosts(hosts) }
+        sharedDiscovery.onChange = { [weak self] hosts in
+            self?.discoveredHosts = hosts
+            self?.sidebar.setSharedHosts(hosts)
+            self?.refreshNetworkViewIfShowing()
+        }
         sharedDiscovery.start()
         startDeviceWatch()
         applyPreferences()

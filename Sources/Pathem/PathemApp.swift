@@ -313,6 +313,22 @@ enum PathemApp {
             }
         }
 
+        // Headless Network-view render (PATHEM_NETWORK_SHOT=1).
+        if ProcessInfo.processInfo.environment["PATHEM_NETWORK_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1100, height: 640))
+            var attempts = 0
+            func tick() {
+                attempts += 1
+                guard browser.layoutSettled() || attempts >= 30 else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+                    return
+                }
+                browser.debugRenderNetworkView(to: "/tmp/network-view.png")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { exit(0) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+        }
+
         // Headless sidebar render for layout inspection (PATHEM_SIDEBAR_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 520))  // a realistic short window

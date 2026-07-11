@@ -114,11 +114,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// `mountArchive` to enter it.
     var onBrowseArchive: ((URL) -> Void)?
     var onAttachDiskImage: ((URL) -> Void)?
+    /// Opening a discovered-but-unmounted host in the synthetic Network view mounts its share.
+    var onMountNetworkHost: ((String) -> Void)?
     /// Called when an archive session ends, so the browser can offer to write changes
     /// back into the archive (compares the mount against the snapshot taken at mount).
     var onArchiveClosed: ((_ archive: URL, _ mountRoot: URL, _ snapshot: [String: String]) -> Void)?
     /// Showing a cross-folder smart-result list (Recents / tag filter).
     private var smartActive = false
+    /// Names in the current Network view that are discovered-but-unmounted hosts (as opposed to
+    /// real network-volume mounts). Opening one mounts it rather than navigating into a folder.
+    private var networkHostNames: Set<String> = []
+    /// The synthetic Network view is showing (whether or not it currently has any unmounted hosts).
+    private var networkActive = false
+    /// Whether this pane is showing the Network view, so the browser can refresh it in place as
+    /// discovered hosts come and go.
+    var isShowingNetworkView: Bool { networkActive }
     /// This pane's current search query, so the shared search field can resync when
     /// focus moves between panes/tabs.
     var searchQuery = ""
@@ -373,6 +383,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// resolves across folders. It's read-only: the browser blocks file ops here
     /// (they assume a single current folder). Back or selecting a folder leaves it.
     func showSmartResults(_ entries: [FileEntry], title: String) {
+        networkHostNames = []  // a plain smart view carries no mountable hosts (Network sets them after)
+        networkActive = false
         remote = nil
         watcher?.stop()
         watcher = nil
@@ -401,6 +413,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         updateStatus()
         onDidNavigate?()
         containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    /// Show the synthetic "Network" listing: real network-volume mounts (OrbStack, mounted SMB/AFP
+    /// shares) that open by navigating into them, plus discovered-but-unmounted hosts named in
+    /// `hostNames` that open by mounting (via onMountNetworkHost). Like Finder's Network view.
+    func showNetworkResults(_ entries: [FileEntry], hostNames: Set<String>, title: String) {
+        showSmartResults(entries, title: title)  // clears the network flags, so set them after
+        networkHostNames = hostNames
+        networkActive = true
     }
 
     /// Drop the given paths from the smart-result list (after a file op trashed or
@@ -689,6 +710,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     func descend(into entry: FileEntry) {
+        // In the Network view, an unmounted host has no real folder -- mount it instead of navigating.
+        if networkHostNames.contains(entry.name) {
+            onMountNetworkHost?(entry.name)
+            return
+        }
         if let remote {
             if entry.isDirectory {
                 self.remote?.path = Self.joinRemote(remote.path, entry.name)
@@ -778,6 +804,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// on-disk changes, and tell the browser the folder changed.
     private func enterDirectory() {
         smartActive = false  // entering a real folder leaves any smart-result view
+        networkHostNames = []
+        networkActive = false
         contentRequestToken += 1  // invalidate any pending async smart load
         smartEntries = []
         startWatching()  // arm before snapshotting, to narrow the listing/watch gap
