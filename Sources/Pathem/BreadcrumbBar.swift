@@ -148,24 +148,33 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    // Click vs drag: track the mouse; a small move starts a drag-out, otherwise it's a click.
+    // Click vs drag via the standard responder overrides, not a hand-rolled nextEvent pump.
+    // Pumping the queue raced quick flicks (start a drag session as the mouse-up is already
+    // queued), which can strand an orphaned NSDraggingSession and silently kill every later
+    // drag in the process until relaunch. mouseDragged only fires while the button is down,
+    // so a session can never start after release.
+    private var pressStart: NSPoint?
+    private var didStartDrag = false
+
     override func mouseDown(with event: NSEvent) {
-        let start = event.locationInWindow
-        var dragged = false
-        trackingLoop: while let next = window?.nextEvent(matching: [.leftMouseDragged, .leftMouseUp]) {
-            switch next.type {
-            case .leftMouseUp: break trackingLoop
-            case .leftMouseDragged:
-                let point = next.locationInWindow
-                if abs(point.x - start.x) > 4 || abs(point.y - start.y) > 4 {
-                    dragged = true
-                    beginDrag(with: next)
-                    break trackingLoop
-                }
-            default: break
-            }
+        // No super: the button's own tracking loop would swallow mouseDragged/mouseUp.
+        pressStart = event.locationInWindow
+        didStartDrag = false
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let start = pressStart, !didStartDrag else { return }
+        let point = event.locationInWindow
+        if abs(point.x - start.x) > 6 || abs(point.y - start.y) > 6 {
+            didStartDrag = true
+            beginDrag(with: event)
         }
-        if !dragged { onClick?() }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        if pressStart != nil, !didStartDrag { onClick?() }
+        pressStart = nil
+        didStartDrag = false
     }
 
     private func beginDrag(with event: NSEvent) {
