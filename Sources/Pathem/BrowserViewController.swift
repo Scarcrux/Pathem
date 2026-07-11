@@ -106,7 +106,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let terminal = TerminalController()
     let torrentDrawer = TorrentDrawerController()  // FileZilla-style transfer drawer at the bottom
     let torrentDetail = TorrentDetailView()  // overlays the panes when a torrent is opened
-    let searchField = NSSearchField()
+    /// The toolbar's search-and-command button: looks like a search field, opens the one
+    /// overlay (Cmd-F search mode, Cmd-K command mode), and shows the active pane's query.
+    let searchButton = NSButton()
     var didSetInitialSplit = false
     /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
     /// default so navigation never disturbs whatever you're running in the shell.
@@ -296,15 +298,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebarWidth.isActive = true
         sidebarWidthConstraint = sidebarWidth
 
-        searchField.placeholderString = L("bvc.searchPlaceholder", "Search")
-        searchField.translatesAutoresizingMaskIntoConstraints = false
-        searchField.target = self
-        searchField.action = #selector(runSearch)
-        searchField.sendsSearchStringImmediately = false
-        searchField.toolTip = L("bvc.searchTip", "Semantic search in this folder (on-device)")
-        // The search field lives in the window's unified toolbar (Finder-style),
-        // not its own strip; pin a width for when it's in the toolbar item.
-        searchField.widthAnchor.constraint(equalToConstant: 240).isActive = true
+        // The search-and-command button lives in the window's unified toolbar (Finder-style).
+        // It reads like a search field but opens the overlay; the active pane's live query
+        // shows as its title so search state stays visible.
+        searchButton.bezelStyle = .texturedRounded
+        searchButton.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: L("bvc.searchToolbarLabel", "Search"))
+        searchButton.imagePosition = .imageLeading
+        searchButton.alignment = .left
+        searchButton.target = self
+        searchButton.action = #selector(searchButtonTapped)
+        searchButton.toolTip = L("bvc.searchTip2", "Search this folder or run a command (⌘F / ⌘K)")
+        searchButton.translatesAutoresizingMaskIntoConstraints = false
+        searchButton.widthAnchor.constraint(equalToConstant: 240).isActive = true
+        updateSearchButton(query: "")
 
         // Vertical split: the browser (sidebar + panes) on top, the optional
         // terminal drawer at the bottom. The terminal starts collapsed.
@@ -500,7 +506,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.onPaneDidNavigate = { [weak self] pane in
                 pane.searchQuery = ""  // navigating clears that pane's query
                 guard pane === self?.activePane else { return }
-                self?.searchField.stringValue = ""
+                self?.updateSearchButton(query: "")
                 self?.updateWindowTitle()  // covers remote nav too
                 if !pane.isRemote { self?.recordRecentFolder(pane.currentURL) }
             }
@@ -986,7 +992,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.calculateSizes", L("bvc.cmd.calculateAllSizes", "Calculate All Sizes")) { [weak self] in self?.toggleCalculateSizes() }
         add("view.compactSidebar", L("bvc.cmd.compactSidebar", "Compact Sidebar")) { [weak self] in self?.toggleCompactSidebar() }
         add("layout.save", L("bvc.cmd.saveLayout", "Save Layout…")) { [weak self] in self?.saveLayoutPrompt() }
-        add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in self?.showPalette() }
+        add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in self?.showPalette(prefill: ">") }
+        add("search.palette", L("bvc.cmd.searchFolder", "Search This Folder…")) { [weak self] in self?.showPalette(prefill: "") }
         add("ai.run", L("bvc.cmd.askPathem", "Ask Pathem (Natural Language)…")) { [weak self] in self?.showAICommandBar() }
         add("view.quickLook", L("bvc.cmd.quickLook", "Quick Look"), enabled: hasSelection) { [weak self] in self?.toggleQuickLook() }
         add(
@@ -1142,24 +1149,20 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadExtensionsIfEnabled()
     }
 
-    /// Open the command palette over the current window, dispatching the chosen
-    /// command through the registry.
-    private func showPalette() {
+    /// Open the search-and-command overlay over the current window. `prefill` picks the
+    /// opening mode: "" is search (Cmd-F), ">" is commands (Cmd-K); either way it's one
+    /// widget and the prefix switches modes mid-flight. Chosen commands dispatch through
+    /// the registry; search queries rank the active pane live.
+    private func showPalette(prefill: String = ">") {
         guard let window = view.window else { return }
         let items = commands.all.map { (id: $0.id, title: $0.title) }
         palette.present(
             commands: items,
+            prefill: prefill,
             onRun: { [weak self] id in self?.commands.perform(id) },
             onNavigate: { [weak self] url in self?.activePane?.navigate(to: url) },
-            onSemantic: { [weak self] query in self?.runSemanticSearch(query) },
+            onSemantic: { [weak self] query in self?.performSearch(query) },
             over: window)
-    }
-
-    /// Run the on-device semantic search in the active pane for `query` (routes the command
-    /// bar's "?" mode through the same path as the toolbar search field).
-    private func runSemanticSearch(_ query: String) {
-        searchField.stringValue = query
-        runSearch(searchField)
     }
 
     /// Open the batch-rename sheet for the active pane's selection.
@@ -2339,10 +2342,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activeSide = side
         pane.setActive(true)
         updateWindowTitle()
-        searchField.stringValue = pane.searchQuery  // show the focused pane's own query
-        // Note: the search field is cleared on navigation (onDidNavigate), not on
-        // every focus change, so a mid-typed query or visible results survive a
-        // pane re-focus.
+        updateSearchButton(query: pane.searchQuery)  // show the focused pane's own query
+        // Note: the query is cleared on navigation (onDidNavigate), not on every
+        // focus change, so a live query or visible results survive a pane re-focus.
         if pane.currentURL != semanticSearch.cachedDirectory { preIndex(pane.currentURL) }
         syncAutoPreview()  // follow the newly active pane's view mode + selection
         updateQuickActions()  // the quick-actions bar follows the active pane's selection
@@ -2669,17 +2671,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Re-rank the active pane's folder by semantic similarity to the query.
     /// An empty query restores the normal directory listing. All embedding runs
-    /// off the main thread, so the UI never blocks.
-    @objc private func runSearch(_ sender: NSSearchField) {
-        let query = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+    /// off the main thread, so the UI never blocks. Fed live (debounced) by the
+    /// overlay's search mode.
+    func performSearch(_ query: String) {
+        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let pane = activePane else { return }
         guard !pane.isRemote, !pane.isShowingSmartResults, pane.viewMode != .column else {
-            NSSound.beep()  // search needs a single local list (not remote/smart/columns)
+            if !query.isEmpty { NSSound.beep() }  // search needs a single local list
             return
         }
-        pane.searchQuery = query  // remember per pane so the shared field resyncs on focus change
+        pane.searchQuery = query  // remember per pane so the toolbar button resyncs on focus change
+        updateSearchButton(query: query)
         guard !query.isEmpty else {
-            pane.reload()  // cleared search, restore the directory listing
+            if pane.isShowingSearchResults { pane.reload() }  // cleared search, restore the listing
             return
         }
         let directory = pane.currentURL
@@ -2693,6 +2697,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             guard let ranked, self.activePane === pane, pane.currentURL == directory else { return }
             pane.showResults(ranked)
         }
+    }
+
+    @objc private func searchButtonTapped() { showPalette(prefill: "") }
+
+    /// Reflect the active pane's query on the toolbar button (its title doubles as the
+    /// visible search state, since the overlay itself is transient).
+    func updateSearchButton(query: String) {
+        searchButton.title = " " + (query.isEmpty ? L("bvc.searchPlaceholder", "Search") : query)
+        searchButton.contentTintColor = query.isEmpty ? .secondaryLabelColor : .controlAccentColor
     }
 
     /// Build the semantic index for `directory` in the background (if not already

@@ -936,7 +936,10 @@ enum PathemApp {
         // Everything else is grouped into submenus so the top level stays scannable
         // instead of a 40-item wall. Shortcuts still work from inside a submenu.
         viewMenu.addItem(submenu("Find", [
-            commandItem("Filter…", "view.filter", "f"),
+            // Cmd-F opens the search-and-command overlay in search mode (Cmd-K opens the same
+            // overlay in command mode); the old Cmd-F live filter moves to Shift-Cmd-F.
+            commandItem("Search This Folder…", "search.palette", "f"),
+            commandItem("Filter…", "view.filter", "f", [.command, .shift]),
             commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]),
             commandItem("Find in Files…", "files.findInFiles"),
             commandItem("Find Duplicates", "files.findDuplicates"),

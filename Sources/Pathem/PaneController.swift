@@ -223,6 +223,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private var watcher: DirectoryWatcher?
     private var pendingRefresh: DispatchWorkItem?
     private var showingSearchResults = false
+    /// Whether a search result list (not the plain folder listing) is on screen, so the
+    /// browser only restores the listing when a cleared search actually changed it.
+    var isShowingSearchResults: Bool { showingSearchResults }
 
     /// Live filter (find-as-you-type) over the current listing.
     private let filterField = NSSearchField()

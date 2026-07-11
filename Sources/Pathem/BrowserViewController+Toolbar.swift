@@ -117,7 +117,7 @@ extension BrowserViewController: NSToolbarDelegate {
     ) -> NSToolbarItem? {
         if identifier == Self.searchItemID {
             let item = NSToolbarItem(itemIdentifier: identifier)
-            item.view = searchField  // the on-device semantic search field
+            item.view = searchButton  // opens the search-and-command overlay (Cmd-F / Cmd-K)
             item.label = L("bvc.searchToolbarLabel", "Search")
             item.visibilityPriority = .high
             return item
