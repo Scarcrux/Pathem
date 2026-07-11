@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Render Pathem's app icon and assemble Packaging/Pathem.icns.
-# Style arg (default "aqua" = the path/river hybrid): aqua | river | route.
+# Render Pathem's app icon (the waypoint-pin P) and assemble Packaging/Pathem.icns.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-style="${1:-aqua}"
-swift Packaging/makeicon.swift Packaging/AppIcon-1024.png "$style"
+swift Packaging/makeicon.swift Packaging/AppIcon-1024.png
 
 iconset=Packaging/AppIcon.iconset
 rm -rf "$iconset"; mkdir -p "$iconset"
@@ -16,4 +14,4 @@ for s in 16 32 128 256 512; do
 done
 iconutil -c icns "$iconset" -o Packaging/Pathem.icns
 rm -rf "$iconset"
-echo "wrote Packaging/Pathem.icns ($style)"
+echo "wrote Packaging/Pathem.icns"
