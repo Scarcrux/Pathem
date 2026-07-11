@@ -334,37 +334,68 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         }
     }
 
-    /// A Finder-style preview column: a large thumbnail of the file plus its name and info.
+    /// A Finder-style preview column: the thumbnail letterboxed in a soft rounded well, the
+    /// name under it, and an aligned label/value metadata table (kind, size, dates) instead
+    /// of centered free-floating lines.
     private func makePreviewColumn(for url: URL) -> NSView {
         let box = NSView()
+
+        // Thumbnail well: a subtle rounded surface the (arbitrary aspect) thumbnail floats in,
+        // so images, icons, and previews all sit in the same calm frame.
+        let well = NSView()
+        well.translatesAutoresizingMaskIntoConstraints = false
+        well.wantsLayer = true
+        well.layer?.backgroundColor = NSColor.quaternarySystemFill.cgColor
+        well.layer?.cornerRadius = 10
+        well.layer?.cornerCurve = .continuous
         let image = NSImageView()
         image.translatesAutoresizingMaskIntoConstraints = false
         image.imageScaling = .scaleProportionallyUpOrDown
         image.image = NSWorkspace.shared.icon(forFile: url.path)
+        well.addSubview(image)
+
         let name = NSTextField(labelWithString: url.lastPathComponent)
         name.translatesAutoresizingMaskIntoConstraints = false
         name.alignment = .center
         name.font = .boldSystemFont(ofSize: 13)
         name.lineBreakMode = .byTruncatingMiddle
-        let info = NSTextField(wrappingLabelWithString: "")
-        info.translatesAutoresizingMaskIntoConstraints = false
-        info.alignment = .center
-        info.font = .systemFont(ofSize: 11)
-        info.textColor = .secondaryLabelColor
-        box.addSubview(image)
+
+        // Metadata rows: right-aligned dim labels, left-aligned values, like Finder / Get Info.
+        let grid = NSGridView(numberOfColumns: 2, rows: 0)
+        grid.translatesAutoresizingMaskIntoConstraints = false
+        grid.rowSpacing = 4
+        grid.columnSpacing = 8
+        grid.column(at: 0).xPlacement = .trailing
+        func addRow(_ label: String, _ value: String) {
+            let key = NSTextField(labelWithString: label)
+            key.font = .systemFont(ofSize: 11)
+            key.textColor = .tertiaryLabelColor
+            let val = NSTextField(labelWithString: value)
+            val.font = .systemFont(ofSize: 11)
+            val.textColor = .secondaryLabelColor
+            val.lineBreakMode = .byTruncatingMiddle
+            grid.addRow(with: [key, val])
+        }
+
+        box.addSubview(well)
         box.addSubview(name)
-        box.addSubview(info)
+        box.addSubview(grid)
         NSLayoutConstraint.activate([
-            image.topAnchor.constraint(equalTo: box.topAnchor, constant: 20),
-            image.centerXAnchor.constraint(equalTo: box.centerXAnchor),
-            image.widthAnchor.constraint(equalToConstant: 200),
-            image.heightAnchor.constraint(equalToConstant: 200),
-            name.topAnchor.constraint(equalTo: image.bottomAnchor, constant: 12),
+            well.topAnchor.constraint(equalTo: box.topAnchor, constant: 16),
+            well.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 16),
+            well.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -16),
+            well.heightAnchor.constraint(equalToConstant: 210),
+            image.centerXAnchor.constraint(equalTo: well.centerXAnchor),
+            image.centerYAnchor.constraint(equalTo: well.centerYAnchor),
+            image.widthAnchor.constraint(lessThanOrEqualTo: well.widthAnchor, constant: -24),
+            image.heightAnchor.constraint(lessThanOrEqualTo: well.heightAnchor, constant: -24),
+            name.topAnchor.constraint(equalTo: well.bottomAnchor, constant: 12),
             name.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
             name.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
-            info.topAnchor.constraint(equalTo: name.bottomAnchor, constant: 8),
-            info.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
-            info.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
+            grid.topAnchor.constraint(equalTo: name.bottomAnchor, constant: 10),
+            grid.centerXAnchor.constraint(equalTo: box.centerXAnchor),
+            grid.leadingAnchor.constraint(greaterThanOrEqualTo: box.leadingAnchor, constant: 12),
+            grid.trailingAnchor.constraint(lessThanOrEqualTo: box.trailingAnchor, constant: -12),
         ])
 
         let size = CGSize(width: 256, height: 256)
@@ -381,9 +412,10 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             let date = DateFormatter()
             date.dateStyle = .medium
             date.timeStyle = .short
-            var lines = [fileInfo.kind, formatter.string(fromByteCount: fileInfo.size)]
-            if let modified = fileInfo.modified { lines.append(date.string(from: modified)) }
-            info.stringValue = lines.joined(separator: "\n")
+            addRow(L("preview.kind", "Kind"), fileInfo.kind)
+            addRow(L("preview.size", "Size"), formatter.string(fromByteCount: fileInfo.size))
+            if let created = fileInfo.created { addRow(L("preview.created", "Created"), date.string(from: created)) }
+            if let modified = fileInfo.modified { addRow(L("preview.modified", "Modified"), date.string(from: modified)) }
         }
         return box
     }

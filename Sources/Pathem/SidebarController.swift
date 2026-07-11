@@ -162,13 +162,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let customImage: NSImage?
         /// A mounted volume that can be ejected (covers non-/Volumes mounts like OrbStack).
         let isEjectable: Bool
+        /// Hover text when it should say more than the title (e.g. a smart folder's criteria).
+        let tooltip: String?
         var children: [Node]
         /// Subfolders are loaded lazily the first time the node is expanded.
         var childrenLoaded = false
         init(
             kind: Kind, title: String, url: URL?, icon: String?, isFolder: Bool = false,
             tagColor: FileTag.Color? = nil, iconTint: NSColor? = nil, isEjectable: Bool = false,
-            customImage: NSImage? = nil, children: [Node] = []
+            customImage: NSImage? = nil, tooltip: String? = nil, children: [Node] = []
         ) {
             self.kind = kind
             self.title = title
@@ -179,6 +181,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             self.iconTint = iconTint
             self.isEjectable = isEjectable
             self.customImage = customImage
+            self.tooltip = tooltip
             self.children = children
         }
         var isHeader: Bool {
@@ -374,8 +377,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if demoMode {
             // Demo mode: fake, generic Cloud/Volumes so screenshots never leak real account
             // emails, machine names, connected servers, or the user's phone.
-            if let cloud = demoSection(L("sidebar.cloudHeader", "Cloud"), demoCloud) { roots.append(cloud) }
-            if let volumes = demoSection(L("sidebar.volumesHeader", "Volumes"), demoVolumes) { roots.append(volumes) }
+            if let cloud = demoSection(L("sidebar.cloudHeader", "Cloud"), demoCloud, volumes: false) { roots.append(cloud) }
+            if let volumes = demoSection(L("sidebar.volumesHeader", "Volumes"), demoVolumes, volumes: true) { roots.append(volumes) }
         } else {
             if let cloud = cloudNode() { roots.append(cloud) }
             roots.append(volumesNode())
@@ -502,13 +505,24 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             children: [airdrop, network, trash])
     }
 
-    /// A demo Cloud/Volumes section from generic (name, folder) pairs.
-    private func demoSection(_ title: String, _ items: [(name: String, url: URL)]) -> Node? {
+    /// A demo Cloud/Volumes section from generic (name, folder) pairs. Icons match what the
+    /// real sections would show (a tinted provider cloud, a drive, Time Machine's clock), so
+    /// screenshots don't show a Macintosh HD wearing a cloud.
+    private func demoSection(_ title: String, _ items: [(name: String, url: URL)], volumes: Bool) -> Node? {
         guard !items.isEmpty else { return nil }
-        let children = items.map {
-            Node(
-                kind: .systemItem, title: $0.name, url: $0.url,
-                icon: $0.name.localizedCaseInsensitiveContains("iCloud") ? "icloud" : "cloud", isFolder: true)
+        let children = items.map { item -> Node in
+            if volumes {
+                let icon = item.name.localizedCaseInsensitiveContains("Time Machine")
+                    ? "clock.arrow.circlepath" : "internaldrive"
+                return Node(kind: .systemItem, title: item.name, url: item.url, icon: icon, isFolder: true)
+            }
+            // Cloud rows: resolve the provider from the display name and use its tinted glyph
+            // (never the branded app image, which could differ machine to machine in captures).
+            let service = CloudLocation.provider(fromDirectory: item.name.replacingOccurrences(of: " ", with: ""))
+            let (symbol, tint) = Self.cloudIcon(service)
+            return Node(
+                kind: .systemItem, title: item.name, url: item.url, icon: symbol, isFolder: true,
+                iconTint: monochromeIcons ? nil : tint)
         }
         return Node(kind: .systemHeader, title: title, url: nil, icon: nil, children: children)
     }
@@ -516,16 +530,70 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// One "Smart Folders" section: the built-in Recents location, then the user's saved
     /// smart folders (each running its saved Spotlight query). Recents is itself a built-in
     /// smart folder, so they share a single section rather than two near-identically named ones.
+    /// Each row's icon reflects what the search looks for, and the criteria live in the
+    /// tooltip so labels stay short.
     private func smartFoldersNode() -> Node {
         var children = [
             Node(kind: .smart(.recents), title: L("sidebar.recents", "Recents"), url: nil, icon: "clock")
         ]
         children += savedSearches.filter { !$0.name.isEmpty }.map {
-            Node(kind: .savedSearch($0), title: $0.name, url: nil, icon: "magnifyingglass")
+            Node(
+                kind: .savedSearch($0), title: $0.name, url: nil, icon: Self.smartIcon(for: $0),
+                tooltip: Self.smartSummary(for: $0))
         }
         return Node(
             kind: .systemHeader, title: L("sidebar.smartFoldersHeader", "Smart Folders"), url: nil,
             icon: nil, children: children)
+    }
+
+    /// An SF Symbol reflecting what a saved search looks for, so smart folders read apart
+    /// at a glance (all of them used to share the magnifying glass).
+    static func smartIcon(for search: SavedSearch) -> String {
+        switch search.contentType {
+        case "public.image": return "photo"
+        case "public.movie": return "film"
+        case "public.audio": return "music.note"
+        case "com.adobe.pdf": return "doc.richtext"
+        case "public.content": return "doc.text"
+        case "public.folder": return "folder"
+        default: break
+        }
+        if search.nameContains?.localizedCaseInsensitiveContains("screenshot") == true { return "camera.viewfinder" }
+        if search.minSizeBytes != nil { return "externaldrive" }
+        if search.tag != nil { return "tag" }
+        if search.contentContains != nil { return "text.magnifyingglass" }
+        return "magnifyingglass"
+    }
+
+    /// A human-readable one-liner of a saved search's criteria, for the row's tooltip.
+    static func smartSummary(for search: SavedSearch) -> String? {
+        var parts: [String] = []
+        if let kind = search.contentType {
+            let kinds = [
+                "public.image": L("smart.images", "images"), "public.movie": L("smart.videos", "videos"),
+                "public.audio": L("smart.audio", "audio"), "com.adobe.pdf": L("smart.pdfs", "PDFs"),
+                "public.content": L("smart.documents", "documents"), "public.folder": L("smart.folders", "folders"),
+            ]
+            parts.append(kinds[kind] ?? kind)
+        }
+        if let name = search.nameContains, !name.isEmpty {
+            parts.append(String(format: L("smart.nameContains", "name contains \u{201C}%@\u{201D}"), name))
+        }
+        if let ext = search.fileExtension, !ext.isEmpty { parts.append(".\(ext)") }
+        if let bytes = search.minSizeBytes {
+            parts.append(String(format: L("smart.overSize", "over %@"), ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)))
+        }
+        if let days = search.modifiedWithinDays {
+            parts.append(String(format: L("smart.withinDays", "modified in the last %d days"), days))
+        }
+        if let text = search.contentContains, !text.isEmpty {
+            parts.append(String(format: L("smart.contains", "containing \u{201C}%@\u{201D}"), text))
+        }
+        if let tag = search.tag, !tag.isEmpty {
+            parts.append(String(format: L("smart.tagged", "tagged %@"), tag))
+        }
+        guard !parts.isEmpty else { return nil }
+        return String(format: L("smart.summaryPrefix", "Finds %@"), parts.joined(separator: ", "))
     }
 
     /// The seven Finder tag colors; selecting one filters to files with that tag.
@@ -816,7 +884,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         cell.textField?.stringValue = showsLabels ? node.title : ""  // compact: icons only
         cell.textField?.isEditable = node.isEditable
         cell.textField?.delegate = self
-        cell.toolTip = node.title  // name on hover when compact
+        cell.toolTip = node.tooltip ?? node.title  // criteria for smart folders; name when compact
         if let image = node.customImage {
             // A branded provider logo (the app icon) -- used verbatim, like Finder's cloud icons.
             cell.imageView?.image = image

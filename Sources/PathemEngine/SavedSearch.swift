@@ -88,11 +88,12 @@ public struct SavedSearches: Codable, Sendable, Equatable {
 
     private enum CodingKeys: String, CodingKey { case searches }
 
-    /// Useful starter searches; users add their own in searches.json.
+    /// Useful starter searches; users add their own in searches.json. Names stay short (the
+    /// sidebar shows the criteria in a tooltip, not in the label).
     public static let `default` = SavedSearches(searches: [
-        SavedSearch(name: "Large Files (> 100 MB)", minSizeBytes: 100_000_000),
-        SavedSearch(name: "Recent Images (7 days)", modifiedWithinDays: 7, contentType: "public.image"),
+        SavedSearch(name: "Large Files", minSizeBytes: 100_000_000),
+        SavedSearch(name: "Recent Images", modifiedWithinDays: 7, contentType: "public.image"),
         SavedSearch(name: "Screenshots", nameContains: "Screenshot"),
-        SavedSearch(name: "Recent Documents (7 days)", modifiedWithinDays: 7, contentType: "public.content"),
+        SavedSearch(name: "Recent Documents", modifiedWithinDays: 7, contentType: "public.content"),
     ])
 }

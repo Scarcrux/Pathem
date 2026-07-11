@@ -848,10 +848,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     private var isActivePane = false
+    /// The active pane reads as raised: a soft drop shadow lifts it above its neighbor (drawn
+    /// over the divider via zPosition) while the border stays a neutral hairline on both panes.
+    /// Quieter than the old accent ring, and it reads in both light and dark themes.
     func setActive(_ active: Bool) {
         isActivePane = active
-        containerView.layer?.borderColor =
-            (active ? ThemeManager.shared.accent : NSColor.separatorColor).cgColor
+        guard let layer = containerView.layer else { return }
+        layer.shadowColor = NSColor.shadowColor.cgColor
+        layer.shadowOffset = .zero
+        layer.shadowRadius = 7
+        layer.shadowOpacity = active ? 0.38 : 0
+        layer.zPosition = active ? 1 : 0  // the raised pane's shadow falls on the flat one
     }
 
     // MARK: - Build

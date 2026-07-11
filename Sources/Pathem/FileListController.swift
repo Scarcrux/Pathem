@@ -324,9 +324,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         scrollView.documentView = tableView
         scrollView.hasVerticalScroller = true
-        // No horizontal scroller: the file list is meant to fit the pane (Name flexes), so a
-        // horizontal scrollbar is never wanted.
-        scrollView.hasHorizontalScroller = false
+        // Name flexes to fit the pane, so most of the time no horizontal bar appears
+        // (autohidesScrollers). But once the visible columns outgrow the pane, Name clamps to its
+        // minimum and the table genuinely overflows; without a scroller that overflow would be
+        // unreachable.
+        scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
 
         // Flex the Name column to fill the pane whenever the pane resizes. Done off a clip-view
