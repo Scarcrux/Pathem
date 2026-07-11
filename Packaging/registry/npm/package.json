@@ -1,12 +1,20 @@
 {
-  "name": "pathem",
+  "name": "@scarcrux/pathem",
   "version": "0.0.1",
   "description": "Name reserved for Pathem, a fast native macOS file manager. This package is not the app; get Pathem at https://pathem.app",
   "author": "Scarcrux (https://pathem.app)",
   "license": "MIT",
   "homepage": "https://pathem.app",
-  "repository": { "type": "git", "url": "git+https://github.com/Scarcrux/Pathem.git" },
-  "bugs": { "url": "https://github.com/Scarcrux/Pathem/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Scarcrux/Pathem.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Scarcrux/Pathem/issues"
+  },
   "main": "index.js",
-  "files": ["index.js", "README.md"]
+  "files": [
+    "index.js",
+    "README.md"
+  ]
 }

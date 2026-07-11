@@ -7,7 +7,7 @@ Publish once, from a machine logged into your accounts:
 
 npm (asks for browser login / OTP as needed):
 
-    cd Packaging/registry/npm
+    cd Packaging/registry/npm  # publishes @scarcrux/pathem (bare "pathem" is blocked by npm similarity rules for everyone)
     npm publish --access public
 
 PyPI (needs `pipx` or `pip install build twine`):
