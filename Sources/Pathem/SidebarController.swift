@@ -1450,8 +1450,16 @@ final class PlaceCellView: NSTableCellView {
     func setEject(visible: Bool, action: (() -> Void)?) {
         eject.isHidden = !visible
         onEject = action
-        labelToTrailing.isActive = !visible
-        labelToEject.isActive = visible
+        // Deactivate the outgoing constraint before activating the incoming one, so the label
+        // never has two conflicting required trailing constraints at once (a console warning on
+        // cell reuse).
+        if visible {
+            labelToTrailing.isActive = false
+            labelToEject.isActive = true
+        } else {
+            labelToEject.isActive = false
+            labelToTrailing.isActive = true
+        }
     }
 
     @objc private func ejectTapped() { onEject?() }

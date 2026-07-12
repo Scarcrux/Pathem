@@ -932,7 +932,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.removeCustomIcon", L("bvc.cmd.removeCustomIcon", "Remove Custom Icon"), enabled: hasLocalSelection) {
             [weak self] in self?.removeCustomIcon()
         }
-        add("files.airdrop", L("bvc.cmd.sendViaAirDrop", "Send via AirDrop"), enabled: hasSelection) {
+        add("files.airdrop", L("bvc.cmd.sendViaAirDrop", "Send via AirDrop"), enabled: hasLocalSelection) {
             [weak self] in self?.activePane?.airDropSelection()
         }
         add("files.copyPath", L("bvc.cmd.copyPath", "Copy Path"), enabled: hasSelection) { [weak self] in self?.copyPaths(asURL: false) }
@@ -949,8 +949,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.organize", L("bvc.cmd.organize", "Organize Folder…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.organizeFolder()
         }
-        add("files.copySHA256", L("bvc.cmd.copySHA256", "Copy SHA-256"), enabled: hasSelection) { [weak self] in self?.copyChecksums() }
-        add("files.verifyChecksum", L("bvc.cmd.verifyChecksum", "Verify Checksum…"), enabled: hasSelection) {
+        add("files.copySHA256", L("bvc.cmd.copySHA256", "Copy SHA-256"), enabled: hasLocalSelection) { [weak self] in self?.copyChecksums() }
+        add("files.verifyChecksum", L("bvc.cmd.verifyChecksum", "Verify Checksum…"), enabled: hasLocalSelection) {
             [weak self] in self?.verifyChecksum()
         }
         add("files.reveal", L("bvc.cmd.revealInFinder", "Reveal in Finder"), enabled: { [weak self] in self?.activePane != nil }) {
@@ -1120,8 +1120,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.comparePanes", L("bvc.cmd.comparePanes", "Compare Panes…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.comparePanes()
         }
-        add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasSelection) { [weak self] in self?.compressSelection() }
-        add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: hasSelection) { [weak self] in self?.compress7zSelection() }
+        add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasLocalSelection) { [weak self] in self?.compressSelection() }
+        add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: hasLocalSelection) { [weak self] in self?.compress7zSelection() }
         let hasArchive: () -> Bool = { [weak self] in
             (self?.activePane?.selectedLocalURLs() ?? []).contains { Archiver.canExtract($0) }
         }
