@@ -1,9 +1,101 @@
 # Pathem roadmap
 
-Living document. Goal: ship a focused, launch-ready **v1.0 this week** (week of
-2026-06-22), then fast-follow with remote/cloud transfer. Grounded in two
-multi-agent design passes (a launch-readiness audit and a cloud-storage
-architecture study), machine-verified on macOS 26.
+Living document. The product is built: a dual-pane manager with fast enumeration,
+file ops + undo, five views, on-device search, remote/cloud backends, a native
+torrent engine, an embedded terminal, deep customization, and Sparkle updates
+(the full shipped history is in the rounds below). A multi-agent correctness and
+security audit has been run and its findings fixed.
+
+The focus now is a **launch runway**, described in the next section: refine the
+app and site to public-launch quality so that the day the repository is flipped
+public, it converts visitors into stars and users. The repo is intentionally kept
+private until more user testing is done, so nothing here is blocked on that flip,
+and everything here makes the flip land better.
+
+## Now (2026-07-12): the launch runway
+
+Five tracks, roughly in priority order. Track A (app polish) and Track B (site)
+are the immediate work; C is hygiene that should land before launch; D is the
+gated public-flip sequence; E is the post-launch backlog.
+
+### Track A -- App polish (refinement, not new features)
+
+Grounded in a fresh-eyes UX survey. Ordered by impact over effort. The first item
+is the keystone: it unlocks several others.
+
+1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
+   brief confirmation or a soft failure. Build one small helper that reuses the
+   per-pane status label (`PaneController.statusLabel`). This is the root fix
+   behind items 2 and 6, and it is a medium-size change that turns a pile of
+   silent successes and beep-only failures into cheap wins.
+2. **Confirm silent successes.** Copy Path / Copy Name / Copy Checksum write to
+   the pasteboard and return with no feedback. Flash "Copied 3 paths" via the new
+   channel. (`BrowserViewController+SelectionInspection.swift`.)
+3. **Consolidate empty-state copy.** "Empty folder" / "This folder is empty" /
+   "No items" all mean the same thing; likewise "No matches for X" vs "No matching
+   files". Pick one of each.
+4. **Make the permission-denied placeholder actionable.** The read-failure state
+   tells the user to open System Settings but gives no button; add one that opens
+   Full Disk Access (or re-triggers `FullDiskAccessGuide`). Also fix the FDA guide
+   button hierarchy (the primary slot currently holds "Not Now").
+5. **Fix themed-accent drift.** Several custom-drawn elements hardcode
+   `.controlAccentColor` and ignore the skin accent, so with a custom theme half
+   the chrome matches and half does not: QuickActions tint, size-bar fill,
+   transfer-progress color, the AI sparkle, the FDA step badge.
+6. **Turn meaningful beep dead-ends into messages.** Roughly ninety
+   `NSSound.beep()` guards exist; most are fine "not applicable" guards, but the
+   ones that hide a real reason (a transfer already running, a remote-only op
+   refused, an Info toggle that failed on permissions) should say so.
+7. **Soften a few raw/technical strings.** A verbatim remote/engine error can
+   reach the pane placeholder; the ACL row is labelled "Sharing" (reads as the
+   share sheet) when it means Permissions; `curl error %d` and octal `644`
+   placeholders leak tool internals.
+8. **Accessibility labels, incrementally.** There are currently no explicit
+   accessibility labels anywhere; start with the functional image-only glyphs
+   (sidebar collapse chevron, gallery cloud-download badge, pane toolbar buttons),
+   then the custom-drawn cells over time.
+9. **Close the view-parity gaps** (highest-impact of the "partial" items, medium
+   each): tag color dots and git badges in the icon/gallery grids, and honoring
+   the single-click-open / hover-underline preference outside the list (today it
+   silently no-ops there, which is a trust problem).
+
+### Track B -- Website & conversion
+
+1. **Optimize `social-card.png`** (currently 610 KB, 4-8x heavier than needed for
+   an OG card).
+2. **Show, do not just tell.** The feature grid describes torrents, the terminal,
+   and remote/site-manager in text but never shows them, while the five view modes
+   get a whole carousel. Add real screenshots for the marquee features.
+3. **An honest download story.** The primary CTA is "Star on GitHub" with a
+   "downloads soon" note; keep it honest until there is a notarized build, then
+   wire a real download + the Sparkle appcast.
+4. **Minor SEO/PWA polish:** a web app manifest, an SVG favicon, and a sitemap
+   date refresh.
+
+### Track C -- Localization hygiene (before launch)
+
+The catalogs have drifted: `en.lproj` has 812 keys, the other five locales carry
+about 1,502 each, and roughly 692 of the 1,406 `L()` keys referenced in code live
+only in the inline English fallback. Reconcile them: extract every referenced key,
+prune stale entries, ensure all six languages cover every key, then add a coverage
++ `plutil` lint to the pre-commit hook so it cannot rot again.
+
+### Track D -- The public flip (gated on user testing)
+
+Not to be done until the user says the testing gate is met. When it is: a final
+manual QA pass, confirm the screenshots are current, cut a notarized direct
+download with an EdDSA-signed Sparkle appcast (so the site has a real download),
+final pass over README / LICENSE / SECURITY, then flip the repo public so the site
+starts converting. Define the user-testing exit criteria explicitly first.
+
+### Track E -- Post-launch engineering bets
+
+- Finish dissolving the `BrowserViewController` god-object (the toolbar and split
+  delegate are already extracted).
+- Torrent standalone-client parity: send-side PEX, a persistent DHT routing table,
+  UPnP-IGD fallback, and LEDBAT congestion control for uTP.
+- Enable the gated Swift extension runtime once there is real demand (seam and
+  manifest schema are in place).
 
 ## Current state
 

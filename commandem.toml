@@ -1,0 +1,126 @@
+# polaris project manifest - see SPEC.md for the full contract.
+# Committed at the project root; this is the authoritative
+# self-description. Re-run `polaris add .` after editing.
+
+name = "pathem"
+working_dir = "."
+# icon_emoji = "🛰️"
+
+# --- Mode A: periodic checks -------------------------------------
+# Provide check_command to run a health check on an interval. It must
+# print a JSON array [{ "name": str, "ok": bool, "msg": str }] and
+# exit 0 iff every check passed (non-JSON output falls back to one
+# synthesized result keyed on exit code). See SPEC.md "Check output".
+# check_command = "./scripts/polaris_check.sh"
+# check_interval_minutes = 15
+
+# --- Mode B: long-running job ------------------------------------
+# Provide process_pattern to track a long-running job by pgrep. Add
+# log_glob (relative to working_dir) to surface the latest log;
+# completion_marker marks "done"; progress_regex needs exactly one
+# capture group around the progress count.
+# process_pattern = "train.py"
+# log_glob = "results/*.log"
+# completion_marker = "RECOMMENDATION"
+# progress_regex = "window (\\d+) done"
+# progress_total = 140
+# queue_file = "results/queue.txt"
+
+# >>> commandem roadmap (managed: edit phases in the Commandem app or `commandem roadmap`) >>>
+[[phase]]
+title = "App polish: refinement pass"
+status = "now"
+note = "Refinement, not features. From a fresh-eyes UX survey; ordered by impact over effort. Keystone (the toast channel) first: it unlocks the feedback wins below."
+
+  [[phase.task]]
+  title = "Transient-status/toast channel reusing the per-pane status label (keystone)"
+
+  [[phase.task]]
+  title = "Confirm silent successes: Copy Path / Name / Checksum flash a confirmation"
+
+  [[phase.task]]
+  title = "Consolidate empty-state copy (three phrasings for an empty folder today)"
+
+  [[phase.task]]
+  title = "Make the permission-denied placeholder actionable (open Full Disk Access); fix FDA guide button hierarchy"
+
+  [[phase.task]]
+  title = "Fix themed-accent drift (QuickActions, size bar, transfer progress, AI sparkle, FDA badge)"
+
+  [[phase.task]]
+  title = "Turn meaningful beep dead-ends into messages (transfer running, remote-only op, failed toggle)"
+
+  [[phase.task]]
+  title = "Soften raw/technical strings (ACL row 'Sharing' -> Permissions; curl error; octal 644)"
+
+  [[phase.task]]
+  title = "Accessibility labels, incrementally (functional image-only glyphs first)"
+
+  [[phase.task]]
+  title = "Close view-parity gaps: tag dots + git badges in grids; honor single-click/hover outside the list"
+
+[[phase]]
+title = "Website & conversion"
+status = "now"
+note = "Site is a funnel whose exits are dead until the repo goes public; make it launch-ready now."
+
+  [[phase.task]]
+  title = "Optimize social-card.png (610 KB, 4-8x heavier than an OG card needs)"
+
+  [[phase.task]]
+  title = "Show, don't just tell: real screenshots for torrents / terminal / remote (text-only today)"
+
+  [[phase.task]]
+  title = "Honest download story: keep the Star CTA until a notarized build, then wire download + Sparkle appcast"
+
+  [[phase.task]]
+  title = "Minor SEO/PWA: web app manifest, SVG favicon, sitemap date refresh"
+
+[[phase]]
+title = "Localization hygiene"
+status = "next"
+note = "Catalogs drifted: en 812 keys vs ~1,502 in the other five locales; ~692 of 1,406 L() keys live only in the inline English fallback."
+
+  [[phase.task]]
+  title = "Extract every referenced L() key; prune stale entries"
+
+  [[phase.task]]
+  title = "Ensure all six locales cover every key"
+
+  [[phase.task]]
+  title = "Add a coverage + plutil lint to the pre-commit hook"
+
+[[phase]]
+title = "The public flip (gated on user testing)"
+status = "later"
+note = "Do NOT start until the user says the testing gate is met. Define exit criteria first."
+
+  [[phase.task]]
+  title = "Define the user-testing exit criteria"
+
+  [[phase.task]]
+  title = "Final manual QA pass; confirm screenshots are current"
+
+  [[phase.task]]
+  title = "Cut a notarized direct download + EdDSA-signed Sparkle appcast"
+
+  [[phase.task]]
+  title = "Final pass over README / LICENSE / SECURITY"
+
+  [[phase.task]]
+  title = "Flip the repo public so the site starts converting"
+
+[[phase]]
+title = "Post-launch engineering bets"
+status = "later"
+note = "Deferred capability work, after the launch runway."
+
+  [[phase.task]]
+  title = "Finish dissolving the BrowserViewController god-object (toolbar + split delegate already extracted)"
+
+  [[phase.task]]
+  title = "Torrent standalone parity: send-side PEX, persistent DHT routing table, UPnP-IGD, LEDBAT"
+
+  [[phase.task]]
+  title = "Enable the gated Swift extension runtime once there is real demand"
+# <<< commandem roadmap <<<
