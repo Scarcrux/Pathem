@@ -63,7 +63,10 @@ public struct OrganizeFeedback: Codable, Sendable, Equatable {
             log.entries.removeFirst(log.entries.count - maxEntries)
         }
         guard let data = try? JSONEncoder().encode(log) else { return }
-        try? data.write(to: url)
+        // Atomic: a crash mid-write would otherwise leave a truncated file. load() tolerates a
+        // corrupt file by returning an empty log, but that silently discards the whole history;
+        // the temp-file swap keeps the last good log intact until the new one is fully written.
+        try? data.write(to: url, options: .atomic)
     }
 
     private static func weight(_ verdict: Verdict) -> Int {
