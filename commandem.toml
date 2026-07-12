@@ -1,6 +1,6 @@
-# polaris project manifest - see SPEC.md for the full contract.
+# commandem project manifest - see SPEC.md for the full contract.
 # Committed at the project root; this is the authoritative
-# self-description. Re-run `polaris add .` after editing.
+# self-description. Re-run `commandem add .` after editing.
 
 name = "pathem"
 working_dir = "."
@@ -11,7 +11,7 @@ working_dir = "."
 # print a JSON array [{ "name": str, "ok": bool, "msg": str }] and
 # exit 0 iff every check passed (non-JSON output falls back to one
 # synthesized result keyed on exit code). See SPEC.md "Check output".
-# check_command = "./scripts/polaris_check.sh"
+# check_command = "./scripts/commandem_check.sh"
 # check_interval_minutes = 15
 
 # --- Mode B: long-running job ------------------------------------

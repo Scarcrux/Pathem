@@ -1,4 +1,4 @@
-# Pathem. Everyday commands mirror the constellation convention (see Polaris).
+# Pathem. Everyday commands mirror the constellation convention (see Commandem).
 #   make run      build and launch from source (fastest loop)
 #   make build    build engine + app
 #   make test     run the engine test suite

@@ -1,17 +1,17 @@
 # Conventions
 
-Shared standards for every project in the constellation (the tools polaris
+Shared standards for every project in the constellation (the tools commandem
 coordinates). Drop this into a new repo, delete the language rows that don't
 apply, and link it from the project's `CLAUDE.md`. The **Standing
-directives** section is propagated automatically by `polaris brief` — you
+directives** section is propagated automatically by `commandem brief` — you
 don't hand-copy it; it's listed here only so you know what your project
 gets.
 
 > New project, one-time setup:
 > ```bash
-> polaris init <path>     # scaffold polaris.toml (the manifest contract; see SPEC.md)
-> polaris add <path>      # register it with polaris
-> polaris brief --apply   # inject the Standing directives into the project's CLAUDE.md
+> commandem init <path>     # scaffold commandem.toml (the manifest contract; see SPEC.md)
+> commandem add <path>      # register it with commandem
+> commandem brief --apply   # inject the Standing directives into the project's CLAUDE.md
 > pre-commit install      # wire the format/lint/test hooks
 > ```
 
@@ -61,22 +61,22 @@ gets.
 - Coverage is a means, not the goal: cover the **load-bearing logic**; don't
   pad glue/printing to move a number.
 
-## Polaris integration (optional but recommended)
+## Commandem integration (optional but recommended)
 
-- **`polaris.toml`** at the repo root is the machine contract (mode +
-  commands + conventions). See polaris's `SPEC.md`. Re-run `polaris add .`
+- **`commandem.toml`** at the repo root is the machine contract (mode +
+  commands + conventions). See commandem's `SPEC.md`. Re-run `commandem add .`
   after editing it.
 - **Health checks** (deployed projects): add a `[[check]]` block
   (`url` / `expect_status` / `expect_body` / `ssl_expiry_days`, multiple =
-  multi-endpoint) so `polaris monitor` watches it.
+  multi-endpoint) so `commandem monitor` watches it.
 - **Link checks:** expose a hook and set
   `links_check_command = "<cmd>"` (exit 0 = clean, non-zero = broken links);
-  `polaris links` runs it on a schedule and routes breakage into the one
+  `commandem links` runs it on a schedule and routes breakage into the one
   notification stream.
 
-## Standing directives (auto-injected by `polaris brief`)
+## Standing directives (auto-injected by `commandem brief`)
 
-*Listed for awareness — `polaris brief --apply` writes these verbatim into
+*Listed for awareness — `commandem brief --apply` writes these verbatim into
 your CLAUDE.md; don't duplicate them by hand.*
 
 - **iCloud hygiene.** Keep only regenerable/churny dirs out of iCloud via

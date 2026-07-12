@@ -35,7 +35,7 @@ swift run Pathem       # launch the (stub) app window
 ```bash
 brew install swift-format                                   # not on PATH here
 pre-commit install                                          # wire the hooks
-polaris init . && polaris add . && polaris brief --apply    # constellation
+commandem init . && commandem add . && commandem brief --apply    # constellation
 ```
 
 ## Current state
