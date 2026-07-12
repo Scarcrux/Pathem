@@ -231,26 +231,41 @@ public enum FileOperations {
     /// Restore trashed items to their original locations (the undo of `trash`). If
     /// the original location was reoccupied, restore under a non-colliding name and
     /// report it, so the file comes back instead of the undo silently failing.
-    public static func untrash(_ items: [Trashed]) -> [Failure] {
+    /// The result of restoring items from the Trash: where each one actually landed (so a redo
+    /// re-trashes the real file, not whatever unrelated file now sits at the recorded original
+    /// path), plus any failures.
+    public struct UntrashResult: Sendable {
+        public var restored: [URL]  // the actual restored locations, in input order (successes only)
+        public var failures: [Failure]
+        public init(restored: [URL] = [], failures: [Failure] = []) {
+            self.restored = restored
+            self.failures = failures
+        }
+    }
+
+    @discardableResult
+    public static func untrash(_ items: [Trashed]) -> UntrashResult {
         let fm = FileManager.default
-        var failures: [Failure] = []
+        var result = UntrashResult()
         for item in items {
             let destination = fm.fileExists(atPath: item.original.path)
                 ? uniqueDestination(item.original) : item.original
             do {
                 try fm.moveItem(at: item.trashed, to: destination)
+                result.restored.append(destination)
                 if destination != item.original {
-                    failures.append(
+                    result.failures.append(
                         Failure(
                             name: item.original.lastPathComponent,
                             reason:
                                 "the original location was taken; restored as \"\(destination.lastPathComponent)\""))
                 }
             } catch {
-                failures.append(Failure(name: item.original.lastPathComponent, reason: error.localizedDescription))
+                result.failures.append(
+                    Failure(name: item.original.lastPathComponent, reason: error.localizedDescription))
             }
         }
-        return failures
+        return result
     }
 
     // MARK: Copy / move

@@ -180,8 +180,17 @@ public enum BatchRename {
                 try fm.moveItem(at: item.temp, to: item.final)
                 renamed += 1
             } catch {
-                failures.append("\(item.original): \(error.localizedDescription)")
-                try? fm.moveItem(at: item.temp, to: directory.appendingPathComponent(item.original))
+                // Phase 2 failed. Restore to the original name; if that's occupied too, land the
+                // file at a unique visible name rather than leaving it stranded under the hidden
+                // ".pathem-rename-<UUID>" temp name where the user can't find it.
+                let originalURL = directory.appendingPathComponent(item.original)
+                if (try? fm.moveItem(at: item.temp, to: originalURL)) != nil {
+                    failures.append("\(item.original): \(error.localizedDescription)")
+                } else {
+                    let fallback = FileOperations.uniqueDestination(originalURL)
+                    try? fm.moveItem(at: item.temp, to: fallback)
+                    failures.append("\(item.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))")
+                }
             }
         }
         return RenameOutcome(renamed: renamed, failures: failures)

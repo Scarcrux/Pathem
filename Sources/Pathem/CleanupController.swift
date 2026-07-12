@@ -8,6 +8,9 @@ import PathemEngine
 /// review-only.
 @MainActor
 final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+    /// Called with the items Cleanup moved to the Trash, so the browser can record their origins
+    /// (Put Back) and register an undo, like the other trash flows.
+    var onTrashed: (([FileOperations.Trashed]) -> Void)?
     private struct Row {
         let item: StorageScan.Item
         var checked: Bool
@@ -474,6 +477,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         rows.removeAll { trashed.contains($0.item.path) }
         table.reloadData()
         updateSummary()
+        // Hand the trashed items to the browser so they're undoable and Put Back works, like the
+        // other trash flows (Cleanup was the only one that trashed with no record).
+        if !result.trashed.isEmpty { onTrashed?(result.trashed) }
         if !result.failures.isEmpty { presentTrashFailures(result.failures) }
     }
 

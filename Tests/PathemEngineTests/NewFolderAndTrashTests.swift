@@ -55,7 +55,7 @@ import Testing
         #expect(trashed.count == 1)
         #expect(!FileManager.default.fileExists(atPath: file.path))
 
-        let undoFailures = FileOperations.untrash(trashed)
+        let undoFailures = FileOperations.untrash(trashed).failures
         #expect(undoFailures.isEmpty)
         #expect(FileManager.default.fileExists(atPath: file.path))
     }

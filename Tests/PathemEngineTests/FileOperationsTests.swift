@@ -231,7 +231,7 @@ import Testing
 
             // Something reoccupies the original path before the undo.
             try Data("new".utf8).write(to: original)
-            let undoFailures = FileOperations.untrash(trashed)
+            let undoFailures = FileOperations.untrash(trashed).failures
 
             // The trashed file comes back (under a new name) and the clash is reported,
             // instead of the undo silently failing and leaving it in the Trash.

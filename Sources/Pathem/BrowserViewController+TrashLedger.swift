@@ -111,21 +111,22 @@ extension BrowserViewController {
             name: L("bvc.moveToTrashAction", "Move to Trash"), footprint: paths, undoFootprint: paths
         ) { [weak self] in
             guard let self else { return }
-            let failures = FileOperations.untrash(trashed)
+            let outcome = FileOperations.untrash(trashed)
             self.reloadBothSides()
-            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.undoFailed", "Undo failed")) }
-            self.registerTrashRedo(trashed)  // redo = move them back to the Trash
+            if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: L("bvc.undoFailed", "Undo failed")) }
+            // Redo re-trashes exactly where each item was restored (which may differ from its
+            // original path if that was reoccupied), not the recorded original path.
+            self.registerTrashRedo(outcome.restored)
         }
     }
 
-    private func registerTrashRedo(_ trashed: [FileOperations.Trashed]) {
-        let paths = Set(trashed.flatMap { [$0.original.path, $0.trashed.path] })
+    private func registerTrashRedo(_ restored: [URL]) {
+        let paths = Set(restored.map(\.path))
         actionHistory.record(
             name: L("bvc.moveToTrashAction", "Move to Trash"), footprint: paths, undoFootprint: paths
         ) { [weak self] in
             guard let self else { return }
-            // Trash by original URL so cross-folder selections redo correctly.
-            let result = FileOperations.trash(urls: trashed.map(\.original))
+            let result = FileOperations.trash(urls: restored)
             self.reloadBothSides()
             if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
             if !result.trashed.isEmpty { self.registerTrashUndo(result.trashed) }

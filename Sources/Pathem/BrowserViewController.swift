@@ -1106,6 +1106,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("view.cleanup", L("bvc.cmd.cleanup", "Cleanup…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in
             guard let self, let url = self.activePane?.currentURL else { return }
+            // Make Cleanup's bulk-trash undoable and Put-Back-able, like every other trash flow.
+            self.cleanup.onTrashed = { [weak self] trashed in
+                self?.recordTrashOrigins(trashed)
+                self?.registerTrashUndo(trashed)
+                self?.reloadBothSides()
+            }
             self.cleanup.present(for: url, over: self.view.window)
         }
         add("view.customizeToolbar", L("bvc.cmd.customizeToolbar", "Customize Toolbar…"), enabled: { [weak self] in

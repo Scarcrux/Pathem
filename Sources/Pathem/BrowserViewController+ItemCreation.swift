@@ -269,7 +269,7 @@ extension BrowserViewController {
         let paths = Self.paths(names, in: directory)
         actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
             guard let self else { return }
-            let failures = FileOperations.untrash(trashed)
+            let failures = FileOperations.untrash(trashed).failures
             self.reloadBothSides()
             if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
             self.registerCreatedUndo(names: names, in: directory, actionName: actionName)
@@ -295,7 +295,7 @@ extension BrowserViewController {
         let paths = Self.paths([name], in: directory)
         actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
             guard let self else { return }
-            let failures = FileOperations.untrash(trashed)  // redo = restore the item
+            let failures = FileOperations.untrash(trashed).failures  // redo = restore the item
             self.reloadBothSides()
             self.paneShowing(directory)?.select(name: name)
             if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
