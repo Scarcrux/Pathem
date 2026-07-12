@@ -43,6 +43,9 @@ extension BrowserViewController {
             lines.append("info list-columns-refill (right pane is not a list view)")
         }
         lines.append("info left-folder (\(leftTabs.activePane?.currentURL.path ?? "?"))")
+        // The listing reads off the main thread now; a stale read of a folder we've navigated
+        // away from (or a superseded reload) must not clobber the current rows.
+        check("reload-superseding-guard", leftTabs.activePane?.debugSupersededListingIsDropped() == true, "stale reads dropped")
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

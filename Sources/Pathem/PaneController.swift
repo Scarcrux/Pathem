@@ -244,6 +244,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private let gitGen = GenerationBox()
     private var gitSummary: String?
 
+    /// Generation guard for the off-main listing enumeration, so a slow read of a
+    /// folder we've since navigated away from (or re-triggered) can't apply its rows
+    /// over the current listing.
+    private let reloadGen = GenerationBox()
+
     /// How this pane sorts and filters its listing (resolved per folder).
     var format = ViewFormat.default
     /// Asks the browser for the saved format for a folder (the per-folder cascade).
@@ -483,36 +488,59 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             format = resolved
         }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
-        content.directoryURL = nav.current  // rows in this folder are draggable
-        content.resolutionURL = nav.current
         content.setSortFormat(format)  // column view re-sorts its drilled columns to match
         content.setGroupKey(format.groupKey)  // list view groups under section headers (else no-op)
-        do {
-            let entries = try BulkEnumerator().entries(
-                of: nav.current, includingHidden: format.showHidden || showHiddenByDefault)
-            displayEntries(format.sorted(entries), preserveState: preserveState)
-            // setEntries refreshes only the root column; re-enumerate drilled ones too
-            // so a file op inside a drilled column shows its result (no-op elsewhere).
-            if preserveState { content.refreshDrilledColumns() }
-            content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
-        } catch {
-            // A read failure (permission denied, missing) looks identical to an
-            // empty folder unless we say so.
-            displayEntries([], preserveState: false)
-            content.showPlaceholder(
-                L(
-                    "pane.readFolderFailed",
-                    "Couldn’t read this folder.\nPathem may need Full Disk Access "
-                        + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
-        }
         content.showSortIndicator(key: format.sortKey, ascending: format.ascending)
-        // After a view-mode swap, carry the selection into the fresh content.
-        if let pending = pendingSelection {
-            content.selectNames(pending)
-            pendingSelection = nil
+
+        // Enumerate (and sort) the folder off the main thread: a huge or slow directory must not
+        // freeze the UI. Existing rows stay on screen until the fresh ones arrive; a stale read of
+        // a folder we've since left is dropped by the generation guard. directoryURL/resolutionURL
+        // are set with the rows in the completion so the content view's directory and its rows are
+        // never momentarily inconsistent (which would misresolve a drag started mid-load).
+        let dir = nav.current
+        let includeHidden = format.showHidden || showHiddenByDefault
+        let fmt = format
+        let generation = reloadGen.bump()
+        Task.detached(priority: .userInitiated) { [weak self] in
+            let outcome: Result<[FileEntry], Error>
+            do {
+                let entries = try BulkEnumerator().entries(of: dir, includingHidden: includeHidden)
+                outcome = .success(fmt.sorted(entries))
+            } catch {
+                outcome = .failure(error)
+            }
+            await MainActor.run {
+                // Apply only if still the same listing (see canApplyListing).
+                guard let self, self.canApplyListing(for: dir, generation: generation) else { return }
+                self.content.directoryURL = dir  // rows in this folder are draggable
+                self.content.resolutionURL = dir
+                switch outcome {
+                case .success(let sorted):
+                    self.displayEntries(sorted, preserveState: preserveState)
+                    // setEntries refreshes only the root column; re-enumerate drilled ones too
+                    // so a file op inside a drilled column shows its result (no-op elsewhere).
+                    if preserveState { self.content.refreshDrilledColumns() }
+                    self.content.showPlaceholder(
+                        sorted.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+                case .failure:
+                    // A read failure (permission denied, missing) looks identical to an
+                    // empty folder unless we say so.
+                    self.displayEntries([], preserveState: false)
+                    self.content.showPlaceholder(
+                        L(
+                            "pane.readFolderFailed",
+                            "Couldn’t read this folder.\nPathem may need Full Disk Access "
+                                + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
+                }
+                // After a view-mode swap, carry the selection into the fresh content.
+                if let pending = self.pendingSelection {
+                    self.content.selectNames(pending)
+                    self.pendingSelection = nil
+                }
+                self.updateStatus()
+                self.refreshGitStatusAsync()
+            }
         }
-        updateStatus()
-        refreshGitStatusAsync()
         breadcrumb.setURL(nav.current)
         // Inside an archive, show a friendly "archive ▸ sub ▸ dir" label, not the raw
         // temp path, and make Up always available (it climbs out to the origin).
@@ -528,6 +556,30 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         backButton.isEnabled = nav.canGoBack
         forwardButton.isEnabled = nav.canGoForward
         upButton.isEnabled = nav.parent != nil || archiveSession != nil
+    }
+
+    /// Whether an off-main listing read for `dir` taken at `generation` may still be applied.
+    /// The superseding guard: it must be the newest reload (a later reload bumped the counter),
+    /// the pane must still be showing a local folder (not switched to a remote or smart-result
+    /// view), and it must still be on that same folder. Any of these failing means the read is
+    /// stale and dropping it leaves the current listing intact.
+    private func canApplyListing(for dir: URL, generation: Int) -> Bool {
+        reloadGen.isCurrent(generation) && remote == nil && !smartActive && nav.current == dir
+    }
+
+    /// Exercises the superseding guard deterministically (PATHEM_SMOKE): a listing read is applied
+    /// only when it is the newest and still on the same folder; a superseded read, or one whose
+    /// folder we've since left, is refused. Bumps the reload counter, which is safe here because
+    /// the startup listing has already been applied (the smoke harness waits for its rows).
+    func debugSupersededListingIsDropped() -> Bool {
+        let here = nav.current
+        let elsewhere = URL(fileURLWithPath: "/var/empty")
+        let genOld = reloadGen.bump()  // as if a reload of `here` started
+        let genNew = reloadGen.bump()  // a newer reload superseded it
+        let newestApplies = canApplyListing(for: here, generation: genNew)
+        let supersededDropped = !canApplyListing(for: here, generation: genOld)
+        let movedOnDropped = !canApplyListing(for: elsewhere, generation: genNew)
+        return newestApplies && supersededDropped && movedOnDropped
     }
 
     /// Re-key git states from the canonical repo root to the displayed folder path, so
@@ -1711,7 +1763,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     /// In-app "reveal": navigate to `url`'s enclosing folder and select `url` there. The
-    /// pendingSelection is applied by reload() after the (synchronous, local) enumeration,
+    /// pendingSelection is applied by reload() once the (off-main) enumeration completes,
     /// so the file ends up selected and scrolled into view in the fresh folder. Useful from
     /// search and smart-result views, where the file lives outside the folder on screen.
     func reveal(_ url: URL) {

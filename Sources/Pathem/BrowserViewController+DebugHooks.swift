@@ -20,6 +20,9 @@ extension BrowserViewController {
             && leftTabs.containerView.frame.width > 50
             && rightTabs.containerView.frame.width > 50
             && (100...360).contains(sidebar.containerView.frame.width)
+            // The listing now loads off the main thread, so "settled" must also mean the
+            // startup folder's rows have arrived (else the row/column smoke checks race the read).
+            && leftTabs.activePane?.entries.isEmpty == false
     }
 
     /// Set the active pane's view mode (PATHEM_VIEW_SHOT diagnostics).
