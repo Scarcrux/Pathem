@@ -97,6 +97,32 @@ starts converting. Define the user-testing exit criteria explicitly first.
 - Enable the gated Swift extension runtime once there is real demand (seam and
   manifest schema are in place).
 
+### Track F -- Finder handoff & editor integration (fast-follow feature)
+
+Post-launch. Strengthens the "other apps hand off to Pathem, not Finder" story.
+The folder-open handler already redirects "open this folder"; "Reveal in Finder"
+cannot be intercepted system-wide (it targets Finder by identity, with no
+LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
+
+- **A `pathem` CLI reveal/open contract** (`pathem reveal <path>`,
+  `pathem open <dir>`) as the stable seam every integration calls, so the launch
+  logic can change without touching any editor config.
+- **Reveal in Pathem** -- a second `NSServices` item plus a select-and-reveal
+  handler (navigate to the parent, select the target), beside the existing
+  "Open in Pathem" service.
+- **Preferences ▸ Integrations** -- detect installed editors and offer per-editor
+  Integrate / Preview / Remove. Editing a third-party config is invasive, so:
+  opt-in only, preview the exact change first, back up and make it reversible,
+  merge (never clobber) the existing file, warn if the editor is running, atomic
+  writes, all inside `~/Library`.
+- **Per-editor mechanism.** Sublime Text (a small User-package plugin + keymap +
+  side-bar menu), TextMate (a bundle command), and JetBrains (an External Tools
+  entry) can be wired by writing their own config -- a true "change the editor's
+  preference files" path. VS Code and Cursor lock their reveal and expose no
+  external-file-manager setting, so those need a small published Pathem extension,
+  not a settings edit; the panel offers to install it rather than claim a config
+  edit that can't work.
+
 ## Current state
 
 The hard part is done and verified in source: getattrlistbulk fast enumeration

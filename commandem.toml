@@ -123,4 +123,27 @@ note = "Deferred capability work, after the launch runway."
 
   [[phase.task]]
   title = "Enable the gated Swift extension runtime once there is real demand"
+
+[[phase]]
+title = "Finder handoff & editor integration"
+status = "later"
+note = "Fast-follow feature. Reveal-in-Finder can't be intercepted system-wide (targets Finder by identity), so: a pull model + opt-in wiring of editors to Pathem."
+
+  [[phase.task]]
+  title = "pathem CLI reveal/open contract (pathem reveal <path>, pathem open <dir>) as the seam every integration calls"
+
+  [[phase.task]]
+  title = "Reveal in Pathem: a second NSServices item + a select-and-reveal handler"
+
+  [[phase.task]]
+  title = "Preferences -> Integrations panel: detect installed editors; per-editor Integrate/Preview/Remove; opt-in, backup, reversible, merge-not-clobber, warn if running"
+
+  [[phase.task]]
+  title = "Sublime Text: write a User-package plugin + keymap + side-bar menu (edits its own config)"
+
+  [[phase.task]]
+  title = "TextMate + JetBrains: a bundle command / an External Tools entry"
+
+  [[phase.task]]
+  title = "VS Code / Cursor: publish a small Pathem extension (their reveal is locked; a settings edit can't redirect it)"
 # <<< commandem roadmap <<<
