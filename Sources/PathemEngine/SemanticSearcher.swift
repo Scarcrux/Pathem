@@ -26,7 +26,7 @@ public enum SemanticSearcher {
     /// Returns an empty index if the on-device model asset isn't ready.
     public static func index(
         _ entries: [FileEntry], in directory: URL, maxItems: Int = 5000, ocrImages: Bool = false,
-        embedder: TextEmbedder = NLEmbedder()
+        pdf: PDFTextExtracting? = nil, embedder: TextEmbedder = NLEmbedder()
     ) -> FolderSemanticIndex {
         guard embedder.dimension > 0 else { return FolderSemanticIndex(ids: [], vectors: []) }
 
@@ -38,7 +38,7 @@ public enum SemanticSearcher {
             // silently trigger a download. Index its name only.
             if !entry.isDirectory, !entry.isDataless,
                 let snippet = ContentExtractor.snippet(
-                    of: directory.appendingPathComponent(entry.name), ocr: ocrImages)
+                    of: directory.appendingPathComponent(entry.name), ocr: ocrImages, pdf: pdf)
             {
                 text += "\n" + snippet
             }

@@ -69,7 +69,9 @@ final class SemanticSearchController {
                 (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
             }.value
             let built = await Task.detached {
-                SemanticSearcher.index(dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr)
+                SemanticSearcher.index(
+                    dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr,
+                    pdf: PDFTextExtractor())  // app-side, since PDFKit links AppKit
             }.value
             guard let self, !Task.isCancelled, isCurrent() else { return }
             self.cachedDir = directory

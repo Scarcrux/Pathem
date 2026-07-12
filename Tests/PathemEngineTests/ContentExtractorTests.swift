@@ -2,6 +2,7 @@ import AppKit
 import CoreGraphics
 import CoreText
 import Foundation
+import PDFKit
 import Testing
 
 @testable import PathemEngine
@@ -47,12 +48,22 @@ import Testing
         #expect(ContentExtractor.snippet(of: url) == nil)
     }
 
-    @Test func readsPDFText() throws {
+    /// PDF text goes through the injected extractor now (PDFKit lives in the app, not the engine).
+    struct PDFKitExtractor: PDFTextExtracting {
+        func pdfText(at url: URL, maxChars: Int) -> String? {
+            guard let doc = PDFDocument(url: url), let s = doc.string, !s.isEmpty else { return nil }
+            return String(s.prefix(maxChars))
+        }
+    }
+
+    @Test func readsPDFTextViaInjectedExtractor() throws {
         try withTempDir { dir in
             let url = dir.appendingPathComponent("doc.pdf")
             try Self.makePDF(text: "semanticpdfcontent", at: url)
-            let snippet = ContentExtractor.snippet(of: url)
+            let snippet = ContentExtractor.snippet(of: url, pdf: PDFKitExtractor())
             #expect(snippet?.contains("semanticpdfcontent") == true)
+            // Without an injected extractor the engine can't read PDFs (it stays AppKit-free).
+            #expect(ContentExtractor.snippet(of: url) == nil)
         }
     }
 
