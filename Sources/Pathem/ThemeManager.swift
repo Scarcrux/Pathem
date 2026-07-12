@@ -46,16 +46,8 @@ final class ThemeManager {
 
     /// Parse "#RRGGBB" (or "#RRGGBBAA") into an sRGB color; nil for empty/invalid input.
     static func color(fromHex raw: String) -> NSColor? {
-        var hex = raw.trimmingCharacters(in: .whitespaces)
-        guard !hex.isEmpty else { return nil }
-        if hex.hasPrefix("#") { hex.removeFirst() }
-        guard hex.count == 6 || hex.count == 8, let value = UInt32(hex, radix: 16) else { return nil }
-        let hasAlpha = hex.count == 8
-        let r = CGFloat((value >> (hasAlpha ? 24 : 16)) & 0xFF) / 255
-        let g = CGFloat((value >> (hasAlpha ? 16 : 8)) & 0xFF) / 255
-        let b = CGFloat((value >> (hasAlpha ? 8 : 0)) & 0xFF) / 255
-        let a = hasAlpha ? CGFloat(value & 0xFF) / 255 : 1
-        return NSColor(srgbRed: r, green: g, blue: b, alpha: a)
+        guard let c = HexColor.parse(raw) else { return nil }  // one parser in the engine
+        return NSColor(srgbRed: c.r, green: c.g, blue: c.b, alpha: c.a)
     }
 
     /// "#RRGGBB" for a color (converted to sRGB first). Used by the custom color wells.

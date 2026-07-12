@@ -1,24 +1,20 @@
 import AppKit
+import PathemEngine
 import QuartzCore
 
 extension NSColor {
-    /// Parse a "#RRGGBB" (or "RRGGBB") hex string into an sRGB color; nil if malformed.
+    /// Parse a "#RRGGBB" / "#RRGGBBAA" hex string into an sRGB color; nil if malformed.
+    /// Thin wrapper over the engine's single HexColor parser.
     convenience init?(hex: String) {
-        var s = hex.trimmingCharacters(in: .whitespaces)
-        if s.hasPrefix("#") { s.removeFirst() }
-        guard s.count == 6, let v = UInt32(s, radix: 16) else { return nil }
-        self.init(
-            srgbRed: CGFloat((v >> 16) & 0xff) / 255, green: CGFloat((v >> 8) & 0xff) / 255,
-            blue: CGFloat(v & 0xff) / 255, alpha: 1)
+        guard let c = HexColor.parse(hex) else { return nil }
+        self.init(srgbRed: c.r, green: c.g, blue: c.b, alpha: c.a)
     }
 
     /// "#RRGGBB" for this color, converted to sRGB first (a color from a picker may be in
     /// another space, where componentwise access would trap).
     var hexString: String {
         let c = usingColorSpace(.sRGB) ?? self
-        return String(
-            format: "#%02X%02X%02X", Int(round(c.redComponent * 255)),
-            Int(round(c.greenComponent * 255)), Int(round(c.blueComponent * 255)))
+        return HexColor.format(r: c.redComponent, g: c.greenComponent, b: c.blueComponent)
     }
 }
 
