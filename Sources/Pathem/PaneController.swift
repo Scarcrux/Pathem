@@ -488,15 +488,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             format = resolved
         }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
+        // Set the directory synchronously (it's cheap and independent of the async read). It gates
+        // row draggability -- the list resolves each row's file URL against it in
+        // pasteboardWriterForRow -- so it must be set the instant the content view exists. Leaving
+        // it until the async completion broke drag whenever that completion was dropped (superseded
+        // reload) or the view was freshly swapped (view-mode change, session restore): the rows
+        // showed but nothing was draggable.
+        content.directoryURL = nav.current  // rows in this folder are draggable
+        content.resolutionURL = nav.current
         content.setSortFormat(format)  // column view re-sorts its drilled columns to match
         content.setGroupKey(format.groupKey)  // list view groups under section headers (else no-op)
         content.showSortIndicator(key: format.sortKey, ascending: format.ascending)
 
         // Enumerate (and sort) the folder off the main thread: a huge or slow directory must not
         // freeze the UI. Existing rows stay on screen until the fresh ones arrive; a stale read of
-        // a folder we've since left is dropped by the generation guard. directoryURL/resolutionURL
-        // are set with the rows in the completion so the content view's directory and its rows are
-        // never momentarily inconsistent (which would misresolve a drag started mid-load).
+        // a folder we've since left is dropped by the generation guard.
         let dir = nav.current
         let includeHidden = format.showHidden || showHiddenByDefault
         let fmt = format
@@ -510,10 +516,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 outcome = .failure(error)
             }
             await MainActor.run {
-                // Apply only if still the same listing (see canApplyListing).
+                // Apply only if still the same listing (see canApplyListing). directoryURL was
+                // already set synchronously above, so drag works even if this completion is dropped.
                 guard let self, self.canApplyListing(for: dir, generation: generation) else { return }
-                self.content.directoryURL = dir  // rows in this folder are draggable
-                self.content.resolutionURL = dir
                 switch outcome {
                 case .success(let sorted):
                     self.displayEntries(sorted, preserveState: preserveState)
@@ -581,6 +586,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let movedOnDropped = !canApplyListing(for: elsewhere, generation: genNew)
         return newestApplies && supersededDropped && movedOnDropped
     }
+
+    /// PATHEM_SMOKE: whether the active list view's rows are draggable (nil if not a list). reload
+    /// sets directoryURL synchronously, so a fresh list from a view-mode swap is draggable at once,
+    /// not only after the async listing lands. Guards the "rows show but nothing drags" regression.
+    func debugListRowsDraggable() -> Bool? { (content as? FileListController)?.debugRowsDraggable() }
 
     /// Re-key git states from the canonical repo root to the displayed folder path, so
     /// overlays match when the folder is browsed through a symlink.

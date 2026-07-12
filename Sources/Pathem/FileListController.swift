@@ -840,6 +840,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return FileDrag.item(for: url)
     }
 
+    /// PATHEM_SMOKE: rows are draggable iff the pane's directory is known (each row resolves its
+    /// URL against it). directoryURL is set synchronously by PaneController.reload, so this is true
+    /// the instant the view exists -- a regression guard for the "rows show but nothing drags" bug.
+    func debugRowsDraggable() -> Bool {
+        guard let first = tableView.selectedRowIndexes.first ?? (numberOfRows(in: tableView) > 0 ? 0 : nil)
+        else { return directoryURL != nil }  // no rows yet: fall back to the gate itself
+        return tableView(tableView, pasteboardWriterForRow: first) != nil
+    }
+
     func tableView(
         _ tableView: NSTableView, draggingSession session: NSDraggingSession,
         willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet

@@ -660,6 +660,18 @@ extension BrowserViewController {
         let navigated = activePane?.currentURL.standardizedFileURL == openDir.standardizedFileURL
         check("open-external-folder", navigated, "at=\(activePane?.currentURL.lastPathComponent ?? "nil")")
         try? FileManager.default.removeItem(at: openDir)
+        // Regression (LAST -- it swaps the active pane's view mode): a view-mode swap builds a fresh
+        // content view, and its rows must stay draggable. directoryURL -- which each list row
+        // resolves its file URL against in pasteboardWriterForRow -- is set synchronously by reload,
+        // not only in the async listing completion, so a freshly swapped list drags at once. This is
+        // the "went back into the app and could no longer drag, only select" bug: rows showed but
+        // directoryURL was nil, so nothing was draggable.
+        activePane?.setViewMode(.list)  // normalize to list (no-op if already)
+        let dragOnList = activePane?.debugListRowsDraggable() == true
+        activePane?.setViewMode(.icon)  // swap away to a fresh icon view
+        activePane?.setViewMode(.list)  // swap back to a fresh list view
+        let dragAfterSwap = activePane?.debugListRowsDraggable() == true
+        check("list-rows-draggable", dragOnList && dragAfterSwap, "onList=\(dragOnList) afterSwap=\(dragAfterSwap)")
         return (ok, lines)
     }
 }
