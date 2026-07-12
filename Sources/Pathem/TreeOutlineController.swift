@@ -86,7 +86,18 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         let expanded = preserveState ? expandedPaths() : []
         let base = directoryURL
         includesHidden = newEntries.contains { $0.name.hasPrefix(".") }
-        roots = newEntries.map { Node(entry: $0, url: nodeURL($0, parent: base)) }
+        // On an in-place refresh (a watcher tick), reuse the previous node for any top-level
+        // folder whose name and modification date are unchanged, keeping its already-loaded
+        // children. Otherwise re-expanding would re-enumerate and re-sort every expanded subtree
+        // on every tick (a build writing one file could restat tens of thousands of entries).
+        var previous: [String: Node] = [:]
+        if preserveState { for node in roots { previous[node.entry.name] = node } }
+        roots = newEntries.map { entry in
+            if let old = previous[entry.name], old.entry.modificationDate == entry.modificationDate {
+                return old
+            }
+            return Node(entry: entry, url: nodeURL(entry, parent: base))
+        }
         outline.reloadData()
         reexpand(expanded)
     }

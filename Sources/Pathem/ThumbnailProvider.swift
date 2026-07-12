@@ -14,8 +14,17 @@ final class ThumbnailProvider {
     private let cache = NSCache<NSString, NSImage>()
     private let noPreview = NSCache<NSString, NSNumber>()  // negative cache, bounded
     /// Keys we've populated, so `evict(_:)` can drop every size for a file (NSCache can't
-    /// enumerate). Bounded implicitly by the same churn that bounds the caches.
+    /// enumerate). NSCache evicts silently past its count limits without telling us, so this is
+    /// compacted (dropping keys whose cache entries are gone) once it outgrows the caches, or it
+    /// would retain a string per thumbnail forever across a long photo-browsing session.
     private var liveKeys: Set<String> = []
+    private func noteLiveKey(_ key: String) {
+        liveKeys.insert(key)
+        guard liveKeys.count > 13_000 else { return }  // a bit above cache + noPreview limits
+        liveKeys = liveKeys.filter {
+            cache.object(forKey: $0 as NSString) != nil || noPreview.object(forKey: $0 as NSString) != nil
+        }
+    }
     private init() {
         cache.countLimit = 4000
         noPreview.countLimit = 8000
@@ -58,7 +67,7 @@ final class ThumbnailProvider {
                 // Remember there's no preview so we don't re-request it on every scroll.
                 Task { @MainActor in
                     self?.noPreview.setObject(1, forKey: cacheKey as NSString)
-                    self?.liveKeys.insert(cacheKey)
+                    self?.noteLiveKey(cacheKey)
                 }
                 return
             }
@@ -67,7 +76,7 @@ final class ThumbnailProvider {
             let result = Delivery(image: representation.nsImage, key: cacheKey, completion: completion)
             Task { @MainActor in
                 self?.cache.setObject(result.image, forKey: result.key as NSString)
-                self?.liveKeys.insert(result.key)
+                self?.noteLiveKey(result.key)
                 result.completion(result.image)
             }
         }

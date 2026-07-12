@@ -854,7 +854,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // Refresh the listing only if we're showing it (not search results),
         // but always tell the browser so it can rebuild the search index.
         if !showingSearchResults {
-            content.invalidateTagCache()  // an on-disk change may include external tag edits
+            // Don't blow away the whole tag cache here: reload's refreshTags already reads tags for
+            // any newly-added files and reuses cached ones, so a copy streaming into a 100k folder
+            // no longer re-issues 100k listxattr calls on every watcher tick. Pathem's own tag
+            // edits invalidate explicitly (tagSelection/clearTags); an external Finder tag change
+            // to an existing file reflects on the next navigation.
             reload()
         }
         onDirectoryDidChange?(nav.current)
@@ -872,12 +876,26 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         layer.shadowRadius = 7
         layer.shadowOpacity = active ? 0.38 : 0
         layer.zPosition = active ? 1 : 0  // the raised pane's shadow falls on the flat one
+        updateShadowPath()
     }
+
+    /// Give the shadow an explicit rectangular path so Core Animation doesn't re-derive it from
+    /// the pane's composited alpha on every content change, which taxed scrolling in the active
+    /// pane. Refreshed on resize via the container's frame-change notification.
+    private func updateShadowPath() {
+        containerView.layer?.shadowPath = CGPath(rect: containerView.bounds, transform: nil)
+    }
+
+    @objc private func containerFrameChanged() { if isActivePane { updateShadowPath() } }
 
     // MARK: - Build
 
     private func build() {
         containerView.wantsLayer = true
+        containerView.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(containerFrameChanged),
+            name: NSView.frameDidChangeNotification, object: containerView)
         containerView.layer?.borderWidth = 1
         containerView.layer?.borderColor = NSColor.separatorColor.cgColor
 
