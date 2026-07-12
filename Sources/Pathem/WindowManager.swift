@@ -86,6 +86,7 @@ final class WindowManager {
     private func handleClose(_ host: Host) {
         host.browser.saveSessionNow()  // a no-op unless this is the primary (session-owning) window
         host.browser.terminateTerminal()  // don't orphan the window's embedded shell
+        host.browser.teardown()  // stop each pane's watcher, the device timer, and observers
         hosts.removeAll { $0 === host }
     }
 }

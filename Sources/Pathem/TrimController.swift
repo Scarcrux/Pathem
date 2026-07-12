@@ -138,6 +138,7 @@ final class TrimController: NSObject {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 720, height: 460),
             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: true)
+        window.isReleasedWhenClosed = false  // cached in self.window; the default extra release UAFs
         window.center()
         playerView.translatesAutoresizingMaskIntoConstraints = false
         let content = window.contentView!

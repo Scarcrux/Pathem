@@ -90,6 +90,13 @@ final class TabbedPaneController: NSObject {
     /// Open tabs at the given folders (skipping ones that no longer exist), replacing any
     /// current tabs. Falls back to the start folder if none are valid. Used for session
     /// restore (from empty) and for switching to a saved workspace (replacing a layout).
+    /// Tear down every tab (stopping its DirectoryWatcher) and drop them. Called when the window
+    /// closes so a closed window doesn't leak a self-retained FSEvents watcher per pane.
+    func teardownAllTabs() {
+        for tab in tabs { tab.teardown() }
+        tabs.removeAll()
+    }
+
     func restoreTabs(_ folders: [String], active: Int) {
         let fm = FileManager.default
         // Tear down any existing tabs so this replaces the layout rather than appending.

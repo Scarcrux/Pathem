@@ -26,6 +26,10 @@ final class ThemeManager {
 
     /// Register `redraw` to run whenever the skin changes, tied to `owner`'s lifetime.
     func onChange(owner: AnyObject, _ redraw: @escaping @MainActor () -> Void) {
+        // Prune dead subscribers here too, not only in apply(): a long session recreates panes and
+        // cell controllers constantly, and apply() only runs when the user changes skin colors, so
+        // without this the array would grow unbounded with nil-owner entries.
+        subscribers.removeAll { $0.owner == nil }
         subscribers.append(Subscriber(owner: owner, redraw: redraw))
     }
 

@@ -59,6 +59,19 @@ extension BrowserViewController {
         positionQuickBar()
     }
 
+    /// Release the window's long-lived resources when it closes: stop every pane's
+    /// DirectoryWatcher (each self-retains via its FSEvents stream, so without this a closed
+    /// window leaks), invalidate the repeating device-poll timer, hide the torrent detail
+    /// timer, and drop the scroll observer.
+    func teardown() {
+        for side in [leftTabs, rightTabs] { side.teardownAllTabs() }
+        stopDeviceTimer()
+        torrentDetail.hide()
+        if let token = quickBarScrollObserver { NotificationCenter.default.removeObserver(token) }
+        quickBarScrollObserver = nil
+        quickBarObservedClip = nil
+    }
+
     /// Reposition the bar while the active pane scrolls, so it stays next to the selection.
     private func observeActivePaneScroll() {
         guard let clip = activePane?.contentClipView else { return }

@@ -596,6 +596,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Stop the repeating device-poll timer (from teardown when the window closes).
+    func stopDeviceTimer() {
+        deviceTimer?.invalidate()
+        deviceTimer = nil
+    }
+
     private func refreshDevices() {
         Task { @MainActor in
             var devices = await DeviceDiscovery.androidDevices()
