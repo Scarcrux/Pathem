@@ -15,9 +15,19 @@
 	     resolves to an undetermined locale and the model returns "Unsupported language". -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<!-- Every language we actually ship a .lproj for. This has to list them all: macOS decides
+	     what an app "supports" from this key, and it is what System Settings > Language & Region
+	     offers when picking a per-app language. Declaring only "en" made Pathem look English-only
+	     even though six translations ship (they live in the SwiftPM resource bundle, which the OS
+	     never looks inside). Keep in sync with Sources/Pathem/Resources/*.lproj. -->
 	<key>CFBundleLocalizations</key>
 	<array>
 		<string>en</string>
+		<string>fr</string>
+		<string>de</string>
+		<string>es</string>
+		<string>ja</string>
+		<string>zh-Hans</string>
 	</array>
 	<key>CFBundleIconFile</key>
 	<string>Pathem</string>
