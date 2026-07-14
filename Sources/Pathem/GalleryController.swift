@@ -241,7 +241,15 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         let fallback = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
         preview.image = fallback
         guard !entry.isDirectory, !entry.isDataless else { return }
-        let size = CGSize(width: 512, height: 512)
+        // Size the request to the preview area, not a fixed 512. QuickLook fits the document into
+        // the box we ask for, so a 512-point box blown up to fill a ~500-point Retina view is a
+        // ~2x upscale -- photos survive it, PDF text does not (that is the "blurry PDF" report).
+        // Asking for the view's own size at the display's scale renders it 1:1, so text stays sharp.
+        let area = preview.bounds.size
+        let size =
+            (area.width > 1 && area.height > 1)
+            ? CGSize(width: ceil(area.width), height: ceil(area.height))
+            : CGSize(width: 512, height: 512)  // not laid out yet: fall back to the old box
         if let cached = ThumbnailProvider.shared.cached(url, size: size) {
             preview.image = cached
             return

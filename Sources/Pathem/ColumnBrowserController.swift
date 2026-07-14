@@ -303,7 +303,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             cell.textField?.stringValue = entry.name
         }
         let url = columns[index].folder.appendingPathComponent(entry.name)
-        let baseIcon = FileIconCache.icon(for: entry)  // cached by kind; no per-cell file stat
+        let baseIcon = FileIconCache.icon(for: entry, in: columns[index].folder)  // kind-cached; bundles per-file
         cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: columns[index].folder)
         // Dim cut items (until pasted), then hidden (dotfile) entries. Keyed on this column's
         // own folder, since a cut can live in any drilled column.

@@ -210,7 +210,8 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         let ruleStyle = FileColorStyle.style(for: node.entry, rules: colorRules, baseFont: .systemFont(ofSize: fontSize))
         cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: fontSize)
         cell.textField?.textColor = ruleStyle?.color ?? (node.entry.isDataless ? .secondaryLabelColor : .labelColor)
-        let baseIcon = FileIconCache.icon(for: node.entry)  // cached by kind; no per-cell file stat
+        let baseIcon = FileIconCache.icon(  // kind-cached; bundles (.app) resolved per-file
+            for: node.entry, in: node.url.deletingLastPathComponent())
         cell.imageView?.image = CloudBadge.decorate(
             baseIcon, for: node.entry, in: node.url.deletingLastPathComponent())
         cell.alphaValue = node.entry.isHidden ? 0.5 : 1.0

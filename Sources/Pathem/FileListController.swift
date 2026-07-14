@@ -539,6 +539,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         let selectedNames = Set(selectedEntries.map(\.name))
         let origin = scrollView.contentView.bounds.origin
+        // A view that had no rows is being filled for the first time -- a fresh list built by a
+        // view-mode swap. There is no scroll position worth preserving there, and restoring the
+        // clip view's (not-yet-settled) origin is what left the list scrolled past the top, hiding
+        // the folders that sort first. Show the top instead.
+        let wasPopulated = !self.entries.isEmpty
         self.entries = entries
         rebuildDisplayRows()
         tableView.reloadData()
@@ -553,6 +558,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             // leaving NSTableView's stale index-based highlight). Maps names to table rows,
             // which differ from entry indices when grouping is on.
             tableView.selectRowIndexes(rows(forNames: selectedNames), byExtendingSelection: false)
+        }
+        guard wasPopulated else {  // fresh list (view-mode swap): nothing to preserve, show the top
+            if !displayRows.isEmpty { tableView.scrollRowToVisible(0) }
+            return
         }
         let maxY = max(0, tableView.frame.height - scrollView.contentView.bounds.height)
         scrollView.contentView.scroll(to: NSPoint(x: origin.x, y: min(max(origin.y, 0), maxY)))
@@ -1003,7 +1012,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: listFontSize)
             let defaultColor: NSColor = entry.isDataless ? .secondaryLabelColor : .labelColor
             cell.textField?.textColor = ruleStyle?.color ?? defaultColor
-            let baseIcon = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
+            let baseIcon = entry.isDataless ? Self.cloudIcon : FileIconCache.icon(for: entry, in: directoryURL)
             cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: directoryURL)
             let colors = tagColors(for: entry)
             let git = gitState(for: entry)
@@ -1450,7 +1459,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// A type icon for the entry, cached by extension (via the shared FileIconCache so the
     /// list, column, and tree views share one cache) so scrolling a huge directory never does
     /// per-row disk work.
-    private static func icon(for entry: FileEntry) -> NSImage { FileIconCache.icon(for: entry) }
 }
 
 /// A lock-guarded generation counter, readable from a background queue so an
