@@ -22,9 +22,15 @@ final class KeyTableView: NSTableView {
         onDragExited?()
         super.draggingExited(sender)
     }
-    override func draggingEnded(_ sender: any NSDraggingInfo) {
+    // draggingEnded: is an OPTIONAL NSDraggingDestination method that NSView does not implement, so
+    // without an explicit @objc the Swift override is never exposed to the ObjC runtime. AppKit's
+    // drag-completion (CoreDragEndDragging) then sends draggingEnded:, hits "unrecognized selector",
+    // and the swallowed NSException leaves the drag SESSION un-concluded -- so after any drag out to
+    // another app, every later drag is silently dead until relaunch. @objc forces the selector; do
+    // NOT call super (there is no NSView draggingEnded: to forward to -- super would raise the same
+    // unrecognized-selector exception).
+    @objc override func draggingEnded(_ sender: any NSDraggingInfo) {
         onDragExited?()
-        super.draggingEnded(sender)
     }
 
     private let gestureTracker = MouseGestureTracker()

@@ -46,6 +46,16 @@ extension BrowserViewController {
         // The listing reads off the main thread now; a stale read of a folder we've navigated
         // away from (or a superseded reload) must not clobber the current rows.
         check("reload-superseding-guard", leftTabs.activePane?.debugSupersededListingIsDropped() == true, "stale reads dropped")
+        // Regression: draggingEnded: must reach the ObjC runtime. It is an optional
+        // NSDraggingDestination method NSView does not implement, so a plain Swift override is NOT
+        // exposed as @objc -- AppKit's cross-app drag completion then sends draggingEnded:, hits an
+        // unrecognized selector, swallows the exception, and the drag session never concludes, so
+        // every drag after a drag-out to another app is dead until relaunch. @objc on the override
+        // is the fix; this guards against silently dropping it.
+        let draggingEndedSel = Selector(("draggingEnded:"))
+        let tableExposes = KeyTableView().responds(to: draggingEndedSel)
+        let gridExposes = KeyCollectionView(frame: .zero).responds(to: draggingEndedSel)
+        check("drag-ended-selector-exposed", tableExposes && gridExposes, "table=\(tableExposes) grid=\(gridExposes)")
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

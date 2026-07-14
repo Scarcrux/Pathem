@@ -200,7 +200,9 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }
     override func draggingExited(_ sender: NSDraggingInfo?) { isDropTarget = false }
-    override func draggingEnded(_ sender: NSDraggingInfo) { isDropTarget = false }
+    // @objc so the optional draggingEnded: is actually exposed to ObjC (NSView doesn't implement it);
+    // without it AppKit's drag completion raises "unrecognized selector" and strands drags. No super.
+    @objc override func draggingEnded(_ sender: NSDraggingInfo) { isDropTarget = false }
 
     private func dropOperation(_ info: NSDraggingInfo) -> NSDragOperation {
         guard let urls = urls(from: info), !urls.isEmpty, !isSelfOrParentOnly(urls) else {

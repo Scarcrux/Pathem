@@ -101,9 +101,11 @@ final class KeyCollectionView: NSCollectionView {
         onDragExited?()
         super.draggingExited(sender)
     }
-    override func draggingEnded(_ sender: any NSDraggingInfo) {
+    // @objc + no super: draggingEnded: is an optional NSDraggingDestination method NSView doesn't
+    // implement, so a plain override isn't exposed to ObjC and AppKit's drag completion hits an
+    // unrecognized selector that strands every later drag. See KeyTableView.draggingEnded.
+    @objc override func draggingEnded(_ sender: any NSDraggingInfo) {
         onDragExited?()
-        super.draggingEnded(sender)
     }
 
     override func becomeFirstResponder() -> Bool {
