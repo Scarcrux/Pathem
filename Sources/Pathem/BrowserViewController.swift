@@ -1248,7 +1248,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    private func renameSelection() {
+    func renameSelection() {
         guard let pane = activePane, pane.selectedEntries.count == 1,
             let entry = pane.selectedEntries.first
         else { return }

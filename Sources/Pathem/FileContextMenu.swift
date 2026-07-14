@@ -33,7 +33,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// Separators aren't listed; they're auto-inserted between groups (see `group`).
     static let defaultEntries: [String] = [
         "files.open", "files.openInNewTab", "@openWith",
-        "files.trash", "files.putBack", "files.deleteImmediately",  // near the top, set apart, like Finder
+        "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
         "files.getInfo", "files.download", "files.reveal", "files.revealInPathem",
         "files.setDesktopPicture", "files.rename",
         "@tags",
@@ -48,7 +48,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// separator management.
     private static func group(_ token: String) -> Int {
         switch token {
-        case "files.trash", "files.putBack", "files.deleteImmediately": return 5  // set apart, like Finder
+        case "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash":
+            return 5  // set apart, like Finder
         case "@tags": return 1
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste": return 3
@@ -103,6 +104,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.trash", L("list.moveToTrash", "Move to Trash")),
         ("files.putBack", L("bvc.cmd.putBack", "Put Back")),
         ("files.deleteImmediately", L("bvc.cmd.deleteImmediately", "Delete Immediately")),
+        ("files.emptyTrash", L("bvc.cmd.emptyTrash", "Empty Trash")),
         ("files.newFolder", L("list.newFolder", "New Folder")),
         ("files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection")),
         ("files.newFile", L("bvc.cmd.newFile", "New File")),
@@ -206,7 +208,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = !singleFolder
                 case "files.setDesktopPicture":
                     item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
-                case "files.putBack", "files.deleteImmediately":
+                case "files.putBack", "files.deleteImmediately", "files.emptyTrash":
                     item.isHidden = !inTrash  // Trash-only actions
                 case "files.addToTorrents", "files.copyMagnetLink":
                     item.isHidden = !allTorrents  // only for .torrent selections

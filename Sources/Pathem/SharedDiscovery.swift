@@ -49,7 +49,11 @@ final class SharedDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate
     // MARK: NetServiceDelegate (resolution)
 
     func netServiceDidResolveAddress(_ sender: NetService) {
-        resolving.removeValue(forKey: sender)?(sender.hostName)
+        // NetService.hostName is the fully-qualified Bonjour name, which ends in a trailing dot
+        // ("Studios-MacBook-Pro.local."). Passed through as-is it lands in the smb:// URL and the
+        // mount fails ("Couldn't mount ..."), so strip the root label's dot before we hand it on.
+        let host = sender.hostName.map { $0.hasSuffix(".") ? String($0.dropLast()) : $0 }
+        resolving.removeValue(forKey: sender)?(host)
     }
 
     func netService(_ sender: NetService, didNotResolve errorDict: [String: NSNumber]) {

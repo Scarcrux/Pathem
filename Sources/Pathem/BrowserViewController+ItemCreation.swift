@@ -32,7 +32,9 @@ extension BrowserViewController {
         do {
             let name = try FileOperations.makeFolder(in: pane.currentURL, baseName: defaultNewFolderName)
             pane.reloadIfShowingListing()
-            pane.select(name: name)
+            // Select it once the (off-main) listing lands, then offer to name it right away, the way
+            // Finder drops you straight into renaming a new folder.
+            pane.selectWhenListed(name) { [weak self] in self?.renameSelection() }
             registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.newFolderVerb", "New Folder"))
         } catch {
             presentFailures(
@@ -55,7 +57,8 @@ extension BrowserViewController {
             let outcome = FileOperations.move(
                 names, from: directory, to: directory.appendingPathComponent(folderName), onConflict: .keepBoth)
             pane.reloadIfShowingListing()
-            pane.select(name: folderName)
+            // Same as New Folder: select it once the async listing lands, then offer to name it.
+            pane.selectWhenListed(folderName) { [weak self] in self?.renameSelection() }
             registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
             if !outcome.failures.isEmpty {
                 presentFailures(outcome.failures, title: L("bvc.moveIntoFolderFailed", "Couldn’t move some items into the folder"))

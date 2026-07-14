@@ -76,6 +76,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private var cutPaths: Set<String> = []
     /// Selection to restore after a view-mode swap repopulates the new content.
     private var pendingSelection: Set<String>?
+    /// Runs once, right after the next listing lands and `pendingSelection` is applied. The listing
+    /// reload is off-main, so a caller that just created an item cannot select it (or act on that
+    /// selection) synchronously -- the row does not exist yet. See `selectWhenListed`.
+    private var pendingAfterListing: (() -> Void)?
+
+    /// Select `name` once the (asynchronous) listing lands, then run `then` with it selected.
+    /// This is what a "create a new item, then rename it" flow needs: reload() enumerates off the
+    /// main thread, so selecting immediately after it would silently miss the brand-new row.
+    func selectWhenListed(_ name: String, then: (() -> Void)? = nil) {
+        pendingSelection = [name]
+        pendingAfterListing = then
+    }
     /// Keymap chord handler, re-applied to whichever content is active.
     var onKeyChordHandler: ((KeyChord) -> Bool)? {
         didSet { content.onKeyChord = onKeyChordHandler }
@@ -541,6 +553,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 if let pending = self.pendingSelection {
                     self.content.selectNames(pending)
                     self.pendingSelection = nil
+                }
+                // A caller waiting on this listing (e.g. "new folder, now rename it") runs now that
+                // its row exists and is selected.
+                if let after = self.pendingAfterListing {
+                    self.pendingAfterListing = nil
+                    after()
                 }
                 self.updateStatus()
                 self.refreshGitStatusAsync()
