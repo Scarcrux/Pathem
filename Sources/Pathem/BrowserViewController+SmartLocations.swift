@@ -55,7 +55,11 @@ extension BrowserViewController {
                     [],
                     title: L(
                         "bvc.spotlightOff",
-                        "Spotlight indexing is off. Smart folders and search need it. Enable it in Terminal: sudo mdutil -i on /"))
+                        // The data volume, NOT "/": on modern macOS "/" is the sealed system volume
+                        // and is always indexed, so "mdutil -i on /" would appear to succeed and
+                        // change nothing. The user's files live on the Data volume.
+                        "Spotlight indexing is off for your files. Smart folders and search need it. "
+                            + "In Terminal: sudo mdutil -i on /System/Volumes/Data"))
                 return
             }
         }

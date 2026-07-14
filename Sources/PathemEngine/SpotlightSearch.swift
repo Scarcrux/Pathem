@@ -73,18 +73,24 @@ public enum SpotlightSearch {
         }
     }
 
-    /// Whether Spotlight indexing is on for the boot volume. Smart folders and search all
-    /// depend on `mdfind`, which returns nothing when indexing is disabled -- so an empty
-    /// result plus this being false means "Spotlight is off", not "no matches". Runs
-    /// `mdutil -s /` off-main; assumes enabled if it can't tell.
+    /// Whether Spotlight indexing is on for the volume that actually holds the user's files. Smart
+    /// folders and search all depend on `mdfind`, which returns nothing when indexing is disabled --
+    /// so an empty result plus this being false means "Spotlight is off", not "no matches".
+    ///
+    /// It must check the DATA volume, not `/`. On modern macOS `/` is the sealed, read-only system
+    /// volume and reports "Indexing enabled" even when the user's own Data volume is disabled, so
+    /// asking only about `/` made a dead index look healthy: smart folders came back empty and we
+    /// told the user nothing. Checks the data volume first, then `/`; assumes enabled if it can't
+    /// tell either way. Runs off-main.
     public static func indexingEnabled() async -> Bool {
         let mdutil = "/usr/bin/mdutil"
-        guard FileManager.default.isExecutableFile(atPath: mdutil),
-            let (data, _, _) = try? await RemoteRunner.run(mdutil, ["-s", "/"])
-        else { return true }
-        let output = String(decoding: data, as: UTF8.self)
-        // "Indexing enabled." when on; "Indexing disabled." when off. Anything else -> assume on.
-        if output.localizedCaseInsensitiveContains("Indexing disabled") { return false }
+        guard FileManager.default.isExecutableFile(atPath: mdutil) else { return true }
+        for volume in ["/System/Volumes/Data", "/"] {
+            guard let (data, _, _) = try? await RemoteRunner.run(mdutil, ["-s", volume]) else { continue }
+            let output = String(decoding: data, as: UTF8.self)
+            // "Indexing enabled." when on; "Indexing disabled." when off. Anything else -> keep looking.
+            if output.localizedCaseInsensitiveContains("Indexing disabled") { return false }
+        }
         return true
     }
 
