@@ -1019,6 +1019,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         add("view.calculateSizes", L("bvc.cmd.calculateAllSizes", "Calculate All Sizes")) { [weak self] in self?.toggleCalculateSizes() }
         add("view.compactSidebar", L("bvc.cmd.compactSidebar", "Compact Sidebar")) { [weak self] in self?.toggleCompactSidebar() }
+        add(
+            "files.share", L("bvc.cmd.share", "Share…"),
+            enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) }
+        ) { [weak self] in self?.activePane?.shareSelection() }
+        add(
+            "sidebar.importFinderFavorites",
+            L("bvc.cmd.importFinderFavorites", "Import Favorites from Finder…")
+        ) { [weak self] in self?.importFinderFavorites() }
         add("layout.save", L("bvc.cmd.saveLayout", "Save Layout…")) { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in self?.showPalette(prefill: ">") }
         add("search.palette", L("bvc.cmd.searchFolder", "Search This Folder…")) { [weak self] in self?.showPalette(prefill: "") }
@@ -2007,6 +2015,49 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     private static var sidebarURL: URL? {
         appSupportDirectory()?.appendingPathComponent("sidebar.json")
+    }
+
+    /// Add Finder's own sidebar favorites to ours (the folders you already keep there), skipping any
+    /// we already have. Reads Finder's LSSharedFileList file; nothing is removed, so running it
+    /// twice is harmless.
+    func importFinderFavorites() {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let found = FinderFavorites.folders()
+        guard !found.isEmpty else {
+            presentInfo(
+                L("sidebar.importNoneTitle", "No Finder favorites found"),
+                L(
+                    "sidebar.importNoneBody",
+                    "Pathem couldn’t read Finder’s sidebar favorites, or none of them point at folders that still exist."
+                ))
+            return
+        }
+        var model = sidebar.model
+        if model.groups.isEmpty {
+            model.groups = [Sidebar.Group(title: L("sidebar.favoritesDefaultName", "Favorites"), items: [])]
+        }
+        let existing = Set(model.groups.flatMap(\.items).map { ($0.path as NSString).standardizingPath })
+        var added = 0
+        for url in found {
+            let path = (url.path as NSString).standardizingPath
+            guard !existing.contains(path) else { continue }  // already in the sidebar: leave it alone
+            model.groups[0].items.append(
+                Sidebar.Item(
+                    name: url.lastPathComponent, icon: Sidebar.suggestedIcon(for: url, home: home),
+                    path: url.path))
+            added += 1
+        }
+        guard added > 0 else {
+            presentInfo(
+                L("sidebar.importAllPresentTitle", "Nothing new to import"),
+                L("sidebar.importAllPresentBody", "Every Finder favorite is already in your sidebar."))
+            return
+        }
+        sidebar.model = model  // rebuilds the sidebar; it does not persist on its own
+        saveSidebar(model)
+        presentInfo(
+            String(format: L("sidebar.importedTitle", "Imported %d favorite(s)"), added),
+            L("sidebar.importedBody", "They were added to your Favorites. Drag to reorder or rename them."))
     }
 
     private func loadSidebar() {

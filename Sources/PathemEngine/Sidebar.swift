@@ -90,6 +90,24 @@ public struct Sidebar: Codable, Sendable, Equatable {
     }
 
     /// The seed for a fresh install: a Favorites group of the standard places.
+    /// The SF Symbol to give a folder added to the sidebar, matching what `makeDefault` picks for
+    /// the well-known ones so an imported Downloads looks like Pathem's own Downloads. Anything else
+    /// gets a plain folder. Pure, so it is unit-tested.
+    public static func suggestedIcon(for url: URL, home: URL) -> String {
+        let path = url.standardizedFileURL.path
+        if path == home.standardizedFileURL.path { return "house" }
+        switch url.lastPathComponent {
+        case "Desktop": return "menubar.dock.rectangle"
+        case "Documents": return "doc"
+        case "Downloads": return "arrow.down.circle"
+        case "Pictures": return "photo"
+        case "Movies": return "film"
+        case "Music": return "music.note"
+        case "Applications": return "square.grid.2x2"
+        default: return "folder"
+        }
+    }
+
     public static func makeDefault(home: URL) -> Sidebar {
         func place(_ name: String, _ icon: String, _ url: URL) -> Item {
             Item(name: name, icon: icon, path: url.path)

@@ -34,7 +34,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     static let defaultEntries: [String] = [
         "files.open", "files.openInNewTab", "@openWith",
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
-        "files.getInfo", "files.download", "files.reveal", "files.revealInPathem",
+        "files.getInfo", "files.share", "files.download", "files.reveal", "files.revealInPathem",
         "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
@@ -97,6 +97,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.openInNewTab", L("bvc.cmd.openInNewTab", "Open in New Tab")),
         ("files.getInfo", L("list.getInfo", "Get Info")),
         ("files.download", L("list.download", "Download")),
+        ("files.share", L("list.share", "Share…")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
         ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
         ("files.setDesktopPicture", L("bvc.cmd.setDesktopPicture", "Set Desktop Picture")),
@@ -206,6 +207,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.title = Self.newFolderWithSelectionTitle(count: urls.count)
                 case "files.openInNewTab":
                     item.isHidden = !singleFolder
+                case "files.share":
+                    item.isHidden = urls.isEmpty
                 case "files.setDesktopPicture":
                     item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
                 case "files.putBack", "files.deleteImmediately", "files.emptyTrash":
@@ -254,13 +257,19 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             menu.addItem(item)
         }
         guard let first = selectedURLs().first else { disabled(L("list.noSelection", "No selection")); return }
+        // LaunchServices hands these back in its own arbitrary order (for a .txt it can put, say,
+        // Adobe Illustrator fourth), which reads as if we were recommending an absurd app. Finder
+        // shows the default first and sorts the rest by name, so do that: the OS still decides WHICH
+        // apps can open the file and which is default -- we only make the list legible.
+        let preferred = NSWorkspace.shared.urlForApplication(toOpen: first)
         var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
-        if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first),
-            let index = apps.firstIndex(of: preferred)
-        {
-            apps.remove(at: index)
-            apps.insert(preferred, at: 0)
-        }
+            .filter { $0 != preferred }
+            .sorted {
+                FileManager.default.displayName(atPath: $0.path)
+                    .localizedStandardCompare(FileManager.default.displayName(atPath: $1.path))
+                    == .orderedAscending
+            }
+        if let preferred { apps.insert(preferred, at: 0) }
         guard !apps.isEmpty else { disabled(L("list.noApplications", "No applications")); return }
         for app in apps {
             let item = NSMenuItem(

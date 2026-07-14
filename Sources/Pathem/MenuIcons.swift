@@ -12,6 +12,7 @@ enum MenuIcons {
         case "files.putBack": return "arrow.uturn.backward"
         case "files.deleteImmediately": return "trash.slash"
         case "files.emptyTrash": return "trash.fill"
+        case "files.share": return "square.and.arrow.up"
         case "files.setDesktopPicture": return "photo"
         case "files.getInfo": return "info.circle"
         case "files.download": return "arrow.down.circle"

@@ -1677,7 +1677,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         return selectedLocalURLs().map(\.path)
     }
 
-    @objc private func shareSelection() {
+    /// The macOS share sheet for the selection (Finder's Share). Anchored to the pane's action
+    /// button. Internal so the context menu / command registry can reach it, not just that button.
+    @objc func shareSelection() {
         onBecomeActive?()
         guard remote == nil else {
             NSSound.beep()  // remote files aren't local URLs to share
