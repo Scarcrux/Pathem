@@ -1,21 +1,53 @@
 import AppKit
 import PathemEngine
 
+/// The pasteboard payload for a dragged tab: which side it came from and its index there. A tab
+/// drag never carries file URLs, so a tab can't be dropped into a file list (or vice versa).
+enum TabDrag {
+    static let type = NSPasteboard.PasteboardType("com.scarcrux.pathem.tab")
+
+    static func item(side: String, index: Int) -> NSPasteboardItem {
+        let item = NSPasteboardItem()
+        item.setPropertyList(["side": side, "index": index], forType: type)
+        return item
+    }
+
+    static func payload(_ pasteboard: NSPasteboard) -> (side: String, index: Int)? {
+        guard let plist = pasteboard.propertyList(forType: type) as? [String: Any],
+            let side = plist["side"] as? String, let index = plist["index"] as? Int
+        else { return nil }
+        return (side, index)
+    }
+}
+
 /// One side of the browser as a stack of tabs. Each tab is a full PaneController
 /// (its own folder, history, listing, watcher, status), so the per-folder logic
 /// is reused unchanged; this controller only owns the tab bar and swaps the
 /// active tab's view into the content area. Background tabs keep watching their
-/// folders, like browser tabs.
+/// folders, like browser tabs. Tabs can be dragged: reordered here, moved to the
+/// other side, or torn off into their own window.
 @MainActor
 final class TabbedPaneController: NSObject {
     let containerView = NSView()
-    private let tabBar = NSStackView()
+    private let tabBar = TabBarStack()
     private let content = NSView()
     private let plusButton = NSButton()
+    /// A thin vertical line showing where a dragged tab would land.
+    private let dropIndicator = NSView()
 
     private let start: URL
     private(set) var tabs: [PaneController] = []
     private(set) var activeIndex = 0
+
+    /// Identifies this side on a tab drag's pasteboard, so a drop can tell "same side" (reorder)
+    /// from "other side" (move across) and find the tab's origin.
+    let sideID = UUID().uuidString
+    /// Resolve a side by its id. The browser owns both sides and wires this.
+    var sideForID: ((String) -> TabbedPaneController?)?
+    /// A tab was dragged out of every tab bar: tear it off into its own window.
+    var onTearOffTab: ((URL) -> Void)?
+    /// "Move to Other Pane" on a tab: the browser knows which side is the other one.
+    var onMoveTabToOtherSide: ((Int) -> Void)?
 
     /// Wire a freshly created pane (keymap dispatch, format resolution). Set by
     /// the browser and applied to every tab, existing and new.
@@ -63,8 +95,23 @@ final class TabbedPaneController: NSObject {
 
         content.translatesAutoresizingMaskIntoConstraints = false
 
+        // The tab bar accepts dropped tabs (reorder here, or move one across from the other side).
+        // Only the bar registers the type -- the chips don't -- so a drop over a chip resolves to
+        // the bar, which is what lets us compute an insertion point from the cursor's x.
+        tabBar.registerForDraggedTypes([TabDrag.type])
+        tabBar.insertionIndexAt = { [weak self] point in self?.insertionIndex(at: point) ?? 0 }
+        tabBar.showInsertion = { [weak self] index in self?.showDropIndicator(at: index) }
+        tabBar.dropTab = { [weak self] side, index, insertAt in
+            self?.handleTabDrop(side: side, index: index, insertAt: insertAt) ?? false
+        }
+
+        dropIndicator.wantsLayer = true
+        dropIndicator.layer?.backgroundColor = ThemeManager.shared.accent.cgColor
+        dropIndicator.isHidden = true
+
         containerView.addSubview(tabBar)
         containerView.addSubview(content)
+        containerView.addSubview(dropIndicator)
         NSLayoutConstraint.activate([
             tabBar.topAnchor.constraint(equalTo: containerView.topAnchor),
             tabBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
@@ -177,6 +224,76 @@ final class TabbedPaneController: NSObject {
         return pane
     }
 
+    // MARK: - Tab dragging (reorder here, move across, tear off)
+
+    private var chipViews: [TabChipView] { tabBar.arrangedSubviews.compactMap { $0 as? TabChipView } }
+
+    /// Where a tab dropped at `point` (in tab-bar coordinates) would be inserted: after every chip
+    /// whose midpoint the cursor is past.
+    private func insertionIndex(at point: NSPoint) -> Int {
+        var index = 0
+        for (i, chip) in chipViews.enumerated() where point.x > chip.frame.midX { index = i + 1 }
+        return index
+    }
+
+    /// Show (or hide, with nil) the line marking where a dragged tab would land.
+    private func showDropIndicator(at index: Int?) {
+        guard let index else {
+            dropIndicator.isHidden = true
+            return
+        }
+        let chips = chipViews
+        let x: CGFloat =
+            chips.isEmpty
+            ? tabBar.frame.minX + 6
+            : (index >= chips.count
+                ? tabBar.convert(chips[chips.count - 1].frame, to: containerView).maxX + 2
+                : tabBar.convert(chips[index].frame, to: containerView).minX - 2)
+        dropIndicator.layer?.backgroundColor = ThemeManager.shared.accent.cgColor
+        dropIndicator.frame = NSRect(x: x, y: tabBar.frame.minY + 3, width: 2, height: max(0, tabBar.frame.height - 6))
+        dropIndicator.isHidden = false
+    }
+
+    /// Reorder within this side, keeping whichever tab was active still active.
+    func moveTab(from: Int, to: Int) {
+        guard tabs.indices.contains(from) else { return }
+        let wasActive = activePane
+        let pane = tabs.remove(at: from)
+        let destination = min(max(from < to ? to - 1 : to, 0), tabs.count)
+        tabs.insert(pane, at: destination)
+        activeIndex = wasActive.flatMap { a in tabs.firstIndex(where: { $0 === a }) } ?? destination
+        showActivePane()
+        refreshTabBar()
+    }
+
+    /// This tab's folder, closing the tab if this side has others. The last tab is never closed --
+    /// same rule as Move Tab to New Window -- so a side is never left with nothing in it.
+    func takeTab(at index: Int) -> URL? {
+        guard tabs.indices.contains(index) else { return nil }
+        let url = tabs[index].currentURL
+        if tabs.count > 1 { closeTab(at: index) }
+        return url
+    }
+
+    /// Open `url` as a tab here, positioned at `index`.
+    func adoptTab(url: URL, at index: Int) {
+        let pane = newTab(at: url, focus: true)
+        guard let landed = tabs.firstIndex(where: { $0 === pane }) else { return }
+        moveTab(from: landed, to: index)
+    }
+
+    /// A tab was dropped on this side's bar: reorder it (same side) or move it across (other side).
+    private func handleTabDrop(side: String, index: Int, insertAt: Int) -> Bool {
+        guard let source = sideForID?(side) else { return false }
+        if source === self {
+            moveTab(from: index, to: insertAt)
+        } else {
+            guard let url = source.takeTab(at: index) else { return false }
+            adoptTab(url: url, at: insertAt)
+        }
+        return true
+    }
+
     func closeActiveTab() { closeTab(at: activeIndex) }
 
     private func closeTab(at index: Int) {
@@ -260,6 +377,12 @@ final class TabbedPaneController: NSObject {
         // space is what a user expects. Only the close button (below) is carved out.
         chip.onSelect = { [weak self] in self?.selectTab(index) }
         chip.menu = makeTabMenu(index: index, closable: closable)
+        chip.index = index
+        chip.sideID = sideID
+        chip.onDroppedOutside = { [weak self] i in  // no tab bar took it -> tear off into a window
+            guard let self, let url = self.takeTab(at: i) else { return }
+            self.onTearOffTab?(url)
+        }
 
         let name = NSTextField(labelWithString: title)
         name.font = .systemFont(ofSize: 12, weight: active ? .semibold : .regular)
@@ -315,6 +438,7 @@ final class TabbedPaneController: NSObject {
         add(L("crumb.newTab", "Open in New Tab"), #selector(duplicateTab(_:)))
         add(L("crumb.leftPane", "Open in Left Pane"), #selector(tabToLeftPane(_:)))
         add(L("crumb.rightPane", "Open in Right Pane"), #selector(tabToRightPane(_:)))
+        add(L("tabs.moveToOtherPane", "Move to Other Pane"), #selector(moveTabToOtherPane(_:)))
         menu.addItem(.separator())
         if closable { add(L("tabs.closeTab", "Close Tab"), #selector(closeTabMenu(_:))) }
         if tabs.count > 1 { add(L("tabs.closeOthers", "Close Other Tabs"), #selector(closeOtherTabs(_:))) }
@@ -326,6 +450,9 @@ final class TabbedPaneController: NSObject {
     @objc private func copyTabPath(_ sender: NSMenuItem) {
         guard let url = tabURL(sender.tag) else { return }
         onOpenFolderInPane?(url, .copyPath)
+    }
+    @objc private func moveTabToOtherPane(_ sender: NSMenuItem) {
+        onMoveTabToOtherSide?(sender.tag)
     }
     @objc private func duplicateTab(_ sender: NSMenuItem) {
         if let url = tabURL(sender.tag) { openTab(at: url) }
@@ -357,9 +484,16 @@ final class TabbedPaneController: NSObject {
 /// A tab chip whose entire area selects the tab -- clicking the padding, background, or label
 /// all count, so you never have to hit the text exactly. The close button (when present) is
 /// the only carved-out target; the non-interactive label never swallows the click.
-private final class TabChipView: NSView {
+private final class TabChipView: NSView, NSDraggingSource {
     var onSelect: (() -> Void)?
     weak var closeButton: NSButton?
+    var index = 0
+    var sideID = ""
+    /// The drag ended with no tab bar accepting it: tear this tab off into its own window.
+    var onDroppedOutside: ((Int) -> Void)?
+
+    private var pressStart: NSPoint?
+    private var dragging = false
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         let local = convert(point, from: superview)
@@ -368,5 +502,84 @@ private final class TabChipView: NSView {
         return self  // the label and empty space both resolve to the chip, which selects
     }
 
-    override func mouseDown(with event: NSEvent) { onSelect?() }
+    // Click vs drag via the standard responder overrides, NOT a hand-rolled nextEvent pump. Pumping
+    // the queue races a quick flick (it can start a session when the mouse-up is already queued),
+    // which strands an orphaned NSDraggingSession and silently kills every later drag in the
+    // process until relaunch. mouseDragged only fires while the button is down, so a session can
+    // never begin after release.
+    override func mouseDown(with event: NSEvent) {
+        pressStart = event.locationInWindow
+        dragging = false
+        onSelect?()  // clicking a tab still selects it immediately
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let start = pressStart, !dragging else { return }
+        let point = event.locationInWindow
+        guard abs(point.x - start.x) > 6 || abs(point.y - start.y) > 6 else { return }
+        dragging = true
+        let item = NSDraggingItem(pasteboardWriter: TabDrag.item(side: sideID, index: index))
+        item.setDraggingFrame(bounds, contents: snapshot())
+        beginDraggingSession(with: [item], event: event, source: self)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        pressStart = nil
+        dragging = false
+    }
+
+    func draggingSession(
+        _ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext
+    ) -> NSDragOperation {
+        .move  // a tab is always moved, never copied -- inside a bar or out into a new window
+    }
+
+    func draggingSession(
+        _ session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation
+    ) {
+        pressStart = nil
+        dragging = false
+        if operation == [] { onDroppedOutside?(index) }  // nobody took it: tear off
+    }
+
+    /// The chip's own pixels, so the thing under the cursor looks like the tab being dragged.
+    private func snapshot() -> NSImage {
+        guard let rep = bitmapImageRepForCachingDisplay(in: bounds) else { return NSImage(size: bounds.size) }
+        cacheDisplay(in: bounds, to: rep)
+        let image = NSImage(size: bounds.size)
+        image.addRepresentation(rep)
+        return image
+    }
+}
+
+/// The tab bar itself is the drop target for a dragged tab. Chips deliberately do NOT register the
+/// type, so a drop over a chip still resolves here and we can turn the cursor's x into an insertion
+/// point. draggingEnded: is NOT overridden on purpose: it is an optional NSDraggingDestination
+/// method NSView does not implement, so a plain override is invisible to the ObjC runtime and
+/// AppKit's drag completion raises "unrecognized selector", stranding every later drag.
+private final class TabBarStack: NSStackView {
+    var insertionIndexAt: ((NSPoint) -> Int)?
+    var showInsertion: ((Int?) -> Void)?
+    var dropTab: ((_ side: String, _ index: Int, _ insertAt: Int) -> Bool)?
+
+    override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { update(sender) }
+    override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation { update(sender) }
+
+    override func draggingExited(_ sender: (any NSDraggingInfo)?) {
+        showInsertion?(nil)
+        super.draggingExited(sender)
+    }
+
+    override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
+        showInsertion?(nil)
+        guard let payload = TabDrag.payload(sender.draggingPasteboard) else { return false }
+        let at = insertionIndexAt?(convert(sender.draggingLocation, from: nil)) ?? 0
+        return dropTab?(payload.side, payload.index, at) ?? false
+    }
+
+    private func update(_ sender: any NSDraggingInfo) -> NSDragOperation {
+        guard TabDrag.payload(sender.draggingPasteboard) != nil else { return [] }
+        showInsertion?(insertionIndexAt?(convert(sender.draggingLocation, from: nil)) ?? 0)
+        return .move
+    }
 }

@@ -525,6 +525,21 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             }
             side.newTabLocation = { [weak self] in self?.preferredNewTabFolder() }
             side.onOpenFolderInPane = { [weak self] url, action in self?.handleBreadcrumbAction(url, action) }
+            // Tab dragging: only the browser knows both sides, so it resolves a drag's origin, and
+            // handles the two drops a single side can't do by itself (tear off, move across).
+            side.sideForID = { [weak self] id in
+                guard let self else { return nil }
+                if self.leftTabs.sideID == id { return self.leftTabs }
+                if self.rightTabs.sideID == id { return self.rightTabs }
+                return nil
+            }
+            side.onTearOffTab = { url in WindowManager.shared.openWindow(start: url) }
+            side.onMoveTabToOtherSide = { [weak self, weak side] index in
+                guard let self, let side else { return }
+                let other = side === self.leftTabs ? self.rightTabs : self.leftTabs
+                guard let url = side.takeTab(at: index) else { return }
+                other.adoptTab(url: url, at: other.tabCount)
+            }
         }
         // Restore the last session's tabs/folders (or open initial tabs) now that
         // configurePane + callbacks are set, so each pane is fully wired.

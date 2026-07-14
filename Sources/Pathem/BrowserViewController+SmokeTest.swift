@@ -682,6 +682,29 @@ extension BrowserViewController {
         activePane?.setViewMode(.list)  // swap back to a fresh list view
         let dragAfterSwap = activePane?.debugListRowsDraggable() == true
         check("list-rows-draggable", dragOnList && dragAfterSwap, "onList=\(dragOnList) afterSwap=\(dragAfterSwap)")
+        // Tab dragging (LAST -- it opens/moves tabs): the drag gestures are just thin wrappers over
+        // moveTab / takeTab / adoptTab, so exercise those. A side must never be left empty: the last
+        // tab is never taken, which is what stops a tear-off or cross-pane move from emptying a side.
+        let leftBefore = leftTabs.tabCount
+        let rightBefore = rightTabs.tabCount
+        leftTabs.openTab(at: URL(fileURLWithPath: "/tmp"))
+        leftTabs.openTab(at: URL(fileURLWithPath: "/usr"))
+        let opened = leftTabs.tabCount == leftBefore + 2
+        let lastFolder = leftTabs.tabFolders.last ?? ""
+        leftTabs.moveTab(from: leftTabs.tabCount - 1, to: 0)  // drag it to the front
+        let reordered = leftTabs.tabFolders.first == lastFolder
+        var movedAcross = false
+        if let url = leftTabs.takeTab(at: 0) {  // drag it onto the other side's bar
+            rightTabs.adoptTab(url: url, at: rightTabs.tabCount)
+            movedAcross = rightTabs.tabCount == rightBefore + 1 && leftTabs.tabCount == leftBefore + 1
+        }
+        // A lone tab is never taken away, so a side can't be emptied by a drag.
+        let solo = TabbedPaneController(start: URL(fileURLWithPath: "/tmp"))
+        solo.openInitialTab()
+        let keptLast = solo.takeTab(at: 0) != nil && solo.tabCount == 1
+        check(
+            "tab-drag-reorder-move-teardown", opened && reordered && movedAcross && keptLast,
+            "opened=\(opened) reordered=\(reordered) movedAcross=\(movedAcross) keptLast=\(keptLast)")
         return (ok, lines)
     }
 }

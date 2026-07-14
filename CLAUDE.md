@@ -56,3 +56,62 @@ Track the living plan in **ROADMAP.md**. Candidate follow-ups: finish dissolving
 the `BrowserViewController` god-object (toolbar and the split delegate are
 already extracted), broaden localization, and enable the extension runtime once
 there is real demand (the seam and manifest schema are in place but gated off).
+
+<!-- commandem:managed:start -->
+<!-- Managed by `commandem brief`. Do not edit between these markers;
+     edit the commandem directives file and re-run `commandem brief`. -->
+
+## Polaris
+
+This project is tracked by **polaris**, a cross-project command
+center. Its machine contract is `polaris.toml` at the repo root
+(mode, commands, conventions - see it / SPEC.md). Polaris
+coordinates status and dispatch across projects and propagates
+the standing directives below to every tracked project.
+
+### Standing directives
+
+## iCloud hygiene
+
+Exclude only regenerable/churny dirs from iCloud via the `.nosync`
+trick. Source files then dual-back-up to iCloud + GitHub harmlessly.
+
+Empirical refinements (post-reboot conflict experience):
+
+- **For non-regenerable load-bearing dirs (notably `.git`): use git's
+  native gitdir pointer file, NOT a symlink.** iCloud reconciliation
+  can evict symlinks across reboots; a plain text file syncs cleanly.
+  Mechanism: `mv .git .git.nosync && printf 'gitdir: .git.nosync\n' >
+  .git`. Git natively follows the pointer (same machinery as
+  worktrees/submodules). Add `.git.nosync/` (and any other in-tree
+  `.nosync` dirs) to `.gitignore` so git doesn't track its own
+  metadata.
+- **For regenerable dirs (e.g. Swift `.build`): the symlink trick is
+  fine, but the build script must self-heal** — before invoking the
+  tool, verify `.build` is a symlink to `.build.nosync` and re-create
+  it if missing/broken. Otherwise the next build materializes the
+  churny dir back into iCloud and the conflict storm returns.
+- **A `* [0-9].*` filename anywhere in the source tree (e.g.
+  `chat 2.go`) is an iCloud conflicted-copy.** The real file is in
+  git; the duplicate is stale. Sweep + remove. Heavy write churn
+  (rapid builds + commits) is what spawns them; the two redirects
+  above are the main prevention.
+
+## Container runtime: OrbStack
+
+All projects that use Docker or containers should migrate to
+[OrbStack](https://orbstack.dev/) if they haven't already. OrbStack
+replaces Docker Desktop on macOS with dramatically lower resource
+usage, faster startup, and native Rosetta x86 emulation on Apple
+Silicon. Migration checklist:
+
+- Install OrbStack (`brew install orbstack` or download from site).
+- Uninstall Docker Desktop (OrbStack is a drop-in replacement;
+  existing images/volumes migrate automatically on first launch).
+- Verify `docker` and `docker compose` commands work unchanged
+  (OrbStack provides compatible CLI shims).
+- Update any CI/local scripts that reference Docker Desktop paths
+  or the Docker Desktop VM directly.
+- If the project uses Dockerfiles or compose files, no changes
+  needed -- OrbStack runs them as-is.
+<!-- commandem:managed:end -->
