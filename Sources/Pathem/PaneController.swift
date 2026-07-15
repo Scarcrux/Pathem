@@ -70,6 +70,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private var lastColorRules = ColorRules()
     private var lastFormats: (size: Preferences.SizeFormat, date: Preferences.DateDisplay)?
     private let contentContainer = NSView()
+    /// Shown centered below the "Couldn't read this folder" placeholder so a permission failure has
+    /// an action, not just an explanation. Hidden the moment any listing lands (see displayEntries).
+    private let permissionButton = NSButton(
+        title: L("pane.openFDA", "Open Full Disk Access…"), target: nil, action: nil)
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)
     private var calculateFolderSizes = false
@@ -330,6 +334,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// false, i.e. navigation or a new smart/remote view) clears the filter; an
     /// in-place refresh keeps it.
     private func displayEntries(_ entries: [FileEntry], preserveState: Bool) {
+        permissionButton.isHidden = true  // any successful/empty listing clears the permission prompt
         if !preserveState, !filterText.isEmpty { clearFilterField() }
         sourceEntries = entries
         content.setEntries(filtered(entries), preserveState: preserveState)
@@ -548,6 +553,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                             "pane.readFolderFailed",
                             "Couldn’t read this folder.\nPathem may need Full Disk Access "
                                 + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
+                    self.permissionButton.isHidden = false  // give the failure an action
                 }
                 // After a view-mode swap, carry the selection into the fresh content.
                 if let pending = self.pendingSelection {
@@ -968,6 +974,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     @objc private func containerFrameChanged() { if isActivePane { updateShadowPath() } }
 
+    @objc private func openFullDiskAccess() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
     // MARK: - Build
 
     private func build() {
@@ -1071,6 +1083,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         containerView.addSubview(pathBar)
         containerView.addSubview(contentContainer)
         containerView.addSubview(bottomStack)
+
+        permissionButton.bezelStyle = .rounded
+        permissionButton.target = self
+        permissionButton.action = #selector(openFullDiskAccess)
+        permissionButton.isHidden = true
+        permissionButton.translatesAutoresizingMaskIntoConstraints = false
+        contentContainer.addSubview(permissionButton)
+        NSLayoutConstraint.activate([
+            permissionButton.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
+            // Below the centered placeholder text the content view draws.
+            permissionButton.centerYAnchor.constraint(equalTo: contentContainer.centerYAnchor, constant: 40),
+        ])
         NSLayoutConstraint.activate([
             toolbarStack.topAnchor.constraint(equalTo: containerView.topAnchor),
             toolbarStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
