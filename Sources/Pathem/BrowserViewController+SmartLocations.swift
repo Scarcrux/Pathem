@@ -20,6 +20,9 @@ extension BrowserViewController {
             case .tag(let color):
                 urls = await SpotlightSearch.taggedFiles(color.label, scope: scope, limit: 500)
                 title = String(format: L("bvc.tagTitle", "Tag: %@"), color.label)
+            case .namedTag(let name):
+                urls = await SpotlightSearch.taggedFiles(name, scope: scope, limit: 500)
+                title = String(format: L("bvc.tagTitle", "Tag: %@"), name)
             }
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value
             guard self.activePane === pane, pane.isContentRequestCurrent(token) else { return }  // stale

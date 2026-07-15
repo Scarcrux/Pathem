@@ -5,6 +5,7 @@ import PathemEngine
 enum SmartQuery: Equatable {
     case recents
     case tag(FileTag.Color)
+    case namedTag(String)  // a custom Finder tag (not one of the seven colors)
 }
 
 /// A fully customizable Finder-style source list. The user's own groups and
@@ -600,8 +601,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     /// The seven Finder tag colors; selecting one filters to files with that tag.
     private func tagsNode() -> Node {
-        let children = FileTag.Color.displayOrder.map { color in
+        var children = FileTag.Color.displayOrder.map { color in
             Node(kind: .smart(.tag(color)), title: color.label, url: nil, icon: nil, tagColor: color)
+        }
+        // The custom, named tags the user made in Finder (Finder shows these in its sidebar too),
+        // filtered by tag name. Read from Finder's own preference so the two lists match.
+        let colorNames = Set(FileTag.Color.displayOrder.map(\.label))
+        for name in FinderTags.customNames(colorNames: colorNames) {
+            children.append(Node(kind: .smart(.namedTag(name)), title: name, url: nil, icon: "tag", tagColor: nil))
         }
         return Node(kind: .systemHeader, title: L("sidebar.tagsHeader", "Tags"), url: nil, icon: nil, children: children)
     }
