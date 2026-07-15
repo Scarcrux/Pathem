@@ -257,19 +257,13 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             menu.addItem(item)
         }
         guard let first = selectedURLs().first else { disabled(L("list.noSelection", "No selection")); return }
-        // LaunchServices hands these back in its own arbitrary order (for a .txt it can put, say,
-        // Adobe Illustrator fourth), which reads as if we were recommending an absurd app. Finder
-        // shows the default first and sorts the rest by name, so do that: the OS still decides WHICH
-        // apps can open the file and which is default -- we only make the list legible.
+        // LaunchServices hands these back in an arbitrary order, so an app that only claims a
+        // catch-all (Adobe Illustrator for a .txt) can sit near the top. Rank by how well each app
+        // actually fits the file's type -- exact-type claims above broad ones -- with the OS default
+        // pinned first. See OpenWithRanker.
         let preferred = NSWorkspace.shared.urlForApplication(toOpen: first)
-        var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
-            .filter { $0 != preferred }
-            .sorted {
-                FileManager.default.displayName(atPath: $0.path)
-                    .localizedStandardCompare(FileManager.default.displayName(atPath: $1.path))
-                    == .orderedAscending
-            }
-        if let preferred { apps.insert(preferred, at: 0) }
+        let apps = OpenWithRanker.ranked(
+            apps: NSWorkspace.shared.urlsForApplications(toOpen: first), for: first, defaultApp: preferred)
         guard !apps.isEmpty else { disabled(L("list.noApplications", "No applications")); return }
         for app in apps {
             let item = NSMenuItem(

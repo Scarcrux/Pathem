@@ -705,6 +705,15 @@ extension BrowserViewController {
         check(
             "tab-drag-reorder-move-teardown", opened && reordered && movedAcross && keptLast,
             "opened=\(opened) reordered=\(reordered) movedAcross=\(movedAcross) keptLast=\(keptLast)")
+        // Open With ranks apps by how well they fit the type (not LaunchServices' arbitrary order):
+        // an exact-type editor outranks a real-supertype claim, which outranks a catch-all "opens
+        // anything" app (the Illustrator-for-.txt case). Guards OpenWithRanker.score.
+        let exactFit = OpenWithRanker.score([.init(types: [.plainText], extensions: [], editor: true)], fileType: .plainText, ext: "txt")
+        let superFit = OpenWithRanker.score([.init(types: [.text], extensions: [], editor: false)], fileType: .plainText, ext: "txt")
+        let catchFit = OpenWithRanker.score([.init(types: [.data], extensions: [], editor: false)], fileType: .plainText, ext: "txt")
+        check(
+            "open-with-ranks-by-fit", exactFit > superFit && superFit > catchFit,
+            "exact=\(exactFit) super=\(superFit) catch=\(catchFit)")
         return (ok, lines)
     }
 }
