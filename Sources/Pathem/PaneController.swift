@@ -1332,6 +1332,27 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         statusLabel.stringValue = text
     }
 
+    private var flashToken = 0
+
+    /// Briefly show a transient message in the status line -- a "Copied 3 paths" confirmation, or a
+    /// soft failure reason -- then revert to the normal item-count status. This is the app's toast
+    /// channel: it reuses the status label the user is already looking at (bottom of the active
+    /// pane), so silent successes and beep-only failures finally say something, with no separate HUD.
+    func flashStatus(_ message: String, isError: Bool = false) {
+        flashToken += 1
+        let token = flashToken
+        statusLabel.stringValue = message
+        statusLabel.textColor = isError ? .systemRed : .labelColor  // pop above the usual secondary status
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { [weak self] in
+            guard let self, self.flashToken == token else { return }  // a newer flash won: leave it
+            self.statusLabel.textColor = .secondaryLabelColor
+            self.updateStatus()
+        }
+    }
+
+    /// PATHEM_SMOKE: the status-line text right now (to check a flash landed).
+    func debugStatusText() -> String { statusLabel.stringValue }
+
     /// Free space on the current folder's volume, e.g. "42 GB free". Local folders only.
     private func freeSpaceString() -> String? {
         guard remote == nil, let url = content.directoryURL,

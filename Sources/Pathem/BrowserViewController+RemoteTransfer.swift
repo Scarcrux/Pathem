@@ -41,7 +41,10 @@ extension BrowserViewController {
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
             }
-            guard !self.transferInFlight else { NSSound.beep(); return }  // one transfer at a time
+            guard !self.transferInFlight else {
+            self.activePane?.flashStatus(L("flash.transferBusy", "A transfer is already running"), isError: true)
+            return  // one transfer at a time
+        }
             self.transferInFlight = true  // so Quit warns mid-transfer
             self.transferController.run(
                 items, title: String(format: L("bvc.downloadingFrom", "Downloading from %@"), ctx.connection.host), over: window
@@ -93,7 +96,10 @@ extension BrowserViewController {
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
         }
-        guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
+        guard !transferInFlight else {
+            activePane?.flashStatus(L("flash.transferBusy", "A transfer is already running"), isError: true)
+            return  // one transfer at a time
+        }
         transferInFlight = true  // so Quit warns mid-transfer
         transferController.run(
             items, title: String(format: L("bvc.uploadingTo", "Uploading to %@"), connection.host), over: window
@@ -149,7 +155,10 @@ extension BrowserViewController {
         let item = TransferQueueController.Item(name: name) {
             try await provider.download(connection, remotePath: remotePath, to: local, password: password)
         }
-        guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
+        guard !transferInFlight else {
+            activePane?.flashStatus(L("flash.transferBusy", "A transfer is already running"), isError: true)
+            return  // one transfer at a time
+        }
         transferInFlight = true  // so Quit warns mid-transfer
         transferController.run([item], title: String(format: L("bvc.opening", "Opening %@"), name), over: window) { [weak self] failures, cancelled in
             self?.transferInFlight = false

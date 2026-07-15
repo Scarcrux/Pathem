@@ -19,6 +19,7 @@ extension BrowserViewController {
         guard !lines.isEmpty else { NSSound.beep(); return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
+        flashCopied(count: lines.count, kind: asURL ? L("flash.url", "URL") : L("flash.path", "path"))
     }
 
     /// Hash the selected file(s) off the main thread and copy the digests (one per
@@ -43,6 +44,7 @@ extension BrowserViewController {
             }
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(lines.joined(separator: "\n"), forType: .string)
+            self.flashCopied(count: lines.count, kind: L("flash.checksum", "checksum"))
         }
     }
 
@@ -199,5 +201,15 @@ extension BrowserViewController {
         guard !names.isEmpty else { NSSound.beep(); return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(names.joined(separator: "\n"), forType: .string)
+        flashCopied(count: names.count, kind: L("flash.name", "name"))
+    }
+
+    /// Confirm a copy-to-clipboard in the status line ("Copied 3 paths"), our toast channel.
+    func flashCopied(count: Int, kind: String) {
+        let message =
+            count == 1
+            ? String(format: L("flash.copiedOne", "Copied %@"), kind)
+            : String(format: L("flash.copiedMany", "Copied %d %@s"), count, kind)
+        activePane?.flashStatus(message)
     }
 }

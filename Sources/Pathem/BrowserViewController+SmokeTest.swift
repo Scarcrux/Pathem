@@ -714,6 +714,13 @@ extension BrowserViewController {
         check(
             "open-with-ranks-by-fit", exactFit > superFit && superFit > catchFit,
             "exact=\(exactFit) super=\(superFit) catch=\(catchFit)")
+        // The transient-status channel (our toast): flashing a message puts it in the status line.
+        // Copy Path/Name/Checksum and the "transfer already running" guard use this instead of a
+        // silent success or a bare beep.
+        leftTabs.activePane?.flashStatus("smoke-flash-probe")
+        check(
+            "status-flash-channel", leftTabs.activePane?.debugStatusText() == "smoke-flash-probe",
+            "status=\(leftTabs.activePane?.debugStatusText() ?? "nil")")
         return (ok, lines)
     }
 }
