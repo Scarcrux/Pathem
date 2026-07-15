@@ -145,7 +145,7 @@ final class SizeBrowserController: NSObject {
         track.heightAnchor.constraint(equalToConstant: 12).isActive = true
         let fill = NSView()
         fill.wantsLayer = true
-        fill.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+        fill.layer?.backgroundColor = ThemeManager.shared.accent.cgColor
         fill.layer?.cornerRadius = 3
         fill.translatesAutoresizingMaskIntoConstraints = false
         track.addSubview(fill)

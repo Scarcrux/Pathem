@@ -738,7 +738,7 @@
 "info.commentLabel" = "Comment";
 "info.hideExtensionLabel" = "Hide extension";
 "info.otherApp" = "Other…";
-"info.aclLabel" = "Sharing";
+"info.aclLabel" = "Permissions";
 "aibar.ex1" = "organize by file type";
 "aibar.ex2" = "find duplicate files";
 "aibar.ex3" = "sort by size largest first";

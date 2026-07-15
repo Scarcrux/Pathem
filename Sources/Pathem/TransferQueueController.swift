@@ -459,7 +459,7 @@ final class TransferQueueController: NSObject, NSTableViewDataSource, NSTableVie
 
     private func statusColor(_ state: State) -> NSColor {
         switch state {
-        case .running: return .controlAccentColor
+        case .running: return ThemeManager.shared.accent
         case .done: return .systemGreen
         case .failed: return .systemRed
         case .cancelled, .queued: return .secondaryLabelColor

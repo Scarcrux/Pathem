@@ -62,7 +62,7 @@ final class AICommandBar: NSObject, NSTextFieldDelegate {
 
         sparkle.image = NSImage(systemSymbolName: "sparkles", accessibilityDescription: nil)
         sparkle.symbolConfiguration = .init(pointSize: 22, weight: .medium)
-        sparkle.contentTintColor = .controlAccentColor
+        sparkle.contentTintColor = ThemeManager.shared.accent
         sparkle.translatesAutoresizingMaskIntoConstraints = false
 
         field.placeholderString = L("aibar.placeholder", "Tell Pathem what to do…")

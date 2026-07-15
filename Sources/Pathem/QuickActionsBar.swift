@@ -79,7 +79,7 @@ final class QuickActionsBar: NSView {
             button.target = self
             button.action = #selector(tapped(_:))
             button.tag = index
-            button.contentTintColor = id == "files.trash" ? .systemRed : .controlAccentColor
+            button.contentTintColor = id == "files.trash" ? .systemRed : ThemeManager.shared.accent
             button.widthAnchor.constraint(equalToConstant: 30).isActive = true
             button.heightAnchor.constraint(equalToConstant: 26).isActive = true
             stack.addArrangedSubview(button)

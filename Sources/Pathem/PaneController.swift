@@ -378,7 +378,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.directoryURL = nil  // disable row drag during search
         content.resolutionURL = nav.current  // but results are from this folder, so actions resolve
         displayEntries(entries, preserveState: false)
-        content.showPlaceholder(entries.isEmpty ? L("pane.noMatchingFiles", "No matching files") : nil)
+        content.showPlaceholder(entries.isEmpty ? String(format: L("pane.noMatchesFor", "No matches for “%@”"), self.searchQuery) : nil)
         updateStatus()
     }
 
@@ -433,7 +433,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // keeps the selection and does not grab focus, so it never yanks the cursor or clears
         // the highlight mid-interaction. A fresh open resets state and takes focus as usual.
         displayEntries(format.sorted(entries), preserveState: preservingState)
-        content.showPlaceholder(entries.isEmpty ? L("pane.noItems", "No items") : nil)
+        content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
         breadcrumb.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
@@ -466,7 +466,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         smartEntries.removeAll { paths.contains(Self.path(of: $0)) }
         guard smartEntries.count != before else { return }
         displayEntries(format.sorted(smartEntries), preserveState: true)
-        content.showPlaceholder(smartEntries.isEmpty ? L("pane.noItems", "No items") : nil)
+        content.showPlaceholder(smartEntries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
         updateStatus()
     }
 
@@ -720,7 +720,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     cur.connection.id == session.connection.id
                 else { return }
                 self.displayEntries(self.format.sorted(entries), preserveState: false)
-                self.content.showPlaceholder(entries.isEmpty ? L("pane.emptyFolder", "Empty folder") : nil)
+                self.content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
                 self.updateStatus()
             } catch {
                 guard let self, let cur = self.remote, cur.path == session.path,

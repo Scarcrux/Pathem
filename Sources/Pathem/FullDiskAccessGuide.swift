@@ -123,7 +123,7 @@ final class FullDiskAccessGuide: NSObject {
         badge.font = .boldSystemFont(ofSize: 12)
         badge.textColor = .white
         badge.wantsLayer = true
-        badge.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
+        badge.layer?.backgroundColor = ThemeManager.shared.accent.cgColor
         badge.layer?.cornerRadius = 11
         badge.translatesAutoresizingMaskIntoConstraints = false
         badge.widthAnchor.constraint(equalToConstant: 22).isActive = true
