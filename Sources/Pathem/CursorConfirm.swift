@@ -47,7 +47,7 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         body.widthAnchor.constraint(lessThanOrEqualToConstant: 300).isActive = true
         let row = NSStackView()
         row.orientation = .horizontal
-        row.spacing = 8
+        row.spacing = 10
         for (index, name) in buttons.enumerated() {
             let button = NSButton(title: name, target: self, action: #selector(clicked(_:)))
             button.tag = index
@@ -58,8 +58,10 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         let stack = NSStackView(views: [title, body, row])
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 14, left: 14, bottom: 14, right: 14)
+        stack.spacing = 12
+        // Generous inset so the buttons don't hug the popover's rounded corners (the outer buttons
+        // otherwise read as jammed against the border).
+        stack.edgeInsets = NSEdgeInsets(top: 16, left: 20, bottom: 16, right: 20)
         stack.translatesAutoresizingMaskIntoConstraints = false
         content.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -92,5 +94,26 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         let controller = makeController(message: "m", info: "i", buttons: buttons)
         controller.loadView()
         return controller.view.subviews.isEmpty == false
+    }
+
+    /// Render the popover content to a PNG (PATHEM_CONFLICT_SHOT) to inspect button padding. The
+    /// NSPopover bubble/tail is drawn by AppKit and isn't in this content view, so we paint a
+    /// backing so the edges (and the inset around the buttons) are visible.
+    func debugRender(to path: String, message: String, info: String, buttons: [String]) {
+        let vc = makeController(message: message, info: info, buttons: buttons)
+        vc.loadView()
+        let v = vc.view
+        v.layoutSubtreeIfNeeded()
+        v.setFrameSize(v.fittingSize)
+        v.layoutSubtreeIfNeeded()
+        v.wantsLayer = true
+        v.layer?.backgroundColor = NSColor(calibratedWhite: 0.16, alpha: 1).cgColor
+        v.layer?.cornerRadius = 10
+        guard v.bounds.width > 1, let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { return }
+        v.cacheDisplay(in: v.bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+            print("CONFLICT SHOT: \(Int(v.bounds.width))x\(Int(v.bounds.height))")
+        }
     }
 }

@@ -313,6 +313,17 @@ enum PathemApp {
             }
         }
 
+        // Headless render of the move/copy conflict popover content (PATHEM_CONFLICT_SHOT=1), to
+        // inspect the button padding.
+        if ProcessInfo.processInfo.environment["PATHEM_CONFLICT_SHOT"] != nil {
+            CursorConfirm().debugRender(
+                to: "/tmp/conflict.png",
+                message: "1 item already exists at the destination",
+                info: "Choose how to handle the copy.",
+                buttons: ["Replace", "Keep Both", "Skip", "Cancel"])
+            exit(0)
+        }
+
         // Live screenshot of the archive-contents dialog (PATHEM_DIALOG_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_DIALOG_SHOT"] != nil {
             let dialog = ArchiveContentsController()
