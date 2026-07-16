@@ -117,6 +117,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         contextMenu.selectedURLs = { [weak self] in
             self?.selectedEntries.compactMap { self?.fileURL(for: $0) } ?? []
         }
+        contextMenu.currentFolder = { [weak self] in self?.directoryURL }
         filmstrip.menu = contextMenu.menu
         scrollView.documentView = filmstrip
         scrollView.hasHorizontalScroller = true

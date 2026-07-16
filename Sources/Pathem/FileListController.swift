@@ -385,6 +385,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             object: tableView)
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
+        contextMenu.currentFolder = { [weak self] in self?.directoryURL }
         tableView.menu = contextMenu.menu
         tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }
         tableView.onMiddleClick = { [weak self] row in self?.middleClicked(row) }
@@ -459,7 +460,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             item.representedObject = id
             item.image = MenuIcons.image(forCommand: id)
         }
-        _ = dir
+        // In the Trash, offer Empty Trash right on the background, the way Finder does -- otherwise
+        // there's no way to empty it without first selecting an item.
+        if FileContextMenuController.isTrashFolder(dir) {
+            menu.addItem(.separator())
+            let empty = menu.addItem(
+                withTitle: L("bvc.cmd.emptyTrash", "Empty Trash"),
+                action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+            empty.representedObject = "files.emptyTrash"
+            empty.image = MenuIcons.image(forCommand: "files.emptyTrash")
+        }
         return menu
     }
     @objc private func copyFolderPath() {

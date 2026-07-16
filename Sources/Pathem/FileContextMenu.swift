@@ -20,6 +20,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     }
     /// The current selection as file URLs (location-aware). Set by the owning view.
     var selectedURLs: () -> [URL] = { [] }
+    /// The pane's current folder, so folder-scoped actions (Empty Trash) can show with nothing
+    /// selected. Set by the owning view.
+    var currentFolder: () -> URL? = { nil }
 
     /// The shared context menu; assign to a view's `menu`.
     let menu = NSMenu()
@@ -76,9 +79,12 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     private static func isImage(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .image) ?? false
     }
-    private static let trashPrefix =
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash").path + "/"
+    private static let trashDir =
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash").standardizedFileURL.path
+    private static let trashPrefix = trashDir + "/"
     private static func isInTrash(_ url: URL) -> Bool { url.path.hasPrefix(trashPrefix) }
+    /// True when `url` is the Trash folder itself (so Empty Trash can show on its background).
+    static func isTrashFolder(_ url: URL?) -> Bool { url?.standardizedFileURL.path == trashDir }
 
     /// The New Folder with Selection title, pluralized with the live selection count (Finder
     /// shows "(3 Items)"). Shared by the context menu and the File menu.
@@ -211,8 +217,12 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = urls.isEmpty
                 case "files.setDesktopPicture":
                     item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
-                case "files.putBack", "files.deleteImmediately", "files.emptyTrash":
-                    item.isHidden = !inTrash  // Trash-only actions
+                case "files.putBack", "files.deleteImmediately":
+                    item.isHidden = !inTrash  // act on the trashed selection
+                case "files.emptyTrash":
+                    // Empties the whole Trash, not a selection: show it whenever this pane is the
+                    // Trash, even with nothing selected (Finder's background-menu gesture).
+                    item.isHidden = !(inTrash || Self.isTrashFolder(self.currentFolder()))
                 case "files.addToTorrents", "files.copyMagnetLink":
                     item.isHidden = !allTorrents  // only for .torrent selections
                 case "files.createTorrent":

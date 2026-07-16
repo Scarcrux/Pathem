@@ -68,6 +68,14 @@ extension BrowserViewController {
             view.window?.makeFirstResponder(nil)  // end the edit with no change
             check("inline-rename-begins", began, "began=\(began)")
         }
+        // Empty Trash must be reachable from the Trash location with nothing selected: the folder
+        // predicate that gates the background-menu entry has to recognize ~/.Trash and reject others.
+        let trashDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        check(
+            "empty-trash-folder-predicate",
+            FileContextMenuController.isTrashFolder(trashDir) && !FileContextMenuController.isTrashFolder(home),
+            "trash=\(FileContextMenuController.isTrashFolder(trashDir)) home=\(FileContextMenuController.isTrashFolder(home))")
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

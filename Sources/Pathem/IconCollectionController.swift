@@ -489,6 +489,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         }
         collection.onSelectionMutated = { [weak self] in self?.onSelectionChanged?() }
         contextMenu.selectedURLs = { [weak self] in self?.contextSelectionURLs() ?? [] }
+        contextMenu.currentFolder = { [weak self] in self?.directoryURL }
         collection.menu = contextMenu.menu
 
         scrollView.documentView = collection

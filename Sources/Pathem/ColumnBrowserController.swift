@@ -55,6 +55,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         build()
         // The active column's selection drives the shared menu's archive gating + Open With.
         contextMenu.selectedURLs = { [weak self] in self?.contextSelectionURLs() ?? [] }
+        contextMenu.currentFolder = { [weak self] in self?.directoryURL }
     }
 
     /// The active column's selection as file URLs, for the shared context menu.
