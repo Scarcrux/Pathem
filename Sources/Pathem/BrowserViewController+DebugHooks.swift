@@ -228,8 +228,12 @@ extension BrowserViewController {
         debugRender(to: path)
     }
 
-    /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT).
+    /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT). Set
+    /// PATHEM_SIDEBAR_SELECT=<row> to highlight a row first, to inspect the selection style.
     func debugRenderSidebar(to path: String) {
+        if let sel = ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SELECT"], let r = Int(sel) {
+            sidebar.debugSelectRow(r)
+        }
         let view = sidebar.containerView
         let bounds = view.bounds
         guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return }

@@ -402,6 +402,17 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
     }
 
+    /// Select a row by index for headless render inspection (PATHEM_SIDEBAR_SELECT). Makes the
+    /// outline first responder so the selection draws emphasized (accent), not muted gray.
+    func debugSelectRow(_ row: Int) {
+        guard row >= 0, row < outline.numberOfRows else { return }
+        restoringSelection = true
+        outline.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        restoringSelection = false
+        outline.window?.makeFirstResponder(outline)
+        outline.window?.makeKeyAndOrderFront(nil)
+    }
+
     /// A stable identity for a node across rebuilds (used to restore selection and
     /// collapse state in reload()).
     private static func key(_ node: Node) -> String {
