@@ -76,8 +76,8 @@ public struct Keymap: Codable, Sendable {
     public func commandID(for chord: KeyChord) -> String? { bindings[chord.canonical] }
 
     public static let defaultBindings: [String: String] = [
-        "return": "files.open",
-        "enter": "files.open",
+        "return": "files.rename",  // Finder parity: Return renames in place (⌘↓ / double-click open)
+        "enter": "files.rename",
         "cmd+down": "files.open",
         "cmd+up": "nav.up",
         "home": "nav.selectFirst",  // jump the selection to the first item (works in every view)
@@ -85,7 +85,7 @@ public struct Keymap: Codable, Sendable {
         "cmd+[": "nav.back",
         "cmd+]": "nav.forward",
         "delete": "files.trash",  // plain Delete trashes the selection (Cmd+Delete also works, via the menu)
-        "f2": "files.rename",  // Windows-style rename (the menu's Rename has no default chord)
+        "f2": "files.rename",  // Windows-style rename alias, alongside Return/Enter
         "cmd+l": "nav.editPath",  // browser-style "go to path"
         "cmd+shift+g": "nav.editPath",  // Finder's "Go to Folder"
         "f5": "files.copyToOtherPane",

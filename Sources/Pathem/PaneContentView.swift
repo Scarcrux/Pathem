@@ -52,6 +52,9 @@ protocol PaneContentView: AnyObject {
     var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)? { get set }
     var onKeyChord: ((KeyChord) -> Bool)? { get set }
     var onMouseGesture: ((String) -> Bool)? { get set }
+    /// The user committed an in-place (Finder-style) rename of a single item. Only the list view
+    /// drives it today; other views leave it unset and fall back to the rename sheet.
+    var onInlineRename: ((_ entry: FileEntry, _ newName: String) -> Void)? { get set }
     /// Row-drag phases, for the super-drag flick + swipe trail. Only the list view drives it
     /// so far; other views default to no-op.
     var onDragSession: ((DragSessionEvent) -> Void)? { get set }
@@ -85,6 +88,10 @@ protocol PaneContentView: AnyObject {
     /// Paint the view's background with `color` (a folder background), `.clear` to let a picture
     /// behind it show through, or `nil` to restore the default system background.
     func setBackgroundColor(_ color: NSColor?)
+    /// Begin a Finder-style in-place edit of the single selected item's name. Returns false when the
+    /// view can't (nothing or many selected, or it doesn't support inline editing) so the pane can
+    /// fall back to the rename sheet. The committed name is reported via `onInlineRename`.
+    func beginInlineRename() -> Bool
 }
 
 extension PaneContentView {
@@ -109,6 +116,12 @@ extension PaneContentView {
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {}
     /// Views that don't paint a custom background ignore the folder background.
     func setBackgroundColor(_ color: NSColor?) {}
+    /// Most views don't support in-place editing yet; the pane falls back to the rename sheet.
+    func beginInlineRename() -> Bool { false }
+    var onInlineRename: ((FileEntry, String) -> Void)? {
+        get { nil }
+        set {}
+    }
     /// The list and column views draw git status letters; the icon/gallery grids don't yet.
     func setGitStates(_ states: [String: GitFileState]) {}
     /// Every pane view now shares one right-click menu (FileContextMenuController) and wires

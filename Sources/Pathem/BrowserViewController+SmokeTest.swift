@@ -56,6 +56,18 @@ extension BrowserViewController {
         let tableExposes = KeyTableView().responds(to: draggingEndedSel)
         let gridExposes = KeyCollectionView(frame: .zero).responds(to: draggingEndedSel)
         check("drag-ended-selector-exposed", tableExposes && gridExposes, "table=\(tableExposes) grid=\(gridExposes)")
+        // Finder-style rename: Return triggers rename (not open), and beginning an edit on a
+        // single selection flips the list's name cell editable. Ending it unchanged (resign first
+        // responder) must rename nothing, so this leaves no filesystem state behind.
+        check(
+            "rename-return-binding", Keymap.defaultBindings["return"] == "files.rename",
+            Keymap.defaultBindings["return"] ?? "nil")
+        if let pane = leftTabs.activePane, let first = pane.entries.first {
+            pane.select(name: first.name)
+            let began = pane.beginInlineRename()
+            view.window?.makeFirstResponder(nil)  // end the edit with no change
+            check("inline-rename-begins", began, "began=\(began)")
+        }
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

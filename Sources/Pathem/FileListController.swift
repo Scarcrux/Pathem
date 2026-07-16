@@ -8,7 +8,9 @@ import UniformTypeIdentifiers
 /// materializing them all — the table only asks for the rows it is about to
 /// show. `cellRequests` instruments exactly that for the Gate A proof.
 @MainActor
-final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate {
+final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate,
+    NSTextFieldDelegate
+{
     let scrollView = NSScrollView()
     let tableView = KeyTableView()
     private let placeholder = NSTextField(labelWithString: "")
@@ -145,7 +147,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// window, never to `entries.count`.
     private(set) var cellRequests = 0
 
-    /// Opened a row (double-click, Return/Enter, or Cmd-Down).
+    /// Opened a row (double-click or Cmd-Down; Return now renames, matching Finder).
     var onOpen: ((FileEntry) -> Void)?
     /// This list's table became first responder (its pane became active).
     var onBecomeActive: (() -> Void)?
@@ -155,6 +157,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     var onSelectionChanged: (() -> Void)?
     /// Right-drag flick phases, for the super-drag flick + swipe trail (PaneContentView).
     var onDragSession: ((DragSessionEvent) -> Void)?
+    /// The user committed an in-place (Finder-style) rename; the pane performs it (+ undo).
+    var onInlineRename: ((FileEntry, String) -> Void)?
+    /// The item being edited in place, its display row, and a flag set when Esc abandoned the edit
+    /// so committing doesn't rename.
+    private var editingEntry: FileEntry?
+    private var editingRow = -1
+    private var renameCancelled = false
     private var suppressSortCallback = false
     /// Open a row on a single click (Finder's single-click mode).
     private var singleClickToOpen = false
@@ -591,6 +600,83 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         onOpen?(entries[index])
     }
 
+    /// Begin a Finder-style in-place edit of the single selected row's name. The row's name field,
+    /// normally a label, is flipped editable and focused with the base name (sans extension)
+    /// selected. Returns false if it can't start, so the pane falls back to the rename sheet.
+    func beginInlineRename() -> Bool {
+        guard editingEntry == nil else { return false }  // already editing
+        let row = tableView.selectedRow
+        guard row >= 0, let index = entryIndex(forRow: row) else { return false }
+        let entry = entries[index]
+        tableView.scrollRowToVisible(row)
+        let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        guard nameCol >= 0,
+            let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: true) as? NSTableCellView,
+            let field = cell.textField
+        else { return false }
+        editingEntry = entry
+        editingRow = row
+        renameCancelled = false
+        field.stringValue = entry.name  // the plain name, without tag-dot / git decoration
+        field.isEditable = true
+        field.isSelectable = true
+        field.isBordered = true
+        field.drawsBackground = true
+        field.backgroundColor = .textBackgroundColor
+        field.textColor = .labelColor
+        field.focusRingType = .default
+        tableView.window?.makeFirstResponder(field)
+        // Select the base name only (exclude the extension), the way Finder does.
+        if let editor = field.currentEditor() {
+            let ns = entry.name as NSString
+            let ext = ns.pathExtension as NSString
+            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
+        }
+        return true
+    }
+
+    /// Restore an edited name field to its plain-label appearance.
+    private func endInlineEditing(_ field: NSTextField) {
+        field.isEditable = false
+        field.isSelectable = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.backgroundColor = .clear
+        field.focusRingType = .none
+    }
+
+    // MARK: NSTextFieldDelegate (in-place rename)
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+        if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
+            renameCancelled = true
+            tableView.window?.makeFirstResponder(tableView)
+            return true
+        }
+        return false  // let Return / Tab end editing the usual way
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let field = obj.object as? NSTextField, let entry = editingEntry else { return }
+        endInlineEditing(field)
+        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let row = editingRow
+        let cancelled = renameCancelled
+        editingEntry = nil
+        editingRow = -1
+        renameCancelled = false
+        // Repaint the row so the stripped tag/git decoration returns, whether or not the name
+        // changed; a successful rename also triggers a full re-list from the pane.
+        if row >= 0, row < displayRows.count {
+            tableView.reloadData(
+                forRowIndexes: IndexSet(integer: row),
+                columnIndexes: IndexSet(integersIn: 0..<tableView.numberOfColumns))
+        }
+        guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
+        onInlineRename?(entry, newName)
+    }
+
     /// A plain single click: toggle a group header's collapsed state, or (in single-click-to-open
     /// mode) open the clicked row. Wired to the table's action unconditionally so header toggling
     /// always works, independent of the single-click-open preference.
@@ -1006,6 +1092,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         cell.alphaValue = isCut(entry) ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
         switch Column(rawValue: id.rawValue) {
         case .name:
+            cell.textField?.delegate = self  // so in-place rename commits reach us
             // A matching color rule tints/styles the name; else the dataless/normal default.
             let ruleStyle = FileColorStyle.style(
                 for: entry, rules: colorRules, baseFont: .systemFont(ofSize: listFontSize))
@@ -1187,9 +1274,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private static func makeCell(_ id: NSUserInterfaceItemIdentifier, withIcon: Bool) -> NSTableCellView {
         let cell = NSTableCellView()
         cell.identifier = id
-        let field = NSTextField(labelWithString: "")
+        // The Name column reads as a label but can be flipped to an editable field for in-place
+        // rename (see beginInlineRename); other columns stay plain labels.
+        let field: NSTextField
+        if withIcon {
+            field = NSTextField()
+            field.isEditable = false
+            field.isSelectable = false
+            field.isBordered = false
+            field.isBezeled = false
+            field.drawsBackground = false
+            field.backgroundColor = .clear
+            field.focusRingType = .none
+        } else {
+            field = NSTextField(labelWithString: "")
+        }
         field.translatesAutoresizingMaskIntoConstraints = false
         field.lineBreakMode = .byTruncatingTail
+        field.usesSingleLineMode = true
         field.font = .systemFont(ofSize: 13)
         cell.addSubview(field)
         cell.textField = field

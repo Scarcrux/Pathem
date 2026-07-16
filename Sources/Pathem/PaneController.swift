@@ -212,6 +212,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var onBecomeActive: (() -> Void)?
     /// Fired when the row selection changes (used by the preview pane).
     var onSelectionChanged: (() -> Void)?
+    /// The active view committed an in-place rename; the browser performs it (+ undo).
+    var onRenameRequested: ((FileEntry, String) -> Void)?
 
     /// The single selected file's URL, or nil (for the preview pane). Never a remote
     /// row (currentURL is the local fallback, so it'd be a bogus path) and never an
@@ -1256,8 +1258,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.onKeyChord = onKeyChordHandler
         content.onMouseGesture = onMouseGestureHandler
         content.onDragSession = onDragSessionHandler
+        content.onInlineRename = { [weak self] entry, newName in self?.onRenameRequested?(entry, newName) }
         content.dragMovesByDefault = dragMovesByDefault
     }
+
+    /// Begin a Finder-style in-place rename in the active view; false if it can't (the browser then
+    /// falls back to the rename sheet). The committed name arrives via `onRenameRequested`.
+    func beginInlineRename() -> Bool { content.beginInlineRename() }
 
     /// Switch this folder's view mode (list / icon / gallery), persist it, and
     /// reload (which swaps the content view).

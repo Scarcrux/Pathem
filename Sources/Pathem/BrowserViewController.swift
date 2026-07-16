@@ -504,6 +504,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 }
                 pane.onOpenInNewTab = { [weak self] url in self?.activeSide?.openTab(at: url) }
                 pane.onMountNetworkHost = { [weak self] host in self?.connectToShared(host) }
+                pane.onRenameRequested = { [weak self, weak pane] entry, newName in
+                    guard let self, let pane else { return }
+                    self.commitLocalRename(entry, to: newName, pane: pane)
+                }
             }
             side.onPaneBecameActive = { [weak self, weak side] pane in
                 guard let self, let side else { return }
@@ -1275,6 +1279,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         guard let pane = activePane, pane.selectedEntries.count == 1,
             let entry = pane.selectedEntries.first
         else { return }
+        // Prefer Finder-style in-place editing (list view, local panes). Remote renames and views
+        // that can't edit in place fall through to the sheet below.
+        if !pane.isRemote, pane.beginInlineRename() { return }
         let alert = NSAlert()
         alert.messageText = String(format: L("bvc.renameTitle", "Rename “%@”"), entry.name)
         alert.addButton(withTitle: L("bvc.renameButton", "Rename"))
@@ -1301,18 +1308,26 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 }
                 return
             }
-            // The file's real folder: its own location in a smart view, else current.
-            let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
-            do {
-                try FileOperations.rename(entry.name, to: newName, in: directory)
-                self.registerRenameUndo(from: newName, to: entry.name, in: directory)
-                pane.reloadIfShowingListing()
-                pane.select(name: newName)
-            } catch {
-                self.presentFailures(
-                    [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
-                    title: L("bvc.renameFailed", "Rename failed"))
-            }
+            self.commitLocalRename(entry, to: newName, pane: pane)
+        }
+    }
+
+    /// Perform a local rename (+ undo + reselect). Shared by the rename sheet and Finder-style
+    /// in-place editing, so both take the same path.
+    func commitLocalRename(_ entry: FileEntry, to newName: String, pane: PaneController) {
+        let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != entry.name else { return }
+        // The file's real folder: its own location in a smart view, else current.
+        let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
+        do {
+            try FileOperations.rename(entry.name, to: trimmed, in: directory)
+            registerRenameUndo(from: trimmed, to: entry.name, in: directory)
+            pane.reloadIfShowingListing()
+            pane.select(name: trimmed)
+        } catch {
+            presentFailures(
+                [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
+                title: L("bvc.renameFailed", "Rename failed"))
         }
     }
 
