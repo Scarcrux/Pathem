@@ -625,6 +625,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         (content as? FileListController)?.debugNameAXMatchesEntry(row: row)
     }
 
+    /// Inline-rename reload-safety guard: is an edit active, and a same-entries reload in place.
+    var debugInlineEditActive: Bool { (content as? FileListController)?.debugInlineEditActive ?? false }
+    func debugReloadContentInPlace() { content.setEntries(content.entries, preserveState: true) }
+
     /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
     func debugToolbarAccessibilityLabeled() -> Bool {
         let labeled: [NSControl] = [backButton, forwardButton, upButton, sortButton, actionButton, viewSwitcher]

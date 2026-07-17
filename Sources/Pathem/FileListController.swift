@@ -543,6 +543,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// position is held, so the list never jumps or deselects under the user.
     /// Without it (navigation, search results) the view resets to the top.
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
+        cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         defer {
             refreshTagsAsync()  // read tag colors off the main thread, then redraw
             refreshFolderSizesAsync()  // and folder sizes if enabled
@@ -654,6 +655,26 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         field.drawsBackground = false
         field.backgroundColor = .clear
         field.focusRingType = .none
+    }
+
+    /// Abandon an in-progress inline rename without committing. Called before a reload recycles the
+    /// editing cell: otherwise a background folder change (FSEvents from another process) resigns
+    /// the field and `controlTextDidEndEditing` would commit a half-typed name as a real rename.
+    /// Clears the state first so that resignation is a no-op.
+    func cancelInlineEdit() {
+        guard editingEntry != nil else { return }
+        let row = editingRow
+        editingEntry = nil
+        editingRow = -1
+        renameCancelled = false
+        let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        if nameCol >= 0, row >= 0, row < tableView.numberOfRows,
+            let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: false) as? NSTableCellView,
+            let field = cell.textField
+        {
+            endInlineEditing(field)
+            if field.currentEditor() != nil { tableView.window?.makeFirstResponder(tableView) }
+        }
     }
 
     // MARK: NSTextFieldDelegate (in-place rename)
@@ -953,6 +974,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         else { return directoryURL != nil }  // no rows yet: fall back to the gate itself
         return tableView(tableView, pasteboardWriterForRow: first) != nil
     }
+
+    /// Whether an inline rename is currently in progress (for the reload-safety smoke guard).
+    var debugInlineEditActive: Bool { editingEntry != nil }
 
     /// Whether the name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
     func debugNameAXMatchesEntry(row: Int) -> Bool {

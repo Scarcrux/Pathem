@@ -65,8 +65,15 @@ extension BrowserViewController {
         if let pane = leftTabs.activePane, let first = pane.entries.first {
             pane.select(name: first.name)
             let began = pane.beginInlineRename()
-            view.window?.makeFirstResponder(nil)  // end the edit with no change
             check("inline-rename-begins", began, "began=\(began)")
+            // A reload arriving mid-edit (a background folder change) must abandon the edit, never
+            // commit a half-typed name. Simulate the reload and confirm the edit was cancelled.
+            let wasActive = pane.debugInlineEditActive
+            pane.debugReloadContentInPlace()
+            check(
+                "inline-rename-cancels-on-reload", wasActive && !pane.debugInlineEditActive,
+                "active=\(wasActive) afterReload=\(pane.debugInlineEditActive)")
+            view.window?.makeFirstResponder(nil)  // end any edit with no change
         }
         // Empty Trash must be reachable from the Trash location with nothing selected: the folder
         // predicate that gates the background-menu entry has to recognize ~/.Trash and reject others.
