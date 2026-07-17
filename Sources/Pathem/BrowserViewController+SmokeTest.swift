@@ -393,6 +393,16 @@ extension BrowserViewController {
             downloadSuggestions.debugChipText ?? "no chip")
         downloadSuggestions.debugReset()
         try? FileManager.default.removeItem(at: dlDir)
+        // Teardown-leak guard: the Downloads/automation watchers self-retain via their FSEvents
+        // stream, so a window close must stop them (BVC.teardown now does). Verify the stop
+        // mechanism itself on a fresh controller so it can't silently regress.
+        let leakProbe = DownloadSuggestionsController()
+        leakProbe.start(feedbackURL: nil)
+        let watchingAfterStart = leakProbe.debugIsWatching
+        leakProbe.stop()
+        check(
+            "download-watcher-stops", watchingAfterStart && !leakProbe.debugIsWatching,
+            "start=\(watchingAfterStart) afterStop=\(leakProbe.debugIsWatching)")
         // The quick-actions bar geometry must place the bar next to the selection, not at a
         // fixed spot (verified as pure math; the live layout is confirmed visually).
         let qbPane = NSRect(x: 0, y: 0, width: 500, height: 700)

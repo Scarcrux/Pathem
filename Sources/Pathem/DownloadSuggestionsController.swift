@@ -44,6 +44,9 @@ final class DownloadSuggestionsController {
         watcher = nil
     }
 
+    /// Whether the Downloads folder is being watched (teardown-leak smoke guard).
+    var debugIsWatching: Bool { watcher != nil }
+
     private var downloadsFolder: URL {
         folderOverride
             ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first

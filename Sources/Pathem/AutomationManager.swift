@@ -53,6 +53,17 @@ final class AutomationManager {
         return outcomes
     }
 
+    /// Stop and drop every folder watcher (called on window teardown so a self-retained FSEvents
+    /// stream doesn't outlive the window). Idempotent.
+    func stopWatching() {
+        for watcher in watchers.values { watcher.stop() }
+        watchers.removeAll()
+        known.removeAll()
+    }
+
+    /// True while at least one folder is being watched (teardown-leak smoke guard).
+    var debugIsWatching: Bool { !watchers.isEmpty }
+
     private func restartWatchers() {
         for watcher in watchers.values { watcher.stop() }
         watchers.removeAll()

@@ -97,11 +97,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var diffViewer = DiffViewerController()
     lazy var bulkAttributes = BulkAttributesController()
     lazy var automationRules = AutomationRulesController()
-    lazy var automation: AutomationManager = {
+    /// Optional-backed (not `lazy var`) so teardown can stop its watchers only when it was actually
+    /// created -- touching a `lazy var` in teardown would force-instantiate a manager just to tear
+    /// it down.
+    var _automation: AutomationManager?  // internal: BVC+QuickActions.teardown() stops it
+    var automation: AutomationManager {
+        if let automation = _automation { return automation }
         let manager = AutomationManager(storeURL: Self.automationRulesURL)
         manager.onApplied = { [weak self] _ in self?.reloadBothSides() }
+        _automation = manager
         return manager
-    }()
+    }
     let sidebar = SidebarController()
     let terminal = TerminalController()
     let torrentDrawer = TorrentDrawerController()  // FileZilla-style transfer drawer at the bottom
