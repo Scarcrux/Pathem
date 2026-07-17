@@ -146,13 +146,13 @@ each of these).
 
 ### Download (notarized)
 
-Grab the latest `Pathem-vX.Y.Z-universal.zip` from
+Grab the latest `Pathem-<version>.dmg` from
 [Releases](https://github.com/Scarcrux/Pathem/releases): a universal (Apple
-Silicon + Intel), Developer ID-signed, notarized, stapled build. Unzip and drag
-`Pathem.app` to /Applications. No Gatekeeper warnings, no build step. These
-builds **update themselves** via Sparkle (App menu > Check for Updates…).
-Releases are produced automatically by the `Release` workflow when a `v*` tag is
-pushed.
+Silicon + Intel), Developer ID-signed, notarized, stapled build. Open the disk
+image and drag `Pathem.app` to Applications. No Gatekeeper warnings, no build
+step. These builds **update themselves** via Sparkle (App menu > Check for
+Updates…). Releases are produced automatically by the `Release` workflow when a
+`v*` tag is pushed.
 
 ### Build from source
 
