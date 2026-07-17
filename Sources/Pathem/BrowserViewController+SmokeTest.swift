@@ -108,6 +108,16 @@ extension BrowserViewController {
             let shown = other.isShowingViewer
             other.dismissViewer()
             check("open-in-other-pane-viewer", shown && !other.isShowingViewer, "shown=\(shown)")
+            // The view switcher sits above the overlay, so switching view mode must close the viewer
+            // (not leave a stale, detached overlay that leaks its loaded document).
+            let originalMode = other.debugViewMode
+            other.presentViewer(URL(fileURLWithPath: "/etc/hosts"))
+            let beforeSwitch = other.isShowingViewer
+            other.setViewMode(originalMode == .icon ? .list : .icon)
+            check(
+                "viewer-dismissed-on-view-switch", beforeSwitch && !other.isShowingViewer,
+                "before=\(beforeSwitch) after=\(other.isShowingViewer)")
+            other.setViewMode(originalMode)  // restore for later checks
         }
         // Track A8: the image-only pane toolbar controls (back/forward/up/sort/actions/view) carry
         // VoiceOver labels, not just tooltips.

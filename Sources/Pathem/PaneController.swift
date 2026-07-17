@@ -628,6 +628,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Inline-rename reload-safety guard: is an edit active, and a same-entries reload in place.
     var debugInlineEditActive: Bool { (content as? FileListController)?.debugInlineEditActive ?? false }
     func debugReloadContentInPlace() { content.setEntries(content.entries, preserveState: true) }
+    /// Current view mode, for the viewer-overlay-vs-view-switch smoke guard.
+    var debugViewMode: ViewFormat.ViewMode { format.viewMode }
 
     /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
     func debugToolbarAccessibilityLabeled() -> Bool {
@@ -1174,6 +1176,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     private func embedContent() {
         for sub in contentContainer.subviews { sub.removeFromSuperview() }
+        paneViewer = nil  // any content swap detaches the document-viewer overlay; drop the stale ref
         // The background picture sits behind the content, which is made transparent to reveal it.
         contentContainer.addSubview(folderBackgroundView)
         let view = content.contentView
@@ -1300,6 +1303,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     func setViewMode(_ mode: ViewFormat.ViewMode) {
         guard mode != format.viewMode else { return }
+        dismissViewer()  // the view switcher sits above the overlay; switching mode closes the viewer
         format.viewMode = mode
         if smartActive {
             // Re-apply in memory; don't persist a format rule onto the underlying
