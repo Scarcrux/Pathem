@@ -76,6 +76,19 @@ extension BrowserViewController {
             "empty-trash-folder-predicate",
             FileContextMenuController.isTrashFolder(trashDir) && !FileContextMenuController.isTrashFolder(home),
             "trash=\(FileContextMenuController.isTrashFolder(trashDir)) home=\(FileContextMenuController.isTrashFolder(home))")
+        // The preview pane routes PDFs to the PDFKit viewer (real zoom/scroll/print) and everything
+        // else to Quick Look.
+        let preview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 300, height: 400))
+        let tmpPDF = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-smoke.pdf")
+        let doc = PDFDocument()
+        doc.insert(PDFPage(), at: 0)
+        doc.write(to: tmpPDF)
+        preview.show(tmpPDF)
+        let pdfRouted = preview.debugShowingPDF
+        preview.show(URL(fileURLWithPath: "/etc/hosts"))  // a non-PDF -> Quick Look
+        let qlRouted = !preview.debugShowingPDF
+        try? FileManager.default.removeItem(at: tmpPDF)
+        check("preview-routes-pdf-vs-quicklook", pdfRouted && qlRouted, "pdf=\(pdfRouted) ql=\(qlRouted)")
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

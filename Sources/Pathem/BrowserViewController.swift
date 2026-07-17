@@ -85,7 +85,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var shelfShownConstraint: NSLayoutConstraint?
     let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
     var commanderShownConstraint: NSLayoutConstraint?
-    let previewView = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
+    let previewView = DocumentPreviewView()
     var previewVisible = false
     /// Durably pins the preview pane's width so it (and the panes) can't collapse; see
     /// togglePreviewPane(). Mirrors sidebarWidthConstraint.

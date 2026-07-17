@@ -32,7 +32,7 @@ extension BrowserViewController {
                 outerSplit.bounds.width - 300, ofDividerAt: outerSplit.arrangedSubviews.count - 2)
             updatePreview()
         } else {
-            previewView.previewItem = nil
+            previewView.show(nil)
             previewWidthConstraint?.isActive = false
             outerSplit.removeArrangedSubview(previewView)
             previewView.removeFromSuperview()
@@ -48,7 +48,7 @@ extension BrowserViewController {
     /// Point the preview at the active pane's single selected file (when visible).
     func updatePreview() {
         guard previewVisible else { return }
-        previewView.previewItem = activePane?.singleSelectedURL as NSURL?
+        previewView.show(activePane?.singleSelectedURL)
     }
 
     /// Show/hide the floating quick-actions bar for the active pane's selection, and place
