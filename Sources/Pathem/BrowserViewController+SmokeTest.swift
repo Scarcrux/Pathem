@@ -124,6 +124,23 @@ extension BrowserViewController {
         check(
             "toolbar-accessibility-labels", leftTabs.activePane?.debugToolbarAccessibilityLabeled() == true,
             "back/forward/up/sort/actions/view labeled")
+        // Track C: the reconciled translations actually load at runtime -- not just that the
+        // .strings parse. Resolve a known key through the de and ja bundles and confirm it comes
+        // back translated, catching a packaging regression that would silently hide every locale.
+        var l10nOK = true
+        var l10nDetail = ""
+        for (lang, expected) in [("de", "Öffnen"), ("ja", "開く")] {
+            if let path = pathemResourceBundle.path(forResource: lang, ofType: "lproj"),
+                let bundle = Bundle(path: path)
+            {
+                let resolved = bundle.localizedString(forKey: "common.open", value: "MISSING", table: nil)
+                if resolved != expected { l10nOK = false; l10nDetail += " \(lang)=\(resolved)" }
+            } else {
+                l10nOK = false
+                l10nDetail += " \(lang)=noBundle"
+            }
+        }
+        check("localization-loads-at-runtime", l10nOK, l10nDetail.isEmpty ? "de+ja resolve" : l10nDetail)
         // A8: the list name cell reads the clean filename to VoiceOver, not the git/tag decoration.
         if leftTabs.activePane?.entries.isEmpty == false {
             check(
