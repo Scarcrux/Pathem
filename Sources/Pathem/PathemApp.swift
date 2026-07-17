@@ -855,6 +855,7 @@ enum PathemApp {
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
         fileMenu.addItem(commandItem("Open in New Tab", "files.openInNewTab"))
+        fileMenu.addItem(commandItem("Open in Other Pane", "files.openInOtherPane"))
         fileMenu.addItem(openInEditorMenuItem())
         fileMenu.addItem(commandItem("Get Info", "files.getInfo", "i"))
         fileMenu.addItem(commandItem("Set Custom Icon…", "files.setCustomIcon"))

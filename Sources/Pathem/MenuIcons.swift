@@ -9,6 +9,7 @@ enum MenuIcons {
         switch commandID {
         case "files.open": return "arrow.up.forward.app"
         case "files.openInNewTab": return "plus.square.on.square"
+        case "files.openInOtherPane": return "rectangle.righthalf.inset.filled"
         case "files.putBack": return "arrow.uturn.backward"
         case "files.deleteImmediately": return "trash.slash"
         case "files.emptyTrash": return "trash.fill"

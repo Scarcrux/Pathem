@@ -35,7 +35,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// The default order of the menu's entries: command ids plus the two submenu tokens.
     /// Separators aren't listed; they're auto-inserted between groups (see `group`).
     static let defaultEntries: [String] = [
-        "files.open", "files.openInNewTab", "@openWith",
+        "files.open", "files.openInNewTab", "files.openInOtherPane", "@openWith",
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
         "files.getInfo", "files.share", "files.download", "files.reveal", "files.revealInPathem",
         "files.setDesktopPicture", "files.rename",
@@ -101,6 +101,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     static let hideableCommands: [(id: String, title: String)] = [
         ("files.open", L("common.open", "Open")),
         ("files.openInNewTab", L("bvc.cmd.openInNewTab", "Open in New Tab")),
+        ("files.openInOtherPane", L("bvc.cmd.openInOtherPane", "Open in Other Pane")),
         ("files.getInfo", L("list.getInfo", "Get Info")),
         ("files.download", L("list.download", "Download")),
         ("files.share", L("list.share", "Share…")),
@@ -213,6 +214,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.title = Self.newFolderWithSelectionTitle(count: urls.count)
                 case "files.openInNewTab":
                     item.isHidden = !singleFolder
+                case "files.openInOtherPane":
+                    // A folder (browse there) or a PDF/image (view in place); single selection only.
+                    item.isHidden = !(count == 1 && (singleFolder || DocumentPreviewView.isViewable(urls[0])))
                 case "files.share":
                     item.isHidden = urls.isEmpty
                 case "files.setDesktopPicture":

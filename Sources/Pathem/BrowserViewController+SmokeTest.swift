@@ -89,6 +89,19 @@ extension BrowserViewController {
         let qlRouted = !preview.debugShowingPDF
         try? FileManager.default.removeItem(at: tmpPDF)
         check("preview-routes-pdf-vs-quicklook", pdfRouted && qlRouted, "pdf=\(pdfRouted) ql=\(qlRouted)")
+        // Open in Other Pane: PDFs/images are viewable; presenting a viewer overlays the pane and
+        // dismiss clears it (so browsing returns).
+        check(
+            "viewable-predicate",
+            DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.pdf"))
+                && !DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.txt")),
+            "pdf=\(DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.pdf")))")
+        if let other = rightTabs.activePane {
+            other.presentViewer(URL(fileURLWithPath: "/etc/hosts"))
+            let shown = other.isShowingViewer
+            other.dismissViewer()
+            check("open-in-other-pane-viewer", shown && !other.isShowingViewer, "shown=\(shown)")
+        }
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

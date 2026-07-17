@@ -70,6 +70,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private var lastColorRules = ColorRules()
     private var lastFormats: (size: Preferences.SizeFormat, date: Preferences.DateDisplay)?
     private let contentContainer = NSView()
+    /// The full-pane document viewer overlay (Open in Other Pane), when showing a file.
+    private var paneViewer: PaneDocumentViewer?
     /// Shown centered below the "Couldn't read this folder" placeholder so a permission failure has
     /// an action, not just an explanation. Hidden the moment any listing lands (see displayEntries).
     private let permissionButton = NSButton(
@@ -814,6 +816,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     func descend(into entry: FileEntry) {
+        dismissViewer()  // opening something closes any document viewer overlay
         // In the Network view, an unmounted host has no real folder -- mount it instead of navigating.
         if networkHostNames.contains(entry.name) {
             onMountNetworkHost?(entry.name)
@@ -1840,9 +1843,40 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Jump to an arbitrary folder (used when restoring a layout).
     func navigate(to url: URL) {
+        dismissViewer()  // browsing away closes any open document viewer
         nav.go(to: url.standardizedFileURL)
         enterDirectory()
     }
+
+    /// Show `url` in a full-pane document viewer (PDF/image), overlaying this pane's browser until
+    /// dismissed. Used by "Open in Other Pane" so the dual-pane becomes files-plus-document.
+    func presentViewer(_ url: URL) {
+        dismissViewer()
+        let overlay = PaneDocumentViewer()
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.onDone = { [weak self] in self?.dismissViewer() }
+        contentContainer.addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+            overlay.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            overlay.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
+        ])
+        overlay.show(url)
+        paneViewer = overlay
+        containerView.window?.makeFirstResponder(overlay)
+    }
+
+    /// Close the document viewer overlay if one is open and hand focus back to the file list.
+    func dismissViewer() {
+        guard let paneViewer else { return }
+        paneViewer.removeFromSuperview()
+        self.paneViewer = nil
+        containerView.window?.makeFirstResponder(content.keyView)
+    }
+
+    /// Whether the document viewer overlay is currently showing (for the smoke check).
+    var isShowingViewer: Bool { paneViewer != nil }
 
     /// In-app "reveal": navigate to `url`'s enclosing folder and select `url` there. The
     /// pendingSelection is applied by reload() once the (off-main) enumeration completes,

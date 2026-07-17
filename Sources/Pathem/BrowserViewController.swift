@@ -694,6 +694,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         add("files.moveToOtherPane", L("bvc.cmd.moveToOtherPane", "Move to Other Pane"), enabled: hasSelection) {
             [weak self] in self?.transfer(move: true)
         }
+        add(
+            "files.openInOtherPane", L("bvc.cmd.openInOtherPane", "Open in Other Pane"),
+            enabled: { [weak self] in self?.openInOtherPaneTarget() != nil }
+        ) { [weak self] in self?.openInOtherPane() }
         add("files.copyTo", L("bvc.cmd.copyTo", "Copy To…"), enabled: hasSelection) {
             [weak self] in self?.copyOrMoveTo(move: false)
         }
@@ -2513,6 +2517,26 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     outcome.failures,
                     title: move ? L("bvc.moveFailed", "Move failed") : L("bvc.copyFailed", "Copy failed"))
             }
+        }
+    }
+
+    /// The single selected local file/folder eligible for Open in Other Pane (a folder to browse
+    /// to, or a PDF/image to view in place), when there is an other pane. Nil disables the command.
+    private func openInOtherPaneTarget() -> URL? {
+        guard otherPane != nil, let url = activePane?.singleSelectedURL else { return nil }
+        let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+        return (isDir || DocumentPreviewView.isViewable(url)) ? url : nil
+    }
+
+    /// Open the selection in the other pane: navigate there for a folder, or show a document viewer
+    /// (PDF/image) so the dual-pane becomes files-on-one-side, live-document-on-the-other.
+    func openInOtherPane() {
+        guard let other = otherPane, let url = openInOtherPaneTarget() else { NSSound.beep(); return }
+        let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+        if isDir {
+            other.navigate(to: url)
+        } else {
+            other.presentViewer(url)
         }
     }
 

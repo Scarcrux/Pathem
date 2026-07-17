@@ -107,6 +107,13 @@ final class DocumentPreviewView: NSView {
         return (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .pdf) ?? false
     }
 
+    /// Types worth opening in the other pane's viewer: PDFs and images (the rest belong in their
+    /// own app). PDFs get the PDFView; images ride the Quick Look fallback.
+    static func isViewable(_ url: URL) -> Bool {
+        if isPDF(url) { return true }
+        return (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .image) ?? false
+    }
+
     /// Whether the PDF path (not Quick Look) is currently showing -- for the smoke check.
     var debugShowingPDF: Bool { !pdfContainer.isHidden }
 
@@ -117,5 +124,69 @@ final class DocumentPreviewView: NSView {
     @objc private func printDocument() {
         guard pdfView.document != nil else { NSSound.beep(); return }
         pdfView.print(with: .shared, autoRotate: true, pageScaling: .pageScaleDownToFit)
+    }
+}
+
+/// A full-pane document viewer shown when a file is opened in the other pane: a header (filename +
+/// Done) over a `DocumentPreviewView`. Dismissed by Done, Escape, or the pane navigating away.
+@MainActor
+final class PaneDocumentViewer: NSView {
+    var onDone: (() -> Void)?
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let viewer = DocumentPreviewView()
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+
+        let header = NSView()
+        header.wantsLayer = true
+        header.layer?.backgroundColor = NSColor.underPageBackgroundColor.cgColor
+        header.translatesAutoresizingMaskIntoConstraints = false
+
+        titleLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        titleLabel.lineBreakMode = .byTruncatingMiddle
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let done = NSButton(title: L("viewer.done", "Done"), target: self, action: #selector(dismiss))
+        done.bezelStyle = .rounded
+        done.keyEquivalent = "\u{1b}"  // Escape
+        done.setAccessibilityLabel(L("viewer.done", "Done"))
+        done.translatesAutoresizingMaskIntoConstraints = false
+
+        viewer.translatesAutoresizingMaskIntoConstraints = false
+        header.addSubview(titleLabel)
+        header.addSubview(done)
+        addSubview(header)
+        addSubview(viewer)
+        NSLayoutConstraint.activate([
+            header.topAnchor.constraint(equalTo: topAnchor),
+            header.leadingAnchor.constraint(equalTo: leadingAnchor),
+            header.trailingAnchor.constraint(equalTo: trailingAnchor),
+            header.heightAnchor.constraint(equalToConstant: 34),
+            titleLabel.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 10),
+            titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            done.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -8),
+            done.centerYAnchor.constraint(equalTo: header.centerYAnchor),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: done.leadingAnchor, constant: -8),
+            viewer.topAnchor.constraint(equalTo: header.bottomAnchor),
+            viewer.leadingAnchor.constraint(equalTo: leadingAnchor),
+            viewer.trailingAnchor.constraint(equalTo: trailingAnchor),
+            viewer.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    func show(_ url: URL) {
+        titleLabel.stringValue = url.lastPathComponent
+        viewer.show(url)
+    }
+
+    @objc private func dismiss() { onDone?() }
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 { onDone?() } else { super.keyDown(with: event) }  // 53 = Escape
     }
 }
