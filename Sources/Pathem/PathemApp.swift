@@ -465,6 +465,7 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_TORRENT_LAYOUT_SHOT"] != nil {
             window.setContentSize(NSSize(width: 1100, height: 700))
             let detail = ProcessInfo.processInfo.environment["DETAIL"] != nil
+            let seedDemo = ProcessInfo.processInfo.environment["DEMO"] != nil
             var attempts = 0
             func tick() {
                 attempts += 1
@@ -472,7 +473,7 @@ enum PathemApp {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
                     return
                 }
-                browser.debugTorrentLayout(openDetail: detail, pngPath: "/tmp/torrent-layout.png")
+                browser.debugTorrentLayout(openDetail: detail, seedDemo: seedDemo, pngPath: "/tmp/torrent-layout.png")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { exit(0) }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)

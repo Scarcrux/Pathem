@@ -187,8 +187,9 @@ extension BrowserViewController {
     /// Open the torrents drawer (and, if `openDetail`, the detail overlay for a fake torrent),
     /// then dump the frames of every view in the stack and render a PNG. Diagnoses the
     /// "full black single pane" report (PATHEM_TORRENT_LAYOUT_SHOT).
-    func debugTorrentLayout(openDetail: Bool, pngPath: String) {
+    func debugTorrentLayout(openDetail: Bool, seedDemo: Bool = false, pngPath: String) {
         showTorrentsDrawer()
+        if seedDemo { torrentDrawer.debugSeedDemoTorrents() }  // populate the list for a real shot
         view.layoutSubtreeIfNeeded()
         if openDetail {
             let fake = TorrentSession.Status(

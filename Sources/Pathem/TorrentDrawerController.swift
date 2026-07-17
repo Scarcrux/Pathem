@@ -46,6 +46,40 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         apply(client.torrents)
     }
 
+    /// Stage a realistic set of torrents for a marketing screenshot -- no daemon, no network, just
+    /// display rows through the normal `apply()` path (mixed states, legal/public content), so the
+    /// drawer looks live in a capture. Used by PATHEM_TORRENT_LAYOUT_SHOT with DEMO=1.
+    func debugSeedDemoTorrents() {
+        active = true
+        apply([
+            .init(
+                infoHash: "demo1", name: "ubuntu-24.04.1-desktop-amd64.iso", totalLength: 6_114_275_328,
+                downloaded: 4_096_512_000, fractionComplete: 0.67, downloadRate: 12_400_000,
+                uploadRate: 340_000, uploaded: 512_000_000, peersConnected: 48, state: .downloading,
+                savePath: "~/Downloads", etaSeconds: 190, ratio: 0.13),
+            .init(
+                infoHash: "demo2", name: "debian-12.7.0-amd64-netinst.iso", totalLength: 660_602_880,
+                downloaded: 660_602_880, fractionComplete: 1.0, downloadRate: 0, uploadRate: 1_180_000,
+                uploaded: 1_520_000_000, peersConnected: 22, state: .seeding, savePath: "~/Downloads",
+                etaSeconds: -1, ratio: 2.30),
+            .init(
+                infoHash: "demo3", name: "blender-4.2.1-demo-scenes", totalLength: 3_221_225_472,
+                downloaded: 1_095_216_660, fractionComplete: 0.34, downloadRate: 5_100_000,
+                uploadRate: 96_000, uploaded: 64_000_000, peersConnected: 17, state: .downloading,
+                savePath: "~/Downloads", etaSeconds: 415, ratio: 0.06),
+            .init(
+                infoHash: "demo4", name: "archive.org-apollo17-hasselblad", totalLength: 8_589_934_592,
+                downloaded: 8_589_934_592, fractionComplete: 1.0, downloadRate: 0, uploadRate: 620_000,
+                uploaded: 35_000_000_000, peersConnected: 9, state: .seeding, savePath: "~/Media",
+                etaSeconds: -1, ratio: 4.10),
+            .init(
+                infoHash: "demo5", name: "fedora-workstation-40-x86_64.iso", totalLength: 2_147_483_648,
+                downloaded: 257_698_037, fractionComplete: 0.12, downloadRate: 0, uploadRate: 0,
+                uploaded: 0, peersConnected: 0, state: .paused, savePath: "~/Downloads", etaSeconds: -1,
+                ratio: 0.0),
+        ])
+    }
+
     /// Stop receiving updates (the daemon keeps running so downloads continue). Call when hidden.
     func deactivate() {
         active = false
