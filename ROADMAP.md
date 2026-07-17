@@ -88,6 +88,11 @@ download with an EdDSA-signed Sparkle appcast (so the site has a real download),
 final pass over README / LICENSE / SECURITY, then flip the repo public so the site
 starts converting. Define the user-testing exit criteria explicitly first.
 
+The go/no-go gate, QA pass, and flip sequence are drafted as a working checklist
+in **[LAUNCH_CHECKLIST.md](LAUNCH_CHECKLIST.md)** (build mechanics stay in
+**[RELEASE.md](RELEASE.md)**); review and adjust the exit-criteria thresholds
+there, then work it top to bottom when the gate opens.
+
 ### Track E -- Post-launch engineering bets
 
 - Finish dissolving the `BrowserViewController` god-object (the toolbar and split
