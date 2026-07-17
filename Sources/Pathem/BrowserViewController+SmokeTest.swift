@@ -107,6 +107,12 @@ extension BrowserViewController {
         check(
             "toolbar-accessibility-labels", leftTabs.activePane?.debugToolbarAccessibilityLabeled() == true,
             "back/forward/up/sort/actions/view labeled")
+        // A8: the list name cell reads the clean filename to VoiceOver, not the git/tag decoration.
+        if leftTabs.activePane?.entries.isEmpty == false {
+            check(
+                "cell-accessibility-clean-name", leftTabs.activePane?.debugListNameAXMatches(row: 0) == true,
+                "name cell exposes the filename")
+        }
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

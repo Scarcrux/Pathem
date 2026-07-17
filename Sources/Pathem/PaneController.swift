@@ -620,6 +620,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// not only after the async listing lands. Guards the "rows show but nothing drags" regression.
     func debugListRowsDraggable() -> Bool? { (content as? FileListController)?.debugRowsDraggable() }
 
+    /// Whether the list's name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
+    func debugListNameAXMatches(row: Int) -> Bool? {
+        (content as? FileListController)?.debugNameAXMatchesEntry(row: row)
+    }
+
     /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
     func debugToolbarAccessibilityLabeled() -> Bool {
         let labeled: [NSControl] = [backButton, forwardButton, upButton, sortButton, actionButton, viewSwitcher]

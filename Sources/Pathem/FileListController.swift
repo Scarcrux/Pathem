@@ -954,6 +954,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return tableView(tableView, pasteboardWriterForRow: first) != nil
     }
 
+    /// Whether the name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
+    func debugNameAXMatchesEntry(row: Int) -> Bool {
+        guard let index = entryIndex(forRow: row) else { return false }
+        let col = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        guard col >= 0,
+            let cell = tableView.view(atColumn: col, row: row, makeIfNecessary: true) as? NSTableCellView
+        else { return false }
+        return cell.textField?.accessibilityLabel() == entries[index].name
+    }
+
     func tableView(
         _ tableView: NSTableView, draggingSession session: NSDraggingSession,
         willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
@@ -1120,6 +1130,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                     entry.name, git: git, dots: colors, size: listFontSize,
                     nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
             }
+            // VoiceOver otherwise reads the git letter + tag-dot glyphs in the attributed name; give
+            // it the clean filename instead (A8).
+            cell.textField?.setAccessibilityLabel(entry.name)
             if underlineOnHover, row == hoveredRow, let field = cell.textField {
                 let text =
                     field.attributedStringValue.length > 0

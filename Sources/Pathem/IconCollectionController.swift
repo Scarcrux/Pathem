@@ -230,6 +230,9 @@ final class IconItem: NSCollectionViewItem {
         } else {
             label.stringValue = name
         }
+        // VoiceOver otherwise reads the attributed name's git letter + tag-dot glyphs; give it the
+        // clean filename instead (A8).
+        label.setAccessibilityLabel(name)
         updateHighlight()
 
         representedURL = thumbnailURL
