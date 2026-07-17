@@ -1,0 +1,16 @@
+{
+  "name": "Pathem",
+  "short_name": "Pathem",
+  "description": "A fast, native macOS file manager. Dual pane, keyboard driven, a million files with no lag.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0e131c",
+  "theme_color": "#0e131c",
+  "icons": [
+    { "src": "/assets/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/assets/favicon-32.png", "type": "image/png", "sizes": "32x32" },
+    { "src": "/assets/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" },
+    { "src": "/assets/icon-256.png", "type": "image/png", "sizes": "256x256", "purpose": "any maskable" }
+  ]
+}
