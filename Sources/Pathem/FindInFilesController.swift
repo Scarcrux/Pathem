@@ -40,7 +40,7 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         onSearch = search
         onOpen = open
         onReplace = replace
-        panel.title = String(format: L("find.title", "Find in %@"), folderName)
+        panel.title = String(format: L("find.inFilesTitle", "Find in %@"), folderName)
         matches = []
         statusLabel.stringValue = ""
         table.reloadData()

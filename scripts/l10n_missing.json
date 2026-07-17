@@ -1,0 +1,68 @@
+{
+  "_comment": "Translations for keys added since the last localization pass (mostly this session's PDF viewer, Open in Other Pane, flash toasts, A8 labels, Finder-favorites import). Merged with scripts/l10n_lint.py --merge. find.title is re-set to 'Advanced Find' (its key collision with the Find-in-Files panel was split into find.inFilesTitle).",
+
+  "auto.choose":                 {"fr": "Choisir…", "de": "Auswählen…", "es": "Elegir…", "ja": "選択…", "zh-Hans": "选择…"},
+
+  "bvc.cmd.importFinderFavorites": {"fr": "Importer les favoris du Finder…", "de": "Favoriten aus dem Finder importieren…", "es": "Importar favoritos del Finder…", "ja": "Finderのお気に入りを読み込む…", "zh-Hans": "从访达导入个人收藏…"},
+  "bvc.cmd.openInOtherPane":      {"fr": "Ouvrir dans l’autre volet", "de": "In anderem Bereich öffnen", "es": "Abrir en el otro panel", "ja": "他のペインで開く", "zh-Hans": "在另一窗格中打开"},
+  "bvc.cmd.share":               {"fr": "Partager…", "de": "Teilen…", "es": "Compartir…", "ja": "共有…", "zh-Hans": "共享…"},
+  "list.share":                 {"fr": "Partager…", "de": "Teilen…", "es": "Compartir…", "ja": "共有…", "zh-Hans": "共享…"},
+
+  "bvc.connectionFailedCode":    {"fr": "La connexion a échoué (code %d)", "de": "Die Verbindung ist fehlgeschlagen (Code %d)", "es": "La conexión falló (código %d)", "ja": "接続に失敗しました（コード %d）", "zh-Hans": "连接失败（代码 %d）"},
+  "pane.connectionFailedCode":   {"fr": "La connexion a échoué (code %d)", "de": "Die Verbindung ist fehlgeschlagen (Code %d)", "es": "La conexión falló (código %d)", "ja": "接続に失敗しました（コード %d）", "zh-Hans": "连接失败（代码 %d）"},
+  "bvc.deviceFailedCode":        {"fr": "La connexion à l’appareil a échoué (code %d)", "de": "Die Geräteverbindung ist fehlgeschlagen (Code %d)", "es": "La conexión con el dispositivo falló (código %d)", "ja": "デバイスへの接続に失敗しました（コード %d）", "zh-Hans": "设备连接失败（代码 %d）"},
+  "pane.deviceFailedCode":       {"fr": "La connexion à l’appareil a échoué (code %d)", "de": "Die Geräteverbindung ist fehlgeschlagen (Code %d)", "es": "La conexión con el dispositivo falló (código %d)", "ja": "デバイスへの接続に失敗しました（コード %d）", "zh-Hans": "设备连接失败（代码 %d）"},
+
+  "fda.subtitle":               {"fr": "Votre dossier personnel fonctionne désormais. Pour tout parcourir (autres utilisateurs, dossiers système et certaines données d’app), ajoutez Pathem à Accès complet au disque.", "de": "Ihr Benutzerordner funktioniert jetzt. Um alles zu durchsuchen (andere Benutzer, Systemordner und einige App-Daten), fügen Sie Pathem zum Festplattenvollzugriff hinzu.", "es": "Tu carpeta de inicio ya funciona. Para explorar todo (otros usuarios, carpetas del sistema y algunos datos de apps), añade Pathem a Acceso a disco completo.", "ja": "ホームフォルダは利用可能になりました。すべて（他のユーザ、システムフォルダ、一部のAppデータ）を参照するには、Pathemをフルディスクアクセスに追加してください。", "zh-Hans": "您的个人文件夹现在可用。要浏览所有内容（其他用户、系统文件夹和某些 App 数据），请将 Pathem 添加到完全磁盘访问权限。"},
+
+  "find.title":                 {"fr": "Recherche avancée", "de": "Erweiterte Suche", "es": "Búsqueda avanzada", "ja": "詳細検索", "zh-Hans": "高级查找"},
+  "find.inFilesTitle":          {"fr": "Rechercher dans %@", "de": "Suchen in %@", "es": "Buscar en %@", "ja": "%@内を検索", "zh-Hans": "在 %@ 中查找"},
+
+  "flash.checksum":             {"fr": "somme de contrôle", "de": "Prüfsumme", "es": "suma de verificación", "ja": "チェックサム", "zh-Hans": "校验和"},
+  "flash.name":                 {"fr": "nom", "de": "Name", "es": "nombre", "ja": "名前", "zh-Hans": "名称"},
+  "flash.path":                 {"fr": "chemin", "de": "Pfad", "es": "ruta", "ja": "パス", "zh-Hans": "路径"},
+  "flash.url":                  {"fr": "URL", "de": "URL", "es": "URL", "ja": "URL", "zh-Hans": "URL"},
+  "flash.copiedOne":            {"fr": "%@ copié", "de": "%@ kopiert", "es": "%@ copiado", "ja": "%@をコピーしました", "zh-Hans": "已复制 %@"},
+  "flash.copiedMany":           {"fr": "%d %@ copiés", "de": "%d %@ kopiert", "es": "%d %@ copiados", "ja": "%d 件の %@ をコピーしました", "zh-Hans": "已复制 %d 个 %@"},
+  "flash.notOnRemote":          {"fr": "Cette action n’est pas disponible sur une connexion distante", "de": "Diese Aktion ist bei einer entfernten Verbindung nicht verfügbar", "es": "Esa acción no está disponible en una conexión remota", "ja": "この操作はリモート接続では利用できません", "zh-Hans": "该操作在远程连接中不可用"},
+  "flash.notInSmartView":       {"fr": "Cette action nécessite un seul dossier, pas une vue de recherche", "de": "Diese Aktion benötigt einen einzelnen Ordner, keine Suchansicht", "es": "Esa acción necesita una sola carpeta, no una vista de búsqueda", "ja": "この操作には検索ビューではなく単一のフォルダが必要です", "zh-Hans": "该操作需要单个文件夹，而非搜索视图"},
+  "flash.transferBusy":         {"fr": "Un transfert est déjà en cours", "de": "Eine Übertragung läuft bereits", "es": "Ya hay una transferencia en curso", "ja": "転送はすでに実行中です", "zh-Hans": "已有传输正在进行"},
+
+  "info.toggleFailedTitle":     {"fr": "Impossible de modifier ce réglage", "de": "Diese Einstellung konnte nicht geändert werden", "es": "No se pudo cambiar ese ajuste", "ja": "その設定を変更できませんでした", "zh-Hans": "无法更改该设置"},
+
+  "menu.group.arrangeBy":       {"fr": "Trier par", "de": "Anordnen nach", "es": "Ordenar por", "ja": "並べ替え", "zh-Hans": "排列方式"},
+  "menu.group.find":            {"fr": "Rechercher", "de": "Suchen", "es": "Buscar", "ja": "検索", "zh-Hans": "查找"},
+  "menu.group.folderBackground": {"fr": "Arrière-plan du dossier", "de": "Ordnerhintergrund", "es": "Fondo de carpeta", "ja": "フォルダの背景", "zh-Hans": "文件夹背景"},
+  "menu.group.folderTools":     {"fr": "Outils de dossier", "de": "Ordnerwerkzeuge", "es": "Herramientas de carpeta", "ja": "フォルダツール", "zh-Hans": "文件夹工具"},
+  "menu.group.git":             {"fr": "Git", "de": "Git", "es": "Git", "ja": "Git", "zh-Hans": "Git"},
+  "menu.group.layoutStyle":     {"fr": "Disposition et style", "de": "Layout & Stil", "es": "Diseño y estilo", "ja": "レイアウトとスタイル", "zh-Hans": "布局与样式"},
+  "menu.group.organize":        {"fr": "Organiser", "de": "Organisieren", "es": "Organizar", "ja": "整理", "zh-Hans": "整理"},
+  "menu.group.preview":         {"fr": "Aperçu", "de": "Vorschau", "es": "Vista previa", "ja": "プレビュー", "zh-Hans": "预览"},
+  "menu.group.show":            {"fr": "Afficher", "de": "Einblenden", "es": "Mostrar", "ja": "表示", "zh-Hans": "显示"},
+  "menu.group.terminal":        {"fr": "Terminal", "de": "Terminal", "es": "Terminal", "ja": "ターミナル", "zh-Hans": "终端"},
+
+  "pane.back":                  {"fr": "Précédent", "de": "Zurück", "es": "Atrás", "ja": "戻る", "zh-Hans": "后退"},
+  "pane.forward":               {"fr": "Suivant", "de": "Vorwärts", "es": "Adelante", "ja": "進む", "zh-Hans": "前进"},
+  "pane.enclosingFolder":       {"fr": "Dossier parent", "de": "Übergeordneter Ordner", "es": "Carpeta contenedora", "ja": "上位フォルダ", "zh-Hans": "上层文件夹"},
+  "pane.viewAs":                {"fr": "Afficher en", "de": "Darstellung", "es": "Ver como", "ja": "表示形式", "zh-Hans": "显示方式"},
+  "pane.openFDA":               {"fr": "Ouvrir Accès complet au disque…", "de": "Festplattenvollzugriff öffnen…", "es": "Abrir Acceso a disco completo…", "ja": "フルディスクアクセスを開く…", "zh-Hans": "打开完全磁盘访问权限…"},
+  "pane.readFolderFailed":      {"fr": "Impossible de lire ce dossier.\nPathem a peut-être besoin de l’accès complet au disque (Réglages Système ▸ Confidentialité et sécurité ▸ Accès complet au disque).", "de": "Dieser Ordner konnte nicht gelesen werden.\nPathem benötigt möglicherweise Festplattenvollzugriff (Systemeinstellungen ▸ Datenschutz & Sicherheit ▸ Festplattenvollzugriff).", "es": "No se pudo leer esta carpeta.\nPathem puede necesitar Acceso a disco completo (Ajustes del Sistema ▸ Privacidad y seguridad ▸ Acceso a disco completo).", "ja": "このフォルダを読み込めませんでした。\nPathemにはフルディスクアクセスが必要な場合があります（システム設定 ▸ プライバシーとセキュリティ ▸ フルディスクアクセス）。", "zh-Hans": "无法读取此文件夹。\nPathem 可能需要完全磁盘访问权限（系统设置 ▸ 隐私与安全性 ▸ 完全磁盘访问权限）。"},
+
+  "preview.zoomIn":             {"fr": "Zoomer", "de": "Vergrößern", "es": "Acercar", "ja": "拡大", "zh-Hans": "放大"},
+  "preview.zoomOut":            {"fr": "Dézoomer", "de": "Verkleinern", "es": "Alejar", "ja": "縮小", "zh-Hans": "缩小"},
+  "preview.fit":                {"fr": "Ajuster à la largeur", "de": "An Breite anpassen", "es": "Ajustar al ancho", "ja": "幅に合わせる", "zh-Hans": "适合宽度"},
+  "preview.print":              {"fr": "Imprimer", "de": "Drucken", "es": "Imprimir", "ja": "プリント", "zh-Hans": "打印"},
+
+  "sidebar.importAllPresentTitle": {"fr": "Rien de nouveau à importer", "de": "Nichts Neues zu importieren", "es": "Nada nuevo que importar", "ja": "読み込む新しい項目はありません", "zh-Hans": "没有可导入的新项目"},
+  "sidebar.importAllPresentBody": {"fr": "Tous les favoris du Finder sont déjà dans votre barre latérale.", "de": "Alle Finder-Favoriten sind bereits in Ihrer Seitenleiste.", "es": "Todos los favoritos del Finder ya están en tu barra lateral.", "ja": "Finderのお気に入りはすべてすでにサイドバーにあります。", "zh-Hans": "所有访达个人收藏都已在您的边栏中。"},
+  "sidebar.importNoneTitle":    {"fr": "Aucun favori du Finder trouvé", "de": "Keine Finder-Favoriten gefunden", "es": "No se encontraron favoritos del Finder", "ja": "Finderのお気に入りが見つかりません", "zh-Hans": "未找到访达个人收藏"},
+  "sidebar.importNoneBody":     {"fr": "Pathem n’a pas pu lire les favoris de la barre latérale du Finder, ou aucun ne pointe vers des dossiers existants.", "de": "Pathem konnte die Seitenleisten-Favoriten des Finders nicht lesen, oder keiner verweist auf noch vorhandene Ordner.", "es": "Pathem no pudo leer los favoritos de la barra lateral del Finder, o ninguno apunta a carpetas que aún existan.", "ja": "PathemはFinderのサイドバーのお気に入りを読み込めなかったか、既存のフォルダを指すものがありませんでした。", "zh-Hans": "Pathem 无法读取访达边栏的个人收藏，或其中没有指向仍存在的文件夹的项目。"},
+  "sidebar.importedTitle":      {"fr": "%d favori(s) importé(s)", "de": "%d Favorit(en) importiert", "es": "%d favorito(s) importado(s)", "ja": "%d 件のお気に入りを読み込みました", "zh-Hans": "已导入 %d 个个人收藏"},
+  "sidebar.importedBody":       {"fr": "Ils ont été ajoutés à vos favoris. Faites glisser pour les réorganiser ou les renommer.", "de": "Sie wurden zu Ihren Favoriten hinzugefügt. Ziehen Sie, um sie neu anzuordnen oder umzubenennen.", "es": "Se añadieron a tus favoritos. Arrastra para reordenarlos o cambiarles el nombre.", "ja": "お気に入りに追加されました。ドラッグして並べ替えたり、名前を変更できます。", "zh-Hans": "它们已添加到您的个人收藏。拖动可重新排序或重命名。"},
+
+  "tabs.moveToOtherPane":       {"fr": "Déplacer vers l’autre volet", "de": "In anderen Bereich bewegen", "es": "Mover al otro panel", "ja": "他のペインに移動", "zh-Hans": "移动到另一窗格"},
+
+  "update.notSetUpBody":        {"fr": "Il s’agit d’une version source ou non signée. Téléchargez la dernière version notariée depuis GitHub ; ces versions se mettent à jour automatiquement.", "de": "Dies ist ein Quell- oder unsignierter Build. Laden Sie die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.", "es": "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas versiones se actualizan solas.", "ja": "これはソースまたは署名されていないビルドです。GitHubから最新の公証済みリリースをダウンロードしてください。それらのビルドは自動的に更新されます。", "zh-Hans": "这是源代码或未签名的构建版本。请从 GitHub 下载最新的已公证版本；那些版本会自动更新。"},
+
+  "viewer.done":                {"fr": "Terminé", "de": "Fertig", "es": "Aceptar", "ja": "完了", "zh-Hans": "完成"}
+}

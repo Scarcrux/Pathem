@@ -14,3 +14,9 @@ repos:
         language: system
         pass_filenames: false
         files: \.swift$
+      - id: l10n-lint
+        name: localization coverage + plutil lint
+        entry: python3 scripts/l10n_lint.py
+        language: system
+        pass_filenames: false
+        files: \.(swift|strings)$

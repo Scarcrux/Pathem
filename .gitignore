@@ -27,3 +27,7 @@ dist/
 # local secrets (never commit)
 .env
 .env.*
+
+# Python bytecode cache (l10n scripts)
+__pycache__/
+*.pyc
