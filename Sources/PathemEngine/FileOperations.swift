@@ -183,9 +183,20 @@ public enum FileOperations {
     public static func rename(_ name: String, to newName: String, in directory: URL) throws {
         let trimmed = newName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed != name else { return }
+        // A slash is the path separator (appendingPathComponent would move into a nonexistent
+        // subfolder and fail cryptically); NUL terminates a C string. Reject both with a clear error
+        // instead of a confusing move failure.
+        guard !trimmed.contains("/"), !trimmed.contains("\0") else { throw InvalidNameError(name: trimmed) }
         try FileManager.default.moveItem(
             at: directory.appendingPathComponent(name),
             to: directory.appendingPathComponent(trimmed))
+    }
+
+    public struct InvalidNameError: LocalizedError {
+        public let name: String
+        public var errorDescription: String? {
+            "“\(name)” isn’t a valid file name. A name can’t contain a slash (/)."
+        }
     }
 
     // MARK: Trash

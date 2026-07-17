@@ -44,6 +44,21 @@ import Testing
         }
     }
 
+    @Test func renameRejectsSlashInName() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try "a".data(using: .utf8)!.write(to: dir.appendingPathComponent("a.txt"))
+
+        // A slash is the path separator; reject it with InvalidNameError rather than moving the
+        // file into a nonexistent subfolder (a cryptic move failure) or leaving partial state.
+        #expect(throws: FileOperations.InvalidNameError.self) {
+            try FileOperations.rename("a.txt", to: "sub/b.txt", in: dir)
+        }
+        // The original is untouched and no stray subfolder was created.
+        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("a.txt").path))
+        #expect(!FileManager.default.fileExists(atPath: dir.appendingPathComponent("sub").path))
+    }
+
     @Test func trashThenUntrashRestores() throws {
         let dir = try tempDir()
         defer { try? FileManager.default.removeItem(at: dir) }
