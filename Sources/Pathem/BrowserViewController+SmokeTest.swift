@@ -102,6 +102,11 @@ extension BrowserViewController {
             other.dismissViewer()
             check("open-in-other-pane-viewer", shown && !other.isShowingViewer, "shown=\(shown)")
         }
+        // Track A8: the image-only pane toolbar controls (back/forward/up/sort/actions/view) carry
+        // VoiceOver labels, not just tooltips.
+        check(
+            "toolbar-accessibility-labels", leftTabs.activePane?.debugToolbarAccessibilityLabeled() == true,
+            "back/forward/up/sort/actions/view labeled")
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).
         if let sort = leftTabs.activePane?.debugSortIndicator {

@@ -620,6 +620,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// not only after the async listing lands. Guards the "rows show but nothing drags" regression.
     func debugListRowsDraggable() -> Bool? { (content as? FileListController)?.debugRowsDraggable() }
 
+    /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
+    func debugToolbarAccessibilityLabeled() -> Bool {
+        let labeled: [NSControl] = [backButton, forwardButton, upButton, sortButton, actionButton, viewSwitcher]
+        return labeled.allSatisfy { !($0.accessibilityLabel()?.isEmpty ?? true) }
+    }
+
     /// Re-key git states from the canonical repo root to the displayed folder path, so
     /// overlays match when the folder is browsed through a symlink.
     private static func remapStates(_ states: [String: GitFileState], to dir: URL)
@@ -996,9 +1002,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         containerView.layer?.borderWidth = 1
         containerView.layer?.borderColor = NSColor.separatorColor.cgColor
 
-        backButton = iconButton("chevron.backward", #selector(goBack))
-        forwardButton = iconButton("chevron.forward", #selector(goForward))
-        upButton = iconButton("chevron.up", #selector(goUp))
+        backButton = iconButton("chevron.backward", L("pane.back", "Back"), #selector(goBack))
+        forwardButton = iconButton("chevron.forward", L("pane.forward", "Forward"), #selector(goForward))
+        upButton = iconButton("chevron.up", L("pane.enclosingFolder", "Enclosing Folder"), #selector(goUp))
         buildViewSwitcher()
         buildSortButton()
         buildActionButton()
@@ -1396,16 +1402,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         return String(format: L("pane.freeSpace", "%@ free"), byteFormatter.string(fromByteCount: free))
     }
 
-    private func iconButton(_ symbol: String, _ action: Selector) -> NSButton {
+    private func iconButton(_ symbol: String, _ label: String, _ action: Selector) -> NSButton {
         let button = NSButton()
         let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
-        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
+        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)?
             .withSymbolConfiguration(config)
         button.bezelStyle = .texturedRounded
         button.setButtonType(.momentaryPushIn)
         button.imagePosition = .imageOnly
         button.target = self
         button.action = action
+        button.toolTip = label
+        button.setAccessibilityLabel(label)  // image-only, so VoiceOver needs an explicit label
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }
@@ -1458,6 +1466,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         for (index, segment) in segments.enumerated() {
             viewSwitcher.setToolTip(segment.1, forSegment: index)
         }
+        viewSwitcher.setAccessibilityLabel(L("pane.viewAs", "View As"))
         viewSwitcher.segmentStyle = .texturedRounded
         viewSwitcher.selectedSegment = segmentIndex(format.viewMode)
         viewSwitcher.translatesAutoresizingMaskIntoConstraints = false
@@ -1478,6 +1487,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         sortButton.menu = menu
         rebuildSortMenu(menu)
         sortButton.toolTip = L("pane.sortTooltip", "Sort")
+        sortButton.setAccessibilityLabel(L("pane.sortTooltip", "Sort"))
     }
 
     /// Rebuild a pull-down menu each time it opens (fresh checkmarks; the action
@@ -1501,6 +1511,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         actionButton.menu = menu
         rebuildActionMenu(menu)
         actionButton.toolTip = L("pane.actionsTooltip", "Actions")
+        actionButton.setAccessibilityLabel(L("pane.actionsTooltip", "Actions"))
     }
 
     /// A submenu of apps that can open the single selected file, plus "Other…".

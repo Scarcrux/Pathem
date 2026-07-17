@@ -316,9 +316,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             settingsButton.imagePosition = .imageLeading
         }
         collapseButton.isHidden = !compact  // the toggle is only an expand affordance, icons-only
-        collapseButton.image = NSImage(systemSymbolName: "chevron.right", accessibilityDescription: nil)?
+        collapseButton.image = NSImage(
+            systemSymbolName: "chevron.right", accessibilityDescription: L("sidebar.expandTooltip", "Expand sidebar"))?
             .withSymbolConfiguration(.init(pointSize: 18, weight: .regular))
         collapseButton.toolTip = L("sidebar.expandTooltip", "Expand sidebar")
+        collapseButton.setAccessibilityLabel(L("sidebar.expandTooltip", "Expand sidebar"))
         settingsButtonHeight?.constant = compact ? 40 : 22
         collapseButtonHeight?.constant = compact ? 32 : 24
     }
