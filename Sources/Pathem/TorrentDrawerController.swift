@@ -39,6 +39,12 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     /// Start receiving live updates. Call when the drawer becomes visible.
     func activate() {
         active = true
+        // Screenshot staging: show the demo torrents instead of connecting the daemon, so opening
+        // the drawer looks live for a Cmd-Shift-4 capture (PATHEM_DEMO_TORRENTS=1).
+        if ProcessInfo.processInfo.environment["PATHEM_DEMO_TORRENTS"] != nil {
+            debugSeedDemoTorrents()
+            return
+        }
         client.onUpdate = { [weak self] statuses in self?.apply(statuses) }
         client.onError = { [weak self] message in self?.showError(message) }
         client.startIfNeeded()
