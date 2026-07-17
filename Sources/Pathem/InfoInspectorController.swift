@@ -41,13 +41,22 @@ final class InfoInspectorController: NSObject {
         return text
     }
 
+    /// A toggle failed (usually a permissions error): revert it and say why, instead of a bare beep.
+    private func reportToggleFailure(_ sender: NSButton, _ error: Error) {
+        sender.state = sender.state == .on ? .off : .on  // revert the toggle
+        let alert = NSAlert()
+        alert.messageText = L("info.toggleFailedTitle", "Couldn’t change that setting")
+        alert.informativeText = error.localizedDescription
+        alert.alertStyle = .warning
+        alert.beginSheetModal(for: panel, completionHandler: nil)
+    }
+
     @objc private func toggleLocked(_ sender: NSButton) {
         guard let url = inspectedURL else { return }
         do {
             try FileInfo.setLocked(sender.state == .on, on: url)
         } catch {
-            sender.state = sender.state == .on ? .off : .on  // revert on failure
-            NSSound.beep()
+            reportToggleFailure(sender, error)
         }
     }
 
@@ -56,8 +65,7 @@ final class InfoInspectorController: NSObject {
         do {
             try FileMetadata.setHidesExtension(sender.state == .on, on: url)
         } catch {
-            sender.state = sender.state == .on ? .off : .on
-            NSSound.beep()
+            reportToggleFailure(sender, error)
         }
     }
 

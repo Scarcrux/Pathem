@@ -201,11 +201,11 @@ extension BrowserViewController {
         guard let error = error as? RemoteError else { return error.localizedDescription }
         switch error {
         case .unsupported(let message): return message
-        case .curl(let code, let message): return message.isEmpty ? String(format: L("bvc.curlError", "curl error %d"), code) : message
+        case .curl(let code, let message): return message.isEmpty ? String(format: L("bvc.connectionFailedCode", "The connection failed (code %d)"), code) : message
         case .curlMissing: return L("bvc.curlMissing", "curl was not found")
-        case .sftp(let code, let message): return message.isEmpty ? String(format: L("bvc.sftpError", "sftp error %d"), code) : message
+        case .sftp(let code, let message): return message.isEmpty ? String(format: L("bvc.connectionFailedCode", "The connection failed (code %d)"), code) : message
         case .sftpMissing: return L("bvc.sftpMissing", "sftp was not found")
-        case .device(let code, let message): return message.isEmpty ? String(format: L("bvc.deviceError", "device error %d"), code) : message
+        case .device(let code, let message): return message.isEmpty ? String(format: L("bvc.deviceFailedCode", "The device connection failed (code %d)"), code) : message
         case .deviceToolMissing(let tool): return String(format: L("bvc.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
         }
     }

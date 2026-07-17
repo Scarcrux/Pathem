@@ -769,13 +769,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         switch error {
         case .unsupported(let message): return message
         case .curl(let code, let message):
-            return message.isEmpty ? String(format: L("pane.curlError", "curl error %d"), code) : message
+            return message.isEmpty ? String(format: L("pane.connectionFailedCode", "The connection failed (code %d)"), code) : message
         case .curlMissing: return L("pane.curlMissing", "curl was not found")
         case .sftp(let code, let message):
-            return message.isEmpty ? String(format: L("pane.sftpError", "sftp error %d"), code) : message
+            return message.isEmpty ? String(format: L("pane.connectionFailedCode", "The connection failed (code %d)"), code) : message
         case .sftpMissing: return L("pane.sftpMissing", "sftp was not found")
         case .device(let code, let message):
-            return message.isEmpty ? String(format: L("pane.deviceError", "device error %d"), code) : message
+            return message.isEmpty ? String(format: L("pane.deviceFailedCode", "The device connection failed (code %d)"), code) : message
         case .deviceToolMissing(let tool):
             return String(format: L("pane.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
         }

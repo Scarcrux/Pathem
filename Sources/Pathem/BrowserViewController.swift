@@ -1244,7 +1244,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// true (and beeps) if blocked.
     private func blockedByRemote() -> Bool {
         if activePane?.isRemote == true {
-            NSSound.beep()
+            activePane?.flashStatus(
+                L("flash.notOnRemote", "That action isn’t available on a remote connection"), isError: true)
             return true
         }
         return false
@@ -1253,8 +1254,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Ops that need one destination folder (paste, new folder) can't run in a
     /// remote pane or a cross-folder smart-result view (there's no single "here").
     func blockedByRemoteOrSmart() -> Bool {
-        if activePane?.isRemote == true || activePane?.isShowingSmartResults == true {
-            NSSound.beep()
+        if activePane?.isRemote == true {
+            activePane?.flashStatus(
+                L("flash.notOnRemote", "That action isn’t available on a remote connection"), isError: true)
+            return true
+        }
+        if activePane?.isShowingSmartResults == true {
+            activePane?.flashStatus(
+                L("flash.notInSmartView", "That action needs a single folder, not a search view"), isError: true)
             return true
         }
         return false
