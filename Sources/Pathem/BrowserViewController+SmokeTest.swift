@@ -96,6 +96,18 @@ extension BrowserViewController {
         let qlRouted = !preview.debugShowingPDF
         try? FileManager.default.removeItem(at: tmpPDF)
         check("preview-routes-pdf-vs-quicklook", pdfRouted && qlRouted, "pdf=\(pdfRouted) ql=\(qlRouted)")
+        // An encrypted PDF loads as a non-nil but locked document; it must fall through to Quick
+        // Look (which prompts for the password), not render blank behind dead zoom/print controls.
+        let lockedPDF = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-smoke-locked.pdf")
+        let lockedDoc = PDFDocument()
+        lockedDoc.insert(PDFPage(), at: 0)
+        lockedDoc.write(
+            to: lockedPDF, withOptions: [.userPasswordOption: "x", .ownerPasswordOption: "x"])
+        let lockedPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 300, height: 400))
+        lockedPreview.show(lockedPDF)
+        let lockedRoutedToQL = !lockedPreview.debugShowingPDF
+        try? FileManager.default.removeItem(at: lockedPDF)
+        check("encrypted-pdf-falls-back-to-quicklook", lockedRoutedToQL, "showingPDF=\(lockedPreview.debugShowingPDF)")
         // Open in Other Pane: PDFs/images are viewable; presenting a viewer overlays the pane and
         // dismiss clears it (so browsing returns).
         check(

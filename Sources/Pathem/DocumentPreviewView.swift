@@ -86,9 +86,12 @@ final class DocumentPreviewView: NSView {
     }
 
     /// Show `url` in the pane: a PDFView for PDFs, else the system Quick Look preview. `nil` clears.
+    /// A corrupt or encrypted PDF (nil document, or one that loads locked) falls through to Quick
+    /// Look, which shows a corrupt file gracefully and prompts for an encrypted PDF's password --
+    /// where PDFView would just render blank behind dead zoom/print buttons.
     func show(_ url: URL?) {
         currentURL = url
-        if let url, Self.isPDF(url), let document = PDFDocument(url: url) {
+        if let url, Self.isPDF(url), let document = PDFDocument(url: url), !document.isLocked {
             pdfView.document = document
             pdfView.autoScales = true
             pdfContainer.isHidden = false
