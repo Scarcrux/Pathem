@@ -381,18 +381,34 @@ enum PathemApp {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSetBinaryRelativeFormats() }
                 }
                 if let mode {
-                    // PATHEM_MAIN_PATH picks the folder; otherwise use the fake Photos folder
-                    // in demo mode (privacy-safe for README shots) or the real ~/Pictures.
-                    if navPath == nil {
-                        let target =
-                            demoLayout?.rightStart
-                            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
-                        browser.debugNavigateActive(to: target)
+                    // Marquee-feature modes stage a whole subsystem for a screencapture; the file
+                    // view modes just switch how the active folder is shown.
+                    switch mode {
+                    case "torrent": browser.showTorrentsDrawer()  // seeds via PATHEM_DEMO_TORRENTS
+                    case "terminal":
+                        browser.toggleTerminal()
+                        // Feed a safe, non-private command so the capture shows real shell output
+                        // instead of a blank pane (the shell needs a beat to spawn first).
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                            browser.terminal.runInline(
+                                "clear && sw_vers && echo && swift --version",
+                                in: FileManager.default.homeDirectoryForCurrentUser)
+                        }
+                    case "network": browser.debugStageNetworkView()
+                    default:
+                        // PATHEM_MAIN_PATH picks the folder; otherwise the fake Photos folder in demo
+                        // mode (privacy-safe) or the real ~/Pictures.
+                        if navPath == nil {
+                            let target =
+                                demoLayout?.rightStart
+                                ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
+                            browser.debugNavigateActive(to: target)
+                        }
+                        let viewMode: ViewFormat.ViewMode =
+                            mode == "gallery"
+                            ? .gallery : (mode == "column" ? .column : (mode == "list" ? .list : .icon))
+                        browser.debugSetActiveViewMode(viewMode)
                     }
-                    let viewMode: ViewFormat.ViewMode =
-                        mode == "gallery"
-                        ? .gallery : (mode == "column" ? .column : (mode == "list" ? .list : .icon))
-                    browser.debugSetActiveViewMode(viewMode)
                 }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
                     let capture = Process()

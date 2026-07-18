@@ -221,12 +221,18 @@ extension BrowserViewController {
     /// Open the synthetic Network view (seeding a fake discovered host so both a real mount and a
     /// mountable host show) and render it (PATHEM_NETWORK_SHOT).
     func debugRenderNetworkView(to path: String) {
-        discoveredHosts = ["Studio-Mac", "living-room-nas"]
-        showNetworkView()
-        view.layoutSubtreeIfNeeded()
+        debugStageNetworkView()
         let names = activePane?.entries.map(\.name) ?? []
         print("NETWORK VIEW entries: \(names)")
         debugRender(to: path)
+    }
+
+    /// Stage the Network view with demo hosts (no render) so an outer screencapture can grab it
+    /// with real thumbnails + vibrancy (PATHEM_MAIN_MODE=network).
+    func debugStageNetworkView() {
+        discoveredHosts = ["Studio-Mac", "living-room-nas", "media-server"]
+        showNetworkView()
+        view.layoutSubtreeIfNeeded()
     }
 
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT). Set
