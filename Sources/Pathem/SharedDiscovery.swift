@@ -1,4 +1,5 @@
 import Foundation
+import PathemEngine
 
 /// Discovers SMB file-sharing computers on the local network via Bonjour
 /// (`_smb._tcp`), for the sidebar's Shared section. Names are resolved to a
@@ -49,10 +50,9 @@ final class SharedDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate
     // MARK: NetServiceDelegate (resolution)
 
     func netServiceDidResolveAddress(_ sender: NetService) {
-        // NetService.hostName is the fully-qualified Bonjour name, which ends in a trailing dot
-        // ("Studios-MacBook-Pro.local."). Passed through as-is it lands in the smb:// URL and the
-        // mount fails ("Couldn't mount ..."), so strip the root label's dot before we hand it on.
-        let host = sender.hostName.map { $0.hasSuffix(".") ? String($0.dropLast()) : $0 }
+        // Strip the trailing root-label dot NetService leaves on ("Mac.local." -> "Mac.local"),
+        // which otherwise breaks the smb:// mount. See BonjourHost.normalized (engine, unit-tested).
+        let host = sender.hostName.map { BonjourHost.normalized($0) }
         resolving.removeValue(forKey: sender)?(host)
     }
 
