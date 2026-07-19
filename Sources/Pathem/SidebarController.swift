@@ -83,6 +83,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onNetwork: (() -> Void)?
     /// Files were dropped onto the Trash: move them to the Trash.
     var onTrashFiles: ((_ urls: [URL]) -> Void)?
+    /// "Empty Trash" was chosen from the Trash item's context menu.
+    var onEmptyTrash: (() -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
@@ -1256,6 +1258,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                     add(L("sidebar.eject", "Eject"), #selector(ejectTarget))
                     menu.addItem(.separator())
                 }
+            case .trash:
+                add(L("bvc.cmd.emptyTrash", "Empty Trash"), #selector(emptyTrashTarget))
+                return  // Trash-only menu (Copy Path above, then Empty Trash)
             default:
                 break
             }
@@ -1304,6 +1309,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return parent
     }
 
+    @objc private func emptyTrashTarget() { onEmptyTrash?() }
     @objc private func renameTarget() { beginRename(menuTargetNode) }
 
     @objc private func removeTarget() {
