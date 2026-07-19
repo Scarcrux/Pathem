@@ -170,6 +170,20 @@ extension BrowserViewController {
             "pdf-shapes-roundtrip",
             shapesOK && shapeTypes.isSuperset(of: ["Square", "Circle", "Line"]),
             "ok=\(shapesOK) types=\(shapeTypes.sorted())")
+        // Text box + sticky note round-trip with the right types (FreeText, Text).
+        let textPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-text-\(UUID().uuidString).pdf")
+        let textDoc = PDFDocument()
+        textDoc.insert(PDFPage(), at: 0)
+        textDoc.write(to: textPDF)
+        let textPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+        textPreview.show(textPDF)
+        let textOK = textPreview.debugDrawTextAndSave()
+        let textTypes = Set((PDFDocument(url: textPDF)?.page(at: 0)?.annotations ?? []).map { $0.type ?? "" })
+        try? FileManager.default.removeItem(at: textPDF)
+        check(
+            "pdf-text-roundtrip", textOK && textTypes.isSuperset(of: ["FreeText", "Text"]),
+            "ok=\(textOK) types=\(textTypes.sorted())")
         // Open in Other Pane: PDFs/images are viewable; presenting a viewer overlays the pane and
         // dismiss clears it (so browsing returns).
         check(

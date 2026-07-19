@@ -358,6 +358,16 @@ final class DocumentPreviewView: NSView {
         return saveMarkup()
     }
 
+    /// Place a free-text box and a sticky note (in a legible color) and save, for the render check
+    /// (PATHEM_TEXT_TEST) of the two tools whose modal prompt can't run headlessly.
+    @discardableResult
+    func debugDrawTextAndSave() -> Bool {
+        pdfView.markupColor = .systemBlue
+        pdfView.debugAddText("Reviewed by design", at: CGPoint(x: 90, y: 660), note: false)
+        pdfView.debugAddText("Check this section", at: CGPoint(x: 90, y: 560), note: true)
+        return saveMarkup()
+    }
+
     /// Drive the markup toggle and a tool button through their real actions, for the tool-state
     /// smoke check (guards the tag-based `selectTool` mapping).
     var debugMarkupVisible: Bool { !markupBar.isHidden }

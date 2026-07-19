@@ -271,6 +271,16 @@ final class PDFMarkupView: PDFView {
     private func addTextBox(at point: CGPoint, page: PDFPage) {
         guard let text = promptForText(L("markup.enterText", "Text"), initial: ""), !text.isEmpty
         else { return }
+        place(textBoxAnnotation(text: text, at: point), on: page)
+    }
+
+    private func addNote(at point: CGPoint, page: PDFPage) {
+        guard let text = promptForText(L("markup.noteText", "Note"), initial: "") else { return }
+        place(noteAnnotation(text: text, at: point), on: page)
+    }
+
+    /// A free-text box whose top-left sits at `point` (page coordinates), sized to its text.
+    private func textBoxAnnotation(text: String, at point: CGPoint) -> PDFAnnotation {
         let font = NSFont.systemFont(ofSize: 14)
         let size = (text as NSString).size(withAttributes: [.font: font])
         let box = CGRect(
@@ -281,17 +291,20 @@ final class PDFMarkupView: PDFView {
         annotation.fontColor = markupColor
         annotation.color = .clear
         annotation.contents = text
-        page.addAnnotation(annotation)
-        registerAddUndo(annotation, page)
-        markEdited()
+        return annotation
     }
 
-    private func addNote(at point: CGPoint, page: PDFPage) {
-        guard let text = promptForText(L("markup.noteText", "Note"), initial: "") else { return }
+    /// A sticky note (icon + hidden contents) anchored at `point` (page coordinates).
+    private func noteAnnotation(text: String, at point: CGPoint) -> PDFAnnotation {
         let box = CGRect(x: point.x, y: point.y - 18, width: 18, height: 18)
         let annotation = PDFAnnotation(bounds: box, forType: .text, withProperties: nil)
         annotation.color = markupColor
         annotation.contents = text
+        return annotation
+    }
+
+    /// Add an annotation to the page, register its undo, and flag the document edited.
+    private func place(_ annotation: PDFAnnotation, on page: PDFPage) {
         page.addAnnotation(annotation)
         registerAddUndo(annotation, page)
         markEdited()
@@ -352,6 +365,15 @@ final class PDFMarkupView: PDFView {
         page.addAnnotation(annotation)
         registerAddUndo(annotation, page)
         markEdited()
+        return true
+    }
+
+    /// Place a text box / sticky note at `point` (page coordinates), bypassing the modal prompt, for
+    /// the render verification. `note == true` makes a sticky note, else a free-text box.
+    @discardableResult
+    func debugAddText(_ text: String, at point: CGPoint, note: Bool, pageIndex: Int = 0) -> Bool {
+        guard let page = document?.page(at: pageIndex) else { return false }
+        place(note ? noteAnnotation(text: text, at: point) : textBoxAnnotation(text: text, at: point), on: page)
         return true
     }
 

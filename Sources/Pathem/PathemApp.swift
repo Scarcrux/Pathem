@@ -393,6 +393,20 @@ enum PathemApp {
             exit(ok ? 0 : 1)
         }
 
+        // Bake a free-text box and a sticky note into a PDF and exit (PATHEM_TEXT_TEST=<out.pdf>), so
+        // a Quick Look render confirms the two prompt-driven tools place text where they should.
+        if let textOut = ProcessInfo.processInfo.environment["PATHEM_TEXT_TEST"] {
+            let url = URL(fileURLWithPath: textOut)
+            let doc = PDFDocument()
+            doc.insert(PDFPage(), at: 0)
+            doc.write(to: url)
+            let preview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+            preview.show(url)
+            let ok = preview.debugDrawTextAndSave()
+            print("TEXT TEST saved=\(ok) -> \(url.path)")
+            exit(ok ? 0 : 1)
+        }
+
         // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1). Navigation runs on
         // the run loop (asyncAfter), not synchronously here, or Launch Services deadlocks.
         if ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil {
