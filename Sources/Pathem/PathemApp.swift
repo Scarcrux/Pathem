@@ -385,15 +385,7 @@ enum PathemApp {
                     // view modes just switch how the active folder is shown.
                     switch mode {
                     case "torrent": browser.showTorrentsDrawer()  // seeds via PATHEM_DEMO_TORRENTS
-                    case "terminal":
-                        browser.toggleTerminal()
-                        // Feed a safe, non-private command so the capture shows real shell output
-                        // instead of a blank pane (the shell needs a beat to spawn first).
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                            browser.terminal.runInline(
-                                "clear && sw_vers && echo && swift --version",
-                                in: FileManager.default.homeDirectoryForCurrentUser)
-                        }
+                    case "terminal": browser.debugStageTerminal()  // full shell timing: PATHEM_TERMINAL_SHOT
                     case "network": browser.debugStageNetworkView()
                     default:
                         // PATHEM_MAIN_PATH picks the folder; otherwise the fake Photos folder in demo
@@ -419,6 +411,35 @@ enum PathemApp {
                     exit(0)
                 }
             }
+        }
+
+        // Live screenshot of the embedded terminal (PATHEM_TERMINAL_SHOT=1). Staged in steps with
+        // generous delays: the shell has to spawn, then run a command, then the emulator has to draw
+        // before the capture -- a single fixed delay (as PATHEM_MAIN_SHOT uses) races all three.
+        if ProcessInfo.processInfo.environment["PATHEM_TERMINAL_SHOT"] != nil {
+            window.setContentSize(NSSize(width: 1280, height: 820))
+            let number = window.windowNumber
+            var attempts = 0
+            func tick() {
+                attempts += 1
+                guard browser.layoutSettled() || attempts >= 30 else {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
+                    return
+                }
+                browser.debugStageTerminal()  // show + fixed strip; shell starts
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
+                    browser.debugRunTerminalDemo()  // shell has spawned; run the demo command
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
+                        let capture = Process()  // command has printed and drawn; capture
+                        capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                        capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/terminal-shot.png"]
+                        try? capture.run()
+                        capture.waitUntilExit()
+                        exit(0)
+                    }
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: tick)
         }
 
         // Live screenshot of the real Settings window (PATHEM_SETTINGS_SHOT=1).

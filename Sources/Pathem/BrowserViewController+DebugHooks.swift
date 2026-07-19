@@ -235,6 +235,27 @@ extension BrowserViewController {
         view.layoutSubtreeIfNeeded()
     }
 
+    /// Stage the terminal for a screencapture (PATHEM_TERMINAL_SHOT). Shows it, then deterministically
+    /// gives it a fixed bottom strip -- the shipping sizeTerminalDrawer no-ops when the split hasn't
+    /// laid out yet, which is what let the terminal grab the whole window in a headless shot. The
+    /// caller must let the shell spawn before calling debugRunTerminalDemo, then let it render.
+    func debugStageTerminal() {
+        view.layoutSubtreeIfNeeded()
+        if terminal.view.isHidden { toggleTerminal() }  // reveals + starts the shell
+        view.layoutSubtreeIfNeeded()
+        let height = vSplit.bounds.height
+        if height > 340 { vSplit.setPosition(height - 300, ofDividerAt: 0) }  // 300px terminal strip
+        view.layoutSubtreeIfNeeded()
+    }
+
+    /// Run a safe, non-private command so the terminal capture shows real output instead of a bare
+    /// prompt. Called after the shell has had a beat to spawn.
+    func debugRunTerminalDemo() {
+        terminal.runInline(
+            "clear && sw_vers && echo && swift --version",
+            in: FileManager.default.homeDirectoryForCurrentUser)
+    }
+
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT). Set
     /// PATHEM_SIDEBAR_SELECT=<row> to highlight a row first, to inspect the selection style.
     func debugRenderSidebar(to path: String) {
