@@ -38,6 +38,7 @@ final class PDFMarkupView: PDFView {
     private var dragStartPage: PDFPage?
     private var dragStartPoint: CGPoint = .zero
     private var liveAnnotation: PDFAnnotation?  // the shape/ink being previewed mid-drag
+    private var hasDraggedFar = false  // did the pointer travel enough to count as a real drag?
     private var movingAnnotation: PDFAnnotation?
     private var moveGrabOffset: CGSize = .zero
     private var moveOriginalOrigin: CGPoint = .zero
@@ -117,6 +118,7 @@ final class PDFMarkupView: PDFView {
         let pagePoint = convert(viewPoint, to: page)
         dragStartPage = page
         dragStartPoint = pagePoint
+        hasDraggedFar = false
 
         switch activeTool {
         case .none:
@@ -162,6 +164,9 @@ final class PDFMarkupView: PDFView {
             return
         }
 
+        if abs(pagePoint.x - dragStartPoint.x) > 3 || abs(pagePoint.y - dragStartPoint.y) > 3 {
+            hasDraggedFar = true
+        }
         if activeTool.isFreehand {
             freehandPoints.append(pagePoint)
         }
@@ -186,13 +191,15 @@ final class PDFMarkupView: PDFView {
         // on the page, so it must be either registered or removed -- never left as a stray.
         if let live = liveAnnotation, let page = dragStartPage {
             liveAnnotation = nil
-            // Discard a click / sub-pixel jitter that produced a degenerate (dot-sized) shape rather
-            // than permanently adding an invisible annotation the user must hunt down and undo.
-            if live.bounds.width < 3, live.bounds.height < 3 {
-                page.removeAnnotation(live)
-            } else {
+            // Discard a click / sub-pixel jitter rather than permanently adding a tiny stray
+            // annotation. Gate on how far the pointer actually travelled, not the annotation bounds:
+            // shapes pad their bounds by the line width and ink insets too, so a bounds test would let
+            // a near-zero drag through.
+            if hasDraggedFar {
                 registerAddUndo(live, page)
                 markEdited()
+            } else {
+                page.removeAnnotation(live)
             }
             return
         }
