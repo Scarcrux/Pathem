@@ -339,6 +339,14 @@ final class DocumentPreviewView: NSView {
         return saveMarkup()
     }
 
+    /// Draw an ink stroke through `points` (page coordinates) and save, for the ink coordinate-space
+    /// render check (PATHEM_INK_TEST).
+    @discardableResult
+    func debugInkAndSave(points: [CGPoint]) -> Bool {
+        guard pdfView.debugAddInk(points) != nil else { return false }
+        return saveMarkup()
+    }
+
     /// Drive the markup toggle and a tool button through their real actions, for the tool-state
     /// smoke check (guards the tag-based `selectTool` mapping).
     var debugMarkupVisible: Bool { !markupBar.isHidden }

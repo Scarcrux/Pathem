@@ -134,6 +134,26 @@ extension BrowserViewController {
         check(
             "markup-tool-toggle", barShown && armed && disarmed,
             "bar=\(barShown) armed=\(armed) disarmed=\(disarmed)")
+        // Freehand ink round-trips with correct geometry: draw an "L" and confirm the reloaded ink
+        // annotation spans the input points (guards the bounds-relative path fix; absolute page
+        // coordinates put the stroke off-page and it rendered blank).
+        let inkPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-ink-\(UUID().uuidString).pdf")
+        let inkDoc = PDFDocument()
+        inkDoc.insert(PDFPage(), at: 0)
+        inkDoc.write(to: inkPDF)
+        let inkPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+        inkPreview.show(inkPDF)
+        let inkedOK = inkPreview.debugInkAndSave(points: [
+            CGPoint(x: 120, y: 680), CGPoint(x: 120, y: 400), CGPoint(x: 420, y: 400),
+        ])
+        let inkBounds =
+            (PDFDocument(url: inkPDF)?.page(at: 0)?.annotations.first { $0.type == "Ink" })?.bounds
+            ?? .zero
+        try? FileManager.default.removeItem(at: inkPDF)
+        check(
+            "pdf-ink-roundtrips", inkedOK && inkBounds.width > 250 && inkBounds.height > 250,
+            "ok=\(inkedOK) bounds=\(inkBounds)")
         // Open in Other Pane: PDFs/images are viewable; presenting a viewer overlays the pane and
         // dismiss clears it (so browsing returns).
         check(

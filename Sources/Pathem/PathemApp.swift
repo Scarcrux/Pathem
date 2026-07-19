@@ -1,5 +1,6 @@
 import AVFoundation
 import AppKit
+import PDFKit
 import PathemEngine
 import PathemTerminal
 
@@ -359,6 +360,23 @@ enum PathemApp {
                     exit(0)
                 }
             }
+        }
+
+        // Bake an ink stroke of known shape into a PDF and exit (PATHEM_INK_TEST=<out.pdf>), so a
+        // Quick Look render can confirm freehand ink lands where the input points are (page
+        // coordinates, bottom-up). The stroke traces an "L": top-left, down, then right.
+        if let inkOut = ProcessInfo.processInfo.environment["PATHEM_INK_TEST"] {
+            let url = URL(fileURLWithPath: inkOut)
+            let doc = PDFDocument()
+            doc.insert(PDFPage(), at: 0)
+            doc.write(to: url)
+            let preview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+            preview.show(url)
+            let ok = preview.debugInkAndSave(points: [
+                CGPoint(x: 120, y: 680), CGPoint(x: 120, y: 400), CGPoint(x: 420, y: 400),
+            ])
+            print("INK TEST saved=\(ok) -> \(url.path)")
+            exit(ok ? 0 : 1)
         }
 
         // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1). Navigation runs on

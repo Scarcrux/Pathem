@@ -228,8 +228,14 @@ final class PDFMarkupView: PDFView {
         path.lineWidth = width
         path.lineJoinStyle = .round
         path.lineCapStyle = .round
-        path.move(to: points[0])
-        for point in points.dropFirst() { path.line(to: point) }
+        // PDFKit draws an ink path relative to the annotation's bounds origin, so the page-space
+        // points must be translated into bounds-local space -- otherwise the stroke lands off-page
+        // (bounds.origin + point) and never renders.
+        let origin = box.origin
+        path.move(to: CGPoint(x: points[0].x - origin.x, y: points[0].y - origin.y))
+        for point in points.dropFirst() {
+            path.line(to: CGPoint(x: point.x - origin.x, y: point.y - origin.y))
+        }
         annotation.add(path)
         return annotation
     }
@@ -316,6 +322,19 @@ final class PDFMarkupView: PDFView {
     }
 
     // MARK: Test hooks
+
+    /// Draw a freehand ink stroke through `points` (page coordinates) on page `pageIndex`, exactly as
+    /// a drag would, for the coordinate-space verification. Returns the resulting annotation bounds.
+    @discardableResult
+    func debugAddInk(_ points: [CGPoint], pageIndex: Int = 0) -> CGRect? {
+        guard let page = document?.page(at: pageIndex),
+            let annotation = inkAnnotation(points: points, color: markupColor, width: lineWidth)
+        else { return nil }
+        page.addAnnotation(annotation)
+        registerAddUndo(annotation, page)
+        markEdited()
+        return annotation.bounds
+    }
 
     /// Add a highlight over `rect` on page `pageIndex` exactly as the toolbar would, for the
     /// save/reload round-trip smoke check. Returns false if the page is missing.
