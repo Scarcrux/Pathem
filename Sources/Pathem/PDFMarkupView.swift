@@ -336,6 +336,25 @@ final class PDFMarkupView: PDFView {
         return annotation.bounds
     }
 
+    /// Add a shape / line / arrow between two page-space points, exactly as a drag would, for the
+    /// render verification. Returns false for a non-shape tool or a missing page.
+    @discardableResult
+    func debugAddShape(_ tool: Tool, from a: CGPoint, to b: CGPoint, pageIndex: Int = 0) -> Bool {
+        guard let page = document?.page(at: pageIndex) else { return false }
+        let annotation: PDFAnnotation
+        switch tool {
+        case .rectangle: annotation = shapeAnnotation(.square, from: a, to: b)
+        case .oval: annotation = shapeAnnotation(.circle, from: a, to: b)
+        case .line: annotation = lineAnnotation(from: a, to: b, arrow: false)
+        case .arrow: annotation = lineAnnotation(from: a, to: b, arrow: true)
+        default: return false
+        }
+        page.addAnnotation(annotation)
+        registerAddUndo(annotation, page)
+        markEdited()
+        return true
+    }
+
     /// Add a highlight over `rect` on page `pageIndex` exactly as the toolbar would, for the
     /// save/reload round-trip smoke check. Returns false if the page is missing.
     @discardableResult

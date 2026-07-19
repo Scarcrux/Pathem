@@ -347,6 +347,17 @@ final class DocumentPreviewView: NSView {
         return saveMarkup()
     }
 
+    /// Draw one of each shape / line / arrow at distinct known spots and save, for the render check
+    /// (PATHEM_MARKUP_TEST) that confirms every modal tool lands where its drag would.
+    @discardableResult
+    func debugDrawShapesAndSave() -> Bool {
+        pdfView.debugAddShape(.rectangle, from: CGPoint(x: 80, y: 650), to: CGPoint(x: 250, y: 720))
+        pdfView.debugAddShape(.oval, from: CGPoint(x: 320, y: 650), to: CGPoint(x: 500, y: 720))
+        pdfView.debugAddShape(.line, from: CGPoint(x: 80, y: 560), to: CGPoint(x: 500, y: 560))
+        pdfView.debugAddShape(.arrow, from: CGPoint(x: 80, y: 480), to: CGPoint(x: 420, y: 480))
+        return saveMarkup()
+    }
+
     /// Drive the markup toggle and a tool button through their real actions, for the tool-state
     /// smoke check (guards the tag-based `selectTool` mapping).
     var debugMarkupVisible: Bool { !markupBar.isHidden }

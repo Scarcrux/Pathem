@@ -379,6 +379,20 @@ enum PathemApp {
             exit(ok ? 0 : 1)
         }
 
+        // Bake one of each shape / line / arrow into a PDF and exit (PATHEM_MARKUP_TEST=<out.pdf>),
+        // so a Quick Look render confirms every modal tool lands where its drag would.
+        if let shapesOut = ProcessInfo.processInfo.environment["PATHEM_MARKUP_TEST"] {
+            let url = URL(fileURLWithPath: shapesOut)
+            let doc = PDFDocument()
+            doc.insert(PDFPage(), at: 0)
+            doc.write(to: url)
+            let preview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+            preview.show(url)
+            let ok = preview.debugDrawShapesAndSave()
+            print("MARKUP TEST saved=\(ok) -> \(url.path)")
+            exit(ok ? 0 : 1)
+        }
+
         // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1). Navigation runs on
         // the run loop (asyncAfter), not synchronously here, or Launch Services deadlocks.
         if ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil {

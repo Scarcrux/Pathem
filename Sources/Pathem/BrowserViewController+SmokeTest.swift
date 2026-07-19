@@ -154,6 +154,22 @@ extension BrowserViewController {
         check(
             "pdf-ink-roundtrips", inkedOK && inkBounds.width > 250 && inkBounds.height > 250,
             "ok=\(inkedOK) bounds=\(inkBounds)")
+        // Shapes / line / arrow round-trip with the right annotation types (rectangle -> Square,
+        // oval -> Circle, line and arrow -> Line).
+        let shapesPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-shapes-\(UUID().uuidString).pdf")
+        let shapesDoc = PDFDocument()
+        shapesDoc.insert(PDFPage(), at: 0)
+        shapesDoc.write(to: shapesPDF)
+        let shapesPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+        shapesPreview.show(shapesPDF)
+        let shapesOK = shapesPreview.debugDrawShapesAndSave()
+        let shapeTypes = Set((PDFDocument(url: shapesPDF)?.page(at: 0)?.annotations ?? []).map { $0.type ?? "" })
+        try? FileManager.default.removeItem(at: shapesPDF)
+        check(
+            "pdf-shapes-roundtrip",
+            shapesOK && shapeTypes.isSuperset(of: ["Square", "Circle", "Line"]),
+            "ok=\(shapesOK) types=\(shapeTypes.sorted())")
         // Open in Other Pane: PDFs/images are viewable; presenting a viewer overlays the pane and
         // dismiss clears it (so browsing returns).
         check(
