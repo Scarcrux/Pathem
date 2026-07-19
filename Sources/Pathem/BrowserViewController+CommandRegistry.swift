@@ -27,6 +27,10 @@ extension BrowserViewController {
             [weak self] in self?.transfer(move: true)
         }
         add(
+            "files.openInThisPane", L("bvc.cmd.openInThisPane", "Open in This Pane"),
+            enabled: { [weak self] in self?.openInThisPaneTarget() != nil }
+        ) { [weak self] in self?.openInThisPane() }
+        add(
             "files.openInOtherPane", L("bvc.cmd.openInOtherPane", "Open in Other Pane"),
             enabled: { [weak self] in self?.openInOtherPaneTarget() != nil }
         ) { [weak self] in self?.openInOtherPane() }

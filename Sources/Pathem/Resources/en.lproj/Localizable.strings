@@ -224,6 +224,7 @@
 "bvc.cmd.openConnectionsInNewTab" = "Open Connections in a New Tab";
 "bvc.cmd.openInNewTab" = "Open in New Tab";
 "bvc.cmd.openInOtherPane" = "Open in Other Pane";
+"bvc.cmd.openInThisPane" = "Open in This Pane";
 "bvc.cmd.openTerminalHere" = "Open Terminal Here";
 "bvc.cmd.openWorkspace" = "Open Workspace…";
 "bvc.cmd.organize" = "Organize Folder…";

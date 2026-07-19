@@ -1432,6 +1432,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// The single selected viewable file (PDF/image) for Open in This Pane. Nil disables the command.
+    func openInThisPaneTarget() -> URL? {
+        guard let url = activePane?.singleSelectedURL, DocumentPreviewView.isViewable(url) else { return nil }
+        return url
+    }
+
+    /// View a supported file (PDF/image) in the active pane itself, without launching another app.
+    func openInThisPane() {
+        guard let pane = activePane, let url = openInThisPaneTarget() else { NSSound.beep(); return }
+        pane.presentViewer(url)
+    }
+
     func transfer(move: Bool) {
         if blockedByRemote() { return }
         guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op

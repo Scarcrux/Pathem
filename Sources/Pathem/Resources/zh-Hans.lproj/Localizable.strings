@@ -224,6 +224,7 @@
 "bvc.cmd.openConnectionsInNewTab" = "在新标签页中打开连接";
 "bvc.cmd.openInNewTab" = "在新标签页中打开";
 "bvc.cmd.openInOtherPane" = "在另一窗格中打开";
+"bvc.cmd.openInThisPane" = "在此窗格中打开";
 "bvc.cmd.openTerminalHere" = "在此处打开终端";
 "bvc.cmd.openWorkspace" = "打开工作空间…";
 "bvc.cmd.organize" = "整理文件夹…";

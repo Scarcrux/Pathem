@@ -224,6 +224,7 @@
 "bvc.cmd.openConnectionsInNewTab" = "接続を新規タブで開く";
 "bvc.cmd.openInNewTab" = "新規タブで開く";
 "bvc.cmd.openInOtherPane" = "他のペインで開く";
+"bvc.cmd.openInThisPane" = "このペインで開く";
 "bvc.cmd.openTerminalHere" = "ここでターミナルを開く";
 "bvc.cmd.openWorkspace" = "ワークスペースを開く…";
 "bvc.cmd.organize" = "フォルダを整理…";
