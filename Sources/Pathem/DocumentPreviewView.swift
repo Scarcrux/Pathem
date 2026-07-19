@@ -320,10 +320,15 @@ final class DocumentPreviewView: NSView {
     @objc func saveMarkup() -> Bool {
         guard let url = currentURL, let document = pdfView.document else { return false }
         guard document.write(to: url) else {
-            let alert = NSAlert()
-            alert.messageText = L("markup.saveFailed", "Couldn't save the PDF.")
-            alert.informativeText = url.path
-            alert.runModal()
+            // Only surface a modal when actually on screen; the headless render/test harness runs this
+            // view with no window, where runModal() would block the process forever instead of letting
+            // the caller see the false return and exit.
+            if window != nil {
+                let alert = NSAlert()
+                alert.messageText = L("markup.saveFailed", "Couldn't save the PDF.")
+                alert.informativeText = url.path
+                alert.runModal()
+            }
             return false
         }
         isEdited = false
