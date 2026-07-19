@@ -1891,9 +1891,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         containerView.window?.makeFirstResponder(overlay)
     }
 
-    /// Close the document viewer overlay if one is open and hand focus back to the file list.
+    /// Close the document viewer overlay if one is open and hand focus back to the file list. Offers
+    /// to save unsaved markup first, so browsing away / switching view mode / opening another file
+    /// doesn't silently drop annotations. (The Done button already offered; that clears the edited
+    /// flag, so this doesn't prompt twice.)
     func dismissViewer() {
         guard let paneViewer else { return }
+        paneViewer.prepareToClose()
         paneViewer.removeFromSuperview()
         self.paneViewer = nil
         containerView.window?.makeFirstResponder(content.keyView)

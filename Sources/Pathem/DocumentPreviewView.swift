@@ -22,6 +22,19 @@ final class DocumentPreviewView: NSView {
     private let pdfContainer = NSView()
     private var currentURL: URL?
     private var isEdited = false
+    /// Whether markup (annotation + save) is offered. Off for the narrow docked preview -- it's a
+    /// read-only glance, so it never enters an edited state and never prompts to save on navigation;
+    /// the full-pane viewer turns it on. Hides the Markup toggle and disarms any active tool.
+    var markupEnabled = false {
+        didSet {
+            markupToggle.isHidden = !markupEnabled
+            if !markupEnabled {
+                markupToggle.state = .off
+                markupBar.isHidden = true
+                pdfView.activeTool = .none
+            }
+        }
+    }
     /// The modal-tool buttons, keyed so the active one can draw pressed.
     private var toolButtons: [PDFMarkupView.Tool: NSButton] = [:]
 
@@ -76,6 +89,7 @@ final class DocumentPreviewView: NSView {
         markupToggle.action = #selector(toggleMarkup)
         markupToggle.toolTip = L("preview.markup", "Markup")
         markupToggle.setAccessibilityLabel(L("preview.markup", "Markup"))
+        markupToggle.isHidden = true  // shown only when markupEnabled is set (the full-pane viewer)
         controls.addArrangedSubview(markupToggle)
 
         saveButton.image = NSImage(
@@ -317,17 +331,24 @@ final class DocumentPreviewView: NSView {
         return true
     }
 
-    /// When leaving an edited document, ask whether to save. There is no Cancel: navigation has
-    /// already been decided by the caller, so the choice is only Save or Discard.
-    private func offerToSaveIfEdited() {
-        guard isEdited, currentURL != nil else { return }
+    /// When leaving an edited document, ask whether to save. Returns true when it's safe to proceed
+    /// with the close/navigation (saved, discarded, or nothing to save), and false only when the user
+    /// chose Save but the write failed -- so the caller can keep the document open rather than lose
+    /// the markup. Nothing-to-save returns true immediately (no modal), so routine navigation of a
+    /// clean document never prompts.
+    @discardableResult
+    func offerToSaveIfEdited() -> Bool {
+        guard isEdited, currentURL != nil else { return true }
         let alert = NSAlert()
         alert.messageText = L("markup.saveChanges", "Save your markup?")
         alert.informativeText = currentURL?.lastPathComponent ?? ""
         alert.addButton(withTitle: L("preview.save", "Save"))
         alert.addButton(withTitle: L("markup.discard", "Discard"))
-        if alert.runModal() == .alertFirstButtonReturn { saveMarkup() }
+        if alert.runModal() == .alertFirstButtonReturn {
+            guard saveMarkup() else { return false }  // save failed: don't discard the markup
+        }
         isEdited = false
+        return true
     }
 
     // MARK: Test hooks
@@ -417,6 +438,7 @@ final class PaneDocumentViewer: NSView {
         super.init(frame: frameRect)
         wantsLayer = true
         layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        viewer.markupEnabled = true  // the full-pane viewer is where markup + save live
 
         let header = NSView()
         header.wantsLayer = true
@@ -470,9 +492,17 @@ final class PaneDocumentViewer: NSView {
         viewer.debugAddSampleMarkup()
     }
 
-    @objc private func dismiss() { onDone?() }
+    /// Close the viewer, first offering to save unsaved markup. If the user picks Save and it fails,
+    /// stay open so the annotations aren't lost.
+    @objc private func dismiss() {
+        if viewer.offerToSaveIfEdited() { onDone?() }
+    }
+
+    /// Offer to save before an incidental teardown (browsing away, view-mode switch). Called by
+    /// PaneController.dismissViewer; a no-op when there's nothing unsaved.
+    func prepareToClose() { viewer.offerToSaveIfEdited() }
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { onDone?() } else { super.keyDown(with: event) }  // 53 = Escape
+        if event.keyCode == 53 { dismiss() } else { super.keyDown(with: event) }  // 53 = Escape
     }
 }

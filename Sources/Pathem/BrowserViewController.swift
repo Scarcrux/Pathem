@@ -1905,6 +1905,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func openExternalFolder(_ url: URL) {
         var isDir: ObjCBool = false
         guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else { return }
+        // Bring the window up first: on a cold Finder-launch open, presentViewer's makeFirstResponder
+        // is a no-op until the window is attached, which would leave the viewer overlay inert.
+        view.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
         if isDir.boolValue {
             activePane?.navigate(to: url)
         } else if url.pathExtension.lowercased() == "torrent" {
@@ -1917,8 +1921,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         } else {
             activePane?.reveal(url)  // any other file: show it in its folder
         }
-        view.window?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
 }
