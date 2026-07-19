@@ -1909,6 +1909,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             activePane?.navigate(to: url)
         } else if url.pathExtension.lowercased() == "torrent" {
             addTorrentToPanel(url)  // a .torrent opened from Finder goes straight into the Torrents panel
+        } else if DocumentPreviewView.isViewable(url) {
+            // A PDF/image opened from Finder (e.g. with Pathem as its default app): show it in its
+            // folder and present the built-in viewer, so double-clicking actually views the file.
+            activePane?.reveal(url)
+            activePane?.presentViewer(url)
         } else {
             activePane?.reveal(url)  // any other file: show it in its folder
         }

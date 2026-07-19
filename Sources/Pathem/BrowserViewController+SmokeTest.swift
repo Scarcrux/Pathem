@@ -836,6 +836,17 @@ extension BrowserViewController {
         openExternalFolder(openDir)
         let navigated = activePane?.currentURL.standardizedFileURL == openDir.standardizedFileURL
         check("open-external-folder", navigated, "at=\(activePane?.currentURL.lastPathComponent ?? "nil")")
+        // Opening a viewable file (Pathem as the default app for a PDF/image) presents the built-in
+        // viewer, not just a reveal.
+        let openPDF = openDir.appendingPathComponent("opened.pdf")
+        try? FileManager.default.createDirectory(at: openDir, withIntermediateDirectories: true)
+        let openDoc = PDFDocument()
+        openDoc.insert(PDFPage(), at: 0)
+        openDoc.write(to: openPDF)
+        openExternalFolder(openPDF)
+        check("open-viewable-presents-viewer", activePane?.isShowingViewer == true,
+            "showing=\(activePane?.isShowingViewer == true)")
+        activePane?.dismissViewer()
         try? FileManager.default.removeItem(at: openDir)
         // Regression (LAST -- it swaps the active pane's view mode): a view-mode swap builds a fresh
         // content view, and its rows must stay draggable. directoryURL -- which each list row
