@@ -393,6 +393,20 @@ enum PathemApp {
             exit(ok ? 0 : 1)
         }
 
+        // Bake a tastefully annotated demo PDF and exit (PATHEM_MARKUP_RENDER=<out.pdf>), for a
+        // marketing figure of PDF markup. Quick Look (qlmanage) renders the result to a PNG; no
+        // Screen Recording needed.
+        if let renderOut = ProcessInfo.processInfo.environment["PATHEM_MARKUP_RENDER"] {
+            let url = URL(fileURLWithPath: renderOut)
+            let doc = DebugDemoPDF.write()
+            if let data = try? Data(contentsOf: doc) { try? data.write(to: url) }
+            let preview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
+            preview.show(url)
+            let ok = preview.debugAddSampleMarkupAndSave()
+            print("MARKUP RENDER saved=\(ok) -> \(url.path)")
+            exit(ok ? 0 : 1)
+        }
+
         // Bake a free-text box and a sticky note into a PDF and exit (PATHEM_TEXT_TEST=<out.pdf>), so
         // a Quick Look render confirms the two prompt-driven tools place text where they should.
         if let textOut = ProcessInfo.processInfo.environment["PATHEM_TEXT_TEST"] {

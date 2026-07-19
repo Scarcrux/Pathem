@@ -358,6 +358,36 @@ final class DocumentPreviewView: NSView {
         return saveMarkup()
     }
 
+    /// Lay a tasteful set of annotations over the shown document (a highlight anchored to real text,
+    /// plus a margin note and an arrow pointing at it) for the marketing shot, so the viewer reads as
+    /// markup in use. Anchoring to a found phrase keeps the highlight translucent and on the line
+    /// instead of an opaque bar over blank space.
+    func debugAddSampleMarkup() {
+        guard let document = pdfView.document, let page = document.page(at: 0),
+            let match = document.findString("content-addressed", withOptions: .caseInsensitive).first
+        else { return }
+        pdfView.markupColor = .systemYellow
+        for line in match.selectionsByLine() {
+            pdfView.debugAddHighlight(line.bounds(for: page))
+        }
+        let target = match.bounds(for: page)
+        pdfView.markupColor = .systemRed
+        pdfView.debugAddShape(
+            .arrow, from: CGPoint(x: target.maxX + 108, y: target.midY + 46),
+            to: CGPoint(x: target.maxX + 6, y: target.midY))
+        pdfView.markupColor = .systemBlue
+        pdfView.debugAddText(
+            "verify this", at: CGPoint(x: target.maxX + 84, y: target.midY + 58), note: false)
+        pdfView.markupColor = .systemYellow  // leave the color well on the default
+    }
+
+    /// Add the sample markup and save, for the marketing-figure render (PATHEM_MARKUP_RENDER).
+    @discardableResult
+    func debugAddSampleMarkupAndSave() -> Bool {
+        debugAddSampleMarkup()
+        return saveMarkup()
+    }
+
     /// Place a free-text box and a sticky note (in a legible color) and save, for the render check
     /// (PATHEM_TEXT_TEST) of the two tools whose modal prompt can't run headlessly.
     @discardableResult
@@ -440,10 +470,12 @@ final class PaneDocumentViewer: NSView {
         viewer.show(url)
     }
 
-    /// Turn on markup mode and arm the Draw tool, for the marquee shot (PATHEM_MAIN_MODE=markup).
+    /// Turn on markup mode, arm the Draw tool, and lay down sample annotations, for the marquee shot
+    /// (PATHEM_MAIN_MODE=markup).
     func debugEnableMarkup() {
         viewer.debugToggleMarkup(true)
         viewer.debugPickTool(.draw)
+        viewer.debugAddSampleMarkup()
     }
 
     @objc private func dismiss() { onDone?() }
