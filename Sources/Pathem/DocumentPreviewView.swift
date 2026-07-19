@@ -358,26 +358,18 @@ final class DocumentPreviewView: NSView {
         return saveMarkup()
     }
 
-    /// Lay a tasteful set of annotations over the shown document (a highlight anchored to real text,
-    /// plus a margin note and an arrow pointing at it) for the marketing shot, so the viewer reads as
-    /// markup in use. Anchoring to a found phrase keeps the highlight translucent and on the line
-    /// instead of an opaque bar over blank space.
+    /// Lay a tasteful set of annotations over the shown document (a highlight over a body line, an
+    /// arrow pointing at it, and a margin sticky note) for the marketing shot, so the viewer reads as
+    /// markup in use. Coordinates are tuned to the demo brief's second body line so the highlight
+    /// lands on text (translucent), not an opaque bar over blank space -- this reproduces the shipped
+    /// view-markup.webp figure. Keep it in sync with that asset if the demo text changes.
     func debugAddSampleMarkup() {
-        guard let document = pdfView.document, let page = document.page(at: 0),
-            let match = document.findString("content-addressed", withOptions: .caseInsensitive).first
-        else { return }
         pdfView.markupColor = .systemYellow
-        for line in match.selectionsByLine() {
-            pdfView.debugAddHighlight(line.bounds(for: page))
-        }
-        let target = match.bounds(for: page)
+        pdfView.debugAddHighlight(CGRect(x: 62, y: 636, width: 486, height: 16))  // over a full body line
         pdfView.markupColor = .systemRed
-        pdfView.debugAddShape(
-            .arrow, from: CGPoint(x: target.maxX + 108, y: target.midY + 46),
-            to: CGPoint(x: target.maxX + 6, y: target.midY))
+        pdfView.debugAddShape(.arrow, from: CGPoint(x: 448, y: 556), to: CGPoint(x: 214, y: 632))  // point at it
         pdfView.markupColor = .systemBlue
-        pdfView.debugAddText(
-            "verify this", at: CGPoint(x: target.maxX + 84, y: target.midY + 58), note: false)
+        pdfView.debugAddText("revisit", at: CGPoint(x: 560, y: 652), note: true)  // sticky note in the margin
         pdfView.markupColor = .systemYellow  // leave the color well on the default
     }
 
