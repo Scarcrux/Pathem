@@ -1339,6 +1339,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activePane = pane
         activeSide = side
         pane.setActive(true)
+        sidebar.highlightFolder(pane.currentURL)  // the sidebar tracks the newly active pane's folder
         updateWindowTitle()
         updateSearchButton(query: pane.searchQuery)  // show the focused pane's own query
         // Note: the query is cleared on navigation (onDidNavigate), not on every
@@ -1799,6 +1800,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         if editedIndexedFolder { semanticSearch.invalidate() }
         if pane === activePane {
             if editedIndexedFolder { scheduleReindex(url) } else { preIndex(url) }
+            sidebar.highlightFolder(url)  // keep the sidebar tracking the current folder, like Finder
             updateWindowTitle()
             // The terminal follows the active folder only when the user opted in
             // and the drawer is open (changeDirectory itself ignores TUIs).

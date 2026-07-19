@@ -406,6 +406,30 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
     }
 
+    /// Track the active folder: highlight the sidebar row whose location matches `url` (like Finder
+    /// and Music, whose sidebar always follows the current location), and deselect when the folder
+    /// isn't a sidebar item. Doesn't re-fire onSelect. Called on every navigation / active-pane switch.
+    func highlightFolder(_ url: URL?) {
+        let target = url?.standardizedFileURL.path
+        let row =
+            target.flatMap { path in
+                (0..<outline.numberOfRows).first { r in
+                    (outline.item(atRow: r) as? Node)?.url?.standardizedFileURL.path == path
+                }
+            } ?? -1
+        guard row != outline.selectedRow else { return }  // already correct
+        restoringSelection = true
+        if row >= 0 {
+            outline.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        } else {
+            outline.deselectAll(nil)
+        }
+        restoringSelection = false
+    }
+
+    /// The folder URL of the currently highlighted sidebar row (for the folder-tracking smoke guard).
+    var debugSelectedFolderURL: URL? { (outline.item(atRow: outline.selectedRow) as? Node)?.url }
+
     /// Select a row by index for headless render inspection (PATHEM_SIDEBAR_SELECT). Makes the
     /// outline first responder so the selection draws emphasized (accent), not muted gray.
     func debugSelectRow(_ row: Int) {

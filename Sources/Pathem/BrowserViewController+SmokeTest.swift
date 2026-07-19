@@ -246,6 +246,16 @@ extension BrowserViewController {
         check(
             "empty-space-drag-trail", emptyTrailShown && emptyHint.isEmpty,
             "shown=\(emptyTrailShown) hint=\"\(emptyHint)\"")
+        // The sidebar tracks the current folder like Finder/Music: highlight the matching row,
+        // deselect when the folder isn't a sidebar item.
+        let homeURL = FileManager.default.homeDirectoryForCurrentUser
+        sidebar.highlightFolder(homeURL)
+        let tracksHome = sidebar.debugSelectedFolderURL?.standardizedFileURL == homeURL.standardizedFileURL
+        sidebar.highlightFolder(URL(fileURLWithPath: "/System/Volumes/nope-not-a-sidebar-item"))
+        let deselectsOffList = sidebar.debugSelectedFolderURL == nil
+        check(
+            "sidebar-tracks-current-folder", tracksHome && deselectsOffList,
+            "home=\(tracksHome) deselect=\(deselectsOffList)")
         // Shrinking a listing must clamp the scroll back to the top, not strand the view
         // scrolled into empty space below the few remaining rows (the "panels scroll down
         // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it
