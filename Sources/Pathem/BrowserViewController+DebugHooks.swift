@@ -298,8 +298,13 @@ enum DebugDemoPDF {
         if let container = textView.textContainer, let layout = textView.layoutManager {
             layout.ensureLayout(for: container)
         }
-        return (try? textView.dataWithPDF(inside: NSRect(origin: .zero, size: page)).write(to: url)) != nil
-            ? url : url
+        let data = textView.dataWithPDF(inside: NSRect(origin: .zero, size: page))
+        do {
+            try data.write(to: url)
+        } catch {
+            print("DebugDemoPDF: write failed: \(error)")
+        }
+        return url
     }
 
     private static func body() -> NSAttributedString {

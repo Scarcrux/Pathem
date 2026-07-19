@@ -120,8 +120,10 @@ final class PDFMarkupView: PDFView {
 
         switch activeTool {
         case .none:
-            // Grab an existing annotation to drag it; otherwise fall through to normal selection.
-            if let hit = page.annotation(at: pagePoint), hit.shouldDisplay {
+            // Grab a movable annotation to drag it; otherwise fall through to normal selection.
+            // Text-anchored markup (highlight/underline/strikethrough) is NOT movable, so a click on
+            // highlighted text still places the caret / starts a selection instead of being eaten.
+            if let hit = page.annotation(at: pagePoint), hit.shouldDisplay, isMovable(hit) {
                 movingAnnotation = hit
                 moveOriginalOrigin = hit.bounds.origin
                 moveGrabOffset = CGSize(
@@ -179,14 +181,30 @@ final class PDFMarkupView: PDFView {
             }
             return
         }
-        guard activeTool != .none, let page = dragStartPage else {
-            super.mouseUp(with: event)
+        // Finalize the in-progress shape/ink regardless of activeTool: the tool can be disarmed
+        // between drag and release (the markup bar toggled off), and the live annotation is already
+        // on the page, so it must be either registered or removed -- never left as a stray.
+        if let live = liveAnnotation, let page = dragStartPage {
+            liveAnnotation = nil
+            // Discard a click / sub-pixel jitter that produced a degenerate (dot-sized) shape rather
+            // than permanently adding an invisible annotation the user must hunt down and undo.
+            if live.bounds.width < 3, live.bounds.height < 3 {
+                page.removeAnnotation(live)
+            } else {
+                registerAddUndo(live, page)
+                markEdited()
+            }
             return
         }
-        if let live = liveAnnotation {
-            liveAnnotation = nil
-            registerAddUndo(live, page)  // it is already on the page from the last drag frame
-            markEdited()
+        if activeTool == .none { super.mouseUp(with: event) }
+    }
+
+    /// Whether an annotation can be dragged to reposition it. Text-anchored markup (highlight,
+    /// underline, strikethrough) is excluded -- it belongs to the text it covers.
+    private func isMovable(_ annotation: PDFAnnotation) -> Bool {
+        switch annotation.type {
+        case "FreeText", "Text", "Ink", "Square", "Circle", "Line": return true
+        default: return false
         }
     }
 
@@ -243,8 +261,11 @@ final class PDFMarkupView: PDFView {
     private func shapeAnnotation(_ subtype: PDFAnnotationSubtype, from a: CGPoint, to b: CGPoint)
         -> PDFAnnotation
     {
+        // Pad the bounds by the line width so the border stroke (centered on the box edge) isn't
+        // clipped by the annotation bounds at larger widths, matching the line/ink tools.
         let box = CGRect(
-            x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
+            x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y)
+        ).insetBy(dx: -lineWidth, dy: -lineWidth)
         let annotation = PDFAnnotation(bounds: box, forType: subtype, withProperties: nil)
         let border = PDFBorder()
         border.lineWidth = lineWidth
@@ -275,7 +296,8 @@ final class PDFMarkupView: PDFView {
     }
 
     private func addNote(at point: CGPoint, page: PDFPage) {
-        guard let text = promptForText(L("markup.noteText", "Note"), initial: "") else { return }
+        guard let text = promptForText(L("markup.noteText", "Note"), initial: ""), !text.isEmpty
+        else { return }
         place(noteAnnotation(text: text, at: point), on: page)
     }
 
@@ -288,10 +310,19 @@ final class PDFMarkupView: PDFView {
             height: size.height + 8)
         let annotation = PDFAnnotation(bounds: box, forType: .freeText, withProperties: nil)
         annotation.font = font
-        annotation.fontColor = markupColor
+        annotation.fontColor = legibleTextColor(markupColor)
         annotation.color = .clear
         annotation.contents = text
         return annotation
+    }
+
+    /// Keep typed text readable on the white page: a very light markup color (e.g. the yellow
+    /// highlight default) would be near-invisible, so fall back to near-black for text.
+    private func legibleTextColor(_ color: NSColor) -> NSColor {
+        guard let rgb = color.usingColorSpace(.deviceRGB) else { return color }
+        let luminance =
+            0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent
+        return luminance > 0.6 ? .labelColor : color
     }
 
     /// A sticky note (icon + hidden contents) anchored at `point` (page coordinates).
