@@ -411,6 +411,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// isn't a sidebar item. Doesn't re-fire onSelect. Called on every navigation / active-pane switch.
     func highlightFolder(_ url: URL?) {
         let target = url?.standardizedFileURL.path
+        // If the selected row already points at this folder, keep it. When two rows share a URL (e.g.
+        // a favorite duplicating a system location), this leaves the user's chosen occurrence selected
+        // instead of yanking the highlight to the first match on every navigation.
+        if let target,
+            (outline.item(atRow: outline.selectedRow) as? Node)?.url?.standardizedFileURL.path == target
+        {
+            return
+        }
         let row =
             target.flatMap { path in
                 (0..<outline.numberOfRows).first { r in
