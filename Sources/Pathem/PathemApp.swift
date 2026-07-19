@@ -260,7 +260,7 @@ enum PathemApp {
                 bar.centerXAnchor.constraint(equalTo: content.centerXAnchor),
                 bar.centerYAnchor.constraint(equalTo: content.centerYAnchor),
             ])
-            bar.update(selectionCount: 3)
+            bar.update(selectionCount: 3, isViewable: false)
             host.center()
             host.makeKeyAndOrderFront(nil)
             let number = host.windowNumber

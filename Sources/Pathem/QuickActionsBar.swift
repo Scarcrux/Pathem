@@ -15,17 +15,19 @@ final class QuickActionsBar: NSView {
     private let blur = NSVisualEffectView()
     private let stack = NSStackView()
     /// (command id, button, whether it needs exactly one selected item).
-    private var buttons: [(id: String, button: NSButton, needsSingle: Bool)] = []
+    private var buttons: [(id: String, button: NSButton, needsSingle: Bool, viewableOnly: Bool)] = []
 
-    /// id, SF Symbol, tooltip, needs a single selection.
-    private static let actions: [(String, String, String, Bool)] = [
-        ("files.open", "arrow.up.forward.app", L("quick.open", "Open"), false),
-        ("files.openWith", "square.grid.2x2", L("quick.openWith", "Open With"), false),
-        ("files.rename", "pencil", L("quick.rename", "Rename"), true),
-        ("files.copy", "doc.on.doc", L("quick.copy", "Copy"), false),
-        ("files.compress", "archivebox", L("quick.compress", "Compress"), false),
-        ("files.getInfo", "info.circle", L("quick.getInfo", "Get Info"), false),
-        ("files.trash", "trash", L("quick.trash", "Move to Trash"), false),
+    /// id, SF Symbol, tooltip, needs a single selection, only for a viewable file (PDF/image).
+    private static let actions: [(String, String, String, Bool, Bool)] = [
+        ("files.open", "arrow.up.forward.app", L("quick.open", "Open"), false, false),
+        ("files.openInThisPane", "rectangle.lefthalf.inset.filled", L("bvc.cmd.openInThisPane", "Open in This Pane"), true, true),
+        ("files.openInOtherPane", "rectangle.righthalf.inset.filled", L("bvc.cmd.openInOtherPane", "Open in Other Pane"), true, true),
+        ("files.openWith", "square.grid.2x2", L("quick.openWith", "Open With"), false, false),
+        ("files.rename", "pencil", L("quick.rename", "Rename"), true, false),
+        ("files.copy", "doc.on.doc", L("quick.copy", "Copy"), false, false),
+        ("files.compress", "archivebox", L("quick.compress", "Compress"), false, false),
+        ("files.getInfo", "info.circle", L("quick.getInfo", "Get Info"), false, false),
+        ("files.trash", "trash", L("quick.trash", "Move to Trash"), false, false),
     ]
 
     init() {
@@ -62,7 +64,7 @@ final class QuickActionsBar: NSView {
         blur.addSubview(stack)
 
         for (index, action) in Self.actions.enumerated() {
-            let (id, symbol, tip, single) = action
+            let (id, symbol, tip, single, viewableOnly) = action
             if index == Self.actions.count - 1, !buttons.isEmpty {
                 let separator = NSBox()
                 separator.boxType = .separator
@@ -83,7 +85,7 @@ final class QuickActionsBar: NSView {
             button.widthAnchor.constraint(equalToConstant: 30).isActive = true
             button.heightAnchor.constraint(equalToConstant: 26).isActive = true
             stack.addArrangedSubview(button)
-            buttons.append((id, button, single))
+            buttons.append((id, button, single, viewableOnly))
         }
 
         NSLayoutConstraint.activate([
@@ -104,10 +106,19 @@ final class QuickActionsBar: NSView {
     }
 
     /// Show/hide and enable buttons for the current selection.
-    func update(selectionCount: Int) {
+    /// Whether the View-in-pane (viewable-only) buttons are currently shown (smoke guard).
+    var debugViewButtonsShown: Bool { buttons.contains { $0.viewableOnly && !$0.button.isHidden } }
+
+    func update(selectionCount: Int, isViewable: Bool) {
         isHidden = selectionCount == 0
-        for (_, button, needsSingle) in buttons {
-            button.isEnabled = needsSingle ? selectionCount == 1 : selectionCount >= 1
+        for (_, button, needsSingle, viewableOnly) in buttons {
+            if viewableOnly {
+                // The View-in-pane buttons appear only for a single PDF/image.
+                button.isHidden = !(selectionCount == 1 && isViewable)
+            } else {
+                button.isHidden = false
+                button.isEnabled = needsSingle ? selectionCount == 1 : selectionCount >= 1
+            }
         }
     }
 

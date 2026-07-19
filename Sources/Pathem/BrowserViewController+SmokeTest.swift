@@ -413,6 +413,15 @@ extension BrowserViewController {
         check(
             "quickbar-near-selection", abs(qbMidY - qbSel.midY) < 80,
             "bar midY \(Int(qbMidY)) vs selection \(Int(qbSel.midY))")
+        // The View-in-pane quick buttons appear only for a single viewable (PDF/image) selection.
+        quickBar.update(selectionCount: 1, isViewable: true)
+        let qbViewShown = quickBar.debugViewButtonsShown
+        quickBar.update(selectionCount: 1, isViewable: false)
+        let qbViewHidden = !quickBar.debugViewButtonsShown
+        check(
+            "quickbar-view-buttons-type-aware", qbViewShown && qbViewHidden,
+            "viewable-shows=\(qbViewShown) nonviewable-hides=\(qbViewHidden)")
+        updateQuickActions()  // restore real state
         // Column view instead pins the bar to the pane's bottom (clear of the drilled
         // columns), so a no-selection bottom placement sits lower than the top-center one.
         let qbBottom = Self.quickBarOrigin(

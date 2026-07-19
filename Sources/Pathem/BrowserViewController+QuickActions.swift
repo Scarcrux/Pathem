@@ -54,7 +54,11 @@ extension BrowserViewController {
     /// Show/hide the floating quick-actions bar for the active pane's selection, and place
     /// it next to the selected rows.
     func updateQuickActions() {
-        quickBar.update(selectionCount: activePane?.selectedEntries.count ?? 0)
+        let count = activePane?.selectedEntries.count ?? 0
+        let viewable =
+            count == 1
+            && ((activePane?.singleSelectedURL).map { DocumentPreviewView.isViewable($0) } ?? false)
+        quickBar.update(selectionCount: count, isViewable: viewable)
         observeActivePaneScroll()
         positionQuickBar()
     }
