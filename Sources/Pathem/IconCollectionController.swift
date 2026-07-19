@@ -31,18 +31,18 @@ final class KeyCollectionView: NSCollectionView {
         gestureTracker.begin(event)
         superDragStartWindow = event.locationInWindow
         superDragStartItem = indexPathForItem(at: convert(event.locationInWindow, from: nil))
-        guard superDragStartItem != nil else { return }
         if let item = superDragStartItem, !selectionIndexPaths.contains(item) {
             selectionIndexPaths = [item]  // the flick acts on it
             onSelectionMutated?()
         }
+        // Draw the trail for any right-drag; the flick hint shows only for an item super-drag.
         if let screen = window?.convertPoint(toScreen: event.locationInWindow) {
-            onSuperDrag?(.began(screen: screen))
+            onSuperDrag?(.began(screen: screen, showsHint: superDragStartItem != nil))
         }
     }
     override func rightMouseDragged(with event: NSEvent) {
         gestureTracker.append(event)
-        if superDragStartItem != nil, let screen = window?.convertPoint(toScreen: event.locationInWindow) {
+        if let screen = window?.convertPoint(toScreen: event.locationInWindow) {
             onSuperDrag?(.moved(screen: screen))
         }
     }
@@ -60,6 +60,7 @@ final class KeyCollectionView: NSCollectionView {
             }
             return
         }
+        onSuperDrag?(.ended(flick: nil))  // end the empty-space trail; the stroke/menu runs below
         superDragStartWindow = nil
         if let stroke = navStroke, onMouseGesture?(stroke) == true { return }
         if let menu = menu(for: event) { NSMenu.popUpContextMenu(menu, with: event, for: self) }

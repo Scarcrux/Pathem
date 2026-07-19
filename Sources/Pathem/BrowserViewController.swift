@@ -146,6 +146,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var dragGestures = DragGestureMap.standard
     let dragTrail = DragTrailOverlay()
     var dragStartScreen: NSPoint?  // to name the live flick as it changes direction
+    var dragShowsHint = false  // only a row super-drag shows the flick label; an empty-space stroke doesn't
     /// Stroke -> command id, defaults overlaid with any user gestures.json.
     var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.

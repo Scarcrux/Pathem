@@ -43,17 +43,18 @@ final class KeyTableView: NSTableView {
         gestureTracker.begin(event)
         superDragStartWindow = event.locationInWindow
         superDragStartRow = row(at: convert(event.locationInWindow, from: nil))
-        guard superDragStartRow >= 0 else { return }
-        if !selectedRowIndexes.contains(superDragStartRow) {
+        if superDragStartRow >= 0, !selectedRowIndexes.contains(superDragStartRow) {
             selectRowIndexes([superDragStartRow], byExtendingSelection: false)  // the flick acts on it
         }
+        // Draw the trail for any right-drag; the flick hint shows only for a row super-drag (empty
+        // space runs a navigation stroke, not a flick).
         if let screen = window?.convertPoint(toScreen: event.locationInWindow) {
-            onSuperDrag?(.began(screen: screen))
+            onSuperDrag?(.began(screen: screen, showsHint: superDragStartRow >= 0))
         }
     }
     override func rightMouseDragged(with event: NSEvent) {
         gestureTracker.append(event)
-        if superDragStartRow >= 0, let screen = window?.convertPoint(toScreen: event.locationInWindow) {
+        if let screen = window?.convertPoint(toScreen: event.locationInWindow) {
             onSuperDrag?(.moved(screen: screen))
         }
     }
@@ -72,6 +73,7 @@ final class KeyTableView: NSTableView {
             }
             return
         }
+        onSuperDrag?(.ended(flick: nil))  // end the empty-space trail; the stroke/menu runs below
         superDragStartWindow = nil
         if let navStroke, onMouseGesture?(navStroke) == true { return }
         if let menu = menu(for: event) { NSMenu.popUpContextMenu(menu, with: event, for: self) }

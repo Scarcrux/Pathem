@@ -229,14 +229,23 @@ extension BrowserViewController {
         // hides it on end (the drawing itself is only visible during a live drag).
         let savedFlick = prefs.dragFlickActions
         prefs.dragFlickActions = true
-        handleDragSession(.began(screen: .zero))
+        handleDragSession(.began(screen: .zero, showsHint: true))  // a row super-drag
         handleDragSession(.moved(screen: NSPoint(x: 90, y: 8)))  // a clear rightward flick
         let trailShown = !dragTrail.isHidden
         let hint = dragTrail.hint  // names the mapped command + its shortcut
         handleDragSession(.ended(flick: nil))
+        // An empty-space stroke draws the trail too, but with no flick label (it runs the gesture map).
+        handleDragSession(.began(screen: .zero, showsHint: false))
+        handleDragSession(.moved(screen: NSPoint(x: 90, y: 8)))
+        let emptyTrailShown = !dragTrail.isHidden
+        let emptyHint = dragTrail.hint
+        handleDragSession(.ended(flick: nil))
         prefs.dragFlickActions = savedFlick
         check("super-drag-trail", trailShown && dragTrail.isHidden, "shown=\(trailShown)")
         check("super-drag-hint", !hint.isEmpty, "hint=\"\(hint)\"")
+        check(
+            "empty-space-drag-trail", emptyTrailShown && emptyHint.isEmpty,
+            "shown=\(emptyTrailShown) hint=\"\(emptyHint)\"")
         // Shrinking a listing must clamp the scroll back to the top, not strand the view
         // scrolled into empty space below the few remaining rows (the "panels scroll down
         // after a change" bug). Load a tall synthetic list, scroll to the bottom, shrink it

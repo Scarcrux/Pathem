@@ -59,8 +59,9 @@ extension BrowserViewController {
     func handleDragSession(_ event: DragSessionEvent) {
         guard prefs.dragFlickActions else { return }
         switch event {
-        case .began(let screen):
+        case .began(let screen, let showsHint):
             dragStartScreen = screen
+            dragShowsHint = showsHint
             dragTrail.color = NSColor(hex: prefs.dragTrailColor) ?? .systemBlue
             dragTrail.trailWidth = max(1, CGFloat(prefs.dragTrailWidth))
             dragTrail.decaySeconds = max(0.1, prefs.dragTrailDecay)
@@ -68,9 +69,10 @@ extension BrowserViewController {
             dragTrail.begin()
         case .moved(let screen):
             guard let window = view.window else { return }
-            // Name the flick this direction would trigger (same threshold as the release),
-            // so the trail shows what it's shortcutting; blank until it's a clear flick.
-            if let start = dragStartScreen {
+            // Name the flick this direction would trigger (same threshold as the release), so the
+            // trail shows what it's shortcutting -- only for a row super-drag; an empty-space stroke
+            // runs the gesture map, not a flick, so it draws the trail without a (wrong) hint.
+            if dragShowsHint, let start = dragStartScreen {
                 let direction = MouseGesture.reduce([start, screen], minSegment: 44)
                 dragTrail.hint = direction.isEmpty ? "" : flickHint(for: direction)
             }

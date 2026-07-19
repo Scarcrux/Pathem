@@ -1,10 +1,12 @@
 import AppKit
 import PathemEngine
 
-/// A phase of a row drag, reported for the super-drag flick + its swipe trail. Screen points
-/// (y-up), so BVC can convert them to the window overlay and MouseGesture can reduce them.
+/// A phase of a right-drag, reported for the super-drag flick + its swipe trail. Screen points
+/// (y-up), so BVC can convert them to the window overlay and MouseGesture can reduce them. The
+/// trail is drawn for any right-drag; `showsHint` is true only for a row super-drag (which runs a
+/// directional flick), so an empty-space navigation stroke draws the trail without a flick label.
 enum DragSessionEvent {
-    case began(screen: NSPoint)
+    case began(screen: NSPoint, showsHint: Bool)
     case moved(screen: NSPoint)
     /// `flick` is the single cardinal direction when the drag ended past the threshold without
     /// a drop target accepting it (else nil: a real drop happened, or the movement was tiny).
