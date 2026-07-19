@@ -387,6 +387,7 @@ enum PathemApp {
                     case "torrent": browser.showTorrentsDrawer()  // seeds via PATHEM_DEMO_TORRENTS
                     case "terminal": browser.debugStageTerminal()  // full shell timing: PATHEM_TERMINAL_SHOT
                     case "network": browser.debugStageNetworkView()
+                    case "markup": browser.debugStageMarkup()  // PDF viewer + markup toolbar
                     default:
                         // PATHEM_MAIN_PATH picks the folder; otherwise the fake Photos folder in demo
                         // mode (privacy-safe) or the real ~/Pictures.

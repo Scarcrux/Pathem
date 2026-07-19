@@ -108,6 +108,32 @@ extension BrowserViewController {
         let lockedRoutedToQL = !lockedPreview.debugShowingPDF
         try? FileManager.default.removeItem(at: lockedPDF)
         check("encrypted-pdf-falls-back-to-quicklook", lockedRoutedToQL, "showingPDF=\(lockedPreview.debugShowingPDF)")
+        // Markup persists: add a highlight and save, then reload from disk and confirm the annotation
+        // round-tripped into the PDF (the core of the Preview-like editing path).
+        let markupPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-markup-\(UUID().uuidString).pdf")
+        let markupDoc = PDFDocument()
+        markupDoc.insert(PDFPage(), at: 0)
+        markupDoc.write(to: markupPDF)
+        let markupPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 400, height: 500))
+        markupPreview.show(markupPDF)
+        let saved = markupPreview.debugMarkUpAndSave(rect: CGRect(x: 40, y: 60, width: 120, height: 18))
+        let reloadedAnnotations = PDFDocument(url: markupPDF)?.page(at: 0)?.annotations.count ?? 0
+        try? FileManager.default.removeItem(at: markupPDF)
+        check(
+            "pdf-markup-persists", saved && reloadedAnnotations >= 1,
+            "saved=\(saved) annotations=\(reloadedAnnotations)")
+        // The markup toggle reveals the tool row; picking a tool arms it and picking it again disarms
+        // it (guards the tag-based selectTool mapping).
+        markupPreview.debugToggleMarkup(true)
+        let barShown = markupPreview.debugMarkupVisible
+        markupPreview.debugPickTool(.arrow)
+        let armed = markupPreview.debugActiveTool == .arrow
+        markupPreview.debugPickTool(.arrow)
+        let disarmed = markupPreview.debugActiveTool == .none
+        check(
+            "markup-tool-toggle", barShown && armed && disarmed,
+            "bar=\(barShown) armed=\(armed) disarmed=\(disarmed)")
         // Open in Other Pane: PDFs/images are viewable; presenting a viewer overlays the pane and
         // dismiss clears it (so browsing returns).
         check(

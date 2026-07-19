@@ -227,6 +227,15 @@ extension BrowserViewController {
         debugRender(to: path)
     }
 
+    /// Stage the PDF markup viewer over the active pane with the markup toolbar showing and a tool
+    /// armed, for the marquee shot (PATHEM_MAIN_MODE=markup). Writes a legible demo document first so
+    /// the annotation tools have real text to sit over.
+    func debugStageMarkup() {
+        let url = DebugDemoPDF.write()
+        activePane?.debugPresentMarkup(url)
+        view.layoutSubtreeIfNeeded()
+    }
+
     /// Stage the Network view with demo hosts (no render) so an outer screencapture can grab it
     /// with real thumbnails + vibrancy (PATHEM_MAIN_MODE=network).
     func debugStageNetworkView() {
@@ -270,5 +279,56 @@ extension BrowserViewController {
             try? data.write(to: URL(fileURLWithPath: path))
             print("SIDEBAR SHOT: \(Int(bounds.width))x\(Int(bounds.height))")
         }
+    }
+}
+
+/// A one-page demo PDF (a fake project brief) written to a temp file, so the markup shot has real
+/// text to annotate. Rendered from an NSTextView via `dataWithPDF`, which needs no external assets.
+enum DebugDemoPDF {
+    @MainActor
+    static func write() -> URL {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-demo-brief.pdf")
+        let page = NSSize(width: 612, height: 792)  // US Letter
+        let textView = NSTextView(frame: NSRect(origin: .zero, size: page))
+        textView.textContainerInset = NSSize(width: 56, height: 64)
+        textView.backgroundColor = .white
+        textView.textStorage?.setAttributedString(body())
+        // Off-window text views don't generate glyphs on their own; force layout so the PDF captures
+        // real text instead of a blank page.
+        if let container = textView.textContainer, let layout = textView.layoutManager {
+            layout.ensureLayout(for: container)
+        }
+        return (try? textView.dataWithPDF(inside: NSRect(origin: .zero, size: page)).write(to: url)) != nil
+            ? url : url
+    }
+
+    private static func body() -> NSAttributedString {
+        let text = NSMutableAttributedString()
+        let heading: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 22, weight: .bold), .foregroundColor: NSColor.black,
+        ]
+        let sub: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
+            .foregroundColor: NSColor.darkGray,
+        ]
+        let para = NSMutableParagraphStyle()
+        para.lineSpacing = 4
+        para.paragraphSpacing = 10
+        let bodyAttrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: 12), .foregroundColor: NSColor.black,
+            .paragraphStyle: para,
+        ]
+        text.append(NSAttributedString(string: "Project Brief: Aurora\n", attributes: heading))
+        text.append(NSAttributedString(string: "Prepared for review \u{2014} draft 3\n\n", attributes: sub))
+        let paragraphs = [
+            "Aurora is a cross-platform sync layer that keeps a team's working files consistent across machines without a central server. Edits propagate peer to peer, and conflicts resolve deterministically so two people can work offline and reconcile cleanly on reconnect.",
+            "The first milestone covers the file-watching core, the change journal, and a reference client. The watcher coalesces rapid saves into a single logical change; the journal is append-only and content-addressed, so history is verifiable and cheap to prune.",
+            "Open questions: how aggressively to compact the journal, whether to expose a merge UI for text conflicts, and what the right default is for large binary files. These are flagged for discussion in the sections below.",
+            "Next steps are to lock the on-disk format, wire the reference client to the journal, and run a week-long soak test across three machines with intentionally poor connectivity.",
+        ]
+        for paragraph in paragraphs {
+            text.append(NSAttributedString(string: paragraph + "\n", attributes: bodyAttrs))
+        }
+        return text
     }
 }

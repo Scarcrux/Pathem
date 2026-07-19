@@ -1902,6 +1902,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Whether the document viewer overlay is currently showing (for the smoke check).
     var isShowingViewer: Bool { paneViewer != nil }
 
+    /// Present `url` with the markup toolbar on and a tool armed, for the marquee shot.
+    func debugPresentMarkup(_ url: URL) {
+        presentViewer(url)
+        paneViewer?.debugEnableMarkup()
+    }
+
     /// In-app "reveal": navigate to `url`'s enclosing folder and select `url` there. The
     /// pendingSelection is applied by reload() once the (off-main) enumeration completes,
     /// so the file ends up selected and scrolled into view in the fresh folder. Useful from

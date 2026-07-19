@@ -65,5 +65,24 @@
 
   "update.notSetUpBody":        {"fr": "Il s’agit d’une version source ou non signée. Téléchargez la dernière version notariée depuis GitHub ; ces versions se mettent à jour automatiquement.", "de": "Dies ist ein Quell- oder unsignierter Build. Laden Sie die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.", "es": "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas versiones se actualizan solas.", "ja": "これはソースまたは署名されていないビルドです。GitHubから最新の公証済みリリースをダウンロードしてください。それらのビルドは自動的に更新されます。", "zh-Hans": "这是源代码或未签名的构建版本。请从 GitHub 下载最新的已公证版本；那些版本会自动更新。"},
 
-  "viewer.done":                {"fr": "Terminé", "de": "Fertig", "es": "Aceptar", "ja": "完了", "zh-Hans": "完成"}
+  "viewer.done":                {"fr": "Terminé", "de": "Fertig", "es": "Aceptar", "ja": "完了", "zh-Hans": "完成"},
+
+  "preview.markup":             {"fr": "Annotation", "de": "Markierung", "es": "Marcado", "ja": "マークアップ", "zh-Hans": "标记"},
+  "preview.save":               {"fr": "Enregistrer", "de": "Sichern", "es": "Guardar", "ja": "保存", "zh-Hans": "存储"},
+  "markup.highlight":           {"fr": "Surligner", "de": "Hervorheben", "es": "Resaltar", "ja": "ハイライト", "zh-Hans": "高亮"},
+  "markup.underline":           {"fr": "Souligner", "de": "Unterstreichen", "es": "Subrayar", "ja": "下線", "zh-Hans": "下划线"},
+  "markup.strikethrough":       {"fr": "Barrer", "de": "Durchstreichen", "es": "Tachar", "ja": "取り消し線", "zh-Hans": "删除线"},
+  "markup.draw":                {"fr": "Dessiner", "de": "Zeichnen", "es": "Dibujar", "ja": "描画", "zh-Hans": "绘制"},
+  "markup.signature":           {"fr": "Signature", "de": "Signatur", "es": "Firma", "ja": "署名", "zh-Hans": "签名"},
+  "markup.rectangle":           {"fr": "Rectangle", "de": "Rechteck", "es": "Rectángulo", "ja": "長方形", "zh-Hans": "矩形"},
+  "markup.oval":                {"fr": "Ovale", "de": "Oval", "es": "Óvalo", "ja": "楕円", "zh-Hans": "椭圆"},
+  "markup.line":                {"fr": "Ligne", "de": "Linie", "es": "Línea", "ja": "線", "zh-Hans": "直线"},
+  "markup.arrow":               {"fr": "Flèche", "de": "Pfeil", "es": "Flecha", "ja": "矢印", "zh-Hans": "箭头"},
+  "markup.text":                {"fr": "Texte", "de": "Text", "es": "Texto", "ja": "テキスト", "zh-Hans": "文本"},
+  "markup.note":                {"fr": "Note", "de": "Notiz", "es": "Nota", "ja": "メモ", "zh-Hans": "注释"},
+  "markup.redo":                {"fr": "Rétablir", "de": "Wiederholen", "es": "Rehacer", "ja": "やり直す", "zh-Hans": "重做"},
+  "markup.enterText":           {"fr": "Texte", "de": "Text", "es": "Texto", "ja": "テキスト", "zh-Hans": "文本"},
+  "markup.noteText":            {"fr": "Note", "de": "Notiz", "es": "Nota", "ja": "メモ", "zh-Hans": "注释"},
+  "markup.saveChanges":         {"fr": "Enregistrer vos annotations ?", "de": "Ihre Markierungen sichern?", "es": "¿Guardar tu marcado?", "ja": "マークアップを保存しますか？", "zh-Hans": "存储您的标记？"},
+  "markup.discard":             {"fr": "Ignorer", "de": "Verwerfen", "es": "Descartar", "ja": "破棄", "zh-Hans": "放弃"}
 }
