@@ -235,6 +235,15 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = !allTorrents  // only for .torrent selections
                 case "files.createTorrent":
                     item.isHidden = urls.count != 1  // make a torrent from one file/folder
+                case "files.revealInPathem":
+                    // Only meaningful when the selection lives outside the folder on screen (search,
+                    // smart folders, flat view, recents). In a normal listing you're already in its
+                    // folder, so revealing in place is a no-op -- hide it there.
+                    let here = self.currentFolder()?.standardizedFileURL
+                    item.isHidden =
+                        urls.isEmpty
+                        || (here != nil
+                            && urls.allSatisfy { $0.deletingLastPathComponent().standardizedFileURL == here })
                 default:
                     break
                 }
