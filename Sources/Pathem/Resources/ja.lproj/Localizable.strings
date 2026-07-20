@@ -1407,6 +1407,7 @@
 "sync.upToDateTitle" = "既に同期済み";
 "tabs.closeOthers" = "他のタブを閉じる";
 "tabs.closeTab" = "タブを閉じる";
+"tabs.duplicate" = "タブを複製";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "他のペインに移動";
 "tabs.newTab" = "新規タブ";

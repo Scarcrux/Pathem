@@ -63,6 +63,8 @@
 
   "tabs.moveToOtherPane":       {"fr": "Déplacer vers l’autre volet", "de": "In anderen Bereich bewegen", "es": "Mover al otro panel", "ja": "他のペインに移動", "zh-Hans": "移动到另一窗格"},
 
+  "tabs.duplicate":             {"fr": "Dupliquer l’onglet", "de": "Tab duplizieren", "es": "Duplicar pestaña", "ja": "タブを複製", "zh-Hans": "复制标签页"},
+
   "update.notSetUpBody":        {"fr": "Il s’agit d’une version source ou non signée. Téléchargez la dernière version notariée depuis GitHub ; ces versions se mettent à jour automatiquement.", "de": "Dies ist ein Quell- oder unsignierter Build. Laden Sie die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.", "es": "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas versiones se actualizan solas.", "ja": "これはソースまたは署名されていないビルドです。GitHubから最新の公証済みリリースをダウンロードしてください。それらのビルドは自動的に更新されます。", "zh-Hans": "这是源代码或未签名的构建版本。请从 GitHub 下载最新的已公证版本；那些版本会自动更新。"},
 
   "viewer.done":                {"fr": "Terminé", "de": "Fertig", "es": "Aceptar", "ja": "完了", "zh-Hans": "完成"},

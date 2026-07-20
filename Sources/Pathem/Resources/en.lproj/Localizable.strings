@@ -1337,6 +1337,7 @@
 "sync.upToDateTitle" = "Already in sync";
 "tabs.closeOthers" = "Close Other Tabs";
 "tabs.closeTab" = "Close Tab";
+"tabs.duplicate" = "Duplicate Tab";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Move to Other Pane";
 "tabs.newTab" = "New Tab";

@@ -681,6 +681,16 @@ extension BrowserViewController {
         // the user's real session.json -- the bug where test runs left the app reopening on /tmp.
         check("automation-launch-detected", PathemApp.isAutomationLaunch && !self.persistsSession,
             "isAutomation=\(PathemApp.isAutomationLaunch) primaryPersists=\(self.persistsSession)")
+        // Duplicate Tab (the tab right-click action): a new tab opens at the same folder. Close it
+        // again to leave the tab set as it was.
+        if let dupURL = leftTabs.activePane?.currentURL {
+            let beforeTabs = leftTabs.tabFolders.count
+            leftTabs.openTab(at: dupURL)
+            let dupOK = leftTabs.tabFolders.count == beforeTabs + 1 && leftTabs.tabFolders.last == dupURL.path
+            leftTabs.closeActiveTab()  // the duplicate is the focused/last tab
+            check("tab-duplicate", dupOK && leftTabs.tabFolders.count == beforeTabs,
+                "before=\(beforeTabs) dupedAtSame=\(dupOK) restored=\(leftTabs.tabFolders.count)")
+        }
         // Slideshow: the command is registered and the controller starts inactive (a headless
         // smoke must not pop a full-screen window, so we don't call start()).
         check("slideshow-ready", cmdIDs.contains("view.slideshow") && !slideshow.isActive,

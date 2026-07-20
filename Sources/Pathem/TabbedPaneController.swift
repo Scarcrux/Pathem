@@ -435,7 +435,9 @@ final class TabbedPaneController: NSObject {
         }
         add(L("crumb.copyPath", "Copy Path"), #selector(copyTabPath(_:)))
         menu.addItem(.separator())
-        add(L("crumb.newTab", "Open in New Tab"), #selector(duplicateTab(_:)))
+        // On a tab, "duplicate" is the right verb (a new tab at the same folder), matching Safari and
+        // Chrome; "Open in New Tab" is for links/folders, not a tab itself.
+        add(L("tabs.duplicate", "Duplicate Tab"), #selector(duplicateTab(_:)))
         add(L("crumb.leftPane", "Open in Left Pane"), #selector(tabToLeftPane(_:)))
         add(L("crumb.rightPane", "Open in Right Pane"), #selector(tabToRightPane(_:)))
         add(L("tabs.moveToOtherPane", "Move to Other Pane"), #selector(moveTabToOtherPane(_:)))

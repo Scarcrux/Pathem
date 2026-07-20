@@ -1407,6 +1407,7 @@
 "sync.upToDateTitle" = "Déjà synchronisés";
 "tabs.closeOthers" = "Fermer les autres onglets";
 "tabs.closeTab" = "Fermer l’onglet";
+"tabs.duplicate" = "Dupliquer l’onglet";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Déplacer vers l’autre volet";
 "tabs.newTab" = "Nouvel onglet";

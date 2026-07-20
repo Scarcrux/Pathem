@@ -1407,6 +1407,7 @@
 "sync.upToDateTitle" = "已同步";
 "tabs.closeOthers" = "关闭其他标签页";
 "tabs.closeTab" = "关闭标签页";
+"tabs.duplicate" = "复制标签页";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "移动到另一窗格";
 "tabs.newTab" = "新建标签页";

@@ -1407,6 +1407,7 @@
 "sync.upToDateTitle" = "Ya está sincronizado";
 "tabs.closeOthers" = "Cerrar otras pestañas";
 "tabs.closeTab" = "Cerrar pestaña";
+"tabs.duplicate" = "Duplicar pestaña";
 "tabs.macintoshHD" = "Macintosh HD";
 "tabs.moveToOtherPane" = "Mover al otro panel";
 "tabs.newTab" = "Nueva pestaña";
