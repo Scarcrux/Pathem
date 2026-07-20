@@ -628,6 +628,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// AX check on the first entry row (skipping group headers), for the accessibility guard.
     func debugFirstEntryNameAXMatches() -> Bool? { (content as? FileListController)?.debugFirstEntryNameAXMatches() }
 
+    /// Whether the background menu for `dir` offers Empty Trash (only in the Trash), for the guard.
+    func debugBackgroundMenuHasEmptyTrash(forDir dir: URL) -> Bool {
+        (content as? FileListController)?.debugBackgroundMenuHasEmptyTrash(forDir: dir) ?? false
+    }
+
     /// Inline-rename reload-safety guard: is an edit active, and a same-entries reload in place.
     var debugInlineEditActive: Bool { (content as? FileListController)?.debugInlineEditActive ?? false }
     func debugReloadContentInPlace() { content.setEntries(content.entries, preserveState: true) }

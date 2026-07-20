@@ -229,6 +229,14 @@ extension BrowserViewController {
             }
         }
         check("localization-loads-at-runtime", l10nOK, l10nDetail.isEmpty ? "de+ja resolve" : l10nDetail)
+        // Empty Trash appears on the Trash background (empty-space right-click), not only via a
+        // selected item -- and only in the Trash, not an ordinary folder.
+        let trashFolderURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        let homeFolderURL = FileManager.default.homeDirectoryForCurrentUser
+        let trashHasEmpty = leftTabs.activePane?.debugBackgroundMenuHasEmptyTrash(forDir: trashFolderURL) ?? false
+        let homeHasEmpty = leftTabs.activePane?.debugBackgroundMenuHasEmptyTrash(forDir: homeFolderURL) ?? false
+        check("trash-background-empty-trash", trashHasEmpty && !homeHasEmpty,
+            "trash=\(trashHasEmpty) home=\(homeHasEmpty)")
         // A8: the list name cell reads the clean filename to VoiceOver, not the git/tag decoration.
         // Check the first entry row (a grouped view puts a header at row 0); skip only if there are
         // no entry rows, so grouping can't turn this into a false failure.

@@ -988,6 +988,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell.textField?.accessibilityLabel() == entries[index].name
     }
 
+    /// Whether the empty-space (background) right-click menu for `dir` offers Empty Trash -- true
+    /// only in the Trash. Guards the "Empty Trash on the Trash background, not just via a selection"
+    /// behavior against regression.
+    func debugBackgroundMenuHasEmptyTrash(forDir dir: URL) -> Bool {
+        let saved = directoryURL
+        directoryURL = dir
+        defer { directoryURL = saved }
+        let title = L("bvc.cmd.emptyTrash", "Empty Trash")
+        return makeBackgroundMenu()?.items.contains { $0.title == title } ?? false
+    }
+
     /// AX check on the first *entry* row, skipping any group-header rows (a grouped view puts a
     /// header at row 0, where entryIndex is nil). Returns nil when there are no entry rows, so the
     /// guard can skip rather than fail. Deterministic regardless of grouping.
