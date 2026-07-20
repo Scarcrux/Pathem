@@ -600,6 +600,55 @@ extension BrowserViewController {
             "name=\(promiseBox.name) wrote=\(wrote) err=\(promiseBox.error.map { "\($0)" } ?? "nil")")
         try? FileManager.default.removeItem(at: promiseSrc)
         try? FileManager.default.removeItem(at: promiseDest.deletingLastPathComponent())
+        // Dragging a FOLDER out must land the whole tree, not a truncated stub. A folder drags as a
+        // plain file URL with NO promise (a folder promise makes Finder pull a truncated stub); a
+        // regular file still advertises a promise (browser upload zones need it). Also confirm the
+        // fulfiller copies a directory recursively, for any receiver that does pull a promise.
+        let dirSrc = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dragdir-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(
+            at: dirSrc.appendingPathComponent("sub"), withIntermediateDirectories: true)
+        try? "one".write(to: dirSrc.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+        try? String(repeating: "x", count: 5000).write(
+            to: dirSrc.appendingPathComponent("sub/big.txt"), atomically: true, encoding: .utf8)
+        let dirProvider = NSFilePromiseProvider(fileType: "public.folder", delegate: FilePromiseFulfiller.shared)
+        dirProvider.userInfo = dirSrc
+        let dirDest = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pathem-dragdst-\(UUID().uuidString)")
+            .appendingPathComponent(dirSrc.lastPathComponent)
+        try? FileManager.default.createDirectory(
+            at: dirDest.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let dirBox = SmokePromiseResult()
+        let dirSem = DispatchSemaphore(value: 0)
+        DispatchQueue.global(qos: .userInitiated).async {
+            fulfiller.filePromiseProvider(dirProvider, writePromiseTo: dirDest) { err in
+                dirBox.error = err
+                dirSem.signal()
+            }
+        }
+        dirSem.wait()
+        let copiedBigSize =
+            ((try? FileManager.default.attributesOfItem(atPath: dirDest.appendingPathComponent("sub/big.txt").path))?[.size]
+                as? Int) ?? 0
+        let treeCopied =
+            dirBox.error == nil
+            && FileManager.default.fileExists(atPath: dirDest.appendingPathComponent("a.txt").path)
+            && copiedBigSize == 5000
+        let promiseContentType = NSPasteboard.PasteboardType("com.apple.pasteboard.promised-file-content-type")
+        func advertised(_ url: URL) -> (fileURL: Bool, promise: Bool) {
+            let pb = NSPasteboard(name: NSPasteboard.Name("com.scarcrux.pathem.dragw-\(UUID().uuidString)"))
+            pb.clearContents()
+            pb.writeObjects([FileDrag.item(for: url)])
+            let hasURL = pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            return (hasURL, pb.types?.contains(promiseContentType) ?? false)
+        }
+        let dirAd = advertised(dirSrc)
+        let fileAd = advertised(dirSrc.appendingPathComponent("a.txt"))
+        try? FileManager.default.removeItem(at: dirSrc)
+        try? FileManager.default.removeItem(at: dirDest.deletingLastPathComponent())
+        check(
+            "folder-drag-whole-tree-no-promise",
+            treeCopied && dirAd.fileURL && !dirAd.promise && fileAd.fileURL && fileAd.promise,
+            "tree=\(treeCopied) big=\(copiedBigSize) dir(url=\(dirAd.fileURL),promise=\(dirAd.promise)) file(url=\(fileAd.fileURL),promise=\(fileAd.promise))")
         // Get Info: presenting the inspector builds every field (metadata reads, open-with,
         // toggles) without crashing, and populates a reasonable number of them.
         let inspector = InfoInspectorController()

@@ -97,12 +97,26 @@ enum FileDrag {
     /// that also carries the file URL (in-app drops, Finder). Use from `pasteboardWriterForRow`
     /// / `pasteboardWriterForItemAt`.
     static func item(for url: URL) -> NSPasteboardWriting {
+        // A directory (folder or package) is dragged as a plain file URL, with NO promise. A promise
+        // for a folder is worse than useless: browser upload zones and sandboxed drops can't take a
+        // directory anyway, while its presence makes Finder pull the promise and land a truncated
+        // stub instead of copying the whole tree from the file URL. The file URL is exactly what
+        // Finder and in-app drops want for a recursive copy.
+        if isDirectory(url) {
+            return url as NSURL
+        }
         let item = FileDragItem(fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
         item.sourceURL = url
         // userInfo is what survives when Foundation rebuilds the provider for file-provider XPC
         // fulfillment (Messages); the delegate reads the source from here. See source(from:).
         item.userInfo = url
         return item
+    }
+
+    /// Whether `url` is a directory (a plain folder or a package/bundle), so it should drag as a
+    /// file URL rather than a file promise.
+    static func isDirectory(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
     }
 
     /// The file's real Uniform Type, so the promised drop advertises an accurate type (and
