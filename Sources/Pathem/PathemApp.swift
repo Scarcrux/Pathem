@@ -99,7 +99,11 @@ enum PathemApp {
         // Privacy-safe demo mode (PATHEM_DEMO=1): a fake workspace + sidebar for screenshots.
         let demoLayout = ProcessInfo.processInfo.environment["PATHEM_DEMO"] != nil ? DemoWorkspace.build() : nil
         let start = viewShot ? Self.makeSampleFolder() : FileManager.default.homeDirectoryForCurrentUser
-        let browser = BrowserViewController(start: start, demo: demoLayout)
+        // An automation launch (smoke test, screenshot, or a render/test harness) navigates panes to
+        // scratch paths; it must NOT persist over the user's real saved session, or their next normal
+        // launch reopens with /tmp-style tabs. Only a plain interactive launch owns session.json.
+        let browser = BrowserViewController(
+            start: start, demo: demoLayout, persistsSession: !Self.isAutomationLaunch)
         window.contentViewController = browser
         // Assigning a contentViewController makes the window adopt the content's
         // Auto Layout fitting size, which collapses to a sliver here (the panes
@@ -1340,6 +1344,18 @@ enum PathemApp {
 
     /// Build a sample folder (subfolders, files, and gradient landscape PNGs that read like
     /// real photos in thumbnails) for PATHEM_VIEW_SHOT.
+    /// Whether this process is a headless automation launch (the smoke test, a screenshot, or a
+    /// render/test harness) rather than a normal interactive run. Such launches drive panes to
+    /// scratch paths and must never persist over the user's real session. Matches PATHEM_SMOKE and
+    /// any PATHEM_*_SHOT / PATHEM_*_TEST / PATHEM_*_RENDER env var, current or future.
+    static var isAutomationLaunch: Bool {
+        ProcessInfo.processInfo.environment.keys.contains { key in
+            key.hasPrefix("PATHEM_")
+                && (key == "PATHEM_SMOKE" || key.hasSuffix("_SHOT") || key.hasSuffix("_TEST")
+                    || key.hasSuffix("_RENDER"))
+        }
+    }
+
     private static func makeSampleFolder() -> URL {
         let fm = FileManager.default
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-viewshot")

@@ -673,9 +673,14 @@ extension BrowserViewController {
         check("window-commands-registered", cmdIDs.isSuperset(of: ["window.new", "window.moveTabToNew"]),
             "have=\(["window.new", "window.moveTabToNew"].filter(cmdIDs.contains).count)/2")
         let secondary = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser, persistsSession: false)
+        let interactive = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser)  // default: owns the session
         check("new-window-independent-session",
-            !secondary.persistsSession && self.persistsSession && WindowManager.shared.windowCount >= 1,
-            "secondaryPersists=\(secondary.persistsSession) primaryPersists=\(self.persistsSession) windows=\(WindowManager.shared.windowCount)")
+            !secondary.persistsSession && interactive.persistsSession && WindowManager.shared.windowCount >= 1,
+            "secondaryPersists=\(secondary.persistsSession) interactivePersists=\(interactive.persistsSession) windows=\(WindowManager.shared.windowCount)")
+        // An automation launch (this smoke run) must be detected as such, so it never persists over
+        // the user's real session.json -- the bug where test runs left the app reopening on /tmp.
+        check("automation-launch-detected", PathemApp.isAutomationLaunch && !self.persistsSession,
+            "isAutomation=\(PathemApp.isAutomationLaunch) primaryPersists=\(self.persistsSession)")
         // Slideshow: the command is registered and the controller starts inactive (a headless
         // smoke must not pop a full-screen window, so we don't call start()).
         check("slideshow-ready", cmdIDs.contains("view.slideshow") && !slideshow.isActive,
