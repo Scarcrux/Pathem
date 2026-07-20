@@ -230,10 +230,10 @@ extension BrowserViewController {
         }
         check("localization-loads-at-runtime", l10nOK, l10nDetail.isEmpty ? "de+ja resolve" : l10nDetail)
         // A8: the list name cell reads the clean filename to VoiceOver, not the git/tag decoration.
-        if leftTabs.activePane?.entries.isEmpty == false {
-            check(
-                "cell-accessibility-clean-name", leftTabs.activePane?.debugListNameAXMatches(row: 0) == true,
-                "name cell exposes the filename")
+        // Check the first entry row (a grouped view puts a header at row 0); skip only if there are
+        // no entry rows, so grouping can't turn this into a false failure.
+        if let axClean = leftTabs.activePane?.debugFirstEntryNameAXMatches() {
+            check("cell-accessibility-clean-name", axClean, "name cell exposes the filename")
         }
         // The sorted column must show its indicator on load, not only after a header
         // click (setting sortDescriptors programmatically doesn't draw the triangle).

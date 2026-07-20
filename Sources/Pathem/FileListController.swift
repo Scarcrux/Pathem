@@ -988,6 +988,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell.textField?.accessibilityLabel() == entries[index].name
     }
 
+    /// AX check on the first *entry* row, skipping any group-header rows (a grouped view puts a
+    /// header at row 0, where entryIndex is nil). Returns nil when there are no entry rows, so the
+    /// guard can skip rather than fail. Deterministic regardless of grouping.
+    func debugFirstEntryNameAXMatches() -> Bool? {
+        for row in 0..<numberOfRows(in: tableView) where entryIndex(forRow: row) != nil {
+            return debugNameAXMatchesEntry(row: row)
+        }
+        return nil
+    }
+
     func tableView(
         _ tableView: NSTableView, draggingSession session: NSDraggingSession,
         willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
