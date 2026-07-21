@@ -128,6 +128,43 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   not a settings edit; the panel offers to install it rather than claim a config
   edit that can't work.
 
+## Round 10 (shipped 2026-07-21) -- PDF markup, caching, and reactive polish
+
+A long session of user-reported bugs and feature requests, all shipped, tested,
+and installed. Not launch-runway tracks; a batch of feature depth + fixes.
+
+- **Preview-style PDF markup.** `PDFMarkupView`: highlight/underline/strikethrough
+  over a text selection, freehand ink, a drawn signature, rectangle/oval/line/
+  arrow, a text box, and sticky notes -- all savable back into the PDF, undoable,
+  with a Markup toolbar + color well. Form-filling comes free from PDFKit. Fixed
+  three latent bugs found while building it: a blank-page render (document set
+  before the view had a frame), ink drawn off-page (the path must be bounds-local),
+  and a save lifecycle that could silently drop edits or pop a modal mid-navigation.
+- **Default-app viewer.** Declared PDF + image types; opening one from Finder now
+  presents the built-in viewer instead of only revealing it.
+- **Persistent folder-size cache** (`FolderSizeCache`, folder-sizes.json), keyed by
+  folder mtime, so calculate-all-sizes reuses a size across visits and restarts
+  instead of re-walking the whole subtree every time.
+- **Match Finder Settings** (Pathem menu / palette): reads the user's Finder prefs
+  and applies the ones Pathem mirrors -- show hidden files, keep folders on top (a
+  new `foldersFirst` pref), and the default view.
+- **Sidebar depth.** Track the current folder like Finder/Music; Remove from
+  Sidebar for auto-detected system items (hide a stale cloud mount, e.g. a
+  signed-out Google Drive) + Restore Hidden Items; Open in New Tab / Other Pane on
+  any location; Empty Trash from the Trash background + the sidebar Trash item.
+- **Watcher flood fix.** An FSEvents stream is recursive, so a pane on a busy tree
+  (worst case `/`) reloaded several times a second on unrelated system activity --
+  the "toolbar flashes while backgrounded" report. It now reloads only on
+  direct-entry changes. Diagnosed with a new opt-in reload trace
+  (`PATHEM_DEBUG_RELOADS` / `~/.pathem-debug-reloads`).
+- **Drag + session fixes.** Folders drag to Finder as a file URL (a folder promise
+  landed a truncated stub); automation launches (smoke / screenshots / renders)
+  never persist over the real session (the "reopens on /tmp tabs" bug).
+- **Smaller wins.** Open in This Pane + type-aware quick-bar view buttons; Duplicate
+  Tab; Reveal in Pathem hidden where redundant; a status-bar eye toggle for hidden
+  files; a rounded sidebar top; the empty-space right-drag gesture trail; a
+  deterministic fix for the flaky `cell-accessibility` smoke check.
+
 ## Current state
 
 The hard part is done and verified in source: getattrlistbulk fast enumeration
