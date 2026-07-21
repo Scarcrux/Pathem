@@ -237,6 +237,53 @@ extension BrowserViewController {
         if let directory = activePane?.currentURL { preIndex(directory) }
     }
 
+    /// Read the user's Finder preferences and apply the ones Pathem has an equivalent for -- show
+    /// hidden files, keep folders on top, and the default view -- but only where Finder actually
+    /// specifies a value. Non-destructive: any other Pathem setting is left as-is, and the user can
+    /// still change each one afterward. Reports what changed.
+    func matchFinderPreferences() {
+        let changed = applyFinderMatch(FinderPreferences.fromSystem())
+        if !changed.isEmpty {
+            applyPreferences()  // applies + persists prefs
+            // The view / folders-first defaults only bite on folders without a saved view, so refresh
+            // the open panes to show the change now instead of on the next navigation.
+            for side in [leftTabs, rightTabs] { for pane in side.tabs { pane.reloadIfShowingListing() } }
+        }
+        if changed.isEmpty {
+            presentInfo(
+                L("finder.match.noneTitle", "Already matches Finder"),
+                L(
+                    "finder.match.noneBody",
+                    "Your settings already match your Finder preferences for the ones Pathem can mirror (show hidden files, keep folders on top, and the default view)."))
+        } else {
+            presentInfo(
+                L("finder.match.doneTitle", "Matched Finder"),
+                L("finder.match.doneBody", "Updated to match Finder:") + "\n• "
+                    + changed.joined(separator: "\n• "))
+        }
+    }
+
+    /// Mutate `prefs` to match `matched` (in memory only -- no persist, no UI) and return the changed
+    /// setting names. The caller persists/refreshes; split out so it's testable without writing the
+    /// real preferences file.
+    @discardableResult
+    func applyFinderMatch(_ matched: FinderPreferences.Matched) -> [String] {
+        var changed: [String] = []
+        if let hidden = matched.showHidden, hidden != prefs.showHiddenByDefault {
+            prefs.showHiddenByDefault = hidden
+            changed.append(L("finder.match.showHidden", "Show hidden files"))
+        }
+        if let first = matched.foldersFirst, first != prefs.foldersFirst {
+            prefs.foldersFirst = first
+            changed.append(L("finder.match.foldersFirst", "Keep folders on top"))
+        }
+        if let view = matched.defaultView, view != prefs.defaultViewMode {
+            prefs.defaultViewMode = view
+            changed.append(L("finder.match.defaultView", "Default view"))
+        }
+        return changed
+    }
+
     /// AppKit shows a tooltip after `NSInitialToolTipDelay` milliseconds (a long system
     /// default). Register a near-zero delay for instant tooltips, or clear our override to
     /// restore the default. A live toggle applies to tooltips shown after this point;

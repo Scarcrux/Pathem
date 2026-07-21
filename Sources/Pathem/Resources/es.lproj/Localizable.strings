@@ -698,6 +698,14 @@
 "find.tagLabel" = "Etiqueta";
 "find.tagPh" = "Etiqueta de Finder";
 "find.title" = "Búsqueda avanzada";
+"finder.match.defaultView" = "Vista predeterminada";
+"finder.match.doneBody" = "Actualizado para coincidir con el Finder:";
+"finder.match.doneTitle" = "Ajustes del Finder aplicados";
+"finder.match.foldersFirst" = "Mantener las carpetas arriba";
+"finder.match.noneBody" = "Tus ajustes ya coinciden con las preferencias del Finder que Pathem puede reflejar (mostrar archivos ocultos, mantener las carpetas arriba y la vista predeterminada).";
+"finder.match.noneTitle" = "Ya coincide con el Finder";
+"finder.match.showHidden" = "Mostrar archivos ocultos";
+"finder.match.title" = "Coincidir con los ajustes del Finder";
 "flash.checksum" = "suma de verificación";
 "flash.copiedMany" = "%d %@ copiados";
 "flash.copiedOne" = "%@ copiado";

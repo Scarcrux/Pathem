@@ -922,6 +922,7 @@ enum PathemApp {
         appMenu.addItem(checkUpdates)
         appMenu.addItem(.separator())
         appMenu.addItem(commandItem("Settings…", "view.preferences", ","))
+        appMenu.addItem(commandItem("Match Finder Settings", "settings.matchFinder"))
         appMenu.addItem(.separator())
         appMenu.addItem(commandItem("Reset Pathem Data…", "app.resetData"))
         appMenu.addItem(.separator())

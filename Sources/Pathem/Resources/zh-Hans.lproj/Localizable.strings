@@ -698,6 +698,14 @@
 "find.tagLabel" = "标签";
 "find.tagPh" = "Finder 标签";
 "find.title" = "高级查找";
+"finder.match.defaultView" = "默认视图";
+"finder.match.doneBody" = "已更新以匹配访达：";
+"finder.match.doneTitle" = "已匹配访达";
+"finder.match.foldersFirst" = "文件夹始终在前";
+"finder.match.noneBody" = "您的设置已与 Pathem 可镜像的访达偏好设置一致（显示隐藏文件、文件夹始终在前和默认视图）。";
+"finder.match.noneTitle" = "已与访达一致";
+"finder.match.showHidden" = "显示隐藏文件";
+"finder.match.title" = "匹配访达设置";
 "flash.checksum" = "校验和";
 "flash.copiedMany" = "已复制 %d 个 %@";
 "flash.copiedOne" = "已复制 %@";

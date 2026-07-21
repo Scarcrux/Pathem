@@ -340,6 +340,18 @@ extension BrowserViewController {
             check("sidebar-hide-restore-system-item", hidden && restored,
                 "path=\(sysPath) hidden=\(hidden) restored=\(restored)")
         }
+        // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
+        // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
+        // after so the real preferences file is never touched.
+        let mfHidden = prefs.showHiddenByDefault
+        let mfFolders = prefs.foldersFirst
+        let mfChanges = applyFinderMatch(.init(showHidden: !mfHidden, foldersFirst: nil, defaultView: nil))
+        let mfFlipped = prefs.showHiddenByDefault == !mfHidden
+        let mfUntouched = prefs.foldersFirst == mfFolders  // nil field left alone
+        prefs.showHiddenByDefault = mfHidden  // reset in memory (never persisted)
+        check(
+            "match-finder-applies", mfFlipped && mfUntouched && mfChanges.count == 1,
+            "flipped=\(mfFlipped) untouched=\(mfUntouched) changes=\(mfChanges)")
         // Persistent folder-size cache: a recorded size is reused while the folder's mtime is
         // unchanged, and invalidated when it changes. In-memory store (nil fileURL) so the smoke
         // never writes the real cache file.

@@ -371,6 +371,10 @@ extension BrowserViewController {
             "sidebar.importFinderFavorites",
             L("bvc.cmd.importFinderFavorites", "Import Favorites from Finder…")
         ) { [weak self] in self?.importFinderFavorites() }
+        add(
+            "settings.matchFinder",
+            L("finder.match.title", "Match Finder Settings")
+        ) { [weak self] in self?.matchFinderPreferences() }
         add("layout.save", L("bvc.cmd.saveLayout", "Save Layout…")) { [weak self] in self?.saveLayoutPrompt() }
         add("palette.show", L("bvc.cmd.commandPalette", "Command Palette…")) { [weak self] in self?.showPalette(prefill: ">") }
         add("search.palette", L("bvc.cmd.searchFolder", "Search This Folder…")) { [weak self] in self?.showPalette(prefill: "") }

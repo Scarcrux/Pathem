@@ -698,6 +698,14 @@
 "find.tagLabel" = "Tag";
 "find.tagPh" = "Tag Finder";
 "find.title" = "Recherche avancée";
+"finder.match.defaultView" = "Vue par défaut";
+"finder.match.doneBody" = "Mis à jour pour correspondre au Finder :";
+"finder.match.doneTitle" = "Réglages du Finder adoptés";
+"finder.match.foldersFirst" = "Garder les dossiers en haut";
+"finder.match.noneBody" = "Vos réglages correspondent déjà aux préférences du Finder que Pathem peut reproduire (afficher les fichiers cachés, garder les dossiers en haut et la vue par défaut).";
+"finder.match.noneTitle" = "Déjà conforme au Finder";
+"finder.match.showHidden" = "Afficher les fichiers cachés";
+"finder.match.title" = "Adopter les réglages du Finder";
 "flash.checksum" = "somme de contrôle";
 "flash.copiedMany" = "%d %@ copiés";
 "flash.copiedOne" = "%@ copié";

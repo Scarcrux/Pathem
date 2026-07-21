@@ -698,6 +698,14 @@
 "find.tagLabel" = "Tag";
 "find.tagPh" = "Finder-Tag";
 "find.title" = "Erweiterte Suche";
+"finder.match.defaultView" = "Standardansicht";
+"finder.match.doneBody" = "An den Finder angepasst:";
+"finder.match.doneTitle" = "Finder übernommen";
+"finder.match.foldersFirst" = "Ordner oben behalten";
+"finder.match.noneBody" = "Ihre Einstellungen stimmen bereits mit den Finder-Einstellungen überein, die Pathem übernehmen kann (verborgene Dateien anzeigen, Ordner oben behalten und die Standardansicht).";
+"finder.match.noneTitle" = "Stimmt bereits mit dem Finder überein";
+"finder.match.showHidden" = "Verborgene Dateien anzeigen";
+"finder.match.title" = "Finder-Einstellungen übernehmen";
 "flash.checksum" = "Prüfsumme";
 "flash.copiedMany" = "%d %@ kopiert";
 "flash.copiedOne" = "%@ kopiert";

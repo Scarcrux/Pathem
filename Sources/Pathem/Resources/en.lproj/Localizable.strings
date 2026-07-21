@@ -698,6 +698,14 @@
 "find.tagLabel" = "Tag";
 "find.tagPh" = "Finder tag";
 "find.title" = "Advanced Find";
+"finder.match.defaultView" = "Default view";
+"finder.match.doneBody" = "Updated to match Finder:";
+"finder.match.doneTitle" = "Matched Finder";
+"finder.match.foldersFirst" = "Keep folders on top";
+"finder.match.noneBody" = "Your settings already match your Finder preferences for the ones Pathem can mirror (show hidden files, keep folders on top, and the default view).";
+"finder.match.noneTitle" = "Already matches Finder";
+"finder.match.showHidden" = "Show hidden files";
+"finder.match.title" = "Match Finder Settings";
 "flash.checksum" = "checksum";
 "flash.copiedMany" = "Copied %d %@s";
 "flash.copiedOne" = "Copied %@";

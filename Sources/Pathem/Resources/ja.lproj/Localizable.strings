@@ -698,6 +698,14 @@
 "find.tagLabel" = "タグ";
 "find.tagPh" = "Finderタグ";
 "find.title" = "詳細検索";
+"finder.match.defaultView" = "デフォルトの表示";
+"finder.match.doneBody" = "Finderに合わせて更新しました：";
+"finder.match.doneTitle" = "Finderに合わせました";
+"finder.match.foldersFirst" = "フォルダを上に表示";
+"finder.match.noneBody" = "設定は、Pathemが反映できるFinderの環境設定（隠しファイルの表示、フォルダを上に表示、デフォルトの表示）とすでに一致しています。";
+"finder.match.noneTitle" = "すでにFinderと一致しています";
+"finder.match.showHidden" = "隠しファイルを表示";
+"finder.match.title" = "Finderの設定に合わせる";
 "flash.checksum" = "チェックサム";
 "flash.copiedMany" = "%d 件の %@ をコピーしました";
 "flash.copiedOne" = "%@をコピーしました";
