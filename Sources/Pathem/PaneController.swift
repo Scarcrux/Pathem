@@ -490,6 +490,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Refresh the listing. In-place refreshes (sort, file op, watcher) preserve
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {
+        ReloadDebug.log(
+            "reload folder=\(nav.current.lastPathComponent) preserve=\(preserveState) "
+                + "remote=\(remote != nil) smart=\(smartActive)")
         if remote != nil { reloadRemote(); return }
         if smartActive { return }  // a smart-result view isn't a folder to refresh
         // Leaving the mounted archive's subtree (sidebar jump, path-bar) drops the session.
@@ -668,6 +671,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// per-file overlays + branch summary, guarded so a stale result is dropped.
     private func refreshGitStatusAsync() {
         let dir = nav.current
+        ReloadDebug.log("git-refresh folder=\(dir.lastPathComponent)")
         let generation = gitGen.bump()
         Task.detached(priority: .utility) { [weak self] in
             let info = await GitStatus.status(for: dir)
@@ -959,6 +963,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// A disk change arrived for `watched`. Ignore it if we have navigated away,
     /// and debounce so a burst (an unzip, a large copy) collapses to one refresh.
     private func directoryChangedOnDisk(watched: URL) {
+        ReloadDebug.log("fsevent folder=\(watched.lastPathComponent) active=\(isActivePane)")
         guard remote == nil, watched == nav.current else { return }  // ignore local changes while remote
         pendingRefresh?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.applyDiskRefresh() }
@@ -985,6 +990,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// over the divider via zPosition) while the border stays a neutral hairline on both panes.
     /// Quieter than the old accent ring, and it reads in both light and dark themes.
     func setActive(_ active: Bool) {
+        if active != isActivePane { ReloadDebug.log("setActive \(active) folder=\(nav.current.lastPathComponent)") }
         isActivePane = active
         guard let layer = containerView.layer else { return }
         layer.shadowColor = NSColor.shadowColor.cgColor
@@ -1227,6 +1233,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func applyViewMode(_ mode: ViewFormat.ViewMode) {
         viewSwitcher.selectedSegment = segmentIndex(mode)  // keep the switcher in sync
         guard mode != currentMode else { return }
+        ReloadDebug.log("viewmode-swap folder=\(nav.current.lastPathComponent) mode=\(mode)")
         // Capture before swapping: the new (empty) content can't report these.
         let hadFocus = content.keyView.window?.firstResponder === content.keyView
         pendingSelection = Set(content.selectedEntries.map(\.name))
