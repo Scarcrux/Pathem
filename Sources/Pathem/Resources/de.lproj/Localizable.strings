@@ -1351,12 +1351,14 @@
 "sidebar.network" = "Netzwerk";
 "sidebar.newGroup" = "Neue Gruppe";
 "sidebar.newGroupDefaultName" = "Neue Gruppe";
+"sidebar.openInOtherPane" = "In anderem Bereich öffnen";
 "sidebar.otherIcon" = "Andere…";
 "sidebar.recents" = "Zuletzt benutzt";
 "sidebar.removeFromSidebar" = "Aus Seitenleiste entfernen";
 "sidebar.removeGroup" = "Gruppe entfernen";
 "sidebar.rename" = "Umbenennen";
 "sidebar.renameGroup" = "Gruppe umbenennen";
+"sidebar.restoreHidden" = "Ausgeblendete Objekte einblenden";
 "sidebar.setButton" = "Festlegen";
 "sidebar.settingsAccessibility" = "Einstellungen";
 "sidebar.settingsTitle" = "Einstellungen";

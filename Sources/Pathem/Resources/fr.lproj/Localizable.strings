@@ -1351,12 +1351,14 @@
 "sidebar.network" = "Réseau";
 "sidebar.newGroup" = "Nouveau groupe";
 "sidebar.newGroupDefaultName" = "Nouveau groupe";
+"sidebar.openInOtherPane" = "Ouvrir dans l’autre volet";
 "sidebar.otherIcon" = "Autre…";
 "sidebar.recents" = "Récents";
 "sidebar.removeFromSidebar" = "Retirer de la barre latérale";
 "sidebar.removeGroup" = "Supprimer le groupe";
 "sidebar.rename" = "Renommer";
 "sidebar.renameGroup" = "Renommer le groupe";
+"sidebar.restoreHidden" = "Restaurer les éléments masqués";
 "sidebar.setButton" = "Définir";
 "sidebar.settingsAccessibility" = "Réglages";
 "sidebar.settingsTitle" = "Réglages";

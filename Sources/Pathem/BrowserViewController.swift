@@ -559,6 +559,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // configurePane + callbacks are set, so each pane is fully wired.
         restoreSession()
         sidebar.onSelect = { [weak self] url in self?.activePane?.navigate(to: url) }
+        sidebar.onOpenInNewTab = { [weak self] url in self?.activeSide?.openTab(at: url) }
+        sidebar.onOpenInOtherPane = { [weak self] url in
+            (self?.otherPane ?? self?.activePane)?.navigate(to: url)
+        }
         sidebar.onEmptyTrash = { [weak self] in self?.emptyTrash() }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
         sidebar.onSelectSavedSearch = { [weak self] search in self?.runSavedSearch(search.name, query: search.mdfindQuery()) }

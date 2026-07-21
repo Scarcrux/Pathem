@@ -1351,12 +1351,14 @@
 "sidebar.network" = "ネットワーク";
 "sidebar.newGroup" = "新規グループ";
 "sidebar.newGroupDefaultName" = "新規グループ";
+"sidebar.openInOtherPane" = "他のペインで開く";
 "sidebar.otherIcon" = "その他…";
 "sidebar.recents" = "最近の項目";
 "sidebar.removeFromSidebar" = "サイドバーから削除";
 "sidebar.removeGroup" = "グループを削除";
 "sidebar.rename" = "名称変更";
 "sidebar.renameGroup" = "グループ名を変更";
+"sidebar.restoreHidden" = "非表示の項目を復元";
 "sidebar.setButton" = "設定";
 "sidebar.settingsAccessibility" = "設定";
 "sidebar.settingsTitle" = "設定";

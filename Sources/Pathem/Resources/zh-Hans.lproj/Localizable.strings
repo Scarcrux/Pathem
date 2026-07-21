@@ -1351,12 +1351,14 @@
 "sidebar.network" = "网络";
 "sidebar.newGroup" = "新建群组";
 "sidebar.newGroupDefaultName" = "新建群组";
+"sidebar.openInOtherPane" = "在另一窗格中打开";
 "sidebar.otherIcon" = "其他…";
 "sidebar.recents" = "最近使用";
 "sidebar.removeFromSidebar" = "从边栏中移除";
 "sidebar.removeGroup" = "移除群组";
 "sidebar.rename" = "重新命名";
 "sidebar.renameGroup" = "重新命名群组";
+"sidebar.restoreHidden" = "恢复隐藏的项目";
 "sidebar.setButton" = "设置";
 "sidebar.settingsAccessibility" = "设置";
 "sidebar.settingsTitle" = "设置";

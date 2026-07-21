@@ -32,6 +32,22 @@ struct SidebarSectionOrderTests {
         let json = #"{"groups":[]}"#
         let decoded = try JSONDecoder().decode(Sidebar.self, from: Data(json.utf8))
         #expect(decoded.sectionOrder.isEmpty)
+        #expect(decoded.hiddenSystemItems.isEmpty)  // absent key defaults, doesn't fail the decode
+    }
+
+    @Test func hideSystemItemRoundTripsAndIsIdempotent() throws {
+        var sidebar = Sidebar(groups: [])
+        let gdrive = "/Users/me/Library/CloudStorage/GoogleDrive-old@x.com"
+        sidebar.hideSystemItem(gdrive)
+        sidebar.hideSystemItem(gdrive)  // idempotent
+        #expect(sidebar.hiddenSystemItems == [gdrive])
+        #expect(sidebar.isSystemItemHidden(gdrive))
+        let decoded = try JSONDecoder().decode(
+            Sidebar.self, from: JSONEncoder().encode(sidebar))
+        #expect(decoded.isSystemItemHidden(gdrive))
+        var restored = decoded
+        restored.showAllSystemItems()
+        #expect(restored.hiddenSystemItems.isEmpty)
     }
 }
 

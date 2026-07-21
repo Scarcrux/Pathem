@@ -58,22 +58,40 @@ public struct Sidebar: Codable, Sendable, Equatable {
     /// missing from the list fall to the end in their default order, so a newly
     /// appearing section (a mounted volume, a connected device) isn't lost.
     public var sectionOrder: [String]
+    /// Target paths of auto-detected system items (cloud drives, volumes, locations) the user has
+    /// hidden. Those sections are built automatically and aren't in `groups`, so hiding one is a
+    /// separate opt-out list, applied when the sidebar is assembled. Lets a stale cloud mount (a
+    /// removed Google Drive account whose folder lingers) be taken off the sidebar.
+    public var hiddenSystemItems: [String]
 
-    public init(groups: [Group], sectionOrder: [String] = []) {
+    public init(groups: [Group], sectionOrder: [String] = [], hiddenSystemItems: [String] = []) {
         self.groups = groups
         self.sectionOrder = sectionOrder
+        self.hiddenSystemItems = hiddenSystemItems
     }
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         groups = try c.decodeIfPresent([Group].self, forKey: .groups) ?? []
         sectionOrder = try c.decodeIfPresent([String].self, forKey: .sectionOrder) ?? []
+        hiddenSystemItems = try c.decodeIfPresent([String].self, forKey: .hiddenSystemItems) ?? []
     }
 
-    private enum CodingKeys: String, CodingKey { case groups, sectionOrder }
+    private enum CodingKeys: String, CodingKey { case groups, sectionOrder, hiddenSystemItems }
 
     /// Reorder the sidebar's sections to exactly `order` (a list of section keys).
     public mutating func setSectionOrder(_ order: [String]) { sectionOrder = order }
+
+    /// Hide an auto-detected system item by its target path (idempotent).
+    public mutating func hideSystemItem(_ path: String) {
+        if !hiddenSystemItems.contains(path) { hiddenSystemItems.append(path) }
+    }
+
+    /// Whether a system item at `path` is hidden.
+    public func isSystemItemHidden(_ path: String) -> Bool { hiddenSystemItems.contains(path) }
+
+    /// Restore every hidden system item.
+    public mutating func showAllSystemItems() { hiddenSystemItems.removeAll() }
 
     /// Stable-sort `keys` so those present in `order` appear in that order, and any others
     /// keep their original relative order after them. The sidebar uses this to arrange its

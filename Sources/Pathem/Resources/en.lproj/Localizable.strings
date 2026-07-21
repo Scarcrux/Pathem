@@ -1281,12 +1281,14 @@
 "sidebar.network" = "Network";
 "sidebar.newGroup" = "New Group";
 "sidebar.newGroupDefaultName" = "New Group";
+"sidebar.openInOtherPane" = "Open in Other Pane";
 "sidebar.otherIcon" = "Other…";
 "sidebar.recents" = "Recents";
 "sidebar.removeFromSidebar" = "Remove from Sidebar";
 "sidebar.removeGroup" = "Remove Group";
 "sidebar.rename" = "Rename";
 "sidebar.renameGroup" = "Rename Group";
+"sidebar.restoreHidden" = "Restore Hidden Items";
 "sidebar.setButton" = "Set";
 "sidebar.settingsAccessibility" = "Settings";
 "sidebar.settingsTitle" = "Settings";

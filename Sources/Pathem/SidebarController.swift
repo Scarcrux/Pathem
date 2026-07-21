@@ -85,6 +85,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onTrashFiles: ((_ urls: [URL]) -> Void)?
     /// "Empty Trash" was chosen from the Trash item's context menu.
     var onEmptyTrash: (() -> Void)?
+    /// Open a sidebar location's folder in a new tab of the active pane.
+    var onOpenInNewTab: ((URL) -> Void)?
+    /// Open a sidebar location's folder in the other pane.
+    var onOpenInOtherPane: ((URL) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
     private var connections: [RemoteConnection] = []
@@ -170,6 +174,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         var children: [Node]
         /// Subfolders are loaded lazily the first time the node is expanded.
         var childrenLoaded = false
+        /// A navigable folder location (favorite, cloud/volume/system place, or subfolder) -- the
+        /// kinds that can be opened in a new tab or the other pane.
+        var isFolderLocation: Bool {
+            switch kind {
+            case .userItem, .systemItem, .folderChild: return true
+            default: return false
+            }
+        }
         init(
             kind: Kind, title: String, url: URL?, icon: String?, isFolder: Bool = false,
             tagColor: FileTag.Color? = nil, iconTint: NSColor? = nil, isEjectable: Bool = false,
@@ -395,6 +407,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         roots.append(smartFoldersNode())
         roots.append(tagsNode())
+        // Honor per-item hides of auto-detected system items (e.g. a stale Google Drive mount), then
+        // drop any auto section left empty by hiding.
+        if !model.hiddenSystemItems.isEmpty {
+            let hidden = Set(model.hiddenSystemItems)
+            for root in roots { Self.removeHiddenSystemItems(from: root, hidden: hidden) }
+            roots.removeAll { if case .systemHeader = $0.kind { return $0.children.isEmpty } else { return false } }
+        }
         roots = Self.ordered(roots, by: model.sectionOrder)
         outline.reloadData()
         for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) { outline.expandItem(root) }
@@ -404,6 +423,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             outline.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
             restoringSelection = false
         }
+    }
+
+    /// Recursively drop hidden system items (matched by standardized target path) from a section's
+    /// children, so a user-hidden cloud mount / volume / location doesn't appear.
+    private static func removeHiddenSystemItems(from node: Node, hidden: Set<String>) {
+        node.children.removeAll { child in
+            if case .systemItem = child.kind, let path = child.url?.standardizedFileURL.path {
+                return hidden.contains(path)
+            }
+            return false
+        }
+        for child in node.children { removeHiddenSystemItems(from: child, hidden: hidden) }
     }
 
     /// Track the active folder: highlight the sidebar row whose location matches `url` (like Finder
@@ -437,6 +468,32 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     /// The folder URL of the currently highlighted sidebar row (for the folder-tracking smoke guard).
     var debugSelectedFolderURL: URL? { (outline.item(atRow: outline.selectedRow) as? Node)?.url }
+
+    /// Standardized target paths of every auto-detected system item currently in the sidebar, for
+    /// the hide/restore smoke guard.
+    var debugSystemItemPaths: [String] {
+        var paths: [String] = []
+        func walk(_ nodes: [Node]) {
+            for node in nodes {
+                if case .systemItem = node.kind, let path = node.url?.standardizedFileURL.path {
+                    paths.append(path)
+                }
+                walk(node.children)
+            }
+        }
+        walk(roots)
+        return paths
+    }
+    func debugHideSystemItem(_ path: String) {
+        var copy = model
+        copy.hideSystemItem(path)
+        model = copy  // didSet reloads; no onModelChange, so the smoke doesn't persist
+    }
+    func debugRestoreHiddenItems() {
+        var copy = model
+        copy.showAllSystemItems()
+        model = copy
+    }
 
     /// Select a row by index for headless render inspection (PATHEM_SIDEBAR_SELECT). Makes the
     /// outline first responder so the selection draws emphasized (accent), not muted gray.
@@ -1261,6 +1318,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
         if let node, node.url != nil {
             add(L("sidebar.copyPath", "Copy Path"), #selector(copyPathTarget))
+            // Folder locations (favorites, cloud drives, volumes, system places) also open elsewhere.
+            if node.isFolderLocation {
+                add(L("bvc.cmd.openInNewTab", "Open in New Tab"), #selector(openInNewTabTarget))
+                add(L("sidebar.openInOtherPane", "Open in Other Pane"), #selector(openInOtherPaneTarget))
+            }
             menu.addItem(.separator())
         }
         if let node {
@@ -1288,8 +1350,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             case .systemItem:
                 if node.isEjectable {
                     add(L("sidebar.eject", "Eject"), #selector(ejectTarget))
-                    menu.addItem(.separator())
                 }
+                // Auto-detected items (cloud drives, volumes, system places) aren't in the editable
+                // model, so hiding is a separate opt-out -- lets a stale Google Drive mount be removed.
+                add(L("sidebar.removeFromSidebar", "Remove from Sidebar"), #selector(hideSystemItemTarget))
+                menu.addItem(.separator())
             case .trash:
                 add(L("bvc.cmd.emptyTrash", "Empty Trash"), #selector(emptyTrashTarget))
                 return  // Trash-only menu (Copy Path above, then Empty Trash)
@@ -1300,6 +1365,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         add(L("sidebar.newGroup", "New Group"), #selector(newGroup))
         if currentFolder?() != nil {
             add(L("sidebar.addCurrentFolder", "Add Current Folder"), #selector(addCurrentFolder))
+        }
+        if !model.hiddenSystemItems.isEmpty {
+            menu.addItem(.separator())
+            add(L("sidebar.restoreHidden", "Restore Hidden Items"), #selector(restoreHiddenTarget))
         }
     }
 
@@ -1321,6 +1390,27 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         guard let url = menuTargetNode?.url else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(url.path, forType: .string)
+    }
+    @objc private func openInNewTabTarget() {
+        if let url = menuTargetNode?.url { onOpenInNewTab?(url) }
+    }
+    @objc private func openInOtherPaneTarget() {
+        if let url = menuTargetNode?.url { onOpenInOtherPane?(url) }
+    }
+    /// Hide an auto-detected system item (cloud drive, volume, system place). Persisted via the model
+    /// so it stays hidden across launches; restored via "Restore Hidden Items".
+    @objc private func hideSystemItemTarget() {
+        guard let url = menuTargetNode?.url else { return }
+        var copy = model
+        copy.hideSystemItem(url.standardizedFileURL.path)
+        model = copy  // didSet calls reload()
+        onModelChange?(model)
+    }
+    @objc private func restoreHiddenTarget() {
+        var copy = model
+        copy.showAllSystemItems()
+        model = copy
+        onModelChange?(model)
     }
 
     private func iconSubmenuItem() -> NSMenuItem {

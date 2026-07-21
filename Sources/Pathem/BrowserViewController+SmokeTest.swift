@@ -330,6 +330,16 @@ extension BrowserViewController {
         check(
             "empty-space-drag-trail", emptyTrailShown && emptyHint.isEmpty,
             "shown=\(emptyTrailShown) hint=\"\(emptyHint)\"")
+        // Hiding an auto-detected system item (e.g. a stale Google Drive mount) removes it from the
+        // sidebar; Restore Hidden Items brings it back.
+        if let sysPath = sidebar.debugSystemItemPaths.first {
+            sidebar.debugHideSystemItem(sysPath)
+            let hidden = !sidebar.debugSystemItemPaths.contains(sysPath)
+            sidebar.debugRestoreHiddenItems()
+            let restored = sidebar.debugSystemItemPaths.contains(sysPath)
+            check("sidebar-hide-restore-system-item", hidden && restored,
+                "path=\(sysPath) hidden=\(hidden) restored=\(restored)")
+        }
         // The sidebar tracks the current folder like Finder/Music: highlight the matching row,
         // deselect when the folder isn't a sidebar item.
         let homeURL = FileManager.default.homeDirectoryForCurrentUser

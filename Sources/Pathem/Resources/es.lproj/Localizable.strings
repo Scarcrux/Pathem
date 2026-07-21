@@ -1351,12 +1351,14 @@
 "sidebar.network" = "Red";
 "sidebar.newGroup" = "Nuevo grupo";
 "sidebar.newGroupDefaultName" = "Nuevo grupo";
+"sidebar.openInOtherPane" = "Abrir en el otro panel";
 "sidebar.otherIcon" = "Otro…";
 "sidebar.recents" = "Recientes";
 "sidebar.removeFromSidebar" = "Eliminar de la barra lateral";
 "sidebar.removeGroup" = "Eliminar grupo";
 "sidebar.rename" = "Renombrar";
 "sidebar.renameGroup" = "Renombrar grupo";
+"sidebar.restoreHidden" = "Restaurar elementos ocultos";
 "sidebar.setButton" = "Establecer";
 "sidebar.settingsAccessibility" = "Ajustes";
 "sidebar.settingsTitle" = "Ajustes";
