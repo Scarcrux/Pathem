@@ -1028,6 +1028,7 @@
 "pane.goButton" = "Ir";
 "pane.goToPathPlaceholder" = "Ir a la ruta";
 "pane.hiddenShown" = "Archivos ocultos mostrados";
+"pane.hideHidden" = "Ocultar archivos ocultos";
 "pane.itemCountPlural" = "%d ítems";
 "pane.itemCountSingular" = "%d ítem";
 "pane.loadingHost" = "Cargando %@…";
@@ -1048,6 +1049,7 @@
 "pane.sendViaAirDrop" = "Enviar por AirDrop";
 "pane.sftpMissing" = "No se encontró sftp";
 "pane.share" = "Compartir…";
+"pane.showHidden" = "Mostrar archivos ocultos";
 "pane.sortAscending" = "Ascendente";
 "pane.sortDateModified" = "Fecha de modificación";
 "pane.sortDescending" = "Descendente";

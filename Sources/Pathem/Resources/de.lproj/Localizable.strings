@@ -1028,6 +1028,7 @@
 "pane.goButton" = "Los";
 "pane.goToPathPlaceholder" = "Gehe zu Pfad";
 "pane.hiddenShown" = "Versteckte Dateien eingeblendet";
+"pane.hideHidden" = "Verborgene Dateien ausblenden";
 "pane.itemCountPlural" = "%d Objekte";
 "pane.itemCountSingular" = "%d Objekt";
 "pane.loadingHost" = "%@ wird geladen…";
@@ -1048,6 +1049,7 @@
 "pane.sendViaAirDrop" = "Über AirDrop senden";
 "pane.sftpMissing" = "sftp wurde nicht gefunden";
 "pane.share" = "Teilen…";
+"pane.showHidden" = "Verborgene Dateien anzeigen";
 "pane.sortAscending" = "Aufsteigend";
 "pane.sortDateModified" = "Änderungsdatum";
 "pane.sortDescending" = "Absteigend";

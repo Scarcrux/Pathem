@@ -242,6 +242,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private func build() {
         containerView.material = .sidebar
         containerView.blendingMode = .behindWindow
+        // Round the top corners so the sidebar echoes the window's rounded corners, like Finder.
+        // (Layer coords are bottom-left origin, so MaxY is the top edge.)
+        containerView.wantsLayer = true
+        containerView.layer?.cornerRadius = 10
+        containerView.layer?.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+        containerView.layer?.masksToBounds = true
 
         let column = NSTableColumn(identifier: .init("main"))
         outline.addTableColumn(column)

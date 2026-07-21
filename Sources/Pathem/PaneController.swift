@@ -204,6 +204,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// when the position toggles.
     private var pathBarPositionConstraints: [NSLayoutConstraint] = []
     private let statusLabel = NSTextField(labelWithString: "")
+    /// A small eye button on the status row that shows/hides hidden files for this pane, like Finder's
+    /// Cmd-Shift-period but always visible.
+    private let hiddenToggle = NSButton()
+    /// Whether hidden files are currently shown in this pane (the per-folder view or the global
+    /// default), for the eye toggle's icon.
+    private var hiddenShown: Bool { format.showHidden || showHiddenByDefault }
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
         f.countStyle = .file
@@ -1094,6 +1100,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.lineBreakMode = .byTruncatingTail
 
+        hiddenToggle.isBordered = false
+        hiddenToggle.imagePosition = .imageOnly
+        hiddenToggle.setButtonType(.momentaryChange)
+        hiddenToggle.target = self
+        hiddenToggle.action = #selector(toggleHiddenFromStatus)
+        hiddenToggle.translatesAutoresizingMaskIntoConstraints = false
+        hiddenToggle.setContentHuggingPriority(.required, for: .horizontal)
+        updateHiddenToggleIcon()
+
         filterField.placeholderString = L("pane.filterPlaceholder", "Filter (try ext:pdf, kind:image, size:>10mb)")
         filterField.controlSize = .small
         filterField.font = .systemFont(ofSize: 11)
@@ -1111,9 +1126,23 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // yields (a gallery yields a lot); the content area should claim that space instead.
         bottomStack.setHuggingPriority(.required, for: .vertical)
         bottomStack.setContentHuggingPriority(.required, for: .vertical)
+        // The status row: the item-count/size label on the left, the hidden-files eye on the right.
+        let statusSpacer = NSView()
+        statusSpacer.translatesAutoresizingMaskIntoConstraints = false
+        statusSpacer.setContentHuggingPriority(.init(1), for: .horizontal)  // expands to push the eye right
+        let statusRow = NSStackView(views: [statusLabel, statusSpacer, hiddenToggle])
+        statusRow.orientation = .horizontal
+        statusRow.spacing = 6
+        statusRow.alignment = .centerY
+        statusRow.translatesAutoresizingMaskIntoConstraints = false
+        // Hug the row's own (small) height, or it stretches and squeezes the file list to nothing.
+        statusRow.setHuggingPriority(.required, for: .vertical)
+        statusRow.setContentHuggingPriority(.required, for: .vertical)
+        statusRow.setClippingResistancePriority(.required, for: .vertical)
         bottomStack.addArrangedSubview(filterField)
-        bottomStack.addArrangedSubview(statusLabel)
+        bottomStack.addArrangedSubview(statusRow)
         filterField.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true
+        statusRow.widthAnchor.constraint(equalTo: bottomStack.widthAnchor).isActive = true
 
         containerView.addSubview(toolbarStack)
         containerView.addSubview(pathBar)
@@ -1398,6 +1427,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
         statusLabel.stringValue = text
+        updateHiddenToggleIcon()  // keep the eye in sync with the current folder's hidden state
     }
 
     private var flashToken = 0
@@ -1860,6 +1890,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         format.showHidden.toggle()
         rememberFormat?(nav.current, format)
         reload()
+    }
+
+    @objc private func toggleHiddenFromStatus() {
+        toggleHidden()  // toggles the per-folder view, remembers it, reloads
+        updateHiddenToggleIcon()
+    }
+
+    /// Sync the status-row eye to whether hidden files are currently shown.
+    private func updateHiddenToggleIcon() {
+        let symbol = hiddenShown ? "eye" : "eye.slash"
+        hiddenToggle.image = NSImage(
+            systemSymbolName: symbol, accessibilityDescription: L("pane.showHidden", "Show Hidden Files"))
+        hiddenToggle.contentTintColor = hiddenShown ? .controlAccentColor : .tertiaryLabelColor
+        hiddenToggle.toolTip =
+            hiddenShown ? L("pane.hideHidden", "Hide Hidden Files") : L("pane.showHidden", "Show Hidden Files")
     }
 
     /// Open the current selection: descend into a folder (files are a no-op for

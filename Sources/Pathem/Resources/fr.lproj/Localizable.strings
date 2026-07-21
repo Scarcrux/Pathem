@@ -1028,6 +1028,7 @@
 "pane.goButton" = "Aller";
 "pane.goToPathPlaceholder" = "Aller au chemin";
 "pane.hiddenShown" = "Fichiers cachés affichés";
+"pane.hideHidden" = "Masquer les fichiers cachés";
 "pane.itemCountPlural" = "%d éléments";
 "pane.itemCountSingular" = "%d élément";
 "pane.loadingHost" = "Chargement de %@…";
@@ -1048,6 +1049,7 @@
 "pane.sendViaAirDrop" = "Envoyer par AirDrop";
 "pane.sftpMissing" = "sftp est introuvable";
 "pane.share" = "Partager…";
+"pane.showHidden" = "Afficher les fichiers cachés";
 "pane.sortAscending" = "Croissant";
 "pane.sortDateModified" = "Date de modification";
 "pane.sortDescending" = "Décroissant";

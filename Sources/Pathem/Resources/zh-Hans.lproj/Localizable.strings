@@ -1028,6 +1028,7 @@
 "pane.goButton" = "前往";
 "pane.goToPathPlaceholder" = "前往路径";
 "pane.hiddenShown" = "显示隐藏文件";
+"pane.hideHidden" = "隐藏隐藏文件";
 "pane.itemCountPlural" = "%d 个项目";
 "pane.itemCountSingular" = "%d 个项目";
 "pane.loadingHost" = "正在载入 %@…";
@@ -1048,6 +1049,7 @@
 "pane.sendViaAirDrop" = "通过 AirDrop 发送";
 "pane.sftpMissing" = "未找到 sftp";
 "pane.share" = "共享…";
+"pane.showHidden" = "显示隐藏文件";
 "pane.sortAscending" = "升序";
 "pane.sortDateModified" = "修改日期";
 "pane.sortDescending" = "降序";

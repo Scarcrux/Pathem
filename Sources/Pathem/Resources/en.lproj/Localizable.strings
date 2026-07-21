@@ -958,6 +958,7 @@
 "pane.goButton" = "Go";
 "pane.goToPathPlaceholder" = "Go to path";
 "pane.hiddenShown" = "Hidden files shown";
+"pane.hideHidden" = "Hide Hidden Files";
 "pane.itemCountPlural" = "%d items";
 "pane.itemCountSingular" = "%d item";
 "pane.loadingHost" = "Loading %@…";
@@ -978,6 +979,7 @@
 "pane.sendViaAirDrop" = "Send via AirDrop";
 "pane.sftpMissing" = "sftp was not found";
 "pane.share" = "Share…";
+"pane.showHidden" = "Show Hidden Files";
 "pane.sortAscending" = "Ascending";
 "pane.sortDateModified" = "Date Modified";
 "pane.sortDescending" = "Descending";
