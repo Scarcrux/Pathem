@@ -1425,6 +1425,7 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         WindowManager.shared.primaryBrowser?.saveSessionNow()  // persist tabs/folders for next launch
+        FolderSizeStore.shared.flush()  // persist the folder-size cache so a restart doesn't re-walk
         // Hang up every window's embedded shell so none (and the jobs they launched) is orphaned.
         WindowManager.shared.terminateAllTerminals()
     }

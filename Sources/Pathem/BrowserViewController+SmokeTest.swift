@@ -340,6 +340,18 @@ extension BrowserViewController {
             check("sidebar-hide-restore-system-item", hidden && restored,
                 "path=\(sysPath) hidden=\(hidden) restored=\(restored)")
         }
+        // Persistent folder-size cache: a recorded size is reused while the folder's mtime is
+        // unchanged, and invalidated when it changes. In-memory store (nil fileURL) so the smoke
+        // never writes the real cache file.
+        let sizeStore = FolderSizeStore(cache: FolderSizeCache(), fileURL: nil)
+        let szDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-size-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: szDir, withIntermediateDirectories: true)
+        let szMtime = FolderSizeStore.mtimeKey(of: szDir)
+        sizeStore.record(path: szDir.path, measurement: .init(bytes: 4096, complete: true), mtime: szMtime)
+        let szHit = sizeStore.measurement(forPath: szDir.path, mtime: szMtime)?.bytes == 4096
+        let szMissOnChange = sizeStore.measurement(forPath: szDir.path, mtime: szMtime + 1) == nil
+        try? FileManager.default.removeItem(at: szDir)
+        check("folder-size-cache", szHit && szMissOnChange, "hit=\(szHit) missOnChange=\(szMissOnChange)")
         // The sidebar tracks the current folder like Finder/Music: highlight the matching row,
         // deselect when the folder isn't a sidebar item.
         let homeURL = FileManager.default.homeDirectoryForCurrentUser

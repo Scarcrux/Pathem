@@ -1501,7 +1501,22 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                     guard gen.isCurrent(generation) else { return }  // navigated away / disabled
                     let folder = folders[index]
                     let path = Self.key(base: base, name: folder.name)  // same key as viewFor
-                    let size = known[path] ?? DirectorySize.total(of: URL(fileURLWithPath: path))
+                    let size: DirectorySize.Measurement
+                    if let inSession = known[path] {
+                        size = inSession  // computed already this session
+                    } else {
+                        // Persistent cache: reuse the stored size unless the folder's mtime changed,
+                        // turning a full recursive walk into a single stat on a revisit / after a
+                        // restart. Only walk (and record) on a miss.
+                        let url = URL(fileURLWithPath: path)
+                        let mtime = FolderSizeStore.mtimeKey(of: url)
+                        if let cached = FolderSizeStore.shared.measurement(forPath: path, mtime: mtime) {
+                            size = cached
+                        } else {
+                            size = DirectorySize.total(of: url)
+                            FolderSizeStore.shared.record(path: path, measurement: size, mtime: mtime)
+                        }
+                    }
                     batch.append((path, folder.name, folder.row, size))
                     if batch.count >= 16 { flush() }
                     index += workers
