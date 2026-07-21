@@ -19,6 +19,8 @@ public final class DirectoryWatcher {
     private var stream: FSEventStreamRef? = nil
     private let queue = DispatchQueue(label: "com.scarcrux.pathem.DirectoryWatcher")
     private let onChange: @Sendable () -> Void
+    /// The canonical watched directory, so the callback can ignore deep-subtree events.
+    private let watchedPath: String
 
     /// Creates and starts a watcher for `path`. Returns `nil` if the stream
     /// can't be created. `onChange` runs on a private serial queue (events are
@@ -31,6 +33,15 @@ public final class DirectoryWatcher {
         // FSEvents needs the canonical path (e.g. /var -> /private/var); an
         // unresolved symlink can make it silently drop all events for the folder.
         let resolved = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        // FSEvents reports PHYSICAL paths (/private/var/...), but resolvingSymlinksInPath can
+        // canonicalize the other way (/var/...), which would make every event compare unequal and
+        // the folder never refresh. realpath gives the physical form the event paths use.
+        if let real = realpath(path, nil) {
+            self.watchedPath = String(cString: real)
+            free(real)
+        } else {
+            self.watchedPath = resolved
+        }
 
         var context = FSEventStreamContext(
             version: 0, info: nil, retain: nil, release: nil, copyDescription: nil)
@@ -74,9 +85,35 @@ public final class DirectoryWatcher {
         }
     }
 
-    private static let callback: FSEventStreamCallback = { _, info, _, _, _, _ in
+    private static let callback: FSEventStreamCallback = { _, info, numEvents, eventPaths, _, _ in
         guard let info else { return }
         // On the watcher's serial queue; the stream's +1 keeps self alive.
-        Unmanaged<DirectoryWatcher>.fromOpaque(info).takeUnretainedValue().onChange()
+        let watcher = Unmanaged<DirectoryWatcher>.fromOpaque(info).takeUnretainedValue()
+        // eventPaths is a C array of C strings (the stream isn't created with UseCFTypes). Fire only
+        // if some event touches the watched directory itself or a DIRECT child -- an FSEvents stream
+        // is recursive, so watching a busy tree (worst case "/") otherwise floods with deep-subtree
+        // events that don't change this folder's listing, reloading it several times a second.
+        let paths = eventPaths.assumingMemoryBound(to: UnsafePointer<CChar>.self)
+        for index in 0..<numEvents where watcher.affectsListing(String(cString: paths[index])) {
+            watcher.onChange()
+            return
+        }
+    }
+
+    private func affectsListing(_ eventPath: String) -> Bool {
+        Self.pathAffectsListing(event: eventPath, watched: watchedPath)
+    }
+
+    /// Whether an FSEvents `event` path changes the `watched` folder's listing: the folder itself
+    /// (its direct contents were added/removed/renamed -- FSEvents reports this as the folder path)
+    /// or one of its direct entries (a direct file modified). A deeper path (a change inside a
+    /// subfolder) doesn't alter what this folder shows, so it's ignored. Both paths are the canonical
+    /// (symlink-resolved) form FSEvents reports; FSEvents may add a trailing slash to a directory
+    /// path, so normalize it. Pure, so it unit-tests.
+    static func pathAffectsListing(event: String, watched: String) -> Bool {
+        var event = event
+        while event.count > 1, event.hasSuffix("/") { event.removeLast() }
+        if event == watched { return true }
+        return (event as NSString).deletingLastPathComponent == watched
     }
 }

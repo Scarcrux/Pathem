@@ -43,5 +43,19 @@ import Testing
         }
         #expect(Bool(true))  // reached here without crashing or hanging
     }
+
+    /// Only the watched folder itself or a direct entry changes its listing; a deep-subtree change
+    /// does not. This filter is what stops watching a busy tree (worst case "/") from reloading the
+    /// pane several times a second on unrelated system activity.
+    @Test func onlyDirectEntriesAndTheFolderItselfAffectTheListing() {
+        #expect(DirectoryWatcher.pathAffectsListing(event: "/Users/me/a.txt", watched: "/Users/me"))
+        #expect(DirectoryWatcher.pathAffectsListing(event: "/Users/me/sub", watched: "/Users/me"))
+        #expect(DirectoryWatcher.pathAffectsListing(event: "/Users/me", watched: "/Users/me"))  // WatchRoot
+        #expect(DirectoryWatcher.pathAffectsListing(event: "/Applications", watched: "/"))
+        // Deep changes are ignored -- the flood the trace caught.
+        #expect(!DirectoryWatcher.pathAffectsListing(event: "/Users/me/sub/deep.txt", watched: "/Users/me"))
+        #expect(!DirectoryWatcher.pathAffectsListing(event: "/private/var/log/x", watched: "/"))
+        #expect(!DirectoryWatcher.pathAffectsListing(event: "/Applications/A.app/Contents/x", watched: "/"))
+    }
 }
 
