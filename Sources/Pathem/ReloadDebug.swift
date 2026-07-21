@@ -10,7 +10,14 @@ import Foundation
 /// fraction of a second on the same folder points at watcher churn (a cloud-syncing folder); a
 /// steady `viewmode-swap` or `setActive` cadence points elsewhere.
 enum ReloadDebug {
-    static let enabled = ProcessInfo.processInfo.environment["PATHEM_DEBUG_RELOADS"] != nil
+    /// On when `PATHEM_DEBUG_RELOADS` is set OR the marker file `~/.pathem-debug-reloads` exists --
+    /// the marker lets tracing be turned on for a normally launched (Dock/Finder) app, no Terminal
+    /// needed: `touch ~/.pathem-debug-reloads`, launch, reproduce, then `rm` it.
+    static let enabled: Bool = {
+        if ProcessInfo.processInfo.environment["PATHEM_DEBUG_RELOADS"] != nil { return true }
+        let marker = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".pathem-debug-reloads")
+        return FileManager.default.fileExists(atPath: marker.path)
+    }()
 
     private static let logURL = URL(fileURLWithPath: NSHomeDirectory())
         .appendingPathComponent("pathem-reloads.log")
