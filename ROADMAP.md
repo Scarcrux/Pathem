@@ -26,14 +26,19 @@ is the keystone: it unlocks several others.
 > **Status (2026-07-21).** Much of this shipped without being marked here. **Done:**
 > 1 (the `flashStatus` / `flashCopied` transient channel), 2 (copies now flash
 > "Copied N"), 3 (empty-state copy consolidated to `pane.folderEmpty` /
-> `pane.noMatchesFor` everywhere). **Largely done:** 5 (the chrome accent sites now
-> read `ThemeManager.shared.accent`, the skin accent, not the hardcoded
+> `pane.noMatchesFor` everywhere), 4 (the permission-denied placeholder has an Open
+> Full Disk Access button, and the FDA guide no longer styles its "Not Now" dismiss
+> as the primary action). **Largely done:** 5 (the chrome accent sites now read
+> `ThemeManager.shared.accent`, the skin accent, not the hardcoded
 > `.controlAccentColor`), 9 (git badges + tag dots are wired in the icon and gallery
-> grids). **Partly done:** 6 (transfer-busy / connection-failed already flash; the
-> rest of the ~90 beeps still want a sweep). **Still open:** 4 (an actionable
-> Full-Disk-Access button on the permission-denied placeholder), 7 (soften the
-> remaining raw/technical strings), 8 (accessibility labels beyond the toolbar), and
-> honoring single-click/hover outside the list (the tail of 9).
+> grids), 7 (the ACL row already reads "Permissions", the raw curl error is already
+> softened to "connection failed (code N)"; only the octal `644` placeholder remains,
+> and it's fine in a field labelled "octal"). **Partly done:** 6 (transfer-busy /
+> connection-failed already flash; the rest of the ~90 beeps still want a sweep), 8
+> (the pane toolbar buttons, the sidebar collapse chevron + settings gear, and the
+> gallery cloud icon are labelled; the custom-drawn cells are the remaining "over
+> time" work). **Still open:** honoring single-click/hover outside the list (the tail
+> of 9).
 
 1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
    brief confirmation or a soft failure. Build one small helper that reuses the
