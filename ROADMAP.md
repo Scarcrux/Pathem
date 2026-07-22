@@ -15,8 +15,9 @@ and everything here makes the flip land better.
 ## Now (2026-07-12): the launch runway
 
 Five tracks, roughly in priority order. Track A (app polish) and Track B (site)
-are the immediate work; C is hygiene that should land before launch; D is the
-gated public-flip sequence; E is the post-launch backlog.
+are substantively done (see their status blocks). **Track C (localization
+hygiene) is now the live before-launch work;** D is the gated public-flip
+sequence; E is the post-launch backlog.
 
 ### Track A -- App polish (refinement, not new features)
 
@@ -45,8 +46,9 @@ is the keystone: it unlocks several others.
 >
 > **Track A is substantively done.** The only remaining tail is item 8's "over time"
 > work -- accessibility labels on the custom-drawn cells (the functional glyphs and
-> controls are all labelled). Track A can move off `now`; Track B (site) and the
-> Track D public-flip gate are the live launch work.
+> controls are all labelled). Track A can move off `now`; with Track B (site) also
+> done, Track C (localization hygiene) and the Track D public-flip gate are the
+> live launch work.
 
 1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
    brief confirmation or a soft failure. Build one small helper that reuses the
@@ -96,6 +98,16 @@ is the keystone: it unlocks several others.
    wire a real download + the Sparkle appcast.
 4. **Minor SEO/PWA polish:** a web app manifest, an SVG favicon, and a sitemap
    date refresh.
+
+**Status (2026-07-21):** Items 1, 2, and 4 are done. `social-card.png` is 123 KB
+(down from 610), with complete Open Graph + Twitter `summary_large_image` meta
+(image, 1200x630 dimensions, alt text). The marquee features now have real framed
+screenshots (torrents, terminal, remote, markup) alongside the view carousel.
+SEO/PWA is in place: `site.webmanifest`, an SVG favicon plus PNG/apple-touch
+icons, and the sitemap `lastmod` refreshed to 2026-07-21. Only item 3 remains,
+and it is deliberately gated: the CTA stays "Star on GitHub" until there is a
+notarized public build to link (Track D), then it wires a real download + the
+Sparkle appcast. Track B is done except that launch-gated download link.
 
 ### Track C -- Localization hygiene (before launch)
 
