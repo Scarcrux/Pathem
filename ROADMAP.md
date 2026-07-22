@@ -23,6 +23,18 @@ gated public-flip sequence; E is the post-launch backlog.
 Grounded in a fresh-eyes UX survey. Ordered by impact over effort. The first item
 is the keystone: it unlocks several others.
 
+> **Status (2026-07-21).** Much of this shipped without being marked here. **Done:**
+> 1 (the `flashStatus` / `flashCopied` transient channel), 2 (copies now flash
+> "Copied N"), 3 (empty-state copy consolidated to `pane.folderEmpty` /
+> `pane.noMatchesFor` everywhere). **Largely done:** 5 (the chrome accent sites now
+> read `ThemeManager.shared.accent`, the skin accent, not the hardcoded
+> `.controlAccentColor`), 9 (git badges + tag dots are wired in the icon and gallery
+> grids). **Partly done:** 6 (transfer-busy / connection-failed already flash; the
+> rest of the ~90 beeps still want a sweep). **Still open:** 4 (an actionable
+> Full-Disk-Access button on the permission-denied placeholder), 7 (soften the
+> remaining raw/technical strings), 8 (accessibility labels beyond the toolbar), and
+> honoring single-click/hover outside the list (the tail of 9).
+
 1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
    brief confirmation or a soft failure. Build one small helper that reuses the
    per-pane status label (`PaneController.statusLabel`). This is the root fix
