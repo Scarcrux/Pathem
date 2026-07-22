@@ -34,14 +34,19 @@ is the keystone: it unlocks several others.
 > grids), 7 (the ACL row already reads "Permissions", the raw curl error is already
 > softened to "connection failed (code N)"; only the octal `644` placeholder remains,
 > and it's fine in a field labelled "octal"). **Partly done:** 6 (transfer-busy /
-> connection-failed already flash; the rest of the ~90 beeps still want a sweep), 8
-> (the pane toolbar buttons, the sidebar collapse chevron + settings gear, and the
-> gallery cloud icon are labelled; the custom-drawn cells are the remaining "over
-> time" work), 9 (single-click-to-open is now honored in every view including column
-> and tree; hover-underline stays list/icon/gallery-only by design, low value in the
-> dense column/tree). **Still open:** just item 6 -- a sweep of the ~90 `NSSound.beep()`
-> guards to turn the ones that hide a real reason into `flashStatus` messages (the
-> rest are fine "not applicable" guards).
+> connection-failed already flash; the three cases that hid a real reason -- a
+> transfer already running, a remote-only op refused (`blockedByRemote`), and an Info
+> toggle that failed on permissions (`reportToggleFailure`) -- all now show a message
+> or alert, and a scan found no `beep()` inside a `catch` swallowing an error. The
+> remaining `NSSound.beep()` calls are the fine "not applicable" guards the item
+> itself carves out.), 9 (single-click-to-open is now honored in every view including
+> column and tree; hover-underline stays list/icon/gallery-only by design, low value
+> in the dense column/tree).
+>
+> **Track A is substantively done.** The only remaining tail is item 8's "over time"
+> work -- accessibility labels on the custom-drawn cells (the functional glyphs and
+> controls are all labelled). Track A can move off `now`; Track B (site) and the
+> Track D public-flip gate are the live launch work.
 
 1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
    brief confirmation or a soft failure. Build one small helper that reuses the
