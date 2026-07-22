@@ -1310,7 +1310,6 @@
 "sidebar.tagsHeader" = "Tags";
 "sidebar.trash" = "Trash";
 "sidebar.volumesHeader" = "Volumes";
-"size.emptyFolder" = "Empty folder";
 "size.enclosingFolder" = "Enclosing Folder";
 "size.windowTitle" = "Size Browser";
 "slideshow.hint" = "Space: play/pause    ←/→: previous/next    Esc: exit";

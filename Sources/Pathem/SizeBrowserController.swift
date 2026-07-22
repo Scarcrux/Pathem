@@ -123,7 +123,7 @@ final class SizeBrowserController: NSObject {
             rows.addArrangedSubview(makeRow(item, maxSize: maxSize))
         }
         if items.isEmpty {
-            rows.addArrangedSubview(NSTextField(labelWithString: L("size.emptyFolder", "Empty folder")))
+            rows.addArrangedSubview(NSTextField(labelWithString: L("pane.folderEmpty", "This folder is empty")))
         }
     }
 

@@ -77,7 +77,7 @@ final class KeyRecorderView: NSView {
 
     override func becomeFirstResponder() -> Bool {
         recording = true
-        layer?.borderColor = NSColor.controlAccentColor.cgColor
+        layer?.borderColor = ThemeManager.shared.accent.cgColor
         updateLabel()
         return true
     }

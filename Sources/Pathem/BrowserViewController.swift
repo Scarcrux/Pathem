@@ -1770,7 +1770,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// visible search state, since the overlay itself is transient).
     func updateSearchButton(query: String) {
         searchButton.title = " " + (query.isEmpty ? L("bvc.searchPlaceholder", "Search") : query)
-        searchButton.contentTintColor = query.isEmpty ? .secondaryLabelColor : .controlAccentColor
+        searchButton.contentTintColor = query.isEmpty ? .secondaryLabelColor : ThemeManager.shared.accent
     }
 
     private var reindexWork: DispatchWorkItem?

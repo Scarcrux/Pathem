@@ -1902,7 +1902,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let symbol = hiddenShown ? "eye" : "eye.slash"
         hiddenToggle.image = NSImage(
             systemSymbolName: symbol, accessibilityDescription: L("pane.showHidden", "Show Hidden Files"))
-        hiddenToggle.contentTintColor = hiddenShown ? .controlAccentColor : .tertiaryLabelColor
+        hiddenToggle.contentTintColor = hiddenShown ? ThemeManager.shared.accent : .tertiaryLabelColor
         hiddenToggle.toolTip =
             hiddenShown ? L("pane.hideHidden", "Hide Hidden Files") : L("pane.showHidden", "Show Hidden Files")
     }

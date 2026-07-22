@@ -77,7 +77,7 @@ final class GestureRecorderView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard points.count >= 2, let ctx = NSGraphicsContext.current?.cgContext else { return }
-        ctx.setStrokeColor(NSColor.controlAccentColor.cgColor)
+        ctx.setStrokeColor(ThemeManager.shared.accent.cgColor)
         ctx.setLineWidth(3)
         ctx.setLineCap(.round)
         ctx.setLineJoin(.round)

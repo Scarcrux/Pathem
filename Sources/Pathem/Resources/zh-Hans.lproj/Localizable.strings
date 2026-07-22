@@ -1380,7 +1380,6 @@
 "sidebar.tagsHeader" = "标记";
 "sidebar.trash" = "废纸篓";
 "sidebar.volumesHeader" = "宗卷";
-"size.emptyFolder" = "空文件夹";
 "size.enclosingFolder" = "上层文件夹";
 "size.windowTitle" = "大小浏览器";
 "slideshow.hint" = "空格键：播放/暂停    ←/→：上一张/下一张    Esc：退出";

@@ -1380,7 +1380,6 @@
 "sidebar.tagsHeader" = "Tags";
 "sidebar.trash" = "Papierkorb";
 "sidebar.volumesHeader" = "Volumes";
-"size.emptyFolder" = "Leerer Ordner";
 "size.enclosingFolder" = "Übergeordneter Ordner";
 "size.windowTitle" = "Größenbrowser";
 "slideshow.hint" = "Leertaste: Wiedergabe/Pause    ←/→: vorheriges/nächstes    Esc: beenden";

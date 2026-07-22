@@ -312,7 +312,7 @@ final class DocumentPreviewView: NSView {
     private func markEdited() {
         isEdited = true
         saveButton.isHidden = false
-        saveButton.contentTintColor = .controlAccentColor  // a subtle "unsaved" cue
+        saveButton.contentTintColor = ThemeManager.shared.accent  // a subtle "unsaved" cue
     }
 
     /// Write the annotated document back over the original file. Returns success for the smoke check.

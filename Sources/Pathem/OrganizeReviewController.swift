@@ -450,7 +450,7 @@ private final class OrganizeRowView: NSTableCellView {
         switch s.kind {
         case .move(let dest):
             action.stringValue = "→ \(dest.lastPathComponent)"
-            action.textColor = .controlAccentColor
+            action.textColor = ThemeManager.shared.accent
         case .trash:
             action.stringValue = L("organize.review.trash", "Trash")
             action.textColor = .systemRed

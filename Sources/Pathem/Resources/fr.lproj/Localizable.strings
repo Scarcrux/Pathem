@@ -1380,7 +1380,6 @@
 "sidebar.tagsHeader" = "Tags";
 "sidebar.trash" = "Corbeille";
 "sidebar.volumesHeader" = "Volumes";
-"size.emptyFolder" = "Dossier vide";
 "size.enclosingFolder" = "Dossier parent";
 "size.windowTitle" = "Explorateur de tailles";
 "slideshow.hint" = "Espace : lecture/pause    ←/→ : précédent/suivant    Échap : quitter";
