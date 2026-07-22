@@ -512,6 +512,7 @@
 "clipboard.pasteHere" = "現在のフォルダにペースト";
 "clipboard.summary" = "%d項目 · %@";
 "clipboard.title" = "クリップボード";
+"cloud.notDownloaded" = "iCloud内、未ダウンロード";
 "cmenu.nfws.many" = "選択項目から新規フォルダ（%d項目）";
 "cmenu.nfws.one" = "選択項目から新規フォルダ（1項目）";
 "commander.placeholder" = "シェルコマンド、Returnでターミナルで実行";
@@ -1378,6 +1379,7 @@
 "sidebar.sharedHeader" = "共有";
 "sidebar.smartFoldersHeader" = "スマートフォルダ";
 "sidebar.tagsHeader" = "タグ";
+"sidebar.toggleWidth" = "サイドバーを折りたたむ";
 "sidebar.trash" = "ゴミ箱";
 "sidebar.volumesHeader" = "ボリューム";
 "size.enclosingFolder" = "上位のフォルダ";

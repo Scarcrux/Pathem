@@ -512,6 +512,7 @@
 "clipboard.pasteHere" = "粘贴到当前文件夹";
 "clipboard.summary" = "%d 个项目 · %@";
 "clipboard.title" = "剪贴板";
+"cloud.notDownloaded" = "在 iCloud 中，未下载";
 "cmenu.nfws.many" = "用所选项新建文件夹（%d 个项目）";
 "cmenu.nfws.one" = "用所选项新建文件夹（1 个项目）";
 "commander.placeholder" = "shell 命令，按 Return 键在终端中运行";
@@ -1378,6 +1379,7 @@
 "sidebar.sharedHeader" = "共享";
 "sidebar.smartFoldersHeader" = "智能文件夹";
 "sidebar.tagsHeader" = "标记";
+"sidebar.toggleWidth" = "折叠边栏";
 "sidebar.trash" = "废纸篓";
 "sidebar.volumesHeader" = "宗卷";
 "size.enclosingFolder" = "上层文件夹";

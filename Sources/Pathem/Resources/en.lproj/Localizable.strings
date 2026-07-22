@@ -512,6 +512,7 @@
 "clipboard.pasteHere" = "Paste to Current Folder";
 "clipboard.summary" = "%d item(s) · %@";
 "clipboard.title" = "Clipboard";
+"cloud.notDownloaded" = "In iCloud, not downloaded";
 "cmenu.nfws.many" = "New Folder with Selection (%d Items)";
 "cmenu.nfws.one" = "New Folder with Selection (1 Item)";
 "commander.placeholder" = "shell command, Return to run in the terminal";
@@ -1308,6 +1309,7 @@
 "sidebar.sharedHeader" = "Shared";
 "sidebar.smartFoldersHeader" = "Smart Folders";
 "sidebar.tagsHeader" = "Tags";
+"sidebar.toggleWidth" = "Collapse Sidebar";
 "sidebar.trash" = "Trash";
 "sidebar.volumesHeader" = "Volumes";
 "size.enclosingFolder" = "Enclosing Folder";

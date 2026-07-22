@@ -512,6 +512,7 @@
 "clipboard.pasteHere" = "Coller dans le dossier actuel";
 "clipboard.summary" = "%d élément(s) · %@";
 "clipboard.title" = "Presse-papiers";
+"cloud.notDownloaded" = "Dans iCloud, non téléchargé";
 "cmenu.nfws.many" = "Nouveau dossier par sélection (%d éléments)";
 "cmenu.nfws.one" = "Nouveau dossier par sélection (1 élément)";
 "commander.placeholder" = "commande shell, Retour pour l'exécuter dans le terminal";
@@ -1378,6 +1379,7 @@
 "sidebar.sharedHeader" = "Partagé";
 "sidebar.smartFoldersHeader" = "Dossiers intelligents";
 "sidebar.tagsHeader" = "Tags";
+"sidebar.toggleWidth" = "Réduire la barre latérale";
 "sidebar.trash" = "Corbeille";
 "sidebar.volumesHeader" = "Volumes";
 "size.enclosingFolder" = "Dossier parent";

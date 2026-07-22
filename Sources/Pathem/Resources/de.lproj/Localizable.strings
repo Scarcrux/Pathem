@@ -512,6 +512,7 @@
 "clipboard.pasteHere" = "In aktuellen Ordner einsetzen";
 "clipboard.summary" = "%d Objekt(e) · %@";
 "clipboard.title" = "Zwischenablage";
+"cloud.notDownloaded" = "In iCloud, nicht geladen";
 "cmenu.nfws.many" = "Neuer Ordner mit Auswahl (%d Objekte)";
 "cmenu.nfws.one" = "Neuer Ordner mit Auswahl (1 Objekt)";
 "commander.placeholder" = "Shell-Befehl, Zeilenschalter zum Ausführen im Terminal";
@@ -1378,6 +1379,7 @@
 "sidebar.sharedHeader" = "Geteilt";
 "sidebar.smartFoldersHeader" = "Intelligente Ordner";
 "sidebar.tagsHeader" = "Tags";
+"sidebar.toggleWidth" = "Seitenleiste einklappen";
 "sidebar.trash" = "Papierkorb";
 "sidebar.volumesHeader" = "Volumes";
 "size.enclosingFolder" = "Übergeordneter Ordner";

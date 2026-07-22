@@ -72,6 +72,8 @@
   "menu.settings.matchFinder":  {"fr": "Adopter les réglages du Finder", "de": "Finder-Einstellungen übernehmen", "es": "Coincidir con los ajustes del Finder", "ja": "Finderの設定に合わせる", "zh-Hans": "匹配访达设置"},
   "pane.showHidden":            {"fr": "Afficher les fichiers cachés", "de": "Verborgene Dateien anzeigen", "es": "Mostrar archivos ocultos", "ja": "隠しファイルを表示", "zh-Hans": "显示隐藏文件"},
   "pane.hideHidden":            {"fr": "Masquer les fichiers cachés", "de": "Verborgene Dateien ausblenden", "es": "Ocultar archivos ocultos", "ja": "隠しファイルを非表示", "zh-Hans": "隐藏隐藏文件"},
+  "sidebar.toggleWidth":        {"fr": "Réduire la barre latérale", "de": "Seitenleiste einklappen", "es": "Contraer la barra lateral", "ja": "サイドバーを折りたたむ", "zh-Hans": "折叠边栏"},
+  "cloud.notDownloaded":        {"fr": "Dans iCloud, non téléchargé", "de": "In iCloud, nicht geladen", "es": "En iCloud, no descargado", "ja": "iCloud内、未ダウンロード", "zh-Hans": "在 iCloud 中，未下载"},
   "finder.match.showHidden":    {"fr": "Afficher les fichiers cachés", "de": "Verborgene Dateien anzeigen", "es": "Mostrar archivos ocultos", "ja": "隠しファイルを表示", "zh-Hans": "显示隐藏文件"},
   "finder.match.foldersFirst":  {"fr": "Garder les dossiers en haut", "de": "Ordner oben behalten", "es": "Mantener las carpetas arriba", "ja": "フォルダを上に表示", "zh-Hans": "文件夹始终在前"},
   "finder.match.defaultView":   {"fr": "Vue par défaut", "de": "Standardansicht", "es": "Vista predeterminada", "ja": "デフォルトの表示", "zh-Hans": "默认视图"},

@@ -512,6 +512,7 @@
 "clipboard.pasteHere" = "Pegar en la carpeta actual";
 "clipboard.summary" = "%d ítem(s) · %@";
 "clipboard.title" = "Portapapeles";
+"cloud.notDownloaded" = "En iCloud, no descargado";
 "cmenu.nfws.many" = "Nueva carpeta con la selección (%d ítems)";
 "cmenu.nfws.one" = "Nueva carpeta con la selección (1 ítem)";
 "commander.placeholder" = "comando de shell, Retorno para ejecutar en el terminal";
@@ -1378,6 +1379,7 @@
 "sidebar.sharedHeader" = "Compartido";
 "sidebar.smartFoldersHeader" = "Carpetas inteligentes";
 "sidebar.tagsHeader" = "Etiquetas";
+"sidebar.toggleWidth" = "Contraer la barra lateral";
 "sidebar.trash" = "Papelera";
 "sidebar.volumesHeader" = "Volúmenes";
 "size.enclosingFolder" = "Carpeta contenedora";

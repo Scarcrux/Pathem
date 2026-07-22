@@ -286,12 +286,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         settingsButton.target = self
         settingsButton.action = #selector(openSettings)
         settingsButton.toolTip = L("sidebar.settingsTooltip", "Settings")
+        settingsButton.setAccessibilityLabel(L("sidebar.settingsTooltip", "Settings"))
         settingsButton.translatesAutoresizingMaskIntoConstraints = false
         collapseButton.bezelStyle = .texturedRounded
         collapseButton.isBordered = false
         collapseButton.imagePosition = .imageOnly
         collapseButton.target = self
         collapseButton.action = #selector(toggleCompact)
+        collapseButton.setAccessibilityLabel(L("sidebar.toggleWidth", "Collapse Sidebar"))
 
         // A vertical bottom bar: Settings, then the expand button (which shows only in the
         // icons-only mode). A stack so hiding the expand button reclaims its space cleanly.
