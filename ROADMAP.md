@@ -37,8 +37,11 @@ is the keystone: it unlocks several others.
 > connection-failed already flash; the rest of the ~90 beeps still want a sweep), 8
 > (the pane toolbar buttons, the sidebar collapse chevron + settings gear, and the
 > gallery cloud icon are labelled; the custom-drawn cells are the remaining "over
-> time" work). **Still open:** honoring single-click/hover outside the list (the tail
-> of 9).
+> time" work), 9 (single-click-to-open is now honored in every view including column
+> and tree; hover-underline stays list/icon/gallery-only by design, low value in the
+> dense column/tree). **Still open:** just item 6 -- a sweep of the ~90 `NSSound.beep()`
+> guards to turn the ones that hide a real reason into `flashStatus` messages (the
+> rest are fine "not applicable" guards).
 
 1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
    brief confirmation or a soft failure. Build one small helper that reuses the
