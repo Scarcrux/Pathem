@@ -79,6 +79,11 @@ final class FullDiskAccessGuide: NSObject {
         primaryButton.target = self
         primaryButton.action = #selector(primaryClicked)
         primaryButton.bezelStyle = .rounded
+        // Start subdued: this is "Not Now" (a dismiss), so it must not read as the primary action --
+        // the blue "Open Full Disk Access Settings" button above is. updateStatus() makes it a
+        // prominent default only once it becomes "Done".
+        primaryButton.isBordered = false
+        primaryButton.contentTintColor = .secondaryLabelColor
 
         let buttonRow = NSStackView(views: [NSView(), relaunchButton, primaryButton])
         buttonRow.orientation = .horizontal
@@ -188,13 +193,21 @@ final class FullDiskAccessGuide: NSObject {
             statusIcon.isHidden = false
             statusLabel.stringValue = L("fda.grantedStatus", "Full Disk Access granted.")
             relaunchButton.isHidden = true
+            // Now the affirmative action: promote it to the prominent default (blue, Enter).
             primaryButton.title = L("common.done", "Done")
             primaryButton.keyEquivalent = "\r"
+            primaryButton.isBordered = true
+            primaryButton.contentTintColor = nil
         } else {
             spinner.isHidden = false
             spinner.startAnimation(nil)
             statusIcon.isHidden = true
             statusLabel.stringValue = L("fda.waitingForAccess", "Waiting for access…")
+            // Still just the "Not Now" dismiss: keep it subdued behind the Open Settings button.
+            primaryButton.title = L("fda.notNow", "Not Now")
+            primaryButton.keyEquivalent = ""
+            primaryButton.isBordered = false
+            primaryButton.contentTintColor = .secondaryLabelColor
         }
     }
 
