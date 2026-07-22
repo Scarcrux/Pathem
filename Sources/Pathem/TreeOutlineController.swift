@@ -229,6 +229,24 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         }
     }
 
+    private var singleClickToOpen = false
+
+    /// Single-click-to-open: a plain click on a file opens it when the preference is on. Folders keep
+    /// their in-place expand/collapse (via the disclosure triangle or double-click), and a modified
+    /// click (extending a selection) is left alone.
+    @objc private func singleClicked() {
+        guard singleClickToOpen else { return }
+        let row = outline.clickedRow
+        guard row >= 0, let node = outline.item(atRow: row) as? Node, !node.entry.isDirectory else { return }
+        let flags = NSApp.currentEvent?.modifierFlags ?? []
+        guard !flags.contains(.shift), !flags.contains(.command) else { return }
+        onOpen?(node.located)
+    }
+
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
+        singleClickToOpen = singleClick  // hover-underline isn't applied in the tree outline
+    }
+
     func selectionRectInWindow() -> NSRect? {
         let rows = outline.selectedRowIndexes
         guard !rows.isEmpty else { return nil }
@@ -286,6 +304,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         outline.delegate = self
         outline.allowsMultipleSelection = true
         outline.target = self
+        outline.action = #selector(singleClicked)  // single-click-to-open (a file) when the pref is on
         outline.doubleAction = #selector(doubleClicked)
         outline.menu = contextMenu.menu
         outline.autoresizesOutlineColumn = true

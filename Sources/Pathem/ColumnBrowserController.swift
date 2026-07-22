@@ -155,6 +155,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         table.dataSource = self
         table.delegate = self
         table.target = self
+        table.action = #selector(singleClicked(_:))  // single-click-to-open (a file) when the pref is on
         table.doubleAction = #selector(doubleClicked(_:))
         table.onKeyChord = { [weak self] chord in self?.onKeyChord?(chord) ?? false }
         table.onMouseGesture = { [weak self] stroke in self?.onMouseGesture?(stroke) ?? false }
@@ -503,6 +504,27 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         guard row >= 0, row < columns[index].entries.count else { return }
         let entry = columns[index].entries[row]
         if !entry.isDirectory { onOpen?(entry) }  // folders drill via single-click; files open
+    }
+
+    private var singleClickToOpen = false
+
+    /// Single-click-to-open: a plain click on a file opens it when the preference is on. Folders keep
+    /// drilling (the column view's normal behavior), and a modified click (extending a selection) is
+    /// left alone. Double-click still opens regardless of the preference.
+    @objc private func singleClicked(_ sender: Any?) {
+        guard singleClickToOpen, let table = sender as? NSTableView,
+            let index = columnIndex(of: table)
+        else { return }
+        let row = table.clickedRow
+        guard row >= 0, row < columns[index].entries.count else { return }
+        let flags = NSApp.currentEvent?.modifierFlags ?? []
+        guard !flags.contains(.shift), !flags.contains(.command) else { return }
+        let entry = columns[index].entries[row]
+        if !entry.isDirectory { onOpen?(entry) }
+    }
+
+    func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
+        singleClickToOpen = singleClick  // hover-underline isn't applied in the dense column view
     }
 
     private static func makeCell(_ id: NSUserInterfaceItemIdentifier) -> NSTableCellView {
