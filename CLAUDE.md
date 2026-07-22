@@ -97,6 +97,22 @@ Empirical refinements (post-reboot conflict experience):
   (rapid builds + commits) is what spawns them; the two redirects
   above are the main prevention.
 
+## Keep the roadmap current
+
+The roadmap is a requirement, not a courtesy. When you complete or
+materially advance a phase, update it in the SAME session via
+`commandem roadmap <project>` — mark finished tasks/phases done, flip the
+phase you are working on to `now`, and add a new phase for new work you
+took on. Do not let shipped work go unrecorded, and do not wait to be
+asked.
+
+A healthy roadmap always names current work: at least one phase in `now`
+or `next`. `commandem health` flags a roadmap with none (the
+`roadmap current` check), so an un-maintained roadmap surfaces in the
+attention view. Record the roadmap edit as part of finishing the work,
+the same way tests and a rebuild are part of it — not an optional
+afterthought.
+
 ## Container runtime: OrbStack
 
 All projects that use Docker or containers should migrate to
