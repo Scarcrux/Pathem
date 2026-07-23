@@ -310,13 +310,15 @@ public enum FileOperations {
     public static func copy(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
         verify: Bool = false,
-        shouldCancel: () -> Bool = { false }, report: (Progress) -> Void = { _ in }
+        shouldCancel: @escaping () -> Bool = { false }, report: @escaping (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .copied, onConflict: onConflict,
             shouldCancel: shouldCancel, report: report
-        ) { source, dest in
-            try FileManager.default.copyItem(at: source, to: dest)
+        ) { source, dest, onBytes in
+            // Stream the copy so the bar/speed/ETA move as the bytes land (metadata-preserving,
+            // cancellable), instead of the opaque all-or-nothing of FileManager.copyItem.
+            try ProgressiveCopy.copy(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
             // Verify files by SHA-256 (a directory hashes to nil on both sides, so it passes
             // through); a mismatch means a corrupt copy -- remove it and fail that item.
             if verify {
@@ -332,14 +334,39 @@ public enum FileOperations {
     @discardableResult
     public static func move(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
-        shouldCancel: () -> Bool = { false }, report: (Progress) -> Void = { _ in }
+        shouldCancel: @escaping () -> Bool = { false }, report: @escaping (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .moved, onConflict: onConflict,
             shouldCancel: shouldCancel, report: report
-        ) {
-            try FileManager.default.moveItem(at: $0, to: $1)
+        ) { source, dest, onBytes in
+            // A same-volume move is an instant rename (same inode, no bytes copied). A cross-volume
+            // move must physically copy then delete the source, so stream it with progress and only
+            // unlink the source once the copy fully lands -- rolling the copy back if the delete
+            // fails, so the move stays all-or-nothing.
+            if sameVolume(source, dest) {
+                try FileManager.default.moveItem(at: source, to: dest)
+            } else {
+                try ProgressiveCopy.copy(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
+                do {
+                    try FileManager.default.removeItem(at: source)
+                } catch {
+                    try? FileManager.default.removeItem(at: dest)
+                    throw error
+                }
+            }
         }
+    }
+
+    /// Whether `source` and the folder that will hold `dest` live on the same volume. A move
+    /// within a volume is a cheap rename; across volumes it is a copy + delete. An unknown
+    /// volume identifier falls back to "different" so we take the safe, progress-reporting path.
+    static func sameVolume(_ source: URL, _ dest: URL) -> Bool {
+        let destDir = dest.deletingLastPathComponent()
+        let a = try? source.resourceValues(forKeys: [.volumeIdentifierKey]).volumeIdentifier
+        let b = try? destDir.resourceValues(forKeys: [.volumeIdentifierKey]).volumeIdentifier
+        if let a = a as? NSObject, let b = b as? NSObject { return a.isEqual(b) }
+        return false
     }
 
     /// Reverse a set of performed operations: moves go back to their source,
@@ -425,8 +452,8 @@ public enum FileOperations {
     private static func apply(
         _ sources: [URL], into destination: URL,
         action: Action, onConflict: ConflictResolution,
-        shouldCancel: () -> Bool, report: (Progress) -> Void,
-        _ op: (URL, URL) throws -> Void
+        shouldCancel: @escaping () -> Bool, report: @escaping (Progress) -> Void,
+        _ op: (URL, URL, _ onItemBytes: @escaping (Int64) -> Void) throws -> Void
     ) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
@@ -438,6 +465,7 @@ public enum FileOperations {
             progress.currentFile = name
             report(progress)  // name the item before the (possibly slow) copy starts
             let itemBytes = byteCount(of: from)
+            let base = progress.completedBytes  // bytes fully done before this item
             var to = destination.appendingPathComponent(name)
             var replacedTrash: URL?  // where a Replace put the overwritten file (for undo)
             do {
@@ -476,7 +504,12 @@ public enum FileOperations {
                     }
                 }
                 do {
-                    try op(from, to)
+                    try op(from, to) { copiedInItem in
+                        // Live intra-file progress: cap at the item's own size so a slightly
+                        // ahead-of-itself count never pushes the bar past this item.
+                        progress.completedBytes = base + min(copiedInItem, itemBytes)
+                        report(progress)
+                    }
                 } catch {
                     // Replace already trashed the old destination. If the op then fails, restore it
                     // so a failed replace doesn't silently leave the user's file in the Trash.
@@ -490,9 +523,16 @@ public enum FileOperations {
                         action: action, source: from, destination: to, replacedOriginalTrashed: replacedTrash))
                 // Only a file that actually transferred advances the byte counter, so a
                 // failure doesn't inflate the bar the way a completed item would. Skips
-                // (handled by `continue` above) likewise never reach this line.
-                progress.completedBytes += itemBytes
+                // (handled by `continue` above) likewise never reach this line. Set (not +=)
+                // to the exact total so intra-file reporting granularity can't drift the count.
+                progress.completedBytes = base + itemBytes
+            } catch is ProgressiveCopy.Cancelled {
+                // User cancelled mid-file: the partial destination was already removed, so drop
+                // its bytes and stop cleanly without recording a failure.
+                progress.completedBytes = base
+                break
             } catch {
+                progress.completedBytes = base  // a failed item contributes nothing to the bar
                 outcome.failures.append(Failure(name: name, reason: error.localizedDescription))
             }
             progress.completedItems = index + 1

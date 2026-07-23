@@ -212,6 +212,10 @@ final class IconItem: NSCollectionViewItem {
         nameFont: NSFont? = nil, nameColor: NSColor? = nil
     ) {
         loadViewIfNeeded()
+        // Clear any in-place-edit appearance in case this cell was reused mid-rename.
+        label.isEditable = false
+        label.isBordered = false
+        label.drawsBackground = false
         icon.image = image  // type icon shows immediately; a thumbnail replaces it when ready
         iconWidth?.constant = iconSize
         iconHeight?.constant = iconSize
@@ -277,7 +281,7 @@ final class IconItem: NSCollectionViewItem {
 /// Conforms to PaneContentView so PaneController can swap it for the list.
 @MainActor
 final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCollectionViewDelegate,
-    PaneContentView
+    NSTextFieldDelegate, PaneContentView
 {
     let scrollView = NSScrollView()
     private let collection = KeyCollectionView()
@@ -379,6 +383,12 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?  // grid has no column headers
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
     var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
+    /// The committed name of an in-place rename (Finder-style edit in the grid).
+    var onInlineRename: ((FileEntry, String) -> Void)?
+    /// The entry being renamed in place (nil = not editing); guards commit against reuse/reload.
+    private var editingEntry: FileEntry?
+    /// Esc pressed during an edit: abandon without committing.
+    private var renameCancelled = false
 
     var keyView: NSView { collection }
     var onKeyChord: ((KeyChord) -> Bool)? {
@@ -585,6 +595,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     }
 
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
+        cancelInlineEdit()  // a background reload must not commit a half-typed rename
         let selectedNames = preserveState ? Set(selectedEntries.map(\.name)) : []
         self.entries = entries
         rebuildSections()
@@ -633,6 +644,94 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
         labelFontSize = fontSize
         collection.reloadData()
+    }
+
+    // MARK: In-place rename (Finder-style, so a new folder is named right in the grid)
+
+    /// Begin editing the single selected item's name inline. Returns false when it can't (nothing or
+    /// many selected, or the cell isn't realized), so the pane falls back to the rename sheet.
+    func beginInlineRename() -> Bool {
+        guard editingEntry == nil else { return false }
+        let selected = selectedEntries
+        guard selected.count == 1, let entry = selected.first,
+            let index = entries.firstIndex(where: { $0.name == entry.name }),
+            let path = indexPath(forEntry: index)
+        else { return false }
+        // Make sure the cell exists and is on screen before grabbing its label.
+        collection.scrollToItems(at: [path], scrollPosition: .centeredVertically)
+        collection.layoutSubtreeIfNeeded()
+        guard let field = (collection.item(at: path) as? IconItem)?.textField else { return false }
+        editingEntry = entry
+        renameCancelled = false
+        field.delegate = self
+        field.stringValue = entry.name  // the plain name, without tag-dot / git decoration
+        field.isEditable = true
+        field.isSelectable = true
+        field.isBordered = true
+        field.drawsBackground = true
+        field.backgroundColor = .textBackgroundColor
+        field.textColor = .labelColor
+        field.maximumNumberOfLines = 1
+        field.lineBreakMode = .byClipping
+        collection.window?.makeFirstResponder(field)
+        // Select the base name only (exclude the extension), the way Finder does.
+        if let editor = field.currentEditor() {
+            let ns = entry.name as NSString
+            let ext = ns.pathExtension as NSString
+            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
+        }
+        return true
+    }
+
+    /// Restore an edited name label to its plain, non-editable appearance.
+    private func endInlineEditing(_ field: NSTextField) {
+        field.isEditable = false
+        field.isSelectable = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.backgroundColor = .clear
+        field.maximumNumberOfLines = 2
+        field.lineBreakMode = .byTruncatingMiddle
+    }
+
+    /// Abandon an in-progress inline edit without committing (before a reload recycles the cell).
+    func cancelInlineEdit() {
+        guard let entry = editingEntry else { return }
+        editingEntry = nil
+        renameCancelled = false
+        if let index = entries.firstIndex(where: { $0.name == entry.name }),
+            let path = indexPath(forEntry: index),
+            let field = (collection.item(at: path) as? IconItem)?.textField
+        {
+            endInlineEditing(field)
+            if field.currentEditor() != nil { collection.window?.makeFirstResponder(collection) }
+        }
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+        if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
+            renameCancelled = true
+            collection.window?.makeFirstResponder(collection)
+            return true
+        }
+        return false  // let Return / Tab end editing the usual way
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let field = obj.object as? NSTextField, let entry = editingEntry else { return }
+        endInlineEditing(field)
+        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cancelled = renameCancelled
+        editingEntry = nil
+        renameCancelled = false
+        // Repaint the item so the stripped tag/git decoration returns; a successful rename also
+        // triggers a full re-list from the pane.
+        if let index = entries.firstIndex(where: { $0.name == entry.name }), let path = indexPath(forEntry: index) {
+            collection.reloadItems(at: [path])
+        }
+        guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
+        onInlineRename?(entry, newName)
     }
 
     // MARK: NSCollectionViewDataSource

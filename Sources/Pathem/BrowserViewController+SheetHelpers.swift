@@ -23,13 +23,28 @@ extension BrowserViewController {
         alert.messageText = title
         alert.addButton(withTitle: L("common.ok", "OK"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        field.stringValue = value
+        let field = Self.nameField(prefilled: value)
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
         guard await presentSheet(alert) == .alertFirstButtonReturn else { return nil }
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         return name.isEmpty ? nil : name
+    }
+
+    /// A single-line text field for a name/rename prompt, sized to comfortably show `value`
+    /// within a sensible range, so a long filename isn't clipped the way a fixed-width field
+    /// clips it. Pre-fills the field with the current name.
+    static func nameField(prefilled value: String) -> NSTextField {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        field.stringValue = value
+        field.usesSingleLineMode = true
+        field.lineBreakMode = .byTruncatingTail
+        // Grow to fit the text (capped), so long names are visible without a giant sheet; the
+        // field still scrolls horizontally while editing past the cap.
+        let fitting = field.cell?.cellSize(
+            forBounds: NSRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: 24)).width ?? 300
+        field.frame = NSRect(x: 0, y: 0, width: min(520, max(300, ceil(fitting) + 16)), height: 24)
+        return field
     }
 
     func presentInfo(_ title: String, _ text: String) {

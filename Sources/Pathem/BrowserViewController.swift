@@ -789,11 +789,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // that can't edit in place fall through to the sheet below.
         if !pane.isRemote, pane.beginInlineRename() { return }
         let alert = NSAlert()
-        alert.messageText = String(format: L("bvc.renameTitle", "Rename “%@”"), entry.name)
+        // Keep the name in the editable field, not the title: a long filename in the title would
+        // stretch or clip the sheet. The informative line explains what the field is for.
+        alert.messageText = L("bvc.renameTitleShort", "Rename")
+        alert.informativeText = L("bvc.renamePrompt", "Enter a new name for this item.")
         alert.addButton(withTitle: L("bvc.renameButton", "Rename"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        field.stringValue = entry.name
+        let field = Self.nameField(prefilled: entry.name)
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
         Task { @MainActor in
