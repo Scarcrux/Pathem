@@ -14,10 +14,11 @@ and everything here makes the flip land better.
 
 ## Now (2026-07-12): the launch runway
 
-Five tracks, roughly in priority order. Track A (app polish) and Track B (site)
-are substantively done (see their status blocks). **Track C (localization
-hygiene) is now the live before-launch work;** D is the gated public-flip
-sequence; E is the post-launch backlog.
+Five tracks, roughly in priority order. **Tracks A (app polish), B (site), and C
+(localization hygiene) are done** (see their status blocks) -- the pre-launch
+runway is complete. **Track D (the public flip) is the next step, gated on the
+user's testing decision;** E is the post-launch backlog. Meanwhile, live-app
+feedback keeps landing as dated rounds below (latest: Round 11).
 
 ### Track A -- App polish (refinement, not new features)
 
@@ -46,9 +47,9 @@ is the keystone: it unlocks several others.
 >
 > **Track A is substantively done.** The only remaining tail is item 8's "over time"
 > work -- accessibility labels on the custom-drawn cells (the functional glyphs and
-> controls are all labelled). Track A can move off `now`; with Track B (site) also
-> done, Track C (localization hygiene) and the Track D public-flip gate are the
-> live launch work.
+> controls are all labelled). Track A can move off `now`; with Tracks B (site) and
+> C (localization) also done, the Track D public-flip gate is the remaining launch
+> work, gated on the user's testing decision.
 
 1. **A transient-status channel (toast/HUD).** There is no app-wide way to show a
    brief confirmation or a soft failure. Build one small helper that reuses the
@@ -111,11 +112,20 @@ Sparkle appcast. Track B is done except that launch-gated download link.
 
 ### Track C -- Localization hygiene (before launch)
 
-The catalogs have drifted: `en.lproj` has 812 keys, the other five locales carry
-about 1,502 each, and roughly 692 of the 1,406 `L()` keys referenced in code live
-only in the inline English fallback. Reconcile them: extract every referenced key,
-prune stale entries, ensure all six languages cover every key, then add a coverage
-+ `plutil` lint to the pre-commit hook so it cannot rot again.
+The catalogs had drifted: `en.lproj` had 812 keys, the other five locales carried
+about 1,502 each, and roughly 692 of the 1,406 `L()` keys referenced in code lived
+only in the inline English fallback. The plan: extract every referenced key, prune
+stale entries, ensure all six languages cover every key, then add a coverage +
+`plutil` lint to the pre-commit hook so it cannot rot again.
+
+**Status (2026-07-22): done.** `scripts/l10n_lint.py` extracts the canonical key
+set from the code, `--fix-en` regenerates `en.lproj` from the inline fallbacks
+(source of truth) and prunes truly-dead keys, and `--merge` pulls the other five
+locales from `scripts/l10n_missing.json`. The lint is green: 1488 canonical keys,
+0 missing / 0 stale across en/fr/de/es/ja/zh-Hans, and it runs in pre-commit (the
+`l10n-lint` hook, on any `.swift`/`.strings` change) so a new `L()` key that isn't
+translated fails the commit. The counts in the paragraph above are the historical
+starting point, not the current state.
 
 ### Track D -- The public flip (gated on user testing)
 
@@ -164,6 +174,34 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   external-file-manager setting, so those need a small published Pathem extension,
   not a settings edit; the panel offers to install it rather than claim a config
   edit that can't work.
+
+## Round 11 (shipped 2026-07-22) -- transfer progress, inline naming, localization close-out
+
+Three live-app issues plus the Track C close-out.
+
+- **Live transfer progress.** `FileManager.copyItem`/`moveItem` are opaque -- a big
+  single-file or cross-volume move sat at 0% then jumped to 100%, with no speed or
+  ETA. New `ProgressiveCopy` (built on BSD `copyfile(3)`, the same primitive
+  Foundation uses) streams the copy with a cumulative-byte callback and mid-file
+  cancel, preserving mode/xattrs/ACLs/resource forks. `FileOperations.copy` and the
+  cross-volume branch of `move` now report bytes as they flow, so the existing
+  transfer sheet's bar/speed/ETA animate; same-volume moves stay an instant rename.
+  Six engine tests (streaming, mid-file cancel + partial cleanup, mode, recursive
+  tree, same-volume detection).
+- **Inline naming in the icon grid.** A new folder in the icon view is now named
+  in place (Finder-style editable label, base name selected), instead of dropping a
+  prompt. Commit/cancel mirror the list view; a background reload cancels a
+  half-typed edit. The gallery/column/tree/remote views keep the (now-fixed) sheet.
+- **Name prompts no longer clip long names.** The shared rename/name sheet sizes its
+  field to the filename and keeps a long name in the editable field, not the sheet
+  title.
+- **Track C closed.** All six catalogs reconciled to 0 missing / 0 stale (1488
+  keys); the pre-commit `l10n-lint` hook guards it.
+
+Known: `DirectoryWatcherTests.firesWhenAFileIsCreated` (a live FSEvents timing test)
+is flaky/failing on this machine under load -- reproduces on clean HEAD, unrelated
+to this round; the pure-logic `pathAffectsListing` sibling passes and the app's live
+watching works.
 
 ## Round 10 (shipped 2026-07-21) -- PDF markup, caching, and reactive polish
 
