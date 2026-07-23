@@ -21,26 +21,32 @@ final class TransferRunner {
         let state = TransferState()
 
         // Main-actor monitor: wait 0.25s before showing the sheet (so quick ops never flash
-        // it), then poll progress, deriving a smoothed transfer speed and ETA, until the
-        // worker finishes and cancels us.
+        // it), then poll progress, deriving a steady transfer speed + ETA, until the worker
+        // finishes and cancels us. The bar tracks bytes every tick; the speed/ETA readout is
+        // averaged over a ~1.5s rolling window and refreshed only ~twice a second, so it does
+        // not jump around with copyfile's bursty (buffer-flush) writes.
         let monitor = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(250))
             guard let self, !Task.isCancelled else { return }
             self.progress.begin(verb: verb, over: window) { state.cancel() }
-            var lastSample = Date()
-            var lastBytes: Int64 = 0
-            var speed = 0.0  // bytes/sec, exponentially smoothed
+            var samples: [(time: Date, bytes: Int64)] = []
+            var lastReadoutRefresh = Date.distantPast
+            var shownSpeed = 0.0  // held steady between refreshes so the ETA counts down smoothly
             while !Task.isCancelled {
                 let progress = state.progress
                 let now = Date()
-                let dt = now.timeIntervalSince(lastSample)
-                if dt >= 0.2 {
-                    let instant = Double(progress.completedBytes - lastBytes) / dt
-                    speed = speed == 0 ? instant : speed * 0.6 + instant * 0.4
-                    lastSample = now
-                    lastBytes = progress.completedBytes
+                samples.append((now, progress.completedBytes))
+                while samples.count > 1, now.timeIntervalSince(samples[0].time) > 1.5 {
+                    samples.removeFirst()  // keep a ~1.5s window
                 }
-                self.progress.update(progress, bytesPerSecond: max(0, speed))
+                // Recompute the speed at most ~2x/sec, as an average over the whole window, once
+                // there is enough history to trust it. Until then, show bytes only (no wild guess).
+                if now.timeIntervalSince(lastReadoutRefresh) >= 0.5, let first = samples.first {
+                    let dt = now.timeIntervalSince(first.time)
+                    if dt >= 0.4 { shownSpeed = Double(progress.completedBytes - first.bytes) / dt }
+                    lastReadoutRefresh = now
+                }
+                self.progress.update(progress, bytesPerSecond: max(0, shownSpeed))
                 try? await Task.sleep(for: .milliseconds(100))
             }
         }
