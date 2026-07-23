@@ -340,6 +340,22 @@ extension BrowserViewController {
             check("sidebar-hide-restore-system-item", hidden && restored,
                 "path=\(sysPath) hidden=\(hidden) restored=\(restored)")
         }
+        // Eject heuristic (Finder parity): the boot volume never ejects; an external USB/Thunderbolt
+        // SSD (ejectable == removable == false, but internal == false) does; a plain internal partition
+        // does not; removable media and network mounts do.
+        let bootEjects = SidebarController.volumeIsEjectable(
+            isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: true)
+        let extSSD = SidebarController.volumeIsEjectable(
+            isEjectable: false, isRemovable: false, isLocal: true, isInternal: false, isRootFileSystem: false)
+        let internalPart = SidebarController.volumeIsEjectable(
+            isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: false)
+        let usbStick = SidebarController.volumeIsEjectable(
+            isEjectable: true, isRemovable: true, isLocal: true, isInternal: false, isRootFileSystem: false)
+        let networkMount = SidebarController.volumeIsEjectable(
+            isEjectable: false, isRemovable: false, isLocal: false, isInternal: nil, isRootFileSystem: false)
+        check("volume-eject-heuristic", !bootEjects && extSSD && !internalPart && usbStick && networkMount,
+            "boot=\(bootEjects) extSSD=\(extSSD) internal=\(internalPart) usb=\(usbStick) net=\(networkMount)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
