@@ -3,6 +3,9 @@
 
   "auto.choose":                 {"fr": "Choisir…", "de": "Auswählen…", "es": "Elegir…", "ja": "選択…", "zh-Hans": "选择…"},
 
+  "bvc.renameTitleShort":        {"fr": "Renommer", "de": "Umbenennen", "es": "Renombrar", "ja": "名前を変更", "zh-Hans": "重命名"},
+  "bvc.renamePrompt":            {"fr": "Saisissez un nouveau nom pour cet élément.", "de": "Geben Sie einen neuen Namen für dieses Objekt ein.", "es": "Introduce un nombre nuevo para este elemento.", "ja": "この項目の新しい名前を入力してください。", "zh-Hans": "为此项目输入新名称。"},
+
   "bvc.cmd.importFinderFavorites": {"fr": "Importer les favoris du Finder…", "de": "Favoriten aus dem Finder importieren…", "es": "Importar favoritos del Finder…", "ja": "Finderのお気に入りを読み込む…", "zh-Hans": "从访达导入个人收藏…"},
   "bvc.cmd.openInThisPane":       {"fr": "Ouvrir dans ce volet", "de": "In diesem Bereich öffnen", "es": "Abrir en este panel", "ja": "このペインで開く", "zh-Hans": "在此窗格中打开"},
   "bvc.cmd.openInOtherPane":      {"fr": "Ouvrir dans l’autre volet", "de": "In anderem Bereich öffnen", "es": "Abrir en el otro panel", "ja": "他のペインで開く", "zh-Hans": "在另一窗格中打开"},

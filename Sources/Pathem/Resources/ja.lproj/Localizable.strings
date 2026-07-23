@@ -406,7 +406,8 @@
 "bvc.remoteOpFailed" = "%@に失敗しました";
 "bvc.renameButton" = "名称変更";
 "bvc.renameFailed" = "名称変更に失敗しました";
-"bvc.renameTitle" = "“%@”の名称を変更";
+"bvc.renamePrompt" = "この項目の新しい名前を入力してください。";
+"bvc.renameTitleShort" = "名前を変更";
 "bvc.renameVerb" = "名称変更";
 "bvc.replace" = "置き換える";
 "bvc.resetDataBody" = "これにより、Pathemのすべての設定、保存された接続とそのキーチェーンパスワード、サイドバーとメニューのカスタマイズ、カラールール、レイアウトが削除され、フォルダのデフォルトアプリがFinderに戻ります。ファイルには影響しません。その後Pathemは終了するので、ゴミ箱にドラッグしてクリーンにアンインストールできます。";

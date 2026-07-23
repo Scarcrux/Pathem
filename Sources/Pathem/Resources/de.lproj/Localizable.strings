@@ -406,7 +406,8 @@
 "bvc.remoteOpFailed" = "%@ fehlgeschlagen";
 "bvc.renameButton" = "Umbenennen";
 "bvc.renameFailed" = "Umbenennen fehlgeschlagen";
-"bvc.renameTitle" = "„%@“ umbenennen";
+"bvc.renamePrompt" = "Geben Sie einen neuen Namen für dieses Objekt ein.";
+"bvc.renameTitleShort" = "Umbenennen";
 "bvc.renameVerb" = "Umbenennen";
 "bvc.replace" = "Ersetzen";
 "bvc.resetDataBody" = "Dies entfernt alle Pathem-Einstellungen, gesicherte Verbindungen und ihre Schlüsselbund-Passwörter, Anpassungen von Seitenleiste und Menüs, Farbregeln und Layouts und stellt Finder als Standard-App für Ordner wieder her. Deine Dateien bleiben unberührt. Pathem wird anschließend beendet, sodass du es für eine saubere Deinstallation in den Papierkorb bewegen kannst.";

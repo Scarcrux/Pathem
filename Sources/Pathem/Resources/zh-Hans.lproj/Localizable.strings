@@ -406,7 +406,8 @@
 "bvc.remoteOpFailed" = "%@ 失败";
 "bvc.renameButton" = "重新命名";
 "bvc.renameFailed" = "重新命名失败";
-"bvc.renameTitle" = "重新命名“%@”";
+"bvc.renamePrompt" = "为此项目输入新名称。";
+"bvc.renameTitleShort" = "重命名";
 "bvc.renameVerb" = "重新命名";
 "bvc.replace" = "替换";
 "bvc.resetDataBody" = "此操作将移除所有 Pathem 设置、已保存的连接及其钥匙串密码、边栏和菜单自定义、颜色规则以及布局，并将 Finder 恢复为默认的文件夹应用。你的文件不会受到影响。之后 Pathem 将退出，你可以将其拖到废纸篓以彻底卸载。";

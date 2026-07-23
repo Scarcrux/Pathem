@@ -406,7 +406,8 @@
 "bvc.remoteOpFailed" = "%@ failed";
 "bvc.renameButton" = "Rename";
 "bvc.renameFailed" = "Rename failed";
-"bvc.renameTitle" = "Rename “%@”";
+"bvc.renamePrompt" = "Enter a new name for this item.";
+"bvc.renameTitleShort" = "Rename";
 "bvc.renameVerb" = "Rename";
 "bvc.replace" = "Replace";
 "bvc.resetDataBody" = "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall.";

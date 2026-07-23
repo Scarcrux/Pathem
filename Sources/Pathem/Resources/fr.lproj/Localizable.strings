@@ -406,7 +406,8 @@
 "bvc.remoteOpFailed" = "Échec de %@";
 "bvc.renameButton" = "Renommer";
 "bvc.renameFailed" = "Échec du renommage";
-"bvc.renameTitle" = "Renommer « %@ »";
+"bvc.renamePrompt" = "Saisissez un nouveau nom pour cet élément.";
+"bvc.renameTitleShort" = "Renommer";
 "bvc.renameVerb" = "Renommer";
 "bvc.replace" = "Remplacer";
 "bvc.resetDataBody" = "Cette opération supprime tous les réglages de Pathem, les connexions enregistrées et leurs mots de passe du trousseau, la personnalisation de la barre latérale et des menus, les règles de couleur et les dispositions, et rétablit Finder comme application par défaut pour les dossiers. Vos fichiers ne sont pas touchés. Pathem se ferme ensuite, afin que vous puissiez le glisser dans la corbeille pour une désinstallation propre.";
