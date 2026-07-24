@@ -115,8 +115,18 @@
 				<string>magnet</string>
 			</array>
 		</dict>
+		<!-- The pathem:// seam the `pathem` CLI (and editor integrations) use to reveal/open a path. -->
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Pathem Handoff</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>pathem</string>
+			</array>
+		</dict>
 	</array>
-	<!-- A Services item so any app's Services menu can send a folder to Pathem. -->
+	<!-- Services items so any app's Services menu can hand a file/folder to Pathem: Open navigates
+	     into it, Reveal selects it in its parent folder. -->
 	<key>NSServices</key>
 	<array>
 		<dict>
@@ -127,6 +137,19 @@
 			</dict>
 			<key>NSMessage</key>
 			<string>openInPathem</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSFilenamesPboardType</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Reveal in Pathem</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>revealInPathem</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSFilenamesPboardType</string>

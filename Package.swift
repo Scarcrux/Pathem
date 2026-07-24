@@ -59,6 +59,11 @@ let package = Package(
         // stays out of the Full-Disk-Access process. Bundled + signed by package.sh.
         .executableTarget(name: "pathem-afc", dependencies: ["PathemEngine"]),
 
+        // The `pathem` CLI: the stable reveal/open seam for Finder-handoff integrations. Resolves a
+        // path and asks the app to act on it via the pathem:// URL scheme. Bundled by package.sh as
+        // `pathem-cli` (a `pathem` on-PATH symlink can't sit in MacOS/ next to `Pathem`).
+        .executableTarget(name: "pathem-cli", dependencies: ["PathemEngine"]),
+
         // Reference out-of-process Swift extension helper. Not shipped in the app; it is the
         // canonical example an extension author copies, and it exercises the ExtensionHost
         // wire protocol (line-delimited JSON over stdio) so the seam can't rot.

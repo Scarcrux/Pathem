@@ -1008,6 +1008,17 @@ extension BrowserViewController {
         openExternalFolder(openDir)
         let navigated = activePane?.currentURL.standardizedFileURL == openDir.standardizedFileURL
         check("open-external-folder", navigated, "at=\(activePane?.currentURL.lastPathComponent ?? "nil")")
+        // Reveal (pathem reveal / the Reveal in Pathem Service): lands in the item's PARENT, not
+        // inside it -- the distinguishing behavior from Open. (Selection is applied async, so only
+        // the navigation target is asserted here.)
+        let revealParent = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-reveal-\(UUID().uuidString)")
+        let revealChild = revealParent.appendingPathComponent("target-item")
+        try? FileManager.default.createDirectory(at: revealChild, withIntermediateDirectories: true)
+        revealExternalItem(revealChild)
+        check("reveal-external-navigates-to-parent",
+            activePane?.currentURL.standardizedFileURL == revealParent.standardizedFileURL,
+            "at=\(activePane?.currentURL.lastPathComponent ?? "nil") expected=\(revealParent.lastPathComponent)")
+        try? FileManager.default.removeItem(at: revealParent)
         // Opening a viewable file (Pathem as the default app for a PDF/image) presents the built-in
         // viewer, not just a reveal.
         let openPDF = openDir.appendingPathComponent("opened.pdf")

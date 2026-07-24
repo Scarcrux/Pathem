@@ -1754,4 +1754,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
+    /// Reveal a path handed in by `pathem reveal <path>`: bring the window up and select the item in
+    /// its parent folder. Unlike openExternalFolder, this selects a *folder* in its parent rather
+    /// than navigating into it, so `reveal` and `open` stay distinct verbs.
+    func revealExternalItem(_ url: URL) {
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        view.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        activePane?.reveal(url)  // navigate to the parent and select the item (file or folder)
+    }
+
 }

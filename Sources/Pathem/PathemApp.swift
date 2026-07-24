@@ -1407,6 +1407,23 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
         openInPrimaryBrowser(urls)
     }
 
+    /// The "Reveal in Pathem" Services item: select the sent item in its parent folder (the reveal
+    /// verb of the handoff contract), rather than navigating into it.
+    @objc func revealInPathem(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString>?) {
+        let urls = (pboard.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
+        revealInPrimaryBrowser(urls)
+    }
+
+    /// Reveal the first sent item in the primary window, retrying once if it isn't up yet.
+    private func revealInPrimaryBrowser(_ urls: [URL]) {
+        guard let url = urls.first else { return }
+        if let browser = WindowManager.shared.primaryBrowser {
+            browser.revealExternalItem(url)
+        } else {
+            DispatchQueue.main.async { [weak self] in self?.revealInPrimaryBrowser(urls) }
+        }
+    }
+
     /// Route opened URLs to the primary window, retrying once if it isn't up yet (open events can
     /// arrive during launch).
     private func openInPrimaryBrowser(_ urls: [URL]) {
@@ -1415,6 +1432,13 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
             for url in urls {
                 if url.scheme == "magnet" {
                     browser.addMagnetToPanel(url.absoluteString)  // magnet: link -> Torrents panel
+                } else if let action = PathemURLContract.parse(url) {
+                    // The `pathem` CLI seam: open navigates into a folder, reveal selects the item.
+                    let target = URL(fileURLWithPath: action.path)
+                    switch action.verb {
+                    case .open: browser.openExternalFolder(target)
+                    case .reveal: browser.revealExternalItem(target)
+                    }
                 } else {
                     browser.openExternalFolder(url)  // routes .torrent files to the panel itself
                 }

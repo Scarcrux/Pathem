@@ -161,10 +161,18 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
 
 - **A `pathem` CLI reveal/open contract** (`pathem reveal <path>`,
   `pathem open <dir>`) as the stable seam every integration calls, so the launch
-  logic can change without touching any editor config.
+  logic can change without touching any editor config. **Done (2026-07-23):** the
+  `pathem-cli` executable target resolves a path and drives the app over a new
+  `pathem://open|reveal?path=` URL scheme; the scheme, verbs, and query live in one
+  place -- `PathemURLContract` (engine, unit-tested) -- shared by the CLI and the
+  app. Registered in `Info.plist`, bundled by `package.sh`. Remaining tail: an
+  on-PATH `pathem` symlink install (folded into the Integrations panel below, since
+  `pathem` can't sit in `MacOS/` next to `Pathem` on a case-insensitive volume).
 - **Reveal in Pathem** -- a second `NSServices` item plus a select-and-reveal
   handler (navigate to the parent, select the target), beside the existing
-  "Open in Pathem" service.
+  "Open in Pathem" service. **Done (2026-07-23):** `revealInPathem` Service +
+  `revealExternalItem` handler; smoke-checked that reveal lands in the parent, not
+  inside the item.
 - **Preferences ▸ Integrations** -- detect installed editors and offer per-editor
   Integrate / Preview / Remove. Editing a third-party config is invasive, so:
   opt-in only, preview the exact change first, back up and make it reversible,
