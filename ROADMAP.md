@@ -143,9 +143,10 @@ there, then work it top to bottom when the gate opens.
 ### Track E -- Post-launch engineering bets
 
 - Finish dissolving the `BrowserViewController` god-object (the toolbar, split
-  delegate, and now semantic search -- `+SemanticSearch.swift` -- are extracted;
-  the core file is down to ~1,870 lines). Remaining large blocks: Trash/Reveal,
-  scoped openers, Copy To / Move To (entangled with core transfer plumbing).
+  delegate, semantic search -- `+SemanticSearch.swift` -- and inter-pane transfers
+  / openers -- `+PaneTransfers.swift` -- are extracted; the core file is down to
+  ~1,760 lines). Remaining large blocks: Trash/Reveal, Copy To / Move To (entangled
+  with core transfer plumbing), and the misc lifecycle/activation glue.
 - Torrent standalone-client parity: send-side PEX, a persistent DHT routing table,
   UPnP-IGD fallback, and LEDBAT congestion control for uTP.
 - Enable the gated Swift extension runtime once there is real demand (seam and
