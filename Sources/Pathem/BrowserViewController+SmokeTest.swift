@@ -372,6 +372,21 @@ extension BrowserViewController {
             "ours=\(recognizesOurs) rejectsForeign=\(rejectsForeign)")
         try? FileManager.default.removeItem(at: cliDir)
 
+        // Sublime integration: installing into an owned package dir writes our files (plugin driving
+        // the pathem:// scheme), and remove deletes only that folder -- fully reversible.
+        let subRoot = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-sublime-\(UUID().uuidString)")
+        let subPkg = subRoot.appendingPathComponent("Packages/Pathem")
+        try? SublimeIntegration.install(into: subPkg)
+        let wrotePlugin = FileManager.default.fileExists(atPath: subPkg.appendingPathComponent("pathem_reveal.py").path)
+        let wroteMenu = FileManager.default.fileExists(atPath: subPkg.appendingPathComponent("Side Bar.sublime-menu").path)
+        let pluginText = (try? String(contentsOf: subPkg.appendingPathComponent("pathem_reveal.py"), encoding: .utf8)) ?? ""
+        let usesScheme = pluginText.contains("pathem://reveal")
+        try? SublimeIntegration.remove(at: subPkg)
+        let subRemoved = !FileManager.default.fileExists(atPath: subPkg.path)
+        check("sublime-integration-install-remove", wrotePlugin && wroteMenu && usesScheme && subRemoved,
+            "plugin=\(wrotePlugin) menu=\(wroteMenu) scheme=\(usesScheme) removed=\(subRemoved)")
+        try? FileManager.default.removeItem(at: subRoot)
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
