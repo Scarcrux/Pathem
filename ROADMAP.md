@@ -151,8 +151,15 @@ there, then work it top to bottom when the gate opens.
   cleanly separate. What's left is mostly genuine controller work (init, wiring,
   lifecycle, remote-op guards) plus scattered helpers that don't form clean cohesive
   blocks -- so this is a good stopping point; further cuts would be churn, not wins.
-- Torrent standalone-client parity: send-side PEX, a persistent DHT routing table,
-  UPnP-IGD fallback, and LEDBAT congestion control for uTP.
+- Torrent standalone-client parity. **Done (verified 2026-07-23):** all four are
+  implemented, wired, and unit-tested in TorrentKit -- send-side PEX
+  (`TorrentSession` sends `PEX.message`; `handshakeAdvertisesAndParsesUtPex`), a
+  persistent DHT routing table (`DHTClient.routingTableData`/`loadRoutingTable`,
+  saved by `TorrentEngine`; `routingTablePersistsGoodNodes`), UPnP-IGD fallback
+  (`TorrentEngine` maps via NAT-PMP, else UPnP), and delay-based LEDBAT congestion
+  control for uTP (`UTPSocket.grow(bytesAcked:)`, RFC 6817;
+  `congestionWindowGrowsBelowTargetShrinksAbove`). This bullet was stale; the work
+  had shipped. (Fixed a misleading "simple fixed window" comment left in `UTPSocket`.)
 - Enable the gated Swift extension runtime once there is real demand (seam and
   manifest schema are in place).
 

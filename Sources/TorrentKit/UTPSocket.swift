@@ -3,8 +3,9 @@ import Foundation
 /// A uTP connection (BEP 29): reliable, in-order delivery over unreliable datagrams, with sequence
 /// numbers, cumulative acks, and timeout retransmission. Transport-agnostic (it's handed a
 /// datagram-send closure and fed incoming datagrams), so it can run over UDP or be tested over a
-/// lossy in-memory channel. Congestion control is a simple fixed window; full LEDBAT delay-based
-/// control is a further refinement.
+/// lossy in-memory channel. Congestion control is delay-based LEDBAT (RFC 6817): the window grows
+/// while the measured one-way queuing delay is under a 100 ms target and shrinks above it (see
+/// `grow(bytesAcked:)`), with a multiplicative cut on loss/timeout, so uTP yields to TCP.
 public actor UTPSocket {
     public enum Role: Sendable { case initiator, responder }
     public enum State: Sendable { case connecting, connected, closed }
