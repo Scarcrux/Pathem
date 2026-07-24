@@ -504,6 +504,9 @@
 "cleanup.trashFailedHint" = "Ils sont peut-être en cours d'utilisation, ou Pathem a besoin d'un accès complet au disque pour les supprimer.";
 "cleanup.trashFailedTitle" = "%d élément(s) n'ont pas pu être supprimés";
 "cleanup.whyDetail" = "%@ · %@ · %@ · %@";
+"cli.err.noDir" = "Aucun dossier accessible en écriture sur votre PATH n’a été trouvé (essais : /usr/local/bin, /opt/homebrew/bin, ~/.local/bin, ~/bin). Créez-en un et réessayez.";
+"cli.err.notBundled" = "La commande pathem n’est pas disponible dans cette version.";
+"cli.err.occupied" = "Un élément existe déjà à %@ et n’est pas le lien de Pathem. Retirez-le d’abord.";
 "clipboard.clear" = "Effacer";
 "clipboard.colItem" = "Élément";
 "clipboard.colLocation" = "Emplacement";
@@ -806,6 +809,18 @@
 "info.versionLabel" = "Version";
 "info.whereFromLabel" = "Provenance";
 "info.whereLabel" = "Emplacement";
+"integrations.cliFailed" = "Impossible de mettre à jour la commande pathem";
+"integrations.cliHint" = "Installe une commande « pathem » sur votre PATH pour que « pathem reveal <chemin> » et « pathem open <dossier> » fonctionnent depuis n’importe quel terminal. C’est un lien symbolique vers l’outil inclus ; le retirer ne supprime que ce lien.";
+"integrations.cliInstall" = "Installer";
+"integrations.cliInstalledAt" = "Installé dans %@";
+"integrations.cliLabel" = "Commande de terminal";
+"integrations.cliNotInstalled" = "Non installé";
+"integrations.cliRemove" = "Retirer";
+"integrations.cliUnavailable" = "Indisponible dans cette version";
+"integrations.detected" = "Éditeurs détectés : %@";
+"integrations.editorsSoon" = "L’intégration par éditeur « afficher dans Pathem » (Sublime Text, TextMate, JetBrains, VS Code) est prévue ; pour l’instant, utilisez le menu Services ou la commande pathem ci-dessus.";
+"integrations.noEditors" = "Aucun éditeur pris en charge détecté.";
+"integrations.servicesHint" = "D’autres apps peuvent transmettre un fichier ou un dossier à Pathem : utilisez « Ouvrir dans Pathem » ou « Afficher dans Pathem » depuis leur menu Services, ou la commande pathem ci-dessous.";
 "list.alwaysOpenWith" = "Toujours ouvrir avec…";
 "list.clearTags" = "Effacer les tags";
 "list.columnComment" = "Commentaire";
@@ -1302,6 +1317,7 @@
 "settings.appearance" = "Apparence";
 "settings.general" = "Général";
 "settings.gestures" = "Gestes";
+"settings.integrations" = "Intégrations";
 "settings.labels" = "Étiquettes";
 "settings.layout" = "Disposition";
 "settings.menus" = "Menus";

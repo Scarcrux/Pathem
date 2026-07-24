@@ -504,6 +504,9 @@
 "cleanup.trashFailedHint" = "Puede que estén en uso, o que Pathem necesite Acceso completo al disco para eliminarlos.";
 "cleanup.trashFailedTitle" = "No se pudieron eliminar %d ítem(s)";
 "cleanup.whyDetail" = "%@ · %@ · %@ · %@";
+"cli.err.noDir" = "No se encontró ningún directorio con permiso de escritura en tu PATH (se probó /usr/local/bin, /opt/homebrew/bin, ~/.local/bin, ~/bin). Crea uno e inténtalo de nuevo.";
+"cli.err.notBundled" = "El comando pathem no está disponible en esta compilación.";
+"cli.err.occupied" = "Ya existe algo en %@ que no es el enlace de Pathem. Quítalo primero.";
 "clipboard.clear" = "Borrar";
 "clipboard.colItem" = "Ítem";
 "clipboard.colLocation" = "Ubicación";
@@ -806,6 +809,18 @@
 "info.versionLabel" = "Versión";
 "info.whereFromLabel" = "Origen";
 "info.whereLabel" = "Ubicación";
+"integrations.cliFailed" = "No se pudo actualizar el comando pathem";
+"integrations.cliHint" = "Instala un comando «pathem» en tu PATH para que «pathem reveal <ruta>» y «pathem open <carpeta>» funcionen desde cualquier terminal. Es un enlace simbólico a la herramienta incluida; al quitarlo solo se elimina ese enlace.";
+"integrations.cliInstall" = "Instalar";
+"integrations.cliInstalledAt" = "Instalado en %@";
+"integrations.cliLabel" = "Comando de terminal";
+"integrations.cliNotInstalled" = "No instalado";
+"integrations.cliRemove" = "Quitar";
+"integrations.cliUnavailable" = "No disponible en esta compilación";
+"integrations.detected" = "Editores detectados: %@";
+"integrations.editorsSoon" = "La integración por editor «mostrar en Pathem» (Sublime Text, TextMate, JetBrains, VS Code) está prevista; por ahora usa el menú Servicios o el comando pathem de arriba.";
+"integrations.noEditors" = "No se detectaron editores compatibles.";
+"integrations.servicesHint" = "Otras apps pueden enviar un archivo o carpeta a Pathem: usa «Abrir en Pathem» o «Mostrar en Pathem» desde su menú Servicios, o el comando pathem de abajo.";
 "list.alwaysOpenWith" = "Abrir siempre con…";
 "list.clearTags" = "Borrar etiquetas";
 "list.columnComment" = "Comentario";
@@ -1302,6 +1317,7 @@
 "settings.appearance" = "Apariencia";
 "settings.general" = "General";
 "settings.gestures" = "Gestos";
+"settings.integrations" = "Integraciones";
 "settings.labels" = "Etiquetas";
 "settings.layout" = "Disposición";
 "settings.menus" = "Menús";

@@ -9,7 +9,7 @@ import PathemEngine
 @MainActor
 final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, menus, labels, search, terminal, transfers, shortcuts, gestures, updates
+        case general, appearance, layout, menus, labels, search, terminal, transfers, shortcuts, gestures, integrations, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
@@ -22,6 +22,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             case .transfers: return L("settings.transfers", "Transfers")
             case .shortcuts: return L("settings.shortcuts", "Shortcuts")
             case .gestures: return L("settings.gestures", "Gestures")
+            case .integrations: return L("settings.integrations", "Integrations")
             case .updates: return L("settings.updates", "Updates")
             }
         }
@@ -37,6 +38,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             case .transfers: return "arrow.up.arrow.down"
             case .shortcuts: return "keyboard"
             case .gestures: return "hand.draw"
+            case .integrations: return "app.connected.to.app.below.fill"
             case .updates: return "arrow.down.circle"
             }
         }
@@ -315,8 +317,74 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case .transfers: return transfersPane()
         case .shortcuts: return shortcutsPane()
         case .gestures: return gesturesPane()
+        case .integrations: return integrationsPane()
         case .updates: return updatesPane()
         }
+    }
+
+    // MARK: - Integrations pane (Finder handoff: the pathem CLI + Services)
+
+    private let cliStatusLabel = NSTextField(labelWithString: "")
+    private let cliButton = NSButton(title: "", target: nil, action: nil)
+
+    private func integrationsPane() -> NSView {
+        cliButton.target = self
+        cliButton.action = #selector(toggleCLIInstall)
+        cliButton.bezelStyle = .rounded
+        cliStatusLabel.font = .systemFont(ofSize: 11)
+        cliStatusLabel.textColor = .secondaryLabelColor
+        refreshCLIStatus()
+
+        let cliRow = NSStackView(views: [cliButton, cliStatusLabel])
+        cliRow.orientation = .horizontal
+        cliRow.spacing = 10
+
+        let editors = ExternalEditors.installed().map(\.name)
+        let editorsText = editors.isEmpty
+            ? L("integrations.noEditors", "No supported editors detected.")
+            : String(format: L("integrations.detected", "Detected editors: %@"), editors.joined(separator: ", "))
+
+        return form([
+            hint(L("integrations.servicesHint",
+                "Other apps can hand a file or folder to Pathem: use “Open in Pathem” or “Reveal in Pathem” from their Services menu, or the pathem command below.")),
+            labeled(L("integrations.cliLabel", "Terminal command"), cliRow),
+            hint(L("integrations.cliHint",
+                "Installs a “pathem” command on your PATH so “pathem reveal <path>” and “pathem open <dir>” work from any terminal. It’s a symlink to the bundled tool; removing it deletes only that link.")),
+            hint(editorsText),
+            hint(L("integrations.editorsSoon",
+                "Per-editor “reveal in Pathem” wiring (Sublime Text, TextMate, JetBrains, VS Code) is planned; for now use the Services menu or the pathem command above.")),
+        ])
+    }
+
+    private func refreshCLIStatus() {
+        cliButton.isEnabled = PathemCLIInstall.bundledCLI != nil
+        cliButton.title = PathemCLIInstall.isInstalled()
+            ? L("integrations.cliRemove", "Remove")
+            : L("integrations.cliInstall", "Install")
+        if PathemCLIInstall.bundledCLI == nil {
+            cliStatusLabel.stringValue = L("integrations.cliUnavailable", "Not available in this build")
+        } else if let link = PathemCLIInstall.installedLink() {
+            cliStatusLabel.stringValue = String(format: L("integrations.cliInstalledAt", "Installed at %@"), link.path)
+        } else {
+            cliStatusLabel.stringValue = L("integrations.cliNotInstalled", "Not installed")
+        }
+    }
+
+    @objc private func toggleCLIInstall() {
+        do {
+            if PathemCLIInstall.isInstalled() {
+                try PathemCLIInstall.remove()
+            } else {
+                try PathemCLIInstall.install()
+            }
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = L("integrations.cliFailed", "Couldn’t update the pathem command")
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: L("common.ok", "OK"))
+            if let window = rootView.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+        }
+        refreshCLIStatus()
     }
 
     private func transfersPane() -> NSView {

@@ -504,6 +504,9 @@
 "cleanup.trashFailedHint" = "Sie sind möglicherweise in Benutzung, oder Pathem benötigt vollständigen Festplattenzugriff, um sie zu löschen.";
 "cleanup.trashFailedTitle" = "%d Objekt(e) konnte(n) nicht entfernt werden";
 "cleanup.whyDetail" = "%@ · %@ · %@ · %@";
+"cli.err.noDir" = "Kein beschreibbares Verzeichnis in deinem PATH gefunden (versucht: /usr/local/bin, /opt/homebrew/bin, ~/.local/bin, ~/bin). Erstelle eines und versuche es erneut.";
+"cli.err.notBundled" = "Der pathem-Befehl ist in diesem Build nicht verfügbar.";
+"cli.err.occupied" = "Bei %@ existiert bereits etwas, das nicht der Link von Pathem ist. Entferne es zuerst.";
 "clipboard.clear" = "Leeren";
 "clipboard.colItem" = "Objekt";
 "clipboard.colLocation" = "Ort";
@@ -806,6 +809,18 @@
 "info.versionLabel" = "Version";
 "info.whereFromLabel" = "Herkunft";
 "info.whereLabel" = "Ort";
+"integrations.cliFailed" = "Der pathem-Befehl konnte nicht aktualisiert werden";
+"integrations.cliHint" = "Installiert einen „pathem“-Befehl in deinem PATH, sodass „pathem reveal <Pfad>“ und „pathem open <Ordner>“ in jedem Terminal funktionieren. Es ist ein Symlink auf das mitgelieferte Tool; beim Entfernen wird nur dieser Link gelöscht.";
+"integrations.cliInstall" = "Installieren";
+"integrations.cliInstalledAt" = "Installiert unter %@";
+"integrations.cliLabel" = "Terminal-Befehl";
+"integrations.cliNotInstalled" = "Nicht installiert";
+"integrations.cliRemove" = "Entfernen";
+"integrations.cliUnavailable" = "In diesem Build nicht verfügbar";
+"integrations.detected" = "Erkannte Editoren: %@";
+"integrations.editorsSoon" = "Die editorspezifische „In Pathem anzeigen“-Anbindung (Sublime Text, TextMate, JetBrains, VS Code) ist geplant; nutze vorerst das Dienste-Menü oder den pathem-Befehl oben.";
+"integrations.noEditors" = "Keine unterstützten Editoren erkannt.";
+"integrations.servicesHint" = "Andere Apps können eine Datei oder einen Ordner an Pathem übergeben: über „In Pathem öffnen“ oder „In Pathem anzeigen“ im Dienste-Menü oder den Befehl pathem unten.";
 "list.alwaysOpenWith" = "Immer öffnen mit…";
 "list.clearTags" = "Tags entfernen";
 "list.columnComment" = "Kommentar";
@@ -1302,6 +1317,7 @@
 "settings.appearance" = "Darstellung";
 "settings.general" = "Allgemein";
 "settings.gestures" = "Gesten";
+"settings.integrations" = "Integrationen";
 "settings.labels" = "Etiketten";
 "settings.layout" = "Layout";
 "settings.menus" = "Menüs";

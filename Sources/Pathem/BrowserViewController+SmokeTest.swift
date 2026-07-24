@@ -356,6 +356,22 @@ extension BrowserViewController {
         check("volume-eject-heuristic", !bootEjects && extSSD && !internalPart && usbStick && networkMount,
             "boot=\(bootEjects) extSSD=\(extSSD) internal=\(internalPart) usb=\(usbStick) net=\(networkMount)")
 
+        // pathem CLI install safety: linkPointsToUs recognizes our own symlink and rejects one that
+        // points elsewhere, so install()/remove() never clobber a file that isn't ours.
+        let cliDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-cli-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: cliDir, withIntermediateDirectories: true)
+        let bundledCLI = cliDir.appendingPathComponent("pathem-cli")
+        FileManager.default.createFile(atPath: bundledCLI.path, contents: Data("x".utf8))
+        let oursLink = cliDir.appendingPathComponent("pathem")
+        try? FileManager.default.createSymbolicLink(at: oursLink, withDestinationURL: bundledCLI)
+        let foreignLink = cliDir.appendingPathComponent("pathem-foreign")
+        try? FileManager.default.createSymbolicLink(at: foreignLink, withDestinationURL: URL(fileURLWithPath: "/usr/bin/true"))
+        let recognizesOurs = PathemCLIInstall.linkPointsToUs(oursLink, bundled: bundledCLI)
+        let rejectsForeign = !PathemCLIInstall.linkPointsToUs(foreignLink, bundled: bundledCLI)
+        check("cli-install-link-safety", recognizesOurs && rejectsForeign,
+            "ours=\(recognizesOurs) rejectsForeign=\(rejectsForeign)")
+        try? FileManager.default.removeItem(at: cliDir)
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

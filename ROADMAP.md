@@ -177,7 +177,13 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   Integrate / Preview / Remove. Editing a third-party config is invasive, so:
   opt-in only, preview the exact change first, back up and make it reversible,
   merge (never clobber) the existing file, warn if the editor is running, atomic
-  writes, all inside `~/Library`.
+  writes, all inside `~/Library`. **Partial (2026-07-23):** the pane exists
+  (`Settings ▸ Integrations`) with the non-invasive core -- a one-click install of
+  the on-PATH `pathem` command (`PathemCLIInstall`: picks the first writable PATH
+  dir, only ever creates/removes a symlink it owns, never clobbers a real file;
+  smoke-checked) and a read-only list of detected editors. Still to do: the
+  invasive per-editor Integrate/Preview/Remove with the backup/reversible/atomic
+  machinery (next bullet).
 - **Per-editor mechanism.** Sublime Text (a small User-package plugin + keymap +
   side-bar menu), TextMate (a bundle command), and JetBrains (an External Tools
   entry) can be wired by writing their own config -- a true "change the editor's

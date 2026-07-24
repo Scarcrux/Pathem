@@ -504,6 +504,9 @@
 "cleanup.trashFailedHint" = "使用中であるか、削除にフルディスクアクセスが必要な可能性があります。";
 "cleanup.trashFailedTitle" = "%d項目を削除できませんでした";
 "cleanup.whyDetail" = "%@ · %@ · %@ · %@";
+"cli.err.noDir" = "PATH上に書き込み可能なディレクトリが見つかりません（/usr/local/bin、/opt/homebrew/bin、~/.local/bin、~/bin を確認）。作成してから再試行してください。";
+"cli.err.notBundled" = "このビルドではpathemコマンドを利用できません。";
+"cli.err.occupied" = "%@ にPathemのリンクではない項目が既に存在します。先に削除してください。";
 "clipboard.clear" = "消去";
 "clipboard.colItem" = "項目";
 "clipboard.colLocation" = "場所";
@@ -806,6 +809,18 @@
 "info.versionLabel" = "バージョン";
 "info.whereFromLabel" = "入手先";
 "info.whereLabel" = "場所";
+"integrations.cliFailed" = "pathemコマンドを更新できませんでした";
+"integrations.cliHint" = "PATHに「pathem」コマンドを追加し、どのターミナルからでも「pathem reveal <パス>」や「pathem open <フォルダ>」を使えるようにします。同梱ツールへのシンボリックリンクで、削除してもそのリンクだけが消えます。";
+"integrations.cliInstall" = "インストール";
+"integrations.cliInstalledAt" = "%@ にインストール済み";
+"integrations.cliLabel" = "ターミナルコマンド";
+"integrations.cliNotInstalled" = "未インストール";
+"integrations.cliRemove" = "削除";
+"integrations.cliUnavailable" = "このビルドでは利用できません";
+"integrations.detected" = "検出されたエディタ：%@";
+"integrations.editorsSoon" = "エディタ別の「Pathemで表示」連携（Sublime Text、TextMate、JetBrains、VS Code）は予定されています。当面はサービスメニューまたは上のpathemコマンドを使用してください。";
+"integrations.noEditors" = "対応するエディタが見つかりません。";
+"integrations.servicesHint" = "他のAppからPathemにファイルやフォルダを渡せます。サービスメニューの「Pathemで開く」または「Pathemで表示」、あるいは下のpathemコマンドを使います。";
 "list.alwaysOpenWith" = "常にこのアプリケーションで開く…";
 "list.clearTags" = "タグを消去";
 "list.columnComment" = "コメント";
@@ -1302,6 +1317,7 @@
 "settings.appearance" = "外観";
 "settings.general" = "一般";
 "settings.gestures" = "ジェスチャ";
+"settings.integrations" = "連携";
 "settings.labels" = "ラベル";
 "settings.layout" = "レイアウト";
 "settings.menus" = "メニュー";

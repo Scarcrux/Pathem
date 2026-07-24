@@ -504,6 +504,9 @@
 "cleanup.trashFailedHint" = "They may be in use, or Pathem may need Full Disk Access to delete them.";
 "cleanup.trashFailedTitle" = "%d item(s) couldn’t be removed";
 "cleanup.whyDetail" = "%@ · %@ · %@ · %@";
+"cli.err.noDir" = "No writable directory on your PATH was found (tried /usr/local/bin, /opt/homebrew/bin, ~/.local/bin, ~/bin). Create one and try again.";
+"cli.err.notBundled" = "The pathem command isn’t available in this build.";
+"cli.err.occupied" = "Something already exists at %@ that isn’t Pathem’s link. Remove it first.";
 "clipboard.clear" = "Clear";
 "clipboard.colItem" = "Item";
 "clipboard.colLocation" = "Location";
@@ -806,6 +809,18 @@
 "info.versionLabel" = "Version";
 "info.whereFromLabel" = "Where from";
 "info.whereLabel" = "Where";
+"integrations.cliFailed" = "Couldn’t update the pathem command";
+"integrations.cliHint" = "Installs a “pathem” command on your PATH so “pathem reveal <path>” and “pathem open <dir>” work from any terminal. It’s a symlink to the bundled tool; removing it deletes only that link.";
+"integrations.cliInstall" = "Install";
+"integrations.cliInstalledAt" = "Installed at %@";
+"integrations.cliLabel" = "Terminal command";
+"integrations.cliNotInstalled" = "Not installed";
+"integrations.cliRemove" = "Remove";
+"integrations.cliUnavailable" = "Not available in this build";
+"integrations.detected" = "Detected editors: %@";
+"integrations.editorsSoon" = "Per-editor “reveal in Pathem” wiring (Sublime Text, TextMate, JetBrains, VS Code) is planned; for now use the Services menu or the pathem command above.";
+"integrations.noEditors" = "No supported editors detected.";
+"integrations.servicesHint" = "Other apps can hand a file or folder to Pathem: use “Open in Pathem” or “Reveal in Pathem” from their Services menu, or the pathem command below.";
 "list.alwaysOpenWith" = "Always Open With…";
 "list.clearTags" = "Clear Tags";
 "list.columnComment" = "Comment";
@@ -1232,6 +1247,7 @@
 "settings.appearance" = "Appearance";
 "settings.general" = "General";
 "settings.gestures" = "Gestures";
+"settings.integrations" = "Integrations";
 "settings.labels" = "Labels";
 "settings.layout" = "Layout";
 "settings.menus" = "Menus";

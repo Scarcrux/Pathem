@@ -504,6 +504,9 @@
 "cleanup.trashFailedHint" = "它们可能正在使用中，或者 Pathem 需要完全磁盘访问权限才能删除它们。";
 "cleanup.trashFailedTitle" = "%d 个项目无法移除";
 "cleanup.whyDetail" = "%@ · %@ · %@ · %@";
+"cli.err.noDir" = "在您的 PATH 中未找到可写目录（已尝试 /usr/local/bin、/opt/homebrew/bin、~/.local/bin、~/bin）。请创建一个后重试。";
+"cli.err.notBundled" = "此版本不提供 pathem 命令。";
+"cli.err.occupied" = "%@ 处已存在非 Pathem 链接的项目。请先将其移除。";
 "clipboard.clear" = "清除";
 "clipboard.colItem" = "项目";
 "clipboard.colLocation" = "位置";
@@ -806,6 +809,18 @@
 "info.versionLabel" = "版本";
 "info.whereFromLabel" = "来源";
 "info.whereLabel" = "位置";
+"integrations.cliFailed" = "无法更新 pathem 命令";
+"integrations.cliHint" = "在您的 PATH 中安装“pathem”命令，以便在任意终端使用“pathem reveal <路径>”和“pathem open <目录>”。它是指向内置工具的符号链接；移除只会删除该链接。";
+"integrations.cliInstall" = "安装";
+"integrations.cliInstalledAt" = "已安装于 %@";
+"integrations.cliLabel" = "终端命令";
+"integrations.cliNotInstalled" = "未安装";
+"integrations.cliRemove" = "移除";
+"integrations.cliUnavailable" = "此版本不可用";
+"integrations.detected" = "检测到的编辑器：%@";
+"integrations.editorsSoon" = "针对各编辑器的“在 Pathem 中显示”接入（Sublime Text、TextMate、JetBrains、VS Code）正在计划中；目前请使用服务菜单或上方的 pathem 命令。";
+"integrations.noEditors" = "未检测到受支持的编辑器。";
+"integrations.servicesHint" = "其他 App 可将文件或文件夹交给 Pathem：使用其服务菜单中的“在 Pathem 中打开”或“在 Pathem 中显示”，或下方的 pathem 命令。";
 "list.alwaysOpenWith" = "始终以此打开…";
 "list.clearTags" = "清除标记";
 "list.columnComment" = "注释";
@@ -1302,6 +1317,7 @@
 "settings.appearance" = "外观";
 "settings.general" = "通用";
 "settings.gestures" = "手势";
+"settings.integrations" = "集成";
 "settings.labels" = "标签";
 "settings.layout" = "布局";
 "settings.menus" = "菜单";
