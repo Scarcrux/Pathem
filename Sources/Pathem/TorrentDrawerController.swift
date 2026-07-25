@@ -29,6 +29,8 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     var onOpen: ((TorrentSession.Status) -> Void)?
     /// The window used to present add/remove sheets (the browser window).
     weak var hostWindow: NSWindow?
+    /// The user's configured torrent download folder (empty = system Downloads); set from Preferences.
+    var preferredDownloadPath = ""
 
     override init() {
         super.init()
@@ -321,14 +323,14 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         panel.prompt = L("torrents.add.prompt", "Add")
         guard panel.runModal() == .OK else { return }
         client.startIfNeeded()
-        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        let savePath = TorrentSavePath.resolve(preferredDownloadPath)
         for url in panel.urls { client.addTorrent(fileAt: url.path, savePath: savePath) }
     }
 
     @objc private func addMagnetTapped() {
         let alert = NSAlert()
         alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
-        alert.informativeText = L("torrents.addMagnet.message", "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder.")
+        alert.informativeText = L("torrents.addMagnet.message", "Paste a magnet link. Pathem fetches its details from peers, then downloads it to your torrent download folder.")
         alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
@@ -343,8 +345,7 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
             return
         }
         client.startIfNeeded()
-        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
-        client.addMagnet(uri, savePath: savePath)
+        client.addMagnet(uri, savePath: TorrentSavePath.resolve(preferredDownloadPath))
     }
 
     @objc private func pauseResumeTapped() {

@@ -1116,6 +1116,8 @@
 "prefs.commanderSheetTitle" = "コマンダーのFキー";
 "prefs.compactSidebar" = "コンパクトサイドバー（アイコンのみ）";
 "prefs.confirmBeforeDelete" = "ゴミ箱に入れる前に確認";
+"prefs.confirmInboundTorrents" = "他のAppからのマグネット/トレントリンクを追加する前に確認";
+"prefs.confirmInboundTorrentsHint" = "クリックしたマグネットリンクは通常意図的なものなので、既定ではオフです。他のAppがPathemに渡すダウンロードを確認するにはオンにします。";
 "prefs.conflictAsk" = "毎回確認";
 "prefs.conflictDefault" = "ファイルが既に存在する場合";
 "prefs.conflictKeepBoth" = "両方を残す";
@@ -1215,6 +1217,9 @@
 "prefs.themeCustom" = "カスタム";
 "prefs.themeHint" = "スキンはPathem独自の選択、ペイン、タブ、パンくずリストに色を付けます。標準のボタンは引き続きシステムのアクセントカラーを使用します。";
 "prefs.themeLabel" = "スキン";
+"prefs.torrentFolderDefault" = "ダウンロード（既定）";
+"prefs.torrentFolderLabel" = "トレントのダウンロードフォルダ";
+"prefs.torrentFolderReset" = "ダウンロードを使用";
 "prefs.underlineOnHover" = "ポインタの下の項目に下線を引く";
 "prefs.useFinderGetInfo" = "Pathem ではなく Finder の情報ウィンドウを使用";
 "prefs.verifyCopies" = "チェックサムでコピーを検証（低速）";
@@ -1472,7 +1477,7 @@
 "torrents.add.prompt" = "追加";
 "torrents.addMagnet" = "マグネットを追加…";
 "torrents.addMagnet.invalid" = "マグネットリンクではないようです。";
-"torrents.addMagnet.message" = "マグネットリンクを貼り付けてください。Pathem がピアから詳細を取得し、「ダウンロード」フォルダに保存します。";
+"torrents.addMagnet.message" = "マグネットリンクを貼り付けます。Pathemがピアから詳細を取得し、トレントのダウンロードフォルダにダウンロードします。";
 "torrents.addMagnet.title" = "マグネットリンクを追加";
 "torrents.col.down" = "下り";
 "torrents.col.eta" = "残り時間";
@@ -1483,6 +1488,9 @@
 "torrents.col.size" = "サイズ";
 "torrents.col.state" = "状態";
 "torrents.col.up" = "上り";
+"torrents.confirmInbound.add" = "追加";
+"torrents.confirmInbound.body" = "他のAppがPathemに次のダウンロードを要求しました：\n\n%@";
+"torrents.confirmInbound.title" = "他のAppからのこのダウンロードを追加しますか？";
 "torrents.create.failed" = "トレントを作成できませんでした";
 "torrents.create.message" = "必要に応じてトラッカーを追加できます。プライベートトレントは DHT やピア交換を使用しません。";
 "torrents.create.next" = "場所を選択…";

@@ -1116,6 +1116,8 @@
 "prefs.commanderSheetTitle" = "Teclas F del comandante";
 "prefs.compactSidebar" = "Barra lateral compacta (solo iconos)";
 "prefs.confirmBeforeDelete" = "Confirmar antes de mover elementos a la papelera";
+"prefs.confirmInboundTorrents" = "Preguntar antes de añadir enlaces magnet/torrent de otras apps";
+"prefs.confirmInboundTorrentsHint" = "Un enlace magnet en el que haces clic suele ser intencionado, así que esto está desactivado por defecto. Actívalo para confirmar cualquier descarga que otra app le pase a Pathem.";
 "prefs.conflictAsk" = "Preguntar cada vez";
 "prefs.conflictDefault" = "Cuando los archivos ya existen";
 "prefs.conflictKeepBoth" = "Conservar ambos";
@@ -1215,6 +1217,9 @@
 "prefs.themeCustom" = "Personalizado";
 "prefs.themeHint" = "El aspecto tiñe la selección propia de Pathem, los paneles, las pestañas y la ruta de navegación. Los botones estándar siguen usando el color de acento del sistema.";
 "prefs.themeLabel" = "Aspecto";
+"prefs.torrentFolderDefault" = "Descargas (predeterminado)";
+"prefs.torrentFolderLabel" = "Carpeta de descargas de torrents";
+"prefs.torrentFolderReset" = "Usar Descargas";
 "prefs.underlineOnHover" = "Subrayar el elemento bajo el puntero";
 "prefs.useFinderGetInfo" = "Usar la ventana Obtener información del Finder en lugar de la de Pathem";
 "prefs.verifyCopies" = "Verificar copias con suma de comprobación (más lento)";
@@ -1472,7 +1477,7 @@
 "torrents.add.prompt" = "Añadir";
 "torrents.addMagnet" = "Añadir enlace magnet…";
 "torrents.addMagnet.invalid" = "Eso no parece un enlace magnet.";
-"torrents.addMagnet.message" = "Pega un enlace magnet. Pathem obtiene sus detalles de los pares y descarga a tu carpeta Descargas.";
+"torrents.addMagnet.message" = "Pega un enlace magnet. Pathem obtiene sus detalles de los pares y luego lo descarga en tu carpeta de descargas de torrents.";
 "torrents.addMagnet.title" = "Añadir enlace magnet";
 "torrents.col.down" = "Bajada";
 "torrents.col.eta" = "Tiempo restante";
@@ -1483,6 +1488,9 @@
 "torrents.col.size" = "Tamaño";
 "torrents.col.state" = "Estado";
 "torrents.col.up" = "Subida";
+"torrents.confirmInbound.add" = "Añadir";
+"torrents.confirmInbound.body" = "Otra app le pidió a Pathem que descargara:\n\n%@";
+"torrents.confirmInbound.title" = "¿Añadir esta descarga desde otra app?";
 "torrents.create.failed" = "No se pudo crear el torrent";
 "torrents.create.message" = "Opcionalmente añade un tracker. Un torrent privado no usará DHT ni intercambio de pares.";
 "torrents.create.next" = "Elegir ubicación…";

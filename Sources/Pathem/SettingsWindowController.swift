@@ -490,10 +490,49 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         return form([
             labeled(L("prefs.bandwidthLabel", "Limit transfer speed (KB/s)"), field),
             hint(L("prefs.bandwidthHint", "Caps remote download and upload speed. 0 means unlimited.")),
+            labeled(L("prefs.torrentFolderLabel", "Torrent download folder"), torrentFolderControl()),
+            check(L("prefs.confirmInboundTorrents", "Ask before adding magnet/torrent links from other apps"), \.confirmInboundTorrents),
+            hint(L("prefs.confirmInboundTorrentsHint", "A magnet link you click is usually intended, so this is off by default. Turn it on to confirm any download another app hands to Pathem.")),
         ])
     }
     @objc private func bandwidthChanged(_ sender: NSTextField) {
         prefs.bandwidthLimitKBps = max(0, Int(sender.stringValue) ?? 0)
+        onChange?(prefs)
+    }
+
+    private let torrentFolderButton = NSButton()
+
+    private func torrentFolderControl() -> NSView {
+        torrentFolderButton.title = prefs.torrentDownloadPath.isEmpty
+            ? L("prefs.torrentFolderDefault", "Downloads (default)")
+            : (prefs.torrentDownloadPath as NSString).lastPathComponent
+        torrentFolderButton.bezelStyle = .rounded
+        torrentFolderButton.target = self
+        torrentFolderButton.action = #selector(chooseTorrentFolder)
+        let reset = NSButton(
+            title: L("prefs.torrentFolderReset", "Use Downloads"), target: self, action: #selector(resetTorrentFolder))
+        reset.bezelStyle = .rounded
+        let row = NSStackView(views: [torrentFolderButton, reset])
+        row.orientation = .horizontal
+        row.spacing = 8
+        return row
+    }
+    @objc private func chooseTorrentFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.prompt = L("prefs.chooseFolder", "Choose…")
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard let self, response == .OK, let url = panel.url else { return }
+            self.prefs.torrentDownloadPath = url.path
+            self.torrentFolderButton.title = url.lastPathComponent
+            self.onChange?(self.prefs)
+        }
+    }
+    @objc private func resetTorrentFolder() {
+        prefs.torrentDownloadPath = ""
+        torrentFolderButton.title = L("prefs.torrentFolderDefault", "Downloads (default)")
         onChange?(prefs)
     }
 

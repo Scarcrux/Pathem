@@ -1116,6 +1116,8 @@
 "prefs.commanderSheetTitle" = "指挥官 F 键";
 "prefs.compactSidebar" = "紧凑边栏（仅图标）";
 "prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";
+"prefs.confirmInboundTorrents" = "添加来自其他 App 的磁力/种子链接前询问";
+"prefs.confirmInboundTorrentsHint" = "您点击的磁力链接通常是有意为之，因此默认关闭。开启后可确认其他 App 交给 Pathem 的任何下载。";
 "prefs.conflictAsk" = "每次询问";
 "prefs.conflictDefault" = "当文件已存在时";
 "prefs.conflictKeepBoth" = "两者都保留";
@@ -1215,6 +1217,9 @@
 "prefs.themeCustom" = "自定义";
 "prefs.themeHint" = "皮肤会为 Pathem 自身的选中项、窗格、标签页和路径栏着色。标准按钮仍使用系统强调色。";
 "prefs.themeLabel" = "皮肤";
+"prefs.torrentFolderDefault" = "下载（默认）";
+"prefs.torrentFolderLabel" = "种子下载文件夹";
+"prefs.torrentFolderReset" = "使用下载文件夹";
 "prefs.underlineOnHover" = "为指针下方的项目添加下划线";
 "prefs.useFinderGetInfo" = "使用访达的“显示简介”窗口而非 Pathem 的";
 "prefs.verifyCopies" = "用校验和验证副本（较慢）";
@@ -1472,7 +1477,7 @@
 "torrents.add.prompt" = "添加";
 "torrents.addMagnet" = "添加磁力链接…";
 "torrents.addMagnet.invalid" = "这看起来不是一个磁力链接。";
-"torrents.addMagnet.message" = "粘贴一个磁力链接。Pathem 会从节点获取其详情，然后下载到“下载”文件夹。";
+"torrents.addMagnet.message" = "粘贴磁力链接。Pathem 会从对等端获取其详情，然后下载到您的种子下载文件夹。";
 "torrents.addMagnet.title" = "添加磁力链接";
 "torrents.col.down" = "下载";
 "torrents.col.eta" = "预计剩余时间";
@@ -1483,6 +1488,9 @@
 "torrents.col.size" = "大小";
 "torrents.col.state" = "状态";
 "torrents.col.up" = "上传";
+"torrents.confirmInbound.add" = "添加";
+"torrents.confirmInbound.body" = "另一个 App 请求 Pathem 下载：\n\n%@";
+"torrents.confirmInbound.title" = "添加来自其他 App 的此下载？";
 "torrents.create.failed" = "无法创建种子";
 "torrents.create.message" = "可选择添加 Tracker。私有种子不会使用 DHT 或节点交换。";
 "torrents.create.next" = "选择位置…";

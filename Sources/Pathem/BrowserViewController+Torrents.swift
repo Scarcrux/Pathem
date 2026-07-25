@@ -69,18 +69,52 @@ extension BrowserViewController {
         NSPasteboard.general.setString(links.joined(separator: "\n"), forType: .string)
     }
 
-    /// Open the Torrents drawer and add a .torrent (or magnet). Downloads go to the Downloads folder.
+    /// Open the Torrents drawer and add a .torrent handed in by another app (Finder open / Services).
+    /// Optionally confirms first (drive-by-download protection); downloads go to the configured folder.
     func addTorrentToPanel(_ url: URL) {
-        showTorrentsDrawer()
-        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
-        TorrentDaemonClient.shared.addTorrent(fileAt: url.path, savePath: savePath)
+        confirmInboundTorrentIfNeeded(url.lastPathComponent) { [weak self] in
+            guard let self else { return }
+            self.showTorrentsDrawer()
+            TorrentDaemonClient.shared.addTorrent(
+                fileAt: url.path, savePath: TorrentSavePath.resolve(self.prefs.torrentDownloadPath))
+        }
     }
 
-    /// Open the Torrents drawer and add a magnet: link (from the magnet: URL scheme).
+    /// Open the Torrents drawer and add a magnet: link handed in by another app (the magnet: URL
+    /// scheme). Optionally confirms first; downloads go to the configured folder.
     func addMagnetToPanel(_ uri: String) {
-        showTorrentsDrawer()
-        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
-        TorrentDaemonClient.shared.addMagnet(uri, savePath: savePath)
+        confirmInboundTorrentIfNeeded(magnetDisplayName(uri)) { [weak self] in
+            guard let self else { return }
+            self.showTorrentsDrawer()
+            TorrentDaemonClient.shared.addMagnet(
+                uri, savePath: TorrentSavePath.resolve(self.prefs.torrentDownloadPath))
+        }
+    }
+
+    /// When "confirm inbound torrents" is on, ask before adding a link another app handed us; else add
+    /// straight away. The user's in-app Add (drawer) never routes through here, so pasting a magnet
+    /// yourself is never gated -- only links pushed in from outside.
+    private func confirmInboundTorrentIfNeeded(_ label: String, add: @escaping () -> Void) {
+        guard prefs.confirmInboundTorrents else { add(); return }
+        let alert = NSAlert()
+        alert.messageText = L("torrents.confirmInbound.title", "Add this download from another app?")
+        alert.informativeText = String(
+            format: L("torrents.confirmInbound.body", "Another app asked Pathem to download:\n\n%@"), label)
+        alert.addButton(withTitle: L("torrents.confirmInbound.add", "Add"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        Task { @MainActor in
+            if await self.presentSheet(alert) == .alertFirstButtonReturn { add() }
+        }
+    }
+
+    /// A short, readable label for a magnet URI in the confirmation prompt: its display-name (`dn`)
+    /// parameter if present, else a truncated form of the URI.
+    private func magnetDisplayName(_ uri: String) -> String {
+        if let components = URLComponents(string: uri),
+            let dn = components.queryItems?.first(where: { $0.name == "dn" })?.value, !dn.isEmpty {
+            return dn
+        }
+        return uri.count > 80 ? String(uri.prefix(80)) + "…" : uri
     }
 
     /// Show or hide the Torrents transfer drawer (docked at the bottom, like the terminal).

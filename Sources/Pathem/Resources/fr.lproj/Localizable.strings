@@ -1116,6 +1116,8 @@
 "prefs.commanderSheetTitle" = "Touches F du commandeur";
 "prefs.compactSidebar" = "Barre latérale compacte (icônes seulement)";
 "prefs.confirmBeforeDelete" = "Demander confirmation avant de placer des éléments dans la corbeille";
+"prefs.confirmInboundTorrents" = "Demander avant d’ajouter des liens magnet/torrent d’autres apps";
+"prefs.confirmInboundTorrentsHint" = "Un lien magnet sur lequel vous cliquez est généralement intentionnel ; c’est donc désactivé par défaut. Activez-le pour confirmer tout téléchargement qu’une autre app transmet à Pathem.";
 "prefs.conflictAsk" = "Demander à chaque fois";
 "prefs.conflictDefault" = "Lorsque les fichiers existent déjà";
 "prefs.conflictKeepBoth" = "Conserver les deux";
@@ -1215,6 +1217,9 @@
 "prefs.themeCustom" = "Personnalisé";
 "prefs.themeHint" = "L'habillage colore la sélection, les volets, les onglets et le fil d'Ariane propres à Pathem. Les boutons standard utilisent toujours la couleur d'accentuation du système.";
 "prefs.themeLabel" = "Habillage";
+"prefs.torrentFolderDefault" = "Téléchargements (par défaut)";
+"prefs.torrentFolderLabel" = "Dossier de téléchargement des torrents";
+"prefs.torrentFolderReset" = "Utiliser Téléchargements";
 "prefs.underlineOnHover" = "Souligner l’élément sous le pointeur";
 "prefs.useFinderGetInfo" = "Utiliser la fenêtre Lire les informations du Finder au lieu de celle de Pathem";
 "prefs.verifyCopies" = "Vérifier les copies avec une somme de contrôle (plus lent)";
@@ -1472,7 +1477,7 @@
 "torrents.add.prompt" = "Ajouter";
 "torrents.addMagnet" = "Ajouter un lien magnet…";
 "torrents.addMagnet.invalid" = "Cela ne ressemble pas à un lien magnet.";
-"torrents.addMagnet.message" = "Collez un lien magnet. Pathem récupère ses détails auprès des pairs, puis télécharge dans votre dossier Téléchargements.";
+"torrents.addMagnet.message" = "Collez un lien magnet. Pathem récupère ses détails auprès des pairs, puis le télécharge dans votre dossier de téléchargement des torrents.";
 "torrents.addMagnet.title" = "Ajouter un lien magnet";
 "torrents.col.down" = "Réception";
 "torrents.col.eta" = "Temps restant";
@@ -1483,6 +1488,9 @@
 "torrents.col.size" = "Taille";
 "torrents.col.state" = "État";
 "torrents.col.up" = "Envoi";
+"torrents.confirmInbound.add" = "Ajouter";
+"torrents.confirmInbound.body" = "Une autre app a demandé à Pathem de télécharger :\n\n%@";
+"torrents.confirmInbound.title" = "Ajouter ce téléchargement depuis une autre app ?";
 "torrents.create.failed" = "Impossible de créer le torrent";
 "torrents.create.message" = "Ajoutez éventuellement un tracker. Un torrent privé n’utilise ni DHT ni échange de pairs.";
 "torrents.create.next" = "Choisir l’emplacement…";

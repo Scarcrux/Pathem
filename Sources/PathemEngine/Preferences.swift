@@ -107,6 +107,12 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var dragMovesByDefault: Bool
     /// Cap remote transfer speed in KB/s (0 = unlimited).
     public var bandwidthLimitKBps: Int
+    /// Where magnet/torrent downloads are saved. Empty (or a folder that no longer exists) falls back
+    /// to the system Downloads folder.
+    public var torrentDownloadPath: String
+    /// Ask before adding a magnet/torrent link that another app hands to Pathem (drive-by-download
+    /// protection). Off by default: clicking a magnet link is normally a deliberate, wanted action.
+    public var confirmInboundTorrents: Bool
     /// Show dotfiles/hidden files in every folder by default.
     public var showHiddenByDefault: Bool
     /// Use Finder's Get Info window instead of Pathem's inspector.
@@ -163,7 +169,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         confirmBeforeDelete: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
-        bandwidthLimitKBps: Int = 0, showHiddenByDefault: Bool = false,
+        bandwidthLimitKBps: Int = 0, torrentDownloadPath: String = "",
+        confirmInboundTorrents: Bool = false, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
@@ -218,6 +225,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.useFinderGetInfo = useFinderGetInfo
         self.previewInGalleryView = previewInGalleryView
         self.bandwidthLimitKBps = bandwidthLimitKBps
+        self.torrentDownloadPath = torrentDownloadPath
+        self.confirmInboundTorrents = confirmInboundTorrents
         self.appearance = appearance
         self.density = density
         self.fontSize = fontSize
@@ -272,6 +281,10 @@ public struct Preferences: Codable, Sendable, Equatable {
         appearance = (try? c.decode(Appearance.self, forKey: .appearance)) ?? d.appearance
         bandwidthLimitKBps =
             try c.decodeIfPresent(Int.self, forKey: .bandwidthLimitKBps) ?? d.bandwidthLimitKBps
+        torrentDownloadPath =
+            try c.decodeIfPresent(String.self, forKey: .torrentDownloadPath) ?? d.torrentDownloadPath
+        confirmInboundTorrents =
+            try c.decodeIfPresent(Bool.self, forKey: .confirmInboundTorrents) ?? d.confirmInboundTorrents
         showHiddenByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .showHiddenByDefault) ?? d.showHiddenByDefault
         useFinderGetInfo =

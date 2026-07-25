@@ -1046,6 +1046,8 @@
 "prefs.commanderSheetTitle" = "Commander F-keys";
 "prefs.compactSidebar" = "Compact sidebar (icons only)";
 "prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";
+"prefs.confirmInboundTorrents" = "Ask before adding magnet/torrent links from other apps";
+"prefs.confirmInboundTorrentsHint" = "A magnet link you click is usually intended, so this is off by default. Turn it on to confirm any download another app hands to Pathem.";
 "prefs.conflictAsk" = "Ask each time";
 "prefs.conflictDefault" = "When files already exist";
 "prefs.conflictKeepBoth" = "Keep both";
@@ -1145,6 +1147,9 @@
 "prefs.themeCustom" = "Custom";
 "prefs.themeHint" = "The skin tints Pathem’s own selection, panes, tabs, and breadcrumb. Standard buttons still use the system accent.";
 "prefs.themeLabel" = "Skin";
+"prefs.torrentFolderDefault" = "Downloads (default)";
+"prefs.torrentFolderLabel" = "Torrent download folder";
+"prefs.torrentFolderReset" = "Use Downloads";
 "prefs.underlineOnHover" = "Underline the item under the pointer";
 "prefs.useFinderGetInfo" = "Use Finder’s Get Info window instead of Pathem’s";
 "prefs.verifyCopies" = "Verify copies with a checksum (slower)";
@@ -1400,7 +1405,7 @@
 "torrents.add.prompt" = "Add";
 "torrents.addMagnet" = "Add Magnet…";
 "torrents.addMagnet.invalid" = "That doesn’t look like a magnet link.";
-"torrents.addMagnet.message" = "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder.";
+"torrents.addMagnet.message" = "Paste a magnet link. Pathem fetches its details from peers, then downloads it to your torrent download folder.";
 "torrents.addMagnet.title" = "Add Magnet Link";
 "torrents.col.down" = "Down";
 "torrents.col.eta" = "ETA";
@@ -1411,6 +1416,9 @@
 "torrents.col.size" = "Size";
 "torrents.col.state" = "Status";
 "torrents.col.up" = "Up";
+"torrents.confirmInbound.add" = "Add";
+"torrents.confirmInbound.body" = "Another app asked Pathem to download:\n\n%@";
+"torrents.confirmInbound.title" = "Add this download from another app?";
 "torrents.create.failed" = "Couldn’t create the torrent";
 "torrents.create.message" = "Optionally add a tracker. A private torrent won’t use DHT or peer exchange.";
 "torrents.create.next" = "Choose Location…";

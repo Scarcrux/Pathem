@@ -403,6 +403,18 @@ extension BrowserViewController {
             "info=\(wroteInfo) command=\(wroteCommand) scheme=\(tmScheme) removed=\(tmRemoved)")
         try? FileManager.default.removeItem(at: tmRoot)
 
+        // Torrent save path: a real configured folder is honored; empty or a missing folder falls
+        // back to the system Downloads folder.
+        let tsvDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-tsv-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: tsvDir, withIntermediateDirectories: true)
+        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        let tsvPicked = TorrentSavePath.resolve(tsvDir.path) == tsvDir.path
+        let tsvEmpty = TorrentSavePath.resolve("") == downloads
+        let tsvMissing = TorrentSavePath.resolve("/no/such/dir-\(UUID().uuidString)") == downloads
+        check("torrent-save-path", tsvPicked && tsvEmpty && tsvMissing,
+            "picked=\(tsvPicked) empty=\(tsvEmpty) missing=\(tsvMissing)")
+        try? FileManager.default.removeItem(at: tsvDir)
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

@@ -223,6 +223,7 @@ extension BrowserViewController {
             }
         }
         for side in [leftTabs, rightTabs] { side.newTabAtEnd = prefs.newTabAtEnd }
+        torrentDrawer.preferredDownloadPath = prefs.torrentDownloadPath
         applyCompactSidebar()
         applyCommanderCommands()
         applyAppearance()
