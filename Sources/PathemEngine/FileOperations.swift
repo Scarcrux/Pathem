@@ -306,6 +306,16 @@ public enum FileOperations {
         }
     }
 
+    /// A cross-volume move that copied `name` but then could neither remove the original nor roll the
+    /// copy back, so a duplicate remains at the destination. Surfaced so the user isn't left with an
+    /// unexplained stray copy after a bare "move failed".
+    public struct MoveIncompleteError: LocalizedError {
+        public let name: String
+        public var errorDescription: String? {
+            "Couldn’t finish moving \(name): the original couldn’t be removed, and a copy was left at the destination."
+        }
+    }
+
     @discardableResult
     public static func copy(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
@@ -351,7 +361,15 @@ public enum FileOperations {
                 do {
                     try FileManager.default.removeItem(at: source)
                 } catch {
-                    try? FileManager.default.removeItem(at: dest)
+                    // The copy landed but the source couldn't be removed, so the move didn't complete.
+                    // Roll the copy back so there's no duplicate; if the rollback ALSO fails, a stray
+                    // copy is left at the destination -- say so explicitly rather than reporting a bare
+                    // "move failed" that hides the duplicate.
+                    do {
+                        try FileManager.default.removeItem(at: dest)
+                    } catch {
+                        throw MoveIncompleteError(name: source.lastPathComponent)
+                    }
                     throw error
                 }
             }

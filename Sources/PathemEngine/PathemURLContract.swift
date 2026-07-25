@@ -24,12 +24,15 @@ public enum PathemURLContract {
     }
 
     /// Parse an incoming URL into its (verb, path), or nil if it isn't a well-formed `pathem://` URL.
+    /// The scheme and verb are matched case-insensitively (LaunchServices may not preserve case), and
+    /// only an absolute `path` is accepted -- a relative one is meaningless here (it would resolve
+    /// against the app's working directory) and is rejected rather than acted on.
     public static func parse(_ url: URL) -> (verb: Verb, path: String)? {
-        guard url.scheme == scheme,
+        guard url.scheme?.lowercased() == scheme,
             let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-            let verb = components.host.flatMap(Verb.init(rawValue:)),
+            let verb = (components.host?.lowercased()).flatMap(Verb.init(rawValue:)),
             let path = components.queryItems?.first(where: { $0.name == "path" })?.value,
-            !path.isEmpty
+            path.hasPrefix("/")
         else { return nil }
         return (verb, path)
     }

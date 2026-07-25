@@ -1414,37 +1414,47 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
         revealInPrimaryBrowser(urls)
     }
 
-    /// Reveal the first sent item in the primary window, retrying once if it isn't up yet.
-    private func revealInPrimaryBrowser(_ urls: [URL]) {
+    /// The most retries an inbound open/reveal will wait for the primary window during a launch race:
+    /// ~4s at 100ms each, then give up rather than respin the main thread forever.
+    private static let primaryBrowserMaxRetries = 40
+
+    /// Reveal the first sent item in the primary window, waiting briefly for it during a launch race.
+    private func revealInPrimaryBrowser(_ urls: [URL], attempt: Int = 0) {
         guard let url = urls.first else { return }
-        if let browser = WindowManager.shared.primaryBrowser {
-            browser.revealExternalItem(url)
-        } else {
-            DispatchQueue.main.async { [weak self] in self?.revealInPrimaryBrowser(urls) }
+        guard let browser = WindowManager.shared.primaryBrowser else {
+            guard attempt < Self.primaryBrowserMaxRetries else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.revealInPrimaryBrowser(urls, attempt: attempt + 1)
+            }
+            return
         }
+        browser.revealExternalItem(url)
     }
 
-    /// Route opened URLs to the primary window, retrying once if it isn't up yet (open events can
-    /// arrive during launch).
-    private func openInPrimaryBrowser(_ urls: [URL]) {
+    /// Route opened URLs to the primary window, waiting briefly for it if it isn't up yet (open
+    /// events can arrive during launch). Bounded, and spaced out (not a tight respin).
+    private func openInPrimaryBrowser(_ urls: [URL], attempt: Int = 0) {
         guard !urls.isEmpty else { return }
-        if let browser = WindowManager.shared.primaryBrowser {
-            for url in urls {
-                if url.scheme == "magnet" {
-                    browser.addMagnetToPanel(url.absoluteString)  // magnet: link -> Torrents panel
-                } else if let action = PathemURLContract.parse(url) {
-                    // The `pathem` CLI seam: open navigates into a folder, reveal selects the item.
-                    let target = URL(fileURLWithPath: action.path)
-                    switch action.verb {
-                    case .open: browser.openExternalFolder(target)
-                    case .reveal: browser.revealExternalItem(target)
-                    }
-                } else {
-                    browser.openExternalFolder(url)  // routes .torrent files to the panel itself
-                }
+        guard let browser = WindowManager.shared.primaryBrowser else {
+            guard attempt < Self.primaryBrowserMaxRetries else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.openInPrimaryBrowser(urls, attempt: attempt + 1)
             }
-        } else {
-            DispatchQueue.main.async { [weak self] in self?.openInPrimaryBrowser(urls) }
+            return
+        }
+        for url in urls {
+            if url.scheme == "magnet" {
+                browser.addMagnetToPanel(url.absoluteString)  // magnet: link -> Torrents panel
+            } else if let action = PathemURLContract.parse(url) {
+                // The `pathem` CLI seam: open navigates into a folder, reveal selects the item.
+                let target = URL(fileURLWithPath: action.path)
+                switch action.verb {
+                case .open: browser.openExternalFolder(target)
+                case .reveal: browser.revealExternalItem(target)
+                }
+            } else {
+                browser.openExternalFolder(url)  // routes .torrent files to the panel itself
+            }
         }
     }
 

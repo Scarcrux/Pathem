@@ -55,7 +55,9 @@ public enum ProgressiveCopy {
                 context.cancelled = true
                 return COPYFILE_QUIT
             }
-            if what == COPYFILE_COPY_DATA {
+            if what == COPYFILE_COPY_DATA, stage != COPYFILE_ERR {
+                // PROGRESS (partial) and FINISH (final) report real bytes; skip ERR, where COPIED is
+                // stale and the copy is about to fail anyway (apply() resets the item's bytes then).
                 var copied: off_t = 0
                 _ = copyfile_state_get(cbState, UInt32(COPYFILE_STATE_COPIED), &copied)
                 context.currentCopied = Int64(copied)

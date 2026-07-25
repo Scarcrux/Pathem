@@ -20,6 +20,18 @@ import Testing
         #expect(PathemURLContract.parse(URL(string: "pathem://open")!) == nil)  // no path
         #expect(PathemURLContract.parse(URL(string: "pathem://open?path=")!) == nil)  // empty path
         #expect(PathemURLContract.parse(URL(string: "pathem://frobnicate?path=/x")!) == nil)  // unknown verb
+        #expect(PathemURLContract.parse(URL(string: "pathem://reveal?path=../../etc")!) == nil)  // relative path rejected
+        #expect(PathemURLContract.parse(URL(string: "pathem://reveal?path=relative.txt")!) == nil)  // relative path rejected
+    }
+
+    @Test func schemeAndVerbAreCaseInsensitive() throws {
+        // LaunchServices may not preserve the case of the scheme/host; a case-varied URL must still
+        // route rather than silently no-op.
+        for raw in ["PATHEM://reveal?path=/x", "pathem://REVEAL?path=/x", "pathem://Reveal?path=/x"] {
+            let parsed = try #require(PathemURLContract.parse(URL(string: raw)!))
+            #expect(parsed.verb == .reveal)
+            #expect(parsed.path == "/x")
+        }
     }
 
     @Test func pathWithQueryReservedCharactersSurvives() throws {
