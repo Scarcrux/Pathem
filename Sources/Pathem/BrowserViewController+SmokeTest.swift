@@ -387,6 +387,22 @@ extension BrowserViewController {
             "plugin=\(wrotePlugin) menu=\(wroteMenu) scheme=\(usesScheme) removed=\(subRemoved)")
         try? FileManager.default.removeItem(at: subRoot)
 
+        // TextMate integration: an owned .tmbundle with a nested Commands/ file that drives the
+        // pathem:// scheme; remove deletes only that bundle.
+        let tmRoot = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-tm-\(UUID().uuidString)")
+        let tmBundle = tmRoot.appendingPathComponent("Bundles/Pathem.tmbundle")
+        try? TextMateIntegration.install(into: tmBundle)
+        let wroteInfo = FileManager.default.fileExists(atPath: tmBundle.appendingPathComponent("info.plist").path)
+        let cmdURL = tmBundle.appendingPathComponent("Commands/Reveal in Pathem.tmCommand")
+        let wroteCommand = FileManager.default.fileExists(atPath: cmdURL.path)
+        let cmdText = (try? String(contentsOf: cmdURL, encoding: .utf8)) ?? ""
+        let tmScheme = cmdText.contains("pathem://reveal")
+        try? TextMateIntegration.remove(at: tmBundle)
+        let tmRemoved = !FileManager.default.fileExists(atPath: tmBundle.path)
+        check("textmate-integration-install-remove", wroteInfo && wroteCommand && tmScheme && tmRemoved,
+            "info=\(wroteInfo) command=\(wroteCommand) scheme=\(tmScheme) removed=\(tmRemoved)")
+        try? FileManager.default.removeItem(at: tmRoot)
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

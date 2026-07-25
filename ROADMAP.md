@@ -201,13 +201,18 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   preference files" path. VS Code and Cursor lock their reveal and expose no
   external-file-manager setting, so those need a small published Pathem extension,
   not a settings edit; the panel offers to install it rather than claim a config
-  edit that can't work. **Sublime Text done (2026-07-23):** `SublimeIntegration`
-  writes a plugin + sidebar/context/palette "Reveal in Pathem" entries into a
-  Pathem-owned `Packages/Pathem/` folder (never merging into the user's own files,
-  so Remove is a clean delete; the plugin drives the `pathem://reveal` scheme, no
-  PATH/CLI dependency). Integrate/Remove/Preview live in Settings ▸ Integrations,
-  with a "restart Sublime" nudge; install/remove is smoke-checked. TextMate,
-  JetBrains, and VS Code (published-extension) are the remaining editors.
+  edit that can't work. **Sublime Text + TextMate done (2026-07-23):**
+  `SublimeIntegration` writes a plugin + sidebar/context/palette entries into a
+  Pathem-owned `Packages/Pathem/`; `TextMateIntegration` writes a `Pathem.tmbundle`
+  with a "Reveal in Pathem" command. Both write only into a folder Pathem fully
+  owns (never merging into the user's files, so Remove is a clean delete) and drive
+  the app through `pathem://reveal` (no PATH/CLI dependency). A generic
+  `EditorIntegration` registry drives Settings ▸ Integrations -- one Integrate /
+  Remove / Preview row per installed editor, with a "restart the editor" nudge; both
+  install/remove paths are smoke-checked. **Remaining:** JetBrains (the genuinely
+  invasive case -- it needs the merge-into-`External Tools.xml` machinery with
+  backup/atomic, per product+version) and VS Code / Cursor (need a *published*
+  Pathem extension, so the panel would offer to install it rather than write config).
 
 ## Round 11 (shipped 2026-07-22) -- transfer progress, inline naming, localization close-out
 

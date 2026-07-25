@@ -352,72 +352,90 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 "Installs a “pathem” command on your PATH so “pathem reveal <path>” and “pathem open <dir>” work from any terminal. It’s a symlink to the bundled tool; removing it deletes only that link.")),
             hint(editorsText),
         ]
-        // Per-editor integration: Sublime Text (fully reversible -- a Pathem-owned package folder).
-        if SublimeIntegration.isEditorInstalled() {
-            rows.append(sublimeIntegrationRow())
-            rows.append(hint(L("integrations.sublimeHint",
-                "Adds “Reveal in Pathem” to Sublime’s sidebar, editor menu, and command palette. Everything goes in a Pathem-owned package folder, so Remove deletes only that.")))
+        // Per-editor integrations (each fully reversible -- a Pathem-owned folder, never merging
+        // into the user's own config). One row per installed, supported editor.
+        builtEditors = EditorIntegration.all.filter { $0.isEditorInstalled() }
+        editorButtons = []
+        editorStatusLabels = []
+        for (index, editor) in builtEditors.enumerated() {
+            rows.append(editorRow(editor, index: index))
+        }
+        if !builtEditors.isEmpty {
+            rows.append(hint(L("integrations.editorHint",
+                "Adds “Reveal in Pathem” to the editor’s menus. Everything goes in a Pathem-owned folder, so Remove deletes only that. Preview shows the exact files.")))
         }
         rows.append(hint(L("integrations.editorsSoon",
-            "TextMate, JetBrains, and VS Code integrations are planned; for now use the Services menu or the pathem command above.")))
+            "JetBrains and VS Code integrations are planned; for now use the Services menu or the pathem command above.")))
         return form(rows)
     }
 
-    private let sublimeButton = NSButton(title: "", target: nil, action: nil)
-    private let sublimePreviewButton = NSButton(title: "", target: nil, action: nil)
-    private let sublimeStatusLabel = NSTextField(labelWithString: "")
+    private var builtEditors: [EditorIntegration] = []
+    private var editorButtons: [NSButton] = []
+    private var editorStatusLabels: [NSTextField] = []
 
-    private func sublimeIntegrationRow() -> NSView {
-        sublimeButton.target = self
-        sublimeButton.action = #selector(toggleSublime)
-        sublimeButton.bezelStyle = .rounded
-        sublimePreviewButton.title = L("integrations.preview", "Preview…")
-        sublimePreviewButton.bezelStyle = .rounded
-        sublimePreviewButton.target = self
-        sublimePreviewButton.action = #selector(previewSublime)
-        sublimeStatusLabel.font = .systemFont(ofSize: 11)
-        sublimeStatusLabel.textColor = .secondaryLabelColor
-        refreshSublimeStatus()
-        let row = NSStackView(views: [sublimeButton, sublimePreviewButton, sublimeStatusLabel])
+    private func editorRow(_ editor: EditorIntegration, index: Int) -> NSView {
+        let button = NSButton(title: "", target: self, action: #selector(toggleEditor(_:)))
+        button.bezelStyle = .rounded
+        button.tag = index
+        let preview = NSButton(title: L("integrations.preview", "Preview…"), target: self, action: #selector(previewEditor(_:)))
+        preview.bezelStyle = .rounded
+        preview.tag = index
+        let status = NSTextField(labelWithString: "")
+        status.font = .systemFont(ofSize: 11)
+        status.textColor = .secondaryLabelColor
+        editorButtons.append(button)
+        editorStatusLabels.append(status)
+        refreshEditorRow(index)
+        let row = NSStackView(views: [button, preview, status])
         row.orientation = .horizontal
         row.spacing = 10
-        return labeled(SublimeIntegration.name, row)
+        return labeled(editor.name, row)
     }
 
-    private func refreshSublimeStatus() {
-        sublimeButton.title = SublimeIntegration.isInstalled()
+    private func refreshEditorRow(_ index: Int) {
+        guard index < builtEditors.count, index < editorButtons.count else { return }
+        let editor = builtEditors[index]
+        editorButtons[index].title = editor.isInstalled()
             ? L("integrations.cliRemove", "Remove")
             : L("integrations.integrate", "Integrate")
-        if SublimeIntegration.isInstalled() {
-            sublimeStatusLabel.stringValue = L("integrations.installed", "Installed")
-        } else if SublimeIntegration.isEditorRunning() {
-            sublimeStatusLabel.stringValue = L("integrations.sublimeRunning", "Sublime is running; restart it after integrating")
+        if editor.isInstalled() {
+            editorStatusLabels[index].stringValue = L("integrations.installed", "Installed")
+        } else if editor.isEditorRunning() {
+            editorStatusLabels[index].stringValue = String(
+                format: L("integrations.editorRunning", "%@ is running; restart it after integrating"), editor.name)
         } else {
-            sublimeStatusLabel.stringValue = L("integrations.cliNotInstalled", "Not installed")
+            editorStatusLabels[index].stringValue = L("integrations.cliNotInstalled", "Not installed")
         }
     }
 
-    @objc private func toggleSublime() {
+    @objc private func toggleEditor(_ sender: NSButton) {
+        let index = sender.tag
+        guard index < builtEditors.count else { return }
+        let editor = builtEditors[index]
         do {
-            if SublimeIntegration.isInstalled() {
-                try SublimeIntegration.remove()
+            if editor.isInstalled() {
+                try editor.remove()
             } else {
-                try SublimeIntegration.install()
-                if SublimeIntegration.isEditorRunning() {
+                try editor.install()
+                if editor.isEditorRunning() {
                     presentInfoAlert(
-                        L("integrations.sublimeRestartTitle", "Restart Sublime Text"),
-                        L("integrations.sublimeRestartBody", "The “Reveal in Pathem” items appear after you quit and reopen Sublime Text."))
+                        String(format: L("integrations.restartTitle", "Restart %@"), editor.name),
+                        String(format: L("integrations.restartBody", "The “Reveal in Pathem” items appear after you quit and reopen %@."), editor.name))
                 }
             }
         } catch {
-            presentInfoAlert(L("integrations.integrateFailed", "Couldn’t update the Sublime Text integration"), error.localizedDescription)
+            presentInfoAlert(
+                String(format: L("integrations.editorFailed", "Couldn’t update the %@ integration"), editor.name),
+                error.localizedDescription)
         }
-        refreshSublimeStatus()
+        refreshEditorRow(index)
     }
 
-    @objc private func previewSublime() {
-        let text = SublimeIntegration.files()
-            .map { "\u{2022} \(SublimeIntegration.packageDirectory()?.appendingPathComponent($0.name).path ?? $0.name)\n\n\($0.contents)" }
+    @objc private func previewEditor(_ sender: NSButton) {
+        let index = sender.tag
+        guard index < builtEditors.count else { return }
+        let text = builtEditors[index].previewFiles()
+            .map { "\u{2022} \($0.path)\n\n\($0.contents)" }
             .joined(separator: "\n\n----------\n\n")
         presentInfoAlert(L("integrations.previewTitle", "Files Pathem will write"), text)
     }

@@ -54,7 +54,7 @@ enum SublimeIntegration {
     /// Write the integration into `directory` (defaults to the real owned package folder). Atomic
     /// per file; creates the folder if needed. Only ever touches files inside `directory`.
     static func install(into directory: URL? = packageDirectory()) throws {
-        guard let directory else { throw IntegrationError.editorDataMissing }
+        guard let directory else { throw EditorIntegrationError.editorDataMissing(editor: name) }
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         for file in files() {
             let url = directory.appendingPathComponent(file.name)
@@ -66,13 +66,6 @@ enum SublimeIntegration {
     static func remove(at directory: URL? = packageDirectory()) throws {
         guard let directory, FileManager.default.fileExists(atPath: directory.path) else { return }
         try FileManager.default.removeItem(at: directory)
-    }
-
-    enum IntegrationError: LocalizedError {
-        case editorDataMissing
-        var errorDescription: String? {
-            L("integrations.sublime.noData", "Sublime Text’s settings folder wasn’t found. Launch Sublime Text once, then try again.")
-        }
     }
 
     // MARK: - File contents
