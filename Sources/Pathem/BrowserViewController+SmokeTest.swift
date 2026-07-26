@@ -344,17 +344,21 @@ extension BrowserViewController {
         // SSD (ejectable == removable == false, but internal == false) does; a plain internal partition
         // does not; removable media and network mounts do.
         let bootEjects = SidebarController.volumeIsEjectable(
-            isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: true)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: true)
         let extSSD = SidebarController.volumeIsEjectable(
-            isEjectable: false, isRemovable: false, isLocal: true, isInternal: false, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true, isInternal: false, isRootFileSystem: false)
         let internalPart = SidebarController.volumeIsEjectable(
-            isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: false)
         let usbStick = SidebarController.volumeIsEjectable(
-            isEjectable: true, isRemovable: true, isLocal: true, isInternal: false, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: true, isRemovable: true, isLocal: true, isInternal: false, isRootFileSystem: false)
         let networkMount = SidebarController.volumeIsEjectable(
-            isEjectable: false, isRemovable: false, isLocal: false, isInternal: nil, isRootFileSystem: false)
-        check("volume-eject-heuristic", !bootEjects && extSSD && !internalPart && usbStick && networkMount,
-            "boot=\(bootEjects) extSSD=\(extSSD) internal=\(internalPart) usb=\(usbStick) net=\(networkMount)")
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: false, isInternal: nil, isRootFileSystem: false)
+        // A firmlinked system volume (Data/home) reports local == false but is non-browsable: must NOT eject.
+        let hiddenSystem = SidebarController.volumeIsEjectable(
+            isBrowsable: false, isEjectable: false, isRemovable: false, isLocal: false, isInternal: nil, isRootFileSystem: false)
+        check("volume-eject-heuristic",
+            !bootEjects && extSSD && !internalPart && usbStick && networkMount && !hiddenSystem,
+            "boot=\(bootEjects) extSSD=\(extSSD) internal=\(internalPart) usb=\(usbStick) net=\(networkMount) hidden=\(hiddenSystem)")
 
         // pathem CLI install safety: linkPointsToUs recognizes our own symlink and rejects one that
         // points elsewhere, so install()/remove() never clobber a file that isn't ours.
@@ -402,6 +406,23 @@ extension BrowserViewController {
         check("textmate-integration-install-remove", wroteInfo && wroteCommand && tmScheme && tmRemoved,
             "info=\(wroteInfo) command=\(wroteCommand) scheme=\(tmScheme) removed=\(tmRemoved)")
         try? FileManager.default.removeItem(at: tmRoot)
+
+        // JetBrains integration: writes a Pathem-owned tools/Pathem.xml into each IDE profile (never
+        // the user's External Tools.xml); the emitted XML must be well-formed and drive pathem-cli.
+        let jbRoot = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-jb-\(UUID().uuidString)")
+        let jbProfile = jbRoot.appendingPathComponent("IntelliJIdea2024.1")
+        try? FileManager.default.createDirectory(at: jbProfile, withIntermediateDirectories: true)
+        try? JetBrainsIntegration.install(into: [jbProfile])
+        let jbFile = JetBrainsIntegration.toolFile(in: jbProfile)
+        let jbWrote = FileManager.default.fileExists(atPath: jbFile.path)
+        let jbText = (try? String(contentsOf: jbFile, encoding: .utf8)) ?? ""
+        let jbWellFormed = (try? XMLDocument(xmlString: jbText)) != nil
+        let jbContent = jbText.contains("<toolSet name=\"Pathem\">") && jbText.contains("reveal &quot;$FilePath$&quot;")
+        try? JetBrainsIntegration.remove(from: [jbProfile])
+        let jbRemoved = !FileManager.default.fileExists(atPath: jbFile.path)
+        check("jetbrains-integration-install-remove", jbWrote && jbWellFormed && jbContent && jbRemoved,
+            "wrote=\(jbWrote) xml=\(jbWellFormed) content=\(jbContent) removed=\(jbRemoved)")
+        try? FileManager.default.removeItem(at: jbRoot)
 
         // Torrent save path: a real configured folder is honored; empty or a missing folder falls
         // back to the system Downloads folder.

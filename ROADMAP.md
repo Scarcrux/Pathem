@@ -209,10 +209,16 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   the app through `pathem://reveal` (no PATH/CLI dependency). A generic
   `EditorIntegration` registry drives Settings ▸ Integrations -- one Integrate /
   Remove / Preview row per installed editor, with a "restart the editor" nudge; both
-  install/remove paths are smoke-checked. **Remaining:** JetBrains (the genuinely
-  invasive case -- it needs the merge-into-`External Tools.xml` machinery with
-  backup/atomic, per product+version) and VS Code / Cursor (need a *published*
-  Pathem extension, so the panel would offer to install it rather than write config).
+  install/remove paths are smoke-checked. **JetBrains done (2026-07-25):** it turned
+  out to be an owned-file case too -- JetBrains reads every `tools/*.xml` as its own
+  External Tools group, so `JetBrainsIntegration` writes a `tools/Pathem.xml` group
+  into each installed IDE profile (IntelliJ/PyCharm/WebStorm/GoLand/… and Android
+  Studio), never touching the user's `External Tools.xml`; the tool runs `pathem-cli
+  reveal "$FilePath$"` (quoted, so the tested CLI does the encoding). Install/remove/
+  preview drive every profile at once; smoke-checked incl. XML well-formedness.
+  **Remaining:** VS Code / Cursor, which lock their reveal and expose no
+  external-file-manager setting -- so they need a *published* Pathem extension, not a
+  config write (the only editor that genuinely can't be done this way).
 
 ## Round 11 (shipped 2026-07-22) -- transfer progress, inline naming, localization close-out
 

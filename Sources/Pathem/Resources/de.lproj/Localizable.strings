@@ -822,7 +822,7 @@
 "integrations.editorHint" = "Fügt „In Pathem anzeigen“ zu den Menüs des Editors hinzu. Alles landet in einem Pathem-eigenen Ordner, sodass „Entfernen“ nur diesen löscht. „Vorschau“ zeigt die genauen Dateien.";
 "integrations.editorNoData" = "Der Einstellungsordner von %@ wurde nicht gefunden. Öffne %@ einmal und versuche es erneut.";
 "integrations.editorRunning" = "%@ läuft; starte es nach der Integration neu";
-"integrations.editorsSoon" = "JetBrains- und VS-Code-Integrationen sind geplant; nutze vorerst das Dienste-Menü oder den pathem-Befehl oben.";
+"integrations.editorsSoon" = "VS Code und Cursor sperren ihre „Anzeigen“-Funktion und brauchen daher eine veröffentlichte Pathem-Erweiterung statt einer Konfigurationsänderung; das kommt noch. Für jeden anderen Editor nutze das Dienste-Menü oder den pathem-Befehl oben.";
 "integrations.installed" = "Installiert";
 "integrations.integrate" = "Integrieren";
 "integrations.noEditors" = "Keine unterstützten Editoren erkannt.";

@@ -29,7 +29,7 @@ struct EditorIntegration: Sendable {
     let remove: @Sendable () throws -> Void
 
     /// Every integration Pathem can wire, in display order.
-    static let all: [EditorIntegration] = [sublime, textMate]
+    static let all: [EditorIntegration] = [sublime, textMate, jetBrains]
 
     static let sublime = EditorIntegration(
         id: "sublime", name: SublimeIntegration.name,
@@ -54,4 +54,13 @@ struct EditorIntegration: Sendable {
         },
         install: { try TextMateIntegration.install() },
         remove: { try TextMateIntegration.remove() })
+
+    static let jetBrains = EditorIntegration(
+        id: "jetbrains", name: JetBrainsIntegration.name,
+        isEditorInstalled: { JetBrainsIntegration.isEditorInstalled() },
+        isEditorRunning: { JetBrainsIntegration.isEditorRunning() },
+        isInstalled: { JetBrainsIntegration.isInstalled() },
+        previewFiles: { JetBrainsIntegration.plannedFiles() },
+        install: { try JetBrainsIntegration.install() },
+        remove: { try JetBrainsIntegration.remove() })
 }

@@ -365,7 +365,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 "Adds “Reveal in Pathem” to the editor’s menus. Everything goes in a Pathem-owned folder, so Remove deletes only that. Preview shows the exact files.")))
         }
         rows.append(hint(L("integrations.editorsSoon",
-            "JetBrains and VS Code integrations are planned; for now use the Services menu or the pathem command above.")))
+            "VS Code and Cursor lock their reveal, so they need a published Pathem extension rather than a config write; that’s still to come. For any other editor, use the Services menu or the pathem command above.")))
         return form(rows)
     }
 

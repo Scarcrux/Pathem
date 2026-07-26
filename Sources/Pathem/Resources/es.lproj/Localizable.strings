@@ -822,7 +822,7 @@
 "integrations.editorHint" = "Añade «Mostrar en Pathem» a los menús del editor. Todo se guarda en una carpeta propiedad de Pathem, así que Quitar solo elimina esa. Vista previa muestra los archivos exactos.";
 "integrations.editorNoData" = "No se encontró la carpeta de ajustes de %@. Abre %@ una vez y vuelve a intentarlo.";
 "integrations.editorRunning" = "%@ está en ejecución; reinícialo tras integrar";
-"integrations.editorsSoon" = "Las integraciones de JetBrains y VS Code están previstas; por ahora usa el menú Servicios o el comando pathem de arriba.";
+"integrations.editorsSoon" = "VS Code y Cursor bloquean su función de mostrar, así que necesitan una extensión de Pathem publicada en vez de una edición de configuración; eso está por llegar. Para cualquier otro editor, usa el menú Servicios o el comando pathem de arriba.";
 "integrations.installed" = "Instalado";
 "integrations.integrate" = "Integrar";
 "integrations.noEditors" = "No se detectaron editores compatibles.";

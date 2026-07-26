@@ -314,7 +314,10 @@ extension BrowserViewController {
 
     /// Eject a specific mounted volume, moving any pane that was inside it back home.
     func ejectVolume(_ volume: URL) {
-        if volume.path == "/" { NSSound.beep(); return }  // never the boot volume
+        // Hard backstop, independent of any volume flag: never eject the boot volume or a system
+        // volume (a firmlinked /System/Volumes/* mount could otherwise slip through a flag check).
+        let path = volume.standardizedFileURL.path
+        if path == "/" || path.hasPrefix("/System/") { NSSound.beep(); return }
         let home = FileManager.default.homeDirectoryForCurrentUser
         for side in [leftTabs, rightTabs] {
             if let pane = side.activePane, !pane.isRemote,

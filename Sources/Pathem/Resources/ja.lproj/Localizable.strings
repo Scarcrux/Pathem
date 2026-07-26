@@ -822,7 +822,7 @@
 "integrations.editorHint" = "エディタのメニューに「Pathemで表示」を追加します。すべてPathem専用のフォルダに置かれるため、削除してもそのフォルダだけが消えます。プレビューで実際のファイルを確認できます。";
 "integrations.editorNoData" = "%@の設定フォルダが見つかりません。%@を一度開いてから再試行してください。";
 "integrations.editorRunning" = "%@は実行中です。統合後に再起動してください";
-"integrations.editorsSoon" = "JetBrainsとVS Codeの連携は予定されています。当面はサービスメニューまたは上のpathemコマンドを使用してください。";
+"integrations.editorsSoon" = "VS CodeとCursorは表示機能がロックされているため、設定の書き込みではなく公開されたPathem拡張機能が必要です（今後対応）。他のエディタではサービスメニューまたは上のpathemコマンドを使用してください。";
 "integrations.installed" = "インストール済み";
 "integrations.integrate" = "統合";
 "integrations.noEditors" = "対応するエディタが見つかりません。";

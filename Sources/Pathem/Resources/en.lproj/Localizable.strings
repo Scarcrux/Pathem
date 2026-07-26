@@ -822,7 +822,7 @@
 "integrations.editorHint" = "Adds “Reveal in Pathem” to the editor’s menus. Everything goes in a Pathem-owned folder, so Remove deletes only that. Preview shows the exact files.";
 "integrations.editorNoData" = "%@’s settings folder wasn’t found. Open %@ once, then try again.";
 "integrations.editorRunning" = "%@ is running; restart it after integrating";
-"integrations.editorsSoon" = "JetBrains and VS Code integrations are planned; for now use the Services menu or the pathem command above.";
+"integrations.editorsSoon" = "VS Code and Cursor lock their reveal, so they need a published Pathem extension rather than a config write; that’s still to come. For any other editor, use the Services menu or the pathem command above.";
 "integrations.installed" = "Installed";
 "integrations.integrate" = "Integrate";
 "integrations.noEditors" = "No supported editors detected.";

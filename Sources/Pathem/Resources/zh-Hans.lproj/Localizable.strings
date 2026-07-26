@@ -822,7 +822,7 @@
 "integrations.editorHint" = "在编辑器菜单中添加“在 Pathem 中显示”。所有内容都放在 Pathem 专属的文件夹中，因此“移除”只会删除该文件夹。“预览”显示确切的文件。";
 "integrations.editorNoData" = "未找到 %@ 的设置文件夹。请先打开一次 %@，然后重试。";
 "integrations.editorRunning" = "%@ 正在运行；集成后请重启";
-"integrations.editorsSoon" = "JetBrains 和 VS Code 集成正在计划中；目前请使用服务菜单或上方的 pathem 命令。";
+"integrations.editorsSoon" = "VS Code 和 Cursor 锁定了其“显示”功能，因此需要已发布的 Pathem 扩展而非写入配置；此功能仍在开发中。对于其他任何编辑器，请使用服务菜单或上方的 pathem 命令。";
 "integrations.installed" = "已安装";
 "integrations.integrate" = "集成";
 "integrations.noEditors" = "未检测到受支持的编辑器。";

@@ -915,9 +915,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             let values = try? url.resourceValues(forKeys: Set(keys))
             if values?.volumeIsBrowsable == false { continue }
             let ejectable = Self.volumeIsEjectable(
-                isEjectable: values?.volumeIsEjectable, isRemovable: values?.volumeIsRemovable,
-                isLocal: values?.volumeIsLocal, isInternal: values?.volumeIsInternal,
-                isRootFileSystem: values?.volumeIsRootFileSystem)
+                isBrowsable: values?.volumeIsBrowsable, isEjectable: values?.volumeIsEjectable,
+                isRemovable: values?.volumeIsRemovable, isLocal: values?.volumeIsLocal,
+                isInternal: values?.volumeIsInternal, isRootFileSystem: values?.volumeIsRootFileSystem)
             volumes.append(Node(
                 kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url,
                 icon: nil, isFolder: true, isEjectable: ejectable))
@@ -925,14 +925,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return Node(kind: .systemHeader, title: L("sidebar.volumesHeader", "Volumes"), url: nil, icon: nil, children: volumes)
     }
 
-    /// Whether a mounted volume should offer Eject, matching Finder. Never the boot volume; then the
-    /// OS ejectable/removable flags, a network mount (local == false, e.g. OrbStack's NFS share), OR
-    /// any external (non-internal) drive. That last case is the one URLResourceValues alone misses:
-    /// USB-C/Thunderbolt SSDs report ejectable == removable == false (they're "fixed" media that just
-    /// happens to be external), yet Finder still ejects them -- `isInternal == false` catches them.
+    /// Whether a mounted volume should offer Eject, matching Finder. Self-contained (doesn't rely on
+    /// the caller pre-filtering): a non-browsable or hidden volume (the Data/Preboot/VM firmlinked
+    /// system volumes, which can report `local == false`) never ejects, nor does the boot volume.
+    /// Then the OS ejectable/removable flags, a network mount (`local == false`, e.g. OrbStack's NFS
+    /// share), OR any external (non-internal) drive -- that last case is the one URLResourceValues
+    /// alone misses: USB-C/Thunderbolt SSDs report ejectable == removable == false (they're "fixed"
+    /// media that just happens to be external), yet Finder still ejects them.
     static func volumeIsEjectable(
-        isEjectable: Bool?, isRemovable: Bool?, isLocal: Bool?, isInternal: Bool?, isRootFileSystem: Bool?
+        isBrowsable: Bool?, isEjectable: Bool?, isRemovable: Bool?, isLocal: Bool?, isInternal: Bool?,
+        isRootFileSystem: Bool?
     ) -> Bool {
+        if isBrowsable == false { return false }  // hidden/system volumes never eject
         if isRootFileSystem == true { return false }  // never the boot volume
         if isEjectable == true || isRemovable == true { return true }
         if isLocal == false { return true }  // network mount
