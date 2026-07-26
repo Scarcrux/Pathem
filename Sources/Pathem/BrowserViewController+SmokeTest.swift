@@ -274,6 +274,27 @@ extension BrowserViewController {
         galleryView.directoryURL = leftTabs.activePane?.currentURL
         galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
+        // The bundled changelog is present and parses into versioned entries; the Release Notes
+        // window (Help menu, on demand) renders from exactly this.
+        let changelogEntries =
+            pathemResourceBundle.url(forResource: "CHANGELOG", withExtension: "md")
+            .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
+            .map { ChangelogParser.parse($0) } ?? []
+        check("changelog-bundled-and-parses", changelogEntries.count >= 1, "\(changelogEntries.count) versions")
+        // The "Update Ready" title-bar button stays hidden until an update is pending, then shows.
+        // Sparkle is dormant on unsigned builds, so simulate a pending update, confirm the button
+        // becomes visible, then restore so the run leaves no state behind.
+        if let updater {
+            installUpdateButtonIfNeeded()
+            let hadPending = updater.pendingUpdateVersion
+            updater.debugSetPendingUpdate(version: "9.9.9")
+            let accessory = view.window?.titlebarAccessoryViewControllers.first { $0 is UpdateButtonAccessory }
+            let shown = accessory?.isHidden == false && updater.pendingUpdateVersion == "9.9.9"
+            check(
+                "update-button-shows-when-pending", shown,
+                "pending=\(updater.pendingUpdateVersion ?? "nil") hidden=\(accessory?.isHidden.description ?? "no-accessory")")
+            updater.debugSetPendingUpdate(version: hadPending)  // restore
+        }
         // Preview pane must not collapse the panes to zero (the auto-preview layout bug):
         // toggling it on keeps the panes wide, and toggling it off restores their width.
         check("preview-pane-keeps-panes", debugPreviewToggleKeepsPanes(), "panes survive preview toggle")

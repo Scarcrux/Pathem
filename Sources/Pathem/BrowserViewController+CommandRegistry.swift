@@ -355,6 +355,7 @@ extension BrowserViewController {
             [weak self] in self?.applyStyle()
         }
         add("tools.automation", L("bvc.cmd.automation", "Automation Rules…")) { [weak self] in self?.showAutomationRules() }
+        add("help.releaseNotes", L("bvc.cmd.releaseNotes", "Release Notes")) { ChangelogWindowController.shared.present() }
         add("view.applyToSubfolders", L("bvc.cmd.applyViewToSubfolders", "Apply View to Subfolders"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.applyViewToSubfolders()
         }

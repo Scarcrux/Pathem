@@ -239,6 +239,7 @@
 "bvc.cmd.putBack" = "Devolver";
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "Rehacer";
+"bvc.cmd.releaseNotes" = "Notas de la versión";
 "bvc.cmd.removeCustomIcon" = "Eliminar icono personalizado";
 "bvc.cmd.removeQuarantine" = "Eliminar cuarentena";
 "bvc.cmd.rename" = "Renombrar…";
@@ -467,6 +468,10 @@
 "bvc.untitledFolder" = "carpeta sin título";
 "bvc.uploadingTo" = "Subiendo a %@";
 "bvc.viewPresetCmd" = "Vista: %@";
+"changelog.heading" = "Novedades de Pathem";
+"changelog.title" = "Notas de la versión";
+"changelog.unavailable" = "Las notas de la versión no están disponibles en esta compilación.";
+"changelog.youAreOn" = "Estás en la versión %@.";
 "checksum.failedBody" = "No se pudo leer ninguno de los archivos seleccionados. Puede que no se puedan leer sin Acceso completo al disco, o que se hayan eliminado.";
 "checksum.failedTitle" = "No se pudo calcular el hash de la selección";
 "chown.group" = "grupo (opcional)";
@@ -945,6 +950,7 @@
 "menu.group.preview" = "Vista previa";
 "menu.group.show" = "Mostrar";
 "menu.group.terminal" = "Terminal";
+"menu.help" = "Ayuda";
 "menu.label" = "Etiqueta";
 "menu.makeLink" = "Crear enlace";
 "menu.minimize" = "Minimizar";
@@ -1562,6 +1568,8 @@
 "trim.noRange" = "No se seleccionó ningún intervalo de recorte.";
 "trim.title" = "Recortar «%@»";
 "update.autoCheck" = "Buscar actualizaciones automáticamente";
+"update.buttonTitle" = "Actualización lista";
+"update.buttonTooltip" = "La versión %@ está lista para instalarse";
 "update.checkNow" = "Buscar actualizaciones ahora";
 "update.notSetUpBody" = "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas versiones se actualizan solas.";
 "update.notSetUpTitle" = "Las actualizaciones no están configuradas para esta compilación";

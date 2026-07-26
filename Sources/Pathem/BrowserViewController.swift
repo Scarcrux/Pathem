@@ -1201,6 +1201,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func viewDidAppear() {
         super.viewDidAppear()
         installToolbarIfNeeded()
+        installUpdateButtonIfNeeded()
         applyInitialSplitPositions()
         // Focus the restored active pane, not always the left one.
         let focusPane = activePane ?? activeSide?.activePane ?? leftTabs.activePane

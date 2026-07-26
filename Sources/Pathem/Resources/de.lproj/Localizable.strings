@@ -239,6 +239,7 @@
 "bvc.cmd.putBack" = "Zurücklegen";
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "Wiederholen";
+"bvc.cmd.releaseNotes" = "Versionshinweise";
 "bvc.cmd.removeCustomIcon" = "Eigenes Symbol entfernen";
 "bvc.cmd.removeQuarantine" = "Quarantäne entfernen";
 "bvc.cmd.rename" = "Umbenennen…";
@@ -467,6 +468,10 @@
 "bvc.untitledFolder" = "ordner ohne titel";
 "bvc.uploadingTo" = "Hochladen auf %@";
 "bvc.viewPresetCmd" = "Ansicht: %@";
+"changelog.heading" = "Neu in Pathem";
+"changelog.title" = "Versionshinweise";
+"changelog.unavailable" = "In diesem Build sind keine Versionshinweise verfügbar.";
+"changelog.youAreOn" = "Sie verwenden Version %@.";
 "checksum.failedBody" = "Keine der ausgewählten Dateien konnte gelesen werden. Sie sind möglicherweise ohne vollständigen Festplattenzugriff nicht lesbar oder wurden entfernt.";
 "checksum.failedTitle" = "Auswahl konnte nicht gehasht werden";
 "chown.group" = "Gruppe (optional)";
@@ -945,6 +950,7 @@
 "menu.group.preview" = "Vorschau";
 "menu.group.show" = "Einblenden";
 "menu.group.terminal" = "Terminal";
+"menu.help" = "Hilfe";
 "menu.label" = "Etikett";
 "menu.makeLink" = "Link erstellen";
 "menu.minimize" = "Im Dock ablegen";
@@ -1562,6 +1568,8 @@
 "trim.noRange" = "Es wurde kein Kürzungsbereich ausgewählt.";
 "trim.title" = "„%@“ kürzen";
 "update.autoCheck" = "Automatisch nach Updates suchen";
+"update.buttonTitle" = "Update bereit";
+"update.buttonTooltip" = "Version %@ kann installiert werden";
 "update.checkNow" = "Jetzt nach Updates suchen";
 "update.notSetUpBody" = "Dies ist ein Quell- oder unsignierter Build. Laden Sie die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.";
 "update.notSetUpTitle" = "Für diesen Build sind keine Updates eingerichtet";

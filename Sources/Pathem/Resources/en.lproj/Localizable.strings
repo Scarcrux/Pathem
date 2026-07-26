@@ -239,6 +239,7 @@
 "bvc.cmd.putBack" = "Put Back";
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "Redo";
+"bvc.cmd.releaseNotes" = "Release Notes";
 "bvc.cmd.removeCustomIcon" = "Remove Custom Icon";
 "bvc.cmd.removeQuarantine" = "Remove Quarantine";
 "bvc.cmd.rename" = "Rename…";
@@ -467,6 +468,10 @@
 "bvc.untitledFolder" = "untitled folder";
 "bvc.uploadingTo" = "Uploading to %@";
 "bvc.viewPresetCmd" = "View: %@";
+"changelog.heading" = "What’s New in Pathem";
+"changelog.title" = "Release Notes";
+"changelog.unavailable" = "Release notes aren’t available in this build.";
+"changelog.youAreOn" = "You are on version %@.";
 "checksum.failedBody" = "None of the selected files could be read. They may be unreadable without Full Disk Access, or they may have been removed.";
 "checksum.failedTitle" = "Couldn’t hash the selection";
 "chown.group" = "group (optional)";
@@ -912,6 +917,7 @@
 "menu.group.preview" = "Preview";
 "menu.group.show" = "Show";
 "menu.group.terminal" = "Terminal";
+"menu.help" = "Help";
 "menu.label" = "Label";
 "menu.makeLink" = "Make Link";
 "menu.minimize" = "Minimize";
@@ -1490,6 +1496,8 @@
 "trim.noRange" = "No trim range was selected.";
 "trim.title" = "Trim “%@”";
 "update.autoCheck" = "Check for updates automatically";
+"update.buttonTitle" = "Update Ready";
+"update.buttonTooltip" = "Version %@ is ready to install";
 "update.checkNow" = "Check for Updates Now";
 "update.notSetUpBody" = "This is a source or unsigned build. Download the latest notarized release from GitHub; those builds update themselves.";
 "update.notSetUpTitle" = "Updates aren’t set up for this build";

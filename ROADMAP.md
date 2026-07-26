@@ -18,7 +18,7 @@ Five tracks, roughly in priority order. **Tracks A (app polish), B (site), and C
 (localization hygiene) are done** (see their status blocks) -- the pre-launch
 runway is complete. **Track D (the public flip) is the next step, gated on the
 user's testing decision;** E is the post-launch backlog. Meanwhile, live-app
-feedback keeps landing as dated rounds below (latest: Round 11).
+feedback keeps landing as dated rounds below (latest: Round 13).
 
 ### Track A -- App polish (refinement, not new features)
 
@@ -219,6 +219,49 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   **Remaining:** VS Code / Cursor, which lock their reveal and expose no
   external-file-manager setting -- so they need a *published* Pathem extension, not a
   config write (the only editor that genuinely can't be done this way).
+
+## Round 13 (shipped 2026-07-26) -- visible update button + in-app changelog
+
+Two live-app requests: make a pending update visible in the app itself (not just a
+background prompt), and keep a changelog in the app without forcing release notes on
+anyone.
+
+- **Title-bar "Update Ready" button.** `UpdaterController` now adopts Sparkle's
+  gentle-reminder pattern (`SPUStandardUserDriverDelegate`): a scheduled update no
+  longer pops an interrupting modal. Instead it flips a `pendingUpdateVersion` signal
+  and posts `pathemUpdateStateChanged`; a trailing `NSTitlebarAccessoryViewController`
+  (`UpdateButtonAccessory`) shows a small accent-tinted "Update Ready" button, hidden
+  the rest of the time. Clicking it resumes the deferred session, opening the installer
+  with its release notes. Nothing is forced; the update is just visible and one click
+  away. Dormant on unsigned/source builds (no EdDSA key), with a `debugSetPendingUpdate`
+  hook so the button is smoke-testable there.
+- **In-app changelog (Help > Release Notes).** A bundled `Resources/CHANGELOG.md`
+  (authored newest-first) is parsed by a pure, unit-tested `ChangelogParser` in the
+  engine and rendered in an on-demand `ChangelogWindowController`. Reachable from a new
+  Help menu and the command palette (`help.releaseNotes`); never shown automatically.
+- Verified: `swift build`, 704 engine tests (4 new parser tests), and two new
+  `PATHEM_SMOKE` invariants (`changelog-bundled-and-parses`,
+  `update-button-shows-when-pending`). Six locales reconciled to 0 missing / 0 stale.
+
+## Round 12 (shipped 2026-07-25) -- live previews in column + gallery views
+
+Two live-app reports: the column view's third column and the gallery view's large
+preview both showed only a static thumbnail (an enlarged file icon), so gallery
+read as "icon view with a preview stuck on top" rather than a real gallery.
+
+- **Live Quick Look in both views.** New shared `QuickLookPreview` (an embedded
+  `QLPreviewView` with a graceful icon fallback for folders, online-only/dataless
+  items, and anything with no generator). It replaces the `NSImageView` +
+  `ThumbnailProvider` static thumbnail in the column view's preview column and the
+  gallery view's big preview, so both now render real file content -- scrollable
+  PDFs, playable audio/video (not auto-started), selectable text/code, images --
+  for the many types Quick Look handles. Dataless items still fall back to the icon
+  so previewing never forces an iCloud download. Same proven embedding the docked
+  `DocumentPreviewView` pane already uses. The column preview keeps its name +
+  kind/size/dates metadata grid under the preview well (now corner-clipped).
+- Note: single-click-to-open and hover-underline preferences already shipped
+  (Settings > Layout; see the Track A status block) -- single-click in every view,
+  hover-underline in list/icon/gallery.
 
 ## Round 11 (shipped 2026-07-22) -- transfer progress, inline naming, localization close-out
 

@@ -23,6 +23,15 @@ extension BrowserViewController {
         window.toolbar = toolbar
     }
 
+    /// Add the trailing "Update Ready" title-bar button once per window. It stays hidden until
+    /// a Sparkle update is pending (see `UpdateButtonAccessory` / `UpdaterController`).
+    func installUpdateButtonIfNeeded() {
+        guard let window = view.window else { return }
+        guard !window.titlebarAccessoryViewControllers.contains(where: { $0 is UpdateButtonAccessory })
+        else { return }
+        window.addTitlebarAccessoryViewController(UpdateButtonAccessory(updater: updater))
+    }
+
     /// Resize the window toolbar's icon(s) to match the toolbar-icon-size preference.
     func applyToolbarIconSize() {
         guard let toolbar = view.window?.toolbar else { return }

@@ -239,6 +239,7 @@
 "bvc.cmd.putBack" = "放回原处";
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "重做";
+"bvc.cmd.releaseNotes" = "发行说明";
 "bvc.cmd.removeCustomIcon" = "移除自定图标";
 "bvc.cmd.removeQuarantine" = "移除隔离标记";
 "bvc.cmd.rename" = "重新命名…";
@@ -467,6 +468,10 @@
 "bvc.untitledFolder" = "未命名文件夹";
 "bvc.uploadingTo" = "正在上传到 %@";
 "bvc.viewPresetCmd" = "视图：%@";
+"changelog.heading" = "Pathem 新功能";
+"changelog.title" = "发行说明";
+"changelog.unavailable" = "此版本不提供发行说明。";
+"changelog.youAreOn" = "当前版本为 %@。";
 "checksum.failedBody" = "所选文件均无法读取。在没有完全磁盘访问权限的情况下它们可能不可读，或者它们已被移除。";
 "checksum.failedTitle" = "无法对所选项计算哈希";
 "chown.group" = "群组（可选）";
@@ -945,6 +950,7 @@
 "menu.group.preview" = "预览";
 "menu.group.show" = "显示";
 "menu.group.terminal" = "终端";
+"menu.help" = "帮助";
 "menu.label" = "标签";
 "menu.makeLink" = "制作链接";
 "menu.minimize" = "最小化";
@@ -1562,6 +1568,8 @@
 "trim.noRange" = "未选择裁剪范围。";
 "trim.title" = "裁剪“%@”";
 "update.autoCheck" = "自动检查更新";
+"update.buttonTitle" = "更新就绪";
+"update.buttonTooltip" = "版本 %@ 已可安装";
 "update.checkNow" = "立即检查更新";
 "update.notSetUpBody" = "这是源代码或未签名的构建版本。请从 GitHub 下载最新的已公证版本；那些版本会自动更新。";
 "update.notSetUpTitle" = "此构建版本尚未设置更新";
