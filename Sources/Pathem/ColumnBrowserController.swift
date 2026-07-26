@@ -330,32 +330,34 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
                 openFolder(url, after: index)
             } else {
                 if columns.count > index + 1 { columns.removeSubrange((index + 1)...) }
-                previewColumn = makePreviewColumn(for: url)  // show a preview of the file
+                previewColumn = makePreviewColumn(for: url, isDataless: entry.isDataless)
                 relayout()
                 scrollToEnd()
             }
         }
     }
 
-    /// A Finder-style preview column: the thumbnail letterboxed in a soft rounded well, the
-    /// name under it, and an aligned label/value metadata table (kind, size, dates) instead
-    /// of centered free-floating lines.
-    private func makePreviewColumn(for url: URL) -> NSView {
+    /// A Finder-style preview column: a live Quick Look preview letterboxed in a soft rounded
+    /// well, the name under it, and an aligned label/value metadata table (kind, size, dates)
+    /// instead of centered free-floating lines. Quick Look renders many file types (PDFs, text,
+    /// code, images, media) rather than just a static thumbnail.
+    private func makePreviewColumn(for url: URL, isDataless: Bool) -> NSView {
         let box = NSView()
 
-        // Thumbnail well: a subtle rounded surface the (arbitrary aspect) thumbnail floats in,
-        // so images, icons, and previews all sit in the same calm frame.
+        // Preview well: a subtle rounded surface the (arbitrary aspect) preview floats in, so
+        // images, documents, and icons all sit in the same calm frame. Clipped to the corners.
         let well = NSView()
         well.translatesAutoresizingMaskIntoConstraints = false
         well.wantsLayer = true
         well.layer?.backgroundColor = NSColor.quaternarySystemFill.cgColor
         well.layer?.cornerRadius = 10
         well.layer?.cornerCurve = .continuous
-        let image = NSImageView()
-        image.translatesAutoresizingMaskIntoConstraints = false
-        image.imageScaling = .scaleProportionallyUpOrDown
-        image.image = NSWorkspace.shared.icon(forFile: url.path)
-        well.addSubview(image)
+        well.layer?.masksToBounds = true
+        let preview = QuickLookPreview()
+        preview.translatesAutoresizingMaskIntoConstraints = false
+        preview.show(
+            url, isDataless: isDataless, fallbackIcon: NSWorkspace.shared.icon(forFile: url.path))
+        well.addSubview(preview)
 
         let name = NSTextField(labelWithString: url.lastPathComponent)
         name.translatesAutoresizingMaskIntoConstraints = false
@@ -388,10 +390,10 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             well.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 16),
             well.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -16),
             well.heightAnchor.constraint(equalToConstant: 210),
-            image.centerXAnchor.constraint(equalTo: well.centerXAnchor),
-            image.centerYAnchor.constraint(equalTo: well.centerYAnchor),
-            image.widthAnchor.constraint(lessThanOrEqualTo: well.widthAnchor, constant: -24),
-            image.heightAnchor.constraint(lessThanOrEqualTo: well.heightAnchor, constant: -24),
+            preview.leadingAnchor.constraint(equalTo: well.leadingAnchor),
+            preview.trailingAnchor.constraint(equalTo: well.trailingAnchor),
+            preview.topAnchor.constraint(equalTo: well.topAnchor),
+            preview.bottomAnchor.constraint(equalTo: well.bottomAnchor),
             name.topAnchor.constraint(equalTo: well.bottomAnchor, constant: 12),
             name.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 12),
             name.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -12),
@@ -401,15 +403,6 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             grid.trailingAnchor.constraint(lessThanOrEqualTo: box.trailingAnchor, constant: -12),
         ])
 
-        let size = CGSize(width: 256, height: 256)
-        if let cached = ThumbnailProvider.shared.cached(url, size: size) {
-            image.image = cached
-        } else {
-            let scale = NSScreen.main?.backingScaleFactor ?? 2
-            ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak image] thumbnail in
-                image?.image = thumbnail
-            }
-        }
         if let fileInfo = FileInfo.gather(for: url) {
             let formatter = ByteCountFormatter()
             let date = DateFormatter()

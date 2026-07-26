@@ -12,7 +12,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 {
     let scrollView = NSScrollView()  // the filmstrip's scroller (protocol requirement)
     private let composite = NSView()
-    private let preview = NSImageView()  // large preview of the selected item
+    private let preview = QuickLookPreview()  // live Quick Look of the selected item
     private let previewName = NSTextField(labelWithString: "")
     private let filmstrip = KeyCollectionView()
     private let emptyLabel = NSTextField(labelWithString: "")
@@ -20,7 +20,6 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     private(set) var entries: [FileEntry] = []
     private var labelFontSize: CGFloat = 11
-    private var previewURL: URL?  // guards an async thumbnail against a newer selection
 
     /// Shared tag-color + git-state cache, so the filmstrip shows the same decorations as the list.
     private let decorations = PaneDecorationCache()
@@ -125,9 +124,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         scrollView.drawsBackground = false
 
         preview.translatesAutoresizingMaskIntoConstraints = false
-        preview.imageScaling = .scaleProportionallyUpOrDown
-        preview.imageAlignment = .alignCenter
-        // Let the preview fill the space its constraints give it rather than hugging its image
+        // Let the preview fill the space its constraints give it rather than hugging its content
         // size; otherwise the whole composite collapses to content height and bottom-aligns.
         for axis in [NSLayoutConstraint.Orientation.horizontal, .vertical] {
             preview.setContentHuggingPriority(.defaultLow, for: axis)
@@ -228,38 +225,19 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         onSelectionChanged?()
     }
 
-    /// Show a large preview of `entry`: its real thumbnail when available, else its file
-    /// icon. Async thumbnail generation is guarded against a newer selection.
+    /// Show a large live Quick Look preview of `entry` (scrollable PDFs, playable media,
+    /// selectable text, rendered images), falling back to the file icon for folders and
+    /// online-only items. This is what makes the gallery a real preview rather than a big icon.
     private func updatePreview(for entry: FileEntry?) {
         guard let entry, let url = fileURL(for: entry) else {
-            preview.image = nil
+            preview.show(nil)
             previewName.stringValue = ""
-            previewURL = nil
             return
         }
-        previewURL = url
         previewName.stringValue = entry.name
-        let fallback = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
-        preview.image = fallback
-        guard !entry.isDirectory, !entry.isDataless else { return }
-        // Size the request to the preview area, not a fixed 512. QuickLook fits the document into
-        // the box we ask for, so a 512-point box blown up to fill a ~500-point Retina view is a
-        // ~2x upscale -- photos survive it, PDF text does not (that is the "blurry PDF" report).
-        // Asking for the view's own size at the display's scale renders it 1:1, so text stays sharp.
-        let area = preview.bounds.size
-        let size =
-            (area.width > 1 && area.height > 1)
-            ? CGSize(width: ceil(area.width), height: ceil(area.height))
-            : CGSize(width: 512, height: 512)  // not laid out yet: fall back to the old box
-        if let cached = ThumbnailProvider.shared.cached(url, size: size) {
-            preview.image = cached
-            return
-        }
-        let scale = preview.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-        ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak self] image in
-            guard let self, self.previewURL == url else { return }
-            self.preview.image = image
-        }
+        preview.show(
+            url, isDirectory: entry.isDirectory, isDataless: entry.isDataless,
+            fallbackIcon: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry))
     }
 
     // MARK: PaneContentView
