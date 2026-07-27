@@ -225,6 +225,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Media conversion hub (image / video / audio) atop ImageConverter + MediaTools"
+    done = true
 
 [[phase]]
   title = "Power-user file tooling"
