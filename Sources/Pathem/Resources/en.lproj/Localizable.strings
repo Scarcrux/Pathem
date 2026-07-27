@@ -166,6 +166,7 @@
 "bvc.cmd.connectToServer" = "Connect to Server…";
 "bvc.cmd.connections" = "Connections…";
 "bvc.cmd.convertImages" = "Convert Images…";
+"bvc.cmd.convertToMP4" = "Convert to MP4";
 "bvc.cmd.copy" = "Copy";
 "bvc.cmd.copyAsFileURL" = "Copy as File URL";
 "bvc.cmd.copyMagnetLink" = "Copy Magnet Link";
@@ -192,6 +193,7 @@
 "bvc.cmd.encryptDMG" = "New Encrypted Disk Image…";
 "bvc.cmd.externalCommands" = "External Commands…";
 "bvc.cmd.extract" = "Extract";
+"bvc.cmd.extractAudio" = "Extract Audio (M4A)";
 "bvc.cmd.extractHere" = "Extract Here";
 "bvc.cmd.extractTo" = "Extract to Folder…";
 "bvc.cmd.filter" = "Filter…";
@@ -315,6 +317,11 @@
 "bvc.connectionFailedCode" = "The connection failed (code %d)";
 "bvc.convertFailed" = "Couldn’t convert";
 "bvc.convertImagesQ" = "Convert %d image(s)";
+"bvc.convertMediaAction" = "Convert Media";
+"bvc.convertMediaFailedBody" = "%d file(s) couldn’t be converted.";
+"bvc.convertMediaFailedTitle" = "Couldn’t convert some media";
+"bvc.convertedMedia" = "Converted %d file(s)";
+"bvc.convertingMedia" = "Converting media…";
 "bvc.copyAction" = "Copy";
 "bvc.copyFailed" = "Copy failed";
 "bvc.copyNoun" = "copy";
@@ -913,6 +920,7 @@
 "markup.underline" = "Underline";
 "markup.undo" = "Undo";
 "markup.width" = "Width";
+"media.convertNoSession" = "This file can’t be converted with that preset.";
 "menu.about" = "About Pathem";
 "menu.bringAllToFront" = "Bring All to Front";
 "menu.checkUpdates" = "Check for Updates…";

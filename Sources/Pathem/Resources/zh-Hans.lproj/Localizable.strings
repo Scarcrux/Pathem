@@ -166,6 +166,7 @@
 "bvc.cmd.connectToServer" = "连接服务器…";
 "bvc.cmd.connections" = "连接…";
 "bvc.cmd.convertImages" = "转换图像…";
+"bvc.cmd.convertToMP4" = "转换为 MP4";
 "bvc.cmd.copy" = "拷贝";
 "bvc.cmd.copyAsFileURL" = "拷贝为文件 URL";
 "bvc.cmd.copyMagnetLink" = "复制磁力链接";
@@ -192,6 +193,7 @@
 "bvc.cmd.encryptDMG" = "新建加密磁盘映像…";
 "bvc.cmd.externalCommands" = "外部命令…";
 "bvc.cmd.extract" = "解压";
+"bvc.cmd.extractAudio" = "提取音频 (M4A)";
 "bvc.cmd.extractHere" = "在此处解压";
 "bvc.cmd.extractTo" = "解压到文件夹…";
 "bvc.cmd.filter" = "筛选…";
@@ -315,6 +317,11 @@
 "bvc.connectionFailedCode" = "连接失败（代码 %d）";
 "bvc.convertFailed" = "无法转换";
 "bvc.convertImagesQ" = "转换 %d 张图像";
+"bvc.convertMediaAction" = "转换媒体";
+"bvc.convertMediaFailedBody" = "有 %d 个文件无法转换。";
+"bvc.convertMediaFailedTitle" = "部分媒体无法转换";
+"bvc.convertedMedia" = "已转换 %d 个文件";
+"bvc.convertingMedia" = "正在转换媒体…";
 "bvc.copyAction" = "拷贝";
 "bvc.copyFailed" = "拷贝失败";
 "bvc.copyNoun" = "拷贝";
@@ -913,6 +920,7 @@
 "markup.underline" = "下划线";
 "markup.undo" = "撤销笔画";
 "markup.width" = "宽度";
+"media.convertNoSession" = "此文件无法使用该预设转换。";
 "menu.about" = "关于 Pathem";
 "menu.ai.run" = "询问 Pathem…";
 "menu.bringAllToFront" = "全部置于顶层";

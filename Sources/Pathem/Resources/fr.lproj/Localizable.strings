@@ -166,6 +166,7 @@
 "bvc.cmd.connectToServer" = "Se connecter au serveur…";
 "bvc.cmd.connections" = "Connexions…";
 "bvc.cmd.convertImages" = "Convertir les images…";
+"bvc.cmd.convertToMP4" = "Convertir en MP4";
 "bvc.cmd.copy" = "Copier";
 "bvc.cmd.copyAsFileURL" = "Copier comme URL de fichier";
 "bvc.cmd.copyMagnetLink" = "Copier le lien magnet";
@@ -192,6 +193,7 @@
 "bvc.cmd.encryptDMG" = "Nouvelle image disque chiffrée…";
 "bvc.cmd.externalCommands" = "Commandes externes…";
 "bvc.cmd.extract" = "Extraire";
+"bvc.cmd.extractAudio" = "Extraire l’audio (M4A)";
 "bvc.cmd.extractHere" = "Extraire ici";
 "bvc.cmd.extractTo" = "Extraire vers un dossier…";
 "bvc.cmd.filter" = "Filtrer…";
@@ -315,6 +317,11 @@
 "bvc.connectionFailedCode" = "La connexion a échoué (code %d)";
 "bvc.convertFailed" = "Impossible de convertir";
 "bvc.convertImagesQ" = "Convertir %d image(s)";
+"bvc.convertMediaAction" = "Convertir le média";
+"bvc.convertMediaFailedBody" = "%d fichier(s) n’ont pas pu être convertis.";
+"bvc.convertMediaFailedTitle" = "Impossible de convertir certains médias";
+"bvc.convertedMedia" = "%d fichier(s) converti(s)";
+"bvc.convertingMedia" = "Conversion du média…";
 "bvc.copyAction" = "Copier";
 "bvc.copyFailed" = "Échec de la copie";
 "bvc.copyNoun" = "copie";
@@ -913,6 +920,7 @@
 "markup.underline" = "Souligner";
 "markup.undo" = "Annuler le tracé";
 "markup.width" = "Épaisseur";
+"media.convertNoSession" = "Ce fichier ne peut pas être converti avec ce préréglage.";
 "menu.about" = "À propos de Pathem";
 "menu.ai.run" = "Demander à Pathem…";
 "menu.bringAllToFront" = "Tout amener au premier plan";

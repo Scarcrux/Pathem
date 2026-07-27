@@ -166,6 +166,7 @@
 "bvc.cmd.connectToServer" = "Mit Server verbinden…";
 "bvc.cmd.connections" = "Verbindungen…";
 "bvc.cmd.convertImages" = "Bilder konvertieren…";
+"bvc.cmd.convertToMP4" = "In MP4 konvertieren";
 "bvc.cmd.copy" = "Kopieren";
 "bvc.cmd.copyAsFileURL" = "Als Datei-URL kopieren";
 "bvc.cmd.copyMagnetLink" = "Magnet-Link kopieren";
@@ -192,6 +193,7 @@
 "bvc.cmd.encryptDMG" = "Neues verschlüsseltes Image…";
 "bvc.cmd.externalCommands" = "Externe Befehle…";
 "bvc.cmd.extract" = "Entpacken";
+"bvc.cmd.extractAudio" = "Audio extrahieren (M4A)";
 "bvc.cmd.extractHere" = "Hier entpacken";
 "bvc.cmd.extractTo" = "In Ordner entpacken…";
 "bvc.cmd.filter" = "Filtern…";
@@ -315,6 +317,11 @@
 "bvc.connectionFailedCode" = "Die Verbindung ist fehlgeschlagen (Code %d)";
 "bvc.convertFailed" = "Konvertierung fehlgeschlagen";
 "bvc.convertImagesQ" = "%d Bild(er) konvertieren";
+"bvc.convertMediaAction" = "Medien konvertieren";
+"bvc.convertMediaFailedBody" = "%d Datei(en) konnten nicht konvertiert werden.";
+"bvc.convertMediaFailedTitle" = "Einige Medien konnten nicht konvertiert werden";
+"bvc.convertedMedia" = "%d Datei(en) konvertiert";
+"bvc.convertingMedia" = "Medien werden konvertiert…";
 "bvc.copyAction" = "Kopieren";
 "bvc.copyFailed" = "Kopieren fehlgeschlagen";
 "bvc.copyNoun" = "Kopie";
@@ -913,6 +920,7 @@
 "markup.underline" = "Unterstreichen";
 "markup.undo" = "Strich widerrufen";
 "markup.width" = "Breite";
+"media.convertNoSession" = "Diese Datei kann mit dieser Voreinstellung nicht konvertiert werden.";
 "menu.about" = "Über Pathem";
 "menu.ai.run" = "Pathem fragen…";
 "menu.bringAllToFront" = "Alle nach vorne bringen";

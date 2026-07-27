@@ -1005,6 +1005,8 @@ enum PathemApp {
                     commandItem("Create PDF", "image.createPDF"),
                     commandItem("Markup…", "image.markup"),
                     commandItem("Trim Media…", "files.trimMedia"),
+                    commandItem("Extract Audio (M4A)", "media.extractAudio"),
+                    commandItem("Convert to MP4", "media.convertToMP4"),
                     commandItem("Set Attributes…", "files.setAttributes"),
                     commandItem("Set Finder Comment…", "files.setFinderComment"),
                     commandItem("Permissions…", "files.editACL"),

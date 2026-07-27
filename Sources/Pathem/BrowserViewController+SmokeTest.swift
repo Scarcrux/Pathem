@@ -533,6 +533,13 @@ extension BrowserViewController {
         check("near-duplicates", ndRegistered && ndGroup.extras.count == 2,
             "registered=\(ndRegistered) extras=\(ndGroup.extras.count)")
 
+        // Media conversion hub: both commands registered; targets map to the right file extensions.
+        let extractReg = commands.command("media.extractAudio") != nil
+        let mp4Reg = commands.command("media.convertToMP4") != nil
+        let mediaExtOK = MediaConverter.Target.m4aAudio.fileExtension == "m4a" && MediaConverter.Target.mp4.fileExtension == "mp4"
+        check("media-convert", extractReg && mp4Reg && mediaExtOK,
+            "extract=\(extractReg) mp4=\(mp4Reg) ext=\(mediaExtOK)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

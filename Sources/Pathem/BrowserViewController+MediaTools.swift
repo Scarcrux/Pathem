@@ -64,6 +64,42 @@ extension BrowserViewController {
         for url in urls { ThumbnailProvider.shared.evict(url) }
     }
 
+    /// Convert each selected video/audio file to `target` (extract audio, or transcode to MP4), off
+    /// the main thread, writing a new file beside it (undoable). Reports how many converted or failed.
+    func convertMediaSelection(to target: MediaConverter.Target) {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter {
+            TrimController.trimmableExtensions.contains($0.pathExtension.lowercased())
+        }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        activePane?.flashStatus(L("bvc.convertingMedia", "Converting media…"))
+        Task { @MainActor in
+            var created: [String] = []
+            var failed = 0
+            for url in urls {
+                do {
+                    let out = try await MediaConverter.convert(url, to: target, into: folder)
+                    created.append(out.lastPathComponent)
+                } catch {
+                    failed += 1
+                }
+            }
+            self.activePane?.reloadIfShowingListing()
+            if let first = created.first { self.activePane?.select(name: first) }
+            if !created.isEmpty {
+                self.registerCreatedUndo(
+                    names: created, in: folder, actionName: L("bvc.convertMediaAction", "Convert Media"))
+                self.activePane?.flashStatus(String(format: L("bvc.convertedMedia", "Converted %d file(s)"), created.count))
+            }
+            if failed > 0 {
+                self.presentInfo(
+                    L("bvc.convertMediaFailedTitle", "Couldn’t convert some media"),
+                    String(format: L("bvc.convertMediaFailedBody", "%d file(s) couldn’t be converted."), failed))
+            }
+        }
+    }
+
     /// Classify each selected image with Vision and add its top content labels as Finder tags, so the
     /// photos become findable by what's in them (in Pathem and Finder). New tags merge with existing.
     func autoTagSelection() {

@@ -166,6 +166,7 @@
 "bvc.cmd.connectToServer" = "サーバへ接続…";
 "bvc.cmd.connections" = "接続…";
 "bvc.cmd.convertImages" = "画像を変換…";
+"bvc.cmd.convertToMP4" = "MP4に変換";
 "bvc.cmd.copy" = "コピー";
 "bvc.cmd.copyAsFileURL" = "ファイルURLとしてコピー";
 "bvc.cmd.copyMagnetLink" = "マグネットリンクをコピー";
@@ -192,6 +193,7 @@
 "bvc.cmd.encryptDMG" = "新規暗号化ディスクイメージ…";
 "bvc.cmd.externalCommands" = "外部コマンド…";
 "bvc.cmd.extract" = "展開";
+"bvc.cmd.extractAudio" = "音声を抽出（M4A）";
 "bvc.cmd.extractHere" = "ここに展開";
 "bvc.cmd.extractTo" = "フォルダに展開…";
 "bvc.cmd.filter" = "フィルタ…";
@@ -315,6 +317,11 @@
 "bvc.connectionFailedCode" = "接続に失敗しました（コード %d）";
 "bvc.convertFailed" = "変換できませんでした";
 "bvc.convertImagesQ" = "%d枚の画像を変換";
+"bvc.convertMediaAction" = "メディアを変換";
+"bvc.convertMediaFailedBody" = "%d件のファイルを変換できませんでした。";
+"bvc.convertMediaFailedTitle" = "一部のメディアを変換できませんでした";
+"bvc.convertedMedia" = "%d件のファイルを変換しました";
+"bvc.convertingMedia" = "メディアを変換中…";
 "bvc.copyAction" = "コピー";
 "bvc.copyFailed" = "コピーに失敗しました";
 "bvc.copyNoun" = "コピー";
@@ -913,6 +920,7 @@
 "markup.underline" = "下線";
 "markup.undo" = "ストロークを取り消す";
 "markup.width" = "太さ";
+"media.convertNoSession" = "このファイルはそのプリセットでは変換できません。";
 "menu.about" = "Pathemについて";
 "menu.ai.run" = "Pathemに質問…";
 "menu.bringAllToFront" = "すべてを前面に";

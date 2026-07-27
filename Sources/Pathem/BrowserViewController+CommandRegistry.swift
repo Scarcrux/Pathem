@@ -206,6 +206,18 @@ extension BrowserViewController {
             else { return false }
             return TrimController.trimmableExtensions.contains((entry.name as NSString).pathExtension.lowercased())
         }) { [weak self] in self?.trimSelection() }
+        let hasSelectedMedia: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
+            return pane.selectedEntries.contains {
+                !$0.isDirectory && TrimController.trimmableExtensions.contains(($0.name as NSString).pathExtension.lowercased())
+            }
+        }
+        add("media.extractAudio", L("bvc.cmd.extractAudio", "Extract Audio (M4A)"), enabled: hasSelectedMedia) {
+            [weak self] in self?.convertMediaSelection(to: .m4aAudio)
+        }
+        add("media.convertToMP4", L("bvc.cmd.convertToMP4", "Convert to MP4"), enabled: hasSelectedMedia) {
+            [weak self] in self?.convertMediaSelection(to: .mp4)
+        }
         add("image.markup", L("bvc.cmd.markup", "Markup…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
                 pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first
