@@ -167,6 +167,8 @@
 	<string>Pathem browses and organizes your Downloads, and can offer to file new downloads into place.</string>
 	<key>NSDesktopFolderUsageDescription</key>
 	<string>Pathem browses and organizes the files on your Desktop.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Pathem shows your Photos albums so you can view and export photos and videos into the filesystem.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>Pathem browses and organizes the files in your Documents.</string>
 	<key>NSRemovableVolumesUsageDescription</key>

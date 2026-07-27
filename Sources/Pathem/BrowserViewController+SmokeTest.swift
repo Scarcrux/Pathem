@@ -503,6 +503,18 @@ extension BrowserViewController {
         check("stale-build-watch", sbNewer && !sbNil && !sbGrace && !sbOlder,
             "newer=\(sbNewer) nil=\(sbNil) grace=\(sbGrace) older=\(sbOlder)")
 
+        // Photos export naming: uniqueURL never overwrites an existing export.
+        let photosDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-photos-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: photosDir, withIntermediateDirectories: true)
+        let firstExport = PhotoLibrary.uniqueURL(in: photosDir, name: "IMG_1.jpg")
+        FileManager.default.createFile(atPath: firstExport.path, contents: Data())
+        let secondExport = PhotoLibrary.uniqueURL(in: photosDir, name: "IMG_1.jpg")
+        let photosUnique = firstExport.lastPathComponent == "IMG_1.jpg" && secondExport.lastPathComponent == "IMG_1 2.jpg"
+        let photosCommand = commands.command("photos.open") != nil
+        check("photos-library", photosUnique && photosCommand,
+            "unique=\(photosUnique) (\(secondExport.lastPathComponent)) command=\(photosCommand)")
+        try? FileManager.default.removeItem(at: photosDir)
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

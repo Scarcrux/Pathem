@@ -225,6 +225,7 @@
 "bvc.cmd.openInNewTab" = "在新标签页中打开";
 "bvc.cmd.openInOtherPane" = "在另一窗格中打开";
 "bvc.cmd.openInThisPane" = "在此窗格中打开";
+"bvc.cmd.openPhotos" = "照片图库…";
 "bvc.cmd.openTerminalHere" = "在此处打开终端";
 "bvc.cmd.openWorkspace" = "打开工作空间…";
 "bvc.cmd.organize" = "整理文件夹…";
@@ -1110,6 +1111,19 @@
 "perms.owner" = "所有者";
 "perms.read" = "读";
 "perms.write" = "写";
+"photos.denied" = "Pathem 无权访问您的照片图库。请在系统设置 ▸ 隐私与安全性 ▸ 照片中授予权限。";
+"photos.empty" = "在您的照片图库中未找到相簿。";
+"photos.export" = "导出…";
+"photos.exportHere" = "导出到此处";
+"photos.exportNoResource" = "此项目没有可导出的文件。";
+"photos.exported" = "已导出 %d 项";
+"photos.exportedWithErrors" = "已导出 %d 项，%d 项失败";
+"photos.exporting" = "正在导出 %d 项…";
+"photos.requesting" = "正在请求访问您的照片图库…";
+"photos.statusCount" = "%d 项";
+"photos.statusSelected" = "已选择 %d / %d 项";
+"photos.untitledAlbum" = "未命名相簿";
+"photos.windowTitle" = "照片";
 "prefs.accentLabel" = "强调色";
 "prefs.alternatingRows" = "交替行颜色";
 "prefs.appearanceDark" = "深色";
@@ -1407,6 +1421,7 @@
 "sidebar.newGroupDefaultName" = "新建群组";
 "sidebar.openInOtherPane" = "在另一窗格中打开";
 "sidebar.otherIcon" = "其他…";
+"sidebar.photos" = "照片";
 "sidebar.recents" = "最近使用";
 "sidebar.removeFromSidebar" = "从边栏中移除";
 "sidebar.removeGroup" = "移除群组";

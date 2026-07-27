@@ -492,6 +492,7 @@ extension BrowserViewController {
         add("files.comparePanes", L("bvc.cmd.comparePanes", "Compare Panes…"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.comparePanes()
         }
+        add("photos.open", L("bvc.cmd.openPhotos", "Photos Library…")) { [weak self] in self?.openPhotosBrowser() }
         add("files.compress", L("bvc.cmd.compress", "Compress"), enabled: hasLocalSelection) { [weak self] in self?.compressSelection() }
         add("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip"), enabled: hasLocalSelection) { [weak self] in self?.compress7zSelection() }
         let hasArchive: () -> Bool = { [weak self] in

@@ -225,6 +225,7 @@
 "bvc.cmd.openInNewTab" = "In neuem Tab öffnen";
 "bvc.cmd.openInOtherPane" = "In anderem Bereich öffnen";
 "bvc.cmd.openInThisPane" = "In diesem Bereich öffnen";
+"bvc.cmd.openPhotos" = "Fotomediathek…";
 "bvc.cmd.openTerminalHere" = "Terminal hier öffnen";
 "bvc.cmd.openWorkspace" = "Arbeitsbereich öffnen…";
 "bvc.cmd.organize" = "Ordner organisieren…";
@@ -1110,6 +1111,19 @@
 "perms.owner" = "Eigentümer";
 "perms.read" = "R";
 "perms.write" = "W";
+"photos.denied" = "Pathem hat keinen Zugriff auf deine Fotomediathek. Erteile ihn in Systemeinstellungen ▸ Datenschutz & Sicherheit ▸ Fotos.";
+"photos.empty" = "Keine Alben in deiner Fotomediathek gefunden.";
+"photos.export" = "Exportieren…";
+"photos.exportHere" = "Hierher exportieren";
+"photos.exportNoResource" = "Dieses Objekt hat keine exportierbare Datei.";
+"photos.exported" = "%d exportiert";
+"photos.exportedWithErrors" = "%d exportiert, %d fehlgeschlagen";
+"photos.exporting" = "%d werden exportiert…";
+"photos.requesting" = "Zugriff auf deine Fotomediathek wird angefordert…";
+"photos.statusCount" = "%d Objekte";
+"photos.statusSelected" = "%d von %d ausgewählt";
+"photos.untitledAlbum" = "Album ohne Titel";
+"photos.windowTitle" = "Fotos";
 "prefs.accentLabel" = "Akzentfarbe";
 "prefs.alternatingRows" = "Abwechselnde Zeilenfarben";
 "prefs.appearanceDark" = "Dunkel";
@@ -1407,6 +1421,7 @@
 "sidebar.newGroupDefaultName" = "Neue Gruppe";
 "sidebar.openInOtherPane" = "In anderem Bereich öffnen";
 "sidebar.otherIcon" = "Andere…";
+"sidebar.photos" = "Fotos";
 "sidebar.recents" = "Zuletzt benutzt";
 "sidebar.removeFromSidebar" = "Aus Seitenleiste entfernen";
 "sidebar.removeGroup" = "Gruppe entfernen";

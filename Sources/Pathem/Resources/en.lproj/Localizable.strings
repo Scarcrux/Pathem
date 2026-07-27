@@ -225,6 +225,7 @@
 "bvc.cmd.openInNewTab" = "Open in New Tab";
 "bvc.cmd.openInOtherPane" = "Open in Other Pane";
 "bvc.cmd.openInThisPane" = "Open in This Pane";
+"bvc.cmd.openPhotos" = "Photos Library…";
 "bvc.cmd.openTerminalHere" = "Open Terminal Here";
 "bvc.cmd.openWorkspace" = "Open Workspace…";
 "bvc.cmd.organize" = "Organize Folder…";
@@ -1040,6 +1041,19 @@
 "perms.owner" = "Owner";
 "perms.read" = "R";
 "perms.write" = "W";
+"photos.denied" = "Pathem doesn’t have access to your photo library. Grant it in System Settings ▸ Privacy & Security ▸ Photos.";
+"photos.empty" = "No albums found in your photo library.";
+"photos.export" = "Export…";
+"photos.exportHere" = "Export Here";
+"photos.exportNoResource" = "This item has no exportable file.";
+"photos.exported" = "Exported %d";
+"photos.exportedWithErrors" = "Exported %d, %d failed";
+"photos.exporting" = "Exporting %d…";
+"photos.requesting" = "Requesting access to your photo library…";
+"photos.statusCount" = "%d items";
+"photos.statusSelected" = "%d of %d selected";
+"photos.untitledAlbum" = "Untitled Album";
+"photos.windowTitle" = "Photos";
 "prefs.accentLabel" = "Accent color";
 "prefs.alternatingRows" = "Alternating row colors";
 "prefs.appearanceDark" = "Dark";
@@ -1337,6 +1351,7 @@
 "sidebar.newGroupDefaultName" = "New Group";
 "sidebar.openInOtherPane" = "Open in Other Pane";
 "sidebar.otherIcon" = "Other…";
+"sidebar.photos" = "Photos";
 "sidebar.recents" = "Recents";
 "sidebar.removeFromSidebar" = "Remove from Sidebar";
 "sidebar.removeGroup" = "Remove Group";

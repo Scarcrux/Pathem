@@ -225,6 +225,7 @@
 "bvc.cmd.openInNewTab" = "Ouvrir dans un nouvel onglet";
 "bvc.cmd.openInOtherPane" = "Ouvrir dans l’autre volet";
 "bvc.cmd.openInThisPane" = "Ouvrir dans ce volet";
+"bvc.cmd.openPhotos" = "Photothèque…";
 "bvc.cmd.openTerminalHere" = "Ouvrir le Terminal ici";
 "bvc.cmd.openWorkspace" = "Ouvrir l'espace de travail…";
 "bvc.cmd.organize" = "Organiser le dossier…";
@@ -1110,6 +1111,19 @@
 "perms.owner" = "Propriétaire";
 "perms.read" = "R";
 "perms.write" = "W";
+"photos.denied" = "Pathem n’a pas accès à votre photothèque. Autorisez-le dans Réglages Système ▸ Confidentialité et sécurité ▸ Photos.";
+"photos.empty" = "Aucun album trouvé dans votre photothèque.";
+"photos.export" = "Exporter…";
+"photos.exportHere" = "Exporter ici";
+"photos.exportNoResource" = "Cet élément n’a pas de fichier exportable.";
+"photos.exported" = "%d exporté(s)";
+"photos.exportedWithErrors" = "%d exporté(s), %d échec(s)";
+"photos.exporting" = "Exportation de %d…";
+"photos.requesting" = "Demande d’accès à votre photothèque…";
+"photos.statusCount" = "%d éléments";
+"photos.statusSelected" = "%d sur %d sélectionné(s)";
+"photos.untitledAlbum" = "Album sans titre";
+"photos.windowTitle" = "Photos";
 "prefs.accentLabel" = "Couleur d’accentuation";
 "prefs.alternatingRows" = "Couleurs de rangées alternées";
 "prefs.appearanceDark" = "Sombre";
@@ -1407,6 +1421,7 @@
 "sidebar.newGroupDefaultName" = "Nouveau groupe";
 "sidebar.openInOtherPane" = "Ouvrir dans l’autre volet";
 "sidebar.otherIcon" = "Autre…";
+"sidebar.photos" = "Photos";
 "sidebar.recents" = "Récents";
 "sidebar.removeFromSidebar" = "Retirer de la barre latérale";
 "sidebar.removeGroup" = "Supprimer le groupe";

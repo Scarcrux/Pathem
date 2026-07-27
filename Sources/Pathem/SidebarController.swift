@@ -36,6 +36,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onSelect: ((URL) -> Void)?
     /// Open Settings (the gear shortcut at the bottom of the sidebar).
     var onOpenSettings: (() -> Void)?
+    /// Open the Photos library browser (a "Photos" sidebar item, PhotoKit-backed).
+    var onOpenPhotos: (() -> Void)?
     /// Toggle the sidebar between the full and icons-only (compact) widths.
     var onToggleCompact: (() -> Void)?
     private let settingsButton = NSButton()
@@ -146,6 +148,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case savedSearch(SavedSearch)  // a user's saved smart folder (runs its mdfind query)
         case airdrop  // AirDrop send sheet (no filesystem path)
         case network  // Network: opens Connect to Server (no filesystem path)
+        case photos  // opens the Photos library browser (PhotoKit; no filesystem path)
         case trash  // the user's Trash (navigable; drops trash the items)
         case shared(String)  // a discovered SMB host (by display name)
         case connection(RemoteConnection)  // a saved FTP/SFTP server
@@ -527,6 +530,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .savedSearch(let search): return "saved:\(search.name)"
         case .airdrop: return "airdrop"
         case .network: return "network"
+        case .photos: return "photos"
         case .trash: return "trash"
         case .shared(let host): return "shared:\(host)"
         case .connection(let connection): return "conn:\(connection.id)"
@@ -613,11 +617,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             icon: "dot.radiowaves.left.and.right")
         let network = Node(
             kind: .network, title: L("sidebar.network", "Network"), url: nil, icon: "network")
+        let photos = Node(
+            kind: .photos, title: L("sidebar.photos", "Photos"), url: nil, icon: "photo.on.rectangle.angled")
         let trashURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
         let trash = Node(kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: "trash")
         return Node(
             kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil, icon: nil,
-            children: [airdrop, network, trash])
+            children: [airdrop, network, photos, trash])
     }
 
     /// A demo Cloud/Volumes section from generic (name, folder) pairs. Icons match what the
@@ -1152,6 +1158,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if case .airdrop = node.kind {
             outline.deselectRow(row)  // an action (share the selection), not a persistent location
             onAirDrop?()
+            return
+        }
+        if case .photos = node.kind {
+            outline.deselectRow(row)  // opens a browser window, not a persistent filesystem location
+            onOpenPhotos?()
             return
         }
         if case .network = node.kind {

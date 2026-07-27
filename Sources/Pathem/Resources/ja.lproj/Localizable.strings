@@ -225,6 +225,7 @@
 "bvc.cmd.openInNewTab" = "新規タブで開く";
 "bvc.cmd.openInOtherPane" = "他のペインで開く";
 "bvc.cmd.openInThisPane" = "このペインで開く";
+"bvc.cmd.openPhotos" = "写真ライブラリ…";
 "bvc.cmd.openTerminalHere" = "ここでターミナルを開く";
 "bvc.cmd.openWorkspace" = "ワークスペースを開く…";
 "bvc.cmd.organize" = "フォルダを整理…";
@@ -1110,6 +1111,19 @@
 "perms.owner" = "所有者";
 "perms.read" = "読";
 "perms.write" = "書";
+"photos.denied" = "Pathemは写真ライブラリにアクセスできません。システム設定 ▸ プライバシーとセキュリティ ▸ 写真で許可してください。";
+"photos.empty" = "写真ライブラリにアルバムが見つかりません。";
+"photos.export" = "書き出す…";
+"photos.exportHere" = "ここに書き出す";
+"photos.exportNoResource" = "この項目には書き出せるファイルがありません。";
+"photos.exported" = "%d件を書き出しました";
+"photos.exportedWithErrors" = "%d件を書き出し、%d件が失敗";
+"photos.exporting" = "%d件を書き出し中…";
+"photos.requesting" = "写真ライブラリへのアクセスを要求しています…";
+"photos.statusCount" = "%d件";
+"photos.statusSelected" = "%d/%d件を選択";
+"photos.untitledAlbum" = "無題のアルバム";
+"photos.windowTitle" = "写真";
 "prefs.accentLabel" = "アクセントカラー";
 "prefs.alternatingRows" = "行の色を交互に表示";
 "prefs.appearanceDark" = "ダーク";
@@ -1407,6 +1421,7 @@
 "sidebar.newGroupDefaultName" = "新規グループ";
 "sidebar.openInOtherPane" = "他のペインで開く";
 "sidebar.otherIcon" = "その他…";
+"sidebar.photos" = "写真";
 "sidebar.recents" = "最近の項目";
 "sidebar.removeFromSidebar" = "サイドバーから削除";
 "sidebar.removeGroup" = "グループを削除";

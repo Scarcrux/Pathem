@@ -179,6 +179,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// BrowserViewController+OrganizeWithAI.swift; a stored property can't sit in an extension).
     var organizeReview: OrganizeReviewController?
     lazy var settings = SettingsWindowController()
+    /// The Photos-library browser (PhotoKit), opened from the sidebar's Photos item.
+    lazy var photosBrowser = PhotosBrowserController()
     /// Settings embedded over the right pane (so browsing continues in the left pane).
     var settingsPanel: NSView?
     lazy var batchCreate = BatchCreateController()
@@ -606,6 +608,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         sidebar.onAirDropFiles = { [weak self] urls in self?.airDrop(urls) }
         sidebar.onNetwork = { [weak self] in self?.showNetworkView() }
+        sidebar.onOpenPhotos = { [weak self] in self?.openPhotosBrowser() }
         sidebar.onTrashFiles = { [weak self] urls in self?.performLocalTrash(urls) }
         sidebar.onOpenSettings = { [weak self] in self?.showPreferences() }
         sidebar.onToggleCompact = { [weak self] in
@@ -1549,6 +1552,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         } else {
             activePane?.reveal(url)  // any other file: show it in its folder
         }
+    }
+
+    /// Open the Photos-library browser (PhotoKit). Exports default to the active local folder so
+    /// dragging or exporting a photo lands where you're browsing.
+    func openPhotosBrowser() {
+        let dir = activePane.flatMap { $0.isRemote ? nil : $0.currentURL }
+        photosBrowser.show(exportDirectory: dir)
     }
 
     /// Reveal a path handed in by `pathem reveal <path>`: bring the window up and select the item in
