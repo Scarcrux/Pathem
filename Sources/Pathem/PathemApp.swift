@@ -134,6 +134,7 @@ enum PathemApp {
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
         delegate.vpnStatusItem = VPNStatusItem()  // shows only while VPN binding is enabled
+        StaleBuildWatch.start()  // offer a relaunch if a newer build gets installed under us
 
 
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a

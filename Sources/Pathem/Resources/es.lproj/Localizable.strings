@@ -1578,6 +1578,8 @@
 "update.checkNow" = "Buscar actualizaciones ahora";
 "update.notSetUpBody" = "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas versiones se actualizan solas.";
 "update.notSetUpTitle" = "Las actualizaciones no están configuradas para esta compilación";
+"update.relaunchTitle" = "Reiniciar para actualizar";
+"update.relaunchTooltip" = "Hay una versión más reciente de Pathem instalada. Reinicia para ejecutarla.";
 "update.sourceBuild" = "Esta es una compilación de código fuente o sin firmar. Descarga la última versión notarizada desde GitHub; esas compilaciones se actualizan solas.";
 "update.viaSparkle" = "Las actualizaciones se entregan automáticamente mediante Sparkle.";
 "upload.foldersSkippedBody" = "La subida de carpetas aún no es compatible, así que solo se subirán los archivos de este arrastre.";

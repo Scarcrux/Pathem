@@ -1506,6 +1506,8 @@
 "update.checkNow" = "Check for Updates Now";
 "update.notSetUpBody" = "This is a source or unsigned build. Download the latest notarized release from GitHub; those builds update themselves.";
 "update.notSetUpTitle" = "Updates aren’t set up for this build";
+"update.relaunchTitle" = "Relaunch to Update";
+"update.relaunchTooltip" = "A newer build of Pathem is installed. Relaunch to run it.";
 "update.sourceBuild" = "This is a source or unsigned build. Download the latest notarized release from GitHub; those builds update themselves.";
 "update.viaSparkle" = "Updates are delivered automatically via Sparkle.";
 "upload.foldersSkippedBody" = "Folder upload isn’t supported yet, so only the files in this drop will be uploaded.";

@@ -1578,6 +1578,8 @@
 "update.checkNow" = "Jetzt nach Updates suchen";
 "update.notSetUpBody" = "Dies ist ein Quell- oder unsignierter Build. Laden Sie die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.";
 "update.notSetUpTitle" = "Für diesen Build sind keine Updates eingerichtet";
+"update.relaunchTitle" = "Neu starten zum Aktualisieren";
+"update.relaunchTooltip" = "Eine neuere Version von Pathem ist installiert. Starte neu, um sie auszuführen.";
 "update.sourceBuild" = "Dies ist ein Quell- oder unsignierter Build. Lade die neueste notarisierte Version von GitHub herunter; diese Builds aktualisieren sich selbst.";
 "update.viaSparkle" = "Updates werden automatisch über Sparkle bereitgestellt.";
 "upload.foldersSkippedBody" = "Das Hochladen von Ordnern wird noch nicht unterstützt, daher werden nur die Dateien in diesem Vorgang hochgeladen.";

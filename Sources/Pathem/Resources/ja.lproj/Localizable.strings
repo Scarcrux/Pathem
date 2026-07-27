@@ -1578,6 +1578,8 @@
 "update.checkNow" = "今すぐアップデートを確認";
 "update.notSetUpBody" = "これはソースまたは署名されていないビルドです。GitHubから最新の公証済みリリースをダウンロードしてください。それらのビルドは自動的に更新されます。";
 "update.notSetUpTitle" = "このビルドではアップデートが設定されていません";
+"update.relaunchTitle" = "再起動して更新";
+"update.relaunchTooltip" = "新しいビルドのPathemがインストールされています。再起動して実行してください。";
 "update.sourceBuild" = "これはソースまたは署名なしのビルドです。最新の公証済みリリースを GitHub からダウンロードしてください。それらのビルドは自動更新されます。";
 "update.viaSparkle" = "アップデートは Sparkle を通じて自動的に配信されます。";
 "upload.foldersSkippedBody" = "フォルダのアップロードはまだサポートされていないため、このドロップ内のファイルのみがアップロードされます。";

@@ -4,6 +4,8 @@
   "auto.choose":                 {"fr": "Choisir…", "de": "Auswählen…", "es": "Elegir…", "ja": "選択…", "zh-Hans": "选择…"},
 
   "settings.integrations":       {"fr": "Intégrations", "de": "Integrationen", "es": "Integraciones", "ja": "連携", "zh-Hans": "集成"},
+  "update.relaunchTitle":        {"fr": "Relancer pour mettre à jour", "de": "Neu starten zum Aktualisieren", "es": "Reiniciar para actualizar", "ja": "再起動して更新", "zh-Hans": "重启以更新"},
+  "update.relaunchTooltip":      {"fr": "Une version plus récente de Pathem est installée. Relancez pour l’exécuter.", "de": "Eine neuere Version von Pathem ist installiert. Starte neu, um sie auszuführen.", "es": "Hay una versión más reciente de Pathem instalada. Reinicia para ejecutarla.", "ja": "新しいビルドのPathemがインストールされています。再起動して実行してください。", "zh-Hans": "已安装较新版本的 Pathem。请重启以运行它。"},
   "overflow.label":              {"fr": "Options", "de": "Optionen", "es": "Opciones", "ja": "オプション", "zh-Hans": "选项"},
   "overflow.tooltip":            {"fr": "Options et thème", "de": "Optionen und Design", "es": "Opciones y tema", "ja": "オプションとテーマ", "zh-Hans": "选项与主题"},
   "overflow.theme":              {"fr": "Thème", "de": "Design", "es": "Tema", "ja": "テーマ", "zh-Hans": "主题"},

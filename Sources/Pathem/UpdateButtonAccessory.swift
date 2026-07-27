@@ -51,14 +51,33 @@ final class UpdateButtonAccessory: NSTitlebarAccessoryViewController {
 
     @objc private func refresh() {
         let version = (updater ?? UpdaterController.shared)?.pendingUpdateVersion
-        isHidden = version == nil
         if let version {
+            // A downloaded Sparkle update takes priority: one click installs it.
+            isHidden = false
+            button.title = L("update.buttonTitle", "Update Ready")
+            button.image = NSImage(
+                systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: button.title)
+            button.action = #selector(openPendingUpdate)
             button.toolTip = L("update.buttonTooltip", "Version %@ is ready to install").replacingOccurrences(
                 of: "%@", with: version)
+        } else if StaleBuildWatch.isStale {
+            // No network update, but a newer build was installed under us: offer a relaunch.
+            isHidden = false
+            button.title = L("update.relaunchTitle", "Relaunch to Update")
+            button.image = NSImage(
+                systemSymbolName: "arrow.clockwise.circle.fill", accessibilityDescription: button.title)
+            button.action = #selector(relaunchForUpdate)
+            button.toolTip = L("update.relaunchTooltip", "A newer build of Pathem is installed. Relaunch to run it.")
+        } else {
+            isHidden = true
         }
     }
 
     @objc private func openPendingUpdate() {
         (updater ?? UpdaterController.shared)?.presentPendingUpdate()
+    }
+
+    @objc private func relaunchForUpdate() {
+        StaleBuildWatch.relaunch()
     }
 }

@@ -493,6 +493,16 @@ extension BrowserViewController {
         check("overflow-menu", themeSub != nil && allPresets && hasSettings,
             "theme=\(themeSub != nil) allPresets=\(allPresets) settings=\(hasSettings)")
 
+        // Stale-build watch: a strictly-newer installed build (past the 5s grace) is stale; nil,
+        // near-launch, and older are not -- so it never nags about the build it launched from.
+        let launchRef = Date()
+        let sbNewer = StaleBuildWatch.isStale(installed: launchRef.addingTimeInterval(60), launched: launchRef)
+        let sbNil = StaleBuildWatch.isStale(installed: nil, launched: launchRef)
+        let sbGrace = StaleBuildWatch.isStale(installed: launchRef.addingTimeInterval(2), launched: launchRef)
+        let sbOlder = StaleBuildWatch.isStale(installed: launchRef.addingTimeInterval(-60), launched: launchRef)
+        check("stale-build-watch", sbNewer && !sbNil && !sbGrace && !sbOlder,
+            "newer=\(sbNewer) nil=\(sbNil) grace=\(sbGrace) older=\(sbOlder)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

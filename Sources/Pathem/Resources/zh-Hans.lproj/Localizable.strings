@@ -1578,6 +1578,8 @@
 "update.checkNow" = "立即检查更新";
 "update.notSetUpBody" = "这是源代码或未签名的构建版本。请从 GitHub 下载最新的已公证版本；那些版本会自动更新。";
 "update.notSetUpTitle" = "此构建版本尚未设置更新";
+"update.relaunchTitle" = "重启以更新";
+"update.relaunchTooltip" = "已安装较新版本的 Pathem。请重启以运行它。";
 "update.sourceBuild" = "这是源码或未签名的构建版本。请从 GitHub 下载最新的公证版本；那些版本会自行更新。";
 "update.viaSparkle" = "更新通过 Sparkle 自动提供。";
 "upload.foldersSkippedBody" = "尚不支持上传文件夹，因此只会上传此次拖放中的文件。";
