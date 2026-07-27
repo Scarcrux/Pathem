@@ -216,12 +216,13 @@ working_dir = "."
 
 [[phase]]
   title = "In-place media editing & conversion"
-  status = "later"
+  status = "done"
   note = "Quick, one-shot edits that save a trip to another app -- crop/rotate/straighten/resize with save-a-copy, plus a batch media-conversion hub (image/video/audio) atop ImageConverter/MediaTools. Not a photo editor; stay in the quick-edit lane."
   issue = 0
 
   [[phase.task]]
     title = "Light image edits: crop / rotate / straighten / resize with save-a-copy, + batch"
+    done = true
 
   [[phase.task]]
     title = "Media conversion hub (image / video / audio) atop ImageConverter + MediaTools"
@@ -241,4 +242,38 @@ working_dir = "."
 
   [[phase.task]]
     title = "Rules-based auto-organize on watch folders (AutomationRule)"
+
+[[phase]]
+  title = "Live-app polish & hardening (2026-07)"
+  status = "done"
+  note = "Shipped from live-app feedback + a multi-agent audit; recorded here so the roadmap is a complete record, not just future tracks."
+  issue = 0
+
+  [[phase.task]]
+    title = "Live transfer progress: speed/ETA/percent (copyfile streaming) + steady readout"
+    done = true
+
+  [[phase.task]]
+    title = "Inline naming in the icon grid; name/rename prompts no longer clip long names"
+    done = true
+
+  [[phase.task]]
+    title = "Eject for external USB/Thunderbolt SSDs + hardened heuristic (never system volumes)"
+    done = true
+
+  [[phase.task]]
+    title = "Configurable torrent download folder + opt-in confirm for inbound magnet/torrent links"
+    done = true
+
+  [[phase.task]]
+    title = "Multi-agent correctness/security audit + fixes (URL parsing, copyfile stage, move rollback, retry bound)"
+    done = true
+
+  [[phase.task]]
+    title = "'…' overflow toolbar button with a Theme (appearance + built-in skins) picker"
+    done = true
+
+  [[phase.task]]
+    title = "Stale-build watch: 'Relaunch to Update' when a newer build is installed under a running app"
+    done = true
 # <<< commandem roadmap <<<
