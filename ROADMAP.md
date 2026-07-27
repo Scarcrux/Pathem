@@ -220,6 +220,34 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   external-file-manager setting -- so they need a *published* Pathem extension, not a
   config write (the only editor that genuinely can't be done this way).
 
+### Track G -- File-explorer capability bets (2026-07-27)
+
+The highest-leverage additions that deepen the "superuser file manager" identity
+without drifting into being a photo editor. Grounded in what Pathem already owns
+(the internal viewer, `MarkupController`, `ImageConverter`, `DuplicateFinder`,
+`SemanticDedup`, the on-device organizer, Vision-for-OCR). Tracked as commandem
+phases; this is the human summary.
+
+- **Photos library integration (PhotoKit) -- now.** Browse and export the macOS
+  Photos library from inside Pathem via **PhotoKit** (never touching the
+  `.photoslibrary` bundle directly, which would corrupt it). Start with browse +
+  export: a Photos sidebar location (albums / moments / people), thumbnails +
+  view, and export originals to the filesystem (`PHAssetResourceManager`). Edit-
+  back into Photos (`PHAssetChangeRequest` / adjustment data) is a later tier.
+- **Vision-powered image smarts -- next.** Tap the same on-device Vision engine
+  Photos uses (we already use it for OCR): subject lift / background removal
+  (`VNGenerateForegroundInstanceMask`), content auto-tagging that feeds the
+  organizer + smart folders, and a near-duplicate photo culler atop
+  `DuplicateFinder` / `SemanticDedup`.
+- **In-place media editing & conversion -- later.** Quick, one-shot edits that
+  save a trip to another app: crop / rotate / straighten / resize with save-a-copy
+  (+ batch), and a media-conversion hub (image / video / audio) atop
+  `ImageConverter` / `MediaTools`. Stay in the quick-edit lane; not a photo editor.
+- **Power-user file tooling -- later.** Classic superuser gaps that compound: a
+  metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit, a first-class
+  disk-space + duplicate cleanup flow (`DirectorySize` + `DuplicateFinder`), and
+  rules-based auto-organize on watch folders (`AutomationRule`).
+
 ## Round 14 (shipped 2026-07-26) -- dialog buttons no longer clip the window border
 
 Live-app report: some window prompts had their button row clipped by the window

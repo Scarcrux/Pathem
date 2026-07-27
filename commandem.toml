@@ -28,122 +28,210 @@ working_dir = "."
 
 # >>> commandem roadmap (managed: edit phases in the Commandem app or `commandem roadmap`) >>>
 [[phase]]
-title = "App polish: refinement pass"
-status = "now"
-note = "Refinement, not features. From a fresh-eyes UX survey; ordered by impact over effort. Keystone (the toast channel) first: it unlocks the feedback wins below."
+  title = "App polish: refinement pass"
+  status = "done"
+  note = "Refinement, not features. From a fresh-eyes UX survey; ordered by impact over effort. Keystone (the toast channel) first: it unlocks the feedback wins below."
+  issue = 0
 
   [[phase.task]]
-  title = "Transient-status/toast channel reusing the per-pane status label (keystone)"
+    title = "Transient-status/toast channel reusing the per-pane status label (keystone)"
+    done = true
 
   [[phase.task]]
-  title = "Confirm silent successes: Copy Path / Name / Checksum flash a confirmation"
+    title = "Confirm silent successes: Copy Path / Name / Checksum flash a confirmation"
+    done = true
 
   [[phase.task]]
-  title = "Consolidate empty-state copy (three phrasings for an empty folder today)"
+    title = "Consolidate empty-state copy (three phrasings for an empty folder today)"
+    done = true
 
   [[phase.task]]
-  title = "Make the permission-denied placeholder actionable (open Full Disk Access); fix FDA guide button hierarchy"
+    title = "Make the permission-denied placeholder actionable (open Full Disk Access); fix FDA guide button hierarchy"
+    done = true
 
   [[phase.task]]
-  title = "Fix themed-accent drift (QuickActions, size bar, transfer progress, AI sparkle, FDA badge)"
+    title = "Fix themed-accent drift (QuickActions, size bar, transfer progress, AI sparkle, FDA badge)"
+    done = true
 
   [[phase.task]]
-  title = "Turn meaningful beep dead-ends into messages (transfer running, remote-only op, failed toggle)"
+    title = "Turn meaningful beep dead-ends into messages (transfer running, remote-only op, failed toggle)"
+    done = true
 
   [[phase.task]]
-  title = "Soften raw/technical strings (ACL row 'Sharing' -> Permissions; curl error; octal 644)"
+    title = "Soften raw/technical strings (ACL row 'Sharing' -> Permissions; curl error; octal 644)"
+    done = true
 
   [[phase.task]]
-  title = "Accessibility labels, incrementally (functional image-only glyphs first)"
+    title = "Accessibility labels, incrementally (functional image-only glyphs first)"
+    done = true
 
   [[phase.task]]
-  title = "Close view-parity gaps: tag dots + git badges in grids; honor single-click/hover outside the list"
+    title = "Close view-parity gaps: tag dots + git badges in grids; honor single-click/hover outside the list"
+    done = true
 
 [[phase]]
-title = "Website & conversion"
-status = "now"
-note = "Site is a funnel whose exits are dead until the repo goes public; make it launch-ready now."
+  title = "Website & conversion"
+  status = "done"
+  note = "Site is a funnel whose exits are dead until the repo goes public; make it launch-ready now."
+  issue = 0
 
   [[phase.task]]
-  title = "Optimize social-card.png (610 KB, 4-8x heavier than an OG card needs)"
+    title = "Optimize social-card.png (610 KB, 4-8x heavier than an OG card needs)"
+    done = true
 
   [[phase.task]]
-  title = "Show, don't just tell: real screenshots for torrents / terminal / remote (text-only today)"
+    title = "Show, don't just tell: real screenshots for torrents / terminal / remote (text-only today)"
+    done = true
 
   [[phase.task]]
-  title = "Honest download story: keep the Star CTA until a notarized build, then wire download + Sparkle appcast"
+    title = "Honest download story: keep the Star CTA until a notarized build, then wire download + Sparkle appcast"
+    done = true
 
   [[phase.task]]
-  title = "Minor SEO/PWA: web app manifest, SVG favicon, sitemap date refresh"
+    title = "Minor SEO/PWA: web app manifest, SVG favicon, sitemap date refresh"
+    done = true
 
 [[phase]]
-title = "Localization hygiene"
-status = "next"
-note = "Catalogs drifted: en 812 keys vs ~1,502 in the other five locales; ~692 of 1,406 L() keys live only in the inline English fallback."
+  title = "Localization hygiene"
+  status = "done"
+  note = "Catalogs drifted: en 812 keys vs ~1,502 in the other five locales; ~692 of 1,406 L() keys live only in the inline English fallback."
+  issue = 0
 
   [[phase.task]]
-  title = "Extract every referenced L() key; prune stale entries"
+    title = "Extract every referenced L() key; prune stale entries"
+    done = true
 
   [[phase.task]]
-  title = "Ensure all six locales cover every key"
+    title = "Ensure all six locales cover every key"
+    done = true
 
   [[phase.task]]
-  title = "Add a coverage + plutil lint to the pre-commit hook"
+    title = "Add a coverage + plutil lint to the pre-commit hook"
+    done = true
 
 [[phase]]
-title = "The public flip (gated on user testing)"
-status = "later"
-note = "Do NOT start until the user says the testing gate is met. Define exit criteria first."
+  title = "The public flip (gated on user testing)"
+  status = "later"
+  note = "Do NOT start until the user says the testing gate is met. Define exit criteria first."
+  issue = 0
 
   [[phase.task]]
-  title = "Define the user-testing exit criteria"
+    title = "Define the user-testing exit criteria"
 
   [[phase.task]]
-  title = "Final manual QA pass; confirm screenshots are current"
+    title = "Final manual QA pass; confirm screenshots are current"
 
   [[phase.task]]
-  title = "Cut a notarized direct download + EdDSA-signed Sparkle appcast"
+    title = "Cut a notarized direct download + EdDSA-signed Sparkle appcast"
 
   [[phase.task]]
-  title = "Final pass over README / LICENSE / SECURITY"
+    title = "Final pass over README / LICENSE / SECURITY"
 
   [[phase.task]]
-  title = "Flip the repo public so the site starts converting"
+    title = "Flip the repo public so the site starts converting"
 
 [[phase]]
-title = "Post-launch engineering bets"
-status = "later"
-note = "Deferred capability work, after the launch runway."
+  title = "Post-launch engineering bets"
+  status = "later"
+  note = "Deferred capability work, after the launch runway."
+  issue = 0
 
   [[phase.task]]
-  title = "Finish dissolving the BrowserViewController god-object (toolbar + split delegate already extracted)"
+    title = "Finish dissolving the BrowserViewController god-object (toolbar + split delegate already extracted)"
 
   [[phase.task]]
-  title = "Torrent standalone parity: send-side PEX, persistent DHT routing table, UPnP-IGD, LEDBAT"
+    title = "Torrent standalone parity: send-side PEX, persistent DHT routing table, UPnP-IGD, LEDBAT"
+    done = true
 
   [[phase.task]]
-  title = "Enable the gated Swift extension runtime once there is real demand"
+    title = "Enable the gated Swift extension runtime once there is real demand"
 
 [[phase]]
-title = "Finder handoff & editor integration"
-status = "later"
-note = "Fast-follow feature. Reveal-in-Finder can't be intercepted system-wide (targets Finder by identity), so: a pull model + opt-in wiring of editors to Pathem."
+  title = "Finder handoff & editor integration"
+  status = "next"
+  note = "Fast-follow feature. Reveal-in-Finder can't be intercepted system-wide (targets Finder by identity), so: a pull model + opt-in wiring of editors to Pathem."
+  issue = 0
 
   [[phase.task]]
-  title = "pathem CLI reveal/open contract (pathem reveal <path>, pathem open <dir>) as the seam every integration calls"
+    title = "pathem CLI reveal/open contract (pathem reveal <path>, pathem open <dir>) as the seam every integration calls"
+    done = true
 
   [[phase.task]]
-  title = "Reveal in Pathem: a second NSServices item + a select-and-reveal handler"
+    title = "Reveal in Pathem: a second NSServices item + a select-and-reveal handler"
+    done = true
 
   [[phase.task]]
-  title = "Preferences -> Integrations panel: detect installed editors; per-editor Integrate/Preview/Remove; opt-in, backup, reversible, merge-not-clobber, warn if running"
+    title = "Preferences -> Integrations panel: detect installed editors; per-editor Integrate/Preview/Remove; opt-in, backup, reversible, merge-not-clobber, warn if running"
+    done = true
 
   [[phase.task]]
-  title = "Sublime Text: write a User-package plugin + keymap + side-bar menu (edits its own config)"
+    title = "Sublime Text: write a User-package plugin + keymap + side-bar menu (edits its own config)"
+    done = true
 
   [[phase.task]]
-  title = "TextMate + JetBrains: a bundle command / an External Tools entry"
+    title = "TextMate + JetBrains: a bundle command / an External Tools entry"
+    done = true
 
   [[phase.task]]
-  title = "VS Code / Cursor: publish a small Pathem extension (their reveal is locked; a settings edit can't redirect it)"
+    title = "VS Code / Cursor: publish a small Pathem extension (their reveal is locked; a settings edit can't redirect it)"
+
+[[phase]]
+  title = "Photos library integration (PhotoKit)"
+  status = "now"
+  note = "Browse and export the macOS Photos library from inside Pathem, via PhotoKit (never touching the .photoslibrary bundle directly). The differentiating 'view/edit what Photos shows' feature; reuses machinery we own."
+  issue = 0
+
+  [[phase.task]]
+    title = "Photos sidebar location: browse albums / moments / people via PhotoKit (read access + permission prompt)"
+
+  [[phase.task]]
+    title = "Export / drag assets out to the filesystem (originals via PHAssetResourceManager)"
+
+  [[phase.task]]
+    title = "View assets (thumbnails + Quick Look / internal viewer)"
+
+  [[phase.task]]
+    title = "Later: edit back into Photos (PHAssetChangeRequest / adjustment data)"
+
+[[phase]]
+  title = "Vision-powered image smarts"
+  status = "next"
+  note = "Tap the same on-device Vision engine Photos uses (we already use it for OCR): subject lift / background removal, content auto-tagging into the organizer, and a near-duplicate photo culler atop DuplicateFinder/SemanticDedup."
+  issue = 0
+
+  [[phase.task]]
+    title = "Subject lift / remove background (VNGenerateForegroundInstanceMask) as a quick action + batch"
+
+  [[phase.task]]
+    title = "Content auto-tagging / classification feeding the on-device organizer + smart folders"
+
+  [[phase.task]]
+    title = "Near-duplicate photo culler (burst/quality scoring atop DuplicateFinder + SemanticDedup)"
+
+[[phase]]
+  title = "In-place media editing & conversion"
+  status = "later"
+  note = "Quick, one-shot edits that save a trip to another app -- crop/rotate/straighten/resize with save-a-copy, plus a batch media-conversion hub (image/video/audio) atop ImageConverter/MediaTools. Not a photo editor; stay in the quick-edit lane."
+  issue = 0
+
+  [[phase.task]]
+    title = "Light image edits: crop / rotate / straighten / resize with save-a-copy, + batch"
+
+  [[phase.task]]
+    title = "Media conversion hub (image / video / audio) atop ImageConverter + MediaTools"
+
+[[phase]]
+  title = "Power-user file tooling"
+  status = "later"
+  note = "Classic superuser gaps that compound: a metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit, a first-class disk-space + duplicate cleanup flow, and rules-based auto-organize on watch folders (AutomationRule)."
+  issue = 0
+
+  [[phase.task]]
+    title = "Metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit"
+
+  [[phase.task]]
+    title = "Disk-space + duplicate cleanup as a first-class flow (DirectorySize + DuplicateFinder)"
+
+  [[phase.task]]
+    title = "Rules-based auto-organize on watch folders (AutomationRule)"
 # <<< commandem roadmap <<<
