@@ -1038,6 +1038,11 @@
 "organize.review.title" = "%@ organisieren";
 "organize.review.trash" = "Papierkorb";
 "organize.review.why" = "Grund: %@  (Regel: %@, Konfidenz %d%%)";
+"overflow.label" = "Optionen";
+"overflow.settings" = "Einstellungen…";
+"overflow.theme" = "Design";
+"overflow.themeSettings" = "Design-Einstellungen…";
+"overflow.tooltip" = "Optionen und Design";
 "palette.multiPlaceholder" = "Diesen Ordner durchsuchen, > für Befehle, / für Pfade";
 "palette.runCommandTitle" = "Befehl ausführen";
 "palette.searchFor" = "Nach „%@“ suchen";

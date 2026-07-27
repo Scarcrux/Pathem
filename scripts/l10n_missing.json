@@ -4,6 +4,11 @@
   "auto.choose":                 {"fr": "Choisir…", "de": "Auswählen…", "es": "Elegir…", "ja": "選択…", "zh-Hans": "选择…"},
 
   "settings.integrations":       {"fr": "Intégrations", "de": "Integrationen", "es": "Integraciones", "ja": "連携", "zh-Hans": "集成"},
+  "overflow.label":              {"fr": "Options", "de": "Optionen", "es": "Opciones", "ja": "オプション", "zh-Hans": "选项"},
+  "overflow.tooltip":            {"fr": "Options et thème", "de": "Optionen und Design", "es": "Opciones y tema", "ja": "オプションとテーマ", "zh-Hans": "选项与主题"},
+  "overflow.theme":              {"fr": "Thème", "de": "Design", "es": "Tema", "ja": "テーマ", "zh-Hans": "主题"},
+  "overflow.themeSettings":      {"fr": "Réglages du thème…", "de": "Design-Einstellungen…", "es": "Ajustes de tema…", "ja": "テーマ設定…", "zh-Hans": "主题设置…"},
+  "overflow.settings":           {"fr": "Réglages…", "de": "Einstellungen…", "es": "Ajustes…", "ja": "設定…", "zh-Hans": "设置…"},
   "torrents.confirmInbound.title":{"fr": "Ajouter ce téléchargement depuis une autre app ?", "de": "Diesen Download aus einer anderen App hinzufügen?", "es": "¿Añadir esta descarga desde otra app?", "ja": "他のAppからのこのダウンロードを追加しますか？", "zh-Hans": "添加来自其他 App 的此下载？"},
   "torrents.confirmInbound.body": {"fr": "Une autre app a demandé à Pathem de télécharger :\n\n%@", "de": "Eine andere App hat Pathem gebeten, Folgendes herunterzuladen:\n\n%@", "es": "Otra app le pidió a Pathem que descargara:\n\n%@", "ja": "他のAppがPathemに次のダウンロードを要求しました：\n\n%@", "zh-Hans": "另一个 App 请求 Pathem 下载：\n\n%@"},
   "torrents.confirmInbound.add":  {"fr": "Ajouter", "de": "Hinzufügen", "es": "Añadir", "ja": "追加", "zh-Hans": "添加"},

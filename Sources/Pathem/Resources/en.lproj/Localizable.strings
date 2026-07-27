@@ -968,6 +968,11 @@
 "organize.review.title" = "Organize %@";
 "organize.review.trash" = "Trash";
 "organize.review.why" = "Why: %@  (rule: %@, confidence %d%%)";
+"overflow.label" = "Options";
+"overflow.settings" = "Settings…";
+"overflow.theme" = "Theme";
+"overflow.themeSettings" = "Theme Settings…";
+"overflow.tooltip" = "Options and theme";
 "palette.multiPlaceholder" = "Search this folder, > for commands, / for paths";
 "palette.runCommandTitle" = "Command Bar";
 "palette.searchFor" = "Search for “%@”";

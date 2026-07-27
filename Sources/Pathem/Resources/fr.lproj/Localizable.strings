@@ -1038,6 +1038,11 @@
 "organize.review.title" = "Organiser %@";
 "organize.review.trash" = "Corbeille";
 "organize.review.why" = "Pourquoi : %@  (règle : %@, confiance %d %%)";
+"overflow.label" = "Options";
+"overflow.settings" = "Réglages…";
+"overflow.theme" = "Thème";
+"overflow.themeSettings" = "Réglages du thème…";
+"overflow.tooltip" = "Options et thème";
 "palette.multiPlaceholder" = "Rechercher dans ce dossier, > pour les commandes, / pour les chemins";
 "palette.runCommandTitle" = "Exécuter la commande";
 "palette.searchFor" = "Rechercher « %@ »";

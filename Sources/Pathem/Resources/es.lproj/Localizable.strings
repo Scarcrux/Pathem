@@ -1038,6 +1038,11 @@
 "organize.review.title" = "Organizar %@";
 "organize.review.trash" = "Papelera";
 "organize.review.why" = "Motivo: %@  (regla: %@, confianza %d%%)";
+"overflow.label" = "Opciones";
+"overflow.settings" = "Ajustes…";
+"overflow.theme" = "Tema";
+"overflow.themeSettings" = "Ajustes de tema…";
+"overflow.tooltip" = "Opciones y tema";
 "palette.multiPlaceholder" = "Busca en esta carpeta, > para comandos, / para rutas";
 "palette.runCommandTitle" = "Ejecutar comando";
 "palette.searchFor" = "Buscar «%@»";

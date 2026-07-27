@@ -131,6 +131,19 @@ extension BrowserViewController: NSToolbarDelegate {
             item.visibilityPriority = .high
             return item
         }
+        if identifier == Self.overflowItemID {
+            let item = NSMenuToolbarItem(itemIdentifier: identifier)
+            item.label = L("overflow.label", "Options")
+            item.toolTip = L("overflow.tooltip", "Options and theme")
+            item.image = NSImage(
+                systemSymbolName: "ellipsis.circle", accessibilityDescription: L("overflow.label", "Options"))?
+                .withSymbolConfiguration(.init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
+            item.showsIndicator = false
+            let menu = NSMenu()
+            menu.delegate = overflowMenuDelegate  // repopulated on open, so checkmarks stay fresh
+            item.menu = menu
+            return item
+        }
         // A command button: the curated catalog entry, or any other registered command
         // (external commands included) resolved dynamically -- so anything can go on the toolbar.
         guard let commandID = Self.toolbarCommandID(identifier) else { return nil }
@@ -164,7 +177,7 @@ extension BrowserViewController: NSToolbarDelegate {
         // A sensible starting arrangement; the rest live in the customization palette.
         let defaults = ["nav.back", "nav.forward", "nav.up", "files.newFolder", "files.getInfo", "view.cleanup"]
         return defaults.compactMap { id in Self.toolbarCatalog.first { $0.commandID == id } }
-            .map(Self.identifier(for:)) + [.flexibleSpace, Self.searchItemID]
+            .map(Self.identifier(for:)) + [.flexibleSpace, Self.searchItemID, Self.overflowItemID]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
@@ -177,6 +190,6 @@ extension BrowserViewController: NSToolbarDelegate {
         let rest = others.filter { !$0.hasPrefix("external.cmd.") }.sorted()
         let ids = catalog + external + rest
         return ids.map { NSToolbarItem.Identifier(Self.toolbarCmdPrefix + $0) }
-            + [.space, .flexibleSpace, Self.searchItemID]
+            + [.space, .flexibleSpace, Self.searchItemID, Self.overflowItemID]
     }
 }

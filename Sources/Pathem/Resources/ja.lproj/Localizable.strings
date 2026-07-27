@@ -1038,6 +1038,11 @@
 "organize.review.title" = "%@を整理";
 "organize.review.trash" = "ゴミ箱に入れる";
 "organize.review.why" = "理由: %@  （ルール: %@、確信度%d%%）";
+"overflow.label" = "オプション";
+"overflow.settings" = "設定…";
+"overflow.theme" = "テーマ";
+"overflow.themeSettings" = "テーマ設定…";
+"overflow.tooltip" = "オプションとテーマ";
 "palette.multiPlaceholder" = "このフォルダを検索、> でコマンド、/ でパス";
 "palette.runCommandTitle" = "コマンドを実行";
 "palette.searchFor" = "「%@」を検索";

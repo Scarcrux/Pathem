@@ -135,6 +135,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
     static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
     static let searchItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.search")
+    /// The "…" overflow toolbar button: a pull-down menu of quick options (theme, view, settings).
+    static let overflowItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.overflow")
+    /// Retained delegate that repopulates the overflow menu each time it opens (fresh checkmarks).
+    lazy var overflowMenuDelegate = OverflowMenuDelegate(browser: self)
     /// A toolbar item that runs a registered command carries the command id in its
     /// identifier (this prefix + the id), so the button is stateless and the id
     /// round-trips through NSToolbar's autosaved customization.

@@ -481,6 +481,18 @@ extension BrowserViewController {
             "picked=\(tsvPicked) empty=\(tsvEmpty) missing=\(tsvMissing)")
         try? FileManager.default.removeItem(at: tsvDir)
 
+        // Overflow (…) toolbar menu: a Theme submenu listing every skin + appearance, plus Settings.
+        let overflowMenu = NSMenu()
+        populateOverflowMenu(overflowMenu)
+        let themeSub = overflowMenu.items.first { $0.title == L("overflow.theme", "Theme") }?.submenu
+        // Every skin is listed (by name; "System" doubles as an appearance label, so match by presence).
+        let allPresets = ThemePreset.presets.allSatisfy { preset in
+            themeSub?.items.contains { $0.title == preset.name } ?? false
+        }
+        let hasSettings = overflowMenu.items.contains { $0.title == L("overflow.settings", "Settings…") }
+        check("overflow-menu", themeSub != nil && allPresets && hasSettings,
+            "theme=\(themeSub != nil) allPresets=\(allPresets) settings=\(hasSettings)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
