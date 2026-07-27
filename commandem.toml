@@ -198,7 +198,7 @@ working_dir = "."
 
 [[phase]]
   title = "Vision-powered image smarts"
-  status = "next"
+  status = "done"
   note = "Tap the same on-device Vision engine Photos uses (we already use it for OCR): subject lift / background removal, content auto-tagging into the organizer, and a near-duplicate photo culler atop DuplicateFinder/SemanticDedup."
   issue = 0
 
@@ -212,6 +212,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Near-duplicate photo culler (burst/quality scoring atop DuplicateFinder + SemanticDedup)"
+    done = true
 
 [[phase]]
   title = "In-place media editing & conversion"
