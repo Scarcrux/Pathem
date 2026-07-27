@@ -198,6 +198,7 @@
 "bvc.cmd.findDuplicates" = "查找重复项";
 "bvc.cmd.findFiles" = "在所有位置查找文件…";
 "bvc.cmd.findInFiles" = "在文件中查找…";
+"bvc.cmd.findNearDuplicates" = "查找近似重复照片";
 "bvc.cmd.findSimilarNames" = "查找相似名称";
 "bvc.cmd.flatView" = "平铺视图";
 "bvc.cmd.flattenFolder" = "展平文件夹（显示所有项目）";
@@ -328,6 +329,10 @@
 "bvc.couldntReadFile" = "无法读取文件";
 "bvc.createPDFFailedBody" = "所选文件均无法添加到 PDF。";
 "bvc.createPDFFailedTitle" = "无法创建 PDF";
+"bvc.cullBody" = "保留 %d 组中每组最清晰的照片，将其余 %d 张移到废纸篓。您可以从废纸篓中还原。";
+"bvc.cullConfirm" = "移到废纸篓";
+"bvc.cullKeep" = "全部保留";
+"bvc.cullTitle" = "将近似重复照片移到废纸篓？";
 "bvc.curlMissing" = "未找到 curl";
 "bvc.deleteFailed" = "删除失败";
 "bvc.deleteNowMany" = "永久删除 %d 个项目？";
@@ -349,6 +354,7 @@
 "bvc.enterPasswordFor" = "请输入 %@@%@ 的密码。";
 "bvc.failuresForItems" = "%d 个项目 %@";
 "bvc.findingDuplicates" = "正在 %@ 中查找重复项…";
+"bvc.findingNearDup" = "正在 %@ 中查找近似重复照片…";
 "bvc.findingSimilar" = "正在 %@ 中查找相似名称…";
 "bvc.flatCount" = "%@ 中的所有项目：%d";
 "bvc.flatCountTruncated" = "%@ 中的所有项目：%d+（已截断）";
@@ -381,11 +387,13 @@
 "bvc.moveToTrashAction" = "移到废纸篓";
 "bvc.moveToTrashFailed" = "移到废纸篓失败";
 "bvc.moving" = "正在移动";
+"bvc.nearDupFound" = "近似重复：%d 组，%d 项待移除";
 "bvc.newFolderPrompt" = "新建文件夹";
 "bvc.newFolderVerb" = "新建文件夹";
 "bvc.newFolderWithItems" = "用项目新建文件夹";
 "bvc.newFolderWithSelectionAction" = "用所选项新建文件夹";
 "bvc.noDuplicates" = "%@ 中没有重复项";
+"bvc.noNearDup" = "%@ 中没有近似重复照片";
 "bvc.noSimilar" = "%@ 中没有相似名称";
 "bvc.noStyles" = "没有样式";
 "bvc.noStylesBody" = "请先通过“存储样式”保存一个。";

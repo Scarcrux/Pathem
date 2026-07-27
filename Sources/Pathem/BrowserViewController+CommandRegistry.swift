@@ -455,6 +455,9 @@ extension BrowserViewController {
         add("files.findSimilarNames", L("bvc.cmd.findSimilarNames", "Find Similar Names"), enabled: { [weak self] in self?.activePane != nil }) {
             [weak self] in self?.findSimilarNames()
         }
+        add("image.findNearDuplicates", L("bvc.cmd.findNearDuplicates", "Find Near-Duplicate Photos"), enabled: { [weak self] in self?.activePane != nil }) {
+            [weak self] in self?.cullNearDuplicatePhotos()
+        }
         add(
             "view.flattenFolder", L("bvc.cmd.flattenFolder", "Flatten Folder (Show All Items)"),
             enabled: { [weak self] in

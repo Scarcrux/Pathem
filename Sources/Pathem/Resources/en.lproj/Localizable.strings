@@ -198,6 +198,7 @@
 "bvc.cmd.findDuplicates" = "Find Duplicates";
 "bvc.cmd.findFiles" = "Find Files Everywhere…";
 "bvc.cmd.findInFiles" = "Find in Files…";
+"bvc.cmd.findNearDuplicates" = "Find Near-Duplicate Photos";
 "bvc.cmd.findSimilarNames" = "Find Similar Names";
 "bvc.cmd.flatView" = "Flat View";
 "bvc.cmd.flattenFolder" = "Flatten Folder (Show All Items)";
@@ -328,6 +329,10 @@
 "bvc.couldntReadFile" = "Couldn’t read the file";
 "bvc.createPDFFailedBody" = "None of the selected files could be added to a PDF.";
 "bvc.createPDFFailedTitle" = "Couldn’t create PDF";
+"bvc.cullBody" = "Keep the sharpest of each of the %d group(s) and move the other %d photo(s) to the Trash. You can Put Back from the Trash.";
+"bvc.cullConfirm" = "Move to Trash";
+"bvc.cullKeep" = "Keep All";
+"bvc.cullTitle" = "Move near-duplicates to the Trash?";
 "bvc.curlMissing" = "curl was not found";
 "bvc.deleteFailed" = "Delete failed";
 "bvc.deleteNowMany" = "Permanently delete %d items?";
@@ -349,6 +354,7 @@
 "bvc.enterPasswordFor" = "Enter the password for %@@%@.";
 "bvc.failuresForItems" = "%@ for %d item(s)";
 "bvc.findingDuplicates" = "Finding duplicates in %@…";
+"bvc.findingNearDup" = "Finding near-duplicate photos in %@…";
 "bvc.findingSimilar" = "Finding similar names in %@…";
 "bvc.flatCount" = "All items in %@: %d";
 "bvc.flatCountTruncated" = "All items in %@: %d+ (truncated)";
@@ -381,11 +387,13 @@
 "bvc.moveToTrashAction" = "Move to Trash";
 "bvc.moveToTrashFailed" = "Move to Trash failed";
 "bvc.moving" = "Moving";
+"bvc.nearDupFound" = "Near-duplicates: %d group(s), %d to remove";
 "bvc.newFolderPrompt" = "New Folder";
 "bvc.newFolderVerb" = "New Folder";
 "bvc.newFolderWithItems" = "New Folder With Items";
 "bvc.newFolderWithSelectionAction" = "New Folder with Selection";
 "bvc.noDuplicates" = "No duplicates in %@";
+"bvc.noNearDup" = "No near-duplicate photos in %@";
 "bvc.noSimilar" = "No similar names in %@";
 "bvc.noStyles" = "No styles";
 "bvc.noStylesBody" = "Save one first with Save Style.";

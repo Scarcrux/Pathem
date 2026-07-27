@@ -1098,6 +1098,7 @@ enum PathemApp {
             commandItem("Find in Files…", "files.findInFiles"),
             commandItem("Find Duplicates", "files.findDuplicates"),
             commandItem("Find Similar Names", "files.findSimilarNames"),
+            commandItem("Find Near-Duplicate Photos", "image.findNearDuplicates"),
             .separator(),
             // ⌥⌘L, not ⌃⌘F: ⌃⌘F is the system Enter Full Screen shortcut, which this shadowed.
             commandItem("Flat View", "view.flatView", "l", [.command, .option]),

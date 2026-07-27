@@ -198,6 +198,7 @@
 "bvc.cmd.findDuplicates" = "Duplikate finden";
 "bvc.cmd.findFiles" = "Dateien überall suchen…";
 "bvc.cmd.findInFiles" = "In Dateien suchen…";
+"bvc.cmd.findNearDuplicates" = "Fast identische Fotos finden";
 "bvc.cmd.findSimilarNames" = "Ähnliche Namen suchen";
 "bvc.cmd.flatView" = "Flache Ansicht";
 "bvc.cmd.flattenFolder" = "Ordner verflachen (alle Objekte anzeigen)";
@@ -328,6 +329,10 @@
 "bvc.couldntReadFile" = "Die Datei konnte nicht gelesen werden";
 "bvc.createPDFFailedBody" = "Keine der ausgewählten Dateien konnte zu einem PDF hinzugefügt werden.";
 "bvc.createPDFFailedTitle" = "PDF konnte nicht erstellt werden";
+"bvc.cullBody" = "Das schärfste Foto jeder der %d Gruppe(n) behalten und die anderen %d Foto(s) in den Papierkorb legen. Du kannst sie aus dem Papierkorb zurücklegen.";
+"bvc.cullConfirm" = "In den Papierkorb";
+"bvc.cullKeep" = "Alle behalten";
+"bvc.cullTitle" = "Fast identische in den Papierkorb legen?";
 "bvc.curlMissing" = "curl wurde nicht gefunden";
 "bvc.deleteFailed" = "Löschen fehlgeschlagen";
 "bvc.deleteNowMany" = "%d Objekte endgültig löschen?";
@@ -349,6 +354,7 @@
 "bvc.enterPasswordFor" = "Gib das Passwort für %@@%@ ein.";
 "bvc.failuresForItems" = "%@ für %d Objekt(e)";
 "bvc.findingDuplicates" = "Duplikate werden in %@ gesucht…";
+"bvc.findingNearDup" = "Fast identische Fotos in %@ werden gesucht…";
 "bvc.findingSimilar" = "Ähnliche Namen in %@ werden gesucht…";
 "bvc.flatCount" = "Alle Objekte in %@: %d";
 "bvc.flatCountTruncated" = "Alle Objekte in %@: %d+ (gekürzt)";
@@ -381,11 +387,13 @@
 "bvc.moveToTrashAction" = "In den Papierkorb legen";
 "bvc.moveToTrashFailed" = "In den Papierkorb legen fehlgeschlagen";
 "bvc.moving" = "Bewegen";
+"bvc.nearDupFound" = "Fast identisch: %d Gruppe(n), %d zu entfernen";
 "bvc.newFolderPrompt" = "Neuer Ordner";
 "bvc.newFolderVerb" = "Neuer Ordner";
 "bvc.newFolderWithItems" = "Neuer Ordner mit Objekten";
 "bvc.newFolderWithSelectionAction" = "Neuer Ordner mit Auswahl";
 "bvc.noDuplicates" = "Keine Duplikate in %@";
+"bvc.noNearDup" = "Keine fast identischen Fotos in %@";
 "bvc.noSimilar" = "Keine ähnlichen Namen in %@";
 "bvc.noStyles" = "Keine Stile";
 "bvc.noStylesBody" = "Sichere zuerst einen mit „Stil sichern“.";

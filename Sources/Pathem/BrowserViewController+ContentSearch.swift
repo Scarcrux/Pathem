@@ -61,6 +61,52 @@ extension BrowserViewController {
         }
     }
 
+    /// Find visually near-duplicate photos in the folder (bursts, near-identical shots), show the
+    /// clusters, and offer to move all but the sharpest of each cluster to the Trash. Runs off-main.
+    func cullNearDuplicatePhotos() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let root = pane.currentURL
+        let entries = pane.entries
+        let imageURLs = entries
+            .filter { !$0.isDirectory && Self.isImageName($0.name) }
+            .map { root.appendingPathComponent($0.name) }
+        guard imageURLs.count >= 2 else { NSSound.beep(); return }
+        let token = pane.beginContentRequest()
+        pane.showSmartResults(
+            [], title: String(format: L("bvc.findingNearDup", "Finding near-duplicate photos in %@…"), root.lastPathComponent))
+        Task { @MainActor [weak self] in
+            let groups = await Task.detached { NearDuplicatePhotos.groups(of: imageURLs) }.value
+            guard let self, self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
+            guard !groups.isEmpty else {
+                pane.showSmartResults(
+                    [], title: String(format: L("bvc.noNearDup", "No near-duplicate photos in %@"), root.lastPathComponent))
+                return
+            }
+            let clusteredNames = Set(groups.flatMap { $0.urls.map(\.lastPathComponent) })
+            let shown = entries.filter { clusteredNames.contains($0.name) }
+            let extras = groups.flatMap(\.extras)
+            pane.showSmartResults(
+                shown,
+                title: String(format: L("bvc.nearDupFound", "Near-duplicates: %d group(s), %d to remove"), groups.count, extras.count))
+            self.confirmCull(extras: extras, groupCount: groups.count)
+        }
+    }
+
+    private func confirmCull(extras: [URL], groupCount: Int) {
+        guard !extras.isEmpty, view.window != nil else { return }
+        let alert = NSAlert()
+        alert.messageText = L("bvc.cullTitle", "Move near-duplicates to the Trash?")
+        alert.informativeText = String(
+            format: L("bvc.cullBody", "Keep the sharpest of each of the %d group(s) and move the other %d photo(s) to the Trash. You can Put Back from the Trash."),
+            groupCount, extras.count)
+        alert.addButton(withTitle: L("bvc.cullConfirm", "Move to Trash"))
+        alert.addButton(withTitle: L("bvc.cullKeep", "Keep All"))
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            self.performLocalTrash(extras)
+        }
+    }
+
     /// Flat / recursive view: list every item under the current folder, flattened into one
     /// location-aware smart-result view (each row carries its own subfolder). Runs off the main
     /// thread; navigating away discards it, like the other smart views.

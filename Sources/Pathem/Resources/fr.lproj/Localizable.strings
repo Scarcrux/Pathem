@@ -198,6 +198,7 @@
 "bvc.cmd.findDuplicates" = "Rechercher les doublons";
 "bvc.cmd.findFiles" = "Rechercher des fichiers partout…";
 "bvc.cmd.findInFiles" = "Rechercher dans les fichiers…";
+"bvc.cmd.findNearDuplicates" = "Trouver les photos quasi-identiques";
 "bvc.cmd.findSimilarNames" = "Rechercher des noms similaires";
 "bvc.cmd.flatView" = "Vue à plat";
 "bvc.cmd.flattenFolder" = "Aplatir le dossier (afficher tous les éléments)";
@@ -328,6 +329,10 @@
 "bvc.couldntReadFile" = "Impossible de lire le fichier";
 "bvc.createPDFFailedBody" = "Aucun des fichiers sélectionnés n'a pu être ajouté à un PDF.";
 "bvc.createPDFFailedTitle" = "Impossible de créer le PDF";
+"bvc.cullBody" = "Conserver la plus nette de chacun des %d groupe(s) et déplacer les %d autre(s) photo(s) vers la corbeille. Vous pouvez les remettre depuis la corbeille.";
+"bvc.cullConfirm" = "Déplacer vers la corbeille";
+"bvc.cullKeep" = "Tout conserver";
+"bvc.cullTitle" = "Déplacer les quasi-identiques vers la corbeille ?";
 "bvc.curlMissing" = "curl est introuvable";
 "bvc.deleteFailed" = "Échec de la suppression";
 "bvc.deleteNowMany" = "Supprimer définitivement %d éléments ?";
@@ -349,6 +354,7 @@
 "bvc.enterPasswordFor" = "Saisissez le mot de passe pour %@@%@.";
 "bvc.failuresForItems" = "%@ pour %d élément(s)";
 "bvc.findingDuplicates" = "Recherche de doublons dans %@…";
+"bvc.findingNearDup" = "Recherche de photos quasi-identiques dans %@…";
 "bvc.findingSimilar" = "Recherche de noms similaires dans %@…";
 "bvc.flatCount" = "Tous les éléments de %@ : %d";
 "bvc.flatCountTruncated" = "Tous les éléments de %@ : %d+ (tronqué)";
@@ -381,11 +387,13 @@
 "bvc.moveToTrashAction" = "Placer dans la corbeille";
 "bvc.moveToTrashFailed" = "Échec du placement dans la corbeille";
 "bvc.moving" = "Déplacement en cours";
+"bvc.nearDupFound" = "Quasi-identiques : %d groupe(s), %d à supprimer";
 "bvc.newFolderPrompt" = "Nouveau dossier";
 "bvc.newFolderVerb" = "Nouveau dossier";
 "bvc.newFolderWithItems" = "Nouveau dossier avec les éléments";
 "bvc.newFolderWithSelectionAction" = "Nouveau dossier par sélection";
 "bvc.noDuplicates" = "Aucun doublon dans %@";
+"bvc.noNearDup" = "Aucune photo quasi-identique dans %@";
 "bvc.noSimilar" = "Aucun nom similaire dans %@";
 "bvc.noStyles" = "Aucun style";
 "bvc.noStylesBody" = "Enregistrez-en un d'abord avec Enregistrer le style.";

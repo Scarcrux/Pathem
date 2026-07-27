@@ -526,6 +526,13 @@ extension BrowserViewController {
         let noJunkTags = ImageClassifier.classify(url: URL(fileURLWithPath: "/etc/hosts")).isEmpty
         check("auto-tag", atRegistered && noJunkTags, "registered=\(atRegistered) noJunk=\(noJunkTags)")
 
+        // Near-duplicate culler: command registered; a cluster's extras exclude the keeper.
+        let ndRegistered = commands.command("image.findNearDuplicates") != nil
+        let ndGroup = NearDuplicatePhotos.Group(
+            urls: [URL(fileURLWithPath: "/a.jpg"), URL(fileURLWithPath: "/b.jpg"), URL(fileURLWithPath: "/c.jpg")], keepIndex: 0)
+        check("near-duplicates", ndRegistered && ndGroup.extras.count == 2,
+            "registered=\(ndRegistered) extras=\(ndGroup.extras.count)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

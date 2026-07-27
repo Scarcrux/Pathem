@@ -198,6 +198,7 @@
 "bvc.cmd.findDuplicates" = "重複を検出";
 "bvc.cmd.findFiles" = "すべての場所でファイルを検索…";
 "bvc.cmd.findInFiles" = "ファイル内を検索…";
+"bvc.cmd.findNearDuplicates" = "ほぼ重複する写真を検索";
 "bvc.cmd.findSimilarNames" = "似た名前を検索";
 "bvc.cmd.flatView" = "フラット表示";
 "bvc.cmd.flattenFolder" = "フォルダを平坦化（すべての項目を表示）";
@@ -328,6 +329,10 @@
 "bvc.couldntReadFile" = "ファイルを読み込めませんでした";
 "bvc.createPDFFailedBody" = "選択したファイルはどれもPDFに追加できませんでした。";
 "bvc.createPDFFailedTitle" = "PDFを作成できませんでした";
+"bvc.cullBody" = "%dグループそれぞれで最も鮮明な写真を残し、他の%d枚をゴミ箱に移動します。ゴミ箱から戻せます。";
+"bvc.cullConfirm" = "ゴミ箱に移動";
+"bvc.cullKeep" = "すべて残す";
+"bvc.cullTitle" = "ほぼ重複する写真をゴミ箱に移動しますか？";
 "bvc.curlMissing" = "curlが見つかりませんでした";
 "bvc.deleteFailed" = "削除に失敗しました";
 "bvc.deleteNowMany" = "%d項目を完全に削除しますか？";
@@ -349,6 +354,7 @@
 "bvc.enterPasswordFor" = "%@@%@のパスワードを入力してください。";
 "bvc.failuresForItems" = "%d項目で%@";
 "bvc.findingDuplicates" = "%@内の重複を検出中…";
+"bvc.findingNearDup" = "%@内のほぼ重複する写真を検索中…";
 "bvc.findingSimilar" = "%@内で似た名前を検索中…";
 "bvc.flatCount" = "%@内のすべての項目: %d";
 "bvc.flatCountTruncated" = "%@内のすべての項目: %d+（省略）";
@@ -381,11 +387,13 @@
 "bvc.moveToTrashAction" = "ゴミ箱に入れる";
 "bvc.moveToTrashFailed" = "ゴミ箱に入れられませんでした";
 "bvc.moving" = "移動中";
+"bvc.nearDupFound" = "ほぼ重複：%dグループ、%d件を削除";
 "bvc.newFolderPrompt" = "新規フォルダ";
 "bvc.newFolderVerb" = "新規フォルダ";
 "bvc.newFolderWithItems" = "項目から新規フォルダ";
 "bvc.newFolderWithSelectionAction" = "選択項目から新規フォルダ";
 "bvc.noDuplicates" = "%@に重複はありません";
+"bvc.noNearDup" = "%@にほぼ重複する写真はありません";
 "bvc.noSimilar" = "%@に似た名前はありません";
 "bvc.noStyles" = "スタイルがありません";
 "bvc.noStylesBody" = "まず「スタイルを保存」で保存してください。";

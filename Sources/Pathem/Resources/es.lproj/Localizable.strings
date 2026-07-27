@@ -198,6 +198,7 @@
 "bvc.cmd.findDuplicates" = "Buscar duplicados";
 "bvc.cmd.findFiles" = "Buscar archivos en todas partes…";
 "bvc.cmd.findInFiles" = "Buscar en archivos…";
+"bvc.cmd.findNearDuplicates" = "Buscar fotos casi duplicadas";
 "bvc.cmd.findSimilarNames" = "Buscar nombres similares";
 "bvc.cmd.flatView" = "Vista plana";
 "bvc.cmd.flattenFolder" = "Aplanar carpeta (mostrar todos los ítems)";
@@ -328,6 +329,10 @@
 "bvc.couldntReadFile" = "No se pudo leer el archivo";
 "bvc.createPDFFailedBody" = "No se pudo añadir a un PDF ninguno de los archivos seleccionados.";
 "bvc.createPDFFailedTitle" = "No se pudo crear el PDF";
+"bvc.cullBody" = "Conservar la más nítida de cada uno de los %d grupo(s) y mover las otras %d foto(s) a la papelera. Puedes recuperarlas desde la papelera.";
+"bvc.cullConfirm" = "Mover a la papelera";
+"bvc.cullKeep" = "Conservar todas";
+"bvc.cullTitle" = "¿Mover las casi duplicadas a la papelera?";
 "bvc.curlMissing" = "No se encontró curl";
 "bvc.deleteFailed" = "La eliminación falló";
 "bvc.deleteNowMany" = "¿Eliminar permanentemente %d ítems?";
@@ -349,6 +354,7 @@
 "bvc.enterPasswordFor" = "Introduce la contraseña de %@@%@.";
 "bvc.failuresForItems" = "%@ para %d ítem(s)";
 "bvc.findingDuplicates" = "Buscando duplicados en %@…";
+"bvc.findingNearDup" = "Buscando fotos casi duplicadas en %@…";
 "bvc.findingSimilar" = "Buscando nombres similares en %@…";
 "bvc.flatCount" = "Todos los ítems en %@: %d";
 "bvc.flatCountTruncated" = "Todos los ítems en %@: %d+ (truncado)";
@@ -381,11 +387,13 @@
 "bvc.moveToTrashAction" = "Mover a la papelera";
 "bvc.moveToTrashFailed" = "No se pudo mover a la papelera";
 "bvc.moving" = "Moviendo";
+"bvc.nearDupFound" = "Casi duplicadas: %d grupo(s), %d para eliminar";
 "bvc.newFolderPrompt" = "Nueva carpeta";
 "bvc.newFolderVerb" = "Nueva carpeta";
 "bvc.newFolderWithItems" = "Nueva carpeta con ítems";
 "bvc.newFolderWithSelectionAction" = "Nueva carpeta con la selección";
 "bvc.noDuplicates" = "No hay duplicados en %@";
+"bvc.noNearDup" = "No hay fotos casi duplicadas en %@";
 "bvc.noSimilar" = "No hay nombres similares en %@";
 "bvc.noStyles" = "Sin estilos";
 "bvc.noStylesBody" = "Guarda uno primero con «Guardar estilo».";
