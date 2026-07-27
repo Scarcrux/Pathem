@@ -998,6 +998,7 @@ enum PathemApp {
                     commandItem("Split File…", "files.split"),
                     commandItem("Merge Parts", "files.merge"),
                     commandItem("Convert Images…", "files.convertImages"),
+                    commandItem("Crop…", "image.crop"),
                     commandItem("Rotate Left", "image.rotateLeft"),
                     commandItem("Rotate Right", "image.rotateRight"),
                     commandItem("Remove Background", "image.removeBackground"),

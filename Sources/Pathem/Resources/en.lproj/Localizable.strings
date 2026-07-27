@@ -177,6 +177,7 @@
 "bvc.cmd.copyToOtherPane" = "Copy to Other Pane";
 "bvc.cmd.createPDF" = "Create PDF";
 "bvc.cmd.createTorrent" = "Create Torrent…";
+"bvc.cmd.crop" = "Crop…";
 "bvc.cmd.customizeToolbar" = "Customize Toolbar…";
 "bvc.cmd.cut" = "Cut";
 "bvc.cmd.deleteApp" = "Uninstall App…";
@@ -336,6 +337,7 @@
 "bvc.couldntReadFile" = "Couldn’t read the file";
 "bvc.createPDFFailedBody" = "None of the selected files could be added to a PDF.";
 "bvc.createPDFFailedTitle" = "Couldn’t create PDF";
+"bvc.cropAction" = "Crop";
 "bvc.cullBody" = "Keep the sharpest of each of the %d group(s) and move the other %d photo(s) to the Trash. You can Put Back from the Trash.";
 "bvc.cullConfirm" = "Move to Trash";
 "bvc.cullKeep" = "Keep All";
@@ -617,6 +619,12 @@
 "convert.maxPixels" = "Max pixels (optional)";
 "convert.sizeLabel" = "Max size";
 "convert.strip" = "Strip metadata (EXIF, GPS)";
+"crop.apply" = "Crop";
+"crop.aspect" = "Aspect:";
+"crop.failedTitle" = "Couldn’t crop the image";
+"crop.free" = "Free";
+"crop.original" = "Original";
+"crop.windowTitle" = "Crop “%@”";
 "crumb.copyPath" = "Copy Path";
 "crumb.leftPane" = "Open in Left Pane";
 "crumb.leftPaneNewTab" = "Open in Left Pane (New Tab)";

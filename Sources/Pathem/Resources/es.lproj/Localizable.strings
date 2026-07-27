@@ -177,6 +177,7 @@
 "bvc.cmd.copyToOtherPane" = "Copiar al otro panel";
 "bvc.cmd.createPDF" = "Crear PDF";
 "bvc.cmd.createTorrent" = "Crear torrent…";
+"bvc.cmd.crop" = "Recortar…";
 "bvc.cmd.customizeToolbar" = "Personalizar barra de herramientas…";
 "bvc.cmd.cut" = "Cortar";
 "bvc.cmd.deleteApp" = "Desinstalar app…";
@@ -336,6 +337,7 @@
 "bvc.couldntReadFile" = "No se pudo leer el archivo";
 "bvc.createPDFFailedBody" = "No se pudo añadir a un PDF ninguno de los archivos seleccionados.";
 "bvc.createPDFFailedTitle" = "No se pudo crear el PDF";
+"bvc.cropAction" = "Recortar";
 "bvc.cullBody" = "Conservar la más nítida de cada uno de los %d grupo(s) y mover las otras %d foto(s) a la papelera. Puedes recuperarlas desde la papelera.";
 "bvc.cullConfirm" = "Mover a la papelera";
 "bvc.cullKeep" = "Conservar todas";
@@ -617,6 +619,12 @@
 "convert.maxPixels" = "Píxeles máximos (opcional)";
 "convert.sizeLabel" = "Tamaño máximo";
 "convert.strip" = "Eliminar metadatos (EXIF, GPS)";
+"crop.apply" = "Recortar";
+"crop.aspect" = "Proporción:";
+"crop.failedTitle" = "No se pudo recortar la imagen";
+"crop.free" = "Libre";
+"crop.original" = "Original";
+"crop.windowTitle" = "Recortar «%@»";
 "crumb.copyPath" = "Copiar ruta";
 "crumb.leftPane" = "Abrir en el panel izquierdo";
 "crumb.leftPaneNewTab" = "Abrir en el panel izquierdo (nueva pestaña)";

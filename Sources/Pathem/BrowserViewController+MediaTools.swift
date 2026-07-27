@@ -168,6 +168,22 @@ extension BrowserViewController {
         }
     }
 
+    /// Crop the selected image in an interactive window, saving a cropped copy beside it (undoable).
+    func cropSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
+            let url = pane.selectedLocalURLs().first, Self.isImageName(url.lastPathComponent),
+            let window = view.window
+        else { NSSound.beep(); return }
+        cropController.onCropped = { [weak self] out in
+            self?.activePane?.reloadIfShowingListing()
+            self?.activePane?.select(name: out.lastPathComponent)
+            self?.registerCreatedUndo(
+                names: [out.lastPathComponent], in: out.deletingLastPathComponent(),
+                actionName: L("bvc.cropAction", "Crop"))
+        }
+        cropController.present(url: url, over: window)
+    }
+
     /// Mark up the selected image (freehand annotations), saving a flattened copy.
     func markupSelection() {
         guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first,

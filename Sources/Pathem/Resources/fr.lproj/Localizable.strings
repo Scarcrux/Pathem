@@ -177,6 +177,7 @@
 "bvc.cmd.copyToOtherPane" = "Copier vers l’autre volet";
 "bvc.cmd.createPDF" = "Créer un PDF";
 "bvc.cmd.createTorrent" = "Créer un torrent…";
+"bvc.cmd.crop" = "Rogner…";
 "bvc.cmd.customizeToolbar" = "Personnaliser la barre d'outils…";
 "bvc.cmd.cut" = "Couper";
 "bvc.cmd.deleteApp" = "Désinstaller l’app…";
@@ -336,6 +337,7 @@
 "bvc.couldntReadFile" = "Impossible de lire le fichier";
 "bvc.createPDFFailedBody" = "Aucun des fichiers sélectionnés n'a pu être ajouté à un PDF.";
 "bvc.createPDFFailedTitle" = "Impossible de créer le PDF";
+"bvc.cropAction" = "Rogner";
 "bvc.cullBody" = "Conserver la plus nette de chacun des %d groupe(s) et déplacer les %d autre(s) photo(s) vers la corbeille. Vous pouvez les remettre depuis la corbeille.";
 "bvc.cullConfirm" = "Déplacer vers la corbeille";
 "bvc.cullKeep" = "Tout conserver";
@@ -617,6 +619,12 @@
 "convert.maxPixels" = "Pixels max (facultatif)";
 "convert.sizeLabel" = "Taille max";
 "convert.strip" = "Supprimer les métadonnées (EXIF, GPS)";
+"crop.apply" = "Rogner";
+"crop.aspect" = "Format :";
+"crop.failedTitle" = "Impossible de rogner l’image";
+"crop.free" = "Libre";
+"crop.original" = "Original";
+"crop.windowTitle" = "Rogner « %@ »";
 "crumb.copyPath" = "Copier le chemin";
 "crumb.leftPane" = "Ouvrir dans le volet gauche";
 "crumb.leftPaneNewTab" = "Ouvrir dans le volet gauche (nouvel onglet)";

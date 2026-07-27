@@ -177,6 +177,7 @@
 "bvc.cmd.copyToOtherPane" = "拷贝到另一窗格";
 "bvc.cmd.createPDF" = "创建 PDF";
 "bvc.cmd.createTorrent" = "创建种子…";
+"bvc.cmd.crop" = "裁剪…";
 "bvc.cmd.customizeToolbar" = "自定义工具栏…";
 "bvc.cmd.cut" = "剪切";
 "bvc.cmd.deleteApp" = "卸载应用…";
@@ -336,6 +337,7 @@
 "bvc.couldntReadFile" = "无法读取文件";
 "bvc.createPDFFailedBody" = "所选文件均无法添加到 PDF。";
 "bvc.createPDFFailedTitle" = "无法创建 PDF";
+"bvc.cropAction" = "裁剪";
 "bvc.cullBody" = "保留 %d 组中每组最清晰的照片，将其余 %d 张移到废纸篓。您可以从废纸篓中还原。";
 "bvc.cullConfirm" = "移到废纸篓";
 "bvc.cullKeep" = "全部保留";
@@ -617,6 +619,12 @@
 "convert.maxPixels" = "最大像素（可选）";
 "convert.sizeLabel" = "最大尺寸";
 "convert.strip" = "移除元数据（EXIF、GPS）";
+"crop.apply" = "裁剪";
+"crop.aspect" = "宽高比：";
+"crop.failedTitle" = "无法裁剪图像";
+"crop.free" = "自由";
+"crop.original" = "原始";
+"crop.windowTitle" = "裁剪“%@”";
 "crumb.copyPath" = "拷贝路径";
 "crumb.leftPane" = "在左窗格中打开";
 "crumb.leftPaneNewTab" = "在左窗格中打开（新标签页）";

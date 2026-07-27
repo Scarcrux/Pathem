@@ -181,6 +181,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var settings = SettingsWindowController()
     /// The Photos-library browser (PhotoKit), opened from the sidebar's Photos item.
     lazy var photosBrowser = PhotosBrowserController()
+    /// The interactive image cropper (Image ▸ Crop).
+    lazy var cropController = CropController()
     /// Settings embedded over the right pane (so browsing continues in the left pane).
     var settingsPanel: NSView?
     lazy var batchCreate = BatchCreateController()

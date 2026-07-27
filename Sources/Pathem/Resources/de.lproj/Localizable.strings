@@ -177,6 +177,7 @@
 "bvc.cmd.copyToOtherPane" = "In anderen Bereich kopieren";
 "bvc.cmd.createPDF" = "PDF erstellen";
 "bvc.cmd.createTorrent" = "Torrent erstellen…";
+"bvc.cmd.crop" = "Zuschneiden…";
 "bvc.cmd.customizeToolbar" = "Symbolleiste anpassen…";
 "bvc.cmd.cut" = "Ausschneiden";
 "bvc.cmd.deleteApp" = "App deinstallieren…";
@@ -336,6 +337,7 @@
 "bvc.couldntReadFile" = "Die Datei konnte nicht gelesen werden";
 "bvc.createPDFFailedBody" = "Keine der ausgewählten Dateien konnte zu einem PDF hinzugefügt werden.";
 "bvc.createPDFFailedTitle" = "PDF konnte nicht erstellt werden";
+"bvc.cropAction" = "Zuschneiden";
 "bvc.cullBody" = "Das schärfste Foto jeder der %d Gruppe(n) behalten und die anderen %d Foto(s) in den Papierkorb legen. Du kannst sie aus dem Papierkorb zurücklegen.";
 "bvc.cullConfirm" = "In den Papierkorb";
 "bvc.cullKeep" = "Alle behalten";
@@ -617,6 +619,12 @@
 "convert.maxPixels" = "Max. Pixel (optional)";
 "convert.sizeLabel" = "Max. Größe";
 "convert.strip" = "Metadaten entfernen (EXIF, GPS)";
+"crop.apply" = "Zuschneiden";
+"crop.aspect" = "Seitenverhältnis:";
+"crop.failedTitle" = "Bild konnte nicht zugeschnitten werden";
+"crop.free" = "Frei";
+"crop.original" = "Original";
+"crop.windowTitle" = "„%@“ zuschneiden";
 "crumb.copyPath" = "Pfad kopieren";
 "crumb.leftPane" = "Im linken Bereich öffnen";
 "crumb.leftPaneNewTab" = "Im linken Bereich öffnen (neuer Tab)";

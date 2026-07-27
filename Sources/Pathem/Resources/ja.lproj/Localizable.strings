@@ -177,6 +177,7 @@
 "bvc.cmd.copyToOtherPane" = "もう一方のペインにコピー";
 "bvc.cmd.createPDF" = "PDFを作成";
 "bvc.cmd.createTorrent" = "トレントを作成…";
+"bvc.cmd.crop" = "トリミング…";
 "bvc.cmd.customizeToolbar" = "ツールバーをカスタマイズ…";
 "bvc.cmd.cut" = "カット";
 "bvc.cmd.deleteApp" = "Appをアンインストール…";
@@ -336,6 +337,7 @@
 "bvc.couldntReadFile" = "ファイルを読み込めませんでした";
 "bvc.createPDFFailedBody" = "選択したファイルはどれもPDFに追加できませんでした。";
 "bvc.createPDFFailedTitle" = "PDFを作成できませんでした";
+"bvc.cropAction" = "トリミング";
 "bvc.cullBody" = "%dグループそれぞれで最も鮮明な写真を残し、他の%d枚をゴミ箱に移動します。ゴミ箱から戻せます。";
 "bvc.cullConfirm" = "ゴミ箱に移動";
 "bvc.cullKeep" = "すべて残す";
@@ -617,6 +619,12 @@
 "convert.maxPixels" = "最大ピクセル数（任意）";
 "convert.sizeLabel" = "最大サイズ";
 "convert.strip" = "メタデータを削除（EXIF、GPS）";
+"crop.apply" = "トリミング";
+"crop.aspect" = "アスペクト比：";
+"crop.failedTitle" = "画像をトリミングできませんでした";
+"crop.free" = "自由";
+"crop.original" = "オリジナル";
+"crop.windowTitle" = "「%@」をトリミング";
 "crumb.copyPath" = "パスをコピー";
 "crumb.leftPane" = "左ペインで開く";
 "crumb.leftPaneNewTab" = "左ペインの新規タブで開く";

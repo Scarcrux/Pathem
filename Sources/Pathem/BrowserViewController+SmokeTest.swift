@@ -540,6 +540,11 @@ extension BrowserViewController {
         check("media-convert", extractReg && mp4Reg && mediaExtOK,
             "extract=\(extractReg) mp4=\(mp4Reg) ext=\(mediaExtOK)")
 
+        // Crop editor: command registered; cropped-copy naming appends " Cropped".
+        let cropReg = commands.command("image.crop") != nil
+        let cropNameOK = ImageCropper.croppedName(for: "shot.png") == "shot Cropped.png"
+        check("image-crop", cropReg && cropNameOK, "registered=\(cropReg) name=\(cropNameOK)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
