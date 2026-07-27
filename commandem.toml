@@ -204,6 +204,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Subject lift / remove background (VNGenerateForegroundInstanceMask) as a quick action + batch"
+    done = true
 
   [[phase.task]]
     title = "Content auto-tagging / classification feeding the on-device organizer + smart folders"
