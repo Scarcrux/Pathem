@@ -230,7 +230,7 @@ working_dir = "."
 
 [[phase]]
   title = "Power-user file tooling"
-  status = "later"
+  status = "now"
   note = "Classic superuser gaps that compound: a metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit, a first-class disk-space + duplicate cleanup flow, and rules-based auto-organize on watch folders (AutomationRule)."
   issue = 0
 
@@ -242,6 +242,10 @@ working_dir = "."
 
   [[phase.task]]
     title = "Rules-based auto-organize on watch folders (AutomationRule)"
+
+  [[phase.task]]
+    title = "Remove Location: lossless in-place GPS strip (kCGImageMetadataShouldExcludeGPS) as a privacy op"
+    done = true
 
 [[phase]]
   title = "Live-app polish & hardening (2026-07)"
