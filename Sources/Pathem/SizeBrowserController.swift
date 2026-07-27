@@ -97,18 +97,9 @@ final class SizeBrowserController: NSObject {
         spinner.startAnimation(nil)
         let generation = gen.bump()
         Task.detached(priority: .utility) { [weak self] in
-            let children =
-                (try? FileManager.default.contentsOfDirectory(
-                    at: url, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]))
-                ?? []
-            var sized: [(name: String, size: Int64, isDir: Bool)] = []
-            for child in children {
-                let isDir = (try? child.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
-                let size = isDir ? DirectorySize.total(of: child).bytes : Int64(
-                    (try? child.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
-                sized.append((child.lastPathComponent, size, isDir))
-            }
-            sized.sort { $0.size > $1.size }
+            // Ranked, symlink-safe child sizing (a symlink to a big tree can't inflate a row).
+            let sized = DiskUsage.rankedChildren(of: url, includingHidden: false)
+                .map { (name: $0.name, size: $0.bytes, isDir: $0.isDirectory) }
             await MainActor.run {
                 guard let self, self.gen.isCurrent(generation) else { return }
                 self.spinner.stopAnimation(nil)
