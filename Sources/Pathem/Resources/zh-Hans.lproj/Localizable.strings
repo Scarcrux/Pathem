@@ -109,6 +109,9 @@
 "bvc.anonymous" = "匿名";
 "bvc.apply" = "应用";
 "bvc.applyStyleTitle" = "应用样式";
+"bvc.autoTagNoneBody" = "Vision 未能为所选图像找到可信的内容标记。";
+"bvc.autoTagNoneTitle" = "未添加标记";
+"bvc.autoTagged" = "已按内容标记 %d 张图像";
 "bvc.bookmarkThisFolder" = "为此文件夹添加书签…";
 "bvc.bookmarksHint" = "连接到服务器以添加书签。";
 "bvc.bookmarksMenu" = "书签";
@@ -142,6 +145,7 @@
 "bvc.cmd.asList" = "以列表方式";
 "bvc.cmd.asTree" = "以树状显示";
 "bvc.cmd.askPathem" = "询问 Pathem（自然语言）…";
+"bvc.cmd.autoTag" = "按内容自动标记";
 "bvc.cmd.automation" = "自动化规则…";
 "bvc.cmd.back" = "后退";
 "bvc.cmd.backupTo" = "备份到…";

@@ -64,6 +64,37 @@ extension BrowserViewController {
         for url in urls { ThumbnailProvider.shared.evict(url) }
     }
 
+    /// Classify each selected image with Vision and add its top content labels as Finder tags, so the
+    /// photos become findable by what's in them (in Pathem and Finder). New tags merge with existing.
+    func autoTagSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter { Self.isImageName($0.lastPathComponent) }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        Task { @MainActor in
+            let tagged = await Task.detached { () -> Int in
+                var count = 0
+                for url in urls {
+                    let labels = ImageClassifier.classify(url: url)
+                    guard !labels.isEmpty else { continue }
+                    let existing = FileTags.tags(of: url)
+                    let have = Set(existing.map(\.name))
+                    let additions = labels.filter { !have.contains($0) }.map { FileTag(name: $0) }
+                    guard !additions.isEmpty else { continue }
+                    if (try? FileTags.setTags(existing + additions, on: url)) != nil { count += 1 }
+                }
+                return count
+            }.value
+            self.activePane?.reloadIfShowingListing()  // reload re-reads tags, so the new dots show
+            if tagged == 0 {
+                self.presentInfo(
+                    L("bvc.autoTagNoneTitle", "No tags added"),
+                    L("bvc.autoTagNoneBody", "Vision didn’t find confident content tags for the selected image(s)."))
+            } else {
+                self.activePane?.flashStatus(String(format: L("bvc.autoTagged", "Tagged %d image(s) by content"), tagged))
+            }
+        }
+    }
+
     /// Lift the foreground subject of each selected image with Vision, writing a transparent-background
     /// "<name> Cutout.png" beside it (a new file, undoable), then select the first result.
     func removeBackgroundSelection() {

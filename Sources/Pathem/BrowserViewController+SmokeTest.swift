@@ -521,6 +521,11 @@ extension BrowserViewController {
         let cutoutOK = SubjectLift.cutoutName(for: "beach.heic") == "beach Cutout.png"
         check("remove-background", rbRegistered && cutoutOK, "registered=\(rbRegistered) cutout=\(cutoutOK)")
 
+        // Vision auto-tag: the command is registered; classifying a non-image yields no tags (safe).
+        let atRegistered = commands.command("image.autoTag") != nil
+        let noJunkTags = ImageClassifier.classify(url: URL(fileURLWithPath: "/etc/hosts")).isEmpty
+        check("auto-tag", atRegistered && noJunkTags, "registered=\(atRegistered) noJunk=\(noJunkTags)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

@@ -193,6 +193,9 @@ extension BrowserViewController {
         add("image.removeBackground", L("bvc.cmd.removeBackground", "Remove Background"), enabled: hasSelectedImage) {
             [weak self] in self?.removeBackgroundSelection()
         }
+        add("image.autoTag", L("bvc.cmd.autoTag", "Auto-Tag by Content"), enabled: hasSelectedImage) {
+            [weak self] in self?.autoTagSelection()
+        }
         add("image.createPDF", L("bvc.cmd.createPDF", "Create PDF"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.contains { Self.isImageName($0.name) || ($0.name as NSString).pathExtension.lowercased() == "pdf" }

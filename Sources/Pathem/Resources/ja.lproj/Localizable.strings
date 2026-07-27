@@ -109,6 +109,9 @@
 "bvc.anonymous" = "anonymous";
 "bvc.apply" = "適用";
 "bvc.applyStyleTitle" = "スタイルを適用";
+"bvc.autoTagNoneBody" = "選択した画像について、Visionは確実な内容タグを見つけられませんでした。";
+"bvc.autoTagNoneTitle" = "タグは追加されませんでした";
+"bvc.autoTagged" = "%d枚の画像を内容でタグ付けしました";
 "bvc.bookmarkThisFolder" = "このフォルダをブックマーク…";
 "bvc.bookmarksHint" = "ブックマークを追加するにはサーバに接続してください。";
 "bvc.bookmarksMenu" = "ブックマーク";
@@ -142,6 +145,7 @@
 "bvc.cmd.asList" = "リスト表示";
 "bvc.cmd.asTree" = "ツリー表示";
 "bvc.cmd.askPathem" = "Pathemに質問（自然言語）…";
+"bvc.cmd.autoTag" = "内容で自動タグ付け";
 "bvc.cmd.automation" = "自動化ルール…";
 "bvc.cmd.back" = "戻る";
 "bvc.cmd.backupTo" = "バックアップ先…";

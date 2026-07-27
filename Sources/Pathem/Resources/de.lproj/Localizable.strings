@@ -109,6 +109,9 @@
 "bvc.anonymous" = "anonym";
 "bvc.apply" = "Anwenden";
 "bvc.applyStyleTitle" = "Stil anwenden";
+"bvc.autoTagNoneBody" = "Vision hat für die ausgewählten Bilder keine sicheren Inhalts-Tags gefunden.";
+"bvc.autoTagNoneTitle" = "Keine Tags hinzugefügt";
+"bvc.autoTagged" = "%d Bild(er) nach Inhalt getaggt";
 "bvc.bookmarkThisFolder" = "Lesezeichen für diesen Ordner…";
 "bvc.bookmarksHint" = "Mit einem Server verbinden, um Lesezeichen hinzuzufügen.";
 "bvc.bookmarksMenu" = "Lesezeichen";
@@ -142,6 +145,7 @@
 "bvc.cmd.asList" = "als Liste";
 "bvc.cmd.asTree" = "als Baum";
 "bvc.cmd.askPathem" = "Pathem fragen (natürliche Sprache)…";
+"bvc.cmd.autoTag" = "Nach Inhalt automatisch taggen";
 "bvc.cmd.automation" = "Automatisierungsregeln…";
 "bvc.cmd.back" = "Zurück";
 "bvc.cmd.backupTo" = "Sichern nach…";

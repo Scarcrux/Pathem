@@ -1001,6 +1001,7 @@ enum PathemApp {
                     commandItem("Rotate Left", "image.rotateLeft"),
                     commandItem("Rotate Right", "image.rotateRight"),
                     commandItem("Remove Background", "image.removeBackground"),
+                    commandItem("Auto-Tag by Content", "image.autoTag"),
                     commandItem("Create PDF", "image.createPDF"),
                     commandItem("Markup…", "image.markup"),
                     commandItem("Trim Media…", "files.trimMedia"),

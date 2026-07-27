@@ -109,6 +109,9 @@
 "bvc.anonymous" = "anonyme";
 "bvc.apply" = "Appliquer";
 "bvc.applyStyleTitle" = "Appliquer le style";
+"bvc.autoTagNoneBody" = "Vision n’a pas trouvé d’étiquettes de contenu fiables pour la ou les images sélectionnées.";
+"bvc.autoTagNoneTitle" = "Aucune étiquette ajoutée";
+"bvc.autoTagged" = "%d image(s) étiquetée(s) par contenu";
 "bvc.bookmarkThisFolder" = "Ajouter ce dossier aux signets…";
 "bvc.bookmarksHint" = "Connectez-vous à un serveur pour ajouter des signets.";
 "bvc.bookmarksMenu" = "Signets";
@@ -142,6 +145,7 @@
 "bvc.cmd.asList" = "en liste";
 "bvc.cmd.asTree" = "en arborescence";
 "bvc.cmd.askPathem" = "Demander à Pathem (langage naturel)…";
+"bvc.cmd.autoTag" = "Étiqueter par contenu";
 "bvc.cmd.automation" = "Règles d'automatisation…";
 "bvc.cmd.back" = "Précédent";
 "bvc.cmd.backupTo" = "Sauvegarder vers…";

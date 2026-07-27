@@ -5,6 +5,10 @@
 
   "settings.integrations":       {"fr": "Intégrations", "de": "Integrationen", "es": "Integraciones", "ja": "連携", "zh-Hans": "集成"},
   "bvc.cmd.removeBackground":    {"fr": "Supprimer l’arrière-plan", "de": "Hintergrund entfernen", "es": "Eliminar fondo", "ja": "背景を削除", "zh-Hans": "移除背景"},
+  "bvc.cmd.autoTag":             {"fr": "Étiqueter par contenu", "de": "Nach Inhalt automatisch taggen", "es": "Etiquetar por contenido", "ja": "内容で自動タグ付け", "zh-Hans": "按内容自动标记"},
+  "bvc.autoTagNoneTitle":        {"fr": "Aucune étiquette ajoutée", "de": "Keine Tags hinzugefügt", "es": "No se añadieron etiquetas", "ja": "タグは追加されませんでした", "zh-Hans": "未添加标记"},
+  "bvc.autoTagNoneBody":         {"fr": "Vision n’a pas trouvé d’étiquettes de contenu fiables pour la ou les images sélectionnées.", "de": "Vision hat für die ausgewählten Bilder keine sicheren Inhalts-Tags gefunden.", "es": "Vision no encontró etiquetas de contenido fiables para las imágenes seleccionadas.", "ja": "選択した画像について、Visionは確実な内容タグを見つけられませんでした。", "zh-Hans": "Vision 未能为所选图像找到可信的内容标记。"},
+  "bvc.autoTagged":              {"fr": "%d image(s) étiquetée(s) par contenu", "de": "%d Bild(er) nach Inhalt getaggt", "es": "%d imagen(es) etiquetada(s) por contenido", "ja": "%d枚の画像を内容でタグ付けしました", "zh-Hans": "已按内容标记 %d 张图像"},
   "bvc.removeBgAction":          {"fr": "Supprimer l’arrière-plan", "de": "Hintergrund entfernen", "es": "Eliminar fondo", "ja": "背景を削除", "zh-Hans": "移除背景"},
   "bvc.removeBgFailedTitle":     {"fr": "Impossible de supprimer l’arrière-plan", "de": "Hintergrund konnte nicht entfernt werden", "es": "No se pudo eliminar el fondo", "ja": "背景を削除できませんでした", "zh-Hans": "无法移除背景"},
   "bvc.removeBgFailedBody":      {"fr": "Aucun sujet trouvé dans %d image(s).", "de": "In %d Bild(ern) wurde kein Motiv gefunden.", "es": "No se encontró ningún sujeto en %d imagen(es).", "ja": "%d枚の画像で被写体が見つかりませんでした。", "zh-Hans": "在 %d 张图像中未找到主体。"},
