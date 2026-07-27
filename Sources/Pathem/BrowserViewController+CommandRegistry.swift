@@ -196,6 +196,9 @@ extension BrowserViewController {
         add("image.autoTag", L("bvc.cmd.autoTag", "Auto-Tag by Content"), enabled: hasSelectedImage) {
             [weak self] in self?.autoTagSelection()
         }
+        add("image.removeLocation", L("bvc.cmd.removeLocation", "Remove Location"), enabled: hasSelectedImage) {
+            [weak self] in self?.removeLocationFromSelection()
+        }
         add("image.crop", L("bvc.cmd.crop", "Crop…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults,
                 pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first

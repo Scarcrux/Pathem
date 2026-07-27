@@ -100,6 +100,35 @@ extension BrowserViewController {
         }
     }
 
+    /// Strip GPS location from the selected photos (losslessly, in place) after a confirm, since it
+    /// edits the originals. Photos with no location are skipped. The "share without leaking where it
+    /// was taken" privacy op.
+    func removeLocationFromSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter { Self.isImageName($0.lastPathComponent) }
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        let alert = NSAlert()
+        alert.messageText = String(format: L("bvc.removeLocationTitle", "Remove location from %d photo(s)?"), urls.count)
+        alert.informativeText = L(
+            "bvc.removeLocationBody",
+            "This edits the originals to drop their GPS location, losslessly (no quality loss). Photos without a location are skipped.")
+        alert.addButton(withTitle: L("bvc.removeLocationConfirm", "Remove Location"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        Task { @MainActor in
+            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
+            let removed = await Task.detached { () -> Int in
+                var count = 0
+                for url in urls where (try? MetadataCleaner.removeLocation(from: url)) == true { count += 1 }
+                return count
+            }.value
+            if removed == 0 {
+                self.activePane?.flashStatus(L("bvc.noLocationFound", "No location found in the selected photos"))
+            } else {
+                self.activePane?.flashStatus(String(format: L("bvc.locationRemoved", "Removed location from %d photo(s)"), removed))
+            }
+        }
+    }
+
     /// Classify each selected image with Vision and add its top content labels as Finder tags, so the
     /// photos become findable by what's in them (in Pathem and Finder). New tags merge with existing.
     func autoTagSelection() {

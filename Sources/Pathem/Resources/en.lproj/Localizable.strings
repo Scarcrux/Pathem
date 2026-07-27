@@ -251,6 +251,7 @@
 "bvc.cmd.releaseNotes" = "Release Notes";
 "bvc.cmd.removeBackground" = "Remove Background";
 "bvc.cmd.removeCustomIcon" = "Remove Custom Icon";
+"bvc.cmd.removeLocation" = "Remove Location";
 "bvc.cmd.removeQuarantine" = "Remove Quarantine";
 "bvc.cmd.rename" = "Rename…";
 "bvc.cmd.repoReclaim" = "Reclaim in Repo…";
@@ -373,6 +374,7 @@
 "bvc.keepBoth" = "Keep Both";
 "bvc.layoutDefaultName" = "Layout %d";
 "bvc.layoutsMenu" = "Layouts";
+"bvc.locationRemoved" = "Removed location from %d photo(s)";
 "bvc.macroCmdTitle" = "Macro: %@";
 "bvc.makeLinkAction" = "Make Link";
 "bvc.makeLinkFailed" = "Couldn’t create the link";
@@ -402,6 +404,7 @@
 "bvc.newFolderWithItems" = "New Folder With Items";
 "bvc.newFolderWithSelectionAction" = "New Folder with Selection";
 "bvc.noDuplicates" = "No duplicates in %@";
+"bvc.noLocationFound" = "No location found in the selected photos";
 "bvc.noNearDup" = "No near-duplicate photos in %@";
 "bvc.noSimilar" = "No similar names in %@";
 "bvc.noStyles" = "No styles";
@@ -431,6 +434,9 @@
 "bvc.removeBgAction" = "Remove Background";
 "bvc.removeBgFailedBody" = "No subject was found in %d image(s).";
 "bvc.removeBgFailedTitle" = "Couldn’t remove the background";
+"bvc.removeLocationBody" = "This edits the originals to drop their GPS location, losslessly (no quality loss). Photos without a location are skipped.";
+"bvc.removeLocationConfirm" = "Remove Location";
+"bvc.removeLocationTitle" = "Remove location from %d photo(s)?";
 "bvc.renameButton" = "Rename";
 "bvc.renameFailed" = "Rename failed";
 "bvc.renamePrompt" = "Enter a new name for this item.";

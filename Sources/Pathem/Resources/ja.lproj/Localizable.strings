@@ -251,6 +251,7 @@
 "bvc.cmd.releaseNotes" = "リリースノート";
 "bvc.cmd.removeBackground" = "背景を削除";
 "bvc.cmd.removeCustomIcon" = "カスタムアイコンを削除";
+"bvc.cmd.removeLocation" = "位置情報を削除";
 "bvc.cmd.removeQuarantine" = "検疫を解除";
 "bvc.cmd.rename" = "名称変更…";
 "bvc.cmd.repoReclaim" = "リポジトリで容量を回収…";
@@ -373,6 +374,7 @@
 "bvc.keepBoth" = "両方とも残す";
 "bvc.layoutDefaultName" = "レイアウト %d";
 "bvc.layoutsMenu" = "レイアウト";
+"bvc.locationRemoved" = "%d枚の写真から位置情報を削除しました";
 "bvc.macroCmdTitle" = "マクロ: %@";
 "bvc.makeLinkAction" = "リンクを作成";
 "bvc.makeLinkFailed" = "リンクを作成できませんでした";
@@ -402,6 +404,7 @@
 "bvc.newFolderWithItems" = "項目から新規フォルダ";
 "bvc.newFolderWithSelectionAction" = "選択項目から新規フォルダ";
 "bvc.noDuplicates" = "%@に重複はありません";
+"bvc.noLocationFound" = "選択した写真に位置情報が見つかりませんでした";
 "bvc.noNearDup" = "%@にほぼ重複する写真はありません";
 "bvc.noSimilar" = "%@に似た名前はありません";
 "bvc.noStyles" = "スタイルがありません";
@@ -431,6 +434,9 @@
 "bvc.removeBgAction" = "背景を削除";
 "bvc.removeBgFailedBody" = "%d枚の画像で被写体が見つかりませんでした。";
 "bvc.removeBgFailedTitle" = "背景を削除できませんでした";
+"bvc.removeLocationBody" = "元の画像を編集してGPS位置情報を可逆的に削除します（画質の劣化はありません）。位置情報のない写真はスキップされます。";
+"bvc.removeLocationConfirm" = "位置情報を削除";
+"bvc.removeLocationTitle" = "%d枚の写真から位置情報を削除しますか？";
 "bvc.renameButton" = "名称変更";
 "bvc.renameFailed" = "名称変更に失敗しました";
 "bvc.renamePrompt" = "この項目の新しい名前を入力してください。";

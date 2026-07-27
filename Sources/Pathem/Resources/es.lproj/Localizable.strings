@@ -251,6 +251,7 @@
 "bvc.cmd.releaseNotes" = "Notas de la versión";
 "bvc.cmd.removeBackground" = "Eliminar fondo";
 "bvc.cmd.removeCustomIcon" = "Eliminar icono personalizado";
+"bvc.cmd.removeLocation" = "Eliminar ubicación";
 "bvc.cmd.removeQuarantine" = "Eliminar cuarentena";
 "bvc.cmd.rename" = "Renombrar…";
 "bvc.cmd.repoReclaim" = "Recuperar espacio en el repositorio…";
@@ -373,6 +374,7 @@
 "bvc.keepBoth" = "Conservar ambos";
 "bvc.layoutDefaultName" = "Disposición %d";
 "bvc.layoutsMenu" = "Disposiciones";
+"bvc.locationRemoved" = "Ubicación eliminada de %d foto(s)";
 "bvc.macroCmdTitle" = "Macro: %@";
 "bvc.makeLinkAction" = "Crear enlace";
 "bvc.makeLinkFailed" = "No se pudo crear el enlace";
@@ -402,6 +404,7 @@
 "bvc.newFolderWithItems" = "Nueva carpeta con ítems";
 "bvc.newFolderWithSelectionAction" = "Nueva carpeta con la selección";
 "bvc.noDuplicates" = "No hay duplicados en %@";
+"bvc.noLocationFound" = "No se encontró ubicación en las fotos seleccionadas";
 "bvc.noNearDup" = "No hay fotos casi duplicadas en %@";
 "bvc.noSimilar" = "No hay nombres similares en %@";
 "bvc.noStyles" = "Sin estilos";
@@ -431,6 +434,9 @@
 "bvc.removeBgAction" = "Eliminar fondo";
 "bvc.removeBgFailedBody" = "No se encontró ningún sujeto en %d imagen(es).";
 "bvc.removeBgFailedTitle" = "No se pudo eliminar el fondo";
+"bvc.removeLocationBody" = "Esto edita los originales para eliminar su ubicación GPS, sin pérdida de calidad. Se omiten las fotos sin ubicación.";
+"bvc.removeLocationConfirm" = "Eliminar ubicación";
+"bvc.removeLocationTitle" = "¿Eliminar la ubicación de %d foto(s)?";
 "bvc.renameButton" = "Renombrar";
 "bvc.renameFailed" = "No se pudo renombrar";
 "bvc.renamePrompt" = "Introduce un nombre nuevo para este elemento.";

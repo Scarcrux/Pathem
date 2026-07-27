@@ -545,6 +545,11 @@ extension BrowserViewController {
         let cropNameOK = ImageCropper.croppedName(for: "shot.png") == "shot Cropped.png"
         check("image-crop", cropReg && cropNameOK, "registered=\(cropReg) name=\(cropNameOK)")
 
+        // Remove Location (GPS privacy): command registered; a non-image reports no location (safe).
+        let rlReg = commands.command("image.removeLocation") != nil
+        let rlSafe = !MetadataCleaner.hasLocation(URL(fileURLWithPath: "/etc/hosts"))
+        check("remove-location", rlReg && rlSafe, "registered=\(rlReg) safe=\(rlSafe)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

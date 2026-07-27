@@ -251,6 +251,7 @@
 "bvc.cmd.releaseNotes" = "发行说明";
 "bvc.cmd.removeBackground" = "移除背景";
 "bvc.cmd.removeCustomIcon" = "移除自定图标";
+"bvc.cmd.removeLocation" = "移除位置信息";
 "bvc.cmd.removeQuarantine" = "移除隔离标记";
 "bvc.cmd.rename" = "重新命名…";
 "bvc.cmd.repoReclaim" = "在仓库中回收空间…";
@@ -373,6 +374,7 @@
 "bvc.keepBoth" = "两者都保留";
 "bvc.layoutDefaultName" = "布局 %d";
 "bvc.layoutsMenu" = "布局";
+"bvc.locationRemoved" = "已从 %d 张照片中移除位置信息";
 "bvc.macroCmdTitle" = "宏：%@";
 "bvc.makeLinkAction" = "创建链接";
 "bvc.makeLinkFailed" = "无法创建链接";
@@ -402,6 +404,7 @@
 "bvc.newFolderWithItems" = "用项目新建文件夹";
 "bvc.newFolderWithSelectionAction" = "用所选项新建文件夹";
 "bvc.noDuplicates" = "%@ 中没有重复项";
+"bvc.noLocationFound" = "所选照片中未找到位置信息";
 "bvc.noNearDup" = "%@ 中没有近似重复照片";
 "bvc.noSimilar" = "%@ 中没有相似名称";
 "bvc.noStyles" = "没有样式";
@@ -431,6 +434,9 @@
 "bvc.removeBgAction" = "移除背景";
 "bvc.removeBgFailedBody" = "在 %d 张图像中未找到主体。";
 "bvc.removeBgFailedTitle" = "无法移除背景";
+"bvc.removeLocationBody" = "此操作会编辑原始文件以无损移除其 GPS 位置信息（不损失画质）。没有位置信息的照片将被跳过。";
+"bvc.removeLocationConfirm" = "移除位置信息";
+"bvc.removeLocationTitle" = "从 %d 张照片中移除位置信息？";
 "bvc.renameButton" = "重新命名";
 "bvc.renameFailed" = "重新命名失败";
 "bvc.renamePrompt" = "为此项目输入新名称。";
