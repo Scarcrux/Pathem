@@ -183,12 +183,15 @@ working_dir = "."
 
   [[phase.task]]
     title = "Photos sidebar location: browse albums / moments / people via PhotoKit (read access + permission prompt)"
+    done = true
 
   [[phase.task]]
     title = "Export / drag assets out to the filesystem (originals via PHAssetResourceManager)"
+    done = true
 
   [[phase.task]]
     title = "View assets (thumbnails + Quick Look / internal viewer)"
+    done = true
 
   [[phase.task]]
     title = "Later: edit back into Photos (PHAssetChangeRequest / adjustment data)"
