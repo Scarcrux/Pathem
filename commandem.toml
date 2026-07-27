@@ -208,6 +208,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Content auto-tagging / classification feeding the on-device organizer + smart folders"
+    done = true
 
   [[phase.task]]
     title = "Near-duplicate photo culler (burst/quality scoring atop DuplicateFinder + SemanticDedup)"
