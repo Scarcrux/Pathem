@@ -295,6 +295,30 @@ extension BrowserViewController {
                 "pending=\(updater.pendingUpdateVersion ?? "nil") hidden=\(accessory?.isHidden.description ?? "no-accessory")")
             updater.debugSetPendingUpdate(version: hadPending)  // restore
         }
+        // Dialog sizing guard: growToFitContent must expand a window whose content is taller than
+        // its designed height (so a button row can't clip past the border), and must never shrink
+        // below the designed size (so scroll-view heights stay intact). Exercises both directions.
+        do {
+            let win = NSPanel(
+                contentRect: NSRect(x: 0, y: 0, width: 200, height: 80),
+                styleMask: [.titled], backing: .buffered, defer: true)
+            let content = win.contentView!
+            let inner = NSView()
+            inner.translatesAutoresizingMaskIntoConstraints = false
+            content.addSubview(inner)
+            NSLayoutConstraint.activate([
+                inner.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+                inner.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+                inner.topAnchor.constraint(equalTo: content.topAnchor),
+                inner.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+                inner.heightAnchor.constraint(equalToConstant: 300),  // taller than the 80pt window
+            ])
+            win.growToFitContent()
+            let sized = win.contentView!.frame.size
+            check(
+                "dialog-grows-to-fit-content", sized.height >= 300 && sized.width >= 200,
+                "grew h 80->\(Int(sized.height)); kept designed w (\(Int(sized.width)))")
+        }
         // Preview pane must not collapse the panes to zero (the auto-preview layout bug):
         // toggling it on keeps the panes wide, and toggling it off restores their width.
         check("preview-pane-keeps-panes", debugPreviewToggleKeepsPanes(), "panes survive preview toggle")

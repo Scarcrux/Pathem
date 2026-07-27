@@ -29,6 +29,7 @@ final class UndoHistoryController: NSObject, NSTableViewDataSource, NSTableViewD
         self.history = history
         history.onChange = { [weak self] in self?.refresh() }
         refresh()
+        panel.growToFitContent()
         panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
     }

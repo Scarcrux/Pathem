@@ -32,6 +32,7 @@ final class BulkAttributesController: NSObject {
     func present(count: Int, over window: NSWindow, onApply: @escaping (BulkAttributes.Changes) -> Void) {
         self.onApply = onApply
         panel.title = String(format: L("attrs.titleFor", "Set Attributes: %d item(s)"), count)
+        panel.growToFitContent()
         window.beginSheet(panel) { _ in }
     }
 

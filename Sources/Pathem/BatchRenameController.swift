@@ -158,6 +158,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         self.onComplete = onComplete
         recompute()
 
+        panel.growToFitContent()
         let windowFrame = window.frame
         let size = panel.frame.size
         panel.setFrameOrigin(

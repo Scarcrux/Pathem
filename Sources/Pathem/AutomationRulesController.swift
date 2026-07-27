@@ -25,6 +25,7 @@ final class AutomationRulesController: NSObject, NSTableViewDataSource, NSTableV
         self.manager = manager
         rules = manager.rules
         table.reloadData()
+        panel.growToFitContent()
         if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
     }
@@ -241,6 +242,7 @@ private final class RuleEditor: NSObject {
         destinationField.stringValue = rule.destinationPath ?? ""
         tagField.stringValue = rule.tag ?? ""
         enabledCheck.state = rule.enabled ? .on : .off
+        panel.growToFitContent()
         window.beginSheet(panel) { _ in }
     }
 

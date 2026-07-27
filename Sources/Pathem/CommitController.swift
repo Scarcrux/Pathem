@@ -31,6 +31,7 @@ final class CommitController: NSObject {
         infoLabel.stringValue = String(format: L("git.commitRepo", "Commit to %@"), repo)
         textView.string = ""
         suggestButton.isHidden = !canSuggest
+        panel.growToFitContent()
         panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(textView)

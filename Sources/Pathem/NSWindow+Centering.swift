@@ -25,4 +25,25 @@ extension NSWindow {
         }
         setFrameOrigin(origin)
     }
+
+    /// Grow this window so its content view's Auto Layout fitting size is fully visible, never
+    /// shrinking below the current (designed) size. This is the systematic guard against the
+    /// "buttons clipped by the window border" problem: a dialog laid out for English at a
+    /// hardcoded height can be too short once a longer localized string wraps to more lines or
+    /// the user runs a larger system font, pushing the bottom button row past the window edge.
+    /// Growing (never shrinking) keeps scroll-view heights intact while ensuring the button row
+    /// always fits. Requires the content pinned top+bottom so the fitting height is determinate.
+    /// Call it just before centering/showing, once the content is populated.
+    func growToFitContent(minWidth: CGFloat = 0, minHeight: CGFloat = 0) {
+        guard let content = contentView else { return }
+        content.layoutSubtreeIfNeeded()
+        let fit = content.fittingSize
+        let current = content.frame.size
+        let target = NSSize(
+            width: max(current.width, fit.width, minWidth),
+            height: max(current.height, fit.height, minHeight))
+        if target.width > current.width || target.height > current.height {
+            setContentSize(target)
+        }
+    }
 }

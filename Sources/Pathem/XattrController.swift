@@ -30,6 +30,7 @@ final class XattrController: NSObject, NSTableViewDataSource, NSTableViewDelegat
     func present(for url: URL, over window: NSWindow?) {
         self.url = url
         reload()
+        panel.growToFitContent()
         if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
     }

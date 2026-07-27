@@ -29,6 +29,7 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
         self.onChange = onChange
         self.onRun = onRun
         table.reloadData()
+        panel.growToFitContent()
         panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
     }

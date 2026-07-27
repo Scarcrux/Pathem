@@ -37,6 +37,7 @@ final class ACLEditorController: NSObject, NSTableViewDataSource, NSTableViewDel
         principalField.stringValue = ""
         statusLabel.stringValue = ""
         reload()
+        panel.growToFitContent()
         panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(principalField)

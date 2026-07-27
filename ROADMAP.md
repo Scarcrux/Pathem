@@ -18,7 +18,7 @@ Five tracks, roughly in priority order. **Tracks A (app polish), B (site), and C
 (localization hygiene) are done** (see their status blocks) -- the pre-launch
 runway is complete. **Track D (the public flip) is the next step, gated on the
 user's testing decision;** E is the post-launch backlog. Meanwhile, live-app
-feedback keeps landing as dated rounds below (latest: Round 13).
+feedback keeps landing as dated rounds below (latest: Round 14).
 
 ### Track A -- App polish (refinement, not new features)
 
@@ -219,6 +219,25 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   **Remaining:** VS Code / Cursor, which lock their reveal and expose no
   external-file-manager setting -- so they need a *published* Pathem extension, not a
   config write (the only editor that genuinely can't be done this way).
+
+## Round 14 (shipped 2026-07-26) -- dialog buttons no longer clip the window border
+
+Live-app report: some window prompts had their button row clipped by the window
+border when there wasn't enough room. Root cause: several custom NSPanel dialogs
+used a hardcoded content height sized for English, so a longer localized string
+(wrapping to more lines) or a larger system font pushed the bottom button row past
+the fixed window height.
+
+- **Systematic fix, not per-dialog patching.** New `NSWindow.growToFitContent()`
+  (in `NSWindow+Centering.swift`) grows a window to its content view's Auto Layout
+  fitting size, never shrinking below the designed size (so scroll-view heights stay
+  intact). Called just before centering/showing, once content is populated, in every
+  custom dialog: Commit, Undo History, Templates, Bulk Attributes, Batch Rename,
+  Xattr, ACL editor, Archive contents, and both Automation Rules panels.
+  (`InfoInspectorController` already sized to fit; it's the pattern this generalizes.)
+- Guarded by a new `PATHEM_SMOKE` invariant, `dialog-grows-to-fit-content`, that
+  drives the helper on a deliberately-too-short window and asserts it grows in height
+  while preserving the designed width.
 
 ## Round 13 (shipped 2026-07-26) -- visible update button + in-app changelog
 
