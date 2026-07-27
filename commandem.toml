@@ -239,12 +239,18 @@ working_dir = "."
 
   [[phase.task]]
     title = "Disk-space + duplicate cleanup as a first-class flow (DirectorySize + DuplicateFinder)"
+    done = true
 
   [[phase.task]]
     title = "Rules-based auto-organize on watch folders (AutomationRule)"
+    done = true
 
   [[phase.task]]
     title = "Remove Location: lossless in-place GPS strip (kCGImageMetadataShouldExcludeGPS) as a privacy op"
+    done = true
+
+  [[phase.task]]
+    title = "Size Browser largest-items view: extracted tested DiskUsage ranker; fixed symlink over-count"
     done = true
 
 [[phase]]
