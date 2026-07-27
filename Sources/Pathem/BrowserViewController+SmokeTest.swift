@@ -515,6 +515,12 @@ extension BrowserViewController {
             "unique=\(photosUnique) (\(secondExport.lastPathComponent)) command=\(photosCommand)")
         try? FileManager.default.removeItem(at: photosDir)
 
+        // Vision subject lift: the Remove Background command is registered, and the cutout name maps
+        // a photo to a transparent-PNG sibling.
+        let rbRegistered = commands.command("image.removeBackground") != nil
+        let cutoutOK = SubjectLift.cutoutName(for: "beach.heic") == "beach Cutout.png"
+        check("remove-background", rbRegistered && cutoutOK, "registered=\(rbRegistered) cutout=\(cutoutOK)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

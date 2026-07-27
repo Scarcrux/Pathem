@@ -64,6 +64,43 @@ extension BrowserViewController {
         for url in urls { ThumbnailProvider.shared.evict(url) }
     }
 
+    /// Lift the foreground subject of each selected image with Vision, writing a transparent-background
+    /// "<name> Cutout.png" beside it (a new file, undoable), then select the first result.
+    func removeBackgroundSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs().filter { Self.isImageName($0.lastPathComponent) }
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        let folder = pane.currentURL
+        Task { @MainActor in
+            let outcome = await Task.detached { () -> (created: [String], failed: Int) in
+                var created: [String] = []
+                var failed = 0
+                for url in urls {
+                    let dest = PhotoLibrary.uniqueURL(
+                        in: folder, name: SubjectLift.cutoutName(for: url.lastPathComponent))
+                    do {
+                        try SubjectLift.removeBackground(from: url, to: dest)
+                        created.append(dest.lastPathComponent)
+                    } catch {
+                        failed += 1
+                    }
+                }
+                return (created, failed)
+            }.value
+            self.activePane?.reloadIfShowingListing()
+            if let first = outcome.created.first { self.activePane?.select(name: first) }
+            if !outcome.created.isEmpty {
+                self.registerCreatedUndo(
+                    names: outcome.created, in: folder, actionName: L("bvc.removeBgAction", "Remove Background"))
+            }
+            if outcome.failed > 0 {
+                self.presentInfo(
+                    L("bvc.removeBgFailedTitle", "Couldn’t remove the background"),
+                    String(format: L("bvc.removeBgFailedBody", "No subject was found in %d image(s)."), outcome.failed))
+            }
+        }
+    }
+
     /// Mark up the selected image (freehand annotations), saving a flattened copy.
     func markupSelection() {
         guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first,

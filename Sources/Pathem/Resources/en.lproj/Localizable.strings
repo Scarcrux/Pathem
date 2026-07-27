@@ -241,6 +241,7 @@
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "Redo";
 "bvc.cmd.releaseNotes" = "Release Notes";
+"bvc.cmd.removeBackground" = "Remove Background";
 "bvc.cmd.removeCustomIcon" = "Remove Custom Icon";
 "bvc.cmd.removeQuarantine" = "Remove Quarantine";
 "bvc.cmd.rename" = "Rename…";
@@ -406,6 +407,9 @@
 "bvc.remoteDeleteMany" = "Permanently delete %d items on %@?";
 "bvc.remoteDeleteOne" = "Permanently delete this item on %@?";
 "bvc.remoteOpFailed" = "%@ failed";
+"bvc.removeBgAction" = "Remove Background";
+"bvc.removeBgFailedBody" = "No subject was found in %d image(s).";
+"bvc.removeBgFailedTitle" = "Couldn’t remove the background";
 "bvc.renameButton" = "Rename";
 "bvc.renameFailed" = "Rename failed";
 "bvc.renamePrompt" = "Enter a new name for this item.";

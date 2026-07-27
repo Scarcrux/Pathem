@@ -241,6 +241,7 @@
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "やり直す";
 "bvc.cmd.releaseNotes" = "リリースノート";
+"bvc.cmd.removeBackground" = "背景を削除";
 "bvc.cmd.removeCustomIcon" = "カスタムアイコンを削除";
 "bvc.cmd.removeQuarantine" = "検疫を解除";
 "bvc.cmd.rename" = "名称変更…";
@@ -406,6 +407,9 @@
 "bvc.remoteDeleteMany" = "%d項目を%@上から完全に削除しますか？";
 "bvc.remoteDeleteOne" = "%@上のこの項目を完全に削除しますか？";
 "bvc.remoteOpFailed" = "%@に失敗しました";
+"bvc.removeBgAction" = "背景を削除";
+"bvc.removeBgFailedBody" = "%d枚の画像で被写体が見つかりませんでした。";
+"bvc.removeBgFailedTitle" = "背景を削除できませんでした";
 "bvc.renameButton" = "名称変更";
 "bvc.renameFailed" = "名称変更に失敗しました";
 "bvc.renamePrompt" = "この項目の新しい名前を入力してください。";

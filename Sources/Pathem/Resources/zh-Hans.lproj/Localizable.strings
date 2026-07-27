@@ -241,6 +241,7 @@
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "重做";
 "bvc.cmd.releaseNotes" = "发行说明";
+"bvc.cmd.removeBackground" = "移除背景";
 "bvc.cmd.removeCustomIcon" = "移除自定图标";
 "bvc.cmd.removeQuarantine" = "移除隔离标记";
 "bvc.cmd.rename" = "重新命名…";
@@ -406,6 +407,9 @@
 "bvc.remoteDeleteMany" = "永久删除 %@ 上的 %d 个项目？";
 "bvc.remoteDeleteOne" = "永久删除 %@ 上的此项目？";
 "bvc.remoteOpFailed" = "%@ 失败";
+"bvc.removeBgAction" = "移除背景";
+"bvc.removeBgFailedBody" = "在 %d 张图像中未找到主体。";
+"bvc.removeBgFailedTitle" = "无法移除背景";
 "bvc.renameButton" = "重新命名";
 "bvc.renameFailed" = "重新命名失败";
 "bvc.renamePrompt" = "为此项目输入新名称。";

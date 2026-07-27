@@ -241,6 +241,7 @@
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "Rehacer";
 "bvc.cmd.releaseNotes" = "Notas de la versión";
+"bvc.cmd.removeBackground" = "Eliminar fondo";
 "bvc.cmd.removeCustomIcon" = "Eliminar icono personalizado";
 "bvc.cmd.removeQuarantine" = "Eliminar cuarentena";
 "bvc.cmd.rename" = "Renombrar…";
@@ -406,6 +407,9 @@
 "bvc.remoteDeleteMany" = "¿Eliminar permanentemente %d ítems en %@?";
 "bvc.remoteDeleteOne" = "¿Eliminar permanentemente este ítem en %@?";
 "bvc.remoteOpFailed" = "%@ falló";
+"bvc.removeBgAction" = "Eliminar fondo";
+"bvc.removeBgFailedBody" = "No se encontró ningún sujeto en %d imagen(es).";
+"bvc.removeBgFailedTitle" = "No se pudo eliminar el fondo";
 "bvc.renameButton" = "Renombrar";
 "bvc.renameFailed" = "No se pudo renombrar";
 "bvc.renamePrompt" = "Introduce un nombre nuevo para este elemento.";

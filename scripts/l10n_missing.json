@@ -4,6 +4,10 @@
   "auto.choose":                 {"fr": "Choisir…", "de": "Auswählen…", "es": "Elegir…", "ja": "選択…", "zh-Hans": "选择…"},
 
   "settings.integrations":       {"fr": "Intégrations", "de": "Integrationen", "es": "Integraciones", "ja": "連携", "zh-Hans": "集成"},
+  "bvc.cmd.removeBackground":    {"fr": "Supprimer l’arrière-plan", "de": "Hintergrund entfernen", "es": "Eliminar fondo", "ja": "背景を削除", "zh-Hans": "移除背景"},
+  "bvc.removeBgAction":          {"fr": "Supprimer l’arrière-plan", "de": "Hintergrund entfernen", "es": "Eliminar fondo", "ja": "背景を削除", "zh-Hans": "移除背景"},
+  "bvc.removeBgFailedTitle":     {"fr": "Impossible de supprimer l’arrière-plan", "de": "Hintergrund konnte nicht entfernt werden", "es": "No se pudo eliminar el fondo", "ja": "背景を削除できませんでした", "zh-Hans": "无法移除背景"},
+  "bvc.removeBgFailedBody":      {"fr": "Aucun sujet trouvé dans %d image(s).", "de": "In %d Bild(ern) wurde kein Motiv gefunden.", "es": "No se encontró ningún sujeto en %d imagen(es).", "ja": "%d枚の画像で被写体が見つかりませんでした。", "zh-Hans": "在 %d 张图像中未找到主体。"},
   "sidebar.photos":              {"fr": "Photos", "de": "Fotos", "es": "Fotos", "ja": "写真", "zh-Hans": "照片"},
   "bvc.cmd.openPhotos":          {"fr": "Photothèque…", "de": "Fotomediathek…", "es": "Fototeca…", "ja": "写真ライブラリ…", "zh-Hans": "照片图库…"},
   "photos.windowTitle":          {"fr": "Photos", "de": "Fotos", "es": "Fotos", "ja": "写真", "zh-Hans": "照片"},

@@ -241,6 +241,7 @@
 "bvc.cmd.quickLook" = "Quick Look";
 "bvc.cmd.redo" = "Wiederholen";
 "bvc.cmd.releaseNotes" = "Versionshinweise";
+"bvc.cmd.removeBackground" = "Hintergrund entfernen";
 "bvc.cmd.removeCustomIcon" = "Eigenes Symbol entfernen";
 "bvc.cmd.removeQuarantine" = "Quarantäne entfernen";
 "bvc.cmd.rename" = "Umbenennen…";
@@ -406,6 +407,9 @@
 "bvc.remoteDeleteMany" = "%d Objekte auf %@ endgültig löschen?";
 "bvc.remoteDeleteOne" = "Dieses Objekt auf %@ endgültig löschen?";
 "bvc.remoteOpFailed" = "%@ fehlgeschlagen";
+"bvc.removeBgAction" = "Hintergrund entfernen";
+"bvc.removeBgFailedBody" = "In %d Bild(ern) wurde kein Motiv gefunden.";
+"bvc.removeBgFailedTitle" = "Hintergrund konnte nicht entfernt werden";
 "bvc.renameButton" = "Umbenennen";
 "bvc.renameFailed" = "Umbenennen fehlgeschlagen";
 "bvc.renamePrompt" = "Geben Sie einen neuen Namen für dieses Objekt ein.";
