@@ -1355,7 +1355,7 @@ enum PathemApp {
         print("numberOfRows = \(controller.tableView.numberOfRows)")
         print("cell views requested for initial display = \(initial)")
         print("cells materialized per jump: lastRow=\(lastDelta) mid=\(midDelta) top=\(topDelta)")
-        print("RESULT: \(pass ? "PASS" : "FAIL") — table materializes bounded cells regardless of 1M-row dataset")
+        print("RESULT: \(pass ? "PASS" : "FAIL"): table materializes bounded cells regardless of 1M-row dataset")
 
         exit(pass ? 0 : 1)
     }

@@ -2,6 +2,9 @@
 #   make run      build and launch from source (fastest loop)
 #   make build    build engine + app
 #   make test     run the engine test suite
+#   make gate-a   reproduce the 1M-row virtualization benchmark (build + load
+#                 1,000,000 rows; prints timings + bounded cell counts, exits
+#                 non-zero if virtualization regresses)
 #   make app      assemble .build/Pathem.app (universal, ad-hoc signed)
 #   make install  build the app and copy it to /Applications
 #   make watch    rebuild + relaunch on every source change (fast debug loop)
@@ -22,7 +25,7 @@ export GIT_CONFIG_COUNT = 1
 export GIT_CONFIG_KEY_0 = safe.bareRepository
 export GIT_CONFIG_VALUE_0 = all
 
-.PHONY: build run test smoke e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
+.PHONY: build run test gate-a smoke e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
 
 build:
 	swift build
@@ -32,6 +35,14 @@ run:
 
 test:
 	swift test
+
+# Gate A: prove the file list virtualizes. Loads 1,000,000 synthetic rows into the
+# real view-based NSTableView and confirms it materializes only a bounded number of
+# cell views (not all 1M), reporting build/reload timings and cells-per-jump. Exits
+# non-zero if virtualization regresses. One command for a skeptic to reproduce the
+# headline benchmark themselves.
+gate-a:
+	PATHEM_GATE_A=1 swift run Pathem
 
 smoke:
 	PATHEM_SMOKE=1 swift run Pathem

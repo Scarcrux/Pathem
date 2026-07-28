@@ -16,6 +16,32 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 
 <sub>Dual pane, tabs per pane, a customizable sidebar, and colored tags. (Screenshots use a built-in demo workspace, so no real files are shown.)</sub>
 
+## Proven fast: the one-million-row test
+
+"Only the rows on screen are built" is not marketing. Reproduce it in one command:
+
+```
+make gate-a
+```
+
+It loads **1,000,000** synthetic rows into the real file list and reports how many
+cell views the table actually materializes:
+
+```
+=== GATE A: view-based NSTableView virtualization ===
+built 1000000 FileEntry in 914 ms
+reloadData + first layout: 523 ms
+numberOfRows = 1000000
+cell views requested for initial display = 84
+cells materialized per jump: lastRow=93 mid=93 top=84
+RESULT: PASS: table materializes bounded cells regardless of 1M-row dataset
+```
+
+Jump to row 1,000,000, the middle, or back to the top and the table still builds
+**fewer than 100 cell views, not a million**. The check is part of the CI suite, so a
+virtualization regression fails the build. (Timings are from a debug build; release
+is faster.)
+
 ## What it does
 
 - Two panes side by side, with tabs per pane, and copy and move between them
