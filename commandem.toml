@@ -155,6 +155,12 @@ working_dir = "."
     title = "BrowserViewController god-object: extracted rename + trash actions into their own files (1442 -> 1294 lines; cumulative 1578 -> 1294)"
     done = true
 
+  [[phase.task]]
+    title = "God-object: extract stateful sub-controllers from BrowserViewController (PreviewPane, SplitLayout, MenuInstaller/LazyMenu) - move state, not just methods (129 stored props shared across 51 extension files)"
+
+  [[phase.task]]
+    title = "Gate the ~1,700 LOC smoke/screenshot/debug harness behind #if DEBUG or a non-shipping target (0 #if DEBUG today; SmokeTest.swift + DebugHooks + 11 screencapture blocks ship in the release binary)"
+
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"
@@ -304,4 +310,103 @@ working_dir = "."
   [[phase.task]]
     title = "Stale-build watch: 'Relaunch to Update' when a newer build is installed under a running app"
     done = true
+
+[[phase]]
+  title = "Audit fix: scale side-passes (Gate-A credibility)"
+  status = "next"
+  note = "From the 6-person committee audit (performance): the render path earns the 1M-row claim, but two O(total-entries) side-passes run on every folder open, contradicting the 'only visible rows realized' story. Highest-value perf work; makes the headline claim hold in practice on huge/networked folders."
+  issue = 0
+
+  [[phase.task]]
+    title = "Lazy visible-range tag decoration + bounded NSCache (stop the full-listing getxattr pass; FileListController.refreshTagsAsync issues up to 1M syscalls + a 1M-key dict to draw ~40 rows)"
+
+  [[phase.task]]
+    title = "Semantic index: build lazily on first search / pref-gate; defer content snippets (SemanticSearchController.ensureIndex reads up to 5000 files' content on every navigation, seconds of CPU+disk whether or not the user searches)"
+
+  [[phase.task]]
+    title = "DuplicateFinder: head-block prefilter before full SHA-256, plus cancellation (two differing same-size 4GB files are both hashed in full today)"
+
+  [[phase.task]]
+    title = "Cheap wins: skip the identity-map rebuild when ungrouped; use NLEmbedder.shared instead of a fresh NLEmbedding per index/search; precompute per-entry collation sort keys"
+
+[[phase]]
+  title = "Audit fix: dangerous-corner tests + CI auto-run"
+  status = "next"
+  note = "From the committee audit (testing): the core conflict matrix is well-covered, but the single highest data-loss corner (cross-volume move) is untested and nothing runs tests automatically on push/PR (ci.yml is workflow_dispatch-only, pre-commit opt-in)."
+  issue = 0
+
+  [[phase.task]]
+    title = "Cross-volume move test via hdiutil RAM disk: happy path + rollback when source-remove fails (FileOperations.swift:344-377, the copy-then-delete-source path)"
+
+  [[phase.task]]
+    title = "Redo-of-Replace test + Trash Put-Back ledger / undo-redo re-registration chain test (both untested; the code warns redo-of-replace can trash the restored original)"
+
+  [[phase.task]]
+    title = "Near-duplicate keeper-selection test with photo-like fixtures + CopyVerificationError mismatch-cleanup test"
+
+  [[phase.task]]
+    title = "Deflake DirectoryWatcher.firesWhenAFileIsCreated (poll-until-timeout + re-touch each pass; drop the two fixed sleeps racing the async FSEvents arm)"
+
+  [[phase.task]]
+    title = "CI: auto-run build + swift test on PR; add l10n lint + the smoke harness as gates (regressions are caught today only if a human runs make ci)"
+
+[[phase]]
+  title = "Audit fix: correctness feedback gaps"
+  status = "later"
+  note = "From the committee audit (correctness): NO crash or data-loss defect found; undo/redo, ProgressiveCopy, and metadata in-place writes were traced and verified sound. The remaining issues are silent-partial-success paths that give the user a wrong result with no feedback."
+  issue = 0
+
+  [[phase.task]]
+    title = "Detect intra-batch basename collisions + surface outcome.skipped in transfer completions (copying two same-named files silently drops one, no prompt/beep, because the pre-check only compares against the destination)"
+
+  [[phase.task]]
+    title = "Metadata editor: collect and present per-item failures instead of try?-swallowing them (MetadataEditorController.swift:257-267 reports only 'Updated N')"
+
+  [[phase.task]]
+    title = "Failed Replace: append an explicit 'moved to Trash, could not restore' failure pointing at the trash location (FileOperations.swift:534 swallows the restore failure)"
+
+  [[phase.task]]
+    title = "BatchRename phase-2: only claim 'kept as X' when the fallback move actually succeeds (BatchRename.swift:186 lies about the location on a triple failure, hiding the file under a dotfile)"
+
+  [[phase.task]]
+    title = "P3s: temp-file cleanup on replaceItemAt failure (ImageMetadata/MetadataCleaner leak a .tmp); preserve animated-GIF loop count on in-place metadata edit; nil resultingItemURL -> locate the trashed item in .Trash"
+
+[[phase]]
+  title = "Audit fix: security defaults & release gates"
+  status = "later"
+  note = "From the committee audit (security): no P0/P1; the codebase is unusually well-hardened (pathem:// validated navigational-only, injection-safe shell-outs via argument arrays + shellQuote, Keychain creds, Zip-Slip guards, out-of-process untrusted parsers). These are default/gate hardening items."
+  issue = 0
+
+  [[phase.task]]
+    title = "Default confirmInboundTorrents = true (or always confirm the first externally-handed magnet/torrent): today an inbound magnet silently downloads AND seeds/reshares into Downloads with no prompt"
+
+  [[phase.task]]
+    title = "Release gate: fail the build if SUPublicEDKey is still the placeholder; add a CI check that no Sparkle/EdDSA private key is in the tree or logs"
+
+  [[phase.task]]
+    title = "SFTP: surface a 'new host key, accept?' prompt instead of silent StrictHostKeyChecking=accept-new (TOFU MITM window on first connect, which also holds the password)"
+
+  [[phase.task]]
+    title = "New-connection dialog: default to an encrypted protocol (sftp/ftps/webdavs) and warn on plaintext FTP/WebDAV (defaults to plain ftp today)"
+
+[[phase]]
+  title = "Launch conversion & product depth (stars)"
+  status = "next"
+  note = "From the committee audit (product/UX): feature breadth already exceeds Path Finder / ForkLift; nearly every table-stakes power-user feature exists. The gaps are conversion and depth-in-signature-features, ordered by ROI toward the stars/job goal. Some overlap the gated Track D public flip."
+  issue = 0
+
+  [[phase.task]]
+    title = "THE ONE THING: capture a ~10s 1M-row scroll demo (GIF/video) above the fold on the site + README, backed by a reproducible `make gate-a` (the PATHEM_GATE_A path already materializes and scrolls 1M rows; DESIGN.md names this the #1 HN lever, and it is the one launch asset not built)"
+
+  [[phase.task]]
+    title = "First-run 'Load demo workspace' tour reusing DemoWorkspace.build (the polished fake workspace behind the marketing screenshots is wired only to a screenshot env var today, so a stranger's first launch is a bare home folder behind the FDA nag)"
+
+  [[phase.task]]
+    title = "Batch rename depth: saved presets + a date/EXIF/{token} vocabulary ({date}, {counter}, {parent}, {exif.taken}) - the exact feature power users benchmark against NameMangler / A Better Finder Rename"
+
+  [[phase.task]]
+    title = "Grouped duplicate-resolve UX: keep one / trash the set + a reclaimable-space total (detection across DuplicateFinder/SemanticDedup/NearDuplicatePhotos is done; results dump to a flat list instead of the Gemini/dupeGuru grouped resolve flow)"
+
+  [[phase.task]]
+    title = "Polish: surface buried differentiators (Shelf -> 'Drop Stack', Reclaim-space); a real list-row VoiceOver pass (size/kind/date + the unlabeled custom-drawn icon/gallery/column/tree cells); a native-speaker l10n quality pass on the top-20 visible strings"
 # <<< commandem roadmap <<<
