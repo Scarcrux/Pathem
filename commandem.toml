@@ -175,6 +175,10 @@ working_dir = "."
   [[phase.task]]
     title = "VS Code / Cursor: publish a small Pathem extension (their reveal is locked; a settings edit can't redirect it)"
 
+  [[phase.task]]
+    title = "VS Code/Cursor extension authored + one-click Integrate wired + locally verified; Marketplace publish pending user's publisher account"
+    done = true
+
 [[phase]]
   title = "Photos library integration (PhotoKit)"
   status = "now"
