@@ -181,7 +181,7 @@ working_dir = "."
 
 [[phase]]
   title = "Photos library integration (PhotoKit)"
-  status = "now"
+  status = "done"
   note = "Browse and export the macOS Photos library from inside Pathem, via PhotoKit (never touching the .photoslibrary bundle directly). The differentiating 'view/edit what Photos shows' feature; reuses machinery we own."
   issue = 0
 
