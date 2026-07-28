@@ -323,6 +323,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Semantic index: build lazily on first search / pref-gate; defer content snippets (SemanticSearchController.ensureIndex reads up to 5000 files' content on every navigation, seconds of CPU+disk whether or not the user searches)"
+    done = true
 
   [[phase.task]]
     title = "DuplicateFinder: head-block prefilter before full SHA-256, plus cancellation (two differing same-size 4GB files are both hashed in full today)"
