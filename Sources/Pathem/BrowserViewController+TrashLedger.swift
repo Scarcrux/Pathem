@@ -132,4 +132,82 @@ extension BrowserViewController {
             if !result.trashed.isEmpty { self.registerTrashUndo(result.trashed) }
         }
     }
+
+    // MARK: - Trash the selection
+
+    func trashSelection() {
+        guard let pane = activePane else { return }
+        if pane.isRemote {
+            let entries = pane.selectedEntries
+            guard !entries.isEmpty else { NSSound.beep(); return }
+            // A non-UTF-8 name only round-trips by its raw bytes; acting on the lossy
+            // String could hit the wrong file, so refuse it for now.
+            guard entries.allSatisfy({ $0.rawName == nil }) else {
+                presentInfo(
+                    L("bvc.cantDeleteTitle", "Can’t delete this item"),
+                    L("bvc.cantDeleteBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
+                return
+            }
+            // Remote delete is permanent (no Trash, no undo): confirm explicitly, at the pointer.
+            let host = pane.remoteContext?.connection.host ?? L("bvc.theServer", "the server")
+            let message =
+                entries.count == 1
+                ? String(format: L("bvc.remoteDeleteOne", "Permanently delete this item on %@?"), host)
+                : String(format: L("bvc.remoteDeleteMany", "Permanently delete %d items on %@?"), entries.count, host)
+            let names = entries.map { ($0.name, $0.isDirectory) }
+            Task { @MainActor in
+                let choice = await self.cursorConfirm.ask(
+                    message: message, info: L("bvc.cantBeUndone", "This can’t be undone."),
+                    buttons: [L("common.delete", "Delete"), L("common.cancel", "Cancel")], over: self.view)
+                guard choice == 0 else { return }
+                self.performRemoteOp(pane, verb: L("bvc.deleteVerb", "Delete")) { provider, connection, path, password in
+                    for (name, isDir) in names {
+                        try await provider.remove(
+                            connection, path: PaneController.joinRemote(path, name), isDirectory: isDir,
+                            password: password)
+                    }
+                }
+            }
+            return
+        }
+        let urls = pane.selectedLocalURLs()  // location-aware: trashes the real files in smart views
+        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard prefs.confirmBeforeDelete, view.window != nil else {
+            performLocalTrash(urls)
+            return
+        }
+        Task { @MainActor in
+            let choice = await cursorConfirm.ask(
+                message: L("bvc.confirmTrashTitle", "Move the selected items to the Trash?"),
+                info: L("bvc.confirmTrashBody", "You can put them back from the Trash."),
+                buttons: [L("bvc.moveToTrashAction", "Move to Trash"), L("common.cancel", "Cancel")],
+                over: view)
+            if choice == 0 { self.performLocalTrash(urls) }
+        }
+    }
+
+    func performLocalTrash(_ urls: [URL]) {
+        let result = FileOperations.trash(urls: urls)
+        reloadBothSides()  // the trashed files may have lived in either visible folder
+        pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
+        recordTrashOrigins(result.trashed)  // remember where each came from, for Put Back
+        if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
+        if !result.failures.isEmpty { presentFailures(result.failures, title: L("bvc.moveToTrashFailed", "Move to Trash failed")) }
+    }
+
+    // MARK: - Trash home location and selection state
+
+    var homeTrashURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+    }
+    var trashHasItems: Bool {
+        !((try? FileManager.default.contentsOfDirectory(atPath: homeTrashURL.path)) ?? []).isEmpty
+    }
+    /// True when the whole selection lives inside the Trash (so Put Back / Delete Immediately apply).
+    var selectionIsInTrash: Bool {
+        guard let pane = activePane, !pane.isRemote else { return false }
+        let trashPrefix = homeTrashURL.path + "/"
+        let selected = pane.selectedLocalURLs()
+        return !selected.isEmpty && selected.allSatisfy { $0.path.hasPrefix(trashPrefix) }
+    }
 }
