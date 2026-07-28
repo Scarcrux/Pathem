@@ -177,8 +177,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// the cell path never does a syscall. Reused across refreshes for names
     /// already read.
     private var tagCache: [String: [FileTag.Color]] = [:]
-    /// Bumped per listing so a stale background tag read can't clobber a newer one.
+    /// Bumped on navigation / invalidation so a stale background tag read (from the
+    /// previous folder) can't clobber the current one. NOT bumped per lazy batch, so
+    /// two visible-window reads in the same folder both apply.
     private var tagReadGeneration = 0
+    /// Paths whose tags a visible cell asked for but aren't cached yet, coalesced into
+    /// one background batch so opening a million-row folder reads tags only for the
+    /// rows actually on screen, not all 1M.
+    private var pendingTagReads: Set<String> = []
+    private var tagReadScheduled = false
     /// Values for the metadata-derived columns (dimensions, permissions, …), keyed by path,
     /// computed off-main only when such a column is visible.
     private var extendedInfo: [String: FileColumns.Extended] = [:]
@@ -551,6 +558,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         guard preserveState else {
             self.entries = entries
+            clearTagState()  // a fresh folder: drop the previous folder's tags; visible rows re-read lazily
             collapsedGroups.removeAll()  // a fresh folder: don't carry collapsed titles across
             rebuildDisplayRows()
             tableView.reloadData()
@@ -594,6 +602,20 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     func debugLayout(width: CGFloat, height: CGFloat) {
         scrollView.frame = NSRect(x: 0, y: 0, width: width, height: height)
         scrollView.layoutSubtreeIfNeeded()
+    }
+
+    /// For the smoke test: list `entries` for `dir` at a bounded height and report how
+    /// many tag reads got enqueued. Tags are read lazily for the visible window, so a
+    /// big folder must enqueue on the order of the visible rows, not entries.count (the
+    /// O(total-entries) getxattr regression). The background flush hasn't run yet under
+    /// synchronous drive, so the pending set still holds exactly what was requested.
+    func debugTagReadsEnqueued(listing entries: [FileEntry], in dir: URL, visibleHeight: CGFloat) -> Int {
+        directoryURL = dir
+        setEntries(entries, preserveState: false)
+        debugLayout(width: 500, height: visibleHeight)
+        tableView.layoutSubtreeIfNeeded()
+        tableView.displayIfNeeded()
+        return pendingTagReads.count
     }
 
     /// Scroll to the very bottom of the content (for the shrink test).
@@ -1389,12 +1411,66 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell
     }
 
-    /// Tag colors for a row, read only from the cache so the cell path never does
-    /// a filesystem syscall on the main thread. The cache is filled by
-    /// refreshTagsAsync after each listing change.
+    /// Tag colors for a row. The cell path never does a syscall on the main thread: a
+    /// hit returns the cached value; a miss schedules a background read for the rows
+    /// the table actually asks about (the visible window) and returns [] for now, so a
+    /// later redraw shows the dots. A cached empty array means "read, no tags" and is
+    /// distinct from a miss, so it never re-enqueues.
     private func tagColors(for entry: FileEntry) -> [FileTag.Color] {
         guard directoryURL != nil else { return [] }  // search results span folders: no dots
-        return tagCache[cacheKey(for: entry)] ?? []
+        let key = cacheKey(for: entry)
+        if let cached = tagCache[key] { return cached }
+        // Tag grouping needs every tag up front to build its buckets and reads them
+        // eagerly in refreshTagsAsync, so it must not also enqueue the whole listing here.
+        if groupKey != .tag { scheduleTagRead(key) }
+        return []
+    }
+
+    /// Queue a tag read for `key`, coalescing every miss during one cell-layout pass
+    /// into a single background batch on the next runloop turn.
+    private func scheduleTagRead(_ key: String) {
+        pendingTagReads.insert(key)
+        guard !tagReadScheduled else { return }
+        tagReadScheduled = true
+        DispatchQueue.main.async { [weak self] in self?.flushTagReads() }
+    }
+
+    private func flushTagReads() {
+        tagReadScheduled = false
+        let keys = pendingTagReads
+        pendingTagReads.removeAll()
+        guard !keys.isEmpty else { return }
+        let generation = tagReadGeneration  // captured; only navigation/invalidation bumps it
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var result: [String: [FileTag.Color]] = [:]
+            result.reserveCapacity(keys.count)
+            for key in keys {
+                result[key] = FileTags.tags(of: URL(fileURLWithPath: key)).map(\.color).filter { $0 != .none }
+            }
+            DispatchQueue.main.async {
+                guard let self, self.tagReadGeneration == generation else { return }  // folder changed: drop
+                for (key, colors) in result { self.tagCache[key] = colors }  // cache empties too, so no re-enqueue
+                // Redraw the visible rows only when a dot actually appeared, so the
+                // common untagged folder never triggers a second reload.
+                if result.contains(where: { !$0.value.isEmpty }) { self.reloadVisibleRowsForTags() }
+            }
+        }
+    }
+
+    private func reloadVisibleRowsForTags() {
+        let visible = tableView.rows(in: tableView.visibleRect)
+        guard visible.length > 0, tableView.numberOfColumns > 0 else { return }
+        tableView.reloadData(
+            forRowIndexes: IndexSet(integersIn: visible.location..<(visible.location + visible.length)),
+            columnIndexes: IndexSet(integersIn: 0..<tableView.numberOfColumns))
+    }
+
+    /// Drop all cached/pending tag state and invalidate any in-flight read (a new
+    /// folder, or the app changed tags). The next cell layout lazily re-reads what's visible.
+    private func clearTagState() {
+        tagCache.removeAll()
+        pendingTagReads.removeAll()
+        tagReadGeneration += 1
     }
 
     /// Update the git overlays and redraw if anything changed.
@@ -1411,8 +1487,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     /// Drop cached tag colors so the next refresh re-reads from disk (call after
-    /// the app itself changes tags).
-    func invalidateTagCache() { tagCache.removeAll() }
+    /// the app itself changes tags). The next cell layout lazily re-reads what's visible.
+    func invalidateTagCache() { clearTagState() }
 
     /// Paths currently marked for cut, dimmed until pasted or the cut is cleared.
     private var cutPaths: Set<String> = []
@@ -1545,14 +1621,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.reloadData(forRowIndexes: rows, columnIndexes: columns)
     }
 
-    /// Read tag colors for the current entries off the main thread (reusing the
-    /// cache for names already read), then redraw. Generation-guarded so a later
-    /// listing supersedes an in-flight read.
+    /// After a listing change: tag grouping needs every tag up front to build its
+    /// buckets, so read them all here. Every other layout reads tags lazily for the
+    /// visible rows (see tagColors), so there is nothing eager to do. Generation-guarded
+    /// so a later listing supersedes an in-flight read.
     private func refreshTagsAsync() {
         guard let dir = directoryURL else {
-            tagCache.removeAll()
+            clearTagState()
             return
         }
+        guard groupKey == .tag else { return }  // the lazy visible-window path handles every other case
         tagReadGeneration += 1
         let generation = tagReadGeneration
         let base = dir.path
@@ -1572,20 +1650,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
             DispatchQueue.main.async {
                 guard let self, self.tagReadGeneration == generation else { return }
-                let hadDots = self.tagCache.contains { !$0.value.isEmpty }
                 self.tagCache = result
-                // When grouping by tag, the buckets depend on the tags we just read, so rebuild
-                // the display rows (preserving selection) and reload.
-                if self.groupKey == .tag {
-                    let selected = Set(self.selectedEntries.map(\.name))
-                    self.rebuildDisplayRows()
-                    self.tableView.reloadData()
-                    self.tableView.selectRowIndexes(self.rows(forNames: selected), byExtendingSelection: false)
-                } else if hadDots || result.contains(where: { !$0.value.isEmpty }) {
-                    // Only redraw if any row actually shows a dot, so the common
-                    // untagged case never triggers a second reload.
-                    self.tableView.reloadData()
-                }
+                // The buckets depend on the tags we just read, so rebuild the display rows
+                // (preserving selection) and reload.
+                let selected = Set(self.selectedEntries.map(\.name))
+                self.rebuildDisplayRows()
+                self.tableView.reloadData()
+                self.tableView.selectRowIndexes(self.rows(forNames: selected), byExtendingSelection: false)
             }
         }
     }

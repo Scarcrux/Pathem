@@ -570,6 +570,18 @@ extension BrowserViewController {
         let vsixFound = VSCodeIntegration.bundledVSIX() != nil
         check("vscode-integration", vscodeEditors == 2 && vsixFound, "editors=\(vscodeEditors) vsix=\(vsixFound)")
 
+        // Lazy tag decoration: listing a 2,000-entry folder must enqueue tag reads only for the
+        // visible window, not all 2,000 (the O(total-entries) getxattr pass the perf audit flagged).
+        let tagProbeDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-tagperf-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: tagProbeDir, withIntermediateDirectories: true)
+        let tagProbeEntries = (0..<2000).map {
+            FileEntry(name: "f\(String(format: "%04d", $0)).txt", isDirectory: false, size: 1, modificationDate: nil)
+        }
+        let tagEnqueued = FileListController().debugTagReadsEnqueued(
+            listing: tagProbeEntries, in: tagProbeDir, visibleHeight: 400)
+        try? FileManager.default.removeItem(at: tagProbeDir)
+        check("tag-decoration-lazy", tagEnqueued > 0 && tagEnqueued < 200, "enqueued=\(tagEnqueued) of \(tagProbeEntries.count) visible-window")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
