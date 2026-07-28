@@ -151,6 +151,10 @@ working_dir = "."
     title = "BrowserViewController god-object: extracted transfer + undo/redo plumbing (1578 -> 1442 lines)"
     done = true
 
+  [[phase.task]]
+    title = "BrowserViewController god-object: extracted rename + trash actions into their own files (1442 -> 1294 lines; cumulative 1578 -> 1294)"
+    done = true
+
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"
