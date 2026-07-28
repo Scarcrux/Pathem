@@ -129,9 +129,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// The scale path (background incremental indexing and a cached vector
     /// store) is in DESIGN.md section 2.
     let semanticSearch = SemanticSearchController()  // owns the per-folder index cache
-    /// Debounce handle for background reindexing; lives here because a stored property can't sit in
-    /// an extension. The search methods themselves are in BrowserViewController+SemanticSearch.swift.
-    var reindexWork: DispatchWorkItem?
     /// Marker on the pasteboard meaning "these files were cut" (paste = move).
     static let cutPasteboardType = NSPasteboard.PasteboardType("com.scarcrux.pathem.cut")
     static let searchItemID = NSToolbarItem.Identifier("com.scarcrux.pathem.search")
@@ -1103,7 +1100,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         updateSearchButton(query: pane.searchQuery)  // show the focused pane's own query
         // Note: the query is cleared on navigation (onDidNavigate), not on every
         // focus change, so a live query or visible results survive a pane re-focus.
-        if pane.currentURL != semanticSearch.cachedDirectory { preIndex(pane.currentURL) }
+        // The semantic index is built lazily on first search (not on focus/navigation),
+        // so re-focusing a pane costs nothing here.
         syncAutoPreview()  // follow the newly active pane's view mode + selection
         updateQuickActions()  // the quick-actions bar follows the active pane's selection
         saveSessionSoon()
@@ -1140,17 +1138,16 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    /// A pane's folder changed (navigation or on-disk edit): drop a stale cache
-    /// for it, and rebuild in the background if it is the active pane.
+    /// A pane's folder changed (navigation or on-disk edit): drop a stale semantic
+    /// index for it and keep the chrome (sidebar, title, terminal) in step.
     private func directoryChanged(_ pane: PaneController, _ url: URL) {
-        // A disk edit to the folder we've already indexed (vs a navigation to a new one) means
-        // the index is stale. Drop it, but rebuild only after the churn settles: a long copy into
-        // this folder fires a watcher tick per file, and re-embedding up to 5000 items on each
-        // would thrash the CPU. A navigation to a fresh folder still indexes eagerly.
-        let editedIndexedFolder = semanticSearch.cachedDirectory == url
-        if editedIndexedFolder { semanticSearch.invalidate() }
+        // A disk edit to a folder we've already indexed makes the index stale, so drop it; the
+        // next search rebuilds it. We don't eagerly (re)index on navigation: reading and embedding
+        // up to 5000 files' content on every folder visit costs seconds of CPU + disk for a search
+        // the user usually never runs. Indexing now happens lazily on first search (rank ->
+        // ensureIndex), so opening a folder stays cheap.
+        if semanticSearch.cachedDirectory == url { semanticSearch.invalidate() }
         if pane === activePane {
-            if editedIndexedFolder { scheduleReindex(url) } else { preIndex(url) }
             sidebar.highlightFolder(url)  // keep the sidebar tracking the current folder, like Finder
             updateWindowTitle()
             // The terminal follows the active folder only when the user opted in

@@ -234,8 +234,7 @@ extension BrowserViewController {
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
         saveConfig(prefs, to: Self.preferencesURL)
         semanticSearch.includeOCR = prefs.searchOCR
-        semanticSearch.invalidate()  // a pref (e.g. OCR) may change how folders index
-        if let directory = activePane?.currentURL { preIndex(directory) }
+        semanticSearch.invalidate()  // a pref (e.g. OCR) may change how folders index; next search rebuilds
     }
 
     /// Read the user's Finder preferences and apply the ones Pathem has an equivalent for -- show

@@ -25,12 +25,6 @@ final class SemanticSearchController {
     /// pre-index of the same folder).
     var cachedDirectory: URL? { cachedDir }
 
-    /// Build/refresh the index for `directory` in the background (if not already cached), so
-    /// the next search there is instant.
-    func preIndex(_ directory: URL, isCurrent: @escaping @MainActor () -> Bool) {
-        Task { await ensureIndex(for: directory, isCurrent: isCurrent) }
-    }
-
     /// Rank `directory`'s entries by semantic similarity to `query`, returning the entries in
     /// ranked order (nil if the index couldn't be built or the folder moved on).
     func rank(query: String, in directory: URL, isCurrent: @escaping @MainActor () -> Bool) async
@@ -57,8 +51,8 @@ final class SemanticSearchController {
 
     /// Enumerate and embed `directory` off the main thread, adopting the result only if
     /// `isCurrent()` still holds (the user hasn't navigated away). Concurrent calls for the same
-    /// folder (a burst of preIndex/rank) await the one in-flight build instead of each starting
-    /// their own embed of up to 5000 files.
+    /// folder (e.g. rapid searches) await the one in-flight build instead of each starting their
+    /// own embed of up to 5000 files.
     private func ensureIndex(for directory: URL, isCurrent: @escaping @MainActor () -> Bool) async {
         guard cachedDir != directory || cachedIndex == nil else { return }
         if let task = buildTask, buildingDir == directory { await task.value; return }

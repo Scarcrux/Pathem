@@ -2,9 +2,9 @@ import AppKit
 import PathemEngine
 
 // On-device semantic search (free, off-main): re-rank the active folder by similarity to a query,
-// keep the toolbar search button in sync, and pre-build / debounce-rebuild the per-folder index.
-// Split out of BrowserViewController. The `reindexWork` debounce handle stays on the core class
-// (a stored property can't live in an extension).
+// and keep the toolbar search button in sync. The per-folder index is built lazily on the first
+// search (SemanticSearchController.rank -> ensureIndex), so opening a folder never reads or embeds
+// its contents. Split out of BrowserViewController.
 @MainActor
 extension BrowserViewController {
     /// Re-rank the active pane's folder by semantic similarity to the query.
@@ -47,24 +47,5 @@ extension BrowserViewController {
     func updateSearchButton(query: String) {
         searchButton.title = " " + (query.isEmpty ? L("bvc.searchPlaceholder", "Search") : query)
         searchButton.contentTintColor = query.isEmpty ? .secondaryLabelColor : ThemeManager.shared.accent
-    }
-
-    /// Rebuild the semantic index after ~1s of no further disk changes, so a stream of watcher
-    /// ticks (a copy or unzip into the folder) collapses into a single rebuild once it settles.
-    func scheduleReindex(_ url: URL) {
-        reindexWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, self.activePane?.currentURL == url else { return }
-            self.preIndex(url)
-        }
-        reindexWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
-    }
-
-    /// Build the semantic index for `directory` in the background (if not already
-    /// cached for it), so the next search there is instant.
-    func preIndex(_ directory: URL) {
-        semanticSearch.preIndex(
-            directory, isCurrent: { [weak self] in self?.activePane?.currentURL == directory })
     }
 }

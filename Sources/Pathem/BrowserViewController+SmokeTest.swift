@@ -582,6 +582,12 @@ extension BrowserViewController {
         try? FileManager.default.removeItem(at: tagProbeDir)
         check("tag-decoration-lazy", tagEnqueued > 0 && tagEnqueued < 200, "enqueued=\(tagEnqueued) of \(tagProbeEntries.count) visible-window")
 
+        // Lazy semantic index: opening/navigating folders must not build the content-reading index
+        // (it reads + embeds up to 5000 files); it builds only on first search. The app has launched
+        // and navigated (home) but nothing has searched, so no folder is indexed.
+        check("semantic-index-lazy", semanticSearch.cachedDirectory == nil,
+            "cached=\(semanticSearch.cachedDirectory?.lastPathComponent ?? "nil")")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
