@@ -1011,6 +1011,7 @@ enum PathemApp {
                     commandItem("Convert to MP4", "media.convertToMP4"),
                     commandItem("Set Attributes…", "files.setAttributes"),
                     commandItem("Set Finder Comment…", "files.setFinderComment"),
+                    commandItem("Edit Metadata…", "files.editMetadata"),
                     commandItem("Permissions…", "files.editACL"),
                     commandItem("Change Owner (Admin)…", "files.changeOwner"),
                     .separator(),

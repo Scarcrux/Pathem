@@ -251,6 +251,9 @@ extension BrowserViewController {
         add("files.setFinderComment", L("bvc.cmd.setFinderComment", "Set Finder Comment…"), enabled: hasLocalSelection) {
             [weak self] in self?.setFinderCommentSelection()
         }
+        add("files.editMetadata", L("bvc.cmd.editMetadata", "Edit Metadata…"), enabled: hasLocalSelection) {
+            [weak self] in self?.editMetadataSelection()
+        }
         add("files.editACL", L("bvc.cmd.editACL", "Permissions…"), enabled: { [weak self] in
             guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults else { return false }
             return pane.selectedEntries.count == 1

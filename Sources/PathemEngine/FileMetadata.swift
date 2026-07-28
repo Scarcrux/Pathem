@@ -46,6 +46,36 @@ public enum FileMetadata {
         }
     }
 
+    /// The item's Finder tag names (the colored/labeled tags, `.tagNamesKey`). Reads
+    /// via a fresh URL so a value cached on the caller's URL can't mask a recent write.
+    public static func tags(of url: URL) -> [String] {
+        (try? URL(fileURLWithPath: url.path).resourceValues(forKeys: [.tagNamesKey]).tagNames) ?? []
+    }
+
+    /// Set (or clear, when empty) the item's Finder tags. Written to the same
+    /// `com.apple.metadata:_kMDItemUserTags` xattr (a binary-plist array of names)
+    /// that Finder uses, since the `URLResourceValues.tagNames` setter is macOS 26+.
+    /// Tags are written as plain names; Finder resolves a known name to its color.
+    public static func setTags(_ tags: [String], on url: URL) throws {
+        let name = "com.apple.metadata:_kMDItemUserTags"
+        let cleaned = tags.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+        let result: Int32 = url.withUnsafeFileSystemRepresentation { fsr in
+            guard let fsr else { return -1 }
+            if cleaned.isEmpty {
+                let code = removexattr(fsr, name, XATTR_NOFOLLOW)
+                return (code == 0 || errno == ENOATTR) ? 0 : code  // clearing absent tags is fine
+            }
+            guard let data = try? PropertyListSerialization.data(fromPropertyList: cleaned, format: .binary, options: 0)
+            else { return -1 }
+            return data.withUnsafeBytes { setxattr(fsr, name, $0.baseAddress, data.count, 0, XATTR_NOFOLLOW) }
+        }
+        if result != 0 {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno == 0 ? EIO : errno), userInfo: [
+                NSLocalizedDescriptionKey: "Couldn’t set the tags on \(url.lastPathComponent)."
+            ])
+        }
+    }
+
     /// Whether Finder hides this item's extension.
     public static func hidesExtension(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.hasHiddenExtensionKey]))?.hasHiddenExtension ?? false

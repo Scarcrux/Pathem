@@ -194,6 +194,21 @@ extension BrowserViewController {
         }
     }
 
+    /// Open the bulk metadata editor over the selection (EXIF/IPTC for images, Finder tags/comment
+    /// for anything), applying edits to every selected item at once.
+    func editMetadataSelection() {
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        let urls = pane.selectedLocalURLs()
+        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        metadataEditor.onApplied = { [weak self] count in
+            self?.activePane?.reloadIfShowingListing()
+            guard count > 0 else { return }
+            self?.activePane?.flashStatus(
+                String(format: L("meta.applied", "Updated metadata on %d item(s)"), count))
+        }
+        metadataEditor.present(urls: urls, over: window)
+    }
+
     /// Copy the selection's file names to the clipboard, one per line. Uses the entries' own
     /// names so it works everywhere — local, remote, and smart results.
     func copyNames() {

@@ -183,6 +183,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var photosBrowser = PhotosBrowserController()
     /// The interactive image cropper (Image ▸ Crop).
     lazy var cropController = CropController()
+    /// Bulk metadata editor (EXIF/IPTC + Finder tags/comment).
+    lazy var metadataEditor = MetadataEditorController()
     /// Settings embedded over the right pane (so browsing continues in the left pane).
     var settingsPanel: NSView?
     lazy var batchCreate = BatchCreateController()

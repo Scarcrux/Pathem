@@ -35,6 +35,22 @@ import Testing
         try FileMetadata.setFinderComment("", on: url)  // clearing an absent comment is not an error
     }
 
+    @Test func finderTagsRoundTrip() throws {
+        let url = try tempFile("tagged.txt")
+        defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        #expect(FileMetadata.tags(of: url).isEmpty)  // none to start
+
+        try FileMetadata.setTags(["Invoice", "2026"], on: url)
+        #expect(FileMetadata.tags(of: url) == ["Invoice", "2026"])
+
+        try FileMetadata.setTags(["Invoice"], on: url)  // narrowing replaces, not merges
+        #expect(FileMetadata.tags(of: url) == ["Invoice"])
+
+        try FileMetadata.setTags([], on: url)  // empty clears
+        #expect(FileMetadata.tags(of: url).isEmpty)
+        try FileMetadata.setTags([], on: url)  // clearing absent tags is not an error
+    }
+
     @Test func whereFromsParsesTheBinaryPlistArray() throws {
         let url = try tempFile("download.zip")
         defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }

@@ -550,6 +550,20 @@ extension BrowserViewController {
         let rlSafe = !MetadataCleaner.hasLocation(URL(fileURLWithPath: "/etc/hosts"))
         check("remove-location", rlReg && rlSafe, "registered=\(rlReg) safe=\(rlSafe)")
 
+        // Metadata editor: command registered; Finder tags round-trip (set then clear) on a temp file.
+        let meReg = commands.command("files.editMetadata") != nil
+        var tagsRoundTrip = false
+        let tagFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-smoke-tag-\(UUID().uuidString).txt")
+        if (try? Data("x".utf8).write(to: tagFile)) != nil {
+            try? FileMetadata.setTags(["SmokeTag"], on: tagFile)
+            let set = FileMetadata.tags(of: tagFile) == ["SmokeTag"]
+            try? FileMetadata.setTags([], on: tagFile)
+            let cleared = FileMetadata.tags(of: tagFile).isEmpty
+            tagsRoundTrip = set && cleared
+            try? FileManager.default.removeItem(at: tagFile)
+        }
+        check("metadata-editor", meReg && tagsRoundTrip, "registered=\(meReg) tags=\(tagsRoundTrip)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
