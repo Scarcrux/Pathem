@@ -230,12 +230,13 @@ working_dir = "."
 
 [[phase]]
   title = "Power-user file tooling"
-  status = "now"
+  status = "done"
   note = "Classic superuser gaps that compound: a metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit, a first-class disk-space + duplicate cleanup flow, and rules-based auto-organize on watch folders (AutomationRule)."
   issue = 0
 
   [[phase.task]]
     title = "Metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit"
+    done = true
 
   [[phase.task]]
     title = "Disk-space + duplicate cleanup as a first-class flow (DirectorySize + DuplicateFinder)"
