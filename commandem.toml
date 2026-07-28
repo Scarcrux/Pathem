@@ -319,6 +319,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Lazy visible-range tag decoration + bounded NSCache (stop the full-listing getxattr pass; FileListController.refreshTagsAsync issues up to 1M syscalls + a 1M-key dict to draw ~40 rows)"
+    done = true
 
   [[phase.task]]
     title = "Semantic index: build lazily on first search / pref-gate; defer content snippets (SemanticSearchController.ensureIndex reads up to 5000 files' content on every navigation, seconds of CPU+disk whether or not the user searches)"
@@ -409,4 +410,8 @@ working_dir = "."
 
   [[phase.task]]
     title = "Polish: surface buried differentiators (Shelf -> 'Drop Stack', Reclaim-space); a real list-row VoiceOver pass (size/kind/date + the unlabeled custom-drawn icon/gallery/column/tree cells); a native-speaker l10n quality pass on the top-20 visible strings"
+
+  [[phase.task]]
+    title = "make gate-a target + reproducible 1M-row benchmark surfaced above the fold in README (the scroll GIF/video capture itself remains, a screen-recording step)"
+    done = true
 # <<< commandem roadmap <<<
