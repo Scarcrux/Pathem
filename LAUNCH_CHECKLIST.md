@@ -53,7 +53,7 @@ things a human has to look at.
 - [ ] The marquee features that the site will show actually work on this build:
       the embedded terminal, a torrent, and one remote backend (S3/WebDAV/SFTP/FTP).
 - [ ] Drag a file **out to Finder and back into Pathem twice** (the drag-strand
-      regression path) — the second drag must still work.
+      regression path): the second drag must still work.
 - [ ] Switch the system language to one of the five non-English locales and spot
       check that the menus/sidebar/dialogs are translated (coverage is linted, but
       look for layout truncation).
@@ -95,7 +95,7 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 - [ ] Wire the site's primary CTA from "Star on GitHub / downloads soon" to the
       **real download link** (the release DMG) + confirm the Sparkle feed URL
       resolves. (Site Track B item B3.)
-- [ ] Add the marquee screenshots the site currently only describes — terminal,
+- [ ] Add the marquee screenshots the site currently only describes: terminal,
       torrents, remote/site-manager. (Track B item B2.)
 - [ ] Flip the repository to **public**.
 - [ ] Verify the live site: OG card renders when the URL is shared, favicon +
@@ -111,7 +111,7 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 ## Rollback
 
 The repo can go private again, but assume anything published (code, DMG) was
-cloned/downloaded the moment it was public — treat the flip as irreversible for
+cloned/downloaded the moment it was public; treat the flip as irreversible for
 anything sensitive. A bad *build* is recoverable: ship a higher `CFBundleVersion`
 fix; Sparkle pulls users forward. There is no un-publishing a leaked secret, so §3
 is the load-bearing step.
