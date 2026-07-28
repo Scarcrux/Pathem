@@ -1,0 +1,68 @@
+name: VS Code Extension Release
+
+# Push a tag like `vscode-v0.1.0` (matching Integrations/vscode-pathem/package.json)
+# to package the "Reveal in Pathem" extension, attach the .vsix to a GitHub Release,
+# and -- if the token secrets are set -- publish it to the VS Code Marketplace and
+# Open VSX. Without the tokens the job still builds the .vsix and makes the Release,
+# so the artifact is always available even before you have a publisher account.
+#
+# Optional repository secrets (Settings > Secrets and variables > Actions):
+#   VSCE_PAT  VS Code Marketplace Personal Access Token (dev.azure.com; publisher: scarcrux)
+#   OVSX_PAT  Open VSX token (open-vsx.org), for the VSCodium / Cursor audience
+#
+# This is separate from the app's `v*` Release workflow: the extension versions on
+# its own cadence.
+
+on:
+  push:
+    tags: ["vscode-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Integrations/vscode-pathem
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check the tag matches package.json and the source is valid
+        run: |
+          set -euo pipefail
+          TAG_VERSION="${GITHUB_REF_NAME#vscode-v}"
+          PKG_VERSION="$(node -e "process.stdout.write(require('./package.json').version)")"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION" >&2
+            exit 1
+          fi
+          node --check extension.js
+
+      - name: Package .vsix
+        run: npx --yes @vscode/vsce package --allow-missing-repository
+
+      - name: Publish to VS Code Marketplace
+        if: ${{ env.VSCE_PAT != '' }}
+        run: npx --yes @vscode/vsce publish --pat "$VSCE_PAT"
+
+      - name: Publish to Open VSX
+        if: ${{ env.OVSX_PAT != '' }}
+        run: npx --yes ovsx publish ./*.vsix --pat "$OVSX_PAT"
+
+      - name: Create GitHub Release with the .vsix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" ./*.vsix \
+            --title "Reveal in Pathem ${GITHUB_REF_NAME#vscode-}" \
+            --notes "VS Code / Cursor extension. Install the attached .vsix with \`code --install-extension\`, or search \"Reveal in Pathem\" in the Marketplace once published."

@@ -70,6 +70,10 @@ things a human has to look at.
       git history. `git log` authorship is uniform.
 - [ ] `.github/workflows/release.yml` secrets exist (Developer ID cert, notary
       creds, `SPARKLE_PRIVATE_KEY`) if you want tag-triggered releases.
+- [ ] Optional: to publish the VS Code / Cursor extension, set `VSCE_PAT`
+      (and `OVSX_PAT`) and push a `vscode-v<version>` tag
+      (`.github/workflows/vscode-extension-release.yml`). Without the tokens the
+      tag still builds the `.vsix` and attaches it to a GitHub Release.
 - [ ] Scrub for stray iCloud conflicted-copy files (`* [0-9].*`).
 
 ## 4. Cut the first public build
