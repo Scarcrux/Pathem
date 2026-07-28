@@ -875,6 +875,9 @@
 "integrations.restartBody" = "「Pathemで表示」項目は、%@を終了して再度開くと表示されます。";
 "integrations.restartTitle" = "%@を再起動";
 "integrations.servicesHint" = "他のAppからPathemにファイルやフォルダを渡せます。サービスメニューの「Pathemで開く」または「Pathemで表示」、あるいは下のpathemコマンドを使います。";
+"integrations.vscodeCliFailed" = "%@は拡張機能を更新できませんでした。";
+"integrations.vscodePreview" = "%@のコマンドラインで「Reveal in Pathem」拡張機能をインストールします:\n  %@ --install-extension %@.vsix\n\nエクスプローラー、エディタのタブメニュー、コマンドパレットに「Reveal in Pathem」を追加します。削除するとクリーンにアンインストールされます。";
+"integrations.vscodeVsixMissing" = "この build には同梱の拡張機能がありません。";
 "list.alwaysOpenWith" = "常にこのアプリケーションで開く…";
 "list.clearTags" = "タグを消去";
 "list.columnComment" = "コメント";

@@ -29,7 +29,7 @@ struct EditorIntegration: Sendable {
     let remove: @Sendable () throws -> Void
 
     /// Every integration Pathem can wire, in display order.
-    static let all: [EditorIntegration] = [sublime, textMate, jetBrains]
+    static let all: [EditorIntegration] = [sublime, textMate, jetBrains, vsCode, cursor]
 
     static let sublime = EditorIntegration(
         id: "sublime", name: SublimeIntegration.name,
@@ -63,4 +63,20 @@ struct EditorIntegration: Sendable {
         previewFiles: { JetBrainsIntegration.plannedFiles() },
         install: { try JetBrainsIntegration.install() },
         remove: { try JetBrainsIntegration.remove() })
+
+    static let vsCode = editor(VSCodeIntegration.vscode)
+    static let cursor = editor(VSCodeIntegration.cursor)
+
+    /// A VS Code-family entry (VS Code or Cursor): installs the bundled extension via
+    /// the editor's own CLI (see `VSCodeIntegration`).
+    private static func editor(_ flavor: VSCodeIntegration.Flavor) -> EditorIntegration {
+        EditorIntegration(
+            id: "vscode-\(flavor.cliName)", name: flavor.name,
+            isEditorInstalled: { VSCodeIntegration.isEditorInstalled(flavor) },
+            isEditorRunning: { VSCodeIntegration.isEditorRunning(flavor) },
+            isInstalled: { VSCodeIntegration.isInstalled(flavor) },
+            previewFiles: { VSCodeIntegration.previewFiles(flavor) },
+            install: { try VSCodeIntegration.install(flavor) },
+            remove: { try VSCodeIntegration.remove(flavor) })
+    }
 }

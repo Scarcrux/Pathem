@@ -31,3 +31,7 @@ dist/
 # Python bytecode cache (l10n scripts)
 __pycache__/
 *.pyc
+
+# VS Code extension build artifacts (the shipped copy lives in Sources/Pathem/Resources)
+Integrations/vscode-pathem/*.vsix
+Integrations/vscode-pathem/node_modules/

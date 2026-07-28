@@ -1,0 +1,66 @@
+{
+  "name": "pathem-reveal",
+  "displayName": "Reveal in Pathem",
+  "description": "Reveal the current file or folder in Pathem, the native macOS file manager.",
+  "version": "0.1.0",
+  "publisher": "scarcrux",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Scarcrux/Pathem.git",
+    "directory": "Integrations/vscode-pathem"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "pathem",
+    "reveal",
+    "finder",
+    "file manager",
+    "macos"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pathem.reveal",
+        "title": "Reveal in Pathem"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "pathem.reveal",
+          "group": "navigation@100"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "pathem.reveal",
+          "group": "2_files@100"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "pathem.reveal",
+          "group": "navigation@100"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Reveal in Pathem",
+      "properties": {
+        "pathem.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the `pathem` command-line tool. Leave empty to auto-detect (/usr/local/bin/pathem, /opt/homebrew/bin/pathem) and fall back to the pathem:// URL scheme."
+        }
+      }
+    }
+  }
+}

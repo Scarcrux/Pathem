@@ -564,6 +564,12 @@ extension BrowserViewController {
         }
         check("metadata-editor", meReg && tagsRoundTrip, "registered=\(meReg) tags=\(tagsRoundTrip)")
 
+        // VS Code / Cursor: both editors present in the integration list; the bundled .vsix resolves
+        // (so one-click Integrate has something to install).
+        let vscodeEditors = EditorIntegration.all.filter { $0.id.hasPrefix("vscode-") }.count
+        let vsixFound = VSCodeIntegration.bundledVSIX() != nil
+        check("vscode-integration", vscodeEditors == 2 && vsixFound, "editors=\(vscodeEditors) vsix=\(vsixFound)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

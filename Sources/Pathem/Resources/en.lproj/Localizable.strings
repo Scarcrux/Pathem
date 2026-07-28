@@ -875,6 +875,9 @@
 "integrations.restartBody" = "The “Reveal in Pathem” items appear after you quit and reopen %@.";
 "integrations.restartTitle" = "Restart %@";
 "integrations.servicesHint" = "Other apps can hand a file or folder to Pathem: use “Open in Pathem” or “Reveal in Pathem” from their Services menu, or the pathem command below.";
+"integrations.vscodeCliFailed" = "%@ couldn’t update the extension.";
+"integrations.vscodePreview" = "Installs the “Reveal in Pathem” extension into %@ via its command line:\n  %@ --install-extension %@.vsix\n\nAdds “Reveal in Pathem” to the Explorer, the editor tab menu, and the command palette. Remove uninstalls it cleanly.";
+"integrations.vscodeVsixMissing" = "The bundled extension isn’t available in this build.";
 "list.alwaysOpenWith" = "Always Open With…";
 "list.clearTags" = "Clear Tags";
 "list.columnComment" = "Comment";

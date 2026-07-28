@@ -875,6 +875,9 @@
 "integrations.restartBody" = "Los elementos «Mostrar en Pathem» aparecen después de cerrar y volver a abrir %@.";
 "integrations.restartTitle" = "Reiniciar %@";
 "integrations.servicesHint" = "Otras apps pueden enviar un archivo o carpeta a Pathem: usa «Abrir en Pathem» o «Mostrar en Pathem» desde su menú Servicios, o el comando pathem de abajo.";
+"integrations.vscodeCliFailed" = "%@ no pudo actualizar la extensión.";
+"integrations.vscodePreview" = "Instala la extensión «Reveal in Pathem» en %@ mediante su línea de comandos:\n  %@ --install-extension %@.vsix\n\nAñade «Reveal in Pathem» al explorador, al menú de pestañas del editor y a la paleta de comandos. Quitar la desinstala limpiamente.";
+"integrations.vscodeVsixMissing" = "La extensión incluida no está disponible en esta compilación.";
 "list.alwaysOpenWith" = "Abrir siempre con…";
 "list.clearTags" = "Borrar etiquetas";
 "list.columnComment" = "Comentario";

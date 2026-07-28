@@ -875,6 +875,9 @@
 "integrations.restartBody" = "退出并重新打开 %@ 后，“在 Pathem 中显示”项目才会出现。";
 "integrations.restartTitle" = "重启 %@";
 "integrations.servicesHint" = "其他 App 可将文件或文件夹交给 Pathem：使用其服务菜单中的“在 Pathem 中打开”或“在 Pathem 中显示”，或下方的 pathem 命令。";
+"integrations.vscodeCliFailed" = "%@ 无法更新该扩展。";
+"integrations.vscodePreview" = "通过 %@ 的命令行安装“Reveal in Pathem”扩展：\n  %@ --install-extension %@.vsix\n\n将“Reveal in Pathem”添加到资源管理器、编辑器标签菜单和命令面板。移除会将其干净卸载。";
+"integrations.vscodeVsixMissing" = "此版本中没有随附的扩展。";
 "list.alwaysOpenWith" = "始终以此打开…";
 "list.clearTags" = "清除标记";
 "list.columnComment" = "注释";

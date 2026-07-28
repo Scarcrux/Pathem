@@ -875,6 +875,9 @@
 "integrations.restartBody" = "Les éléments « Afficher dans Pathem » apparaissent après avoir quitté et rouvert %@.";
 "integrations.restartTitle" = "Redémarrer %@";
 "integrations.servicesHint" = "D’autres apps peuvent transmettre un fichier ou un dossier à Pathem : utilisez « Ouvrir dans Pathem » ou « Afficher dans Pathem » depuis leur menu Services, ou la commande pathem ci-dessous.";
+"integrations.vscodeCliFailed" = "%@ n’a pas pu mettre à jour l’extension.";
+"integrations.vscodePreview" = "Installe l’extension « Reveal in Pathem » dans %@ via sa ligne de commande :\n  %@ --install-extension %@.vsix\n\nAjoute « Reveal in Pathem » à l’explorateur, au menu des onglets de l’éditeur et à la palette de commandes. Supprimer la désinstalle proprement.";
+"integrations.vscodeVsixMissing" = "L’extension intégrée n’est pas disponible dans cette version.";
 "list.alwaysOpenWith" = "Toujours ouvrir avec…";
 "list.clearTags" = "Effacer les tags";
 "list.columnComment" = "Commentaire";
