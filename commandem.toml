@@ -313,7 +313,7 @@ working_dir = "."
 
 [[phase]]
   title = "Audit fix: scale side-passes (Gate-A credibility)"
-  status = "next"
+  status = "done"
   note = "From the 6-person committee audit (performance): the render path earns the 1M-row claim, but two O(total-entries) side-passes run on every folder open, contradicting the 'only visible rows realized' story. Highest-value perf work; makes the headline claim hold in practice on huge/networked folders."
   issue = 0
 
@@ -327,9 +327,14 @@ working_dir = "."
 
   [[phase.task]]
     title = "DuplicateFinder: head-block prefilter before full SHA-256, plus cancellation (two differing same-size 4GB files are both hashed in full today)"
+    done = true
 
   [[phase.task]]
     title = "Cheap wins: skip the identity-map rebuild when ungrouped; use NLEmbedder.shared instead of a fresh NLEmbedding per index/search; precompute per-entry collation sort keys"
+    done = true
+
+  [[phase.task]]
+    title = "Deferred (optional): precompute per-entry collation sort keys -- localizedStandardCompare has no cheap Foundation collation-key equivalent, so it is not a cheap win"
 
 [[phase]]
   title = "Audit fix: dangerous-corner tests + CI auto-run"
