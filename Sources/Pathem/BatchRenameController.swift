@@ -24,6 +24,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     private let applyButton = NSButton(title: L("rename.renameButton", "Rename"), target: nil, action: nil)
 
     private var names: [String] = []
+    /// Per-file token values ({date}, {parent}, {exif.taken}), built once when the selection loads
+    /// so the live preview and rename interpolate real metadata without re-reading on each keystroke.
+    private var contexts: [RenameContext] = []
     private var existing: Set<String> = []
     private var directory = URL(fileURLWithPath: "/")
     private var onComplete: (() -> Void)?
@@ -48,6 +51,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
             field.delegate = self
             field.translatesAutoresizingMaskIntoConstraints = false
         }
+        // Hint the token vocabulary right where it's typed.
+        prefixField.placeholderString = L("rename.tokenHint", "text or {date} {parent} {exif}")
+        suffixField.placeholderString = L("rename.tokenHint", "text or {date} {parent} {exif}")
         startField.stringValue = "1"
         padField.stringValue = "1"
         startField.widthAnchor.constraint(equalToConstant: 48).isActive = true
@@ -156,6 +162,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         self.directory = directory
         self.existing = existing
         self.onComplete = onComplete
+        buildContexts()
         recompute()
 
         panel.growToFitContent()
@@ -184,8 +191,22 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         return rule
     }
 
+    /// Read each file's dates + parent (and EXIF capture date for images) once, so tokens in the
+    /// prefix/suffix interpolate real values. Image EXIF is read only for image extensions.
+    private func buildContexts() {
+        let parent = directory.lastPathComponent
+        contexts = names.map { name in
+            let url = directory.appendingPathComponent(name)
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
+            let exif = BrowserViewController.isImageName(name) ? ImageMetadata.read(url).dateTaken : nil
+            return RenameContext(
+                modified: values?.contentModificationDate, created: values?.creationDate,
+                exifTaken: exif, parent: parent)
+        }
+    }
+
     private func recompute() {
-        plan = BatchRename.plan(currentRule(), names: names, existing: existing)
+        plan = BatchRename.plan(currentRule(), names: names, existing: existing, contexts: contexts)
         table.reloadData()
         let changes = plan.pairs.contains { $0.original != $0.renamed }
         applyButton.isEnabled = changes && !plan.hasCollisions

@@ -4,6 +4,31 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct BatchRenameTests {
+    @Test func expandsParentAndDateTokens() {
+        let rule = RenameRule(prefix: "{parent}-{date}-")
+        // 1_600_000_000 is 2020-09-13 (12:26 UTC); the month/day are stable across US time zones.
+        let context = RenameContext(modified: Date(timeIntervalSince1970: 1_600_000_000), parent: "Trip")
+        let name = BatchRename.newName(for: "IMG.jpg", index: 0, rule: rule, context: context)
+        #expect(name.hasPrefix("Trip-2020-09-13-"))
+        #expect(name.hasSuffix("-IMG.jpg"))
+    }
+
+    @Test func expandsCustomDateFormatAndExif() {
+        let rule = RenameRule(prefix: "{exif:yyyyMMdd}_")
+        let context = RenameContext(exifTaken: Date(timeIntervalSince1970: 1_600_000_000))
+        let name = BatchRename.newName(for: "photo.heic", index: 0, rule: rule, context: context)
+        #expect(name.hasPrefix("20200913_"))
+        #expect(name.hasSuffix("_photo.heic"))
+    }
+
+    @Test func extTokenAndUnknownTokenToEmpty() {
+        // {ext} comes from the original; an unknown token expands to nothing.
+        #expect(BatchRename.newName(for: "a.txt", index: 0, rule: RenameRule(prefix: "[{ext}]")) == "[txt]a.txt")
+        #expect(BatchRename.newName(for: "a.txt", index: 0, rule: RenameRule(prefix: "{bogus}x-")) == "x-a.txt")
+        // No braces: the prefix is used verbatim (no token machinery runs).
+        #expect(BatchRename.newName(for: "a.txt", index: 0, rule: RenameRule(prefix: "plain-")) == "plain-a.txt")
+    }
+
     @Test func findReplacePreservesExtension() {
         let rule = RenameRule(find: "draft", replace: "final")
         #expect(BatchRename.newName(for: "draft-1.txt", index: 0, rule: rule) == "final-1.txt")

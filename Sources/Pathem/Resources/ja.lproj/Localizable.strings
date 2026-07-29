@@ -1401,6 +1401,7 @@
 "rename.rowReplace" = "置換";
 "rename.rowStart" = "開始";
 "rename.rowSuffix" = "接尾辞";
+"rename.tokenHint" = "テキストまたは {date} {parent} {exif}";
 "repo.backup" = "重要なものをバックアップ…（%d）";
 "repo.clean" = "再生成可能なものをクリーン（%d）";
 "repo.notRepo" = "gitリポジトリではありません";

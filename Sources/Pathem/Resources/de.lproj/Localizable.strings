@@ -1401,6 +1401,7 @@
 "rename.rowReplace" = "Ersetzen";
 "rename.rowStart" = "Start";
 "rename.rowSuffix" = "Suffix";
+"rename.tokenHint" = "Text oder {date} {parent} {exif}";
 "repo.backup" = "Wertvolles sichern… (%d)";
 "repo.clean" = "Regenerierbares bereinigen (%d)";
 "repo.notRepo" = "Kein Git-Repository";

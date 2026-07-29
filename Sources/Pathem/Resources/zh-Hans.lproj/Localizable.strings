@@ -1401,6 +1401,7 @@
 "rename.rowReplace" = "替换";
 "rename.rowStart" = "起始";
 "rename.rowSuffix" = "后缀";
+"rename.tokenHint" = "文本或 {date} {parent} {exif}";
 "repo.backup" = "备份珍贵文件…（%d）";
 "repo.clean" = "清理可重新生成的文件（%d）";
 "repo.notRepo" = "不是 git 仓库";
