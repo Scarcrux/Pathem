@@ -344,18 +344,25 @@ working_dir = "."
 
   [[phase.task]]
     title = "Cross-volume move test via hdiutil RAM disk: happy path + rollback when source-remove fails (FileOperations.swift:344-377, the copy-then-delete-source path)"
+    done = true
 
   [[phase.task]]
     title = "Redo-of-Replace test + Trash Put-Back ledger / undo-redo re-registration chain test (both untested; the code warns redo-of-replace can trash the restored original)"
+    done = true
 
   [[phase.task]]
     title = "Near-duplicate keeper-selection test with photo-like fixtures + CopyVerificationError mismatch-cleanup test"
 
   [[phase.task]]
     title = "Deflake DirectoryWatcher.firesWhenAFileIsCreated (poll-until-timeout + re-touch each pass; drop the two fixed sleeps racing the async FSEvents arm)"
+    done = true
 
   [[phase.task]]
     title = "CI: auto-run build + swift test on PR; add l10n lint + the smoke harness as gates (regressions are caught today only if a human runs make ci)"
+    done = true
+
+  [[phase.task]]
+    title = "Remaining (lower priority): Trash Put-Back ledger undo/redo smoke check; near-dup keeper-selection test (needs photo-like Vision fixtures); CopyVerificationError mismatch-cleanup test"
 
 [[phase]]
   title = "Audit fix: correctness feedback gaps"
