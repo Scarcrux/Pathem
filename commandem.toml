@@ -411,6 +411,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "THE ONE THING: capture a ~10s 1M-row scroll demo (GIF/video) above the fold on the site + README, backed by a reproducible `make gate-a` (the PATHEM_GATE_A path already materializes and scrolls 1M rows; DESIGN.md names this the #1 HN lever, and it is the one launch asset not built)"
+    done = true
 
   [[phase.task]]
     title = "First-run 'Load demo workspace' tour reusing DemoWorkspace.build (the polished fake workspace behind the marketing screenshots is wired only to a screenshot env var today, so a stranger's first launch is a bare home folder behind the FDA nag)"
@@ -418,9 +419,11 @@ working_dir = "."
 
   [[phase.task]]
     title = "Batch rename depth: saved presets + a date/EXIF/{token} vocabulary ({date}, {counter}, {parent}, {exif.taken}) - the exact feature power users benchmark against NameMangler / A Better Finder Rename"
+    done = true
 
   [[phase.task]]
     title = "Grouped duplicate-resolve UX: keep one / trash the set + a reclaimable-space total (detection across DuplicateFinder/SemanticDedup/NearDuplicatePhotos is done; results dump to a flat list instead of the Gemini/dupeGuru grouped resolve flow)"
+    done = true
 
   [[phase.task]]
     title = "Polish: surface buried differentiators (Shelf -> 'Drop Stack', Reclaim-space); a real list-row VoiceOver pass (size/kind/date + the unlabeled custom-drawn icon/gallery/column/tree cells); a native-speaker l10n quality pass on the top-20 visible strings"
@@ -428,4 +431,7 @@ working_dir = "."
   [[phase.task]]
     title = "make gate-a target + reproducible 1M-row benchmark surfaced above the fold in README (the scroll GIF/video capture itself remains, a screen-recording step)"
     done = true
+
+  [[phase.task]]
+    title = "Follow-ups: batch-rename saved presets (config-as-data); the actual scroll-GIF recording + placement above the fold (make gate-a-demo tooling is in place, needs Screen Recording permission)"
 # <<< commandem roadmap <<<
