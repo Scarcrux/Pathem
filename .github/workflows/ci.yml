@@ -1,9 +1,22 @@
 name: CI
 
-# Auto-runs on push/PR are disabled to save GitHub Actions minutes; run the same
-# checks locally with `make ci`. This workflow stays available to trigger by hand
-# from the Actions tab (Run workflow) for a clean-room run when wanted.
+# Runs automatically on code changes so regressions are caught without anyone
+# remembering `make ci`. Minute-conscious for a private repo where macOS runners
+# bill at 10x: it triggers only when code (Sources/Tests/Package) changes -- doc,
+# site, and roadmap (commandem.toml) commits skip it -- and rapid pushes cancel
+# earlier runs. Runs the l10n lint, build, engine tests, Gate A, and the UI smoke.
+# `make ci` still runs the same checks locally; Run workflow triggers on demand.
 on:
+  push:
+    branches: [main]
+    paths:
+      - "Sources/**"
+      - "Tests/**"
+      - "Package.swift"
+      - "Package.resolved"
+      - "scripts/l10n_lint.py"
+      - ".github/workflows/ci.yml"
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -16,16 +29,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Localization coverage + plist validity (plutil is macOS-only, so this runs here
+      # rather than on a cheaper runner). A missing/stale translation or a malformed
+      # .strings fails the build.
+      - name: Localization lint
+        run: python3 scripts/l10n_lint.py
+
       - name: Build
         run: swift build
 
       - name: Engine tests
         run: swift test
 
-      # Gate A proves the table virtualizes a 1M-row dataset; the smoke test
-      # asserts the window/pane layout invariants (the structural GUI bugs the
-      # unit tests can't see). Both boot a real window, so they need the runner's
-      # GUI session, which the macOS runners provide.
+      # Gate A proves the table virtualizes a 1M-row dataset; the smoke test asserts
+      # the window/pane layout invariants (the structural GUI bugs the unit tests can't
+      # see). Both boot a real window, so they need the runner's GUI session, which the
+      # macOS runners provide.
       - name: Gate A (virtualization proof)
         run: PATHEM_GATE_A=1 swift run Pathem
 
