@@ -193,6 +193,34 @@ import Testing
         }
     }
 
+    @Test func redoOfReplaceReappliesAndUndoStillRestoresTheOriginal() throws {
+        try withTwoDirs { src, dst in
+            try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
+            try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
+            // Replace: dst/c.txt "old" -> "new", with "old" displaced to the Trash.
+            let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .replace)
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+
+            // Undo restores "old".
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(undo.failures.isEmpty)
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+
+            // Redo re-applies the replace, re-trashing the restored "old" to a FRESH trash location
+            // recorded in redo.performed.
+            let redo = FileOperations.redo(undo.performed)
+            #expect(redo.failures.isEmpty)
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+
+            // The bit the code warns about: undoing the redo must restore "old" again, using the
+            // fresh trash location redo recorded, not the stale original -- otherwise a later undo
+            // trashes the wrong file.
+            let undo2 = FileOperations.undo(redo.performed)
+            #expect(undo2.failures.isEmpty)
+            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+        }
+    }
+
     @Test func redoMoveReappliesAfterUndo() throws {
         try withTwoDirs { src, dst in
             try Data("x".utf8).write(to: src.appendingPathComponent("m.txt"))
