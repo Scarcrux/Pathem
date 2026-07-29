@@ -93,6 +93,18 @@ enum PathemApp {
             runGateA(controller, window)  // measures synchronously, then exits
         }
 
+        if ProcessInfo.processInfo.environment["PATHEM_GATE_A_DEMO"] != nil {
+            // The same 1M-row dataset, but smoothly auto-scrolled for a screen recording (the
+            // above-the-fold demo). Runs the app loop so the scroll timer fires, then exits.
+            let controller = FileListController()
+            window.contentView = controller.scrollView
+            window.makeKeyAndOrderFront(nil)
+            app.activate(ignoringOtherApps: true)
+            startGateADemoScroll(controller, window)
+            app.run()
+            return
+        }
+
         // Normal mode: a dual-pane browser rooted at the home directory (or a sample
         // folder when rendering view-mode screenshots).
         let viewShot = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
@@ -1312,6 +1324,39 @@ enum PathemApp {
     /// the rows, forces layout at several scroll positions, and reports how many
     /// cell views the table actually requested. A virtualized table requests a
     /// number proportional to the visible window (tens), not to the dataset.
+    /// Build the same 1,000,000-row dataset as Gate A and smoothly auto-scroll it top to bottom
+    /// (ease-in-out) over PATHEM_GATE_A_SECONDS (default 12), then exit. For recording the
+    /// above-the-fold scroll demo; a bounded cell count keeps it buttery regardless of the 1M rows.
+    private static func startGateADemoScroll(_ controller: FileListController, _ window: NSWindow) {
+        let n = 1_000_000
+        let base = Date(timeIntervalSince1970: 1_700_000_000)
+        var rows = [FileEntry]()
+        rows.reserveCapacity(n)
+        for i in 0..<n {
+            rows.append(
+                FileEntry(
+                    name: "file-\(String(format: "%07d", i)).dat",
+                    isDirectory: i % 50 == 0,
+                    size: Int64((i % 100_000) * 13),
+                    modificationDate: base.addingTimeInterval(Double(i))))
+        }
+        controller.setEntries(rows)
+        window.layoutIfNeeded()
+        controller.tableView.layoutSubtreeIfNeeded()
+
+        let duration = Double(ProcessInfo.processInfo.environment["PATHEM_GATE_A_SECONDS"] ?? "") ?? 12
+        let clip = controller.scrollView.contentView
+        let start = Date()
+        Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
+            let maxY = max(0, controller.tableView.frame.height - clip.bounds.height)
+            let t = min(1, Date().timeIntervalSince(start) / max(0.1, duration))
+            let eased = t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2  // ease-in-out
+            clip.scroll(to: NSPoint(x: 0, y: maxY * CGFloat(eased)))
+            controller.scrollView.reflectScrolledClipView(clip)
+            if t >= 1 { timer.invalidate(); exit(0) }
+        }
+    }
+
     private static func runGateA(_ controller: FileListController, _ window: NSWindow) {
         let n = 1_000_000
         let base = Date(timeIntervalSince1970: 1_700_000_000)

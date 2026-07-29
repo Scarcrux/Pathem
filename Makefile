@@ -5,6 +5,8 @@
 #   make gate-a   reproduce the 1M-row virtualization benchmark (build + load
 #                 1,000,000 rows; prints timings + bounded cell counts, exits
 #                 non-zero if virtualization regresses)
+#   make gate-a-demo  record the 1M-row scroll to a video/GIF for the site + README
+#                 (needs Screen Recording permission; see scripts/capture-gate-a.sh)
 #   make app      assemble .build/Pathem.app (universal, ad-hoc signed)
 #   make install  build the app and copy it to /Applications
 #   make watch    rebuild + relaunch on every source change (fast debug loop)
@@ -25,7 +27,7 @@ export GIT_CONFIG_COUNT = 1
 export GIT_CONFIG_KEY_0 = safe.bareRepository
 export GIT_CONFIG_VALUE_0 = all
 
-.PHONY: build run test gate-a smoke e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
+.PHONY: build run test gate-a gate-a-demo smoke e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
 
 build:
 	swift build
@@ -43,6 +45,11 @@ test:
 # headline benchmark themselves.
 gate-a:
 	PATHEM_GATE_A=1 swift run Pathem
+
+# Record the 1M-row scroll demo (the above-the-fold asset) to docs/demo/. Needs Screen
+# Recording permission for your terminal; produces a GIF too if ffmpeg is installed.
+gate-a-demo:
+	scripts/capture-gate-a.sh
 
 smoke:
 	PATHEM_SMOKE=1 swift run Pathem
