@@ -414,6 +414,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "First-run 'Load demo workspace' tour reusing DemoWorkspace.build (the polished fake workspace behind the marketing screenshots is wired only to a screenshot env var today, so a stranger's first launch is a bare home folder behind the FDA nag)"
+    done = true
 
   [[phase.task]]
     title = "Batch rename depth: saved presets + a date/EXIF/{token} vocabulary ({date}, {counter}, {parent}, {exif.taken}) - the exact feature power users benchmark against NameMangler / A Better Finder Rename"
