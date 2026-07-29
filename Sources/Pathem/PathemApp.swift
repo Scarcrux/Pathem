@@ -1240,6 +1240,7 @@ enum PathemApp {
         mainMenu.addItem(helpItem)
         let helpMenu = NSMenu(title: L("menu.help", "Help"))
         helpItem.submenu = helpMenu
+        helpMenu.addItem(commandItem("Load Demo Workspace", "help.demoWorkspace"))
         helpMenu.addItem(commandItem("Release Notes", "help.releaseNotes"))
         NSApplication.shared.helpMenu = helpMenu
 

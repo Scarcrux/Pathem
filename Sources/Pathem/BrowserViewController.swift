@@ -1068,6 +1068,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         view.window?.makeFirstResponder(focusPane?.keyView)
         updateWindowTitle()
         maybePromptFullDiskAccess()
+        maybeOfferDemoWorkspace()  // first-run tour, once FDA is granted (never stacks on the FDA guide)
     }
 
     /// Show the guided Full Disk Access walkthrough when we don't have access and

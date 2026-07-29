@@ -183,6 +183,7 @@
 "bvc.cmd.deleteApp" = "Appをアンインストール…";
 "bvc.cmd.deleteImmediately" = "すぐに削除";
 "bvc.cmd.demoMode" = "デモモード（スクショ用のダミーデータ）";
+"bvc.cmd.demoWorkspace" = "デモワークスペースを読み込む";
 "bvc.cmd.diff" = "ファイルを比較";
 "bvc.cmd.download" = "ダウンロード";
 "bvc.cmd.downloadFromServer" = "サーバからダウンロード…";
@@ -641,6 +642,11 @@
 "customicon.choose" = "アイコンを設定";
 "customicon.failedBody" = "カスタムアイコンを適用できませんでした。この項目を変更する権限がない可能性があります。";
 "customicon.failedTitle" = "アイコンを設定できませんでした";
+"demo.loaded" = "デモワークスペースを読み込みました。実際のファイルはそのままです。";
+"demo.offerBody" = "デモワークスペースを読み込んで、安全なサンプルファイルでデュアルペイン、タグ、ビューを試せます。実際のファイルには影響しません。";
+"demo.offerLoad" = "デモを読み込む";
+"demo.offerSkip" = "後で";
+"demo.offerTitle" = "Pathem は初めてですか？";
 "dest.copyHere" = "ここにコピー";
 "dest.copyMessage" = "選択項目のコピー先フォルダを選択してください";
 "dest.invalidBody" = "選択したフォルダやその中ではない移動先を選択してください。";

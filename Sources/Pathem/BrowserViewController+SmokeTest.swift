@@ -588,6 +588,14 @@ extension BrowserViewController {
         check("semantic-index-lazy", semanticSearch.cachedDirectory == nil,
             "cached=\(semanticSearch.cachedDirectory?.lastPathComponent ?? "nil")")
 
+        // Demo workspace (first-run tour): the command is registered and build() produces a real,
+        // navigable sample tree with the expected dual-pane starts.
+        let demo = DemoWorkspace.build()
+        let demoReg = commands.command("help.demoWorkspace") != nil
+        let demoDirs = FileManager.default.fileExists(atPath: demo.leftStart.path)
+            && FileManager.default.fileExists(atPath: demo.rightStart.path)
+        check("demo-workspace", demoReg && demoDirs, "registered=\(demoReg) dirs=\(demoDirs)")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

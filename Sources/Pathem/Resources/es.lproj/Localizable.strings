@@ -183,6 +183,7 @@
 "bvc.cmd.deleteApp" = "Desinstalar app…";
 "bvc.cmd.deleteImmediately" = "Eliminar inmediatamente";
 "bvc.cmd.demoMode" = "Modo demo (datos falsos para capturas)";
+"bvc.cmd.demoWorkspace" = "Cargar espacio de demostración";
 "bvc.cmd.diff" = "Comparar archivos";
 "bvc.cmd.download" = "Descargar";
 "bvc.cmd.downloadFromServer" = "Descargar del servidor…";
@@ -641,6 +642,11 @@
 "customicon.choose" = "Establecer icono";
 "customicon.failedBody" = "No se pudo aplicar el icono personalizado. Puede que no tengas permiso para cambiar este ítem.";
 "customicon.failedTitle" = "No se pudo establecer el icono";
+"demo.loaded" = "Espacio de demostración cargado. Tus archivos reales están intactos.";
+"demo.offerBody" = "Carga un espacio de demostración para explorar los dos paneles, las etiquetas y las vistas con archivos de ejemplo seguros. Tus archivos reales no se tocan.";
+"demo.offerLoad" = "Cargar demo";
+"demo.offerSkip" = "Ahora no";
+"demo.offerTitle" = "¿Nuevo en Pathem?";
 "dest.copyHere" = "Copiar aquí";
 "dest.copyMessage" = "Elige una carpeta en la que copiar la selección";
 "dest.invalidBody" = "Elige un destino que no sea una de las carpetas seleccionadas ni esté dentro de ellas.";

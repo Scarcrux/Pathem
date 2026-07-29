@@ -183,6 +183,7 @@
 "bvc.cmd.deleteApp" = "卸载应用…";
 "bvc.cmd.deleteImmediately" = "立即删除";
 "bvc.cmd.demoMode" = "演示模式（用于截图的虚构数据）";
+"bvc.cmd.demoWorkspace" = "加载演示工作区";
 "bvc.cmd.diff" = "比较文件";
 "bvc.cmd.download" = "下载";
 "bvc.cmd.downloadFromServer" = "从服务器下载…";
@@ -641,6 +642,11 @@
 "customicon.choose" = "设置图标";
 "customicon.failedBody" = "无法应用自定图标。你可能没有更改此项目的权限。";
 "customicon.failedTitle" = "无法设置图标";
+"demo.loaded" = "已加载演示工作区。您的真实文件未受影响。";
+"demo.offerBody" = "加载演示工作区，用安全的示例文件体验双窗格、标签和视图。不会影响您的真实文件。";
+"demo.offerLoad" = "加载演示";
+"demo.offerSkip" = "暂不";
+"demo.offerTitle" = "初次使用 Pathem？";
 "dest.copyHere" = "拷贝到此处";
 "dest.copyMessage" = "选择一个文件夹以将所选项拷贝进去";
 "dest.invalidBody" = "请选择一个不属于所选文件夹或其内部的目的位置。";
