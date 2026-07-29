@@ -64,10 +64,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         rebuildRowIndex()
     }
 
-    /// Rebuild the entryIndex -> row map from the current displayRows (called whenever
-    /// displayRows changes: grouping, collapse, and the ungrouped fast path).
+    /// True when display rows are exactly the entries in order (no group headers, nothing
+    /// collapsed), so table row == entry index and the reverse map is a pure identity.
+    private var isFlatLayout: Bool { groupKey == .none }
+
+    /// Rebuild the entryIndex -> row map from the current displayRows (grouping / collapse).
+    /// In the flat (ungrouped) case row == entryIndex, so the map is a pure identity we skip
+    /// building entirely -- otherwise a million-row folder rebuilt a million-entry dictionary on
+    /// every reload, refresh, and filter keystroke.
     private func rebuildRowIndex() {
         rowForEntry.removeAll(keepingCapacity: true)
+        guard !isFlatLayout else { return }
         for (row, dr) in displayRows.enumerated() {
             if case .item(let idx) = dr { rowForEntry[idx] = row }
         }
@@ -87,8 +94,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return index
     }
     /// The table row showing the entry at `index`, or nil if not currently displayed. O(1) via
-    /// the reverse index instead of an O(n) scan of displayRows.
-    private func row(forEntryIndex index: Int) -> Int? { rowForEntry[index] }
+    /// the reverse index (or the identity, when flat) instead of an O(n) scan of displayRows.
+    private func row(forEntryIndex index: Int) -> Int? {
+        if isFlatLayout { return (index >= 0 && index < displayRows.count) ? index : nil }
+        return rowForEntry[index]
+    }
     /// The table rows (item rows) whose entry name is in `names`.
     private func rows(forNames names: Set<String>) -> IndexSet {
         var set = IndexSet()
