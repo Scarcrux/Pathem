@@ -34,6 +34,27 @@ public enum FileHasher {
         }
     }
 
+    /// Hex digest of just the first `maxBytes` bytes of the file: a cheap prefilter for the
+    /// duplicate finder, since files whose heads differ can't be identical, so only head
+    /// collisions need a full hash. For a file no larger than `maxBytes` this equals its full
+    /// digest. Throws if it can't be read.
+    public static func hashHead(_ url: URL, maxBytes: Int, algorithm: Algorithm = .sha256)
+        throws -> String
+    {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        let head = try handle.read(upToCount: max(0, maxBytes)) ?? Data()
+        switch algorithm {
+        case .sha256: var h = SHA256(); h.update(data: head); return hex(h.finalize())
+        case .sha1: var h = Insecure.SHA1(); h.update(data: head); return hex(h.finalize())
+        case .md5: var h = Insecure.MD5(); h.update(data: head); return hex(h.finalize())
+        }
+    }
+
+    private static func hex<D: Sequence>(_ digest: D) -> String where D.Element == UInt8 {
+        digest.map { String(format: "%02x", $0) }.joined()
+    }
+
     private static func digest<H: HashFunction>(of url: URL, into hasher: inout H, bufferSize: Int)
         throws -> String
     {

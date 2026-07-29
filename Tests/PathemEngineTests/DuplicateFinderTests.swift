@@ -32,6 +32,39 @@ import Testing
         #expect(DuplicateFinder.find(in: [root]).isEmpty)
     }
 
+    @Test func differByTailOnlyIsNotADuplicate() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        // Identical first 64 KB (the prefilter head is all zeros), differing only in the very
+        // last byte: the head hash collides, so the full hash must still run to reject them.
+        var a = Data(count: 70_000)
+        a[69_999] = 1
+        var b = Data(count: 70_000)
+        b[69_999] = 2
+        try a.write(to: root.appendingPathComponent("a.bin"))
+        try b.write(to: root.appendingPathComponent("b.bin"))
+        #expect(DuplicateFinder.find(in: [root]).isEmpty)
+    }
+
+    @Test func identicalLargeFilesPastTheHeadAreGrouped() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let payload = Data((0..<70_000).map { UInt8($0 % 251) })  // bigger than the 64 KB head
+        try payload.write(to: root.appendingPathComponent("a.bin"))
+        try payload.write(to: root.appendingPathComponent("b.bin"))
+        let groups = DuplicateFinder.find(in: [root])
+        #expect(groups.count == 1)
+        #expect(Set(groups[0].files.map(\.name)) == ["a.bin", "b.bin"])
+    }
+
+    @Test func cancellationReturnsEarly() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data("same".utf8).write(to: root.appendingPathComponent("a.txt"))
+        try Data("same".utf8).write(to: root.appendingPathComponent("b.txt"))  // would group if not cancelled
+        #expect(DuplicateFinder.find(in: [root], isCancelled: { true }).isEmpty)
+    }
+
     @Test func emptyFilesAreSkipped() throws {
         let root = try tempDir()
         defer { try? FileManager.default.removeItem(at: root) }
