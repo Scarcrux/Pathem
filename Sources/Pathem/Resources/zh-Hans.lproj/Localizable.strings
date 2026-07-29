@@ -365,7 +365,6 @@
 "bvc.enterPassphrase" = "输入私钥的密码短语（如无则留空）。";
 "bvc.enterPasswordFor" = "请输入 %@@%@ 的密码。";
 "bvc.failuresForItems" = "%d 个项目 %@";
-"bvc.findingDuplicates" = "正在 %@ 中查找重复项…";
 "bvc.findingNearDup" = "正在 %@ 中查找近似重复照片…";
 "bvc.findingSimilar" = "正在 %@ 中查找相似名称…";
 "bvc.flatCount" = "%@ 中的所有项目：%d";
@@ -405,7 +404,6 @@
 "bvc.newFolderVerb" = "新建文件夹";
 "bvc.newFolderWithItems" = "用项目新建文件夹";
 "bvc.newFolderWithSelectionAction" = "用所选项新建文件夹";
-"bvc.noDuplicates" = "%@ 中没有重复项";
 "bvc.noLocationFound" = "所选照片中未找到位置信息";
 "bvc.noNearDup" = "%@ 中没有近似重复照片";
 "bvc.noSimilar" = "%@ 中没有相似名称";
@@ -675,6 +673,16 @@
 "drop.replace" = "替换“%@”";
 "drop.replaceAction" = "替换";
 "drop.replaceFailed" = "无法替换文件";
+"dupes.colItem" = "重复文件组";
+"dupes.confirmBody" = "每组保留一个副本。您可以从废纸篓放回，或撤销。";
+"dupes.confirmTitle" = "将 %d 个重复副本移到废纸篓？";
+"dupes.keep" = "保留";
+"dupes.none" = "未找到重复文件";
+"dupes.scanning" = "正在扫描…";
+"dupes.setLabel" = "%d 个副本 · 每个 %@ · 保留一个";
+"dupes.summary" = "%d 个重复文件组 · 可回收 %@";
+"dupes.trash" = "移到废纸篓";
+"dupes.windowTitle" = "“%@”中的重复文件";
 "editor.failedTitle" = "无法在 %@ 中打开";
 "ext.cmdTitle" = "%@：%@";
 "ext.failed" = "扩展出错";

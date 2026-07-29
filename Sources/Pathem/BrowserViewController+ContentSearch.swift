@@ -26,18 +26,14 @@ extension BrowserViewController {
     func findDuplicates() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let root = pane.currentURL
-        let token = pane.beginContentRequest()  // so navigating away discards stale results
-        pane.showSmartResults([], title: String(format: L("bvc.findingDuplicates", "Finding duplicates in %@…"), root.lastPathComponent))
-        Task { @MainActor [weak self] in
-            let groups = await Task.detached { DuplicateFinder.find(in: [root]) }.value
-            guard let self, self.activePane === pane, pane.isContentRequestCurrent(token) else { return }
-            let files = groups.flatMap { $0.files }
-            let title =
-                groups.isEmpty
-                ? String(format: L("bvc.noDuplicates", "No duplicates in %@"), root.lastPathComponent)
-                : "Duplicates: \(groups.count) group\(groups.count == 1 ? "" : "s"), \(files.count) files"
-            pane.showSmartResults(files, title: title)
+        // Open the grouped resolver (keep one per set, trash the rest, with a reclaimable total)
+        // rather than dumping a flat list of every duplicate file.
+        duplicatesController.onTrash = { [weak self] urls in self?.performLocalTrash(urls) }
+        duplicatesController.onReveal = { [weak self] url in
+            self?.activePane?.navigate(to: url.deletingLastPathComponent())
+            self?.activePane?.select(name: url.lastPathComponent)
         }
+        duplicatesController.present(root: root, over: view.window)
     }
 
     /// Group files in the folder whose names are semantically similar (via the on-device

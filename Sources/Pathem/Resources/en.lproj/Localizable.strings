@@ -365,7 +365,6 @@
 "bvc.enterPassphrase" = "Enter the private key’s passphrase (leave blank if it has none).";
 "bvc.enterPasswordFor" = "Enter the password for %@@%@.";
 "bvc.failuresForItems" = "%@ for %d item(s)";
-"bvc.findingDuplicates" = "Finding duplicates in %@…";
 "bvc.findingNearDup" = "Finding near-duplicate photos in %@…";
 "bvc.findingSimilar" = "Finding similar names in %@…";
 "bvc.flatCount" = "All items in %@: %d";
@@ -405,7 +404,6 @@
 "bvc.newFolderVerb" = "New Folder";
 "bvc.newFolderWithItems" = "New Folder With Items";
 "bvc.newFolderWithSelectionAction" = "New Folder with Selection";
-"bvc.noDuplicates" = "No duplicates in %@";
 "bvc.noLocationFound" = "No location found in the selected photos";
 "bvc.noNearDup" = "No near-duplicate photos in %@";
 "bvc.noSimilar" = "No similar names in %@";
@@ -675,6 +673,16 @@
 "drop.replace" = "Replace “%@”";
 "drop.replaceAction" = "Replace";
 "drop.replaceFailed" = "Couldn’t replace the file";
+"dupes.colItem" = "Duplicate sets";
+"dupes.confirmBody" = "One copy of each set is kept. You can Put Back from the Trash, or undo.";
+"dupes.confirmTitle" = "Move %d duplicate copy(ies) to the Trash?";
+"dupes.keep" = "Keep";
+"dupes.none" = "No duplicate files found";
+"dupes.scanning" = "Scanning…";
+"dupes.setLabel" = "%d copies · %@ each · keep one";
+"dupes.summary" = "%d duplicate set(s) · %@ reclaimable";
+"dupes.trash" = "Move to Trash";
+"dupes.windowTitle" = "Duplicates in “%@”";
 "editor.failedTitle" = "Couldn’t open in %@";
 "ext.cmdTitle" = "%@: %@";
 "ext.failed" = "Extension error";

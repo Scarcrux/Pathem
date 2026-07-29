@@ -596,6 +596,18 @@ extension BrowserViewController {
             && FileManager.default.fileExists(atPath: demo.rightStart.path)
         check("demo-workspace", demoReg && demoDirs, "registered=\(demoReg) dirs=\(demoDirs)")
 
+        // Grouped duplicate resolver: keep one per set. A 3-file set queues 2, a 2-file set queues 1.
+        func dupEntry(_ name: String, _ loc: String) -> FileEntry {
+            FileEntry(name: name, isDirectory: false, size: 10, modificationDate: nil, location: loc)
+        }
+        let dupGroups = [
+            DuplicateFinder.Group(hash: "a", files: [dupEntry("a1", "/x"), dupEntry("a2", "/y"), dupEntry("a3", "/z")]),
+            DuplicateFinder.Group(hash: "b", files: [dupEntry("b1", "/x"), dupEntry("b2", "/y")]),
+        ]
+        let dupQueued = DuplicatesController().debugQueuedCount(groups: dupGroups)
+        let dupReg = commands.command("files.findDuplicates") != nil
+        check("duplicates-resolver", dupReg && dupQueued == 3, "registered=\(dupReg) queued=\(dupQueued) keep-one-per-set")
+
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.

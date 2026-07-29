@@ -182,6 +182,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var cropController = CropController()
     /// Bulk metadata editor (EXIF/IPTC + Finder tags/comment).
     lazy var metadataEditor = MetadataEditorController()
+    /// Grouped duplicate resolver (keep one per set, trash the rest).
+    lazy var duplicatesController = DuplicatesController()
     /// Settings embedded over the right pane (so browsing continues in the left pane).
     var settingsPanel: NSView?
     lazy var batchCreate = BatchCreateController()

@@ -365,7 +365,6 @@
 "bvc.enterPassphrase" = "Introduce la frase de contraseña de la clave privada (déjalo en blanco si no tiene).";
 "bvc.enterPasswordFor" = "Introduce la contraseña de %@@%@.";
 "bvc.failuresForItems" = "%@ para %d ítem(s)";
-"bvc.findingDuplicates" = "Buscando duplicados en %@…";
 "bvc.findingNearDup" = "Buscando fotos casi duplicadas en %@…";
 "bvc.findingSimilar" = "Buscando nombres similares en %@…";
 "bvc.flatCount" = "Todos los ítems en %@: %d";
@@ -405,7 +404,6 @@
 "bvc.newFolderVerb" = "Nueva carpeta";
 "bvc.newFolderWithItems" = "Nueva carpeta con ítems";
 "bvc.newFolderWithSelectionAction" = "Nueva carpeta con la selección";
-"bvc.noDuplicates" = "No hay duplicados en %@";
 "bvc.noLocationFound" = "No se encontró ubicación en las fotos seleccionadas";
 "bvc.noNearDup" = "No hay fotos casi duplicadas en %@";
 "bvc.noSimilar" = "No hay nombres similares en %@";
@@ -675,6 +673,16 @@
 "drop.replace" = "Reemplazar «%@»";
 "drop.replaceAction" = "Reemplazar";
 "drop.replaceFailed" = "No se pudo reemplazar el archivo";
+"dupes.colItem" = "Conjuntos de duplicados";
+"dupes.confirmBody" = "Se conserva una copia de cada conjunto. Puedes devolverlas desde la papelera o deshacer.";
+"dupes.confirmTitle" = "¿Mover %d copia(s) duplicada(s) a la papelera?";
+"dupes.keep" = "Conservar";
+"dupes.none" = "No se encontraron archivos duplicados";
+"dupes.scanning" = "Analizando…";
+"dupes.setLabel" = "%d copias · %@ cada una · conservar una";
+"dupes.summary" = "%d conjunto(s) de duplicados · %@ recuperables";
+"dupes.trash" = "Mover a la papelera";
+"dupes.windowTitle" = "Duplicados en «%@»";
 "editor.failedTitle" = "No se pudo abrir en %@";
 "ext.cmdTitle" = "%@: %@";
 "ext.failed" = "Error de la extensión";

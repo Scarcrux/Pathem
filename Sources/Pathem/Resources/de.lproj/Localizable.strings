@@ -365,7 +365,6 @@
 "bvc.enterPassphrase" = "Gib die Passphrase des privaten Schlüssels ein (leer lassen, falls keine vorhanden).";
 "bvc.enterPasswordFor" = "Gib das Passwort für %@@%@ ein.";
 "bvc.failuresForItems" = "%@ für %d Objekt(e)";
-"bvc.findingDuplicates" = "Duplikate werden in %@ gesucht…";
 "bvc.findingNearDup" = "Fast identische Fotos in %@ werden gesucht…";
 "bvc.findingSimilar" = "Ähnliche Namen in %@ werden gesucht…";
 "bvc.flatCount" = "Alle Objekte in %@: %d";
@@ -405,7 +404,6 @@
 "bvc.newFolderVerb" = "Neuer Ordner";
 "bvc.newFolderWithItems" = "Neuer Ordner mit Objekten";
 "bvc.newFolderWithSelectionAction" = "Neuer Ordner mit Auswahl";
-"bvc.noDuplicates" = "Keine Duplikate in %@";
 "bvc.noLocationFound" = "Kein Standort in den ausgewählten Fotos gefunden";
 "bvc.noNearDup" = "Keine fast identischen Fotos in %@";
 "bvc.noSimilar" = "Keine ähnlichen Namen in %@";
@@ -675,6 +673,16 @@
 "drop.replace" = "„%@“ ersetzen";
 "drop.replaceAction" = "Ersetzen";
 "drop.replaceFailed" = "Datei konnte nicht ersetzt werden";
+"dupes.colItem" = "Duplikat-Sätze";
+"dupes.confirmBody" = "Von jedem Satz wird eine Kopie behalten. Sie können sie aus dem Papierkorb zurücklegen oder widerrufen.";
+"dupes.confirmTitle" = "%d Duplikatkopie(n) in den Papierkorb legen?";
+"dupes.keep" = "Behalten";
+"dupes.none" = "Keine doppelten Dateien gefunden";
+"dupes.scanning" = "Wird gescannt…";
+"dupes.setLabel" = "%d Kopien · je %@ · eine behalten";
+"dupes.summary" = "%d Duplikat-Satz/Sätze · %@ freigebbar";
+"dupes.trash" = "In den Papierkorb legen";
+"dupes.windowTitle" = "Duplikate in „%@“";
 "editor.failedTitle" = "Öffnen in %@ nicht möglich";
 "ext.cmdTitle" = "%@: %@";
 "ext.failed" = "Erweiterungsfehler";

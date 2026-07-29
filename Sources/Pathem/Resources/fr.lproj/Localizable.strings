@@ -365,7 +365,6 @@
 "bvc.enterPassphrase" = "Saisissez la phrase secrète de la clé privée (laissez vide si elle n'en a pas).";
 "bvc.enterPasswordFor" = "Saisissez le mot de passe pour %@@%@.";
 "bvc.failuresForItems" = "%@ pour %d élément(s)";
-"bvc.findingDuplicates" = "Recherche de doublons dans %@…";
 "bvc.findingNearDup" = "Recherche de photos quasi-identiques dans %@…";
 "bvc.findingSimilar" = "Recherche de noms similaires dans %@…";
 "bvc.flatCount" = "Tous les éléments de %@ : %d";
@@ -405,7 +404,6 @@
 "bvc.newFolderVerb" = "Nouveau dossier";
 "bvc.newFolderWithItems" = "Nouveau dossier avec les éléments";
 "bvc.newFolderWithSelectionAction" = "Nouveau dossier par sélection";
-"bvc.noDuplicates" = "Aucun doublon dans %@";
 "bvc.noLocationFound" = "Aucune localisation trouvée dans les photos sélectionnées";
 "bvc.noNearDup" = "Aucune photo quasi-identique dans %@";
 "bvc.noSimilar" = "Aucun nom similaire dans %@";
@@ -675,6 +673,16 @@
 "drop.replace" = "Remplacer « %@ »";
 "drop.replaceAction" = "Remplacer";
 "drop.replaceFailed" = "Impossible de remplacer le fichier";
+"dupes.colItem" = "Ensembles de doublons";
+"dupes.confirmBody" = "Une copie de chaque ensemble est conservée. Vous pouvez remettre en place depuis la corbeille, ou annuler.";
+"dupes.confirmTitle" = "Mettre %d copie(s) en double à la corbeille ?";
+"dupes.keep" = "Garder";
+"dupes.none" = "Aucun fichier en double trouvé";
+"dupes.scanning" = "Analyse…";
+"dupes.setLabel" = "%d copies · %@ chacune · en garder une";
+"dupes.summary" = "%d ensemble(s) de doublons · %@ récupérables";
+"dupes.trash" = "Mettre à la corbeille";
+"dupes.windowTitle" = "Doublons dans « %@ »";
 "editor.failedTitle" = "Impossible d'ouvrir dans %@";
 "ext.cmdTitle" = "%@ : %@";
 "ext.failed" = "Erreur d'extension";

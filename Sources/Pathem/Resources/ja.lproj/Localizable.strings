@@ -365,7 +365,6 @@
 "bvc.enterPassphrase" = "秘密鍵のパスフレーズを入力してください（ない場合は空欄のまま）。";
 "bvc.enterPasswordFor" = "%@@%@のパスワードを入力してください。";
 "bvc.failuresForItems" = "%d項目で%@";
-"bvc.findingDuplicates" = "%@内の重複を検出中…";
 "bvc.findingNearDup" = "%@内のほぼ重複する写真を検索中…";
 "bvc.findingSimilar" = "%@内で似た名前を検索中…";
 "bvc.flatCount" = "%@内のすべての項目: %d";
@@ -405,7 +404,6 @@
 "bvc.newFolderVerb" = "新規フォルダ";
 "bvc.newFolderWithItems" = "項目から新規フォルダ";
 "bvc.newFolderWithSelectionAction" = "選択項目から新規フォルダ";
-"bvc.noDuplicates" = "%@に重複はありません";
 "bvc.noLocationFound" = "選択した写真に位置情報が見つかりませんでした";
 "bvc.noNearDup" = "%@にほぼ重複する写真はありません";
 "bvc.noSimilar" = "%@に似た名前はありません";
@@ -675,6 +673,16 @@
 "drop.replace" = "「%@」を置き換える";
 "drop.replaceAction" = "置き換える";
 "drop.replaceFailed" = "ファイルを置き換えられませんでした";
+"dupes.colItem" = "重複セット";
+"dupes.confirmBody" = "各セットのコピーを1つ保持します。ゴミ箱から戻すか、取り消すことができます。";
+"dupes.confirmTitle" = "%d個の重複コピーをゴミ箱に入れますか？";
+"dupes.keep" = "保持";
+"dupes.none" = "重複ファイルは見つかりませんでした";
+"dupes.scanning" = "スキャン中…";
+"dupes.setLabel" = "%d個のコピー · 各%@ · 1つを保持";
+"dupes.summary" = "%d個の重複セット · %@を回収可能";
+"dupes.trash" = "ゴミ箱に入れる";
+"dupes.windowTitle" = "「%@」内の重複";
 "editor.failedTitle" = "%@で開けませんでした";
 "ext.cmdTitle" = "%@: %@";
 "ext.failed" = "機能拡張のエラー";
