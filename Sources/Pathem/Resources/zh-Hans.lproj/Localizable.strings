@@ -895,6 +895,7 @@
 "integrations.vscodePreview" = "通过 %@ 的命令行安装“Reveal in Pathem”扩展：\n  %@ --install-extension %@.vsix\n\n将“Reveal in Pathem”添加到资源管理器、编辑器标签菜单和命令面板。移除会将其干净卸载。";
 "integrations.vscodeVsixMissing" = "此版本中没有随附的扩展。";
 "list.alwaysOpenWith" = "始终以此打开…";
+"list.ax.folder" = "文件夹";
 "list.clearTags" = "清除标记";
 "list.columnComment" = "注释";
 "list.columnDate" = "修改日期";

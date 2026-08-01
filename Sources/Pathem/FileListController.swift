@@ -1017,7 +1017,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard col >= 0,
             let cell = tableView.view(atColumn: col, row: row, makeIfNecessary: true) as? NSTableCellView
         else { return false }
-        return cell.textField?.accessibilityLabel() == entries[index].name
+        // The label now leads with the name and appends kind/size/date, so match on the prefix.
+        return cell.textField?.accessibilityLabel()?.hasPrefix(entries[index].name) ?? false
     }
 
     /// Whether the empty-space (background) right-click menu for `dir` offers Empty Trash -- true
@@ -1208,8 +1209,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                     nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
             }
             // VoiceOver otherwise reads the git letter + tag-dot glyphs in the attributed name; give
-            // it the clean filename instead (A8).
-            cell.textField?.setAccessibilityLabel(entry.name)
+            // it a clean spoken description instead: name, kind, size, and modified date, so a
+            // screen-reader user hears more than the bare filename the cell shows.
+            cell.textField?.setAccessibilityLabel(accessibilityLabel(for: entry))
             if underlineOnHover, row == hoveredRow, let field = cell.textField {
                 let text =
                     field.attributedStringValue.length > 0
@@ -1331,6 +1333,25 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     /// A human-readable file kind (localized) derived from the type, no I/O.
+    /// A spoken VoiceOver description of a row: name, kind, size (files), and modified date.
+    private func accessibilityLabel(for entry: FileEntry) -> String {
+        var parts = [entry.name, entry.isDirectory ? L("list.ax.folder", "folder") : Self.kind(for: entry)]
+        if !entry.isDirectory {
+            parts.append(ByteCountFormatter.string(fromByteCount: entry.size, countStyle: .file))
+        }
+        if let date = entry.modificationDate {
+            parts.append(Self.axDateFormatter.string(from: date))
+        }
+        return parts.joined(separator: ", ")
+    }
+
+    private static let axDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
     private static func kind(for entry: FileEntry) -> String {
         if entry.isDirectory { return L("list.kindFolder", "Folder") }
         let ext = (entry.name as NSString).pathExtension

@@ -895,6 +895,7 @@
 "integrations.vscodePreview" = "%@のコマンドラインで「Reveal in Pathem」拡張機能をインストールします:\n  %@ --install-extension %@.vsix\n\nエクスプローラー、エディタのタブメニュー、コマンドパレットに「Reveal in Pathem」を追加します。削除するとクリーンにアンインストールされます。";
 "integrations.vscodeVsixMissing" = "この build には同梱の拡張機能がありません。";
 "list.alwaysOpenWith" = "常にこのアプリケーションで開く…";
+"list.ax.folder" = "フォルダ";
 "list.clearTags" = "タグを消去";
 "list.columnComment" = "コメント";
 "list.columnDate" = "変更日";

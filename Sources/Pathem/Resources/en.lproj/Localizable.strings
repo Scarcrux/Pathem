@@ -895,6 +895,7 @@
 "integrations.vscodePreview" = "Installs the “Reveal in Pathem” extension into %@ via its command line:\n  %@ --install-extension %@.vsix\n\nAdds “Reveal in Pathem” to the Explorer, the editor tab menu, and the command palette. Remove uninstalls it cleanly.";
 "integrations.vscodeVsixMissing" = "The bundled extension isn’t available in this build.";
 "list.alwaysOpenWith" = "Always Open With…";
+"list.ax.folder" = "folder";
 "list.clearTags" = "Clear Tags";
 "list.columnComment" = "Comment";
 "list.columnDate" = "Date Modified";
