@@ -253,8 +253,14 @@ public enum BatchRename {
                     failures.append("\(item.original): \(error.localizedDescription)")
                 } else {
                     let fallback = FileOperations.uniqueDestination(originalURL)
-                    try? fm.moveItem(at: item.temp, to: fallback)
-                    failures.append("\(item.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))")
+                    if (try? fm.moveItem(at: item.temp, to: fallback)) != nil {
+                        failures.append("\(item.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))")
+                    } else {
+                        // Even the fallback move failed, so the file is still under the hidden temp
+                        // name. Report that truthfully instead of claiming a name that doesn't exist.
+                        failures.append(
+                            "\(item.original): \(error.localizedDescription) (recover it at \(item.temp.lastPathComponent))")
+                    }
                 }
             }
         }

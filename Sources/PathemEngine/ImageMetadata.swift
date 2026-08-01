@@ -142,6 +142,11 @@ public enum ImageMetadata {
         guard let dest = CGImageDestinationCreateWithURL(temp as CFURL, type, count, nil) else {
             throw MetadataError(reason: "Couldn’t prepare the image.")
         }
+        // Carry the container-level properties (e.g. an animated GIF's loop count) so a metadata
+        // edit doesn't drop them; per-image properties are set below.
+        if let container = CGImageSourceCopyProperties(source, nil) {
+            CGImageDestinationSetProperties(dest, container)
+        }
         // Copy the compressed image data verbatim (lossless); only image 0 takes the
         // edited properties, other frames keep their own so multi-image files survive.
         for index in 0..<count {
@@ -153,7 +158,12 @@ public enum ImageMetadata {
             try? FileManager.default.removeItem(at: temp)
             throw MetadataError(reason: "Couldn’t write the image metadata.")
         }
-        _ = try FileManager.default.replaceItemAt(url, withItemAt: temp)
+        do {
+            _ = try FileManager.default.replaceItemAt(url, withItemAt: temp)
+        } catch {
+            try? FileManager.default.removeItem(at: temp)  // don't leak the temp beside the original
+            throw error
+        }
         return true
     }
 

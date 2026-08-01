@@ -40,7 +40,12 @@ public enum MetadataCleaner {
             try? FileManager.default.removeItem(at: temp)
             throw cfError?.takeRetainedValue() ?? MetadataError(reason: "Couldn’t remove the location.")
         }
-        _ = try FileManager.default.replaceItemAt(url, withItemAt: temp)
+        do {
+            _ = try FileManager.default.replaceItemAt(url, withItemAt: temp)
+        } catch {
+            try? FileManager.default.removeItem(at: temp)  // don't leak the temp beside the original
+            throw error
+        }
         return true
     }
 }

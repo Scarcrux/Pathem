@@ -241,6 +241,15 @@ public enum FileOperations {
                 try fm.trashItem(at: source, resultingItemURL: &resulting)
                 if let landed = resulting as URL? {
                     trashed.append(Trashed(original: source, trashed: landed))
+                } else {
+                    // macOS almost always returns the landing URL; if it didn't, locate the item in
+                    // the home Trash by name so undo / Put Back still work (else it's trashed but
+                    // un-restorable). Skipped only if even that isn't found.
+                    let guess = fm.homeDirectoryForCurrentUser
+                        .appendingPathComponent(".Trash").appendingPathComponent(source.lastPathComponent)
+                    if fm.fileExists(atPath: guess.path) {
+                        trashed.append(Trashed(original: source, trashed: guess))
+                    }
                 }
             } catch {
                 failures.append(Failure(name: source.lastPathComponent, reason: error.localizedDescription))
@@ -542,7 +551,20 @@ public enum FileOperations {
                     // Replace already trashed the old destination. If the op then fails, restore it
                     // so a failed replace doesn't silently leave the user's file in the Trash.
                     if let trashed = replacedTrash {
-                        try? fm.moveItem(at: trashed, to: to)
+                        do {
+                            try fm.moveItem(at: trashed, to: to)
+                        } catch {
+                            // The op failed AND the overwritten original couldn't be put back: it's
+                            // stranded in the Trash. Say so explicitly, with its location, instead of
+                            // a bare "failed" that hides where the file went.
+                            outcome.failures.append(
+                                Failure(
+                                    name: name,
+                                    reason:
+                                        "Couldn’t \(action == .moved ? "move" : "copy") the item here, and the file it "
+                                        + "replaced was moved to the Trash and couldn’t be restored. It’s at \(trashed.path)"))
+                            continue
+                        }
                     }
                     throw error
                 }
