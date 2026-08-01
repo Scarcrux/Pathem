@@ -127,7 +127,7 @@
 "bvc.chooseEllipsis" = "Elegir…";
 "bvc.cmd.addBookmark" = "Añadir esta carpeta remota a marcadores…";
 "bvc.cmd.addToCollection" = "Añadir a la colección…";
-"bvc.cmd.addToShelf" = "Añadir a la estantería";
+"bvc.cmd.addToShelf" = "Añadir al Drop Stack";
 "bvc.cmd.addToTorrents" = "Añadir a Torrents";
 "bvc.cmd.advancedFind" = "Búsqueda avanzada…";
 "bvc.cmd.aiRename" = "Renombrar con IA…";
@@ -286,7 +286,7 @@
 "bvc.cmd.showHistory" = "Historial de deshacer…";
 "bvc.cmd.showOriginal" = "Mostrar original";
 "bvc.cmd.showPathBarAtBottom" = "Mostrar la barra de ruta abajo";
-"bvc.cmd.showShelf" = "Mostrar la estantería";
+"bvc.cmd.showShelf" = "Mostrar Drop Stack";
 "bvc.cmd.sizeBrowser" = "Explorador de tamaños…";
 "bvc.cmd.slideshow" = "Pase de diapositivas";
 "bvc.cmd.split" = "Dividir archivo…";
@@ -370,7 +370,7 @@
 "bvc.flatCount" = "Todos los ítems en %@: %d";
 "bvc.flatCountTruncated" = "Todos los ítems en %@: %d+ (truncado)";
 "bvc.flatteningLoading" = "Listando todo en %@…";
-"bvc.hideShelf" = "Ocultar la estantería";
+"bvc.hideShelf" = "Ocultar Drop Stack";
 "bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "Conservar ambos";
 "bvc.layoutDefaultName" = "Disposición %d";
@@ -483,7 +483,7 @@
 "bvc.sftpMissing" = "No se encontró sftp";
 "bvc.showOriginalNoneBody" = "Este ítem no es un alias ni un enlace simbólico, o no se encuentra su original (puede que se haya movido o eliminado).";
 "bvc.showOriginalNoneTitle" = "No hay original que mostrar";
-"bvc.showShelf" = "Mostrar la estantería";
+"bvc.showShelf" = "Mostrar Drop Stack";
 "bvc.skip" = "Omitir";
 "bvc.splitFailed" = "No se pudo dividir el archivo";
 "bvc.splitTitle" = "¿En partes de cuántos MB dividir?";
@@ -1029,8 +1029,8 @@
 "menu.redoNamed" = "Rehacer %@";
 "menu.remote.download" = "Descargar del servidor…";
 "menu.selectAll" = "Seleccionar todo";
-"menu.shelf.add" = "Añadir a la estantería";
-"menu.shelf.toggle" = "Mostrar la estantería";
+"menu.shelf.add" = "Añadir al Drop Stack";
+"menu.shelf.toggle" = "Mostrar Drop Stack";
 "menu.storage" = "Almacenamiento";
 "menu.tab.close" = "Cerrar pestaña";
 "menu.tab.new" = "Nueva pestaña";
@@ -1454,13 +1454,13 @@
 "shelf.clear" = "Vaciar";
 "shelf.copyHere" = "Copiar aquí";
 "shelf.emptyHint" = "Arrastra archivos aquí para guardarlos";
-"shelf.hideShelfAX" = "Ocultar la estantería";
-"shelf.hideShelfTooltip" = "Ocultar la estantería";
+"shelf.hideShelfAX" = "Ocultar Drop Stack";
+"shelf.hideShelfTooltip" = "Ocultar el Drop Stack";
 "shelf.moveHere" = "Mover aquí";
 "shelf.reveal" = "Mostrar";
 "shelf.share" = "Compartir";
-"shelf.title" = "Estantería";
-"shelf.titleCount" = "Estantería (%d)";
+"shelf.title" = "Drop Stack";
+"shelf.titleCount" = "Drop Stack (%d)";
 "shelf.trash" = "Papelera";
 "shortcut.noneBody" = "Crea antes atajos en la app Atajos (o la herramienta Atajos no está disponible).";
 "shortcut.noneTitle" = "No se encontraron atajos";

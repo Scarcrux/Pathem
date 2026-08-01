@@ -127,7 +127,7 @@
 "bvc.chooseEllipsis" = "Auswählen…";
 "bvc.cmd.addBookmark" = "Lesezeichen für diesen entfernten Ordner…";
 "bvc.cmd.addToCollection" = "Zur Sammlung hinzufügen…";
-"bvc.cmd.addToShelf" = "Zum Ablagefach hinzufügen";
+"bvc.cmd.addToShelf" = "Zu Drop Stack hinzufügen";
 "bvc.cmd.addToTorrents" = "Zu Torrents hinzufügen";
 "bvc.cmd.advancedFind" = "Erweiterte Suche…";
 "bvc.cmd.aiRename" = "KI-Umbenennung…";
@@ -286,7 +286,7 @@
 "bvc.cmd.showHistory" = "Widerrufsverlauf…";
 "bvc.cmd.showOriginal" = "Original zeigen";
 "bvc.cmd.showPathBarAtBottom" = "Pfadleiste unten anzeigen";
-"bvc.cmd.showShelf" = "Ablagefach einblenden";
+"bvc.cmd.showShelf" = "Drop Stack einblenden";
 "bvc.cmd.sizeBrowser" = "Größenbrowser…";
 "bvc.cmd.slideshow" = "Diashow";
 "bvc.cmd.split" = "Datei aufteilen…";
@@ -370,7 +370,7 @@
 "bvc.flatCount" = "Alle Objekte in %@: %d";
 "bvc.flatCountTruncated" = "Alle Objekte in %@: %d+ (gekürzt)";
 "bvc.flatteningLoading" = "Alles in %@ wird aufgelistet…";
-"bvc.hideShelf" = "Ablagefach ausblenden";
+"bvc.hideShelf" = "Drop Stack ausblenden";
 "bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "Beide behalten";
 "bvc.layoutDefaultName" = "Layout %d";
@@ -483,7 +483,7 @@
 "bvc.sftpMissing" = "sftp wurde nicht gefunden";
 "bvc.showOriginalNoneBody" = "Dieses Objekt ist kein Alias oder Symlink, oder sein Original wurde nicht gefunden (möglicherweise wurde es bewegt oder gelöscht).";
 "bvc.showOriginalNoneTitle" = "Kein Original zum Anzeigen";
-"bvc.showShelf" = "Ablagefach einblenden";
+"bvc.showShelf" = "Drop Stack einblenden";
 "bvc.skip" = "Überspringen";
 "bvc.splitFailed" = "Datei konnte nicht aufgeteilt werden";
 "bvc.splitTitle" = "In Teile von wie vielen MB aufteilen?";
@@ -1029,8 +1029,8 @@
 "menu.redoNamed" = "%@ wiederholen";
 "menu.remote.download" = "Vom Server laden…";
 "menu.selectAll" = "Alles auswählen";
-"menu.shelf.add" = "Zum Ablagefach hinzufügen";
-"menu.shelf.toggle" = "Ablagefach einblenden";
+"menu.shelf.add" = "Zu Drop Stack hinzufügen";
+"menu.shelf.toggle" = "Drop Stack einblenden";
 "menu.storage" = "Speicher";
 "menu.tab.close" = "Tab schließen";
 "menu.tab.new" = "Neuer Tab";
@@ -1454,13 +1454,13 @@
 "shelf.clear" = "Leeren";
 "shelf.copyHere" = "Hierher kopieren";
 "shelf.emptyHint" = "Dateien hierher ziehen, um sie abzulegen";
-"shelf.hideShelfAX" = "Ablagefach ausblenden";
-"shelf.hideShelfTooltip" = "Ablagefach ausblenden";
+"shelf.hideShelfAX" = "Drop Stack ausblenden";
+"shelf.hideShelfTooltip" = "Den Drop Stack ausblenden";
 "shelf.moveHere" = "Hierher bewegen";
 "shelf.reveal" = "Anzeigen";
 "shelf.share" = "Teilen";
-"shelf.title" = "Ablagefach";
-"shelf.titleCount" = "Ablagefach (%d)";
+"shelf.title" = "Drop Stack";
+"shelf.titleCount" = "Drop Stack (%d)";
 "shelf.trash" = "Papierkorb";
 "shortcut.noneBody" = "Erstelle zuerst Kurzbefehle in der App „Kurzbefehle“ (oder das Kurzbefehle-Tool ist nicht verfügbar).";
 "shortcut.noneTitle" = "Keine Kurzbefehle gefunden";

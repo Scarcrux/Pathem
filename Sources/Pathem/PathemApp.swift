@@ -989,7 +989,7 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Move To…", "files.moveTo"))
         fileMenu.addItem(applyLabelMenuItem())
         fileMenu.addItem(commandItem("Add to Collection…", "files.addToCollection"))
-        fileMenu.addItem(commandItem("Add to Shelf", "shelf.add", "y"))
+        fileMenu.addItem(commandItem("Add to Drop Stack", "shelf.add", "y"))
         fileMenu.addItem(commandItem("Send via AirDrop", "files.airdrop"))
         // Power operations, grouped into submenus
         fileMenu.addItem(.separator())
@@ -1141,7 +1141,7 @@ enum PathemApp {
             commandItem("Quick Look", "view.quickLook"),
             commandItem("Slideshow", "view.slideshow"),
             commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]),
-            commandItem("Show Shelf", "shelf.toggle", "y", [.command, .shift]),
+            commandItem("Show Drop Stack", "shelf.toggle", "y", [.command, .shift]),
         ]))
         viewMenu.addItem(submenu(L("menu.group.layoutStyle", "Layout & Style"), [
             commandItem("Save Workspace…", "workspace.save"),

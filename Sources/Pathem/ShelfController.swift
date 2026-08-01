@@ -11,7 +11,7 @@ final class ShelfController: NSObject {
     let view = ShelfBarView()
 
     private var model = ShelfModel()
-    private let titleLabel = NSTextField(labelWithString: L("shelf.title", "Shelf"))
+    private let titleLabel = NSTextField(labelWithString: L("shelf.title", "Drop Stack"))
     private let chipsStack = NSStackView()
     private let emptyHint = NSTextField(labelWithString: L("shelf.emptyHint", "Drag files here to stash them"))
     private var actionButtons: [NSButton] = []
@@ -116,12 +116,12 @@ final class ShelfController: NSObject {
         actions.setHuggingPriority(.defaultHigh, for: .horizontal)
 
         let hide = NSButton()
-        hide.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("shelf.hideShelfAX", "Hide Shelf"))
+        hide.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("shelf.hideShelfAX", "Hide Drop Stack"))
         hide.isBordered = false
         hide.bezelStyle = .inline
         hide.target = self
         hide.action = #selector(hideShelf)
-        hide.toolTip = L("shelf.hideShelfTooltip", "Hide the shelf")
+        hide.toolTip = L("shelf.hideShelfTooltip", "Hide the Drop Stack")
 
         let row = NSStackView(views: [titleLabel, scroll, actions, hide])
         row.orientation = .horizontal
@@ -159,8 +159,8 @@ final class ShelfController: NSObject {
         }
         titleLabel.stringValue =
             model.isEmpty
-            ? L("shelf.title", "Shelf")
-            : String(format: L("shelf.titleCount", "Shelf (%d)"), model.count)
+            ? L("shelf.title", "Drop Stack")
+            : String(format: L("shelf.titleCount", "Drop Stack (%d)"), model.count)
         emptyHint.isHidden = !model.isEmpty
         for button in actionButtons {
             // Clear is enabled whenever there are items; the rest too.

@@ -53,7 +53,7 @@ extension BrowserViewController {
         case "view.previewPane": menuItem.state = previewVisible ? .on : .off
         case "shelf.toggle":
             menuItem.state = shelf.view.isHidden ? .off : .on
-            menuItem.title = shelf.view.isHidden ? L("bvc.showShelf", "Show Shelf") : L("bvc.hideShelf", "Hide Shelf")
+            menuItem.title = shelf.view.isHidden ? L("bvc.showShelf", "Show Drop Stack") : L("bvc.hideShelf", "Hide Drop Stack")
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         case "files.newFolderWithSelection":
             menuItem.title = FileContextMenuController.newFolderWithSelectionTitle(

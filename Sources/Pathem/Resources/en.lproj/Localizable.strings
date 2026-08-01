@@ -127,7 +127,7 @@
 "bvc.chooseEllipsis" = "Choose…";
 "bvc.cmd.addBookmark" = "Bookmark This Remote Folder…";
 "bvc.cmd.addToCollection" = "Add to Collection…";
-"bvc.cmd.addToShelf" = "Add to Shelf";
+"bvc.cmd.addToShelf" = "Add to Drop Stack";
 "bvc.cmd.addToTorrents" = "Add to Torrents";
 "bvc.cmd.advancedFind" = "Advanced Find…";
 "bvc.cmd.aiRename" = "AI Rename…";
@@ -286,7 +286,7 @@
 "bvc.cmd.showHistory" = "Undo History…";
 "bvc.cmd.showOriginal" = "Show Original";
 "bvc.cmd.showPathBarAtBottom" = "Show Path Bar at Bottom";
-"bvc.cmd.showShelf" = "Show Shelf";
+"bvc.cmd.showShelf" = "Show Drop Stack";
 "bvc.cmd.sizeBrowser" = "Size Browser…";
 "bvc.cmd.slideshow" = "Slideshow";
 "bvc.cmd.split" = "Split File…";
@@ -370,7 +370,7 @@
 "bvc.flatCount" = "All items in %@: %d";
 "bvc.flatCountTruncated" = "All items in %@: %d+ (truncated)";
 "bvc.flatteningLoading" = "Listing everything in %@…";
-"bvc.hideShelf" = "Hide Shelf";
+"bvc.hideShelf" = "Hide Drop Stack";
 "bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "Keep Both";
 "bvc.layoutDefaultName" = "Layout %d";
@@ -483,7 +483,7 @@
 "bvc.sftpMissing" = "sftp was not found";
 "bvc.showOriginalNoneBody" = "This item isn’t an alias or symlink, or its original can’t be found (it may have been moved or deleted).";
 "bvc.showOriginalNoneTitle" = "No original to show";
-"bvc.showShelf" = "Show Shelf";
+"bvc.showShelf" = "Show Drop Stack";
 "bvc.skip" = "Skip";
 "bvc.splitFailed" = "Couldn’t split the file";
 "bvc.splitTitle" = "Split into parts of how many MB?";
@@ -1384,13 +1384,13 @@
 "shelf.clear" = "Clear";
 "shelf.copyHere" = "Copy Here";
 "shelf.emptyHint" = "Drag files here to stash them";
-"shelf.hideShelfAX" = "Hide Shelf";
-"shelf.hideShelfTooltip" = "Hide the shelf";
+"shelf.hideShelfAX" = "Hide Drop Stack";
+"shelf.hideShelfTooltip" = "Hide the Drop Stack";
 "shelf.moveHere" = "Move Here";
 "shelf.reveal" = "Reveal";
 "shelf.share" = "Share";
-"shelf.title" = "Shelf";
-"shelf.titleCount" = "Shelf (%d)";
+"shelf.title" = "Drop Stack";
+"shelf.titleCount" = "Drop Stack (%d)";
 "shelf.trash" = "Trash";
 "shortcut.noneBody" = "Create shortcuts in the Shortcuts app first (or the Shortcuts tool is unavailable).";
 "shortcut.noneTitle" = "No Shortcuts found";

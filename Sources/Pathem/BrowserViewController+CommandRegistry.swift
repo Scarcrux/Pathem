@@ -541,9 +541,9 @@ extension BrowserViewController {
         add(
             "files.extractTo", L("bvc.cmd.extractTo", "Extract to Folder…"), enabled: hasArchive
         ) { [weak self] in self?.extractToSelection() }
-        add("shelf.add", L("bvc.cmd.addToShelf", "Add to Shelf"), enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
+        add("shelf.add", L("bvc.cmd.addToShelf", "Add to Drop Stack"), enabled: { [weak self] in !(self?.activePane?.selectedEntries.isEmpty ?? true) })
         { [weak self] in self?.addSelectionToShelf() }
-        add("shelf.toggle", L("bvc.cmd.showShelf", "Show Shelf")) { [weak self] in self?.toggleShelf() }
+        add("shelf.toggle", L("bvc.cmd.showShelf", "Show Drop Stack")) { [weak self] in self?.toggleShelf() }
         add("connections.manage", L("bvc.cmd.connections", "Connections…")) {
             [weak self] in self?.connectionsController.present(over: self?.view.window)
         }

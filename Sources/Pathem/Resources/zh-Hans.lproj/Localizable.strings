@@ -127,7 +127,7 @@
 "bvc.chooseEllipsis" = "选取…";
 "bvc.cmd.addBookmark" = "为此远程文件夹添加书签…";
 "bvc.cmd.addToCollection" = "添加到收藏集…";
-"bvc.cmd.addToShelf" = "添加到暂存架";
+"bvc.cmd.addToShelf" = "添加到 Drop Stack";
 "bvc.cmd.addToTorrents" = "添加到种子";
 "bvc.cmd.advancedFind" = "高级查找…";
 "bvc.cmd.aiRename" = "AI 重命名…";
@@ -286,7 +286,7 @@
 "bvc.cmd.showHistory" = "撤销历史…";
 "bvc.cmd.showOriginal" = "显示原身";
 "bvc.cmd.showPathBarAtBottom" = "在底部显示路径栏";
-"bvc.cmd.showShelf" = "显示暂存架";
+"bvc.cmd.showShelf" = "显示 Drop Stack";
 "bvc.cmd.sizeBrowser" = "大小浏览器…";
 "bvc.cmd.slideshow" = "幻灯片显示";
 "bvc.cmd.split" = "分割文件…";
@@ -370,7 +370,7 @@
 "bvc.flatCount" = "%@ 中的所有项目：%d";
 "bvc.flatCountTruncated" = "%@ 中的所有项目：%d+（已截断）";
 "bvc.flatteningLoading" = "正在列出 %@ 中的所有内容…";
-"bvc.hideShelf" = "隐藏暂存架";
+"bvc.hideShelf" = "隐藏 Drop Stack";
 "bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "两者都保留";
 "bvc.layoutDefaultName" = "布局 %d";
@@ -483,7 +483,7 @@
 "bvc.sftpMissing" = "未找到 sftp";
 "bvc.showOriginalNoneBody" = "此项目不是替身或符号链接，或者找不到其原身（可能已被移动或删除）。";
 "bvc.showOriginalNoneTitle" = "没有可显示的原身";
-"bvc.showShelf" = "显示暂存架";
+"bvc.showShelf" = "显示 Drop Stack";
 "bvc.skip" = "跳过";
 "bvc.splitFailed" = "无法分割文件";
 "bvc.splitTitle" = "每个分卷分割为多少 MB？";
@@ -1029,8 +1029,8 @@
 "menu.redoNamed" = "重做%@";
 "menu.remote.download" = "从服务器下载…";
 "menu.selectAll" = "全选";
-"menu.shelf.add" = "添加到暂存架";
-"menu.shelf.toggle" = "显示暂存架";
+"menu.shelf.add" = "添加到 Drop Stack";
+"menu.shelf.toggle" = "显示 Drop Stack";
 "menu.storage" = "存储";
 "menu.tab.close" = "关闭标签页";
 "menu.tab.new" = "新建标签页";
@@ -1454,13 +1454,13 @@
 "shelf.clear" = "清除";
 "shelf.copyHere" = "拷贝到此处";
 "shelf.emptyHint" = "将文件拖到此处以暂存";
-"shelf.hideShelfAX" = "隐藏暂存架";
-"shelf.hideShelfTooltip" = "隐藏暂存架";
+"shelf.hideShelfAX" = "隐藏 Drop Stack";
+"shelf.hideShelfTooltip" = "隐藏 Drop Stack";
 "shelf.moveHere" = "移到此处";
 "shelf.reveal" = "显示";
 "shelf.share" = "共享";
-"shelf.title" = "暂存架";
-"shelf.titleCount" = "暂存架（%d）";
+"shelf.title" = "Drop Stack";
+"shelf.titleCount" = "Drop Stack (%d)";
 "shelf.trash" = "废纸篓";
 "shortcut.noneBody" = "请先在“快捷指令”应用中创建快捷指令（或者快捷指令工具不可用）。";
 "shortcut.noneTitle" = "未找到快捷指令";

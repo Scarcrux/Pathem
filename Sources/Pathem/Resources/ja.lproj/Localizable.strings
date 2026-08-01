@@ -127,7 +127,7 @@
 "bvc.chooseEllipsis" = "選択…";
 "bvc.cmd.addBookmark" = "このリモートフォルダをブックマーク…";
 "bvc.cmd.addToCollection" = "コレクションに追加…";
-"bvc.cmd.addToShelf" = "シェルフに追加";
+"bvc.cmd.addToShelf" = "Drop Stack に追加";
 "bvc.cmd.addToTorrents" = "トレントに追加";
 "bvc.cmd.advancedFind" = "詳細検索…";
 "bvc.cmd.aiRename" = "AIで名前を変更…";
@@ -286,7 +286,7 @@
 "bvc.cmd.showHistory" = "取り消し履歴…";
 "bvc.cmd.showOriginal" = "オリジナルを表示";
 "bvc.cmd.showPathBarAtBottom" = "パスバーを下部に表示";
-"bvc.cmd.showShelf" = "シェルフを表示";
+"bvc.cmd.showShelf" = "Drop Stack を表示";
 "bvc.cmd.sizeBrowser" = "サイズブラウザ…";
 "bvc.cmd.slideshow" = "スライドショー";
 "bvc.cmd.split" = "ファイルを分割…";
@@ -370,7 +370,7 @@
 "bvc.flatCount" = "%@内のすべての項目: %d";
 "bvc.flatCountTruncated" = "%@内のすべての項目: %d+（省略）";
 "bvc.flatteningLoading" = "%@内のすべてをリスト表示中…";
-"bvc.hideShelf" = "シェルフを隠す";
+"bvc.hideShelf" = "Drop Stack を非表示";
 "bvc.iphoneFallback" = "iPhone";
 "bvc.keepBoth" = "両方とも残す";
 "bvc.layoutDefaultName" = "レイアウト %d";
@@ -483,7 +483,7 @@
 "bvc.sftpMissing" = "sftpが見つかりませんでした";
 "bvc.showOriginalNoneBody" = "この項目はエイリアスやシンボリックリンクではないか、オリジナルが見つかりません（移動または削除された可能性があります）。";
 "bvc.showOriginalNoneTitle" = "表示するオリジナルがありません";
-"bvc.showShelf" = "シェルフを表示";
+"bvc.showShelf" = "Drop Stack を表示";
 "bvc.skip" = "スキップ";
 "bvc.splitFailed" = "ファイルを分割できませんでした";
 "bvc.splitTitle" = "何MBごとに分割しますか？";
@@ -1029,8 +1029,8 @@
 "menu.redoNamed" = "%@をやり直す";
 "menu.remote.download" = "サーバからダウンロード…";
 "menu.selectAll" = "すべてを選択";
-"menu.shelf.add" = "シェルフに追加";
-"menu.shelf.toggle" = "シェルフを表示";
+"menu.shelf.add" = "Drop Stack に追加";
+"menu.shelf.toggle" = "Drop Stack を表示";
 "menu.storage" = "ストレージ";
 "menu.tab.close" = "タブを閉じる";
 "menu.tab.new" = "新規タブ";
@@ -1454,13 +1454,13 @@
 "shelf.clear" = "消去";
 "shelf.copyHere" = "ここにコピー";
 "shelf.emptyHint" = "ファイルをここにドラッグして一時保管";
-"shelf.hideShelfAX" = "シェルフを隠す";
-"shelf.hideShelfTooltip" = "シェルフを隠す";
+"shelf.hideShelfAX" = "Drop Stack を非表示";
+"shelf.hideShelfTooltip" = "Drop Stack を非表示にする";
 "shelf.moveHere" = "ここに移動";
 "shelf.reveal" = "表示";
 "shelf.share" = "共有";
-"shelf.title" = "シェルフ";
-"shelf.titleCount" = "シェルフ（%d）";
+"shelf.title" = "Drop Stack";
+"shelf.titleCount" = "Drop Stack (%d)";
 "shelf.trash" = "ゴミ箱";
 "shortcut.noneBody" = "まずショートカットアプリでショートカットを作成してください（またはショートカットツールが利用できません）。";
 "shortcut.noneTitle" = "ショートカットが見つかりません";
