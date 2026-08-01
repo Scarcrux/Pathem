@@ -445,4 +445,8 @@ working_dir = "."
 
   [[phase.task]]
     title = "Follow-ups: batch-rename saved presets (config-as-data); the actual scroll-GIF recording + placement above the fold (make gate-a-demo tooling is in place, needs Screen Recording permission)"
+
+  [[phase.task]]
+    title = "List-row VoiceOver: announces name + kind + size + date (was name-only). Remaining 16.5: custom-drawn icon/gallery/column/tree cell labels; Shelf resurface; native-speaker l10n pass"
+    done = true
 # <<< commandem roadmap <<<
