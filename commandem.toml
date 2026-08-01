@@ -459,4 +459,8 @@ working_dir = "."
   [[phase.task]]
     title = "a11y sweep complete: all 5 file views (list/icon/column/gallery/tree) speak name+kind+size+date. Saved batch-rename presets shipped (RenamePresetStore). Remaining: native-speaker l10n pass; the scroll-GIF recording (make gate-a-demo)"
     done = true
+
+  [[phase.task]]
+    title = "Shelf renamed to 'Drop Stack' (market-recognized name) across commands/menus/panel + 6 locales; docs/PRE_PUBLIC.md written (post-audit state + owner-action items)"
+    done = true
 # <<< commandem roadmap <<<
