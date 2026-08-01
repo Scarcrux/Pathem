@@ -1198,6 +1198,11 @@
 "photos.exported" = "%d件を書き出しました";
 "photos.exportedWithErrors" = "%d件を書き出し、%d件が失敗";
 "photos.exporting" = "%d件を書き出し中…";
+"photos.locationRemoved" = "%d枚の写真から位置情報を削除しました";
+"photos.noLocation" = "選択した写真に位置情報が見つかりませんでした";
+"photos.removeLocation" = "位置情報を削除";
+"photos.removeLocationBody" = "写真ライブラリ内の写真を編集してGPS位置情報を削除します。写真では変更を元に戻せます。";
+"photos.removeLocationTitle" = "%d枚の写真から位置情報を削除しますか？";
 "photos.requesting" = "写真ライブラリへのアクセスを要求しています…";
 "photos.statusCount" = "%d件";
 "photos.statusSelected" = "%d/%d件を選択";

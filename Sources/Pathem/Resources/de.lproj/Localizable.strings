@@ -1198,6 +1198,11 @@
 "photos.exported" = "%d exportiert";
 "photos.exportedWithErrors" = "%d exportiert, %d fehlgeschlagen";
 "photos.exporting" = "%d werden exportiert…";
+"photos.locationRemoved" = "Standort aus %d Foto(s) entfernt";
+"photos.noLocation" = "Kein Standort in den ausgewählten Fotos gefunden";
+"photos.removeLocation" = "Standort entfernen";
+"photos.removeLocationBody" = "Dies bearbeitet die Fotos in Ihrer Fotomediathek, um ihren GPS-Standort zu entfernen. Fotos hält die Änderung widerrufbar.";
+"photos.removeLocationTitle" = "Standort aus %d Foto(s) entfernen?";
 "photos.requesting" = "Zugriff auf deine Fotomediathek wird angefordert…";
 "photos.statusCount" = "%d Objekte";
 "photos.statusSelected" = "%d von %d ausgewählt";

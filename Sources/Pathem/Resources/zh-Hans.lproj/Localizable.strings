@@ -1198,6 +1198,11 @@
 "photos.exported" = "已导出 %d 项";
 "photos.exportedWithErrors" = "已导出 %d 项，%d 项失败";
 "photos.exporting" = "正在导出 %d 项…";
+"photos.locationRemoved" = "已从 %d 张照片中移除位置信息";
+"photos.noLocation" = "所选照片中未找到位置信息";
+"photos.removeLocation" = "移除位置信息";
+"photos.removeLocationBody" = "此操作会编辑“照片”图库中的照片以移除其 GPS 位置信息。“照片”保留可还原的更改。";
+"photos.removeLocationTitle" = "从 %d 张照片中移除位置信息？";
 "photos.requesting" = "正在请求访问您的照片图库…";
 "photos.statusCount" = "%d 项";
 "photos.statusSelected" = "已选择 %d / %d 项";

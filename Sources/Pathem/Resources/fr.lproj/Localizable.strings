@@ -1198,6 +1198,11 @@
 "photos.exported" = "%d exporté(s)";
 "photos.exportedWithErrors" = "%d exporté(s), %d échec(s)";
 "photos.exporting" = "Exportation de %d…";
+"photos.locationRemoved" = "Localisation supprimée de %d photo(s)";
+"photos.noLocation" = "Aucune localisation trouvée dans les photos sélectionnées";
+"photos.removeLocation" = "Supprimer la localisation";
+"photos.removeLocationBody" = "Cela modifie les photos de votre photothèque pour supprimer leur localisation GPS. Photos conserve la modification réversible.";
+"photos.removeLocationTitle" = "Supprimer la localisation de %d photo(s) ?";
 "photos.requesting" = "Demande d’accès à votre photothèque…";
 "photos.statusCount" = "%d éléments";
 "photos.statusSelected" = "%d sur %d sélectionné(s)";

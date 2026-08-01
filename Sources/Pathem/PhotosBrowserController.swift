@@ -4,7 +4,8 @@ import UniformTypeIdentifiers
 
 /// A window that browses the macOS Photos library (albums on the left, a thumbnail grid on the
 /// right) and gets photos OUT of it: drag any thumbnail into a folder (a file promise that exports
-/// the original), or select and Export. Read-only for now -- edits stay in Photos. Backed entirely
+/// the original), or select and Export. Also a safe edit-back: Remove Location clears GPS from the
+/// selected photos via PHAssetChangeRequest (metadata only, revertible in Photos). Backed entirely
 /// by PhotoKit (`PhotoLibrary`), so nothing touches the `.photoslibrary` bundle directly.
 @MainActor
 final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableViewDelegate,
@@ -15,6 +16,7 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private let grid = NSCollectionView()
     private let statusLabel = NSTextField(labelWithString: "")
     private let exportButton = NSButton()
+    private let removeLocationButton = NSButton()
     private let placeholder = NSTextField(labelWithString: "")
 
     private let imageManager = PHCachingImageManager()
@@ -102,7 +104,12 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         exportButton.target = self
         exportButton.action = #selector(exportSelected)
         exportButton.isEnabled = false
-        let bar = NSStackView(views: [statusLabel, NSView(), exportButton])
+        removeLocationButton.title = L("photos.removeLocation", "Remove Location")
+        removeLocationButton.bezelStyle = .rounded
+        removeLocationButton.target = self
+        removeLocationButton.action = #selector(removeLocationSelected)
+        removeLocationButton.isEnabled = false
+        let bar = NSStackView(views: [statusLabel, NSView(), removeLocationButton, exportButton])
         bar.orientation = .horizontal
         bar.translatesAutoresizingMaskIntoConstraints = false
 
@@ -146,6 +153,7 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         albumTable.reloadData()
         grid.reloadData()
         exportButton.isEnabled = false
+        removeLocationButton.isEnabled = false
         showPlaceholder(L(
             "photos.denied",
             "Pathem doesn’t have access to your photo library. Grant it in System Settings ▸ Privacy & Security ▸ Photos."))
@@ -186,6 +194,7 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let total = assets?.count ?? 0
         let selected = grid.selectionIndexPaths.count
         exportButton.isEnabled = selected > 0
+        removeLocationButton.isEnabled = selected > 0
         statusLabel.stringValue = selected > 0
             ? String(format: L("photos.statusSelected", "%d of %d selected"), selected, total)
             : String(format: L("photos.statusCount", "%d items"), total)
@@ -289,6 +298,34 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     // MARK: - Export button
+
+    /// Clear GPS location from the selected photos, edited back into the Photos library (metadata
+    /// only, revertible in Photos). Confirmed first, since it changes the library.
+    @objc private func removeLocationSelected() {
+        let ids = grid.selectionIndexPaths.sorted().compactMap { asset(at: $0)?.localIdentifier }
+        guard !ids.isEmpty, let window else { return }
+        let alert = NSAlert()
+        alert.messageText = String(format: L("photos.removeLocationTitle", "Remove location from %d photo(s)?"), ids.count)
+        alert.informativeText = L(
+            "photos.removeLocationBody",
+            "This edits the photos in your Photos library to drop their GPS location. Photos keeps the change revertible.")
+        alert.addButton(withTitle: L("photos.removeLocation", "Remove Location"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard let self, response == .alertFirstButtonReturn else { return }
+            Task { @MainActor in
+                let result = await PhotoLibrary.removeLocation(assetIDs: ids)
+                if let error = result.error {
+                    self.statusLabel.stringValue = error
+                } else if result.changed == 0 {
+                    self.statusLabel.stringValue = L("photos.noLocation", "No location found in the selected photos")
+                } else {
+                    self.statusLabel.stringValue = String(
+                        format: L("photos.locationRemoved", "Removed location from %d photo(s)"), result.changed)
+                }
+            }
+        }
+    }
 
     @objc private func exportSelected() {
         let ids = grid.selectionIndexPaths.sorted().compactMap { asset(at: $0)?.localIdentifier }

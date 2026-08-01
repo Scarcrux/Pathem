@@ -116,6 +116,25 @@ enum PhotoLibrary {
         try await writeResource(resource, to: url)
     }
 
+    /// Clear the GPS location from the given assets: an edit back into the Photos library via
+    /// PHAssetChangeRequest. Metadata only (no pixel change), atomic, and revertible in Photos, so
+    /// it's the safe kind of edit-back. Assets without a location are skipped. Takes stable String
+    /// ids and re-fetches inside the change block, so no non-Sendable PHAsset crosses an actor.
+    static func removeLocation(assetIDs: [String]) async -> (changed: Int, error: String?) {
+        let withLocation = assetIDs.filter { asset(withID: $0)?.location != nil }
+        guard !withLocation.isEmpty else { return (0, nil) }
+        return await withCheckedContinuation { continuation in
+            PHPhotoLibrary.shared().performChanges {
+                for id in withLocation {
+                    guard let asset = asset(withID: id) else { continue }
+                    PHAssetChangeRequest(for: asset).location = nil
+                }
+            } completionHandler: { success, error in
+                continuation.resume(returning: (success ? withLocation.count : 0, error?.localizedDescription))
+            }
+        }
+    }
+
     private static func writeResource(_ resource: PHAssetResource, to url: URL) async throws {
         let options = PHAssetResourceRequestOptions()
         options.isNetworkAccessAllowed = true

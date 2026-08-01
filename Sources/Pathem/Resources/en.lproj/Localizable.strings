@@ -1128,6 +1128,11 @@
 "photos.exported" = "Exported %d";
 "photos.exportedWithErrors" = "Exported %d, %d failed";
 "photos.exporting" = "Exporting %d…";
+"photos.locationRemoved" = "Removed location from %d photo(s)";
+"photos.noLocation" = "No location found in the selected photos";
+"photos.removeLocation" = "Remove Location";
+"photos.removeLocationBody" = "This edits the photos in your Photos library to drop their GPS location. Photos keeps the change revertible.";
+"photos.removeLocationTitle" = "Remove location from %d photo(s)?";
 "photos.requesting" = "Requesting access to your photo library…";
 "photos.statusCount" = "%d items";
 "photos.statusSelected" = "%d of %d selected";
