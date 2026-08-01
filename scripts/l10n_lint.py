@@ -35,6 +35,15 @@ DYNAMIC_PREFIXES = ("menu.", "toolbar.", "commander.", "acl.preset.")
 def is_dynamic(key):
     return key.startswith(DYNAMIC_PREFIXES)
 
+# printf-style format specifiers (%@, %d, %1$@, %.2f, ...), ignoring the literal %%. A translation
+# that drops, adds, or renames one relative to English will crash or garble the UI at runtime, so
+# the multisets must match. This is the machine-checkable half of translation correctness (the
+# phrasing itself needs a human).
+FORMAT_SPEC = re.compile(r"%(?:\d+\$)?[-+ 0#]*\d*(?:\.\d+)?[@diouxXeEfgGscp]")
+
+def format_specs(value):
+    return sorted(FORMAT_SPEC.findall(value.replace("%%", "")))
+
 # The KEY of an L() call: the first string-literal argument. Lenient on purpose -- it captures the
 # key even when the fallback isn't a clean literal (a comment between the args, a "a" + "b"
 # concatenation), so no live key is ever mistaken for stale.
@@ -199,17 +208,25 @@ def main():
                 write_strings(locale, pruned, f"Pathem {locale} strings")
         print("regenerated en.lproj and pruned truly-dead keys from every locale")
 
+    english = canonical_map()  # authoritative English text, keyed by L() key
     ok = True
     for locale in LOCALES:
         if not plutil_ok(locale):
             print(f"FAIL {locale}: plutil could not parse Localizable.strings")
             ok = False
             continue
-        present = set(parse_strings(locale))
+        current = parse_strings(locale)
+        present = set(current)
         missing = keys - present
         stale = {k for k in present - keys if not is_dynamic(k)}  # dynamic keys are never stale
-        status = "ok" if not missing and not stale else "GAP"
-        print(f"{status:4} {locale:8} present={len(present):5} missing={len(missing):4} stale={len(stale):4}")
+        # A translation must carry the same printf specifiers as English (order-insensitive).
+        mismatched = [
+            k for k in present & set(english) if format_specs(english[k]) != format_specs(current[k])
+        ]
+        status = "ok" if not missing and not stale and not mismatched else "GAP"
+        print(
+            f"{status:4} {locale:8} present={len(present):5} missing={len(missing):4} "
+            f"stale={len(stale):4} fmt={len(mismatched):3}")
         if missing:
             ok = False
             for key in sorted(missing)[:8]:
@@ -218,6 +235,10 @@ def main():
                 print(f"       ... and {len(missing) - 8} more")
         if stale:
             ok = False
+        if mismatched:
+            ok = False
+            for key in sorted(mismatched)[:8]:
+                print(f"       format mismatch: {key} en={format_specs(english[key])} {locale}={format_specs(current[key])}")
     sys.exit(0 if ok else 1)
 
 

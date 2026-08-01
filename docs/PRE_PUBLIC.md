@@ -32,9 +32,15 @@ your Marketplace publisher account:
 `cd Integrations/vscode-pathem && npx @vscode/vsce publish` (or push a
 `vscode-v0.1.0` tag once `VSCE_PAT` is set).
 
-**3. A native-speaker localization pass.** Coverage is complete (six locales, 0
-missing / 0 stale, linted in CI), but the fr/de/es/ja/zh-Hans strings are
-provisional and want a human review of the top ~20 visible strings before public.
+**3. Localization phrasing (optional, post-public, not a blocker).** Coverage,
+plist validity, and printf format-specifier consistency are all gated in CI, so no
+translation can crash or garble the UI. What's left is *phrasing* quality: the
+fr/de/es/ja/zh-Hans strings are AI-generated and provisional, and only a native
+speaker can polish them. That's inherently a crowdsourced, post-public task (going
+public is what surfaces the volunteers). Two honest choices: ship the provisional
+translations as-is and invite fixes (worst case is an awkward phrase, strictly
+better than a missing feature), or drop the five locales and ship English-only if
+you'd rather not show unreviewed strings. Either way it does not block the flip.
 
 **4. The public flip itself.** Gated on your user-testing bar. See
 `LAUNCH_CHECKLIST.md` §1 for the exit criteria and §4-5 for cutting the notarized
@@ -58,8 +64,8 @@ Sparkle key set up.
 
 1. `make gate-a-demo` → GIF above the fold (item 1).
 2. Publish the VS Code extension (item 2): a second, independent star surface.
-3. Native-speaker l10n review (item 3).
-4. When your testing bar is met, run `LAUNCH_CHECKLIST.md` end to end (item 4).
+3. When your testing bar is met, run `LAUNCH_CHECKLIST.md` end to end (item 4).
+4. After public, invite translation fixes as issues/PRs come in (item 3).
 
 Bottom line: the engineering the audit surfaced is complete. What remains is
 launch production and the gated flip, all of which are yours to trigger.
