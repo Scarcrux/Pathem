@@ -33,6 +33,12 @@ extension BrowserViewController {
             verify: !move && prefs.verifyCopies, over: view.window
         ) { [weak self] outcome in
             self?.transferInFlight = false
+            // Surface skipped items centrally (every transfer path funnels through here), so a
+            // Skip resolution or a name clash never silently drops files with no feedback.
+            if !outcome.skipped.isEmpty {
+                self?.activePane?.flashStatus(
+                    String(format: L("bvc.transferSkipped", "%d item(s) skipped (name already in use)"), outcome.skipped.count))
+            }
             completion(outcome)
         }
     }

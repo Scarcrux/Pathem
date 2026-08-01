@@ -494,6 +494,7 @@
 "bvc.syncTwoWay" = "In beide Richtungen abgleichen (neuere gewinnt)";
 "bvc.tagTitle" = "Tag: %@";
 "bvc.theServer" = "den Server";
+"bvc.transferSkipped" = "%d Objekt(e) übersprungen (Name bereits vergeben)";
 "bvc.undoFailed" = "Widerrufen fehlgeschlagen";
 "bvc.unsupportedChecksum" = "Nicht unterstützte Prüfsumme";
 "bvc.unsupportedChecksumBody" = "Kopiere zuerst eine hexadezimale MD5-, SHA-1- oder SHA-256-Summe in die Zwischenablage.";

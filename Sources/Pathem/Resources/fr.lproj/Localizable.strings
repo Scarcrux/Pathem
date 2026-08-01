@@ -494,6 +494,7 @@
 "bvc.syncTwoWay" = "Synchroniser dans les deux sens (le plus récent gagne)";
 "bvc.tagTitle" = "Tag : %@";
 "bvc.theServer" = "le serveur";
+"bvc.transferSkipped" = "%d élément(s) ignoré(s) (nom déjà utilisé)";
 "bvc.undoFailed" = "Échec de l’annulation";
 "bvc.unsupportedChecksum" = "Somme de contrôle non prise en charge";
 "bvc.unsupportedChecksumBody" = "Copiez d’abord une somme MD5, SHA-1 ou SHA-256 hexadécimale dans le presse-papiers.";

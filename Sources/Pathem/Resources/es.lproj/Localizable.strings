@@ -494,6 +494,7 @@
 "bvc.syncTwoWay" = "Sincronizar en ambos sentidos (gana el más reciente)";
 "bvc.tagTitle" = "Etiqueta: %@";
 "bvc.theServer" = "el servidor";
+"bvc.transferSkipped" = "%d elemento(s) omitido(s) (nombre ya en uso)";
 "bvc.undoFailed" = "No se pudo deshacer";
 "bvc.unsupportedChecksum" = "Suma de comprobación no admitida";
 "bvc.unsupportedChecksumBody" = "Copia primero una suma MD5, SHA-1 o SHA-256 hexadecimal al portapapeles.";

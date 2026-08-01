@@ -193,6 +193,43 @@ import Testing
         }
     }
 
+    @Test func intraBatchDuplicateBasenamesConflictEvenWhenDestEmpty() throws {
+        try withTwoDirs { src, dst in
+            let a = src.appendingPathComponent("a")
+            let b = src.appendingPathComponent("b")
+            try FileManager.default.createDirectory(at: a, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: b, withIntermediateDirectories: true)
+            try Data("1".utf8).write(to: a.appendingPathComponent("photo.jpg"))
+            try Data("2".utf8).write(to: b.appendingPathComponent("photo.jpg"))
+            let urls = [a.appendingPathComponent("photo.jpg"), b.appendingPathComponent("photo.jpg")]
+            // The destination has no photo.jpg, but the two sources collide with each other, so the
+            // second must be flagged for resolution instead of silently overwriting the first.
+            #expect(FileOperations.conflicts(urls: urls, into: dst) == ["photo.jpg"])
+            // Unique names into an empty destination stay conflict-free.
+            try Data().write(to: src.appendingPathComponent("x.txt"))
+            try Data().write(to: src.appendingPathComponent("y.txt"))
+            #expect(FileOperations.conflicts(
+                urls: [src.appendingPathComponent("x.txt"), src.appendingPathComponent("y.txt")], into: dst).isEmpty)
+        }
+    }
+
+    @Test func keepBothCopiesBothSameNamedSourcesInsteadOfDroppingOne() throws {
+        try withTwoDirs { src, dst in
+            let a = src.appendingPathComponent("a")
+            let b = src.appendingPathComponent("b")
+            try FileManager.default.createDirectory(at: a, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: b, withIntermediateDirectories: true)
+            try Data("1".utf8).write(to: a.appendingPathComponent("photo.jpg"))
+            try Data("2".utf8).write(to: b.appendingPathComponent("photo.jpg"))
+            let urls = [a.appendingPathComponent("photo.jpg"), b.appendingPathComponent("photo.jpg")]
+            let outcome = FileOperations.copy(urls: urls, into: dst, onConflict: .keepBoth)
+            // Both land (one keeps the name, the other is auto-numbered); nothing is skipped.
+            let landed = try FileManager.default.contentsOfDirectory(atPath: dst.path).filter { $0.hasSuffix(".jpg") }
+            #expect(landed.count == 2)
+            #expect(outcome.skipped.isEmpty)
+        }
+    }
+
     @Test func redoOfReplaceReappliesAndUndoStillRestoresTheOriginal() throws {
         try withTwoDirs { src, dst in
             try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))

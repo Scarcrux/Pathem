@@ -494,6 +494,7 @@
 "bvc.syncTwoWay" = "Sync Both Ways (newer wins)";
 "bvc.tagTitle" = "Tag: %@";
 "bvc.theServer" = "the server";
+"bvc.transferSkipped" = "%d item(s) skipped (name already in use)";
 "bvc.undoFailed" = "Undo failed";
 "bvc.unsupportedChecksum" = "Unsupported checksum";
 "bvc.unsupportedChecksumBody" = "Copy a hex MD5, SHA-1, or SHA-256 to the clipboard first.";

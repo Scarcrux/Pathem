@@ -494,6 +494,7 @@
 "bvc.syncTwoWay" = "双向同步（较新者优先）";
 "bvc.tagTitle" = "标记：%@";
 "bvc.theServer" = "服务器";
+"bvc.transferSkipped" = "已跳过 %d 个项目（名称已被占用）";
 "bvc.undoFailed" = "撤销失败";
 "bvc.unsupportedChecksum" = "不支持的校验和";
 "bvc.unsupportedChecksumBody" = "请先将十六进制的 MD5、SHA-1 或 SHA-256 拷贝到剪贴板。";

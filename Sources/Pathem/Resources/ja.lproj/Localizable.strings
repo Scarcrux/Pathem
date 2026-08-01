@@ -494,6 +494,7 @@
 "bvc.syncTwoWay" = "双方向で同期（新しい方を優先）";
 "bvc.tagTitle" = "タグ: %@";
 "bvc.theServer" = "サーバ";
+"bvc.transferSkipped" = "%d件の項目をスキップしました（名前が既に使用中）";
 "bvc.undoFailed" = "取り消しに失敗しました";
 "bvc.unsupportedChecksum" = "未対応のチェックサム";
 "bvc.unsupportedChecksumBody" = "先に16進数のMD5、SHA-1、またはSHA-256をクリップボードにコピーしてください。";

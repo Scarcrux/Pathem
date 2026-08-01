@@ -106,12 +106,22 @@ public enum FileOperations {
     }
 
     public static func conflicts(urls: [URL], into destination: URL) -> [String] {
-        urls.compactMap { url in
+        // A name conflicts if it already exists at the destination OR appears more than once in
+        // this batch: two selected sources that share a basename (e.g. a/photo.jpg + b/photo.jpg)
+        // would land on the same target, so the second must be resolved (prompt / keep-both /
+        // skip) rather than silently dropped.
+        var seen = Set<String>()
+        var conflicting: [String] = []
+        for url in urls {
             let name = url.lastPathComponent
-            let exists = FileManager.default.fileExists(
+            let existsAtDestination = FileManager.default.fileExists(
                 atPath: destination.appendingPathComponent(name).path)
-            return exists ? name : nil
+            if existsAtDestination || seen.contains(name) {
+                conflicting.append(name)
+            }
+            seen.insert(name)
         }
+        return conflicting
     }
 
     // MARK: New folder
