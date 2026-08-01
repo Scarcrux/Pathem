@@ -218,6 +218,11 @@ working_dir = "."
 
   [[phase.task]]
     title = "Later: edit back into Photos (PHAssetChangeRequest / adjustment data)"
+    done = true
+
+  [[phase.task]]
+    title = "Edit-back safe slice shipped: Remove Location via PHAssetChangeRequest (metadata only, revertible). Full content edit-back (crop/adjustments via PHContentEditingOutput) remains a larger future item."
+    done = true
 
 [[phase]]
   title = "Vision-powered image smarts"
@@ -336,6 +341,10 @@ working_dir = "."
   [[phase.task]]
     title = "Deferred (optional): precompute per-entry collation sort keys -- localizedStandardCompare has no cheap Foundation collation-key equivalent, so it is not a cheap win"
 
+  [[phase.task]]
+    title = "Precomputed sort keys assessed and declined: Foundation exposes no ICU collation-key API, so any precomputed key sorts non-ASCII by codepoint (diverges from localizedStandardCompare and breaks the enumerator contract test). Kept as-is."
+    done = true
+
 [[phase]]
   title = "Audit fix: dangerous-corner tests + CI auto-run"
   status = "done"
@@ -415,6 +424,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Deferred: SFTP new-host-key prompt (accept-new already rejects changed keys; a full known-hosts prompt needs out-of-process helper + UI plumbing)"
+    done = true
 
 [[phase]]
   title = "Launch conversion & product depth (stars)"
