@@ -1,0 +1,46 @@
+name: Translation feedback
+description: A word or phrase reads wrong in your language (fr, de, es, ja, zh-Hans)
+labels: ["localization"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pathem's non-English text is machine-translated and provisional, so a native speaker's eye is exactly what it needs. You do not need to write any code: just tell us what reads wrong and, if you can, a better wording. Thank you!
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language
+      options:
+        - French (fr)
+        - German (de)
+        - Spanish (es)
+        - Japanese (ja)
+        - Chinese, Simplified (zh-Hans)
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where you saw it
+      description: Which menu, button, dialog, or screen the text is on. A screenshot is great (drag it in).
+      placeholder: e.g. the "Move to Trash" confirmation dialog / the View menu
+    validations:
+      required: true
+  - type: input
+    id: current
+    attributes:
+      label: The current wording
+      description: Copy the exact text as it appears now.
+    validations:
+      required: true
+  - type: input
+    id: suggestion
+    attributes:
+      label: A better wording (optional)
+      description: How a native speaker would say it. Even "this is unnatural, but I'm not sure of the best phrasing" is useful.
+    validations:
+      required: false
+  - type: markdown
+    attributes:
+      value: |
+        Comfortable with a pull request? The strings live in `Sources/Pathem/Resources/<lang>.lproj/Localizable.strings`. Edit the value (keep the key and any `%@`/`%d` placeholders unchanged) and run `python3 scripts/l10n_lint.py` to check it. See `docs/TRANSLATIONS.md`.
