@@ -833,6 +833,9 @@
 "history.title" = "Undo History";
 "history.undo" = "Undo";
 "history.undoThis" = "Undo This";
+"hostkey.accept" = "Accept and Connect";
+"hostkey.body" = "The server presented this host-key fingerprint:\n\n%@\n\nAccept it only if it matches what you expect. It is pinned for future connections.";
+"hostkey.title" = "First connection to “%@”";
 "icons.onlineOnly" = "Online only";
 "info.accessedLabel" = "Last opened";
 "info.aclLabel" = "Permissions";

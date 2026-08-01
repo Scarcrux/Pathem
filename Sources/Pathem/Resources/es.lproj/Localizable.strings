@@ -833,6 +833,9 @@
 "history.title" = "Historial de deshacer";
 "history.undo" = "Deshacer";
 "history.undoThis" = "Deshacer esto";
+"hostkey.accept" = "Aceptar y conectar";
+"hostkey.body" = "El servidor presentó esta huella de clave de host:\n\n%@\n\nAcéptala solo si coincide con lo que esperas. Se fija para futuras conexiones.";
+"hostkey.title" = "Primera conexión con «%@»";
 "icons.onlineOnly" = "Solo en línea";
 "info.accessedLabel" = "Último acceso";
 "info.aclLabel" = "Compartir";

@@ -833,6 +833,9 @@
 "history.title" = "Widerrufsverlauf";
 "history.undo" = "Widerrufen";
 "history.undoThis" = "Diese Aktion widerrufen";
+"hostkey.accept" = "Akzeptieren und verbinden";
+"hostkey.body" = "Der Server hat diesen Host-Schlüssel-Fingerabdruck vorgelegt:\n\n%@\n\nAkzeptieren Sie ihn nur, wenn er Ihren Erwartungen entspricht. Er wird für künftige Verbindungen gemerkt.";
+"hostkey.title" = "Erste Verbindung zu „%@“";
 "icons.onlineOnly" = "Nur online";
 "info.accessedLabel" = "Zuletzt geöffnet";
 "info.aclLabel" = "Freigabe";

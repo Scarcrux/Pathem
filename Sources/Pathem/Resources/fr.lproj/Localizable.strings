@@ -833,6 +833,9 @@
 "history.title" = "Historique d'annulation";
 "history.undo" = "Annuler";
 "history.undoThis" = "Annuler ceci";
+"hostkey.accept" = "Accepter et se connecter";
+"hostkey.body" = "Le serveur a présenté cette empreinte de clé d’hôte :\n\n%@\n\nNe l’acceptez que si elle correspond à ce que vous attendez. Elle est épinglée pour les connexions futures.";
+"hostkey.title" = "Première connexion à « %@ »";
 "icons.onlineOnly" = "En ligne uniquement";
 "info.accessedLabel" = "Dernière ouverture";
 "info.aclLabel" = "Partage";

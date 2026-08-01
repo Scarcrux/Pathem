@@ -833,6 +833,9 @@
 "history.title" = "撤销历史";
 "history.undo" = "撤销";
 "history.undoThis" = "撤销此项";
+"hostkey.accept" = "接受并连接";
+"hostkey.body" = "服务器提供了此主机密钥指纹：\n\n%@\n\n仅在与预期相符时才接受。它将为将来的连接固定。";
+"hostkey.title" = "首次连接到“%@”";
 "icons.onlineOnly" = "仅在线";
 "info.accessedLabel" = "上次打开";
 "info.aclLabel" = "共享";

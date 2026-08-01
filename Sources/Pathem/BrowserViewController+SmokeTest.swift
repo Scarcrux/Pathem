@@ -613,6 +613,10 @@ extension BrowserViewController {
         }
         check("trash-putback-ledger", putBackOK, putBackDetail)
 
+        // SFTP host-key check: a host we've never seen isn't pinned, so the first-connect prompt fires.
+        let hostKeyUnknown = !HostKeyCheck.isKnown(host: "pathem-\(UUID().uuidString).invalid", port: 22)
+        check("sftp-hostkey-check", hostKeyUnknown, "unknown host not pinned")
+
         // Grouped duplicate resolver: keep one per set. A 3-file set queues 2, a 2-file set queues 1.
         func dupEntry(_ name: String, _ loc: String) -> FileEntry {
             FileEntry(name: name, isDirectory: false, size: 10, modificationDate: nil, location: loc)

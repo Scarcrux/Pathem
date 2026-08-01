@@ -833,6 +833,9 @@
 "history.title" = "取り消し履歴";
 "history.undo" = "取り消す";
 "history.undoThis" = "これを取り消す";
+"hostkey.accept" = "承認して接続";
+"hostkey.body" = "サーバーは次のホスト鍵フィンガープリントを提示しました:\n\n%@\n\n想定どおりの場合のみ受け入れてください。今後の接続のために固定されます。";
+"hostkey.title" = "「%@」への初回接続";
 "icons.onlineOnly" = "オンラインのみ";
 "info.accessedLabel" = "最終オープン";
 "info.aclLabel" = "共有";

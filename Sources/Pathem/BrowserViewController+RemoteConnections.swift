@@ -33,6 +33,40 @@ extension BrowserViewController {
 
     func connectToRemote(_ connection: RemoteConnection, forceNewTab: Bool = false) {
         guard let pane = activePane else { return }
+        // For SFTP to a host we haven't pinned yet, confirm its key fingerprint first (a visible
+        // trust-on-first-use prompt) instead of silently accepting it.
+        if connection.proto == .sftp,
+            !HostKeyCheck.isKnown(host: connection.host, port: connection.effectivePort)
+        {
+            Task { @MainActor in
+                guard await self.confirmNewHostKey(connection) else { return }
+                self.beginConnect(connection, forceNewTab: forceNewTab, pane: pane)
+            }
+            return
+        }
+        beginConnect(connection, forceNewTab: forceNewTab, pane: pane)
+    }
+
+    /// Show the scanned host-key fingerprint and let the user accept it (or cancel) before the first
+    /// SFTP connection. Returns true to proceed. If the key can't be scanned (host unreachable), we
+    /// proceed anyway: ssh's own accept-new still pins it on the real connection.
+    private func confirmNewHostKey(_ connection: RemoteConnection) async -> Bool {
+        guard let fingerprint = await HostKeyCheck.fingerprint(
+            host: connection.host, port: connection.effectivePort), view.window != nil
+        else { return true }
+        let alert = NSAlert()
+        alert.messageText = String(format: L("hostkey.title", "First connection to “%@”"), connection.host)
+        alert.informativeText = String(
+            format: L(
+                "hostkey.body",
+                "The server presented this host-key fingerprint:\n\n%@\n\nAccept it only if it matches what you expect. It is pinned for future connections."),
+            fingerprint)
+        alert.addButton(withTitle: L("hostkey.accept", "Accept and Connect"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return await presentSheet(alert) == .alertFirstButtonReturn
+    }
+
+    private func beginConnect(_ connection: RemoteConnection, forceNewTab: Bool, pane: PaneController) {
         openLocalPairing(connection)  // point the other pane at the site's default local dir
         // USB devices (adb / iOS) have no password; connect straight through.
         if connection.proto.isDevice {
