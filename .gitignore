@@ -15,9 +15,11 @@ DerivedData/
 # iCloud hygiene (CONVENTIONS standing directive): keep regenerable dirs out
 *.nosync/
 
-# Sparkle code-signing — NEVER commit the private update-signing key
+# Sparkle code-signing: NEVER commit the private update-signing key (it lives in
+# the login Keychain / a CI secret). sparkle_ed_priv is release.yml's temp filename.
 *.private
 sparkle_eddsa_private.key
+sparkle_ed_priv
 dsa_priv.pem
 
 # Release output (DMGs, appcast, per-item fragments): regenerated, uploaded to

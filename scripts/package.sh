@@ -105,6 +105,16 @@ resourceBundle="$frameworkBinDir/${APP_NAME}_${APP_NAME}.bundle"
 [[ -d "$resourceBundle" ]] && cp -R "$resourceBundle" "$APP/Contents/Resources/"
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
+
+# Release gate: a distribution build (DEVELOPER_ID set) must not ship the placeholder Sparkle
+# public key -- auto-update would be permanently dormant for everyone who installs it, and there
+# is no way to push a fix without it. Fail loudly instead.
+if [[ -n "${DEVELOPER_ID:-}" ]] && grep -q "REPLACE_WITH_SPARKLE_PUBLIC_KEY" "$APP/Contents/Info.plist"; then
+	echo "ERROR: SUPublicEDKey is still the placeholder in Packaging/Info.plist." >&2
+	echo "       Run Sparkle's generate_keys and paste the real EdDSA public key before a" >&2
+	echo "       distribution build (see scripts/setup-sparkle-key.sh)." >&2
+	exit 1
+fi
 [[ -f "$ROOT/Packaging/$APP_NAME.icns" ]] \
   && cp "$ROOT/Packaging/$APP_NAME.icns" "$APP/Contents/Resources/$APP_NAME.icns"
 

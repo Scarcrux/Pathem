@@ -605,6 +605,7 @@
 "conn.panelTitle" = "连接";
 "conn.pathLabel" = "路径";
 "conn.pathPlaceholder" = "路径（S3：/bucket）";
+"conn.plaintextWarning" = "此协议以未加密方式发送您的凭据和文件。建议使用 SFTP、FTPS 或 WebDAV (HTTPS)。";
 "conn.portLabel" = "端口";
 "conn.portPlaceholder" = "端口（留空 = 默认）";
 "conn.protocolLabel" = "协议";
@@ -1216,7 +1217,7 @@
 "prefs.compactSidebar" = "紧凑边栏（仅图标）";
 "prefs.confirmBeforeDelete" = "移到废纸篓前进行确认";
 "prefs.confirmInboundTorrents" = "添加来自其他 App 的磁力/种子链接前询问";
-"prefs.confirmInboundTorrentsHint" = "您点击的磁力链接通常是有意为之，因此默认关闭。开启后可确认其他 App 交给 Pathem 的任何下载。";
+"prefs.confirmInboundTorrentsHint" = "默认开启：传入的磁力链接还会做种分享其下载的内容，因此 Pathem 会确认其他应用或网页交给它的任何链接。关闭后将不经询问直接添加。";
 "prefs.conflictAsk" = "每次询问";
 "prefs.conflictDefault" = "当文件已存在时";
 "prefs.conflictKeepBoth" = "两者都保留";

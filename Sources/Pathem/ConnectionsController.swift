@@ -15,6 +15,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     private weak var editingKeyFileField: NSTextField?
     private weak var editingLocalPathField: NSTextField?
     private weak var editingHostField: NSTextField?
+    private weak var editingProtoPopup: NSPopUpButton?
+    private weak var editingPlaintextWarning: NSTextField?
 
     /// Common S3-compatible endpoints, so B2 / GCS / Wasabi / Spaces are discoverable. "" = Amazon
     /// (host derived from the region). Regions in the sample hosts are placeholders to edit.
@@ -29,6 +31,18 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     @objc private func s3EndpointChanged(_ sender: NSPopUpButton) {
         guard sender.indexOfSelectedItem < Self.s3Endpoints.count else { return }
         editingHostField?.stringValue = Self.s3Endpoints[sender.indexOfSelectedItem].host
+    }
+
+    /// Show a warning when the selected protocol sends credentials in the clear.
+    @objc private func protoChanged() {
+        guard let popup = editingProtoPopup, popup.indexOfSelectedItem < RemoteConnection.Proto.allCases.count
+        else { return }
+        let proto = RemoteConnection.Proto.allCases[popup.indexOfSelectedItem]
+        editingPlaintextWarning?.stringValue =
+            proto.isPlaintext
+            ? L("conn.plaintextWarning",
+                "This protocol sends your credentials and files unencrypted. Prefer SFTP, FTPS, or WebDAV (HTTPS).")
+            : ""
     }
 
     var connections: [RemoteConnection] = [] { didSet { table.reloadData() } }
@@ -280,7 +294,19 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
         let proto = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
         proto.addItems(withTitles: RemoteConnection.Proto.allCases.map(\.label))
-        proto.selectItem(at: RemoteConnection.Proto.allCases.firstIndex(of: existing?.proto ?? .ftp) ?? 0)
+        // Default new connections to SFTP (encrypted), not plain FTP: FTP/WebDAV send Basic-auth
+        // credentials in the clear.
+        proto.selectItem(at: RemoteConnection.Proto.allCases.firstIndex(of: existing?.proto ?? .sftp) ?? 0)
+        proto.target = self
+        proto.action = #selector(protoChanged)
+        let plaintextWarning = NSTextField(labelWithString: "")
+        plaintextWarning.font = .systemFont(ofSize: 11)
+        plaintextWarning.textColor = .systemOrange
+        plaintextWarning.lineBreakMode = .byWordWrapping
+        plaintextWarning.maximumNumberOfLines = 2
+        plaintextWarning.preferredMaxLayoutWidth = 340
+        editingProtoPopup = proto
+        editingPlaintextWarning = plaintextWarning
 
         func field(_ placeholder: String, _ value: String) -> NSTextField {
             let f = NSTextField()
@@ -324,7 +350,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         localRow.spacing = 6
 
         let rows = NSStackView(views: [
-            labeled(L("conn.protocolLabel", "Protocol"), proto), labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
+            labeled(L("conn.protocolLabel", "Protocol"), proto), plaintextWarning,
+            labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
             labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
             labeled(L("conn.regionLabel", "Region"), region), labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
             labeled(L("conn.keyFileLabel", "Key File"), keyRow),
@@ -336,6 +363,7 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         rows.spacing = 6
         rows.frame = NSRect(x: 0, y: 0, width: 360, height: 356)
         alert.accessoryView = rows
+        protoChanged()  // reflect the initial protocol (warn if editing a plaintext connection)
         alert.addButton(withTitle: L("common.save", "Save"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
 

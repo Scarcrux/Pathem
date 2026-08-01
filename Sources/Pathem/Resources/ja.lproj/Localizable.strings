@@ -605,6 +605,7 @@
 "conn.panelTitle" = "接続";
 "conn.pathLabel" = "パス";
 "conn.pathPlaceholder" = "パス（S3：/bucket）";
+"conn.plaintextWarning" = "このプロトコルは資格情報とファイルを暗号化せずに送信します。SFTP、FTPS、または WebDAV（HTTPS）を推奨します。";
 "conn.portLabel" = "ポート";
 "conn.portPlaceholder" = "ポート（空白=デフォルト）";
 "conn.protocolLabel" = "プロトコル";
@@ -1216,7 +1217,7 @@
 "prefs.compactSidebar" = "コンパクトサイドバー（アイコンのみ）";
 "prefs.confirmBeforeDelete" = "ゴミ箱に入れる前に確認";
 "prefs.confirmInboundTorrents" = "他のAppからのマグネット/トレントリンクを追加する前に確認";
-"prefs.confirmInboundTorrentsHint" = "クリックしたマグネットリンクは通常意図的なものなので、既定ではオフです。他のAppがPathemに渡すダウンロードを確認するにはオンにします。";
+"prefs.confirmInboundTorrentsHint" = "デフォルトでオン：受信したマグネットはダウンロードした内容をシード（再配布）もするため、他のAppやWebページから渡されたリンクを確認します。オフにすると確認せずに追加します。";
 "prefs.conflictAsk" = "毎回確認";
 "prefs.conflictDefault" = "ファイルが既に存在する場合";
 "prefs.conflictKeepBoth" = "両方を残す";

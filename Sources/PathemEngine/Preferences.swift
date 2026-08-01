@@ -110,8 +110,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Where magnet/torrent downloads are saved. Empty (or a folder that no longer exists) falls back
     /// to the system Downloads folder.
     public var torrentDownloadPath: String
-    /// Ask before adding a magnet/torrent link that another app hands to Pathem (drive-by-download
-    /// protection). Off by default: clicking a magnet link is normally a deliberate, wanted action.
+    /// Ask before adding a magnet/torrent link that another app hands to Pathem. On by default:
+    /// an inbound magnet doesn't just download, it seeds/reshares the content, so an unconsented
+    /// one handed over by a webpage or another app is a real privacy/legal exposure. The confirm is
+    /// cheap for the deliberate case (one click) and blocks the drive-by case.
     public var confirmInboundTorrents: Bool
     /// Show dotfiles/hidden files in every folder by default.
     public var showHiddenByDefault: Bool
@@ -170,7 +172,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
         dragMovesByDefault: Bool = false, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, torrentDownloadPath: String = "",
-        confirmInboundTorrents: Bool = false, showHiddenByDefault: Bool = false,
+        confirmInboundTorrents: Bool = true, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,

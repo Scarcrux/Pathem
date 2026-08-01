@@ -16,6 +16,14 @@ public struct RemoteConnection: Codable, Sendable, Equatable, Identifiable {
             case .adb, .afc: return 0  // USB devices, no network port
             }
         }
+        /// True for protocols that send credentials + data unencrypted over the network, so the UI
+        /// can steer the user to an encrypted variant. USB transports (adb/afc) aren't network.
+        public var isPlaintext: Bool {
+            switch self {
+            case .ftp, .webdav: return true
+            default: return false
+            }
+        }
         public var label: String {
             switch self {
             case .ftp: return "FTP"

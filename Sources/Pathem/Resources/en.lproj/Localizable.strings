@@ -605,6 +605,7 @@
 "conn.panelTitle" = "Connections";
 "conn.pathLabel" = "Path";
 "conn.pathPlaceholder" = "Path (S3 /bucket, Azure /container)";
+"conn.plaintextWarning" = "This protocol sends your credentials and files unencrypted. Prefer SFTP, FTPS, or WebDAV (HTTPS).";
 "conn.portLabel" = "Port";
 "conn.portPlaceholder" = "Port (blank = default)";
 "conn.protocolLabel" = "Protocol";
@@ -1146,7 +1147,7 @@
 "prefs.compactSidebar" = "Compact sidebar (icons only)";
 "prefs.confirmBeforeDelete" = "Confirm before moving items to the Trash";
 "prefs.confirmInboundTorrents" = "Ask before adding magnet/torrent links from other apps";
-"prefs.confirmInboundTorrentsHint" = "A magnet link you click is usually intended, so this is off by default. Turn it on to confirm any download another app hands to Pathem.";
+"prefs.confirmInboundTorrentsHint" = "On by default: an inbound magnet also seeds what it downloads, so Pathem confirms any link another app or a webpage hands it. Turn off to add them without asking.";
 "prefs.conflictAsk" = "Ask each time";
 "prefs.conflictDefault" = "When files already exist";
 "prefs.conflictKeepBoth" = "Keep both";

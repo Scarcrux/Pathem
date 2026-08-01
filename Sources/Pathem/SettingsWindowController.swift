@@ -492,7 +492,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             hint(L("prefs.bandwidthHint", "Caps remote download and upload speed. 0 means unlimited.")),
             labeled(L("prefs.torrentFolderLabel", "Torrent download folder"), torrentFolderControl()),
             check(L("prefs.confirmInboundTorrents", "Ask before adding magnet/torrent links from other apps"), \.confirmInboundTorrents),
-            hint(L("prefs.confirmInboundTorrentsHint", "A magnet link you click is usually intended, so this is off by default. Turn it on to confirm any download another app hands to Pathem.")),
+            hint(L("prefs.confirmInboundTorrentsHint", "On by default: an inbound magnet also seeds what it downloads, so Pathem confirms any link another app or a webpage hands it. Turn off to add them without asking.")),
         ])
     }
     @objc private func bandwidthChanged(_ sender: NSTextField) {

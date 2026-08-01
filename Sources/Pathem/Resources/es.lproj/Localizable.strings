@@ -605,6 +605,7 @@
 "conn.panelTitle" = "Conexiones";
 "conn.pathLabel" = "Ruta";
 "conn.pathPlaceholder" = "Ruta (S3: /bucket)";
+"conn.plaintextWarning" = "Este protocolo envía tus credenciales y archivos sin cifrar. Prefiere SFTP, FTPS o WebDAV (HTTPS).";
 "conn.portLabel" = "Puerto";
 "conn.portPlaceholder" = "Puerto (en blanco = por omisión)";
 "conn.protocolLabel" = "Protocolo";
@@ -1216,7 +1217,7 @@
 "prefs.compactSidebar" = "Barra lateral compacta (solo iconos)";
 "prefs.confirmBeforeDelete" = "Confirmar antes de mover elementos a la papelera";
 "prefs.confirmInboundTorrents" = "Preguntar antes de añadir enlaces magnet/torrent de otras apps";
-"prefs.confirmInboundTorrentsHint" = "Un enlace magnet en el que haces clic suele ser intencionado, así que esto está desactivado por defecto. Actívalo para confirmar cualquier descarga que otra app le pase a Pathem.";
+"prefs.confirmInboundTorrentsHint" = "Activado por defecto: un enlace magnet entrante también comparte lo que descarga, así que Pathem confirma cualquier enlace que otra app o una página web le pase. Desactívalo para añadirlos sin preguntar.";
 "prefs.conflictAsk" = "Preguntar cada vez";
 "prefs.conflictDefault" = "Cuando los archivos ya existen";
 "prefs.conflictKeepBoth" = "Conservar ambos";
