@@ -1069,6 +1069,7 @@
 "menu.zoom" = "Réduire/Agrandir";
 "meta.applied" = "Métadonnées mises à jour sur %d élément(s)";
 "meta.apply" = "Appliquer";
+"meta.applyFailed" = "Certains éléments n’ont pas pu être mis à jour";
 "meta.author" = "Auteur :";
 "meta.captureDate" = "Date de prise :";
 "meta.commaSeparated" = "séparés par des virgules";

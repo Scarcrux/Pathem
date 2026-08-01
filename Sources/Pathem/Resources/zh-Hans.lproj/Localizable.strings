@@ -1069,6 +1069,7 @@
 "menu.zoom" = "缩放";
 "meta.applied" = "已更新 %d 个项目的元数据";
 "meta.apply" = "应用";
+"meta.applyFailed" = "部分项目无法更新";
 "meta.author" = "作者：";
 "meta.captureDate" = "拍摄日期：";
 "meta.commaSeparated" = "以逗号分隔";

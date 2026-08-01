@@ -1069,6 +1069,7 @@
 "menu.zoom" = "拡大/縮小";
 "meta.applied" = "%d件の項目のメタデータを更新しました";
 "meta.apply" = "適用";
+"meta.applyFailed" = "一部の項目を更新できませんでした";
 "meta.author" = "作成者:";
 "meta.captureDate" = "撮影日:";
 "meta.commaSeparated" = "カンマ区切り";

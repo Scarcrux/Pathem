@@ -1069,6 +1069,7 @@
 "menu.zoom" = "Zoomen";
 "meta.applied" = "Metadaten für %d Objekt(e) aktualisiert";
 "meta.apply" = "Anwenden";
+"meta.applyFailed" = "Einige Objekte konnten nicht aktualisiert werden";
 "meta.author" = "Autor:";
 "meta.captureDate" = "Aufnahmedatum:";
 "meta.commaSeparated" = "durch Kommas getrennt";

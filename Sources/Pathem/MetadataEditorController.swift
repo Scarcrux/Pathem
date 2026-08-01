@@ -31,7 +31,7 @@ final class MetadataEditorController: NSObject, NSTextFieldDelegate {
     private var edited: Set<String> = []
 
     /// Called with the number of items successfully updated.
-    var onApplied: ((Int) -> Void)?
+    var onApplied: ((Int, [FileOperations.Failure]) -> Void)?
 
     func present(urls: [URL], over host: NSWindow?) {
         guard !urls.isEmpty else { NSSound.beep(); return }
@@ -251,28 +251,30 @@ final class MetadataEditorController: NSObject, NSTextFieldDelegate {
         spinner.startAnimation(nil)
 
         Task { @MainActor in
-            let changed = await Task.detached { () -> Int in
+            let result = await Task.detached { () -> (changed: Int, failures: [FileOperations.Failure]) in
                 var touched: Set<String> = []
+                var failures: [FileOperations.Failure] = []
+                // Record which item failed and why, instead of swallowing it: a read-only file, a
+                // read-only volume, or a format ImageIO can't write should be reported, not hidden
+                // behind an "Updated N" that silently under-counts.
+                func attempt(_ url: URL, _ body: () throws -> Void) {
+                    do { try body(); touched.insert(url.path) }
+                    catch { failures.append(.init(name: url.lastPathComponent, reason: error.localizedDescription)) }
+                }
                 if hasImageWork {
-                    for url in imageURLs where (try? ImageMetadata.apply(finalEdit, to: url)) == true {
-                        touched.insert(url.path)
-                    }
+                    for url in imageURLs { attempt(url) { _ = try ImageMetadata.apply(finalEdit, to: url) } }
                 }
                 if let tagsEdit {
-                    for url in allURLs where (try? FileMetadata.setTags(tagsEdit, on: url)) != nil {
-                        touched.insert(url.path)
-                    }
+                    for url in allURLs { attempt(url) { try FileMetadata.setTags(tagsEdit, on: url) } }
                 }
                 if let commentEdit {
-                    for url in allURLs where (try? FileMetadata.setFinderComment(commentEdit, on: url)) != nil {
-                        touched.insert(url.path)
-                    }
+                    for url in allURLs { attempt(url) { try FileMetadata.setFinderComment(commentEdit, on: url) } }
                 }
-                return touched.count
+                return (touched.count, failures)
             }.value
             self.spinner.stopAnimation(nil)
             self.close()
-            self.onApplied?(changed)
+            self.onApplied?(result.changed, result.failures)
         }
     }
 

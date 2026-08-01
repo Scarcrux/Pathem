@@ -999,6 +999,7 @@
 "menu.zoom" = "Zoom";
 "meta.applied" = "Updated metadata on %d item(s)";
 "meta.apply" = "Apply";
+"meta.applyFailed" = "Some items couldn’t be updated";
 "meta.author" = "Author:";
 "meta.captureDate" = "Capture Date:";
 "meta.commaSeparated" = "comma separated";

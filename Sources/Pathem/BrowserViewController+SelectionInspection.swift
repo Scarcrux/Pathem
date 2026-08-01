@@ -200,11 +200,14 @@ extension BrowserViewController {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
         let urls = pane.selectedLocalURLs()
         guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
-        metadataEditor.onApplied = { [weak self] count in
+        metadataEditor.onApplied = { [weak self] count, failures in
             self?.activePane?.reloadIfShowingListing()
-            guard count > 0 else { return }
-            self?.activePane?.flashStatus(
-                String(format: L("meta.applied", "Updated metadata on %d item(s)"), count))
+            if !failures.isEmpty {
+                self?.presentFailures(failures, title: L("meta.applyFailed", "Some items couldn’t be updated"))
+            } else if count > 0 {
+                self?.activePane?.flashStatus(
+                    String(format: L("meta.applied", "Updated metadata on %d item(s)"), count))
+            }
         }
         metadataEditor.present(urls: urls, over: window)
     }
