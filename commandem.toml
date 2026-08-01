@@ -366,24 +366,29 @@ working_dir = "."
 
 [[phase]]
   title = "Audit fix: correctness feedback gaps"
-  status = "later"
+  status = "done"
   note = "From the committee audit (correctness): NO crash or data-loss defect found; undo/redo, ProgressiveCopy, and metadata in-place writes were traced and verified sound. The remaining issues are silent-partial-success paths that give the user a wrong result with no feedback."
   issue = 0
 
   [[phase.task]]
     title = "Detect intra-batch basename collisions + surface outcome.skipped in transfer completions (copying two same-named files silently drops one, no prompt/beep, because the pre-check only compares against the destination)"
+    done = true
 
   [[phase.task]]
     title = "Metadata editor: collect and present per-item failures instead of try?-swallowing them (MetadataEditorController.swift:257-267 reports only 'Updated N')"
+    done = true
 
   [[phase.task]]
     title = "Failed Replace: append an explicit 'moved to Trash, could not restore' failure pointing at the trash location (FileOperations.swift:534 swallows the restore failure)"
+    done = true
 
   [[phase.task]]
     title = "BatchRename phase-2: only claim 'kept as X' when the fallback move actually succeeds (BatchRename.swift:186 lies about the location on a triple failure, hiding the file under a dotfile)"
+    done = true
 
   [[phase.task]]
     title = "P3s: temp-file cleanup on replaceItemAt failure (ImageMetadata/MetadataCleaner leak a .tmp); preserve animated-GIF loop count on in-place metadata edit; nil resultingItemURL -> locate the trashed item in .Trash"
+    done = true
 
 [[phase]]
   title = "Audit fix: security defaults & release gates"
