@@ -1391,8 +1391,10 @@
 "rename.columnCurrent" = "現在";
 "rename.columnNewName" = "新しい名前";
 "rename.conflicts" = "名前が重複しています。名称変更前にルールを調整してください。";
+"rename.deletePreset" = "削除";
 "rename.includeExtension" = "拡張子を含める";
 "rename.labelPad" = "桁揃え";
+"rename.noPreset" = "プリセットなし";
 "rename.number" = "番号（フィールド内の#、なければ末尾に追加）";
 "rename.panelTitle" = "一括名称変更";
 "rename.regex" = "正規表現";
@@ -1402,9 +1404,13 @@
 "rename.rowFind" = "検索";
 "rename.rowNumbering" = "番号付け";
 "rename.rowPrefix" = "接頭辞";
+"rename.rowPreset" = "プリセット";
 "rename.rowReplace" = "置換";
 "rename.rowStart" = "開始";
 "rename.rowSuffix" = "接尾辞";
+"rename.savePreset" = "保存…";
+"rename.savePresetBody" = "再利用できるようこのルールに名前を付けます。";
+"rename.savePresetTitle" = "名前変更プリセットを保存";
 "rename.tokenHint" = "テキストまたは {date} {parent} {exif}";
 "repo.backup" = "重要なものをバックアップ…（%d）";
 "repo.clean" = "再生成可能なものをクリーン（%d）";

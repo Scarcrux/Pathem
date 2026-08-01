@@ -1391,8 +1391,10 @@
 "rename.columnCurrent" = "Actuel";
 "rename.columnNewName" = "Nouveau nom";
 "rename.conflicts" = "Conflits de noms : ajustez la règle avant de renommer.";
+"rename.deletePreset" = "Supprimer";
 "rename.includeExtension" = "Inclure l’extension";
 "rename.labelPad" = "Remplissage";
+"rename.noPreset" = "Aucun préréglage";
 "rename.number" = "Numéro (# dans un champ, sinon ajouté à la fin)";
 "rename.panelTitle" = "Renommage par lot";
 "rename.regex" = "Regex";
@@ -1402,9 +1404,13 @@
 "rename.rowFind" = "Rechercher";
 "rename.rowNumbering" = "Numérotation";
 "rename.rowPrefix" = "Préfixe";
+"rename.rowPreset" = "Préréglage";
 "rename.rowReplace" = "Remplacer";
 "rename.rowStart" = "Début";
 "rename.rowSuffix" = "Suffixe";
+"rename.savePreset" = "Enregistrer…";
+"rename.savePresetBody" = "Nommez cette règle pour la réutiliser.";
+"rename.savePresetTitle" = "Enregistrer le préréglage de renommage";
 "rename.tokenHint" = "texte ou {date} {parent} {exif}";
 "repo.backup" = "Sauvegarder les données précieuses… (%d)";
 "repo.clean" = "Nettoyer les fichiers régénérables (%d)";

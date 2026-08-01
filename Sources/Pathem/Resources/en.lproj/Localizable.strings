@@ -1321,8 +1321,10 @@
 "rename.columnCurrent" = "Current";
 "rename.columnNewName" = "New name";
 "rename.conflicts" = "Name conflicts: adjust the rule before renaming.";
+"rename.deletePreset" = "Delete";
 "rename.includeExtension" = "Include extension";
 "rename.labelPad" = "Pad";
+"rename.noPreset" = "No preset";
 "rename.number" = "Number (# in a field, else appended)";
 "rename.panelTitle" = "Batch Rename";
 "rename.regex" = "Regex";
@@ -1332,9 +1334,13 @@
 "rename.rowFind" = "Find";
 "rename.rowNumbering" = "Numbering";
 "rename.rowPrefix" = "Prefix";
+"rename.rowPreset" = "Preset";
 "rename.rowReplace" = "Replace";
 "rename.rowStart" = "Start";
 "rename.rowSuffix" = "Suffix";
+"rename.savePreset" = "Save…";
+"rename.savePresetBody" = "Name this rule so you can reuse it.";
+"rename.savePresetTitle" = "Save rename preset";
 "rename.tokenHint" = "text or {date} {parent} {exif}";
 "repo.backup" = "Back Up Precious… (%d)";
 "repo.clean" = "Clean Regenerable (%d)";

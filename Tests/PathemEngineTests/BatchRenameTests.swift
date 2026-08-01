@@ -4,6 +4,15 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct BatchRenameTests {
+    @Test func ruleRoundTripsThroughCodable() throws {
+        // Saved presets persist a RenameRule as JSON, so its Codable conformance must round-trip.
+        let rule = RenameRule(
+            find: "a", replace: "b", useRegex: true, prefix: "{date}-", suffix: "_x",
+            caseMode: .title, includeExtension: true, counterStart: 5, counterStep: 2, counterPadding: 3)
+        let data = try JSONEncoder().encode(rule)
+        #expect(try JSONDecoder().decode(RenameRule.self, from: data) == rule)
+    }
+
     @Test func expandsParentAndDateTokens() {
         let rule = RenameRule(prefix: "{parent}-{date}-")
         // 1_600_000_000 is 2020-09-13 (12:26 UTC); the month/day are stable across US time zones.

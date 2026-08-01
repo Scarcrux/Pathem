@@ -19,6 +19,8 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     private let numberCheck = NSButton(checkboxWithTitle: L("rename.number", "Number (# in a field, else appended)"), target: nil, action: nil)
     private let startField = NSTextField()
     private let padField = NSTextField()
+    private let presetPopup = NSPopUpButton()
+    private var presets: [RenamePreset] = []
     private let table = NSTableView()
     private let warnLabel = NSTextField(labelWithString: "")
     private let applyButton = NSButton(title: L("rename.renameButton", "Rename"), target: nil, action: nil)
@@ -101,7 +103,15 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         applyButton.action = #selector(apply)
         applyButton.keyEquivalent = "\r"  // Return
 
+        presetPopup.target = self
+        presetPopup.action = #selector(presetSelected)
+        let savePreset = NSButton(title: L("rename.savePreset", "Save…"), target: self, action: #selector(saveCurrentAsPreset))
+        savePreset.bezelStyle = .rounded
+        let deletePreset = NSButton(title: L("rename.deletePreset", "Delete"), target: self, action: #selector(deleteSelectedPreset))
+        deletePreset.bezelStyle = .rounded
+
         let form = NSStackView(views: [
+            row(L("rename.rowPreset", "Preset"), presetPopup, savePreset, deletePreset),
             row(L("rename.rowFind", "Find"), findField, regexCheck),
             row(L("rename.rowReplace", "Replace"), replaceField),
             row(L("rename.rowPrefix", "Prefix"), prefixField),
@@ -163,6 +173,8 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         self.existing = existing
         self.onComplete = onComplete
         buildContexts()
+        presets = RenamePresetStore.load()
+        reloadPresetPopup()
         recompute()
 
         panel.growToFitContent()
@@ -216,6 +228,69 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
     func controlTextDidChange(_ obj: Notification) { recompute() }
     @objc private func ruleChanged() { recompute() }
+
+    // MARK: - Presets
+
+    private func reloadPresetPopup() {
+        presetPopup.removeAllItems()
+        presetPopup.addItem(withTitle: L("rename.noPreset", "No preset"))
+        presetPopup.addItems(withTitles: presets.map(\.name))
+    }
+
+    /// Fill the form from a saved rule (and recompute the preview).
+    private func applyRule(_ rule: RenameRule) {
+        findField.stringValue = rule.find
+        replaceField.stringValue = rule.replace
+        regexCheck.state = rule.useRegex ? .on : .off
+        prefixField.stringValue = rule.prefix
+        suffixField.stringValue = rule.suffix
+        casePopup.selectItem(at: [RenameRule.CaseMode.none, .lower, .upper, .title].firstIndex(of: rule.caseMode) ?? 0)
+        extCheck.state = rule.includeExtension ? .on : .off
+        numberCheck.state = rule.counterStart != nil ? .on : .off
+        if let start = rule.counterStart { startField.stringValue = "\(start)" }
+        padField.stringValue = "\(rule.counterPadding)"
+        recompute()
+    }
+
+    @objc private func presetSelected() {
+        let index = presetPopup.indexOfSelectedItem - 1  // item 0 is "No preset"
+        guard index >= 0, index < presets.count else { return }
+        applyRule(presets[index].rule)
+    }
+
+    @objc private func saveCurrentAsPreset() {
+        let alert = NSAlert()
+        alert.messageText = L("rename.savePresetTitle", "Save rename preset")
+        alert.informativeText = L("rename.savePresetBody", "Name this rule so you can reuse it.")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        // Prefill a selected preset's name so Save updates it in place.
+        let selected = presetPopup.indexOfSelectedItem - 1
+        if selected >= 0, selected < presets.count { field.stringValue = presets[selected].name }
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+        let preset = RenamePreset(name: name, rule: currentRule())
+        if let existingIndex = presets.firstIndex(where: { $0.name == name }) {
+            presets[existingIndex] = preset  // overwrite a same-named preset
+        } else {
+            presets.append(preset)
+        }
+        RenamePresetStore.save(presets)
+        reloadPresetPopup()
+        presetPopup.selectItem(withTitle: name)
+    }
+
+    @objc private func deleteSelectedPreset() {
+        let index = presetPopup.indexOfSelectedItem - 1
+        guard index >= 0, index < presets.count else { NSSound.beep(); return }
+        presets.remove(at: index)
+        RenamePresetStore.save(presets)
+        reloadPresetPopup()
+    }
 
     @objc private func cancel() { panel.orderOut(nil) }
 

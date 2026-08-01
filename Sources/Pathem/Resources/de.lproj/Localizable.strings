@@ -1391,8 +1391,10 @@
 "rename.columnCurrent" = "Aktuell";
 "rename.columnNewName" = "Neuer Name";
 "rename.conflicts" = "Namenskonflikte: Passe die Regel vor dem Umbenennen an.";
+"rename.deletePreset" = "Löschen";
 "rename.includeExtension" = "Erweiterung einbeziehen";
 "rename.labelPad" = "Auffüllen";
+"rename.noPreset" = "Keine Voreinstellung";
 "rename.number" = "Nummer (# in einem Feld, sonst angehängt)";
 "rename.panelTitle" = "Stapelumbenennung";
 "rename.regex" = "Regex";
@@ -1402,9 +1404,13 @@
 "rename.rowFind" = "Suchen";
 "rename.rowNumbering" = "Nummerierung";
 "rename.rowPrefix" = "Präfix";
+"rename.rowPreset" = "Voreinstellung";
 "rename.rowReplace" = "Ersetzen";
 "rename.rowStart" = "Start";
 "rename.rowSuffix" = "Suffix";
+"rename.savePreset" = "Sichern…";
+"rename.savePresetBody" = "Benennen Sie diese Regel, um sie wiederzuverwenden.";
+"rename.savePresetTitle" = "Umbenennungs-Voreinstellung sichern";
 "rename.tokenHint" = "Text oder {date} {parent} {exif}";
 "repo.backup" = "Wertvolles sichern… (%d)";
 "repo.clean" = "Regenerierbares bereinigen (%d)";

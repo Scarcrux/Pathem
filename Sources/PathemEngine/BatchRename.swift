@@ -3,8 +3,8 @@ import Foundation
 /// A batch-rename rule (DESIGN.md roadmap). Pure data; the transform and
 /// collision detection in `BatchRename` are unit-tested, and the rename itself
 /// is a two-phase move that survives swaps and cycles.
-public struct RenameRule: Sendable, Equatable {
-    public enum CaseMode: String, Sendable, Equatable { case none, lower, upper, title }
+public struct RenameRule: Sendable, Equatable, Codable {
+    public enum CaseMode: String, Sendable, Equatable, Codable { case none, lower, upper, title }
 
     /// Find/replace applied to the name (literal, or a regex when `useRegex`).
     public var find: String

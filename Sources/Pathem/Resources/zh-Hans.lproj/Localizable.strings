@@ -1391,8 +1391,10 @@
 "rename.columnCurrent" = "当前";
 "rename.columnNewName" = "新名称";
 "rename.conflicts" = "名称冲突：请在重新命名前调整规则。";
+"rename.deletePreset" = "删除";
 "rename.includeExtension" = "包括扩展名";
 "rename.labelPad" = "补位";
+"rename.noPreset" = "无预设";
 "rename.number" = "编号（# 表示字段位置，否则追加在末尾）";
 "rename.panelTitle" = "批量重新命名";
 "rename.regex" = "正则表达式";
@@ -1402,9 +1404,13 @@
 "rename.rowFind" = "查找";
 "rename.rowNumbering" = "编号";
 "rename.rowPrefix" = "前缀";
+"rename.rowPreset" = "预设";
 "rename.rowReplace" = "替换";
 "rename.rowStart" = "起始";
 "rename.rowSuffix" = "后缀";
+"rename.savePreset" = "保存…";
+"rename.savePresetBody" = "为此规则命名以便重复使用。";
+"rename.savePresetTitle" = "保存重命名预设";
 "rename.tokenHint" = "文本或 {date} {parent} {exif}";
 "repo.backup" = "备份珍贵文件…（%d）";
 "repo.clean" = "清理可重新生成的文件（%d）";
