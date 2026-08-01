@@ -455,4 +455,8 @@ working_dir = "."
   [[phase.task]]
     title = "Enriched VoiceOver label (name+kind+size+date) shared across list/icon/column views via FileAXLabel. Remaining 16.5: tree/gallery cell labels; native-speaker l10n pass; Shelf resurface"
     done = true
+
+  [[phase.task]]
+    title = "a11y sweep complete: all 5 file views (list/icon/column/gallery/tree) speak name+kind+size+date. Saved batch-rename presets shipped (RenamePresetStore). Remaining: native-speaker l10n pass; the scroll-GIF recording (make gate-a-demo)"
+    done = true
 # <<< commandem roadmap <<<
