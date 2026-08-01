@@ -392,21 +392,27 @@ working_dir = "."
 
 [[phase]]
   title = "Audit fix: security defaults & release gates"
-  status = "later"
+  status = "done"
   note = "From the committee audit (security): no P0/P1; the codebase is unusually well-hardened (pathem:// validated navigational-only, injection-safe shell-outs via argument arrays + shellQuote, Keychain creds, Zip-Slip guards, out-of-process untrusted parsers). These are default/gate hardening items."
   issue = 0
 
   [[phase.task]]
     title = "Default confirmInboundTorrents = true (or always confirm the first externally-handed magnet/torrent): today an inbound magnet silently downloads AND seeds/reshares into Downloads with no prompt"
+    done = true
 
   [[phase.task]]
     title = "Release gate: fail the build if SUPublicEDKey is still the placeholder; add a CI check that no Sparkle/EdDSA private key is in the tree or logs"
+    done = true
 
   [[phase.task]]
     title = "SFTP: surface a 'new host key, accept?' prompt instead of silent StrictHostKeyChecking=accept-new (TOFU MITM window on first connect, which also holds the password)"
 
   [[phase.task]]
     title = "New-connection dialog: default to an encrypted protocol (sftp/ftps/webdavs) and warn on plaintext FTP/WebDAV (defaults to plain ftp today)"
+    done = true
+
+  [[phase.task]]
+    title = "Deferred: SFTP new-host-key prompt (accept-new already rejects changed keys; a full known-hosts prompt needs out-of-process helper + UI plumbing)"
 
 [[phase]]
   title = "Launch conversion & product depth (stars)"
