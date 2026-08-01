@@ -305,7 +305,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
-            underlined: indexPath.item == hoveredItem)
+            underlined: indexPath.item == hoveredItem, accessibilityLabel: FileAXLabel.describe(entry))
         item.view.alphaValue = alpha(for: entry)  // dim cut items until pasted
         return item
     }

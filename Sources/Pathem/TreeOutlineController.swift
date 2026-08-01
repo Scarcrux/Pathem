@@ -207,6 +207,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
         cell.textField?.stringValue = node.entry.name
+        cell.textField?.setAccessibilityLabel(FileAXLabel.describe(node.entry))  // name + kind/size/date
         let ruleStyle = FileColorStyle.style(for: node.entry, rules: colorRules, baseFont: .systemFont(ofSize: fontSize))
         cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: fontSize)
         cell.textField?.textColor = ruleStyle?.color ?? (node.entry.isDataless ? .secondaryLabelColor : .labelColor)
