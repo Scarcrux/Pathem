@@ -41,11 +41,18 @@ provisional and want a human review of the top ~20 visible strings before public
 build and flipping the repo. Requires a paid Apple Developer account and the
 Sparkle key set up.
 
-## Deferred bets (optional, not launch-blocking)
+## Deferred bets (resolved)
 
-- SFTP "new host key, accept?" prompt (accept-new already rejects *changed* keys).
-- Photos edit-back (`PHAssetChangeRequest`): the riskier half of the Photos feature.
-- Precomputed collation sort keys (`localizedStandardCompare` has no cheap Foundation equivalent).
+- **SFTP "new host key, accept?" prompt: shipped.** The first SFTP connection to
+  an unpinned host shows its scanned fingerprint for confirmation (HostKeyCheck).
+- **Photos edit-back: safe slice shipped.** Remove Location clears GPS from
+  selected photos via `PHAssetChangeRequest` (metadata only, revertible in Photos).
+  The full content edit-back (crop/adjustments via `PHContentEditingOutput`) stays
+  a larger future item.
+- **Precomputed collation sort keys: declined by design.** Foundation exposes no
+  ICU collation-key API, so any precomputed key sorts non-ASCII by codepoint, which
+  diverges from `localizedStandardCompare` and breaks the enumerator contract test.
+  Left as-is.
 
 ## Recommended sequence
 
