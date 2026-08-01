@@ -338,7 +338,7 @@ working_dir = "."
 
 [[phase]]
   title = "Audit fix: dangerous-corner tests + CI auto-run"
-  status = "next"
+  status = "done"
   note = "From the committee audit (testing): the core conflict matrix is well-covered, but the single highest data-loss corner (cross-volume move) is untested and nothing runs tests automatically on push/PR (ci.yml is workflow_dispatch-only, pre-commit opt-in)."
   issue = 0
 
@@ -352,6 +352,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Near-duplicate keeper-selection test with photo-like fixtures + CopyVerificationError mismatch-cleanup test"
+    done = true
 
   [[phase.task]]
     title = "Deflake DirectoryWatcher.firesWhenAFileIsCreated (poll-until-timeout + re-touch each pass; drop the two fixed sleeps racing the async FSEvents arm)"
@@ -363,6 +364,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Remaining (lower priority): Trash Put-Back ledger undo/redo smoke check; near-dup keeper-selection test (needs photo-like Vision fixtures); CopyVerificationError mismatch-cleanup test"
+    done = true
 
 [[phase]]
   title = "Audit fix: correctness feedback gaps"
@@ -448,5 +450,9 @@ working_dir = "."
 
   [[phase.task]]
     title = "List-row VoiceOver: announces name + kind + size + date (was name-only). Remaining 16.5: custom-drawn icon/gallery/column/tree cell labels; Shelf resurface; native-speaker l10n pass"
+    done = true
+
+  [[phase.task]]
+    title = "Enriched VoiceOver label (name+kind+size+date) shared across list/icon/column views via FileAXLabel. Remaining 16.5: tree/gallery cell labels; native-speaker l10n pass; Shelf resurface"
     done = true
 # <<< commandem roadmap <<<
