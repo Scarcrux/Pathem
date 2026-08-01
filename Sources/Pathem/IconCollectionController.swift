@@ -209,7 +209,7 @@ final class IconItem: NSCollectionViewItem {
     func configure(
         name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
         thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = [], underlined: Bool = false,
-        nameFont: NSFont? = nil, nameColor: NSColor? = nil
+        nameFont: NSFont? = nil, nameColor: NSColor? = nil, accessibilityLabel: String? = nil
     ) {
         loadViewIfNeeded()
         // Clear any in-place-edit appearance in case this cell was reused mid-rename.
@@ -235,9 +235,9 @@ final class IconItem: NSCollectionViewItem {
         } else {
             label.stringValue = name
         }
-        // VoiceOver otherwise reads the attributed name's git letter + tag-dot glyphs; give it the
-        // clean filename instead (A8).
-        label.setAccessibilityLabel(name)
+        // VoiceOver otherwise reads the attributed name's git letter + tag-dot glyphs; give it a
+        // clean spoken description (name + kind/size/date) instead (A8).
+        label.setAccessibilityLabel(accessibilityLabel ?? name)
         updateHighlight()
 
         representedURL = thumbnailURL
@@ -772,7 +772,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
-            underlined: ei == hoveredItem, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
+            underlined: ei == hoveredItem, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color,
+            accessibilityLabel: FileAXLabel.describe(entry))
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
         // as Finder does, and dim cut items until pasted. Set on every configure (cells are
         // reused) so it never sticks.

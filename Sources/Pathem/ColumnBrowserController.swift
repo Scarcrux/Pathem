@@ -304,7 +304,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         } else {
             cell.textField?.stringValue = entry.name
         }
-        cell.textField?.setAccessibilityLabel(entry.name)  // clean filename, not the decoration glyphs (A8)
+        cell.textField?.setAccessibilityLabel(FileAXLabel.describe(entry))  // name + kind/size/date, not glyphs
         let url = columns[index].folder.appendingPathComponent(entry.name)
         let baseIcon = FileIconCache.icon(for: entry, in: columns[index].folder)  // kind-cached; bundles per-file
         cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: columns[index].folder)

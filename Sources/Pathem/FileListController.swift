@@ -1211,7 +1211,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             // VoiceOver otherwise reads the git letter + tag-dot glyphs in the attributed name; give
             // it a clean spoken description instead: name, kind, size, and modified date, so a
             // screen-reader user hears more than the bare filename the cell shows.
-            cell.textField?.setAccessibilityLabel(accessibilityLabel(for: entry))
+            cell.textField?.setAccessibilityLabel(FileAXLabel.describe(entry))
             if underlineOnHover, row == hoveredRow, let field = cell.textField {
                 let text =
                     field.attributedStringValue.length > 0
@@ -1240,7 +1240,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 cell.textField?.stringValue = byteFormatter.string(fromByteCount: entry.size)
             }
         case .kind:
-            cell.textField?.stringValue = Self.kind(for: entry)
+            cell.textField?.stringValue = FileAXLabel.kind(for: entry)
         case .date:
             cell.textField?.stringValue = entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
         case .dateCreated:
@@ -1333,34 +1333,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     /// A human-readable file kind (localized) derived from the type, no I/O.
-    /// A spoken VoiceOver description of a row: name, kind, size (files), and modified date.
-    private func accessibilityLabel(for entry: FileEntry) -> String {
-        var parts = [entry.name, entry.isDirectory ? L("list.ax.folder", "folder") : Self.kind(for: entry)]
-        if !entry.isDirectory {
-            parts.append(ByteCountFormatter.string(fromByteCount: entry.size, countStyle: .file))
-        }
-        if let date = entry.modificationDate {
-            parts.append(Self.axDateFormatter.string(from: date))
-        }
-        return parts.joined(separator: ", ")
-    }
-
-    private static let axDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
-
-    private static func kind(for entry: FileEntry) -> String {
-        if entry.isDirectory { return L("list.kindFolder", "Folder") }
-        let ext = (entry.name as NSString).pathExtension
-        if !ext.isEmpty, let type = UTType(filenameExtension: ext) {
-            return type.localizedDescription ?? String(format: L("list.kindExtFile", "%@ file"), ext.uppercased())
-        }
-        return L("list.kindDocument", "Document")
-    }
-
     /// The right-click menu on the column header: toggle each optional column.
     private func makeHeaderMenu() -> NSMenu {
         let menu = NSMenu()
