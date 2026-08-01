@@ -348,15 +348,20 @@ public enum FileOperations {
             // Stream the copy so the bar/speed/ETA move as the bytes land (metadata-preserving,
             // cancellable), instead of the opaque all-or-nothing of FileManager.copyItem.
             try ProgressiveCopy.copy(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
-            // Verify files by SHA-256 (a directory hashes to nil on both sides, so it passes
-            // through); a mismatch means a corrupt copy -- remove it and fail that item.
-            if verify {
-                let matched = (try? FileHasher.hash(source)) == (try? FileHasher.hash(dest))
-                if !matched {
-                    try? FileManager.default.removeItem(at: dest)
-                    throw CopyVerificationError(name: source.lastPathComponent)
-                }
-            }
+            // Verify files by SHA-256; a mismatch means a corrupt copy -- remove it and fail.
+            if verify { try verifyCopy(source: source, dest: dest) }
+        }
+    }
+
+    /// Confirm a copied file matches its source by SHA-256; on a mismatch (a corrupt copy) remove
+    /// the destination and throw `CopyVerificationError`. A directory hashes to nil on both sides,
+    /// so it passes through. Extracted so the corrupt-copy path is testable without staging a real
+    /// corruption mid-copy.
+    static func verifyCopy(source: URL, dest: URL) throws {
+        let matched = (try? FileHasher.hash(source)) == (try? FileHasher.hash(dest))
+        if !matched {
+            try? FileManager.default.removeItem(at: dest)
+            throw CopyVerificationError(name: source.lastPathComponent)
         }
     }
 

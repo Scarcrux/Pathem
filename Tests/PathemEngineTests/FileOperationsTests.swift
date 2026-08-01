@@ -193,6 +193,27 @@ import Testing
         }
     }
 
+    @Test func verifyCopyRemovesACorruptDestinationAndThrows() throws {
+        try withTwoDirs { src, dst in
+            try Data("original".utf8).write(to: src.appendingPathComponent("f"))
+            let corrupt = dst.appendingPathComponent("f")
+            try Data("DIFFERENT".utf8).write(to: corrupt)  // stand in for a copy that landed corrupt
+            #expect(throws: FileOperations.CopyVerificationError.self) {
+                try FileOperations.verifyCopy(source: src.appendingPathComponent("f"), dest: corrupt)
+            }
+            #expect(!exists(corrupt))  // the corrupt copy is removed, not left behind
+        }
+    }
+
+    @Test func verifyCopyPassesForAMatchingCopy() throws {
+        try withTwoDirs { src, dst in
+            try Data("same bytes".utf8).write(to: src.appendingPathComponent("f"))
+            try Data("same bytes".utf8).write(to: dst.appendingPathComponent("f"))
+            try FileOperations.verifyCopy(source: src.appendingPathComponent("f"), dest: dst.appendingPathComponent("f"))
+            #expect(exists(dst.appendingPathComponent("f")))  // a good copy is left in place
+        }
+    }
+
     @Test func intraBatchDuplicateBasenamesConflictEvenWhenDestEmpty() throws {
         try withTwoDirs { src, dst in
             let a = src.appendingPathComponent("a")

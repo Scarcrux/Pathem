@@ -596,6 +596,23 @@ extension BrowserViewController {
             && FileManager.default.fileExists(atPath: demo.rightStart.path)
         check("demo-workspace", demoReg && demoDirs, "registered=\(demoReg) dirs=\(demoDirs)")
 
+        // Trash Put-Back ledger: trashing a file records where it came from, and undo (Put Back)
+        // restores it -- the recovery path users trust. Uses a temp file, restored then removed.
+        let putBackProbe = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-putback-\(UUID().uuidString).txt")
+        var putBackOK = false
+        var putBackDetail = "no file"
+        if (try? Data("x".utf8).write(to: putBackProbe)) != nil {
+            performLocalTrash([putBackProbe])
+            let recorded = trashOrigins.values.contains(putBackProbe.path)  // ledger maps trashed -> original
+            let gone = !FileManager.default.fileExists(atPath: putBackProbe.path)
+            if actionHistory.canUndo { actionHistory.undo() }  // Put Back
+            let restored = FileManager.default.fileExists(atPath: putBackProbe.path)
+            putBackOK = recorded && gone && restored
+            putBackDetail = "recorded=\(recorded) gone=\(gone) restored=\(restored)"
+            try? FileManager.default.removeItem(at: putBackProbe)  // clean up the restored temp
+        }
+        check("trash-putback-ledger", putBackOK, putBackDetail)
+
         // Grouped duplicate resolver: keep one per set. A 3-file set queues 2, a 2-file set queues 1.
         func dupEntry(_ name: String, _ loc: String) -> FileEntry {
             FileEntry(name: name, isDirectory: false, size: 10, modificationDate: nil, location: loc)
