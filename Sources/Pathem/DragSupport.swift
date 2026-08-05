@@ -105,7 +105,7 @@ enum FileDrag {
         if isDirectory(url) {
             return url as NSURL
         }
-        let item = FileDragItem(fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
+        let item = FileDragItem(fileType: promiseType(for: url).identifier, delegate: FilePromiseFulfiller.shared)
         item.sourceURL = url
         // userInfo is what survives when Foundation rebuilds the provider for file-provider XPC
         // fulfillment (Messages); the delegate reads the source from here. See source(from:).
@@ -117,6 +117,20 @@ enum FileDrag {
     /// file URL rather than a file promise.
     static func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+    }
+
+    /// The Uniform Type a file's out-drag PROMISE should advertise. Normally the file's real type,
+    /// EXCEPT for text-like files (HTML, plain text, source code, RTF): some receivers (Messages,
+    /// Mail) treat a text/HTML-typed promise as insertable CONTENT and paste the file's text inline
+    /// instead of attaching the file. Promising those as generic data makes them attach as a file.
+    /// The copied file still keeps its real name and bytes, and browser upload zones still
+    /// materialize it (they take the name/extension from the fulfilled file, not this UTI).
+    static func promiseType(for url: URL) -> UTType {
+        let type = contentType(of: url)
+        if type.conforms(to: .text) || type.conforms(to: .html) || type.conforms(to: .rtf) {
+            return .data
+        }
+        return type
     }
 
     /// The file's real Uniform Type, so the promised drop advertises an accurate type (and

@@ -617,6 +617,19 @@ extension BrowserViewController {
         let hostKeyUnknown = !HostKeyCheck.isKnown(host: "pathem-\(UUID().uuidString).invalid", port: 22)
         check("sftp-hostkey-check", hostKeyUnknown, "unknown host not pinned")
 
+        // Out-drag promise type: a text-like file (HTML) promises as generic data so Messages/Mail
+        // attach the file instead of pasting its text inline; a binary keeps its precise type.
+        let dragDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-drag-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dragDir, withIntermediateDirectories: true)
+        let htmlURL = dragDir.appendingPathComponent("page.html")
+        let pngURL = dragDir.appendingPathComponent("pic.png")
+        try? Data("<html><body>hi</body></html>".utf8).write(to: htmlURL)
+        try? Data([0x89, 0x50, 0x4E, 0x47]).write(to: pngURL)  // PNG magic; extension resolves the type
+        let htmlGeneric = FileDrag.promiseType(for: htmlURL) == .data
+        let pngPrecise = FileDrag.promiseType(for: pngURL) != .data
+        try? FileManager.default.removeItem(at: dragDir)
+        check("drag-text-attaches", htmlGeneric && pngPrecise, "html->data=\(htmlGeneric) png-kept=\(pngPrecise)")
+
         // Grouped duplicate resolver: keep one per set. A 3-file set queues 2, a 2-file set queues 1.
         func dupEntry(_ name: String, _ loc: String) -> FileEntry {
             FileEntry(name: name, isDirectory: false, size: 10, modificationDate: nil, location: loc)
