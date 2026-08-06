@@ -33,7 +33,19 @@ final class SharedDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate
         service.resolve(withTimeout: 5)
     }
 
-    private func notify() { onChange?(services.map(\.name).sorted()) }
+    /// This Mac's own computer name, to drop from the discovered list. Bonjour surfaces our own
+    /// `_smb._tcp` advertisement when File Sharing is on, but Finder never lists your own machine
+    /// under Shared -- and "connecting" to it just loops back to localhost. Compared by name (what
+    /// the service advertises); an exact case-insensitive match is this host.
+    private static let localName = Host.current().localizedName
+
+    private func notify() {
+        let names = services.map(\.name).filter { name in
+            guard let local = Self.localName else { return true }
+            return name.caseInsensitiveCompare(local) != .orderedSame
+        }
+        onChange?(names.sorted())
+    }
 
     // MARK: NetServiceBrowserDelegate
 
