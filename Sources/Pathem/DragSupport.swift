@@ -102,10 +102,15 @@ enum FileDrag {
         // directory anyway, while its presence makes Finder pull the promise and land a truncated
         // stub instead of copying the whole tree from the file URL. The file URL is exactly what
         // Finder and in-app drops want for a recursive copy.
-        if isDirectory(url) {
+        // Directories drag as a plain file URL (no promise). So do text-like files (HTML, plain
+        // text, source, RTF): the mere presence of a file promise makes Messages / Mail pull it,
+        // read the file, and INSERT its text inline instead of attaching it. A plain file URL is
+        // exactly what Finder drags, and it attaches correctly. (Trade-off: those types can no
+        // longer be dropped into a browser upload zone, which needs the promise.)
+        if isDirectory(url) || isTextLike(url) {
             return url as NSURL
         }
-        let item = FileDragItem(fileType: promiseType(for: url).identifier, delegate: FilePromiseFulfiller.shared)
+        let item = FileDragItem(fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
         item.sourceURL = url
         // userInfo is what survives when Foundation rebuilds the provider for file-provider XPC
         // fulfillment (Messages); the delegate reads the source from here. See source(from:).
@@ -119,18 +124,14 @@ enum FileDrag {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
     }
 
-    /// The Uniform Type a file's out-drag PROMISE should advertise. Normally the file's real type,
-    /// EXCEPT for text-like files (HTML, plain text, source code, RTF): some receivers (Messages,
-    /// Mail) treat a text/HTML-typed promise as insertable CONTENT and paste the file's text inline
-    /// instead of attaching the file. Promising those as generic data makes them attach as a file.
-    /// The copied file still keeps its real name and bytes, and browser upload zones still
-    /// materialize it (they take the name/extension from the fulfilled file, not this UTI).
-    static func promiseType(for url: URL) -> UTType {
+    /// Whether `url` is a text-like file (HTML, plain text, source code, RTF, JSON, CSV, XML) that
+    /// should drag WITHOUT a file promise, so Messages / Mail attach the file instead of inlining
+    /// its text. Image formats are excluded even when XML-based (e.g. SVG), so they keep the promise
+    /// and still work in browser upload zones.
+    static func isTextLike(_ url: URL) -> Bool {
         let type = contentType(of: url)
-        if type.conforms(to: .text) || type.conforms(to: .html) || type.conforms(to: .rtf) {
-            return .data
-        }
-        return type
+        guard !type.conforms(to: .image) else { return false }
+        return type.conforms(to: .text) || type.conforms(to: .html) || type.conforms(to: .rtf)
     }
 
     /// The file's real Uniform Type, so the promised drop advertises an accurate type (and
