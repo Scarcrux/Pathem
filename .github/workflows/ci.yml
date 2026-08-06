@@ -29,6 +29,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Pathem depends on the private Scarcrux/AppRelaunch package (the shared stale-build
+      # watcher). The default GITHUB_TOKEN is scoped to THIS repo only and can't clone another
+      # private repo, so SwiftPM's fetch needs an explicit read token. APPRELAUNCH_TOKEN is a
+      # repo secret: a fine-grained PAT with Contents: read on Scarcrux/AppRelaunch (or a classic
+      # PAT with `repo`). The url.insteadOf rewrite makes every github.com HTTPS clone -- here,
+      # the `swift build` dependency fetch -- carry it. Drop this step if AppRelaunch goes public.
+      - name: Authenticate SwiftPM to private package deps
+        run: |
+          git config --global \
+            url."https://x-access-token:${{ secrets.APPRELAUNCH_TOKEN }}@github.com/".insteadOf \
+            "https://github.com/"
+
       # Localization coverage + plist validity (plutil is macOS-only, so this runs here
       # rather than on a cheaper runner). A missing/stale translation or a malformed
       # .strings fails the build.

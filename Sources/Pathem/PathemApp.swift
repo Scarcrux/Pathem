@@ -1,5 +1,6 @@
 import AVFoundation
 import AppKit
+import AppRelaunch
 import PDFKit
 import PathemEngine
 import PathemTerminal
@@ -146,7 +147,15 @@ enum PathemApp {
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
         delegate.vpnStatusItem = VPNStatusItem()  // shows only while VPN binding is enabled
-        StaleBuildWatch.start()  // offer a relaunch if a newer build gets installed under us
+        // Offer a relaunch if a newer build gets installed under us (a `make install` under a
+        // running process). Silent under automation launches (smoke / screenshot / test), which
+        // start and exit in seconds. The watcher is the shared AppRelaunch package; see its notes
+        // for why it reads the bundle by path, keeps a grace margin, and never force-quits.
+        if !Self.isAutomationLaunch {
+            AppRelaunch.watch(.init(appName: "pathem")) { stale in
+                StaleBuildState.record(stale)
+            }
+        }
 
 
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a

@@ -1,4 +1,5 @@
 import AppKit
+import AppRelaunch
 
 /// A trailing title-bar accessory that shows a small "Update Ready" button while a Sparkle
 /// update is pending (see `UpdaterController`'s gentle-reminder wiring), and hides itself the
@@ -60,7 +61,7 @@ final class UpdateButtonAccessory: NSTitlebarAccessoryViewController {
             button.action = #selector(openPendingUpdate)
             button.toolTip = L("update.buttonTooltip", "Version %@ is ready to install").replacingOccurrences(
                 of: "%@", with: version)
-        } else if StaleBuildWatch.isStale {
+        } else if StaleBuildState.current != nil {
             // No network update, but a newer build was installed under us: offer a relaunch.
             isHidden = false
             button.title = L("update.relaunchTitle", "Relaunch to Update")
@@ -78,6 +79,6 @@ final class UpdateButtonAccessory: NSTitlebarAccessoryViewController {
     }
 
     @objc private func relaunchForUpdate() {
-        StaleBuildWatch.relaunch()
+        AppRelaunch.relaunch()
     }
 }

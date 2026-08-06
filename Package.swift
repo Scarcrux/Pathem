@@ -23,6 +23,16 @@ let package = Package(
         // notarized direct-download build's update feed (DESIGN.md). A linked
         // framework, embedded and signed by scripts/package.sh.
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
+        // AppRelaunch: the shared stale-build watcher (notices when a newer bundle is installed
+        // under the running process and offers a relaunch). Kept as ONE source of truth with the
+        // commandem menubar rather than a drifting copy -- the value is the accumulated incident
+        // lessons (read-by-path, the grace margin, non-fatal relaunch). Its own repo (not a sibling
+        // path dep) so a lone checkout -- CI, a clean clone, the eventual public clone -- resolves
+        // it the same way it resolves SwiftTerm and Sparkle. Tracks `main` while the package is
+        // still settling; pin a tag once it stabilizes. The repo is private for now, so CI needs a
+        // read token to fetch it (see .github/workflows/ci.yml); flipping it public later is a
+        // repo-visibility change with zero edits here.
+        .package(url: "https://github.com/Scarcrux/AppRelaunch.git", branch: "main"),
     ],
     targets: [
         // The engine: enumeration, watching, file ops, search. No AppKit.
@@ -44,6 +54,7 @@ let package = Package(
             dependencies: [
                 "PathemEngine", "PathemTerminal", "TorrentKit",
                 .product(name: "Sparkle", package: "Sparkle"),
+                .product(name: "AppRelaunch", package: "AppRelaunch"),
             ],
             resources: [.process("Resources")]  // localized .strings (en, es, …)
         ),
