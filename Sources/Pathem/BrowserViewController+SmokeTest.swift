@@ -275,6 +275,11 @@ extension BrowserViewController {
         galleryView.directoryURL = leftTabs.activePane?.currentURL
         galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
+        // Regression: selecting a pane must activate it (and take keyboard focus) in EVERY view
+        // mode. Icon and Gallery once failed to forward their grid's focus (onBecomeActive), so
+        // clicking such a pane left the active pane -- and focus -- on the previously active one.
+        check("view-focus-activates-pane", iconView.debugForwardsFocusToPane && galleryView.debugForwardsFocusToPane,
+            "icon=\(iconView.debugForwardsFocusToPane) gallery=\(galleryView.debugForwardsFocusToPane)")
         // The bundled changelog is present and parses into versioned entries; the Release Notes
         // window (Help menu, on demand) renders from exactly this.
         let changelogEntries =
@@ -875,9 +880,13 @@ extension BrowserViewController {
             "quickbar-column-bottom", qbBottom.y < qbTop.y,
             "bottom.y=\(Int(qbBottom.y)) top.y=\(Int(qbTop.y))")
         // Switching a pane's view mode must not move the split divider (durable ratio constraint).
+        // Uses a non-preview mode on purpose: gallery would legitimately move the split by auto-
+        // showing the preview pane (syncAutoPreview + previewInGalleryView), which isn't what this
+        // guards. Switching the active pane now activates it (onBecomeActive), so icon/list is the
+        // clean isolation of the ratio constraint.
         let beforeRight = rightTabs.containerView.frame.width
         let originalMode = rightTabs.activePane?.viewMode ?? .list
-        rightTabs.activePane?.setViewMode(.gallery)
+        rightTabs.activePane?.setViewMode(originalMode == .icon ? .list : .icon)
         view.layoutSubtreeIfNeeded()
         let afterRight = rightTabs.containerView.frame.width
         rightTabs.activePane?.setViewMode(originalMode)  // restore

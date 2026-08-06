@@ -36,6 +36,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     var contentView: NSView { composite }
     var keyView: NSView { filmstrip }
+    /// Smoke guard: true iff the filmstrip forwards its focus to the pane (so selecting a gallery
+    /// pane makes it active). Was silently false before, unlike list/column/tree.
+    var debugForwardsFocusToPane: Bool { filmstrip.onBecomeActive != nil }
     var onKeyChord: ((KeyChord) -> Bool)? {
         get { filmstrip.onKeyChord }
         set { filmstrip.onKeyChord = newValue }
@@ -51,6 +54,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         decorations.onTagsChanged = { [weak self] in self?.filmstrip.reloadData() }
         filmstrip.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
         filmstrip.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
+        // Forward focus so clicking the gallery makes its pane active + focused, like list/tree.
+        filmstrip.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
         ThemeManager.shared.onChange(owner: self) { [weak self] in self?.filmstrip.reloadData() }
     }
 

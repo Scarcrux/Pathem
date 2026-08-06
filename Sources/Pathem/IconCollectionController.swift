@@ -391,6 +391,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private var renameCancelled = false
 
     var keyView: NSView { collection }
+    /// Smoke guard: true iff the grid forwards its focus to the pane (so selecting an icon/gallery
+    /// pane makes it active). Was silently false before, unlike list/column/tree.
+    var debugForwardsFocusToPane: Bool { collection.onBecomeActive != nil }
     var onKeyChord: ((KeyChord) -> Bool)? {
         get { collection.onKeyChord }
         set { collection.onKeyChord = newValue }
@@ -413,6 +416,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         }
         collection.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
         collection.onDragExited = { [weak self] in self?.springLoader.cancel() }
+        // Clicking the grid makes it first responder; forward that so the pane becomes active and
+        // takes focus (as list/column/tree do). Without this, selecting an icon/gallery pane left
+        // the active pane -- and keyboard focus -- on the previously active one.
+        collection.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
         ThemeManager.shared.onChange(owner: self) { [weak self] in self?.collection.reloadData() }
     }
 
