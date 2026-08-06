@@ -29,6 +29,11 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Where a new tab or window opens: the current folder, Home, or a fixed folder.
     public enum NewTabLocation: String, Codable, Sendable, CaseIterable { case lastFolder, home, fixed }
 
+    /// What the Recents smart location surfaces: files recently changed (default) or recently
+    /// opened. Finder's Recents is "recently opened"; "modified" is often more useful in a file
+    /// manager because it surfaces what actually changed. Either way the view sorts newest-first.
+    public enum RecentsBasis: String, Codable, Sendable, CaseIterable { case modified, opened }
+
     /// Row spacing for the file list.
     public var density: Density
     /// Where new tabs/windows open.
@@ -58,6 +63,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// The sort key/direction a folder uses when it has no saved view of its own.
     public var defaultSortKey: ViewFormat.SortKey
     public var defaultSortAscending: Bool
+    /// What the Recents smart location shows: recently modified files (default) or recently opened.
+    public var recentsBasis: RecentsBasis
     /// Keep folders on top when sorting a folder that has no saved view (Finder's "Keep folders on
     /// top"). Applies to unconfigured folders; a folder's own saved view keeps its setting.
     public var foldersFirst: Bool
@@ -181,6 +188,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .medium,
         defaultViewMode: ViewFormat.ViewMode = .list, defaultSortKey: ViewFormat.SortKey = .name,
         defaultSortAscending: Bool = true, foldersFirst: Bool = true,
+        recentsBasis: RecentsBasis = .modified,
         newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
         middleClickOpensNewTab: Bool = true, commanderCommands: [String] = [],
         statusShowItemCount: Bool = true, statusShowSize: Bool = true, statusShowFreeSpace: Bool = false,
@@ -212,6 +220,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.defaultSortKey = defaultSortKey
         self.defaultSortAscending = defaultSortAscending
         self.foldersFirst = foldersFirst
+        self.recentsBasis = recentsBasis
         self.newTabLocation = newTabLocation
         self.fixedStartFolder = fixedStartFolder
         self.middleClickOpensNewTab = middleClickOpensNewTab
@@ -312,6 +321,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         defaultSortKey = (try? c.decode(ViewFormat.SortKey.self, forKey: .defaultSortKey)) ?? d.defaultSortKey
         defaultSortAscending = try c.decodeIfPresent(Bool.self, forKey: .defaultSortAscending) ?? d.defaultSortAscending
         foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? d.foldersFirst
+        recentsBasis = try c.decodeIfPresent(RecentsBasis.self, forKey: .recentsBasis) ?? d.recentsBasis
         newTabLocation = (try? c.decode(NewTabLocation.self, forKey: .newTabLocation)) ?? d.newTabLocation
         fixedStartFolder = try c.decodeIfPresent(String.self, forKey: .fixedStartFolder) ?? d.fixedStartFolder
         middleClickOpensNewTab =

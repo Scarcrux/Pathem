@@ -14,6 +14,13 @@ import Testing
         #expect(SpotlightSearch.recentQuery(days: 0) == "kMDItemFSContentChangeDate >= $time.now(-86400)")
     }
 
+    @Test func recentQueryBasisSelectsAttribute() {
+        // Default (modified) uses the content-change date; opened uses last-used (Finder's Recents).
+        #expect(SpotlightSearch.recentQuery(days: 7) == "kMDItemFSContentChangeDate >= $time.now(-604800)")
+        #expect(SpotlightSearch.recentQuery(days: 7, opened: false) == "kMDItemFSContentChangeDate >= $time.now(-604800)")
+        #expect(SpotlightSearch.recentQuery(days: 7, opened: true) == "kMDItemLastUsedDate >= $time.now(-604800)")
+    }
+
     @Test func filenameQueryMatchesSubstringCaseInsensitively() {
         #expect(SpotlightSearch.filenameQuery("Report") == "kMDItemFSName == \"*Report*\"c")
         #expect(SpotlightSearch.filenameQuery("  ") == "")  // blank -> no query

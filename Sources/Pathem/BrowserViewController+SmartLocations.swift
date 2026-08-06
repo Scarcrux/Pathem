@@ -15,8 +15,14 @@ extension BrowserViewController {
             let title: String
             switch query {
             case .recents:
-                urls = await SpotlightSearch.recentFiles(scope: scope, days: 30, limit: 200)
+                let opened = prefs.recentsBasis == .opened
+                urls = await SpotlightSearch.recentFiles(scope: scope, days: 30, limit: 200, opened: opened)
                 title = L("bvc.recents", "Recents")
+                // Recents is a recency list, so default it to newest-first (Finder does the same),
+                // rather than inheriting the pane's folder sort (usually name, ascending). The user
+                // can still re-sort by clicking a column while viewing it.
+                pane.format.sortKey = opened ? .dateAccessed : .date
+                pane.format.ascending = false
             case .tag(let color):
                 urls = await SpotlightSearch.taggedFiles(color.label, scope: scope, limit: 500)
                 title = String(format: L("bvc.tagTitle", "Tag: %@"), color.label)

@@ -1310,6 +1310,9 @@
 "prefs.openConnectionsNewTab" = "接続を新しいタブで開く";
 "prefs.pathBarBottom" = "パスバーを下部に表示";
 "prefs.previewInGallery" = "ギャラリー・カラム表示でプレビューパネルを自動表示";
+"prefs.recentsLabel" = "「最近の項目」の表示";
+"prefs.recentsModified" = "最近変更した項目";
+"prefs.recentsOpened" = "最近開いた項目";
 "prefs.searchOCR" = "画像の内容を検索（OCR、低速）";
 "prefs.searchOCRHint" = "テキストとPDFの内容は常にインデックスされます。画像のOCRは追加です。";
 "prefs.showFullPath" = "タイトルバーにフルパスを表示";

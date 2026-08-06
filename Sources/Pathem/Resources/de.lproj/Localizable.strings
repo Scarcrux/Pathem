@@ -1310,6 +1310,9 @@
 "prefs.openConnectionsNewTab" = "Verbindungen in einem neuen Tab öffnen";
 "prefs.pathBarBottom" = "Pfadleiste unten anzeigen";
 "prefs.previewInGallery" = "Vorschaubereich in Galerie- und Spaltenansicht automatisch anzeigen";
+"prefs.recentsLabel" = "Zuletzt benutzt zeigt";
+"prefs.recentsModified" = "Kürzlich geändert";
+"prefs.recentsOpened" = "Kürzlich geöffnet";
 "prefs.searchOCR" = "Bildinhalte durchsuchen (OCR, langsamer)";
 "prefs.searchOCRHint" = "Text- und PDF-Inhalte werden immer indiziert; die Bild-OCR kommt hinzu.";
 "prefs.showFullPath" = "Vollständigen Pfad in der Titelleiste anzeigen";

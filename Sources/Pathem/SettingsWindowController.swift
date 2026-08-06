@@ -295,6 +295,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
             labeled(L("prefs.defaultViewLabel", "New folders open as"), defaultViewControl()),
             labeled(L("prefs.defaultSortLabel", "Default sort"), defaultSortControl()),
+            labeled(L("prefs.recentsLabel", "Recents shows"), recentsBasisControl()),
             labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
             labeled(L("prefs.newTabPosLabel", "New tab position"), newTabPositionControl()),
             labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
@@ -630,6 +631,23 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func newTabPositionChanged(_ sender: NSPopUpButton) {
         prefs.newTabAtEnd = sender.indexOfSelectedItem == 1
+        onChange?(prefs)
+    }
+
+    /// Order of the Recents-basis popup, matching the RecentsBasis cases.
+    private let recentsBasisOrder: [Preferences.RecentsBasis] = [.modified, .opened]
+    private func recentsBasisControl() -> NSView {
+        let popup = NSPopUpButton()
+        popup.addItems(withTitles: [
+            L("prefs.recentsModified", "Recently Modified"), L("prefs.recentsOpened", "Recently Opened"),
+        ])
+        popup.selectItem(at: recentsBasisOrder.firstIndex(of: prefs.recentsBasis) ?? 0)
+        popup.target = self
+        popup.action = #selector(recentsBasisChanged(_:))
+        return popup
+    }
+    @objc private func recentsBasisChanged(_ sender: NSPopUpButton) {
+        prefs.recentsBasis = recentsBasisOrder[sender.indexOfSelectedItem]
         onChange?(prefs)
     }
 

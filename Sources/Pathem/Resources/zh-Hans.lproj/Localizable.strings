@@ -1310,6 +1310,9 @@
 "prefs.openConnectionsNewTab" = "在新标签页中打开连接";
 "prefs.pathBarBottom" = "在底部显示路径栏";
 "prefs.previewInGallery" = "在画廊和分栏视图中自动显示预览窗格";
+"prefs.recentsLabel" = "最近使用显示";
+"prefs.recentsModified" = "最近修改";
+"prefs.recentsOpened" = "最近打开";
 "prefs.searchOCR" = "搜索图像内容（OCR，较慢）";
 "prefs.searchOCRHint" = "文本和 PDF 内容始终会被索引；图像 OCR 为额外项。";
 "prefs.showFullPath" = "在标题栏中显示完整路径";

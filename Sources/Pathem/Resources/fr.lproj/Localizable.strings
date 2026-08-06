@@ -1310,6 +1310,9 @@
 "prefs.openConnectionsNewTab" = "Ouvrir les connexions dans un nouvel onglet";
 "prefs.pathBarBottom" = "Afficher la barre de chemin en bas";
 "prefs.previewInGallery" = "Afficher le volet d’aperçu automatiquement dans les vues Galerie et Colonnes";
+"prefs.recentsLabel" = "Les Récents affichent";
+"prefs.recentsModified" = "Modifiés récemment";
+"prefs.recentsOpened" = "Ouverts récemment";
 "prefs.searchOCR" = "Rechercher dans le contenu des images (OCR, plus lent)";
 "prefs.searchOCRHint" = "Le contenu texte et PDF est toujours indexé ; l’OCR des images est en supplément.";
 "prefs.showFullPath" = "Afficher le chemin complet dans la barre de titre";

@@ -448,6 +448,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // keeps the selection and does not grab focus, so it never yanks the cursor or clears
         // the highlight mid-interaction. A fresh open resets state and takes focus as usual.
         displayEntries(format.sorted(entries), preserveState: preservingState)
+        content.showSortIndicator(key: format.sortKey, ascending: format.ascending)  // match the header to the sort
         content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
         breadcrumb.isHidden = true
         addressField.isHidden = true

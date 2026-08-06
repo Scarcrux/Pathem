@@ -10,11 +10,14 @@ public enum SpotlightSearch {
         await run(query: tagQuery(tag), scope: scope, limit: limit)
     }
 
-    /// Recently changed files, most recent first (mdfind can't sort, so we sort
-    /// the matches by modification date and cap).
-    public static func recentFiles(scope: URL? = nil, days: Int = 30, limit: Int = 200) async -> [URL] {
-        let urls = await run(query: recentQuery(days: days), scope: scope, limit: 5000)
-        let sorted = urls.sorted { modificationDate($0) > modificationDate($1) }
+    /// Recently changed (or, when `opened`, recently used) files, most recent first. mdfind can't
+    /// sort, so we sort the matches by the relevant date and cap. The sort also decides WHICH
+    /// `limit` files survive, so it must use the same date the query filtered on.
+    public static func recentFiles(
+        scope: URL? = nil, days: Int = 30, limit: Int = 200, opened: Bool = false
+    ) async -> [URL] {
+        let urls = await run(query: recentQuery(days: days, opened: opened), scope: scope, limit: 5000)
+        let sorted = urls.sorted { recencyDate($0, opened: opened) > recencyDate($1, opened: opened) }
         return Array(sorted.prefix(limit))
     }
 
@@ -37,9 +40,12 @@ public enum SpotlightSearch {
         return trimmed.isEmpty ? "" : "kMDItemFSName == \"*\(escape(trimmed))*\"c"
     }
 
-    static func recentQuery(days: Int) -> String {
+    /// Files touched within `days`. `opened` selects "recently used" (Finder's Recents) instead of
+    /// the default "recently changed on disk".
+    static func recentQuery(days: Int, opened: Bool = false) -> String {
         let seconds = max(1, days) * 86_400
-        return "kMDItemFSContentChangeDate >= $time.now(-\(seconds))"
+        let attribute = opened ? "kMDItemLastUsedDate" : "kMDItemFSContentChangeDate"
+        return "\(attribute) >= $time.now(-\(seconds))"
     }
 
     /// Escape a value for an mdfind quoted string (backslash and quote).
@@ -94,7 +100,11 @@ public enum SpotlightSearch {
         return true
     }
 
-    private static func modificationDate(_ url: URL) -> Date {
-        (try? url.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+    /// The date a "recent" result is ranked by: last-access time for the `opened` basis (the closest
+    /// URL-resource proxy for "last used"), content-modification time otherwise.
+    private static func recencyDate(_ url: URL, opened: Bool) -> Date {
+        let key: URLResourceKey = opened ? .contentAccessDateKey : .contentModificationDateKey
+        let values = try? url.resourceValues(forKeys: [key])
+        return (opened ? values?.contentAccessDate : values?.contentModificationDate) ?? .distantPast
     }
 }

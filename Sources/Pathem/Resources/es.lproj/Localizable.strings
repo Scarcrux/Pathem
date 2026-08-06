@@ -1310,6 +1310,9 @@
 "prefs.openConnectionsNewTab" = "Abrir conexiones en una pestaña nueva";
 "prefs.pathBarBottom" = "Mostrar la barra de ruta en la parte inferior";
 "prefs.previewInGallery" = "Mostrar el panel de vista previa automáticamente en las vistas Galería y Columnas";
+"prefs.recentsLabel" = "Recientes muestra";
+"prefs.recentsModified" = "Modificados recientemente";
+"prefs.recentsOpened" = "Abiertos recientemente";
 "prefs.searchOCR" = "Buscar en el contenido de las imágenes (OCR, más lento)";
 "prefs.searchOCRHint" = "El contenido de texto y PDF siempre se indexa; el OCR de imágenes es adicional.";
 "prefs.showFullPath" = "Mostrar la ruta completa en la barra de título";

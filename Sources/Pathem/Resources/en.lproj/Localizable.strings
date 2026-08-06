@@ -1240,6 +1240,9 @@
 "prefs.openConnectionsNewTab" = "Open connections in a new tab";
 "prefs.pathBarBottom" = "Show the path bar at the bottom";
 "prefs.previewInGallery" = "Show the preview pane automatically in Gallery and Column views";
+"prefs.recentsLabel" = "Recents shows";
+"prefs.recentsModified" = "Recently Modified";
+"prefs.recentsOpened" = "Recently Opened";
 "prefs.searchOCR" = "Search image contents (OCR, slower)";
 "prefs.searchOCRHint" = "Text and PDF contents are always indexed; image OCR is extra.";
 "prefs.showFullPath" = "Show full path in the title bar";

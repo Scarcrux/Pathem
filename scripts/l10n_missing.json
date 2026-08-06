@@ -1,6 +1,10 @@
 {
   "_comment": "Translations for keys added since the last localization pass (mostly this session's PDF viewer, Open in Other Pane, flash toasts, A8 labels, Finder-favorites import). Merged with scripts/l10n_lint.py --merge. find.title is re-set to 'Advanced Find' (its key collision with the Find-in-Files panel was split into find.inFilesTitle).",
 
+  "prefs.recentsLabel":          {"fr": "Les Récents affichent", "de": "Zuletzt benutzt zeigt", "es": "Recientes muestra", "ja": "「最近の項目」の表示", "zh-Hans": "最近使用显示"},
+  "prefs.recentsModified":       {"fr": "Modifiés récemment", "de": "Kürzlich geändert", "es": "Modificados recientemente", "ja": "最近変更した項目", "zh-Hans": "最近修改"},
+  "prefs.recentsOpened":         {"fr": "Ouverts récemment", "de": "Kürzlich geöffnet", "es": "Abiertos recientemente", "ja": "最近開いた項目", "zh-Hans": "最近打开"},
+
   "auto.choose":                 {"fr": "Choisir…", "de": "Auswählen…", "es": "Elegir…", "ja": "選択…", "zh-Hans": "选择…"},
 
   "settings.integrations":       {"fr": "Intégrations", "de": "Integrationen", "es": "Integraciones", "ja": "連携", "zh-Hans": "集成"},
