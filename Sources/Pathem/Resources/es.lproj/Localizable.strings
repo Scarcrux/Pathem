@@ -1257,6 +1257,7 @@
 "prefs.folderHandlerFailedBody" = "Puede que esta versión de macOS no permita reemplazar Finder como la app predeterminada para carpetas. Aún puedes abrir carpetas en Pathem arrastrando y soltando o con «Abrir en Pathem».\n\n(%@)";
 "prefs.folderHandlerUse" = "Usar Pathem";
 "prefs.fontSizeLabel" = "Tamaño de letra";
+"prefs.iconExtraLarge" = "Muy grande";
 "prefs.iconLarge" = "Grande";
 "prefs.iconMedium" = "Mediano";
 "prefs.iconSetLabel" = "Iconos de archivo";

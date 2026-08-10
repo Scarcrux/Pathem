@@ -1257,6 +1257,7 @@
 "prefs.folderHandlerFailedBody" = "Cette version de macOS ne permet peut-être pas de remplacer Finder comme application par défaut pour les dossiers. Vous pouvez toujours ouvrir des dossiers dans Pathem par glisser-déposer ou avec « Ouvrir dans Pathem ».\n\n(%@)";
 "prefs.folderHandlerUse" = "Utiliser Pathem";
 "prefs.fontSizeLabel" = "Taille de police";
+"prefs.iconExtraLarge" = "Très grande";
 "prefs.iconLarge" = "Grande";
 "prefs.iconMedium" = "Moyenne";
 "prefs.iconSetLabel" = "Icônes de fichier";

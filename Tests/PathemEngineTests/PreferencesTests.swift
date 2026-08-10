@@ -99,7 +99,7 @@ import Testing
         #expect(prefs.calculateFolderSizes == false)  // defaulted
         #expect(prefs.compactSidebar == false)  // defaulted
         #expect(prefs.instantTooltips == false)  // defaulted
-        #expect(prefs.toolbarIconSize == .medium)  // defaulted
+        #expect(prefs.toolbarIconSize == .large)  // defaulted (bumped from .medium for legibility)
         #expect(prefs.hiddenContextItems.isEmpty)  // defaulted
     }
 

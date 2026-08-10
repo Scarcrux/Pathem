@@ -1257,6 +1257,7 @@
 "prefs.folderHandlerFailedBody" = "此版本的 macOS 可能不允许将 Finder 替换为文件夹的默认应用。你仍可以通过拖放或“在 Pathem 中打开”来在 Pathem 中打开文件夹。\n\n（%@）";
 "prefs.folderHandlerUse" = "使用 Pathem";
 "prefs.fontSizeLabel" = "字体大小";
+"prefs.iconExtraLarge" = "特大";
 "prefs.iconLarge" = "大";
 "prefs.iconMedium" = "中";
 "prefs.iconSetLabel" = "文件图标";

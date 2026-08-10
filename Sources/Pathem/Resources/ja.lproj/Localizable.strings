@@ -1257,6 +1257,7 @@
 "prefs.folderHandlerFailedBody" = "このバージョンのmacOSでは、フォルダのデフォルトアプリとしてFinderを置き換えられない場合があります。ドラッグ＆ドロップまたは「Pathemで開く」でPathemでフォルダを開くことは引き続き可能です。\n\n（%@）";
 "prefs.folderHandlerUse" = "Pathemを使用";
 "prefs.fontSizeLabel" = "フォントサイズ";
+"prefs.iconExtraLarge" = "特大";
 "prefs.iconLarge" = "大";
 "prefs.iconMedium" = "中";
 "prefs.iconSetLabel" = "ファイルアイコン";

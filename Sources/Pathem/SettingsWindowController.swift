@@ -1050,6 +1050,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         let popup = NSPopUpButton()
         popup.addItems(withTitles: [
             L("prefs.iconSmall", "Small"), L("prefs.iconMedium", "Medium"), L("prefs.iconLarge", "Large"),
+            L("prefs.iconExtraLarge", "Extra Large"),
         ])
         popup.selectItem(at: Preferences.IconSize.allCases.firstIndex(of: prefs.toolbarIconSize) ?? 1)
         popup.target = self

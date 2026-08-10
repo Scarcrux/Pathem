@@ -1257,6 +1257,7 @@
 "prefs.folderHandlerFailedBody" = "Diese macOS-Version erlaubt möglicherweise nicht, Finder als Standard-App für Ordner zu ersetzen. Du kannst Ordner in Pathem weiterhin per Drag & Drop oder mit „In Pathem öffnen“ öffnen.\n\n(%@)";
 "prefs.folderHandlerUse" = "Pathem verwenden";
 "prefs.fontSizeLabel" = "Schriftgröße";
+"prefs.iconExtraLarge" = "Sehr groß";
 "prefs.iconLarge" = "Groß";
 "prefs.iconMedium" = "Mittel";
 "prefs.iconSetLabel" = "Dateisymbole";

@@ -9,13 +9,14 @@ public struct Preferences: Codable, Sendable, Equatable {
     public enum Appearance: String, Codable, Sendable, CaseIterable { case system, light, dark }
     /// Size of the navigation/toolbar button icons.
     public enum IconSize: String, Codable, Sendable, CaseIterable {
-        case small, medium, large
+        case small, medium, large, extraLarge
         /// SF Symbol point size for the toolbar/navigation buttons.
         public var pointSize: Double {
             switch self {
             case .small: return 11
             case .medium: return 13  // the historical default look
-            case .large: return 18
+            case .large: return 18  // the current default -- roughly Finder's toolbar
+            case .extraLarge: return 24
             }
         }
     }
@@ -183,7 +184,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
-        toolbarIconSize: IconSize = .medium, hiddenContextItems: [String] = [],
+        toolbarIconSize: IconSize = .large, hiddenContextItems: [String] = [],
         contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
         sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .medium,
         defaultViewMode: ViewFormat.ViewMode = .list, defaultSortKey: ViewFormat.SortKey = .name,
