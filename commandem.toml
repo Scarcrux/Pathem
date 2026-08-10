@@ -473,4 +473,10 @@ working_dir = "."
   [[phase.task]]
     title = "Shelf renamed to 'Drop Stack' (market-recognized name) across commands/menus/panel + 6 locales; docs/PRE_PUBLIC.md written (post-audit state + owner-action items)"
     done = true
+
+[[phase]]
+  title = "Live-app fixes: New Folder inline-rename race + toolbar icon sizing"
+  status = "done"
+  note = "New Folder / New Folder with Selection now let you name the item before the debounced folder-watcher reload cancels the inline rename. Toolbar icons default to Large (from Medium) with a new Extra Large (24pt) size; localized across six locales."
+  issue = 0
 # <<< commandem roadmap <<<
