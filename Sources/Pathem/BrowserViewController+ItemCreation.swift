@@ -115,7 +115,11 @@ extension BrowserViewController {
         do {
             let name = try FileOperations.makeFile(in: pane.currentURL, baseName: defaultNewFileName)
             pane.reloadIfShowingListing()
-            pane.select(name: name)
+            // Select it once the (off-main) listing lands, then offer to name it right away, like
+            // New Folder does -- a plain select(name:) here is a no-op, since the row doesn't exist
+            // yet. (applyPendingAfterListing then drops the redundant watcher reload so the inline
+            // rename isn't cancelled the instant it begins.)
+            pane.selectWhenListed(name) { [weak self] in self?.renameSelection() }
             registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.cmd.newFile", "New File"))
         } catch {
             presentFailures(
