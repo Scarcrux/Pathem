@@ -94,6 +94,38 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pendingSelection = [name]
         pendingAfterListing = then
     }
+
+    /// Consume a queued selection into the fresh listing, then run any queued follow-up (e.g. "New
+    /// Folder, now rename it"). Creating the item also trips the folder watcher, whose debounced
+    /// reload (~0.25s) would land right after and cancel the inline rename we just began -- any
+    /// reload ends editing. This listing already includes the new item, so once the follow-up has
+    /// run we drop that now-redundant refresh; otherwise the rename field flashes and is lost, which
+    /// reads as "it created the folder but never let me name it." Called from reload()'s completion.
+    private func applyPendingAfterListing() {
+        if let pending = pendingSelection {
+            content.selectNames(pending)
+            pendingSelection = nil
+        }
+        if let after = pendingAfterListing {
+            pendingAfterListing = nil
+            after()
+            pendingRefresh?.cancel()
+            pendingRefresh = nil
+        }
+    }
+
+    /// Repro for the New-Folder-rename race (PATHEM_SMOKE): arm a queued rename plus a pending
+    /// watcher refresh, as a real create does, run the post-listing step, and report that the
+    /// follow-up ran and the redundant refresh was dropped so it can't cancel the inline edit.
+    func debugNewItemRenameDropsWatcherRefresh() -> Bool {
+        let refresh = DispatchWorkItem {}
+        pendingRefresh = refresh
+        pendingSelection = nil
+        var ran = false
+        pendingAfterListing = { ran = true }
+        applyPendingAfterListing()
+        return ran && pendingRefresh == nil && refresh.isCancelled
+    }
     /// Keymap chord handler, re-applied to whichever content is active.
     var onKeyChordHandler: ((KeyChord) -> Bool)? {
         didSet { content.onKeyChord = onKeyChordHandler }
@@ -569,17 +601,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                                 + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
                     self.permissionButton.isHidden = false  // give the failure an action
                 }
-                // After a view-mode swap, carry the selection into the fresh content.
-                if let pending = self.pendingSelection {
-                    self.content.selectNames(pending)
-                    self.pendingSelection = nil
-                }
-                // A caller waiting on this listing (e.g. "new folder, now rename it") runs now that
-                // its row exists and is selected.
-                if let after = self.pendingAfterListing {
-                    self.pendingAfterListing = nil
-                    after()
-                }
+                // Carry a queued selection into the fresh content (view-mode swap), then run any
+                // queued follow-up (e.g. "new folder, now rename it") now that its row exists and is
+                // selected -- and drop the redundant watcher refresh that would cancel the rename.
+                self.applyPendingAfterListing()
                 self.updateStatus()
                 self.refreshGitStatusAsync()
             }

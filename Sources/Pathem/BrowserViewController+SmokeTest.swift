@@ -275,6 +275,13 @@ extension BrowserViewController {
         galleryView.directoryURL = leftTabs.activePane?.currentURL
         galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
+        // New Folder must let you name it: the create trips the folder watcher, whose debounced
+        // reload would otherwise cancel the inline rename the moment it begins. The post-listing
+        // follow-up drops that redundant refresh so naming survives.
+        check(
+            "new-folder-rename-survives-watcher-reload",
+            leftTabs.activePane?.debugNewItemRenameDropsWatcherRefresh() == true,
+            "rename ran + redundant refresh cancelled")
         // Regression: selecting a pane must activate it (and take keyboard focus) in EVERY view
         // mode. Icon and Gallery once failed to forward their grid's focus (onBecomeActive), so
         // clicking such a pane left the active pane -- and focus -- on the previously active one.
