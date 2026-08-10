@@ -485,4 +485,10 @@ working_dir = "."
   status = "done"
   note = "New File now offers an inline rename on create (was: default name, no prompt), matching New Folder. Date columns default to relative (Today/Yesterday), matching Finder; still switchable in Settings."
   issue = 0
+
+[[phase]]
+  title = "Live-app fixes 3: breadcrumb spring-loading (drag issue #1, paths half)"
+  status = "done"
+  note = "Dragging over a breadcrumb path component spring-loads (navigates into it) mid-drag, like Finder. Nav-button drops (up = move to parent) remain for the buttons half of the drag-across-nav report."
+  issue = 0
 # <<< commandem roadmap <<<
