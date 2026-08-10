@@ -186,7 +186,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .large, hiddenContextItems: [String] = [],
         contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
-        sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .medium,
+        sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .relative,
         defaultViewMode: ViewFormat.ViewMode = .list, defaultSortKey: ViewFormat.SortKey = .name,
         defaultSortAscending: Bool = true, foldersFirst: Bool = true,
         recentsBasis: RecentsBasis = .modified,

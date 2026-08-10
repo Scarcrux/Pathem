@@ -10,7 +10,7 @@ import Testing
         #expect(prefs.searchOCR == false)
         #expect(prefs.rowHeight == 24)  // 13 + 11, matches the historical default
         #expect(prefs.sizeFormat == .decimal)  // Finder-style KB/MB by default
-        #expect(prefs.dateDisplay == .medium)
+        #expect(prefs.dateDisplay == .relative)  // Finder-style "Today at 3:14 PM" by default
     }
 
     @Test func sizeAndDateFormatsRoundTrip() throws {
@@ -20,7 +20,7 @@ import Testing
         #expect(decoded.dateDisplay == .relative)
         // An older prefs.json without the fields decodes to the defaults.
         let old = try JSONDecoder().decode(Preferences.self, from: Data(#"{"fontSize":13}"#.utf8))
-        #expect(old.sizeFormat == .decimal && old.dateDisplay == .medium)
+        #expect(old.sizeFormat == .decimal && old.dateDisplay == .relative)
     }
 
     @Test func commanderStatusAndNewItemRoundTrip() throws {
