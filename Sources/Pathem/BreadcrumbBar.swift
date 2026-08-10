@@ -74,6 +74,7 @@ final class BreadcrumbBar: NSView {
             let segment = BreadcrumbSegment(folder: folder)
             segment.title = index == 0 && rootLabel != nil ? rootLabel! : FileManager.default.displayName(atPath: folder.path)
             segment.onClick = { [weak self] in self?.onNavigate?(folder) }
+            segment.onSpringLoad = { [weak self] in self?.onNavigate?(folder) }
             segment.onDropURLs = { [weak self] urls, move in self?.onDropURLs?(urls, folder, move) }
             segment.onContextAction = { [weak self] action in self?.onContextAction?(folder, action) }
             stack.addArrangedSubview(segment)
@@ -103,7 +104,15 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     let folder: URL
     var onClick: (() -> Void)?
     var onDropURLs: ((_ urls: [URL], _ move: Bool) -> Void)?
+    /// Fired when a drag hovers this segment long enough to "spring-load" it: navigate to this
+    /// ancestor mid-drag so you can drop into what it reveals, the way Finder drills in when you
+    /// hold a drag over a path component.
+    var onSpringLoad: (() -> Void)?
     var onContextAction: ((BreadcrumbBar.Action) -> Void)?
+
+    /// Pending spring-load, armed while a drag rests on this segment and cancelled the moment it
+    /// leaves (or drops), so a drag merely passing over doesn't navigate.
+    private var springLoad: DispatchWorkItem?
 
     override func menu(for event: NSEvent) -> NSMenu? {
         let menu = NSMenu()
@@ -197,12 +206,29 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
 
     // MARK: Drop target
 
-    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        armSpringLoad(sender)
+        return dropOperation(sender)
+    }
     override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { dropOperation(sender) }
-    override func draggingExited(_ sender: NSDraggingInfo?) { isDropTarget = false }
+    override func draggingExited(_ sender: NSDraggingInfo?) { cancelSpringLoad(); isDropTarget = false }
     // @objc so the optional draggingEnded: is actually exposed to ObjC (NSView doesn't implement it);
     // without it AppKit's drag completion raises "unrecognized selector" and strands drags. No super.
-    @objc override func draggingEnded(_ sender: NSDraggingInfo) { isDropTarget = false }
+    @objc override func draggingEnded(_ sender: NSDraggingInfo) { cancelSpringLoad(); isDropTarget = false }
+
+    /// Arm the spring-load once, when a file drag first rests on the segment. Uses the system
+    /// spring-loading delay so it matches Finder / the user's "Spring-loaded folders" setting.
+    private func armSpringLoad(_ info: NSDraggingInfo) {
+        guard springLoad == nil, let urls = urls(from: info), !urls.isEmpty else { return }
+        let work = DispatchWorkItem { [weak self] in self?.onSpringLoad?() }
+        springLoad = work
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + NSEvent.doubleClickInterval + 0.35, execute: work)
+    }
+    private func cancelSpringLoad() {
+        springLoad?.cancel()
+        springLoad = nil
+    }
 
     private func dropOperation(_ info: NSDraggingInfo) -> NSDragOperation {
         guard let urls = urls(from: info), !urls.isEmpty, !isSelfOrParentOnly(urls) else {
@@ -214,6 +240,7 @@ final class BreadcrumbSegment: NSButton, NSDraggingSource {
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        cancelSpringLoad()  // a drop here shouldn't also spring-navigate
         isDropTarget = false
         guard let urls = urls(from: sender), !urls.isEmpty, !isSelfOrParentOnly(urls) else { return false }
         onDropURLs?(urls, NSApp.currentEvent?.modifierFlags.contains(.command) == true)
