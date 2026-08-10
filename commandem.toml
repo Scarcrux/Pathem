@@ -479,4 +479,10 @@ working_dir = "."
   status = "done"
   note = "New Folder / New Folder with Selection now let you name the item before the debounced folder-watcher reload cancels the inline rename. Toolbar icons default to Large (from Medium) with a new Extra Large (24pt) size; localized across six locales."
   issue = 0
+
+[[phase]]
+  title = "Live-app fixes 2: New File naming + relative date columns"
+  status = "done"
+  note = "New File now offers an inline rename on create (was: default name, no prompt), matching New Folder. Date columns default to relative (Today/Yesterday), matching Finder; still switchable in Settings."
+  issue = 0
 # <<< commandem roadmap <<<
