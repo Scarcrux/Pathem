@@ -491,4 +491,25 @@ working_dir = "."
   status = "done"
   note = "Dragging over a breadcrumb path component spring-loads (navigates into it) mid-drag, like Finder. Nav-button drops (up = move to parent) remain for the buttons half of the drag-across-nav report."
   issue = 0
+
+[[phase]]
+  title = "Live-app fixes 4: outstanding drag / size / layout + E2E testing"
+  status = "now"
+  note = "Open items from live-app feedback still to land. Tracked so the roadmap names current work rather than only the shipped fixes (17-19)."
+  issue = 0
+
+  [[phase.task]]
+    title = "Nav-button drops (drag #1, buttons half): up = drop-to-move into parent; spring-load up/back/forward mid-drag"
+
+  [[phase.task]]
+    title = "Multiple selected folders show a combined calculated size in the selection summary (#3)"
+
+  [[phase.task]]
+    title = "Pane content 'pushes up' with only a few files: reproduce, then fix the async layout nudge (#5)"
+
+  [[phase.task]]
+    title = "Transfer 'queue you cant cancel': confirm remote Cancel All truly terminates jobs; surface the Transfers window (local moves dont queue) (#-transfer)"
+
+  [[phase.task]]
+    title = "End-to-end feature testing with a screenshotting harness: drive real flows, capture, assert (#6)"
 # <<< commandem roadmap <<<
