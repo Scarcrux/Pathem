@@ -665,6 +665,9 @@
 "dmg.password" = "Contraseña";
 "dmg.passwordLabel" = "Contraseña";
 "dmg.title" = "Nueva imagen de disco cifrada (%d ítem(s))";
+"dock.newTab" = "Nueva pestaña";
+"dock.newWindow" = "Nueva ventana";
+"dock.openTabs" = "Pestañas abiertas";
 "download.dismiss" = "Descartar";
 "download.move" = "Mover";
 "download.suggestion" = "Mover %@ a %@";

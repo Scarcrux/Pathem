@@ -665,6 +665,9 @@
 "dmg.password" = "密码";
 "dmg.passwordLabel" = "密码";
 "dmg.title" = "新建加密磁盘映像（%d 个项目）";
+"dock.newTab" = "新建标签页";
+"dock.newWindow" = "新建窗口";
+"dock.openTabs" = "打开的标签页";
 "download.dismiss" = "忽略";
 "download.move" = "移动";
 "download.suggestion" = "将 %@ 移动到 %@";

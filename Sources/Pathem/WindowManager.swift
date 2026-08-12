@@ -37,6 +37,19 @@ final class WindowManager {
     /// How many browser windows are currently open (used by the smoke check and menu gating).
     var windowCount: Int { hosts.count }
 
+    /// The front-most window's browser (the key window's, else the primary), for the Dock menu's
+    /// New Tab (which acts on whatever window you were last in).
+    var frontBrowser: BrowserViewController? {
+        if let key = NSApp.keyWindow, let host = hosts.first(where: { $0.window === key }) {
+            return host.browser
+        }
+        return primaryBrowser
+    }
+
+    /// Every open window's browser, front-most first, so the Dock menu can list open tabs across
+    /// all windows and bring the right one forward.
+    var browsers: [BrowserViewController] { hosts.map(\.browser) }
+
     /// Adopt the primary window built in `main()` so it joins tab-merging and teardown.
     func adoptPrimary(window: NSWindow, browser: BrowserViewController) {
         window.isReleasedWhenClosed = false  // Host owns the lifetime; the default extra release UAFs

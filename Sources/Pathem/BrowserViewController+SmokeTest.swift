@@ -282,6 +282,14 @@ extension BrowserViewController {
             "new-folder-rename-survives-watcher-reload",
             leftTabs.activePane?.debugNewItemRenameDropsWatcherRefresh() == true,
             "rename ran + redundant refresh cancelled")
+        // The Dock menu (right-click the Dock icon) offers New Window, New Tab, and a live list of
+        // open tabs -- above the OS-appended defaults -- not just the bare default menu.
+        if let delegate = NSApp.delegate as? PathemAppDelegate {
+            let dock = delegate.applicationDockMenu(NSApp)
+            let actions = dock?.items.filter { $0.action != nil && $0.representedObject == nil }.count ?? 0
+            let tabEntries = dock?.items.filter { $0.representedObject != nil }.count ?? 0
+            check("dock-menu-populated", actions >= 2 && tabEntries >= 1, "actions=\(actions) tabs=\(tabEntries)")
+        }
         // Regression: selecting a pane must activate it (and take keyboard focus) in EVERY view
         // mode. Icon and Gallery once failed to forward their grid's focus (onBecomeActive), so
         // clicking such a pane left the active pane -- and focus -- on the previously active one.

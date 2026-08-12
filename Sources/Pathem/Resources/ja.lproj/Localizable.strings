@@ -665,6 +665,9 @@
 "dmg.password" = "パスワード";
 "dmg.passwordLabel" = "パスワード";
 "dmg.title" = "新規暗号化ディスクイメージ（%d項目）";
+"dock.newTab" = "新規タブ";
+"dock.newWindow" = "新規ウインドウ";
+"dock.openTabs" = "開いているタブ";
 "download.dismiss" = "閉じる";
 "download.move" = "移動";
 "download.suggestion" = "%@を%@に移動";

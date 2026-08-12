@@ -665,6 +665,9 @@
 "dmg.password" = "Password";
 "dmg.passwordLabel" = "Password";
 "dmg.title" = "New Encrypted Disk Image (%d item(s))";
+"dock.newTab" = "New Tab";
+"dock.newWindow" = "New Window";
+"dock.openTabs" = "Open Tabs";
 "download.dismiss" = "Dismiss";
 "download.move" = "Move";
 "download.suggestion" = "Move %@ to %@";

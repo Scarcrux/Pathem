@@ -665,6 +665,9 @@
 "dmg.password" = "Mot de passe";
 "dmg.passwordLabel" = "Mot de passe";
 "dmg.title" = "Nouvelle image disque chiffrée (%d élément(s))";
+"dock.newTab" = "Nouvel onglet";
+"dock.newWindow" = "Nouvelle fenêtre";
+"dock.openTabs" = "Onglets ouverts";
 "download.dismiss" = "Ignorer";
 "download.move" = "Déplacer";
 "download.suggestion" = "Déplacer %@ vers %@";

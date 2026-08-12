@@ -665,6 +665,9 @@
 "dmg.password" = "Passwort";
 "dmg.passwordLabel" = "Passwort";
 "dmg.title" = "Neues verschlüsseltes Image (%d Objekt(e))";
+"dock.newTab" = "Neuer Tab";
+"dock.newWindow" = "Neues Fenster";
+"dock.openTabs" = "Geöffnete Tabs";
 "download.dismiss" = "Schließen";
 "download.move" = "Bewegen";
 "download.suggestion" = "%@ nach %@ bewegen";
