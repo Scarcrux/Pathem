@@ -512,4 +512,10 @@ working_dir = "."
 
   [[phase.task]]
     title = "End-to-end feature testing with a screenshotting harness: drive real flows, capture, assert (#6)"
+
+[[phase]]
+  title = "Live-app fixes 5: Finder-style Dock menu (New Window/Tab + open tabs)"
+  status = "done"
+  note = "Right-clicking the Dock icon now offers New Window, New Tab, and a live list of open tabs (click to activate), via applicationDockMenu -- previously only OS defaults. Localized; smoke-guarded."
+  issue = 0
 # <<< commandem roadmap <<<
