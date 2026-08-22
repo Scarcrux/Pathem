@@ -282,13 +282,22 @@ extension BrowserViewController {
             "new-folder-rename-survives-watcher-reload",
             leftTabs.activePane?.debugNewItemRenameDropsWatcherRefresh() == true,
             "rename ran + redundant refresh cancelled")
-        // The Dock menu (right-click the Dock icon) offers New Window, New Tab, and a live list of
-        // open tabs -- above the OS-appended defaults -- not just the bare default menu.
+        // The Dock menu (right-click the Dock icon) offers New Window, New Tab, a live list of open
+        // tabs, and a Recent Folders section -- above the OS-appended defaults, a real launcher.
         if let delegate = NSApp.delegate as? PathemAppDelegate {
             let dock = delegate.applicationDockMenu(NSApp)
             let actions = dock?.items.filter { $0.action != nil && $0.representedObject == nil }.count ?? 0
-            let tabEntries = dock?.items.filter { $0.representedObject != nil }.count ?? 0
-            check("dock-menu-populated", actions >= 2 && tabEntries >= 1, "actions=\(actions) tabs=\(tabEntries)")
+            // Tabs carry an opaque ref; recent folders carry a URL -- distinguish them.
+            let tabEntries = dock?.items.filter { $0.representedObject != nil && !($0.representedObject is URL) }.count ?? 0
+            // Seed a recent folder (in-memory only, restored after) and confirm the section renders.
+            let savedRecents = recentFolders
+            recentFolders = [FileManager.default.homeDirectoryForCurrentUser] + savedRecents
+            let seeded = delegate.applicationDockMenu(NSApp)
+            let recentEntries = seeded?.items.filter { $0.representedObject is URL }.count ?? 0
+            recentFolders = savedRecents  // restore; never persisted
+            check(
+                "dock-menu-populated", actions >= 2 && tabEntries >= 1 && recentEntries >= 1,
+                "actions=\(actions) tabs=\(tabEntries) recents=\(recentEntries)")
         }
         // Regression: selecting a pane must activate it (and take keyboard focus) in EVERY view
         // mode. Icon and Gallery once failed to forward their grid's focus (onBecomeActive), so

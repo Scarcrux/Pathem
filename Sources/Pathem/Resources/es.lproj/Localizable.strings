@@ -668,6 +668,7 @@
 "dock.newTab" = "Nueva pestaña";
 "dock.newWindow" = "Nueva ventana";
 "dock.openTabs" = "Pestañas abiertas";
+"dock.recentFolders" = "Carpetas recientes";
 "download.dismiss" = "Descartar";
 "download.move" = "Mover";
 "download.suggestion" = "Mover %@ a %@";

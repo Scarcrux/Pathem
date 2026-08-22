@@ -668,6 +668,7 @@
 "dock.newTab" = "新建标签页";
 "dock.newWindow" = "新建窗口";
 "dock.openTabs" = "打开的标签页";
+"dock.recentFolders" = "最近的文件夹";
 "download.dismiss" = "忽略";
 "download.move" = "移动";
 "download.suggestion" = "将 %@ 移动到 %@";

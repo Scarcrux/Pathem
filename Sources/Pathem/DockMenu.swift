@@ -28,6 +28,28 @@ extension PathemAppDelegate {
                 item.representedObject = DockTabRef(browser: browser, left: tab.left, index: tab.index)
             }
         }
+
+        // Recent Folders: jump straight to a recently-visited folder (opens in a new tab), the way
+        // Finder's Dock menu surfaces recent items. Pulled from the front window's history, so the
+        // Dock menu is a real launcher, not just window/tab management.
+        let recents = WindowManager.shared.frontBrowser?.dockRecentFolders() ?? []
+        if !recents.isEmpty {
+            menu.addItem(.separator())
+            let header = menu.addItem(
+                withTitle: L("dock.recentFolders", "Recent Folders"), action: nil, keyEquivalent: "")
+            header.isEnabled = false
+            for url in recents {
+                let item = menu.addItem(
+                    withTitle: url.lastPathComponent, action: #selector(dockOpenRecentFolder(_:)),
+                    keyEquivalent: "")
+                item.target = self
+                item.toolTip = url.path
+                item.representedObject = url
+                let icon = NSWorkspace.shared.icon(forFile: url.path)
+                icon.size = NSSize(width: 16, height: 16)
+                item.image = icon
+            }
+        }
         return menu
     }
 
@@ -45,6 +67,11 @@ extension PathemAppDelegate {
 
     @objc fileprivate func dockActivateTab(_ sender: NSMenuItem) {
         (sender.representedObject as? DockTabRef)?.activate()
+    }
+
+    @objc fileprivate func dockOpenRecentFolder(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else { return }
+        WindowManager.shared.frontBrowser?.dockOpenFolder(url)
     }
 }
 
@@ -88,6 +115,16 @@ extension BrowserViewController {
     /// Open a new tab on the active side and bring the window forward (Dock menu New Tab).
     func dockOpenNewTab() {
         (activeSide ?? leftTabs).newTab(duplicatingCurrent: true)
+        view.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// The most recent folders (capped for the menu), for the Dock menu's Recent Folders section.
+    func dockRecentFolders() -> [URL] { Array(recentFolders.prefix(10)) }
+
+    /// Open `url` in a new tab on the active side and bring the window forward (Dock menu).
+    func dockOpenFolder(_ url: URL) {
+        (activeSide ?? leftTabs).openTab(at: url)
         view.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }

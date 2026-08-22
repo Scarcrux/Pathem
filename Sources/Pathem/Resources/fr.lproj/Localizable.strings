@@ -668,6 +668,7 @@
 "dock.newTab" = "Nouvel onglet";
 "dock.newWindow" = "Nouvelle fenêtre";
 "dock.openTabs" = "Onglets ouverts";
+"dock.recentFolders" = "Dossiers récents";
 "download.dismiss" = "Ignorer";
 "download.move" = "Déplacer";
 "download.suggestion" = "Déplacer %@ vers %@";

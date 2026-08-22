@@ -668,6 +668,7 @@
 "dock.newTab" = "New Tab";
 "dock.newWindow" = "New Window";
 "dock.openTabs" = "Open Tabs";
+"dock.recentFolders" = "Recent Folders";
 "download.dismiss" = "Dismiss";
 "download.move" = "Move";
 "download.suggestion" = "Move %@ to %@";

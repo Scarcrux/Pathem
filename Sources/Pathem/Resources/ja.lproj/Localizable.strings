@@ -668,6 +668,7 @@
 "dock.newTab" = "新規タブ";
 "dock.newWindow" = "新規ウインドウ";
 "dock.openTabs" = "開いているタブ";
+"dock.recentFolders" = "最近使ったフォルダ";
 "download.dismiss" = "閉じる";
 "download.move" = "移動";
 "download.suggestion" = "%@を%@に移動";
