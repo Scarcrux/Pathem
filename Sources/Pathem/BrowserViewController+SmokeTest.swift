@@ -27,6 +27,8 @@ extension BrowserViewController {
         // squeezed the list flat. Rows exist (data is fine) but nothing is visible.
         let leftContentH = leftTabs.activePane?.debugContentHeight() ?? 0
         let rightContentH = rightTabs.activePane?.debugContentHeight() ?? 0
+        lines.append("info browser-heights [\(debugBrowserHeights())]")
+        lines.append("info pane-heights L[\(leftTabs.activePane?.debugPaneHeights() ?? "?")] R[\(rightTabs.activePane?.debugPaneHeights() ?? "?")]")
         check("pane-content-not-squished", leftContentH > 150 && rightContentH > 150,
             "left=\(Int(leftContentH)) right=\(Int(rightContentH))")
         check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")

@@ -241,7 +241,13 @@ extension BrowserViewController {
         outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
         setRightPaneFraction(0.5)  // even panes
         didSetInitialSplit = true
-        // Restore the terminal drawer if it was open last session.
-        if UserDefaults.standard.bool(forKey: "pathem.terminalVisible") { toggleTerminal() }
+        // Restore the terminal drawer if it was open last session -- but never on an automation
+        // launch (smoke / screenshot / E2E), which must start from a clean, deterministic layout.
+        // Otherwise a run that left the drawer open (e.g. one that was killed mid-check) makes every
+        // later automation launch start with the terminal eating half the height, squishing the
+        // panes -- exactly the "pane pushes up / squished" symptom in the invariant checks.
+        if !PathemApp.isAutomationLaunch, UserDefaults.standard.bool(forKey: "pathem.terminalVisible") {
+            toggleTerminal()
+        }
     }
 }

@@ -1263,6 +1263,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// regression that renders panes blank.
     func debugContentHeight() -> CGFloat { contentContainer.frame.height }
 
+    /// Breakdown of the pane's vertical layout, to pinpoint what eats the height when content
+    /// squishes (the "pane pushes up" report). container = the whole pane.
+    func debugPaneHeights() -> String {
+        "container=\(Int(containerView.frame.height)) toolbar=\(Int(toolbarStack.frame.height)) "
+            + "path=\(Int(pathBar.frame.height)) content=\(Int(contentContainer.frame.height)) "
+            + "bottom=\(Int(bottomStack.frame.height))"
+    }
+
     /// Put the active content's scroll view into the content container, replacing
     /// any previous one.
     /// A folder's background picture, drawn behind the content view (which goes clear) when the

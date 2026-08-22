@@ -31,6 +31,15 @@ extension BrowserViewController {
     /// Navigate the active pane (PATHEM_VIEW_SHOT diagnostics, bypassing session restore).
     func debugNavigateActive(to url: URL) { activePane?.navigate(to: url) }
 
+    /// Browser-level vertical breakdown, to find what squishes the panes (the "pane pushes up"
+    /// report): the window content view vs the stacked browser elements.
+    func debugBrowserHeights() -> String {
+        "win=\(Int(view.window?.frame.height ?? 0)) rootView=\(Int(view.frame.height)) "
+            + "mainStack=\(Int(mainStack.frame.height)) vSplit=\(Int(vSplit.frame.height)) "
+            + "outerSplit=\(Int(outerSplit.frame.height)) panes=\(Int(panesContainer.frame.height)) "
+            + "terminal=\(Int(terminal.view.frame.height)) termHidden=\(terminal.view.isHidden)"
+    }
+
     /// Create a new folder in the active pane (PATHEM_E2E: drives the real create flow).
     func debugNewFolder() { newFolder() }
 
