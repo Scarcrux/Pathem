@@ -511,6 +511,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Transfer 'queue you cant cancel': confirm remote Cancel All truly terminates jobs; surface the Transfers window (local moves dont queue) (#-transfer)"
+    done = true
 
   [[phase.task]]
     title = "End-to-end feature testing with a screenshotting harness: drive real flows, capture, assert (#6)"
