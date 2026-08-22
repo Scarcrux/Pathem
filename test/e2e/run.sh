@@ -80,6 +80,8 @@ scenario "launch + UI invariants"      'RESULT: PASS' env PATHEM_SMOKE=1 "$BIN"
 scenario "1M-row virtualization (Gate A)" 'RESULT: PASS' env PATHEM_GATE_A=1 "$BIN"
 scenario "localization bundled + resolves" 'RESULT: PASS' env PATHEM_L10N_SMOKE=1 "$BIN"
 scenario "organize-with-AI path"       'RESULT: (PASS|SKIP)' env PATHEM_AI_SMOKE=1 "$BIN"
+rm -f /tmp/pathem-e2e.png  # cleared before the flow so the render assert below sees a fresh one
+scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$BIN"
 
 # Render harnesses: assert they produce non-empty PNGs (layout didn't collapse).
 rm -f /tmp/settings_general.png /tmp/sidebar.png
@@ -87,6 +89,7 @@ env PATHEM_PREFS_SHOT=1 "$BIN" >/dev/null 2>&1
 env PATHEM_SIDEBAR_SHOT=1 "$BIN" >/dev/null 2>&1
 assert "settings panes render"  test -s /tmp/settings_general.png
 assert "sidebar renders"        test -s /tmp/sidebar.png
+assert "e2e flow render produced" test -s /tmp/pathem-e2e.png
 
 echo
 echo "==> ${pass} passed, ${skip} skipped, ${fail} failed"

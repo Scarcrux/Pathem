@@ -158,6 +158,15 @@ enum PathemApp {
         }
 
 
+        // PATHEM_E2E: drive a real create -> rename -> new-file flow on a temp workspace and assert
+        // the on-disk outcomes end to end (feature-level, not just UI invariants), then capture an
+        // offscreen render. The seed of a feature E2E harness; run via `make e2e`.
+        if ProcessInfo.processInfo.environment["PATHEM_E2E"] != nil {
+            runE2E(browser: browser)
+            app.run()
+            return
+        }
+
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a
         // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and
         // thumbnails, unlike the offscreen cacheDisplay render). Runs over the sample
@@ -926,6 +935,58 @@ enum PathemApp {
     /// id in representedObject and dispatches via BrowserViewController). Only
     /// chords the keymap does not own get key equivalents here, so the menu and
     /// the rebindable keymap never fight over the same keys.
+    /// Drive a real create -> rename -> new-file -> rename flow on a throwaway workspace and assert
+    /// the on-disk results at each step (the actual feature working, end to end), then capture an
+    /// offscreen render. Disk checks read the real filesystem, so they don't depend on UI reload
+    /// timing; the delays only let the async listing/inline-edit settle between user actions.
+    private static func runE2E(browser: BrowserViewController) {
+        let fm = FileManager.default
+        let workspace = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-e2e-\(ProcessInfo.processInfo.processIdentifier)")
+        try? fm.createDirectory(at: workspace, withIntermediateDirectories: true)
+        let folderName = "E2E-Folder"
+        let fileName = "E2E-File.txt"
+        var results: [(name: String, ok: Bool, detail: String)] = []
+        func others(_ excluding: Set<String>) -> [String] {
+            ((try? fm.contentsOfDirectory(atPath: workspace.path)) ?? [])
+                .filter { !$0.hasPrefix(".") && !excluding.contains($0) }
+        }
+        func step(_ delay: Double, _ body: @escaping () -> Void) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: body)
+        }
+
+        step(0.5) { browser.debugNavigateActive(to: workspace) }
+        step(1.3) { browser.debugNewFolder() }  // creates the default-named folder + inline edit
+        step(2.3) {
+            let created = others([]).first
+            results.append(("new-folder-created", created != nil, created ?? "none"))
+            if let created { browser.debugCommitRename(created, to: folderName) }
+        }
+        step(3.3) {
+            let ok = fm.fileExists(atPath: workspace.appendingPathComponent(folderName).path)
+            results.append(("folder-renamed-on-disk", ok, folderName))
+            browser.debugNewFile()  // creates the default-named file + inline edit
+        }
+        step(4.3) {
+            let created = others([folderName]).first
+            results.append(("new-file-created", created != nil, created ?? "none"))
+            if let created { browser.debugCommitRename(created, to: fileName) }
+        }
+        step(5.3) {
+            let ok = fm.fileExists(atPath: workspace.appendingPathComponent(fileName).path)
+            results.append(("file-renamed-on-disk", ok, fileName))
+            browser.debugRender(to: "/tmp/pathem-e2e.png")  // offscreen capture, no Screen Recording needed
+        }
+        step(6.0) {
+            print("=== PATHEM_E2E: create -> rename flow ===")
+            let ok = results.allSatisfy(\.ok)
+            for r in results { print("\(r.ok ? "ok  " : "FAIL") \(r.name) (\(r.detail))") }
+            print("RESULT: \(ok ? "PASS" : "FAIL")   render: /tmp/pathem-e2e.png")
+            try? fm.removeItem(at: workspace)
+            exit(ok ? 0 : 1)
+        }
+    }
+
     private static func makeMainMenu(updater: UpdaterController) -> NSMenu {
         let mainMenu = NSMenu()
 

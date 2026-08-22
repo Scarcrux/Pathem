@@ -31,6 +31,20 @@ extension BrowserViewController {
     /// Navigate the active pane (PATHEM_VIEW_SHOT diagnostics, bypassing session restore).
     func debugNavigateActive(to url: URL) { activePane?.navigate(to: url) }
 
+    /// Create a new folder in the active pane (PATHEM_E2E: drives the real create flow).
+    func debugNewFolder() { newFolder() }
+
+    /// Create a new file in the active pane (PATHEM_E2E).
+    func debugNewFile() { newFile() }
+
+    /// Rename the entry named `name` in the active pane to `newName`, via the real commit path
+    /// (PATHEM_E2E). Ends any in-progress inline edit first so it doesn't fight the rename.
+    func debugCommitRename(_ name: String, to newName: String) {
+        view.window?.makeFirstResponder(nil)  // close any inline editor from a just-created item
+        guard let pane = activePane, let entry = pane.entries.first(where: { $0.name == name }) else { return }
+        commitLocalRename(entry, to: newName, pane: pane)
+    }
+
     /// Toggle the preview pane and report whether both panes kept a real width (the
     /// regression guard for the auto-preview layout collapse). Used by the smoke self-check.
     func debugPreviewToggleKeepsPanes() -> Bool {
