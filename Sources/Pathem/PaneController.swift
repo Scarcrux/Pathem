@@ -214,9 +214,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var onUploadFiles: ((_ urls: [URL], _ connection: RemoteConnection, _ remotePath: String, _ password: String) -> Void)?
     /// Opening a remote file: download it to a temp file and open it locally.
     var onOpenRemoteFile: ((_ connection: RemoteConnection, _ remotePath: String, _ password: String, _ name: String) -> Void)?
-    private var backButton = NSButton()
-    private var forwardButton = NSButton()
-    private var upButton = NSButton()
+    private var backButton = NavDragButton()
+    private var forwardButton = NavDragButton()
+    private var upButton = NavDragButton()
     /// Point size for the navigation button icons (from the toolbar-icon-size preference).
     var iconPointSize: CGFloat = 13 { didSet { applyIconSize() } }
     private var viewSwitcher = NSSegmentedControl()
@@ -655,6 +655,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// not only after the async listing lands. Guards the "rows show but nothing drags" regression.
     func debugListRowsDraggable() -> Bool? { (content as? FileListController)?.debugRowsDraggable() }
 
+    /// The Up (enclosing folder) button accepts a file drop that moves items into the parent, and
+    /// its destination resolves to the current folder's parent (drag #1, buttons half).
+    func debugUpButtonAcceptsFileDrop() -> Bool {
+        upButton.registeredDraggedTypes.contains(.fileURL) && upButton.dropDestination?() != nil
+    }
+
     /// Whether the list's name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
     func debugListNameAXMatches(row: Int) -> Bool? {
         (content as? FileListController)?.debugNameAXMatchesEntry(row: row)
@@ -1062,6 +1068,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         backButton = iconButton("chevron.backward", L("pane.back", "Back"), #selector(goBack))
         forwardButton = iconButton("chevron.forward", L("pane.forward", "Forward"), #selector(goForward))
         upButton = iconButton("chevron.up", L("pane.enclosingFolder", "Enclosing Folder"), #selector(goUp))
+        // Finder-style drag participation: drop files on Up to move them into the enclosing folder,
+        // and spring-load (hover a drag) over Up/Back/Forward to navigate mid-drag.
+        upButton.dropDestination = { [weak self] in self?.nav.parent }
+        upButton.onDropURLs = { [weak self] urls, move, dest in self?.onDropFiles?(urls, move, dest) }
+        upButton.onSpringLoad = { [weak self] in self?.goUp() }
+        upButton.enableDragNavigation()
+        backButton.onSpringLoad = { [weak self] in self?.goBack() }
+        backButton.enableDragNavigation()
+        forwardButton.onSpringLoad = { [weak self] in self?.goForward() }
+        forwardButton.enableDragNavigation()
         buildViewSwitcher()
         buildSortButton()
         buildActionButton()
@@ -1486,8 +1502,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         return String(format: L("pane.freeSpace", "%@ free"), byteFormatter.string(fromByteCount: free))
     }
 
-    private func iconButton(_ symbol: String, _ label: String, _ action: Selector) -> NSButton {
-        let button = NSButton()
+    private func iconButton(_ symbol: String, _ label: String, _ action: Selector) -> NavDragButton {
+        let button = NavDragButton()
         let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)?
             .withSymbolConfiguration(config)

@@ -76,6 +76,13 @@ extension BrowserViewController {
                 "active=\(wasActive) afterReload=\(pane.debugInlineEditActive)")
             view.window?.makeFirstResponder(nil)  // end any edit with no change
         }
+        // The Up (enclosing folder) button is a drop target that moves items into the parent, like
+        // Finder's path controls (drag #1, buttons half). Home has a parent, so it resolves.
+        if let pane = leftTabs.activePane {
+            check(
+                "up-button-accepts-drop", pane.debugUpButtonAcceptsFileDrop(),
+                "registered + destination resolves")
+        }
         // Empty Trash must be reachable from the Trash location with nothing selected: the folder
         // predicate that gates the background-menu entry has to recognize ~/.Trash and reject others.
         let trashDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
