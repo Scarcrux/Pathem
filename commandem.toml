@@ -530,4 +530,10 @@ working_dir = "."
   status = "done"
   note = "New Folder gained the Finder Cmd+Shift+N binding (had none). Duplicate (auto-creates 'X copy' via Cmd+D) added to the right-click context menu with an icon, where users expect it."
   issue = 0
+
+[[phase]]
+  title = "Live-app fixes 8: inline rename in column/tree/gallery (not a sheet)"
+  status = "done"
+  note = "New Folder/File/Rename now begin an in-place edit in column, tree, and gallery too (were modal-sheet only outside list/icon); ports the list/icon pattern incl. cancel-on-reload."
+  issue = 0
 # <<< commandem roadmap <<<
