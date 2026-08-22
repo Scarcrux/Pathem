@@ -500,9 +500,11 @@ working_dir = "."
 
   [[phase.task]]
     title = "Nav-button drops (drag #1, buttons half): up = drop-to-move into parent; spring-load up/back/forward mid-drag"
+    done = true
 
   [[phase.task]]
     title = "Multiple selected folders show a combined calculated size in the selection summary (#3)"
+    done = true
 
   [[phase.task]]
     title = "Pane content 'pushes up' with only a few files: reproduce, then fix the async layout nudge (#5)"
