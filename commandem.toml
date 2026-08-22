@@ -518,4 +518,16 @@ working_dir = "."
   status = "done"
   note = "Right-clicking the Dock icon now offers New Window, New Tab, and a live list of open tabs (click to activate), via applicationDockMenu -- previously only OS defaults. Localized; smoke-guarded."
   issue = 0
+
+[[phase]]
+  title = "Live-app fixes 6: make the Dock menu actually useful (Recent Folders)"
+  status = "done"
+  note = "The initial Dock menu (phase 21) only had New Window/Tab + open tabs. Add a Recent Folders section (jump to any recently-visited folder in a new tab) reusing the existing persisted recentFolders store, so the Dock menu is a real launcher."
+  issue = 0
+
+[[phase]]
+  title = "Live-app fixes 7: New Folder shortcut (Cmd+Shift+N) + Duplicate in context menu"
+  status = "done"
+  note = "New Folder gained the Finder Cmd+Shift+N binding (had none). Duplicate (auto-creates 'X copy' via Cmd+D) added to the right-click context menu with an icon, where users expect it."
+  issue = 0
 # <<< commandem roadmap <<<
