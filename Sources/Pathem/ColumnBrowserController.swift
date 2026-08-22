@@ -6,7 +6,9 @@ import PathemEngine
 /// one clicked) defines the current folder and selection, so file operations resolve
 /// against a single real folder (PaneController.currentURL returns directoryURL).
 @MainActor
-final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableViewDelegate,
+    NSTextFieldDelegate
+{
     private struct Column {
         let folder: URL
         var entries: [FileEntry]
@@ -45,6 +47,12 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     var onSortChanged: ((ViewFormat.SortKey, Bool) -> Void)?
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
     var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
+    /// The committed name of an in-place rename (Finder-style edit in the active column).
+    var onInlineRename: ((FileEntry, String) -> Void)?
+    private var editingEntry: FileEntry?
+    private weak var editingTable: NSTableView?
+    private var editingRow = -1
+    private var renameCancelled = false
     var onKeyChord: ((KeyChord) -> Bool)?
     var onMouseGesture: ((String) -> Bool)?
     /// Right-drag flick + swipe trail (super-drag), forwarded from each column's KeyTableView.
@@ -568,7 +576,99 @@ extension ColumnBrowserController: PaneContentView {
         set { storedResolutionURL = newValue }
     }
 
+    // MARK: In-place rename (Finder-style, so New Folder drops straight into editing here too)
+
+    /// Begin editing the single selected item's name inline, in the active column's table. Returns
+    /// false when it can't, so the pane falls back to the rename sheet.
+    func beginInlineRename() -> Bool {
+        guard editingEntry == nil, columns.indices.contains(activeColumn) else { return false }
+        let col = columns[activeColumn]
+        let row = col.table.selectedRow
+        guard row >= 0, row < col.entries.count else { return false }
+        let entry = col.entries[row]
+        col.table.scrollRowToVisible(row)
+        guard let cell = col.table.view(atColumn: 0, row: row, makeIfNecessary: true) as? NSTableCellView,
+            let field = cell.textField
+        else { return false }
+        editingEntry = entry
+        editingTable = col.table
+        editingRow = row
+        renameCancelled = false
+        field.delegate = self
+        field.stringValue = entry.name  // the plain name, without git/tag decoration
+        field.isEditable = true
+        field.isSelectable = true
+        field.isBordered = true
+        field.drawsBackground = true
+        field.backgroundColor = .textBackgroundColor
+        field.textColor = .labelColor
+        field.focusRingType = .default
+        col.table.window?.makeFirstResponder(field)
+        if let editor = field.currentEditor() {
+            let ns = entry.name as NSString
+            let ext = ns.pathExtension as NSString
+            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
+        }
+        return true
+    }
+
+    private func endInlineEditing(_ field: NSTextField) {
+        field.isEditable = false
+        field.isSelectable = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.backgroundColor = .clear
+        field.focusRingType = .none
+    }
+
+    /// Abandon an in-progress inline edit without committing (before a reload recycles the cell).
+    func cancelInlineEdit() {
+        guard editingEntry != nil else { return }
+        let table = editingTable
+        let row = editingRow
+        editingEntry = nil
+        editingTable = nil
+        editingRow = -1
+        renameCancelled = false
+        if let table, row >= 0, row < table.numberOfRows,
+            let cell = table.view(atColumn: 0, row: row, makeIfNecessary: false) as? NSTableCellView,
+            let field = cell.textField
+        {
+            endInlineEditing(field)
+            if field.currentEditor() != nil { table.window?.makeFirstResponder(table) }
+        }
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+        if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
+            renameCancelled = true
+            editingTable?.window?.makeFirstResponder(editingTable)
+            return true
+        }
+        return false
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let field = obj.object as? NSTextField, let entry = editingEntry else { return }
+        endInlineEditing(field)
+        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let table = editingTable
+        let row = editingRow
+        let cancelled = renameCancelled
+        editingEntry = nil
+        editingTable = nil
+        editingRow = -1
+        renameCancelled = false
+        if let table, row >= 0, row < table.numberOfRows {
+            table.reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
+        }
+        guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
+        onInlineRename?(entry, newName)
+    }
+
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
+        cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         guard let root = rootURL else {
             columns = []
             relayout()

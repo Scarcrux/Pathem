@@ -8,7 +8,7 @@ import UniformTypeIdentifiers
 /// PaneContentView so PaneController can swap it for the list/icon/column views.
 @MainActor
 final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectionViewDelegate,
-    PaneContentView
+    NSTextFieldDelegate, PaneContentView
 {
     let scrollView = NSScrollView()  // the filmstrip's scroller (protocol requirement)
     private let composite = NSView()
@@ -20,6 +20,13 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     private(set) var entries: [FileEntry] = []
     private var labelFontSize: CGFloat = 11
+
+    /// The committed name of an in-place rename (Finder-style edit in the filmstrip).
+    var onInlineRename: ((FileEntry, String) -> Void)?
+    /// The entry being renamed in place (nil = not editing); guards commit against reuse/reload.
+    private var editingEntry: FileEntry?
+    /// Esc pressed during an edit: abandon without committing.
+    private var renameCancelled = false
 
     /// Shared tag-color + git-state cache, so the filmstrip shows the same decorations as the list.
     private let decorations = PaneDecorationCache()
@@ -251,7 +258,90 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         filmstrip.selectionIndexPaths.compactMap { $0.item < entries.count ? entries[$0.item] : nil }
     }
 
+    // MARK: In-place rename (Finder-style, so New Folder drops straight into editing here too)
+
+    /// Begin editing the single selected filmstrip item's name inline. Returns false when it can't
+    /// (nothing or many selected, or the cell isn't realized) so the pane falls back to the sheet.
+    func beginInlineRename() -> Bool {
+        guard editingEntry == nil else { return false }
+        let selected = selectedEntries
+        guard selected.count == 1, let entry = selected.first,
+            let index = entries.firstIndex(where: { $0.name == entry.name })
+        else { return false }
+        let path = IndexPath(item: index, section: 0)
+        filmstrip.scrollToItems(at: [path], scrollPosition: .centeredHorizontally)
+        filmstrip.layoutSubtreeIfNeeded()
+        guard let field = (filmstrip.item(at: path) as? IconItem)?.textField else { return false }
+        editingEntry = entry
+        renameCancelled = false
+        field.delegate = self
+        field.stringValue = entry.name  // the plain name, without tag-dot / git decoration
+        field.isEditable = true
+        field.isSelectable = true
+        field.isBordered = true
+        field.drawsBackground = true
+        field.backgroundColor = .textBackgroundColor
+        field.textColor = .labelColor
+        field.maximumNumberOfLines = 1
+        field.lineBreakMode = .byClipping
+        filmstrip.window?.makeFirstResponder(field)
+        if let editor = field.currentEditor() {
+            let ns = entry.name as NSString
+            let ext = ns.pathExtension as NSString
+            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
+        }
+        return true
+    }
+
+    private func endInlineEditing(_ field: NSTextField) {
+        field.isEditable = false
+        field.isSelectable = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.backgroundColor = .clear
+        field.maximumNumberOfLines = 2
+        field.lineBreakMode = .byTruncatingMiddle
+    }
+
+    /// Abandon an in-progress inline edit without committing (before a reload recycles the cell).
+    func cancelInlineEdit() {
+        guard let entry = editingEntry else { return }
+        editingEntry = nil
+        renameCancelled = false
+        if let index = entries.firstIndex(where: { $0.name == entry.name }),
+            let field = (filmstrip.item(at: IndexPath(item: index, section: 0)) as? IconItem)?.textField
+        {
+            endInlineEditing(field)
+            if field.currentEditor() != nil { filmstrip.window?.makeFirstResponder(filmstrip) }
+        }
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+        if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
+            renameCancelled = true
+            filmstrip.window?.makeFirstResponder(filmstrip)
+            return true
+        }
+        return false  // let Return / Tab end editing the usual way
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let field = obj.object as? NSTextField, let entry = editingEntry else { return }
+        endInlineEditing(field)
+        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cancelled = renameCancelled
+        editingEntry = nil
+        renameCancelled = false
+        if let index = entries.firstIndex(where: { $0.name == entry.name }) {
+            filmstrip.reloadItems(at: [IndexPath(item: index, section: 0)])
+        }
+        guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
+        onInlineRename?(entry, newName)
+    }
+
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
+        cancelInlineEdit()  // a background reload must not commit a half-typed rename
         let selectedNames = preserveState ? Set(selectedEntries.map(\.name)) : []
         self.entries = entries
         filmstrip.reloadData()

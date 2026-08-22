@@ -28,7 +28,9 @@ final class KeyOutlineView: NSOutlineView {
 /// without losing the parent (Directory Opus-style). Folders load their children lazily on expand.
 /// Conforms to PaneContentView, so PaneController can swap it in like the list/icon/column views.
 @MainActor
-final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate, PaneContentView {
+final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate,
+    NSTextFieldDelegate, PaneContentView
+{
     /// One row: a file entry plus its real URL, with children loaded on demand.
     private final class Node {
         let entry: FileEntry
@@ -65,6 +67,11 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     var onDropFiles: ((_ urls: [URL], _ move: Bool, _ destination: URL?) -> Void)?
     var onDropOntoFile: ((_ dragged: [URL], _ target: URL) -> Void)?
     var onMouseGesture: ((String) -> Bool)?
+    /// The committed name of an in-place rename (Finder-style edit in the outline).
+    var onInlineRename: ((FileEntry, String) -> Void)?
+    private var editingEntry: FileEntry?
+    private var editingRow = -1
+    private var renameCancelled = false
 
     var keyView: NSView { outline }
     var onKeyChord: ((KeyChord) -> Bool)? {
@@ -82,7 +89,93 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         outline.selectedRowIndexes.compactMap { (outline.item(atRow: $0) as? Node)?.located }
     }
 
+    // MARK: In-place rename (Finder-style, so New Folder drops straight into editing here too)
+
+    /// Begin editing the single selected row's name inline. Returns false when it can't, so the
+    /// pane falls back to the rename sheet.
+    func beginInlineRename() -> Bool {
+        guard editingEntry == nil else { return false }
+        let row = outline.selectedRow
+        guard row >= 0, let node = outline.item(atRow: row) as? Node else { return false }
+        let entry = node.located
+        outline.scrollRowToVisible(row)
+        guard let cell = outline.view(atColumn: 0, row: row, makeIfNecessary: true) as? NSTableCellView,
+            let field = cell.textField
+        else { return false }
+        editingEntry = entry
+        editingRow = row
+        renameCancelled = false
+        field.delegate = self
+        field.stringValue = entry.name
+        field.isEditable = true
+        field.isSelectable = true
+        field.isBordered = true
+        field.drawsBackground = true
+        field.backgroundColor = .textBackgroundColor
+        field.textColor = .labelColor
+        field.focusRingType = .default
+        outline.window?.makeFirstResponder(field)
+        if let editor = field.currentEditor() {
+            let ns = entry.name as NSString
+            let ext = ns.pathExtension as NSString
+            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
+        }
+        return true
+    }
+
+    private func endInlineEditing(_ field: NSTextField) {
+        field.isEditable = false
+        field.isSelectable = false
+        field.isBordered = false
+        field.drawsBackground = false
+        field.backgroundColor = .clear
+        field.focusRingType = .none
+    }
+
+    /// Abandon an in-progress inline edit without committing (before a reload recycles the cell).
+    func cancelInlineEdit() {
+        guard editingEntry != nil else { return }
+        let row = editingRow
+        editingEntry = nil
+        editingRow = -1
+        renameCancelled = false
+        if row >= 0, row < outline.numberOfRows,
+            let cell = outline.view(atColumn: 0, row: row, makeIfNecessary: false) as? NSTableCellView,
+            let field = cell.textField
+        {
+            endInlineEditing(field)
+            if field.currentEditor() != nil { outline.window?.makeFirstResponder(outline) }
+        }
+    }
+
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+        if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
+            renameCancelled = true
+            outline.window?.makeFirstResponder(outline)
+            return true
+        }
+        return false
+    }
+
+    func controlTextDidEndEditing(_ obj: Notification) {
+        guard let field = obj.object as? NSTextField, let entry = editingEntry else { return }
+        endInlineEditing(field)
+        let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let row = editingRow
+        let cancelled = renameCancelled
+        editingEntry = nil
+        editingRow = -1
+        renameCancelled = false
+        if row >= 0, row < outline.numberOfRows, let node = outline.item(atRow: row) as? Node {
+            outline.reloadItem(node)
+        }
+        guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
+        onInlineRename?(entry, newName)
+    }
+
     func setEntries(_ newEntries: [FileEntry], preserveState: Bool) {
+        cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         let expanded = preserveState ? expandedPaths() : []
         let base = directoryURL
         includesHidden = newEntries.contains { $0.name.hasPrefix(".") }
