@@ -1132,6 +1132,7 @@
 "palette.searchFor" = "搜索“%@”";
 "pane.actionsTooltip" = "操作";
 "pane.back" = "后退";
+"pane.calculatingSizes" = "(计算中…)";
 "pane.clearTags" = "清除标记";
 "pane.connectionFailedCode" = "连接失败（代码 %d）";
 "pane.curlMissing" = "未找到 curl";

@@ -1132,6 +1132,7 @@
 "palette.searchFor" = "「%@」を検索";
 "pane.actionsTooltip" = "アクション";
 "pane.back" = "戻る";
+"pane.calculatingSizes" = "(計算中…)";
 "pane.clearTags" = "タグを消去";
 "pane.connectionFailedCode" = "接続に失敗しました（コード %d）";
 "pane.curlMissing" = "curlが見つかりませんでした";

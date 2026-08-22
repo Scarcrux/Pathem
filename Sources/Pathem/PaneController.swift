@@ -79,6 +79,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private var lastStyle: (rowHeight: CGFloat, fontSize: CGFloat, alternating: Bool)?
     private var clickBehavior: (singleClick: Bool, underlineHover: Bool) = (false, false)
     private var calculateFolderSizes = false
+    /// Guards against stacking selection-size folder walks; the follow-up refresh re-reads the cache.
+    private var measuringSelectionSizes = false
     private var cutPaths: Set<String> = []
     /// Selection to restore after a view-mode swap repopulates the new content.
     private var pendingSelection: Set<String>?
@@ -659,6 +661,23 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// its destination resolves to the current folder's parent (drag #1, buttons half).
     func debugUpButtonAcceptsFileDrop() -> Bool {
         upButton.registeredDraggedTypes.contains(.fileURL) && upButton.dropDestination?() != nil
+    }
+
+    /// A selected folder's size is included in the selection summary (not excluded like before): the
+    /// summed bytes for just that folder equal its measured size. Records the real size if uncached.
+    func debugSelectionSizeIncludesFolder(_ name: String) -> Bool {
+        guard let entry = content.entries.first(where: { $0.name == name && $0.isDirectory }) else { return false }
+        let url = entryURL(entry)
+        let mtime = FolderSizeStore.mtimeKey(of: url)
+        let measured: Int64
+        if let cached = FolderSizeStore.shared.measurement(forPath: url.path, mtime: mtime) {
+            measured = cached.bytes
+        } else {
+            let m = DirectorySize.total(of: url)
+            FolderSizeStore.shared.record(path: url.path, measurement: m, mtime: mtime)
+            measured = m.bytes
+        }
+        return selectionSizeBytes([entry], selectionMode: true).bytes == measured
     }
 
     /// Whether the list's name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
@@ -1440,6 +1459,60 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         didSet { if oldValue != statusOptions { updateStatus() } }
     }
 
+    /// Sum the byte sizes of `subset`: file sizes plus, for an explicit selection, the cached sizes
+    /// of selected folders. Returns the total and any selected folders whose size isn't cached yet
+    /// (so the caller can compute them off-main and refresh). Whole-folder default (selectionMode
+    /// false) stays files-only, so opening a folder never auto-walks every subfolder.
+    private func selectionSizeBytes(_ subset: [FileEntry], selectionMode: Bool) -> (bytes: Int64, uncomputed: [URL]) {
+        var bytes: Int64 = 0
+        var uncomputed: [URL] = []
+        for entry in subset {
+            if entry.isDirectory {
+                guard selectionMode, remote == nil, !entry.isDataless else { continue }
+                let url = entryURL(entry)
+                let mtime = FolderSizeStore.mtimeKey(of: url)
+                if let measured = FolderSizeStore.shared.measurement(forPath: url.path, mtime: mtime) {
+                    bytes += measured.bytes
+                } else {
+                    uncomputed.append(url)
+                }
+            } else {
+                bytes += entry.size
+            }
+        }
+        return (bytes, uncomputed)
+    }
+
+    /// The on-disk URL of an entry (its own location in a smart view, else the current folder).
+    private func entryURL(_ entry: FileEntry) -> URL {
+        if let location = entry.location {
+            return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+        }
+        return currentURL.appendingPathComponent(entry.name)
+    }
+
+    /// Measure the selected folders whose size isn't cached (off the main thread), record them in
+    /// the shared store, then refresh the status so the combined size fills in -- Finder's
+    /// "Calculating…" then total. One walk at a time; the refresh re-reads the cache.
+    private func computeSelectionFolderSizesThenRefresh(_ urls: [URL]) {
+        guard !measuringSelectionSizes else { return }
+        measuringSelectionSizes = true
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            for url in urls {
+                let mtime = FolderSizeStore.mtimeKey(of: url)
+                if FolderSizeStore.shared.measurement(forPath: url.path, mtime: mtime) == nil {
+                    FolderSizeStore.shared.record(
+                        path: url.path, measurement: DirectorySize.total(of: url), mtime: mtime)
+                }
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.measuringSelectionSizes = false
+                self.updateStatus()  // sizes are cached now; re-render the combined total
+            }
+        }
+    }
+
     private func updateStatus() {
         let all = content.entries
         let selected = content.selectedEntries
@@ -1456,9 +1529,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             }
         }
         if statusOptions.size {
-            let subset = selected.isEmpty ? all : selected
-            let size = subset.filter { !$0.isDirectory }.reduce(Int64(0)) { $0 + $1.size }
-            if size > 0 { parts.append(byteFormatter.string(fromByteCount: size)) }
+            // For an explicit selection, sum folder sizes too (Finder shows a combined size for
+            // selected folders). For the whole-folder default (nothing selected) we stay files-only,
+            // so merely opening a folder never auto-walks every subfolder in it.
+            let selectionMode = !selected.isEmpty
+            let (size, uncomputed) = selectionSizeBytes(selectionMode ? selected : all, selectionMode: selectionMode)
+            if size > 0 || !uncomputed.isEmpty {
+                var sizeText = byteFormatter.string(fromByteCount: size)
+                if !uncomputed.isEmpty { sizeText += " " + L("pane.calculatingSizes", "(calculating…)") }
+                parts.append(sizeText)
+            }
+            if selectionMode, !uncomputed.isEmpty { computeSelectionFolderSizesThenRefresh(uncomputed) }
         }
         if statusOptions.freeSpace, let free = freeSpaceString() { parts.append(free) }
         var text = parts.joined(separator: " · ")

@@ -1132,6 +1132,7 @@
 "palette.searchFor" = "Nach „%@“ suchen";
 "pane.actionsTooltip" = "Aktionen";
 "pane.back" = "Zurück";
+"pane.calculatingSizes" = "(wird berechnet…)";
 "pane.clearTags" = "Tags entfernen";
 "pane.connectionFailedCode" = "Die Verbindung ist fehlgeschlagen (Code %d)";
 "pane.curlMissing" = "curl wurde nicht gefunden";

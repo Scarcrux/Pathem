@@ -83,6 +83,13 @@ extension BrowserViewController {
                 "up-button-accepts-drop", pane.debugUpButtonAcceptsFileDrop(),
                 "registered + destination resolves")
         }
+        // Selecting folders shows a combined size: a selected folder's calculated size is summed into
+        // the selection summary (it used to be excluded, so multi-folder selections showed no size).
+        if let pane = leftTabs.activePane, let folder = pane.entries.first(where: { $0.isDirectory }) {
+            check(
+                "selection-size-includes-folders", pane.debugSelectionSizeIncludesFolder(folder.name),
+                "folder '\(folder.name)' size summed")
+        }
         // Empty Trash must be reachable from the Trash location with nothing selected: the folder
         // predicate that gates the background-menu entry has to recognize ~/.Trash and reject others.
         let trashDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")

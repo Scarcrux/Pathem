@@ -1062,6 +1062,7 @@
 "palette.searchFor" = "Search for “%@”";
 "pane.actionsTooltip" = "Actions";
 "pane.back" = "Back";
+"pane.calculatingSizes" = "(calculating…)";
 "pane.clearTags" = "Clear Tags";
 "pane.connectionFailedCode" = "The connection failed (code %d)";
 "pane.curlMissing" = "curl was not found";
