@@ -41,7 +41,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
-        "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
+        "files.duplicate", "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
         "files.extract", "files.extractHere", "files.extractTo",
         "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
     ]
@@ -55,7 +55,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             return 5  // set apart, like Finder
         case "@tags": return 1
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
-        case "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste": return 3
+        case "files.duplicate", "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste":
+            return 3
         case "files.extract", "files.extractHere", "files.extractTo": return 4
         case "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink": return 6  // torrent actions
         default: return 0  // open / info / rename actions
@@ -117,6 +118,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.newFolder", L("list.newFolder", "New Folder")),
         ("files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection")),
         ("files.newFile", L("bvc.cmd.newFile", "New File")),
+        ("files.duplicate", L("bvc.cmd.duplicate", "Duplicate")),
         ("files.copy", L("list.copy", "Copy")),
         ("files.copyPath", L("bvc.cmd.copyPath", "Copy Path")),
         ("files.copyName", L("bvc.cmd.copyName", "Copy Name")),

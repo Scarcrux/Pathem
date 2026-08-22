@@ -26,6 +26,7 @@ enum MenuIcons {
         case "files.newFolderWithSelection": return "plus.rectangle.on.folder"
         case "files.newFile": return "doc.badge.plus"
         case "files.copy": return "doc.on.doc"
+        case "files.duplicate": return "plus.square.on.square"
         case "files.copyPath": return "link"
         case "files.copyName": return "textformat"
         case "files.cut": return "scissors"
