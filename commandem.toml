@@ -543,8 +543,8 @@ working_dir = "."
 
 [[phase]]
   title = "Live-app: relaunch button verified; consider a prominent banner"
-  status = "now"
-  note = "'Never see the relaunch button' report: the title-bar UpdateButtonAccessory correctly shows 'Relaunch to Update' when a newer build lands mid-run (smoke-verified). It's subtle + only fires while the app stays open across an install. Candidate: a prominent in-window banner (like Commandem's) so it's unmissable."
+  status = "done"
+  note = "Root cause: the title-bar UpdateButtonAccessory rendered inconsistently next to the unified toolbar - the watcher fired and isHidden=false (a false-positive smoke pass at fitting 147x20) yet nothing showed on the real window ('still nothing' after a manual trigger). Fix: RelaunchBanner, a full-width accent bar at the top of the browser content, driven by the same .pathemUpdateStateChanged state (Sparkle pending -> install; newer installed build -> relaunch). Smoke now asserts real size for both affordances (banner 547x36). Verified live: mtime-bumped exe, watcher fired ~26s, banner shown (user-confirmed). Commit 52a6614."
   issue = 0
 
 [[phase]]
