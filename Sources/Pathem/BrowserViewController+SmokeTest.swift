@@ -349,6 +349,23 @@ extension BrowserViewController {
             check(
                 "relaunch-button-shows-when-build-stale", accessory?.isHidden == false,
                 "hidden=\(accessory?.isHidden.description ?? "no-accessory")")
+            // isHidden==false isn't enough: a zero-size accessory is invisible even when "shown"
+            // (the "I never see it" report). Assert the accessory actually has a real size.
+            accessory?.view.layoutSubtreeIfNeeded()
+            let sz = accessory?.view.fittingSize ?? .zero
+            check(
+                "relaunch-button-has-visible-size", sz.width > 20 && sz.height > 12,
+                "fitting=\(Int(sz.width))x\(Int(sz.height))")
+            // The reliable affordance is the in-window banner (the title-bar accessory renders
+            // inconsistently next to the unified toolbar, which is why the button was never seen).
+            // With the stale-build signal set above, the banner must be shown AND have a real size.
+            refreshUpdateBanner()
+            updateBanner.layoutSubtreeIfNeeded()
+            let bsz = updateBanner.fittingSize
+            check(
+                "update-banner-shows-and-has-size",
+                updateBanner.isHidden == false && bsz.width > 40 && bsz.height > 20,
+                "hidden=\(updateBanner.isHidden) fitting=\(Int(bsz.width))x\(Int(bsz.height))")
         }
         // Dialog sizing guard: growToFitContent must expand a window whose content is taller than
         // its designed height (so a button row can't clip past the border), and must never shrink

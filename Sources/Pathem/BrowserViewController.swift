@@ -1,4 +1,5 @@
 import AppKit
+import AppRelaunch
 import NetFS
 import PathemEngine
 import PathemTerminal
@@ -210,6 +211,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var recentDestinations: [String] = []  // Copy To / Move To history (see +CopyMoveTo)
     /// The shared Sparkle updater (set by the app), surfaced in Settings > Updates.
     var updater: UpdaterController?
+    /// Prominent in-window banner shown when an update is ready to install or a newer build is
+    /// installed under the running app. This is the reliable affordance (the title-bar accessory
+    /// renders inconsistently next to the unified toolbar and was easy to miss).
+    let updateBanner = RelaunchBanner()
     /// User preferences (density, font, alternating rows, search OCR).
     var prefs = Preferences.default
     /// Runs a local copy/move with a progress sheet; one transfer at a time.
@@ -358,8 +363,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         mainStack.spacing = 0
         mainStack.distribution = .fill
         mainStack.translatesAutoresizingMaskIntoConstraints = false
+        updateBanner.isHidden = true  // collapses to zero height until there's an update
+        updateBanner.onAction = { [weak self] in self?.performUpdateBannerAction() }
+        mainStack.addArrangedSubview(updateBanner)  // unmissable update bar across the very top
         mainStack.addArrangedSubview(vSplit)
         mainStack.addArrangedSubview(torrentDrawer.view)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(refreshUpdateBanner), name: .pathemUpdateStateChanged, object: nil)
+        refreshUpdateBanner()
         // The browser split absorbs resize; the drawer holds its constrained height.
         vSplit.setContentHuggingPriority(.init(1), for: .vertical)
         torrentDrawer.view.setContentHuggingPriority(.required, for: .vertical)

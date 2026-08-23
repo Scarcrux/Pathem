@@ -1,4 +1,5 @@
 import AppKit
+import AppRelaunch
 import PathemEngine
 
 // The window toolbar: a native, user-customizable NSToolbar whose buttons all dispatch
@@ -30,6 +31,36 @@ extension BrowserViewController {
         guard !window.titlebarAccessoryViewControllers.contains(where: { $0 is UpdateButtonAccessory })
         else { return }
         window.addTitlebarAccessoryViewController(UpdateButtonAccessory(updater: updater))
+    }
+
+    /// Drive the in-window update banner from the same state as the title-bar button: a downloaded
+    /// Sparkle update takes priority (one click installs it), else a newer build installed under the
+    /// running app offers a relaunch, else the banner collapses. Fired on `.pathemUpdateStateChanged`.
+    @objc func refreshUpdateBanner() {
+        if let version = (updater ?? UpdaterController.shared)?.pendingUpdateVersion {
+            updateBanner.present(
+                symbol: "arrow.down.circle.fill",
+                message: L("update.buttonTooltip", "Version %@ is ready to install")
+                    .replacingOccurrences(of: "%@", with: version),
+                actionTitle: L("update.buttonTitle", "Update Ready"))
+        } else if StaleBuildState.current != nil {
+            updateBanner.present(
+                symbol: "arrow.clockwise.circle.fill",
+                message: L("update.relaunchTooltip", "A newer build of Pathem is installed. Relaunch to run it."),
+                actionTitle: L("update.relaunchTitle", "Relaunch to Update"))
+        } else {
+            updateBanner.isHidden = true
+        }
+    }
+
+    /// The banner's button: install the pending Sparkle update if there is one, otherwise relaunch
+    /// into the newer installed build. Re-checks state at click time so it always does the right thing.
+    func performUpdateBannerAction() {
+        if (updater ?? UpdaterController.shared)?.pendingUpdateVersion != nil {
+            (updater ?? UpdaterController.shared)?.presentPendingUpdate()
+        } else if StaleBuildState.current != nil {
+            AppRelaunch.relaunch()
+        }
     }
 
     /// Resize the window toolbar's icon(s) to match the toolbar-icon-size preference.
