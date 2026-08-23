@@ -540,4 +540,10 @@ working_dir = "."
   status = "done"
   note = "New Folder/File/Rename now begin an in-place edit in column, tree, and gallery too (were modal-sheet only outside list/icon); ports the list/icon pattern incl. cancel-on-reload."
   issue = 0
+
+[[phase]]
+  title = "Live-app: relaunch button verified; consider a prominent banner"
+  status = "now"
+  note = "'Never see the relaunch button' report: the title-bar UpdateButtonAccessory correctly shows 'Relaunch to Update' when a newer build lands mid-run (smoke-verified). It's subtle + only fires while the app stays open across an install. Candidate: a prominent in-window banner (like Commandem's) so it's unmissable."
+  issue = 0
 # <<< commandem roadmap <<<
