@@ -358,6 +358,8 @@
 "bvc.downloadingFrom" = "正在从 %@ 下载";
 "bvc.duplicateAction" = "复制副本";
 "bvc.duplicateFailed" = "无法复制副本";
+"bvc.ejected" = "已推出 %@";
+"bvc.ejecting" = "正在推出 %@…";
 "bvc.emptyTrashAction" = "清倒废纸篓";
 "bvc.emptyTrashPartialBody" = "它们可能已被锁定或正在使用中。";
 "bvc.emptyTrashPartialTitle" = "部分项目无法抹掉";

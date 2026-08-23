@@ -325,10 +325,22 @@ extension BrowserViewController {
                 pane.navigate(to: home)
             }
         }
-        do {
-            try NSWorkspace.shared.unmountAndEjectDevice(at: volume)
-        } catch {
-            reportArchiveError(L("bvc.couldntEject", "Couldn’t eject the volume"), error)
+        // unmountAndEjectDevice BLOCKS until the unmount finishes -- flushing write buffers and
+        // releasing handles can take many seconds, and on the main thread that beachballs the whole
+        // app (the ~15s "struggle" report). Run it off the main thread and flash a status while it
+        // works, then confirm or report on the main thread.
+        let name = FileManager.default.displayName(atPath: volume.path)
+        activePane?.flashStatus(String(format: L("bvc.ejecting", "Ejecting %@…"), name))
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Result { try NSWorkspace.shared.unmountAndEjectDevice(at: volume) }
+            DispatchQueue.main.async {
+                switch result {
+                case .success:
+                    self?.activePane?.flashStatus(String(format: L("bvc.ejected", "Ejected %@"), name))
+                case .failure(let error):
+                    self?.reportArchiveError(L("bvc.couldntEject", "Couldn’t eject the volume"), error)
+                }
+            }
         }
     }
 }

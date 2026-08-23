@@ -358,6 +358,8 @@
 "bvc.downloadingFrom" = "Downloading from %@";
 "bvc.duplicateAction" = "Duplicate";
 "bvc.duplicateFailed" = "Couldn’t duplicate";
+"bvc.ejected" = "Ejected %@";
+"bvc.ejecting" = "Ejecting %@…";
 "bvc.emptyTrashAction" = "Empty Trash";
 "bvc.emptyTrashPartialBody" = "They may be locked or in use.";
 "bvc.emptyTrashPartialTitle" = "Some items couldn’t be erased";

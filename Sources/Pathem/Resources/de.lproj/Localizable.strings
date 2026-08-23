@@ -358,6 +358,8 @@
 "bvc.downloadingFrom" = "Laden von %@";
 "bvc.duplicateAction" = "Duplizieren";
 "bvc.duplicateFailed" = "Duplizieren fehlgeschlagen";
+"bvc.ejected" = "%@ ausgeworfen";
+"bvc.ejecting" = "%@ wird ausgeworfen…";
 "bvc.emptyTrashAction" = "Papierkorb entleeren";
 "bvc.emptyTrashPartialBody" = "Sie sind möglicherweise gesperrt oder in Benutzung.";
 "bvc.emptyTrashPartialTitle" = "Einige Objekte konnten nicht gelöscht werden";

@@ -358,6 +358,8 @@
 "bvc.downloadingFrom" = "Descargando de %@";
 "bvc.duplicateAction" = "Duplicar";
 "bvc.duplicateFailed" = "No se pudo duplicar";
+"bvc.ejected" = "%@ expulsado";
+"bvc.ejecting" = "Expulsando %@…";
 "bvc.emptyTrashAction" = "Vaciar Papelera";
 "bvc.emptyTrashPartialBody" = "Puede que estén bloqueados o en uso.";
 "bvc.emptyTrashPartialTitle" = "No se pudieron borrar algunos ítems";

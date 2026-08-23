@@ -358,6 +358,8 @@
 "bvc.downloadingFrom" = "Téléchargement depuis %@";
 "bvc.duplicateAction" = "Dupliquer";
 "bvc.duplicateFailed" = "Impossible de dupliquer";
+"bvc.ejected" = "%@ éjecté";
+"bvc.ejecting" = "Éjection de %@…";
 "bvc.emptyTrashAction" = "Vider la corbeille";
 "bvc.emptyTrashPartialBody" = "Ils sont peut-être verrouillés ou en cours d'utilisation.";
 "bvc.emptyTrashPartialTitle" = "Certains éléments n'ont pas pu être effacés";

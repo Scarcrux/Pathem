@@ -358,6 +358,8 @@
 "bvc.downloadingFrom" = "%@からダウンロード中";
 "bvc.duplicateAction" = "複製";
 "bvc.duplicateFailed" = "複製できませんでした";
+"bvc.ejected" = "%@ を取り出しました";
+"bvc.ejecting" = "%@ を取り出し中…";
 "bvc.emptyTrashAction" = "ゴミ箱を空にする";
 "bvc.emptyTrashPartialBody" = "ロックされているか使用中の可能性があります。";
 "bvc.emptyTrashPartialTitle" = "一部の項目を消去できませんでした";
