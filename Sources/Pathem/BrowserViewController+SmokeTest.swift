@@ -340,6 +340,15 @@ extension BrowserViewController {
                 "update-button-shows-when-pending", shown,
                 "pending=\(updater.pendingUpdateVersion ?? "nil") hidden=\(accessory?.isHidden.description ?? "no-accessory")")
             updater.debugSetPendingUpdate(version: hadPending)  // restore
+            // The relaunch affordance: when a NEWER build is installed under the running app (no
+            // network update), the same title-bar button offers a relaunch. Simulate the
+            // stale-build signal and confirm the button appears. StaleBuildState.current is
+            // process-scoped (reset each launch), so this doesn't leak across runs.
+            StaleBuildState.record(
+                AppRelaunch.StaleBuild(installedAt: Date(timeIntervalSinceNow: 120), launchedAt: Date()))
+            check(
+                "relaunch-button-shows-when-build-stale", accessory?.isHidden == false,
+                "hidden=\(accessory?.isHidden.description ?? "no-accessory")")
         }
         // Dialog sizing guard: growToFitContent must expand a window whose content is taller than
         // its designed height (so a button row can't clip past the border), and must never shrink
