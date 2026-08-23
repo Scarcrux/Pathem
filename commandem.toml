@@ -546,4 +546,10 @@ working_dir = "."
   status = "now"
   note = "'Never see the relaunch button' report: the title-bar UpdateButtonAccessory correctly shows 'Relaunch to Update' when a newer build lands mid-run (smoke-verified). It's subtle + only fires while the app stays open across an install. Candidate: a prominent in-window banner (like Commandem's) so it's unmissable."
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: eject off the main thread (UI froze ~15s)"
+  status = "done"
+  note = "Eject ran unmountAndEjectDevice synchronously on the main thread, beachballing the app until the unmount finished. Now off-main with a status; UI stays responsive."
+  issue = 0
 # <<< commandem roadmap <<<
