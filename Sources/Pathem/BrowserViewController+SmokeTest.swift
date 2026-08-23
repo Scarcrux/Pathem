@@ -286,6 +286,20 @@ extension BrowserViewController {
         let iconView = IconCollectionController(gallery: false)
         iconView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
         check("icon-view-renders", iconView.entries.count > 0, "\(iconView.entries.count) entries")
+        // #5 "pane content pushes up in a small folder": selecting an item that is already fully on
+        // screen must not scroll (revealing it is a no-op). `.centeredVertically` re-centered it,
+        // yanking the top rows out of view. Single column, short viewport, target already visible.
+        let nudgeEntries = (0..<12).map {
+            FileEntry(name: "n\($0).txt", isDirectory: false, size: 1, modificationDate: nil)
+        }
+        // NSCollectionView.scrollToItems is inert without a window, so host the probe in the real
+        // smoke window; otherwise the check is vacuous (it never scrolls at all).
+        let nudgeProbe = IconCollectionController(gallery: false)
+        view.window?.contentView?.addSubview(nudgeProbe.scrollView)
+        let nudge = nudgeProbe.debugSelectNudge(
+            listing: nudgeEntries, in: URL(fileURLWithPath: "/tmp"), height: 200, selectIndex: 1)
+        nudgeProbe.scrollView.removeFromSuperview()
+        check("icon-select-visible-item-no-scroll", nudge < 1, "scrolled \(Int(nudge))px")
         // Gallery (preview + filmstrip): exercise setEntries so a crash/hang there is caught.
         let galleryView = GalleryController()
         galleryView.directoryURL = leftTabs.activePane?.currentURL

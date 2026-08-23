@@ -613,6 +613,24 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
         decorations.refreshTags(entries: entries, directory: directoryURL)
     }
 
+    /// Repro/instrument for "content pushes up when I select an item in a small folder" (#5):
+    /// list `entries` in a single column at a bounded height, then select an item that is already
+    /// fully on screen. Revealing an already-visible item must not scroll at all -- a non-zero
+    /// result is the `.centeredVertically` nudge (it re-centered the item, yanking the top rows out
+    /// of view). Returns the absolute vertical scroll caused by the selection.
+    func debugSelectNudge(listing entries: [FileEntry], in dir: URL, height: CGFloat, selectIndex: Int) -> CGFloat {
+        directoryURL = dir
+        setEntries(entries, preserveState: false)
+        scrollView.frame = NSRect(x: 0, y: 0, width: 170, height: height)  // narrow -> one item per row
+        scrollView.layoutSubtreeIfNeeded()
+        collection.layoutSubtreeIfNeeded()
+        collection.layoutSubtreeIfNeeded()
+        let before = scrollView.contentView.bounds.origin.y
+        if entries.indices.contains(selectIndex) { select(name: entries[selectIndex].name) }
+        scrollView.layoutSubtreeIfNeeded()
+        return abs(scrollView.contentView.bounds.origin.y - before)
+    }
+
     func setGitStates(_ states: [String: GitFileState]) {
         if decorations.setGitStates(states) { collection.reloadData() }
     }
@@ -635,7 +653,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     func select(name: String) {
         guard let index = entries.firstIndex(where: { $0.name == name }), let path = indexPath(forEntry: index) else { return }
         collection.selectionIndexPaths = [path]
-        collection.scrollToItems(at: [path], scrollPosition: .centeredVertically)
+        // Reveal minimally (nearest edge), never re-center: centering an item that's already on
+        // screen yanked the content up in small folders (#5). No-op when the item is fully visible.
+        collection.scrollToItems(at: [path], scrollPosition: .nearestVerticalEdge)
     }
 
     func selectNames(_ names: Set<String>) {
@@ -664,8 +684,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
             let index = entries.firstIndex(where: { $0.name == entry.name }),
             let path = indexPath(forEntry: index)
         else { return false }
-        // Make sure the cell exists and is on screen before grabbing its label.
-        collection.scrollToItems(at: [path], scrollPosition: .centeredVertically)
+        // Make sure the cell exists and is on screen before grabbing its label (nearest edge, so an
+        // already-visible item to rename doesn't jump the view; #5).
+        collection.scrollToItems(at: [path], scrollPosition: .nearestVerticalEdge)
         collection.layoutSubtreeIfNeeded()
         guard let field = (collection.item(at: path) as? IconItem)?.textField else { return false }
         editingEntry = entry
