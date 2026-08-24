@@ -248,7 +248,7 @@
 "bvc.cmd.previousTab" = "Onglet précédent";
 "bvc.cmd.processViewer" = "Moniteur de processus";
 "bvc.cmd.putBack" = "Remettre";
-"bvc.cmd.quickLook" = "Quick Look";
+"bvc.cmd.quickLook" = "Coup d’œil";
 "bvc.cmd.redo" = "Rétablir";
 "bvc.cmd.releaseNotes" = "Notes de version";
 "bvc.cmd.removeBackground" = "Supprimer l’arrière-plan";

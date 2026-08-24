@@ -248,7 +248,7 @@
 "bvc.cmd.previousTab" = "上一个标签页";
 "bvc.cmd.processViewer" = "进程查看器";
 "bvc.cmd.putBack" = "放回原处";
-"bvc.cmd.quickLook" = "Quick Look";
+"bvc.cmd.quickLook" = "快速查看";
 "bvc.cmd.redo" = "重做";
 "bvc.cmd.releaseNotes" = "发行说明";
 "bvc.cmd.removeBackground" = "移除背景";

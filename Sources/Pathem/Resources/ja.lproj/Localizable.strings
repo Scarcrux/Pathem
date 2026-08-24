@@ -248,7 +248,7 @@
 "bvc.cmd.previousTab" = "前のタブ";
 "bvc.cmd.processViewer" = "プロセスビューア";
 "bvc.cmd.putBack" = "戻す";
-"bvc.cmd.quickLook" = "Quick Look";
+"bvc.cmd.quickLook" = "クイックルック";
 "bvc.cmd.redo" = "やり直す";
 "bvc.cmd.releaseNotes" = "リリースノート";
 "bvc.cmd.removeBackground" = "背景を削除";

@@ -248,7 +248,7 @@
 "bvc.cmd.previousTab" = "Pestaña anterior";
 "bvc.cmd.processViewer" = "Visor de procesos";
 "bvc.cmd.putBack" = "Devolver";
-"bvc.cmd.quickLook" = "Quick Look";
+"bvc.cmd.quickLook" = "Vista rápida";
 "bvc.cmd.redo" = "Rehacer";
 "bvc.cmd.releaseNotes" = "Notas de la versión";
 "bvc.cmd.removeBackground" = "Eliminar fondo";
