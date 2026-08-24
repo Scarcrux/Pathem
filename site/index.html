@@ -185,6 +185,10 @@
   .btn-primary:hover { transform: translateY(-2px); text-decoration: none; box-shadow: 0 10px 28px var(--glow); }
   .btn-ghost { border-color: var(--line); color: var(--text); }
   .btn-ghost:hover { border-color: var(--accent); background: var(--glow); text-decoration: none; }
+  /* Download is greyed out until the public launch. Swap the <span> for an <a href> to enable it. */
+  .btn-disabled { background: var(--line); color: var(--faint); box-shadow: none; cursor: default; pointer-events: none; }
+  .btn-disabled:hover { transform: none; box-shadow: none; }
+  .btn-disabled .soon { font-family: var(--mono); font-size: .72rem; opacity: .8; margin-left: .5rem; }
   .cta small { color: var(--faint); font-size: .82rem; font-family: var(--mono); }
   @media (prefers-reduced-motion: reduce) { .btn, .btn:hover { transition: none; transform: none; } }
 
@@ -447,9 +451,12 @@
     <h1>A faster way to move through your <span class="hl">files</span>.</h1>
     <p class="lede">Pathem is a fast, native, dual-pane file manager for macOS. A <b>Finder alternative</b> for people who want more control, in the spirit of Directory Opus and Path Finder. Written in Swift and AppKit. <b>No Electron.</b></p>
     <div class="cta">
-      <a class="btn btn-primary" href="https://github.com/Scarcrux/Pathem">&#9733; Star on GitHub</a>
+      <!-- Greyed out until the public launch. To enable: replace this <span> with
+           <a class="btn btn-primary" href="https://github.com/Scarcrux/Pathem/releases/latest"> -->
+      <span class="btn btn-primary btn-disabled" aria-disabled="true" role="button" title="Available at the public launch">&#8595; Download for macOS<span class="soon">coming soon</span></span>
+      <a class="btn btn-ghost" href="https://github.com/Scarcrux/Pathem">&#9733; Star on GitHub</a>
       <a class="btn btn-ghost" href="#views">See it in action</a>
-      <small>Free &amp; open source &middot; MIT &middot; macOS 15+ &middot; downloads soon</small>
+      <small>Free &amp; open source &middot; MIT &middot; macOS 15+</small>
     </div>
 
     <figure class="window reveal">
