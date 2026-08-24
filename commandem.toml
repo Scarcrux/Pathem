@@ -345,6 +345,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Deferred (optional): precompute per-entry collation sort keys -- localizedStandardCompare has no cheap Foundation collation-key equivalent, so it is not a cheap win"
+    done = true
 
   [[phase.task]]
     title = "Precomputed sort keys assessed and declined: Foundation exposes no ICU collation-key API, so any precomputed key sorts non-ASCII by codepoint (diverges from localizedStandardCompare and breaks the enumerator contract test). Kept as-is."
