@@ -27,6 +27,21 @@ working_dir = "."
 # queue_file = "results/queue.txt"
 
 # >>> commandem roadmap (managed: edit phases in the Commandem app or `commandem roadmap`) >>>
+[[milestone]]
+  title = "Launch public and convert visitors into GitHub stars"
+  why = "The repo exists to earn stars that back a job search, so the finish line is a public launch that converts, not just working code. Done when the repo is public, pathem.app converts (a working notarized download plus Sparkle auto-update, not a greyed 'coming soon'), and the README and site are HN-ready. Fed by the website, launch-conversion, update-affordance, and public-flip phases."
+  status = "next"
+
+[[milestone]]
+  title = "Make the million-row claim real and verifiable in the open"
+  why = "Pathem's signature differentiator, and the top HN lever per DESIGN.md, is that it stays fast at 1,000,000 rows because only visible rows are built. Done when make gate-a reproduces the benchmark on any machine and a scroll demo sits above the fold on the site and README, so a skeptic can verify the headline claim instead of taking it on faith."
+  status = "next"
+
+[[milestone]]
+  title = "A power-user Finder replacement people trust and switch to"
+  why = "Adoption (and stars) require parity-plus with Directory Opus, Path Finder, and ForkLift on a non-sandboxed build users trust with Full Disk Access. Done when the signature power features are complete, editor and Finder handoff ship, and the app stays hardened: tested dangerous corners, secure defaults, accessibility, localization, and no live-app rough edges."
+  status = "now"
+
 [[phase]]
   title = "App polish: refinement pass"
   status = "done"
@@ -73,6 +88,7 @@ working_dir = "."
   title = "Website & conversion"
   status = "done"
   note = "Site is a funnel whose exits are dead until the repo goes public; make it launch-ready now."
+  milestone = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
   [[phase.task]]
@@ -113,6 +129,7 @@ working_dir = "."
   title = "The public flip (gated on user testing)"
   status = "later"
   note = "Do NOT start until the user says the testing gate is met. Define exit criteria first."
+  milestone = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
   [[phase.task]]
@@ -135,6 +152,7 @@ working_dir = "."
   title = "Post-launch engineering bets"
   status = "later"
   note = "Deferred capability work, after the launch runway."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -170,6 +188,7 @@ working_dir = "."
   title = "Finder handoff & editor integration"
   status = "next"
   note = "Blocked on owner action only: 6.1-6.5, 6.7, 6.8 shipped. The VS Code/Cursor extension (6.6) is publish-ready - authored, .vsix packaged (integrations/vscode-pathem), one-click Integrate wired, CI release workflow present (.github/workflows/vscode-extension-release.yml). Remaining is the Marketplace push itself, which needs the owner's publisher account + VSCE_PAT/OVSX_PAT secrets. Nothing further is doable without the user."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -207,6 +226,7 @@ working_dir = "."
   title = "Photos library integration (PhotoKit)"
   status = "done"
   note = "Browse and export the macOS Photos library from inside Pathem, via PhotoKit (never touching the .photoslibrary bundle directly). The differentiating 'view/edit what Photos shows' feature; reuses machinery we own."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -233,6 +253,7 @@ working_dir = "."
   title = "Vision-powered image smarts"
   status = "done"
   note = "Tap the same on-device Vision engine Photos uses (we already use it for OCR): subject lift / background removal, content auto-tagging into the organizer, and a near-duplicate photo culler atop DuplicateFinder/SemanticDedup."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -251,6 +272,7 @@ working_dir = "."
   title = "In-place media editing & conversion"
   status = "done"
   note = "Quick, one-shot edits that save a trip to another app -- crop/rotate/straighten/resize with save-a-copy, plus a batch media-conversion hub (image/video/audio) atop ImageConverter/MediaTools. Not a photo editor; stay in the quick-edit lane."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -265,6 +287,7 @@ working_dir = "."
   title = "Power-user file tooling"
   status = "done"
   note = "Classic superuser gaps that compound: a metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit, a first-class disk-space + duplicate cleanup flow, and rules-based auto-organize on watch folders (AutomationRule)."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -291,6 +314,7 @@ working_dir = "."
   title = "Live-app polish & hardening (2026-07)"
   status = "done"
   note = "Shipped from live-app feedback + a multi-agent audit; recorded here so the roadmap is a complete record, not just future tracks."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -325,6 +349,7 @@ working_dir = "."
   title = "Audit fix: scale side-passes (Gate-A credibility)"
   status = "done"
   note = "From the 6-person committee audit (performance): the render path earns the 1M-row claim, but two O(total-entries) side-passes run on every folder open, contradicting the 'only visible rows realized' story. Highest-value perf work; makes the headline claim hold in practice on huge/networked folders."
+  milestone = "Make the million-row claim real and verifiable in the open"
   issue = 0
 
   [[phase.task]]
@@ -355,6 +380,7 @@ working_dir = "."
   title = "Audit fix: dangerous-corner tests + CI auto-run"
   status = "done"
   note = "From the committee audit (testing): the core conflict matrix is well-covered, but the single highest data-loss corner (cross-volume move) is untested and nothing runs tests automatically on push/PR (ci.yml is workflow_dispatch-only, pre-commit opt-in)."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -385,6 +411,7 @@ working_dir = "."
   title = "Audit fix: correctness feedback gaps"
   status = "done"
   note = "From the committee audit (correctness): NO crash or data-loss defect found; undo/redo, ProgressiveCopy, and metadata in-place writes were traced and verified sound. The remaining issues are silent-partial-success paths that give the user a wrong result with no feedback."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -411,6 +438,7 @@ working_dir = "."
   title = "Audit fix: security defaults & release gates"
   status = "done"
   note = "From the committee audit (security): no P0/P1; the codebase is unusually well-hardened (pathem:// validated navigational-only, injection-safe shell-outs via argument arrays + shellQuote, Keychain creds, Zip-Slip guards, out-of-process untrusted parsers). These are default/gate hardening items."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -437,6 +465,7 @@ working_dir = "."
   title = "Launch conversion & product depth (stars)"
   status = "next"
   note = "Near-complete; remaining items are owner-action. 16.1-16.4, 16.6, 16.8-16.11 shipped (scroll-benchmark gate, demo-workspace tour, batch-rename depth+presets, grouped dupe-resolve, full VoiceOver, Drop Stack rename). 16.5: shipped the verifiable slice (Quick Look localized to the Apple system term in all 5 locales; commit f98d8fa) + docs/L10N_GAPS.md as the native-reviewer worklist - the rest is a native-speaker quality pass I cannot fake. 16.7: scroll-GIF recording needs Screen Recording permission on the owner's machine (make gate-a-demo tooling is in place)."
+  milestone = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
   [[phase.task]]
@@ -485,24 +514,28 @@ working_dir = "."
   title = "Live-app fixes: New Folder inline-rename race + toolbar icon sizing"
   status = "done"
   note = "New Folder / New Folder with Selection now let you name the item before the debounced folder-watcher reload cancels the inline rename. Toolbar icons default to Large (from Medium) with a new Extra Large (24pt) size; localized across six locales."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app fixes 2: New File naming + relative date columns"
   status = "done"
   note = "New File now offers an inline rename on create (was: default name, no prompt), matching New Folder. Date columns default to relative (Today/Yesterday), matching Finder; still switchable in Settings."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app fixes 3: breadcrumb spring-loading (drag issue #1, paths half)"
   status = "done"
   note = "Dragging over a breadcrumb path component spring-loads (navigates into it) mid-drag, like Finder. Nav-button drops (up = move to parent) remain for the buttons half of the drag-across-nav report."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app fixes 4: outstanding drag / size / layout + E2E testing"
   status = "done"
   note = "All live-app-4 items shipped. 20.3 (content pushes up in a small folder) was convicted, not guessed: a windowed smoke probe showed the icon grid's select/reveal used scrollToItems(.centeredVertically), scrolling 56px to re-center an already-visible item and yanking the top rows out of view. Fixed with .nearestVerticalEdge (minimal reveal, no-op when visible); probe now 0px. Commit a56877d."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
   [[phase.task]]
@@ -529,35 +562,41 @@ working_dir = "."
   title = "Live-app fixes 5: Finder-style Dock menu (New Window/Tab + open tabs)"
   status = "done"
   note = "Right-clicking the Dock icon now offers New Window, New Tab, and a live list of open tabs (click to activate), via applicationDockMenu -- previously only OS defaults. Localized; smoke-guarded."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app fixes 6: make the Dock menu actually useful (Recent Folders)"
   status = "done"
   note = "The initial Dock menu (phase 21) only had New Window/Tab + open tabs. Add a Recent Folders section (jump to any recently-visited folder in a new tab) reusing the existing persisted recentFolders store, so the Dock menu is a real launcher."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app fixes 7: New Folder shortcut (Cmd+Shift+N) + Duplicate in context menu"
   status = "done"
   note = "New Folder gained the Finder Cmd+Shift+N binding (had none). Duplicate (auto-creates 'X copy' via Cmd+D) added to the right-click context menu with an icon, where users expect it."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app fixes 8: inline rename in column/tree/gallery (not a sheet)"
   status = "done"
   note = "New Folder/File/Rename now begin an in-place edit in column, tree, and gallery too (were modal-sheet only outside list/icon); ports the list/icon pattern incl. cancel-on-reload."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
 [[phase]]
   title = "Live-app: relaunch button verified; consider a prominent banner"
   status = "done"
   note = "Root cause: the title-bar UpdateButtonAccessory rendered inconsistently next to the unified toolbar - the watcher fired and isHidden=false (a false-positive smoke pass at fitting 147x20) yet nothing showed on the real window ('still nothing' after a manual trigger). Fix: RelaunchBanner, a full-width accent bar at the top of the browser content, driven by the same .pathemUpdateStateChanged state (Sparkle pending -> install; newer installed build -> relaunch). Smoke now asserts real size for both affordances (banner 547x36). Verified live: mtime-bumped exe, watcher fired ~26s, banner shown (user-confirmed). Commit 52a6614."
+  milestone = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
 [[phase]]
   title = "Live-app fix: eject off the main thread (UI froze ~15s)"
   status = "done"
   note = "Eject ran unmountAndEjectDevice synchronously on the main thread, beachballing the app until the unmount finished. Now off-main with a status; UI stays responsive."
+  milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 # <<< commandem roadmap <<<
