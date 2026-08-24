@@ -160,6 +160,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Gate the ~1,700 LOC smoke/screenshot/debug harness behind #if DEBUG or a non-shipping target (0 #if DEBUG today; SmokeTest.swift + DebugHooks + 11 screencapture blocks ship in the release binary)"
+    done = true
 
 [[phase]]
   title = "Finder handoff & editor integration"
@@ -417,6 +418,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "SFTP: surface a 'new host key, accept?' prompt instead of silent StrictHostKeyChecking=accept-new (TOFU MITM window on first connect, which also holds the password)"
+    done = true
 
   [[phase.task]]
     title = "New-connection dialog: default to an encrypted protocol (sftp/ftps/webdavs) and warn on plaintext FTP/WebDAV (defaults to plain ftp today)"
