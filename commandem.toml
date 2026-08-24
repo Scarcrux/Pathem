@@ -162,6 +162,10 @@ working_dir = "."
     title = "Gate the ~1,700 LOC smoke/screenshot/debug harness behind #if DEBUG or a non-shipping target (0 #if DEBUG today; SmokeTest.swift + DebugHooks + 11 screencapture blocks ship in the release binary)"
     done = true
 
+  [[phase.task]]
+    title = "BrowserViewController god-object: extracted device-watch + ownership/ACL actions into their own files (1305 -> 1224 lines; cumulative 1578 -> 1224)"
+    done = true
+
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"
