@@ -164,7 +164,7 @@ working_dir = "."
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"
-  note = "Fast-follow feature. Reveal-in-Finder can't be intercepted system-wide (targets Finder by identity), so: a pull model + opt-in wiring of editors to Pathem."
+  note = "Blocked on owner action only: 6.1-6.5, 6.7, 6.8 shipped. The VS Code/Cursor extension (6.6) is publish-ready - authored, .vsix packaged (integrations/vscode-pathem), one-click Integrate wired, CI release workflow present (.github/workflows/vscode-extension-release.yml). Remaining is the Marketplace push itself, which needs the owner's publisher account + VSCE_PAT/OVSX_PAT secrets. Nothing further is doable without the user."
   issue = 0
 
   [[phase.task]]
@@ -429,7 +429,7 @@ working_dir = "."
 [[phase]]
   title = "Launch conversion & product depth (stars)"
   status = "next"
-  note = "From the committee audit (product/UX): feature breadth already exceeds Path Finder / ForkLift; nearly every table-stakes power-user feature exists. The gaps are conversion and depth-in-signature-features, ordered by ROI toward the stars/job goal. Some overlap the gated Track D public flip."
+  note = "Near-complete; remaining items are owner-action. 16.1-16.4, 16.6, 16.8-16.11 shipped (scroll-benchmark gate, demo-workspace tour, batch-rename depth+presets, grouped dupe-resolve, full VoiceOver, Drop Stack rename). 16.5: shipped the verifiable slice (Quick Look localized to the Apple system term in all 5 locales; commit f98d8fa) + docs/L10N_GAPS.md as the native-reviewer worklist - the rest is a native-speaker quality pass I cannot fake. 16.7: scroll-GIF recording needs Screen Recording permission on the owner's machine (make gate-a-demo tooling is in place)."
   issue = 0
 
   [[phase.task]]
