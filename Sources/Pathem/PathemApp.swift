@@ -41,6 +41,7 @@ enum PathemApp {
         window.isReleasedWhenClosed = false  // WindowManager.Host owns the lifetime (see adoptPrimary)
         window.center()
 
+        #if DEBUG  // automation / self-check / screenshot entrypoints; stripped from the release binary (5.7)
         if ProcessInfo.processInfo.environment["PATHEM_L10N_SMOKE"] != nil {
             // Deterministic: every shipped language must be bundled and actually
             // translated (sample keys resolve to a non-empty value that differs from
@@ -105,6 +106,7 @@ enum PathemApp {
             app.run()
             return
         }
+        #endif
 
         // Normal mode: a dual-pane browser rooted at the home directory (or a sample
         // folder when rendering view-mode screenshots).
@@ -158,6 +160,7 @@ enum PathemApp {
         }
 
 
+        #if DEBUG  // all remaining automation / screenshot / E2E dispatch; stripped from release (5.7)
         // PATHEM_E2E: drive a real create -> rename -> new-file flow on a temp workspace and assert
         // the on-disk outcomes end to end (feature-level, not just UI invariants), then capture an
         // offscreen render. The seed of a feature E2E harness; run via `make e2e`.
@@ -927,6 +930,7 @@ enum PathemApp {
                 exit(pass ? 0 : 1)
             }
         }
+        #endif
         app.run()
     }
 
@@ -939,6 +943,7 @@ enum PathemApp {
     /// the on-disk results at each step (the actual feature working, end to end), then capture an
     /// offscreen render. Disk checks read the real filesystem, so they don't depend on UI reload
     /// timing; the delays only let the async listing/inline-edit settle between user actions.
+    #if DEBUG
     private static func runE2E(browser: BrowserViewController) {
         let fm = FileManager.default
         let workspace = fm.temporaryDirectory.appendingPathComponent(
@@ -986,6 +991,7 @@ enum PathemApp {
             exit(ok ? 0 : 1)
         }
     }
+    #endif
 
     private static func makeMainMenu(updater: UpdaterController) -> NSMenu {
         let mainMenu = NSMenu()

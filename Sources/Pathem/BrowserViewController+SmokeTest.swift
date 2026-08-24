@@ -1,3 +1,6 @@
+// The self-check / E2E harness (PATHEM_SMOKE, PATHEM_E2E). Debug-only so it never ships in the
+// notarized release binary (5.7); available in `swift run` / `swift test` (both debug).
+#if DEBUG
 import AppKit
 import AppRelaunch
 import PathemEngine
@@ -1470,3 +1473,4 @@ private final class SmokePromiseResult: @unchecked Sendable {
     var name = ""
     var error: Error?
 }
+#endif

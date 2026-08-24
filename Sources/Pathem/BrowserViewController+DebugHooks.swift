@@ -1,3 +1,6 @@
+// Debug/automation hooks for the smoke + E2E harness. Debug-only so they never ship in the
+// notarized release binary (5.7); available in `swift run` / `swift test` (both debug).
+#if DEBUG
 import AppKit
 import PathemEngine
 import TorrentKit
@@ -360,3 +363,4 @@ enum DebugDemoPDF {
         return text
     }
 }
+#endif
