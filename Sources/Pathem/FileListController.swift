@@ -998,6 +998,39 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return FileDrag.item(for: url)
     }
 
+    /// Where a drag that started in THIS list began (screen coords). NSTableView begins a drag after
+    /// a tiny threshold, so a click with trackpad jitter starts one; dropping it on a neighbor then
+    /// popped the "Move Here?" menu the user never asked for. We remember the start and ignore a drop
+    /// that never traveled a real distance. nil unless this list is the drag source, so cross-pane
+    /// and cross-app drops (which have no local start) are never gated.
+    private var localDragStartScreen: NSPoint?
+    private let intentionalDragDistance: CGFloat = 12  // below one row height; above jitter
+
+    func tableView(
+        _ tableView: NSTableView, draggingSession session: NSDraggingSession,
+        endedAt screenPoint: NSPoint, operation: NSDragOperation
+    ) {
+        localDragStartScreen = nil
+    }
+
+    /// True when a drag that started in this list ended within a jitter's distance of where it began
+    /// -- an accidental micro-drag (a click, essentially) that must not perform a move or pop a menu.
+    private func isAccidentalMicroDrag(endingAtScreen drop: NSPoint) -> Bool {
+        guard let start = localDragStartScreen else { return false }
+        return hypot(drop.x - start.x, drop.y - start.y) < intentionalDragDistance
+    }
+
+    /// PATHEM_SMOKE: a near drop (jitter) counts as accidental; a far drop is intentional; a drop with
+    /// no local start (cross-pane/app) is never gated. Guards the "click pops the Move Here menu" fix.
+    func debugMicroDragIgnored() -> Bool {
+        localDragStartScreen = NSPoint(x: 100, y: 100)
+        let near = isAccidentalMicroDrag(endingAtScreen: NSPoint(x: 104, y: 103))  // ~5pt
+        let far = isAccidentalMicroDrag(endingAtScreen: NSPoint(x: 100, y: 140))  // 40pt
+        localDragStartScreen = nil
+        let crossPane = isAccidentalMicroDrag(endingAtScreen: NSPoint(x: 104, y: 103))  // no source
+        return near && !far && !crossPane
+    }
+
     /// PATHEM_SMOKE: rows are draggable iff the pane's directory is known (each row resolves its
     /// URL against it). directoryURL is set synchronously by PaneController.reload, so this is true
     /// the instant the view exists -- a regression guard for the "rows show but nothing drags" bug.
@@ -1046,6 +1079,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         _ tableView: NSTableView, draggingSession session: NSDraggingSession,
         willBeginAt screenPoint: NSPoint, forRowIndexes rowIndexes: IndexSet
     ) {
+        localDragStartScreen = screenPoint  // to ignore an accidental micro-drag on drop (see acceptDrop)
         let urls = rowIndexes.compactMap { row -> URL? in
             guard let index = entryIndex(forRow: row), !entries[index].isDataless else { return nil }
             return entryURL(entries[index])
@@ -1098,6 +1132,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     ) -> Bool {
         springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: info), !urls.isEmpty else { return false }
+        // A drag that began in this list but barely moved is a click with jitter, not a move. Ignore
+        // it so a plain click near another file no longer pops the "Move Here / Copy Here" menu.
+        if let window = tableView.window,
+            isAccidentalMicroDrag(endingAtScreen: window.convertPoint(toScreen: info.draggingLocation))
+        {
+            return false
+        }
         if let folder = folderRow(at: row, excluding: urls) {
             let incoming = incomingURLs(urls, into: folder)
             guard !incoming.isEmpty else { return false }

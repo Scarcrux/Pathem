@@ -670,6 +670,11 @@ extension BrowserViewController {
             listing: tagProbeEntries, in: tagProbeDir, visibleHeight: 400)
         try? FileManager.default.removeItem(at: tagProbeDir)
         check("tag-decoration-lazy", tagEnqueued > 0 && tagEnqueued < 200, "enqueued=\(tagEnqueued) of \(tagProbeEntries.count) visible-window")
+        // A click with trackpad jitter starts a tiny NSTableView drag; dropping it near another file
+        // popped the "Move Here?" menu the user never asked for. A drop must travel a real distance to
+        // count as a move; cross-pane drops (no local start) stay unaffected.
+        check("micro-drag-ignored", FileListController().debugMicroDragIgnored(),
+            "near=accidental, far=intentional, cross-pane=allowed")
 
         // Lazy semantic index: opening/navigating folders must not build the content-reading index
         // (it reads + embeds up to 5000 files); it builds only on first search. The app has launched
