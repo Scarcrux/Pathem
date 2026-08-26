@@ -1023,6 +1023,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         ReloadDebug.log("fsevent folder=\(watched.lastPathComponent) active=\(isActivePane)")
         guard remote == nil, watched == nav.current else { return }  // ignore local changes while remote
         pendingRefresh?.cancel()
+        // Never reload the list out from under an in-place rename. Creating a new folder fires an
+        // FSEvents tick for THIS folder; a reload then cancels the inline edit we just opened to name
+        // it, so New Folder appeared to skip renaming. While editing, poll instead: re-check shortly,
+        // and the reload lands once the edit ends (a self-healing catch-up for any real change too).
+        if content.isInlineEditing {
+            let recheck = DispatchWorkItem { [weak self] in self?.directoryChangedOnDisk(watched: watched) }
+            pendingRefresh = recheck
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: recheck)
+            return
+        }
         let work = DispatchWorkItem { [weak self] in self?.applyDiskRefresh() }
         pendingRefresh = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)

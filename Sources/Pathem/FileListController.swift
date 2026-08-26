@@ -1041,7 +1041,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     /// Whether an inline rename is currently in progress (for the reload-safety smoke guard).
-    var debugInlineEditActive: Bool { editingEntry != nil }
+    var isInlineEditing: Bool { editingEntry != nil }
+    var debugInlineEditActive: Bool { isInlineEditing }
+
+    /// PATHEM_SMOKE: begin an in-place rename, then reload. A reload cancels the edit, which is why
+    /// the pane must not reload while editing (the "New Folder created but no rename" bug: an FSEvents
+    /// tick reloaded the list and cancelled the rename). True iff the edit began and the reload ended
+    /// it. Host the scrollView in a window first (editing needs a realized cell).
+    func debugReloadCancelsInlineEdit() -> Bool {
+        directoryURL = URL(fileURLWithPath: "/tmp")
+        let probe = [FileEntry(name: "probe.txt", isDirectory: false, size: 1, modificationDate: nil)]
+        setEntries(probe, preserveState: false)
+        debugLayout(width: 500, height: 200)
+        select(name: "probe.txt")
+        let began = beginInlineRename()
+        let editingAfterBegin = isInlineEditing
+        setEntries(probe, preserveState: true)  // a watcher-style reload
+        return began && editingAfterBegin && !isInlineEditing
+    }
 
     /// Whether the name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
     func debugNameAXMatchesEntry(row: Int) -> Bool {

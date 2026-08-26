@@ -94,6 +94,10 @@ protocol PaneContentView: AnyObject {
     /// view can't (nothing or many selected, or it doesn't support inline editing) so the pane can
     /// fall back to the rename sheet. The committed name is reported via `onInlineRename`.
     func beginInlineRename() -> Bool
+    /// True while a Finder-style in-place rename is active. The pane suppresses folder-watcher
+    /// reloads during it, so an FSEvents tick (e.g. from creating the very item you're naming)
+    /// can't reload the list out from under the edit and cancel it.
+    var isInlineEditing: Bool { get }
 }
 
 extension PaneContentView {

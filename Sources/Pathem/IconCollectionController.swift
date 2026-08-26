@@ -387,6 +387,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     var onInlineRename: ((FileEntry, String) -> Void)?
     /// The entry being renamed in place (nil = not editing); guards commit against reuse/reload.
     private var editingEntry: FileEntry?
+    var isInlineEditing: Bool { editingEntry != nil }
     /// Esc pressed during an edit: abandon without committing.
     private var renameCancelled = false
 

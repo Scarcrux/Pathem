@@ -675,6 +675,14 @@ extension BrowserViewController {
         // count as a move; cross-pane drops (no local start) stay unaffected.
         check("micro-drag-ignored", FileListController().debugMicroDragIgnored(),
             "near=accidental, far=intentional, cross-pane=allowed")
+        // New Folder created the item but skipped the inline rename: an FSEvents tick for the folder
+        // reloaded the list and cancelled the just-opened edit. The pane now defers reloads while
+        // editing. This proves the underlying hazard (a reload cancels an active inline edit).
+        let editProbe = FileListController()
+        view.window?.contentView?.addSubview(editProbe.scrollView)
+        let reloadCancels = editProbe.debugReloadCancelsInlineEdit()
+        editProbe.scrollView.removeFromSuperview()
+        check("reload-cancels-inline-edit", reloadCancels, "edit begins, then a reload cancels it")
 
         // Lazy semantic index: opening/navigating folders must not build the content-reading index
         // (it reads + embeds up to 5000 files); it builds only on first search. The app has launched

@@ -70,6 +70,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     /// The committed name of an in-place rename (Finder-style edit in the outline).
     var onInlineRename: ((FileEntry, String) -> Void)?
     private var editingEntry: FileEntry?
+    var isInlineEditing: Bool { editingEntry != nil }
     private var editingRow = -1
     private var renameCancelled = false
 

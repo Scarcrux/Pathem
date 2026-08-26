@@ -50,6 +50,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     /// The committed name of an in-place rename (Finder-style edit in the active column).
     var onInlineRename: ((FileEntry, String) -> Void)?
     private var editingEntry: FileEntry?
+    var isInlineEditing: Bool { editingEntry != nil }
     private weak var editingTable: NSTableView?
     private var editingRow = -1
     private var renameCancelled = false
