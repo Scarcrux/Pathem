@@ -606,4 +606,11 @@ working_dir = "."
   note = "User report: 'asked to move files one at a time when I'm not trying to move.' Convicted (user-confirmed): a click with trackpad jitter starts a tiny NSTableView drag that lands on a neighbor and fired the drop-onto-file menu. Fix: a drop must travel >12pt from where the drag began to count as a move; cross-pane/app drops (no local start) unaffected. Only the list view calls onDropOntoFile. Smoke micro-drag-ignored; commit 3371919."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: New Folder/File skipped the inline rename (watcher reload cancelled it)"
+  status = "done"
+  note = "User: 'made a new folder and it didnt give me the inline rename.' Convicted: creating the folder fires an FSEvents tick for the same folder; the watcher's debounced reload lands just after the rename opens and setEntries cancels the edit. Phase-17 only cancelled an already-scheduled refresh; when FSEvents fires after the rename opens, a fresh reload cancels it. Fix: the pane defers reloads while content.isInlineEditing (polls until the edit ends). New smoke reload-cancels-inline-edit. Commit 6898759."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
