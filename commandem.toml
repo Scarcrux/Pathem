@@ -599,4 +599,11 @@ working_dir = "."
   note = "Eject ran unmountAndEjectDevice synchronously on the main thread, beachballing the app until the unmount finished. Now off-main with a status; UI stays responsive."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: accidental micro-drag popped the Move Here menu"
+  status = "done"
+  note = "User report: 'asked to move files one at a time when I'm not trying to move.' Convicted (user-confirmed): a click with trackpad jitter starts a tiny NSTableView drag that lands on a neighbor and fired the drop-onto-file menu. Fix: a drop must travel >12pt from where the drag began to count as a move; cross-pane/app drops (no local start) unaffected. Only the list view calls onDropOntoFile. Smoke micro-drag-ignored; commit 3371919."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
