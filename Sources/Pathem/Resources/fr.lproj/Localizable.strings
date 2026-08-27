@@ -891,7 +891,7 @@
 "integrations.editorHint" = "Ajoute « Afficher dans Pathem » aux menus de l’éditeur. Tout est placé dans un dossier appartenant à Pathem ; Retirer ne supprime que celui-ci. Aperçu montre les fichiers exacts.";
 "integrations.editorNoData" = "Le dossier de réglages de %@ est introuvable. Ouvrez %@ une fois, puis réessayez.";
 "integrations.editorRunning" = "%@ est en cours d’exécution ; redémarrez-le après l’intégration";
-"integrations.editorsSoon" = "VS Code et Cursor verrouillent leur fonction « afficher » ; ils nécessitent donc une extension Pathem publiée plutôt qu’une modification de config, ce qui reste à venir. Pour tout autre éditeur, utilisez le menu Services ou la commande pathem ci-dessus.";
+"integrations.editorsSoon" = "VS Code et Cursor verrouillent leur fonction « afficher » ; Pathem fournit donc une extension « Reveal in Pathem » intégrée et l’installe via la ligne de commande de l’éditeur ; ils apparaissent ci-dessus lorsqu’ils sont détectés. Pour tout autre éditeur, utilisez le menu Services ou la commande pathem ci-dessus.";
 "integrations.installed" = "Installé";
 "integrations.integrate" = "Intégrer";
 "integrations.noEditors" = "Aucun éditeur pris en charge détecté.";

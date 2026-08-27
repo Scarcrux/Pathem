@@ -216,9 +216,23 @@ LaunchServices role to claim), so the rest is a "pull" model plus opt-in wiring.
   Studio), never touching the user's `External Tools.xml`; the tool runs `pathem-cli
   reveal "$FilePath$"` (quoted, so the tested CLI does the encoding). Install/remove/
   preview drive every profile at once; smoke-checked incl. XML well-formedness.
-  **Remaining:** VS Code / Cursor, which lock their reveal and expose no
-  external-file-manager setting -- so they need a *published* Pathem extension, not a
-  config write (the only editor that genuinely can't be done this way).
+  **VS Code + Cursor done (2026-08-27):** they lock their reveal and expose no
+  external-file-manager setting, so instead of a config write Pathem ships a tiny
+  bundled extension (`Integrations/vscode-pathem/`, packaged to
+  `Sources/Pathem/Resources/pathem-reveal-0.1.0.vsix` by
+  `scripts/build-vscode-extension.sh`) and installs it through the editor's own
+  bundled CLI (`<editor> --install-extension … --force` / `--uninstall-extension`),
+  so nothing needs to be on PATH and Remove is clean. `VSCodeIntegration` handles
+  both flavors (bundle-id detection, extensions-dir install check) and is wired into
+  the `EditorIntegration.all` registry + `ExternalEditors`, so both show up as
+  Integrate / Remove / Preview rows in Settings ▸ Integrations. The extension adds
+  "Reveal in Pathem" to the Explorer context menu, the editor-tab menu, and the
+  command palette, calling `pathem reveal <path>` (falling back to the
+  `pathem://reveal` URL scheme). The stale "still to come" hint in the pane was
+  corrected in all six locales. Build + 738 tests + l10n lint green. **This closes
+  Track F -- every editor that can be integrated now is.** The only thing left is
+  publishing the extension to the VS Code Marketplace / Open VSX (an outward-facing
+  step, gated on the user); the bundled-install path already works without it.
 
 ### Track G -- File-explorer capability bets (2026-07-27)
 
