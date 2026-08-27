@@ -172,6 +172,27 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The item being edited in place, its display row, and a flag set when Esc abandoned the edit
     /// so committing doesn't rename.
     private var editingEntry: FileEntry?
+    /// An async cosmetic refresh (tags, folder sizes, git badges, extended columns) tried to reload
+    /// while an inline rename was open. Reloading recycles the editing cell and ends the edit (the
+    /// New Folder "created but no rename" bug: a new folder's size refresh reloaded its row). We skip
+    /// the reload and remember, then catch up once the edit ends.
+    private var deferredCosmeticReload = false
+    /// Reload for a cosmetic refresh, unless an inline rename is open (then defer to `editEnded`).
+    private func cosmeticReload(rows: IndexSet? = nil, columns: IndexSet? = nil) {
+        guard editingEntry == nil else { deferredCosmeticReload = true; return }
+        if let rows, let columns { tableView.reloadData(forRowIndexes: rows, columnIndexes: columns) }
+        else { tableView.reloadData() }
+    }
+    /// Called after an inline rename ends (committed or cancelled): flush any cosmetic reload we held,
+    /// rebuilding display rows (tag buckets may have arrived) and preserving the selection.
+    private func editEnded() {
+        guard deferredCosmeticReload else { return }
+        deferredCosmeticReload = false
+        let selected = Set(selectedEntries.map(\.name))
+        rebuildDisplayRows()
+        tableView.reloadData()
+        tableView.selectRowIndexes(rows(forNames: selected), byExtendingSelection: false)
+    }
     private var editingRow = -1
     private var renameCancelled = false
     private var suppressSortCallback = false
@@ -699,6 +720,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         editingEntry = nil
         editingRow = -1
         renameCancelled = false
+        defer { editEnded() }
         let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
         if nameCol >= 0, row >= 0, row < tableView.numberOfRows,
             let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: false) as? NSTableCellView,
@@ -729,6 +751,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         editingEntry = nil
         editingRow = -1
         renameCancelled = false
+        defer { editEnded() }
         // Repaint the row so the stripped tag/git decoration returns, whether or not the name
         // changed; a successful rename also triggers a full re-list from the pane.
         if row >= 0, row < displayRows.count {
@@ -1058,6 +1081,22 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let editingAfterBegin = isInlineEditing
         setEntries(probe, preserveState: true)  // a watcher-style reload
         return began && editingAfterBegin && !isInlineEditing
+    }
+
+    /// PATHEM_SMOKE: an async cosmetic refresh (folder sizes, tags, git badges, extended columns)
+    /// must NOT cancel an active inline rename by reloading. This was the "New Folder created but no
+    /// rename" bug: a new folder's size refresh reloaded its row and resigned the editing field.
+    /// True iff the edit begins and survives a cosmetic reload. Host the scrollView in a window first.
+    func debugCosmeticReloadKeepsInlineEdit() -> Bool {
+        directoryURL = URL(fileURLWithPath: "/tmp")
+        let probe = [FileEntry(name: "probe.txt", isDirectory: false, size: 1, modificationDate: nil)]
+        setEntries(probe, preserveState: false)
+        debugLayout(width: 500, height: 200)
+        select(name: "probe.txt")
+        guard beginInlineRename(), isInlineEditing else { return false }
+        cosmeticReload(rows: IndexSet(integer: 0), columns: IndexSet(integer: 0))  // a size/tag/git refresh
+        cosmeticReload()  // a full cosmetic reload (git/tags/extended columns)
+        return isInlineEditing  // deferred while editing, so the edit survives
     }
 
     /// Whether the name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
@@ -1539,7 +1578,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard states != gitStates else { return }
         let hadAny = !gitStates.isEmpty
         gitStates = states
-        if hadAny || !states.isEmpty { tableView.reloadData() }
+        if hadAny || !states.isEmpty { cosmeticReload() }
     }
 
     private func gitState(for entry: FileEntry) -> GitFileState? {
@@ -1679,7 +1718,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard !rows.isEmpty else { return }
         let columns =
             sizeColumn >= 0 ? IndexSet(integer: sizeColumn) : IndexSet(integersIn: 0..<tableView.numberOfColumns)
-        tableView.reloadData(forRowIndexes: rows, columnIndexes: columns)
+        cosmeticReload(rows: rows, columns: columns)
     }
 
     /// After a listing change: tag grouping needs every tag up front to build its
@@ -1712,6 +1751,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             DispatchQueue.main.async {
                 guard let self, self.tagReadGeneration == generation else { return }
                 self.tagCache = result
+                // Don't rebuild/reload while an inline rename is open (it recycles the editing cell
+                // and ends the edit); catch up in editEnded, which also rebuilds the tag buckets.
+                guard self.editingEntry == nil else { self.deferredCosmeticReload = true; return }
                 // The buckets depend on the tags we just read, so rebuild the display rows
                 // (preserving selection) and reload.
                 let selected = Set(self.selectedEntries.map(\.name))
@@ -1760,7 +1802,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             DispatchQueue.main.async {
                 guard let self, self.extendedGeneration == generation else { return }
                 self.extendedInfo = result
-                self.tableView.reloadData()
+                self.cosmeticReload()
             }
         }
     }

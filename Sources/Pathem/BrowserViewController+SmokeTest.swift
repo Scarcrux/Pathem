@@ -683,6 +683,13 @@ extension BrowserViewController {
         let reloadCancels = editProbe.debugReloadCancelsInlineEdit()
         editProbe.scrollView.removeFromSuperview()
         check("reload-cancels-inline-edit", reloadCancels, "edit begins, then a reload cancels it")
+        // The New Folder fix: a cosmetic async refresh (folder sizes / tags / git) must NOT cancel an
+        // active inline rename. A new folder's size refresh reloaded its row and ended the edit.
+        let cosmeticProbe = FileListController()
+        view.window?.contentView?.addSubview(cosmeticProbe.scrollView)
+        let survives = cosmeticProbe.debugCosmeticReloadKeepsInlineEdit()
+        cosmeticProbe.scrollView.removeFromSuperview()
+        check("cosmetic-reload-keeps-inline-edit", survives, "inline rename survives a folder-size/tag/git refresh")
 
         // Lazy semantic index: opening/navigating folders must not build the content-reading index
         // (it reads + embeds up to 5000 files); it builds only on first search. The app has launched
