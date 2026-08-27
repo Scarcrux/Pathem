@@ -40,3 +40,6 @@ Integrations/vscode-pathem/node_modules/
 
 # 1M-row scroll demo raw recordings (regenerable; commit the final GIF only)
 docs/demo/*.mov
+
+# Cloudflare Wrangler local cache/tmp (site Worker); regenerated on every dev run
+.wrangler/
