@@ -613,4 +613,11 @@ working_dir = "."
   note = "User: 'made a new folder and it didnt give me the inline rename.' Convicted: creating the folder fires an FSEvents tick for the same folder; the watcher's debounced reload lands just after the rename opens and setEntries cancels the edit. Phase-17 only cancelled an already-scheduled refresh; when FSEvents fires after the rename opens, a fresh reload cancels it. Fix: the pane defers reloads while content.isInlineEditing (polls until the edit ends). New smoke reload-cancels-inline-edit. Commit 6898759."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: New Folder inline rename cancelled by async folder-size refresh"
+  status = "done"
+  note = "User: 'worked for new file, not new folder; folder appeared then scrolled out of view, no inline rename.' Convicted with a scrolled 80-file probe + live tracing: the rename field opened then resigned ~20ms later (controlTextDidEndEditing, movement=0) because a partial reloadData(forRowIndexes:) recycled the editing cell -- the new folder's async FOLDER-SIZE refresh reloading its row. New File needs no size refresh, so it worked. Fix: cosmeticReload() defers folder-size/tag/git/extended-column reloads while editing, flushed by editEnded(). Smoke cosmetic-reload-keeps-inline-edit. Commit 7036ca7."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
