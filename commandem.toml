@@ -164,6 +164,7 @@ working_dir = "."
 
   [[phase.task]]
     title = "Enable the gated Swift extension runtime once there is real demand"
+    done = true
 
   [[phase.task]]
     title = "BrowserViewController god-object: extracted transfer + undo/redo plumbing (1578 -> 1442 lines)"
@@ -182,6 +183,10 @@ working_dir = "."
 
   [[phase.task]]
     title = "BrowserViewController god-object: extracted device-watch + ownership/ACL actions into their own files (1305 -> 1224 lines; cumulative 1578 -> 1224)"
+    done = true
+
+  [[phase.task]]
+    title = "God-object: moved device-watch STATE (timer + name cache) into an owned DeviceWatcher (129 -> 127 stored props). Remaining 5.6: the higher-coupling clusters (SplitLayout, PreviewPane, MenuInstaller)."
     done = true
 
 [[phase]]
