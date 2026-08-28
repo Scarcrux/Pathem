@@ -71,7 +71,7 @@ extension BrowserViewController {
         for side in [leftTabs, rightTabs] { side.teardownAllTabs() }
         downloadSuggestions.stop()  // its Downloads watcher self-retains; stop it or the window leaks
         _automation?.stopWatching()  // likewise the per-rule folder watchers (only if it was created)
-        stopDeviceTimer()
+        deviceWatcher.stop()
         torrentDetail.hide()
         if let token = quickBarScrollObserver { NotificationCenter.default.removeObserver(token) }
         quickBarScrollObserver = nil

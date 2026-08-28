@@ -253,7 +253,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Confirmations shown as a popover at the pointer (move/copy conflicts, Trash) rather than
     /// a sheet pinned to the title bar.
     let cursorConfirm = CursorConfirm()
-    var deviceTimer: Timer?  // device-watch poll; behavior in BrowserViewController+DeviceWatch
+    let deviceWatcher = DeviceWatcher()  // owns the USB-phone poll timer + name cache (feeds the sidebar)
     let layoutsMenu = NSMenu(title: "Layouts")
     var didInstallLayoutsMenu = false
     let savedViewsMenu = NSMenu(title: "Saved Views")
@@ -639,13 +639,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             self?.refreshNetworkViewIfShowing()
         }
         sharedDiscovery.start()
-        startDeviceWatch()
+        deviceWatcher.onDevices = { [weak self] devices in self?.sidebar.setDevices(devices) }
+        deviceWatcher.start()
         applyPreferences()
     }
-
-    // Device-watch state (behavior lives in BrowserViewController+DeviceWatch). Stored here because
-    // an extension can't hold stored properties.
-    var deviceNameCache: [String: String] = [:]  // iOS udid -> friendly DeviceName
 
     /// Register every browser action as a named command. This is the spine the
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
