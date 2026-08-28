@@ -436,6 +436,10 @@ extension BrowserViewController {
         check(
             "keymap-dispatch", deleteCmd == "files.trash" && commands.command("files.trash") != nil,
             "delete -> \(deleteCmd ?? "nil")")
+        // Extensions stay OFF by default: an FDA host must not load foreign code without an explicit
+        // opt-in (PATHEM_ENABLE_EXTENSIONS or the pathem.extensionsEnabled default). No ext.* commands.
+        let extCmds = commands.all.filter { $0.id.hasPrefix("ext.") }
+        check("extensions-off-by-default", extCmds.isEmpty, "\(extCmds.count) ext.* commands without opt-in")
         // Every super-drag flick direction maps to a registered command (same wiring check).
         let deadFlicks = DragGestureMap.standard.bindings.filter { commands.command($0.value) == nil }
         check(

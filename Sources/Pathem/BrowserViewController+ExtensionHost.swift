@@ -16,7 +16,14 @@ extension BrowserViewController {
     /// (local development only).
     func loadExtensionsIfEnabled() {
         let env = ProcessInfo.processInfo.environment
-        guard env["PATHEM_ENABLE_EXTENSIONS"] == "1" else { return }
+        // Off by default. Enable intentionally, either the env var (dev/CI) or a persistent
+        // opt-in that survives GUI launches (env vars don't reach a Dock/Finder-launched app):
+        //   defaults write com.scarcrux.pathem pathem.extensionsEnabled -bool YES
+        // Deliberately not a prominent Settings toggle: an FDA app must not normalize loading
+        // foreign code. Signatures stay required (production policy) unless PATHEM_EXTENSIONS_UNSIGNED.
+        let optedIn = env["PATHEM_ENABLE_EXTENSIONS"] == "1"
+            || UserDefaults.standard.bool(forKey: "pathem.extensionsEnabled")
+        guard optedIn else { return }
         guard
             let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
                 .first?.appendingPathComponent("Pathem/Extensions"),
