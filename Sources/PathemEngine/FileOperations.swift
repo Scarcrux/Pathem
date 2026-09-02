@@ -374,6 +374,14 @@ public enum FileOperations {
             urls, into: destination, action: .moved, onConflict: onConflict,
             shouldCancel: shouldCancel, report: report
         ) { source, dest, onBytes in
+            // iCloud / file-provider items must be moved through NSFileCoordinator. A raw moveItem on
+            // an online-only item "succeeds" but the provider never releases the source, so a cut+paste
+            // silently duplicates (the file lands at the destination AND stays in iCloud). Route those
+            // through a coordinated move that also verifies the source is actually gone.
+            if isUbiquitous(source) || isUbiquitous(dest) {
+                try coordinatedMove(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
+                return
+            }
             // A same-volume move is an instant rename (same inode, no bytes copied). A cross-volume
             // move must physically copy then delete the source, so stream it with progress and only
             // unlink the source once the copy fully lands -- rolling the copy back if the delete
@@ -409,6 +417,42 @@ public enum FileOperations {
         let b = try? destDir.resourceValues(forKeys: [.volumeIdentifierKey]).volumeIdentifier
         if let a = a as? NSObject, let b = b as? NSObject { return a.isEqual(b) }
         return false
+    }
+
+    /// Whether `url` is an iCloud (or other file-provider) item. Such items need coordinated access;
+    /// raw FileManager moves/removes on them don't reliably reach the provider.
+    static func isUbiquitous(_ url: URL) -> Bool {
+        (try? url.resourceValues(forKeys: [.isUbiquitousItemKey]).isUbiquitousItem) == true
+    }
+
+    /// Move a file-provider (iCloud) item through NSFileCoordinator so the provider actually releases
+    /// the source, then verify it's gone. Reading the source during the copy materializes an
+    /// online-only item on demand, so the destination lands with real content. If the source survives
+    /// (iCloud reported success without releasing it), surface it instead of leaving a silent duplicate.
+    static func coordinatedMove(
+        from source: URL, to dest: URL, onBytes: @escaping (Int64) -> Void,
+        shouldCancel: @escaping () -> Bool
+    ) throws {
+        let fm = FileManager.default
+        var coordError: NSError?
+        var opError: Error?
+        NSFileCoordinator().coordinate(
+            writingItemAt: source, options: .forMoving, writingItemAt: dest, options: .forReplacing,
+            error: &coordError
+        ) { coordinatedSource, coordinatedDest in
+            do {
+                if sameVolume(coordinatedSource, coordinatedDest) {
+                    try fm.moveItem(at: coordinatedSource, to: coordinatedDest)
+                } else {
+                    try ProgressiveCopy.copy(
+                        from: coordinatedSource, to: coordinatedDest, onBytes: onBytes, shouldCancel: shouldCancel)
+                    try fm.removeItem(at: coordinatedSource)
+                }
+            } catch { opError = error }
+        }
+        if let coordError { throw coordError }
+        if let opError { throw opError }
+        if fm.fileExists(atPath: source.path) { throw MoveIncompleteError(name: source.lastPathComponent) }
     }
 
     /// Reverse a set of performed operations: moves go back to their source,

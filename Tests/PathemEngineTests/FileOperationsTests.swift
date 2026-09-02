@@ -17,6 +17,30 @@ import Testing
 
     private func exists(_ url: URL) -> Bool { FileManager.default.fileExists(atPath: url.path) }
 
+    // A local file is not a file-provider item, so a move takes the fast path (not the iCloud
+    // coordinated path). Guards against accidentally routing every move through NSFileCoordinator.
+    @Test func localFileIsNotUbiquitous() throws {
+        try withTwoDirs { src, _ in
+            let f = src.appendingPathComponent("a.txt")
+            try Data("hi".utf8).write(to: f)
+            #expect(FileOperations.isUbiquitous(f) == false)
+        }
+    }
+
+    // The coordinated move (used for iCloud items; iCloud itself can't be tested headlessly) must
+    // still correctly move a plain local file: destination gets it, source is gone.
+    @Test func coordinatedMoveMovesLocalFileAndClearsSource() throws {
+        try withTwoDirs { src, dst in
+            let from = src.appendingPathComponent("a.txt")
+            try Data("hi".utf8).write(to: from)
+            let to = dst.appendingPathComponent("a.txt")
+            try FileOperations.coordinatedMove(from: from, to: to, onBytes: { _ in }, shouldCancel: { false })
+            #expect(!exists(from))
+            #expect(exists(to))
+            #expect((try? Data(contentsOf: to)) == Data("hi".utf8))
+        }
+    }
+
     @Test func copyPlacesFileInDestinationAndKeepsSource() throws {
         try withTwoDirs { src, dst in
             try Data("hi".utf8).write(to: src.appendingPathComponent("a.txt"))
