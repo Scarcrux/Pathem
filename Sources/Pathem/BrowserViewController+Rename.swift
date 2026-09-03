@@ -55,7 +55,11 @@ extension BrowserViewController {
             try FileOperations.rename(entry.name, to: trimmed, in: directory)
             registerRenameUndo(from: trimmed, to: entry.name, in: directory)
             pane.reloadIfShowingListing()
-            pane.select(name: trimmed)
+            // Select + scroll to the renamed item AFTER the (async) listing lands. A plain
+            // select(name:) here ran against the pre-reload listing, where the new name doesn't
+            // exist yet, so it no-oped -- and a rename that re-sorts the item then left it scrolled
+            // out of view. selectWhenListed defers the reveal until the row actually exists.
+            pane.selectWhenListed(trimmed) { [weak pane] in pane?.select(name: trimmed) }
         } catch {
             presentFailures(
                 [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
