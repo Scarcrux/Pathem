@@ -1380,6 +1380,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             self.format.sortKey = key
             self.format.ascending = ascending
             self.rememberFormat?(self.nav.current, self.format)
+            // Keep the selection visible after the re-sort: the reload carries the selection but
+            // preserves the old scroll offset, so a selected item that moved would scroll off-screen.
+            self.pendingAfterListing = { [weak self] in self?.content.revealSelection() }
             self.reload()
         }
         content.onSelectionChanged = { [weak self] in

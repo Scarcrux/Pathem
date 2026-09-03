@@ -67,6 +67,9 @@ protocol PaneContentView: AnyObject {
     func showPlaceholder(_ text: String?)
     func select(name: String)
     func selectNames(_ names: Set<String>)
+    /// Scroll the current selection back into view without changing it. Used after a re-sort so the
+    /// selected item, which may have moved to a new position, doesn't end up scrolled off-screen.
+    func revealSelection()
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool)
     /// Header sort-indicator state (list view only), for the layout smoke check.
     var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { get }
@@ -101,6 +104,8 @@ protocol PaneContentView: AnyObject {
 }
 
 extension PaneContentView {
+    /// Default no-op; the list view (the one with sortable column headers) overrides it.
+    func revealSelection() {}
     /// Most views embed their scroll view directly; the gallery overrides this.
     var contentView: NSView { scrollView }
     /// Only the list view groups rows under headers; the others ignore the key.

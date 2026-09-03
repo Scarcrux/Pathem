@@ -853,6 +853,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.scrollRowToVisible(row)
     }
 
+    /// Scroll the current selection back into view (after a re-sort moved it) without changing it.
+    func revealSelection() {
+        guard let row = tableView.selectedRowIndexes.first else { return }
+        tableView.scrollRowToVisible(row)
+    }
+
+
     /// Select all rows whose names are in the set (used to carry selection).
     func selectNames(_ names: Set<String>) {
         tableView.selectRowIndexes(rows(forNames: names), byExtendingSelection: false)
