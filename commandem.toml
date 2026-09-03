@@ -189,6 +189,10 @@ working_dir = "."
     title = "God-object: moved device-watch STATE (timer + name cache) into an owned DeviceWatcher (129 -> 127 stored props). Remaining 5.6: the higher-coupling clusters (SplitLayout, PreviewPane, MenuInstaller)."
     done = true
 
+  [[phase.task]]
+    title = "God-object: extracted navigation/sync/window-title cluster into BrowserViewController+Navigation (1221 -> 1100 lines; commit e03ccd1)"
+    done = true
+
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"
@@ -630,6 +634,13 @@ working_dir = "."
   title = "Live-app fix: cut+paste of iCloud files duplicated them (no NSFileCoordinator)"
   status = "next"
   note = "User: cut+paste files from an iCloud Drive pane -> files stayed in source AND appeared in dest (openable), i.e. move became copy + duplicate; dest showed transient '?' icons. Convicted: source not removed even after re-nav; files open. Root cause: all file ops used raw FileManager, zero NSFileCoordinator; a raw move/remove on an iCloud item succeeds without the provider releasing the source. Fix (3c1a5da): route moves touching ubiquitous items through NSFileCoordinator (.forMoving/.forReplacing), materialize-on-read, and verify the source is gone (else MoveIncompleteError, not silent duplicate). Local moves unchanged. STATUS next: needs on-device iCloud verification -- I cannot reproduce dataless items headlessly."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+[[phase]]
+  title = "Live-app fix: menu icons enlarged to 18pt (match toolbar) for easier clicking"
+  status = "done"
+  note = "User: menu icons difficult to click, wanted Chrome/toolbar size. MenuIcons were a fixed 14pt vs the 18pt toolbar default; bumped to 18pt (+ Open With app icons 16->18). Taller rows, bigger targets. Commit 092b229."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 # <<< commandem roadmap <<<
