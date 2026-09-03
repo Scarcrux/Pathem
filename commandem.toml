@@ -193,6 +193,14 @@ working_dir = "."
     title = "God-object: extracted navigation/sync/window-title cluster into BrowserViewController+Navigation (1221 -> 1100 lines; commit e03ccd1)"
     done = true
 
+  [[phase.task]]
+    title = "God-object: extracted external-open/reveal/Photos cluster into BrowserViewController+ExternalOpen (1100 -> 1061 lines)"
+    done = true
+
+  [[phase.task]]
+    title = "God-object: extracted palette/batch-rename/select-by-pattern into BrowserViewController+CommandSurfaces (1061 -> 1026 lines; cumulative 1578 -> 1026)"
+    done = true
+
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"
