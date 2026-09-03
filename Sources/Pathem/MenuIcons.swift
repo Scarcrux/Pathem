@@ -44,7 +44,9 @@ enum MenuIcons {
     /// A menu-sized template image for an SF Symbol (nil if unavailable on this OS), tinted
     /// by the menu the way the system's own item images are.
     static func image(_ symbol: String) -> NSImage? {
-        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+        // 18pt to match the toolbar's default (.large) icon size, roughly Finder/Chrome: the old
+        // 14pt read small and made menu rows tight to click.
+        let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
         let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(config)
         image?.isTemplate = true

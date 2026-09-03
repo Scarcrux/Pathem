@@ -158,7 +158,7 @@ extension BrowserViewController {
                 item.target = self
                 item.representedObject = app
                 let icon = (NSWorkspace.shared.icon(forFile: app.path).copy() as? NSImage) ?? NSImage()
-                icon.size = NSSize(width: 16, height: 16)
+                icon.size = NSSize(width: 18, height: 18)  // match the 18pt menu-icon size
                 item.image = icon
                 menu.addItem(item)
             }
