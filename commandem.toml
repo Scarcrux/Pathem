@@ -651,4 +651,11 @@ working_dir = "."
   note = "User: menu icons difficult to click, wanted Chrome/toolbar size. MenuIcons were a fixed 14pt vs the 18pt toolbar default; bumped to 18pt (+ Open With app icons 16->18). Taller rows, bigger targets. Commit 092b229."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: renamed folder scrolled out of view (reselect raced the async reload)"
+  status = "done"
+  note = "User + 40-folder probe: renaming a folder in list view scrolled it out of view (no scrollbar). commitLocalRename did reloadIfShowingListing() then select(name:newName) immediately -- select found nothing in the pre-reload listing and no-oped, so a re-sorting rename left the item off-screen. Fix: selectWhenListed(trimmed){ select(name:trimmed) } to reveal after the row exists. Probe visible false->true; E2E PASS. Commit pending."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
