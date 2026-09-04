@@ -53,6 +53,17 @@ extension BrowserViewController {
             pumpRunLoop(0.3)
         }
 
+        // Scenario 1b: New File also drops straight into an inline rename.
+        do {
+            let dir = makeDir("newfile") { _ in }
+            navigate(to: dir, expecting: 0)
+            newFile()
+            let editing = waitUntil(3) { self.activePane?.debugInlineEditing == true }
+            check("new-file-opens-inline-rename", editing, "isInlineEditing=\(editing)")
+            view.window?.makeFirstResponder(nil)
+            pumpRunLoop(0.3)
+        }
+
         // Precondition + Scenario 2 + 3 use a list taller than the viewport so scrolling matters.
         let manyFolders = makeDir("rename") { dir in
             for i in 0..<40 {
@@ -86,6 +97,33 @@ extension BrowserViewController {
             activePane?.debugFireSort(.name, ascending: false)  // name desc -> file-00 to the bottom
             let visible = waitUntil(3) { self.activePane?.debugRowVisible("file-00.txt") == true }
             check("sort-keeps-selection-visible", visible)
+        }
+
+        // Scenario 4: cut+paste is a real move -- source cleared, dest populated, no duplicate. This
+        // is the local path (the iCloud path can't run headlessly); it guards the move-not-copy family.
+        do {
+            let names = ["a.txt", "b.txt", "c.txt"]
+            let src = makeDir("cutsrc") { d in
+                for n in names { fm.createFile(atPath: d.appendingPathComponent(n).path, contents: Data("x".utf8)) }
+            }
+            let dst = makeDir("cutdst") { _ in }
+            navigate(to: src, expecting: names.count)  // active (left) pane = source
+            otherPane?.navigate(to: dst)
+            _ = waitUntil(3) { self.otherPane?.currentURL == dst }
+            pumpRunLoop(0.3)
+            activePane?.debugSelectNames(names)
+            pumpRunLoop(0.1)
+            cut(nil)
+            pasteInto(otherPane)
+            _ = waitUntil(4) {
+                names.allSatisfy { self.activePane?.debugHasEntry($0) == false && self.otherPane?.debugHasEntry($0) == true }
+            }
+            let sourceCleared = names.allSatisfy { activePane?.debugHasEntry($0) == false }
+            let destPopulated = names.allSatisfy { otherPane?.debugHasEntry($0) == true }
+            let srcEmptyOnDisk = ((try? fm.contentsOfDirectory(atPath: src.path))?.filter { !$0.hasPrefix(".") }.isEmpty) ?? false
+            check("cut-paste-move-clears-source", sourceCleared)
+            check("cut-paste-move-populates-dest", destPopulated)
+            check("cut-paste-no-duplicate-on-disk", srcEmptyOnDisk)
         }
 
         for r in results {

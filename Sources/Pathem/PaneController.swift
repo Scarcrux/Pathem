@@ -125,6 +125,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var debugListClipHeight: CGFloat { (content as? FileListController)?.debugListClipHeight ?? 0 }
     var debugListContentHeight: CGFloat { (content as? FileListController)?.debugListContentHeight ?? 0 }
     var debugEntryCount: Int { entries.count }
+    func debugHasEntry(_ name: String) -> Bool { entries.contains { $0.name == name } }
+    func debugSelectNames(_ names: [String]) { content.selectNames(Set(names)) }
 
     /// Repro for the New-Folder-rename race (PATHEM_SMOKE): arm a queued rename plus a pending
     /// watcher refresh, as a real create does, run the post-listing step, and report that the
