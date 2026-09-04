@@ -658,4 +658,11 @@ working_dir = "."
   note = "User + 40-folder probe: renaming a folder in list view scrolled it out of view (no scrollbar). commitLocalRename did reloadIfShowingListing() then select(name:newName) immediately -- select found nothing in the pre-reload listing and no-oped, so a re-sorting rename left the item off-screen. Fix: selectWhenListed(trimmed){ select(name:trimmed) } to reveal after the row exists. Probe visible false->true; E2E PASS. Commit pending."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "UI-automation harness (PATHEM_UI_TEST): real-window interaction/scroll regression tests"
+  status = "done"
+  note = "Built the in-process UI-automation harness the headless smoke can't replace: drives real UI flows in a real sized key window, pumps the run loop to settle async reloads, asserts on real geometry (clip=698 content=975, genuinely scrollable -- vs the 102px squished-pane ad-hoc probes). Scenarios: new-folder-inline-rename, list-overflows-viewport, rename-resort-keeps-visible, sort-keeps-selection-visible. Proven to catch bugs: breaking the rename fix -> rename scenario FAILs (3/4). #if DEBUG (0 symbols in release). make ui-test. Commit 5469287. Limit: sort scenario vacuous (NSTableView auto-reveals in-harness) -- doesn't yet reproduce the user's sort case."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
