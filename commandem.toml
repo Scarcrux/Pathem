@@ -672,4 +672,11 @@ working_dir = "."
   note = "Extended PATHEM_UI_TEST (make ui-test) to 9 scenarios in a real sized window: new-folder/new-file inline rename, new-folder-rename-survives-refresh (populated folder), list-overflows-viewport, rename-resort-keeps-visible, sort-keeps-selection-visible, cut-paste move/populates/no-duplicate. Three PROVEN guards (break the fix -> scenario FAILs): rename-resort, cut-paste-move, new-folder-rename-survives-refresh. #if DEBUG (0 symbols in release). Commits 5469287, f40fa0c, 6452df0."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: Gallery auto-opened the far-right preview pane over the other pane"
+  status = "done"
+  note = "User: switching a pane to Gallery popped a preview of its selection across the window over the OTHER (list) pane. syncAutoPreview auto-opened the separate preview pane for gallery, but gallery self-previews (Quick Look + filmstrip) and the pane docks far-right -> a left gallery's preview landed over the right pane. Column was already exempted; gallery wasn't. Fix: nothing auto-opens the pane now; removed the vestigial pref toggle + stale l10n key. New harness guard gallery-no-auto-preview-pane (proven: original code -> 9/10). Commit 5678b6c."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
