@@ -665,4 +665,11 @@ working_dir = "."
   note = "Built the in-process UI-automation harness the headless smoke can't replace: drives real UI flows in a real sized key window, pumps the run loop to settle async reloads, asserts on real geometry (clip=698 content=975, genuinely scrollable -- vs the 102px squished-pane ad-hoc probes). Scenarios: new-folder-inline-rename, list-overflows-viewport, rename-resort-keeps-visible, sort-keeps-selection-visible. Proven to catch bugs: breaking the rename fix -> rename scenario FAILs (3/4). #if DEBUG (0 symbols in release). make ui-test. Commit 5469287. Limit: sort scenario vacuous (NSTableView auto-reveals in-harness) -- doesn't yet reproduce the user's sort case."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "UI-automation harness: 9 scenarios, 3 proven regression guards"
+  status = "done"
+  note = "Extended PATHEM_UI_TEST (make ui-test) to 9 scenarios in a real sized window: new-folder/new-file inline rename, new-folder-rename-survives-refresh (populated folder), list-overflows-viewport, rename-resort-keeps-visible, sort-keeps-selection-visible, cut-paste move/populates/no-duplicate. Three PROVEN guards (break the fix -> scenario FAILs): rename-resort, cut-paste-move, new-folder-rename-survives-refresh. #if DEBUG (0 symbols in release). Commits 5469287, f40fa0c, 6452df0."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
