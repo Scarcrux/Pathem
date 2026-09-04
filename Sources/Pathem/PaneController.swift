@@ -116,6 +116,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
     }
 
+    // UI-automation harness accessors (PATHEM_UI_TEST).
+    func debugRowVisible(_ name: String) -> Bool { (content as? FileListController)?.debugRowVisibleForName(name) ?? false }
+    func debugFireSort(_ key: ViewFormat.SortKey, ascending: Bool) {
+        (content as? FileListController)?.debugFireSort(key, ascending: ascending)
+    }
+    var debugInlineEditing: Bool { content.isInlineEditing }
+    var debugListClipHeight: CGFloat { (content as? FileListController)?.debugListClipHeight ?? 0 }
+    var debugListContentHeight: CGFloat { (content as? FileListController)?.debugListContentHeight ?? 0 }
+    var debugEntryCount: Int { entries.count }
+
     /// Repro for the New-Folder-rename race (PATHEM_SMOKE): arm a queued rename plus a pending
     /// watcher refresh, as a real create does, run the post-listing step, and report that the
     /// follow-up ran and the redundant refresh was dropped so it can't cancel the inline edit.

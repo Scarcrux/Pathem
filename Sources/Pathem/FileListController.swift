@@ -859,6 +859,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.scrollRowToVisible(row)
     }
 
+    // UI-automation harness accessors (PATHEM_UI_TEST). Dead-stripped in release (only the DEBUG
+    // harness calls them).
+    func debugRowVisibleForName(_ name: String) -> Bool {
+        guard let row = rows(forNames: [name]).first else { return false }
+        return tableView.rows(in: tableView.visibleRect).contains(row)
+    }
+    func debugFireSort(_ key: ViewFormat.SortKey, ascending: Bool) { onSortChanged?(key, ascending) }
+    var debugListClipHeight: CGFloat { scrollView.contentView.bounds.height }
+    var debugListContentHeight: CGFloat { tableView.frame.height }
 
     /// Select all rows whose names are in the set (used to carry selection).
     func selectNames(_ names: Set<String>) {

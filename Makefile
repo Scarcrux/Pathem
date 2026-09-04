@@ -54,6 +54,11 @@ gate-a-demo:
 smoke:
 	PATHEM_SMOKE=1 swift run Pathem
 
+# In-process UI-automation: drives real UI flows in a real, sized window and asserts on real
+# geometry (interaction/scroll bugs the headless smoke can't see). Prints UITEST/RESULT lines.
+ui-test:
+	PATHEM_UI_TEST=1 swift run Pathem
+
 # Blackbox end-to-end: launch the real product and assert behavior from the outside.
 e2e:
 	test/e2e/run.sh

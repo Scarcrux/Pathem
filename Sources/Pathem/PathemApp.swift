@@ -170,6 +170,13 @@ enum PathemApp {
             return
         }
 
+        // PATHEM_UI_TEST: the in-process UI-automation harness -- drives real UI flows in a real
+        // window and asserts on real geometry (interaction/scroll bugs). It pumps the run loop itself
+        // and exits, so no app.run() here.
+        if ProcessInfo.processInfo.environment["PATHEM_UI_TEST"] != nil {
+            browser.runUIAutomation()
+        }
+
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a
         // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and
         // thumbnails, unlike the offscreen cacheDisplay render). Runs over the sample
