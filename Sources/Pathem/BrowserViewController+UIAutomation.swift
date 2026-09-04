@@ -64,6 +64,24 @@ extension BrowserViewController {
             pumpRunLoop(0.3)
         }
 
+        // Scenario 1c: New Folder in a POPULATED folder keeps the inline rename open after the async
+        // cosmetic refreshes (folder sizes/tags/git) + the FSEvents tick land -- the "created a folder
+        // but it never let me name it" bug. The empty-folder case above doesn't exercise those reloads.
+        do {
+            let dir = makeDir("newfolder-populated") { d in
+                for i in 0..<10 {
+                    try? fm.createDirectory(at: d.appendingPathComponent("sub-\(i)"), withIntermediateDirectories: true)
+                }
+            }
+            navigate(to: dir, expecting: 10)
+            newFolder()
+            _ = waitUntil(3) { self.activePane?.debugInlineEditing == true }
+            pumpRunLoop(1.2)  // let the async size/tag/git refreshes + watcher tick land; they must not cancel it
+            check("new-folder-rename-survives-refresh", activePane?.debugInlineEditing == true)
+            view.window?.makeFirstResponder(nil)
+            pumpRunLoop(0.3)
+        }
+
         // Precondition + Scenario 2 + 3 use a list taller than the viewport so scrolling matters.
         let manyFolders = makeDir("rename") { dir in
             for i in 0..<40 {
