@@ -144,6 +144,53 @@ extension BrowserViewController {
             check("cut-paste-no-duplicate-on-disk", srcEmptyOnDisk)
         }
 
+        // Scenario 4b: cut+paste of REAL iCloud (ubiquitous) files. This is the branch scenario 4
+        // can't reach -- a temp dir isn't ubiquitous, so the move above never enters coordinatedMove
+        // (the NSFileCoordinator path that the "iCloud paste duplicated the files" fix lives in).
+        // Files created under com~apple~CloudDocs are ubiquitous immediately (before upload), so this
+        // exercises the coordinated move for real. It skips cleanly when there is no iCloud Drive, and
+        // it removes its temp subfolders (they sync to the cloud briefly, then go). The original
+        // symptom involved dataless/online-only files, which can't be synthesized on demand; what it
+        // proves is the correctness the fix guarantees -- moved not copied, no leftover on the source.
+        let iCloudBase = fm.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs", isDirectory: true)
+        if fm.fileExists(atPath: iCloudBase.path) {
+            let stamp = "pathem-uitest-icloud-\(ProcessInfo.processInfo.processIdentifier)"
+            let src = iCloudBase.appendingPathComponent("\(stamp)-src", isDirectory: true)
+            let dst = iCloudBase.appendingPathComponent("\(stamp)-dst", isDirectory: true)
+            defer { try? fm.removeItem(at: src); try? fm.removeItem(at: dst) }
+            try? fm.removeItem(at: src)
+            try? fm.removeItem(at: dst)
+            try? fm.createDirectory(at: src, withIntermediateDirectories: true)
+            try? fm.createDirectory(at: dst, withIntermediateDirectories: true)
+            let names = ["ic-a.txt", "ic-b.txt", "ic-c.txt"]
+            for n in names { fm.createFile(atPath: src.appendingPathComponent(n).path, contents: Data("x".utf8)) }
+            // Sanity: assert the source really is ubiquitous, else this scenario is vacuous (it would
+            // silently take the plain-move path and pretend to cover the iCloud branch).
+            let ubiquitous = (try? src.appendingPathComponent(names[0])
+                .resourceValues(forKeys: [.isUbiquitousItemKey]).isUbiquitousItem) == true
+            check("icloud-cut-paste-is-ubiquitous", ubiquitous, "isUbiquitousItem=\(ubiquitous)")
+            navigate(to: src, expecting: names.count)
+            otherPane?.navigate(to: dst)
+            _ = waitUntil(3) { self.otherPane?.currentURL == dst }
+            pumpRunLoop(0.3)
+            activePane?.debugSelectNames(names)
+            pumpRunLoop(0.1)
+            cut(nil)
+            pasteInto(otherPane)
+            _ = waitUntil(6) {
+                names.allSatisfy { self.activePane?.debugHasEntry($0) == false && self.otherPane?.debugHasEntry($0) == true }
+            }
+            let sourceCleared = names.allSatisfy { activePane?.debugHasEntry($0) == false }
+            let destPopulated = names.allSatisfy { otherPane?.debugHasEntry($0) == true }
+            let srcEmptyOnDisk = ((try? fm.contentsOfDirectory(atPath: src.path))?.filter { !$0.hasPrefix(".") }.isEmpty) ?? false
+            check("icloud-cut-paste-clears-source", sourceCleared)
+            check("icloud-cut-paste-populates-dest", destPopulated)
+            check("icloud-cut-paste-no-duplicate-on-disk", srcEmptyOnDisk)
+        } else {
+            FileHandle.standardError.write(Data("UITEST: SKIP  icloud-cut-paste  (no iCloud Drive)\n".utf8))
+        }
+
         // Scenario 5: switching a pane to Gallery must NOT auto-open the separate (far-right) preview
         // pane. Gallery draws its own inline preview, so the extra pane just duplicated the selection
         // across the window over the OTHER pane (the reported bug). Even with the old pref on.

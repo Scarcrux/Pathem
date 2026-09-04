@@ -679,4 +679,11 @@ working_dir = "."
   note = "User: switching a pane to Gallery popped a preview of its selection across the window over the OTHER (list) pane. syncAutoPreview auto-opened the separate preview pane for gallery, but gallery self-previews (Quick Look + filmstrip) and the pane docks far-right -> a left gallery's preview landed over the right pane. Column was already exempted; gallery wasn't. Fix: nothing auto-opens the pane now; removed the vestigial pref toggle + stale l10n key. New harness guard gallery-no-auto-preview-pane (proven: original code -> 9/10). Commit 5678b6c."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "UI-automation harness reaches the real iCloud coordinatedMove branch (14 scenarios)"
+  status = "done"
+  note = "Gap: the cut+paste scenario used a temp dir, which isn't ubiquitous, so isUbiquitous was false and the move never entered coordinatedMove -- the NSFileCoordinator path the 'iCloud paste duplicated files' fix lives in was untested. New scenario 4b creates temp subfolders under com~apple~CloudDocs (files there are ubiquitous immediately), cuts+pastes, and asserts move-not-copy: source cleared, dest populated, no duplicate on disk. It first asserts isUbiquitousItem=true so a plain-move fallback can't pass vacuously; skips cleanly with no iCloud Drive; self-cleaning. Proven: forcing copy-not-move in coordinatedMove flips it to 12/14. Can't reproduce the dataless/online-only symptom (no way to synthesize evicted files on demand) -- guards correctness of the coordinated move, not necessity for dataless files."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<

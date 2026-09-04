@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf ~/.vscode/extensions/scarcrux.pathem-reveal-0.1.0)",
+      "Bash(code --install-extension Integrations/vscode-pathem/pathem-reveal-0.1.0.vsix --force)",
+      "Bash(code --list-extensions --show-versions)"
+    ],
+    "additionalDirectories": [
+      "/Users/scarcrux/Code/scarcrux-commandem/menubar"
+    ]
+  }
+}
