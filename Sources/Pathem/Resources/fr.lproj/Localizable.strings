@@ -1317,7 +1317,6 @@
 "prefs.newTabPosLabel" = "Position du nouvel onglet";
 "prefs.openConnectionsNewTab" = "Ouvrir les connexions dans un nouvel onglet";
 "prefs.pathBarBottom" = "Afficher la barre de chemin en bas";
-"prefs.previewInGallery" = "Afficher le volet d’aperçu automatiquement dans les vues Galerie et Colonnes";
 "prefs.recentsLabel" = "Les Récents affichent";
 "prefs.recentsModified" = "Modifiés récemment";
 "prefs.recentsOpened" = "Ouverts récemment";

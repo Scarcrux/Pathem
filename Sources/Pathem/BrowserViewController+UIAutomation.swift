@@ -144,6 +144,22 @@ extension BrowserViewController {
             check("cut-paste-no-duplicate-on-disk", srcEmptyOnDisk)
         }
 
+        // Scenario 5: switching a pane to Gallery must NOT auto-open the separate (far-right) preview
+        // pane. Gallery draws its own inline preview, so the extra pane just duplicated the selection
+        // across the window over the OTHER pane (the reported bug). Even with the old pref on.
+        do {
+            prefs.previewInGalleryView = true
+            let dir = makeDir("gallery") { d in
+                for i in 0..<6 { fm.createFile(atPath: d.appendingPathComponent("img-\(i).txt").path, contents: Data("x".utf8)) }
+            }
+            navigate(to: dir, expecting: 6)
+            setActiveViewMode(.gallery)
+            pumpRunLoop(0.6)
+            check("gallery-no-auto-preview-pane", !previewVisible, "previewVisible=\(previewVisible)")
+            setActiveViewMode(.list)  // restore
+            pumpRunLoop(0.3)
+        }
+
         for r in results {
             FileHandle.standardError.write(Data("UITEST: \(r.ok ? "PASS" : "FAIL")  \(r.name)  \(r.detail)\n".utf8))
         }

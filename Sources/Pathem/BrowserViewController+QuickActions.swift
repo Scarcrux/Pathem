@@ -225,21 +225,19 @@ extension BrowserViewController {
         syncAutoPreview()
     }
 
-    /// With the "preview in gallery" preference on, auto-open the preview pane while the
-    /// active pane is in gallery view (and close it again when leaving). Column view used
-    /// to auto-open it too, but it draws its own preview column now, so the auto pane just
-    /// duplicated the selected file right beside it.
+    /// Keep a manually-opened preview pane pointed at the current selection.
+    ///
+    /// Gallery and column both render their own inline preview now (gallery is a big Quick Look over
+    /// a filmstrip; column draws a preview column), so auto-opening the SEPARATE preview pane just
+    /// duplicated the selected file -- and because that pane docks at the far right of the window, a
+    /// left-pane gallery's preview landed clear across the window, over the unrelated right pane (the
+    /// reported bug). Column stopped auto-opening it earlier; gallery now does too. So nothing
+    /// auto-opens the pane any more; if a prior state auto-showed it, take it down.
     func syncAutoPreview() {
-        guard prefs.previewInGalleryView else { return }
-        let mode = activePane?.viewMode
-        let wantsPreview = (mode == .gallery)
-        if wantsPreview, !previewVisible {
-            togglePreviewPane()
-            previewAutoShown = true
-        } else if !wantsPreview, previewVisible, previewAutoShown {
-            togglePreviewPane()
+        if previewAutoShown {
+            if previewVisible { togglePreviewPane() }
             previewAutoShown = false
         }
-        updatePreview()
+        updatePreview()  // a pane the user opened by hand still tracks the selection
     }
 }

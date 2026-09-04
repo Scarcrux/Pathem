@@ -265,7 +265,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             check(L("prefs.verifyCopies", "Verify copies with a checksum (slower)"), \.verifyCopies),
             check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
             check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
-            check(L("prefs.previewInGallery", "Show the preview pane automatically in Gallery and Column views"), \.previewInGalleryView),
+            // (Removed "preview pane in Gallery/Column" toggle: both views draw their own inline
+            //  preview now, so the separate pane only duplicated the selection over the other pane.)
             check(L("prefs.dragFlickActions", "Super-drag: right-drag an item to flick it (with a swipe trail)"), \.dragFlickActions),
             labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
             folderHandlerControl(),

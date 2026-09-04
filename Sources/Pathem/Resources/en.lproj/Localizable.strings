@@ -1247,7 +1247,6 @@
 "prefs.newTabPosLabel" = "New tab position";
 "prefs.openConnectionsNewTab" = "Open connections in a new tab";
 "prefs.pathBarBottom" = "Show the path bar at the bottom";
-"prefs.previewInGallery" = "Show the preview pane automatically in Gallery and Column views";
 "prefs.recentsLabel" = "Recents shows";
 "prefs.recentsModified" = "Recently Modified";
 "prefs.recentsOpened" = "Recently Opened";
