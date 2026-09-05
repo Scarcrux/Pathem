@@ -86,11 +86,13 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var shelfShownConstraint: NSLayoutConstraint?
     let commanderBar = CommanderBar()  // orthodox F-key bar + command line (Commander mode)
     var commanderShownConstraint: NSLayoutConstraint?
-    let previewView = DocumentPreviewView()
-    var previewVisible = false
-    /// Durably pins the preview pane's width so it (and the panes) can't collapse; see
-    /// togglePreviewPane(). Mirrors sidebarWidthConstraint.
-    var previewWidthConstraint: NSLayoutConstraint?
+    /// The docked far-right Quick Look preview pane -- view, visibility, width pin, and the
+    /// auto-shown flag all live here now (god-object slice 5.6). Lazy so outerSplit and the
+    /// sidebar constraint exist by first use; its selection/width closures defer back to self.
+    lazy var previewPane = PreviewPaneController(
+        outerSplit: outerSplit,
+        selectedURL: { [weak self] in self?.activePane?.singleSelectedURL },
+        sidebarWidth: { [weak self] in self?.sidebarWidthConstraint?.constant ?? 200 })
     lazy var sizeBrowser = SizeBrowserController()
     lazy var clipboardViewer = ClipboardViewerController()
     lazy var cleanup = CleanupController()
@@ -793,7 +795,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     // BrowserViewController+QuickActions.swift (extensions can't hold stored properties).
     var quickBarScrollObserver: NSObjectProtocol?
     weak var quickBarObservedClip: NSClipView?
-    var previewAutoShown = false
 
 
     /// Apply (toggle) the named label carried by a "Label" menu item to the selection.

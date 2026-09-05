@@ -201,6 +201,10 @@ working_dir = "."
     title = "God-object: extracted palette/batch-rename/select-by-pattern into BrowserViewController+CommandSurfaces (1061 -> 1026 lines; cumulative 1578 -> 1026)"
     done = true
 
+  [[phase.task]]
+    title = "God-object: extracted PreviewPane STATE into an owned PreviewPaneController (view + visibility + width pin + auto-shown flag; 4 stored props -> 1; BrowserViewController 126 stored props). Deps via closures (selectedURL, sidebarWidth) like DeviceWatcher. Harness guards the toggle path: opens docked as a 3rd outerSplit subview, closes clean back to 2. Remaining 5.6: SplitLayout, MenuInstaller/LazyMenu."
+    done = true
+
 [[phase]]
   title = "Finder handoff & editor integration"
   status = "next"

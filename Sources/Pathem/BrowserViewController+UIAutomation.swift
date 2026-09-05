@@ -202,9 +202,27 @@ extension BrowserViewController {
             navigate(to: dir, expecting: 6)
             setActiveViewMode(.gallery)
             pumpRunLoop(0.6)
-            check("gallery-no-auto-preview-pane", !previewVisible, "previewVisible=\(previewVisible)")
+            check("gallery-no-auto-preview-pane", !previewPane.isVisible, "previewVisible=\(previewPane.isVisible)")
             setActiveViewMode(.list)  // restore
             pumpRunLoop(0.3)
+        }
+
+        // Scenario 6: the preview pane the user opens by hand shows then hides -- guards the toggle
+        // path after PreviewPaneController extraction (5.6). Asserts the pane docks into outerSplit
+        // (a third arranged subview) and that closing it removes it without collapsing the panes.
+        do {
+            let panesBefore = outerSplit.arrangedSubviews.count
+            togglePreviewPane()  // open
+            pumpRunLoop(0.3)
+            let opened = previewPane.isVisible
+                && outerSplit.arrangedSubviews.contains(previewPane.view)
+            check("preview-pane-opens-docked", opened, "visible=\(previewPane.isVisible) subviews=\(outerSplit.arrangedSubviews.count)")
+            togglePreviewPane()  // close
+            pumpRunLoop(0.3)
+            let closed = !previewPane.isVisible
+                && !outerSplit.arrangedSubviews.contains(previewPane.view)
+                && outerSplit.arrangedSubviews.count == panesBefore
+            check("preview-pane-closes-clean", closed, "visible=\(previewPane.isVisible) subviews=\(outerSplit.arrangedSubviews.count) before=\(panesBefore)")
         }
 
         for r in results {

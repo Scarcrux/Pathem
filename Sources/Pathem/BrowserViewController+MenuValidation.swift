@@ -50,7 +50,7 @@ extension BrowserViewController {
         case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
         case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
-        case "view.previewPane": menuItem.state = previewVisible ? .on : .off
+        case "view.previewPane": menuItem.state = previewPane.isVisible ? .on : .off
         case "shelf.toggle":
             menuItem.state = shelf.view.isHidden ? .off : .on
             menuItem.title = shelf.view.isHidden ? L("bvc.showShelf", "Show Drop Stack") : L("bvc.hideShelf", "Hide Drop Stack")

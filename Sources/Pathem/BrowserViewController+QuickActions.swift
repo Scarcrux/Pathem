@@ -8,48 +8,10 @@ import PathemEngine
 extension BrowserViewController {
 
     /// Show/hide the QuickLook preview pane docked at the right of the window.
-    func togglePreviewPane() {
-        previewVisible.toggle()
-        if previewVisible {
-            // Auto-layout, like the sidebar and panes -- a TAMIC arranged subview in an
-            // auto-layout NSSplitView breaks the split's width distribution and collapses
-            // the panes to zero (blanking both panes).
-            previewView.translatesAutoresizingMaskIntoConstraints = false
-            outerSplit.addArrangedSubview(previewView)  // [sidebar | panes | preview]
-            outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(255), forSubviewAt: 2)
-            // Durably pin the preview to a sane width so the panes always keep the rest. A
-            // bare setPosition() is transient in an auto-layout split and lets the preview
-            // (and the panes with it) collapse to zero; this constraint stays put and is
-            // still draggable (its priority is below the divider-drag priority).
-            let width = previewWidthConstraint ?? previewView.widthAnchor.constraint(equalToConstant: 300)
-            width.priority = NSLayoutConstraint.Priority(255)
-            width.isActive = true
-            previewWidthConstraint = width
-            // Seed the divider once so the split gives the preview its width now; the
-            // constraint then holds it durably across resizes and view swaps.
-            outerSplit.layoutSubtreeIfNeeded()
-            outerSplit.setPosition(
-                outerSplit.bounds.width - 300, ofDividerAt: outerSplit.arrangedSubviews.count - 2)
-            updatePreview()
-        } else {
-            previewView.show(nil)
-            previewWidthConstraint?.isActive = false
-            outerSplit.removeArrangedSubview(previewView)
-            previewView.removeFromSuperview()
-            // Hand the freed width back to the panes now: pin the sidebar|panes divider at the
-            // sidebar width so the panes fill the rest (removeArrangedSubview leaves a stale
-            // divider position otherwise, stranding the freed strip as dead space).
-            outerSplit.layoutSubtreeIfNeeded()
-            outerSplit.setPosition(sidebarWidthConstraint?.constant ?? 200, ofDividerAt: 0)
-            outerSplit.layoutSubtreeIfNeeded()
-        }
-    }
+    func togglePreviewPane() { previewPane.toggle() }
 
     /// Point the preview at the active pane's single selected file (when visible).
-    func updatePreview() {
-        guard previewVisible else { return }
-        previewView.show(activePane?.singleSelectedURL)
-    }
+    func updatePreview() { previewPane.update() }
 
     /// Show/hide the floating quick-actions bar for the active pane's selection, and place
     /// it next to the selected rows.
@@ -225,19 +187,7 @@ extension BrowserViewController {
         syncAutoPreview()
     }
 
-    /// Keep a manually-opened preview pane pointed at the current selection.
-    ///
-    /// Gallery and column both render their own inline preview now (gallery is a big Quick Look over
-    /// a filmstrip; column draws a preview column), so auto-opening the SEPARATE preview pane just
-    /// duplicated the selected file -- and because that pane docks at the far right of the window, a
-    /// left-pane gallery's preview landed clear across the window, over the unrelated right pane (the
-    /// reported bug). Column stopped auto-opening it earlier; gallery now does too. So nothing
-    /// auto-opens the pane any more; if a prior state auto-showed it, take it down.
-    func syncAutoPreview() {
-        if previewAutoShown {
-            if previewVisible { togglePreviewPane() }
-            previewAutoShown = false
-        }
-        updatePreview()  // a pane the user opened by hand still tracks the selection
-    }
+    /// Keep a manually-opened preview pane pointed at the current selection; see
+    /// PreviewPaneController.syncAuto() for why nothing auto-opens the pane any more.
+    func syncAutoPreview() { previewPane.syncAuto() }
 }
