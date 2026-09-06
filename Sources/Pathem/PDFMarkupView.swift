@@ -76,30 +76,39 @@ final class PDFMarkupView: PDFView {
     func redoMarkup() { if markupUndo.canRedo { markupUndo.redo() } }
 
     /// Register the add so undo removes it (and redo re-adds it, symmetrically).
+    // NSUndoManager fires its handlers on the main thread, so assumeIsolated is safe; it is needed
+    // because the older CI toolchain types the handler as a nonisolated closure and PDFKit's
+    // PDFPage/PDFAnnotation are not Sendable there.
     private func registerAddUndo(_ annotation: PDFAnnotation, _ page: PDFPage) {
         markupUndo.registerUndo(withTarget: self) { view in
-            page.removeAnnotation(annotation)
-            view.registerRemoveUndo(annotation, page)
-            view.markEdited()
+            MainActor.assumeIsolated {
+                page.removeAnnotation(annotation)
+                view.registerRemoveUndo(annotation, page)
+                view.markEdited()
+            }
         }
     }
 
     private func registerRemoveUndo(_ annotation: PDFAnnotation, _ page: PDFPage) {
         markupUndo.registerUndo(withTarget: self) { view in
-            page.addAnnotation(annotation)
-            view.registerAddUndo(annotation, page)
-            view.markEdited()
+            MainActor.assumeIsolated {
+                page.addAnnotation(annotation)
+                view.registerAddUndo(annotation, page)
+                view.markEdited()
+            }
         }
     }
 
     private func registerMoveUndo(_ annotation: PDFAnnotation, from origin: CGPoint) {
         let restored = origin
         markupUndo.registerUndo(withTarget: self) { view in
-            let current = annotation.bounds.origin
-            annotation.bounds = CGRect(origin: restored, size: annotation.bounds.size)
-            view.registerMoveUndo(annotation, from: current)
-            view.setNeedsDisplay(view.bounds)
-            view.markEdited()
+            MainActor.assumeIsolated {
+                let current = annotation.bounds.origin
+                annotation.bounds = CGRect(origin: restored, size: annotation.bounds.size)
+                view.registerMoveUndo(annotation, from: current)
+                view.setNeedsDisplay(view.bounds)
+                view.markEdited()
+            }
         }
     }
 

@@ -10,7 +10,10 @@ final class WindowManager {
     static let shared = WindowManager()
 
     /// Retains a window together with its browser and acts as the window's delegate so a close
-    /// tears down that window's embedded shell (and persists the primary session).
+    /// tears down that window's embedded shell (and persists the primary session). Main-actor
+    /// isolated (the enclosing manager is) so setting window.delegate is legal under the CI SDK,
+    /// where NSWindow.delegate is main-actor-isolated.
+    @MainActor
     private final class Host: NSObject, NSWindowDelegate {
         let window: NSWindow
         let browser: BrowserViewController

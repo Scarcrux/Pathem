@@ -96,15 +96,17 @@ final class SizeBrowserController: NSObject {
         rows.arrangedSubviews.forEach { $0.removeFromSuperview() }
         spinner.startAnimation(nil)
         let generation = gen.bump()
-        Task.detached(priority: .utility) { [weak self] in
-            // Ranked, symlink-safe child sizing (a symlink to a big tree can't inflate a row).
-            let sized = DiskUsage.rankedChildren(of: url, includingHidden: false)
-                .map { (name: $0.name, size: $0.bytes, isDir: $0.isDirectory) }
-            await MainActor.run {
-                guard let self, self.gen.isCurrent(generation) else { return }
-                self.spinner.stopAnimation(nil)
-                self.render(sized)
-            }
+        // Main-actor Task so `self` stays on the main actor (the older CI toolchain flags sending
+        // it into MainActor.run); the ranked, symlink-safe child sizing runs on a detached task
+        // that captures only the Sendable `url`.
+        Task { [weak self] in
+            let sized = await Task.detached(priority: .utility) {
+                DiskUsage.rankedChildren(of: url, includingHidden: false)
+                    .map { (name: $0.name, size: $0.bytes, isDir: $0.isDirectory) }
+            }.value
+            guard let self, self.gen.isCurrent(generation) else { return }
+            self.spinner.stopAnimation(nil)
+            self.render(sized)
         }
     }
 

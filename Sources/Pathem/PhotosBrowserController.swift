@@ -281,11 +281,16 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         OperationQueue()  // a fresh queue per promise; AppKit retains it for the write
     }
 
+    // No @Sendable on completionHandler: the older CI SDK types this requirement without it, and a
+    // less-constrained witness satisfies the protocol on both SDKs. The handler is documented as
+    // called once; the nonisolated(unsafe) local lets it cross into the Task without a Sendable
+    // error while remaining safe in practice.
     nonisolated func filePromiseProvider(
         _ provider: NSFilePromiseProvider, writePromiseTo url: URL,
-        completionHandler: @escaping @Sendable (Error?) -> Void
+        completionHandler: @escaping (Error?) -> Void
     ) {
         let id = provider.userInfo as? String
+        nonisolated(unsafe) let completionHandler = completionHandler
         Task {
             guard let id else { completionHandler(PhotoLibrary.ExportError.noResource); return }
             do {

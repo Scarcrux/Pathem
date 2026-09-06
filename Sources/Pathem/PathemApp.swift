@@ -1431,12 +1431,17 @@ enum PathemApp {
         let clip = controller.scrollView.contentView
         let start = Date()
         Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
-            let maxY = max(0, controller.tableView.frame.height - clip.bounds.height)
-            let t = min(1, Date().timeIntervalSince(start) / max(0.1, duration))
-            let eased = t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2  // ease-in-out
-            clip.scroll(to: NSPoint(x: 0, y: maxY * CGFloat(eased)))
-            controller.scrollView.reflectScrolledClipView(clip)
-            if t >= 1 { timer.invalidate(); exit(0) }
+            // Keep the non-Sendable `timer` out of the main-actor closure (act on it outside); the
+            // timer fires on the main run loop, so assumeIsolated is safe for the UI touches.
+            let done = MainActor.assumeIsolated { () -> Bool in
+                let maxY = max(0, controller.tableView.frame.height - clip.bounds.height)
+                let t = min(1, Date().timeIntervalSince(start) / max(0.1, duration))
+                let eased = t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2  // ease-in-out
+                clip.scroll(to: NSPoint(x: 0, y: maxY * CGFloat(eased)))
+                controller.scrollView.reflectScrolledClipView(clip)
+                return t >= 1
+            }
+            if done { timer.invalidate(); exit(0) }
         }
     }
 

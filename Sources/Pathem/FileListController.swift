@@ -1633,7 +1633,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         Self.key(base: entry.location ?? directoryPath, name: entry.name)
     }
 
-    private static func key(base: String?, name: String) -> String {
+    // Pure string join, so it is safe to call from the background folder-size work (nonisolated
+    // keeps it callable off the main actor under the CI toolchain's stricter isolation checking).
+    nonisolated private static func key(base: String?, name: String) -> String {
         guard let base else { return name }
         return (base as NSString).appendingPathComponent(name)
     }

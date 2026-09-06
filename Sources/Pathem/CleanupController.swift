@@ -253,17 +253,16 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         spinner.startAnimation(nil)
         let generation = gen.bump()
         let url = root
-        Task.detached(priority: .utility) { [weak self] in
-            let quick = StorageScan.scanQuick(url)
-            await MainActor.run {
-                guard let self, self.gen.isCurrent(generation) else { return }
-                self.applyQuick(quick)
-            }
-            let dups = StorageScan.duplicates(url)
-            await MainActor.run {
-                guard let self, self.gen.isCurrent(generation) else { return }
-                self.applyDuplicates(dups)
-            }
+        // Main-actor Task so `self` never crosses an isolation boundary (the older CI toolchain
+        // flags sending a non-Sendable self into MainActor.run); the blocking scans run on
+        // detached tasks that capture only the Sendable `url`.
+        Task { [weak self] in
+            let quick = await Task.detached(priority: .utility) { StorageScan.scanQuick(url) }.value
+            guard let self, self.gen.isCurrent(generation) else { return }
+            self.applyQuick(quick)
+            let dups = await Task.detached(priority: .utility) { StorageScan.duplicates(url) }.value
+            guard self.gen.isCurrent(generation) else { return }
+            self.applyDuplicates(dups)
         }
     }
 

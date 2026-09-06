@@ -16,7 +16,7 @@ final class DeviceWatcher {
     func start() {
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
-            self?.refresh()
+            MainActor.assumeIsolated { self?.refresh() }  // the timer fires on the main run loop
         }
     }
 
