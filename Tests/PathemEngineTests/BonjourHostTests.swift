@@ -5,7 +5,7 @@ import Testing
 @Suite struct BonjourHostTests {
     @Test func stripsTheTrailingRootDot() {
         // The exact shape that caused the "Couldn't mount ..." failure.
-        #expect(BonjourHost.normalized("studios-macbook-pro.local.") == "studios-macbook-pro.local")
+        #expect(BonjourHost.normalized("studio-macbook-pro.local.") == "studio-macbook-pro.local")
         #expect(BonjourHost.normalized("Studio-Mac.local.") == "Studio-Mac.local")
     }
 

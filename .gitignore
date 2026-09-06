@@ -43,3 +43,4 @@ docs/demo/*.mov
 
 # Cloudflare Wrangler local cache/tmp (site Worker); regenerated on every dev run
 .wrangler/
+.claude/
