@@ -71,6 +71,15 @@ jobs:
       - name: UI smoke (layout invariants)
         run: |
           # Run the built binary directly (not `swift run`, whose wrapper can swallow a crash
-          # backtrace) with Swift's backtrace-on-crash on, so a trap prints where it happened.
+          # backtrace) with Swift's backtrace-on-crash on. Capture head + the trap reason + tail
+          # and propagate the real exit code (a piped tail would mask a crash).
           swift build 2>&1 | tail -1
-          SWIFT_BACKTRACE=enable=yes,interactive=no PATHEM_SMOKE=1 .build/debug/Pathem 2>&1 | tail -80
+          rc=0
+          SWIFT_BACKTRACE=enable=yes,interactive=no PATHEM_SMOKE=1 .build/debug/Pathem \
+            > "$RUNNER_TEMP/smoke.log" 2>&1 || rc=$?
+          echo "smoke exit=$rc"
+          echo "==== head ===="; head -40 "$RUNNER_TEMP/smoke.log"
+          echo "==== trap reason ===="
+          grep -iE "BUG IN CLIENT|Fatal error|Crashed|signal|assert|precondition|exception|libdispatch|libxpc|CFRunLoop|Inconsistency|Illegal|main thread" "$RUNNER_TEMP/smoke.log" | head -20
+          echo "==== tail ===="; tail -25 "$RUNNER_TEMP/smoke.log"
+          exit $rc
