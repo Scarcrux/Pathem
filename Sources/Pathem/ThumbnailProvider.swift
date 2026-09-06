@@ -54,6 +54,10 @@ final class ThumbnailProvider {
     /// Generate a thumbnail off the main thread; `completion` runs on the main actor
     /// only if a representation is produced (callers guard against cell reuse).
     func generate(_ url: URL, size: CGSize, scale: CGFloat, completion: @escaping (NSImage) -> Void) {
+        // QuickLook thumbnailing depends on an XPC agent that a headless automation/CI session
+        // lacks; there the framework traps ("BUG IN CLIENT OF ..." on a background thread).
+        // Thumbnails aren't under test in that mode, so skip generation and leave the type icon.
+        if PathemApp.isAutomationLaunch { return }
         let cacheKey = key(url, size)
         if let hit = cache.object(forKey: cacheKey as NSString) {
             completion(hit)
