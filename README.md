@@ -77,9 +77,11 @@ is faster.)
   Drive) and never silently downloads online-only files just to list or index them.
 - Remote and cloud transfer, built in: connect to S3 (and S3-compatible stores like
   Backblaze B2, Google Cloud Storage, and Wasabi), Azure Blob, WebDAV, SFTP, and
-  FTP, and copy to and from them with a progress and cancel sheet. Saved sites carry
-  color labels, groups, per-site path bookmarks, and a paired local folder. Every
-  network backend runs out-of-process.
+  FTP, and copy to and from them with a progress and cancel sheet. SFTP and FTP are
+  covered by live round-trip tests against real servers; the S3, Azure, and WebDAV
+  backends are covered by request-signing and parser unit tests (no live-server test
+  in the suite yet). Saved sites carry color labels, groups, per-site path bookmarks,
+  and a paired local folder. Every network backend runs out-of-process.
 - Git-aware. Files in a repository show status badges (modified, staged,
   untracked), and "Reclaim in Repo" tells regenerable build output (safe to
   clean) from precious untracked data (worth backing up).
@@ -131,10 +133,12 @@ Pathem also seeds: connections are bidirectional, so it serves pieces to peers (
 client, peer wire protocol, metadata exchange, SHA-1 piece verification, sparse file
 storage, seeding, DHT) is unit-tested, including an end-to-end test where a real
 leecher downloads a file from a real seeder over TCP and verifies it byte-for-byte.
-Peers come from HTTP trackers and from the mainline DHT (BEP 5), so a trackerless
-magnet still finds peers, and NAT-PMP asks your router to forward the port so peers
-behind common home NAT can reach you. UPnP-IGD (for routers that speak only UPnP) and
-peer exchange are on the roadmap.
+Peers come from HTTP trackers, from the mainline DHT (BEP 5) so a trackerless
+magnet still finds peers, and from peer exchange (PEX, receive side). To accept
+incoming peers behind common home NAT, Pathem asks your router to forward the
+port via NAT-PMP, falling back to UPnP-IGD for routers that speak only UPnP.
+Message-stream encryption (MSE) is supported; µTP is experimental (off by
+default, outbound only, and not yet tested against a third-party client).
 
 ## Why it's fast
 
@@ -172,15 +176,18 @@ each of these).
 
 ## Install
 
-### Download (notarized)
+Build from source today (below). A prebuilt download is not published yet.
 
-Grab the latest `Pathem-<version>.dmg` from
-[Releases](https://github.com/Scarcrux/Pathem/releases): a universal (Apple
-Silicon + Intel), Developer ID-signed, notarized, stapled build. Open the disk
-image and drag `Pathem.app` to Applications. No Gatekeeper warnings, no build
-step. These builds **update themselves** via Sparkle (App menu > Check for
-Updates…). Releases are produced automatically by the `Release` workflow when a
-`v*` tag is pushed.
+### Download (coming with the first release)
+
+There is no `.dmg` on [Releases](https://github.com/Scarcrux/Pathem/releases)
+yet. The first tagged release will be a universal (Apple Silicon + Intel),
+Developer ID-signed, notarized, stapled build you can drag to Applications with
+no Gatekeeper warnings and no build step, and it will update itself via Sparkle
+(App menu > Check for Updates…). The release pipeline that produces it
+(`.github/workflows/release.yml`, triggered on a `v*` tag) is in place; the
+signing keys and notarization credentials are the remaining setup. Until then,
+build from source.
 
 ### Build from source
 
