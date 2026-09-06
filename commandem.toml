@@ -700,8 +700,15 @@ working_dir = "."
 
 [[phase]]
   title = "Pre-release audit: 3 blockers, honest-copy gaps, one real bug fixed"
-  status = "now"
+  status = "done"
   note = "Three-way audit (secrets/PII, release mechanics, claims-vs-evidence) before the public flip. FIXED during audit: flaky MSE test was a real decryption bug (0029efb); first-name PII removed from BonjourHost source+test; .claude/settings.json untracked. BLOCKERS remaining: (1) surname in git history via old ai.scarcrux bundle id, needs history rewrite or fresh-history publish before any flip; (2) private AppRelaunch dep means a public Pathem cannot swift build for anyone, and is why all 42 CI runs are red for a month (APPRELAUNCH_TOKEN auth fails), making the README CI-gated claim false in practice; (3) README Install section states a notarized self-updating DMG as fact but zero release assets ever shipped, release.yml fails on every tag in ~10s (missing secrets), Sparkle key is a placeholder. HONESTY GAPS: torrent copy contradicts itself (README says PEX/UPnP on-roadmap, site sells them as built; uTP off-by-default and never tested vs a real client); 8 remote backends marketed, only FTP+SFTP live-tested; 2 screenshots render staged fake data (discovery hosts, torrent statuses); dual CFBundleVersion schemes (plist 24 vs tag-derived 9000) would make Sparkle rank a later local release older. Graded strengths: Gate A harness real and reproducible; smoke+UI suites substantive; security hardening genuinely tested."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+[[phase]]
+  title = "Audit blockers resolved: history rewritten, AppRelaunch vendored, copy corrected"
+  status = "done"
+  note = "Cleared the three pre-flip blockers from phase 38. (1) git history rewrite: git filter-repo redacted the personal surname (old bundle id) and first name from every blob and commit message across all 22 tags; verified 0 pickaxe hits across all refs and a clean tree; force-pushed to origin (backups: /tmp bundle + mirror). Note: the surviving CI/download claims are true once CI is green and a release exists. (2) AppRelaunch vendored in-tree as a local Swift-5-mode target (commit a968bb7): a credential-free clone now builds and the APPRELAUNCH_TOKEN CI step is gone, so ci.yml should go green (it needed no secrets). (3) README+site copy corrected (aae8a0c): Download reframed as coming-with-first-release, PEX/UPnP marked shipped, uTP marked experimental, remote backends note live-tested vs unit-tested. STILL OPEN before an actual public flip (owner action): set the Sparkle key + release secrets and cut one real notarized release; unify the dual CFBundleVersion schemes; re-render the 2 staged screenshots (discovery hosts, torrent drawer) with real data; confirm ci.yml actually goes green on the next push."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
 # <<< commandem roadmap <<<
