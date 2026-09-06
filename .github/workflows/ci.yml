@@ -39,7 +39,21 @@ jobs:
         run: swift build
 
       - name: Engine tests
-        run: swift test
+        run: |
+          set -o pipefail
+          # Bounded + serial so a test that blocks on an absent CI service (a socket with no
+          # timeout, say) fails fast and names itself -- the last "started" without a matching
+          # "passed" is the culprit -- instead of burning the whole job. 12 min is ~40x the
+          # ~17s local run, so it only trips on a real hang.
+          timeout 720 swift test --no-parallel 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" = "124" ]; then
+            echo "::error::swift test timed out (likely a test blocking on an absent CI service)"
+            echo "---- last test events ----"
+            grep -E "started\.?$|passed|failed" "$RUNNER_TEMP/swift-test.log" | tail -8
+            exit 1
+          fi
+          exit "$rc"
 
       # Gate A proves the table virtualizes a 1M-row dataset; the smoke test asserts
       # the window/pane layout invariants (the structural GUI bugs the unit tests can't
