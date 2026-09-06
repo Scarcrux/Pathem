@@ -711,4 +711,11 @@ working_dir = "."
   note = "Cleared the three pre-flip blockers from phase 38. (1) git history rewrite: git filter-repo redacted the personal surname (old bundle id) and first name from every blob and commit message across all 22 tags; verified 0 pickaxe hits across all refs and a clean tree; force-pushed to origin (backups: /tmp bundle + mirror). Note: the surviving CI/download claims are true once CI is green and a release exists. (2) AppRelaunch vendored in-tree as a local Swift-5-mode target (commit a968bb7): a credential-free clone now builds and the APPRELAUNCH_TOKEN CI step is gone, so ci.yml should go green (it needed no secrets). (3) README+site copy corrected (aae8a0c): Download reframed as coming-with-first-release, PEX/UPnP marked shipped, uTP marked experimental, remote backends note live-tested vs unit-tested. STILL OPEN before an actual public flip (owner action): set the Sparkle key + release secrets and cut one real notarized release; unify the dual CFBundleVersion schemes; re-render the 2 staged screenshots (discovery hosts, torrent drawer) with real data; confirm ci.yml actually goes green on the next push."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Blocker 4 (newly found): CI has never compiled the repo on the runner SDK"
+  status = "now"
+  note = "Vendoring AppRelaunch got CI past the auth failure that masked everything, revealing CI has NEVER successfully compiled (0/45 runs, failures back to 2026-06-22). Cause: dev machine is macOS 26 SDK (Swift 6.3.3) where CIContext/DateFormatter/NSRegularExpression are Sendable, so non-isolated static lets of them compile locally; the macos-15 runner SDK does not mark them Sendable, so each is a Swift 6 strict-concurrency error there. The macOS 15 SDK cannot be reproduced on this machine (SDK ships with Xcode, not the toolchain), so CI is the only instrument. Fixed the whole PathemEngine set (SubjectLift.ciContext, ProcessList/BatchRename regexes, WebDAV/Azure/S3/ImageMetadata formatters) with nonisolated(unsafe) -- convicted by the language rule, not guessed. Engine builds locally. App-target statics verified next via CI. Commit e605748."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<
