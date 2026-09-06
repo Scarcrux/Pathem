@@ -23,20 +23,20 @@ let package = Package(
         // notarized direct-download build's update feed (DESIGN.md). A linked
         // framework, embedded and signed by scripts/package.sh.
         .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
-        // AppRelaunch: the shared stale-build watcher (notices when a newer bundle is installed
-        // under the running process and offers a relaunch). Kept as ONE source of truth with the
-        // commandem menubar rather than a drifting copy -- the value is the accumulated incident
-        // lessons (read-by-path, the grace margin, non-fatal relaunch). Its own repo (not a sibling
-        // path dep) so a lone checkout -- CI, a clean clone, the eventual public clone -- resolves
-        // it the same way it resolves SwiftTerm and Sparkle. Tracks `main` while the package is
-        // still settling; pin a tag once it stabilizes. The repo is private for now, so CI needs a
-        // read token to fetch it (see .github/workflows/ci.yml); flipping it public later is a
-        // repo-visibility change with zero edits here.
-        .package(url: "https://github.com/Scarcrux/AppRelaunch.git", branch: "main"),
     ],
     targets: [
         // The engine: enumeration, watching, file ops, search. No AppKit.
         .target(name: "PathemEngine"),
+
+        // AppRelaunch: the shared stale-build watcher (notices when a newer bundle is installed
+        // under the running process and offers a relaunch). Vendored in-tree as a local target
+        // rather than a remote package so a lone checkout -- CI, a clean clone, the public clone --
+        // builds with zero credentials. The upstream (shared with the commandem menubar) stays the
+        // source of truth; re-vendor from there when it changes. See Sources/AppRelaunch for the
+        // provenance header. Pinned to the Swift 5 language mode it was written in (the upstream
+        // package is swift-tools 5.9) so the vendored copy compiles unedited under Pathem's 6.1
+        // tools; re-vendoring stays a pure file copy.
+        .target(name: "AppRelaunch", swiftSettings: [.swiftLanguageMode(.v5)]),
 
         // Optional terminal module: an embedded shell pane that follows the
         // active folder. Isolates the SwiftTerm dependency from everything else;
@@ -52,9 +52,8 @@ let package = Package(
         .executableTarget(
             name: "Pathem",
             dependencies: [
-                "PathemEngine", "PathemTerminal", "TorrentKit",
+                "PathemEngine", "PathemTerminal", "TorrentKit", "AppRelaunch",
                 .product(name: "Sparkle", package: "Sparkle"),
-                .product(name: "AppRelaunch", package: "AppRelaunch"),
             ],
             resources: [.process("Resources")]  // localized .strings (en, es, …)
         ),
@@ -64,6 +63,11 @@ let package = Package(
             name: "PathemEngineTests",
             dependencies: ["PathemEngine"]
         ),
+
+        // AppRelaunch tests (vendored alongside the target).
+        .testTarget(
+            name: "AppRelaunchTests", dependencies: ["AppRelaunch"],
+            swiftSettings: [.swiftLanguageMode(.v5)]),
 
         // Out-of-process helper that browses a paired iOS device over AFC (usbmux +
         // lockdown + TLS + AFC). The app invokes this binary so untrusted device parsing
