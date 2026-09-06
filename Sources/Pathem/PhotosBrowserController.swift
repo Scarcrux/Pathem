@@ -281,23 +281,27 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         OperationQueue()  // a fresh queue per promise; AppKit retains it for the write
     }
 
+    /// Carries the non-Sendable AppKit completion closure across the Task boundary. AppKit calls
+    /// the handler exactly once, off the main thread, so an @unchecked Sendable box is safe.
+    private struct CompletionBox: @unchecked Sendable { let call: (Error?) -> Void }
+
     // No @Sendable on completionHandler: the older CI SDK types this requirement without it, and a
-    // less-constrained witness satisfies the protocol on both SDKs. The handler is documented as
-    // called once; the nonisolated(unsafe) local lets it cross into the Task without a Sendable
-    // error while remaining safe in practice.
+    // less-constrained witness satisfies the protocol on both SDKs. The box makes the capture into
+    // the Task explicitly Sendable (nonisolated(unsafe) on a local is not enough for the older
+    // toolchain's "closure as a sending parameter" check).
     nonisolated func filePromiseProvider(
         _ provider: NSFilePromiseProvider, writePromiseTo url: URL,
         completionHandler: @escaping (Error?) -> Void
     ) {
         let id = provider.userInfo as? String
-        nonisolated(unsafe) let completionHandler = completionHandler
+        let completion = CompletionBox(call: completionHandler)
         Task {
-            guard let id else { completionHandler(PhotoLibrary.ExportError.noResource); return }
+            guard let id else { completion.call(PhotoLibrary.ExportError.noResource); return }
             do {
                 try await PhotoLibrary.writeOriginal(assetID: id, to: url)
-                completionHandler(nil)
+                completion.call(nil)
             } catch {
-                completionHandler(error)
+                completion.call(error)
             }
         }
     }

@@ -584,44 +584,46 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let includeHidden = format.showHidden || showHiddenByDefault
         let fmt = format
         let generation = reloadGen.bump()
-        Task.detached(priority: .userInitiated) { [weak self] in
-            let outcome: Result<[FileEntry], Error>
-            do {
-                let entries = try BulkEnumerator().entries(of: dir, includingHidden: includeHidden)
-                outcome = .success(fmt.sorted(entries))
-            } catch {
-                outcome = .failure(error)
-            }
-            await MainActor.run {
-                // Apply only if still the same listing (see canApplyListing). directoryURL was
-                // already set synchronously above, so drag works even if this completion is dropped.
-                guard let self, self.canApplyListing(for: dir, generation: generation) else { return }
-                switch outcome {
-                case .success(let sorted):
-                    self.displayEntries(sorted, preserveState: preserveState)
-                    // setEntries refreshes only the root column; re-enumerate drilled ones too
-                    // so a file op inside a drilled column shows its result (no-op elsewhere).
-                    if preserveState { self.content.refreshDrilledColumns() }
-                    self.content.showPlaceholder(
-                        sorted.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
-                case .failure:
-                    // A read failure (permission denied, missing) looks identical to an
-                    // empty folder unless we say so.
-                    self.displayEntries([], preserveState: false)
-                    self.content.showPlaceholder(
-                        L(
-                            "pane.readFolderFailed",
-                            "Couldn’t read this folder.\nPathem may need Full Disk Access "
-                                + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
-                    self.permissionButton.isHidden = false  // give the failure an action
+        // Main-actor Task so `self` never crosses an isolation boundary (the older CI toolchain
+        // flags sending a non-Sendable self into MainActor.run); the blocking enumeration + sort
+        // runs on a detached task that captures only Sendable values (dir, fmt, includeHidden).
+        Task { [weak self] in
+            let outcome: Result<[FileEntry], Error> = await Task.detached(priority: .userInitiated) {
+                do {
+                    let entries = try BulkEnumerator().entries(of: dir, includingHidden: includeHidden)
+                    return .success(fmt.sorted(entries))
+                } catch {
+                    return .failure(error)
                 }
-                // Carry a queued selection into the fresh content (view-mode swap), then run any
-                // queued follow-up (e.g. "new folder, now rename it") now that its row exists and is
-                // selected -- and drop the redundant watcher refresh that would cancel the rename.
-                self.applyPendingAfterListing()
-                self.updateStatus()
-                self.refreshGitStatusAsync()
+            }.value
+            // Apply only if still the same listing (see canApplyListing). directoryURL was
+            // already set synchronously above, so drag works even if this completion is dropped.
+            guard let self, self.canApplyListing(for: dir, generation: generation) else { return }
+            switch outcome {
+            case .success(let sorted):
+                self.displayEntries(sorted, preserveState: preserveState)
+                // setEntries refreshes only the root column; re-enumerate drilled ones too
+                // so a file op inside a drilled column shows its result (no-op elsewhere).
+                if preserveState { self.content.refreshDrilledColumns() }
+                self.content.showPlaceholder(
+                    sorted.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+            case .failure:
+                // A read failure (permission denied, missing) looks identical to an
+                // empty folder unless we say so.
+                self.displayEntries([], preserveState: false)
+                self.content.showPlaceholder(
+                    L(
+                        "pane.readFolderFailed",
+                        "Couldn’t read this folder.\nPathem may need Full Disk Access "
+                            + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
+                self.permissionButton.isHidden = false  // give the failure an action
             }
+            // Carry a queued selection into the fresh content (view-mode swap), then run any
+            // queued follow-up (e.g. "new folder, now rename it") now that its row exists and is
+            // selected -- and drop the redundant watcher refresh that would cancel the rename.
+            self.applyPendingAfterListing()
+            self.updateStatus()
+            self.refreshGitStatusAsync()
         }
         breadcrumb.setURL(nav.current)
         // Inside an archive, show a friendly "archive ▸ sub ▸ dir" label, not the raw
@@ -742,24 +744,24 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let dir = nav.current
         ReloadDebug.log("git-refresh folder=\(dir.lastPathComponent)")
         let generation = gitGen.bump()
-        Task.detached(priority: .utility) { [weak self] in
+        // Main-actor Task so `self` stays on the main actor (the older CI toolchain flags sending it
+        // into MainActor.run); GitStatus.status does its work off-main internally across the await.
+        Task { [weak self] in
             let info = await GitStatus.status(for: dir)
-            await MainActor.run {
-                guard let self, self.gitGen.isCurrent(generation), self.remote == nil, !self.smartActive,
-                    self.nav.current == dir
-                else { return }
-                // git reports the canonical repo root (symlinks resolved), but the list
-                // keys rows by the displayed (possibly symlinked) path. Remap so badges
-                // match when the folder is reached through a symlink (e.g. /tmp).
-                self.content.setGitStates(Self.remapStates(info?.states ?? [:], to: dir))
-                self.gitSummary = info.map { gitInfo in
-                    var parts = ["\u{2387} \(gitInfo.branch ?? L("pane.gitDetached", "detached"))"]  // ⎇ branch
-                    if gitInfo.ahead > 0 { parts.append("\u{2191}\(gitInfo.ahead)") }
-                    if gitInfo.behind > 0 { parts.append("\u{2193}\(gitInfo.behind)") }
-                    return parts.joined(separator: " ")
-                }
-                self.updateStatus()
+            guard let self, self.gitGen.isCurrent(generation), self.remote == nil, !self.smartActive,
+                self.nav.current == dir
+            else { return }
+            // git reports the canonical repo root (symlinks resolved), but the list
+            // keys rows by the displayed (possibly symlinked) path. Remap so badges
+            // match when the folder is reached through a symlink (e.g. /tmp).
+            self.content.setGitStates(Self.remapStates(info?.states ?? [:], to: dir))
+            self.gitSummary = info.map { gitInfo in
+                var parts = ["\u{2387} \(gitInfo.branch ?? L("pane.gitDetached", "detached"))"]  // ⎇ branch
+                if gitInfo.ahead > 0 { parts.append("\u{2191}\(gitInfo.ahead)") }
+                if gitInfo.behind > 0 { parts.append("\u{2193}\(gitInfo.behind)") }
+                return parts.joined(separator: " ")
             }
+            self.updateStatus()
         }
     }
 
