@@ -40,20 +40,26 @@ jobs:
 
       - name: Engine tests
         run: |
-          set -o pipefail
-          # Bounded + serial so a test that blocks on an absent CI service (a socket with no
-          # timeout, say) fails fast and names itself -- the last "started" without a matching
-          # "passed" is the culprit -- instead of burning the whole job. 12 min is ~40x the
-          # ~17s local run, so it only trips on a real hang.
-          timeout 720 swift test --no-parallel 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
-          rc=${PIPESTATUS[0]}
-          if [ "$rc" = "124" ]; then
-            echo "::error::swift test timed out (likely a test blocking on an absent CI service)"
+          # Serial (--no-parallel) so a test that blocks on an absent CI service names itself:
+          # the last "started" without a matching "passed" is the culprit. macOS has no GNU
+          # `timeout`, so a background watchdog bounds the run (12 min is ~40x the ~17s local
+          # run) and kills the test process tree so a hang fails fast instead of burning the job.
+          log="$RUNNER_TEMP/swift-test.log"
+          swift test --no-parallel > "$log" 2>&1 &
+          pid=$!
+          ( sleep 720; echo "WATCHDOG: killing hung swift test" >> "$log"; \
+            kill -9 "$pid" 2>/dev/null; pkill -9 -P "$pid" 2>/dev/null; \
+            pkill -9 xctest 2>/dev/null; pkill -9 -f PathemPackageTests 2>/dev/null ) &
+          wd=$!
+          wait "$pid"; rc=$?
+          kill "$wd" 2>/dev/null || true
+          tail -30 "$log"
+          if [ "$rc" != "0" ]; then
+            echo "::error::swift test failed or was killed (rc=$rc)"
             echo "---- last test events ----"
-            grep -E "started\.?$|passed|failed" "$RUNNER_TEMP/swift-test.log" | tail -8
+            grep -E "started|passed|failed|error:" "$log" | tail -12
             exit 1
           fi
-          exit "$rc"
 
       # Gate A proves the table virtualizes a 1M-row dataset; the smoke test asserts
       # the window/pane layout invariants (the structural GUI bugs the unit tests can't
