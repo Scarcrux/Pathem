@@ -14,7 +14,9 @@ public enum WebDAVListParser {
         return delegate.entries
     }
 
-    private static let httpDate: DateFormatter = {
+    // Configured once, used read-only for parsing (thread-safe). The older CI SDK does not mark
+    // DateFormatter Sendable; nonisolated(unsafe) states the safety for both toolchains.
+    private nonisolated(unsafe) static let httpDate: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone(identifier: "GMT")

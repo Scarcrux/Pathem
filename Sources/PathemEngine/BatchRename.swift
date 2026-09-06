@@ -128,7 +128,7 @@ public enum BatchRename {
 
     /// The `{token}` vocabulary a rename prefix/suffix can use. Unknown tokens expand to empty.
     /// Dates take an optional strftime-style format after a colon, e.g. `{date:yyyyMMdd}`.
-    static let tokenPattern = try! NSRegularExpression(pattern: #"\{([a-zA-Z.]+)(?::([^}]*))?\}"#)
+    nonisolated(unsafe) static let tokenPattern = try! NSRegularExpression(pattern: #"\{([a-zA-Z.]+)(?::([^}]*))?\}"#)
 
     static func expandTokens(_ text: String, original: String, context: RenameContext) -> String {
         guard text.contains("{") else { return text }

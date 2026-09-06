@@ -59,7 +59,7 @@ public enum ImageMetadata {
 
     /// EXIF stores dates as "yyyy:MM:dd HH:mm:ss" in no particular timezone; read and
     /// write use the same fixed formatter so a round-trip is stable.
-    private static let exifDate: DateFormatter = {
+    private nonisolated(unsafe) static let exifDate: DateFormatter = {  // read-only shared; see note below
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"

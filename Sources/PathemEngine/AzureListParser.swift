@@ -39,7 +39,7 @@ public enum AzureListParser {
         return String(rest.split(separator: "/").last ?? Substring(rest))
     }
 
-    private static let rfc1123: DateFormatter = {
+    private nonisolated(unsafe) static let rfc1123: DateFormatter = {  // read-only shared, thread-safe for parsing
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone(identifier: "GMT")

@@ -29,8 +29,9 @@ public enum S3ListParser {
         f.dateFormat = format
         return f
     }
-    private static let isoFractional = isoFormatter("yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX")
-    private static let isoPlain = isoFormatter("yyyy-MM-dd'T'HH:mm:ssXXXXX")
+    // read-only shared formatters, thread-safe for parsing; explicit for the older CI SDK
+    private nonisolated(unsafe) static let isoFractional = isoFormatter("yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX")
+    private nonisolated(unsafe) static let isoPlain = isoFormatter("yyyy-MM-dd'T'HH:mm:ssXXXXX")
 
     static func date(_ s: String) -> Date? {
         isoFractional.date(from: s) ?? isoPlain.date(from: s)

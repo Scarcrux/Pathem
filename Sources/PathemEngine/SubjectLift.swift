@@ -37,7 +37,10 @@ public enum SubjectLift {
         return "\(base) Cutout.png"
     }
 
-    private static let ciContext = CIContext()
+    // CIContext is documented as thread-safe for rendering, so a shared static is safe. The
+    // macOS 26 SDK marks it Sendable; older SDKs (the CI runner) do not, so spell the safety
+    // out explicitly to compile on both.
+    private nonisolated(unsafe) static let ciContext = CIContext()
 
     private static func writePNG(_ image: CIImage, to destination: URL) throws {
         let colorSpace = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!

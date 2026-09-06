@@ -36,7 +36,9 @@ public enum ProcessList {
         return parse(String(decoding: data, as: UTF8.self))
     }
 
-    private static let line = try! NSRegularExpression(
+    // Immutable compiled regex shared read-only (thread-safe for matching). The older CI SDK does
+    // not mark NSRegularExpression Sendable, so state the safety explicitly for both toolchains.
+    private nonisolated(unsafe) static let line = try! NSRegularExpression(
         pattern: #"^\s*(\d+)\s+(\d+)\s+(\S+)\s+([0-9.]+)\s+([0-9.]+)\s+(\d+)\s+(.+?)\s*$"#)
 
     static func parse(_ output: String) -> [RunningProcess] {
