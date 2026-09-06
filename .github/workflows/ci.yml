@@ -69,4 +69,8 @@ jobs:
         run: PATHEM_GATE_A=1 swift run Pathem
 
       - name: UI smoke (layout invariants)
-        run: PATHEM_SMOKE=1 swift run Pathem
+        run: |
+          # Run the built binary directly (not `swift run`, whose wrapper can swallow a crash
+          # backtrace) with Swift's backtrace-on-crash on, so a trap prints where it happened.
+          swift build 2>&1 | tail -1
+          SWIFT_BACKTRACE=enable=yes,interactive=no PATHEM_SMOKE=1 .build/debug/Pathem 2>&1 | tail -80
