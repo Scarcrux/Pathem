@@ -690,4 +690,11 @@ working_dir = "."
   note = "Gap: the cut+paste scenario used a temp dir, which isn't ubiquitous, so isUbiquitous was false and the move never entered coordinatedMove -- the NSFileCoordinator path the 'iCloud paste duplicated files' fix lives in was untested. New scenario 4b creates temp subfolders under com~apple~CloudDocs (files there are ubiquitous immediately), cuts+pastes, and asserts move-not-copy: source cleared, dest populated, no duplicate on disk. It first asserts isUbiquitousItem=true so a plain-move fallback can't pass vacuously; skips cleanly with no iCloud Drive; self-cleaning. Proven: forcing copy-not-move in coordinatedMove flips it to 12/14. Can't reproduce the dataless/online-only symptom (no way to synthesize evicted files on demand) -- guards correctness of the coordinated move, not necessity for dataless files."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Audit fix: flaky MSE test was a real decryption bug (undecrypted post-handshake leftovers)"
+  status = "done"
+  note = "Pre-release audit ran the suite in a loop: encryptedHandshakeAndMessageOverRealSocket failed 3/6 runs with handshakeMismatch. Convicted, not a test problem: MSEHandshake.Stream buffers raw socket bytes; bytes TCP coalesced past the handshake end came back via drainBuffer() as CIPHERTEXT and were appended to inbound undecrypted (only receiveRawChunk decrypts). recv's RC4 keystream sits exactly at the first post-handshake byte, so the peer's BT handshake parsed as garbage whenever coalescing happened -> timing-dependent flake, and a real-world bug for any encrypted peer whose handshake reply coalesces. Fix: decrypt the drained leftover through recvCipher at both call sites (initiator connect + responder acceptEncryptedHandshake). Evidence: 0/15 failures after (was 3/6; P~3e-5 if unchanged), 740 tests + smoke pass."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<

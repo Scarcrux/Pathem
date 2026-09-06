@@ -116,7 +116,12 @@ import Foundation
                 sendCipher = result.send
                 recvCipher = result.recv
                 isEncrypted = true
-                inbound.append(await stream.drainBuffer())
+                // Bytes the handshake read past its end (TCP coalescing) are still CIPHERTEXT:
+                // only receiveRawChunk decrypts, and these bypassed it. recv's keystream sits
+                // exactly at the first post-handshake byte, so decrypt them here or the peer's
+                // BT handshake parses as garbage (the flaky handshakeMismatch).
+                let leftover = await stream.drainBuffer()
+                if !leftover.isEmpty { inbound.append(recvCipher!.process(leftover)) }
                 try await readHandshake(timeout: timeout)  // the peer's BT handshake, now decrypted
                 return
             }
@@ -140,7 +145,10 @@ import Foundation
             recvCipher = result.recv
             isEncrypted = true
             inbound.append(result.initialData)          // the initiator's BT handshake (MSE payload)
-            inbound.append(await stream.drainBuffer())
+            // Same as connect(): post-handshake leftovers in the stream buffer are ciphertext
+            // that bypassed receiveRawChunk's decryption; recv is positioned right after IA.
+            let leftover = await stream.drainBuffer()
+            if !leftover.isEmpty { inbound.append(recvCipher!.process(leftover)) }
             try await readHandshake(timeout: timeout)     // validate it, set remotePeerID
             return hash
         }
