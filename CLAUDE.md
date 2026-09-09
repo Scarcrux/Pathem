@@ -158,6 +158,34 @@ appear" is friction for information that could have been two taps.
 This is not license to ask more often. Decide what you can decide; when a
 question is genuinely the user's call, make it tappable.
 
+**Make the options machine-readable so the app can render them as chips.**
+Whenever you offer the user a choice, ALSO emit the options in a fenced
+` ```options ` block, one option per line (the prose version can stay above it
+for readability). Commandem parses that block and renders each line as a
+tappable chip the user selects or edits in one tap -- so a decision never
+requires typing. Example:
+
+```options
+Add tests now
+Refactor the tokenizer first
+Refactor, then tests
+```
+
+Keep each option short (it becomes a row in the list). Emit the block only for a
+real choice, not for open-ended questions that need a typed answer.
+
+**When SEVERAL answers can apply at once, use ` ```options-multi ` instead.**
+Commandem renders that as CHECKBOXES with a "Use N selected" action, so the user
+can tick more than one and send them together:
+
+```options-multi
+Run the tests
+Update the docs
+Bump the version
+```
+
+Use `options` for a single choice and `options-multi` for "pick any that apply".
+
 ## Causal design: every change explains itself
 
 Work here is CAUSAL by requirement, not by habit: design, code, and
