@@ -1,21 +1,13 @@
 name: CI
 
-# Runs automatically on code changes so regressions are caught without anyone
-# remembering `make ci`. Minute-conscious for a private repo where macOS runners
-# bill at 10x: it triggers only when code (Sources/Tests/Package) changes -- doc,
-# site, and roadmap (commandem.toml) commits skip it -- and rapid pushes cancel
-# earlier runs. Runs the l10n lint, build, engine tests, Gate A, and the UI smoke.
-# `make ci` still runs the same checks locally; Run workflow triggers on demand.
+# PR + manual ONLY -- no per-push runs (owner decision 2026-09-12, quota).
+# The per-push macOS runs, even path-filtered + cancel-in-progress, billed at
+# 10x and were ~70% of the account's 3,000 monthly Actions minutes (~198 raw
+# macOS min = ~1,980 billable in Sep alone). `make ci` runs the SAME checks
+# locally and is the enforcement for main (the Commandem CI posture); this
+# workflow stays as the on-demand "Run workflow" button + the PR trust gate.
+# Re-add a push trigger only if a green-main badge ever becomes worth 10x.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "Sources/**"
-      - "Tests/**"
-      - "Package.swift"
-      - "Package.resolved"
-      - "scripts/l10n_lint.py"
-      - ".github/workflows/ci.yml"
   pull_request:
   workflow_dispatch:
 
