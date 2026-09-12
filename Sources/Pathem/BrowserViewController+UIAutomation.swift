@@ -225,6 +225,39 @@ extension BrowserViewController {
             check("preview-pane-closes-clean", closed, "visible=\(previewPane.isVisible) subviews=\(outerSplit.arrangedSubviews.count) before=\(panesBefore)")
         }
 
+        // Scenario 7: right-clicking the toolbar BACKGROUND must offer "Customize Toolbar..." (the
+        // native NSToolbar contextual menu; allowsUserCustomization is on). Asks the toolbar view
+        // directly for the menu it would show at a background point, so no real event injection.
+        do {
+            func findToolbarView(_ v: NSView) -> NSView? {
+                if String(describing: type(of: v)).contains("ToolbarView") { return v }
+                for sub in v.subviews { if let f = findToolbarView(sub) { return f } }
+                return nil
+            }
+            var detail = "no toolbar view"
+            var ok = false
+            if let window = view.window, let frame = window.contentView?.superview,
+                let tbv = findToolbarView(frame) {
+                // Probe a few x positions across the strip; at least one must be background.
+                let ys = tbv.bounds.midY
+                var offered: [String] = []
+                for fx in stride(from: 0.05, through: 0.95, by: 0.05) {
+                    let pt = NSPoint(x: tbv.bounds.width * fx, y: ys)
+                    guard let ev = NSEvent.mouseEvent(
+                        with: .rightMouseDown, location: tbv.convert(pt, to: nil), modifierFlags: [],
+                        timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                        context: nil, eventNumber: 0, clickCount: 1, pressure: 1) else { continue }
+                    let hit = tbv.hitTest(tbv.convert(pt, to: tbv.superview))
+                    let menu = hit?.menu(for: ev) ?? tbv.menu(for: ev)
+                    let titles = menu?.items.map(\.title) ?? []
+                    if titles.contains(where: { $0.hasPrefix("Customize") }) { ok = true; offered = titles; break }
+                    if offered.isEmpty, !titles.isEmpty { offered = titles }
+                }
+                detail = "toolbarView=\(type(of: tbv)) menuItems=\(offered)"
+            }
+            check("toolbar-right-click-offers-customize", ok, detail)
+        }
+
         for r in results {
             FileHandle.standardError.write(Data("UITEST: \(r.ok ? "PASS" : "FAIL")  \(r.name)  \(r.detail)\n".utf8))
         }
