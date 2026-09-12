@@ -718,4 +718,11 @@ working_dir = "."
   note = "Vendoring AppRelaunch got CI past the auth failure that masked everything, revealing CI has NEVER successfully compiled (0/45 runs, failures back to 2026-06-22). Cause: dev machine is macOS 26 SDK (Swift 6.3.3) where CIContext/DateFormatter/NSRegularExpression are Sendable, so non-isolated static lets of them compile locally; the macos-15 runner SDK does not mark them Sendable, so each is a Swift 6 strict-concurrency error there. The macOS 15 SDK cannot be reproduced on this machine (SDK ships with Xcode, not the toolchain), so CI is the only instrument. Fixed the whole PathemEngine set (SubjectLift.ciContext, ProcessList/BatchRename regexes, WebDAV/Azure/S3/ImageMetadata formatters) with nonisolated(unsafe) -- convicted by the language rule, not guessed. Engine builds locally. App-target statics verified next via CI. Commit e605748."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+
+[[phase]]
+  title = "Live-app fix: toolbar icon size only resized the nav chevrons"
+  status = "done"
+  note = "User: changing the toolbar icon size only changed the navigation buttons. Convicted by code + an offscreen chrome render at small vs extraLarge: PaneController.applyIconSize re-imaged only back/forward/up; the view-switcher segments and the sort/action pull-down faces were built with an unsized Self.symbol and never re-applied, so they kept their creation-time size. The window toolbar had the same gap for its overflow (ellipsis) item, which the live-resize loop skipped (not a command item) so it only changed on relaunch. Fix: a sizedSymbol helper used at build time and re-applied live for every header control; the toolbar loop now covers the overflow item too. Instruments added (DEBUG-only, stripped from release, nm-verified): PATHEM_CONFIG_DIR pins prefs to a scratch dir, PATHEM_CHROME_RENDER renders the window chrome incl. toolbar offscreen (screencapture needs Screen Recording permission this box lacks). Note: cacheDisplay cannot draw the unified toolbar's system glyphs (white pills), so window-toolbar glyph size is verified by code path, the pane header by pixels. Smoke PASS, harness 16/16."
+  milestone = "A power-user Finder replacement people trust and switch to"
+  issue = 0
 # <<< commandem roadmap <<<

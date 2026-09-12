@@ -8,6 +8,16 @@ enum ConfigStore {
     /// `~/Library/Application Support/Pathem`, created if needed (nil if it can't be made).
     static func directory() -> URL? {
         let fm = FileManager.default
+        #if DEBUG
+            // Harness instrument: point every config file at a scratch directory so a screenshot or
+            // smoke run can pin preferences (toolbar icon size, say) without touching the user's real
+            // Application Support. Debug-only; never consulted in a release build.
+            if let scratch = ProcessInfo.processInfo.environment["PATHEM_CONFIG_DIR"] {
+                let dir = URL(fileURLWithPath: scratch, isDirectory: true)
+                try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+                return dir
+            }
+        #endif
         guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             return nil
         }

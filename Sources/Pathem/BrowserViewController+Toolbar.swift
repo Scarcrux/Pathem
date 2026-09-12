@@ -69,6 +69,14 @@ extension BrowserViewController {
         let config = NSImage.SymbolConfiguration(
             pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular)
         for item in toolbar.items {
+            if item.itemIdentifier == Self.overflowItemID {
+                // Not a command item, so the loop below skipped it and its glyph only picked up a
+                // new size on relaunch.
+                item.image = NSImage(
+                    systemSymbolName: "ellipsis.circle", accessibilityDescription: item.label)?
+                    .withSymbolConfiguration(config)
+                continue
+            }
             guard let id = Self.toolbarCommandID(item.itemIdentifier) else { continue }
             item.image = NSImage(
                 systemSymbolName: Self.toolbarSymbolName(for: id), accessibilityDescription: item.label)?

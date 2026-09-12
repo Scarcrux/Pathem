@@ -111,6 +111,21 @@ extension BrowserViewController {
         }
     }
 
+    /// Render the whole window chrome (title bar + toolbar + content) to a PNG by caching the
+    /// window's theme frame, the view that owns the toolbar -- `debugRender` covers only the content
+    /// view. Needs no Screen Recording permission, unlike screencapture (PATHEM_CHROME_RENDER).
+    func debugRenderWindowChrome(to path: String) {
+        guard let window = view.window, let frame = window.contentView?.superview else { return }
+        frame.layoutSubtreeIfNeeded()
+        let bounds = frame.bounds
+        guard bounds.width > 10, let rep = frame.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        frame.cacheDisplay(in: bounds, to: rep)
+        if let data = rep.representation(using: .png, properties: [:]) {
+            try? data.write(to: URL(fileURLWithPath: path))
+            print("CHROME RENDER: \(path) \(Int(bounds.width))x\(Int(bounds.height))")
+        }
+    }
+
     /// Apply a skin and select the first row so a render shows the accent (PATHEM_THEME_SHOT).
     func debugApplyTheme(accentHex: String, tintHex: String) {
         prefs.accentColorHex = accentHex

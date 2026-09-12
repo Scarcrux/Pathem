@@ -466,6 +466,18 @@ enum PathemApp {
             exit(ok ? 0 : 1)
         }
 
+        // Offscreen render of the window chrome incl. the toolbar (PATHEM_CHROME_RENDER=<out.png>),
+        // for toolbar/title-bar checks that must measure what is actually drawn. Exits after.
+        if let chromeOut = ProcessInfo.processInfo.environment["PATHEM_CHROME_RENDER"] {
+            window.setContentSize(NSSize(width: 1100, height: 700))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                browser.debugRenderWindowChrome(to: chromeOut)
+                exit(0)
+            }
+            app.run()
+            return
+        }
+
         // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1). Navigation runs on
         // the run loop (asyncAfter), not synchronously here, or Launch Services deadlocks.
         if ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil {

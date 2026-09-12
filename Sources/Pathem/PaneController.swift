@@ -1634,12 +1634,34 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         return button
     }
 
-    /// Re-render the navigation icons at the current point size (toolbar-icon-size pref).
+    /// Re-render every header icon at the current point size (toolbar-icon-size pref): the nav
+    /// chevrons, the view-switcher segments, and the sort / action pull-down faces. Live report:
+    /// "changing the icon size only changed the navigation buttons" -- this used to re-image only
+    /// the three chevrons, so the segmented control and the two pull-downs kept their build-time
+    /// size.
     private func applyIconSize() {
-        let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
-        backButton.image = Self.symbol("chevron.backward").withSymbolConfiguration(config)
-        forwardButton.image = Self.symbol("chevron.forward").withSymbolConfiguration(config)
-        upButton.image = Self.symbol("chevron.up").withSymbolConfiguration(config)
+        backButton.image = sizedSymbol("chevron.backward")
+        forwardButton.image = sizedSymbol("chevron.forward")
+        upButton.image = sizedSymbol("chevron.up")
+        for (index, name) in Self.viewSwitcherSymbols.enumerated() where index < viewSwitcher.segmentCount {
+            viewSwitcher.setImage(sizedSymbol(name), forSegment: index)
+        }
+        // A pull-down shows its first item's image as the face; the menus are rebuilt on open
+        // (with the sized glyph), so refresh the face that is on screen right now too.
+        sortButton.item(at: 0)?.image = sizedSymbol("arrow.up.arrow.down")
+        actionButton.item(at: 0)?.image = sizedSymbol("ellipsis.circle")
+    }
+
+    /// The view-switcher segment symbols, in segment order (shared by build + live resize).
+    private static let viewSwitcherSymbols = [
+        "list.bullet", "square.grid.2x2", "square.grid.3x1.below.line.grid.1x2",
+        "rectangle.split.3x1", "list.bullet.indent",
+    ]
+
+    /// An SF Symbol rendered at the pane's current icon point size.
+    private func sizedSymbol(_ name: String) -> NSImage {
+        Self.symbol(name).withSymbolConfiguration(
+            NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)) ?? Self.symbol(name)
     }
 
     private static func symbol(_ name: String) -> NSImage {
@@ -1677,7 +1699,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             ("list.bullet.indent", L("pane.viewAsTree", "as Tree")),
         ]
         viewSwitcher = NSSegmentedControl(
-            images: segments.map { Self.symbol($0.0) }, trackingMode: .selectOne,
+            images: segments.map { sizedSymbol($0.0) }, trackingMode: .selectOne,
             target: self, action: #selector(viewSwitcherChanged))
         for (index, segment) in segments.enumerated() {
             viewSwitcher.setToolTip(segment.1, forSegment: index)
@@ -1778,7 +1800,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func rebuildActionMenu(_ menu: NSMenu) {
         menu.removeAllItems()
         let face = NSMenuItem()  // pull-down face (item 0 isn't selectable)
-        face.image = Self.symbol("ellipsis.circle")
+        face.image = sizedSymbol("ellipsis.circle")
         menu.addItem(face)
         func add(_ label: String, command id: String) {
             let item = NSMenuItem(title: label, action: #selector(runActionCommand(_:)), keyEquivalent: "")
@@ -1995,7 +2017,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func rebuildSortMenu(_ menu: NSMenu) {
         menu.removeAllItems()
         let title = NSMenuItem()  // pull-down face (item 0 isn't selectable)
-        title.image = Self.symbol("arrow.up.arrow.down")
+        title.image = sizedSymbol("arrow.up.arrow.down")
         menu.addItem(title)
         func addKey(_ label: String, _ key: ViewFormat.SortKey) {
             let item = NSMenuItem(title: label, action: #selector(sortByKey(_:)), keyEquivalent: "")
