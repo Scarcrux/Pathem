@@ -240,6 +240,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Fired when the user toggles a header button from this pane, so the host can persist the
     /// choice and apply it to every pane.
     var onHeaderButtonsChanged: ((Set<String>) -> Void)?
+    /// Fired when the user Cmd-drags a header button to a new place (normalized full order).
+    var onHeaderOrderChanged: (([String]) -> Void)?
     /// Right-click menu on the header row (show/hide each button).
     private let headerMenu = NSMenu()
     private let actionButton = NSPopUpButton(frame: .zero, pullsDown: true)
@@ -251,7 +253,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// row, above or below the file list (Directory Opus style), never crammed onto
     /// the button row.
     private let pathBar = NSStackView()
-    private var toolbarStack = NSStackView()
+    private var toolbarStack = HeaderButtonStack()
     private let bottomStack = NSStackView()
     /// The constraints that position the location bar above or below the list; swapped
     /// when the position toggles.
@@ -733,6 +735,26 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         return menu.items.filter { $0.isEnabled }.map { ($0.title, $0.state == .on) }
     }
     var debugHeaderRowWidth: CGFloat { toolbarStack.layoutSubtreeIfNeeded(); return toolbarStack.fittingSize.width }
+    /// The header row view itself (event-level harness checks) and a button's frame in window coords.
+    var debugHeaderStack: NSView { toolbarStack }
+    func debugHeaderButtonFrameInWindow(_ id: String) -> NSRect? {
+        guard let control = headerButtons.first(where: { $0.id == id })?.control else { return nil }
+        return control.convert(control.bounds, to: nil)
+    }
+    /// Header button ids in their current on-screen (arranged) order.
+    func debugHeaderOrder() -> [String] {
+        toolbarStack.arrangedSubviews.compactMap { v in headerButtons.first { $0.control === v }?.id }
+    }
+    /// Drive the reorder-ended path as a Cmd-drag would, moving `id` to `index`.
+    func debugReorderHeader(moving id: String, to index: Int) {
+        var order = debugHeaderOrder()
+        guard let from = order.firstIndex(of: id) else { return }
+        order.remove(at: from)
+        order.insert(id, at: min(max(index, 0), order.count))
+        let views = order.compactMap { id in headerButtons.first { $0.id == id }?.control }
+        toolbarStack.arrange(views)
+        toolbarStack.onReorderEnded?(toolbarStack.arrangedSubviews)
+    }
 
     /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
     func debugToolbarAccessibilityLabeled() -> Bool {
@@ -1187,9 +1209,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pathBar.addArrangedSubview(addressField)
         pathBar.addArrangedSubview(remoteLabel)
 
-        toolbarStack = NSStackView(views: [
+        toolbarStack = HeaderButtonStack(views: [
             backButton, forwardButton, upButton, viewSwitcher, sortButton, actionButton,
         ])
+        toolbarStack.onReorderEnded = { [weak self] views in
+            guard let self else { return }
+            let ids = views.compactMap { view in self.headerButtons.first { $0.control === view }?.id }
+            self.onHeaderOrderChanged?(Self.normalizedHeaderOrder(ids))
+        }
         toolbarStack.orientation = .horizontal
         toolbarStack.spacing = 4
         toolbarStack.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
@@ -1693,6 +1720,27 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         ]
     }
 
+    /// The built-in header order; also the canonical id list.
+    static let headerButtonIDs = ["back", "forward", "up", "viewSwitcher", "sort", "actions"]
+
+    /// A full, valid order from any saved value: known ids in the given order (deduplicated),
+    /// then any missing ids in built-in order. Never drops a button.
+    static func normalizedHeaderOrder(_ ids: [String]) -> [String] {
+        var seen: Set<String> = []
+        var out = ids.filter { headerButtonIDs.contains($0) && seen.insert($0).inserted }
+        out += headerButtonIDs.filter { !seen.contains($0) }
+        return out
+    }
+
+    /// Arrange the header buttons in the given order (the global pref, applied to every pane by
+    /// the host); hidden buttons keep their hidden state.
+    func setHeaderButtonOrder(_ ids: [String]) {
+        let controls = headerButtons
+        let ordered = Self.normalizedHeaderOrder(ids).compactMap { id in controls.first { $0.id == id }?.control }
+        toolbarStack.arrange(ordered)
+        setHiddenHeaderButtons(hiddenHeaderButtons)
+    }
+
     /// Show/hide header buttons by id (the global pref, applied to every pane by the host). The
     /// stack view collapses a hidden arranged subview, so the remaining buttons close ranks.
     func setHiddenHeaderButtons(_ ids: Set<String>) {
@@ -1709,6 +1757,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             title.isEnabled = false
             menu.addItem(title)
         }
+        // How to reorder (same gesture as the window toolbar), stated where the user is looking.
+        let hint = NSMenuItem(title: L("pane.headerReorderHint", "⌘-drag a button to reorder"), action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        menu.addItem(hint)
+        menu.addItem(.separator())
         for entry in headerButtons {
             let item = NSMenuItem(title: entry.label, action: #selector(toggleHeaderButton(_:)), keyEquivalent: "")
             item.target = self

@@ -1727,3 +1727,4 @@
 "xattr.titleFor" = "Erweiterte Attribute: %@";
 
 "pane.headerButtons" = "Kopfzeilen-Schaltflächen";
+"pane.headerReorderHint" = "⌘-Ziehen zum Umsortieren";

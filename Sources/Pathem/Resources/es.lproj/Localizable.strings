@@ -1727,3 +1727,4 @@
 "xattr.titleFor" = "Atributos extendidos: %@";
 
 "pane.headerButtons" = "Botones del encabezado";
+"pane.headerReorderHint" = "⌘-arrastra un botón para reordenar";

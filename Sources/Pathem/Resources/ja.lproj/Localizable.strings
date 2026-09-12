@@ -1727,3 +1727,4 @@
 "xattr.titleFor" = "拡張属性: %@";
 
 "pane.headerButtons" = "ヘッダーボタン";
+"pane.headerReorderHint" = "⌘を押しながらドラッグで並べ替え";

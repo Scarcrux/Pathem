@@ -199,6 +199,15 @@ extension BrowserViewController {
         }
     }
 
+    /// A pane's Cmd-drag reordered the header: persist and apply the order to every pane.
+    func rememberHeaderButtonOrder(_ ids: [String]) {
+        prefs.paneHeaderButtonOrder = ids
+        saveConfig(prefs, to: Self.preferencesURL)
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.setHeaderButtonOrder(ids) }
+        }
+    }
+
     func rememberIconZoom(_ scale: CGFloat) {
         prefs.iconZoom = Double(scale)
         saveConfig(prefs, to: Self.preferencesURL)
@@ -224,6 +233,7 @@ extension BrowserViewController {
                 pane.iconZoom = CGFloat(prefs.iconZoom)
                 pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
                 pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
+                pane.setHeaderButtonOrder(prefs.paneHeaderButtonOrder)
                 pane.setHiddenHeaderButtons(Set(prefs.hiddenPaneHeaderButtons))
                 pane.setContextMenuOrder(prefs.contextMenuOrder)
                 pane.setColorRules(prefs.colorRules)

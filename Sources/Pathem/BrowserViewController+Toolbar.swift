@@ -213,10 +213,15 @@ extension BrowserViewController: NSToolbarDelegate {
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        // A sensible starting arrangement; the rest live in the customization palette.
-        let defaults = ["nav.back", "nav.forward", "nav.up", "files.newFolder", "files.getInfo", "view.cleanup"]
+        // A sensible starting arrangement; the rest live in the customization palette. No
+        // Back/Forward/Up here: every pane header already carries its own navigation, so a
+        // window-level copy was redundant (and ambiguous about which pane it drives) -- it
+        // became glaring once icons grew. The search field sits centered between flexible
+        // spaces rather than pushed to the right edge.
+        let defaults = ["files.newFolder", "files.getInfo", "view.cleanup"]
         return defaults.compactMap { id in Self.toolbarCatalog.first { $0.commandID == id } }
-            .map(Self.identifier(for:)) + [.flexibleSpace, Self.searchItemID, Self.overflowItemID]
+            .map(Self.identifier(for:))
+            + [.flexibleSpace, Self.searchItemID, .flexibleSpace, Self.overflowItemID]
     }
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {

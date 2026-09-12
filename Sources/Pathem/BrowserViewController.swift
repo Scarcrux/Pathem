@@ -524,7 +524,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.iconZoom = CGFloat(self?.prefs.iconZoom ?? 1)
                 pane.onIconZoomChanged = { [weak self] scale in self?.rememberIconZoom(scale) }
                 pane.onHeaderButtonsChanged = { [weak self] ids in self?.rememberHiddenHeaderButtons(ids) }
-                pane.setHiddenHeaderButtons(Set(self?.prefs.hiddenPaneHeaderButtons ?? []))  // new tabs honor it too
+                pane.onHeaderOrderChanged = { [weak self] ids in self?.rememberHeaderButtonOrder(ids) }
+                // New tabs honor the customized header too.
+                pane.setHeaderButtonOrder(self?.prefs.paneHeaderButtonOrder ?? [])
+                pane.setHiddenHeaderButtons(Set(self?.prefs.hiddenPaneHeaderButtons ?? []))
                 pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
                     self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)

@@ -1727,3 +1727,4 @@
 "xattr.titleFor" = "扩展属性：%@";
 
 "pane.headerButtons" = "标题栏按钮";
+"pane.headerReorderHint" = "按住 ⌘ 拖动按钮以重新排序";

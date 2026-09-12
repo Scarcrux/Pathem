@@ -285,6 +285,72 @@ extension BrowserViewController {
                     && prefs.hiddenPaneHeaderButtons.isEmpty)
         }
 
+        // Scenario 9: header reordering. A move driven through the Cmd-drag-ended path must change
+        // the on-screen order in BOTH panes, persist as a full normalized order, and a partial /
+        // garbage saved order must still yield every button exactly once.
+        do {
+            let original = activePane?.debugHeaderOrder() ?? []
+            activePane?.debugReorderHeader(moving: "sort", to: 0)
+            pumpRunLoop(0.2)
+            let here = activePane?.debugHeaderOrder() ?? []
+            let other = otherPane?.debugHeaderOrder() ?? []
+            check("pane-header-reorder-applies-to-both-panes", here.first == "sort" && other == here, "here=\(here) other=\(other)")
+            check("pane-header-reorder-persists-full-order", prefs.paneHeaderButtonOrder == here && here.count == 6, "prefs=\(prefs.paneHeaderButtonOrder)")
+            let normalized = PaneController.normalizedHeaderOrder(["actions", "bogus", "actions", "up"])
+            check("pane-header-order-normalizer-never-drops", normalized == ["actions", "up", "back", "forward", "viewSwitcher", "sort"], "\(normalized)")
+            rememberHeaderButtonOrder(original)  // restore
+            pumpRunLoop(0.2)
+            check("pane-header-reorder-restores", activePane?.debugHeaderOrder() == original && otherPane?.debugHeaderOrder() == original)
+        }
+
+        // Scenario 9b: the Cmd-drag GESTURE itself. Synthesized Cmd mouseDown on "sort", a drag
+        // leftward past the midpoints of "viewSwitcher" then "up", and mouseUp, sent to the real
+        // header stack: the midpoint-crossing logic must move the button two places and end the
+        // reorder (persisting it). Not just the programmatic path.
+        do {
+            guard let pane = activePane, let window = view.window,
+                let sortFrame = pane.debugHeaderButtonFrameInWindow("sort"),
+                let upFrame = pane.debugHeaderButtonFrameInWindow("up")
+            else { check("pane-header-cmd-drag-gesture", false, "no frames"); return exit(1) }
+            let stack = pane.debugHeaderStack
+            let y = sortFrame.midY
+            func ev(_ type: NSEvent.EventType, x: CGFloat) -> NSEvent {
+                NSEvent.mouseEvent(
+                    with: type, location: NSPoint(x: x, y: y), modifierFlags: [.command],
+                    timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                    context: nil, eventNumber: 0, clickCount: 1, pressure: 1)!
+            }
+            let before = pane.debugHeaderOrder()
+            stack.mouseDown(with: ev(.leftMouseDown, x: sortFrame.midX))
+            // Step leftward in small increments so each neighbor's midpoint is crossed in turn.
+            var x = sortFrame.midX
+            while x > upFrame.minX - 4 {
+                x -= 6
+                stack.mouseDragged(with: ev(.leftMouseDragged, x: x))
+            }
+            stack.mouseUp(with: ev(.leftMouseUp, x: x))
+            pumpRunLoop(0.2)
+            let after = pane.debugHeaderOrder()
+            let sortIdx = after.firstIndex(of: "sort") ?? -1
+            let upIdx = after.firstIndex(of: "up") ?? -1
+            let moved = sortIdx >= 0 && upIdx >= 0 && sortIdx < upIdx && after != before
+            check("pane-header-cmd-drag-gesture", moved, "before=\(before) after=\(after)")
+            check("pane-header-cmd-drag-persists", prefs.paneHeaderButtonOrder == after && otherPane?.debugHeaderOrder() == after)
+            rememberHeaderButtonOrder(before)  // restore
+            pumpRunLoop(0.2)
+        }
+
+        // Scenario 10: the window toolbar default carries no navigation (each pane header has its
+        // own) and centers the search field between two flexible spaces.
+        do {
+            let ids = view.window?.toolbar?.items.map(\.itemIdentifier) ?? []
+            let hasNav = ids.contains { Self.toolbarCommandID($0)?.hasPrefix("nav.") == true }
+            let s = ids.firstIndex(of: Self.searchItemID) ?? -1
+            let centered = s > 0 && s + 1 < ids.count && ids[s - 1] == .flexibleSpace && ids[s + 1] == .flexibleSpace
+            check("window-toolbar-default-no-nav", !hasNav, "\(ids.map(\.rawValue))")
+            check("window-toolbar-default-search-centered", centered)
+        }
+
         for r in results {
             FileHandle.standardError.write(Data("UITEST: \(r.ok ? "PASS" : "FAIL")  \(r.name)  \(r.detail)\n".utf8))
         }
