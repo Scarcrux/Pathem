@@ -1726,3 +1726,4 @@
 "xattr.title" = "拡張属性";
 "xattr.titleFor" = "拡張属性: %@";
 
+"pane.headerButtons" = "ヘッダーボタン";

@@ -189,6 +189,16 @@ extension BrowserViewController {
     /// Apply preferences to every tab in both sides, persist them, and rebuild the
     /// search index (OCR can change what gets embedded).
     /// Persist a new icon/gallery zoom and keep both panes' base zoom in sync.
+    /// A pane's header right-click / Actions submenu toggled a button: persist and apply to every
+    /// pane (the pref is global, like the context-menu item list).
+    func rememberHiddenHeaderButtons(_ ids: Set<String>) {
+        prefs.hiddenPaneHeaderButtons = ids.sorted()
+        saveConfig(prefs, to: Self.preferencesURL)
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.setHiddenHeaderButtons(ids) }
+        }
+    }
+
     func rememberIconZoom(_ scale: CGFloat) {
         prefs.iconZoom = Double(scale)
         saveConfig(prefs, to: Self.preferencesURL)
@@ -214,6 +224,7 @@ extension BrowserViewController {
                 pane.iconZoom = CGFloat(prefs.iconZoom)
                 pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
                 pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
+                pane.setHiddenHeaderButtons(Set(prefs.hiddenPaneHeaderButtons))
                 pane.setContextMenuOrder(prefs.contextMenuOrder)
                 pane.setColorRules(prefs.colorRules)
                 pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)

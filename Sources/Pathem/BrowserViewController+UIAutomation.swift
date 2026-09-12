@@ -258,6 +258,33 @@ extension BrowserViewController {
             check("toolbar-right-click-offers-customize", ok, detail)
         }
 
+        // Scenario 8: the pane header row is customizable. Toggling a button through the menu path
+        // must hide it in BOTH panes (global pref), persist, actually collapse the row, and the
+        // header's right-click menu must list all six buttons with the right check states.
+        do {
+            let before = activePane?.debugHeaderRowWidth ?? 0
+            activePane?.debugToggleHeaderButton("sort")
+            pumpRunLoop(0.2)
+            let hiddenHere = activePane?.debugHeaderButtonHidden("sort") == true
+            let hiddenOther = otherPane?.debugHeaderButtonHidden("sort") == true
+            let persisted = prefs.hiddenPaneHeaderButtons == ["sort"]
+            let after = activePane?.debugHeaderRowWidth ?? 0
+            check("pane-header-hide-applies-to-both-panes", hiddenHere && hiddenOther, "here=\(hiddenHere) other=\(hiddenOther)")
+            check("pane-header-hide-persists-to-prefs", persisted, "prefs=\(prefs.hiddenPaneHeaderButtons)")
+            check("pane-header-hide-collapses-row", after < before, "width \(Int(before)) -> \(Int(after))")
+            let menu = activePane?.debugHeaderMenuState() ?? []
+            let sixItems = menu.count == 6
+            let sortOff = menu.first { $0.0 == L("pane.sortTooltip", "Sort") }?.1 == false
+            let othersOn = menu.filter { $0.0 != L("pane.sortTooltip", "Sort") }.allSatisfy(\.1)
+            check("pane-header-menu-lists-six-with-states", sixItems && sortOff && othersOn, "items=\(menu)")
+            activePane?.debugToggleHeaderButton("sort")  // restore
+            pumpRunLoop(0.2)
+            check(
+                "pane-header-show-restores-everywhere",
+                activePane?.debugHeaderButtonHidden("sort") == false && otherPane?.debugHeaderButtonHidden("sort") == false
+                    && prefs.hiddenPaneHeaderButtons.isEmpty)
+        }
+
         for r in results {
             FileHandle.standardError.write(Data("UITEST: \(r.ok ? "PASS" : "FAIL")  \(r.name)  \(r.detail)\n".utf8))
         }

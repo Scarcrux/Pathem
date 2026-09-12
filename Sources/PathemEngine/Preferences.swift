@@ -142,6 +142,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Command ids hidden from the file list's right-click menu (config-as-data
     /// customization). Empty = the full default menu.
     public var hiddenContextItems: [String]
+    /// Pane-header buttons the user has hidden (ids: back, forward, up, viewSwitcher, sort,
+    /// actions). Applies to every pane; the header row itself always stays so it can be
+    /// customized back (right-click it, or the pane's Actions menu).
+    public var hiddenPaneHeaderButtons: [String]
     /// The order of the file right-click menu's entries (command ids and the "@openWith" /
     /// "@tags" submenu tokens). Empty = the default order. Separators are auto-inserted
     /// between groups, so they aren't stored here.
@@ -185,6 +189,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         iconZoom: Double = 1, singleClickToOpen: Bool = false,
         underlineOnHover: Bool = false, instantTooltips: Bool = false,
         toolbarIconSize: IconSize = .large, hiddenContextItems: [String] = [],
+        hiddenPaneHeaderButtons: [String] = [],
         contextMenuOrder: [String] = [], colorRules: ColorRules = ColorRules(),
         sizeFormat: SizeFormat = .decimal, dateDisplay: DateDisplay = .relative,
         defaultViewMode: ViewFormat.ViewMode = .list, defaultSortKey: ViewFormat.SortKey = .name,
@@ -213,6 +218,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.instantTooltips = instantTooltips
         self.toolbarIconSize = toolbarIconSize
         self.hiddenContextItems = hiddenContextItems
+        self.hiddenPaneHeaderButtons = hiddenPaneHeaderButtons
         self.contextMenuOrder = contextMenuOrder
         self.colorRules = colorRules
         self.sizeFormat = sizeFormat
@@ -313,6 +319,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         toolbarIconSize = (try? c.decode(IconSize.self, forKey: .toolbarIconSize)) ?? d.toolbarIconSize
         hiddenContextItems =
             try c.decodeIfPresent([String].self, forKey: .hiddenContextItems) ?? d.hiddenContextItems
+        hiddenPaneHeaderButtons =
+            try c.decodeIfPresent([String].self, forKey: .hiddenPaneHeaderButtons) ?? d.hiddenPaneHeaderButtons
         contextMenuOrder =
             try c.decodeIfPresent([String].self, forKey: .contextMenuOrder) ?? d.contextMenuOrder
         colorRules = try c.decodeIfPresent(ColorRules.self, forKey: .colorRules) ?? d.colorRules

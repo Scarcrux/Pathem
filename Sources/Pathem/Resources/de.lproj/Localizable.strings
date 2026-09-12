@@ -1726,3 +1726,4 @@
 "xattr.title" = "Erweiterte Attribute";
 "xattr.titleFor" = "Erweiterte Attribute: %@";
 
+"pane.headerButtons" = "Kopfzeilen-Schaltflächen";

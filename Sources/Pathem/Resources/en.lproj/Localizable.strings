@@ -1654,3 +1654,4 @@
 "xattr.title" = "Extended Attributes";
 "xattr.titleFor" = "Extended Attributes: %@";
 
+"pane.headerButtons" = "Header Buttons";

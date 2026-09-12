@@ -1726,3 +1726,4 @@
 "xattr.title" = "Atributos extendidos";
 "xattr.titleFor" = "Atributos extendidos: %@";
 
+"pane.headerButtons" = "Botones del encabezado";

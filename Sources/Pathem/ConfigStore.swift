@@ -12,7 +12,17 @@ enum ConfigStore {
             // Harness instrument: point every config file at a scratch directory so a screenshot or
             // smoke run can pin preferences (toolbar icon size, say) without touching the user's real
             // Application Support. Debug-only; never consulted in a release build.
-            if let scratch = ProcessInfo.processInfo.environment["PATHEM_CONFIG_DIR"] {
+            let env = ProcessInfo.processInfo.environment
+            // The test harnesses (smoke, UI test) mutate preferences as part of their scenarios;
+            // they must never write the user's real config, so they default to a per-process
+            // scratch directory unless one is given explicitly.
+            let scratch =
+                env["PATHEM_CONFIG_DIR"]
+                ?? ((env["PATHEM_SMOKE"] != nil || env["PATHEM_UI_TEST"] != nil)
+                    ? fm.temporaryDirectory.appendingPathComponent(
+                        "pathem-config-\(ProcessInfo.processInfo.processIdentifier)").path
+                    : nil)
+            if let scratch {
                 let dir = URL(fileURLWithPath: scratch, isDirectory: true)
                 try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
                 return dir

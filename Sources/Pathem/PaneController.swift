@@ -235,6 +235,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var iconPointSize: CGFloat = 13 { didSet { applyIconSize() } }
     private var viewSwitcher = NSSegmentedControl()
     private let sortButton = NSPopUpButton(frame: .zero, pullsDown: true)
+    /// Header buttons currently hidden (ids from `headerButtons`); mirrors the global pref.
+    private var hiddenHeaderButtons: Set<String> = []
+    /// Fired when the user toggles a header button from this pane, so the host can persist the
+    /// choice and apply it to every pane.
+    var onHeaderButtonsChanged: ((Set<String>) -> Void)?
+    /// Right-click menu on the header row (show/hide each button).
+    private let headerMenu = NSMenu()
     private let actionButton = NSPopUpButton(frame: .zero, pullsDown: true)
     /// Run a registered browser command by id (set by the browser). The action
     /// menu uses this so its items reuse the same command spine as the main menu.
@@ -713,6 +720,20 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Current view mode, for the viewer-overlay-vs-view-switch smoke guard.
     var debugViewMode: ViewFormat.ViewMode { format.viewMode }
 
+    // Header-customization hooks (UI harness): drive the same path the menu item uses.
+    func debugHeaderButtonHidden(_ id: String) -> Bool { hiddenHeaderButtons.contains(id) && (headerButtons.first { $0.id == id }?.control.isHidden ?? false) }
+    func debugToggleHeaderButton(_ id: String) {
+        let item = NSMenuItem(); item.representedObject = id
+        toggleHeaderButton(item)
+    }
+    /// The header right-click menu as (title, isOn), after a rebuild -- also proves the row has a menu.
+    func debugHeaderMenuState() -> [(String, Bool)] {
+        guard let menu = toolbarStack.menu else { return [] }
+        rebuildHeaderMenu(menu, sectionTitle: true)
+        return menu.items.filter { $0.isEnabled }.map { ($0.title, $0.state == .on) }
+    }
+    var debugHeaderRowWidth: CGFloat { toolbarStack.layoutSubtreeIfNeeded(); return toolbarStack.fittingSize.width }
+
     /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
     func debugToolbarAccessibilityLabeled() -> Bool {
         let labeled: [NSControl] = [backButton, forwardButton, upButton, sortButton, actionButton, viewSwitcher]
@@ -1178,6 +1199,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // pane's spare vertical space, which would squeeze the file list to nothing.
         toolbarStack.setHuggingPriority(.required, for: .vertical)
         toolbarStack.setClippingResistancePriority(.required, for: .vertical)
+        // Right-click anywhere on the row (buttons included: a control with no menu of its own
+        // hands the click to its superview) to show/hide each button. The row spans the pane's
+        // full width and keeps its insets when every button is hidden, so the target never goes
+        // away -- there is always a way back.
+        headerMenu.delegate = self
+        toolbarStack.menu = headerMenu
 
         contentContainer.translatesAutoresizingMaskIntoConstraints = false
 
@@ -1652,6 +1679,53 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         actionButton.item(at: 0)?.image = sizedSymbol("ellipsis.circle")
     }
 
+    // MARK: - Header button show/hide (customizable pane header)
+
+    /// Every header control with its stable id and user-facing label, in row order.
+    private var headerButtons: [(id: String, label: String, control: NSControl)] {
+        [
+            ("back", L("pane.back", "Back"), backButton),
+            ("forward", L("pane.forward", "Forward"), forwardButton),
+            ("up", L("pane.enclosingFolder", "Enclosing Folder"), upButton),
+            ("viewSwitcher", L("pane.viewAs", "View As"), viewSwitcher),
+            ("sort", L("pane.sortTooltip", "Sort"), sortButton),
+            ("actions", L("pane.actionsTooltip", "Actions"), actionButton),
+        ]
+    }
+
+    /// Show/hide header buttons by id (the global pref, applied to every pane by the host). The
+    /// stack view collapses a hidden arranged subview, so the remaining buttons close ranks.
+    func setHiddenHeaderButtons(_ ids: Set<String>) {
+        hiddenHeaderButtons = ids
+        for entry in headerButtons { entry.control.isHidden = ids.contains(entry.id) }
+    }
+
+    /// Check-item list of the header buttons; used by the header's right-click menu and as a
+    /// submenu of the Actions menu (so it is reachable from either place).
+    private func rebuildHeaderMenu(_ menu: NSMenu, sectionTitle: Bool) {
+        menu.removeAllItems()
+        if sectionTitle {
+            let title = NSMenuItem(title: L("pane.headerButtons", "Header Buttons"), action: nil, keyEquivalent: "")
+            title.isEnabled = false
+            menu.addItem(title)
+        }
+        for entry in headerButtons {
+            let item = NSMenuItem(title: entry.label, action: #selector(toggleHeaderButton(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = entry.id
+            item.state = hiddenHeaderButtons.contains(entry.id) ? .off : .on
+            menu.addItem(item)
+        }
+    }
+
+    @objc private func toggleHeaderButton(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String else { return }
+        var ids = hiddenHeaderButtons
+        if ids.contains(id) { ids.remove(id) } else { ids.insert(id) }
+        setHiddenHeaderButtons(ids)
+        onHeaderButtonsChanged?(ids)
+    }
+
     /// The view-switcher segment symbols, in segment order (shared by build + live resize).
     private static let viewSwitcherSymbols = [
         "list.bullet", "square.grid.2x2", "square.grid.3x1.below.line.grid.1x2",
@@ -1731,7 +1805,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Rebuild a pull-down menu each time it opens (fresh checkmarks; the action
     /// menu first makes this pane active so its items target the right pane).
     func menuNeedsUpdate(_ menu: NSMenu) {
-        if menu === sortButton.menu {
+        if menu === headerMenu {
+            rebuildHeaderMenu(menu, sectionTitle: true)
+        } else if menu === sortButton.menu {
             onBecomeActive?()  // sort applies to this pane
             rebuildSortMenu(menu)
         } else if menu === actionButton.menu {
@@ -1802,6 +1878,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let face = NSMenuItem()  // pull-down face (item 0 isn't selectable)
         face.image = sizedSymbol("ellipsis.circle")
         menu.addItem(face)
+        // Same show/hide list as the header's right-click menu, so it is discoverable from the
+        // menu users already open, and still reachable if they hid every other button.
+        let headerItem = NSMenuItem(title: L("pane.headerButtons", "Header Buttons"), action: nil, keyEquivalent: "")
+        let headerSub = NSMenu()
+        rebuildHeaderMenu(headerSub, sectionTitle: false)
+        headerItem.submenu = headerSub
+        menu.addItem(headerItem)
+        menu.addItem(.separator())
         func add(_ label: String, command id: String) {
             let item = NSMenuItem(title: label, action: #selector(runActionCommand(_:)), keyEquivalent: "")
             item.target = self

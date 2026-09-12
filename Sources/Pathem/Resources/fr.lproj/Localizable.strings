@@ -1726,3 +1726,4 @@
 "xattr.title" = "Attributs étendus";
 "xattr.titleFor" = "Attributs étendus : %@";
 
+"pane.headerButtons" = "Boutons de l’en-tête";
