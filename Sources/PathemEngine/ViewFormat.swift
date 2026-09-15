@@ -19,25 +19,30 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     public var sortKey: SortKey
     public var ascending: Bool
     public var showHidden: Bool
+    /// An explicit per-folder decision to show (true) or hide (false) dotfiles, set by the eye
+    /// toggle; nil means follow `showHidden` / the app-wide default. Needed because `showHidden`
+    /// can only ADD to a global "show by default": with that on, a plain Bool could never hide.
+    public var hiddenOverride: Bool?
     public var foldersFirst: Bool
     public var viewMode: ViewMode
     public var groupKey: GroupKey
 
     public init(
         sortKey: SortKey = .name, ascending: Bool = true,
-        showHidden: Bool = false, foldersFirst: Bool = true, viewMode: ViewMode = .list,
-        groupKey: GroupKey = .none
+        showHidden: Bool = false, hiddenOverride: Bool? = nil, foldersFirst: Bool = true,
+        viewMode: ViewMode = .list, groupKey: GroupKey = .none
     ) {
         self.sortKey = sortKey
         self.ascending = ascending
         self.showHidden = showHidden
+        self.hiddenOverride = hiddenOverride
         self.foldersFirst = foldersFirst
         self.viewMode = viewMode
         self.groupKey = groupKey
     }
 
     private enum CodingKeys: String, CodingKey {
-        case sortKey, ascending, showHidden, foldersFirst, viewMode, groupKey
+        case sortKey, ascending, showHidden, hiddenOverride, foldersFirst, viewMode, groupKey
     }
 
     // Decode each key if present so older formats.json (without viewMode, etc.)
@@ -49,6 +54,7 @@ public struct ViewFormat: Codable, Sendable, Equatable {
         sortKey = (try? c.decode(SortKey.self, forKey: .sortKey)) ?? .name
         ascending = try c.decodeIfPresent(Bool.self, forKey: .ascending) ?? true
         showHidden = try c.decodeIfPresent(Bool.self, forKey: .showHidden) ?? false
+        hiddenOverride = try c.decodeIfPresent(Bool.self, forKey: .hiddenOverride)
         foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? true
         viewMode = (try? c.decode(ViewMode.self, forKey: .viewMode)) ?? .list
         groupKey = (try? c.decode(GroupKey.self, forKey: .groupKey)) ?? .none

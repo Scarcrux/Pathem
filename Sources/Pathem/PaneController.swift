@@ -264,7 +264,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private let hiddenToggle = NSButton()
     /// Whether hidden files are currently shown in this pane (the per-folder view or the global
     /// default), for the eye toggle's icon.
-    private var hiddenShown: Bool { format.showHidden || showHiddenByDefault }
+    /// Whether dotfiles are listed: the folder's explicit eye-toggle decision wins; otherwise the
+    /// folder's saved "show" hint or the app-wide default.
+    private var hiddenShown: Bool { format.hiddenOverride ?? (format.showHidden || showHiddenByDefault) }
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
         f.countStyle = .file
@@ -590,7 +592,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // freeze the UI. Existing rows stay on screen until the fresh ones arrive; a stale read of
         // a folder we've since left is dropped by the generation guard.
         let dir = nav.current
-        let includeHidden = format.showHidden || showHiddenByDefault
+        let includeHidden = hiddenShown
         let fmt = format
         let generation = reloadGen.bump()
         // Main-actor Task so `self` never crosses an isolation boundary (the older CI toolchain
@@ -741,6 +743,19 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         guard let control = headerButtons.first(where: { $0.id == id })?.control else { return nil }
         return control.convert(control.bounds, to: nil)
     }
+    /// Click the status-row eye exactly as the user does, and read its current glyph.
+    func debugClickHiddenEye() { hiddenToggle.performClick(nil) }
+    var debugHiddenShown: Bool { hiddenShown }
+    /// The current content's key view (list table, icon grid, ...), for focus-flow checks.
+    var debugListKeyView: NSView? { content.keyView }
+    /// Drive the header view switcher exactly as a click does (activate pane, then set the mode).
+    func debugClickViewSwitcher(_ mode: ViewFormat.ViewMode) {
+        viewSwitcher.selectedSegment = segmentIndex(mode)
+        viewSwitcherChanged()
+    }
+    /// Icon-grid zoom scale and its key view (nil unless the pane is in icon/gallery mode).
+    var debugIconScale: CGFloat? { (content as? IconCollectionController)?.debugScale }
+    var debugIconKeyView: NSView? { (content as? IconCollectionController)?.debugKeyView }
     /// Header button ids in their current on-screen (arranged) order.
     func debugHeaderOrder() -> [String] {
         toolbarStack.arrangedSubviews.compactMap { v in headerButtons.first { $0.control === v }?.id }
@@ -1410,8 +1425,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         viewSwitcher.selectedSegment = segmentIndex(mode)  // keep the switcher in sync
         guard mode != currentMode else { return }
         ReloadDebug.log("viewmode-swap folder=\(nav.current.lastPathComponent) mode=\(mode)")
-        // Capture before swapping: the new (empty) content can't report these.
-        let hadFocus = content.keyView.window?.firstResponder === content.keyView
+        // Capture before swapping: the new (empty) content can't report these. The new content
+        // should own the keyboard when the old one did, when nothing was focused (a fresh window,
+        // or after clicking chrome: the window itself is first responder), or when focus sat on
+        // this pane's own header controls. Live report: switching to icons with nothing focused
+        // left the grid unfocused, so Cmd+= (and every other content shortcut) went nowhere until
+        // the user clicked into it. Never steal from a text field or the other pane.
+        let window = content.keyView.window
+        let responder = window?.firstResponder
+        let hadFocus =
+            responder === content.keyView || responder == nil || responder === window
+            || (responder as? NSView).map { $0.isDescendant(of: toolbarStack) } == true
         pendingSelection = Set(content.selectedEntries.map(\.name))
         currentMode = mode
         switch mode {
@@ -1489,6 +1513,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         format.sortKey = style.sortKey
         format.ascending = style.ascending
         format.showHidden = style.showHidden
+        format.hiddenOverride = nil  // a style states hidden-ness outright; drop the eye's per-folder override
         format.foldersFirst = style.foldersFirst
         setViewMode(style.viewMode)  // swaps the content controller when the mode changes
         reload()  // re-list with the new sort/hidden/folders-first
@@ -1634,7 +1659,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         var text = parts.joined(separator: " · ")
         // Note when hidden files are on view, so the mode is legible even in a folder with
         // no hidden files (where the dimmed-row cue alone wouldn't show it).
-        if format.showHidden || showHiddenByDefault {
+        if hiddenShown {
             text += (text.isEmpty ? "" : "   ") + L("pane.hiddenShown", "Hidden files shown")
         }
         if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
@@ -2204,7 +2229,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
 
     func toggleHidden() {
-        format.showHidden.toggle()
+        // Flip the EFFECTIVE state and record it as this folder's explicit decision, so the eye
+        // works both ways even when "show hidden by default" is on (a plain showHidden.toggle()
+        // could never hide in that case: the OR with the global default stayed true).
+        format.hiddenOverride = !hiddenShown
         rememberFormat?(nav.current, format)
         reload()
     }

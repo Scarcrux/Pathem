@@ -340,6 +340,91 @@ extension BrowserViewController {
             pumpRunLoop(0.2)
         }
 
+        // Scenario 11: in icon mode, Cmd+= (zoom in), Cmd+Shift+= (the + key) and Cmd+- (zoom out)
+        // sent as real keyDown events to the icon view must change the zoom scale. Live report:
+        // zoom in did nothing in icon mode while zoom out worked.
+        do {
+            let dir = makeDir("zoom") { d in
+                for i in 0..<12 { fm.createFile(atPath: d.appendingPathComponent("z-\(i).txt").path, contents: Data("x".utf8)) }
+            }
+            navigate(to: dir, expecting: 12)
+            setActiveViewMode(.icon)
+            pumpRunLoop(0.4)
+            if let window = view.window, let keyView = activePane?.debugIconKeyView {
+                window.makeFirstResponder(keyView)
+                func key(_ chars: String, _ ignoring: String, code: UInt16, shift: Bool = false) -> NSEvent {
+                    NSEvent.keyEvent(
+                        with: .keyDown, location: .zero, modifierFlags: shift ? [.command, .shift] : [.command],
+                        timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber, context: nil,
+                        characters: chars, charactersIgnoringModifiers: ignoring, isARepeat: false, keyCode: code)!
+                }
+                let s0 = activePane?.debugIconScale ?? -1
+                keyView.keyDown(with: key("=", "=", code: 24))          // Cmd+=
+                pumpRunLoop(0.2); let s1 = activePane?.debugIconScale ?? -1
+                keyView.keyDown(with: key("+", "+", code: 24, shift: true))  // Cmd+Shift+= i.e. Cmd++
+                pumpRunLoop(0.2); let s2 = activePane?.debugIconScale ?? -1
+                keyView.keyDown(with: key("-", "-", code: 27))          // Cmd+-
+                pumpRunLoop(0.2); let s3 = activePane?.debugIconScale ?? -1
+                check("icon-zoom-in-cmd-equals", s1 > s0, "scale \(s0) -> \(s1)")
+                check("icon-zoom-in-cmd-plus", s2 > s1, "scale \(s1) -> \(s2)")
+                check("icon-zoom-out-cmd-minus", s3 < s2, "scale \(s2) -> \(s3)")
+                // The REAL dispatch path (NSApp.sendEvent: menu key equivalents, then the first
+                // responder). Flow A, the common one: list focused, then the user clicks the pane's
+                // own view switcher to go to icons, then presses Cmd+=. Flow B: nothing focused
+                // (fresh window / after clicking chrome) then the same switch and key.
+                func send(_ e: NSEvent) { NSApp.sendEvent(e); pumpRunLoop(0.2) }
+                func fr() -> String { window.firstResponder.map { String(describing: type(of: $0)) } ?? "nil" }
+                setActiveViewMode(.list); pumpRunLoop(0.3)
+                if let listKey = activePane?.debugListKeyView { window.makeFirstResponder(listKey) }
+                activePane?.debugClickViewSwitcher(.icon); pumpRunLoop(0.4)
+                let frA = fr()
+                let a0 = activePane?.debugIconScale ?? -1
+                send(key("=", "=", code: 24)); let a1 = activePane?.debugIconScale ?? -1
+                send(key("-", "-", code: 27)); let a2 = activePane?.debugIconScale ?? -1
+                check("icon-zoom-real-dispatch-list-focused-then-switch", a1 > a0 && a2 < a1, "firstResponder=\(frA) scale \(a0) -> \(a1) -> \(a2)")
+                setActiveViewMode(.list); pumpRunLoop(0.3)
+                window.makeFirstResponder(nil)
+                activePane?.debugClickViewSwitcher(.icon); pumpRunLoop(0.4)
+                let frB = fr()
+                let b0 = activePane?.debugIconScale ?? -1
+                send(key("=", "=", code: 24)); let b1 = activePane?.debugIconScale ?? -1
+                check("icon-zoom-real-dispatch-nothing-focused-then-switch", b1 > b0, "firstResponder=\(frB) scale \(b0) -> \(b1)")
+            } else {
+                check("icon-zoom-in-cmd-equals", false, "no icon key view")
+            }
+            setActiveViewMode(.list)
+            pumpRunLoop(0.3)
+        }
+
+        // Scenario 12: the status-row eye must show/hide dotfiles in BOTH directions, including
+        // when "show hidden by default" is on (live report: the eye did nothing; effective
+        // visibility was showHidden || default, so with the default on it could never hide).
+        do {
+            // A fresh folder per case: the eye's decision is remembered per folder (by design), so
+            // reusing one would carry the first case's override into the second.
+            for defaultOn in [true, false] {
+                let tag = defaultOn ? "default-on" : "default-off"
+                let dir = makeDir("eye-\(tag)") { d in
+                    fm.createFile(atPath: d.appendingPathComponent("visible.txt").path, contents: Data("x".utf8))
+                    fm.createFile(atPath: d.appendingPathComponent(".dotfile").path, contents: Data("x".utf8))
+                }
+                activePane?.showHiddenByDefault = defaultOn
+                navigate(to: dir, expecting: defaultOn ? 2 : 1)
+                let c0 = activePane?.debugEntryCount ?? -1
+                let flipped = defaultOn ? 1 : 2
+                activePane?.debugClickHiddenEye()
+                _ = waitUntil(3) { self.activePane?.debugEntryCount == flipped }
+                let c1 = activePane?.debugEntryCount ?? -1
+                let glyph1 = activePane?.debugHiddenShown == true ? "eye" : "eye.slash"
+                activePane?.debugClickHiddenEye()
+                _ = waitUntil(3) { self.activePane?.debugEntryCount == c0 }
+                let c2 = activePane?.debugEntryCount ?? -1
+                check("eye-toggles-hidden-\(tag)", c1 == flipped && c2 == c0, "counts \(c0) -> \(c1) -> \(c2)")
+                check("eye-glyph-tracks-state-\(tag)", glyph1 == (defaultOn ? "eye.slash" : "eye"), "after first click glyph=\(glyph1)")
+            }
+            activePane?.showHiddenByDefault = false
+        }
+
         // Scenario 10: the window toolbar default carries no navigation (each pane header has its
         // own) and centers the search field between two flexible spaces.
         do {

@@ -292,6 +292,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource, NSCo
     private(set) var entries: [FileEntry] = []
     private let gallery: Bool
     private var scale: CGFloat = 1
+    /// Harness accessors: the current zoom scale, and the key view that receives keyDown.
+    var debugScale: CGFloat { scale }
+    var debugKeyView: NSView { collection }
     private var baseIconSize: CGFloat { gallery ? 96 : 56 }
     private var iconSize: CGFloat { (baseIconSize * scale).rounded() }
     private var cellSize: NSSize {
