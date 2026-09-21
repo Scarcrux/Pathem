@@ -36,12 +36,17 @@ public struct KeyChord: Hashable, Sendable {
     /// which still applies Shift, so a letter key maps to its base letter (via
     /// lowercasing) and a shifted symbol is folded back to its unshifted key so
     /// that, for example, Shift plus "." canonicalizes to "shift+." not "shift+>".
+    /// The fold runs regardless of the shift flag: the numpad's dedicated "+" and
+    /// "*" keys send those characters with shift *false* (they're not "Shift+=" /
+    /// "Shift+8", they're their own physical keys), so gating the fold on shift
+    /// left Cmd+(numpad +) uncanonicalized as "cmd++" -- unbound, since only
+    /// "cmd+=" is bound to zoom in.
     public static func from(
         keyCode: UInt16, characters: String?,
         cmd: Bool, opt: Bool, ctrl: Bool, shift: Bool
     ) -> KeyChord {
         var key = specialKeys[keyCode] ?? (characters?.lowercased() ?? "")
-        if specialKeys[keyCode] == nil, shift, let base = shiftedSymbols[key] { key = base }
+        if specialKeys[keyCode] == nil, let base = shiftedSymbols[key] { key = base }
         return KeyChord(key: key, cmd: cmd, opt: opt, ctrl: ctrl, shift: shift)
     }
 

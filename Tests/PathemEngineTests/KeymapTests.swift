@@ -12,27 +12,46 @@ import Testing
 
     @Test func fromMapsSpecialKeysAndLetters() {
         #expect(
-            KeyChord.from(keyCode: 96, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
-                .canonical == "f5")
+            KeyChord.from(
+                keyCode: 96, characters: nil, cmd: false, opt: false, ctrl: false, shift: false
+            )
+            .canonical == "f5")
         #expect(
-            KeyChord.from(keyCode: 36, characters: "\r", cmd: false, opt: false, ctrl: false, shift: false)
-                .canonical == "return")
+            KeyChord.from(
+                keyCode: 36, characters: "\r", cmd: false, opt: false, ctrl: false, shift: false
+            )
+            .canonical == "return")
         // A letter keeps Shift as a modifier so cmd+z and cmd+shift+z differ.
         // AppKit delivers the uppercased letter for charactersIgnoringModifiers
         // when Shift is held, so feed "Z" (what really arrives), not "z".
         #expect(
-            KeyChord.from(keyCode: 6, characters: "Z", cmd: true, opt: false, ctrl: false, shift: true)
-                .canonical == "cmd+shift+z")
+            KeyChord.from(
+                keyCode: 6, characters: "Z", cmd: true, opt: false, ctrl: false, shift: true
+            )
+            .canonical == "cmd+shift+z")
     }
 
     @Test func foldsShiftedPunctuationToBaseKey() {
         // Shift plus "." yields ">" from charactersIgnoringModifiers; it must
         // canonicalize to "cmd+shift+." so the default Show Hidden binding fires.
         #expect(
-            KeyChord.from(keyCode: 47, characters: ">", cmd: true, opt: false, ctrl: false, shift: true)
-                .canonical == "cmd+shift+.")
+            KeyChord.from(
+                keyCode: 47, characters: ">", cmd: true, opt: false, ctrl: false, shift: true
+            )
+            .canonical == "cmd+shift+.")
         #expect(
-            Keymap.standard.commandID(for: KeyChord(key: ".", cmd: true, shift: true)) == "view.toggleHidden")
+            Keymap.standard.commandID(for: KeyChord(key: ".", cmd: true, shift: true))
+                == "view.toggleHidden")
+    }
+
+    @Test func foldsNumpadPunctuationWithoutShift() {
+        // The numpad's dedicated "+" key (keyCode 69) sends "+" with shift *false*
+        // -- it isn't "Shift+=" -- so the fold must not be gated on shift, or
+        // Cmd+(numpad +) canonicalizes to the unbound "cmd++" instead of "cmd+=".
+        let chord = KeyChord.from(
+            keyCode: 69, characters: "+", cmd: true, opt: false, ctrl: false, shift: false)
+        #expect(chord.canonical == "cmd+=")
+        #expect(Keymap.standard.commandID(for: chord) == "view.zoomIn")
     }
 
     @Test func defaultKeymapLookups() {
@@ -52,8 +71,10 @@ import Testing
 
     @Test func homeEndKeyCodesResolveToJumps() {
         // Home = keyCode 115, End = 119, no modifiers -> the selection-jump commands.
-        let home = KeyChord.from(keyCode: 115, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
-        let end = KeyChord.from(keyCode: 119, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
+        let home = KeyChord.from(
+            keyCode: 115, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
+        let end = KeyChord.from(
+            keyCode: 119, characters: nil, cmd: false, opt: false, ctrl: false, shift: false)
         #expect(home.canonical == "home")
         #expect(end.canonical == "end")
         #expect(Keymap.standard.commandID(for: home) == "nav.selectFirst")
