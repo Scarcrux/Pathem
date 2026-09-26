@@ -7,7 +7,7 @@ named behavior is exercised at that layer, not that every permutation of the fea
 
 | Feature area | Unit / integration (`make test`) | Product E2E (`make e2e`) | Release package (`make e2e-app`) | Remaining boundary |
 |---|---|---|---|---|
-| Launch, panes, layout | Models and layout rules | Real app, window and pane invariants | Real signed binary stays alive; visible window when Accessibility is available | Full exploratory UX and assistive-technology pass |
+| Launch, panes, layout | Models and layout rules | Real app, window and pane invariants | Real signed binary stays alive and exposes an on-screen layer-0 window to an external Core Graphics probe | Full exploratory UX and assistive-technology pass |
 | Million-row list | Enumerators and file columns | Real `NSTableView`, 1,000,000 rows, bounded materialized cells | Bundle/launch only | Performance across older supported Macs |
 | Core file operations | Create, copy, move, trash, links, conflicts, undo-related models | Real-file create/rename; skip and verified replace-copy; keep-both move; pre-mutation cancel; undo/redo; Trash/Put Back; batch create; swap-safe batch rename; symlink/hardlink/alias resolution; plus 39 on-screen interaction checks | Bundle/launch only | Removable volumes, network shares, every conflict sheet |
 | Navigation and views | Navigation, saved formats, filters, columns, sidebar, keymap | Real-window list/icon/gallery/column and navigation interactions | Bundle/launch only | Every shortcut and drag/drop destination |
@@ -26,9 +26,9 @@ named behavior is exercised at that layer, not that every permutation of the fea
 
 - `make ci` runs localization lint, a full serial engine test pass, the complete debug product E2E
   suite, and the release-package gate. GitHub Actions runs the same layers.
-- `make e2e-app` is the release-bundle gate. The Accessibility assertion reports `SKIP` when the
-  runner lacks permission; launch liveness, bundle contents, languages, helpers, and signature are
-  still mandatory.
+- `make e2e-app` is the release-bundle gate. Launch liveness, an externally observed visible window,
+  bundle contents, languages, helpers, and signature are all mandatory; the read-only window probe
+  needs no Accessibility permission.
 - `PATHEM_DHT_LIVE=1 make test -- --filter liveDHTFindsPeers` opts into the public mainline DHT.
 - Live FTP/SFTP tests require `PATHEM_LIVE_REMOTE=1` plus
   `PATHEM_LIVE_FTP_PASSWORD` and `PATHEM_LIVE_REBEX_PASSWORD`. Missing opt-in requirements appear

@@ -78,8 +78,8 @@ assert() {
 }
 
 # Release builds intentionally contain no PATHEM_* debug hooks. Probe the assembled product from
-# outside: launch the real binary, require it to stay alive, and inspect its window through macOS
-# Accessibility when the invoking terminal/runner has that permission.
+# outside: launch the real binary, require it to stay alive, and inspect its on-screen window by
+# owner PID through read-only Core Graphics metadata (no Accessibility permission required).
 packaged_launch_probe() {
   local log="${TMPDIR:-/tmp}/pathem-packaged-e2e.log"
   : > "$log"
@@ -99,14 +99,14 @@ packaged_launch_probe() {
   fi
 
   local windows=""
-  windows="$(timeout_run 10 osascript \
-    -e 'tell application "System Events" to tell process "Pathem" to count windows' 2>/dev/null || true)"
+  windows="$(timeout_run 20 xcrun --toolchain XcodeDefault swift \
+    "$ROOT/test/e2e/window_probe.swift" "$pid" 2>/dev/null || true)"
   if [[ "$windows" =~ ^[1-9][0-9]*$ ]]; then
-    printf "  %s ok %s  %-34s %s%s visible window(s)%s\n" "$green" "$rst" "release accessibility surface" "$dim" "$windows" "$rst"
+    printf "  %s ok %s  %-34s %s%s visible window(s)%s\n" "$green" "$rst" "release visible window" "$dim" "$windows" "$rst"
     pass=$((pass+1))
   else
-    printf "  %sSKIP%s  %-34s %sgrant Accessibility to run this assertion%s\n" "$yellow" "$rst" "release accessibility surface" "$dim" "$rst"
-    skip=$((skip+1))
+    printf "  %sFAIL%s  %-34s %swindow count: %s%s\n" "$red" "$rst" "release visible window" "$dim" "${windows:-unavailable}" "$rst"
+    fail=$((fail+1))
   fi
 
   kill -TERM "$pid" 2>/dev/null || true

@@ -4,8 +4,8 @@ The debug suite launches the **built product** as a separate process and drives 
 automation entry points. It catches launch crashes, packaging gaps, layout collapses, daemon
 protocol failures, real-file regressions, and on-screen interaction bugs. The packaged suite is
 different by design: release builds contain no debug hooks, so it checks the bundle/signature and
-launches the release binary externally, using Accessibility for a visible-window assertion when
-the runner has permission.
+launches the release binary externally, using read-only Core Graphics metadata for a mandatory
+visible-window assertion that does not require Accessibility permission.
 
 ## Run
 
@@ -44,8 +44,8 @@ not read or modify the user's application configuration or torrent queue.
 
 `--packaged` verifies the release `.app` has its binary, resource bundle, six languages, three
 out-of-process helpers, and a valid nested signature. It then launches the real release binary and
-requires it to remain alive. The Accessibility window check is reported as SKIP rather than a false
-pass when the invoking terminal/runner has not been granted Accessibility permission.
+requires it to remain alive and expose an on-screen layer-0 window to an external Core Graphics
+probe. A missing or unobservable window fails the packaged gate.
 
 ## Adding a scenario
 
