@@ -11,7 +11,7 @@
 #   make install  build the app and copy it to /Applications
 #   make watch    rebuild + relaunch on every source change (fast debug loop)
 #   make watch-install  same, but build + sign + install the .app each time
-#   make ci       run the full CI suite locally (build, test, Gate A, smoke);
+#   make ci       run the full CI suite locally (build, tests, product E2E, release package);
 #                 remote GitHub Actions CI is manual-only to save minutes
 #   make icon     regenerate Packaging/Pathem.icns from makeicon.swift
 #   make dev-cert create a stable self-signed signing identity (keeps an FDA
@@ -27,62 +27,78 @@ export GIT_CONFIG_COUNT = 1
 export GIT_CONFIG_KEY_0 = safe.bareRepository
 export GIT_CONFIG_VALUE_0 = all
 
-.PHONY: build run test gate-a gate-a-demo smoke e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
+# Pathem is a macOS app and must use the Swift toolchain paired with the selected Xcode SDK. A
+# separately installed Swiftly toolchain can be older than the SDK and fail while compiling package
+# manifests. Xcode 27's new default `swiftbuild` also tries to compile SwiftTerm's shader even for a
+# single-architecture build; the native SwiftPM build system follows SwiftTerm's intended copy path.
+XCODE_SWIFT := $(shell xcrun --toolchain XcodeDefault --find swift 2>/dev/null)
+XCODE_SWIFT_BIN := $(shell dirname "$(XCODE_SWIFT)" 2>/dev/null)
+ifneq ($(XCODE_SWIFT_BIN),)
+export PATH := $(XCODE_SWIFT_BIN):$(PATH)
+endif
+SWIFTPM_FLAGS ?= --build-system native
 
-build:
-	swift build
+.PHONY: preflight build run test gate-a gate-a-demo smoke ui-test e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
 
-run:
-	swift run Pathem
+preflight:
+	scripts/toolchain_preflight.sh
 
-test:
-	swift test
+build: preflight
+	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS)
+
+run: preflight
+	"$(XCODE_SWIFT)" run $(SWIFTPM_FLAGS) Pathem
+
+test: preflight
+	"$(XCODE_SWIFT)" test $(SWIFTPM_FLAGS)
 
 # Gate A: prove the file list virtualizes. Loads 1,000,000 synthetic rows into the
 # real view-based NSTableView and confirms it materializes only a bounded number of
 # cell views (not all 1M), reporting build/reload timings and cells-per-jump. Exits
 # non-zero if virtualization regresses. One command for a skeptic to reproduce the
 # headline benchmark themselves.
-gate-a:
-	PATHEM_GATE_A=1 swift run Pathem
+gate-a: preflight
+	PATHEM_GATE_A=1 "$(XCODE_SWIFT)" run $(SWIFTPM_FLAGS) Pathem
 
 # Record the 1M-row scroll demo (the above-the-fold asset) to docs/demo/. Needs Screen
 # Recording permission for your terminal; produces a GIF too if ffmpeg is installed.
 gate-a-demo:
 	scripts/capture-gate-a.sh
 
-smoke:
-	PATHEM_SMOKE=1 swift run Pathem
+smoke: preflight
+	PATHEM_SMOKE=1 "$(XCODE_SWIFT)" run $(SWIFTPM_FLAGS) Pathem
 
 # In-process UI-automation: drives real UI flows in a real, sized window and asserts on real
 # geometry (interaction/scroll bugs the headless smoke can't see). Prints UITEST/RESULT lines.
-ui-test:
-	PATHEM_UI_TEST=1 swift run Pathem
+ui-test: preflight
+	PATHEM_UI_TEST=1 "$(XCODE_SWIFT)" run $(SWIFTPM_FLAGS) Pathem
 
 # Blackbox end-to-end: launch the real product and assert behavior from the outside.
-e2e:
+e2e: preflight
 	test/e2e/run.sh
 
 # Same, against the assembled .app (also checks the bundle is complete).
-e2e-app:
+e2e-app: preflight
 	test/e2e/run.sh --packaged
 
 # The same checks the (now manual-only) GitHub Actions workflow runs.
-ci:
-	swift build
-	swift test
+ci: preflight
+	python3 scripts/l10n_lint.py
+	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS)
+	"$(XCODE_SWIFT)" test $(SWIFTPM_FLAGS) --no-parallel
 	test/e2e/run.sh
+	test/e2e/run.sh --packaged
 
-app:
+app: preflight
 	scripts/package.sh
 
-install:
+install: preflight
 	INSTALL=1 scripts/package.sh
 
-watch:
+watch: preflight
 	scripts/watch.sh
 
-watch-install:
+watch-install: preflight
 	scripts/watch.sh install
 
 icon:

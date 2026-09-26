@@ -19,7 +19,7 @@ import Testing
         process.standardOutput = out
         process.standardError = Pipe()
         // Isolate from the developer's global/system git config.
-        var env = ProcessInfo.processInfo.environment
+        var env = GitStatus.subprocessEnvironment
         env["GIT_CONFIG_GLOBAL"] = "/dev/null"
         env["GIT_CONFIG_SYSTEM"] = "/dev/null"
         env["GIT_TERMINAL_PROMPT"] = "0"
@@ -31,13 +31,15 @@ import Testing
 
     @Test func realRepositoryStatusIsParsed() async throws {
         guard FileManager.default.isExecutableFile(atPath: Self.git) else { return }  // no git: skip
-        let repo = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-git-\(UUID().uuidString)")
+        let repo = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-git-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: repo, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: repo) }
 
         try run(["-c", "init.defaultBranch=main", "init"], in: repo)
         try run(["config", "user.email", "t@example.com"], in: repo)
         try run(["config", "user.name", "Test"], in: repo)
+        try run(["config", "core.hooksPath", "/dev/null"], in: repo)
         try Data("v1".utf8).write(to: repo.appendingPathComponent("tracked.txt"))
         try run(["add", "."], in: repo)
         try run(["commit", "-m", "init"], in: repo)
@@ -50,13 +52,15 @@ import Testing
         let result = try #require(info)
         #expect(result.branch == "main")
         // Match by suffix: rev-parse canonicalizes /var -> /private/var on macOS.
-        #expect(result.states.contains { $0.key.hasSuffix("/tracked.txt") && $0.value == .modified })
+        #expect(
+            result.states.contains { $0.key.hasSuffix("/tracked.txt") && $0.value == .modified })
         #expect(result.states.contains { $0.key.hasSuffix("/fresh.txt") && $0.value == .untracked })
     }
 
     @Test func nonRepositoryReturnsNil() async throws {
         guard FileManager.default.isExecutableFile(atPath: Self.git) else { return }
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-nogit-\(UUID().uuidString)")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-nogit-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         #expect(await GitStatus.status(for: dir) == nil)  // not a repo
@@ -69,13 +73,15 @@ import Testing
     /// are byte-identical before and after a status read. This fails on the pre-fix code.
     @Test func statusDoesNotRewriteTheIndex() async throws {
         guard FileManager.default.isExecutableFile(atPath: Self.git) else { return }
-        let repo = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-gitidx-\(UUID().uuidString)")
+        let repo = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-gitidx-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: repo, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: repo) }
 
         try run(["-c", "init.defaultBranch=main", "init"], in: repo)
         try run(["config", "user.email", "t@example.com"], in: repo)
         try run(["config", "user.name", "Test"], in: repo)
+        try run(["config", "core.hooksPath", "/dev/null"], in: repo)
         let file = repo.appendingPathComponent("tracked.txt")
         try Data("hello world".utf8).write(to: file)
         try run(["add", "."], in: repo)

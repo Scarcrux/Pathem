@@ -23,7 +23,8 @@ public enum RepoScan {
 
     static func isRegenerable(_ name: String, isDirectory: Bool) -> Bool {
         if regenerableNames.contains(name) { return true }
-        return !isDirectory && regenerableExtensions.contains((name as NSString).pathExtension.lowercased())
+        return !isDirectory
+            && regenerableExtensions.contains((name as NSString).pathExtension.lowercased())
     }
 
     /// Classify the direct children of `folder` (which must be inside a git repo). Returns []
@@ -33,7 +34,8 @@ public enum RepoScan {
         let fm = FileManager.default
         guard
             let children = try? fm.contentsOfDirectory(
-                at: folder, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey], options: [])
+                at: folder, includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey], options: []
+            )
         else { return [] }
         let names = children.map(\.lastPathComponent).filter { $0 != ".git" }
         guard !names.isEmpty else { return [] }
@@ -62,11 +64,13 @@ public enum RepoScan {
     private static func trackedTopLevel(_ names: [String], in folder: URL) async -> Set<String> {
         guard
             let (data, status, _) = try? await RemoteRunner.run(
-                GitStatus.git, ["-C", folder.path, "ls-files", "-z", "--"] + names),
+                GitStatus.git, ["-C", folder.path, "ls-files", "-z", "--"] + names,
+                env: GitStatus.subprocessEnvironment),
             status == 0
         else { return [] }
         var result = Set<String>()
-        for entry in String(decoding: data, as: UTF8.self).split(separator: "\0") where !entry.isEmpty {
+        for entry in String(decoding: data, as: UTF8.self).split(separator: "\0")
+        where !entry.isEmpty {
             result.insert(String(entry.split(separator: "/", maxSplits: 1).first ?? entry))
         }
         return result

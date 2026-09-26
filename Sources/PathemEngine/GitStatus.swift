@@ -15,7 +15,9 @@ public struct GitInfo: Sendable, Equatable {
     /// Absolute path -> state. Directories containing changes are marked `.modified`.
     public var states: [String: GitFileState]
 
-    public init(branch: String? = nil, ahead: Int = 0, behind: Int = 0, states: [String: GitFileState] = [:]) {
+    public init(
+        branch: String? = nil, ahead: Int = 0, behind: Int = 0, states: [String: GitFileState] = [:]
+    ) {
         self.branch = branch
         self.ahead = ahead
         self.behind = behind
@@ -26,16 +28,34 @@ public struct GitInfo: Sendable, Equatable {
 public enum GitStatus {
     static let git = "/usr/bin/git"
 
+    /// Git exports repository-routing variables while hooks run. Letting those leak into a child
+    /// launched for a different folder makes `git -C` operate on the hook's repository/index and
+    /// can mutate the parent checkout. Keep user config and credentials, but clear only variables
+    /// that override repository discovery or object/index storage.
+    static var subprocessEnvironment: [String: String] {
+        var env = ProcessInfo.processInfo.environment
+        for key in [
+            "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+            "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_COMMON_DIR", "GIT_PREFIX", "GIT_NAMESPACE",
+            "GIT_REPLACE_REF_BASE",
+        ] {
+            env.removeValue(forKey: key)
+        }
+        return env
+    }
+
     /// Git status for the repo containing `folder`, or nil if it isn't a repo / git
     /// is unavailable. Runs off-process.
     public static func status(for folder: URL) async -> GitInfo? {
         guard FileManager.default.isExecutableFile(atPath: git) else { return nil }
         guard
             let root = try? await RemoteRunner.run(
-                git, ["-C", folder.path, "rev-parse", "--show-toplevel"]),
+                git, ["-C", folder.path, "rev-parse", "--show-toplevel"],
+                env: subprocessEnvironment),
             root.1 == 0
         else { return nil }  // not a repository
-        let rootPath = String(decoding: root.0, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        let rootPath = String(decoding: root.0, as: UTF8.self).trimmingCharacters(
+            in: .whitespacesAndNewlines)
         guard !rootPath.isEmpty else { return nil }
         // `--no-optional-locks` keeps `git status` from refreshing/rewriting `.git/index`
         // as a side effect. Without it, polling status mutates the repo, the pane's FSEvents
@@ -44,10 +64,16 @@ public enum GitStatus {
         guard
             let result = try? await RemoteRunner.run(
                 git,
-                ["--no-optional-locks", "-C", folder.path, "status", "--porcelain=v2", "--branch", "-z"]),
+                [
+                    "--no-optional-locks", "-C", folder.path, "status", "--porcelain=v2",
+                    "--branch", "-z",
+                ],
+                env: subprocessEnvironment),
             result.1 == 0
         else { return nil }
-        return parse(porcelainZ: String(decoding: result.0, as: UTF8.self), repoRoot: URL(fileURLWithPath: rootPath))
+        return parse(
+            porcelainZ: String(decoding: result.0, as: UTF8.self),
+            repoRoot: URL(fileURLWithPath: rootPath))
     }
 
     /// Parse `git status --porcelain=v2 --branch -z` into a GitInfo. Records are
@@ -55,7 +81,8 @@ public enum GitStatus {
     /// next record.
     public static func parse(porcelainZ output: String, repoRoot: URL) -> GitInfo {
         var info = GitInfo()
-        let records = output.split(separator: "\0", omittingEmptySubsequences: true).map(String.init)
+        let records = output.split(separator: "\0", omittingEmptySubsequences: true).map(
+            String.init)
         var index = 0
         while index < records.count {
             let record = records[index]
@@ -94,7 +121,9 @@ public enum GitStatus {
     /// `fieldsBeforePath` single-space-separated fields) and its two-char XY status.
     /// The path is taken as a verbatim substring so consecutive spaces in a name are
     /// preserved (split+join would collapse them).
-    private static func pathAndXY(_ record: String, fieldsBeforePath: Int) -> (path: String, xy: String)? {
+    private static func pathAndXY(_ record: String, fieldsBeforePath: Int) -> (
+        path: String, xy: String
+    )? {
         var spaces = 0
         var index = record.startIndex
         while index < record.endIndex {
@@ -103,7 +132,8 @@ public enum GitStatus {
                 if spaces == fieldsBeforePath {
                     let start = record.index(after: index)
                     guard start < record.endIndex else { return nil }
-                    let head = record.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
+                    let head = record.split(
+                        separator: " ", maxSplits: 1, omittingEmptySubsequences: false)
                     let xy = head.count > 1 ? String(head[1]) : ".."
                     return (String(record[start...]), xy)
                 }

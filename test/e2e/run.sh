@@ -17,6 +17,7 @@
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
+"$ROOT/scripts/toolchain_preflight.sh" || exit 1
 
 # Let SwiftPM use its own trusted bare-repo cache even under git safe.bareRepository.
 export GIT_CONFIG_COUNT="${GIT_CONFIG_COUNT:-1}"
@@ -57,6 +58,42 @@ assert() {
   else printf "  %sFAIL%s  %s\n" "$red" "$rst" "$name"; fail=$((fail+1)); fi
 }
 
+# Release builds intentionally contain no PATHEM_* debug hooks. Probe the assembled product from
+# outside: launch the real binary, require it to stay alive, and inspect its window through macOS
+# Accessibility when the invoking terminal/runner has that permission.
+packaged_launch_probe() {
+  local log="${TMPDIR:-/tmp}/pathem-packaged-e2e.log"
+  : > "$log"
+  env PATHEM_RELEASE_TEST=1 "$BIN" >"$log" 2>&1 &
+  local pid=$!
+  local alive=0
+  for _ in {1..20}; do
+    if kill -0 "$pid" 2>/dev/null; then alive=1; sleep 0.25; else break; fi
+  done
+  if [[ $alive == 1 ]] && kill -0 "$pid" 2>/dev/null; then
+    printf "  %s ok %s  %-34s %sprocess %s stayed alive%s\n" "$green" "$rst" "release app launches" "$dim" "$pid" "$rst"
+    pass=$((pass+1))
+  else
+    printf "  %sFAIL%s  %-34s\n" "$red" "$rst" "release app launches"
+    tail -12 "$log" | sed 's/^/        /'
+    fail=$((fail+1))
+  fi
+
+  local windows=""
+  windows="$(timeout_run 10 osascript \
+    -e 'tell application "System Events" to tell process "Pathem" to count windows' 2>/dev/null || true)"
+  if [[ "$windows" =~ ^[1-9][0-9]*$ ]]; then
+    printf "  %s ok %s  %-34s %s%s visible window(s)%s\n" "$green" "$rst" "release accessibility surface" "$dim" "$windows" "$rst"
+    pass=$((pass+1))
+  else
+    printf "  %sSKIP%s  %-34s %sgrant Accessibility to run this assertion%s\n" "$yellow" "$rst" "release accessibility surface" "$dim" "$rst"
+    skip=$((skip+1))
+  fi
+
+  kill -TERM "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
 echo "==> Building product"
 if [[ $PACKAGED == 1 ]]; then
   INSTALL= ./scripts/package.sh >/tmp/pathem_e2e_pkg.log 2>&1 \
@@ -67,12 +104,21 @@ if [[ $PACKAGED == 1 ]]; then
   # Bundle-completeness checks (a missing resource bundle is what crashed launch).
   assert "binary present"        test -x "$BIN"
   assert "resource bundle present" test -d "$APP/Contents/Resources/Pathem_Pathem.bundle"
+  assert "torrent daemon bundled" test -x "$APP/Contents/MacOS/pathem-torrentd"
+  assert "AFC helper bundled"     test -x "$APP/Contents/MacOS/pathem-afc"
+  assert "CLI bundled"            test -x "$APP/Contents/MacOS/pathem-cli"
   langs=$(ls -d "$APP/Contents/Resources/Pathem_Pathem.bundle/"*.lproj 2>/dev/null | wc -l | tr -d ' ')
   assert "all 6 languages bundled ($langs)" test "$langs" -eq 6
+  assert "bundle signature verifies" codesign --verify --deep --strict "$APP"
+  packaged_launch_probe
+  echo
+  echo "==> ${pass} passed, ${skip} skipped, ${fail} failed"
+  [[ $fail -eq 0 ]]
+  exit
 else
-  swift build >/tmp/pathem_e2e_build.log 2>&1 \
+  swift build --build-system native >/tmp/pathem_e2e_build.log 2>&1 \
     || { echo "${red}swift build failed${rst}"; tail -8 /tmp/pathem_e2e_build.log; exit 1; }
-  BIN="$(swift build --show-bin-path)/Pathem"
+  BIN="$(swift build --build-system native --show-bin-path)/Pathem"
 fi
 
 echo "==> Scenarios"
@@ -80,8 +126,10 @@ scenario "launch + UI invariants"      'RESULT: PASS' env PATHEM_SMOKE=1 "$BIN"
 scenario "1M-row virtualization (Gate A)" 'RESULT: PASS' env PATHEM_GATE_A=1 "$BIN"
 scenario "localization bundled + resolves" 'RESULT: PASS' env PATHEM_L10N_SMOKE=1 "$BIN"
 scenario "organize-with-AI path"       'RESULT: (PASS|SKIP)' env PATHEM_AI_SMOKE=1 "$BIN"
+scenario "torrent + magnet daemon seam" 'RESULT: PASS' env PATHEM_TORRENTS_SMOKE=1 "$BIN"
 rm -f /tmp/pathem-e2e.png  # cleared before the flow so the render assert below sees a fresh one
 scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$BIN"
+scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN"
 
 # Render harnesses: assert they produce non-empty PNGs (layout didn't collapse).
 rm -f /tmp/settings_general.png /tmp/sidebar.png

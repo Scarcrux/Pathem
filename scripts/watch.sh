@@ -24,6 +24,7 @@ set -uo pipefail  # deliberately no -e: a failed build must not kill the loop
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+"$ROOT/scripts/toolchain_preflight.sh" || exit 1
 MODE="${1:-run}"
 APP_PID=""
 FSWATCH_PID=""
@@ -67,10 +68,10 @@ launch() {
   fi
 
   # Fast loop: build first; only swap the running instance if the build worked.
-  if swift build; then
+  if swift build --build-system native; then
     kill_app
     local bin
-    bin="$(swift build --show-bin-path)/Pathem"
+    bin="$(swift build --build-system native --show-bin-path)/Pathem"
     "$bin" &
     APP_PID=$!
   else

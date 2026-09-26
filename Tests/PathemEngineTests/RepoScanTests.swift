@@ -11,13 +11,15 @@ import Testing
         p.arguments = ["-C", dir.path] + args
         p.standardOutput = Pipe()
         p.standardError = Pipe()
+        p.environment = GitStatus.subprocessEnvironment
         try? p.run()
         p.waitUntilExit()
         return p.terminationStatus
     }
 
     @Test func classifiesTrackedRegenerableAndPrecious() async throws {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-repo-\(UUID().uuidString)")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-repo-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
 
@@ -47,7 +49,8 @@ import Testing
     }
 
     @Test func returnsEmptyOutsideARepo() async throws {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-norepo-\(UUID().uuidString)")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-norepo-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         try Data("x".utf8).write(to: dir.appendingPathComponent("a.txt"))

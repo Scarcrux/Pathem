@@ -28,7 +28,8 @@ enum PathemApp {
         // Screenshot runs use a window that always draws key chrome (colored traffic lights),
         // since macOS denies programmatic activation while the user is typing elsewhere and a
         // capture with gray lights reads as an inactive app.
-        let shotRun = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
+        let shotRun =
+            ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
             || ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil
         let windowType: NSWindow.Type = shotRun ? AlwaysKeyWindow.self : NSWindow.self
         let window = windowType.init(
@@ -112,8 +113,10 @@ enum PathemApp {
         // folder when rendering view-mode screenshots).
         let viewShot = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
         // Privacy-safe demo mode (PATHEM_DEMO=1): a fake workspace + sidebar for screenshots.
-        let demoLayout = ProcessInfo.processInfo.environment["PATHEM_DEMO"] != nil ? DemoWorkspace.build() : nil
-        let start = viewShot ? Self.makeSampleFolder() : FileManager.default.homeDirectoryForCurrentUser
+        let demoLayout =
+            ProcessInfo.processInfo.environment["PATHEM_DEMO"] != nil ? DemoWorkspace.build() : nil
+        let start =
+            viewShot ? Self.makeSampleFolder() : FileManager.default.homeDirectoryForCurrentUser
         // An automation launch (smoke test, screenshot, or a render/test harness) navigates panes to
         // scratch paths; it must NOT persist over the user's real saved session, or their next normal
         // launch reopens with /tmp-style tabs. Only a plain interactive launch owns session.json.
@@ -158,7 +161,6 @@ enum PathemApp {
                 StaleBuildState.record(stale)
             }
         }
-
 
         #if DEBUG  // all remaining automation / screenshot / E2E dispatch; stripped from release (5.7)
         // PATHEM_E2E: drive a real create -> rename -> new-file flow on a temp workspace and assert
@@ -314,7 +316,8 @@ enum PathemApp {
                 let capture = Process()
                 capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                 capture.arguments = ["-x", "-l\(number)", "/tmp/quickbar_live.png"]
-                try? capture.run(); capture.waitUntilExit()
+                try? capture.run()
+                capture.waitUntilExit()
                 exit(0)
             }
         }
@@ -330,7 +333,8 @@ enum PathemApp {
                     let capture = Process()
                     capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                     capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/ai_live.png"]
-                    try? capture.run(); capture.waitUntilExit()
+                    try? capture.run()
+                    capture.waitUntilExit()
                     exit(0)
                 }
             }
@@ -340,20 +344,28 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_QUEUE_SHOT"] != nil {
             let queue = TransferQueueController()
             Self.liveDialog = queue
-            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-queue-demo.bin")
+            let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "pathem-queue-demo.bin")
             try? Data(repeating: 0, count: 46_000).write(to: tmp)  // 46% of 100k
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                let running = TransferQueueController.Item(name: "vacation-4k.mov", totalBytes: 100_000, progressFile: tmp) {
+                let running = TransferQueueController.Item(
+                    name: "vacation-4k.mov", totalBytes: 100_000, progressFile: tmp
+                ) {
                     try? await Task.sleep(for: .seconds(4))
                 }
-                let queued = TransferQueueController.Item(name: "photos.zip", totalBytes: 5_000_000, progressFile: tmp) {}
-                queue.run([running, queued], title: "Downloading from example.com", over: window) { _, _ in }
+                let queued = TransferQueueController.Item(
+                    name: "photos.zip", totalBytes: 5_000_000, progressFile: tmp
+                ) {}
+                queue.run([running, queued], title: "Downloading from example.com", over: window) {
+                    _, _ in
+                }
                 let number = queue.debugWindowNumber
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     let capture = Process()
                     capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                     capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/queue_live.png"]
-                    try? capture.run(); capture.waitUntilExit()
+                    try? capture.run()
+                    capture.waitUntilExit()
                     exit(0)
                 }
             }
@@ -377,14 +389,18 @@ enum PathemApp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                 dialog.present(
                     over: window, archiveName: "photos.zip",
-                    entries: ["IMG_0001.jpg", "IMG_0002.jpg", "notes/todo.txt", "notes/ideas.md", "cover.png"],
+                    entries: [
+                        "IMG_0001.jpg", "IMG_0002.jpg", "notes/todo.txt", "notes/ideas.md",
+                        "cover.png",
+                    ],
                     onExtractAll: {})
                 let number = dialog.debugWindowNumber
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     let capture = Process()
                     capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                     capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/dialog_archive.png"]
-                    try? capture.run(); capture.waitUntilExit()
+                    try? capture.run()
+                    capture.waitUntilExit()
                     exit(0)
                 }
             }
@@ -395,13 +411,15 @@ enum PathemApp {
             let inspector = InfoInspectorController()
             Self.liveInspector = inspector
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                inspector.present(urls: [URL(fileURLWithPath: "/System/Applications/Calculator.app")], over: nil)
+                inspector.present(
+                    urls: [URL(fileURLWithPath: "/System/Applications/Calculator.app")], over: nil)
                 let number = inspector.debugWindowNumber
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     let capture = Process()
                     capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
                     capture.arguments = ["-x", "-o", "-l\(number)", "/tmp/info_live.png"]
-                    try? capture.run(); capture.waitUntilExit()
+                    try? capture.run()
+                    capture.waitUntilExit()
                     exit(0)
                 }
             }
@@ -486,16 +504,24 @@ enum PathemApp {
             let navPath = ProcessInfo.processInfo.environment["PATHEM_MAIN_PATH"]
             let sectionOrder = ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_ORDER"]
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                if let sectionOrder { browser.debugReorderSidebar(sectionOrder.split(separator: ",").map(String.init)) }
+                if let sectionOrder {
+                    browser.debugReorderSidebar(sectionOrder.split(separator: ",").map(String.init))
+                }
                 if let navPath { browser.debugNavigateActive(to: URL(fileURLWithPath: navPath)) }
                 if ProcessInfo.processInfo.environment["PATHEM_COLOR_RULES"] != nil {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSeedColorRules() }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        browser.debugSeedColorRules()
+                    }
                 }
                 if ProcessInfo.processInfo.environment["PATHEM_SITE_GROUPS"] != nil {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSeedGroupedConnections() }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        browser.debugSeedGroupedConnections()
+                    }
                 }
                 if ProcessInfo.processInfo.environment["PATHEM_FORMATS"] != nil {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { browser.debugSetBinaryRelativeFormats() }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        browser.debugSetBinaryRelativeFormats()
+                    }
                 }
                 if let mode {
                     // Marquee-feature modes stage a whole subsystem for a screencapture; the file
@@ -511,12 +537,14 @@ enum PathemApp {
                         if navPath == nil {
                             let target =
                                 demoLayout?.rightStart
-                                ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
+                                ?? FileManager.default.homeDirectoryForCurrentUser
+                                .appendingPathComponent("Pictures")
                             browser.debugNavigateActive(to: target)
                         }
                         let viewMode: ViewFormat.ViewMode =
                             mode == "gallery"
-                            ? .gallery : (mode == "column" ? .column : (mode == "list" ? .list : .icon))
+                            ? .gallery
+                            : (mode == "column" ? .column : (mode == "list" ? .list : .icon))
                         browser.debugSetActiveViewMode(viewMode)
                     }
                 }
@@ -628,7 +656,8 @@ enum PathemApp {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
                     return
                 }
-                browser.debugTorrentLayout(openDetail: detail, seedDemo: seedDemo, pngPath: "/tmp/torrent-layout.png")
+                browser.debugTorrentLayout(
+                    openDetail: detail, seedDemo: seedDemo, pngPath: "/tmp/torrent-layout.png")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { exit(0) }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
@@ -665,7 +694,10 @@ enum PathemApp {
                     }
                     let response = await browser.presentSheet(sheetAlert)
                     let sheetOK = response == .alertFirstButtonReturn
-                    print(sheetOK ? "ok   async-sheet-returns" : "FAIL async-sheet-returns (\(response.rawValue))")
+                    print(
+                        sheetOK
+                            ? "ok   async-sheet-returns"
+                            : "FAIL async-sheet-returns (\(response.rawValue))")
                     print("RESULT: \(report.ok && sheetOK ? "PASS" : "FAIL")")
                     exit(report.ok && sheetOK ? 0 : 1)
                 }
@@ -674,13 +706,14 @@ enum PathemApp {
         }
 
         // Headless torrents smoke: spawn the real pathem-torrentd via TorrentDaemonClient, add a
-        // trackerless fixture .torrent, and confirm it comes back in a status broadcast. Exercises
-        // the app-side spawn + JSON round-trip that the engine tests can't reach. Exits itself.
+        // trackerless fixture .torrent AND a magnet, and confirm both come back in a status
+        // broadcast. Exercises the app-side spawn + JSON round-trip that engine tests cannot reach.
         if ProcessInfo.processInfo.environment["PATHEM_TORRENTS_SMOKE"] != nil {
             print("=== TORRENTS SMOKE: daemon spawn + add ===")
             func bencodeLen(_ v: String) -> String { "\(v.utf8.count):\(v)" }
             let pieces = String(repeating: "a", count: 20)
-            let info = "d" + bencodeLen("length") + "i1024e" + bencodeLen("name") + bencodeLen("smoke.bin")
+            let info =
+                "d" + bencodeLen("length") + "i1024e" + bencodeLen("name") + bencodeLen("smoke.bin")
                 + bencodeLen("piece length") + "i16384e" + bencodeLen("pieces") + "20:\(pieces)e"
             let fixture = "d" + bencodeLen("info") + info + "e"
             let fixtureURL = FileManager.default.temporaryDirectory
@@ -690,25 +723,46 @@ enum PathemApp {
                 try Data(fixture.utf8).write(to: fixtureURL)
                 let spawned = client.startIfNeeded()
                 print(spawned ? "ok   daemon-spawned" : "FAIL daemon-spawned (helper not found)")
-                guard spawned else { print("RESULT: FAIL"); exit(1) }
-                client.addTorrent(fileAt: fixtureURL.path, savePath: fixtureURL.deletingLastPathComponent().path)
+                guard spawned else {
+                    print("RESULT: FAIL")
+                    exit(1)
+                }
+                client.addTorrent(
+                    fileAt: fixtureURL.path, savePath: fixtureURL.deletingLastPathComponent().path)
+                let magnetID = UUID().uuidString.replacingOccurrences(of: "-", with: "")
+                    .lowercased()
+                let magnetHash = magnetID + String(repeating: "0", count: 8)
+                let magnetName = "smoke-magnet-\(magnetID.prefix(8))"
+                client.addMagnet(
+                    "magnet:?xt=urn:btih:\(magnetHash)&dn=\(magnetName)",
+                    savePath: fixtureURL.deletingLastPathComponent().path)
                 var attempts = 0
                 func poll() {
                     attempts += 1
-                    if let smoke = client.torrents.first(where: { $0.name == "smoke.bin" }) {
+                    if let smoke = client.torrents.first(where: { $0.name == "smoke.bin" }),
+                        let magnet = client.torrents.first(where: { $0.name == magnetName })
+                    {
                         print("ok   torrent-appears-in-status")
-                        print("RESULT: PASS")
-                        // Remove the fixture so the smoke doesn't leave a torrent in real state.
+                        print(
+                            magnet.state == .checking
+                                ? "ok   magnet-appears-in-status"
+                                : "FAIL magnet-appears-in-status (state=\(magnet.state))")
+                        let ok = magnet.state == .checking
+                        print("RESULT: \(ok ? "PASS" : "FAIL")")
+                        // Remove the fixtures so the smoke doesn't leave torrents in real state.
                         client.remove(smoke.infoHash, deleteData: true)
+                        client.remove(magnet.infoHash, deleteData: true)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                             client.shutdown()
                             try? FileManager.default.removeItem(at: fixtureURL)
-                            exit(0)
+                            exit(ok ? 0 : 1)
                         }
                         return
                     }
                     if attempts >= 40 {
-                        print("FAIL torrent-appears-in-status (timed out, last count=\(client.torrents.count))")
+                        print(
+                            "FAIL torrent-appears-in-status (timed out, last count=\(client.torrents.count))"
+                        )
                         print("RESULT: FAIL")
                         client.shutdown()
                         exit(1)
@@ -726,41 +780,44 @@ enum PathemApp {
         // Headless AI smoke: run the on-device model through our real proposal path
         // and print the plan it proposes. Needs macOS 26 + Apple Intelligence.
         #if canImport(FoundationModels)
-            // Env var for direct runs; --ai-smoke arg so it also works via `open`
-            // (LaunchServices doesn't pass the terminal environment through).
-            if ProcessInfo.processInfo.environment["PATHEM_AI_SMOKE"] != nil
-                || CommandLine.arguments.contains("--ai-smoke")
-            {
-                DispatchQueue.main.async {
-                    Task.detached {
-                        print("=== AI SMOKE: Organize with AI ===")
-                        guard #available(macOS 26, *) else {
-                            print("RESULT: SKIP (macOS < 26)")
-                            exit(0)
-                        }
-                        // Skip (not fail) when Apple Intelligence isn't available, so the
-                        // e2e suite is green on machines without it.
-                        if let reason = AIAvailability.unavailableReason() {
-                            print("RESULT: SKIP (\(reason))")
-                            exit(0)
-                        }
-                        let files = [
-                            "IMG_1024.jpg", "budget.pdf", "notes.txt", "screenshot.png", "invoice.pdf",
-                            "cat.heic",
-                        ]  // a filename-heavy case that used to trip the language classifier
-                        let plan = await proposeOrganizePlan(
-                            instruction: "Move images into a Pictures folder and PDFs into a Docs folder",
-                            files: files)
-                        guard let plan, !plan.steps.isEmpty else {
-                            print("RESULT: FAIL (no plan; model unavailable or empty)")
-                            exit(1)
-                        }
-                        for line in plan.summary(in: URL(fileURLWithPath: "/tmp")) { print("  \(line)") }
-                        print("RESULT: PASS (\(plan.steps.count) steps proposed)")
+        // Env var for direct runs; --ai-smoke arg so it also works via `open`
+        // (LaunchServices doesn't pass the terminal environment through).
+        if ProcessInfo.processInfo.environment["PATHEM_AI_SMOKE"] != nil
+            || CommandLine.arguments.contains("--ai-smoke")
+        {
+            DispatchQueue.main.async {
+                Task.detached {
+                    print("=== AI SMOKE: Organize with AI ===")
+                    guard #available(macOS 26, *) else {
+                        print("RESULT: SKIP (macOS < 26)")
                         exit(0)
                     }
+                    // Skip (not fail) when Apple Intelligence isn't available, so the
+                    // e2e suite is green on machines without it.
+                    if let reason = AIAvailability.unavailableReason() {
+                        print("RESULT: SKIP (\(reason))")
+                        exit(0)
+                    }
+                    let files = [
+                        "IMG_1024.jpg", "budget.pdf", "notes.txt", "screenshot.png", "invoice.pdf",
+                        "cat.heic",
+                    ]  // a filename-heavy case that used to trip the language classifier
+                    let plan = await proposeOrganizePlan(
+                        instruction:
+                            "Move images into a Pictures folder and PDFs into a Docs folder",
+                        files: files)
+                    guard let plan, !plan.steps.isEmpty else {
+                        print("RESULT: FAIL (no plan; model unavailable or empty)")
+                        exit(1)
+                    }
+                    for line in plan.summary(in: URL(fileURLWithPath: "/tmp")) {
+                        print("  \(line)")
+                    }
+                    print("RESULT: PASS (\(plan.steps.count) steps proposed)")
+                    exit(0)
                 }
             }
+        }
         #endif
 
         // Render the main window with a distinctive skin (purple accent + dark tint) so the
@@ -781,29 +838,36 @@ enum PathemApp {
         // assert the output exists and is shorter (the trim UI itself is interactive, not headless).
         if ProcessInfo.processInfo.environment["PATHEM_TRIM_SMOKE"] != nil {
             Task { @MainActor in
-                let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-trim-\(UUID().uuidString)")
+                let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+                    "pathem-trim-\(UUID().uuidString)")
                 try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
                 let src = dir.appendingPathComponent("tone.m4a")
                 var ok = false
                 let settings: [String: Any] = [
-                    AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100.0, AVNumberOfChannelsKey: 1,
+                    AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100.0,
+                    AVNumberOfChannelsKey: 1,
                 ]
                 print("=== TRIM SMOKE ===")
                 do {
                     // Write (and finalize, by scoping the file so it deallocs) 3s of silent AAC.
                     do {
-                        let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
+                        let format = AVAudioFormat(
+                            standardFormatWithSampleRate: 44100, channels: 1)!
                         let file = try AVAudioFile(forWriting: src, settings: settings)
-                        let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(44100 * 3))!
+                        let buffer = AVAudioPCMBuffer(
+                            pcmFormat: format, frameCapacity: AVAudioFrameCount(44100 * 3))!
                         buffer.frameLength = AVAudioFrameCount(44100 * 3)
                         try file.write(from: buffer)
                     }
                     let srcDur = CMTimeGetSeconds(AVURLAsset(url: src).duration)
                     print("wrote src dur=\(String(format: "%.2f", srcDur))s")
-                    let out = await TrimController.debugExport(from: src, startSeconds: 0, endSeconds: 1)
+                    let out = await TrimController.debugExport(
+                        from: src, startSeconds: 0, endSeconds: 1)
                     if let out {
                         let dur = CMTimeGetSeconds(AVURLAsset(url: out).duration)
-                        ok = FileManager.default.fileExists(atPath: out.path) && dur < srcDur && dur > 0.4
+                        ok =
+                            FileManager.default.fileExists(atPath: out.path) && dur < srcDur
+                            && dur > 0.4
                         print("exported out dur=\(String(format: "%.2f", dur))s")
                     } else {
                         print("export returned nil")
@@ -882,12 +946,14 @@ enum PathemApp {
                 // A soft gradient picture behind the pane proves the image path end to end.
                 let img = NSImage(size: NSSize(width: 400, height: 400))
                 img.lockFocus()
-                let gradient = NSGradient(starting: NSColor.systemTeal, ending: NSColor.systemIndigo)
+                let gradient = NSGradient(
+                    starting: NSColor.systemTeal, ending: NSColor.systemIndigo)
                 gradient?.draw(in: NSRect(x: 0, y: 0, width: 400, height: 400), angle: 45)
                 img.unlockFocus()
                 let path = "/tmp/pathem-folderbg.png"
                 if let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
-                    let png = rep.representation(using: .png, properties: [:]) {
+                    let png = rep.representation(using: .png, properties: [:])
+                {
                     try? png.write(to: URL(fileURLWithPath: path))
                 }
                 browser.debugSetFolderBackground(colorHex: "", imagePath: path)
@@ -909,7 +975,8 @@ enum PathemApp {
                 let bothLaidOut = browser.layoutSettled() && second.layoutSettled()
                 let independent = browser.persistsSession && !second.persistsSession
                 print("=== MULTIWINDOW SMOKE ===")
-                print("windows=\(count) bothLaidOut=\(bothLaidOut) independentSession=\(independent)")
+                print(
+                    "windows=\(count) bothLaidOut=\(bothLaidOut) independentSession=\(independent)")
                 let pass = count == 2 && bothLaidOut && independent
                 print("RESULT: \(pass ? "PASS" : "FAIL")")
                 WindowManager.shared.terminateAllTerminals()
@@ -919,7 +986,8 @@ enum PathemApp {
         // End-to-end slideshow check: build two real images, present the full-screen slideshow,
         // then close it, asserting it went active and back inactive without leaving a window up.
         if ProcessInfo.processInfo.environment["PATHEM_SLIDESHOW_SMOKE"] != nil {
-            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-slideshow-smoke")
+            let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "pathem-slideshow-smoke")
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             var urls: [URL] = []
             for (i, color) in [NSColor.systemRed, NSColor.systemBlue].enumerated() {
@@ -929,7 +997,8 @@ enum PathemApp {
                 NSRect(x: 0, y: 0, width: 200, height: 200).fill()
                 image.unlockFocus()
                 if let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
-                    let png = rep.representation(using: .png, properties: [:]) {
+                    let png = rep.representation(using: .png, properties: [:])
+                {
                     let url = dir.appendingPathComponent("img\(i).png")
                     try? png.write(to: url)
                     urls.append(url)
@@ -1035,7 +1104,8 @@ enum PathemApp {
         appMenu.addItem(commandItem("Reset Pathem Data…", "app.resetData"))
         appMenu.addItem(.separator())
         appMenu.addItem(
-            withTitle: L("menu.quit", "Quit Pathem"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+            withTitle: L("menu.quit", "Quit Pathem"),
+            action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         let fileItem = NSMenuItem()
         mainMenu.addItem(fileItem)
@@ -1147,9 +1217,12 @@ enum PathemApp {
         // Delete
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Move to Trash", "files.trash", "\u{8}"))
-        fileMenu.addItem(commandItem("Delete Immediately…", "files.deleteImmediately", "\u{8}", [.command, .option]))
+        fileMenu.addItem(
+            commandItem(
+                "Delete Immediately…", "files.deleteImmediately", "\u{8}", [.command, .option]))
         fileMenu.addItem(commandItem("Put Back", "files.putBack"))
-        fileMenu.addItem(commandItem("Empty Trash…", "files.emptyTrash", "\u{8}", [.command, .shift]))
+        fileMenu.addItem(
+            commandItem("Empty Trash…", "files.emptyTrash", "\u{8}", [.command, .shift]))
         fileMenu.addItem(commandItem("Secure Delete…", "files.secureDelete"))
         fileMenu.addItem(commandItem("Uninstall App…", "files.deleteApp"))
         fileMenu.addItem(.separator())
@@ -1159,16 +1232,24 @@ enum PathemApp {
         mainMenu.addItem(editItem)
         let editMenu = NSMenu(title: L("menu.edit", "Edit"))
         editItem.submenu = editMenu
-        editMenu.addItem(withTitle: L("menu.undo", "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = editMenu.addItem(withTitle: L("menu.redo", "Redo"), action: Selector(("redo:")), keyEquivalent: "z")
+        editMenu.addItem(
+            withTitle: L("menu.undo", "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = editMenu.addItem(
+            withTitle: L("menu.redo", "Redo"), action: Selector(("redo:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(commandItem("Undo History…", "edit.showHistory"))
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: L("menu.cut", "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        editMenu.addItem(withTitle: L("menu.copy", "Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        editMenu.addItem(withTitle: L("menu.paste", "Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
         editMenu.addItem(
-            withTitle: L("menu.selectAll", "Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+            withTitle: L("menu.cut", "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(
+            withTitle: L("menu.copy", "Copy"), action: #selector(NSText.copy(_:)),
+            keyEquivalent: "c")
+        editMenu.addItem(
+            withTitle: L("menu.paste", "Paste"), action: #selector(NSText.paste(_:)),
+            keyEquivalent: "v")
+        editMenu.addItem(
+            withTitle: L("menu.selectAll", "Select All"), action: #selector(NSText.selectAll(_:)),
+            keyEquivalent: "a")
         editMenu.addItem(.separator())
         editMenu.addItem(commandItem("Copy Path", "files.copyPath", "c", [.command, .option]))
         editMenu.addItem(commandItem("Copy as File URL", "files.copyURL"))
@@ -1187,13 +1268,16 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Gallery", "view.asGallery", "3"))
         viewMenu.addItem(commandItem("as Columns", "view.asColumn", "4"))
         viewMenu.addItem(commandItem("as Tree", "view.asTree", "5"))
-        viewMenu.addItem(submenu(L("menu.group.arrangeBy", "Arrange By"), [
-            commandItem("None", "view.arrangeNone"),
-            commandItem("Kind", "view.arrangeKind"),
-            commandItem("Size", "view.arrangeSize"),
-            commandItem("Date Modified", "view.arrangeDate"),
-            commandItem("Tag", "view.arrangeTag"),
-        ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.arrangeBy", "Arrange By"),
+                [
+                    commandItem("None", "view.arrangeNone"),
+                    commandItem("Kind", "view.arrangeKind"),
+                    commandItem("Size", "view.arrangeSize"),
+                    commandItem("Date Modified", "view.arrangeDate"),
+                    commandItem("Tag", "view.arrangeTag"),
+                ]))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
         viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))
@@ -1201,59 +1285,76 @@ enum PathemApp {
 
         // Everything else is grouped into submenus so the top level stays scannable
         // instead of a 40-item wall. Shortcuts still work from inside a submenu.
-        viewMenu.addItem(submenu(L("menu.group.find", "Find"), [
-            // Cmd-F opens the search-and-command overlay in search mode (Cmd-K opens the same
-            // overlay in command mode); the old Cmd-F live filter moves to Shift-Cmd-F.
-            commandItem("Search This Folder…", "search.palette", "f"),
-            commandItem("Filter…", "view.filter", "f", [.command, .shift]),
-            commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]),
-            commandItem("Find in Files…", "files.findInFiles"),
-            commandItem("Find Duplicates", "files.findDuplicates"),
-            commandItem("Find Similar Names", "files.findSimilarNames"),
-            commandItem("Find Near-Duplicate Photos", "image.findNearDuplicates"),
-            .separator(),
-            // ⌥⌘L, not ⌃⌘F: ⌃⌘F is the system Enter Full Screen shortcut, which this shadowed.
-            commandItem("Flat View", "view.flatView", "l", [.command, .option]),
-            commandItem("Flatten Folder (Show All Items)", "view.flattenFolder"),
-        ]))
-        viewMenu.addItem(submenu(L("menu.group.folderTools", "Folder Tools"), [
-            commandItem("Compare Panes…", "files.comparePanes"),
-            commandItem("Size Browser…", "view.sizeBrowser"),
-            commandItem("Calculate All Sizes", "view.calculateSizes"),
-            .separator(),
-            commandItem("Cleanup…", "view.cleanup"),
-            commandItem("Reclaim in Repo…", "files.repoReclaim"),
-        ]))
-        viewMenu.addItem(submenu(L("menu.group.show", "Show"), [
-            commandItem("Show Hidden Files", "view.toggleHidden"),
-            commandItem("Show Full Path in Title Bar", "view.fullPathTitle"),
-            commandItem("Show Path Bar at Bottom", "view.pathBarBottom"),
-            commandItem("Compact Sidebar", "view.compactSidebar"),
-            commandItem("Sync Browsing", "view.syncBrowsing"),
-            commandItem("Vim Navigation", "nav.vimMode"),
-        ]))
-        viewMenu.addItem(submenu(L("menu.group.preview", "Preview"), [
-            commandItem("Quick Look", "view.quickLook"),
-            commandItem("Slideshow", "view.slideshow"),
-            commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]),
-            commandItem("Show Drop Stack", "shelf.toggle", "y", [.command, .shift]),
-        ]))
-        viewMenu.addItem(submenu(L("menu.group.layoutStyle", "Layout & Style"), [
-            commandItem("Save Workspace…", "workspace.save"),
-            commandItem("Open Workspace…", "workspace.open"),
-            .separator(),
-            commandItem("Save Style…", "view.saveStyle"),
-            commandItem("Apply Style…", "view.applyStyle"),
-            commandItem("Use as Default View", "view.useAsDefault"),
-            .separator(),
-            submenu(L("menu.group.folderBackground", "Folder Background"), [
-                commandItem("Background Color…", "files.setFolderBgColor"),
-                commandItem("Background Picture…", "files.setFolderBgPicture"),
-                .separator(),
-                commandItem("Remove Background", "files.clearFolderBg"),
-            ]),
-            commandItem("Customize Toolbar…", "view.customizeToolbar"),
-        ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.find", "Find"),
+                [
+                    // Cmd-F opens the search-and-command overlay in search mode (Cmd-K opens the same
+                    // overlay in command mode); the old Cmd-F live filter moves to Shift-Cmd-F.
+                    commandItem("Search This Folder…", "search.palette", "f"),
+                    commandItem("Filter…", "view.filter", "f", [.command, .shift]),
+                    commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]),
+                    commandItem("Find in Files…", "files.findInFiles"),
+                    commandItem("Find Duplicates", "files.findDuplicates"),
+                    commandItem("Find Similar Names", "files.findSimilarNames"),
+                    commandItem("Find Near-Duplicate Photos", "image.findNearDuplicates"),
+                    .separator(),
+                    // ⌥⌘L, not ⌃⌘F: ⌃⌘F is the system Enter Full Screen shortcut, which this shadowed.
+                    commandItem("Flat View", "view.flatView", "l", [.command, .option]),
+                    commandItem("Flatten Folder (Show All Items)", "view.flattenFolder"),
+                ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.folderTools", "Folder Tools"),
+                [
+                    commandItem("Compare Panes…", "files.comparePanes"),
+                    commandItem("Size Browser…", "view.sizeBrowser"),
+                    commandItem("Calculate All Sizes", "view.calculateSizes"),
+                    .separator(),
+                    commandItem("Cleanup…", "view.cleanup"),
+                    commandItem("Reclaim in Repo…", "files.repoReclaim"),
+                ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.show", "Show"),
+                [
+                    commandItem("Show Hidden Files", "view.toggleHidden"),
+                    commandItem("Show Full Path in Title Bar", "view.fullPathTitle"),
+                    commandItem("Show Path Bar at Bottom", "view.pathBarBottom"),
+                    commandItem("Compact Sidebar", "view.compactSidebar"),
+                    commandItem("Sync Browsing", "view.syncBrowsing"),
+                    commandItem("Vim Navigation", "nav.vimMode"),
+                ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.preview", "Preview"),
+                [
+                    commandItem("Quick Look", "view.quickLook"),
+                    commandItem("Slideshow", "view.slideshow"),
+                    commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]),
+                    commandItem("Show Drop Stack", "shelf.toggle", "y", [.command, .shift]),
+                ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.layoutStyle", "Layout & Style"),
+                [
+                    commandItem("Save Workspace…", "workspace.save"),
+                    commandItem("Open Workspace…", "workspace.open"),
+                    .separator(),
+                    commandItem("Save Style…", "view.saveStyle"),
+                    commandItem("Apply Style…", "view.applyStyle"),
+                    commandItem("Use as Default View", "view.useAsDefault"),
+                    .separator(),
+                    submenu(
+                        L("menu.group.folderBackground", "Folder Background"),
+                        [
+                            commandItem("Background Color…", "files.setFolderBgColor"),
+                            commandItem("Background Picture…", "files.setFolderBgPicture"),
+                            .separator(),
+                            commandItem("Remove Background", "files.clearFolderBg"),
+                        ]),
+                    commandItem("Customize Toolbar…", "view.customizeToolbar"),
+                ]))
 
         // Terminal group, with the theme presets nested under it.
         let themeItem = NSMenuItem(
@@ -1267,30 +1368,39 @@ enum PathemApp {
             themeMenu.addItem(item)
         }
         themeItem.submenu = themeMenu
-        viewMenu.addItem(submenu(L("menu.group.terminal", "Terminal"), [
-            commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]),
-            commandItem("Commander Mode", "commander.toggle"),
-            commandItem("Terminal Follows Folder", "terminal.toggleFollow"),
-            commandItem("Open Terminal Here", "terminal.here"),
-            .separator(),
-            themeItem,
-        ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.terminal", "Terminal"),
+                [
+                    commandItem("Toggle Terminal", "terminal.toggle", "`", [.control]),
+                    commandItem("Commander Mode", "commander.toggle"),
+                    commandItem("Terminal Follows Folder", "terminal.toggleFollow"),
+                    commandItem("Open Terminal Here", "terminal.here"),
+                    .separator(),
+                    themeItem,
+                ]))
         viewMenu.addItem(.separator())
 
         // The AI bar stays top-level; the folder-organizing and git actions group up.
         viewMenu.addItem(commandItem("Command Palette…", "palette.show", "k"))
         viewMenu.addItem(commandItem("Ask Pathem…", "ai.run"))
-        viewMenu.addItem(submenu(L("menu.group.organize", "Organize"), [
-            commandItem("Organize Folder…", "files.organize"),
-            commandItem("Organize with AI…", "files.organizeAI"),
-            commandItem("Summarize Folder", "ai.summarizeFolder"),
-            commandItem("Batch Rename…", "files.batchRename"),
-        ]))
-        viewMenu.addItem(submenu(L("menu.group.git", "Git"), [
-            commandItem("Commit…", "git.commit"),
-            commandItem("Push", "git.push"),
-            commandItem("Pull", "git.pull"),
-        ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.organize", "Organize"),
+                [
+                    commandItem("Organize Folder…", "files.organize"),
+                    commandItem("Organize with AI…", "files.organizeAI"),
+                    commandItem("Summarize Folder", "ai.summarizeFolder"),
+                    commandItem("Batch Rename…", "files.batchRename"),
+                ]))
+        viewMenu.addItem(
+            submenu(
+                L("menu.group.git", "Git"),
+                [
+                    commandItem("Commit…", "git.commit"),
+                    commandItem("Push", "git.push"),
+                    commandItem("Pull", "git.pull"),
+                ]))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Demo Mode (fake data for screenshots)", "view.demoMode"))
 
@@ -1302,7 +1412,8 @@ enum PathemApp {
         goMenu.addItem(commandItem("Forward", "nav.forward"))
         goMenu.addItem(commandItem("Enclosing Folder", "nav.up"))
         goMenu.addItem(commandItem("Go to Path…", "nav.editPath", "l"))
-        goMenu.addItem(commandItem("Find Files Everywhere…", "nav.findFiles", "o", [.command, .shift]))
+        goMenu.addItem(
+            commandItem("Find Files Everywhere…", "nav.findFiles", "o", [.command, .shift]))
         goMenu.addItem(.separator())
         goMenu.addItem(commandItem("Connect to Server…", "files.connectToServer"))
         goMenu.addItem(commandItem("Connections…", "connections.manage", "k", [.command, .shift]))
@@ -1335,7 +1446,8 @@ enum PathemApp {
             withTitle: L("menu.minimize", "Minimize"),
             action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
         windowMenu.addItem(
-            withTitle: L("menu.zoom", "Zoom"), action: #selector(NSWindow.performZoom(_:)), keyEquivalent: "")
+            withTitle: L("menu.zoom", "Zoom"), action: #selector(NSWindow.performZoom(_:)),
+            keyEquivalent: "")
         windowMenu.addItem(.separator())
         windowMenu.addItem(
             withTitle: L("menu.bringAllToFront", "Bring All to Front"),
@@ -1364,14 +1476,16 @@ enum PathemApp {
         let submenu = NSMenu(title: "Open in…")
         let editors = ExternalEditors.installed()
         if editors.isEmpty {
-            let none = NSMenuItem(title: L("menu.noEditors", "No editors found"), action: nil, keyEquivalent: "")
+            let none = NSMenuItem(
+                title: L("menu.noEditors", "No editors found"), action: nil, keyEquivalent: "")
             none.isEnabled = false
             submenu.addItem(none)
         } else {
             for editor in editors {
                 let entry = NSMenuItem(
                     title: editor.name,
-                    action: #selector(BrowserViewController.openInExternalEditor(_:)), keyEquivalent: "")
+                    action: #selector(BrowserViewController.openInExternalEditor(_:)),
+                    keyEquivalent: "")
                 entry.representedObject = editor.url
                 submenu.addItem(entry)
             }
@@ -1439,7 +1553,8 @@ enum PathemApp {
         window.layoutIfNeeded()
         controller.tableView.layoutSubtreeIfNeeded()
 
-        let duration = Double(ProcessInfo.processInfo.environment["PATHEM_GATE_A_SECONDS"] ?? "") ?? 12
+        let duration =
+            Double(ProcessInfo.processInfo.environment["PATHEM_GATE_A_SECONDS"] ?? "") ?? 12
         let clip = controller.scrollView.contentView
         let start = Date()
         Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
@@ -1453,7 +1568,10 @@ enum PathemApp {
                 controller.scrollView.reflectScrolledClipView(clip)
                 return t >= 1
             }
-            if done { timer.invalidate(); exit(0) }
+            if done {
+                timer.invalidate()
+                exit(0)
+            }
         }
     }
 
@@ -1501,7 +1619,9 @@ enum PathemApp {
         print("numberOfRows = \(controller.tableView.numberOfRows)")
         print("cell views requested for initial display = \(initial)")
         print("cells materialized per jump: lastRow=\(lastDelta) mid=\(midDelta) top=\(topDelta)")
-        print("RESULT: \(pass ? "PASS" : "FAIL"): table materializes bounded cells regardless of 1M-row dataset")
+        print(
+            "RESULT: \(pass ? "PASS" : "FAIL"): table materializes bounded cells regardless of 1M-row dataset"
+        )
 
         exit(pass ? 0 : 1)
     }
@@ -1525,14 +1645,21 @@ enum PathemApp {
         let dir = fm.temporaryDirectory.appendingPathComponent("pathem-viewshot")
         try? fm.removeItem(at: dir)
         for sub in ["Subfolder A", "Subfolder B"] {
-            try? fm.createDirectory(at: dir.appendingPathComponent(sub), withIntermediateDirectories: true)
+            try? fm.createDirectory(
+                at: dir.appendingPathComponent(sub), withIntermediateDirectories: true)
         }
         for name in ["nested1.txt", "nested2.txt", "nested3.txt"] {
-            try? "x".write(to: dir.appendingPathComponent("Subfolder A").appendingPathComponent(name), atomically: true, encoding: .utf8)
+            try? "x".write(
+                to: dir.appendingPathComponent("Subfolder A").appendingPathComponent(name),
+                atomically: true, encoding: .utf8)
         }
-        try? "notes".write(to: dir.appendingPathComponent("notes.txt"), atomically: true, encoding: .utf8)
-        try? "code".write(to: dir.appendingPathComponent("main.swift"), atomically: true, encoding: .utf8)
-        for name in ["Sunset.png", "Coastline.png", "Forest.png", "Mountains.png", "City.png", "Desert.png"] {
+        try? "notes".write(
+            to: dir.appendingPathComponent("notes.txt"), atomically: true, encoding: .utf8)
+        try? "code".write(
+            to: dir.appendingPathComponent("main.swift"), atomically: true, encoding: .utf8)
+        for name in [
+            "Sunset.png", "Coastline.png", "Forest.png", "Mountains.png", "City.png", "Desert.png",
+        ] {
             if let data = DemoWorkspace.landscapePNG(named: name, side: 256) {
                 try? data.write(to: dir.appendingPathComponent(name))
             }
@@ -1565,14 +1692,20 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// The "Open in Pathem" Services item: open the sent files/folders.
-    @objc func openInPathem(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString>?) {
+    @objc func openInPathem(
+        _ pboard: NSPasteboard, userData: String?,
+        error: AutoreleasingUnsafeMutablePointer<NSString>?
+    ) {
         let urls = (pboard.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
         openInPrimaryBrowser(urls)
     }
 
     /// The "Reveal in Pathem" Services item: select the sent item in its parent folder (the reveal
     /// verb of the handoff contract), rather than navigating into it.
-    @objc func revealInPathem(_ pboard: NSPasteboard, userData: String?, error: AutoreleasingUnsafeMutablePointer<NSString>?) {
+    @objc func revealInPathem(
+        _ pboard: NSPasteboard, userData: String?,
+        error: AutoreleasingUnsafeMutablePointer<NSString>?
+    ) {
         let urls = (pboard.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
         revealInPrimaryBrowser(urls)
     }

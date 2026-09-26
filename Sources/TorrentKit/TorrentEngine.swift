@@ -7,11 +7,11 @@ public actor TorrentEngine {
     /// What we save to disk so a torrent survives a restart.
     struct Persisted: Codable {
         var infoHashHex: String
-        var torrentFileName: String   // file within `torrentsDir`
+        var torrentFileName: String  // file within `torrentsDir`
         var savePath: String
         var paused: Bool
         var completedPieces: [Int]
-        var wantedFiles: [Int]?       // nil = all files (per-file selection)
+        var wantedFiles: [Int]?  // nil = all files (per-file selection)
     }
 
     /// A magnet whose metadata we're still fetching from peers (no info dict yet).
@@ -29,7 +29,7 @@ public actor TorrentEngine {
     private let dht = DHTClient()  // shared across sessions for trackerless peer discovery
     private lazy var dhtServer = DHTServer(client: dht)  // serves DHT queries: a full participant
     private let natpmp = NATPMPClient()  // best-effort router port mapping for inbound peers
-    private let upnp = UPnPClient()      // fallback when the router speaks UPnP, not NAT-PMP
+    private let upnp = UPnPClient()  // fallback when the router speaks UPnP, not NAT-PMP
     private let downLimiter: RateLimiter  // global caps (0 = unlimited), shared by all sessions
     private let uploadLimiter: RateLimiter
     private var limits: Limits
@@ -219,7 +219,10 @@ public actor TorrentEngine {
     public func trackers(infoHash: String) async -> [String] {
         guard let session = sessions[infoHash] else { return [] }
         var out = await session.trackerURLs()
-        if await session.usesDHT { out.append("DHT"); out.append("Peer Exchange") }
+        if await session.usesDHT {
+            out.append("DHT")
+            out.append("Peer Exchange")
+        }
         return out
     }
 
@@ -277,7 +280,9 @@ public actor TorrentEngine {
 
     /// Add a torrent from a .torrent file, copying it into the state directory and starting it.
     @discardableResult
-    public func addTorrentFile(at path: String, savePath: String) async throws -> TorrentSession.Status {
+    public func addTorrentFile(at path: String, savePath: String) async throws
+        -> TorrentSession.Status
+    {
         await ensureListener()
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
         let torrent = try TorrentFile.parse(data)
@@ -288,7 +293,8 @@ public actor TorrentEngine {
         try data.write(to: torrentsDir.appendingPathComponent(storedName))
 
         let session = try TorrentSession(
-            torrent: torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
+            torrent: torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID,
+            dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
         sessions[hash] = session
         meta[hash] = Persisted(
             infoHashHex: hash, torrentFileName: storedName, savePath: savePath,
@@ -391,7 +397,9 @@ public actor TorrentEngine {
             guard let entry = pending[hash] else { return }
             let peers = await gatherPeers(entry)
             if let resolved = await fetchMetadata(entry, from: peers) {
-                await promote(hash: hash, resolved: resolved, savePath: entry.savePath)
+                await promote(
+                    hash: hash, resolved: resolved, savePath: entry.savePath,
+                    discoveredPeers: peers)
                 return
             }
             if Task.isCancelled || pending[hash] == nil { return }
@@ -412,8 +420,9 @@ public actor TorrentEngine {
                 peers.append(contentsOf: response.peers)
             }
         }
-        // The DHT is what makes a trackerless magnet work: it finds peers we can ask for metadata.
-        peers.append(contentsOf: await dht.findPeers(infoHash: entry.infoHash))
+        // The DHT is what makes a trackerless magnet work. A responsive tracker already gave us
+        // candidates, so do not delay metadata fetch on a public-network lookup we do not need.
+        if peers.isEmpty { peers.append(contentsOf: await dht.findPeers(infoHash: entry.infoHash)) }
         var seen = Set<Tracker.Peer>()
         return peers.filter { seen.insert($0).inserted }
     }
@@ -443,7 +452,10 @@ public actor TorrentEngine {
     }
 
     /// Turn a resolved magnet into a persisted, running download.
-    private func promote(hash: String, resolved: MetadataExchange.ResolvedTorrent, savePath: String) async {
+    private func promote(
+        hash: String, resolved: MetadataExchange.ResolvedTorrent, savePath: String,
+        discoveredPeers: [Tracker.Peer]
+    ) async {
         // Do the (possibly slow) listener setup BEFORE the guard, so the check-and-commit below is
         // atomic on the actor. Otherwise a remove() during the ensureListener await could clear
         // `pending[hash]` and this would resurrect the removed magnet.
@@ -453,8 +465,10 @@ public actor TorrentEngine {
         resolverTasks[hash] = nil
         let storedName = "\(hash).torrent"
         try? resolved.torrentBytes.write(to: torrentsDir.appendingPathComponent(storedName))
-        guard let session = try? TorrentSession(
-            torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
+        guard
+            let session = try? TorrentSession(
+                torrent: resolved.torrent, downloadRoot: URL(fileURLWithPath: savePath),
+                peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
         else { return }
         sessions[hash] = session
         meta[hash] = Persisted(
@@ -464,6 +478,9 @@ public actor TorrentEngine {
         await session.setPreferEncryption(limits.encryptOutgoing)
         await session.setPreferUTP(limits.preferUTP)
         await session.start()
+        // The peer that supplied magnet metadata almost certainly has the payload too. Keeping it
+        // closes the resolution-to-download seam and avoids waiting for another tracker/DHT round.
+        await session.addPeers(discoveredPeers)
         await holdIfKillSwitch(hash)
         saveState()
     }
@@ -495,19 +512,24 @@ public actor TorrentEngine {
             guard let data = try? Data(contentsOf: fileURL),
                 let torrent = try? TorrentFile.parse(data),
                 let session = try? TorrentSession(
-                    torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath), peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter)
+                    torrent: torrent, downloadRoot: URL(fileURLWithPath: persisted.savePath),
+                    peerID: peerID, dht: dht, downLimiter: downLimiter, uploadLimiter: uploadLimiter
+                )
             else { continue }
             await session.loadResume(havePieces: persisted.completedPieces)
             if let wanted = persisted.wantedFiles { await session.setWantedFiles(Set(wanted)) }
             await session.setSuperSeeding(limits.superSeed)
-        await session.setPreferEncryption(limits.encryptOutgoing)
-        await session.setPreferUTP(limits.preferUTP)
+            await session.setPreferEncryption(limits.encryptOutgoing)
+            await session.setPreferUTP(limits.preferUTP)
             sessions[persisted.infoHashHex] = session
             if !persisted.paused {
                 // With binding on we hold everything until the tunnel is confirmed (below); otherwise
                 // start normally.
-                if killSwitchEngaged { killSwitchPaused.insert(persisted.infoHashHex) }
-                else { await session.start() }
+                if killSwitchEngaged {
+                    killSwitchPaused.insert(persisted.infoHashHex)
+                } else {
+                    await session.start()
+                }
             }
         }
         // Now that torrents are loaded, engage binding if it was enabled: this confirms a tunnel and

@@ -43,10 +43,14 @@ public enum GitOps {
         guard FileManager.default.isExecutableFile(atPath: GitStatus.git) else {
             return Outcome(ok: false, output: "git not found")
         }
-        guard let result = try? await RemoteRunner.run(GitStatus.git, ["-C", folder.path] + args) else {
+        guard
+            let result = try? await RemoteRunner.run(
+                GitStatus.git, ["-C", folder.path] + args, env: GitStatus.subprocessEnvironment)
+        else {
             return Outcome(ok: false, output: "git could not run")
         }
         let combined = String(decoding: result.0, as: UTF8.self) + result.2
-        return Outcome(ok: result.1 == 0, output: combined.trimmingCharacters(in: .whitespacesAndNewlines))
+        return Outcome(
+            ok: result.1 == 0, output: combined.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }

@@ -28,7 +28,7 @@ jobs:
         run: python3 scripts/l10n_lint.py
 
       - name: Build
-        run: swift build
+        run: swift build --build-system native
 
       - name: Engine tests
         run: |
@@ -37,7 +37,7 @@ jobs:
           # `timeout`, so a background watchdog bounds the run (12 min is ~40x the ~17s local
           # run) and kills the test process tree so a hang fails fast instead of burning the job.
           log="$RUNNER_TEMP/swift-test.log"
-          swift test --no-parallel > "$log" 2>&1 &
+          swift test --build-system native --no-parallel > "$log" 2>&1 &
           pid=$!
           ( sleep 720; echo "WATCHDOG: killing hung swift test" >> "$log"; \
             kill -9 "$pid" 2>/dev/null; pkill -9 -P "$pid" 2>/dev/null; \
@@ -53,25 +53,11 @@ jobs:
             exit 1
           fi
 
-      # Gate A proves the table virtualizes a 1M-row dataset; the smoke test asserts
-      # the window/pane layout invariants (the structural GUI bugs the unit tests can't
-      # see). Both boot a real window, so they need the runner's GUI session, which the
-      # macOS runners provide.
-      - name: Gate A (virtualization proof)
-        run: PATHEM_GATE_A=1 swift run Pathem
+      # The product-level suite launches a real debug app for Gate A, layout smoke, localization,
+      # real-file create/rename, the daemon .torrent + magnet control seam, and the 39-check
+      # on-screen interaction harness. Each process is timeout-bounded and reports its own result.
+      - name: Product end-to-end
+        run: test/e2e/run.sh
 
-      - name: UI smoke (layout invariants)
-        run: |
-          # Run the built binary directly (not `swift run`, whose wrapper can swallow a crash
-          # backtrace) with Swift's backtrace-on-crash on. Capture head + the trap reason + tail
-          # and propagate the real exit code (a piped tail would mask a crash).
-          swift build 2>&1 | tail -1
-          rc=0
-          SWIFT_BACKTRACE=enable=yes,interactive=no PATHEM_SMOKE=1 .build/debug/Pathem \
-            > "$RUNNER_TEMP/smoke.log" 2>&1 || rc=$?
-          echo "smoke exit=$rc"
-          echo "==== head ===="; head -40 "$RUNNER_TEMP/smoke.log"
-          echo "==== trap reason ===="
-          grep -iE "BUG IN CLIENT|Fatal error|Crashed|signal|assert|precondition|exception|libdispatch|libxpc|CFRunLoop|Inconsistency|Illegal|main thread" "$RUNNER_TEMP/smoke.log" | head -20
-          echo "==== tail ===="; tail -25 "$RUNNER_TEMP/smoke.log"
-          exit $rc
+      - name: Release package end-to-end
+        run: test/e2e/run.sh --packaged

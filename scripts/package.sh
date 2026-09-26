@@ -36,6 +36,7 @@ export GIT_CONFIG_KEY_0="${GIT_CONFIG_KEY_0:-safe.bareRepository}"
 export GIT_CONFIG_VALUE_0="${GIT_CONFIG_VALUE_0:-all}"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+"$ROOT/scripts/toolchain_preflight.sh"
 APP_NAME="Pathem"
 CONFIG="release"
 # Local builds default to the host arch (fast, and a single-arch SwiftTerm build
@@ -62,8 +63,8 @@ frameworkBinDir=""
 helperNames=(pathem-afc pathem-torrentd pathem-cli)
 for arch in $ARCHS; do
 	echo "    building $arch"
-	swift build -c "$CONFIG" --arch "$arch"
-	archBinDir="$(swift build -c "$CONFIG" --arch "$arch" --show-bin-path)"
+	swift build --build-system native -c "$CONFIG" --arch "$arch"
+	archBinDir="$(swift build --build-system native -c "$CONFIG" --arch "$arch" --show-bin-path)"
 	[[ -x "$archBinDir/$APP_NAME" ]] || { echo "error: binary not found at $archBinDir/$APP_NAME" >&2; exit 1; }
 	binaries+=("$archBinDir/$APP_NAME")
 	archBinDirs+=("$archBinDir")

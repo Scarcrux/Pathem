@@ -1,16 +1,16 @@
-# One-time: `brew install swift-format` then `pre-commit install`.
-# CONVENTIONS: format on commit; tests via the hook + `swift test`.
+# One-time: `pre-commit install` (the hooks use Xcode's bundled Swift tools).
+# CONVENTIONS: format on commit; tests via the hook + `make test`'s build system.
 repos:
   - repo: local
     hooks:
       - id: swift-format
         name: swift-format
-        entry: swift-format format --in-place
+        entry: xcrun --toolchain XcodeDefault swift-format format --in-place --configuration .swift-format
         language: system
         files: \.swift$
       - id: swift-test
         name: swift test
-        entry: swift test
+        entry: xcrun --toolchain XcodeDefault swift test --build-system native
         language: system
         pass_filenames: false
         files: \.swift$

@@ -199,7 +199,7 @@ later and the Swift toolchain (Xcode, or just the Command Line Tools via
 ```
 git clone https://github.com/Scarcrux/Pathem.git
 cd Pathem
-make install     # build a universal Pathem.app and put it in /Applications
+make install     # build a host-architecture Pathem.app and put it in /Applications
 # or
 make run         # build and launch straight from source
 ```
@@ -214,6 +214,10 @@ make run            # build and launch from source (fastest loop)
 make build          # build the engine and the app
 make test           # run the engine tests
 make smoke          # launch and assert the window/pane layout invariants
+make ui-test        # drive and assert 39 real-window interaction checks
+make e2e            # run every hermetic product-level scenario (including magnets)
+make e2e-app        # assemble/sign a release app and probe it externally
+make ci             # run localization, build, tests, debug E2E, and release package E2E
 make app            # assemble .build/Pathem.app (host arch, ad-hoc signed)
 make install        # build the app and copy it to /Applications
 make watch          # rebuild and relaunch on every save (fast debug loop)
@@ -222,9 +226,13 @@ make dev-cert       # create a stable self-signed identity so a Full Disk Access
                     # grant survives rebuilds (then SIGN_IDENTITY=... make install)
 ```
 
-(These wrap plain `swift build` / `swift run Pathem` / `swift test` if you
-prefer to call those directly.) `make watch` is the quickest way to iterate:
+(The Make targets select Xcode's Swift toolchain and SwiftPM's native build system; this avoids a
+standalone-toolchain/Xcode SDK mismatch and an Xcode 27 `swiftbuild` Metal regression.) `make
+watch` is the quickest way to iterate:
 edit a file, save, and Pathem rebuilds and relaunches itself.
+
+See [the test coverage matrix](docs/TEST_MATRIX.md) for what each layer proves, what CI runs, and
+which hardware or public-network checks remain opt-in.
 
 ### Packaging a .app
 

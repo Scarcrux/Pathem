@@ -17,15 +17,20 @@ public enum MetadataExchange {
     public static let blockSize = 16 * 1024
 
     /// Our extended handshake (extended message id 0): advertise ut_metadata as extension id 1.
-    public static func extendedHandshakePayload(utMetadataID: Int = 1) -> Data {
-        let dict = Bencode.dict([
+    public static func extendedHandshakePayload(
+        utMetadataID: Int = 1, metadataSize: Int? = nil
+    ) -> Data {
+        var values: [(String, Bencode)] = [
             ("m", .dict([("ut_metadata", .int(Int64(utMetadataID)))]))
-        ])
-        return dict.encoded
+        ]
+        if let metadataSize { values.append(("metadata_size", .int(Int64(metadataSize)))) }
+        return Bencode.dict(values).encoded
     }
 
     /// Parse a peer's extended handshake: their ut_metadata message id and the metadata size.
-    public static func parseExtendedHandshake(_ payload: Data) -> (utMetadataID: UInt8?, metadataSize: Int?) {
+    public static func parseExtendedHandshake(_ payload: Data) -> (
+        utMetadataID: UInt8?, metadataSize: Int?
+    ) {
         guard let dict = try? BencodeDecoder.decode(payload) else { return (nil, nil) }
         let id = dict["m"]?["ut_metadata"]?.intValue
         let size = dict["metadata_size"]?.intValue
@@ -44,7 +49,8 @@ public enum MetadataExchange {
             header["msg_type"]?.intValue == 1,
             let piece = header["piece"]?.intValue
         else { return nil }
-        let block = consumed <= payload.count ? payload.suffix(from: payload.startIndex + consumed) : Data()
+        let block =
+            consumed <= payload.count ? payload.suffix(from: payload.startIndex + consumed) : Data()
         return (Int(piece), Data(block))
     }
 
