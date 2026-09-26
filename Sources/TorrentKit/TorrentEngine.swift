@@ -522,7 +522,12 @@ public actor TorrentEngine {
             await session.setPreferEncryption(limits.encryptOutgoing)
             await session.setPreferUTP(limits.preferUTP)
             sessions[persisted.infoHashHex] = session
-            if !persisted.paused {
+            if persisted.paused {
+                // A newly constructed session begins as .stopped. Preserve the user-visible
+                // distinction across daemon restarts: this torrent was deliberately paused, not
+                // stopped by an error or shutdown.
+                await session.pause()
+            } else {
                 // With binding on we hold everything until the tunnel is confirmed (below); otherwise
                 // start normally.
                 if killSwitchEngaged {

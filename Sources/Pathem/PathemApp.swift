@@ -107,6 +107,12 @@ enum PathemApp {
             app.run()
             return
         }
+
+        if let suite = DeterministicE2E.requestedSuite {
+            DeterministicE2E.start(suite)
+            app.run()
+            return
+        }
         #endif
 
         // Normal mode: a dual-pane browser rooted at the home directory (or a sample
@@ -737,7 +743,99 @@ enum PathemApp {
                     "magnet:?xt=urn:btih:\(magnetHash)&dn=\(magnetName)",
                     savePath: fixtureURL.deletingLastPathComponent().path)
                 var attempts = 0
-                func poll() {
+                var smokeHash = ""
+                func fail(_ step: String) -> Never {
+                    print("FAIL \(step) (timed out, last count=\(client.torrents.count))")
+                    print("RESULT: FAIL")
+                    client.onUpdate = nil
+                    client.shutdown()
+                    try? FileManager.default.removeItem(at: fixtureURL)
+                    exit(1)
+                }
+                func pollRemoved() {
+                    attempts += 1
+                    if client.torrents.isEmpty {
+                        print("ok   torrent-remove-updates-status")
+                        print("RESULT: PASS")
+                        client.onUpdate = nil
+                        client.shutdown()
+                        try? FileManager.default.removeItem(at: fixtureURL)
+                        exit(0)
+                    }
+                    if attempts >= 40 { fail("torrent-remove-updates-status") }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollRemoved)
+                }
+                func pollResumed() {
+                    attempts += 1
+                    if let smoke = client.torrents.first(where: { $0.infoHash == smokeHash }),
+                        smoke.state != .paused
+                    {
+                        print("ok   torrent-resumes-after-restart (state=\(smoke.state))")
+                        client.remove(smokeHash, deleteData: true)
+                        attempts = 0
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollRemoved)
+                        return
+                    }
+                    if attempts >= 40 { fail("torrent-resumes-after-restart") }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollResumed)
+                }
+                func pollRestored(_ receivedAfterRestart: @escaping () -> Bool) {
+                    attempts += 1
+                    if receivedAfterRestart(),
+                        let smoke = client.torrents.first(where: { $0.infoHash == smokeHash }),
+                        smoke.state == .paused,
+                        client.downLimit == 4096, client.upLimit == 2048, client.superSeed
+                    {
+                        print("ok   daemon-restart-restores-paused-torrent")
+                        print("ok   daemon-restart-restores-limits")
+                        client.resume(smokeHash)
+                        attempts = 0
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollResumed)
+                        return
+                    }
+                    if attempts >= 40 {
+                        let state = client.torrents.first(where: { $0.infoHash == smokeHash })?
+                            .state
+                        print(
+                            "info restart-state received=\(receivedAfterRestart()) state=\(String(describing: state)) "
+                                + "limits=\(client.downLimit)/\(client.upLimit) superSeed=\(client.superSeed)"
+                        )
+                        fail("daemon-restart-restores-state")
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        pollRestored(receivedAfterRestart)
+                    }
+                }
+                func restartDaemon() {
+                    var receivedAfterRestart = false
+                    client.onUpdate = { _ in receivedAfterRestart = true }
+                    guard client.startIfNeeded() else { fail("daemon-restarts") }
+                    print("ok   daemon-restarts")
+                    client.requestList()
+                    attempts = 0
+                    pollRestored { receivedAfterRestart }
+                }
+                func pollPaused() {
+                    attempts += 1
+                    let onlyFixtureRemains =
+                        client.torrents.count == 1
+                        && client.torrents.first?.infoHash == smokeHash
+                    if let smoke = client.torrents.first(where: { $0.infoHash == smokeHash }),
+                        smoke.state == .paused, onlyFixtureRemains,
+                        client.downLimit == 4096, client.upLimit == 2048, client.superSeed
+                    {
+                        print("ok   torrent-pause-updates-status")
+                        print("ok   torrent-remove-pending-magnet")
+                        print("ok   torrent-limits-roundtrip")
+                        client.shutdown()
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + 1.0, execute: restartDaemon)
+                        return
+                    }
+                    if attempts >= 40 { fail("torrent-pause-and-limits") }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollPaused)
+                }
+                func pollInitial() {
                     attempts += 1
                     if let smoke = client.torrents.first(where: { $0.name == "smoke.bin" }),
                         let magnet = client.torrents.first(where: { $0.name == magnetName })
@@ -747,29 +845,21 @@ enum PathemApp {
                             magnet.state == .checking
                                 ? "ok   magnet-appears-in-status"
                                 : "FAIL magnet-appears-in-status (state=\(magnet.state))")
-                        let ok = magnet.state == .checking
-                        print("RESULT: \(ok ? "PASS" : "FAIL")")
-                        // Remove the fixtures so the smoke doesn't leave torrents in real state.
-                        client.remove(smoke.infoHash, deleteData: true)
+                        guard magnet.state == .checking else { fail("magnet-appears-in-status") }
+                        smokeHash = smoke.infoHash
+                        client.pause(smokeHash)
                         client.remove(magnet.infoHash, deleteData: true)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            client.shutdown()
-                            try? FileManager.default.removeItem(at: fixtureURL)
-                            exit(ok ? 0 : 1)
-                        }
+                        client.setLimits(
+                            down: 4096, up: 2048, superSeed: true, encryptOutgoing: true,
+                            preferUTP: true, bindToVPN: false)
+                        attempts = 0
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollPaused)
                         return
                     }
-                    if attempts >= 40 {
-                        print(
-                            "FAIL torrent-appears-in-status (timed out, last count=\(client.torrents.count))"
-                        )
-                        print("RESULT: FAIL")
-                        client.shutdown()
-                        exit(1)
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: poll)
+                    if attempts >= 40 { fail("torrent-appears-in-status") }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollInitial)
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: poll)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: pollInitial)
             } catch {
                 print("FAIL fixture-write (\(error))")
                 print("RESULT: FAIL")

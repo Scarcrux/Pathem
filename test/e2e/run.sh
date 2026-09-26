@@ -19,6 +19,20 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 "$ROOT/scripts/toolchain_preflight.sh" || exit 1
 
+# Every debug scenario gets disposable application state. This keeps daemon/config checks from
+# reading or mutating the user's real Application Support data.
+E2E_SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/pathem-e2e.XXXXXX")"
+WEBDAV_PID=""
+cleanup() {
+  if [[ -n "$WEBDAV_PID" ]]; then
+    kill -TERM "$WEBDAV_PID" 2>/dev/null || true
+    wait "$WEBDAV_PID" 2>/dev/null || true
+  fi
+  rm -rf "$E2E_SCRATCH"
+}
+trap cleanup EXIT
+export PATHEM_CONFIG_DIR="$E2E_SCRATCH/config"
+
 # Let SwiftPM use its own trusted bare-repo cache even under git safe.bareRepository.
 export GIT_CONFIG_COUNT="${GIT_CONFIG_COUNT:-1}"
 export GIT_CONFIG_KEY_0="${GIT_CONFIG_KEY_0:-safe.bareRepository}"
@@ -130,6 +144,30 @@ scenario "torrent + magnet daemon seam" 'RESULT: PASS' env PATHEM_TORRENTS_SMOKE
 rm -f /tmp/pathem-e2e.png  # cleared before the flow so the render assert below sees a fresh one
 scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$BIN"
 scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN"
+scenario "file conflicts + undo/redo/trash" 'RESULT: PASS' env PATHEM_FILES_E2E=1 "$BIN"
+scenario "archives + disk utilities"   'RESULT: PASS' env PATHEM_ARCHIVES_E2E=1 "$BIN"
+scenario "search + tags + metadata"    'RESULT: PASS' env PATHEM_SEARCH_METADATA_E2E=1 "$BIN"
+scenario "Git + external commands"     'RESULT: PASS' env PATHEM_DEVELOPER_E2E=1 "$BIN"
+
+# Real WebDAV CRUD through the app -> provider -> system curl boundary, backed by a hermetic
+# loopback fixture rather than a public service or user-owned credentials.
+WEBDAV_ROOT="$E2E_SCRATCH/webdav-root"
+WEBDAV_PORT_FILE="$E2E_SCRATCH/webdav-port"
+/usr/bin/python3 "$ROOT/test/e2e/webdav_fixture.py" \
+  --root "$WEBDAV_ROOT" --port-file "$WEBDAV_PORT_FILE" &
+WEBDAV_PID=$!
+for _ in {1..100}; do
+  [[ -s "$WEBDAV_PORT_FILE" ]] && break
+  kill -0 "$WEBDAV_PID" 2>/dev/null || break
+  sleep 0.02
+done
+if [[ -s "$WEBDAV_PORT_FILE" ]]; then
+  WEBDAV_PORT="$(<"$WEBDAV_PORT_FILE")"
+  scenario "loopback WebDAV CRUD" 'RESULT: PASS' env PATHEM_WEBDAV_E2E=1 PATHEM_WEBDAV_PORT="$WEBDAV_PORT" "$BIN"
+else
+  printf "  %sFAIL%s  %-34s\n" "$red" "$rst" "loopback WebDAV fixture starts"
+  fail=$((fail+1))
+fi
 
 # Render harnesses: assert they produce non-empty PNGs (layout didn't collapse).
 rm -f /tmp/settings_general.png /tmp/sidebar.png

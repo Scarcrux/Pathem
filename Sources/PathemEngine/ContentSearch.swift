@@ -37,7 +37,9 @@ public enum ContentSearch {
         } else {
             var args = ["-rnI"]  // recursive, line numbers, skip binary files
             if !caseSensitive { args.append("-i") }
-            if !regex { args.append("-F") }  // fixed strings, not a regex
+            // The UI's regex contract uses extended syntax (groups and `|`). macOS grep defaults
+            // to basic regex, where those are literals, so explicitly select ERE when rg is absent.
+            args.append(regex ? "-E" : "-F")
             args += ["-e", query, folder.path]
             guard let result = try? await RemoteRunner.run("/usr/bin/grep", args) else { return [] }
             output = String(decoding: result.0, as: UTF8.self)
@@ -96,7 +98,8 @@ public enum ContentSearch {
             let count = expression.numberOfMatches(in: text, range: range)
             guard count > 0 else { return (text, 0) }
             return (
-                expression.stringByReplacingMatches(in: text, range: range, withTemplate: replacement),
+                expression.stringByReplacingMatches(
+                    in: text, range: range, withTemplate: replacement),
                 count
             )
         }
@@ -117,7 +120,9 @@ public enum ContentSearch {
         var matches: [Match] = []
         for raw in output.split(whereSeparator: \.isNewline) {
             let lineString = String(raw)
-            guard let range = lineString.range(of: #":\d+:"#, options: .regularExpression) else { continue }
+            guard let range = lineString.range(of: #":\d+:"#, options: .regularExpression) else {
+                continue
+            }
             let path = String(lineString[lineString.startIndex..<range.lowerBound])
             let number = Int(lineString[range].dropFirst().dropLast()) ?? 0
             let text = String(lineString[range.upperBound...])
