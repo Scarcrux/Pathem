@@ -3,10 +3,10 @@
 # Blackbox end-to-end harness for Pathem.
 #
 # Launches the REAL built product and asserts behavior from the outside (no access to
-# internals): the app launches without crashing, the dense list virtualizes a 1M-row
-# directory, localized resources are bundled and resolve, the on-device AI path runs,
-# and key panels lay out. Each scenario is driven by a PATHEM_* environment switch the
-# app understands and prints a "RESULT: PASS/SKIP/FAIL" line we grep for.
+# internals): the app launches without crashing, exercises deterministic local features,
+# crosses daemon and remote-provider process boundaries, virtualizes a 1M-row directory,
+# resolves bundled localization, and lays out key panels. Each scenario is driven by a
+# PATHEM_* environment switch and prints a "RESULT: PASS/SKIP/FAIL" line we grep for.
 #
 # Usage:
 #   test/e2e/run.sh              # fast: against the debug `swift build` binary
@@ -23,10 +23,15 @@ cd "$ROOT"
 # reading or mutating the user's real Application Support data.
 E2E_SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/pathem-e2e.XXXXXX")"
 WEBDAV_PID=""
+OBJECT_STORAGE_PID=""
 cleanup() {
   if [[ -n "$WEBDAV_PID" ]]; then
     kill -TERM "$WEBDAV_PID" 2>/dev/null || true
     wait "$WEBDAV_PID" 2>/dev/null || true
+  fi
+  if [[ -n "$OBJECT_STORAGE_PID" ]]; then
+    kill -TERM "$OBJECT_STORAGE_PID" 2>/dev/null || true
+    wait "$OBJECT_STORAGE_PID" 2>/dev/null || true
   fi
   rm -rf "$E2E_SCRATCH"
 }
@@ -145,6 +150,7 @@ rm -f /tmp/pathem-e2e.png  # cleared before the flow so the render assert below 
 scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$BIN"
 scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN"
 scenario "file conflicts + undo/redo/trash" 'RESULT: PASS' env PATHEM_FILES_E2E=1 "$BIN"
+scenario "advanced filesystem tools"   'RESULT: PASS' env PATHEM_ADVANCED_FILES_E2E=1 "$BIN"
 scenario "archives + disk utilities"   'RESULT: PASS' env PATHEM_ARCHIVES_E2E=1 "$BIN"
 scenario "search + tags + metadata"    'RESULT: PASS' env PATHEM_SEARCH_METADATA_E2E=1 "$BIN"
 scenario "Git + external commands"     'RESULT: PASS' env PATHEM_DEVELOPER_E2E=1 "$BIN"
@@ -166,6 +172,36 @@ if [[ -s "$WEBDAV_PORT_FILE" ]]; then
   scenario "loopback WebDAV CRUD" 'RESULT: PASS' env PATHEM_WEBDAV_E2E=1 PATHEM_WEBDAV_PORT="$WEBDAV_PORT" "$BIN"
 else
   printf "  %sFAIL%s  %-34s\n" "$red" "$rst" "loopback WebDAV fixture starts"
+  fail=$((fail+1))
+fi
+
+# Exercise both signed object-storage backends over real TLS without requiring cloud accounts.
+# The generated CA is scoped to this process invocation and disappears with the scratch folder.
+OBJECT_STORAGE_ROOT="$E2E_SCRATCH/object-storage-root"
+OBJECT_STORAGE_PORT_FILE="$E2E_SCRATCH/object-storage-port"
+OBJECT_STORAGE_CERT="$E2E_SCRATCH/object-storage-cert.pem"
+OBJECT_STORAGE_KEY="$E2E_SCRATCH/object-storage-key.pem"
+if /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+  -subj '/CN=127.0.0.1' -addext 'subjectAltName=IP:127.0.0.1' \
+  -keyout "$OBJECT_STORAGE_KEY" -out "$OBJECT_STORAGE_CERT" \
+  >"$E2E_SCRATCH/object-storage-openssl.log" 2>&1; then
+  /usr/bin/python3 "$ROOT/test/e2e/object_storage_fixture.py" \
+    --root "$OBJECT_STORAGE_ROOT" --port-file "$OBJECT_STORAGE_PORT_FILE" \
+    --cert "$OBJECT_STORAGE_CERT" --key "$OBJECT_STORAGE_KEY" &
+  OBJECT_STORAGE_PID=$!
+  for _ in {1..100}; do
+    [[ -s "$OBJECT_STORAGE_PORT_FILE" ]] && break
+    kill -0 "$OBJECT_STORAGE_PID" 2>/dev/null || break
+    sleep 0.02
+  done
+fi
+if [[ -s "$OBJECT_STORAGE_PORT_FILE" ]]; then
+  OBJECT_STORAGE_PORT="$(<"$OBJECT_STORAGE_PORT_FILE")"
+  scenario "loopback S3 + Azure CRUD" 'RESULT: PASS' env \
+    CURL_CA_BUNDLE="$OBJECT_STORAGE_CERT" SSL_CERT_FILE="$OBJECT_STORAGE_CERT" \
+    PATHEM_OBJECT_STORAGE_E2E=1 PATHEM_OBJECT_STORAGE_PORT="$OBJECT_STORAGE_PORT" "$BIN"
+else
+  printf "  %sFAIL%s  %-34s\n" "$red" "$rst" "loopback object-storage fixture starts"
   fail=$((fail+1))
 fi
 

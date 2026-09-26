@@ -722,10 +722,13 @@ enum PathemApp {
                 "d" + bencodeLen("length") + "i1024e" + bencodeLen("name") + bencodeLen("smoke.bin")
                 + bencodeLen("piece length") + "i16384e" + bencodeLen("pieces") + "20:\(pieces)e"
             let fixture = "d" + bencodeLen("info") + info + "e"
-            let fixtureURL = FileManager.default.temporaryDirectory
-                .appendingPathComponent("pathem-smoke-\(UUID().uuidString).torrent")
+            let fixtureRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+                "pathem-torrent-smoke-\(UUID().uuidString)", isDirectory: true)
+            let fixtureURL = fixtureRoot.appendingPathComponent("fixture.torrent")
             let client = TorrentDaemonClient.shared
             do {
+                try FileManager.default.createDirectory(
+                    at: fixtureRoot, withIntermediateDirectories: true)
                 try Data(fixture.utf8).write(to: fixtureURL)
                 let spawned = client.startIfNeeded()
                 print(spawned ? "ok   daemon-spawned" : "FAIL daemon-spawned (helper not found)")
@@ -734,22 +737,33 @@ enum PathemApp {
                     exit(1)
                 }
                 client.addTorrent(
-                    fileAt: fixtureURL.path, savePath: fixtureURL.deletingLastPathComponent().path)
+                    fileAt: fixtureURL.path, savePath: fixtureRoot.path)
                 let magnetID = UUID().uuidString.replacingOccurrences(of: "-", with: "")
                     .lowercased()
                 let magnetHash = magnetID + String(repeating: "0", count: 8)
                 let magnetName = "smoke-magnet-\(magnetID.prefix(8))"
                 client.addMagnet(
                     "magnet:?xt=urn:btih:\(magnetHash)&dn=\(magnetName)",
-                    savePath: fixtureURL.deletingLastPathComponent().path)
+                    savePath: fixtureRoot.path)
                 var attempts = 0
                 var smokeHash = ""
+                var invalidMagnetRejected = false
+                var filesListed = false
+                var fileSelectionUpdated = false
+                var detailsListed = false
+                client.onError = { message in
+                    if message.contains("valid magnet link") { invalidMagnetRejected = true }
+                }
+                client.addMagnet("not-a-magnet", savePath: fixtureRoot.path)
                 func fail(_ step: String) -> Never {
                     print("FAIL \(step) (timed out, last count=\(client.torrents.count))")
                     print("RESULT: FAIL")
                     client.onUpdate = nil
+                    client.onError = nil
+                    client.onFiles = nil
+                    client.onDetails = nil
                     client.shutdown()
-                    try? FileManager.default.removeItem(at: fixtureURL)
+                    try? FileManager.default.removeItem(at: fixtureRoot)
                     exit(1)
                 }
                 func pollRemoved() {
@@ -758,8 +772,11 @@ enum PathemApp {
                         print("ok   torrent-remove-updates-status")
                         print("RESULT: PASS")
                         client.onUpdate = nil
+                        client.onError = nil
+                        client.onFiles = nil
+                        client.onDetails = nil
                         client.shutdown()
-                        try? FileManager.default.removeItem(at: fixtureURL)
+                        try? FileManager.default.removeItem(at: fixtureRoot)
                         exit(0)
                     }
                     if attempts >= 40 { fail("torrent-remove-updates-status") }
@@ -835,25 +852,69 @@ enum PathemApp {
                     if attempts >= 40 { fail("torrent-pause-and-limits") }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollPaused)
                 }
+                func beginLifecycleChecks() {
+                    client.onFiles = nil
+                    client.onDetails = nil
+                    client.setFiles(smokeHash, wanted: [0])
+                    client.pause(smokeHash)
+                    client.remove(magnetHash, deleteData: true)
+                    client.setLimits(
+                        down: 4096, up: 2048, superSeed: true, encryptOutgoing: true,
+                        preferUTP: true, bindToVPN: false)
+                    attempts = 0
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollPaused)
+                }
+                func pollInspection() {
+                    attempts += 1
+                    if filesListed, fileSelectionUpdated, detailsListed {
+                        print("ok   torrent-files-roundtrip")
+                        print("ok   torrent-file-selection-roundtrip")
+                        print("ok   torrent-details-roundtrip")
+                        beginLifecycleChecks()
+                        return
+                    }
+                    if attempts >= 40 { fail("torrent-files-and-details") }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollInspection)
+                }
                 func pollInitial() {
                     attempts += 1
-                    if let smoke = client.torrents.first(where: { $0.name == "smoke.bin" }),
+                    if invalidMagnetRejected,
+                        let smoke = client.torrents.first(where: { $0.name == "smoke.bin" }),
                         let magnet = client.torrents.first(where: { $0.name == magnetName })
                     {
                         print("ok   torrent-appears-in-status")
+                        print("ok   invalid-magnet-surfaces-error")
                         print(
                             magnet.state == .checking
                                 ? "ok   magnet-appears-in-status"
                                 : "FAIL magnet-appears-in-status (state=\(magnet.state))")
                         guard magnet.state == .checking else { fail("magnet-appears-in-status") }
                         smokeHash = smoke.infoHash
-                        client.pause(smokeHash)
-                        client.remove(magnet.infoHash, deleteData: true)
-                        client.setLimits(
-                            down: 4096, up: 2048, superSeed: true, encryptOutgoing: true,
-                            preferUTP: true, bindToVPN: false)
+                        client.onFiles = { hash, files in
+                            guard hash == smokeHash, files.count == 1,
+                                files[0].path == "smoke.bin", files[0].length == 1024
+                            else { return }
+                            if files[0].wanted, !filesListed {
+                                filesListed = true
+                                client.setFiles(hash, wanted: [])
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                    client.requestFiles(hash)
+                                }
+                            } else if !files[0].wanted {
+                                fileSelectionUpdated = true
+                            }
+                        }
+                        client.onDetails = { hash, peers, trackers in
+                            guard hash == smokeHash else { return }
+                            detailsListed =
+                                peers.isEmpty && trackers.contains("DHT")
+                                && trackers.contains("Peer Exchange")
+                        }
+                        client.requestFiles(smokeHash)
+                        client.requestDetails(smokeHash)
                         attempts = 0
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: pollPaused)
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + 0.25, execute: pollInspection)
                         return
                     }
                     if attempts >= 40 { fail("torrent-appears-in-status") }
@@ -863,6 +924,7 @@ enum PathemApp {
             } catch {
                 print("FAIL fixture-write (\(error))")
                 print("RESULT: FAIL")
+                try? FileManager.default.removeItem(at: fixtureRoot)
                 exit(1)
             }
         }

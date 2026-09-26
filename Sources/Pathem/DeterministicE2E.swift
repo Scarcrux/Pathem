@@ -8,16 +8,21 @@ import PathemEngine
 enum DeterministicE2E {
     enum Suite: String {
         case files = "PATHEM_FILES_E2E"
+        case advancedFilesystem = "PATHEM_ADVANCED_FILES_E2E"
         case archives = "PATHEM_ARCHIVES_E2E"
         case searchMetadata = "PATHEM_SEARCH_METADATA_E2E"
         case developerTools = "PATHEM_DEVELOPER_E2E"
         case remoteWebDAV = "PATHEM_WEBDAV_E2E"
+        case remoteObjectStorage = "PATHEM_OBJECT_STORAGE_E2E"
     }
 
     static var requestedSuite: Suite? {
         let env = ProcessInfo.processInfo.environment
-        return [Suite.files, .archives, .searchMetadata, .developerTools, .remoteWebDAV]
-            .first { env[$0.rawValue] != nil }
+        return [
+            Suite.files, .advancedFilesystem, .archives, .searchMetadata, .developerTools,
+            .remoteWebDAV, .remoteObjectStorage,
+        ]
+        .first { env[$0.rawValue] != nil }
     }
 
     @MainActor
@@ -27,10 +32,12 @@ enum DeterministicE2E {
             do {
                 switch suite {
                 case .files: try runFiles(&report)
+                case .advancedFilesystem: try runAdvancedFilesystem(&report)
                 case .archives: try await runArchives(&report)
                 case .searchMetadata: try await runSearchMetadata(&report)
                 case .developerTools: try await runDeveloperTools(&report)
                 case .remoteWebDAV: try await runWebDAV(&report)
+                case .remoteObjectStorage: try await runObjectStorage(&report)
                 }
             } catch {
                 report.check("scenario-completed", false, String(describing: error))
@@ -82,6 +89,13 @@ enum DeterministicE2E {
         let destinationReport = destination.appendingPathComponent("report.txt")
         try "new-version".write(to: sourceReport, atomically: true, encoding: .utf8)
         try "old-version".write(to: destinationReport, atomically: true, encoding: .utf8)
+        let skipped = FileOperations.copy(
+            urls: [sourceReport], into: destination, onConflict: .skip)
+        report.check(
+            "copy-skip-preserves-both-files",
+            skipped.performed.isEmpty && skipped.failures.isEmpty
+                && skipped.skipped == ["report.txt"] && text(sourceReport) == "new-version"
+                && text(destinationReport) == "old-version")
         let copied = FileOperations.copy(
             urls: [sourceReport], into: destination, onConflict: .replace, verify: true)
         report.check(
@@ -125,6 +139,18 @@ enum DeterministicE2E {
                 && movedURL.flatMap(text) == "moving")
         _ = FileOperations.undo(redoneMove.performed)
 
+        let cancelledSource = source.appendingPathComponent("cancelled.txt")
+        try "do-not-copy".write(to: cancelledSource, atomically: true, encoding: .utf8)
+        let cancelled = FileOperations.copy(
+            urls: [cancelledSource], into: destination, shouldCancel: { true })
+        report.check(
+            "copy-cancel-stops-before-mutation",
+            cancelled.performed.isEmpty && cancelled.failures.isEmpty
+                && fm.fileExists(atPath: cancelledSource.path)
+                && !fm.fileExists(
+                    atPath: destination.appendingPathComponent("cancelled.txt").path)
+        )
+
         let trashCandidate = root.appendingPathComponent("trash-roundtrip-\(UUID().uuidString).txt")
         try "recover-me".write(to: trashCandidate, atomically: true, encoding: .utf8)
         let trashed = FileOperations.trash(urls: [trashCandidate])
@@ -138,6 +164,131 @@ enum DeterministicE2E {
             "trash-put-back-restores-bytes",
             restored.failures.isEmpty && restored.restored == [trashCandidate]
                 && text(trashCandidate) == "recover-me")
+    }
+
+    private static func runAdvancedFilesystem(_ report: inout Report) throws {
+        let fm = FileManager.default
+        let root = try workspace("advanced-files")
+        defer { try? fm.removeItem(at: root) }
+
+        let batch = root.appendingPathComponent("batch", isDirectory: true)
+        try fm.createDirectory(at: batch, withIntermediateDirectories: true)
+        let fileNames = BatchCreate.expand("note_{01..03}.txt\nnote_02.txt\ninvalid/name")
+        let createdFiles = BatchCreate.create(fileNames, kind: .files, in: batch)
+        let folderNames = BatchCreate.expand("Report {2..1}")
+        let createdFolders = BatchCreate.create(folderNames, kind: .folders, in: batch)
+        let repeatedCreate = BatchCreate.create(fileNames, kind: .files, in: batch)
+        report.check(
+            "batch-create-expands-dedupes-and-skips-existing",
+            createdFiles.created == ["note_01.txt", "note_02.txt", "note_03.txt"]
+                && createdFiles.failures.isEmpty
+                && createdFolders.created == ["Report 2", "Report 1"]
+                && createdFolders.failures.isEmpty && repeatedCreate.created.isEmpty)
+
+        let first = batch.appendingPathComponent("note_01.txt")
+        let second = batch.appendingPathComponent("note_02.txt")
+        try "first".write(to: first, atomically: true, encoding: .utf8)
+        try "second".write(to: second, atomically: true, encoding: .utf8)
+        let renamed = BatchRename.perform(
+            in: batch,
+            pairs: [
+                RenamePair(original: "note_01.txt", renamed: "note_02.txt"),
+                RenamePair(original: "note_02.txt", renamed: "note_01.txt"),
+            ])
+        report.check(
+            "batch-rename-two-phase-swap-preserves-bytes",
+            renamed.renamed == 2 && renamed.failures.isEmpty && text(first) == "second"
+                && text(second) == "first")
+
+        let linkTarget = root.appendingPathComponent("link-target.txt")
+        try "linked".write(to: linkTarget, atomically: true, encoding: .utf8)
+        let symlinked = FileOperations.makeLinks([linkTarget], kind: .symlink)
+        let hardlinked = FileOperations.makeLinks([linkTarget], kind: .hardlink)
+        let aliased = FileOperations.makeLinks([linkTarget], kind: .alias)
+        let symlink = root.appendingPathComponent("link-target symlink.txt")
+        let hardlink = root.appendingPathComponent("link-target hardlink.txt")
+        let alias = root.appendingPathComponent("link-target alias.txt")
+        let symlinkDestination = try fm.destinationOfSymbolicLink(atPath: symlink.path)
+        let aliasDestination = try URL(resolvingAliasFileAt: alias).standardizedFileURL
+        try "shared-inode".write(to: hardlink, atomically: false, encoding: .utf8)
+        report.check(
+            "symbolic-hard-and-alias-links-resolve",
+            symlinked.failures.isEmpty && hardlinked.failures.isEmpty && aliased.failures.isEmpty
+                && symlinkDestination == linkTarget.path && text(linkTarget) == "shared-inode"
+                && aliasDestination == linkTarget.standardizedFileURL)
+
+        let duplicates = root.appendingPathComponent("duplicates", isDirectory: true)
+        try fm.createDirectory(at: duplicates, withIntermediateDirectories: true)
+        let duplicateBytes = Data(repeating: 0x61, count: 128)
+        try duplicateBytes.write(to: duplicates.appendingPathComponent("a.bin"))
+        try duplicateBytes.write(to: duplicates.appendingPathComponent("b.bin"))
+        try Data(repeating: 0x62, count: 128).write(
+            to: duplicates.appendingPathComponent("same-size-different.bin"))
+        let duplicateGroups = DuplicateFinder.find(in: [duplicates])
+        report.check(
+            "duplicate-finder-confirms-content-not-just-size",
+            duplicateGroups.count == 1
+                && Set(duplicateGroups[0].files.map(\.name)) == ["a.bin", "b.bin"])
+
+        let sized = root.appendingPathComponent("sized", isDirectory: true)
+        let nested = sized.appendingPathComponent("nested", isDirectory: true)
+        try fm.createDirectory(at: nested, withIntermediateDirectories: true)
+        try Data(repeating: 1, count: 10).write(to: sized.appendingPathComponent("ten.bin"))
+        try Data(repeating: 2, count: 20).write(to: nested.appendingPathComponent("twenty.bin"))
+        try fm.createSymbolicLink(
+            at: sized.appendingPathComponent("nested-link"), withDestinationURL: nested)
+        let measured = DirectorySize.total(of: sized)
+        let ranked = DiskUsage.rankedChildren(of: sized)
+        let rankedByName = Dictionary(uniqueKeysWithValues: ranked.map { ($0.name, $0) })
+        report.check(
+            "directory-size-and-disk-usage-do-not-follow-symlinks",
+            measured.complete && measured.bytes == 30 && rankedByName["nested"]?.bytes == 20
+                && rankedByName["nested"]?.isDirectory == true
+                && rankedByName["nested-link"]?.isDirectory == false,
+            "measured=\(measured.bytes)/\(measured.complete) ranked=\(ranked.map { "\($0.name):\($0.bytes)" })"
+        )
+
+        let left = root.appendingPathComponent("sync-left", isDirectory: true)
+        let right = root.appendingPathComponent("sync-right", isDirectory: true)
+        try fm.createDirectory(at: left, withIntermediateDirectories: true)
+        try fm.createDirectory(at: right, withIntermediateDirectories: true)
+        try "from-left".write(
+            to: left.appendingPathComponent("left.txt"), atomically: true, encoding: .utf8)
+        try "from-right".write(
+            to: right.appendingPathComponent("right.txt"), atomically: true, encoding: .utf8)
+        try "left-conflict".write(
+            to: left.appendingPathComponent("conflict.txt"), atomically: true, encoding: .utf8)
+        try "right-conflict".write(
+            to: right.appendingPathComponent("conflict.txt"), atomically: true, encoding: .utf8)
+        let skippedPlan = FolderSync.plan(
+            left: left, right: right, conflict: .skip, byContent: true)
+        let synced = FolderSync.execute(skippedPlan, left: left, right: right)
+        report.check(
+            "two-way-sync-copies-additions-and-skips-conflicts",
+            synced.copiedToRight == 1 && synced.copiedToLeft == 1
+                && synced.conflictsSkipped == 1 && synced.failures.isEmpty
+                && text(right.appendingPathComponent("left.txt")) == "from-left"
+                && text(left.appendingPathComponent("right.txt")) == "from-right"
+                && text(left.appendingPathComponent("conflict.txt")) == "left-conflict"
+                && text(right.appendingPathComponent("conflict.txt")) == "right-conflict")
+
+        let attributeTarget = root.appendingPathComponent("attributes.txt")
+        try "attributes".write(to: attributeTarget, atomically: true, encoding: .utf8)
+        let fixedDate = Date(timeIntervalSince1970: 1_700_000_000)
+        let attributes = BulkAttributes.apply(
+            .init(modificationDate: fixedDate, posixPermissions: 0o600, addTags: ["Bulk-E2E"]),
+            to: [attributeTarget])
+        let values = try attributeTarget.resourceValues(forKeys: [.contentModificationDateKey])
+        let mode =
+            (try fm.attributesOfItem(atPath: attributeTarget.path)[.posixPermissions]
+            as? NSNumber)?.uint16Value
+        report.check(
+            "bulk-attributes-update-date-permissions-and-tags",
+            attributes.changed == 1 && attributes.failures.isEmpty && mode == 0o600
+                && abs(
+                    (values.contentModificationDate?.timeIntervalSince1970 ?? 0)
+                        - fixedDate.timeIntervalSince1970) < 1
+                && FileTags.tags(of: attributeTarget).contains { $0.name == "Bulk-E2E" })
     }
 
     private static func runArchives(_ report: inout Report) async throws {
@@ -167,6 +318,33 @@ enum DeterministicE2E {
         report.check(
             "archive-repack-persists-edit",
             text(repacked.appendingPathComponent("payload/alpha.txt")) == "alpha-v2")
+
+        let crossA = root.appendingPathComponent("cross-a", isDirectory: true)
+        let crossB = root.appendingPathComponent("cross-b", isDirectory: true)
+        try fm.createDirectory(at: crossA, withIntermediateDirectories: true)
+        try fm.createDirectory(at: crossB, withIntermediateDirectories: true)
+        let crossAFile = crossA.appendingPathComponent("one.txt")
+        let crossBFile = crossB.appendingPathComponent("two.txt")
+        try "one".write(to: crossAFile, atomically: true, encoding: .utf8)
+        try "two".write(to: crossBFile, atomically: true, encoding: .utf8)
+        let crossArchive = root.appendingPathComponent("cross-folder.zip")
+        try await Archiver.compressItems([crossAFile, crossBFile], to: crossArchive)
+        let crossExtracted = root.appendingPathComponent("cross-extracted", isDirectory: true)
+        try await Archiver.extract(crossArchive, to: crossExtracted)
+        report.check(
+            "cross-folder-archive-stages-every-source",
+            text(crossExtracted.appendingPathComponent("one.txt")) == "one"
+                && text(crossExtracted.appendingPathComponent("two.txt")) == "two")
+
+        let sevenZip = root.appendingPathComponent("native.7z")
+        try await Archiver.compress7z([original], to: sevenZip)
+        let sevenZipListing = try await Archiver.list(sevenZip)
+        let sevenZipExtracted = root.appendingPathComponent("seven-extracted", isDirectory: true)
+        try await Archiver.extract(sevenZip, to: sevenZipExtracted)
+        report.check(
+            "seven-zip-create-list-extract",
+            sevenZipListing.contains { $0.hasSuffix("alpha.txt") }
+                && text(sevenZipExtracted.appendingPathComponent("alpha.txt")) == "alpha-v1")
 
         let bytes = Data((0..<131_111).map { UInt8($0 % 251) })
         let splitSource = root.appendingPathComponent("large.bin")
@@ -200,6 +378,22 @@ enum DeterministicE2E {
             "encrypted-disk-image-created",
             DiskImage.isDiskImage(image)
                 && ((try? image.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) > 0)
+
+        let damaged = root.appendingPathComponent("damaged.zip")
+        try Data("not-a-zip".utf8).write(to: damaged)
+        let failedDestination = root.appendingPathComponent("failed-extract", isDirectory: true)
+        try fm.createDirectory(at: failedDestination, withIntermediateDirectories: true)
+        let sentinel = failedDestination.appendingPathComponent("existing.txt")
+        try "untouched".write(to: sentinel, atomically: true, encoding: .utf8)
+        var damagedArchiveFailed = false
+        do {
+            try await Archiver.extract(damaged, to: failedDestination)
+        } catch {
+            damagedArchiveFailed = true
+        }
+        report.check(
+            "damaged-archive-fails-without-clobbering-existing-files",
+            damagedArchiveFailed && text(sentinel) == "untouched")
     }
 
     private static func runSearchMetadata(_ report: inout Report) async throws {
@@ -208,8 +402,11 @@ enum DeterministicE2E {
         defer { try? fm.removeItem(at: root) }
         let first = root.appendingPathComponent("first.txt")
         let second = root.appendingPathComponent("second.md")
+        let binary = root.appendingPathComponent("binary.dat")
         try "Needle one\nplain".write(to: first, atomically: true, encoding: .utf8)
         try "needle two\nneedle three".write(to: second, atomically: true, encoding: .utf8)
+        let binaryBytes = Data([0, 110, 101, 101, 100, 108, 101, 0, 255])
+        try binaryBytes.write(to: binary)
 
         let literal = await ContentSearch.search("needle", in: root)
         report.check(
@@ -227,7 +424,8 @@ enum DeterministicE2E {
         report.check(
             "content-replace-updates-real-files",
             replaced.filesChanged == 2 && replaced.replacements == 3
-                && text(second) == "found two\nfound three")
+                && text(second) == "found two\nfound three"
+                && (try? Data(contentsOf: binary)) == binaryBytes)
 
         try FileTags.setTags([FileTag(name: "E2E", color: .blue)], on: first)
         report.check(
@@ -237,6 +435,11 @@ enum DeterministicE2E {
         report.check(
             "finder-comment-roundtrip",
             FileMetadata.finderComment(of: first) == "coverage-marker")
+        try FileTags.setTags([], on: first)
+        try FileMetadata.setFinderComment("", on: first)
+        report.check(
+            "finder-metadata-clear-roundtrip",
+            FileTags.tags(of: first).isEmpty && FileMetadata.finderComment(of: first) == nil)
         let hashBefore = try FileHasher.hash(first)
         let duplicate = root.appendingPathComponent("duplicate.txt")
         try fm.copyItem(at: first, to: duplicate)
@@ -281,6 +484,11 @@ enum DeterministicE2E {
         report.check(
             "git-commit-cleans-worktree",
             committed.ok && clean?.states.isEmpty == true)
+        let emptyCommit = await GitOps.commit("should fail because tree is clean", in: root)
+        let cleanAfterEmptyCommit = await GitStatus.status(for: root)
+        report.check(
+            "git-empty-commit-surfaces-failure",
+            !emptyCommit.ok && cleanAfterEmptyCommit?.states.isEmpty == true)
 
         let command = ExternalCommand(
             id: "e2e", name: "E2E", command: "printf 'folder=%s file=%s' %D %N")
@@ -318,6 +526,15 @@ enum DeterministicE2E {
         try await provider.download(
             connection, remotePath: "/docs/upload.txt", to: download, password: "")
         report.check("webdav-download-preserves-bytes", text(download) == "webdav-roundtrip")
+        var missingFailed = false
+        do {
+            try await provider.download(
+                connection, remotePath: "/docs/missing.txt",
+                to: root.appendingPathComponent("missing.txt"), password: "")
+        } catch {
+            missingFailed = true
+        }
+        report.check("webdav-missing-object-surfaces-error", missingFailed)
         try await provider.rename(
             connection, from: "/docs/upload.txt", to: "/docs/renamed.txt", password: "")
         let afterRename = try await provider.list(connection, path: "/docs", password: "")
@@ -330,6 +547,139 @@ enum DeterministicE2E {
         try await provider.remove(connection, path: "/docs", isDirectory: true, password: "")
         let rootListing = try await provider.list(connection, path: "/", password: "")
         report.check("webdav-delete-file-and-folder", !rootListing.contains { $0.name == "docs" })
+    }
+
+    private struct ObjectStorageResult {
+        let listOK: Bool
+        let downloadOK: Bool
+        let renameOK: Bool
+        let missingObjectFailed: Bool
+        let invalidCredentialsFailed: Bool
+        let cleanupOK: Bool
+    }
+
+    private static func runObjectStorage(_ report: inout Report) async throws {
+        guard let rawPort = ProcessInfo.processInfo.environment["PATHEM_OBJECT_STORAGE_PORT"],
+            let port = Int(rawPort)
+        else {
+            throw NSError(
+                domain: "PathemE2E", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "missing object-storage fixture port"])
+        }
+        let root = try workspace("object-storage")
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let s3Connection = RemoteConnection(
+            name: "loopback-s3", proto: .s3, host: "127.0.0.1", port: port,
+            user: "e2e-access", region: "us-east-1")
+        let s3 = try await objectStorageLifecycle(
+            provider: RemoteProviders.make(for: .s3), connection: s3Connection,
+            password: "e2e-secret", invalidPassword: "wrong-secret", container: "e2e-bucket",
+            createContainer: false,
+            localRoot: root.appendingPathComponent("s3", isDirectory: true),
+            payload: "s3-roundtrip")
+        report.check("s3-create-upload-list", s3.listOK)
+        report.check("s3-download-preserves-bytes", s3.downloadOK)
+        report.check("s3-copy-delete-rename", s3.renameOK)
+        report.check("s3-missing-object-surfaces-error", s3.missingObjectFailed)
+        report.check("s3-invalid-signature-is-rejected", s3.invalidCredentialsFailed)
+        report.check("s3-delete-file-and-folder", s3.cleanupOK)
+
+        let azureConnection = RemoteConnection(
+            name: "loopback-azure", proto: .azure, host: "127.0.0.1", port: port,
+            user: "devstoreaccount1")
+        let azureKey = Data("e2e-azure-key".utf8).base64EncodedString()
+        let azure = try await objectStorageLifecycle(
+            provider: RemoteProviders.make(for: .azure), connection: azureConnection,
+            password: azureKey,
+            invalidPassword: Data("wrong-azure-key".utf8).base64EncodedString(),
+            container: "e2econtainer", createContainer: true,
+            localRoot: root.appendingPathComponent("azure", isDirectory: true),
+            payload: "azure-roundtrip")
+        report.check("azure-create-upload-list", azure.listOK)
+        report.check("azure-download-preserves-bytes", azure.downloadOK)
+        report.check("azure-copy-delete-rename", azure.renameOK)
+        report.check("azure-missing-object-surfaces-error", azure.missingObjectFailed)
+        report.check("azure-invalid-signature-is-rejected", azure.invalidCredentialsFailed)
+        report.check("azure-delete-file-folder-container", azure.cleanupOK)
+    }
+
+    private static func objectStorageLifecycle(
+        provider: RemoteProvider, connection: RemoteConnection, password: String,
+        invalidPassword: String, container: String, createContainer: Bool, localRoot: URL,
+        payload: String
+    ) async throws -> ObjectStorageResult {
+        let fm = FileManager.default
+        try fm.createDirectory(at: localRoot, withIntermediateDirectories: true)
+        if createContainer {
+            try await provider.makeDirectory(connection, path: "/\(container)", password: password)
+        }
+        try await provider.makeDirectory(
+            connection, path: "/\(container)/docs", password: password)
+        let upload = localRoot.appendingPathComponent("upload.txt")
+        try payload.write(to: upload, atomically: true, encoding: .utf8)
+        try await provider.upload(
+            upload, to: connection, remotePath: "/\(container)/docs/upload.txt",
+            password: password)
+        let listed = try await provider.list(
+            connection, path: "/\(container)/docs/", password: password)
+        let listOK = listed.contains {
+            $0.name == "upload.txt" && !$0.isDirectory && $0.size == Int64(payload.utf8.count)
+        }
+
+        let download = localRoot.appendingPathComponent("download.txt")
+        try await provider.download(
+            connection, remotePath: "/\(container)/docs/upload.txt", to: download,
+            password: password)
+        let downloadOK = text(download) == payload
+
+        try await provider.rename(
+            connection, from: "/\(container)/docs/upload.txt",
+            to: "/\(container)/docs/renamed.txt", password: password)
+        let afterRename = try await provider.list(
+            connection, path: "/\(container)/docs/", password: password)
+        let renameOK =
+            afterRename.contains { $0.name == "renamed.txt" }
+            && !afterRename.contains { $0.name == "upload.txt" }
+
+        var missingObjectFailed = false
+        do {
+            try await provider.download(
+                connection, remotePath: "/\(container)/docs/missing.txt",
+                to: localRoot.appendingPathComponent("missing.txt"), password: password)
+        } catch {
+            missingObjectFailed = true
+        }
+        var invalidCredentialsFailed = false
+        do {
+            _ = try await provider.list(
+                connection, path: "/\(container)/docs/", password: invalidPassword)
+        } catch {
+            invalidCredentialsFailed = true
+        }
+
+        try await provider.remove(
+            connection, path: "/\(container)/docs/renamed.txt", isDirectory: false,
+            password: password)
+        try await provider.remove(
+            connection, path: "/\(container)/docs", isDirectory: true, password: password)
+        if createContainer {
+            try await provider.remove(
+                connection, path: "/\(container)", isDirectory: true, password: password)
+            let rootListing = try await provider.list(connection, path: "/", password: password)
+            return ObjectStorageResult(
+                listOK: listOK, downloadOK: downloadOK, renameOK: renameOK,
+                missingObjectFailed: missingObjectFailed,
+                invalidCredentialsFailed: invalidCredentialsFailed,
+                cleanupOK: !rootListing.contains { $0.name == container })
+        }
+        let rootListing = try await provider.list(
+            connection, path: "/\(container)", password: password)
+        return ObjectStorageResult(
+            listOK: listOK, downloadOK: downloadOK, renameOK: renameOK,
+            missingObjectFailed: missingObjectFailed,
+            invalidCredentialsFailed: invalidCredentialsFailed,
+            cleanupOK: !rootListing.contains { $0.name == "docs" })
     }
 
     private static func runProcess(_ executable: String, _ arguments: [String]) -> (

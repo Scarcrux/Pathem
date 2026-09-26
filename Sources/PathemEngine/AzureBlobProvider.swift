@@ -9,8 +9,8 @@ import Foundation
 /// the account key; `host` may be left blank (derived as `<account>.blob.core.windows.net`).
 ///
 /// Listing uses "List Blobs" with a "/" delimiter so prefixes read as folders; the
-/// account root lists containers. Live calls aren't covered by the test suite (no
-/// account to hit); the signer, the list parser, and host/account derivation are.
+/// account root lists containers. The signer has fixed-vector unit coverage, and the
+/// full provider runs against a signature-validating HTTPS fixture in product E2E.
 public struct AzureBlobProvider: RemoteProvider {
     public init() {}
 
@@ -54,8 +54,10 @@ public struct AzureBlobProvider: RemoteProvider {
     ) async throws {
         try require(connection)
         let (container, key) = Self.split(remotePath)
-        let req = Request(method: "GET", encodedPath: Self.encodePath(container: container, key: key))
-        let (_, status, err) = try await run(connection, password, req, extra: ["-o", localFile.path])
+        let req = Request(
+            method: "GET", encodedPath: Self.encodePath(container: container, key: key))
+        let (_, status, err) = try await run(
+            connection, password, req, extra: ["-o", localFile.path])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
@@ -65,16 +67,20 @@ public struct AzureBlobProvider: RemoteProvider {
         try require(connection)
         let (container, key) = Self.split(remotePath)
         let size =
-            ((try? FileManager.default.attributesOfItem(atPath: localFile.path))?[.size] as? NSNumber)?
+            ((try? FileManager.default.attributesOfItem(atPath: localFile.path))?[.size]
+            as? NSNumber)?
             .intValue ?? 0
         let req = Request(
             method: "PUT", encodedPath: Self.encodePath(container: container, key: key),
             xms: ["x-ms-blob-type": "BlockBlob"], contentLength: size)
-        let (_, status, err) = try await run(connection, password, req, extra: ["-T", localFile.path])
+        let (_, status, err) = try await run(
+            connection, password, req, extra: ["-T", localFile.path])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
-    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws {
+    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String)
+        async throws
+    {
         try require(connection)
         let (container, key) = Self.split(path)
         let req: Request
@@ -88,7 +94,9 @@ public struct AzureBlobProvider: RemoteProvider {
             req = Request(
                 method: "PUT", encodedPath: Self.encodePath(container: container, key: marker),
                 xms: ["x-ms-blob-type": "BlockBlob"], contentLength: 0)
-            extra = ["-T", "/dev/null"]
+            // curl treats an upload URL ending in "/" as a directory and appends the
+            // local filename. An explicit empty body preserves the marker's trailing slash.
+            extra = ["-H", "Content-Type:", "--data-binary", ""]
         }
         let (_, status, err) = try await run(connection, password, req, extra: extra)
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
@@ -113,14 +121,16 @@ public struct AzureBlobProvider: RemoteProvider {
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
-    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws {
+    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String)
+        async throws
+    {
         try require(connection)
         // Azure has no move: "Put Blob From URL" copies the source synchronously (so a
         // delete-after is safe), then the source is removed.
         let (fromContainer, fromKey) = Self.split(from)
         let (toContainer, toKey) = Self.split(to)
         let sourceURL =
-            "https://\(Self.host(connection))\(Self.encodePath(container: fromContainer, key: fromKey))"
+            "\(Self.base(connection))\(Self.encodePath(container: fromContainer, key: fromKey))"
         let copy = Request(
             method: "PUT", encodedPath: Self.encodePath(container: toContainer, key: toKey),
             xms: ["x-ms-blob-type": "BlockBlob", "x-ms-copy-source": sourceURL], contentLength: 0)
@@ -152,6 +162,12 @@ public struct AzureBlobProvider: RemoteProvider {
         c.host.isEmpty ? "\(c.user).blob.core.windows.net" : c.host
     }
 
+    /// Keep the standard endpoint clean while honoring an explicit emulator/custom-service port.
+    static func base(_ c: RemoteConnection) -> String {
+        let suffix = c.effectivePort == 443 ? "" : ":\(c.effectivePort)"
+        return "https://\(host(c))\(suffix)"
+    }
+
     /// Build the request URL and curl header arguments, signing with Shared Key. Static
     /// and date-injected so a fixed date yields a fixed, checkable signature.
     static func build(_ c: RemoteConnection, _ key: String, _ req: Request, date: Date) throws
@@ -176,14 +192,16 @@ public struct AzureBlobProvider: RemoteProvider {
         let queryString = req.query
             .map { "\(pctQuery($0.name))=\(pctQuery($0.value))" }
             .joined(separator: "&")
-        let url = "https://\(host(c))\(req.encodedPath)" + (queryString.isEmpty ? "" : "?\(queryString)")
+        let url = "\(base(c))\(req.encodedPath)" + (queryString.isEmpty ? "" : "?\(queryString)")
         return (url, headerArgs)
     }
 
     // MARK: - Helpers
 
     private func require(_ c: RemoteConnection) throws {
-        guard c.proto == .azure else { throw RemoteError.unsupported("AzureBlobProvider handles Azure only") }
+        guard c.proto == .azure else {
+            throw RemoteError.unsupported("AzureBlobProvider handles Azure only")
+        }
         guard Self.isValidAccount(c.user) else {
             throw RemoteError.unsupported("Invalid Azure account name")
         }
@@ -230,7 +248,9 @@ public struct AzureBlobProvider: RemoteProvider {
         return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? s
     }
 
-    private func run(_ c: RemoteConnection, _ password: String, _ req: Request, extra: [String] = [])
+    private func run(
+        _ c: RemoteConnection, _ password: String, _ req: Request, extra: [String] = []
+    )
         async throws -> (Data, Int32, String)
     {
         let (url, headerArgs) = try Self.build(c, password, req, date: Date())

@@ -78,10 +78,12 @@ is faster.)
 - Remote and cloud transfer, built in: connect to S3 (and S3-compatible stores like
   Backblaze B2, Google Cloud Storage, and Wasabi), Azure Blob, WebDAV, SFTP, and
   FTP, and copy to and from them with a progress and cancel sheet. SFTP and FTP are
-  covered by live round-trip tests against real servers; the S3, Azure, and WebDAV
-  backends are covered by request-signing and parser unit tests (no live-server test
-  in the suite yet). Saved sites carry color labels, groups, per-site path bookmarks,
-  and a paired local folder. Every network backend runs out-of-process.
+  covered by opt-in live round-trip tests against real servers; S3, Azure, and WebDAV
+  run full CRUD through the built product and system curl against hermetic loopback
+  services. The object-storage fixtures cryptographically verify AWS SigV4 and Azure
+  Shared Key and reject bad credentials, in addition to the parser unit tests. Saved
+  sites carry color labels, groups, per-site path bookmarks, and a paired local folder.
+  Every network backend runs out-of-process.
 - Git-aware. Files in a repository show status badges (modified, staged,
   untracked), and "Reclaim in Repo" tells regenerable build output (safe to
   clean) from precious untracked data (worth backing up).
@@ -133,6 +135,9 @@ Pathem also seeds: connections are bidirectional, so it serves pieces to peers (
 client, peer wire protocol, metadata exchange, SHA-1 piece verification, sparse file
 storage, seeding, DHT) is unit-tested, including an end-to-end test where a real
 leecher downloads a file from a real seeder over TCP and verifies it byte-for-byte.
+The product E2E also crosses the real app/daemon boundary for `.torrent` and magnet
+adds, file selection, peer/tracker details, limits, pause/resume, removal, and restart
+restoration.
 Peers come from HTTP trackers, from the mainline DHT (BEP 5) so a trackerless
 magnet still finds peers, and from peer exchange (PEX, receive side). To accept
 incoming peers behind common home NAT, Pathem asks your router to forward the
@@ -290,7 +295,7 @@ Finder, other apps, and browser upload zones), an embedded themeable terminal,
 per-folder saved views, saved layouts, Quick Look, batch rename, a command
 palette, on-device semantic search, git-status badges, a cleanup view and an
 active file organizer, and a watcher that keeps the view in sync with the disk.
-Remote and cloud transfer (S3, WebDAV, SFTP, FTP) runs out-of-process and is
+Remote and cloud transfer (S3, Azure Blob, WebDAV, SFTP, FTP) runs out-of-process and is
 built in. Auto-update ships via Sparkle. DESIGN.md and ROADMAP.md have the full
 plan.
 

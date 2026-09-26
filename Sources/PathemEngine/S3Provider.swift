@@ -48,12 +48,15 @@ public struct S3Provider: RemoteProvider {
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
-    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String) async throws {
+    public func makeDirectory(_ connection: RemoteConnection, path: String, password: String)
+        async throws
+    {
         try require(connection)
         // S3 has no real folders; create a zero-byte marker object ending in "/".
         let marker = path.hasSuffix("/") ? path : path + "/"
         let (_, status, err) = try await run(
-            connection, password, ["-T", "/dev/null", Self.objectURL(connection, marker)])
+            connection, password,
+            ["-X", "PUT", "--data-binary", "", Self.objectURL(connection, marker)])
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
@@ -69,7 +72,9 @@ public struct S3Provider: RemoteProvider {
         guard status == 0 else { throw RemoteError.curl(code: status, message: err) }
     }
 
-    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String) async throws {
+    public func rename(_ connection: RemoteConnection, from: String, to: String, password: String)
+        async throws
+    {
         try require(connection)
         // S3 has no move: copy then delete the source.
         let (fromBucket, fromKey) = Self.split(from)
@@ -90,12 +95,18 @@ public struct S3Provider: RemoteProvider {
         guard RemoteConnection.isValidHost(Self.host(c)) else {
             throw RemoteError.unsupported("Invalid S3 endpoint host")
         }
-        guard Self.regionIsValid(c.region) else { throw RemoteError.unsupported("Invalid S3 region") }
+        guard Self.regionIsValid(c.region) else {
+            throw RemoteError.unsupported("Invalid S3 region")
+        }
     }
 
     static func regionIsValid(_ region: String) -> Bool {
         region.isEmpty
-            || region.unicodeScalars.allSatisfy { CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-").contains($0) }
+            || region.unicodeScalars.allSatisfy {
+                CharacterSet(
+                    charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+                ).contains($0)
+            }
     }
 
     /// Endpoint host: explicit, or AWS regional default derived from the region.
@@ -131,7 +142,8 @@ public struct S3Provider: RemoteProvider {
     }
     /// Percent-encode a query value (RFC 3986 unreserved plus "/").
     static func q(_ s: String) -> String {
-        let allowed = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~/")
+        let allowed = CharacterSet(
+            charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~/")
         return s.addingPercentEncoding(withAllowedCharacters: allowed) ?? s
     }
 
@@ -143,7 +155,8 @@ public struct S3Provider: RemoteProvider {
             "-q", "-s", "--show-error", "-f", "--globoff", "--proto", "=https",
             "--connect-timeout", "20", "--aws-sigv4", "aws:amz:\(region):s3", "-K", "-",
         ]
-        return try await CurlFTPProvider.runCurl(base + RemoteLimits.curlArgs + opArgs, input: Self.credentials(c, password))
+        return try await CurlFTPProvider.runCurl(
+            base + RemoteLimits.curlArgs + opArgs, input: Self.credentials(c, password))
     }
 
     /// curl config carrying the access key id / secret (the password), kept off the
