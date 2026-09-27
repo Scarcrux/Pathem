@@ -5,6 +5,50 @@ import PDFKit
 import PathemEngine
 import PathemTerminal
 
+@MainActor
+private final class GateADemoCapture {
+    let framesDirectory: URL?
+    private(set) var tickCount = 0
+    private(set) var frameCount = 0
+    private(set) var frameWriteFailed = false
+
+    init(framesDirectory: URL?) {
+        self.framesDirectory = framesDirectory
+    }
+
+    func advanceTick() {
+        tickCount += 1
+    }
+
+    func capture(window: NSWindow) {
+        guard let framesDirectory, let content = window.contentView,
+            let bitmap = content.bitmapImageRepForCachingDisplay(in: content.bounds)
+        else { return }
+        content.cacheDisplay(in: content.bounds, to: bitmap)
+        guard let png = bitmap.representation(using: .png, properties: [:]) else {
+            frameWriteFailed = true
+            return
+        }
+        let output = framesDirectory.appendingPathComponent(
+            String(format: "frame-%05d.png", frameCount))
+        do {
+            try png.write(to: output, options: .atomic)
+            frameCount += 1
+        } catch {
+            frameWriteFailed = true
+        }
+    }
+
+    var result: (message: String?, exitCode: Int32) {
+        let tooFewFrames = framesDirectory != nil && frameCount < 2
+        let failed = frameWriteFailed || tooFewFrames
+        let message = framesDirectory.map { _ in
+            "GATE_A_DEMO: \(failed ? "FAIL" : "PASS") frames=\(frameCount)"
+        }
+        return (message, failed ? 1 : 0)
+    }
+}
+
 // AppKit entry point. Normal launch shows a dual-pane browser rooted at the
 // home directory. Launch with PATHEM_GATE_A=1 to run the Gate A virtualization
 // proof (DESIGN.md §5): load 1,000,000 synthetic rows and confirm the table
@@ -1686,8 +1730,9 @@ enum PathemApp {
     /// cell views the table actually requested. A virtualized table requests a
     /// number proportional to the visible window (tens), not to the dataset.
     /// Build the same 1,000,000-row dataset as Gate A and smoothly auto-scroll it top to bottom
-    /// (ease-in-out) over PATHEM_GATE_A_SECONDS (default 12), then exit. For recording the
-    /// above-the-fold scroll demo; a bounded cell count keeps it buttery regardless of the 1M rows.
+    /// (ease-in-out) over PATHEM_GATE_A_SECONDS (default 10), then exit. When
+    /// PATHEM_GATE_A_FRAMES_DIR is set, render the window content to PNG frames in-process. AppKit
+    /// owns those pixels, so this produces the launch asset without Screen Recording permission.
     private static func startGateADemoScroll(_ controller: FileListController, _ window: NSWindow) {
         let n = 1_000_000
         let base = Date(timeIntervalSince1970: 1_700_000_000)
@@ -1706,7 +1751,12 @@ enum PathemApp {
         controller.tableView.layoutSubtreeIfNeeded()
 
         let duration =
-            Double(ProcessInfo.processInfo.environment["PATHEM_GATE_A_SECONDS"] ?? "") ?? 12
+            Double(ProcessInfo.processInfo.environment["PATHEM_GATE_A_SECONDS"] ?? "") ?? 10
+        let framesDirectory = ProcessInfo.processInfo.environment["PATHEM_GATE_A_FRAMES_DIR"].map {
+            URL(fileURLWithPath: $0, isDirectory: true)
+        }
+        let capture = GateADemoCapture(framesDirectory: framesDirectory)
+        capture.capture(window: window)
         let clip = controller.scrollView.contentView
         let start = Date()
         Timer.scheduledTimer(withTimeInterval: 1.0 / 60.0, repeats: true) { timer in
@@ -1718,11 +1768,17 @@ enum PathemApp {
                 let eased = t < 0.5 ? 2 * t * t : 1 - pow(-2 * t + 2, 2) / 2  // ease-in-out
                 clip.scroll(to: NSPoint(x: 0, y: maxY * CGFloat(eased)))
                 controller.scrollView.reflectScrolledClipView(clip)
+                capture.advanceTick()
+                if capture.tickCount.isMultiple(of: 4) || t >= 1 {
+                    capture.capture(window: window)  // 15 fps from the 60 Hz timer
+                }
                 return t >= 1
             }
             if done {
                 timer.invalidate()
-                exit(0)
+                let result = MainActor.assumeIsolated { capture.result }
+                if let message = result.message { print(message) }
+                exit(result.exitCode)
             }
         }
     }

@@ -21,10 +21,10 @@ below is a known open defect.
 
 ## What still needs you (not buildable-and-verifiable by an agent)
 
-**1. Record the 1M-row scroll GIF.** The tooling is wired: `make gate-a-demo`
-records the auto-scroll and (with ffmpeg) makes an optimized GIF. It needs Screen
-Recording permission for your terminal. Then drop the GIF above the fold in
-`README.md` and the site. This is the single highest-leverage launch asset.
+**1. The 1M-row scroll proof is shipped.** `make gate-a-demo` renders the real AppKit
+table in-process, then produces the above-the-fold README GIF and site MP4. It does
+not need Screen Recording permission. `make gate-a` independently enforces that the
+million-row table materializes only a bounded number of cells.
 
 **2. Publish the VS Code / Cursor extension.** Authored, packaged, installed
 locally, and CI-ready (`.github/workflows/vscode-extension-release.yml`). Needs
@@ -62,10 +62,9 @@ Sparkle key set up.
 
 ## Recommended sequence
 
-1. `make gate-a-demo` → GIF above the fold (item 1).
-2. Publish the VS Code extension (item 2): a second, independent star surface.
-3. When your testing bar is met, run `LAUNCH_CHECKLIST.md` end to end (item 4).
-4. After public, invite translation fixes as issues/PRs come in (item 3).
+1. Publish the VS Code extension (item 2): a second, independent star surface.
+2. When your testing bar is met, run `LAUNCH_CHECKLIST.md` end to end (item 4).
+3. After public, invite translation fixes as issues/PRs come in (item 3).
 
 Bottom line: the engineering the audit surfaced is complete. What remains is
 launch production and the gated flip, all of which are yours to trigger.

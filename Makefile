@@ -5,8 +5,8 @@
 #   make gate-a   reproduce the 1M-row virtualization benchmark (build + load
 #                 1,000,000 rows; prints timings + bounded cell counts, exits
 #                 non-zero if virtualization regresses)
-#   make gate-a-demo  record the 1M-row scroll to a video/GIF for the site + README
-#                 (needs Screen Recording permission; see scripts/capture-gate-a.sh)
+#   make gate-a-demo  render the 1M-row scroll to a video/GIF for the site + README
+#                 (in-process AppKit capture; no Screen Recording permission needed)
 #   make app      assemble .build/Pathem.app (universal, ad-hoc signed)
 #   make install  build the app and copy it to /Applications
 #   make watch    rebuild + relaunch on every source change (fast debug loop)
@@ -60,8 +60,8 @@ test: preflight
 gate-a: preflight
 	PATHEM_GATE_A=1 "$(XCODE_SWIFT)" run $(SWIFTPM_FLAGS) Pathem
 
-# Record the 1M-row scroll demo (the above-the-fold asset) to docs/demo/. Needs Screen
-# Recording permission for your terminal; produces a GIF too if ffmpeg is installed.
+# Render the 1M-row scroll demo in-process (the above-the-fold asset) to an MP4 for the
+# site and an optimized GIF for the README. Requires ffmpeg, not Screen Recording access.
 gate-a-demo:
 	scripts/capture-gate-a.sh
 

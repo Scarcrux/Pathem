@@ -213,7 +213,7 @@
   .lights span { width: 12px; height: 12px; border-radius: 50%; display: block; }
   .lights .r { background: #ec6a5e; } .lights .y { background: #f4bf4f; } .lights .g { background: #61c454; }
   .titlebar .path { font-family: var(--mono); font-size: .78rem; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .window img { display: block; width: 100%; height: auto; }
+  .window img, .window video { display: block; width: 100%; height: auto; }
   figure.window { margin: 0; }
 
   /* ---- stats strip ---- */
@@ -461,9 +461,12 @@
     <figure class="window reveal">
       <div class="titlebar">
         <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-        <span class="path">~/Projects &middot; two panes, tabs per pane, a customizable sidebar</span>
+        <span class="path">1,000,000 rows &middot; only the visible cells are materialized</span>
       </div>
-      <img src="/assets/hero.webp" fetchpriority="high" alt="Pathem dual-pane window: a Projects list on the left, a Photos gallery with a large preview and filmstrip on the right, and a sidebar of favorites, clouds, volumes, smart folders, and tags" width="1280" height="852" />
+      <video id="gate-a-demo" autoplay muted loop playsinline controls preload="auto" aria-label="Pathem smoothly scrolling its real file list through one million synthetic rows">
+        <source src="/assets/gate-a-1M.mp4" type="video/mp4" />
+        <img src="/assets/hero.webp" alt="Pathem dual-pane window: a Projects list on the left, a Photos gallery on the right, and a customizable sidebar" width="1280" height="852" />
+      </video>
     </figure>
   </section>
 
@@ -680,9 +683,17 @@
 
 <script>
   (function () {
+    var reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    var gateADemo = document.getElementById("gate-a-demo");
+    if (reducedMotion.matches) gateADemo.pause();
+    reducedMotion.addEventListener("change", function (event) {
+      if (event.matches) gateADemo.pause();
+      else gateADemo.play().catch(function () {});
+    });
+
     // scroll reveal
     var els = document.querySelectorAll(".reveal");
-    if (!("IntersectionObserver" in window) || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (!("IntersectionObserver" in window) || reducedMotion.matches) {
       els.forEach(function (e) { e.classList.add("in"); });
     } else {
       var io = new IntersectionObserver(function (entries) {

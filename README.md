@@ -12,9 +12,9 @@ Directory Opus or Path Finder. Written in Swift and AppKit. No Electron.
 
 **Website:** [pathem.app](https://pathem.app)
 
-![Pathem: a dual-pane window with tabs, a customizable sidebar, and a dark theme](docs/screenshots/dual-pane.png)
+![Pathem smoothly scrolling its real file list through one million rows](docs/demo/gate-a-1M.gif)
 
-<sub>Dual pane, tabs per pane, a customizable sidebar, and colored tags. (Screenshots use a built-in demo workspace, so no real files are shown.)</sub>
+<sub>The production AppKit table scrolling 1,000,000 synthetic rows. Rebuild this capture with `make gate-a-demo`; no Screen Recording permission is needed.</sub>
 
 ## Proven fast: the one-million-row test
 
@@ -41,6 +41,10 @@ Jump to row 1,000,000, the middle, or back to the top and the table still builds
 **fewer than 100 cell views, not a million**. The check is part of the CI suite, so a
 virtualization regression fails the build. (Timings are from a debug build; release
 is faster.)
+
+![Pathem: a dual-pane window with tabs, a customizable sidebar, and a dark theme](docs/screenshots/dual-pane.png)
+
+<sub>Dual pane, tabs per pane, a customizable sidebar, and colored tags. (Screenshots use a built-in demo workspace, so no real files are shown.)</sub>
 
 ## What it does
 
