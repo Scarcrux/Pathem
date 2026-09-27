@@ -13,7 +13,8 @@ final class ShelfController: NSObject {
     private var model = ShelfModel()
     private let titleLabel = NSTextField(labelWithString: L("shelf.title", "Drop Stack"))
     private let chipsStack = NSStackView()
-    private let emptyHint = NSTextField(labelWithString: L("shelf.emptyHint", "Drag files here to stash them"))
+    private let emptyHint = NSTextField(
+        labelWithString: L("shelf.emptyHint", "Drag files here to stash them"))
     private var actionButtons: [NSButton] = []
 
     /// Emptiness changed (so the browser can auto-show the bar and update toggles).
@@ -28,6 +29,10 @@ final class ShelfController: NSObject {
     var isEmpty: Bool { model.isEmpty }
     var count: Int { model.count }
     var items: [URL] { model.items }
+    /// PATHEM_UI_TEST: the Drop Stack's background remains an active file-URL destination.
+    var debugFileDropHandlerWired: Bool {
+        view.registeredDraggedTypes.contains(.fileURL) && view.onDropURLs != nil
+    }
 
     override init() {
         super.init()
@@ -116,7 +121,9 @@ final class ShelfController: NSObject {
         actions.setHuggingPriority(.defaultHigh, for: .horizontal)
 
         let hide = NSButton()
-        hide.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("shelf.hideShelfAX", "Hide Drop Stack"))
+        hide.image = NSImage(
+            systemSymbolName: "xmark",
+            accessibilityDescription: L("shelf.hideShelfAX", "Hide Drop Stack"))
         hide.isBordered = false
         hide.bezelStyle = .inline
         hide.target = self
@@ -190,7 +197,9 @@ final class ShelfController: NSObject {
         label.maximumNumberOfLines = 1
 
         let remove = NSButton()
-        remove.image = NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: L("common.remove", "Remove"))
+        remove.image = NSImage(
+            systemSymbolName: "xmark.circle.fill",
+            accessibilityDescription: L("common.remove", "Remove"))
         remove.isBordered = false
         remove.bezelStyle = .inline
         remove.contentTintColor = .tertiaryLabelColor
@@ -222,10 +231,22 @@ final class ShelfController: NSObject {
         remove(model.items[sender.tag])
     }
 
-    @objc private func copyHere() { guard !model.isEmpty else { return }; onCopyHere?(model.items) }
-    @objc private func moveHere() { guard !model.isEmpty else { return }; onMoveHere?(model.items) }
-    @objc private func trash() { guard !model.isEmpty else { return }; onTrash?(model.items) }
-    @objc private func reveal() { guard !model.isEmpty else { return }; onReveal?(model.items) }
+    @objc private func copyHere() {
+        guard !model.isEmpty else { return }
+        onCopyHere?(model.items)
+    }
+    @objc private func moveHere() {
+        guard !model.isEmpty else { return }
+        onMoveHere?(model.items)
+    }
+    @objc private func trash() {
+        guard !model.isEmpty else { return }
+        onTrash?(model.items)
+    }
+    @objc private func reveal() {
+        guard !model.isEmpty else { return }
+        onReveal?(model.items)
+    }
     @objc private func share(_ sender: NSButton) {
         guard !model.isEmpty else { return }
         onShare?(model.items, sender)
@@ -252,7 +273,8 @@ final class ShelfBarView: NSView {
     }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        layer?.backgroundColor = NSColor.selectedContentBackgroundColor.withAlphaComponent(0.18).cgColor
+        layer?.backgroundColor =
+            NSColor.selectedContentBackgroundColor.withAlphaComponent(0.18).cgColor
         return .copy
     }
 

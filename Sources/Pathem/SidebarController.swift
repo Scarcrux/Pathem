@@ -93,6 +93,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onOpenInOtherPane: ((URL) -> Void)?
     /// The "Manage…" row in the Connections section was selected.
     var onManageConnections: (() -> Void)?
+
+    /// PATHEM_UI_TEST: the browser has connected sidebar folder drops to the transfer path.
+    var debugFileDropHandlerWired: Bool { onDropFilesIntoFolder != nil }
     private var connections: [RemoteConnection] = []
     /// Header keys the user has collapsed, so reload() doesn't re-expand them.
     private var collapsedHeaderKeys: Set<String> = []
@@ -116,7 +119,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private var devices: [RemoteConnection] = []
     /// Update the Devices section with discovered USB phones (adb / iOS).
     func setDevices(_ found: [RemoteConnection]) {
-        let identity: (RemoteConnection) -> String = { "\($0.proto.rawValue):\($0.host):\($0.name)" }
+        let identity: (RemoteConnection) -> String = {
+            "\($0.proto.rawValue):\($0.host):\($0.name)"
+        }
         guard devices.map(identity) != found.map(identity) else { return }
         devices = found
         reload()
@@ -128,7 +133,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private static let groupType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-group")
     /// Dragging a whole section (a system header or a user group) to reorder it among the
     /// other sections; carries the section's stable key.
-    private static let sectionType = NSPasteboard.PasteboardType("com.scarcrux.pathem.sidebar-section")
+    private static let sectionType = NSPasteboard.PasteboardType(
+        "com.scarcrux.pathem.sidebar-section")
 
     private static let iconChoices = [
         "house", "folder", "doc", "doc.text", "star", "heart", "flag", "tag",
@@ -232,8 +238,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         build()
         reload()
         let center = NSWorkspace.shared.notificationCenter
-        for name in [NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
-                     NSWorkspace.didRenameVolumeNotification] {
+        for name in [
+            NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
+            NSWorkspace.didRenameVolumeNotification,
+        ] {
             center.addObserver(self, selector: #selector(volumesChanged), name: name, object: nil)
         }
     }
@@ -317,7 +325,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: bottomBar.topAnchor, constant: -2),
             bottomBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 6),
-            bottomBar.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -6),
+            bottomBar.trailingAnchor.constraint(
+                equalTo: containerView.trailingAnchor, constant: -6),
             bottomBar.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -6),
             settingsButtonHeight!, collapseButtonHeight!,
         ])
@@ -342,7 +351,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         collapseButton.isHidden = !compact  // the toggle is only an expand affordance, icons-only
         collapseButton.image = NSImage(
-            systemSymbolName: "chevron.right", accessibilityDescription: L("sidebar.expandTooltip", "Expand sidebar"))?
+            systemSymbolName: "chevron.right",
+            accessibilityDescription: L("sidebar.expandTooltip", "Expand sidebar"))?
             .withSymbolConfiguration(.init(pointSize: 18, weight: .regular))
         collapseButton.toolTip = L("sidebar.expandTooltip", "Expand sidebar")
         collapseButton.setAccessibilityLabel(L("sidebar.expandTooltip", "Expand sidebar"))
@@ -407,8 +417,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if demoMode {
             // Demo mode: fake, generic Cloud/Volumes so screenshots never leak real account
             // emails, machine names, connected servers, or the user's phone.
-            if let cloud = demoSection(L("sidebar.cloudHeader", "Cloud"), demoCloud, volumes: false) { roots.append(cloud) }
-            if let volumes = demoSection(L("sidebar.volumesHeader", "Volumes"), demoVolumes, volumes: true) { roots.append(volumes) }
+            if let cloud = demoSection(L("sidebar.cloudHeader", "Cloud"), demoCloud, volumes: false)
+            {
+                roots.append(cloud)
+            }
+            if let volumes = demoSection(
+                L("sidebar.volumesHeader", "Volumes"), demoVolumes, volumes: true)
+            {
+                roots.append(volumes)
+            }
         } else {
             if let cloud = cloudNode() { roots.append(cloud) }
             roots.append(volumesNode())
@@ -423,11 +440,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         if !model.hiddenSystemItems.isEmpty {
             let hidden = Set(model.hiddenSystemItems)
             for root in roots { Self.removeHiddenSystemItems(from: root, hidden: hidden) }
-            roots.removeAll { if case .systemHeader = $0.kind { return $0.children.isEmpty } else { return false } }
+            roots.removeAll {
+                if case .systemHeader = $0.kind { return $0.children.isEmpty } else { return false }
+            }
         }
         roots = Self.ordered(roots, by: model.sectionOrder)
         outline.reloadData()
-        for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) { outline.expandItem(root) }
+        for root in roots where !collapsedHeaderKeys.contains(Self.key(root)) {
+            outline.expandItem(root)
+        }
 
         if let selectedKey, let row = rowForKey(selectedKey) {
             restoringSelection = true  // restore the highlight without re-firing the action
@@ -457,7 +478,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         // a favorite duplicating a system location), this leaves the user's chosen occurrence selected
         // instead of yanking the highlight to the first match on every navigation.
         if let target,
-            (outline.item(atRow: outline.selectedRow) as? Node)?.url?.standardizedFileURL.path == target
+            (outline.item(atRow: outline.selectedRow) as? Node)?.url?.standardizedFileURL.path
+                == target
         {
             return
         }
@@ -552,7 +574,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     private func rowForKey(_ wanted: String) -> Int? {
-        for row in 0..<outline.numberOfRows where (outline.item(atRow: row) as? Node).map(Self.key) == wanted {
+        for row in 0..<outline.numberOfRows
+        where (outline.item(atRow: row) as? Node).map(Self.key) == wanted {
             return row
         }
         return nil
@@ -583,9 +606,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         children.append(
             Node(
-                kind: .manageConnections, title: connections.isEmpty ? L("sidebar.addConnection", "Add Connection…") : L("sidebar.manage", "Manage…"),
+                kind: .manageConnections,
+                title: connections.isEmpty
+                    ? L("sidebar.addConnection", "Add Connection…")
+                    : L("sidebar.manage", "Manage…"),
                 url: nil, icon: "plus.circle"))
-        return Node(kind: .systemHeader, title: L("sidebar.connectionsHeader", "Connections"), url: nil, icon: nil, children: children)
+        return Node(
+            kind: .systemHeader, title: L("sidebar.connectionsHeader", "Connections"), url: nil,
+            icon: nil, children: children)
     }
 
     /// Discovered SMB computers on the local network (nil when none seen yet).
@@ -606,7 +634,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let children = sharedHosts.map { host in
             Node(kind: .shared(host), title: host, url: nil, icon: "desktopcomputer")
         }
-        return Node(kind: .systemHeader, title: L("sidebar.sharedHeader", "Shared"), url: nil, icon: nil, children: children)
+        return Node(
+            kind: .systemHeader, title: L("sidebar.sharedHeader", "Shared"), url: nil, icon: nil,
+            children: children)
     }
 
     /// AirDrop (a send sheet) and the Trash. AirDrop has no path; the Trash is a
@@ -618,28 +648,37 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let network = Node(
             kind: .network, title: L("sidebar.network", "Network"), url: nil, icon: "network")
         let photos = Node(
-            kind: .photos, title: L("sidebar.photos", "Photos"), url: nil, icon: "photo.on.rectangle.angled")
-        let trashURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
-        let trash = Node(kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: "trash")
+            kind: .photos, title: L("sidebar.photos", "Photos"), url: nil,
+            icon: "photo.on.rectangle.angled")
+        let trashURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
+            ".Trash")
+        let trash = Node(
+            kind: .trash, title: L("sidebar.trash", "Trash"), url: trashURL, icon: "trash")
         return Node(
-            kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil, icon: nil,
+            kind: .systemHeader, title: L("sidebar.locationsHeader", "Locations"), url: nil,
+            icon: nil,
             children: [airdrop, network, photos, trash])
     }
 
     /// A demo Cloud/Volumes section from generic (name, folder) pairs. Icons match what the
     /// real sections would show (a tinted provider cloud, a drive, Time Machine's clock), so
     /// screenshots don't show a Macintosh HD wearing a cloud.
-    private func demoSection(_ title: String, _ items: [(name: String, url: URL)], volumes: Bool) -> Node? {
+    private func demoSection(_ title: String, _ items: [(name: String, url: URL)], volumes: Bool)
+        -> Node?
+    {
         guard !items.isEmpty else { return nil }
         let children = items.map { item -> Node in
             if volumes {
-                let icon = item.name.localizedCaseInsensitiveContains("Time Machine")
+                let icon =
+                    item.name.localizedCaseInsensitiveContains("Time Machine")
                     ? "clock.arrow.circlepath" : "internaldrive"
-                return Node(kind: .systemItem, title: item.name, url: item.url, icon: icon, isFolder: true)
+                return Node(
+                    kind: .systemItem, title: item.name, url: item.url, icon: icon, isFolder: true)
             }
             // Cloud rows: resolve the provider from the display name and use its tinted glyph
             // (never the branded app image, which could differ machine to machine in captures).
-            let service = CloudLocation.provider(fromDirectory: item.name.replacingOccurrences(of: " ", with: ""))
+            let service = CloudLocation.provider(
+                fromDirectory: item.name.replacingOccurrences(of: " ", with: ""))
             let (symbol, tint) = Self.cloudIcon(service)
             return Node(
                 kind: .systemItem, title: item.name, url: item.url, icon: symbol, isFolder: true,
@@ -655,7 +694,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// tooltip so labels stay short.
     private func smartFoldersNode() -> Node {
         var children = [
-            Node(kind: .smart(.recents), title: L("sidebar.recents", "Recents"), url: nil, icon: "clock")
+            Node(
+                kind: .smart(.recents), title: L("sidebar.recents", "Recents"), url: nil,
+                icon: "clock")
         ]
         children += savedSearches.filter { !$0.name.isEmpty }.map {
             Node(
@@ -679,7 +720,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case "public.folder": return "folder"
         default: break
         }
-        if search.nameContains?.localizedCaseInsensitiveContains("screenshot") == true { return "camera.viewfinder" }
+        if search.nameContains?.localizedCaseInsensitiveContains("screenshot") == true {
+            return "camera.viewfinder"
+        }
         if search.minSizeBytes != nil { return "externaldrive" }
         if search.tag != nil { return "tag" }
         if search.contentContains != nil { return "text.magnifyingglass" }
@@ -691,21 +734,28 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         var parts: [String] = []
         if let kind = search.contentType {
             let kinds = [
-                "public.image": L("smart.images", "images"), "public.movie": L("smart.videos", "videos"),
+                "public.image": L("smart.images", "images"),
+                "public.movie": L("smart.videos", "videos"),
                 "public.audio": L("smart.audio", "audio"), "com.adobe.pdf": L("smart.pdfs", "PDFs"),
-                "public.content": L("smart.documents", "documents"), "public.folder": L("smart.folders", "folders"),
+                "public.content": L("smart.documents", "documents"),
+                "public.folder": L("smart.folders", "folders"),
             ]
             parts.append(kinds[kind] ?? kind)
         }
         if let name = search.nameContains, !name.isEmpty {
-            parts.append(String(format: L("smart.nameContains", "name contains \u{201C}%@\u{201D}"), name))
+            parts.append(
+                String(format: L("smart.nameContains", "name contains \u{201C}%@\u{201D}"), name))
         }
         if let ext = search.fileExtension, !ext.isEmpty { parts.append(".\(ext)") }
         if let bytes = search.minSizeBytes {
-            parts.append(String(format: L("smart.overSize", "over %@"), ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)))
+            parts.append(
+                String(
+                    format: L("smart.overSize", "over %@"),
+                    ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)))
         }
         if let days = search.modifiedWithinDays {
-            parts.append(String(format: L("smart.withinDays", "modified in the last %d days"), days))
+            parts.append(
+                String(format: L("smart.withinDays", "modified in the last %d days"), days))
         }
         if let text = search.contentContains, !text.isEmpty {
             parts.append(String(format: L("smart.contains", "containing \u{201C}%@\u{201D}"), text))
@@ -720,15 +770,21 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// The seven Finder tag colors; selecting one filters to files with that tag.
     private func tagsNode() -> Node {
         var children = FileTag.Color.displayOrder.map { color in
-            Node(kind: .smart(.tag(color)), title: color.label, url: nil, icon: nil, tagColor: color)
+            Node(
+                kind: .smart(.tag(color)), title: color.label, url: nil, icon: nil, tagColor: color)
         }
         // The custom, named tags the user made in Finder (Finder shows these in its sidebar too),
         // filtered by tag name. Read from Finder's own preference so the two lists match.
         let colorNames = Set(FileTag.Color.displayOrder.map(\.label))
         for name in FinderTags.customNames(colorNames: colorNames) {
-            children.append(Node(kind: .smart(.namedTag(name)), title: name, url: nil, icon: "tag", tagColor: nil))
+            children.append(
+                Node(
+                    kind: .smart(.namedTag(name)), title: name, url: nil, icon: "tag", tagColor: nil
+                ))
         }
-        return Node(kind: .systemHeader, title: L("sidebar.tagsHeader", "Tags"), url: nil, icon: nil, children: children)
+        return Node(
+            kind: .systemHeader, title: L("sidebar.tagsHeader", "Tags"), url: nil, icon: nil,
+            children: children)
     }
 
     /// Cloud storage the OS already mounts. nil when none are present.
@@ -740,20 +796,30 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let iCloud = home.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs")
         if fm.fileExists(atPath: iCloud.path) {
             let ic = Self.cloudNodeIcon(.iCloud, monochrome: monochromeIcons)
-            children.append(Node(kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
+            children.append(
+                Node(
+                    kind: .systemItem, title: L("sidebar.iCloudDrive", "iCloud Drive"), url: iCloud,
+                    icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
         }
         // Modern Dropbox/Google Drive/OneDrive/Box etc. mount here via the File Provider.
         let cloudStorage = home.appendingPathComponent("Library/CloudStorage")
         if let urls = try? fm.contentsOfDirectory(
-            at: cloudStorage, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+            at: cloudStorage, includingPropertiesForKeys: [.isDirectoryKey],
+            options: [.skipsHiddenFiles])
         {
             for url in urls.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
-                let isDir = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
+                let isDir =
+                    (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
                 guard isDir else { continue }
                 // iCloud is already listed from Mobile Documents above; don't list it twice.
                 if url.lastPathComponent.hasPrefix("iCloudDrive") { continue }
-                let ic = Self.cloudNodeIcon(CloudLocation.provider(fromDirectory: url.lastPathComponent), monochrome: monochromeIcons)
-                children.append(Node(kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
+                let ic = Self.cloudNodeIcon(
+                    CloudLocation.provider(fromDirectory: url.lastPathComponent),
+                    monochrome: monochromeIcons)
+                children.append(
+                    Node(
+                        kind: .systemItem, title: Self.cloudLabel(url.lastPathComponent), url: url,
+                        icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
             }
         }
         // Legacy/home-level cloud folders not under CloudStorage (older Dropbox, OneDrive,
@@ -762,11 +828,13 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             children.contains { $0.title.range(of: keyword, options: .caseInsensitive) != nil }
         }
         var legacy: [(name: String, folder: String, keyword: String, service: CloudService)] = [
-            ("Dropbox", "Dropbox", "Dropbox", .dropbox), ("Google Drive", "Google Drive", "Google Drive", .googleDrive),
+            ("Dropbox", "Dropbox", "Dropbox", .dropbox),
+            ("Google Drive", "Google Drive", "Google Drive", .googleDrive),
         ]
         // OneDrive home folders are "OneDrive", "OneDrive - Personal", "OneDrive - <Org>".
         if let homeChildren = try? fm.contentsOfDirectory(atPath: home.path) {
-            for name in homeChildren.sorted() where name == "OneDrive" || name.hasPrefix("OneDrive -") {
+            for name in homeChildren.sorted()
+            where name == "OneDrive" || name.hasPrefix("OneDrive -") {
                 legacy.append((name, name, "OneDrive", .oneDrive))
             }
         }
@@ -777,10 +845,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 !alreadyHasProvider(entry.keyword)
             else { continue }
             let ic = Self.cloudNodeIcon(entry.service, monochrome: monochromeIcons)
-            children.append(Node(kind: .systemItem, title: entry.name, url: url, icon: ic.icon, isFolder: true, iconTint: ic.tint, customImage: ic.image))
+            children.append(
+                Node(
+                    kind: .systemItem, title: entry.name, url: url, icon: ic.icon, isFolder: true,
+                    iconTint: ic.tint, customImage: ic.image))
         }
         guard !children.isEmpty else { return nil }
-        return Node(kind: .systemHeader, title: L("sidebar.cloudHeader", "Cloud"), url: nil, icon: nil, children: children)
+        return Node(
+            kind: .systemHeader, title: L("sidebar.cloudHeader", "Cloud"), url: nil, icon: nil,
+            children: children)
     }
 
     /// The SF Symbol + brand tint for a cloud service, so providers read apart in the sidebar
@@ -804,7 +877,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         case .box: map = ("com.box.desktop", nil)
         case .iCloud, .generic: map = nil
         }
-        guard let map, let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: map.id) else { return nil }
+        guard let map, let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: map.id)
+        else { return nil }
         if let glyph = map.glyph {
             let url = app.appendingPathComponent("Contents/Resources/\(glyph).icns")
             if let clean = NSImage(contentsOf: url) { return clean }  // the bare logo Finder shows
@@ -874,7 +948,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// colored bitmap, so we load Finder's own resource. Cached; nil if the OS ever drops it (we fall
     /// back to the sharing image then).
     static let airDropGlyph: NSImage? = {
-        let path = "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/SidebarAirDrop.icns"
+        let path =
+            "/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/SidebarAirDrop.icns"
         guard let img = NSImage(contentsOfFile: path) else { return nil }
         img.isTemplate = true  // pure-black glyph -> tint it like the sidebar's other symbols
         return img
@@ -889,7 +964,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// are "Provider-Account"; the account (after the first "-") is shown in
     /// parentheses so multiple accounts of the same provider are distinguishable.
     static func cloudLabel(_ directoryName: String) -> String {
-        let parts = directoryName.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+        let parts = directoryName.split(
+            separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
         let providerRaw = String(parts.first ?? "")
         let account = parts.count > 1 ? String(parts[1]) : ""
         let provider = knownProviders[providerRaw] ?? spacedCamelCase(providerRaw)
@@ -915,7 +991,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             .volumeNameKey, .volumeIsBrowsableKey, .volumeIsLocalKey, .volumeIsRootFileSystemKey,
             .volumeIsRemovableKey, .volumeIsEjectableKey, .volumeIsInternalKey,
         ]
-        let urls = fm.mountedVolumeURLs(includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
+        let urls =
+            fm.mountedVolumeURLs(
+                includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
         var volumes: [Node] = []
         for url in urls {
             let values = try? url.resourceValues(forKeys: Set(keys))
@@ -923,12 +1001,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             let ejectable = Self.volumeIsEjectable(
                 isBrowsable: values?.volumeIsBrowsable, isEjectable: values?.volumeIsEjectable,
                 isRemovable: values?.volumeIsRemovable, isLocal: values?.volumeIsLocal,
-                isInternal: values?.volumeIsInternal, isRootFileSystem: values?.volumeIsRootFileSystem)
-            volumes.append(Node(
-                kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url,
-                icon: nil, isFolder: true, isEjectable: ejectable))
+                isInternal: values?.volumeIsInternal,
+                isRootFileSystem: values?.volumeIsRootFileSystem)
+            volumes.append(
+                Node(
+                    kind: .systemItem, title: values?.volumeName ?? url.lastPathComponent, url: url,
+                    icon: nil, isFolder: true, isEjectable: ejectable))
         }
-        return Node(kind: .systemHeader, title: L("sidebar.volumesHeader", "Volumes"), url: nil, icon: nil, children: volumes)
+        return Node(
+            kind: .systemHeader, title: L("sidebar.volumesHeader", "Volumes"), url: nil, icon: nil,
+            children: volumes)
     }
 
     /// Whether a mounted volume should offer Eject, matching Finder. Self-contained (doesn't rely on
@@ -939,7 +1021,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// alone misses: USB-C/Thunderbolt SSDs report ejectable == removable == false (they're "fixed"
     /// media that just happens to be external), yet Finder still ejects them.
     static func volumeIsEjectable(
-        isBrowsable: Bool?, isEjectable: Bool?, isRemovable: Bool?, isLocal: Bool?, isInternal: Bool?,
+        isBrowsable: Bool?, isEjectable: Bool?, isRemovable: Bool?, isLocal: Bool?,
+        isInternal: Bool?,
         isRootFileSystem: Bool?
     ) -> Bool {
         if isBrowsable == false { return false }  // hidden/system volumes never eject
@@ -957,7 +1040,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     /// gray. Monochrome mode returns nil so the icon renders as a uniform template that tints
     /// with the sidebar. This is the single place the colored-vs-monochrome choice is applied.
     private func placeTint(_ node: Node, symbol: String?) -> NSColor? {
-        if let explicit = node.iconTint ?? node.tagColor.map({ TagColors.nsColor($0) }) { return explicit }
+        if let explicit = node.iconTint ?? node.tagColor.map({ TagColors.nsColor($0) }) {
+            return explicit
+        }
         return monochromeIcons ? nil : Self.symbolTint(symbol)
     }
 
@@ -1001,7 +1086,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             let dirs = await Self.subfolders(of: url)  // runs off the main actor
             guard let self, let node else { return }
             node.children = dirs.map {
-                Node(kind: .folderChild, title: $0.lastPathComponent, url: $0, icon: nil, isFolder: true)
+                Node(
+                    kind: .folderChild, title: $0.lastPathComponent, url: $0, icon: nil,
+                    isFolder: true)
             }
             self.outline.reloadItem(node, reloadChildren: true)
             if !node.children.isEmpty { self.outline.expandItem(node) }
@@ -1051,9 +1138,11 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return
             contents
             .filter { (try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }
-            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            .sorted {
+                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                    == .orderedAscending
+            }
     }
-
 
     // MARK: NSOutlineViewDelegate
 
@@ -1066,11 +1155,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return !(node.isHeader || node.isConnectionGroup)  // a group is a container, not a target
     }
 
-    func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
+    func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any)
+        -> NSView?
+    {
         guard let node = item as? Node else { return nil }
         if node.isHeader {
             let id = NSUserInterfaceItemIdentifier("header")
-            let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeHeaderCell(id)
+            let cell =
+                (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+                ?? Self.makeHeaderCell(id)
             cell.textField?.stringValue = showsLabels ? node.title : ""
             cell.textField?.isEditable = node.isEditable
             cell.textField?.delegate = self
@@ -1078,7 +1171,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             return cell
         }
         let id = NSUserInterfaceItemIdentifier("place")
-        let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makePlaceCell(id)
+        let cell =
+            (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makePlaceCell(id)
         (cell as? PlaceCellView)?.setCompact(!showsLabels)  // center the icon when icons-only
         cell.textField?.stringValue = showsLabels ? node.title : ""  // compact: icons only
         cell.textField?.isEditable = node.isEditable
@@ -1110,7 +1205,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         } else if let icon = node.icon {
             // Render the SF Symbol at the cell's icon point size so it stays crisp when the
             // icons-only mode blows it up. A cloud provider's brand tint / per-site color tints it.
-            let pointSize = showsLabels ? PlaceCellView.expandedIconSize : PlaceCellView.compactIconSize
+            let pointSize =
+                showsLabels ? PlaceCellView.expandedIconSize : PlaceCellView.compactIconSize
             cell.imageView?.image = NSImage(systemSymbolName: icon, accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: pointSize, weight: .regular))
             cell.imageView?.contentTintColor = placeTint(node, symbol: icon)
@@ -1176,7 +1272,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     // MARK: Drag and drop
 
-    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+    func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any)
+        -> NSPasteboardWriting?
+    {
         guard let node = item as? Node else { return nil }
         let pb = NSPasteboardItem()
         switch node.kind {
@@ -1203,7 +1301,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         // Reordering a whole section (a system header or a user group) among the sections.
         if pb.availableType(from: [Self.sectionType]) != nil {
             // Dropped onto a section: retarget to the gap before it so the insertion line shows.
-            if let node = item as? Node, node.isHeader, let idx = roots.firstIndex(where: { $0 === node }) {
+            if let node = item as? Node, node.isHeader,
+                let idx = roots.firstIndex(where: { $0 === node })
+            {
                 outlineView.setDropItem(nil, dropChildIndex: idx)
                 return .move
             }
@@ -1231,7 +1331,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             if let group = item as? Node, case .userGroup = group.kind { return .copy }
             // Dropped onto/near a favorite: retarget into its group at that slot so
             // the new favorite lands between favorites instead of being rejected.
-            if let node = item as? Node, case let .userItem(id) = node.kind, let at = model.locate(id) {
+            if let node = item as? Node, case .userItem(let id) = node.kind,
+                let at = model.locate(id)
+            {
                 let slot = index == NSOutlineViewDropOnItemIndex ? at.item + 1 : at.item
                 outlineView.setDropItem(roots[at.group], dropChildIndex: slot)
                 return .copy
@@ -1249,12 +1351,14 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     func outlineView(
-        _ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex index: Int
+        _ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?,
+        childIndex index: Int
     ) -> Bool {
         let pb = info.draggingPasteboard
         // Files onto a folder item (move/copy in) or a Tag (apply), when dropped ON it.
         if index == NSOutlineViewDropOnItemIndex, let node = item as? Node,
-            let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+            let urls = pb.readObjects(
+                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
             !urls.isEmpty
         {
             if case .smart(.tag(let color)) = node.kind {
@@ -1275,7 +1379,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             }
         }
         if let str = pb.string(forType: Self.itemType), let id = UUID(uuidString: str),
-            let group = item as? Node, case let .userGroup(gid) = group.kind
+            let group = item as? Node, case .userGroup(let gid) = group.kind
         {
             let count = model.groups.first { $0.id == gid }?.items.count ?? 0
             let target = index < 0 ? count : index
@@ -1293,13 +1397,15 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             mutate { $0.setSectionOrder(order) }
             return true
         }
-        if let str = pb.string(forType: Self.groupType), let id = UUID(uuidString: str), item == nil {
+        if let str = pb.string(forType: Self.groupType), let id = UUID(uuidString: str), item == nil
+        {
             let target = min(max(index, 0), model.groups.count)
             mutate { $0.moveGroup(id, to: target) }
             return true
         }
-        if let urls = pb.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
-            let group = item as? Node, case let .userGroup(gid) = group.kind
+        if let urls = pb.readObjects(
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+            let group = item as? Node, case .userGroup(let gid) = group.kind
         {
             let count = model.groups.first { $0.id == gid }?.items.count ?? 0
             let start = index < 0 ? count : min(index, count)
@@ -1329,7 +1435,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         guard let node = editing, let field = obj.object as? NSTextField else { return }
         editing = nil
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { reload(); return }
+        guard !name.isEmpty else {
+            reload()
+            return
+        }
         // Defer so the field editor finishes tearing down before we reload.
         DispatchQueue.main.async { [weak self] in
             switch node.kind {
@@ -1358,7 +1467,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             // Folder locations (favorites, cloud drives, volumes, system places) also open elsewhere.
             if node.isFolderLocation {
                 add(L("bvc.cmd.openInNewTab", "Open in New Tab"), #selector(openInNewTabTarget))
-                add(L("sidebar.openInOtherPane", "Open in Other Pane"), #selector(openInOtherPaneTarget))
+                add(
+                    L("sidebar.openInOtherPane", "Open in Other Pane"),
+                    #selector(openInOtherPaneTarget))
             }
             menu.addItem(.separator())
         }
@@ -1375,14 +1486,21 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 menu.addItem(.separator())
             case .connection:
                 add(L("sidebar.connect", "Connect"), #selector(connectTarget))
-                add(L("sidebar.connectInNewTab", "Connect in New Tab"), #selector(connectInNewTabTarget))
+                add(
+                    L("sidebar.connectInNewTab", "Connect in New Tab"),
+                    #selector(connectInNewTabTarget))
                 menu.addItem(.separator())
                 add(L("common.edit", "Edit…"), #selector(editConnectionTarget))
-                add(L("sidebar.forgetPassword", "Forget Password"), #selector(forgetConnectionTarget))
+                add(
+                    L("sidebar.forgetPassword", "Forget Password"),
+                    #selector(forgetConnectionTarget))
                 add(L("common.remove", "Remove"), #selector(removeConnectionTarget))
                 return  // connection-only menu (no New Group / Add Current Folder)
             case .manageConnections:
-                add(connections.isEmpty ? L("sidebar.addConnection", "Add Connection…") : L("sidebar.manage", "Manage…"), #selector(manageConnectionsTarget))
+                add(
+                    connections.isEmpty
+                        ? L("sidebar.addConnection", "Add Connection…")
+                        : L("sidebar.manage", "Manage…"), #selector(manageConnectionsTarget))
                 return
             case .systemItem:
                 if node.isEjectable {
@@ -1390,7 +1508,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 }
                 // Auto-detected items (cloud drives, volumes, system places) aren't in the editable
                 // model, so hiding is a separate opt-out -- lets a stale Google Drive mount be removed.
-                add(L("sidebar.removeFromSidebar", "Remove from Sidebar"), #selector(hideSystemItemTarget))
+                add(
+                    L("sidebar.removeFromSidebar", "Remove from Sidebar"),
+                    #selector(hideSystemItemTarget))
                 menu.addItem(.separator())
             case .trash:
                 add(L("bvc.cmd.emptyTrash", "Empty Trash"), #selector(emptyTrashTarget))
@@ -1410,15 +1530,23 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     private func targetConnection() -> RemoteConnection? {
-        guard let node = menuTargetNode, case let .connection(connection) = node.kind else { return nil }
+        guard let node = menuTargetNode, case .connection(let connection) = node.kind else {
+            return nil
+        }
         return connection
     }
 
     @objc private func connectTarget() { targetConnection().map { onSelectConnection?($0) } }
-    @objc private func connectInNewTabTarget() { targetConnection().map { onConnectConnectionInNewTab?($0) } }
+    @objc private func connectInNewTabTarget() {
+        targetConnection().map { onConnectConnectionInNewTab?($0) }
+    }
     @objc private func editConnectionTarget() { targetConnection().map { onEditConnection?($0) } }
-    @objc private func forgetConnectionTarget() { targetConnection().map { onForgetConnection?($0) } }
-    @objc private func removeConnectionTarget() { targetConnection().map { onRemoveConnection?($0) } }
+    @objc private func forgetConnectionTarget() {
+        targetConnection().map { onForgetConnection?($0) }
+    }
+    @objc private func removeConnectionTarget() {
+        targetConnection().map { onRemoveConnection?($0) }
+    }
     @objc private func manageConnectionsTarget() { onManageConnections?() }
     @objc private func ejectTarget() {
         if let url = menuTargetNode?.url { onEjectVolume?(url) }
@@ -1451,7 +1579,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     }
 
     private func iconSubmenuItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: L("sidebar.changeIcon", "Change Icon"), action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(
+            title: L("sidebar.changeIcon", "Change Icon"), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         for symbol in Self.iconChoices {
             let item = NSMenuItem(title: symbol, action: #selector(pickIcon(_:)), keyEquivalent: "")
@@ -1461,7 +1590,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             submenu.addItem(item)
         }
         submenu.addItem(.separator())
-        let custom = NSMenuItem(title: L("sidebar.otherIcon", "Other…"), action: #selector(customIcon), keyEquivalent: "")
+        let custom = NSMenuItem(
+            title: L("sidebar.otherIcon", "Other…"), action: #selector(customIcon),
+            keyEquivalent: "")
         custom.target = self
         submenu.addItem(custom)
         parent.submenu = submenu
@@ -1482,16 +1613,18 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     @objc private func pickIcon(_ sender: NSMenuItem) {
         guard let symbol = sender.representedObject as? String,
-            let node = menuTargetNode, case let .userItem(id) = node.kind
+            let node = menuTargetNode, case .userItem(let id) = node.kind
         else { return }
         mutate { $0.setIcon(id, to: symbol) }
     }
 
     @objc private func customIcon() {
-        guard let node = menuTargetNode, case let .userItem(id) = node.kind else { return }
+        guard let node = menuTargetNode, case .userItem(let id) = node.kind else { return }
         let alert = NSAlert()
         alert.messageText = L("sidebar.sfSymbolNameTitle", "SF Symbol name")
-        alert.informativeText = L("sidebar.sfSymbolNameBody", "Enter any SF Symbol name (for example, \"flame\" or \"folder.badge.gearshape\").")
+        alert.informativeText = L(
+            "sidebar.sfSymbolNameBody",
+            "Enter any SF Symbol name (for example, \"flame\" or \"folder.badge.gearshape\").")
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
         alert.accessoryView = field
         alert.addButton(withTitle: L("sidebar.setButton", "Set"))
@@ -1513,7 +1646,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         var newID: UUID?
         mutate { newID = $0.addGroup(title: L("sidebar.newGroupDefaultName", "New Group")) }
         guard let newID,
-            let node = roots.first(where: { if case let .userGroup(g) = $0.kind { return g == newID }; return false })
+            let node = roots.first(where: {
+                if case .userGroup(let g) = $0.kind { return g == newID }
+                return false
+            })
         else { return }
         beginRename(node)
     }
@@ -1523,10 +1659,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         let targetGroup = resolveGroupID(for: menuTargetNode)
         mutate { s in
             let gid: UUID
-            if let targetGroup, s.groupIndex(targetGroup) != nil { gid = targetGroup }
-            else if let first = s.groups.first { gid = first.id }
-            else { gid = s.addGroup(title: L("sidebar.favoritesDefaultName", "Favorites")) }
-            s.addItem(Sidebar.Item(name: url.lastPathComponent, icon: "folder", path: url.path), toGroup: gid)
+            if let targetGroup, s.groupIndex(targetGroup) != nil {
+                gid = targetGroup
+            } else if let first = s.groups.first {
+                gid = first.id
+            } else {
+                gid = s.addGroup(title: L("sidebar.favoritesDefaultName", "Favorites"))
+            }
+            s.addItem(
+                Sidebar.Item(name: url.lastPathComponent, icon: "folder", path: url.path),
+                toGroup: gid)
         }
     }
 
@@ -1594,7 +1736,8 @@ final class PlaceCellView: NSTableCellView {
         // Finder-style eject button, shown only on ejectable volume rows (Volumes section,
         // network mounts like OrbStack). Borderless template glyph that tints with the row.
         eject.isBordered = false
-        eject.image = NSImage(systemSymbolName: "eject.fill", accessibilityDescription: L("sidebar.eject", "Eject"))?
+        eject.image = NSImage(
+            systemSymbolName: "eject.fill", accessibilityDescription: L("sidebar.eject", "Eject"))?
             .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
         eject.contentTintColor = .secondaryLabelColor
         eject.toolTip = L("sidebar.eject", "Eject")

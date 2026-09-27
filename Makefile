@@ -38,7 +38,7 @@ export PATH := $(XCODE_SWIFT_BIN):$(PATH)
 endif
 SWIFTPM_FLAGS ?= --build-system native
 
-.PHONY: preflight build run test gate-a gate-a-demo smoke ui-test e2e e2e-app ci app install watch watch-install icon dev-cert fmt clean
+.PHONY: preflight build run test gate-a gate-a-demo smoke ui-test e2e e2e-app e2e-env ci app install watch watch-install icon dev-cert fmt clean
 
 preflight:
 	scripts/toolchain_preflight.sh
@@ -80,6 +80,11 @@ e2e: preflight
 # Same, against the assembled .app (also checks the bundle is complete).
 e2e-app: preflight
 	test/e2e/run.sh --packaged
+
+# Environmental boundaries are explicit PASS/SKIP/FAIL checks. Missing hardware, permissions,
+# credentials, or opt-in public-network access never masquerades as a pass.
+e2e-env: preflight
+	test/environmental/run.sh
 
 # The same checks the (now manual-only) GitHub Actions workflow runs.
 ci: preflight

@@ -84,6 +84,12 @@ let package = Package(
         // wire protocol (line-delimited JSON over stdio) so the seam can't rot.
         .executableTarget(name: "pathem-ext-example", dependencies: ["PathemEngine"]),
 
+        // Opt-in environmental verifier. Kept out of the app bundle: it exercises real host
+        // boundaries (secondary volumes, local protocol servers, Spotlight, routers and public
+        // DHT) and reports PASS/SKIP/FAIL without turning absent hardware into a green test.
+        .executableTarget(
+            name: "pathem-env-probe", dependencies: ["PathemEngine", "TorrentKit"]),
+
         // TorrentKit: our native Swift BitTorrent engine -- bencode + .torrent metadata,
         // HTTP tracker client, peer wire protocol, piece manager with SHA-1 verification,
         // file layout + sparse storage, peer connections (Network.framework), and the

@@ -298,6 +298,35 @@ extension BrowserViewController {
                 Data("UITEST: SKIP  icloud-cut-paste  (no iCloud Drive)\n".utf8))
         }
 
+        // Scenario 4c: generate the complete input-routing matrices from the registered data rather
+        // than checking a hand-picked shortcut or view. Every effective shortcut must resolve to a
+        // command, and every pane mode plus the fixed chrome destinations must retain its drop hook.
+        let deadShortcuts = keymap.bindings.filter {
+            !$0.value.isEmpty && commands.command($0.value) == nil
+        }
+        check(
+            "shortcut-coverage-matrix", deadShortcuts.isEmpty,
+            deadShortcuts.isEmpty
+                ? "\(keymap.bindings.count) shortcuts resolve"
+                : "dead=\(deadShortcuts.map { "\($0.key)=\($0.value)" }.sorted())")
+        var dropMatrix: [String: Bool] = [:]
+        for mode in ViewFormat.ViewMode.allCases {
+            setActiveViewMode(mode)
+            pumpRunLoop(0.1)
+            let wiring = activePane?.debugDropDestinationWiring()
+            dropMatrix["pane.\(mode.rawValue)"] = wiring?.content == true
+            dropMatrix["breadcrumb"] = wiring?.breadcrumb == true
+            dropMatrix["up"] = wiring?.up == true
+        }
+        dropMatrix["sidebar"] = sidebar.debugFileDropHandlerWired
+        dropMatrix["drop-stack"] = shelf.debugFileDropHandlerWired
+        setActiveViewMode(.list)
+        let deadDrops = dropMatrix.filter { !$0.value }.map(\.key).sorted()
+        check(
+            "drop-destination-coverage-matrix", deadDrops.isEmpty,
+            deadDrops.isEmpty
+                ? dropMatrix.keys.sorted().joined(separator: ",") : "dead=\(deadDrops)")
+
         // Scenario 5: switching a pane to Gallery must NOT auto-open the separate (far-right) preview
         // pane. Gallery draws its own inline preview, so the extra pane just duplicated the selection
         // across the window over the OTHER pane (the reported bug). Even with the old pref on.

@@ -219,9 +219,10 @@ make run            # build and launch from source (fastest loop)
 make build          # build the engine and the app
 make test           # run the engine tests
 make smoke          # launch and assert the window/pane layout invariants
-make ui-test        # drive 35 core + 11 conditional real-iCloud interaction checks
+make ui-test        # drive 37 core + 11 conditional real-iCloud interaction checks
 make e2e            # run every hermetic product-level scenario (including magnets)
 make e2e-app        # assemble/sign a release app and probe it externally
+make e2e-env        # environmental PASS/SKIP/FAIL report (hardware, providers, public network)
 make ci             # run localization, build, tests, debug E2E, and release package E2E
 make app            # assemble .build/Pathem.app (host arch, ad-hoc signed)
 make install        # build the app and copy it to /Applications

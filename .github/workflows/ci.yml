@@ -54,7 +54,7 @@ jobs:
           fi
 
       # The product-level suite launches a real debug app for Gate A, layout smoke, localization,
-      # real-file create/rename, the daemon .torrent + magnet control seam, and the 39-check
+      # real-file create/rename, the daemon .torrent + magnet control seam, and the complete
       # on-screen interaction harness. Each process is timeout-bounded and reports its own result.
       - name: Product end-to-end
         run: test/e2e/run.sh

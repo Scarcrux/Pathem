@@ -36,22 +36,37 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     /// PATHEM_SMOKE: the list view's column fill ratio (nil when not in list view).
-    func debugColumnFillRatio() -> CGFloat? { (content as? FileListController)?.debugColumnFillRatio() }
+    func debugColumnFillRatio() -> CGFloat? {
+        (content as? FileListController)?.debugColumnFillRatio()
+    }
 
     /// Expand named top-level folders of the tree outline (PATHEM_VIEW_SHOT tree render).
-    func debugTreeExpand(names: [String]) { (content as? TreeOutlineController)?.debugExpand(names: names) }
+    func debugTreeExpand(names: [String]) {
+        (content as? TreeOutlineController)?.debugExpand(names: names)
+    }
 
     /// Header sort-indicator state (list view only), for the layout smoke check.
-    var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? { content.debugSortIndicator }
+    var debugSortIndicator: (column: String, ascending: Bool, drawn: Bool)? {
+        content.debugSortIndicator
+    }
 
     /// The current selection's bounding rect in window coordinates (for floating the
     /// quick-actions bar next to it), and the pane's scrolling clip view (to reposition
     /// the bar as the list scrolls).
     var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
     var contentClipView: NSClipView { content.scrollView.contentView }
-    func setHiddenContextItems(_ ids: Set<String>) { lastHiddenContextItems = ids; content.setHiddenContextItems(ids) }
-    func setContextMenuOrder(_ order: [String]) { lastContextMenuOrder = order; content.setContextMenuOrder(order) }
-    func setColorRules(_ rules: ColorRules) { lastColorRules = rules; content.setColorRules(rules) }
+    func setHiddenContextItems(_ ids: Set<String>) {
+        lastHiddenContextItems = ids
+        content.setHiddenContextItems(ids)
+    }
+    func setContextMenuOrder(_ order: [String]) {
+        lastContextMenuOrder = order
+        content.setContextMenuOrder(order)
+    }
+    func setColorRules(_ rules: ColorRules) {
+        lastColorRules = rules
+        content.setColorRules(rules)
+    }
     func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {
         lastFormats = (size, date)
         content.setFormats(size: size, date: date)
@@ -117,13 +132,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     // UI-automation harness accessors (PATHEM_UI_TEST).
-    func debugRowVisible(_ name: String) -> Bool { (content as? FileListController)?.debugRowVisibleForName(name) ?? false }
+    func debugRowVisible(_ name: String) -> Bool {
+        (content as? FileListController)?.debugRowVisibleForName(name) ?? false
+    }
     func debugFireSort(_ key: ViewFormat.SortKey, ascending: Bool) {
         (content as? FileListController)?.debugFireSort(key, ascending: ascending)
     }
     var debugInlineEditing: Bool { content.isInlineEditing }
     var debugListClipHeight: CGFloat { (content as? FileListController)?.debugListClipHeight ?? 0 }
-    var debugListContentHeight: CGFloat { (content as? FileListController)?.debugListContentHeight ?? 0 }
+    var debugListContentHeight: CGFloat {
+        (content as? FileListController)?.debugListContentHeight ?? 0
+    }
     var debugEntryCount: Int { entries.count }
     func debugHasEntry(_ name: String) -> Bool { entries.contains { $0.name == name } }
     func debugSelectNames(_ names: [String]) { content.selectNames(Set(names)) }
@@ -168,7 +187,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private let remoteLabel = NSTextField(labelWithString: "")
 
     /// An active remote browsing session (nil = browsing the local disk).
-    private struct RemoteSession { let connection: RemoteConnection; var path: String; let password: String }
+    private struct RemoteSession {
+        let connection: RemoteConnection
+        var path: String
+        let password: String
+    }
     private var remote: RemoteSession?
     var isRemote: Bool { remote != nil }
 
@@ -225,9 +248,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         remote.map { ($0.connection, $0.path, $0.password) }
     }
     /// Local files dropped onto a remote pane: upload them to the current folder.
-    var onUploadFiles: ((_ urls: [URL], _ connection: RemoteConnection, _ remotePath: String, _ password: String) -> Void)?
+    var onUploadFiles:
+        (
+            (
+                _ urls: [URL], _ connection: RemoteConnection, _ remotePath: String,
+                _ password: String
+            ) -> Void
+        )?
     /// Opening a remote file: download it to a temp file and open it locally.
-    var onOpenRemoteFile: ((_ connection: RemoteConnection, _ remotePath: String, _ password: String, _ name: String) -> Void)?
+    var onOpenRemoteFile:
+        (
+            (
+                _ connection: RemoteConnection, _ remotePath: String, _ password: String,
+                _ name: String
+            ) -> Void
+        )?
     private var backButton = NavDragButton()
     private var forwardButton = NavDragButton()
     private var upButton = NavDragButton()
@@ -266,7 +301,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// default), for the eye toggle's icon.
     /// Whether dotfiles are listed: the folder's explicit eye-toggle decision wins; otherwise the
     /// folder's saved "show" hint or the app-wide default.
-    private var hiddenShown: Bool { format.hiddenOverride ?? (format.showHidden || showHiddenByDefault) }
+    private var hiddenShown: Bool {
+        format.hiddenOverride ?? (format.showHidden || showHiddenByDefault)
+    }
     private let byteFormatter: ByteCountFormatter = {
         let f = ByteCountFormatter()
         f.countStyle = .file
@@ -348,7 +385,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         super.init()
         build()
         wireContent()
-        ThemeManager.shared.onChange(owner: self) { [weak self] in guard let self else { return }; self.setActive(self.isActivePane) }
+        ThemeManager.shared.onChange(owner: self) { [weak self] in
+            guard let self else { return }
+            self.setActive(self.isActivePane)
+        }
         enterDirectory()
     }
 
@@ -374,7 +414,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let all = content.entries
         guard !all.isEmpty else { return }
         let currentName = content.selectedEntries.last?.name
-        let currentIndex = currentName.flatMap { name in all.firstIndex { $0.name == name } } ?? (delta > 0 ? -1 : all.count)
+        let currentIndex =
+            currentName.flatMap { name in all.firstIndex { $0.name == name } }
+            ?? (delta > 0 ? -1 : all.count)
         let next = max(0, min(all.count - 1, currentIndex + delta))
         content.select(name: all[next].name)
     }
@@ -450,7 +492,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.directoryURL = nil  // disable row drag during search
         content.resolutionURL = nav.current  // but results are from this folder, so actions resolve
         displayEntries(entries, preserveState: false)
-        content.showPlaceholder(entries.isEmpty ? String(format: L("pane.noMatchesFor", "No matches for “%@”"), self.searchQuery) : nil)
+        content.showPlaceholder(
+            entries.isEmpty
+                ? String(format: L("pane.noMatchesFor", "No matches for “%@”"), self.searchQuery)
+                : nil)
         updateStatus()
     }
 
@@ -462,7 +507,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Opus "Flat View"). Walks off the main thread, then renders through the smart-
     /// results path; re-validates the pane hasn't moved before showing.
     func showFlatView() {
-        guard remote == nil else { NSSound.beep(); return }
+        guard remote == nil else {
+            NSSound.beep()
+            return
+        }
         let root = nav.current
         let token = beginContentRequest()
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -474,7 +522,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 let title =
                     String(format: L("pane.flatViewTitle", "Flat View: %@"), root.lastPathComponent)
                     + (result.truncated
-                        ? String(format: L("pane.flatViewFirstN", " (first %d)"), result.entries.count) : "")
+                        ? String(
+                            format: L("pane.flatViewFirstN", " (first %d)"), result.entries.count)
+                        : "")
                 self.showSmartResults(result.entries, title: title)
             }
         }
@@ -506,7 +556,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // the highlight mid-interaction. A fresh open resets state and takes focus as usual.
         displayEntries(format.sorted(entries), preserveState: preservingState)
         content.showSortIndicator(key: format.sortKey, ascending: format.ascending)  // match the header to the sort
-        content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+        content.showPlaceholder(
+            entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
         breadcrumb.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
@@ -539,7 +590,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         smartEntries.removeAll { paths.contains(Self.path(of: $0)) }
         guard smartEntries.count != before else { return }
         displayEntries(format.sorted(smartEntries), preserveState: true)
-        content.showPlaceholder(smartEntries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+        content.showPlaceholder(
+            smartEntries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
         updateStatus()
     }
 
@@ -557,11 +609,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         ReloadDebug.log(
             "reload folder=\(nav.current.lastPathComponent) preserve=\(preserveState) "
                 + "remote=\(remote != nil) smart=\(smartActive)")
-        if remote != nil { reloadRemote(); return }
+        if remote != nil {
+            reloadRemote()
+            return
+        }
         if smartActive { return }  // a smart-result view isn't a folder to refresh
         // Leaving the mounted archive's subtree (sidebar jump, path-bar) drops the session.
         if let session = archiveSession,
-            !nav.current.standardizedFileURL.path.hasPrefix(session.mountRoot.standardizedFileURL.path)
+            !nav.current.standardizedFileURL.path.hasPrefix(
+                session.mountRoot.standardizedFileURL.path)
         {
             endArchiveSession()  // offer to write changes back
         }
@@ -599,9 +655,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // flags sending a non-Sendable self into MainActor.run); the blocking enumeration + sort
         // runs on a detached task that captures only Sendable values (dir, fmt, includeHidden).
         Task { [weak self] in
-            let outcome: Result<[FileEntry], Error> = await Task.detached(priority: .userInitiated) {
+            let outcome: Result<[FileEntry], Error> = await Task.detached(priority: .userInitiated)
+            {
                 do {
-                    let entries = try BulkEnumerator().entries(of: dir, includingHidden: includeHidden)
+                    let entries = try BulkEnumerator().entries(
+                        of: dir, includingHidden: includeHidden)
                     return .success(fmt.sorted(entries))
                 } catch {
                     return .failure(error)
@@ -643,7 +701,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             let rootPath = session.mountRoot.standardizedFileURL.path
             let rel = String(nav.current.standardizedFileURL.path.dropFirst(rootPath.count))
                 .split(separator: "/").joined(separator: " ▸ ")
-            remoteLabel.stringValue = "📦 " + session.archive.lastPathComponent + (rel.isEmpty ? "" : " ▸ " + rel)
+            remoteLabel.stringValue =
+                "📦 " + session.archive.lastPathComponent + (rel.isEmpty ? "" : " ▸ " + rel)
             remoteLabel.isHidden = false
             breadcrumb.isHidden = true
             addressField.isHidden = true
@@ -680,7 +739,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// PATHEM_SMOKE: whether the active list view's rows are draggable (nil if not a list). reload
     /// sets directoryURL synchronously, so a fresh list from a view-mode swap is draggable at once,
     /// not only after the async listing lands. Guards the "rows show but nothing drags" regression.
-    func debugListRowsDraggable() -> Bool? { (content as? FileListController)?.debugRowsDraggable() }
+    func debugListRowsDraggable() -> Bool? {
+        (content as? FileListController)?.debugRowsDraggable()
+    }
 
     /// The Up (enclosing folder) button accepts a file drop that moves items into the parent, and
     /// its destination resolves to the current folder's parent (drag #1, buttons half).
@@ -688,10 +749,23 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         upButton.registeredDraggedTypes.contains(.fileURL) && upButton.dropDestination?() != nil
     }
 
+    /// PATHEM_UI_TEST: every swappable pane content must retain its file-drop callback, while the
+    /// fixed breadcrumb and Up destinations must be wired too. This catches a new view mode that
+    /// renders correctly but silently drops the transfer callback during `wireContent()`.
+    func debugDropDestinationWiring() -> (content: Bool, breadcrumb: Bool, up: Bool) {
+        (
+            content.onDropFiles != nil,
+            breadcrumb.onDropURLs != nil,
+            upButton.onDropURLs != nil && upButton.dropDestination != nil
+        )
+    }
+
     /// A selected folder's size is included in the selection summary (not excluded like before): the
     /// summed bytes for just that folder equal its measured size. Records the real size if uncached.
     func debugSelectionSizeIncludesFolder(_ name: String) -> Bool {
-        guard let entry = content.entries.first(where: { $0.name == name && $0.isDirectory }) else { return false }
+        guard let entry = content.entries.first(where: { $0.name == name && $0.isDirectory }) else {
+            return false
+        }
         let url = entryURL(entry)
         let mtime = FolderSizeStore.mtimeKey(of: url)
         let measured: Int64
@@ -711,7 +785,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     /// AX check on the first entry row (skipping group headers), for the accessibility guard.
-    func debugFirstEntryNameAXMatches() -> Bool? { (content as? FileListController)?.debugFirstEntryNameAXMatches() }
+    func debugFirstEntryNameAXMatches() -> Bool? {
+        (content as? FileListController)?.debugFirstEntryNameAXMatches()
+    }
 
     /// Whether the background menu for `dir` offers Empty Trash (only in the Trash), for the guard.
     func debugBackgroundMenuHasEmptyTrash(forDir dir: URL) -> Bool {
@@ -719,15 +795,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     /// Inline-rename reload-safety guard: is an edit active, and a same-entries reload in place.
-    var debugInlineEditActive: Bool { (content as? FileListController)?.debugInlineEditActive ?? false }
+    var debugInlineEditActive: Bool {
+        (content as? FileListController)?.debugInlineEditActive ?? false
+    }
     func debugReloadContentInPlace() { content.setEntries(content.entries, preserveState: true) }
     /// Current view mode, for the viewer-overlay-vs-view-switch smoke guard.
     var debugViewMode: ViewFormat.ViewMode { format.viewMode }
 
     // Header-customization hooks (UI harness): drive the same path the menu item uses.
-    func debugHeaderButtonHidden(_ id: String) -> Bool { hiddenHeaderButtons.contains(id) && (headerButtons.first { $0.id == id }?.control.isHidden ?? false) }
+    func debugHeaderButtonHidden(_ id: String) -> Bool {
+        hiddenHeaderButtons.contains(id)
+            && (headerButtons.first { $0.id == id }?.control.isHidden ?? false)
+    }
     func debugToggleHeaderButton(_ id: String) {
-        let item = NSMenuItem(); item.representedObject = id
+        let item = NSMenuItem()
+        item.representedObject = id
         toggleHeaderButton(item)
     }
     /// The header right-click menu as (title, isOn), after a rebuild -- also proves the row has a menu.
@@ -736,7 +818,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         rebuildHeaderMenu(menu, sectionTitle: true)
         return menu.items.filter { $0.isEnabled }.map { ($0.title, $0.state == .on) }
     }
-    var debugHeaderRowWidth: CGFloat { toolbarStack.layoutSubtreeIfNeeded(); return toolbarStack.fittingSize.width }
+    var debugHeaderRowWidth: CGFloat {
+        toolbarStack.layoutSubtreeIfNeeded()
+        return toolbarStack.fittingSize.width
+    }
     /// The header row view itself (event-level harness checks) and a button's frame in window coords.
     var debugHeaderStack: NSView { toolbarStack }
     func debugHeaderButtonFrameInWindow(_ id: String) -> NSRect? {
@@ -758,7 +843,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var debugIconKeyView: NSView? { (content as? IconCollectionController)?.debugKeyView }
     /// Header button ids in their current on-screen (arranged) order.
     func debugHeaderOrder() -> [String] {
-        toolbarStack.arrangedSubviews.compactMap { v in headerButtons.first { $0.control === v }?.id }
+        toolbarStack.arrangedSubviews.compactMap { v in headerButtons.first { $0.control === v }?.id
+        }
     }
     /// Drive the reorder-ended path as a Cmd-drag would, moving `id` to `index`.
     func debugReorderHeader(moving id: String, to index: Int) {
@@ -773,7 +859,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Whether the image-only toolbar controls carry accessibility labels (Track A8 guard).
     func debugToolbarAccessibilityLabeled() -> Bool {
-        let labeled: [NSControl] = [backButton, forwardButton, upButton, sortButton, actionButton, viewSwitcher]
+        let labeled: [NSControl] = [
+            backButton, forwardButton, upButton, sortButton, actionButton, viewSwitcher,
+        ]
         return labeled.allSatisfy { !($0.accessibilityLabel()?.isEmpty ?? true) }
     }
 
@@ -806,7 +894,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // into MainActor.run); GitStatus.status does its work off-main internally across the await.
         Task { [weak self] in
             let info = await GitStatus.status(for: dir)
-            guard let self, self.gitGen.isCurrent(generation), self.remote == nil, !self.smartActive,
+            guard let self, self.gitGen.isCurrent(generation), self.remote == nil,
+                !self.smartActive,
                 self.nav.current == dir
             else { return }
             // git reports the canonical repo root (symlinks resolved), but the list
@@ -841,7 +930,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         watcher = nil
         pendingRefresh?.cancel()
         remote = RemoteSession(
-            connection: connection, path: connection.path.isEmpty ? "/" : connection.path, password: password)
+            connection: connection, path: connection.path.isEmpty ? "/" : connection.path,
+            password: password)
         gitSummary = nil
         content.setGitStates([:])  // no git overlays on a remote server
         reloadRemote()
@@ -870,11 +960,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         pendingSelection = nil  // clear AFTER the swap (which would set it) so it can't leak forward
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
-        content.showPlaceholder(String(format: L("pane.loadingHost", "Loading %@…"), session.connection.host))
+        content.showPlaceholder(
+            String(format: L("pane.loadingHost", "Loading %@…"), session.connection.host))
         breadcrumb.isHidden = true
         addressField.isHidden = true
         remoteLabel.isHidden = false
-        remoteLabel.stringValue = "\(session.connection.proto.label)  \(session.connection.host)\(session.path)"
+        remoteLabel.stringValue =
+            "\(session.connection.proto.label)  \(session.connection.host)\(session.path)"
         backButton.isEnabled = false
         forwardButton.isEnabled = false
         upButton.isEnabled = true  // up goes to the parent, or back to local at the root
@@ -888,7 +980,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                     cur.connection.id == session.connection.id
                 else { return }
                 self.displayEntries(self.format.sorted(entries), preserveState: false)
-                self.content.showPlaceholder(entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+                self.content.showPlaceholder(
+                    entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
                 self.updateStatus()
             } catch {
                 guard let self, let cur = self.remote, cur.path == session.path,
@@ -921,15 +1014,27 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         switch error {
         case .unsupported(let message): return message
         case .curl(let code, let message):
-            return message.isEmpty ? String(format: L("pane.connectionFailedCode", "The connection failed (code %d)"), code) : message
+            return message.isEmpty
+                ? String(
+                    format: L("pane.connectionFailedCode", "The connection failed (code %d)"), code)
+                : message
         case .curlMissing: return L("pane.curlMissing", "curl was not found")
         case .sftp(let code, let message):
-            return message.isEmpty ? String(format: L("pane.connectionFailedCode", "The connection failed (code %d)"), code) : message
+            return message.isEmpty
+                ? String(
+                    format: L("pane.connectionFailedCode", "The connection failed (code %d)"), code)
+                : message
         case .sftpMissing: return L("pane.sftpMissing", "sftp was not found")
         case .device(let code, let message):
-            return message.isEmpty ? String(format: L("pane.deviceFailedCode", "The device connection failed (code %d)"), code) : message
+            return message.isEmpty
+                ? String(
+                    format: L("pane.deviceFailedCode", "The device connection failed (code %d)"),
+                    code) : message
         case .deviceToolMissing(let tool):
-            return String(format: L("pane.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
+            return String(
+                format: L(
+                    "pane.deviceToolMissing",
+                    "%@ is not installed. Install it to browse this device."), tool)
         }
     }
 
@@ -952,7 +1057,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func applyStyle(rowHeight: Double, fontSize: Int, alternatingRows: Bool) {
         lastStyle = (CGFloat(rowHeight), CGFloat(fontSize), alternatingRows)
         content.applyStyle(
-            rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize), alternatingRows: alternatingRows)
+            rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize),
+            alternatingRows: alternatingRows)
     }
 
     /// Apply click behavior (single-click open, hover underline) to this pane's view.
@@ -986,7 +1092,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 reloadRemote()
             } else {
                 onOpenRemoteFile?(
-                    remote.connection, Self.joinRemote(remote.path, entry.name), remote.password, entry.name)
+                    remote.connection, Self.joinRemote(remote.path, entry.name), remote.password,
+                    entry.name)
             }
             return
         }
@@ -1043,8 +1150,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Select (and scroll to) a row by name, e.g. a just-created folder.
     func select(name: String) { content.select(name: name) }
 
-    @objc func goBack() { guard remote == nil else { return }; if nav.goBack() { enterDirectory() } }
-    @objc func goForward() { guard remote == nil else { return }; if nav.goForward() { enterDirectory() } }
+    @objc func goBack() {
+        guard remote == nil else { return }
+        if nav.goBack() { enterDirectory() }
+    }
+    @objc func goForward() {
+        guard remote == nil else { return }
+        if nav.goForward() { enterDirectory() }
+    }
     @objc func goUp() {
         if let remote {
             if remote.path == "/" || remote.path.isEmpty {
@@ -1056,7 +1169,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             return
         }
         // Going up from an archive's root returns to the folder it lives in.
-        if let session = archiveSession, nav.current.standardizedFileURL == session.mountRoot.standardizedFileURL {
+        if let session = archiveSession,
+            nav.current.standardizedFileURL == session.mountRoot.standardizedFileURL
+        {
             endArchiveSession()  // offer to write changes back
             nav.go(to: session.origin)
             enterDirectory()
@@ -1100,7 +1215,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // it, so New Folder appeared to skip renaming. While editing, poll instead: re-check shortly,
         // and the reload lands once the edit ends (a self-healing catch-up for any real change too).
         if content.isInlineEditing {
-            let recheck = DispatchWorkItem { [weak self] in self?.directoryChangedOnDisk(watched: watched) }
+            let recheck = DispatchWorkItem { [weak self] in
+                self?.directoryChangedOnDisk(watched: watched)
+            }
             pendingRefresh = recheck
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: recheck)
             return
@@ -1129,7 +1246,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// over the divider via zPosition) while the border stays a neutral hairline on both panes.
     /// Quieter than the old accent ring, and it reads in both light and dark themes.
     func setActive(_ active: Bool) {
-        if active != isActivePane { ReloadDebug.log("setActive \(active) folder=\(nav.current.lastPathComponent)") }
+        if active != isActivePane {
+            ReloadDebug.log("setActive \(active) folder=\(nav.current.lastPathComponent)")
+        }
         isActivePane = active
         guard let layer = containerView.layer else { return }
         layer.shadowColor = NSColor.shadowColor.cgColor
@@ -1150,7 +1269,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     @objc private func containerFrameChanged() { if isActivePane { updateShadowPath() } }
 
     @objc private func openFullDiskAccess() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+        if let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+        {
             NSWorkspace.shared.open(url)
         }
     }
@@ -1167,12 +1288,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         containerView.layer?.borderColor = NSColor.separatorColor.cgColor
 
         backButton = iconButton("chevron.backward", L("pane.back", "Back"), #selector(goBack))
-        forwardButton = iconButton("chevron.forward", L("pane.forward", "Forward"), #selector(goForward))
-        upButton = iconButton("chevron.up", L("pane.enclosingFolder", "Enclosing Folder"), #selector(goUp))
+        forwardButton = iconButton(
+            "chevron.forward", L("pane.forward", "Forward"), #selector(goForward))
+        upButton = iconButton(
+            "chevron.up", L("pane.enclosingFolder", "Enclosing Folder"), #selector(goUp))
         // Finder-style drag participation: drop files on Up to move them into the enclosing folder,
         // and spring-load (hover a drag) over Up/Back/Forward to navigate mid-drag.
         upButton.dropDestination = { [weak self] in self?.nav.parent }
-        upButton.onDropURLs = { [weak self] urls, move, dest in self?.onDropFiles?(urls, move, dest) }
+        upButton.onDropURLs = { [weak self] urls, move, dest in self?.onDropFiles?(urls, move, dest)
+        }
         upButton.onSpringLoad = { [weak self] in self?.goUp() }
         upButton.enableDragNavigation()
         backButton.onSpringLoad = { [weak self] in self?.goBack() }
@@ -1191,8 +1315,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             self?.enterDirectory()
         }
         breadcrumb.onClickBackground = { [weak self] in self?.beginEditingPath() }
-        breadcrumb.onDropURLs = { [weak self] urls, folder, move in self?.onDropFiles?(urls, move, folder) }
-        breadcrumb.onContextAction = { [weak self] folder, action in self?.onBreadcrumbAction?(folder, action) }
+        breadcrumb.onDropURLs = { [weak self] urls, folder, move in
+            self?.onDropFiles?(urls, move, folder)
+        }
+        breadcrumb.onContextAction = { [weak self] folder, action in
+            self?.onBreadcrumbAction?(folder, action)
+        }
 
         addressField.placeholderString = L("pane.goToPathPlaceholder", "Go to path")
         addressField.font = .systemFont(ofSize: 12)
@@ -1229,7 +1357,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         ])
         toolbarStack.onReorderEnded = { [weak self] views in
             guard let self else { return }
-            let ids = views.compactMap { view in self.headerButtons.first { $0.control === view }?.id }
+            let ids = views.compactMap { view in
+                self.headerButtons.first { $0.control === view }?.id
+            }
             self.onHeaderOrderChanged?(Self.normalizedHeaderOrder(ids))
         }
         toolbarStack.orientation = .horizontal
@@ -1263,7 +1393,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         hiddenToggle.setContentHuggingPriority(.required, for: .horizontal)
         updateHiddenToggleIcon()
 
-        filterField.placeholderString = L("pane.filterPlaceholder", "Filter (try ext:pdf, kind:image, size:>10mb)")
+        filterField.placeholderString = L(
+            "pane.filterPlaceholder", "Filter (try ext:pdf, kind:image, size:>10mb)")
         filterField.controlSize = .small
         filterField.font = .systemFont(ofSize: 11)
         filterField.isHidden = true  // shown via the Filter command
@@ -1312,7 +1443,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         NSLayoutConstraint.activate([
             permissionButton.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
             // Below the centered placeholder text the content view draws.
-            permissionButton.centerYAnchor.constraint(equalTo: contentContainer.centerYAnchor, constant: 40),
+            permissionButton.centerYAnchor.constraint(
+                equalTo: contentContainer.centerYAnchor, constant: 40),
         ])
         NSLayoutConstraint.activate([
             toolbarStack.topAnchor.constraint(equalTo: containerView.topAnchor),
@@ -1320,8 +1452,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             toolbarStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             contentContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             contentContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
-            bottomStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 10),
-            bottomStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -10),
+            bottomStack.leadingAnchor.constraint(
+                equalTo: containerView.leadingAnchor, constant: 10),
+            bottomStack.trailingAnchor.constraint(
+                equalTo: containerView.trailingAnchor, constant: -10),
             bottomStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -5),
             // The location bar always spans the pane's full width on its own row.
             pathBar.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
@@ -1345,7 +1479,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             pathBarPositionConstraints = [
                 pathBar.topAnchor.constraint(equalTo: toolbarStack.bottomAnchor, constant: 2),
                 contentContainer.topAnchor.constraint(equalTo: pathBar.bottomAnchor, constant: 2),
-                contentContainer.bottomAnchor.constraint(equalTo: bottomStack.topAnchor, constant: -4),
+                contentContainer.bottomAnchor.constraint(
+                    equalTo: bottomStack.topAnchor, constant: -4),
             ]
         }
         NSLayoutConstraint.activate(pathBarPositionConstraints)
@@ -1390,7 +1525,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         NSLayoutConstraint.activate([
             folderBackgroundView.topAnchor.constraint(equalTo: contentContainer.topAnchor),
             folderBackgroundView.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
-            folderBackgroundView.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+            folderBackgroundView.trailingAnchor.constraint(
+                equalTo: contentContainer.trailingAnchor),
             folderBackgroundView.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
             view.topAnchor.constraint(equalTo: contentContainer.topAnchor),
             view.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
@@ -1404,11 +1540,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// or neither (restore the default). Called on navigation and after a view-mode swap.
     func applyFolderBackground() {
         let background = backgroundFor?(nav.current)
-        if let path = background?.imagePath, !path.isEmpty, let image = NSImage(contentsOfFile: path) {
+        if let path = background?.imagePath, !path.isEmpty,
+            let image = NSImage(contentsOfFile: path)
+        {
             folderBackgroundView.image = image
             folderBackgroundView.isHidden = false
             content.setBackgroundColor(.clear)
-        } else if let hex = background?.colorHex, !hex.isEmpty, let color = ThemeManager.color(fromHex: hex) {
+        } else if let hex = background?.colorHex, !hex.isEmpty,
+            let color = ThemeManager.color(fromHex: hex)
+        {
             folderBackgroundView.image = nil
             folderBackgroundView.isHidden = true
             content.setBackgroundColor(color)
@@ -1448,7 +1588,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         wireContent()
         embedContent()
         if let s = lastStyle {
-            content.applyStyle(rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
+            content.applyStyle(
+                rowHeight: s.rowHeight, fontSize: s.fontSize, alternatingRows: s.alternating)
         }
         content.setCalculateFolderSizes(calculateFolderSizes)  // carry the option across the swap
         content.setClickBehavior(  // carry single-click / hover across the swap
@@ -1484,7 +1625,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.onDropFiles = { [weak self] urls, move, destination in
             guard let self else { return }
             if let remote = self.remote {  // dropping onto a remote pane uploads
-                let path = destination.map { remote.path + "/" + $0.lastPathComponent } ?? remote.path
+                let path =
+                    destination.map { remote.path + "/" + $0.lastPathComponent } ?? remote.path
                 self.onUploadFiles?(urls, remote.connection, path, remote.password)
             } else {
                 self.onDropFiles?(urls, move, destination ?? self.nav.current)
@@ -1497,7 +1639,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.onKeyChord = onKeyChordHandler
         content.onMouseGesture = onMouseGestureHandler
         content.onDragSession = onDragSessionHandler
-        content.onInlineRename = { [weak self] entry, newName in self?.onRenameRequested?(entry, newName) }
+        content.onInlineRename = { [weak self] entry, newName in
+            self?.onRenameRequested?(entry, newName)
+        }
         content.dragMovesByDefault = dragMovesByDefault
     }
 
@@ -1577,7 +1721,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// of selected folders. Returns the total and any selected folders whose size isn't cached yet
     /// (so the caller can compute them off-main and refresh). Whole-folder default (selectionMode
     /// false) stays files-only, so opening a folder never auto-walks every subfolder.
-    private func selectionSizeBytes(_ subset: [FileEntry], selectionMode: Bool) -> (bytes: Int64, uncomputed: [URL]) {
+    private func selectionSizeBytes(_ subset: [FileEntry], selectionMode: Bool) -> (
+        bytes: Int64, uncomputed: [URL]
+    ) {
         var bytes: Int64 = 0
         var uncomputed: [URL] = []
         for entry in subset {
@@ -1585,7 +1731,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 guard selectionMode, remote == nil, !entry.isDataless else { continue }
                 let url = entryURL(entry)
                 let mtime = FolderSizeStore.mtimeKey(of: url)
-                if let measured = FolderSizeStore.shared.measurement(forPath: url.path, mtime: mtime) {
+                if let measured = FolderSizeStore.shared.measurement(
+                    forPath: url.path, mtime: mtime)
+                {
                     bytes += measured.bytes
                 } else {
                     uncomputed.append(url)
@@ -1639,7 +1787,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                         : String(format: L("pane.itemCountPlural", "%d items"), all.count))
             } else {
                 parts.append(
-                    String(format: L("pane.selectedOf", "%d of %d selected"), selected.count, all.count))
+                    String(
+                        format: L("pane.selectedOf", "%d of %d selected"), selected.count, all.count
+                    ))
             }
         }
         if statusOptions.size {
@@ -1647,13 +1797,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             // selected folders). For the whole-folder default (nothing selected) we stay files-only,
             // so merely opening a folder never auto-walks every subfolder in it.
             let selectionMode = !selected.isEmpty
-            let (size, uncomputed) = selectionSizeBytes(selectionMode ? selected : all, selectionMode: selectionMode)
+            let (size, uncomputed) = selectionSizeBytes(
+                selectionMode ? selected : all, selectionMode: selectionMode)
             if size > 0 || !uncomputed.isEmpty {
                 var sizeText = byteFormatter.string(fromByteCount: size)
-                if !uncomputed.isEmpty { sizeText += " " + L("pane.calculatingSizes", "(calculating…)") }
+                if !uncomputed.isEmpty {
+                    sizeText += " " + L("pane.calculatingSizes", "(calculating…)")
+                }
                 parts.append(sizeText)
             }
-            if selectionMode, !uncomputed.isEmpty { computeSelectionFolderSizesThenRefresh(uncomputed) }
+            if selectionMode, !uncomputed.isEmpty {
+                computeSelectionFolderSizesThenRefresh(uncomputed)
+            }
         }
         if statusOptions.freeSpace, let free = freeSpaceString() { parts.append(free) }
         var text = parts.joined(separator: " · ")
@@ -1691,13 +1846,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Free space on the current folder's volume, e.g. "42 GB free". Local folders only.
     private func freeSpaceString() -> String? {
         guard remote == nil, let url = content.directoryURL,
-            let values = try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]),
+            let values = try? url.resourceValues(forKeys: [
+                .volumeAvailableCapacityForImportantUsageKey
+            ]),
             let free = values.volumeAvailableCapacityForImportantUsage
         else { return nil }
-        return String(format: L("pane.freeSpace", "%@ free"), byteFormatter.string(fromByteCount: free))
+        return String(
+            format: L("pane.freeSpace", "%@ free"), byteFormatter.string(fromByteCount: free))
     }
 
-    private func iconButton(_ symbol: String, _ label: String, _ action: Selector) -> NavDragButton {
+    private func iconButton(_ symbol: String, _ label: String, _ action: Selector) -> NavDragButton
+    {
         let button = NavDragButton()
         let config = NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)?
@@ -1722,7 +1881,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         backButton.image = sizedSymbol("chevron.backward")
         forwardButton.image = sizedSymbol("chevron.forward")
         upButton.image = sizedSymbol("chevron.up")
-        for (index, name) in Self.viewSwitcherSymbols.enumerated() where index < viewSwitcher.segmentCount {
+        for (index, name) in Self.viewSwitcherSymbols.enumerated()
+        where index < viewSwitcher.segmentCount {
             viewSwitcher.setImage(sizedSymbol(name), forSegment: index)
         }
         // A pull-down shows its first item's image as the face; the menus are rebuilt on open
@@ -1761,7 +1921,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// the host); hidden buttons keep their hidden state.
     func setHeaderButtonOrder(_ ids: [String]) {
         let controls = headerButtons
-        let ordered = Self.normalizedHeaderOrder(ids).compactMap { id in controls.first { $0.id == id }?.control }
+        let ordered = Self.normalizedHeaderOrder(ids).compactMap { id in
+            controls.first { $0.id == id }?.control
+        }
         toolbarStack.arrange(ordered)
         setHiddenHeaderButtons(hiddenHeaderButtons)
     }
@@ -1778,17 +1940,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func rebuildHeaderMenu(_ menu: NSMenu, sectionTitle: Bool) {
         menu.removeAllItems()
         if sectionTitle {
-            let title = NSMenuItem(title: L("pane.headerButtons", "Header Buttons"), action: nil, keyEquivalent: "")
+            let title = NSMenuItem(
+                title: L("pane.headerButtons", "Header Buttons"), action: nil, keyEquivalent: "")
             title.isEnabled = false
             menu.addItem(title)
         }
         // How to reorder (same gesture as the window toolbar), stated where the user is looking.
-        let hint = NSMenuItem(title: L("pane.headerReorderHint", "⌘-drag a button to reorder"), action: nil, keyEquivalent: "")
+        let hint = NSMenuItem(
+            title: L("pane.headerReorderHint", "⌘-drag a button to reorder"), action: nil,
+            keyEquivalent: "")
         hint.isEnabled = false
         menu.addItem(hint)
         menu.addItem(.separator())
         for entry in headerButtons {
-            let item = NSMenuItem(title: entry.label, action: #selector(toggleHeaderButton(_:)), keyEquivalent: "")
+            let item = NSMenuItem(
+                title: entry.label, action: #selector(toggleHeaderButton(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = entry.id
             item.state = hiddenHeaderButtons.contains(entry.id) ? .off : .on
@@ -1813,7 +1979,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// An SF Symbol rendered at the pane's current icon point size.
     private func sizedSymbol(_ name: String) -> NSImage {
         Self.symbol(name).withSymbolConfiguration(
-            NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular)) ?? Self.symbol(name)
+            NSImage.SymbolConfiguration(pointSize: iconPointSize, weight: .regular))
+            ?? Self.symbol(name)
     }
 
     private static func symbol(_ name: String) -> NSImage {
@@ -1908,7 +2075,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// A submenu of apps that can open the single selected file, plus "Other…".
     private func makeOpenWithSubmenu() -> NSMenu? {
-        guard !isRemote, selectedEntries.count == 1, let entry = selectedEntries.first, !entry.isDirectory
+        guard !isRemote, selectedEntries.count == 1, let entry = selectedEntries.first,
+            !entry.isDirectory
         else { return nil }
         let url = urlFor(entry)
         let submenu = NSMenu()
@@ -1919,7 +2087,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             item.target = self
             // Copy before resizing: icon(forFile:) returns a shared cached NSImage, and
             // mutating its size in place shrinks that app's icon elsewhere in the UI.
-            let icon = (NSWorkspace.shared.icon(forFile: appURL.path).copy() as? NSImage)
+            let icon =
+                (NSWorkspace.shared.icon(forFile: appURL.path).copy() as? NSImage)
                 ?? NSWorkspace.shared.icon(forFile: appURL.path)
             icon.size = NSSize(width: 16, height: 16)
             item.image = icon
@@ -1928,7 +2097,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         if submenu.items.count > 0 { submenu.addItem(.separator()) }
         let other = NSMenuItem(
-            title: L("pane.openWithOther", "Other…"), action: #selector(openWithOther), keyEquivalent: "")
+            title: L("pane.openWithOther", "Other…"), action: #selector(openWithOther),
+            keyEquivalent: "")
         other.target = self
         other.representedObject = url
         submenu.addItem(other)
@@ -1937,7 +2107,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     @objc private func openWithApp(_ sender: NSMenuItem) {
         guard let pair = sender.representedObject as? [URL], pair.count == 2 else { return }
-        NSWorkspace.shared.open([pair[0]], withApplicationAt: pair[1], configuration: .init(), completionHandler: nil)
+        NSWorkspace.shared.open(
+            [pair[0]], withApplicationAt: pair[1], configuration: .init(), completionHandler: nil)
     }
 
     @objc private func openWithOther(_ sender: NSMenuItem) {
@@ -1947,7 +2118,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         panel.allowedContentTypes = [.application]
         panel.begin { response in
             guard response == .OK, let app = panel.url else { return }
-            NSWorkspace.shared.open([file], withApplicationAt: app, configuration: .init(), completionHandler: nil)
+            NSWorkspace.shared.open(
+                [file], withApplicationAt: app, configuration: .init(), completionHandler: nil)
         }
     }
 
@@ -1958,14 +2130,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         menu.addItem(face)
         // Same show/hide list as the header's right-click menu, so it is discoverable from the
         // menu users already open, and still reachable if they hid every other button.
-        let headerItem = NSMenuItem(title: L("pane.headerButtons", "Header Buttons"), action: nil, keyEquivalent: "")
+        let headerItem = NSMenuItem(
+            title: L("pane.headerButtons", "Header Buttons"), action: nil, keyEquivalent: "")
         let headerSub = NSMenu()
         rebuildHeaderMenu(headerSub, sectionTitle: false)
         headerItem.submenu = headerSub
         menu.addItem(headerItem)
         menu.addItem(.separator())
         func add(_ label: String, command id: String) {
-            let item = NSMenuItem(title: label, action: #selector(runActionCommand(_:)), keyEquivalent: "")
+            let item = NSMenuItem(
+                title: label, action: #selector(runActionCommand(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = id
             menu.addItem(item)
@@ -1975,7 +2149,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         add(L("pane.getInfo", "Get Info"), command: "files.getInfo")
         add("Quick Look", command: "view.quickLook")
         if let openWith = makeOpenWithSubmenu() {
-            let item = NSMenuItem(title: L("pane.openWith", "Open With"), action: nil, keyEquivalent: "")
+            let item = NSMenuItem(
+                title: L("pane.openWith", "Open With"), action: nil, keyEquivalent: "")
             item.submenu = openWith
             menu.addItem(item)
         }
@@ -1984,11 +2159,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         menu.addItem(.separator())
         add(L("pane.revealInFinder", "Reveal in Finder"), command: "files.reveal")
         add(L("pane.revealInPathem", "Reveal in Pathem"), command: "files.revealInPathem")
-        let share = NSMenuItem(title: L("pane.share", "Share…"), action: #selector(shareSelection), keyEquivalent: "")
+        let share = NSMenuItem(
+            title: L("pane.share", "Share…"), action: #selector(shareSelection), keyEquivalent: "")
         share.target = self
         menu.addItem(share)
         let airdrop = NSMenuItem(
-            title: L("pane.sendViaAirDrop", "Send via AirDrop"), action: #selector(airDropSelection),
+            title: L("pane.sendViaAirDrop", "Send via AirDrop"),
+            action: #selector(airDropSelection),
             keyEquivalent: "")
         airdrop.target = self
         menu.addItem(airdrop)
@@ -2011,12 +2188,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func makeTagsSubmenu() -> NSMenu {
         let menu = NSMenu()
         let current: Set<FileTag.Color> = {
-            guard remote == nil, !smartActive, let first = content.selectedEntries.first else { return [] }
+            guard remote == nil, !smartActive, let first = content.selectedEntries.first else {
+                return []
+            }
             let url = currentURL.appendingPathComponent(first.name)  // active column folder in column view
             return Set(FileTags.tags(of: url).map(\.color))
         }()
         for color in FileTag.Color.displayOrder {
-            let item = NSMenuItem(title: color.label, action: #selector(tagMenuItem(_:)), keyEquivalent: "")
+            let item = NSMenuItem(
+                title: color.label, action: #selector(tagMenuItem(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = color.rawValue
             item.image = TagColors.dot(color)
@@ -2024,14 +2204,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             menu.addItem(item)
         }
         menu.addItem(.separator())
-        let clear = NSMenuItem(title: L("pane.clearTags", "Clear Tags"), action: #selector(clearTags), keyEquivalent: "")
+        let clear = NSMenuItem(
+            title: L("pane.clearTags", "Clear Tags"), action: #selector(clearTags),
+            keyEquivalent: "")
         clear.target = self
         menu.addItem(clear)
         return menu
     }
 
     @objc private func tagMenuItem(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? Int, let color = FileTag.Color(rawValue: raw) else { return }
+        guard let raw = sender.representedObject as? Int, let color = FileTag.Color(rawValue: raw)
+        else { return }
         tagSelection(toggle: color)
     }
 
@@ -2082,7 +2265,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             return
         }
         let allHave = urls.allSatisfy {
-            FileTags.tags(of: $0).contains { $0.name.caseInsensitiveCompare(label.name) == .orderedSame }
+            FileTags.tags(of: $0).contains {
+                $0.name.caseInsensitiveCompare(label.name) == .orderedSame
+            }
         }
         var failures = 0
         for url in urls {
@@ -2193,19 +2378,22 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         addKey(L("pane.sortDateModified", "Date Modified"), .date)
         menu.addItem(.separator())
         let ascending = NSMenuItem(
-            title: L("pane.sortAscending", "Ascending"), action: #selector(sortAscending), keyEquivalent: "")
+            title: L("pane.sortAscending", "Ascending"), action: #selector(sortAscending),
+            keyEquivalent: "")
         ascending.target = self
         ascending.state = format.ascending ? .on : .off
         menu.addItem(ascending)
         let descending = NSMenuItem(
-            title: L("pane.sortDescending", "Descending"), action: #selector(sortDescending), keyEquivalent: "")
+            title: L("pane.sortDescending", "Descending"), action: #selector(sortDescending),
+            keyEquivalent: "")
         descending.target = self
         descending.state = format.ascending ? .off : .on
         menu.addItem(descending)
     }
 
     @objc private func sortByKey(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String, let key = ViewFormat.SortKey(rawValue: raw)
+        guard let raw = sender.representedObject as? String,
+            let key = ViewFormat.SortKey(rawValue: raw)
         else { return }
         applySort(key: key, ascending: format.ascending)
     }
@@ -2227,7 +2415,6 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.showSortIndicator(key: key, ascending: ascending)
     }
 
-
     func toggleHidden() {
         // Flip the EFFECTIVE state and record it as this folder's explicit decision, so the eye
         // works both ways even when "show hidden by default" is on (a plain showHidden.toggle()
@@ -2246,10 +2433,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func updateHiddenToggleIcon() {
         let symbol = hiddenShown ? "eye" : "eye.slash"
         hiddenToggle.image = NSImage(
-            systemSymbolName: symbol, accessibilityDescription: L("pane.showHidden", "Show Hidden Files"))
-        hiddenToggle.contentTintColor = hiddenShown ? ThemeManager.shared.accent : .tertiaryLabelColor
+            systemSymbolName: symbol,
+            accessibilityDescription: L("pane.showHidden", "Show Hidden Files"))
+        hiddenToggle.contentTintColor =
+            hiddenShown ? ThemeManager.shared.accent : .tertiaryLabelColor
         hiddenToggle.toolTip =
-            hiddenShown ? L("pane.hideHidden", "Hide Hidden Files") : L("pane.showHidden", "Show Hidden Files")
+            hiddenShown
+            ? L("pane.hideHidden", "Hide Hidden Files") : L("pane.showHidden", "Show Hidden Files")
     }
 
     /// Open the current selection: descend into a folder (files are a no-op for
@@ -2265,7 +2455,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         for entry in selected {
             // Open files and app/document packages; skip plain folders (can't navigate
             // several at once in one pane).
-            let isPackage = (try? urlFor(entry).resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+            let isPackage =
+                (try? urlFor(entry).resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
             if !entry.isDirectory || isPackage { descend(into: entry) }
         }
     }
@@ -2338,7 +2529,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Swap the breadcrumb for an editable field pre-filled with the current path,
     /// selected, so you can type or paste a new path and press Return.
     func beginEditingPath() {
-        guard remote == nil else { NSSound.beep(); return }  // remote path editing is a later step
+        guard remote == nil else {
+            NSSound.beep()
+            return
+        }  // remote path editing is a later step
         addressField.stringValue = nav.current.path
         breadcrumb.isHidden = true
         addressField.isHidden = false
@@ -2356,7 +2550,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         endEditingPath()
         containerView.window?.makeFirstResponder(content.keyView)  // restore focus on every path
         guard !raw.isEmpty else { return }
-        guard remote == nil else { NSSound.beep(); return }  // path entry is local-only for now
+        guard remote == nil else {
+            NSSound.beep()
+            return
+        }  // path entry is local-only for now
 
         // Cheap existence check on the main thread (no fuzzy scan): navigate at once
         // if it's a real path (absolute, or relative to this folder).
@@ -2407,11 +2604,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Report that some tag writes didn't stick, instead of failing with only a beep. The
     /// usual causes are a read-only volume or a missing Full Disk Access grant.
     private func presentTagWriteFailure(_ count: Int) {
-        guard let window = containerView.window else { NSSound.beep(); return }
+        guard let window = containerView.window else {
+            NSSound.beep()
+            return
+        }
         let alert = NSAlert()
         alert.messageText = L("pane.tagFailedTitle", "Couldn’t change tags")
         alert.informativeText = String(
-            format: L("pane.tagFailedBody", "%d item(s) couldn’t be updated. They may be on a read-only volume, or Pathem may need Full Disk Access."),
+            format: L(
+                "pane.tagFailedBody",
+                "%d item(s) couldn’t be updated. They may be on a read-only volume, or Pathem may need Full Disk Access."
+            ),
             count)
         alert.addButton(withTitle: L("common.ok", "OK"))
         alert.beginSheetModal(for: window) { _ in }
@@ -2427,7 +2630,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let alert = NSAlert()
         alert.messageText = L("pane.noSuchPathTitle", "No such path")
         alert.informativeText = String(
-            format: L("pane.noSuchPathBody", "“%@” doesn't exist.\n\nDid you mean:\n%@"), raw, suggestion.path)
+            format: L("pane.noSuchPathBody", "“%@” doesn't exist.\n\nDid you mean:\n%@"), raw,
+            suggestion.path)
         alert.addButton(withTitle: L("pane.goButton", "Go"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -2448,7 +2652,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         if obj.object as AnyObject === addressField, !addressField.isHidden { endEditingPath() }
     }
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector)
+        -> Bool
+    {
         guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else { return false }  // Esc
         if control === filterField {
             endFilter()
