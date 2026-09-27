@@ -35,12 +35,13 @@ private enum EnvironmentalProbe {
             case "spotlight": result = await spotlight()
             case "large-tree": result = try largeTree()
             case "provider-tree": result = try providerTree()
+            case "icloud-eviction": result = await iCloudEviction()
             case "router": result = await router()
             case "dht": result = await dht()
             case "external-tool": result = externalTool()
             default:
                 result = .fail(
-                    "usage: pathem-env-probe storage|remote|spotlight|large-tree|provider-tree|router|dht|external-tool"
+                    "usage: pathem-env-probe storage|remote|spotlight|large-tree|provider-tree|icloud-eviction|router|dht|external-tool"
                 )
             }
         } catch {
@@ -244,6 +245,107 @@ private enum EnvironmentalProbe {
             return .fail("provider-backed bulk/fallback listings disagree")
         }
         return .pass("provider-backed listing matched Foundation for \(bulk.count) entries")
+    }
+
+    /// Proves the data-integrity path that cannot be synthesized in a normal temporary directory:
+    /// upload one uniquely named iCloud Drive fixture, evict its local bytes, then move the
+    /// online-only item through FileOperations and verify both destination bytes and source
+    /// removal. The caller must explicitly supply a disposable iCloud Drive root.
+    private static func iCloudEviction() async -> ProbeResult {
+        let env = ProcessInfo.processInfo.environment
+        guard env["PATHEM_ICLOUD_EVICTION_LIVE"] == "1",
+            let rootPath = env["PATHEM_ICLOUD_ROOT"], !rootPath.isEmpty
+        else {
+            return .skip(
+                "set PATHEM_ICLOUD_EVICTION_LIVE=1 and PATHEM_ICLOUD_ROOT to an iCloud Drive folder"
+            )
+        }
+
+        let fm = FileManager.default
+        let root = URL(fileURLWithPath: rootPath, isDirectory: true)
+        let fixture = root.appendingPathComponent(
+            ".pathem-eviction-\(UUID().uuidString)", isDirectory: true)
+        let source = fixture.appendingPathComponent("online-only.bin")
+        let destination = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-eviction-destination-\(UUID().uuidString)", isDirectory: true)
+        let payload = Data((0..<16_384).map { UInt8($0 % 251) })
+        var phase = "creating fixture"
+        do {
+            try fm.createDirectory(at: fixture, withIntermediateDirectories: false)
+            try fm.createDirectory(at: destination, withIntermediateDirectories: false)
+            defer {
+                try? fm.removeItem(at: fixture)
+                try? fm.removeItem(at: destination)
+            }
+            try payload.write(to: source, options: .atomic)
+
+            let keys: Set<URLResourceKey> = [
+                .isUbiquitousItemKey, .ubiquitousItemIsUploadedKey,
+                .ubiquitousItemIsUploadingKey, .ubiquitousItemUploadingErrorKey,
+                .ubiquitousItemDownloadingStatusKey,
+            ]
+            var lastState = "unknown"
+            var uploaded = false
+            for _ in 0..<180 {
+                let observedSource = URL(fileURLWithPath: source.path)
+                let values = try observedSource.resourceValues(forKeys: keys)
+                guard values.isUbiquitousItem == true else {
+                    return .fail("fixture inside supplied root is not an iCloud ubiquitous item")
+                }
+                // File Provider commonly surfaces BRCloudDocsError 140 while it retries an
+                // unacknowledged in-flight diff. The host log shows those transient errors clear
+                // once CloudKit accepts the record, so only the deadline convicts the upload.
+                let uploadError =
+                    values.ubiquitousItemUploadingError.map {
+                        let error = $0 as NSError
+                        return " error=\(error.domain):\(error.code)"
+                    } ?? ""
+                lastState =
+                    "uploaded=\(values.ubiquitousItemIsUploaded == true) uploading=\(values.ubiquitousItemIsUploading == true) status=\(values.ubiquitousItemDownloadingStatus?.rawValue ?? "nil")\(uploadError)"
+                if values.ubiquitousItemIsUploaded == true {
+                    uploaded = true
+                    break
+                }
+                try await Task.sleep(for: .seconds(1))
+            }
+            guard uploaded else {
+                return .skip("fixture did not upload within 180 seconds (\(lastState))")
+            }
+
+            phase = "evicting uploaded fixture"
+            guard run("/usr/bin/brctl", ["evict", source.path]) != nil else {
+                return .fail("brctl could not evict the uploaded disposable fixture")
+            }
+            var evicted = false
+            for _ in 0..<60 {
+                let observedSource = URL(fileURLWithPath: source.path)
+                let values = try observedSource.resourceValues(forKeys: keys)
+                if values.ubiquitousItemDownloadingStatus == .notDownloaded {
+                    evicted = true
+                    break
+                }
+                try await Task.sleep(for: .milliseconds(500))
+            }
+            guard evicted else {
+                return .fail("uploaded fixture never became online-only after eviction")
+            }
+
+            phase = "moving online-only fixture"
+            let outcome = FileOperations.move(urls: [source], into: destination)
+            let moved = destination.appendingPathComponent(source.lastPathComponent)
+            guard outcome.failures.isEmpty, !fm.fileExists(atPath: source.path),
+                (try? Data(contentsOf: moved)) == payload
+            else {
+                let reasons = outcome.failures.map(\.reason).joined(separator: "; ")
+                return .fail("online-only move did not preserve bytes/remove source: \(reasons)")
+            }
+            return .pass("evicted iCloud item moved locally with verified bytes and no duplicate")
+        } catch {
+            let error = error as NSError
+            return .fail(
+                "iCloud eviction fixture failed while \(phase): \(error.domain):\(error.code) \(error.localizedDescription)"
+            )
+        }
     }
 
     private static func dht() async -> ProbeResult {

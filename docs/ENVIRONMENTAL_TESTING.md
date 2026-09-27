@@ -20,6 +20,7 @@ These variables enable boundaries that cannot be manufactured safely on every ma
 |---|---|
 | `PATHEM_SPOTLIGHT_LIVE=1` plus `PATHEM_SPOTLIGHT_SCOPE=/path` | Creates, imports, finds, and removes one uniquely named file inside an indexed disposable scope. |
 | `PATHEM_PROVIDER_TREE_ROOT=/path` | Compares the fast and Foundation listings of a provider-backed directory without changing it. |
+| `PATHEM_ICLOUD_EVICTION_LIVE=1` plus `PATHEM_ICLOUD_ROOT=/path` | Creates a unique iCloud Drive fixture, waits for upload, evicts it, moves it through `FileOperations`, verifies bytes/source removal, and cleans up only that fixture. |
 | `PATHEM_DHT_LIVE=1` | Queries the public mainline DHT for a known public-domain torrent. |
 | `PATHEM_ROUTER_LIVE=1` | Requests a temporary high TCP port through NAT-PMP and then UPnP. Unsupported routers report SKIP. |
 | `PATHEM_TRANSMISSION_DAEMON=/path` plus `PATHEM_TRANSMISSION_REMOTE=/path` | Starts a disposable Transmission daemon, then downloads its real payload through Pathem's peer engine and verifies both bytes and the peer client identity. |

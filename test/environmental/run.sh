@@ -150,6 +150,7 @@ fi
 echo "==> Opt-in host and public-network boundaries"
 scenario "Spotlight indexed fixture" "$PROBE" spotlight
 scenario "provider-backed listing" "$PROBE" provider-tree
+scenario "online-only iCloud move" "$PROBE" icloud-eviction
 scenario "public DHT lookup" "$PROBE" dht
 scenario "router NAT-PMP / UPnP" "$PROBE" router
 if [[ -n "${PATHEM_TRANSMISSION_DAEMON:-}" && -n "${PATHEM_TRANSMISSION_REMOTE:-}" ]]; then
