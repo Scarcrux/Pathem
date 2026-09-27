@@ -30,7 +30,9 @@ public enum FileOperations {
         /// If a Replace conflict trashed an existing item at `destination`, where it
         /// landed in the Trash, so undo can restore the overwritten file.
         public let replacedOriginalTrashed: URL?
-        public init(action: Action, source: URL, destination: URL, replacedOriginalTrashed: URL? = nil) {
+        public init(
+            action: Action, source: URL, destination: URL, replacedOriginalTrashed: URL? = nil
+        ) {
             self.action = action
             self.source = source
             self.destination = destination
@@ -91,7 +93,9 @@ public enum FileOperations {
         else { return 0 }
         var total: Int64 = 0
         for case let child as URL in enumerator {
-            let v = try? child.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey])
+            let v = try? child.resourceValues(forKeys: [
+                .fileSizeKey, .isRegularFileKey, .isSymbolicLinkKey,
+            ])
             if v?.isSymbolicLink == true { continue }
             if v?.isRegularFile == true { total += Int64(v?.fileSize ?? 0) }
         }
@@ -100,7 +104,8 @@ public enum FileOperations {
 
     // MARK: Conflict detection
 
-    public static func conflicts(_ names: [String], from source: URL, to destination: URL) -> [String]
+    public static func conflicts(_ names: [String], from source: URL, to destination: URL)
+        -> [String]
     {
         conflicts(urls: names.map { source.appendingPathComponent($0) }, into: destination)
     }
@@ -129,7 +134,9 @@ public enum FileOperations {
     /// Create a new folder in `directory`, picking a unique "untitled folder"
     /// name (Finder-style) when the base name is taken. Returns the name created.
     @discardableResult
-    public static func makeFolder(in directory: URL, baseName: String = "untitled folder") throws -> String {
+    public static func makeFolder(in directory: URL, baseName: String = "untitled folder") throws
+        -> String
+    {
         let fm = FileManager.default
         var name = baseName
         var n = 2
@@ -148,7 +155,9 @@ public enum FileOperations {
     /// when the base name is taken. A number is inserted before the extension, so
     /// "note.txt" becomes "note 2.txt". Returns the name created.
     @discardableResult
-    public static func makeFile(in directory: URL, baseName: String = "untitled file") throws -> String {
+    public static func makeFile(in directory: URL, baseName: String = "untitled file") throws
+        -> String
+    {
         let fm = FileManager.default
         let ext = (baseName as NSString).pathExtension
         let stem = ext.isEmpty ? baseName : (baseName as NSString).deletingPathExtension
@@ -159,7 +168,8 @@ public enum FileOperations {
             name = assemble("\(stem) \(n)")
             n += 1
         }
-        guard fm.createFile(atPath: directory.appendingPathComponent(name).path, contents: nil) else {
+        guard fm.createFile(atPath: directory.appendingPathComponent(name).path, contents: nil)
+        else {
             throw CocoaError(.fileWriteUnknown)
         }
         return name
@@ -196,7 +206,9 @@ public enum FileOperations {
         // A slash is the path separator (appendingPathComponent would move into a nonexistent
         // subfolder and fail cryptically); NUL terminates a C string. Reject both with a clear error
         // instead of a confusing move failure.
-        guard !trimmed.contains("/"), !trimmed.contains("\0") else { throw InvalidNameError(name: trimmed) }
+        guard !trimmed.contains("/"), !trimmed.contains("\0") else {
+            throw InvalidNameError(name: trimmed)
+        }
         try FileManager.default.moveItem(
             at: directory.appendingPathComponent(name),
             to: directory.appendingPathComponent(trimmed))
@@ -246,13 +258,15 @@ public enum FileOperations {
                     // the home Trash by name so undo / Put Back still work (else it's trashed but
                     // un-restorable). Skipped only if even that isn't found.
                     let guess = fm.homeDirectoryForCurrentUser
-                        .appendingPathComponent(".Trash").appendingPathComponent(source.lastPathComponent)
+                        .appendingPathComponent(".Trash").appendingPathComponent(
+                            source.lastPathComponent)
                     if fm.fileExists(atPath: guess.path) {
                         trashed.append(Trashed(original: source, trashed: guess))
                     }
                 }
             } catch {
-                failures.append(Failure(name: source.lastPathComponent, reason: error.localizedDescription))
+                failures.append(
+                    Failure(name: source.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return (trashed, failures)
@@ -278,7 +292,8 @@ public enum FileOperations {
         let fm = FileManager.default
         var result = UntrashResult()
         for item in items {
-            let destination = fm.fileExists(atPath: item.original.path)
+            let destination =
+                fm.fileExists(atPath: item.original.path)
                 ? uniqueDestination(item.original) : item.original
             do {
                 try fm.moveItem(at: item.trashed, to: destination)
@@ -288,11 +303,13 @@ public enum FileOperations {
                         Failure(
                             name: item.original.lastPathComponent,
                             reason:
-                                "the original location was taken; restored as \"\(destination.lastPathComponent)\""))
+                                "the original location was taken; restored as \"\(destination.lastPathComponent)\""
+                        ))
                 }
             } catch {
                 result.failures.append(
-                    Failure(name: item.original.lastPathComponent, reason: error.localizedDescription))
+                    Failure(
+                        name: item.original.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return result
@@ -305,7 +322,9 @@ public enum FileOperations {
         _ names: [String], from source: URL, to destination: URL,
         onConflict: ConflictResolution = .skip
     ) -> Outcome {
-        copy(urls: names.map { source.appendingPathComponent($0) }, into: destination, onConflict: onConflict)
+        copy(
+            urls: names.map { source.appendingPathComponent($0) }, into: destination,
+            onConflict: onConflict)
     }
 
     @discardableResult
@@ -313,7 +332,9 @@ public enum FileOperations {
         _ names: [String], from source: URL, to destination: URL,
         onConflict: ConflictResolution = .skip
     ) -> Outcome {
-        move(urls: names.map { source.appendingPathComponent($0) }, into: destination, onConflict: onConflict)
+        move(
+            urls: names.map { source.appendingPathComponent($0) }, into: destination,
+            onConflict: onConflict)
     }
 
     /// A copy whose SHA-256 didn't match the source (verification was on). The bad copy is
@@ -339,7 +360,8 @@ public enum FileOperations {
     public static func copy(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
         verify: Bool = false,
-        shouldCancel: @escaping () -> Bool = { false }, report: @escaping (Progress) -> Void = { _ in }
+        shouldCancel: @escaping () -> Bool = { false },
+        report: @escaping (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .copied, onConflict: onConflict,
@@ -347,7 +369,8 @@ public enum FileOperations {
         ) { source, dest, onBytes in
             // Stream the copy so the bar/speed/ETA move as the bytes land (metadata-preserving,
             // cancellable), instead of the opaque all-or-nothing of FileManager.copyItem.
-            try ProgressiveCopy.copy(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
+            try ProgressiveCopy.copy(
+                from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
             // Verify files by SHA-256; a mismatch means a corrupt copy -- remove it and fail.
             if verify { try verifyCopy(source: source, dest: dest) }
         }
@@ -368,7 +391,8 @@ public enum FileOperations {
     @discardableResult
     public static func move(
         urls: [URL], into destination: URL, onConflict: ConflictResolution = .skip,
-        shouldCancel: @escaping () -> Bool = { false }, report: @escaping (Progress) -> Void = { _ in }
+        shouldCancel: @escaping () -> Bool = { false },
+        report: @escaping (Progress) -> Void = { _ in }
     ) -> Outcome {
         apply(
             urls, into: destination, action: .moved, onConflict: onConflict,
@@ -378,8 +402,9 @@ public enum FileOperations {
             // an online-only item "succeeds" but the provider never releases the source, so a cut+paste
             // silently duplicates (the file lands at the destination AND stays in iCloud). Route those
             // through a coordinated move that also verifies the source is actually gone.
-            if isUbiquitous(source) || isUbiquitous(dest) {
-                try coordinatedMove(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
+            if requiresCoordinatedMove(from: source, to: dest) {
+                try coordinatedMove(
+                    from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
                 return
             }
             // A same-volume move is an instant rename (same inode, no bytes copied). A cross-volume
@@ -389,7 +414,8 @@ public enum FileOperations {
             if sameVolume(source, dest) {
                 try FileManager.default.moveItem(at: source, to: dest)
             } else {
-                try ProgressiveCopy.copy(from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
+                try ProgressiveCopy.copy(
+                    from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
                 do {
                     try FileManager.default.removeItem(at: source)
                 } catch {
@@ -425,6 +451,15 @@ public enum FileOperations {
         (try? url.resourceValues(forKeys: [.isUbiquitousItemKey]).isUbiquitousItem) == true
     }
 
+    /// A destination item normally does not exist yet, so it cannot report file-provider metadata.
+    /// Inspect its containing folder as well or a local-to-iCloud move will incorrectly bypass the
+    /// coordinated path.
+    static func requiresCoordinatedMove(from source: URL, to destination: URL) -> Bool {
+        isUbiquitous(source)
+            || isUbiquitous(destination)
+            || isUbiquitous(destination.deletingLastPathComponent())
+    }
+
     /// Move a file-provider (iCloud) item through NSFileCoordinator so the provider actually releases
     /// the source, then verify it's gone. Reading the source during the copy materializes an
     /// online-only item on demand, so the destination lands with real content. If the source survives
@@ -445,14 +480,17 @@ public enum FileOperations {
                     try fm.moveItem(at: coordinatedSource, to: coordinatedDest)
                 } else {
                     try ProgressiveCopy.copy(
-                        from: coordinatedSource, to: coordinatedDest, onBytes: onBytes, shouldCancel: shouldCancel)
+                        from: coordinatedSource, to: coordinatedDest, onBytes: onBytes,
+                        shouldCancel: shouldCancel)
                     try fm.removeItem(at: coordinatedSource)
                 }
             } catch { opError = error }
         }
         if let coordError { throw coordError }
         if let opError { throw opError }
-        if fm.fileExists(atPath: source.path) { throw MoveIncompleteError(name: source.lastPathComponent) }
+        if fm.fileExists(atPath: source.path) {
+            throw MoveIncompleteError(name: source.lastPathComponent)
+        }
     }
 
     /// Reverse a set of performed operations: moves go back to their source,
@@ -485,13 +523,16 @@ public enum FileOperations {
                         outcome.failures.append(
                             Failure(
                                 name: op.destination.lastPathComponent,
-                                reason: "couldn't restore the replaced file: \(error.localizedDescription)"))
+                                reason:
+                                    "couldn't restore the replaced file: \(error.localizedDescription)"
+                            ))
                     }
                 }
                 outcome.performed.append(op)
             } catch {
                 outcome.failures.append(
-                    Failure(name: op.destination.lastPathComponent, reason: error.localizedDescription))
+                    Failure(
+                        name: op.destination.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return outcome
@@ -527,7 +568,8 @@ public enum FileOperations {
                         replacedOriginalTrashed: replacedTrash))
             } catch {
                 outcome.failures.append(
-                    Failure(name: op.destination.lastPathComponent, reason: error.localizedDescription))
+                    Failure(
+                        name: op.destination.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return outcome
@@ -573,7 +615,8 @@ public enum FileOperations {
                 // under it). The app guards this too; this is the engine backstop so a copy can't
                 // recurse into itself and duplicate the tree until the path length blows up.
                 if Self.isDescendant(to, of: from) {
-                    outcome.failures.append(Failure(name: name, reason: "A folder can’t be moved inside itself."))
+                    outcome.failures.append(
+                        Failure(name: name, reason: "A folder can’t be moved inside itself."))
                     continue
                 }
                 if fm.fileExists(atPath: to.path) {
@@ -611,7 +654,8 @@ public enum FileOperations {
                                     name: name,
                                     reason:
                                         "Couldn’t \(action == .moved ? "move" : "copy") the item here, and the file it "
-                                        + "replaced was moved to the Trash and couldn’t be restored. It’s at \(trashed.path)"))
+                                        + "replaced was moved to the Trash and couldn’t be restored. It’s at \(trashed.path)"
+                                ))
                             continue
                         }
                     }
@@ -619,7 +663,8 @@ public enum FileOperations {
                 }
                 outcome.performed.append(
                     Performed(
-                        action: action, source: from, destination: to, replacedOriginalTrashed: replacedTrash))
+                        action: action, source: from, destination: to,
+                        replacedOriginalTrashed: replacedTrash))
                 // Only a file that actually transferred advances the byte counter, so a
                 // failure doesn't inflate the bar the way a completed item would. Skips
                 // (handled by `continue` above) likewise never reach this line. Set (not +=)
@@ -654,11 +699,14 @@ public enum FileOperations {
     }
 
     private static func isSameItem(_ a: URL, _ b: URL) -> Bool {
-        let idA = try? a.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier
-        let idB = try? b.resourceValues(forKeys: [.fileResourceIdentifierKey]).fileResourceIdentifier
+        let idA = try? a.resourceValues(forKeys: [.fileResourceIdentifierKey])
+            .fileResourceIdentifier
+        let idB = try? b.resourceValues(forKeys: [.fileResourceIdentifierKey])
+            .fileResourceIdentifier
         if let idA = idA as? NSObject, let idB = idB as? NSObject { return idA.isEqual(idB) }
         return a.resolvingSymlinksInPath().standardizedFileURL.path
-            .compare(b.resolvingSymlinksInPath().standardizedFileURL.path, options: .caseInsensitive)
+            .compare(
+                b.resolvingSymlinksInPath().standardizedFileURL.path, options: .caseInsensitive)
             == .orderedSame
     }
 
@@ -714,7 +762,8 @@ public enum FileOperations {
                 }
                 outcome.performed.append(Performed(action: .copied, source: url, destination: link))
             } catch {
-                outcome.failures.append(Failure(name: url.lastPathComponent, reason: error.localizedDescription))
+                outcome.failures.append(
+                    Failure(name: url.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return outcome
@@ -728,7 +777,8 @@ public enum FileOperations {
         let base = url.deletingPathExtension().lastPathComponent
         func candidate(_ n: Int?) -> URL {
             let extra = n.map { " \($0)" } ?? ""
-            let name = ext.isEmpty ? "\(base) \(suffix)\(extra)" : "\(base) \(suffix)\(extra).\(ext)"
+            let name =
+                ext.isEmpty ? "\(base) \(suffix)\(extra)" : "\(base) \(suffix)\(extra).\(ext)"
             return dir.appendingPathComponent(name)
         }
         var result = candidate(nil)

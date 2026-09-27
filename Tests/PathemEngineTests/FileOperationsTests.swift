@@ -6,7 +6,8 @@ import Testing
 @Suite struct FileOperationsTests {
     private func withTwoDirs(_ body: (URL, URL) throws -> Void) throws {
         let fm = FileManager.default
-        let root = fm.temporaryDirectory.appendingPathComponent("pathem-fileops-\(UUID().uuidString)")
+        let root = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-fileops-\(UUID().uuidString)")
         let src = root.appendingPathComponent("src")
         let dst = root.appendingPathComponent("dst")
         try fm.createDirectory(at: src, withIntermediateDirectories: true)
@@ -20,10 +21,13 @@ import Testing
     // A local file is not a file-provider item, so a move takes the fast path (not the iCloud
     // coordinated path). Guards against accidentally routing every move through NSFileCoordinator.
     @Test func localFileIsNotUbiquitous() throws {
-        try withTwoDirs { src, _ in
+        try withTwoDirs { src, dst in
             let f = src.appendingPathComponent("a.txt")
             try Data("hi".utf8).write(to: f)
             #expect(FileOperations.isUbiquitous(f) == false)
+            #expect(
+                FileOperations.requiresCoordinatedMove(
+                    from: f, to: dst.appendingPathComponent("a.txt")) == false)
         }
     }
 
@@ -34,7 +38,8 @@ import Testing
             let from = src.appendingPathComponent("a.txt")
             try Data("hi".utf8).write(to: from)
             let to = dst.appendingPathComponent("a.txt")
-            try FileOperations.coordinatedMove(from: from, to: to, onBytes: { _ in }, shouldCancel: { false })
+            try FileOperations.coordinatedMove(
+                from: from, to: to, onBytes: { _ in }, shouldCancel: { false })
             #expect(!exists(from))
             #expect(exists(to))
             #expect((try? Data(contentsOf: to)) == Data("hi".utf8))
@@ -122,7 +127,8 @@ import Testing
             let outcome = FileOperations.copy(["c.txt"], from: src, to: dst)
             #expect(outcome.skipped == ["c.txt"])
             #expect(outcome.failures.isEmpty)
-            let content = try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+            let content = try String(
+                contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
             #expect(content == "old")  // destination untouched
         }
     }
@@ -133,7 +139,8 @@ import Testing
             try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
             let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .replace)
             #expect(outcome.performed.count == 1)
-            let content = try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+            let content = try String(
+                contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
             #expect(content == "new")
         }
     }
@@ -156,7 +163,8 @@ import Testing
             try Data().write(to: src.appendingPathComponent("ok2.txt"))
             try Data().write(to: dst.appendingPathComponent("clash.txt"))  // pre-existing
 
-            let outcome = FileOperations.copy(["ok1.txt", "clash.txt", "ok2.txt"], from: src, to: dst)
+            let outcome = FileOperations.copy(
+                ["ok1.txt", "clash.txt", "ok2.txt"], from: src, to: dst)
             #expect(outcome.skipped == ["clash.txt"])
             #expect(exists(dst.appendingPathComponent("ok1.txt")))
             #expect(exists(dst.appendingPathComponent("ok2.txt")))
@@ -194,12 +202,16 @@ import Testing
             try Data("new".utf8).write(to: src.appendingPathComponent("c.txt"))
             try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
             let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .replace)
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "new")
 
             let undo = FileOperations.undo(outcome.performed)
             #expect(undo.failures.isEmpty)
             // The overwritten original is restored, not stranded in the Trash.
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "old")
             #expect(exists(src.appendingPathComponent("c.txt")))
         }
     }
@@ -212,8 +224,12 @@ import Testing
 
             let undo = FileOperations.undo(outcome.performed)
             #expect(undo.failures.isEmpty)
-            #expect(try String(contentsOf: src.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+            #expect(
+                try String(contentsOf: src.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "new")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "old")
         }
     }
 
@@ -223,7 +239,8 @@ import Testing
             let corrupt = dst.appendingPathComponent("f")
             try Data("DIFFERENT".utf8).write(to: corrupt)  // stand in for a copy that landed corrupt
             #expect(throws: FileOperations.CopyVerificationError.self) {
-                try FileOperations.verifyCopy(source: src.appendingPathComponent("f"), dest: corrupt)
+                try FileOperations.verifyCopy(
+                    source: src.appendingPathComponent("f"), dest: corrupt)
             }
             #expect(!exists(corrupt))  // the corrupt copy is removed, not left behind
         }
@@ -233,7 +250,8 @@ import Testing
         try withTwoDirs { src, dst in
             try Data("same bytes".utf8).write(to: src.appendingPathComponent("f"))
             try Data("same bytes".utf8).write(to: dst.appendingPathComponent("f"))
-            try FileOperations.verifyCopy(source: src.appendingPathComponent("f"), dest: dst.appendingPathComponent("f"))
+            try FileOperations.verifyCopy(
+                source: src.appendingPathComponent("f"), dest: dst.appendingPathComponent("f"))
             #expect(exists(dst.appendingPathComponent("f")))  // a good copy is left in place
         }
     }
@@ -246,15 +264,21 @@ import Testing
             try FileManager.default.createDirectory(at: b, withIntermediateDirectories: true)
             try Data("1".utf8).write(to: a.appendingPathComponent("photo.jpg"))
             try Data("2".utf8).write(to: b.appendingPathComponent("photo.jpg"))
-            let urls = [a.appendingPathComponent("photo.jpg"), b.appendingPathComponent("photo.jpg")]
+            let urls = [
+                a.appendingPathComponent("photo.jpg"), b.appendingPathComponent("photo.jpg"),
+            ]
             // The destination has no photo.jpg, but the two sources collide with each other, so the
             // second must be flagged for resolution instead of silently overwriting the first.
             #expect(FileOperations.conflicts(urls: urls, into: dst) == ["photo.jpg"])
             // Unique names into an empty destination stay conflict-free.
             try Data().write(to: src.appendingPathComponent("x.txt"))
             try Data().write(to: src.appendingPathComponent("y.txt"))
-            #expect(FileOperations.conflicts(
-                urls: [src.appendingPathComponent("x.txt"), src.appendingPathComponent("y.txt")], into: dst).isEmpty)
+            #expect(
+                FileOperations.conflicts(
+                    urls: [
+                        src.appendingPathComponent("x.txt"), src.appendingPathComponent("y.txt"),
+                    ], into: dst
+                ).isEmpty)
         }
     }
 
@@ -266,10 +290,14 @@ import Testing
             try FileManager.default.createDirectory(at: b, withIntermediateDirectories: true)
             try Data("1".utf8).write(to: a.appendingPathComponent("photo.jpg"))
             try Data("2".utf8).write(to: b.appendingPathComponent("photo.jpg"))
-            let urls = [a.appendingPathComponent("photo.jpg"), b.appendingPathComponent("photo.jpg")]
+            let urls = [
+                a.appendingPathComponent("photo.jpg"), b.appendingPathComponent("photo.jpg"),
+            ]
             let outcome = FileOperations.copy(urls: urls, into: dst, onConflict: .keepBoth)
             // Both land (one keeps the name, the other is auto-numbered); nothing is skipped.
-            let landed = try FileManager.default.contentsOfDirectory(atPath: dst.path).filter { $0.hasSuffix(".jpg") }
+            let landed = try FileManager.default.contentsOfDirectory(atPath: dst.path).filter {
+                $0.hasSuffix(".jpg")
+            }
             #expect(landed.count == 2)
             #expect(outcome.skipped.isEmpty)
         }
@@ -281,25 +309,33 @@ import Testing
             try Data("old".utf8).write(to: dst.appendingPathComponent("c.txt"))
             // Replace: dst/c.txt "old" -> "new", with "old" displaced to the Trash.
             let outcome = FileOperations.copy(["c.txt"], from: src, to: dst, onConflict: .replace)
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "new")
 
             // Undo restores "old".
             let undo = FileOperations.undo(outcome.performed)
             #expect(undo.failures.isEmpty)
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "old")
 
             // Redo re-applies the replace, re-trashing the restored "old" to a FRESH trash location
             // recorded in redo.performed.
             let redo = FileOperations.redo(undo.performed)
             #expect(redo.failures.isEmpty)
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "new")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "new")
 
             // The bit the code warns about: undoing the redo must restore "old" again, using the
             // fresh trash location redo recorded, not the stale original -- otherwise a later undo
             // trashes the wrong file.
             let undo2 = FileOperations.undo(redo.performed)
             #expect(undo2.failures.isEmpty)
-            #expect(try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8) == "old")
+            #expect(
+                try String(contentsOf: dst.appendingPathComponent("c.txt"), encoding: .utf8)
+                    == "old")
         }
     }
 
@@ -350,14 +386,17 @@ import Testing
             #expect(names.count == 2)
             #expect(try String(contentsOf: original, encoding: .utf8) == "new")  // reoccupier untouched
             let restored = try #require(names.first { $0 != "c.txt" })
-            #expect(try String(contentsOf: dir.appendingPathComponent(restored), encoding: .utf8) == "old")
+            #expect(
+                try String(contentsOf: dir.appendingPathComponent(restored), encoding: .utf8)
+                    == "old")
         }
     }
 
     @Test func pasteCopyFromArbitrarySourceURLs() throws {
         try withTwoDirs { src, dst in
             try Data("x".utf8).write(to: src.appendingPathComponent("a.txt"))
-            let outcome = FileOperations.copy(urls: [src.appendingPathComponent("a.txt")], into: dst)
+            let outcome = FileOperations.copy(
+                urls: [src.appendingPathComponent("a.txt")], into: dst)
             #expect(outcome.failures.isEmpty)
             #expect(exists(dst.appendingPathComponent("a.txt")))
             #expect(exists(src.appendingPathComponent("a.txt")))
@@ -367,7 +406,8 @@ import Testing
     @Test func pasteMoveFromArbitrarySourceURLs() throws {
         try withTwoDirs { src, dst in
             try Data().write(to: src.appendingPathComponent("m.txt"))
-            let outcome = FileOperations.move(urls: [src.appendingPathComponent("m.txt")], into: dst)
+            let outcome = FileOperations.move(
+                urls: [src.appendingPathComponent("m.txt")], into: dst)
             #expect(outcome.performed.count == 1)
             #expect(exists(dst.appendingPathComponent("m.txt")))
             #expect(!exists(src.appendingPathComponent("m.txt")))
@@ -378,7 +418,8 @@ import Testing
         try withTwoDirs { src, dst in
             try Data().write(to: src.appendingPathComponent("c.txt"))
             try Data().write(to: dst.appendingPathComponent("c.txt"))
-            let found = FileOperations.conflicts(urls: [src.appendingPathComponent("c.txt")], into: dst)
+            let found = FileOperations.conflicts(
+                urls: [src.appendingPathComponent("c.txt")], into: dst)
             #expect(found == ["c.txt"])
         }
     }
