@@ -20,21 +20,32 @@ extension BrowserViewController {
             lines.append("\(pass ? "ok  " : "FAIL") \(name) (\(detail))")
         }
         let size = view.window?.frame.size ?? .zero
-        check("window-size", size.width >= 700 && size.height >= 400, "\(Int(size.width))x\(Int(size.height))")
+        check(
+            "window-size", size.width >= 700 && size.height >= 400,
+            "\(Int(size.width))x\(Int(size.height))")
         let sidebarW = sidebar.containerView.frame.width
         check("sidebar-width", (100...360).contains(sidebarW), "\(Int(sidebarW))")
-        check("left-pane-visible", leftTabs.containerView.frame.width > 50, "\(Int(leftTabs.containerView.frame.width))")
-        check("right-pane-visible", rightTabs.containerView.frame.width > 50, "\(Int(rightTabs.containerView.frame.width))")
+        check(
+            "left-pane-visible", leftTabs.containerView.frame.width > 50,
+            "\(Int(leftTabs.containerView.frame.width))")
+        check(
+            "right-pane-visible", rightTabs.containerView.frame.width > 50,
+            "\(Int(rightTabs.containerView.frame.width))")
         // The file list must actually have vertical room. A near-zero height with the pane at
         // full width is the "blank panes" regression: the tab bar / toolbar stacks stretched and
         // squeezed the list flat. Rows exist (data is fine) but nothing is visible.
         let leftContentH = leftTabs.activePane?.debugContentHeight() ?? 0
         let rightContentH = rightTabs.activePane?.debugContentHeight() ?? 0
         lines.append("info browser-heights [\(debugBrowserHeights())]")
-        lines.append("info pane-heights L[\(leftTabs.activePane?.debugPaneHeights() ?? "?")] R[\(rightTabs.activePane?.debugPaneHeights() ?? "?")]")
-        check("pane-content-not-squished", leftContentH > 150 && rightContentH > 150,
+        lines.append(
+            "info pane-heights L[\(leftTabs.activePane?.debugPaneHeights() ?? "?")] R[\(rightTabs.activePane?.debugPaneHeights() ?? "?")]"
+        )
+        check(
+            "pane-content-not-squished", leftContentH > 150 && rightContentH > 150,
             "left=\(Int(leftContentH)) right=\(Int(rightContentH))")
-        check("left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false, "\(leftTabs.activePane?.entries.count ?? -1) entries")
+        check(
+            "left-pane-has-rows", leftTabs.activePane?.entries.isEmpty == false,
+            "\(leftTabs.activePane?.entries.count ?? -1) entries")
         // Regression: squeeze the right pane narrow, widen it back, and the list columns
         // must refill the pane. The old frame-based chrome measurement read the blank
         // space as chrome and locked every column at its floor (tiny columns filling
@@ -51,7 +62,9 @@ extension BrowserViewController {
         lines.append("info left-folder (\(leftTabs.activePane?.currentURL.path ?? "?"))")
         // The listing reads off the main thread now; a stale read of a folder we've navigated
         // away from (or a superseded reload) must not clobber the current rows.
-        check("reload-superseding-guard", leftTabs.activePane?.debugSupersededListingIsDropped() == true, "stale reads dropped")
+        check(
+            "reload-superseding-guard",
+            leftTabs.activePane?.debugSupersededListingIsDropped() == true, "stale reads dropped")
         // Regression: draggingEnded: must reach the ObjC runtime. It is an optional
         // NSDraggingDestination method NSView does not implement, so a plain Swift override is NOT
         // exposed as @objc -- AppKit's cross-app drag completion then sends draggingEnded:, hits an
@@ -61,7 +74,9 @@ extension BrowserViewController {
         let draggingEndedSel = Selector(("draggingEnded:"))
         let tableExposes = KeyTableView().responds(to: draggingEndedSel)
         let gridExposes = KeyCollectionView(frame: .zero).responds(to: draggingEndedSel)
-        check("drag-ended-selector-exposed", tableExposes && gridExposes, "table=\(tableExposes) grid=\(gridExposes)")
+        check(
+            "drag-ended-selector-exposed", tableExposes && gridExposes,
+            "table=\(tableExposes) grid=\(gridExposes)")
         // Finder-style rename: Return triggers rename (not open), and beginning an edit on a
         // single selection flips the list's name cell editable. Ending it unchanged (resign first
         // responder) must rename nothing, so this leaves no filesystem state behind.
@@ -90,23 +105,30 @@ extension BrowserViewController {
         }
         // Selecting folders shows a combined size: a selected folder's calculated size is summed into
         // the selection summary (it used to be excluded, so multi-folder selections showed no size).
-        if let pane = leftTabs.activePane, let folder = pane.entries.first(where: { $0.isDirectory }) {
+        if let pane = leftTabs.activePane,
+            let folder = pane.entries.first(where: { $0.isDirectory })
+        {
             check(
-                "selection-size-includes-folders", pane.debugSelectionSizeIncludesFolder(folder.name),
+                "selection-size-includes-folders",
+                pane.debugSelectionSizeIncludesFolder(folder.name),
                 "folder '\(folder.name)' size summed")
         }
         // Empty Trash must be reachable from the Trash location with nothing selected: the folder
         // predicate that gates the background-menu entry has to recognize ~/.Trash and reject others.
-        let trashDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        let trashDir = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
+            ".Trash")
         let home = FileManager.default.homeDirectoryForCurrentUser
         check(
             "empty-trash-folder-predicate",
-            FileContextMenuController.isTrashFolder(trashDir) && !FileContextMenuController.isTrashFolder(home),
-            "trash=\(FileContextMenuController.isTrashFolder(trashDir)) home=\(FileContextMenuController.isTrashFolder(home))")
+            FileContextMenuController.isTrashFolder(trashDir)
+                && !FileContextMenuController.isTrashFolder(home),
+            "trash=\(FileContextMenuController.isTrashFolder(trashDir)) home=\(FileContextMenuController.isTrashFolder(home))"
+        )
         // The preview pane routes PDFs to the PDFKit viewer (real zoom/scroll/print) and everything
         // else to Quick Look.
         let preview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 300, height: 400))
-        let tmpPDF = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-smoke.pdf")
+        let tmpPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-smoke.pdf")
         let doc = PDFDocument()
         doc.insert(PDFPage(), at: 0)
         doc.write(to: tmpPDF)
@@ -115,10 +137,13 @@ extension BrowserViewController {
         preview.show(URL(fileURLWithPath: "/etc/hosts"))  // a non-PDF -> Quick Look
         let qlRouted = !preview.debugShowingPDF
         try? FileManager.default.removeItem(at: tmpPDF)
-        check("preview-routes-pdf-vs-quicklook", pdfRouted && qlRouted, "pdf=\(pdfRouted) ql=\(qlRouted)")
+        check(
+            "preview-routes-pdf-vs-quicklook", pdfRouted && qlRouted,
+            "pdf=\(pdfRouted) ql=\(qlRouted)")
         // An encrypted PDF loads as a non-nil but locked document; it must fall through to Quick
         // Look (which prompts for the password), not render blank behind dead zoom/print controls.
-        let lockedPDF = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-smoke-locked.pdf")
+        let lockedPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-smoke-locked.pdf")
         let lockedDoc = PDFDocument()
         lockedDoc.insert(PDFPage(), at: 0)
         lockedDoc.write(
@@ -127,7 +152,9 @@ extension BrowserViewController {
         lockedPreview.show(lockedPDF)
         let lockedRoutedToQL = !lockedPreview.debugShowingPDF
         try? FileManager.default.removeItem(at: lockedPDF)
-        check("encrypted-pdf-falls-back-to-quicklook", lockedRoutedToQL, "showingPDF=\(lockedPreview.debugShowingPDF)")
+        check(
+            "encrypted-pdf-falls-back-to-quicklook", lockedRoutedToQL,
+            "showingPDF=\(lockedPreview.debugShowingPDF)")
         // Markup persists: add a highlight and save, then reload from disk and confirm the annotation
         // round-tripped into the PDF (the core of the Preview-like editing path).
         let markupPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -137,7 +164,8 @@ extension BrowserViewController {
         markupDoc.write(to: markupPDF)
         let markupPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 400, height: 500))
         markupPreview.show(markupPDF)
-        let saved = markupPreview.debugMarkUpAndSave(rect: CGRect(x: 40, y: 60, width: 120, height: 18))
+        let saved = markupPreview.debugMarkUpAndSave(
+            rect: CGRect(x: 40, y: 60, width: 120, height: 18))
         let reloadedAnnotations = PDFDocument(url: markupPDF)?.page(at: 0)?.annotations.count ?? 0
         try? FileManager.default.removeItem(at: markupPDF)
         check(
@@ -184,7 +212,8 @@ extension BrowserViewController {
         let shapesPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
         shapesPreview.show(shapesPDF)
         let shapesOK = shapesPreview.debugDrawShapesAndSave()
-        let shapeTypes = Set((PDFDocument(url: shapesPDF)?.page(at: 0)?.annotations ?? []).map { $0.type ?? "" })
+        let shapeTypes = Set(
+            (PDFDocument(url: shapesPDF)?.page(at: 0)?.annotations ?? []).map { $0.type ?? "" })
         try? FileManager.default.removeItem(at: shapesPDF)
         check(
             "pdf-shapes-roundtrip",
@@ -199,7 +228,8 @@ extension BrowserViewController {
         let textPreview = DocumentPreviewView(frame: NSRect(x: 0, y: 0, width: 612, height: 792))
         textPreview.show(textPDF)
         let textOK = textPreview.debugDrawTextAndSave()
-        let textTypes = Set((PDFDocument(url: textPDF)?.page(at: 0)?.annotations ?? []).map { $0.type ?? "" })
+        let textTypes = Set(
+            (PDFDocument(url: textPDF)?.page(at: 0)?.annotations ?? []).map { $0.type ?? "" })
         try? FileManager.default.removeItem(at: textPDF)
         check(
             "pdf-text-roundtrip", textOK && textTypes.isSuperset(of: ["FreeText", "Text"]),
@@ -230,7 +260,8 @@ extension BrowserViewController {
         // Track A8: the image-only pane toolbar controls (back/forward/up/sort/actions/view) carry
         // VoiceOver labels, not just tooltips.
         check(
-            "toolbar-accessibility-labels", leftTabs.activePane?.debugToolbarAccessibilityLabeled() == true,
+            "toolbar-accessibility-labels",
+            leftTabs.activePane?.debugToolbarAccessibilityLabeled() == true,
             "back/forward/up/sort/actions/view labeled")
         // Track C: the reconciled translations actually load at runtime -- not just that the
         // .strings parse. Resolve a known key through the de and ja bundles and confirm it comes
@@ -241,21 +272,31 @@ extension BrowserViewController {
             if let path = pathemResourceBundle.path(forResource: lang, ofType: "lproj"),
                 let bundle = Bundle(path: path)
             {
-                let resolved = bundle.localizedString(forKey: "common.open", value: "MISSING", table: nil)
-                if resolved != expected { l10nOK = false; l10nDetail += " \(lang)=\(resolved)" }
+                let resolved = bundle.localizedString(
+                    forKey: "common.open", value: "MISSING", table: nil)
+                if resolved != expected {
+                    l10nOK = false
+                    l10nDetail += " \(lang)=\(resolved)"
+                }
             } else {
                 l10nOK = false
                 l10nDetail += " \(lang)=noBundle"
             }
         }
-        check("localization-loads-at-runtime", l10nOK, l10nDetail.isEmpty ? "de+ja resolve" : l10nDetail)
+        check(
+            "localization-loads-at-runtime", l10nOK,
+            l10nDetail.isEmpty ? "de+ja resolve" : l10nDetail)
         // Empty Trash appears on the Trash background (empty-space right-click), not only via a
         // selected item -- and only in the Trash, not an ordinary folder.
-        let trashFolderURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        let trashFolderURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(
+            ".Trash")
         let homeFolderURL = FileManager.default.homeDirectoryForCurrentUser
-        let trashHasEmpty = leftTabs.activePane?.debugBackgroundMenuHasEmptyTrash(forDir: trashFolderURL) ?? false
-        let homeHasEmpty = leftTabs.activePane?.debugBackgroundMenuHasEmptyTrash(forDir: homeFolderURL) ?? false
-        check("trash-background-empty-trash", trashHasEmpty && !homeHasEmpty,
+        let trashHasEmpty =
+            leftTabs.activePane?.debugBackgroundMenuHasEmptyTrash(forDir: trashFolderURL) ?? false
+        let homeHasEmpty =
+            leftTabs.activePane?.debugBackgroundMenuHasEmptyTrash(forDir: homeFolderURL) ?? false
+        check(
+            "trash-background-empty-trash", trashHasEmpty && !homeHasEmpty,
             "trash=\(trashHasEmpty) home=\(homeHasEmpty)")
         // A8: the list name cell reads the clean filename to VoiceOver, not the git/tag decoration.
         // Check the first entry row (a grouped view puts a header at row 0); skip only if there are
@@ -279,7 +320,8 @@ extension BrowserViewController {
         let wasRunning = terminal.isRunning
         let savedVisible = UserDefaults.standard.bool(forKey: "pathem.terminalVisible")
         if terminal.view.isHidden { toggleTerminal() }
-        check("terminal-opens", !terminal.view.isHidden && terminal.isRunning,
+        check(
+            "terminal-opens", !terminal.view.isHidden && terminal.isRunning,
             "visible=\(!terminal.view.isHidden) running=\(terminal.isRunning)")
         if !wasVisible, !terminal.view.isHidden { toggleTerminal() }  // we opened it; hide again
         if !wasRunning, terminal.isRunning { terminal.shutdown() }  // we started the shell; stop it
@@ -307,7 +349,9 @@ extension BrowserViewController {
         let galleryView = GalleryController()
         galleryView.directoryURL = leftTabs.activePane?.currentURL
         galleryView.setEntries(leftTabs.activePane?.entries ?? [], preserveState: false)
-        check("gallery-view-renders", galleryView.entries.count > 0, "\(galleryView.entries.count) entries")
+        check(
+            "gallery-view-renders", galleryView.entries.count > 0,
+            "\(galleryView.entries.count) entries")
         // New Folder must let you name it: the create trips the folder watcher, whose debounced
         // reload would otherwise cancel the inline rename the moment it begins. The post-listing
         // follow-up drops that redundant refresh so naming survives.
@@ -319,9 +363,12 @@ extension BrowserViewController {
         // tabs, and a Recent Folders section -- above the OS-appended defaults, a real launcher.
         if let delegate = NSApp.delegate as? PathemAppDelegate {
             let dock = delegate.applicationDockMenu(NSApp)
-            let actions = dock?.items.filter { $0.action != nil && $0.representedObject == nil }.count ?? 0
+            let actions =
+                dock?.items.filter { $0.action != nil && $0.representedObject == nil }.count ?? 0
             // Tabs carry an opaque ref; recent folders carry a URL -- distinguish them.
-            let tabEntries = dock?.items.filter { $0.representedObject != nil && !($0.representedObject is URL) }.count ?? 0
+            let tabEntries =
+                dock?.items.filter { $0.representedObject != nil && !($0.representedObject is URL) }
+                .count ?? 0
             // Seed a recent folder (in-memory only, restored after) and confirm the section renders.
             let savedRecents = recentFolders
             recentFolders = [FileManager.default.homeDirectoryForCurrentUser] + savedRecents
@@ -332,18 +379,28 @@ extension BrowserViewController {
                 "dock-menu-populated", actions >= 2 && tabEntries >= 1 && recentEntries >= 1,
                 "actions=\(actions) tabs=\(tabEntries) recents=\(recentEntries)")
         }
+        check(
+            "stateful-browser-controllers-own-wiring",
+            splitLayout.ownsSplitDelegates && menuInstaller.installedMenuCount == 5,
+            "splitDelegates=\(splitLayout.ownsSplitDelegates) installedMenus=\(menuInstaller.installedMenuCount)/5"
+        )
         // Regression: selecting a pane must activate it (and take keyboard focus) in EVERY view
         // mode. Icon and Gallery once failed to forward their grid's focus (onBecomeActive), so
         // clicking such a pane left the active pane -- and focus -- on the previously active one.
-        check("view-focus-activates-pane", iconView.debugForwardsFocusToPane && galleryView.debugForwardsFocusToPane,
-            "icon=\(iconView.debugForwardsFocusToPane) gallery=\(galleryView.debugForwardsFocusToPane)")
+        check(
+            "view-focus-activates-pane",
+            iconView.debugForwardsFocusToPane && galleryView.debugForwardsFocusToPane,
+            "icon=\(iconView.debugForwardsFocusToPane) gallery=\(galleryView.debugForwardsFocusToPane)"
+        )
         // The bundled changelog is present and parses into versioned entries; the Release Notes
         // window (Help menu, on demand) renders from exactly this.
         let changelogEntries =
             pathemResourceBundle.url(forResource: "CHANGELOG", withExtension: "md")
             .flatMap { try? String(contentsOf: $0, encoding: .utf8) }
             .map { ChangelogParser.parse($0) } ?? []
-        check("changelog-bundled-and-parses", changelogEntries.count >= 1, "\(changelogEntries.count) versions")
+        check(
+            "changelog-bundled-and-parses", changelogEntries.count >= 1,
+            "\(changelogEntries.count) versions")
         // The "Update Ready" title-bar button stays hidden until an update is pending, then shows.
         // Sparkle is dormant on unsigned builds, so simulate a pending update, confirm the button
         // becomes visible, then restore so the run leaves no state behind.
@@ -351,18 +408,22 @@ extension BrowserViewController {
             installUpdateButtonIfNeeded()
             let hadPending = updater.pendingUpdateVersion
             updater.debugSetPendingUpdate(version: "9.9.9")
-            let accessory = view.window?.titlebarAccessoryViewControllers.first { $0 is UpdateButtonAccessory }
+            let accessory = view.window?.titlebarAccessoryViewControllers.first {
+                $0 is UpdateButtonAccessory
+            }
             let shown = accessory?.isHidden == false && updater.pendingUpdateVersion == "9.9.9"
             check(
                 "update-button-shows-when-pending", shown,
-                "pending=\(updater.pendingUpdateVersion ?? "nil") hidden=\(accessory?.isHidden.description ?? "no-accessory")")
+                "pending=\(updater.pendingUpdateVersion ?? "nil") hidden=\(accessory?.isHidden.description ?? "no-accessory")"
+            )
             updater.debugSetPendingUpdate(version: hadPending)  // restore
             // The relaunch affordance: when a NEWER build is installed under the running app (no
             // network update), the same title-bar button offers a relaunch. Simulate the
             // stale-build signal and confirm the button appears. StaleBuildState.current is
             // process-scoped (reset each launch), so this doesn't leak across runs.
             StaleBuildState.record(
-                AppRelaunch.StaleBuild(installedAt: Date(timeIntervalSinceNow: 120), launchedAt: Date()))
+                AppRelaunch.StaleBuild(
+                    installedAt: Date(timeIntervalSinceNow: 120), launchedAt: Date()))
             check(
                 "relaunch-button-shows-when-build-stale", accessory?.isHidden == false,
                 "hidden=\(accessory?.isHidden.description ?? "no-accessory")")
@@ -410,17 +471,24 @@ extension BrowserViewController {
         }
         // Preview pane must not collapse the panes to zero (the auto-preview layout bug):
         // toggling it on keeps the panes wide, and toggling it off restores their width.
-        check("preview-pane-keeps-panes", debugPreviewToggleKeepsPanes(), "panes survive preview toggle")
+        check(
+            "preview-pane-keeps-panes", debugPreviewToggleKeepsPanes(),
+            "panes survive preview toggle")
         // Every context-menu command resolves to an icon (a mistyped SF Symbol name would
         // silently drop the glyph, leaving the item icon-less).
-        let iconlessCommands = FileListController.contextCommands.filter { MenuIcons.image(forCommand: $0.id) == nil }
+        let iconlessCommands = FileListController.contextCommands.filter {
+            MenuIcons.image(forCommand: $0.id) == nil
+        }
         check(
             "context-menu-icons", iconlessCommands.isEmpty,
             iconlessCommands.isEmpty ? "all present" : "missing: \(iconlessCommands.map(\.id))")
         // Copy Path / Copy Name are offered in the right-click menu everywhere (all views share it).
         let ctxIDs = Set(FileListController.contextCommands.map(\.id))
-        check("copy-path-in-context-menu", ctxIDs.isSuperset(of: ["files.copyPath", "files.copyName"]),
-            "copyPath=\(ctxIDs.contains("files.copyPath")) copyName=\(ctxIDs.contains("files.copyName"))")
+        check(
+            "copy-path-in-context-menu",
+            ctxIDs.isSuperset(of: ["files.copyPath", "files.copyName"]),
+            "copyPath=\(ctxIDs.contains("files.copyPath")) copyName=\(ctxIDs.contains("files.copyName"))"
+        )
         // Every default hotkey resolves to a registered command -- catches a binding that
         // points at a renamed or removed command id (a silently dead key). The wiring check
         // between the keymap and the command registry.
@@ -439,9 +507,13 @@ extension BrowserViewController {
         // Extensions stay OFF by default: an FDA host must not load foreign code without an explicit
         // opt-in (PATHEM_ENABLE_EXTENSIONS or the pathem.extensionsEnabled default). No ext.* commands.
         let extCmds = commands.all.filter { $0.id.hasPrefix("ext.") }
-        check("extensions-off-by-default", extCmds.isEmpty, "\(extCmds.count) ext.* commands without opt-in")
+        check(
+            "extensions-off-by-default", extCmds.isEmpty,
+            "\(extCmds.count) ext.* commands without opt-in")
         // Every super-drag flick direction maps to a registered command (same wiring check).
-        let deadFlicks = DragGestureMap.standard.bindings.filter { commands.command($0.value) == nil }
+        let deadFlicks = DragGestureMap.standard.bindings.filter {
+            commands.command($0.value) == nil
+        }
         check(
             "drag-gestures-resolve", deadFlicks.isEmpty,
             deadFlicks.isEmpty
@@ -475,79 +547,104 @@ extension BrowserViewController {
             let hidden = !sidebar.debugSystemItemPaths.contains(sysPath)
             sidebar.debugRestoreHiddenItems()
             let restored = sidebar.debugSystemItemPaths.contains(sysPath)
-            check("sidebar-hide-restore-system-item", hidden && restored,
+            check(
+                "sidebar-hide-restore-system-item", hidden && restored,
                 "path=\(sysPath) hidden=\(hidden) restored=\(restored)")
         }
         // Eject heuristic (Finder parity): the boot volume never ejects; an external USB/Thunderbolt
         // SSD (ejectable == removable == false, but internal == false) does; a plain internal partition
         // does not; removable media and network mounts do.
         let bootEjects = SidebarController.volumeIsEjectable(
-            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: true)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true,
+            isInternal: true, isRootFileSystem: true)
         let extSSD = SidebarController.volumeIsEjectable(
-            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true, isInternal: false, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true,
+            isInternal: false, isRootFileSystem: false)
         let internalPart = SidebarController.volumeIsEjectable(
-            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true, isInternal: true, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: true,
+            isInternal: true, isRootFileSystem: false)
         let usbStick = SidebarController.volumeIsEjectable(
-            isBrowsable: true, isEjectable: true, isRemovable: true, isLocal: true, isInternal: false, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: true, isRemovable: true, isLocal: true,
+            isInternal: false, isRootFileSystem: false)
         let networkMount = SidebarController.volumeIsEjectable(
-            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: false, isInternal: nil, isRootFileSystem: false)
+            isBrowsable: true, isEjectable: false, isRemovable: false, isLocal: false,
+            isInternal: nil, isRootFileSystem: false)
         // A firmlinked system volume (Data/home) reports local == false but is non-browsable: must NOT eject.
         let hiddenSystem = SidebarController.volumeIsEjectable(
-            isBrowsable: false, isEjectable: false, isRemovable: false, isLocal: false, isInternal: nil, isRootFileSystem: false)
-        check("volume-eject-heuristic",
+            isBrowsable: false, isEjectable: false, isRemovable: false, isLocal: false,
+            isInternal: nil, isRootFileSystem: false)
+        check(
+            "volume-eject-heuristic",
             !bootEjects && extSSD && !internalPart && usbStick && networkMount && !hiddenSystem,
-            "boot=\(bootEjects) extSSD=\(extSSD) internal=\(internalPart) usb=\(usbStick) net=\(networkMount) hidden=\(hiddenSystem)")
+            "boot=\(bootEjects) extSSD=\(extSSD) internal=\(internalPart) usb=\(usbStick) net=\(networkMount) hidden=\(hiddenSystem)"
+        )
 
         // pathem CLI install safety: linkPointsToUs recognizes our own symlink and rejects one that
         // points elsewhere, so install()/remove() never clobber a file that isn't ours.
-        let cliDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-cli-\(UUID().uuidString)")
+        let cliDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-cli-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: cliDir, withIntermediateDirectories: true)
         let bundledCLI = cliDir.appendingPathComponent("pathem-cli")
         FileManager.default.createFile(atPath: bundledCLI.path, contents: Data("x".utf8))
         let oursLink = cliDir.appendingPathComponent("pathem")
         try? FileManager.default.createSymbolicLink(at: oursLink, withDestinationURL: bundledCLI)
         let foreignLink = cliDir.appendingPathComponent("pathem-foreign")
-        try? FileManager.default.createSymbolicLink(at: foreignLink, withDestinationURL: URL(fileURLWithPath: "/usr/bin/true"))
+        try? FileManager.default.createSymbolicLink(
+            at: foreignLink, withDestinationURL: URL(fileURLWithPath: "/usr/bin/true"))
         let recognizesOurs = PathemCLIInstall.linkPointsToUs(oursLink, bundled: bundledCLI)
         let rejectsForeign = !PathemCLIInstall.linkPointsToUs(foreignLink, bundled: bundledCLI)
-        check("cli-install-link-safety", recognizesOurs && rejectsForeign,
+        check(
+            "cli-install-link-safety", recognizesOurs && rejectsForeign,
             "ours=\(recognizesOurs) rejectsForeign=\(rejectsForeign)")
         try? FileManager.default.removeItem(at: cliDir)
 
         // Sublime integration: installing into an owned package dir writes our files (plugin driving
         // the pathem:// scheme), and remove deletes only that folder -- fully reversible.
-        let subRoot = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-sublime-\(UUID().uuidString)")
+        let subRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-sublime-\(UUID().uuidString)")
         let subPkg = subRoot.appendingPathComponent("Packages/Pathem")
         try? SublimeIntegration.install(into: subPkg)
-        let wrotePlugin = FileManager.default.fileExists(atPath: subPkg.appendingPathComponent("pathem_reveal.py").path)
-        let wroteMenu = FileManager.default.fileExists(atPath: subPkg.appendingPathComponent("Side Bar.sublime-menu").path)
-        let pluginText = (try? String(contentsOf: subPkg.appendingPathComponent("pathem_reveal.py"), encoding: .utf8)) ?? ""
+        let wrotePlugin = FileManager.default.fileExists(
+            atPath: subPkg.appendingPathComponent("pathem_reveal.py").path)
+        let wroteMenu = FileManager.default.fileExists(
+            atPath: subPkg.appendingPathComponent("Side Bar.sublime-menu").path)
+        let pluginText =
+            (try? String(
+                contentsOf: subPkg.appendingPathComponent("pathem_reveal.py"), encoding: .utf8))
+            ?? ""
         let usesScheme = pluginText.contains("pathem://reveal")
         try? SublimeIntegration.remove(at: subPkg)
         let subRemoved = !FileManager.default.fileExists(atPath: subPkg.path)
-        check("sublime-integration-install-remove", wrotePlugin && wroteMenu && usesScheme && subRemoved,
+        check(
+            "sublime-integration-install-remove",
+            wrotePlugin && wroteMenu && usesScheme && subRemoved,
             "plugin=\(wrotePlugin) menu=\(wroteMenu) scheme=\(usesScheme) removed=\(subRemoved)")
         try? FileManager.default.removeItem(at: subRoot)
 
         // TextMate integration: an owned .tmbundle with a nested Commands/ file that drives the
         // pathem:// scheme; remove deletes only that bundle.
-        let tmRoot = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-tm-\(UUID().uuidString)")
+        let tmRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-tm-\(UUID().uuidString)")
         let tmBundle = tmRoot.appendingPathComponent("Bundles/Pathem.tmbundle")
         try? TextMateIntegration.install(into: tmBundle)
-        let wroteInfo = FileManager.default.fileExists(atPath: tmBundle.appendingPathComponent("info.plist").path)
+        let wroteInfo = FileManager.default.fileExists(
+            atPath: tmBundle.appendingPathComponent("info.plist").path)
         let cmdURL = tmBundle.appendingPathComponent("Commands/Reveal in Pathem.tmCommand")
         let wroteCommand = FileManager.default.fileExists(atPath: cmdURL.path)
         let cmdText = (try? String(contentsOf: cmdURL, encoding: .utf8)) ?? ""
         let tmScheme = cmdText.contains("pathem://reveal")
         try? TextMateIntegration.remove(at: tmBundle)
         let tmRemoved = !FileManager.default.fileExists(atPath: tmBundle.path)
-        check("textmate-integration-install-remove", wroteInfo && wroteCommand && tmScheme && tmRemoved,
+        check(
+            "textmate-integration-install-remove",
+            wroteInfo && wroteCommand && tmScheme && tmRemoved,
             "info=\(wroteInfo) command=\(wroteCommand) scheme=\(tmScheme) removed=\(tmRemoved)")
         try? FileManager.default.removeItem(at: tmRoot)
 
         // JetBrains integration: writes a Pathem-owned tools/Pathem.xml into each IDE profile (never
         // the user's External Tools.xml); the emitted XML must be well-formed and drive pathem-cli.
-        let jbRoot = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-jb-\(UUID().uuidString)")
+        let jbRoot = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-jb-\(UUID().uuidString)")
         let jbProfile = jbRoot.appendingPathComponent("IntelliJIdea2024.1")
         try? FileManager.default.createDirectory(at: jbProfile, withIntermediateDirectories: true)
         try? JetBrainsIntegration.install(into: [jbProfile])
@@ -555,56 +652,75 @@ extension BrowserViewController {
         let jbWrote = FileManager.default.fileExists(atPath: jbFile.path)
         let jbText = (try? String(contentsOf: jbFile, encoding: .utf8)) ?? ""
         let jbWellFormed = (try? XMLDocument(xmlString: jbText)) != nil
-        let jbContent = jbText.contains("<toolSet name=\"Pathem\">") && jbText.contains("reveal &quot;$FilePath$&quot;")
+        let jbContent =
+            jbText.contains("<toolSet name=\"Pathem\">")
+            && jbText.contains("reveal &quot;$FilePath$&quot;")
         try? JetBrainsIntegration.remove(from: [jbProfile])
         let jbRemoved = !FileManager.default.fileExists(atPath: jbFile.path)
-        check("jetbrains-integration-install-remove", jbWrote && jbWellFormed && jbContent && jbRemoved,
+        check(
+            "jetbrains-integration-install-remove",
+            jbWrote && jbWellFormed && jbContent && jbRemoved,
             "wrote=\(jbWrote) xml=\(jbWellFormed) content=\(jbContent) removed=\(jbRemoved)")
         try? FileManager.default.removeItem(at: jbRoot)
 
         // Torrent save path: a real configured folder is honored; empty or a missing folder falls
         // back to the system Downloads folder.
-        let tsvDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-tsv-\(UUID().uuidString)")
+        let tsvDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-tsv-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: tsvDir, withIntermediateDirectories: true)
-        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)
+            .first?.path
         let tsvPicked = TorrentSavePath.resolve(tsvDir.path) == tsvDir.path
         let tsvEmpty = TorrentSavePath.resolve("") == downloads
         let tsvMissing = TorrentSavePath.resolve("/no/such/dir-\(UUID().uuidString)") == downloads
-        check("torrent-save-path", tsvPicked && tsvEmpty && tsvMissing,
+        check(
+            "torrent-save-path", tsvPicked && tsvEmpty && tsvMissing,
             "picked=\(tsvPicked) empty=\(tsvEmpty) missing=\(tsvMissing)")
         try? FileManager.default.removeItem(at: tsvDir)
 
         // Overflow (…) toolbar menu: a Theme submenu listing every skin + appearance, plus Settings.
         let overflowMenu = NSMenu()
         populateOverflowMenu(overflowMenu)
-        let themeSub = overflowMenu.items.first { $0.title == L("overflow.theme", "Theme") }?.submenu
+        let themeSub = overflowMenu.items.first { $0.title == L("overflow.theme", "Theme") }?
+            .submenu
         // Every skin is listed (by name; "System" doubles as an appearance label, so match by presence).
         let allPresets = ThemePreset.presets.allSatisfy { preset in
             themeSub?.items.contains { $0.title == preset.name } ?? false
         }
-        let hasSettings = overflowMenu.items.contains { $0.title == L("overflow.settings", "Settings…") }
-        check("overflow-menu", themeSub != nil && allPresets && hasSettings,
+        let hasSettings = overflowMenu.items.contains {
+            $0.title == L("overflow.settings", "Settings…")
+        }
+        check(
+            "overflow-menu", themeSub != nil && allPresets && hasSettings,
             "theme=\(themeSub != nil) allPresets=\(allPresets) settings=\(hasSettings)")
 
         // Stale-build watch: a strictly-newer installed build (past the 5s grace) is stale; nil,
         // near-launch, and older are not -- so it never nags about the build it launched from.
         let launchRef = Date()
-        let sbNewer = AppRelaunch.isStale(installed: launchRef.addingTimeInterval(60), launched: launchRef)
+        let sbNewer = AppRelaunch.isStale(
+            installed: launchRef.addingTimeInterval(60), launched: launchRef)
         let sbNil = AppRelaunch.isStale(installed: nil, launched: launchRef)
-        let sbGrace = AppRelaunch.isStale(installed: launchRef.addingTimeInterval(2), launched: launchRef)
-        let sbOlder = AppRelaunch.isStale(installed: launchRef.addingTimeInterval(-60), launched: launchRef)
-        check("stale-build-watch", sbNewer && !sbNil && !sbGrace && !sbOlder,
+        let sbGrace = AppRelaunch.isStale(
+            installed: launchRef.addingTimeInterval(2), launched: launchRef)
+        let sbOlder = AppRelaunch.isStale(
+            installed: launchRef.addingTimeInterval(-60), launched: launchRef)
+        check(
+            "stale-build-watch", sbNewer && !sbNil && !sbGrace && !sbOlder,
             "newer=\(sbNewer) nil=\(sbNil) grace=\(sbGrace) older=\(sbOlder)")
 
         // Photos export naming: uniqueURL never overwrites an existing export.
-        let photosDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-photos-\(UUID().uuidString)")
+        let photosDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-photos-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: photosDir, withIntermediateDirectories: true)
         let firstExport = PhotoLibrary.uniqueURL(in: photosDir, name: "IMG_1.jpg")
         FileManager.default.createFile(atPath: firstExport.path, contents: Data())
         let secondExport = PhotoLibrary.uniqueURL(in: photosDir, name: "IMG_1.jpg")
-        let photosUnique = firstExport.lastPathComponent == "IMG_1.jpg" && secondExport.lastPathComponent == "IMG_1 2.jpg"
+        let photosUnique =
+            firstExport.lastPathComponent == "IMG_1.jpg"
+            && secondExport.lastPathComponent == "IMG_1 2.jpg"
         let photosCommand = commands.command("photos.open") != nil
-        check("photos-library", photosUnique && photosCommand,
+        check(
+            "photos-library", photosUnique && photosCommand,
             "unique=\(photosUnique) (\(secondExport.lastPathComponent)) command=\(photosCommand)")
         try? FileManager.default.removeItem(at: photosDir)
 
@@ -612,25 +728,36 @@ extension BrowserViewController {
         // a photo to a transparent-PNG sibling.
         let rbRegistered = commands.command("image.removeBackground") != nil
         let cutoutOK = SubjectLift.cutoutName(for: "beach.heic") == "beach Cutout.png"
-        check("remove-background", rbRegistered && cutoutOK, "registered=\(rbRegistered) cutout=\(cutoutOK)")
+        check(
+            "remove-background", rbRegistered && cutoutOK,
+            "registered=\(rbRegistered) cutout=\(cutoutOK)")
 
         // Vision auto-tag: the command is registered; classifying a non-image yields no tags (safe).
         let atRegistered = commands.command("image.autoTag") != nil
         let noJunkTags = ImageClassifier.classify(url: URL(fileURLWithPath: "/etc/hosts")).isEmpty
-        check("auto-tag", atRegistered && noJunkTags, "registered=\(atRegistered) noJunk=\(noJunkTags)")
+        check(
+            "auto-tag", atRegistered && noJunkTags,
+            "registered=\(atRegistered) noJunk=\(noJunkTags)")
 
         // Near-duplicate culler: command registered; a cluster's extras exclude the keeper.
         let ndRegistered = commands.command("image.findNearDuplicates") != nil
         let ndGroup = NearDuplicatePhotos.Group(
-            urls: [URL(fileURLWithPath: "/a.jpg"), URL(fileURLWithPath: "/b.jpg"), URL(fileURLWithPath: "/c.jpg")], keepIndex: 0)
-        check("near-duplicates", ndRegistered && ndGroup.extras.count == 2,
+            urls: [
+                URL(fileURLWithPath: "/a.jpg"), URL(fileURLWithPath: "/b.jpg"),
+                URL(fileURLWithPath: "/c.jpg"),
+            ], keepIndex: 0)
+        check(
+            "near-duplicates", ndRegistered && ndGroup.extras.count == 2,
             "registered=\(ndRegistered) extras=\(ndGroup.extras.count)")
 
         // Media conversion hub: both commands registered; targets map to the right file extensions.
         let extractReg = commands.command("media.extractAudio") != nil
         let mp4Reg = commands.command("media.convertToMP4") != nil
-        let mediaExtOK = MediaConverter.Target.m4aAudio.fileExtension == "m4a" && MediaConverter.Target.mp4.fileExtension == "mp4"
-        check("media-convert", extractReg && mp4Reg && mediaExtOK,
+        let mediaExtOK =
+            MediaConverter.Target.m4aAudio.fileExtension == "m4a"
+            && MediaConverter.Target.mp4.fileExtension == "mp4"
+        check(
+            "media-convert", extractReg && mp4Reg && mediaExtOK,
             "extract=\(extractReg) mp4=\(mp4Reg) ext=\(mediaExtOK)")
 
         // Crop editor: command registered; cropped-copy naming appends " Cropped".
@@ -646,7 +773,8 @@ extension BrowserViewController {
         // Metadata editor: command registered; Finder tags round-trip (set then clear) on a temp file.
         let meReg = commands.command("files.editMetadata") != nil
         var tagsRoundTrip = false
-        let tagFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-smoke-tag-\(UUID().uuidString).txt")
+        let tagFile = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-smoke-tag-\(UUID().uuidString).txt")
         if (try? Data("x".utf8).write(to: tagFile)) != nil {
             try? FileMetadata.setTags(["SmokeTag"], on: tagFile)
             let set = FileMetadata.tags(of: tagFile) == ["SmokeTag"]
@@ -655,29 +783,38 @@ extension BrowserViewController {
             tagsRoundTrip = set && cleared
             try? FileManager.default.removeItem(at: tagFile)
         }
-        check("metadata-editor", meReg && tagsRoundTrip, "registered=\(meReg) tags=\(tagsRoundTrip)")
+        check(
+            "metadata-editor", meReg && tagsRoundTrip, "registered=\(meReg) tags=\(tagsRoundTrip)")
 
         // VS Code / Cursor: both editors present in the integration list; the bundled .vsix resolves
         // (so one-click Integrate has something to install).
         let vscodeEditors = EditorIntegration.all.filter { $0.id.hasPrefix("vscode-") }.count
         let vsixFound = VSCodeIntegration.bundledVSIX() != nil
-        check("vscode-integration", vscodeEditors == 2 && vsixFound, "editors=\(vscodeEditors) vsix=\(vsixFound)")
+        check(
+            "vscode-integration", vscodeEditors == 2 && vsixFound,
+            "editors=\(vscodeEditors) vsix=\(vsixFound)")
 
         // Lazy tag decoration: listing a 2,000-entry folder must enqueue tag reads only for the
         // visible window, not all 2,000 (the O(total-entries) getxattr pass the perf audit flagged).
-        let tagProbeDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-tagperf-\(UUID().uuidString)")
+        let tagProbeDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-tagperf-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: tagProbeDir, withIntermediateDirectories: true)
         let tagProbeEntries = (0..<2000).map {
-            FileEntry(name: "f\(String(format: "%04d", $0)).txt", isDirectory: false, size: 1, modificationDate: nil)
+            FileEntry(
+                name: "f\(String(format: "%04d", $0)).txt", isDirectory: false, size: 1,
+                modificationDate: nil)
         }
         let tagEnqueued = FileListController().debugTagReadsEnqueued(
             listing: tagProbeEntries, in: tagProbeDir, visibleHeight: 400)
         try? FileManager.default.removeItem(at: tagProbeDir)
-        check("tag-decoration-lazy", tagEnqueued > 0 && tagEnqueued < 200, "enqueued=\(tagEnqueued) of \(tagProbeEntries.count) visible-window")
+        check(
+            "tag-decoration-lazy", tagEnqueued > 0 && tagEnqueued < 200,
+            "enqueued=\(tagEnqueued) of \(tagProbeEntries.count) visible-window")
         // A click with trackpad jitter starts a tiny NSTableView drag; dropping it near another file
         // popped the "Move Here?" menu the user never asked for. A drop must travel a real distance to
         // count as a move; cross-pane drops (no local start) stay unaffected.
-        check("micro-drag-ignored", FileListController().debugMicroDragIgnored(),
+        check(
+            "micro-drag-ignored", FileListController().debugMicroDragIgnored(),
             "near=accidental, far=intentional, cross-pane=allowed")
         // New Folder created the item but skipped the inline rename: an FSEvents tick for the folder
         // reloaded the list and cancelled the just-opened edit. The pane now defers reloads while
@@ -693,25 +830,30 @@ extension BrowserViewController {
         view.window?.contentView?.addSubview(cosmeticProbe.scrollView)
         let survives = cosmeticProbe.debugCosmeticReloadKeepsInlineEdit()
         cosmeticProbe.scrollView.removeFromSuperview()
-        check("cosmetic-reload-keeps-inline-edit", survives, "inline rename survives a folder-size/tag/git refresh")
+        check(
+            "cosmetic-reload-keeps-inline-edit", survives,
+            "inline rename survives a folder-size/tag/git refresh")
 
         // Lazy semantic index: opening/navigating folders must not build the content-reading index
         // (it reads + embeds up to 5000 files); it builds only on first search. The app has launched
         // and navigated (home) but nothing has searched, so no folder is indexed.
-        check("semantic-index-lazy", semanticSearch.cachedDirectory == nil,
+        check(
+            "semantic-index-lazy", semanticSearch.cachedDirectory == nil,
             "cached=\(semanticSearch.cachedDirectory?.lastPathComponent ?? "nil")")
 
         // Demo workspace (first-run tour): the command is registered and build() produces a real,
         // navigable sample tree with the expected dual-pane starts.
         let demo = DemoWorkspace.build()
         let demoReg = commands.command("help.demoWorkspace") != nil
-        let demoDirs = FileManager.default.fileExists(atPath: demo.leftStart.path)
+        let demoDirs =
+            FileManager.default.fileExists(atPath: demo.leftStart.path)
             && FileManager.default.fileExists(atPath: demo.rightStart.path)
         check("demo-workspace", demoReg && demoDirs, "registered=\(demoReg) dirs=\(demoDirs)")
 
         // Trash Put-Back ledger: trashing a file records where it came from, and undo (Put Back)
         // restores it -- the recovery path users trust. Uses a temp file, restored then removed.
-        let putBackProbe = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-putback-\(UUID().uuidString).txt")
+        let putBackProbe = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-putback-\(UUID().uuidString).txt")
         var putBackOK = false
         var putBackDetail = "no file"
         if (try? Data("x".utf8).write(to: putBackProbe)) != nil {
@@ -727,41 +869,53 @@ extension BrowserViewController {
         check("trash-putback-ledger", putBackOK, putBackDetail)
 
         // SFTP host-key check: a host we've never seen isn't pinned, so the first-connect prompt fires.
-        let hostKeyUnknown = !HostKeyCheck.isKnown(host: "pathem-\(UUID().uuidString).invalid", port: 22)
+        let hostKeyUnknown = !HostKeyCheck.isKnown(
+            host: "pathem-\(UUID().uuidString).invalid", port: 22)
         check("sftp-hostkey-check", hostKeyUnknown, "unknown host not pinned")
 
         // Out-drag of a text-like file (HTML) is a plain file URL with NO promise, so Messages/Mail
         // attach it instead of inlining its text; a binary (PNG) keeps its file promise (for browser
         // upload zones).
-        let dragDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-drag-\(UUID().uuidString)")
+        let dragDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-drag-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: dragDir, withIntermediateDirectories: true)
         let htmlURL = dragDir.appendingPathComponent("page.html")
         let pngURL = dragDir.appendingPathComponent("pic.png")
         try? Data("<html><body>hi</body></html>".utf8).write(to: htmlURL)
         try? Data([0x89, 0x50, 0x4E, 0x47]).write(to: pngURL)  // PNG magic; extension resolves the type
-        let htmlNoPromise = FileDrag.isTextLike(htmlURL) && !(FileDrag.item(for: htmlURL) is NSFilePromiseProvider)
-        let pngHasPromise = !FileDrag.isTextLike(pngURL) && FileDrag.item(for: pngURL) is NSFilePromiseProvider
+        let htmlNoPromise =
+            FileDrag.isTextLike(htmlURL) && !(FileDrag.item(for: htmlURL) is NSFilePromiseProvider)
+        let pngHasPromise =
+            !FileDrag.isTextLike(pngURL) && FileDrag.item(for: pngURL) is NSFilePromiseProvider
         try? FileManager.default.removeItem(at: dragDir)
-        check("drag-text-attaches", htmlNoPromise && pngHasPromise, "html-fileURL=\(htmlNoPromise) png-promise=\(pngHasPromise)")
+        check(
+            "drag-text-attaches", htmlNoPromise && pngHasPromise,
+            "html-fileURL=\(htmlNoPromise) png-promise=\(pngHasPromise)")
 
         // Grouped duplicate resolver: keep one per set. A 3-file set queues 2, a 2-file set queues 1.
         func dupEntry(_ name: String, _ loc: String) -> FileEntry {
-            FileEntry(name: name, isDirectory: false, size: 10, modificationDate: nil, location: loc)
+            FileEntry(
+                name: name, isDirectory: false, size: 10, modificationDate: nil, location: loc)
         }
         let dupGroups = [
-            DuplicateFinder.Group(hash: "a", files: [dupEntry("a1", "/x"), dupEntry("a2", "/y"), dupEntry("a3", "/z")]),
+            DuplicateFinder.Group(
+                hash: "a",
+                files: [dupEntry("a1", "/x"), dupEntry("a2", "/y"), dupEntry("a3", "/z")]),
             DuplicateFinder.Group(hash: "b", files: [dupEntry("b1", "/x"), dupEntry("b2", "/y")]),
         ]
         let dupQueued = DuplicatesController().debugQueuedCount(groups: dupGroups)
         let dupReg = commands.command("files.findDuplicates") != nil
-        check("duplicates-resolver", dupReg && dupQueued == 3, "registered=\(dupReg) queued=\(dupQueued) keep-one-per-set")
+        check(
+            "duplicates-resolver", dupReg && dupQueued == 3,
+            "registered=\(dupReg) queued=\(dupQueued) keep-one-per-set")
 
         // Match Finder: applying a mapped Finder value flips the matching Pathem pref and reports it;
         // a nil field is left untouched. In-memory only (applyFinderMatch doesn't persist), and reset
         // after so the real preferences file is never touched.
         let mfHidden = prefs.showHiddenByDefault
         let mfFolders = prefs.foldersFirst
-        let mfChanges = applyFinderMatch(.init(showHidden: !mfHidden, foldersFirst: nil, defaultView: nil))
+        let mfChanges = applyFinderMatch(
+            .init(showHidden: !mfHidden, foldersFirst: nil, defaultView: nil))
         let mfFlipped = prefs.showHiddenByDefault == !mfHidden
         let mfUntouched = prefs.foldersFirst == mfFolders  // nil field left alone
         prefs.showHiddenByDefault = mfHidden  // reset in memory (never persisted)
@@ -772,19 +926,24 @@ extension BrowserViewController {
         // unchanged, and invalidated when it changes. In-memory store (nil fileURL) so the smoke
         // never writes the real cache file.
         let sizeStore = FolderSizeStore(cache: FolderSizeCache(), fileURL: nil)
-        let szDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-size-\(UUID().uuidString)")
+        let szDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-size-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: szDir, withIntermediateDirectories: true)
         let szMtime = FolderSizeStore.mtimeKey(of: szDir)
-        sizeStore.record(path: szDir.path, measurement: .init(bytes: 4096, complete: true), mtime: szMtime)
+        sizeStore.record(
+            path: szDir.path, measurement: .init(bytes: 4096, complete: true), mtime: szMtime)
         let szHit = sizeStore.measurement(forPath: szDir.path, mtime: szMtime)?.bytes == 4096
         let szMissOnChange = sizeStore.measurement(forPath: szDir.path, mtime: szMtime + 1) == nil
         try? FileManager.default.removeItem(at: szDir)
-        check("folder-size-cache", szHit && szMissOnChange, "hit=\(szHit) missOnChange=\(szMissOnChange)")
+        check(
+            "folder-size-cache", szHit && szMissOnChange,
+            "hit=\(szHit) missOnChange=\(szMissOnChange)")
         // The sidebar tracks the current folder like Finder/Music: highlight the matching row,
         // deselect when the folder isn't a sidebar item.
         let homeURL = FileManager.default.homeDirectoryForCurrentUser
         sidebar.highlightFolder(homeURL)
-        let tracksHome = sidebar.debugSelectedFolderURL?.standardizedFileURL == homeURL.standardizedFileURL
+        let tracksHome =
+            sidebar.debugSelectedFolderURL?.standardizedFileURL == homeURL.standardizedFileURL
         sidebar.highlightFolder(URL(fileURLWithPath: "/System/Volumes/nope-not-a-sidebar-item"))
         let deselectsOffList = sidebar.debugSelectedFolderURL == nil
         check(
@@ -796,7 +955,8 @@ extension BrowserViewController {
         // to two rows, and assert the offset returns to zero.
         let tallList = (0..<40).map {
             FileEntry(
-                name: String(format: "row-%02d.txt", $0), isDirectory: false, size: 0, modificationDate: nil)
+                name: String(format: "row-%02d.txt", $0), isDirectory: false, size: 0,
+                modificationDate: nil)
         }
         let shrink = FileListController()
         shrink.debugLayout(width: 300, height: 100)  // small viewport so the list overflows
@@ -817,15 +977,22 @@ extension BrowserViewController {
                 themes: TerminalTheme.presets.map(\.name), current: terminal.theme.name,
                 follows: terminalFollows, onSelectTheme: { _ in }, onToggleFollows: { _ in }),
             onChange: { _ in }, onKeymapChange: { _ in }, onGestureChange: { _ in })
-        check("settings-embeds", !settingsView.subviews.isEmpty, "\(settingsView.subviews.count) subviews")
+        check(
+            "settings-embeds", !settingsView.subviews.isEmpty,
+            "\(settingsView.subviews.count) subviews")
         // Organize review sheet: build it with synthetic suggestions (a move and a trash)
         // so a crash in the row/detail layout is caught headlessly.
         let review = OrganizeReviewController(
-            feedbackURL: FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fb-smoke.json"))
+            feedbackURL: FileManager.default.temporaryDirectory.appendingPathComponent(
+                "pathem-fb-smoke.json"))
         review.debugLoad([
-            .init(file: URL(fileURLWithPath: "/tmp/a.png"), kind: .move(to: URL(fileURLWithPath: "/tmp/Images")),
-                ruleID: "by-kind", rationale: "Image to Images", confidence: 0.8, size: 1234, accepted: true),
-            .init(file: URL(fileURLWithPath: "/tmp/.DS_Store"), kind: .trash, ruleID: "junk",
+            .init(
+                file: URL(fileURLWithPath: "/tmp/a.png"),
+                kind: .move(to: URL(fileURLWithPath: "/tmp/Images")),
+                ruleID: "by-kind", rationale: "Image to Images", confidence: 0.8, size: 1234,
+                accepted: true),
+            .init(
+                file: URL(fileURLWithPath: "/tmp/.DS_Store"), kind: .trash, ruleID: "junk",
                 rationale: "System junk file", confidence: 0.9, size: 6, accepted: true),
         ])
         check("organize-review-builds", review.debugRowCount == 2, "\(review.debugRowCount) rows")
@@ -834,59 +1001,94 @@ extension BrowserViewController {
         // The ambient download chip must render its suggestion text without crashing.
         let chip = DownloadSuggestionBar()
         chip.show(fileURL: URL(fileURLWithPath: "/tmp/invoice.pdf"), destinationName: "PDFs")
-        check("download-chip-builds", chip.debugVisibleText?.contains("PDFs") == true, chip.debugVisibleText ?? "nil")
+        check(
+            "download-chip-builds", chip.debugVisibleText?.contains("PDFs") == true,
+            chip.debugVisibleText ?? "nil")
         // The transfer queue holds when paused and re-queues a failed job on retry.
         check("transfer-queue-pause-retry", TransferQueueController().debugPauseRetry(), "")
         // New Folder with Selection: create a folder, move items in, and undo back to the start.
-        let nfwsDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-nfws-\(UUID().uuidString)")
+        let nfwsDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-nfws-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: nfwsDir, withIntermediateDirectories: true)
-        for name in ["a.txt", "b.txt"] { try? "x".write(to: nfwsDir.appendingPathComponent(name), atomically: true, encoding: .utf8) }
-        let nfwsFolder = (try? FileOperations.makeFolder(in: nfwsDir, baseName: "New Folder With Items")) ?? ""
+        for name in ["a.txt", "b.txt"] {
+            try? "x".write(
+                to: nfwsDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        let nfwsFolder =
+            (try? FileOperations.makeFolder(in: nfwsDir, baseName: "New Folder With Items")) ?? ""
         let nfwsOutcome = FileOperations.move(
-            ["a.txt", "b.txt"], from: nfwsDir, to: nfwsDir.appendingPathComponent(nfwsFolder), onConflict: .keepBoth)
+            ["a.txt", "b.txt"], from: nfwsDir, to: nfwsDir.appendingPathComponent(nfwsFolder),
+            onConflict: .keepBoth)
         let movedIn = FileManager.default.fileExists(
             atPath: nfwsDir.appendingPathComponent(nfwsFolder).appendingPathComponent("a.txt").path)
         FileOperations.undo(nfwsOutcome.performed)  // move back out
         _ = FileOperations.trash([nfwsFolder], in: nfwsDir)  // and remove the emptied folder
-        let backOut = FileManager.default.fileExists(atPath: nfwsDir.appendingPathComponent("a.txt").path)
-        check("new-folder-with-selection", !nfwsFolder.isEmpty && movedIn && backOut,
+        let backOut = FileManager.default.fileExists(
+            atPath: nfwsDir.appendingPathComponent("a.txt").path)
+        check(
+            "new-folder-with-selection", !nfwsFolder.isEmpty && movedIn && backOut,
             "folder=\(nfwsFolder) movedIn=\(movedIn) undone=\(backOut)")
         try? FileManager.default.removeItem(at: nfwsDir)
         // The cursor-anchored confirmation popover builds its content without a layout crash, and
         // a non-Ask conflict default resolves without prompting.
-        check("cursor-confirm-builds",
-            cursorConfirm.debugBuildsController(buttons: ["Replace", "Keep Both", "Skip", "Cancel"]), "")
-        check("conflict-default-maps",
-            ConflictDefault.keepBoth.resolution == .keepBoth && ConflictDefault.ask.resolution == nil, "")
+        check(
+            "cursor-confirm-builds",
+            cursorConfirm.debugBuildsController(buttons: ["Replace", "Keep Both", "Skip", "Cancel"]
+            ), "")
+        check(
+            "conflict-default-maps",
+            ConflictDefault.keepBoth.resolution == .keepBoth
+                && ConflictDefault.ask.resolution == nil, "")
         // Verified copy: copying a file with verify on succeeds (SHA-256 matches) and lands.
-        let vDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-verify-\(UUID().uuidString)")
+        let vDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-verify-\(UUID().uuidString)")
         let vSrcDir = vDir.appendingPathComponent("src")
         let vDstDir = vDir.appendingPathComponent("dst")
         try? FileManager.default.createDirectory(at: vSrcDir, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: vDstDir, withIntermediateDirectories: true)
         let vSrc = vSrcDir.appendingPathComponent("v.txt")
-        try? String(repeating: "payload ", count: 2000).write(to: vSrc, atomically: true, encoding: .utf8)
+        try? String(repeating: "payload ", count: 2000).write(
+            to: vSrc, atomically: true, encoding: .utf8)
         let vOutcome = FileOperations.copy(urls: [vSrc], into: vDstDir, verify: true)
-        let vOK = vOutcome.failures.isEmpty
+        let vOK =
+            vOutcome.failures.isEmpty
             && FileManager.default.fileExists(atPath: vDstDir.appendingPathComponent("v.txt").path)
-        check("verified-copy", vOK, "performed=\(vOutcome.performed.count) failures=\(vOutcome.failures.count)")
+        check(
+            "verified-copy", vOK,
+            "performed=\(vOutcome.performed.count) failures=\(vOutcome.failures.count)")
         try? FileManager.default.removeItem(at: vDir)
         // Arrange By: ungrouped is 1:1 items; grouping by kind adds section headers and keeps
         // every item, mapping each display row back to an entry.
         let gEntries = [
-            FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil, location: nil),
-            FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil, location: nil),
-            FileEntry(name: "c.txt", isDirectory: false, size: 10, modificationDate: nil, location: nil),
+            FileEntry(
+                name: "b.txt", isDirectory: false, size: 10, modificationDate: nil, location: nil),
+            FileEntry(
+                name: "afolder", isDirectory: true, size: 0, modificationDate: nil, location: nil),
+            FileEntry(
+                name: "c.txt", isDirectory: false, size: 10, modificationDate: nil, location: nil),
         ]
         let flat = FileGrouping.rows(gEntries, by: .none, now: Date())
         let grouped = FileGrouping.rows(gEntries, by: .kind, now: Date())
-        func headers(_ r: [FileGrouping.Row]) -> Int { r.filter { if case .header = $0 { return true }; return false }.count }
-        func items(_ r: [FileGrouping.Row]) -> Int { r.filter { if case .item = $0 { return true }; return false }.count }
-        check("arrange-by-grouping",
+        func headers(_ r: [FileGrouping.Row]) -> Int {
+            r.filter {
+                if case .header = $0 { return true }
+                return false
+            }.count
+        }
+        func items(_ r: [FileGrouping.Row]) -> Int {
+            r.filter {
+                if case .item = $0 { return true }
+                return false
+            }.count
+        }
+        check(
+            "arrange-by-grouping",
             flat.count == 3 && headers(flat) == 0 && items(grouped) == 3 && headers(grouped) >= 2,
             "flat=\(flat.count) groupedHeaders=\(headers(grouped)) groupedItems=\(items(grouped))")
         // And against the real list view: grouping + selection maps back to the right entry.
-        check("arrange-by-selection", leftTabs.activePane?.debugGroupedSelectionRoundTrips() ?? true, "")
+        check(
+            "arrange-by-selection", leftTabs.activePane?.debugGroupedSelectionRoundTrips() ?? true,
+            "")
         // Collapsible sections: collapsing a group hides its items but keeps the header, and
         // re-expanding restores the rows.
         check("collapsible-sections", leftTabs.activePane?.debugCollapseHidesItems() ?? true, "")
@@ -896,7 +1098,9 @@ extension BrowserViewController {
         let ecOut = ExternalCommandRunner.run(
             ExternalCommand(id: "smoke", name: "echo", command: "echo ok"),
             files: [], directory: FileManager.default.temporaryDirectory)
-        check("external-command-runs", ecOut.succeeded && ecOut.text.contains("ok"), "exit=\(ecOut.exitCode)")
+        check(
+            "external-command-runs", ecOut.succeeded && ecOut.text.contains("ok"),
+            "exit=\(ecOut.exitCode)")
         // Undo history: two path-disjoint actions; the older is independently undoable, and a
         // selective undo runs just its reverse and enables redo.
         let history = ActionHistory()
@@ -911,10 +1115,12 @@ extension BrowserViewController {
         }
         let indepA = history.isIndependentlyUndoable(at: 0)
         let didUndoA = history.undo(at: 0)
-        check("undo-history-selective", indepA && didUndoA && undoLog == ["undoA"] && history.canRedo,
+        check(
+            "undo-history-selective", indepA && didUndoA && undoLog == ["undoA"] && history.canRedo,
             "indep=\(indepA) undid=\(didUndoA) log=\(undoLog) canRedo=\(history.canRedo)")
         // The real file-op undo path: move a file, register it in the live history, then undo it.
-        let uDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-undo-\(UUID().uuidString)")
+        let uDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-undo-\(UUID().uuidString)")
         let uSrc = uDir.appendingPathComponent("src")
         let uDst = uDir.appendingPathComponent("dst")
         try? FileManager.default.createDirectory(at: uSrc, withIntermediateDirectories: true)
@@ -922,9 +1128,11 @@ extension BrowserViewController {
         try? "x".write(to: uSrc.appendingPathComponent("f.txt"), atomically: true, encoding: .utf8)
         let uOutcome = FileOperations.move(["f.txt"], from: uSrc, to: uDst, onConflict: .keepBoth)
         registerUndo(uOutcome.performed, actionName: "Move")
-        let movedOK = FileManager.default.fileExists(atPath: uDst.appendingPathComponent("f.txt").path)
+        let movedOK = FileManager.default.fileExists(
+            atPath: uDst.appendingPathComponent("f.txt").path)
         actionHistory.undo()  // reverses the move
-        let undoneOK = FileManager.default.fileExists(atPath: uSrc.appendingPathComponent("f.txt").path)
+        let undoneOK =
+            FileManager.default.fileExists(atPath: uSrc.appendingPathComponent("f.txt").path)
             && !FileManager.default.fileExists(atPath: uDst.appendingPathComponent("f.txt").path)
         check("undo-file-move", movedOK && undoneOK, "moved=\(movedOK) undone=\(undoneOK)")
         try? FileManager.default.removeItem(at: uDir)
@@ -936,13 +1144,15 @@ extension BrowserViewController {
         check("aux-panels-build", panelsOK, "diff/xattr/attrs/automation")
         // End-to-end ambient path: point Downloads at a temp dir, drop a file, run one change
         // pass, and confirm the chip offers to move it (catches wiring bugs the unit tests can't).
-        let dlDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dl-\(UUID().uuidString)")
+        let dlDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-dl-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: dlDir, withIntermediateDirectories: true)
         try? Data("x".utf8).write(to: dlDir.appendingPathComponent("receipt.pdf"))
         downloadSuggestions.debugRunCheck(  // empty seed => receipt.pdf reads as newly arrived
             folder: dlDir, seedKnown: [], feedbackURL: Self.organizeFeedbackURL)
         check(
-            "download-suggestion-fires", downloadSuggestions.debugChipText?.contains("receipt.pdf") == true,
+            "download-suggestion-fires",
+            downloadSuggestions.debugChipText?.contains("receipt.pdf") == true,
             downloadSuggestions.debugChipText ?? "no chip")
         downloadSuggestions.debugReset()
         try? FileManager.default.removeItem(at: dlDir)
@@ -1017,10 +1227,12 @@ extension BrowserViewController {
         // browser upload zones and sandboxed apps -- which materialize the promise into
         // DataTransfer.files -- silently reject the drop. (Text-like files intentionally have no
         // promise; see drag-text-attaches.)
-        let promiseScratch = NSPasteboard(name: NSPasteboard.Name("com.scarcrux.pathem.promisecheck"))
+        let promiseScratch = NSPasteboard(
+            name: NSPasteboard.Name("com.scarcrux.pathem.promisecheck"))
         promiseScratch.clearContents()
         promiseScratch.writeObjects([FileDrag.item(for: URL(fileURLWithPath: "/tmp/a.png"))])
-        let promiseType = NSPasteboard.PasteboardType("com.apple.pasteboard.promised-file-content-type")
+        let promiseType = NSPasteboard.PasteboardType(
+            "com.apple.pasteboard.promised-file-content-type")
         let hasPromise = promiseScratch.types?.contains(promiseType) ?? false
         let promiseFileURL = promiseScratch.canReadObject(
             forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
@@ -1050,7 +1262,8 @@ extension BrowserViewController {
         let promiseSem = DispatchSemaphore(value: 0)
         DispatchQueue.global(qos: .userInitiated).async {
             _ = fulfiller.operationQueue(for: promiseItem)  // the exact call that trapped
-            promiseBox.name = fulfiller.filePromiseProvider(promiseItem, fileNameForType: "public.plain-text")
+            promiseBox.name = fulfiller.filePromiseProvider(
+                promiseItem, fileNameForType: "public.plain-text")
             // Actually fulfill the promise, exactly as a receiver (Messages) triggers it.
             fulfiller.filePromiseProvider(promiseItem, writePromiseTo: promiseDest) { err in
                 promiseBox.error = err
@@ -1058,22 +1271,28 @@ extension BrowserViewController {
             }
         }
         promiseSem.wait()
-        let wrote = promiseBox.error == nil && FileManager.default.fileExists(atPath: promiseDest.path)
-        check("promise-fulfills-offmain", promiseBox.name == promiseSrc.lastPathComponent && wrote,
-            "name=\(promiseBox.name) wrote=\(wrote) err=\(promiseBox.error.map { "\($0)" } ?? "nil")")
+        let wrote =
+            promiseBox.error == nil && FileManager.default.fileExists(atPath: promiseDest.path)
+        check(
+            "promise-fulfills-offmain", promiseBox.name == promiseSrc.lastPathComponent && wrote,
+            "name=\(promiseBox.name) wrote=\(wrote) err=\(promiseBox.error.map { "\($0)" } ?? "nil")"
+        )
         try? FileManager.default.removeItem(at: promiseSrc)
         try? FileManager.default.removeItem(at: promiseDest.deletingLastPathComponent())
         // Dragging a FOLDER out must land the whole tree, not a truncated stub. A folder drags as a
         // plain file URL with NO promise (a folder promise makes Finder pull a truncated stub); a
         // regular file still advertises a promise (browser upload zones need it). Also confirm the
         // fulfiller copies a directory recursively, for any receiver that does pull a promise.
-        let dirSrc = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dragdir-\(UUID().uuidString)")
+        let dirSrc = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-dragdir-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(
             at: dirSrc.appendingPathComponent("sub"), withIntermediateDirectories: true)
-        try? "one".write(to: dirSrc.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+        try? "one".write(
+            to: dirSrc.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
         try? String(repeating: "x", count: 5000).write(
             to: dirSrc.appendingPathComponent("sub/big.txt"), atomically: true, encoding: .utf8)
-        let dirProvider = NSFilePromiseProvider(fileType: "public.folder", delegate: FilePromiseFulfiller.shared)
+        let dirProvider = NSFilePromiseProvider(
+            fileType: "public.folder", delegate: FilePromiseFulfiller.shared)
         dirProvider.userInfo = dirSrc
         let dirDest = FileManager.default.temporaryDirectory
             .appendingPathComponent("pathem-dragdst-\(UUID().uuidString)")
@@ -1090,18 +1309,22 @@ extension BrowserViewController {
         }
         dirSem.wait()
         let copiedBigSize =
-            ((try? FileManager.default.attributesOfItem(atPath: dirDest.appendingPathComponent("sub/big.txt").path))?[.size]
+            ((try? FileManager.default.attributesOfItem(
+                atPath: dirDest.appendingPathComponent("sub/big.txt").path))?[.size]
                 as? Int) ?? 0
         let treeCopied =
             dirBox.error == nil
             && FileManager.default.fileExists(atPath: dirDest.appendingPathComponent("a.txt").path)
             && copiedBigSize == 5000
-        let promiseContentType = NSPasteboard.PasteboardType("com.apple.pasteboard.promised-file-content-type")
+        let promiseContentType = NSPasteboard.PasteboardType(
+            "com.apple.pasteboard.promised-file-content-type")
         func advertised(_ url: URL) -> (fileURL: Bool, promise: Bool) {
-            let pb = NSPasteboard(name: NSPasteboard.Name("com.scarcrux.pathem.dragw-\(UUID().uuidString)"))
+            let pb = NSPasteboard(
+                name: NSPasteboard.Name("com.scarcrux.pathem.dragw-\(UUID().uuidString)"))
             pb.clearContents()
             pb.writeObjects([FileDrag.item(for: url)])
-            let hasURL = pb.canReadObject(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            let hasURL = pb.canReadObject(
+                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
             return (hasURL, pb.types?.contains(promiseContentType) ?? false)
         }
         let dirAd = advertised(dirSrc)
@@ -1111,7 +1334,8 @@ extension BrowserViewController {
         check(
             "folder-drag-whole-tree-no-promise",
             treeCopied && dirAd.fileURL && !dirAd.promise && fileAd.fileURL && fileAd.promise,
-            "tree=\(treeCopied) big=\(copiedBigSize) dir(url=\(dirAd.fileURL),promise=\(dirAd.promise)) file(url=\(fileAd.fileURL),promise=\(fileAd.promise))")
+            "tree=\(treeCopied) big=\(copiedBigSize) dir(url=\(dirAd.fileURL),promise=\(dirAd.promise)) file(url=\(fileAd.fileURL),promise=\(fileAd.promise))"
+        )
         // Get Info: presenting the inspector builds every field (metadata reads, open-with,
         // toggles) without crashing, and populates a reasonable number of them.
         let inspector = InfoInspectorController()
@@ -1119,47 +1343,71 @@ extension BrowserViewController {
             "pathem-info-\(UUID().uuidString).txt")
         try? "hi".write(to: infoTmp, atomically: true, encoding: .utf8)
         inspector.present(urls: [infoTmp], over: nil)
-        check("get-info-populates", inspector.debugFieldCount >= 5, "\(inspector.debugFieldCount) fields")
+        check(
+            "get-info-populates", inspector.debugFieldCount >= 5,
+            "\(inspector.debugFieldCount) fields")
         inspector.debugClose()
         try? FileManager.default.removeItem(at: infoTmp)
         // Semantic dedup + AI: the new commands are registered, clustering is crash-safe on empty
         // input, and the AI availability probe returns a defined value (whatever this Mac reports).
         let cmdIDs = Set(commands.all.map(\.id))
-        check("ai-commands-registered",
-            cmdIDs.isSuperset(of: ["files.findSimilarNames", "ai.renameSelection", "ai.summarizeFolder"]),
-            "have=\(["files.findSimilarNames", "ai.renameSelection", "ai.summarizeFolder"].filter(cmdIDs.contains).count)/3")
-        check("semantic-dedup-empty-safe", SemanticDedup.similarGroups([]).isEmpty, "no groups for no files")
-        check("ai-availability-defined", AIAssistant.availability.reason.isEmpty == AIAssistant.isAvailable,
-            "availability=\(AIAssistant.availability) reason=\"\(AIAssistant.availability.reason)\"")
+        check(
+            "ai-commands-registered",
+            cmdIDs.isSuperset(of: [
+                "files.findSimilarNames", "ai.renameSelection", "ai.summarizeFolder",
+            ]),
+            "have=\(["files.findSimilarNames", "ai.renameSelection", "ai.summarizeFolder"].filter(cmdIDs.contains).count)/3"
+        )
+        check(
+            "semantic-dedup-empty-safe", SemanticDedup.similarGroups([]).isEmpty,
+            "no groups for no files")
+        check(
+            "ai-availability-defined",
+            AIAssistant.availability.reason.isEmpty == AIAssistant.isAvailable,
+            "availability=\(AIAssistant.availability) reason=\"\(AIAssistant.availability.reason)\""
+        )
         // Multi-window: the primary is registered, the window commands exist, and a second browser
         // constructs as an independent (non-persisting) session so it can't clobber the primary's.
-        check("window-commands-registered", cmdIDs.isSuperset(of: ["window.new", "window.moveTabToNew"]),
+        check(
+            "window-commands-registered",
+            cmdIDs.isSuperset(of: ["window.new", "window.moveTabToNew"]),
             "have=\(["window.new", "window.moveTabToNew"].filter(cmdIDs.contains).count)/2")
-        let secondary = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser, persistsSession: false)
-        let interactive = BrowserViewController(start: FileManager.default.homeDirectoryForCurrentUser)  // default: owns the session
-        check("new-window-independent-session",
-            !secondary.persistsSession && interactive.persistsSession && WindowManager.shared.windowCount >= 1,
-            "secondaryPersists=\(secondary.persistsSession) interactivePersists=\(interactive.persistsSession) windows=\(WindowManager.shared.windowCount)")
+        let secondary = BrowserViewController(
+            start: FileManager.default.homeDirectoryForCurrentUser, persistsSession: false)
+        let interactive = BrowserViewController(
+            start: FileManager.default.homeDirectoryForCurrentUser)  // default: owns the session
+        check(
+            "new-window-independent-session",
+            !secondary.persistsSession && interactive.persistsSession
+                && WindowManager.shared.windowCount >= 1,
+            "secondaryPersists=\(secondary.persistsSession) interactivePersists=\(interactive.persistsSession) windows=\(WindowManager.shared.windowCount)"
+        )
         // An automation launch (this smoke run) must be detected as such, so it never persists over
         // the user's real session.json -- the bug where test runs left the app reopening on /tmp.
-        check("automation-launch-detected", PathemApp.isAutomationLaunch && !self.persistsSession,
+        check(
+            "automation-launch-detected", PathemApp.isAutomationLaunch && !self.persistsSession,
             "isAutomation=\(PathemApp.isAutomationLaunch) primaryPersists=\(self.persistsSession)")
         // Duplicate Tab (the tab right-click action): a new tab opens at the same folder. Close it
         // again to leave the tab set as it was.
         if let dupURL = leftTabs.activePane?.currentURL {
             let beforeTabs = leftTabs.tabFolders.count
             leftTabs.openTab(at: dupURL)
-            let dupOK = leftTabs.tabFolders.count == beforeTabs + 1 && leftTabs.tabFolders.last == dupURL.path
+            let dupOK =
+                leftTabs.tabFolders.count == beforeTabs + 1
+                && leftTabs.tabFolders.last == dupURL.path
             leftTabs.closeActiveTab()  // the duplicate is the focused/last tab
-            check("tab-duplicate", dupOK && leftTabs.tabFolders.count == beforeTabs,
+            check(
+                "tab-duplicate", dupOK && leftTabs.tabFolders.count == beforeTabs,
                 "before=\(beforeTabs) dupedAtSame=\(dupOK) restored=\(leftTabs.tabFolders.count)")
         }
         // Slideshow: the command is registered and the controller starts inactive (a headless
         // smoke must not pop a full-screen window, so we don't call start()).
-        check("slideshow-ready", cmdIDs.contains("view.slideshow") && !slideshow.isActive,
+        check(
+            "slideshow-ready", cmdIDs.contains("view.slideshow") && !slideshow.isActive,
             "registered=\(cmdIDs.contains("view.slideshow")) active=\(slideshow.isActive)")
         // Create PDF: two images combine into a real 2-page PDF.
-        let pdfDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-pdf-\(UUID().uuidString)")
+        let pdfDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-pdf-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: pdfDir, withIntermediateDirectories: true)
         var pdfImages: [URL] = []
         for i in 0..<2 {
@@ -1169,7 +1417,8 @@ extension BrowserViewController {
             NSRect(x: 0, y: 0, width: 60, height: 40).fill()
             image.unlockFocus()
             if let tiff = image.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
-                let png = rep.representation(using: .png, properties: [:]) {
+                let png = rep.representation(using: .png, properties: [:])
+            {
                 let url = pdfDir.appendingPathComponent("p\(i).png")
                 try? png.write(to: url)
                 pdfImages.append(url)
@@ -1181,18 +1430,25 @@ extension BrowserViewController {
         // Markup: draw a stroke over an image and flatten to a valid same-size PNG.
         let mkFile = pdfDir.appendingPathComponent("markup-src.png")
         let mkImage = NSImage(size: NSSize(width: 80, height: 60))
-        mkImage.lockFocus(); NSColor.white.setFill(); NSRect(x: 0, y: 0, width: 80, height: 60).fill(); mkImage.unlockFocus()
+        mkImage.lockFocus()
+        NSColor.white.setFill()
+        NSRect(x: 0, y: 0, width: 80, height: 60).fill()
+        mkImage.unlockFocus()
         if let tiff = mkImage.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
-            let png = rep.representation(using: .png, properties: [:]) {
+            let png = rep.representation(using: .png, properties: [:])
+        {
             try? png.write(to: mkFile)
         }
         let mkOut = markupController.debugMarkupAndSave(mkFile)
         let mkSize = mkOut.flatMap { NSImage(contentsOf: $0)?.size.width } ?? 0
-        check("markup-flattens", cmdIDs.contains("image.markup") && mkOut != nil && mkSize >= 80,
-            "registered=\(cmdIDs.contains("image.markup")) out=\(mkOut != nil) width=\(Int(mkSize))")
+        check(
+            "markup-flattens", cmdIDs.contains("image.markup") && mkOut != nil && mkSize >= 80,
+            "registered=\(cmdIDs.contains("image.markup")) out=\(mkOut != nil) width=\(Int(mkSize))"
+        )
         try? FileManager.default.removeItem(at: pdfDir)
         // Show Original: a symlink resolves to its target; a plain file resolves to nil.
-        let soDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-showorig-\(UUID().uuidString)")
+        let soDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-showorig-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: soDir, withIntermediateDirectories: true)
         let soTarget = soDir.appendingPathComponent("target.txt")
         let soLink = soDir.appendingPathComponent("link.txt")
@@ -1200,14 +1456,19 @@ extension BrowserViewController {
         try? FileManager.default.createSymbolicLink(at: soLink, withDestinationURL: soTarget)
         let resolvedLink = BrowserViewController.resolveOriginal(of: soLink)
         let resolvedPlain = BrowserViewController.resolveOriginal(of: soTarget)
-        check("show-original-resolves", resolvedLink?.lastPathComponent == "target.txt" && resolvedPlain == nil,
-            "link=\(resolvedLink?.lastPathComponent ?? "nil") plain=\(resolvedPlain?.lastPathComponent ?? "nil")")
+        check(
+            "show-original-resolves",
+            resolvedLink?.lastPathComponent == "target.txt" && resolvedPlain == nil,
+            "link=\(resolvedLink?.lastPathComponent ?? "nil") plain=\(resolvedPlain?.lastPathComponent ?? "nil")"
+        )
         try? FileManager.default.removeItem(at: soDir)
         // Batch metadata + server: the new commands are registered, and the Finder-comment writer
         // round-trips (set, read back, clear) through the engine.
-        check("batch-commands-registered",
+        check(
+            "batch-commands-registered",
             cmdIDs.isSuperset(of: ["files.setFinderComment", "files.connectToServer"]),
-            "have=\(["files.setFinderComment", "files.connectToServer"].filter(cmdIDs.contains).count)/2")
+            "have=\(["files.setFinderComment", "files.connectToServer"].filter(cmdIDs.contains).count)/2"
+        )
         // Remote bookmarks: the command is registered and a bookmark survives a save/jump
         // round-trip on a connection (mirrors what addBookmark writes into the store).
         var bmConn = RemoteConnection(name: "Site", proto: .sftp, host: "h.example.com")
@@ -1215,25 +1476,32 @@ extension BrowserViewController {
         let bmData = (try? JSONEncoder().encode(bmConn)).flatMap {
             try? JSONDecoder().decode(RemoteConnection.self, from: $0)
         }
-        check("remote-bookmarks",
-            cmdIDs.contains("files.addBookmark") && bmData?.bookmarks.first?.remotePath == "/var/log",
-            "cmd=\(cmdIDs.contains("files.addBookmark")) path=\(bmData?.bookmarks.first?.remotePath ?? "nil")")
+        check(
+            "remote-bookmarks",
+            cmdIDs.contains("files.addBookmark")
+                && bmData?.bookmarks.first?.remotePath == "/var/log",
+            "cmd=\(cmdIDs.contains("files.addBookmark")) path=\(bmData?.bookmarks.first?.remotePath ?? "nil")"
+        )
         // Sync browsing: the command is registered and a relative descend on one pane
         // maps onto the other pane's parallel tree (delta mirroring, not same-path lock).
         let syncDescend = SyncBrowse.mirroredPath(
             driverFrom: "/a/projA", driverTo: "/a/projA/src", otherAt: "/a/projB")
         let syncAscend = SyncBrowse.mirroredPath(
             driverFrom: "/a/projA/src", driverTo: "/a/projA", otherAt: "/a/projB/src")
-        check("sync-browse-delta",
+        check(
+            "sync-browse-delta",
             cmdIDs.contains("view.syncBrowsing") && syncDescend == "/a/projB/src"
                 && syncAscend == "/a/projB",
-            "cmd=\(cmdIDs.contains("view.syncBrowsing")) descend=\(syncDescend ?? "nil") ascend=\(syncAscend ?? "nil")")
+            "cmd=\(cmdIDs.contains("view.syncBrowsing")) descend=\(syncDescend ?? "nil") ascend=\(syncAscend ?? "nil")"
+        )
         // Azure Blob: the protocol dispatches to its provider and the Shared Key signer
         // produces a signature (correctness is unit-tested against an HMAC vector).
         let azureProvider = RemoteProviders.make(for: .azure) is AzureBlobProvider
         let azureSig = AzureSharedKey.signature(
-            key: Data("Jefe".utf8).base64EncodedString(), stringToSign: "what do ya want for nothing?")
-        check("azure-blob-backend",
+            key: Data("Jefe".utf8).base64EncodedString(),
+            stringToSign: "what do ya want for nothing?")
+        check(
+            "azure-blob-backend",
             azureProvider && RemoteConnection.Proto.allCases.contains(.azure) && azureSig != nil,
             "provider=\(azureProvider) signer=\(azureSig != nil)")
         // Cloud folder badges: a cloud folder's icon is decorated with a service glyph; a
@@ -1241,13 +1509,20 @@ extension BrowserViewController {
         let homeDir = NSHomeDirectory()
         let cloudDir = URL(fileURLWithPath: homeDir).appendingPathComponent("Library/CloudStorage")
         let baseIcon = NSWorkspace.shared.icon(forFile: "/")
-        let cloudFolder = FileEntry(name: "GoogleDrive-x@y.com", isDirectory: true, size: 0, modificationDate: nil)
-        let plainFolder = FileEntry(name: "Documents", isDirectory: true, size: 0, modificationDate: nil)
+        let cloudFolder = FileEntry(
+            name: "GoogleDrive-x@y.com", isDirectory: true, size: 0, modificationDate: nil)
+        let plainFolder = FileEntry(
+            name: "Documents", isDirectory: true, size: 0, modificationDate: nil)
         let badged = CloudBadge.decorate(baseIcon, for: cloudFolder, in: cloudDir)
-        let plain = CloudBadge.decorate(baseIcon, for: plainFolder, in: URL(fileURLWithPath: homeDir).appendingPathComponent("Code"))
-        check("cloud-folder-badge",
+        let plain = CloudBadge.decorate(
+            baseIcon, for: plainFolder,
+            in: URL(fileURLWithPath: homeDir).appendingPathComponent("Code"))
+        check(
+            "cloud-folder-badge",
             badged !== baseIcon && plain === baseIcon
-                && CloudLocation.service(forFolderAt: cloudDir.appendingPathComponent("GoogleDrive-x@y.com").path, home: homeDir) == .googleDrive,
+                && CloudLocation.service(
+                    forFolderAt: cloudDir.appendingPathComponent("GoogleDrive-x@y.com").path,
+                    home: homeDir) == .googleDrive,
             "badged=\(badged !== baseIcon) plainUntouched=\(plain === baseIcon)")
         // Context menu editor: a custom order reorders the right-click menu, and hiding drops
         // an item. Build a menu with copy first and Rename hidden, then read it back.
@@ -1255,10 +1530,12 @@ extension BrowserViewController {
         cmenu.hiddenItems = ["files.rename"]
         cmenu.menuOrder = ["files.copy", "files.open"]
         let cmenuCommands = cmenu.menu.items.compactMap { $0.representedObject as? String }
-        check("context-menu-reorder",
+        check(
+            "context-menu-reorder",
             Array(cmenuCommands.prefix(2)) == ["files.copy", "files.open"]
                 && !cmenuCommands.contains("files.rename"),
-            "first=\(Array(cmenuCommands.prefix(2))) hidRename=\(!cmenuCommands.contains("files.rename"))")
+            "first=\(Array(cmenuCommands.prefix(2))) hidRename=\(!cmenuCommands.contains("files.rename"))"
+        )
         // Color rules (labels): a matching rule yields a color/font; a non-match yields nil.
         let ruleSet = ColorRules(rules: [
             ColorRule(field: .ext, op: .isAnyOf, value: "log", colorHex: "#FF0000", bold: true)
@@ -1269,160 +1546,219 @@ extension BrowserViewController {
         let txtStyle = FileColorStyle.style(
             for: FileEntry(name: "a.txt", isDirectory: false, size: 1, modificationDate: nil),
             rules: ruleSet, baseFont: .systemFont(ofSize: 13))
-        check("color-rules", logStyle?.color != nil && txtStyle == nil,
+        check(
+            "color-rules", logStyle?.color != nil && txtStyle == nil,
             "matched=\(logStyle?.color != nil) unmatched=\(txtStyle == nil)")
         // Custom toolbar buttons: the customize palette exposes every registry command (not
         // just the curated catalog), so any command can be dragged onto the toolbar.
-        let paletteIDs = Set(toolbarAllowedItemIdentifiers(NSToolbar(identifier: "smoke")).map(\.rawValue))
-        check("toolbar-any-command",
+        let paletteIDs = Set(
+            toolbarAllowedItemIdentifiers(NSToolbar(identifier: "smoke")).map(\.rawValue))
+        check(
+            "toolbar-any-command",
             paletteIDs.contains(Self.toolbarCmdPrefix + "view.syncBrowsing")
                 && paletteIDs.count > Self.toolbarCatalog.count + 3,
             "palette=\(paletteIDs.count) catalog=\(Self.toolbarCatalog.count)")
         // Clean-uninstall + folder handler: the reset command is registered (never invoked
         // here -- it would wipe data), and the folder-default query answers without crashing.
-        check("uninstall-hooks",
+        check(
+            "uninstall-hooks",
             cmdIDs.contains("app.resetData") && (FolderHandler.isPathem || !FolderHandler.isPathem),
             "reset=\(cmdIDs.contains("app.resetData"))")
-        let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fc-\(UUID().uuidString).txt")
+        let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)
         try? FileMetadata.setFinderComment("smoke note", on: fcFile)
         let fcRead = FileMetadata.finderComment(of: fcFile)
         try? FileMetadata.setFinderComment("", on: fcFile)
         let fcCleared = FileMetadata.finderComment(of: fcFile) == nil
-        check("finder-comment-roundtrips", fcRead == "smoke note" && fcCleared, "read=\(fcRead ?? "nil") cleared=\(fcCleared)")
+        check(
+            "finder-comment-roundtrips", fcRead == "smoke note" && fcCleared,
+            "read=\(fcRead ?? "nil") cleared=\(fcCleared)")
         try? FileManager.default.removeItem(at: fcFile)
         // ACL editor: the command is registered, the panel constructs, and the engine adds then
         // removes an entry on a real file (no privileges needed for your own file).
         _ = ACLEditorController()
-        let aclFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-acl-\(UUID().uuidString).txt")
+        let aclFile = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-acl-\(UUID().uuidString).txt")
         try? "x".write(to: aclFile, atomically: true, encoding: .utf8)
-        let added = ACLEditor.add(principal: NSUserName(), allow: true, permissions: ["read"], to: aclFile) == nil
-        let listed = FileMetadata.aclEntries(of: aclFile)?.contains { $0.contains(NSUserName()) } ?? false
-        let removed = ACLEditor.removeEntry(at: 0, from: aclFile) == nil && FileMetadata.aclEntries(of: aclFile) == nil
-        check("acl-edit-roundtrips", cmdIDs.contains("files.editACL") && added && listed && removed,
-            "registered=\(cmdIDs.contains("files.editACL")) added=\(added) listed=\(listed) removed=\(removed)")
+        let added =
+            ACLEditor.add(principal: NSUserName(), allow: true, permissions: ["read"], to: aclFile)
+            == nil
+        let listed =
+            FileMetadata.aclEntries(of: aclFile)?.contains { $0.contains(NSUserName()) } ?? false
+        let removed =
+            ACLEditor.removeEntry(at: 0, from: aclFile) == nil
+            && FileMetadata.aclEntries(of: aclFile) == nil
+        check(
+            "acl-edit-roundtrips", cmdIDs.contains("files.editACL") && added && listed && removed,
+            "registered=\(cmdIDs.contains("files.editACL")) added=\(added) listed=\(listed) removed=\(removed)"
+        )
         try? FileManager.default.removeItem(at: aclFile)
         // Ownership: change-owner command registered, the sudo command builds correctly, and a
         // change-group applies without root (setting the file's own group is a valid no-op).
-        let ownFile = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-own-\(UUID().uuidString).txt")
+        let ownFile = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-own-\(UUID().uuidString).txt")
         try? "x".write(to: ownFile, atomically: true, encoding: .utf8)
-        let chownCmd = OwnershipEditor.sudoChownCommand(owner: "bob", group: "staff", recursive: false, paths: ["/tmp/a b"])
+        let chownCmd = OwnershipEditor.sudoChownCommand(
+            owner: "bob", group: "staff", recursive: false, paths: ["/tmp/a b"])
         let group = OwnershipEditor.read(ownFile)?.group ?? ""
-        let grpOK = BulkAttributes.apply(.init(groupOwnerName: group), to: [ownFile]).failures.isEmpty && !group.isEmpty
-        check("ownership-tools",
-            cmdIDs.contains("files.changeOwner") && chownCmd == "sudo chown 'bob:staff' '/tmp/a b'" && grpOK,
-            "registered=\(cmdIDs.contains("files.changeOwner")) cmd=\(chownCmd == "sudo chown 'bob:staff' '/tmp/a b'") group=\(grpOK)")
+        let grpOK =
+            BulkAttributes.apply(.init(groupOwnerName: group), to: [ownFile]).failures.isEmpty
+            && !group.isEmpty
+        check(
+            "ownership-tools",
+            cmdIDs.contains("files.changeOwner") && chownCmd == "sudo chown 'bob:staff' '/tmp/a b'"
+                && grpOK,
+            "registered=\(cmdIDs.contains("files.changeOwner")) cmd=\(chownCmd == "sudo chown 'bob:staff' '/tmp/a b'") group=\(grpOK)"
+        )
         try? FileManager.default.removeItem(at: ownFile)
         // Custom icon: the commands register and NSWorkspace applies then clears a custom icon.
-        let iconDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-icon-\(UUID().uuidString)")
+        let iconDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-icon-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: iconDir, withIntermediateDirectories: true)
         let customImage = NSImage(size: NSSize(width: 32, height: 32))
-        customImage.lockFocus(); NSColor.systemPink.setFill(); NSRect(x: 0, y: 0, width: 32, height: 32).fill(); customImage.unlockFocus()
+        customImage.lockFocus()
+        NSColor.systemPink.setFill()
+        NSRect(x: 0, y: 0, width: 32, height: 32).fill()
+        customImage.unlockFocus()
         let iconSet = NSWorkspace.shared.setIcon(customImage, forFile: iconDir.path, options: [])
         NSWorkspace.shared.setIcon(nil, forFile: iconDir.path, options: [])
-        check("custom-icon",
+        check(
+            "custom-icon",
             cmdIDs.isSuperset(of: ["files.setCustomIcon", "files.removeCustomIcon"]) && iconSet,
-            "registered=\(cmdIDs.isSuperset(of: ["files.setCustomIcon", "files.removeCustomIcon"])) set=\(iconSet)")
+            "registered=\(cmdIDs.isSuperset(of: ["files.setCustomIcon", "files.removeCustomIcon"])) set=\(iconSet)"
+        )
         try? FileManager.default.removeItem(at: iconDir)
         // Skinning: hex parsing, preset lookup, and an accent apply (restored afterward so the
         // running window keeps its configured skin).
         let parsedAccent = ThemeManager.color(fromHex: "#BD93F9")
         let emptyParse = ThemeManager.color(fromHex: "")
-        let presetName = ThemePreset.matching(accentHex: "#BD93F9", backgroundHex: "#282A36", appearance: .dark)?.name
+        let presetName = ThemePreset.matching(
+            accentHex: "#BD93F9", backgroundHex: "#282A36", appearance: .dark)?.name
         ThemeManager.shared.apply(accentHex: "#FF0000", windowTintHex: "")
         let accentApplied = ThemeManager.shared.customAccent != nil
-        ThemeManager.shared.apply(accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)  // restore
-        check("skinning-applies",
+        ThemeManager.shared.apply(
+            accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)  // restore
+        check(
+            "skinning-applies",
             parsedAccent != nil && emptyParse == nil && presetName == "Dracula" && accentApplied,
-            "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)")
+            "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)"
+        )
         // Folder backgrounds: the per-folder store round-trips (set, read, clear).
         check("folder-background-roundtrips", debugFolderBackgroundRoundTrips(), "")
         // Icon sets: a themed set renders an icon; "System" returns nil (use the OS icon).
-        let sampleFolder = FileEntry(name: "docs", isDirectory: true, size: 0, modificationDate: nil)
+        let sampleFolder = FileEntry(
+            name: "docs", isDirectory: true, size: 0, modificationDate: nil)
         IconSetManager.shared.setCurrent(named: "Vivid")
         let themedIcon = IconSetManager.shared.icon(for: sampleFolder)
         IconSetManager.shared.setCurrent(named: "System")
         let systemIcon = IconSetManager.shared.icon(for: sampleFolder)
         IconSetManager.shared.setCurrent(named: prefs.iconSetName)  // restore
-        check("icon-set-renders", themedIcon != nil && (themedIcon?.size.width ?? 0) > 0 && systemIcon == nil,
+        check(
+            "icon-set-renders",
+            themedIcon != nil && (themedIcon?.size.width ?? 0) > 0 && systemIcon == nil,
             "themed=\(themedIcon != nil) system=\(systemIcon == nil)")
         // Icon-view grouping: sections cover every entry and a selection maps back through the
         // section<->entry mapping.
         let gridGroup = IconCollectionController(gallery: false)
         gridGroup.directoryURL = URL(fileURLWithPath: "/tmp")
-        gridGroup.setEntries([
-            FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil),
-            FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil),
-            FileEntry(name: "c.txt", isDirectory: false, size: 10, modificationDate: nil),
-        ], preserveState: false)
+        gridGroup.setEntries(
+            [
+                FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil),
+                FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil),
+                FileEntry(name: "c.txt", isDirectory: false, size: 10, modificationDate: nil),
+            ], preserveState: false)
         check("icon-view-grouping", gridGroup.debugGroupRoundTrips(), "")
         // Flat / recursive view: the command is registered and the enumerator flattens a subtree
         // (a nested file appears with its own subfolder location).
-        let flatDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-flat-\(UUID().uuidString)")
+        let flatDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-flat-\(UUID().uuidString)")
         let flatSub = flatDir.appendingPathComponent("sub")
         try? FileManager.default.createDirectory(at: flatSub, withIntermediateDirectories: true)
-        try? "x".write(to: flatDir.appendingPathComponent("top.txt"), atomically: true, encoding: .utf8)
-        try? "y".write(to: flatSub.appendingPathComponent("deep.txt"), atomically: true, encoding: .utf8)
+        try? "x".write(
+            to: flatDir.appendingPathComponent("top.txt"), atomically: true, encoding: .utf8)
+        try? "y".write(
+            to: flatSub.appendingPathComponent("deep.txt"), atomically: true, encoding: .utf8)
         let flatResult = FlatEnumerator.entries(of: flatDir, includeFolders: true)
-        let hasDeep = flatResult.entries.contains { $0.name == "deep.txt" && ($0.location?.contains("sub") ?? false) }
+        let hasDeep = flatResult.entries.contains {
+            $0.name == "deep.txt" && ($0.location?.contains("sub") ?? false)
+        }
         let hasTop = flatResult.entries.contains { $0.name == "top.txt" }
-        check("flatten-folder", cmdIDs.contains("view.flattenFolder") && hasDeep && hasTop,
+        check(
+            "flatten-folder", cmdIDs.contains("view.flattenFolder") && hasDeep && hasTop,
             "registered=\(cmdIDs.contains("view.flattenFolder")) deep=\(hasDeep) top=\(hasTop)")
         try? FileManager.default.removeItem(at: flatDir)
         // Tree view: the mode is registered, and the outline controller exposes its entries and a
         // location-aware selection (so file ops resolve to the real path).
         let tree = TreeOutlineController()
         tree.directoryURL = URL(fileURLWithPath: "/tmp")
-        tree.setEntries([
-            FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil),
-            FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil),
-        ], preserveState: false)
+        tree.setEntries(
+            [
+                FileEntry(name: "afolder", isDirectory: true, size: 0, modificationDate: nil),
+                FileEntry(name: "b.txt", isDirectory: false, size: 10, modificationDate: nil),
+            ], preserveState: false)
         tree.select(name: "b.txt")
         let selected = tree.selectedEntries.first
-        check("tree-view",
+        check(
+            "tree-view",
             cmdIDs.contains("view.asTree") && tree.entries.count == 2
                 && selected?.name == "b.txt" && selected?.location == "/tmp",
-            "registered=\(cmdIDs.contains("view.asTree")) entries=\(tree.entries.count) sel=\(selected?.name ?? "nil") loc=\(selected?.location ?? "nil")")
+            "registered=\(cmdIDs.contains("view.asTree")) entries=\(tree.entries.count) sel=\(selected?.name ?? "nil") loc=\(selected?.location ?? "nil")"
+        )
         // Commander mode: registered, and toggling shows then hides the bar.
         let commanderShown = debugToggleCommander()
         let commanderHidden = !debugToggleCommander()
-        check("commander-mode", cmdIDs.contains("commander.toggle") && commanderShown && commanderHidden,
-            "registered=\(cmdIDs.contains("commander.toggle")) shown=\(commanderShown) hidden=\(commanderHidden)")
+        check(
+            "commander-mode",
+            cmdIDs.contains("commander.toggle") && commanderShown && commanderHidden,
+            "registered=\(cmdIDs.contains("commander.toggle")) shown=\(commanderShown) hidden=\(commanderHidden)"
+        )
         // Saved view presets: the store saves/replaces by name and round-trips the captured format,
         // and the save command is registered.
         var presetStore = ViewPresets.default
         presetStore.save(.init(name: "Photos", format: .init(viewMode: .icon, groupKey: .kind)))
         presetStore.save(.init(name: "Photos", format: .init(viewMode: .gallery, groupKey: .none)))  // replace by name
         let savedPreset = presetStore.presets.first { $0.name == "Photos" }
-        check("view-presets",
+        check(
+            "view-presets",
             cmdIDs.contains("view.saveViewPreset") && presetStore.presets.count == 1
                 && savedPreset?.format.viewMode == .gallery,
-            "registered=\(cmdIDs.contains("view.saveViewPreset")) count=\(presetStore.presets.count) mode=\(savedPreset?.format.viewMode.rawValue ?? "nil")")
+            "registered=\(cmdIDs.contains("view.saveViewPreset")) count=\(presetStore.presets.count) mode=\(savedPreset?.format.viewMode.rawValue ?? "nil")"
+        )
         // Vim navigation: the command is registered and j/k selection movement steps the selection.
         leftTabs.activePane?.selectFirst()
         let vimFirst = leftTabs.activePane?.selectedEntries.first?.name
         leftTabs.activePane?.moveSelection(by: 1)
         let vimSecond = leftTabs.activePane?.selectedEntries.first?.name
-        check("vim-navigation",
-            cmdIDs.contains("nav.vimMode") && vimFirst != nil && vimSecond != nil && vimFirst != vimSecond,
-            "registered=\(cmdIDs.contains("nav.vimMode")) first=\(vimFirst ?? "nil") second=\(vimSecond ?? "nil")")
+        check(
+            "vim-navigation",
+            cmdIDs.contains("nav.vimMode") && vimFirst != nil && vimSecond != nil
+                && vimFirst != vimSecond,
+            "registered=\(cmdIDs.contains("nav.vimMode")) first=\(vimFirst ?? "nil") second=\(vimSecond ?? "nil")"
+        )
         // Open with Pathem / Services: openExternalFolder navigates the active pane. (Last check,
         // since it changes the active folder.)
-        let openDir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-open-\(UUID().uuidString)")
+        let openDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-open-\(UUID().uuidString)")
         try? FileManager.default.createDirectory(at: openDir, withIntermediateDirectories: true)
         openExternalFolder(openDir)
         let navigated = activePane?.currentURL.standardizedFileURL == openDir.standardizedFileURL
-        check("open-external-folder", navigated, "at=\(activePane?.currentURL.lastPathComponent ?? "nil")")
+        check(
+            "open-external-folder", navigated,
+            "at=\(activePane?.currentURL.lastPathComponent ?? "nil")")
         // Reveal (pathem reveal / the Reveal in Pathem Service): lands in the item's PARENT, not
         // inside it -- the distinguishing behavior from Open. (Selection is applied async, so only
         // the navigation target is asserted here.)
-        let revealParent = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-reveal-\(UUID().uuidString)")
+        let revealParent = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-reveal-\(UUID().uuidString)")
         let revealChild = revealParent.appendingPathComponent("target-item")
         try? FileManager.default.createDirectory(at: revealChild, withIntermediateDirectories: true)
         revealExternalItem(revealChild)
-        check("reveal-external-navigates-to-parent",
+        check(
+            "reveal-external-navigates-to-parent",
             activePane?.currentURL.standardizedFileURL == revealParent.standardizedFileURL,
-            "at=\(activePane?.currentURL.lastPathComponent ?? "nil") expected=\(revealParent.lastPathComponent)")
+            "at=\(activePane?.currentURL.lastPathComponent ?? "nil") expected=\(revealParent.lastPathComponent)"
+        )
         try? FileManager.default.removeItem(at: revealParent)
         // Opening a viewable file (Pathem as the default app for a PDF/image) presents the built-in
         // viewer, not just a reveal.
@@ -1432,7 +1768,8 @@ extension BrowserViewController {
         openDoc.insert(PDFPage(), at: 0)
         openDoc.write(to: openPDF)
         openExternalFolder(openPDF)
-        check("open-viewable-presents-viewer", activePane?.isShowingViewer == true,
+        check(
+            "open-viewable-presents-viewer", activePane?.isShowingViewer == true,
             "showing=\(activePane?.isShowingViewer == true)")
         activePane?.dismissViewer()
         try? FileManager.default.removeItem(at: openDir)
@@ -1447,7 +1784,9 @@ extension BrowserViewController {
         activePane?.setViewMode(.icon)  // swap away to a fresh icon view
         activePane?.setViewMode(.list)  // swap back to a fresh list view
         let dragAfterSwap = activePane?.debugListRowsDraggable() == true
-        check("list-rows-draggable", dragOnList && dragAfterSwap, "onList=\(dragOnList) afterSwap=\(dragAfterSwap)")
+        check(
+            "list-rows-draggable", dragOnList && dragAfterSwap,
+            "onList=\(dragOnList) afterSwap=\(dragAfterSwap)")
         // Tab dragging (LAST -- it opens/moves tabs): the drag gestures are just thin wrappers over
         // moveTab / takeTab / adoptTab, so exercise those. A side must never be left empty: the last
         // tab is never taken, which is what stops a tear-off or cross-pane move from emptying a side.
@@ -1462,7 +1801,8 @@ extension BrowserViewController {
         var movedAcross = false
         if let url = leftTabs.takeTab(at: 0) {  // drag it onto the other side's bar
             rightTabs.adoptTab(url: url, at: rightTabs.tabCount)
-            movedAcross = rightTabs.tabCount == rightBefore + 1 && leftTabs.tabCount == leftBefore + 1
+            movedAcross =
+                rightTabs.tabCount == rightBefore + 1 && leftTabs.tabCount == leftBefore + 1
         }
         // A lone tab is never taken away, so a side can't be emptied by a drag.
         let solo = TabbedPaneController(start: URL(fileURLWithPath: "/tmp"))
@@ -1470,13 +1810,20 @@ extension BrowserViewController {
         let keptLast = solo.takeTab(at: 0) != nil && solo.tabCount == 1
         check(
             "tab-drag-reorder-move-teardown", opened && reordered && movedAcross && keptLast,
-            "opened=\(opened) reordered=\(reordered) movedAcross=\(movedAcross) keptLast=\(keptLast)")
+            "opened=\(opened) reordered=\(reordered) movedAcross=\(movedAcross) keptLast=\(keptLast)"
+        )
         // Open With ranks apps by how well they fit the type (not LaunchServices' arbitrary order):
         // an exact-type editor outranks a real-supertype claim, which outranks a catch-all "opens
         // anything" app (the Illustrator-for-.txt case). Guards OpenWithRanker.score.
-        let exactFit = OpenWithRanker.score([.init(types: [.plainText], extensions: [], editor: true)], fileType: .plainText, ext: "txt")
-        let superFit = OpenWithRanker.score([.init(types: [.text], extensions: [], editor: false)], fileType: .plainText, ext: "txt")
-        let catchFit = OpenWithRanker.score([.init(types: [.data], extensions: [], editor: false)], fileType: .plainText, ext: "txt")
+        let exactFit = OpenWithRanker.score(
+            [.init(types: [.plainText], extensions: [], editor: true)], fileType: .plainText,
+            ext: "txt")
+        let superFit = OpenWithRanker.score(
+            [.init(types: [.text], extensions: [], editor: false)], fileType: .plainText, ext: "txt"
+        )
+        let catchFit = OpenWithRanker.score(
+            [.init(types: [.data], extensions: [], editor: false)], fileType: .plainText, ext: "txt"
+        )
         check(
             "open-with-ranks-by-fit", exactFit > superFit && superFit > catchFit,
             "exact=\(exactFit) super=\(superFit) catch=\(catchFit)")

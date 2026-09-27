@@ -38,8 +38,14 @@ extension BrowserViewController {
     }
 
     private func runExternalCommand(_ command: ExternalCommand) {
-        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
-        if command.usesSelection && pane.selectedEntries.isEmpty { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
+        if command.usesSelection && pane.selectedEntries.isEmpty {
+            NSSound.beep()
+            return
+        }
         externalOutput.run(command, files: pane.selectedLocalURLs(), directory: pane.currentURL)
     }
 
@@ -57,28 +63,22 @@ extension BrowserViewController {
     /// Add a "External Commands" submenu to the Tools menu (built in PathemApp before the browser
     /// exists), listing each command plus a Manage entry.
     func installExternalCommandsMenu() {
-        guard !didInstallExternalCommandsMenu, let mainMenu = NSApp.mainMenu,
-            let toolsMenu = mainMenu.items.compactMap({ $0.submenu }).first(where: { $0.title == L("menu.tools", "Tools") })
-        else { return }
-        externalCommandsMenu.delegate = self
-        let item = NSMenuItem(title: L("menu.externalCommands", "External Commands"), action: nil, keyEquivalent: "")
-        item.submenu = externalCommandsMenu
-        toolsMenu.addItem(.separator())
-        toolsMenu.addItem(item)
-        didInstallExternalCommandsMenu = true
+        menuInstaller.installExternalCommandsMenu(delegate: self)
     }
 
     func populateExternalCommandsMenu() {
         externalCommandsMenu.removeAllItems()
         for command in externalCommands {
             let item = externalCommandsMenu.addItem(
-                withTitle: command.name, action: #selector(runExternalCommandMenu(_:)), keyEquivalent: "")
+                withTitle: command.name, action: #selector(runExternalCommandMenu(_:)),
+                keyEquivalent: "")
             item.target = self
             item.representedObject = command.id
         }
         if !externalCommands.isEmpty { externalCommandsMenu.addItem(.separator()) }
         let manage = externalCommandsMenu.addItem(
-            withTitle: L("extcmd.manage", "Manage Commands…"), action: #selector(manageExternalCommandsMenu), keyEquivalent: "")
+            withTitle: L("extcmd.manage", "Manage Commands…"),
+            action: #selector(manageExternalCommandsMenu), keyEquivalent: "")
         manage.target = self
     }
 

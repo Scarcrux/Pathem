@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 /// manager.
 @MainActor
 final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPanelDataSource,
-    NSSplitViewDelegate, NSMenuItemValidation
+    NSMenuItemValidation
 {
     let leftTabs: TabbedPaneController
     let rightTabs: TabbedPaneController
@@ -47,7 +47,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var selectedTorrentURLs: [URL] {
         guard let pane = activePane, !pane.isRemote else { return [] }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty, urls.allSatisfy({ $0.pathExtension.lowercased() == "torrent" }) else { return [] }
+        guard !urls.isEmpty, urls.allSatisfy({ $0.pathExtension.lowercased() == "torrent" }) else {
+            return []
+        }
         return urls
     }
 
@@ -76,11 +78,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Each pane's last-seen local folder, so a navigation's relative delta can be
     /// computed (see `mirrorNavigationIfSyncing`). Keyed by pane identity.
     var syncBrowseAnchors: [ObjectIdentifier: URL] = [:]
-    let split = NSSplitView()  // the two sides
-    let panesContainer = NSView()  // wraps `split` so the torrent detail can overlay without NSSplitView treating it as a pane
-    let outerSplit = NSSplitView()  // sidebar | panes
-    let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
-    let mainStack = NSStackView()  // vSplit (top) + torrents drawer (bottom dock)
+    let splitLayout = BrowserSplitLayoutController()
+    var split: NSSplitView { splitLayout.split }
+    var panesContainer: NSView { splitLayout.panesContainer }
+    var outerSplit: NSSplitView { splitLayout.outerSplit }
+    var vSplit: NSSplitView { splitLayout.vSplit }
+    var mainStack: NSStackView { splitLayout.mainStack }
     let shelf = ShelfController()  // stash shelf / drop stack across the bottom
     var shelfHiddenConstraint: NSLayoutConstraint?
     var shelfShownConstraint: NSLayoutConstraint?
@@ -118,7 +121,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// The toolbar's search-and-command button: looks like a search field, opens the one
     /// overlay (Cmd-F search mode, Cmd-K command mode), and shows the active pane's query.
     let searchButton = NSButton()
-    var didSetInitialSplit = false
+    var didSetInitialSplit: Bool {
+        get { splitLayout.didSetInitialSplit }
+        set { splitLayout.didSetInitialSplit = newValue }
+    }
     /// Opt-in: when true the terminal `cd`s as the active folder changes. Off by
     /// default so navigation never disturbs whatever you're running in the shell.
     var terminalFollows = UserDefaults.standard.bool(forKey: "pathem.terminalFollows")
@@ -205,9 +211,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var undoHistoryController = UndoHistoryController()  // used by showUndoHistory (BrowserViewController+Transfers)
     lazy var globalSearchController = GlobalSearchController()  // used in +Navigation
     var externalCommands: [ExternalCommand] = []
-    /// Dynamic Tools > External Commands submenu (installed once the menu bar is up).
-    let externalCommandsMenu = NSMenu(title: "External Commands")
-    var didInstallExternalCommandsMenu = false
+    let menuInstaller = BrowserMenuInstaller()
+    var externalCommandsMenu: NSMenu { menuInstaller.externalCommandsMenu }
     var createTemplates: [CreateTemplate] = []
     /// Folders recently used as a Copy To / Move To destination (most recent first).
     var recentDestinations: [String] = []  // Copy To / Move To history (see +CopyMoveTo)
@@ -226,12 +231,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var isTransferring: Bool { transferInFlight }
     /// File paths currently marked for cut (dimmed until pasted or cleared).
     var cutPaths: Set<String> = []
-    var sidebarWidthConstraint: NSLayoutConstraint!
-    /// Lays out the two panes at a fixed ratio (and tracks divider drags), so switching a
-    /// pane to a content-light view (gallery) can't make the split re-divide and collapse it.
-    private let paneSplitDelegate = PaneRatioSplitDelegate()
-    var compactSidebar = false
-    static let compactSidebarWidth: CGFloat = 60
+    var sidebarWidthConstraint: NSLayoutConstraint? { splitLayout.sidebarWidthConstraint }
+    var compactSidebar: Bool {
+        get { splitLayout.compactSidebar }
+        set { splitLayout.compactSidebar = newValue }
+    }
+    static let compactSidebarWidth = BrowserSplitLayoutController.compactSidebarWidth
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()
     lazy var infoInspector = InfoInspectorController()
@@ -256,17 +261,15 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// a sheet pinned to the title bar.
     let cursorConfirm = CursorConfirm()
     let deviceWatcher = DeviceWatcher()  // owns the USB-phone poll timer + name cache (feeds the sidebar)
-    let layoutsMenu = NSMenu(title: "Layouts")
-    var didInstallLayoutsMenu = false
-    let savedViewsMenu = NSMenu(title: "Saved Views")
-    var didInstallSavedViewsMenu = false
-    let bookmarksMenu = NSMenu(title: "Bookmarks")
-    var didInstallBookmarksMenu = false
+    var layoutsMenu: NSMenu { menuInstaller.layoutsMenu }
+    var savedViewsMenu: NSMenu { menuInstaller.savedViewsMenu }
+    var bookmarksMenu: NSMenu { menuInstaller.bookmarksMenu }
+    var recentFoldersMenu: NSMenu { menuInstaller.recentFoldersMenu }
     /// The most-recently-visited folders (newest first), for the Go > Recent Folders submenu.
-    let recentFoldersMenu = NSMenu(title: "Recent Folders")
-    var didInstallRecentMenu = false
-    var recentFolders: [URL] = []
-
+    var recentFolders: [URL] {
+        get { menuInstaller.recentFolders }
+        set { menuInstaller.recentFolders = newValue }
+    }
 
     /// Set in privacy-safe demo mode (launch flag or the View menu), so session restore is
     /// skipped and the sidebar/panes use the fake workspace instead of the user's real data.
@@ -291,47 +294,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     required init?(coder: NSCoder) { fatalError("not used") }
 
     override func loadView() {
-        split.isVertical = true
-        split.dividerStyle = .thin
-        // The two panes use NSSplitView's frame model (TAMIC=true subviews), where width
-        // constraints are ignored, so a dedicated delegate lays them out at a fixed ratio.
-        // This is what keeps a content-light view (gallery) from collapsing its pane.
-        split.delegate = paneSplitDelegate
-        split.addArrangedSubview(leftTabs.containerView)
-        split.addArrangedSubview(rightTabs.containerView)
-        // Wrap the panes split in a plain container so the torrent detail view can overlay it: an
-        // NSSplitView treats every direct subview as a pane, so the overlay must go on the container.
-        split.translatesAutoresizingMaskIntoConstraints = false
-        panesContainer.addSubview(split)
-        NSLayoutConstraint.activate([
-            split.topAnchor.constraint(equalTo: panesContainer.topAnchor),
-            split.leadingAnchor.constraint(equalTo: panesContainer.leadingAnchor),
-            split.trailingAnchor.constraint(equalTo: panesContainer.trailingAnchor),
-            split.bottomAnchor.constraint(equalTo: panesContainer.bottomAnchor),
-        ])
-
-        outerSplit.isVertical = true
-        outerSplit.dividerStyle = .thin
-        outerSplit.delegate = self
-        outerSplit.translatesAutoresizingMaskIntoConstraints = false
-        outerSplit.addArrangedSubview(sidebar.containerView)
-        outerSplit.addArrangedSubview(panesContainer)
-        // Keep the sidebar's width when the window resizes; the panes absorb it.
-        outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 0)
-        // Durably pin the sidebar to a sane default width so the panes always get
-        // the rest. setPosition() alone is transient in an auto-layout split and
-        // can let the sidebar swallow the whole window; this constraint stays put
-        // and is still draggable (its priority is below the divider-drag priority).
-        let sidebarWidth = sidebar.containerView.widthAnchor.constraint(equalToConstant: 200)
-        sidebarWidth.priority = NSLayoutConstraint.Priority(260)
-        sidebarWidth.isActive = true
-        sidebarWidthConstraint = sidebarWidth
+        splitLayout.configure(
+            left: leftTabs.containerView, right: rightTabs.containerView,
+            sidebar: sidebar.containerView, terminal: terminal.view)
 
         // The search-and-command button lives in the window's unified toolbar (Finder-style).
         // It reads like a search field but opens the overlay; the active pane's live query
         // shows as its title so search state stays visible.
         searchButton.bezelStyle = .texturedRounded
-        searchButton.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: L("bvc.searchToolbarLabel", "Search"))
+        searchButton.image = NSImage(
+            systemSymbolName: "magnifyingglass",
+            accessibilityDescription: L("bvc.searchToolbarLabel", "Search"))
         searchButton.imagePosition = .imageLeading
         searchButton.alignment = .left
         searchButton.target = self
@@ -340,18 +313,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         searchButton.translatesAutoresizingMaskIntoConstraints = false
         searchButton.widthAnchor.constraint(equalToConstant: 240).isActive = true
         updateSearchButton(query: "")
-
-        // Vertical split: the browser (sidebar + panes) on top, the optional
-        // terminal drawer at the bottom. The terminal starts collapsed.
-        vSplit.isVertical = false
-        vSplit.dividerStyle = .thin
-        vSplit.translatesAutoresizingMaskIntoConstraints = false
-        vSplit.addArrangedSubview(outerSplit)
-        vSplit.addArrangedSubview(terminal.view)
-        vSplit.delegate = self
-        // The terminal keeps its height; the browser absorbs window resize.
-        vSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 1)
-        terminal.view.isHidden = true
 
         // The torrents drawer docks below the whole split via a stack view rather than as a third
         // split pane: two independently-toggled drawers in one NSSplitView can't both size reliably
@@ -371,7 +332,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         mainStack.addArrangedSubview(vSplit)
         mainStack.addArrangedSubview(torrentDrawer.view)
         NotificationCenter.default.addObserver(
-            self, selector: #selector(refreshUpdateBanner), name: .pathemUpdateStateChanged, object: nil)
+            self, selector: #selector(refreshUpdateBanner), name: .pathemUpdateStateChanged,
+            object: nil)
         refreshUpdateBanner()
         // The browser split absorbs resize; the drawer holds its constrained height.
         vSplit.setContentHuggingPriority(.init(1), for: .vertical)
@@ -418,7 +380,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             commanderBar.bottomAnchor.constraint(equalTo: host.bottomAnchor),
             commanderBar.heightAnchor.constraint(equalToConstant: 38),  // a single compact strip
         ])
-        commanderShownConstraint = mainStack.bottomAnchor.constraint(equalTo: commanderBar.topAnchor)
+        commanderShownConstraint = mainStack.bottomAnchor.constraint(
+            equalTo: commanderBar.topAnchor)
         commanderBar.onCommand = { [weak self] id in self?.commands.perform(id) }
         commanderBar.onRunCommand = { [weak self] command in self?.runCommanderCommand(command) }
         commanderBar.titleForCommand = { [weak self] id in self?.commands.command(id)?.title ?? id }
@@ -432,7 +395,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         quickBar.translatesAutoresizingMaskIntoConstraints = true
         quickBar.onAction = { [weak self] id in self?.commands.perform(id) }
         quickBar.onOpenWith = { [weak self] anchor in self?.showQuickOpenWith(from: anchor) }
-        quickBar.onCopiedShowPaste = { [weak self] anchor in self?.showQuickPasteFollowUp(from: anchor) }
+        quickBar.onCopiedShowPaste = { [weak self] anchor in
+            self?.showQuickPasteFollowUp(from: anchor)
+        }
         // Ambient download chip, floating at the top-center of the panes.
         let downloadChip = downloadSuggestions.view
         host.addSubview(downloadChip)
@@ -459,15 +424,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Set the panes' divider to `fraction` (the right pane's share) and lay them out now.
     /// The delegate keeps that ratio across content swaps and window resizes.
     func setRightPaneFraction(_ fraction: Double) {
-        paneSplitDelegate.fraction = max(0.15, min(0.85, fraction))
-        paneSplitDelegate.layout(split)
-        // Also drive the split's own machinery: the delegate layout sets subview frames
-        // directly, and without setPosition the split's internal divider layer stays put,
-        // leaving a full-height line at the old position.
-        if let left = split.arrangedSubviews.first {
-            split.setPosition(left.frame.width, ofDividerAt: 0)
-        }
-        split.needsDisplay = true
+        splitLayout.setRightPaneFraction(fraction)
     }
 
     override func viewDidLoad() {
@@ -498,42 +455,60 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         installRecentFoldersMenu()
         for side in [leftTabs, rightTabs] {
             side.configurePane = { [weak self] pane in
-                pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false }
-                pane.onMouseGestureHandler = { [weak self] stroke in self?.handleGesture(stroke) ?? false }
+                pane.onKeyChordHandler = { [weak self] chord in self?.handleKeyChord(chord) ?? false
+                }
+                pane.onMouseGestureHandler = { [weak self] stroke in
+                    self?.handleGesture(stroke) ?? false
+                }
                 pane.onDragSessionHandler = { [weak self] event in self?.handleDragSession(event) }
                 pane.onBrowseArchive = { [weak self, weak pane] archive in
                     guard let self, let pane else { return }
                     self.browseArchive(archive, in: pane, origin: pane.currentURL)
                 }
                 pane.onArchiveClosed = { [weak self] archive, mountRoot, snapshot in
-                    self?.writeBackArchiveIfChanged(archive: archive, mountRoot: mountRoot, original: snapshot)
+                    self?.writeBackArchiveIfChanged(
+                        archive: archive, mountRoot: mountRoot, original: snapshot)
                 }
                 pane.onAttachDiskImage = { [weak self, weak pane] image in
                     self?.attachDiskImage(image, in: pane)
                 }
                 pane.resolveFormat = { [weak self] url in
-                    self?.folderFormats.format(for: url.path) ?? self?.prefs.defaultFormat ?? .default
+                    self?.folderFormats.format(for: url.path) ?? self?.prefs.defaultFormat
+                        ?? .default
                 }
-                pane.hasExplicitFormat = { [weak self] url in self?.folderFormats.hasRule(for: url.path) ?? false }
-                pane.backgroundFor = { [weak self] url in self?.folderBackgrounds.background(for: url.path) }
-                pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format) }
+                pane.hasExplicitFormat = { [weak self] url in
+                    self?.folderFormats.hasRule(for: url.path) ?? false
+                }
+                pane.backgroundFor = { [weak self] url in
+                    self?.folderBackgrounds.background(for: url.path)
+                }
+                pane.rememberFormat = { [weak self] url, format in self?.rememberFormat(url, format)
+                }
                 pane.openFile = { [weak self] url in self?.applyOpen(url) }
                 pane.runCommand = { [weak self] id in self?.commands.perform(id) }
                 pane.setPathBar(atBottom: self?.prefs.pathBarAtBottom ?? false)
                 pane.showHiddenByDefault = self?.prefs.showHiddenByDefault ?? false
                 pane.iconZoom = CGFloat(self?.prefs.iconZoom ?? 1)
                 pane.onIconZoomChanged = { [weak self] scale in self?.rememberIconZoom(scale) }
-                pane.onHeaderButtonsChanged = { [weak self] ids in self?.rememberHiddenHeaderButtons(ids) }
-                pane.onHeaderOrderChanged = { [weak self] ids in self?.rememberHeaderButtonOrder(ids) }
+                pane.onHeaderButtonsChanged = { [weak self] ids in
+                    self?.rememberHiddenHeaderButtons(ids)
+                }
+                pane.onHeaderOrderChanged = { [weak self] ids in
+                    self?.rememberHeaderButtonOrder(ids)
+                }
                 // New tabs honor the customized header too.
                 pane.setHeaderButtonOrder(self?.prefs.paneHeaderButtonOrder ?? [])
                 pane.setHiddenHeaderButtons(Set(self?.prefs.hiddenPaneHeaderButtons ?? []))
-                pane.onUploadFiles = { [weak self, weak pane] urls, connection, remotePath, password in
+                pane.onUploadFiles = {
+                    [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
-                    self.uploadFiles(urls, to: connection, remotePath: remotePath, password: password, pane: pane)
+                    self.uploadFiles(
+                        urls, to: connection, remotePath: remotePath, password: password, pane: pane
+                    )
                 }
                 pane.onOpenRemoteFile = { [weak self] connection, remotePath, password, name in
-                    self?.openRemoteFile(connection, remotePath: remotePath, password: password, name: name)
+                    self?.openRemoteFile(
+                        connection, remotePath: remotePath, password: password, name: name)
                 }
                 pane.onSelectionChanged = { [weak self] in
                     self?.updatePreview()
@@ -553,7 +528,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 guard let self, let side else { return }
                 self.setActiveSide(side, pane: pane)
             }
-            side.onPaneDirectoryDidChange = { [weak self] pane, url in self?.directoryChanged(pane, url) }
+            side.onPaneDirectoryDidChange = { [weak self] pane, url in
+                self?.directoryChanged(pane, url)
+            }
             side.onPaneDidNavigate = { [weak self] pane in
                 pane.searchQuery = ""  // navigating clears that pane's query
                 guard pane === self?.activePane else { return }
@@ -568,7 +545,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 self?.showDropOntoFileMenu(dragged: dragged, target: target)
             }
             side.newTabLocation = { [weak self] in self?.preferredNewTabFolder() }
-            side.onOpenFolderInPane = { [weak self] url, action in self?.handleBreadcrumbAction(url, action) }
+            side.onOpenFolderInPane = { [weak self] url, action in
+                self?.handleBreadcrumbAction(url, action)
+            }
             // Tab dragging: only the browser knows both sides, so it resolves a drag's origin, and
             // handles the two drops a single side can't do by itself (tear off, move across).
             side.sideForID = { [weak self] id in
@@ -595,7 +574,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         sidebar.onEmptyTrash = { [weak self] in self?.emptyTrash() }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
-        sidebar.onSelectSavedSearch = { [weak self] search in self?.runSavedSearch(search.name, query: search.mdfindQuery()) }
+        sidebar.onSelectSavedSearch = { [weak self] search in
+            self?.runSavedSearch(search.name, query: search.mdfindQuery())
+        }
         sidebar.savedSearches = savedSearches.searches  // show saved smart folders in the sidebar
         sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }
         sidebar.onSelectConnection = { [weak self] connection in self?.connectToRemote(connection) }
@@ -624,7 +605,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onApplyTag = { [weak self] urls, color in self?.applyTag(color, to: urls) }
         sidebar.onAirDrop = { [weak self] in
             let urls = self?.activePane?.selectedLocalURLs() ?? []
-            guard !urls.isEmpty else { NSSound.beep(); return }  // nothing selected to send
+            guard !urls.isEmpty else {
+                NSSound.beep()
+                return
+            }  // nothing selected to send
             self?.airDrop(urls)
         }
         sidebar.onAirDropFiles = { [weak self] urls in self?.airDrop(urls) }
@@ -653,11 +637,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     /// Register every browser action as a named command. This is the spine the
     /// keymap, command palette, and AI bar will all bind to (DESIGN.md 10).
-    private static var macrosURL: URL? { appSupportDirectory()?.appendingPathComponent("macros.json") }
-    static var savedSearchesURL: URL? { appSupportDirectory()?.appendingPathComponent("searches.json") }
+    private static var macrosURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("macros.json")
+    }
+    static var savedSearchesURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("searches.json")
+    }
     var viewPresets = ViewPresets.default
 
-    static var folderBackgroundsURL: URL? { appSupportDirectory()?.appendingPathComponent("folder-backgrounds.json") }
+    static var folderBackgroundsURL: URL? {
+        appSupportDirectory()?.appendingPathComponent("folder-backgrounds.json")
+    }
     var folderBackgrounds = FolderBackgrounds.default
     static var collectionsConfigURL: URL? {
         appSupportDirectory()?.appendingPathComponent("collections.json")
@@ -679,7 +669,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let macroID = "macro.\(macro.name)"
             commands.register(
                 .init(
-                    id: macroID, title: String(format: L("bvc.macroCmdTitle", "Macro: %@"), macro.name), isEnabled: { true },
+                    id: macroID,
+                    title: String(format: L("bvc.macroCmdTitle", "Macro: %@"), macro.name),
+                    isEnabled: { true },
                     run: { [weak self] in
                         guard let self, !self.runningMacroIDs.contains(macroID) else { return }  // cycle guard
                         self.runningMacroIDs.insert(macroID)
@@ -688,7 +680,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                     }))
         }
     }
-
 
     // Palette / batch-rename / select-by-pattern surfaces live in BrowserViewController+CommandSurfaces.
 
@@ -701,7 +692,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func blockedByRemote() -> Bool {
         if activePane?.isRemote == true {
             activePane?.flashStatus(
-                L("flash.notOnRemote", "That action isn’t available on a remote connection"), isError: true)
+                L("flash.notOnRemote", "That action isn’t available on a remote connection"),
+                isError: true)
             return true
         }
         return false
@@ -712,12 +704,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     func blockedByRemoteOrSmart() -> Bool {
         if activePane?.isRemote == true {
             activePane?.flashStatus(
-                L("flash.notOnRemote", "That action isn’t available on a remote connection"), isError: true)
+                L("flash.notOnRemote", "That action isn’t available on a remote connection"),
+                isError: true)
             return true
         }
         if activePane?.isShowingSmartResults == true {
             activePane?.flashStatus(
-                L("flash.notInSmartView", "That action needs a single folder, not a search view"), isError: true)
+                L("flash.notInSmartView", "That action needs a single folder, not a search view"),
+                isError: true)
             return true
         }
         return false
@@ -726,7 +720,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Run a remote file operation off-main, refreshing the pane and reporting errors.
     func performRemoteOp(
         _ pane: PaneController, verb: String,
-        _ op: @escaping @Sendable (RemoteProvider, RemoteConnection, String, String) async throws -> Void
+        _ op:
+            @escaping @Sendable (RemoteProvider, RemoteConnection, String, String) async throws ->
+            Void
     ) {
         guard let ctx = pane.remoteContext else { return }
         let provider = RemoteProviders.make(for: ctx.connection.proto)
@@ -750,12 +746,17 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Hand the given files to the system AirDrop sheet. The OS (sharingd) does the
     /// transfer, so this stays a plain UI handoff (no networking in our process).
     private func airDrop(_ urls: [URL]) {
-        guard let service = NSSharingService(named: .sendViaAirDrop) else { NSSound.beep(); return }
+        guard let service = NSSharingService(named: .sendViaAirDrop) else {
+            NSSound.beep()
+            return
+        }
         let sendable = urls.filter { $0.isFileURL }
         guard service.canPerform(withItems: sendable) else {
             presentInfo(
                 L("bvc.airdropUnavailableTitle", "Can’t AirDrop these items"),
-                L("bvc.airdropUnavailableBody", "AirDrop may be turned off, or these items can’t be sent."))
+                L(
+                    "bvc.airdropUnavailableBody",
+                    "AirDrop may be turned off, or these items can’t be sent."))
             return
         }
         service.perform(withItems: sendable)
@@ -783,14 +784,19 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// The folder a new window should open at: the active pane's folder when it's a local
     /// listing, otherwise Home (a remote/smart pane has no plain local folder to reopen).
     func newWindowStartFolder() -> URL {
-        if let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults { return pane.currentURL }
+        if let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults {
+            return pane.currentURL
+        }
         return FileManager.default.homeDirectoryForCurrentUser
     }
 
     /// Detach the active tab into its own window: open a new window at that folder and, if the
     /// side still has other tabs, close the one we moved (so nothing is duplicated in place).
     func moveActiveTabToNewWindow() {
-        guard let side = activeSide, let pane = side.activePane, !pane.isRemote else { NSSound.beep(); return }
+        guard let side = activeSide, let pane = side.activePane, !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
         WindowManager.shared.openWindow(start: pane.currentURL)
         if side.tabCount > 1 { side.closeActiveTab() }
     }
@@ -801,10 +807,12 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var quickBarScrollObserver: NSObjectProtocol?
     weak var quickBarObservedClip: NSClipView?
 
-
     /// Apply (toggle) the named label carried by a "Label" menu item to the selection.
     @objc func applyLabelFromMenu(_ sender: NSMenuItem) {
-        guard let label = sender.representedObject as? FileLabel else { NSSound.beep(); return }
+        guard let label = sender.representedObject as? FileLabel else {
+            NSSound.beep()
+            return
+        }
         activePane?.applyLabel(label)
     }
 
@@ -828,7 +836,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
         let config = NSWorkspace.OpenConfiguration()
         config.promptsUserIfNeeded = true
-        NSWorkspace.shared.open([target], withApplicationAt: editor, configuration: config) { [weak self] _, error in
+        NSWorkspace.shared.open([target], withApplicationAt: editor, configuration: config) {
+            [weak self] _, error in
             guard let error else { return }
             DispatchQueue.main.async {
                 self?.presentInfo(
@@ -856,8 +865,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         return nil
     }
 
-
-
     /// Vim-style, keyboard-driven navigation (View ▸ Vim Navigation). Off by default.
     var vimMode = false
     var vimPendingG = false
@@ -884,12 +891,14 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         alert.messageText = L("bvc.resetDataTitle", "Reset Pathem Data?")
         alert.informativeText = L(
             "bvc.resetDataBody",
-            "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall.")
+            "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall."
+        )
         alert.alertStyle = .warning
         // Off by default = a full clean uninstall. Checked keeps the config/passwords in place
         // so a reinstall picks up where you left off; only the folder default is restored.
         let keepData = NSButton(
-            checkboxWithTitle: L("bvc.resetKeepData", "Keep my Pathem settings and data (for a future reinstall)"),
+            checkboxWithTitle: L(
+                "bvc.resetKeepData", "Keep my Pathem settings and data (for a future reinstall)"),
             target: nil, action: nil)
         keepData.state = .off
         alert.accessoryView = keepData
@@ -901,7 +910,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             let wasFolderHandler = FolderHandler.isPathem
             if wasFolderHandler { try? await FolderHandler.setDefault(toPathem: false) }  // always restore Finder
             if !keep {
-                if let dir = Self.appSupportDirectory() { try? FileManager.default.removeItem(at: dir) }
+                if let dir = Self.appSupportDirectory() {
+                    try? FileManager.default.removeItem(at: dir)
+                }
                 KeychainStore.removeAll()
                 if let bundleID = Bundle.main.bundleIdentifier {
                     UserDefaults.standard.removePersistentDomain(forName: bundleID)
@@ -912,23 +923,28 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
             // A closing note on how to finish removing Pathem: the two leftovers Reset can't
             // handle for you (the app bundle itself, and the system Full Disk Access grant).
-            let removed = keep
+            let removed =
+                keep
                 ? L("bvc.resetKept", "Your settings and data were kept")
-                : L("bvc.resetRemoved", "Your settings, saved passwords, and customization were removed")
+                : L(
+                    "bvc.resetRemoved",
+                    "Your settings, saved passwords, and customization were removed")
             let done = NSAlert()
             done.messageText = L("bvc.resetDoneTitle", "Pathem Data Reset")
             done.informativeText = String(
                 format: L(
                     "bvc.resetDoneBody",
-                    "%@%@.\n\nTo finish uninstalling:\n1. Drag Pathem from Applications to the Trash.\n2. Optionally remove Pathem under System Settings ▸ Privacy & Security ▸ Full Disk Access. macOS keeps that grant until you clear it."),
+                    "%@%@.\n\nTo finish uninstalling:\n1. Drag Pathem from Applications to the Trash.\n2. Optionally remove Pathem under System Settings ▸ Privacy & Security ▸ Full Disk Access. macOS keeps that grant until you clear it."
+                ),
                 removed,
-                wasFolderHandler ? L("bvc.resetFinderRestored", ", and Finder is again the default for folders") : "")
+                wasFolderHandler
+                    ? L("bvc.resetFinderRestored", ", and Finder is again the default for folders")
+                    : "")
             done.addButton(withTitle: L("bvc.resetDoneQuit", "Quit Pathem"))
             _ = await self.presentSheet(done)
             NSApp.terminate(nil)
         }
     }
-
 
     // ACL + ownership actions live in BrowserViewController+Permissions.
 
@@ -942,7 +958,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     static var openersURL: URL? {
         appSupportDirectory()?.appendingPathComponent("openers.json")
     }
-
 
     /// Apply a built-in terminal theme by name (from the View > Terminal Theme menu).
     @objc func selectTerminalTheme(_ sender: NSMenuItem) {

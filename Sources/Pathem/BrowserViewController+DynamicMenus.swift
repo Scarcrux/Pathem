@@ -5,49 +5,34 @@ import PathemEngine
 extension BrowserViewController {
     /// Add a "Layouts" menu to the main menu, rebuilt on demand from the saved set.
     func installLayoutsMenu() {
-        guard !didInstallLayoutsMenu, let mainMenu = NSApp.mainMenu else { return }
-        let item = NSMenuItem()
-        item.title = L("bvc.layoutsMenu", "Layouts")
-        item.submenu = layoutsMenu
-        layoutsMenu.delegate = self
-        mainMenu.addItem(item)
-        didInstallLayoutsMenu = true
-        installSavedViewsMenu()
-    }
-
-    private func installSavedViewsMenu() {
-        guard !didInstallSavedViewsMenu, let mainMenu = NSApp.mainMenu else { return }
-        let item = NSMenuItem()
-        item.title = L("bvc.savedViewsMenu", "Saved Views")
-        item.submenu = savedViewsMenu
-        savedViewsMenu.delegate = self
-        mainMenu.addItem(item)
-        didInstallSavedViewsMenu = true
-        installBookmarksMenu()
-    }
-
-    private func installBookmarksMenu() {
-        guard !didInstallBookmarksMenu, let mainMenu = NSApp.mainMenu else { return }
-        let item = NSMenuItem()
-        item.title = L("bvc.bookmarksMenu", "Bookmarks")
-        item.submenu = bookmarksMenu
-        bookmarksMenu.delegate = self
-        mainMenu.addItem(item)
-        didInstallBookmarksMenu = true
+        menuInstaller.installBrowserMenus(delegate: self)
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
-        if menu === recentFoldersMenu { populateRecentFoldersMenu(); return }
-        if menu === externalCommandsMenu { populateExternalCommandsMenu(); return }
-        if menu === bookmarksMenu { populateBookmarksMenu(); return }
+        if menu === recentFoldersMenu {
+            populateRecentFoldersMenu()
+            return
+        }
+        if menu === externalCommandsMenu {
+            populateExternalCommandsMenu()
+            return
+        }
+        if menu === bookmarksMenu {
+            populateBookmarksMenu()
+            return
+        }
         if menu === savedViewsMenu {
             menu.removeAllItems()
-            let save = menu.addItem(withTitle: L("bvc.saveViewMenuItem", "Save Current View As…"), action: #selector(saveViewPreset), keyEquivalent: "")
+            let save = menu.addItem(
+                withTitle: L("bvc.saveViewMenuItem", "Save Current View As…"),
+                action: #selector(saveViewPreset), keyEquivalent: "")
             save.target = self
             guard !viewPresets.presets.isEmpty else { return }
             menu.addItem(.separator())
             for preset in viewPresets.presets {
-                let item = menu.addItem(withTitle: preset.name, action: #selector(applyViewPresetMenu(_:)), keyEquivalent: "")
+                let item = menu.addItem(
+                    withTitle: preset.name, action: #selector(applyViewPresetMenu(_:)),
+                    keyEquivalent: "")
                 item.target = self
                 item.representedObject = preset.name
             }
@@ -55,12 +40,15 @@ extension BrowserViewController {
         }
         guard menu === layoutsMenu else { return }
         menu.removeAllItems()
-        let save = menu.addItem(withTitle: L("bvc.saveLayoutMenuItem", "Save Layout…"), action: #selector(saveLayoutMenu), keyEquivalent: "")
+        let save = menu.addItem(
+            withTitle: L("bvc.saveLayoutMenuItem", "Save Layout…"),
+            action: #selector(saveLayoutMenu), keyEquivalent: "")
         save.target = self
         guard !layouts.names.isEmpty else { return }
         menu.addItem(.separator())
         for name in layouts.names {
-            let item = menu.addItem(withTitle: name, action: #selector(applyLayoutMenu(_:)), keyEquivalent: "")
+            let item = menu.addItem(
+                withTitle: name, action: #selector(applyLayoutMenu(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = name
         }
@@ -90,7 +78,8 @@ extension BrowserViewController {
         bookmarksMenu.addItem(.separator())
         for bookmark in bookmarks {
             let item = bookmarksMenu.addItem(
-                withTitle: bookmark.name, action: #selector(jumpBookmarkMenu(_:)), keyEquivalent: "")
+                withTitle: bookmark.name, action: #selector(jumpBookmarkMenu(_:)), keyEquivalent: ""
+            )
             item.target = self
             item.representedObject = bookmark.remotePath
             item.toolTip = bookmark.remotePath
@@ -129,28 +118,22 @@ extension BrowserViewController {
     /// Add "Recent Folders" to the existing Go menu (built in PathemApp before the browser
     /// exists, so it's wired here once the menu bar is up).
     func installRecentFoldersMenu() {
-        guard !didInstallRecentMenu, let mainMenu = NSApp.mainMenu,
-            let goMenu = mainMenu.items.compactMap({ $0.submenu }).first(where: { $0.title == L("menu.go", "Go") })
-        else { return }
-        recentFoldersMenu.delegate = self
-        let item = NSMenuItem(title: L("menu.recentFolders", "Recent Folders"), action: nil, keyEquivalent: "")
-        item.submenu = recentFoldersMenu
-        goMenu.addItem(.separator())
-        goMenu.addItem(item)
-        didInstallRecentMenu = true
+        menuInstaller.installRecentFoldersMenu(delegate: self)
     }
 
     private func populateRecentFoldersMenu() {
         recentFoldersMenu.removeAllItems()
         guard !recentFolders.isEmpty else {
             let none = recentFoldersMenu.addItem(
-                withTitle: L("menu.noRecentFolders", "No Recent Folders"), action: nil, keyEquivalent: "")
+                withTitle: L("menu.noRecentFolders", "No Recent Folders"), action: nil,
+                keyEquivalent: "")
             none.isEnabled = false
             return
         }
         for url in recentFolders {
             let item = recentFoldersMenu.addItem(
-                withTitle: url.lastPathComponent, action: #selector(openRecentFolder(_:)), keyEquivalent: "")
+                withTitle: url.lastPathComponent, action: #selector(openRecentFolder(_:)),
+                keyEquivalent: "")
             item.target = self
             item.representedObject = url
             item.toolTip = url.path
@@ -160,7 +143,8 @@ extension BrowserViewController {
         }
         recentFoldersMenu.addItem(.separator())
         let clear = recentFoldersMenu.addItem(
-            withTitle: L("menu.clearMenu", "Clear Menu"), action: #selector(clearRecentFolders), keyEquivalent: "")
+            withTitle: L("menu.clearMenu", "Clear Menu"), action: #selector(clearRecentFolders),
+            keyEquivalent: "")
         clear.target = self
     }
 
@@ -176,18 +160,21 @@ extension BrowserViewController {
     @objc private func saveLayoutMenu() { saveLayoutPrompt() }
 
     @objc private func applyLayoutMenu(_ sender: NSMenuItem) {
-        guard let name = sender.representedObject as? String, let layout = layouts.named(name) else { return }
+        guard let name = sender.representedObject as? String, let layout = layouts.named(name)
+        else { return }
         applyLayout(layout)
     }
 
     func saveLayoutPrompt() {
         let alert = NSAlert()
         alert.messageText = L("bvc.saveLayoutTitle", "Save Layout")
-        alert.informativeText = L("bvc.saveLayoutBody", "Name this arrangement of folders and panes.")
+        alert.informativeText = L(
+            "bvc.saveLayoutBody", "Name this arrangement of folders and panes.")
         alert.addButton(withTitle: L("common.save", "Save"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
-        field.stringValue = String(format: L("bvc.layoutDefaultName", "Layout %d"), layouts.names.count + 1)
+        field.stringValue = String(
+            format: L("bvc.layoutDefaultName", "Layout %d"), layouts.names.count + 1)
         alert.accessoryView = field
         Task { @MainActor in
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
@@ -216,8 +203,12 @@ extension BrowserViewController {
         // Skip paths that no longer resolve to a folder (hand-edited, shared from
         // another machine, or since deleted) so a pane is never dropped onto the
         // process working directory or a missing path.
-        if let url = Self.existingFolderURL(layout.leftPath) { leftTabs.activePane?.navigate(to: url) }
-        if let url = Self.existingFolderURL(layout.rightPath) { rightTabs.activePane?.navigate(to: url) }
+        if let url = Self.existingFolderURL(layout.leftPath) {
+            leftTabs.activePane?.navigate(to: url)
+        }
+        if let url = Self.existingFolderURL(layout.rightPath) {
+            rightTabs.activePane?.navigate(to: url)
+        }
         setRightPaneFraction(1 - layout.dividerFraction)  // saved fraction is the left pane's share
     }
 
@@ -246,7 +237,9 @@ extension BrowserViewController {
         // Otherwise a run that left the drawer open (e.g. one that was killed mid-check) makes every
         // later automation launch start with the terminal eating half the height, squishing the
         // panes -- exactly the "pane pushes up / squished" symptom in the invariant checks.
-        if !PathemApp.isAutomationLaunch, UserDefaults.standard.bool(forKey: "pathem.terminalVisible") {
+        if !PathemApp.isAutomationLaunch,
+            UserDefaults.standard.bool(forKey: "pathem.terminalVisible")
+        {
             toggleTerminal()
         }
     }
