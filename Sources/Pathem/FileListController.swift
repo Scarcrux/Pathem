@@ -8,7 +8,8 @@ import UniformTypeIdentifiers
 /// materializing them all — the table only asks for the rows it is about to
 /// show. `cellRequests` instruments exactly that for the Gate A proof.
 @MainActor
-final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSMenuDelegate,
+final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDelegate,
+    NSMenuDelegate,
     NSTextFieldDelegate
 {
     let scrollView = NSScrollView()
@@ -36,19 +37,27 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Item count per group title, from the full grouping (so a collapsed header still shows it).
     private var groupCounts: [String: Int] = [:]
     private func rebuildDisplayRows() {
-        let full = FileGrouping.rows(entries, by: groupKey, now: Date(), tagColors: { [weak self] in
-            self?.tagColors(for: $0) ?? []
-        })
+        let full = FileGrouping.rows(
+            entries, by: groupKey, now: Date(),
+            tagColors: { [weak self] in
+                self?.tagColors(for: $0) ?? []
+            })
         var counts: [String: Int] = [:]
         var currentTitle = ""
         for row in full {
             switch row {
-            case .header(let title): currentTitle = title; counts[title] = 0
+            case .header(let title):
+                currentTitle = title
+                counts[title] = 0
             case .item: counts[currentTitle, default: 0] += 1
             }
         }
         groupCounts = counts
-        guard !collapsedGroups.isEmpty else { displayRows = full; rebuildRowIndex(); return }
+        guard !collapsedGroups.isEmpty else {
+            displayRows = full
+            rebuildRowIndex()
+            return
+        }
         // Drop the item rows under any collapsed header, keeping the header itself.
         var result: [FileGrouping.Row] = []
         var hidingItems = false
@@ -82,15 +91,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Toggle a group's collapsed state (from a click on its header), preserving the selection.
     private func toggleGroupCollapsed(_ title: String) {
-        let names = Set(tableView.selectedRowIndexes.compactMap { entryIndex(forRow: $0).map { entries[$0].name } })
-        if collapsedGroups.contains(title) { collapsedGroups.remove(title) } else { collapsedGroups.insert(title) }
+        let names = Set(
+            tableView.selectedRowIndexes.compactMap {
+                entryIndex(forRow: $0).map { entries[$0].name }
+            })
+        if collapsedGroups.contains(title) {
+            collapsedGroups.remove(title)
+        } else {
+            collapsedGroups.insert(title)
+        }
         rebuildDisplayRows()
         tableView.reloadData()
         tableView.selectRowIndexes(rows(forNames: names), byExtendingSelection: false)
     }
     /// The entries index a table row shows, or nil for a group-header row.
     private func entryIndex(forRow row: Int) -> Int? {
-        guard row >= 0, row < displayRows.count, case .item(let index) = displayRows[row] else { return nil }
+        guard row >= 0, row < displayRows.count, case .item(let index) = displayRows[row] else {
+            return nil
+        }
         return index
     }
     /// The table row showing the entry at `index`, or nil if not currently displayed. O(1) via
@@ -103,7 +121,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private func rows(forNames names: Set<String>) -> IndexSet {
         var set = IndexSet()
         for (row, displayRow) in displayRows.enumerated() {
-            if case .item(let index) = displayRow, index < entries.count, names.contains(entries[index].name) {
+            if case .item(let index) = displayRow, index < entries.count,
+                names.contains(entries[index].name)
+            {
                 set.insert(row)
             }
         }
@@ -127,9 +147,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let original = groupKey
         setGroupKey(.kind)
         select(name: first.name)
-        let hasHeaders = displayRows.contains { if case .header = $0 { return true }; return false }
+        let hasHeaders = displayRows.contains {
+            if case .header = $0 { return true }
+            return false
+        }
         let mapped = selectedEntries.count == 1 && selectedEntries.first?.name == first.name
-        let sameCount = displayRows.filter { if case .item = $0 { return true }; return false }.count == entries.count
+        let sameCount =
+            displayRows.filter {
+                if case .item = $0 { return true }
+                return false
+            }.count == entries.count
         setGroupKey(original)
         return hasHeaders && mapped && sameCount
     }
@@ -140,12 +167,22 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let original = groupKey
         setGroupKey(.kind)
         let before = displayRows.count
-        guard let headerRow = displayRows.firstIndex(where: { if case .header = $0 { return true }; return false }),
+        guard
+            let headerRow = displayRows.firstIndex(where: {
+                if case .header = $0 { return true }
+                return false
+            }),
             case .header(let title) = displayRows[headerRow]
-        else { setGroupKey(original); return false }
+        else {
+            setGroupKey(original)
+            return false
+        }
         toggleGroupCollapsed(title)
         let after = displayRows.count
-        let headerStays = displayRows.contains { if case .header(let t) = $0 { return t == title }; return false }
+        let headerStays = displayRows.contains {
+            if case .header(let t) = $0 { return t == title }
+            return false
+        }
         toggleGroupCollapsed(title)  // re-expand
         let restored = displayRows.count == before
         setGroupKey(original)
@@ -179,9 +216,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var deferredCosmeticReload = false
     /// Reload for a cosmetic refresh, unless an inline rename is open (then defer to `editEnded`).
     private func cosmeticReload(rows: IndexSet? = nil, columns: IndexSet? = nil) {
-        guard editingEntry == nil else { deferredCosmeticReload = true; return }
-        if let rows, let columns { tableView.reloadData(forRowIndexes: rows, columnIndexes: columns) }
-        else { tableView.reloadData() }
+        guard editingEntry == nil else {
+            deferredCosmeticReload = true
+            return
+        }
+        if let rows, let columns {
+            tableView.reloadData(forRowIndexes: rows, columnIndexes: columns)
+        } else {
+            tableView.reloadData()
+        }
     }
     /// Called after an inline rename ends (committed or cancelled): flush any cosmetic reload we held,
     /// rebuilding display rows (tag buckets may have arrived) and preserving the selection.
@@ -344,7 +387,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         /// Shown by default; the rest are opt-in via the header menu (persisted).
         var defaultVisible: Bool { [.name, .size, .date].contains(self) }
         /// Metadata-derived columns whose values are computed off-main and cached.
-        var isExtended: Bool { [.dimensions, .permissions, .owner, .whereFrom, .comment].contains(self) }
+        var isExtended: Bool {
+            [.dimensions, .permissions, .owner, .whereFrom, .comment].contains(self)
+        }
     }
 
     override init() {
@@ -417,9 +462,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let clip = scrollView.contentView
         clip.postsFrameChangedNotifications = true
         NotificationCenter.default.addObserver(
-            self, selector: #selector(fitColumns), name: NSView.frameDidChangeNotification, object: clip)
+            self, selector: #selector(fitColumns), name: NSView.frameDidChangeNotification,
+            object: clip)
         NotificationCenter.default.addObserver(
-            self, selector: #selector(columnResized(_:)), name: NSTableView.columnDidResizeNotification,
+            self, selector: #selector(columnResized(_:)),
+            name: NSTableView.columnDidResizeNotification,
             object: tableView)
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
@@ -449,7 +496,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         NSLayoutConstraint.activate([
             placeholder.centerXAnchor.constraint(equalTo: scrollView.centerXAnchor),
             placeholder.centerYAnchor.constraint(equalTo: scrollView.centerYAnchor),
-            placeholder.widthAnchor.constraint(lessThanOrEqualTo: scrollView.widthAnchor, constant: -48),
+            placeholder.widthAnchor.constraint(
+                lessThanOrEqualTo: scrollView.widthAnchor, constant: -48),
         ])
     }
 
@@ -468,7 +516,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The command-backed items that may appear in the right-click menu (for the Settings
     /// toggles and the smoke icon check). The menu itself is built by the shared
     /// `FileContextMenuController`; this stays as the canonical list's public name.
-    static var contextCommands: [(id: String, title: String)] { FileContextMenuController.hideableCommands }
+    static var contextCommands: [(id: String, title: String)] {
+        FileContextMenuController.hideableCommands
+    }
 
     /// The one shared file context menu, used by every pane view so they never drift.
     private let contextMenu = FileContextMenuController()
@@ -481,10 +531,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private func makeBackgroundMenu() -> NSMenu? {
         guard let dir = directoryURL else { return nil }
         let menu = NSMenu()
-        let copyPath = menu.addItem(withTitle: L("bvc.cmd.copyPath", "Copy Path"), action: #selector(copyFolderPath), keyEquivalent: "")
+        let copyPath = menu.addItem(
+            withTitle: L("bvc.cmd.copyPath", "Copy Path"), action: #selector(copyFolderPath),
+            keyEquivalent: "")
         copyPath.target = self
         copyPath.image = MenuIcons.image(forCommand: "files.copyPath")
-        let copyName = menu.addItem(withTitle: L("bvc.cmd.copyName", "Copy Name"), action: #selector(copyFolderName), keyEquivalent: "")
+        let copyName = menu.addItem(
+            withTitle: L("bvc.cmd.copyName", "Copy Name"), action: #selector(copyFolderName),
+            keyEquivalent: "")
         copyName.target = self
         copyName.image = MenuIcons.image(forCommand: "files.copyName")
         menu.addItem(.separator())
@@ -494,7 +548,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             ("files.paste", L("list.paste", "Paste")),
         ] {
             let item = menu.addItem(
-                withTitle: title, action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
+                withTitle: title, action: #selector(BrowserViewController.performMenuCommand(_:)),
+                keyEquivalent: "")
             item.representedObject = id
             item.image = MenuIcons.image(forCommand: id)
         }
@@ -578,7 +633,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Replace the listing. With `preserveState` (an in-place refresh: a sort, a
     /// file op, a watcher tick) the selection is restored by name and the scroll
-    /// position is held, so the list never jumps or deselects under the user.
+    /// position is held, so the list never jumps or deselects under the user. If a
+    /// selected row was visible before the refresh, keep that same row visible if
+    /// re-sorting moves it; do not reveal a selection the user had scrolled away from.
     /// Without it (navigation, search results) the view resets to the top.
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
@@ -597,6 +654,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             return
         }
         let selectedNames = Set(selectedEntries.map(\.name))
+        // Opening a file can change its metadata in the receiving app. The folder watcher then
+        // re-lists and re-sorts the folder; preserving only the old clip origin can strand the
+        // selected file at its new row outside the viewport. Anchor one selected row that is
+        // actually visible now, so the refresh keeps the user's point of reference without
+        // yanking back to a selection they intentionally scrolled away from.
+        let visibleSelectionAnchor = tableView.selectedRowIndexes.first { row in
+            tableView.rect(ofRow: row).intersects(tableView.visibleRect)
+        }.flatMap { row in
+            entryIndex(forRow: row).map { self.entries[$0].name }
+        }
         let origin = scrollView.contentView.bounds.origin
         // A view that had no rows is being filled for the first time -- a fresh list built by a
         // view-mode swap. There is no scroll position worth preserving there, and restoring the
@@ -625,6 +692,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let maxY = max(0, tableView.frame.height - scrollView.contentView.bounds.height)
         scrollView.contentView.scroll(to: NSPoint(x: origin.x, y: min(max(origin.y, 0), maxY)))
         scrollView.reflectScrolledClipView(scrollView.contentView)
+        if let visibleSelectionAnchor,
+            let row = rows(forNames: [visibleSelectionAnchor]).first,
+            !tableView.rect(ofRow: row).intersects(tableView.visibleRect)
+        {
+            tableView.scrollRowToVisible(row)
+        }
     }
 
     // MARK: - Scroll-clamp diagnostics (the shrink-while-scrolled regression check)
@@ -640,7 +713,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// big folder must enqueue on the order of the visible rows, not entries.count (the
     /// O(total-entries) getxattr regression). The background flush hasn't run yet under
     /// synchronous drive, so the pending set still holds exactly what was requested.
-    func debugTagReadsEnqueued(listing entries: [FileEntry], in dir: URL, visibleHeight: CGFloat) -> Int {
+    func debugTagReadsEnqueued(listing entries: [FileEntry], in dir: URL, visibleHeight: CGFloat)
+        -> Int
+    {
         directoryURL = dir
         setEntries(entries, preserveState: false)
         debugLayout(width: 500, height: visibleHeight)
@@ -673,9 +748,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard row >= 0, let index = entryIndex(forRow: row) else { return false }
         let entry = entries[index]
         tableView.scrollRowToVisible(row)
-        let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        let nameCol = tableView.column(
+            withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
         guard nameCol >= 0,
-            let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: true) as? NSTableCellView,
+            let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: true)
+                as? NSTableCellView,
             let field = cell.textField
         else { return false }
         editingEntry = entry
@@ -694,7 +771,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         if let editor = field.currentEditor() {
             let ns = entry.name as NSString
             let ext = ns.pathExtension as NSString
-            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            let baseLength =
+                (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
             editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
         }
         return true
@@ -721,9 +799,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         editingRow = -1
         renameCancelled = false
         defer { editEnded() }
-        let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        let nameCol = tableView.column(
+            withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
         if nameCol >= 0, row >= 0, row < tableView.numberOfRows,
-            let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: false) as? NSTableCellView,
+            let cell = tableView.view(atColumn: nameCol, row: row, makeIfNecessary: false)
+                as? NSTableCellView,
             let field = cell.textField
         {
             endInlineEditing(field)
@@ -733,7 +813,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     // MARK: NSTextFieldDelegate (in-place rename)
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool
+    {
         if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
             renameCancelled = true
             tableView.window?.makeFirstResponder(tableView)
@@ -769,7 +850,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     @objc private func handleSingleClick() {
         let row = tableView.clickedRow
         guard row >= 0, row < displayRows.count else { return }
-        if case .header(let title) = displayRows[row] { toggleGroupCollapsed(title); return }
+        if case .header(let title) = displayRows[row] {
+            toggleGroupCollapsed(title)
+            return
+        }
         guard singleClickToOpen else { return }
         let flags = NSApp.currentEvent?.modifierFlags ?? []
         if flags.contains(.shift) || flags.contains(.command) { return }  // extending a selection
@@ -786,7 +870,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             if underlineHover {
                 let area = NSTrackingArea(
                     rect: .zero,
-                    options: [.mouseMoved, .mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+                    options: [
+                        .mouseMoved, .mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect,
+                    ],
                     owner: self, userInfo: nil)
                 tableView.addTrackingArea(area)
                 hoverTrackingArea = area
@@ -810,12 +896,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard row != hoveredRow else { return }
         let old = hoveredRow
         hoveredRow = row
-        let nameCol = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        let nameCol = tableView.column(
+            withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
         guard nameCol >= 0 else { return }
         var rows = IndexSet()
         if old >= 0, old < displayRows.count { rows.insert(old) }
         if row >= 0, row < displayRows.count { rows.insert(row) }
-        if !rows.isEmpty { tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integer: nameCol)) }
+        if !rows.isEmpty {
+            tableView.reloadData(forRowIndexes: rows, columnIndexes: IndexSet(integer: nameCol))
+        }
     }
 
     // MARK: Open With
@@ -832,7 +921,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
     }
 
-    func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
+    func tableView(
+        _ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]
+    ) {
         guard !suppressSortCallback,
             let descriptor = tableView.sortDescriptors.first,
             let key = descriptor.key,
@@ -865,7 +956,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard let row = rows(forNames: [name]).first else { return false }
         return tableView.rows(in: tableView.visibleRect).contains(row)
     }
-    func debugFireSort(_ key: ViewFormat.SortKey, ascending: Bool) { onSortChanged?(key, ascending) }
+    func debugFireSort(_ key: ViewFormat.SortKey, ascending: Bool) {
+        onSortChanged?(key, ascending)
+    }
     var debugListClipHeight: CGFloat { scrollView.contentView.bounds.height }
     var debugListContentHeight: CGFloat { tableView.frame.height }
 
@@ -887,7 +980,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         // The system sort-indicator triangles (public named images, not exposed as Swift
         // static members): up for ascending, down for descending.
         let arrow = NSImage(
-            named: ascending ? NSImage.Name("NSAscendingSortIndicator")
+            named: ascending
+                ? NSImage.Name("NSAscendingSortIndicator")
                 : NSImage.Name("NSDescendingSortIndicator"))
         for column in tableView.tableColumns {
             tableView.setIndicatorImage(column === sorted ? arrow : nil, in: column)
@@ -913,7 +1007,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard let column = tableView.highlightedTableColumn else { return nil }
         return (
             column.identifier.rawValue, tableView.sortDescriptors.first?.ascending ?? true,
-            tableView.indicatorImage(in: column) != nil)
+            tableView.indicatorImage(in: column) != nil
+        )
     }
 
     // MARK: NSTableViewDataSource
@@ -928,7 +1023,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// proportionally from their wanted widths toward their floors. Only when every
     /// column is floored does the table overflow and the scrollbar appear.
     @objc private func fitColumns() {
-        guard let name = tableView.tableColumns.first(where: { $0.identifier.rawValue == Column.name.rawValue && !$0.isHidden })
+        guard
+            let name = tableView.tableColumns.first(where: {
+                $0.identifier.rawValue == Column.name.rawValue && !$0.isHidden
+            })
         else { return }
         let others = tableView.tableColumns.filter { $0 !== name && !$0.isHidden }
         // Seed wanted widths lazily from each column's sensible default, NOT the current width:
@@ -936,9 +1034,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         // that would lock the column at its squeeze floor forever. User drags update wanted via
         // columnResized, so deliberate in-session sizing is still honored.
         for col in others where wantedWidths[col.identifier.rawValue] == nil {
-            wantedWidths[col.identifier.rawValue] = Column(rawValue: col.identifier.rawValue)?.width ?? col.width
+            wantedWidths[col.identifier.rawValue] =
+                Column(rawValue: col.identifier.rawValue)?.width ?? col.width
         }
-        func wanted(_ col: NSTableColumn) -> CGFloat { wantedWidths[col.identifier.rawValue] ?? col.width }
+        func wanted(_ col: NSTableColumn) -> CGFloat {
+            wantedWidths[col.identifier.rawValue] ?? col.width
+        }
         func floorOf(_ col: NSTableColumn) -> CGFloat {
             Column(rawValue: col.identifier.rawValue)?.squeezeFloor ?? 80
         }
@@ -1029,7 +1130,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     // MARK: Drag and drop
 
-    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int)
+        -> NSPasteboardWriting?
+    {
         guard let index = entryIndex(forRow: row) else { return nil }  // headers don't drag
         let entry = entries[index]
         guard !entry.isDataless, let url = entryURL(entry) else { return nil }  // no location -> can't drag
@@ -1074,7 +1177,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// URL against it). directoryURL is set synchronously by PaneController.reload, so this is true
     /// the instant the view exists -- a regression guard for the "rows show but nothing drags" bug.
     func debugRowsDraggable() -> Bool {
-        guard let first = tableView.selectedRowIndexes.first ?? (numberOfRows(in: tableView) > 0 ? 0 : nil)
+        guard
+            let first = tableView.selectedRowIndexes.first
+                ?? (numberOfRows(in: tableView) > 0 ? 0 : nil)
         else { return directoryURL != nil }  // no rows yet: fall back to the gate itself
         return tableView(tableView, pasteboardWriterForRow: first) != nil
     }
@@ -1089,7 +1194,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// it. Host the scrollView in a window first (editing needs a realized cell).
     func debugReloadCancelsInlineEdit() -> Bool {
         directoryURL = URL(fileURLWithPath: "/tmp")
-        let probe = [FileEntry(name: "probe.txt", isDirectory: false, size: 1, modificationDate: nil)]
+        let probe = [
+            FileEntry(name: "probe.txt", isDirectory: false, size: 1, modificationDate: nil)
+        ]
         setEntries(probe, preserveState: false)
         debugLayout(width: 500, height: 200)
         select(name: "probe.txt")
@@ -1105,7 +1212,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// True iff the edit begins and survives a cosmetic reload. Host the scrollView in a window first.
     func debugCosmeticReloadKeepsInlineEdit() -> Bool {
         directoryURL = URL(fileURLWithPath: "/tmp")
-        let probe = [FileEntry(name: "probe.txt", isDirectory: false, size: 1, modificationDate: nil)]
+        let probe = [
+            FileEntry(name: "probe.txt", isDirectory: false, size: 1, modificationDate: nil)
+        ]
         setEntries(probe, preserveState: false)
         debugLayout(width: 500, height: 200)
         select(name: "probe.txt")
@@ -1118,9 +1227,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Whether the name cell at `row` exposes the clean filename to VoiceOver (A8 guard).
     func debugNameAXMatchesEntry(row: Int) -> Bool {
         guard let index = entryIndex(forRow: row) else { return false }
-        let col = tableView.column(withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
+        let col = tableView.column(
+            withIdentifier: NSUserInterfaceItemIdentifier(Column.name.rawValue))
         guard col >= 0,
-            let cell = tableView.view(atColumn: col, row: row, makeIfNecessary: true) as? NSTableCellView
+            let cell = tableView.view(atColumn: col, row: row, makeIfNecessary: true)
+                as? NSTableCellView
         else { return false }
         // The label now leads with the name and appends kind/size/date, so match on the prefix.
         return cell.textField?.accessibilityLabel()?.hasPrefix(entries[index].name) ?? false
@@ -1153,7 +1264,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     ) {
         localDragStartScreen = screenPoint  // to ignore an accidental micro-drag on drop (see acceptDrop)
         let urls = rowIndexes.compactMap { row -> URL? in
-            guard let index = entryIndex(forRow: row), !entries[index].isDataless else { return nil }
+            guard let index = entryIndex(forRow: row), !entries[index].isDataless else {
+                return nil
+            }
             return entryURL(entries[index])
         }
         FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
@@ -1170,10 +1283,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         _ tableView: NSTableView, validateDrop info: NSDraggingInfo,
         proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation
     ) -> NSDragOperation {
-        guard let urls = draggedURLs(from: info), !urls.isEmpty else { springLoader.cancel(); return [] }
+        guard let urls = draggedURLs(from: info), !urls.isEmpty else {
+            springLoader.cancel()
+            return []
+        }
         // Over a folder row (that isn't one of the dragged items) -> drop INTO it, with
         // the row highlighted. Otherwise drop into the current folder.
-        if let folder = folderRow(at: row, excluding: urls), !incomingURLs(urls, into: folder).isEmpty {
+        if let folder = folderRow(at: row, excluding: urls),
+            !incomingURLs(urls, into: folder).isEmpty
+        {
             tableView.setDropRow(row, dropOperation: .on)
             armSpring(atRow: row, folder: folder)  // dwell here to spring the folder open
         } else if fileRow(at: row, excluding: urls) != nil {
@@ -1193,7 +1311,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// descends), so a drag can walk into a tree without dropping.
     private let springLoader = SpringLoader()
     private func armSpring(atRow row: Int, folder: URL) {
-        guard let index = entryIndex(forRow: row) else { springLoader.cancel(); return }
+        guard let index = entryIndex(forRow: row) else {
+            springLoader.cancel()
+            return
+        }
         let entry = entries[index]
         springLoader.arm(key: folder.path) { [weak self] in self?.onOpen?(entry) }
     }
@@ -1207,7 +1328,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         // A drag that began in this list but barely moved is a click with jitter, not a move. Ignore
         // it so a plain click near another file no longer pops the "Move Here / Copy Here" menu.
         if let window = tableView.window,
-            isAccidentalMicroDrag(endingAtScreen: window.convertPoint(toScreen: info.draggingLocation))
+            isAccidentalMicroDrag(
+                endingAtScreen: window.convertPoint(toScreen: info.draggingLocation))
         {
             return false
         }
@@ -1230,20 +1352,29 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// The file URL at `row`, if it's a non-directory not among the dragged items (the target of a
     /// file-onto-file drop).
     private func fileRow(at row: Int, excluding dragged: [URL]) -> URL? {
-        guard let index = entryIndex(forRow: row), !entries[index].isDirectory, let dir = directoryURL else { return nil }
+        guard let index = entryIndex(forRow: row), !entries[index].isDirectory,
+            let dir = directoryURL
+        else { return nil }
         let file = dir.appendingPathComponent(entries[index].name)
         let path = file.resolvingSymlinksInPath().standardizedFileURL.path
-        if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == path }) { return nil }
+        if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == path }
+        ) {
+            return nil
+        }
         return file
     }
 
     /// The folder URL at `row`, if it's a directory not among the dragged items.
     private func folderRow(at row: Int, excluding dragged: [URL]) -> URL? {
-        guard let index = entryIndex(forRow: row), entries[index].isDirectory, let dir = directoryURL else { return nil }
+        guard let index = entryIndex(forRow: row), entries[index].isDirectory,
+            let dir = directoryURL
+        else { return nil }
         let folder = dir.appendingPathComponent(entries[index].name)
         let folderPath = folder.resolvingSymlinksInPath().standardizedFileURL.path
         // Don't allow dropping a folder onto itself.
-        if dragged.contains(where: { $0.resolvingSymlinksInPath().standardizedFileURL.path == folderPath }) {
+        if dragged.contains(where: {
+            $0.resolvingSymlinksInPath().standardizedFileURL.path == folderPath
+        }) {
             return nil
         }
         return folder
@@ -1260,7 +1391,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         guard let destination else { return [] }
         let destPath = destination.resolvingSymlinksInPath().standardizedFileURL.path
         return urls.filter {
-            let parent = $0.deletingLastPathComponent().resolvingSymlinksInPath().standardizedFileURL.path
+            let parent = $0.deletingLastPathComponent().resolvingSymlinksInPath()
+                .standardizedFileURL.path
             return parent.compare(destPath, options: .caseInsensitive) != .orderedSame
         }
     }
@@ -1280,11 +1412,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     // MARK: NSTableViewDelegate
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         // Group-header rows span the width; render the header once (nil column or the name
         // column) and nothing for the other columns.
         if row < displayRows.count, case .header(let title) = displayRows[row] {
-            let isNameOrSpanning = tableColumn == nil || tableColumn?.identifier.rawValue == Column.name.rawValue
+            let isNameOrSpanning =
+                tableColumn == nil || tableColumn?.identifier.rawValue == Column.name.rawValue
             return isNameOrSpanning ? groupHeaderView(title) : nil
         }
         guard let tableColumn, let entryIndex = entryIndex(forRow: row) else { return nil }
@@ -1310,7 +1445,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: listFontSize)
             let defaultColor: NSColor = entry.isDataless ? .secondaryLabelColor : .labelColor
             cell.textField?.textColor = ruleStyle?.color ?? defaultColor
-            let baseIcon = entry.isDataless ? Self.cloudIcon : FileIconCache.icon(for: entry, in: directoryURL)
+            let baseIcon =
+                entry.isDataless ? Self.cloudIcon : FileIconCache.icon(for: entry, in: directoryURL)
             cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: directoryURL)
             let colors = tagColors(for: entry)
             let git = gitState(for: entry)
@@ -1345,7 +1481,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 if let measure = folderSize(for: entry) {
                     // A trailing "+" marks an undercount from an unreadable subtree.
                     cell.textField?.stringValue =
-                        byteFormatter.string(fromByteCount: measure.bytes) + (measure.complete ? "" : "+")
+                        byteFormatter.string(fromByteCount: measure.bytes)
+                        + (measure.complete ? "" : "+")
                 } else {
                     cell.textField?.stringValue = "--"
                 }
@@ -1355,21 +1492,26 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         case .kind:
             cell.textField?.stringValue = FileAXLabel.kind(for: entry)
         case .date:
-            cell.textField?.stringValue = entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
+            cell.textField?.stringValue =
+                entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
         case .dateCreated:
-            cell.textField?.stringValue = entry.creationDate.map { dateFormatter.string(from: $0) } ?? ""
+            cell.textField?.stringValue =
+                entry.creationDate.map { dateFormatter.string(from: $0) } ?? ""
         case .dateAccessed:
-            cell.textField?.stringValue = entry.accessDate.map { dateFormatter.string(from: $0) } ?? ""
+            cell.textField?.stringValue =
+                entry.accessDate.map { dateFormatter.string(from: $0) } ?? ""
         case .ext:
             cell.textField?.stringValue =
                 entry.isDirectory ? "" : (entry.name as NSString).pathExtension.lowercased()
         case .git:
-            cell.textField?.stringValue = gitState(for: entry).map { FileNameDecoration.gitBadge($0).letter } ?? ""
+            cell.textField?.stringValue =
+                gitState(for: entry).map { FileNameDecoration.gitBadge($0).letter } ?? ""
         case .path:
             cell.textField?.stringValue = entry.location ?? directoryURL?.path ?? ""
             cell.textField?.textColor = .secondaryLabelColor
         case .dimensions, .permissions, .owner, .whereFrom, .comment:
-            let info = extendedInfo[Self.key(base: entry.location ?? directoryURL?.path, name: entry.name)]
+            let info = extendedInfo[
+                Self.key(base: entry.location ?? directoryURL?.path, name: entry.name)]
             let value: String?
             switch Column(rawValue: id.rawValue) {
             case .dimensions: value = info?.dimensions
@@ -1450,7 +1592,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private func makeHeaderMenu() -> NSMenu {
         let menu = NSMenu()
         for column in Column.allCases where column != .name {  // Name is always shown
-            let item = NSMenuItem(title: column.title, action: #selector(toggleColumn(_:)), keyEquivalent: "")
+            let item = NSMenuItem(
+                title: column.title, action: #selector(toggleColumn(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = column.rawValue
             menu.addItem(item)
@@ -1477,7 +1620,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return true
     }
 
-    private static func makeCell(_ id: NSUserInterfaceItemIdentifier, withIcon: Bool) -> NSTableCellView {
+    private static func makeCell(_ id: NSUserInterfaceItemIdentifier, withIcon: Bool)
+        -> NSTableCellView
+    {
         let cell = NSTableCellView()
         cell.identifier = id
         // The Name column reads as a label but can be flipped to an editable field for in-place
@@ -1561,7 +1706,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             var result: [String: [FileTag.Color]] = [:]
             result.reserveCapacity(keys.count)
             for key in keys {
-                result[key] = FileTags.tags(of: URL(fileURLWithPath: key)).map(\.color).filter { $0 != .none }
+                result[key] = FileTags.tags(of: URL(fileURLWithPath: key)).map(\.color).filter {
+                    $0 != .none
+                }
             }
             DispatchQueue.main.async {
                 guard let self, self.tagReadGeneration == generation else { return }  // folder changed: drop
@@ -1577,7 +1724,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let visible = tableView.rows(in: tableView.visibleRect)
         guard visible.length > 0, tableView.numberOfColumns > 0 else { return }
         tableView.reloadData(
-            forRowIndexes: IndexSet(integersIn: visible.location..<(visible.location + visible.length)),
+            forRowIndexes: IndexSet(
+                integersIn: visible.location..<(visible.location + visible.length)),
             columnIndexes: IndexSet(integersIn: 0..<tableView.numberOfColumns))
     }
 
@@ -1682,12 +1830,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let workers = min(6, max(2, ProcessInfo.processInfo.activeProcessorCount - 1))
         for offset in 0..<workers {
             DispatchQueue.global(qos: .utility).async { [weak self] in
-                var batch: [(path: String, name: String, row: Int, size: DirectorySize.Measurement)] = []
+                var batch:
+                    [(path: String, name: String, row: Int, size: DirectorySize.Measurement)] = []
                 func flush() {
                     let pending = batch
                     batch = []
                     DispatchQueue.main.async { [weak self] in
-                        self?.publishFolderSizes(pending, generation: generation, sizeColumn: sizeColumn)
+                        self?.publishFolderSizes(
+                            pending, generation: generation, sizeColumn: sizeColumn)
                     }
                 }
                 var index = offset
@@ -1704,11 +1854,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                         // restart. Only walk (and record) on a miss.
                         let url = URL(fileURLWithPath: path)
                         let mtime = FolderSizeStore.mtimeKey(of: url)
-                        if let cached = FolderSizeStore.shared.measurement(forPath: path, mtime: mtime) {
+                        if let cached = FolderSizeStore.shared.measurement(
+                            forPath: path, mtime: mtime)
+                        {
                             size = cached
                         } else {
                             size = DirectorySize.total(of: url)
-                            FolderSizeStore.shared.record(path: path, measurement: size, mtime: mtime)
+                            FolderSizeStore.shared.record(
+                                path: path, measurement: size, mtime: mtime)
                         }
                     }
                     batch.append((path, folder.name, folder.row, size))
@@ -1729,13 +1882,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         var rows = IndexSet()
         for item in pending
         where item.row < entries.count && entries[item.row].isDirectory
-            && entries[item.row].name == item.name {
+            && entries[item.row].name == item.name
+        {
             folderSizeCache[item.path] = item.size
             if let tableRow = row(forEntryIndex: item.row) { rows.insert(tableRow) }  // entry index -> table row
         }
         guard !rows.isEmpty else { return }
         let columns =
-            sizeColumn >= 0 ? IndexSet(integer: sizeColumn) : IndexSet(integersIn: 0..<tableView.numberOfColumns)
+            sizeColumn >= 0
+            ? IndexSet(integer: sizeColumn) : IndexSet(integersIn: 0..<tableView.numberOfColumns)
         cosmeticReload(rows: rows, columns: columns)
     }
 
@@ -1771,13 +1926,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 self.tagCache = result
                 // Don't rebuild/reload while an inline rename is open (it recycles the editing cell
                 // and ends the edit); catch up in editEnded, which also rebuilds the tag buckets.
-                guard self.editingEntry == nil else { self.deferredCosmeticReload = true; return }
+                guard self.editingEntry == nil else {
+                    self.deferredCosmeticReload = true
+                    return
+                }
                 // The buckets depend on the tags we just read, so rebuild the display rows
                 // (preserving selection) and reload.
                 let selected = Set(self.selectedEntries.map(\.name))
                 self.rebuildDisplayRows()
                 self.tableView.reloadData()
-                self.tableView.selectRowIndexes(self.rows(forNames: selected), byExtendingSelection: false)
+                self.tableView.selectRowIndexes(
+                    self.rows(forNames: selected), byExtendingSelection: false)
             }
         }
     }
@@ -1786,7 +1945,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private func visibleExtendedRequest() -> FileColumns.Request {
         var request: FileColumns.Request = []
         func on(_ column: Column, _ flag: FileColumns.Request) {
-            if let col = tableView.tableColumn(withIdentifier: .init(column.rawValue)), !col.isHidden {
+            if let col = tableView.tableColumn(withIdentifier: .init(column.rawValue)),
+                !col.isHidden
+            {
                 request.insert(flag)
             }
         }
@@ -1830,7 +1991,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Badge for online-only (dataless) cloud placeholders.
     private static let cloudIcon: NSImage =
-        NSImage(systemSymbolName: "icloud.and.arrow.down", accessibilityDescription: L("list.onlineOnly", "Online only"))
+        NSImage(
+            systemSymbolName: "icloud.and.arrow.down",
+            accessibilityDescription: L("list.onlineOnly", "Online only"))
         ?? NSImage()
 
     /// A type icon for the entry, cached by extension (via the shared FileIconCache so the

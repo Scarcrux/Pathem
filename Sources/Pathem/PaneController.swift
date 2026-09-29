@@ -145,6 +145,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
     var debugEntryCount: Int { entries.count }
     func debugHasEntry(_ name: String) -> Bool { entries.contains { $0.name == name } }
+    func debugEntryPosition(_ name: String) -> Int? { entries.firstIndex { $0.name == name } }
     func debugSelectNames(_ names: [String]) { content.selectNames(Set(names)) }
 
     /// Repro for the New-Folder-rename race (PATHEM_SMOKE): arm a queued rename plus a pending

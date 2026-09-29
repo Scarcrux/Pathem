@@ -125,6 +125,36 @@ extension BrowserViewController {
             check("sort-keeps-selection-visible", visible)
         }
 
+        // Scenario 3b: an external app can update an opened file's metadata. The watcher-driven
+        // refresh then re-sorts it without going through the explicit column-header callback above.
+        // A file that was visible when opened must remain visible at its new row.
+        do {
+            let baseDate = Date(timeIntervalSince1970: 1_700_000_000)
+            let dir = makeDir("open-refresh") { dir in
+                for i in 0..<40 {
+                    let url = dir.appendingPathComponent(String(format: "opened-%02d.txt", i))
+                    fm.createFile(atPath: url.path, contents: Data("x".utf8))
+                    try? fm.setAttributes(
+                        [.modificationDate: baseDate.addingTimeInterval(Double(i))],
+                        ofItemAtPath: url.path)
+                }
+            }
+            navigate(to: dir, expecting: 40)
+            activePane?.debugFireSort(.date, ascending: true)
+            _ = waitUntil(3) { self.activePane?.debugEntryCount == 40 }
+            pumpRunLoop(0.3)
+            activePane?.select(name: "opened-00.txt")  // oldest: visible at the top
+            pumpRunLoop(0.2)
+            try? fm.setAttributes(
+                [.modificationDate: baseDate.addingTimeInterval(10_000)],
+                ofItemAtPath: dir.appendingPathComponent("opened-00.txt").path)
+            activePane?.reload()  // the same in-place path used by the folder watcher
+            let moved = waitUntil(3) { self.activePane?.debugEntryPosition("opened-00.txt") == 39 }
+            pumpRunLoop(0.2)
+            let visible = activePane?.debugRowVisible("opened-00.txt") == true
+            check("open-metadata-refresh-keeps-selection-visible", moved && visible)
+        }
+
         // Scenario 4: cut+paste is a real move -- source cleared, dest populated, no duplicate. This
         // is the local path (the iCloud path can't run headlessly); it guards the move-not-copy family.
         do {
