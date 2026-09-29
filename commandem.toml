@@ -243,6 +243,14 @@ working_dir = "."
     title = "CI: vscode-v* release workflow packages + publishes the extension (gated on VSCE_PAT/OVSX_PAT)"
     done = true
 
+  [[phase.task]]
+    title = "Add a typed open/reveal/preview handoff with bounded inert Jupyter notebook previews"
+    done = true
+
+  [[phase.comment]]
+    text = "2026-09-29 Pathem handoff slice. Trigger/evidence: an external .ipynb open only revealed its parent and Pathem declared no notebook document type; the viewer accepted only PDF/images, so the requested preview intent had no route. Mechanism: the open/reveal URL contract lacked a distinct preview verb and notebooks had neither a UTI nor a safe renderer. Change: added pathem://preview plus CLI and Services entry, explicit visible failures, an Alternate-rank Jupyter UTI, and a bounded inert cell/text-output projection that ignores HTML/JavaScript. Review caught a synchronous metadata-check/read race before landing; the final reader opens one nonblocking descriptor, rejects nonregular files, caps bytes and rendered characters, parses off-main, and fences stale results. Effect: Commandem and other callers can deliberately reveal or safely preview a notebook without changing its system editor. Verification: 754 Swift tests, 158 suites, 17 debug E2E scenarios including 49/49 UI checks, 9/9 packaged-app checks, and independent review passed. Confidence: high for local URL/CLI/AppKit routing and parser safety; Commandem's chooser and third-party editor actions remain a separate integration slice. The roadmap edit was authored with commandem roadmap against an isolated clean manifest, then transplanted here because the primary checkout contains a concurrent schema-migration WIP that must remain untouched."
+    at = "2026-09-29T01:16:45Z"
+
 [[phase]]
   title = "Photos library integration (PhotoKit)"
   status = "done"

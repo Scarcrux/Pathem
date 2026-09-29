@@ -6,12 +6,14 @@ import Foundation
 ///
 ///   pathem://open?path=/abs/dir     -> navigate the active pane INTO that folder (or view a file)
 ///   pathem://reveal?path=/abs/item  -> select the item in its PARENT folder (file or folder alike)
+///   pathem://preview?path=/abs/file -> show a supported file in Pathem's read-only viewer
 public enum PathemURLContract {
     public static let scheme = "pathem"
 
     public enum Verb: String, Sendable {
         case open
         case reveal
+        case preview
     }
 
     /// Build a `pathem://<verb>?path=<path>` URL. `path` should be an absolute filesystem path.

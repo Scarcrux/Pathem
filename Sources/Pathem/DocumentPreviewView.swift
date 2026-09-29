@@ -1,5 +1,6 @@
 import AppKit
 import PDFKit
+import PathemEngine
 import Quartz
 import UniformTypeIdentifiers
 
@@ -12,6 +13,9 @@ import UniformTypeIdentifiers
 final class DocumentPreviewView: NSView {
     private let quickLook = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     private let pdfView = PDFMarkupView()
+    private let notebookScroll = NSScrollView()
+    private let notebookText = NSTextView()
+    private var notebookLoadID = UUID()
     private let controls = NSStackView()
     /// The second toolbar row: the markup tools, shown only while markup mode is on.
     private let markupBar = NSStackView()
@@ -58,6 +62,34 @@ final class DocumentPreviewView: NSView {
             quickLook.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
 
+        notebookText.isEditable = false
+        notebookText.isSelectable = true
+        notebookText.drawsBackground = false
+        notebookText.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        notebookText.textContainerInset = NSSize(width: 18, height: 18)
+        notebookText.isHorizontallyResizable = false
+        notebookText.isVerticallyResizable = true
+        notebookText.autoresizingMask = [.width]
+        notebookText.minSize = .zero
+        notebookText.maxSize = NSSize(
+            width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        notebookText.textContainer?.widthTracksTextView = true
+        notebookText.textContainer?.containerSize = NSSize(
+            width: 0, height: CGFloat.greatestFiniteMagnitude)
+        notebookScroll.documentView = notebookText
+        notebookScroll.hasVerticalScroller = true
+        notebookScroll.autohidesScrollers = true
+        notebookScroll.drawsBackground = false
+        notebookScroll.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(notebookScroll)
+        NSLayoutConstraint.activate([
+            notebookScroll.leadingAnchor.constraint(equalTo: leadingAnchor),
+            notebookScroll.trailingAnchor.constraint(equalTo: trailingAnchor),
+            notebookScroll.topAnchor.constraint(equalTo: topAnchor),
+            notebookScroll.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
+        notebookScroll.isHidden = true
+
         pdfView.autoScales = true  // fit width; user can then zoom in/out
         pdfView.displayMode = .singlePageContinuous  // scroll through pages
         pdfView.displaysPageBreaks = true
@@ -71,7 +103,10 @@ final class DocumentPreviewView: NSView {
         for (symbol, tip, action) in [
             ("minus.magnifyingglass", L("preview.zoomOut", "Zoom Out"), #selector(zoomOut)),
             ("plus.magnifyingglass", L("preview.zoomIn", "Zoom In"), #selector(zoomIn)),
-            ("arrow.up.left.and.arrow.down.right", L("preview.fit", "Fit Width"), #selector(fitWidth)),
+            (
+                "arrow.up.left.and.arrow.down.right", L("preview.fit", "Fit Width"),
+                #selector(fitWidth)
+            ),
             ("printer", L("preview.print", "Print"), #selector(printDocument)),
         ] {
             controls.addArrangedSubview(iconButton(symbol, tip, action))
@@ -93,7 +128,8 @@ final class DocumentPreviewView: NSView {
         controls.addArrangedSubview(markupToggle)
 
         saveButton.image = NSImage(
-            systemSymbolName: "square.and.arrow.down", accessibilityDescription: L("preview.save", "Save"))
+            systemSymbolName: "square.and.arrow.down",
+            accessibilityDescription: L("preview.save", "Save"))
         saveButton.bezelStyle = .texturedRounded
         saveButton.target = self
         saveButton.action = #selector(saveMarkup)
@@ -157,7 +193,10 @@ final class DocumentPreviewView: NSView {
         for (symbol, tip, action) in [
             ("highlighter", L("markup.highlight", "Highlight"), #selector(applyHighlight)),
             ("underline", L("markup.underline", "Underline"), #selector(applyUnderline)),
-            ("strikethrough", L("markup.strikethrough", "Strikethrough"), #selector(applyStrikethrough)),
+            (
+                "strikethrough", L("markup.strikethrough", "Strikethrough"),
+                #selector(applyStrikethrough)
+            ),
         ] {
             markupBar.addArrangedSubview(iconButton(symbol, tip, action))
         }
@@ -193,8 +232,10 @@ final class DocumentPreviewView: NSView {
         colorWell.heightAnchor.constraint(equalToConstant: 22).isActive = true
         markupBar.addArrangedSubview(colorWell)
 
-        markupBar.addArrangedSubview(iconButton("arrow.uturn.backward", L("markup.undo", "Undo"), #selector(undoMarkup)))
-        markupBar.addArrangedSubview(iconButton("arrow.uturn.forward", L("markup.redo", "Redo"), #selector(redoMarkup)))
+        markupBar.addArrangedSubview(
+            iconButton("arrow.uturn.backward", L("markup.undo", "Undo"), #selector(undoMarkup)))
+        markupBar.addArrangedSubview(
+            iconButton("arrow.uturn.forward", L("markup.redo", "Redo"), #selector(redoMarkup)))
     }
 
     private func divider() -> NSView {
@@ -210,20 +251,66 @@ final class DocumentPreviewView: NSView {
     private let toolOrder: [PDFMarkupView.Tool] = [
         .draw, .signature, .rectangle, .oval, .line, .arrow, .text, .note,
     ]
-    private func toolIndex(_ tool: PDFMarkupView.Tool) -> Int { toolOrder.firstIndex(of: tool) ?? 0 }
+    private func toolIndex(_ tool: PDFMarkupView.Tool) -> Int {
+        toolOrder.firstIndex(of: tool) ?? 0
+    }
 
-    /// Show `url` in the pane: a PDFView for PDFs, else the system Quick Look preview. `nil` clears.
+    /// Show `url` in the pane: a PDFView for PDFs, an inert structured projection for Jupyter
+    /// notebooks, else the system Quick Look preview. `nil` clears.
     /// A corrupt or encrypted PDF (nil document, or one that loads locked) falls through to Quick
     /// Look, which shows a corrupt file gracefully and prompts for an encrypted PDF's password --
     /// where PDFView would just render blank behind dead zoom/print buttons.
     func show(_ url: URL?) {
         offerToSaveIfEdited()  // don't silently drop markup when navigating away
         currentURL = url
-        if let url, Self.isPDF(url), let document = PDFDocument(url: url), !document.isLocked {
+        notebookLoadID = UUID()
+        if let url, Self.isNotebook(url) {
+            pdfView.document = nil
+            pdfContainer.isHidden = true
+            quickLook.isHidden = true
+            quickLook.previewItem = nil
+            notebookScroll.isHidden = false
+            notebookText.string = "Loading notebook…"
+            notebookScroll.contentView.scroll(to: .zero)
+            notebookScroll.reflectScrolledClipView(notebookScroll.contentView)
+            let loadID = notebookLoadID
+            Task.detached(priority: .userInitiated) {
+                let result: Result<NotebookPreview.Document, NotebookPreview.PreviewError>
+                do {
+                    result = .success(try NotebookPreview.document(at: url))
+                } catch let error as NotebookPreview.PreviewError {
+                    result = .failure(error)
+                } catch {
+                    result = .failure(.unreadable)
+                }
+                await MainActor.run { [weak self] in
+                    guard let self, self.notebookLoadID == loadID, self.currentURL == url else {
+                        return
+                    }
+                    switch result {
+                    case .success(let document):
+                        self.notebookText.string = document.text
+                    case .failure(.tooLarge):
+                        self.notebookText.string =
+                            "This notebook is too large for the bounded preview. Open it in its notebook editor."
+                    case .failure(.unsupportedFile):
+                        self.notebookText.string =
+                            "This path is not a regular notebook file. Pathem did not read it."
+                    case .failure(.invalidNotebook), .failure(.unreadable):
+                        self.notebookText.string =
+                            "Pathem could not parse this notebook. Open it in its notebook editor to inspect the complete file."
+                    }
+                    self.notebookScroll.contentView.scroll(to: .zero)
+                    self.notebookScroll.reflectScrolledClipView(self.notebookScroll.contentView)
+                }
+            }
+        } else if let url, Self.isPDF(url), let document = PDFDocument(url: url), !document.isLocked
+        {
             pdfView.document = document
             pdfView.autoScales = true
             pdfContainer.isHidden = false
             quickLook.isHidden = true
+            notebookScroll.isHidden = true
             quickLook.previewItem = nil  // release the previewed file
             resetMarkupState()
             // The document is often set before the view has its final frame, so autoScales computes
@@ -243,6 +330,7 @@ final class DocumentPreviewView: NSView {
             pdfView.document = nil
             pdfContainer.isHidden = true
             quickLook.isHidden = false
+            notebookScroll.isHidden = true
             quickLook.previewItem = url as NSURL?
         }
     }
@@ -257,25 +345,37 @@ final class DocumentPreviewView: NSView {
 
     static func isPDF(_ url: URL) -> Bool {
         if url.pathExtension.lowercased() == "pdf" { return true }
-        return (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .pdf) ?? false
+        return (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(
+            to: .pdf) ?? false
     }
 
-    /// Types worth opening in the other pane's viewer: PDFs and images (the rest belong in their
-    /// own app). PDFs get the PDFView; images ride the Quick Look fallback.
+    static func isNotebook(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() == "ipynb"
+    }
+
+    /// Types worth opening in the other pane's viewer. Notebooks are parsed into bounded inert
+    /// text; PDFs get PDFView; images ride the Quick Look fallback.
     static func isViewable(_ url: URL) -> Bool {
-        if isPDF(url) { return true }
-        return (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .image) ?? false
+        if isPDF(url) || isNotebook(url) { return true }
+        return (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(
+            to: .image) ?? false
     }
 
     /// Whether the PDF path (not Quick Look) is currently showing -- for the smoke check.
     var debugShowingPDF: Bool { !pdfContainer.isHidden }
+    var debugShowingNotebook: Bool { !notebookScroll.isHidden }
+    var debugNotebookText: String { notebookText.string }
+    var debugNotebookTextFrame: NSRect { notebookText.frame }
 
     @objc private func zoomIn() { pdfView.zoomIn(nil) }
     @objc private func zoomOut() { pdfView.zoomOut(nil) }
     @objc private func fitWidth() { pdfView.autoScales = true }
 
     @objc private func printDocument() {
-        guard pdfView.document != nil else { NSSound.beep(); return }
+        guard pdfView.document != nil else {
+            NSSound.beep()
+            return
+        }
         pdfView.print(with: .shared, autoRotate: true, pageScaling: .pageScaleDownToFit)
     }
 
@@ -296,7 +396,9 @@ final class DocumentPreviewView: NSView {
         // .off (re-clicked the armed tool) means "disarm". Reflect the choice on every tool button.
         let newTool: PDFMarkupView.Tool = (sender.state == .on) ? tool : .none
         pdfView.activeTool = newTool
-        for (buttonTool, button) in toolButtons { button.state = (buttonTool == newTool) ? .on : .off }
+        for (buttonTool, button) in toolButtons {
+            button.state = (buttonTool == newTool) ? .on : .off
+        }
     }
 
     @objc private func colorChanged() {
@@ -454,7 +556,8 @@ final class PaneDocumentViewer: NSView {
         titleLabel.lineBreakMode = .byTruncatingMiddle
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let done = NSButton(title: L("viewer.done", "Done"), target: self, action: #selector(dismiss))
+        let done = NSButton(
+            title: L("viewer.done", "Done"), target: self, action: #selector(dismiss))
         done.bezelStyle = .rounded
         done.keyEquivalent = "\u{1b}"  // Escape
         done.setAccessibilityLabel(L("viewer.done", "Done"))
@@ -474,7 +577,8 @@ final class PaneDocumentViewer: NSView {
             titleLabel.centerYAnchor.constraint(equalTo: header.centerYAnchor),
             done.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -8),
             done.centerYAnchor.constraint(equalTo: header.centerYAnchor),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: done.leadingAnchor, constant: -8),
+            titleLabel.trailingAnchor.constraint(
+                lessThanOrEqualTo: done.leadingAnchor, constant: -8),
             viewer.topAnchor.constraint(equalTo: header.bottomAnchor),
             viewer.leadingAnchor.constraint(equalTo: leadingAnchor),
             viewer.trailingAnchor.constraint(equalTo: trailingAnchor),

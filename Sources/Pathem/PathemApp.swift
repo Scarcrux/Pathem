@@ -1908,6 +1908,16 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
         openInPrimaryBrowser(urls)
     }
 
+    /// The "Preview in Pathem" Services item uses the same typed preview behavior as the URL/CLI
+    /// handoff and never executes notebook rich output.
+    @objc func previewInPathem(
+        _ pboard: NSPasteboard, userData: String?,
+        error: AutoreleasingUnsafeMutablePointer<NSString>?
+    ) {
+        let urls = (pboard.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
+        previewInPrimaryBrowser(urls)
+    }
+
     /// The "Reveal in Pathem" Services item: select the sent item in its parent folder (the reveal
     /// verb of the handoff contract), rather than navigating into it.
     @objc func revealInPathem(
@@ -1935,6 +1945,18 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
         browser.revealExternalItem(url)
     }
 
+    private func previewInPrimaryBrowser(_ urls: [URL], attempt: Int = 0) {
+        guard let url = urls.first else { return }
+        guard let browser = WindowManager.shared.primaryBrowser else {
+            guard attempt < Self.primaryBrowserMaxRetries else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                self?.previewInPrimaryBrowser(urls, attempt: attempt + 1)
+            }
+            return
+        }
+        browser.previewExternalItem(url)
+    }
+
     /// Route opened URLs to the primary window, waiting briefly for it if it isn't up yet (open
     /// events can arrive during launch). Bounded, and spaced out (not a tight respin).
     private func openInPrimaryBrowser(_ urls: [URL], attempt: Int = 0) {
@@ -1955,6 +1977,7 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
                 switch action.verb {
                 case .open: browser.openExternalFolder(target)
                 case .reveal: browser.revealExternalItem(target)
+                case .preview: browser.previewExternalItem(target)
                 }
             } else {
                 browser.openExternalFolder(url)  // routes .torrent files to the panel itself

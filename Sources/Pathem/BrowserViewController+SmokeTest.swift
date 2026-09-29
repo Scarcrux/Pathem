@@ -140,6 +140,26 @@ extension BrowserViewController {
         check(
             "preview-routes-pdf-vs-quicklook", pdfRouted && qlRouted,
             "pdf=\(pdfRouted) ql=\(qlRouted)")
+        // A notebook is not a generic JSON/text preview. It routes through the bounded inert
+        // projection so rich HTML/JavaScript output cannot execute and the cells are still useful.
+        let notebook = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-smoke-\(UUID().uuidString).ipynb")
+        try? Data(
+            """
+            {"cells":[{"cell_type":"markdown","source":["# Safe preview"]},{"cell_type":"code","execution_count":1,"source":["print(1)"],"outputs":[{"data":{"text/html":"<script>bad()</script>","text/plain":"1"}}]}]}
+            """.utf8
+        ).write(to: notebook)
+        preview.show(notebook)
+        preview.layoutSubtreeIfNeeded()
+        let notebookRouted = preview.debugShowingNotebook
+        let notebookText = (try? NotebookPreview.document(at: notebook).text) ?? ""
+        let notebookGeometry = preview.debugNotebookTextFrame.height > 0
+        try? FileManager.default.removeItem(at: notebook)
+        check(
+            "preview-routes-notebook-to-inert-text",
+            notebookRouted && notebookGeometry && notebookText.contains("Safe preview")
+                && notebookText.contains("print(1)") && !notebookText.contains("<script>"),
+            "notebook=\(notebookRouted) geometry=\(notebookGeometry) chars=\(notebookText.count)")
         // An encrypted PDF loads as a non-nil but locked document; it must fall through to Quick
         // Look (which prompts for the password), not render blank behind dead zoom/print controls.
         let lockedPDF = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -239,8 +259,10 @@ extension BrowserViewController {
         check(
             "viewable-predicate",
             DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.pdf"))
+                && DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.ipynb"))
                 && !DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.txt")),
-            "pdf=\(DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.pdf")))")
+            "pdf=\(DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.pdf"))) notebook=\(DocumentPreviewView.isViewable(URL(fileURLWithPath: "/x/a.ipynb")))"
+        )
         if let other = rightTabs.activePane {
             other.presentViewer(URL(fileURLWithPath: "/etc/hosts"))
             let shown = other.isShowingViewer

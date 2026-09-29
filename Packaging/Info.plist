@@ -103,6 +103,44 @@
 				<string>public.image</string>
 			</array>
 		</dict>
+		<!-- Jupyter notebooks use an imported UTI because macOS has no canonical built-in type.
+		     Alternate rank makes Pathem an explicit read-only preview choice without stealing the
+		     user's editor association. -->
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Jupyter Notebook</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>org.jupyter.ipynb</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>org.jupyter.ipynb</string>
+			<key>UTTypeDescription</key>
+			<string>Jupyter Notebook</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.json</string>
+				<string>public.text</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>ipynb</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/x-ipynb+json</string>
+			</dict>
+		</dict>
 	</array>
 	<!-- Handle magnet: links so "open magnet URL" can hand off to Pathem's Torrents panel. -->
 	<key>CFBundleURLTypes</key>
@@ -150,6 +188,19 @@
 			</dict>
 			<key>NSMessage</key>
 			<string>revealInPathem</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSFilenamesPboardType</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Preview in Pathem</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>previewInPathem</string>
 			<key>NSSendTypes</key>
 			<array>
 				<string>NSFilenamesPboardType</string>

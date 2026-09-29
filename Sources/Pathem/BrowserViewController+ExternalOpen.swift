@@ -9,7 +9,10 @@ extension BrowserViewController {
     /// menu, and bring the window forward.
     func openExternalFolder(_ url: URL) {
         var isDir: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else { return }
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else {
+            presentInfo("Couldn’t open item", "The file or folder no longer exists.")
+            return
+        }
         // Bring the window up first: on a cold Finder-launch open, presentViewer's makeFirstResponder
         // is a no-op until the window is attached, which would leave the viewer overlay inert.
         view.window?.makeKeyAndOrderFront(nil)
@@ -25,7 +28,31 @@ extension BrowserViewController {
             activePane?.presentViewer(url)
         } else {
             activePane?.reveal(url)  // any other file: show it in its folder
+            activePane?.flashStatus(
+                "Selected \(url.lastPathComponent) — double-click to open it in its default app")
         }
+    }
+
+    /// Preview a file handed over through the typed `pathem://preview` contract. Unsupported
+    /// formats are still revealed, but the failure is explicit rather than a silent no-op.
+    func previewExternalItem(_ url: URL) {
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir) else {
+            presentInfo("Couldn’t preview item", "The file no longer exists.")
+            return
+        }
+        view.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        guard !isDir.boolValue, DocumentPreviewView.isViewable(url) else {
+            revealExternalItem(url)
+            presentInfo(
+                "Preview unavailable",
+                "Pathem selected the item, but this file type does not have a read-only Pathem preview. Open it with its default application instead."
+            )
+            return
+        }
+        activePane?.reveal(url)
+        activePane?.presentViewer(url)
     }
 
     /// Open the Photos-library browser (PhotoKit). Exports default to the active local folder so
@@ -39,7 +66,10 @@ extension BrowserViewController {
     /// its parent folder. Unlike openExternalFolder, this selects a *folder* in its parent rather
     /// than navigating into it, so `reveal` and `open` stay distinct verbs.
     func revealExternalItem(_ url: URL) {
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            presentInfo("Couldn’t reveal item", "The file or folder no longer exists.")
+            return
+        }
         view.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         activePane?.reveal(url)  // navigate to the parent and select the item (file or folder)

@@ -6,8 +6,9 @@ import Testing
 /// The `pathem://` seam that the CLI and the app both speak must round-trip and reject junk.
 @Suite struct PathemURLContractTests {
     @Test func buildsAndParsesEachVerb() throws {
-        for verb in [PathemURLContract.Verb.open, .reveal] {
-            let url = try #require(PathemURLContract.url(verb: verb, path: "/Users/me/a folder/file.txt"))
+        for verb in [PathemURLContract.Verb.open, .reveal, .preview] {
+            let url = try #require(
+                PathemURLContract.url(verb: verb, path: "/Users/me/a folder/file.txt"))
             #expect(url.scheme == "pathem")
             let parsed = try #require(PathemURLContract.parse(url))
             #expect(parsed.verb == verb)
@@ -27,7 +28,9 @@ import Testing
     @Test func schemeAndVerbAreCaseInsensitive() throws {
         // LaunchServices may not preserve the case of the scheme/host; a case-varied URL must still
         // route rather than silently no-op.
-        for raw in ["PATHEM://reveal?path=/x", "pathem://REVEAL?path=/x", "pathem://Reveal?path=/x"] {
+        for raw in [
+            "PATHEM://reveal?path=/x", "pathem://REVEAL?path=/x", "pathem://Reveal?path=/x",
+        ] {
             let parsed = try #require(PathemURLContract.parse(URL(string: raw)!))
             #expect(parsed.verb == .reveal)
             #expect(parsed.path == "/x")

@@ -2,7 +2,8 @@ import Foundation
 import PathemEngine
 
 // The `pathem` command-line tool: `pathem reveal <path>` selects an item in Pathem (in its parent
-// folder), `pathem open <dir>` navigates into a folder. It resolves the path to absolute and hands
+// folder), `pathem open <dir>` navigates into a folder, and `pathem preview <file>` opens the
+// read-only viewer. It resolves the path to absolute and hands
 // it to the running (or launched) app over the pathem:// URL scheme -- the one stable seam every
 // editor/Finder-handoff integration targets, so their config never has to know the launch details.
 
@@ -13,11 +14,12 @@ func fail(_ message: String, _ code: Int32) -> Never {
 
 let arguments = CommandLine.arguments
 guard arguments.count == 3, let verb = PathemURLContract.Verb(rawValue: arguments[1]) else {
-    fail("usage: pathem <open|reveal> <path>", 2)
+    fail("usage: pathem <open|reveal|preview> <path>", 2)
 }
 
 let raw = arguments[2]
-let absolute = (raw as NSString).isAbsolutePath
+let absolute =
+    (raw as NSString).isAbsolutePath
     ? raw
     : FileManager.default.currentDirectoryPath + "/" + raw
 let path = URL(fileURLWithPath: absolute).standardizedFileURL.path
