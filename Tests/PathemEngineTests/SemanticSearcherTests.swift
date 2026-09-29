@@ -4,6 +4,77 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct SemanticSearcherTests {
+    /// A deterministic stand-in for Apple's non-Sendable `NLEmbedding`. It records how many calls
+    /// enter `vector(for:)` at once and pauses long enough that an unlocked wrapper reliably
+    /// overlaps after the start gate releases every task together.
+    private final class OverlapDetectingEmbedding: NLEmbeddingBackend, @unchecked Sendable {
+        let dimension = 2
+        private let statsLock = NSLock()
+        private var activeCalls = 0
+        private var highWatermark = 0
+
+        func vector(for string: String) -> [Double]? {
+            statsLock.lock()
+            activeCalls += 1
+            highWatermark = max(highWatermark, activeCalls)
+            statsLock.unlock()
+
+            Thread.sleep(forTimeInterval: 0.005)
+
+            statsLock.lock()
+            activeCalls -= 1
+            statsLock.unlock()
+            return [Double(string.count), 1]
+        }
+
+        var maximumOverlap: Int {
+            statsLock.lock()
+            defer { statsLock.unlock() }
+            return highWatermark
+        }
+    }
+
+    private actor StartGate {
+        let target: Int
+        private var arrivals = 0
+        private var waiters: [CheckedContinuation<Void, Never>] = []
+
+        init(target: Int) { self.target = target }
+
+        func wait() async {
+            arrivals += 1
+            if arrivals == target {
+                let ready = waiters
+                waiters.removeAll()
+                for waiter in ready { waiter.resume() }
+                return
+            }
+            await withCheckedContinuation { waiters.append($0) }
+        }
+    }
+
+    @Test func sharedEmbedderSerializesConcurrentFrameworkCalls() async {
+        let callCount = 32
+        let backend = OverlapDetectingEmbedding()
+        let embedder = NLEmbedder(embedding: backend)
+        let gate = StartGate(target: callCount)
+
+        let resultCount = await withTaskGroup(of: [Float]?.self, returning: Int.self) { group in
+            for i in 0..<callCount {
+                group.addTask {
+                    await gate.wait()
+                    return embedder.embed("query-\(i)")
+                }
+            }
+            var count = 0
+            for await result in group where result != nil { count += 1 }
+            return count
+        }
+
+        #expect(resultCount == callCount)
+        #expect(backend.maximumOverlap == 1)
+    }
+
     /// Content-aware ranking: files with neutral NAMES ("a.txt"/"b.txt") but
     /// distinguishing CONTENTS should rank by meaning of the content. Skips
     /// gracefully if the on-device model asset isn't present.
@@ -45,7 +116,8 @@ import Testing
 
     @Test func rankAndIndexAreContentAwareWithInjectedEmbedder() throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-stubsearch-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-stubsearch-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
         try "cat kitten purring".write(
@@ -67,14 +139,18 @@ import Testing
         // A dataless cloud placeholder must NOT have its contents read (that would
         // trigger a download); only its name is embedded.
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-dataless-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-dataless-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
-        try "car engine driving".write(to: dir.appendingPathComponent("kitten.txt"), atomically: true, encoding: .utf8)
+        try "car engine driving".write(
+            to: dir.appendingPathComponent("kitten.txt"), atomically: true, encoding: .utf8)
 
-        let regular = FileEntry(name: "kitten.txt", isDirectory: false, size: 0, modificationDate: nil)
+        let regular = FileEntry(
+            name: "kitten.txt", isDirectory: false, size: 0, modificationDate: nil)
         let dataless = FileEntry(
-            name: "kitten.txt", isDirectory: false, size: 0, modificationDate: nil, isDataless: true)
+            name: "kitten.txt", isDirectory: false, size: 0, modificationDate: nil, isDataless: true
+        )
         let index = SemanticSearcher.index([regular, dataless], in: dir, embedder: StubEmbedder())
 
         #expect(index.vectors.count == 2)
