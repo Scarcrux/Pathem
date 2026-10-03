@@ -1051,12 +1051,19 @@ extension BrowserViewController {
             "new-folder-with-selection", !nfwsFolder.isEmpty && movedIn && backOut,
             "folder=\(nfwsFolder) movedIn=\(movedIn) undone=\(backOut)")
         try? FileManager.default.removeItem(at: nfwsDir)
-        // The cursor-anchored confirmation popover builds its content without a layout crash, and
-        // a non-Ask conflict default resolves without prompting.
+        // The cursor-anchored confirmation popover has a deliberate, comfortably-spaced action
+        // row. Longer localized labels adapt to a vertical stack rather than squeezing or clipping;
+        // a non-Ask conflict default still resolves without prompting.
         check(
-            "cursor-confirm-builds",
-            cursorConfirm.debugBuildsController(buttons: ["Replace", "Keep Both", "Skip", "Cancel"]
-            ), "")
+            "cursor-confirm-layout",
+            cursorConfirm.debugLayoutIsComfortable(
+                buttons: ["Replace", "Keep Both", "Skip", "Cancel"], expectsStacked: false)
+                && cursorConfirm.debugLayoutIsComfortable(
+                    buttons: [
+                        "Replace the Existing Item", "Keep Both Items with Unique Names",
+                        "Skip This Conflicting Item", "Cancel the Entire Operation",
+                    ], expectsStacked: true),
+            "English=row, long labels=stack, buttons>=88pt, insets>=20pt")
         check(
             "conflict-default-maps",
             ConflictDefault.keepBoth.resolution == .keepBoth

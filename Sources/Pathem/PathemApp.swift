@@ -432,6 +432,21 @@ enum PathemApp {
             exit(0)
         }
 
+        // Interactive preview of the real NSPopover, including its material, arrow, focus and
+        // cursor-relative placement. Used during visual polish; it stays open until the user picks
+        // an action or clicks away, while keeping the underlying demo window available for context.
+        if ProcessInfo.processInfo.environment["PATHEM_CONFLICT_PREVIEW"] != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                Task { @MainActor in
+                    _ = await browser.cursorConfirm.ask(
+                        message: "1 item already exists at the destination",
+                        info: "Choose how to handle the copy.",
+                        buttons: ["Replace", "Keep Both", "Skip", "Cancel"],
+                        over: browser.view)
+                }
+            }
+        }
+
         // Live screenshot of the archive-contents dialog (PATHEM_DIALOG_SHOT=1).
         if ProcessInfo.processInfo.environment["PATHEM_DIALOG_SHOT"] != nil {
             let dialog = ArchiveContentsController()
@@ -1844,7 +1859,7 @@ enum PathemApp {
         ProcessInfo.processInfo.environment.keys.contains { key in
             key.hasPrefix("PATHEM_")
                 && (key == "PATHEM_SMOKE" || key.hasSuffix("_SHOT") || key.hasSuffix("_TEST")
-                    || key.hasSuffix("_RENDER"))
+                    || key.hasSuffix("_RENDER") || key.hasSuffix("_PREVIEW"))
         }
     }
 
