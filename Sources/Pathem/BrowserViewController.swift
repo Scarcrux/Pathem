@@ -153,6 +153,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// The command bus (DESIGN.md section 10). Every browser action is a named
     /// command; keybindings, the palette, and the AI bar will dispatch by id.
     let commands = CommandRegistry()
+    var savedSearchCommandIDs: Set<String> = []
     /// Chord -> command id, defaults overlaid with any user keymap.json.
     var keymap = Keymap.standard
     /// Super-drag: direction -> command for a flick, and the swipe-trail overlay.
@@ -309,7 +310,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         searchButton.alignment = .left
         searchButton.target = self
         searchButton.action = #selector(searchButtonTapped)
-        searchButton.toolTip = L("bvc.searchTip2", "Search this folder or run a command (⌘F / ⌘K)")
+        searchButton.toolTip = L("filesearch.toolbarTip", "Search file names or contents (⌘F)")
         searchButton.translatesAutoresizingMaskIntoConstraints = false
         searchButton.widthAnchor.constraint(equalToConstant: 240).isActive = true
         updateSearchButton(query: "")

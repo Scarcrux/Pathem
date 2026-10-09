@@ -34,6 +34,7 @@ does not fail the suite.
 | file lifecycle | `PATHEM_FILES_E2E` | replace/keep-both conflicts, verified copy, move, undo/redo, Trash and Put Back on real files |
 | archives and disk tools | `PATHEM_ARCHIVES_E2E` | ZIP create/list/extract/repack, split/merge, backup, secure delete, encrypted DMG creation |
 | search and metadata | `PATHEM_SEARCH_METADATA_E2E` | literal/regex search, replace, Finder tags/comments and hashing against real files |
+| file search UI | `PATHEM_FILE_SEARCH_TEST` | real-window field-editor typing, filename/content controls and isolated folder scopes, recursion, keyboard Reveal/Open callback, stale-query/reopen/error/limit regressions and column/minimum-layout checks; whole-Mac routing uses a fixture index |
 | developer tools | `PATHEM_DEVELOPER_E2E` | real Git init/status/stage/diff/commit and external-command expansion/execution |
 | remote WebDAV | `PATHEM_WEBDAV_E2E` | app → provider → system curl CRUD against a hermetic loopback WebDAV service |
 | settings / sidebar render | `PATHEM_PREFS_SHOT`, `PATHEM_SIDEBAR_SHOT` | panels render to non-empty images |

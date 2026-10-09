@@ -6,7 +6,9 @@ import os
 /// builders are pure so they can be unit-tested without relying on the index.
 public enum SpotlightSearch {
     /// Files whose Finder tag set contains `tag`.
-    public static func taggedFiles(_ tag: String, scope: URL? = nil, limit: Int = 500) async -> [URL] {
+    public static func taggedFiles(_ tag: String, scope: URL? = nil, limit: Int = 500) async
+        -> [URL]
+    {
         await run(query: tagQuery(tag), scope: scope, limit: limit)
     }
 
@@ -16,13 +18,18 @@ public enum SpotlightSearch {
     public static func recentFiles(
         scope: URL? = nil, days: Int = 30, limit: Int = 200, opened: Bool = false
     ) async -> [URL] {
-        let urls = await run(query: recentQuery(days: days, opened: opened), scope: scope, limit: 5000)
-        let sorted = urls.sorted { recencyDate($0, opened: opened) > recencyDate($1, opened: opened) }
+        let urls = await run(
+            query: recentQuery(days: days, opened: opened), scope: scope, limit: 5000)
+        let sorted = urls.sorted {
+            recencyDate($0, opened: opened) > recencyDate($1, opened: opened)
+        }
         return Array(sorted.prefix(limit))
     }
 
     /// Files matching a raw mdfind predicate (e.g. from a SavedSearch).
-    public static func matching(_ query: String, scope: URL? = nil, limit: Int = 1000) async -> [URL] {
+    public static func matching(_ query: String, scope: URL? = nil, limit: Int = 1000) async
+        -> [URL]
+    {
         guard !query.isEmpty else { return [] }
         return await run(query: query, scope: scope, limit: limit)
     }
@@ -40,6 +47,40 @@ public enum SpotlightSearch {
         return trimmed.isEmpty ? "" : "kMDItemFSName == \"*\(escape(trimmed))*\"c"
     }
 
+    /// Escape LIKE metacharacters as well as quoted-string syntax: the search field is literal.
+    public static func fileSearchQuery(_ request: FileSearch.Request) -> String {
+        guard !request.keyword.isEmpty else { return "" }
+        let value = request.keyword.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "*", with: "\\*")
+            .replacingOccurrences(of: "?", with: "\\?")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let attribute = request.mode == .filename ? "kMDItemFSName" : "kMDItemTextContent"
+        return "\(attribute) == \"*\(value)*\"cd"
+    }
+
+    public static func fileSearch(
+        _ request: FileSearch.Request, scope: URL? = nil, limit: Int = 500
+    ) async -> FileSearch.Response {
+        guard await indexingEnabled() else {
+            return .init(
+                error: "Spotlight indexing is disabled. Choose a folder to search directly.")
+        }
+        do {
+            var args = ["-0"]
+            if let scope { args += ["-onlyin", scope.path] }
+            args.append(fileSearchQuery(request))
+            let (data, status, _) = try await RemoteRunner.run("/usr/bin/mdfind", args)
+            guard status == 0 else {
+                return .init(error: "Spotlight search failed (exit \(status)).")
+            }
+            let paths = String(decoding: data, as: UTF8.self).split(
+                separator: "\0", omittingEmptySubsequences: true)
+            return .init(
+                urls: paths.prefix(max(0, limit)).map { URL(fileURLWithPath: String($0)) },
+                truncated: paths.count > limit)
+        } catch { return .init(error: error.localizedDescription) }
+    }
+
     /// Files touched within `days`. `opened` selects "recently used" (Finder's Recents) instead of
     /// the default "recently changed on disk".
     static func recentQuery(days: Int, opened: Bool = false) -> String {
@@ -50,7 +91,8 @@ public enum SpotlightSearch {
 
     /// Escape a value for an mdfind quoted string (backslash and quote).
     static func escape(_ value: String) -> String {
-        value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+        value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(
+            of: "\"", with: "\\\"")
     }
 
     // MARK: Runner
@@ -92,7 +134,9 @@ public enum SpotlightSearch {
         let mdutil = "/usr/bin/mdutil"
         guard FileManager.default.isExecutableFile(atPath: mdutil) else { return true }
         for volume in ["/System/Volumes/Data", "/"] {
-            guard let (data, _, _) = try? await RemoteRunner.run(mdutil, ["-s", volume]) else { continue }
+            guard let (data, _, _) = try? await RemoteRunner.run(mdutil, ["-s", volume]) else {
+                continue
+            }
             let output = String(decoding: data, as: UTF8.self)
             // "Indexing enabled." when on; "Indexing disabled." when off. Anything else -> keep looking.
             if output.localizedCaseInsensitiveContains("Indexing disabled") { return false }
@@ -105,6 +149,7 @@ public enum SpotlightSearch {
     private static func recencyDate(_ url: URL, opened: Bool) -> Date {
         let key: URLResourceKey = opened ? .contentAccessDateKey : .contentModificationDateKey
         let values = try? url.resourceValues(forKeys: [key])
-        return (opened ? values?.contentAccessDate : values?.contentModificationDate) ?? .distantPast
+        return (opened ? values?.contentAccessDate : values?.contentModificationDate)
+            ?? .distantPast
     }
 }

@@ -40,12 +40,13 @@ extension BrowserViewController {
         }
     }
 
-    @objc func searchButtonTapped() { showPalette(prefill: "") }
+    @objc func searchButtonTapped() { showFileSearch() }
 
     /// Reflect the active pane's query on the toolbar button (its title doubles as the
     /// visible search state, since the overlay itself is transient).
     func updateSearchButton(query: String) {
         searchButton.title = " " + (query.isEmpty ? L("bvc.searchPlaceholder", "Search") : query)
-        searchButton.contentTintColor = query.isEmpty ? .secondaryLabelColor : ThemeManager.shared.accent
+        searchButton.contentTintColor =
+            query.isEmpty ? .secondaryLabelColor : ThemeManager.shared.accent
     }
 }

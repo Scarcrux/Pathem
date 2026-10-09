@@ -28,7 +28,9 @@ extension BrowserViewController {
     /// a Sparkle update is pending (see `UpdateButtonAccessory` / `UpdaterController`).
     func installUpdateButtonIfNeeded() {
         guard let window = view.window else { return }
-        guard !window.titlebarAccessoryViewControllers.contains(where: { $0 is UpdateButtonAccessory })
+        guard
+            !window.titlebarAccessoryViewControllers.contains(where: { $0 is UpdateButtonAccessory }
+            )
         else { return }
         window.addTitlebarAccessoryViewController(UpdateButtonAccessory(updater: updater))
     }
@@ -46,7 +48,9 @@ extension BrowserViewController {
         } else if StaleBuildState.current != nil {
             updateBanner.present(
                 symbol: "arrow.clockwise.circle.fill",
-                message: L("update.relaunchTooltip", "A newer build of Pathem is installed. Relaunch to run it."),
+                message: L(
+                    "update.relaunchTooltip",
+                    "A newer build of Pathem is installed. Relaunch to run it."),
                 actionTitle: L("update.relaunchTitle", "Relaunch to Update"))
         } else {
             updateBanner.isHidden = true
@@ -79,7 +83,8 @@ extension BrowserViewController {
             }
             guard let id = Self.toolbarCommandID(item.itemIdentifier) else { continue }
             item.image = NSImage(
-                systemSymbolName: Self.toolbarSymbolName(for: id), accessibilityDescription: item.label)?
+                systemSymbolName: Self.toolbarSymbolName(for: id),
+                accessibilityDescription: item.label)?
                 .withSymbolConfiguration(config)
         }
     }
@@ -114,17 +119,26 @@ extension BrowserViewController: NSToolbarDelegate {
         .init(commandID: "files.copyPath", symbol: "link", label: "Copy Path"),
         .init(commandID: "files.compress", symbol: "archivebox", label: "Compress"),
         .init(commandID: "files.trash", symbol: "trash", label: "Move to Trash"),
-        .init(commandID: "files.reveal", symbol: "arrow.up.forward.square", label: "Reveal in Finder"),
-        .init(commandID: "files.revealInPathem", symbol: "dot.viewfinder", label: "Reveal in Pathem"),
+        .init(
+            commandID: "files.reveal", symbol: "arrow.up.forward.square", label: "Reveal in Finder"),
+        .init(
+            commandID: "files.revealInPathem", symbol: "dot.viewfinder", label: "Reveal in Pathem"),
         .init(commandID: "files.organize", symbol: "wand.and.stars", label: "Organize"),
         .init(commandID: "view.cleanup", symbol: "sparkles", label: "Cleanup"),
         .init(commandID: "files.repoReclaim", symbol: "internaldrive", label: "Reclaim in Repo"),
-        .init(commandID: "files.findInFiles", symbol: "doc.text.magnifyingglass", label: "Find in Files"),
-        .init(commandID: "files.findDuplicates", symbol: "square.on.square.dashed", label: "Find Duplicates"),
-        .init(commandID: "files.findSimilarNames", symbol: "rectangle.on.rectangle.angled", label: "Find Similar Names"),
+        .init(
+            commandID: "files.findInFiles", symbol: "doc.text.magnifyingglass",
+            label: "Find in Files"),
+        .init(
+            commandID: "files.findDuplicates", symbol: "square.on.square.dashed",
+            label: "Find Duplicates"),
+        .init(
+            commandID: "files.findSimilarNames", symbol: "rectangle.on.rectangle.angled",
+            label: "Find Similar Names"),
         .init(commandID: "view.quickLook", symbol: "eye", label: "Quick Look"),
         .init(commandID: "view.slideshow", symbol: "play.rectangle", label: "Slideshow"),
-        .init(commandID: "view.filter", symbol: "line.3.horizontal.decrease.circle", label: "Filter"),
+        .init(
+            commandID: "view.filter", symbol: "line.3.horizontal.decrease.circle", label: "Filter"),
         .init(commandID: "view.toggleHidden", symbol: "eye.slash", label: "Show Hidden Files"),
         .init(commandID: "view.sizeBrowser", symbol: "chart.pie", label: "Size Browser"),
         .init(commandID: "view.previewPane", symbol: "sidebar.right", label: "Preview Pane"),
@@ -150,7 +164,9 @@ extension BrowserViewController: NSToolbarDelegate {
     /// The SF Symbol for a command button: the curated catalog symbol, a bolt for a
     /// user-defined external command, or a generic command glyph for anything else.
     static func toolbarSymbolName(for commandID: String) -> String {
-        if let entry = toolbarCatalog.first(where: { $0.commandID == commandID }) { return entry.symbol }
+        if let entry = toolbarCatalog.first(where: { $0.commandID == commandID }) {
+            return entry.symbol
+        }
         if commandID.hasPrefix("external.cmd.") { return "bolt.fill" }
         return "command.square"
     }
@@ -165,7 +181,7 @@ extension BrowserViewController: NSToolbarDelegate {
     ) -> NSToolbarItem? {
         if identifier == Self.searchItemID {
             let item = NSToolbarItem(itemIdentifier: identifier)
-            item.view = searchButton  // opens the search-and-command overlay (Cmd-F / Cmd-K)
+            item.view = searchButton  // opens literal file search (Cmd-F); commands stay on Cmd-K
             item.label = L("bvc.searchToolbarLabel", "Search")
             item.visibilityPriority = .high
             return item
@@ -175,8 +191,10 @@ extension BrowserViewController: NSToolbarDelegate {
             item.label = L("overflow.label", "Options")
             item.toolTip = L("overflow.tooltip", "Options and theme")
             item.image = NSImage(
-                systemSymbolName: "ellipsis.circle", accessibilityDescription: L("overflow.label", "Options"))?
-                .withSymbolConfiguration(.init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
+                systemSymbolName: "ellipsis.circle",
+                accessibilityDescription: L("overflow.label", "Options"))?
+                .withSymbolConfiguration(
+                    .init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
             item.showsIndicator = false
             let menu = NSMenu()
             menu.delegate = overflowMenuDelegate  // repopulated on open, so checkmarks stay fresh
@@ -188,13 +206,17 @@ extension BrowserViewController: NSToolbarDelegate {
         guard let commandID = Self.toolbarCommandID(identifier) else { return nil }
         let entry = Self.toolbarCatalog.first { $0.commandID == commandID }
         guard entry != nil || commands.command(commandID) != nil else { return nil }
-        let label = entry.map { L("toolbar.\($0.commandID)", $0.label) } ?? (commands.command(commandID)?.title ?? commandID)
+        let label =
+            entry.map { L("toolbar.\($0.commandID)", $0.label) }
+            ?? (commands.command(commandID)?.title ?? commandID)
         let item = NSToolbarItem(itemIdentifier: identifier)
         item.label = label
         item.toolTip = label
         item.image = NSImage(
-            systemSymbolName: Self.toolbarSymbolName(for: commandID), accessibilityDescription: label)?
-            .withSymbolConfiguration(.init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
+            systemSymbolName: Self.toolbarSymbolName(for: commandID),
+            accessibilityDescription: label)?
+            .withSymbolConfiguration(
+                .init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
         item.isBordered = true
         item.target = self
         item.action = #selector(runToolbarCommand(_:))
@@ -202,7 +224,10 @@ extension BrowserViewController: NSToolbarDelegate {
     }
 
     @objc private func runToolbarCommand(_ sender: NSToolbarItem) {
-        guard let id = Self.toolbarCommandID(sender.itemIdentifier) else { NSSound.beep(); return }
+        guard let id = Self.toolbarCommandID(sender.itemIdentifier) else {
+            NSSound.beep()
+            return
+        }
         if !commands.perform(id) { NSSound.beep() }
     }
 

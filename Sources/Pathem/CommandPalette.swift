@@ -1,17 +1,18 @@
 import AppKit
 import PathemEngine
 
-/// The one search-and-command overlay (DESIGN.md section 10, Phase 3). One widget, VS
-/// Code-style, modes chosen by the first character:
-///   - bare text runs the on-device semantic search in the active folder (live, debounced),
+/// The command/path overlay, also used by the explicitly named semantic-search command:
+///   - bare text searches commands, or semantic meaning when opened in semantic mode,
 ///   - a leading ">" fuzzy-finds and runs any registered command,
 ///   - "/" or "~/" jumps to a filesystem path (with directory completion).
-/// Cmd-F opens it empty (search mode); Cmd-K opens it with ">" pre-typed (command mode).
+/// Cmd-K opens commands. Cmd-F uses the separate literal file-search window.
 /// Because every action is a Command in the registry, the command mode lists the whole
 /// surface for free. Driven entirely from the field editor's command selectors, so
 /// up/down/return/escape work while typing.
 @MainActor
-final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, NSWindowDelegate {
+final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate,
+    NSTextFieldDelegate, NSWindowDelegate
+{
     private let panel: NSPanel
     private let field = NSTextField()
     private let table = NSTableView()
@@ -24,13 +25,14 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     private var onSemantic: ((String) -> Void)?
     private var liveSearch: Task<Void, Never>?
     private var lastLiveQuery = ""
+    private var semanticMode = false
 
     private enum Mode { case command, path, semantic }
     private var mode: Mode {
         let s = field.stringValue
         if s.hasPrefix("/") || s.hasPrefix("~/") { return .path }
         if s.hasPrefix(">") { return .command }  // ">" is the explicit command prefix (Cmd-K prefills it)
-        return .semantic  // plain text (and empty) is search: Cmd-F opens here, not on the command list
+        return semanticMode ? .semantic : .command
     }
 
     override init() {
@@ -50,7 +52,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         panel.hidesOnDeactivate = true
         panel.isReleasedWhenClosed = false
 
-        field.placeholderString = L("palette.multiPlaceholder", "Search this folder, > for commands, / for paths")
+        field.placeholderString = L("filesearch.commandPlaceholder", "Search commands, / for paths")
         field.delegate = self
         field.font = .systemFont(ofSize: 15)
         field.translatesAutoresizingMaskIntoConstraints = false
@@ -86,7 +88,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
 
     /// Show the bar over `window`. The callbacks route the non-command modes; command mode
     /// uses `onRun` with the chosen command id. `prefill` picks the opening mode: "" opens
-    /// in search mode (Cmd-F), ">" opens in command mode (Cmd-K). `onSemantic` fires live
+    /// in explicitly requested semantic mode, ">" opens in command mode (Cmd-K). `onSemantic` fires live
     /// (debounced) as the query is typed, and with "" when the search is dismissed or
     /// cleared so the caller can restore the plain listing.
     func present(
@@ -101,6 +103,17 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         self.onRun = onRun
         self.onNavigate = onNavigate
         self.onSemantic = onSemantic
+        semanticMode = prefill.isEmpty  // only the explicitly named semantic-search command opens empty
+        panel.title =
+            semanticMode
+            ? L("filesearch.semantic", "Semantic Search This Folder…")
+            : L("palette.runCommandTitle", "Command Bar")
+        field.placeholderString =
+            semanticMode
+            ? L(
+                "filesearch.semanticPlaceholder",
+                "Semantic search this folder, > for commands, / for paths")
+            : L("filesearch.commandPlaceholder", "Search commands, / for paths")
         lastLiveQuery = ""
         field.stringValue = prefill
         refilter()
@@ -116,7 +129,8 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     private func refilter() {
         switch mode {
         case .command:
-            let query = field.stringValue.hasPrefix(">")
+            let query =
+                field.stringValue.hasPrefix(">")
                 ? String(field.stringValue.dropFirst()) : field.stringValue
             filtered = FuzzyMatch.rank(all, query: query, key: { $0.title })
             scheduleLiveSearch("")  // leaving search mode restores the plain listing
@@ -127,9 +141,15 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
             let query = field.stringValue.trimmingCharacters(in: .whitespaces)
             // An empty field (e.g. just after Cmd-F opens) has nothing to run: show no row so
             // Return does nothing, rather than auto-selecting and firing an arbitrary action.
-            filtered = query.isEmpty
+            filtered =
+                query.isEmpty
                 ? []
-                : [(id: query, title: String(format: L("palette.searchFor", "Search for “%@”"), query))]
+                : [
+                    (
+                        id: query,
+                        title: String(format: L("palette.searchFor", "Search for “%@”"), query)
+                    )
+                ]
             scheduleLiveSearch(query)  // rank the pane live while typing (no-op when empty)
         }
         table.reloadData()
@@ -165,12 +185,17 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
             (try? FileManager.default.contentsOfDirectory(
                 at: URL(fileURLWithPath: dir), includingPropertiesForKeys: [.isDirectoryKey],
                 options: [.skipsHiddenFiles])) ?? []
-        return entries
+        return
+            entries
             .filter { url in
                 (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
-                    && (prefix.isEmpty || url.lastPathComponent.lowercased().hasPrefix(prefix.lowercased()))
+                    && (prefix.isEmpty
+                        || url.lastPathComponent.lowercased().hasPrefix(prefix.lowercased()))
             }
-            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+            .sorted {
+                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                    == .orderedAscending
+            }
             .prefix(60)
             .map { (id: $0.path, title: $0.path) }
     }
@@ -236,7 +261,8 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
 
     func controlTextDidChange(_ obj: Notification) { refilter() }
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool
+    {
         switch selector {
         case #selector(NSResponder.moveUp(_:)): moveSelection(-1)
         case #selector(NSResponder.moveDown(_:)): moveSelection(1)
@@ -255,10 +281,14 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
 
     func numberOfRows(in tableView: NSTableView) -> Int { filtered.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard row < filtered.count else { return nil }
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makeCell(id)
         cell.textField?.stringValue = filtered[row].title
         return cell
     }
@@ -279,4 +309,12 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         ])
         return cell
     }
+    #if DEBUG
+    var debugIsSemantic: Bool { mode == .semantic }
+    func debugSetQuery(_ query: String) {
+        field.stringValue = query
+        refilter()
+    }
+    func debugDismiss() { close() }
+    #endif
 }

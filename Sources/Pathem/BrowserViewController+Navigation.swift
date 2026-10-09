@@ -8,15 +8,17 @@ extension BrowserViewController {
     /// Open the "find files everywhere" palette; revealing a result navigates the active pane to
     /// its folder and selects it.
     func showGlobalSearch() {
+        showFileSearch(everywhere: true)
+    }
+
+    func showFileSearch(everywhere: Bool = false) {
         guard let window = view.window else { return }
         let folder = activePane.map { !$0.isRemote ? $0.currentURL : nil } ?? nil
         globalSearchController.present(
-            over: window, currentFolder: folder ?? FileManager.default.homeDirectoryForCurrentUser
-        ) { [weak self] url in
-            guard let pane = self?.activePane else { return }
-            pane.navigate(to: url.deletingLastPathComponent())
-            pane.select(name: url.lastPathComponent)
-        }
+            over: window, currentFolder: folder ?? FileManager.default.homeDirectoryForCurrentUser,
+            everywhere: everywhere,
+            onReveal: { [weak pane = activePane] url in pane?.reveal(url) },
+            onOpen: { [weak self] url in self?.applyOpen(url) })
     }
 
     /// A pane's folder changed (navigation or on-disk edit): drop a stale semantic

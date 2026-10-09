@@ -228,6 +228,9 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_UI_TEST"] != nil {
             browser.runUIAutomation()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_FILE_SEARCH_TEST"] != nil {
+            browser.runFileSearchUIAutomation()
+        }
 
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a
         // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and
@@ -1500,9 +1503,9 @@ enum PathemApp {
             submenu(
                 L("menu.group.find", "Find"),
                 [
-                    // Cmd-F opens the search-and-command overlay in search mode (Cmd-K opens the same
-                    // overlay in command mode); the old Cmd-F live filter moves to Shift-Cmd-F.
+                    // Cmd-F opens literal file search; Cmd-K is the separate command palette.
                     commandItem("Search This Folder…", "search.palette", "f"),
+                    commandItem("Semantic Search This Folder…", "search.semantic"),
                     commandItem("Filter…", "view.filter", "f", [.command, .shift]),
                     commandItem("Advanced Find…", "view.advancedFind", "f", [.command, .option]),
                     commandItem("Find in Files…", "files.findInFiles"),
