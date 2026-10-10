@@ -1,10 +1,13 @@
 import CoreGraphics
+import Foundation
 import Testing
 
 @testable import PathemEngine
 
 @Suite struct MouseGestureTests {
-    private func path(_ pts: [(CGFloat, CGFloat)]) -> [CGPoint] { pts.map { CGPoint(x: $0.0, y: $0.1) } }
+    private func path(_ pts: [(CGFloat, CGFloat)]) -> [CGPoint] {
+        pts.map { CGPoint(x: $0.0, y: $0.1) }
+    }
 
     @Test func recognizesSingleDirections() {
         #expect(MouseGesture.reduce(path([(0, 0), (100, 0)])) == "R")
@@ -15,7 +18,8 @@ import Testing
 
     @Test func recognizesCombosAndCollapses() {
         // Right then down, with intermediate points along the way.
-        #expect(MouseGesture.reduce(path([(0, 0), (50, 0), (100, 0), (100, -50), (100, -100)])) == "RD")
+        #expect(
+            MouseGesture.reduce(path([(0, 0), (50, 0), (100, 0), (100, -50), (100, -100)])) == "RD")
     }
 
     @Test func tinyMovementIsNotAGesture() {
@@ -57,5 +61,68 @@ import Testing
         let remapped = map.merging(userBindings: ["U": "view.quickLook", "D": ""])
         #expect(remapped.commandID(for: "U") == "view.quickLook")
         #expect(remapped.commandID(for: "D") == nil)
+    }
+}
+
+@Suite struct SharedGestureCompatibilityTests {
+    @Test func fifthDirectionPreservesPathemPrefix() {
+        let points: [CGPoint] = [
+            .zero, CGPoint(x: 18, y: 0), CGPoint(x: 18, y: 18),
+            CGPoint(x: 0, y: 18), .zero, CGPoint(x: 18, y: 0),
+        ]
+        #expect(MouseGesture.reduce(points) == "RULD")
+        #expect(MouseGesture.reduce([.zero, CGPoint(x: 17.99, y: 17.99)]) == "")
+        #expect(MouseGesture.reduce([.zero, CGPoint(x: 18, y: 18)]) == "R")
+    }
+    @Test func streamingCaptureMatchesLegacyValidGeometryAndBoundsMemory() {
+        // Independent historical geometry oracle; never used by production.
+        func legacy(_ points: [CGPoint]) -> String {
+            var anchor = points[0]
+            var directions: [Character] = []
+            for point in points.dropFirst() {
+                let dx = point.x - anchor.x
+                let dy = point.y - anchor.y
+                if abs(dx) < 18 && abs(dy) < 18 { continue }
+                let direction: Character =
+                    abs(dx) >= abs(dy) ? (dx > 0 ? "R" : "L") : (dy > 0 ? "U" : "D")
+                if directions.last != direction { directions.append(direction) }
+                anchor = point
+            }
+            return String(directions.prefix(4))
+        }
+        var points: [CGPoint] = [.zero]
+        for i in 1...10000 { points.append(CGPoint(x: i * 18, y: 0)) }
+        points += [
+            CGPoint(x: 180000, y: 18), CGPoint(x: 179982, y: 18), CGPoint(x: 179982, y: 0),
+            CGPoint(x: 180000, y: 0),
+        ]
+        var capture = MouseGestureCapture(origin: points[0])
+        for point in points.dropFirst() { capture.append(point) }
+        #expect(capture.visualPointCount == 256)
+        #expect(capture.visualPoints == Array(points.suffix(256)))
+        #expect(capture.end() == legacy(points))
+        #expect(capture.end() == nil)
+        #expect(capture.visualPointCount == 0)
+        #expect(MouseGesture.reduce(points) == legacy(points))
+    }
+    @Test func cancelAndInvalidCoordinatesDoNotBecomeRecognizedStrokes() {
+        var capture = MouseGestureCapture(origin: .zero)
+        capture.append(CGPoint(x: 100, y: 0))
+        capture.cancel()
+        #expect(capture.end() == nil)
+        #expect(MouseGesture.reduce([.zero, CGPoint(x: CGFloat.infinity, y: 0)]) == "")
+    }
+    @Test func savedOverlayAndFlickDefaultsRemainCompatible() throws {
+        let overlay = ["R": "nav.up", "DR": "", "UL": "tab.new"]
+        let encoded = try JSONEncoder().encode(overlay)
+        let decoded = try JSONDecoder().decode([String: String].self, from: encoded)
+        let result = GestureMap.standard.merging(userBindings: decoded)
+        #expect(result.commandID(for: "R") == "nav.up")
+        #expect(result.commandID(for: "DR") == nil)
+        #expect(GestureMap.overlay(forEffective: result.bindings) == overlay)
+        #expect(DragGestureMap.standard.merging(userBindings: ["D": ""]).commandID(for: "D") == nil)
+        #expect(DragGestureMap.standard.commandID(for: "R") == "files.copyToOtherPane")
+        #expect(MouseGesture.reduce([.zero, CGPoint(x: 43.99, y: 0)], minSegment: 44) == "")
+        #expect(MouseGesture.reduce([.zero, CGPoint(x: 44, y: 0)], minSegment: 44) == "R")
     }
 }

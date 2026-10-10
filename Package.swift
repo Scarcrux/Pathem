@@ -14,11 +14,12 @@ let package = Package(
         .macOS(.v15)
     ],
     dependencies: [
+        .package(path: "vendor/GestureSupport"),
         // SwiftTerm (MIT): a real VT/xterm terminal emulator in pure Swift. Used
         // only by the optional PathemTerminal module so the rest of the app and
         // the engine stay dependency-free. Compiled in (not a loaded bundle), so
         // it does not affect our clean Hardened Runtime stance.
-        .package(url: "https://github.com/migueldeicaza/SwiftTerm", from: "1.13.0"),
+        .package(url: "https://github.com/migueldeicaza/SwiftTerm", exact: "1.13.0"),
         // Sparkle (MIT): the auto-update framework. Used by the app for the
         // notarized direct-download build's update feed (DESIGN.md). A linked
         // framework, embedded and signed by scripts/package.sh.
@@ -26,7 +27,9 @@ let package = Package(
     ],
     targets: [
         // The engine: enumeration, watching, file ops, search. No AppKit.
-        .target(name: "PathemEngine"),
+        .target(
+            name: "PathemEngine",
+            dependencies: [.product(name: "GestureSupport", package: "GestureSupport")]),
 
         // AppRelaunch: the shared stale-build watcher (notices when a newer bundle is installed
         // under the running process and offers a relaunch). Vendored in-tree as a local target
@@ -53,6 +56,7 @@ let package = Package(
             name: "Pathem",
             dependencies: [
                 "PathemEngine", "PathemTerminal", "TorrentKit", "AppRelaunch",
+                .product(name: "GestureRecording", package: "GestureSupport"),
                 .product(name: "Sparkle", package: "Sparkle"),
             ],
             resources: [.process("Resources")]  // localized .strings (en, es, …)
@@ -63,6 +67,15 @@ let package = Package(
             name: "PathemEngineTests",
             dependencies: ["PathemEngine"]
         ),
+
+        // Shared package conformance/native recorder checks run in the normal gate.
+        .testTarget(
+            name: "GestureSupportTests",
+            dependencies: [
+                .product(name: "GestureSupport", package: "GestureSupport"),
+                .product(name: "GestureRecording", package: "GestureSupport"),
+            ],
+            path: "vendor/GestureSupport/Tests/GestureSupportTests"),
 
         // AppRelaunch tests (vendored alongside the target).
         .testTarget(

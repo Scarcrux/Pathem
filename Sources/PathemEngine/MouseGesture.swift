@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import GestureSupport
 
 /// Recognizes a right-button mouse "stroke" gesture (Directory Opus style) and maps it
 /// to a command. The recognizer reduces a path of points into a compact direction
@@ -12,19 +13,10 @@ public enum MouseGesture {
     /// "" for movement too small to be a gesture (so a plain right-click still gets its
     /// context menu). Capped at four directions.
     public static func reduce(_ points: [CGPoint], minSegment: CGFloat = 18) -> String {
-        guard points.count >= 2 else { return "" }
-        var directions: [Character] = []
-        var anchor = points[0]
-        for point in points.dropFirst() {
-            let dx = point.x - anchor.x
-            let dy = point.y - anchor.y
-            guard abs(dx) >= minSegment || abs(dy) >= minSegment else { continue }
-            let direction: Character =
-                abs(dx) >= abs(dy) ? (dx > 0 ? "R" : "L") : (dy > 0 ? "U" : "D")
-            if directions.last != direction { directions.append(direction) }
-            anchor = point
-        }
-        return String(directions.prefix(4))
+        guard let first = points.first, points.count >= 2 else { return "" }
+        var capture = MouseGestureCapture(origin: first, minSegment: minSegment)
+        for point in points.dropFirst() { capture.append(point) }
+        return capture.end() ?? ""
     }
 }
 
@@ -50,11 +42,10 @@ public struct GestureMap: Codable, Sendable {
 
     /// Overlay user bindings; an empty command id unbinds a stroke.
     public func merging(userBindings: [String: String]) -> GestureMap {
-        var merged = bindings
-        for (stroke, command) in userBindings {
-            if command.isEmpty { merged[stroke] = nil } else { merged[stroke] = command }
-        }
-        return GestureMap(bindings: merged)
+        let table = BindingTable(
+            defaults: bindings.mapValues { GestureBindingValue($0) },
+            overrides: userBindings.mapValues { GestureBindingValue($0, disabled: $0.isEmpty) })
+        return GestureMap(bindings: table.effectiveBindings)
     }
 
     /// The minimal user overlay that turns the defaults into `effective` (mirrors
@@ -93,10 +84,44 @@ public struct DragGestureMap: Codable, Sendable {
 
     /// Overlay user bindings; an empty command id unbinds a direction.
     public func merging(userBindings: [String: String]) -> DragGestureMap {
-        var merged = bindings
-        for (direction, command) in userBindings {
-            if command.isEmpty { merged[direction] = nil } else { merged[direction] = command }
+        let table = BindingTable(
+            defaults: bindings.mapValues { GestureBindingValue($0) },
+            overrides: userBindings.mapValues { GestureBindingValue($0, disabled: $0.isEmpty) })
+        return DragGestureMap(bindings: table.effectiveBindings)
+    }
+}
+
+/// Streaming adapter preserves Pathem's first-four semantics without retaining
+/// an unbounded input path. The engine has no native event/action dependency.
+public struct MouseGestureCapture {
+    private var capture: StrokeCapture<String>?
+    private var sequence = 0.0
+    private var last: StrokeSample
+
+    public init(origin: CGPoint, minSegment: CGFloat = 18) {
+        last = StrokeSample(x: Double(origin.x), y: Double(origin.y), timestamp: 0)
+        capture = try? StrokeCapture(
+            origin: last, threshold: Double(minSegment), overflow: .prefix, timeoutReason: "timeout"
+        )
+    }
+    public var visualPoints: [CGPoint] {
+        (capture?.visualPoints ?? []).map { CGPoint(x: $0.x, y: $0.y) }
+    }
+    public var visualPointCount: Int { capture?.visualPointCount ?? 0 }
+    public mutating func append(_ point: CGPoint) {
+        sequence += 1
+        last = StrokeSample(x: Double(point.x), y: Double(point.y), timestamp: sequence)
+        capture?.move(last)
+    }
+    public mutating func end() -> String? {
+        defer { capture = nil }
+        guard let result = capture?.release(last), case .recognized(let directions) = result else {
+            return nil
         }
-        return DragGestureMap(bindings: merged)
+        return directions.map(\.letter).joined()
+    }
+    public mutating func cancel() {
+        capture?.cancel("cancelled")
+        capture = nil
     }
 }

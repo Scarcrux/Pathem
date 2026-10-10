@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "files": {
+    ".gitignore": "1a6a181062f0bf4c4fa7f45930aaa58d5795e1289aabcfd3809b71232a153fd1",
+    "Package.swift": "144999f966950ee0754b3c33bd231470aeb31647388dd59fbeedb80aa1fead5b",
+    "README.md": "ac7a94e42338c7e51bd5837e08008cbe6c9f9bb677e4561ea0c1e6742a9b4038",
+    "Sources/GestureRecording/StrokeRecordingView.swift": "1bd8aa7b7f2409e9eb51eaaf819b591bf451761a91c41ab1d3975806ddc9bbae",
+    "Sources/GestureSupport/BindingTable.swift": "070b9666f8b4a9f672c514422c46a1567a3c529f5ce5a2628b789614acf57fe4",
+    "Sources/GestureSupport/StrokeCapture.swift": "693f4af4042e7be437bf84f6aa37a6747953aee6979d8da317f0d1e088fcc1e2",
+    "Tests/GestureSupportTests/StrokeCaptureTests.swift": "b742f612f9dc927347b130ec32ab00b5cda62e666c40f0c5bd6ab634a542d894",
+    "Tests/GestureSupportTests/StrokeRecordingTests.swift": "c68e41c5a925d1bdf88d0ad21627aee71ca2f619b281ca9510c5fc1a4d241046",
+    "verify.py": "7206b50ae9a73d15af8102cfc1d3441b343673b11386ac49d44c48fa3818e4ce"
+  }
+}

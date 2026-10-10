@@ -768,4 +768,15 @@ working_dir = "."
   note = "Trigger: an audit asked whether every feature, especially magnet links, had end-to-end coverage. Evidence: magnet tests stopped at parsing/BEP 9 units; daemon smoke only added a .torrent; Gate A and smoke were the only product scenarios in CI; packaged E2E relied on DEBUG hooks stripped from release; opt-in network tests returned early and appeared to pass. Mechanism: test layers existed but were disconnected, and the release harness assumed instrumentation it could not contain. Change: a hermetic tracker + real TCP BEP 9 peer resolves a magnet, downloads pieces, and verifies bytes; magnet promotion now keeps discovered peers; app/daemon smoke adds both .torrent and magnet forms; all deterministic scenarios plus an external signed-release probe run in make ci and CI; live tests are visibly disabled; TEST_MATRIX names hardware/public-network boundaries. Verification: final make ci passed localization, build, 9 XCTest + 742 Swift Testing cases, debug E2E 10/10 (including 39/39 UI), and packaged E2E 8/8 mandatory checks; its Accessibility window check honestly skipped for missing terminal permission. Negative results retained: two initial consolidated runs hit stale Swift 6.1 dependency-manifest cache state; absolute-path Xcode Swift fixed it. The first corrected commit hook then exposed a separate isolation bug: inherited GIT_INDEX_FILE made integration fixtures mutate the parent index and delete the worktree. The worktree was restored from Git, git subprocesses now strip only repository-routing env vars, fixture commits disable inherited hooks, and a simulated hook environment passed all 6 Git integration tests. Confidence: hermetic and package paths proven locally; public DHT/router/physical-device/third-party interoperability remain explicitly opt-in or manual."
   milestone = "A power-user Finder replacement people trust and switch to"
   issue = 0
+[[phase]]
+  id = "m-e1443252"
+  design = "docs/design-shared-gestures.md"
+  title = "Share gesture engine and recording controls with Commandem"
+  status = "now"
+  note = "Owner requested modular gestures across both apps. Current source duplicates dominant-axis reduction and bindings, and Pathem capture stores unbounded points. Extract shared system-framework-only package with explicit prefix-versus-reject policy, preserved flat JSON/default file actions/native fallback, common recording/preview/cancellation controls, and checksum-pinned local dependency; verify real adapter compatibility before acceptance."
+  issue = 0
+
+  [[phase.task]]
+    id = "t-138b2e24"
+    title = "Adopt pinned shared GestureSupport core and recording canvas; preserve native actions/configuration and verify compatibility/full gates"
 # <<< commandem roadmap <<<
