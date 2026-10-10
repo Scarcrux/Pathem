@@ -772,11 +772,16 @@ working_dir = "."
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
   title = "Share gesture engine and recording controls with Commandem"
-  status = "now"
+  status = "done"
   note = "Owner requested modular gestures across both apps. Current source duplicates dominant-axis reduction and bindings, and Pathem capture stores unbounded points. Extract shared system-framework-only package with explicit prefix-versus-reject policy, preserved flat JSON/default file actions/native fallback, common recording/preview/cancellation controls, and checksum-pinned local dependency; verify real adapter compatibility before acceptance."
   issue = 0
 
   [[phase.task]]
     id = "t-138b2e24"
     title = "Adopt pinned shared GestureSupport core and recording canvas; preserve native actions/configuration and verify compatibility/full gates"
+    done = true
+
+  [[phase.comment]]
+    text = "Shared GestureSupport migration94f53d0 verified by complete normal Swift/format/pin/localization gates plus explicit full build3.66s. Same9fe9ab93 package as accepted Commandem54867e97; streaming compatibility, overflow/JSON/flick defaults and shared off-screen preview/Escape checks included. Initial inherited Git-routing failure, new SwiftTerm API mismatch and stale traits are retained with controls; corrected hooks/exact1.13 pin/owned-state reset accepted. Normal land refused only foreign primary roadmap. Integration will privately archive and restore all unrelated pending bytes/records, never commit them. No install/restart/provider/push or physical calibration claim."
+    at = "2026-10-10T21:45:19Z"
 # <<< commandem roadmap <<<

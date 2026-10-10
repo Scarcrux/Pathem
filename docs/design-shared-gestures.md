@@ -122,3 +122,24 @@ pin retry then exposed stale SwiftPM build-plan traits: PortableGraphics from
 1.99 was still applied to1.13, which declares no traits. Reset only this owned
 workbench's regenerable SwiftPM state before rerunning the normal hook; shared
 caches, source, foreign records and installed applications remain untouched.
+
+## Final local gate verdicts
+
+S1 PASS in Commandem204 affected checks and mandatory complete Swift hook; its
+source54867e97 is normally landed. S2 PASS in Pathem's full unfiltered normal
+Swift hook at94f53d0 (includes the four named compatibility tests); no filtered
+substitute or skipped failing suite. S3 PASS by exact9fe9ab93 manifest comparison
+and independent local builds. S4 PASS by the actual shared native callback tests
+and mounted Commandem Settings preview/Apply/Escape/geometry capture; physical
+Pathem menu/flick interruption behavior is not newly certified. S5 PASS: exact
+package copies verify and changed-byte pin control refuses. S6 PASS locally:
+Pathem normal formatting/pin/full Swift/localization hooks and explicit full build
+(3.66s); Commandem full Swift plus CLI38.725s/e2e61.418s. All prior failed controls
+and build attempts remain in receipts. Installation/restart/push remain absent.
+
+Initial normal land was refused by the unrelated dirty primary commandem.toml.
+Final integration preserves the original three instruction files byte-for-byte
+and all53 foreign modern Mission records/other fields. A private0700 archive
+retains original0600 files. Only owned gesture records may be inserted/replaced
+by their stable ID when restoring pending state; foreign changes are not committed.
+Actual normal land status and resulting main SHA are recorded on the scoped board.
