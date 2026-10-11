@@ -231,6 +231,9 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_FILE_SEARCH_TEST"] != nil {
             browser.runFileSearchUIAutomation()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_FINDER_UI_TEST"] != nil {
+            browser.runFinderUIAutomation()
+        }
 
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a
         // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and
@@ -1350,6 +1353,7 @@ enum PathemApp {
         // Open & inspect
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Open", "files.open", "o"))
+        fileMenu.addItem(commandItem("Show Package Contents", "files.showPackageContents"))
         fileMenu.addItem(commandItem("Open in New Tab", "files.openInNewTab"))
         fileMenu.addItem(commandItem("Open in This Pane", "files.openInThisPane"))
         fileMenu.addItem(commandItem("Open in Other Pane", "files.openInOtherPane"))

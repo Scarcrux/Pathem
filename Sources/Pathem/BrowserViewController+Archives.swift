@@ -11,46 +11,78 @@ extension BrowserViewController {
     func compressSelection() {
         // Smart/flat/duplicate views span multiple folders; Archiver assumes one
         // shared parent, so restrict Compress to a single real folder.
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         let base = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
         let dest = uniqueLocalURL(folder.appendingPathComponent("\(base).zip"))
-        Task { @MainActor [weak self] in
+        Task { @MainActor [weak self, weak pane] in
             do {
                 try await Archiver.compress(urls, to: dest)
+                if let pane, !pane.isRemote, !pane.isShowingSmartResults,
+                    pane.currentURL.path == folder.path
+                {
+                    pane.selectWhenListed(dest.lastPathComponent) { [weak pane] in
+                        pane?.select(name: dest.lastPathComponent)
+                    }
+                }
                 self?.reloadBothSides()
-                self?.activePane?.select(name: dest.lastPathComponent)
             } catch {
-                self?.reportArchiveError(L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
+                self?.reportArchiveError(
+                    L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
             }
         }
     }
 
     func compress7zSelection() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         let base = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Archive"
         let dest = uniqueLocalURL(folder.appendingPathComponent("\(base).7z"))
-        Task { @MainActor [weak self] in
+        Task { @MainActor [weak self, weak pane] in
             do {
                 try await Archiver.compress7z(urls, to: dest)
+                if let pane, !pane.isRemote, !pane.isShowingSmartResults,
+                    pane.currentURL.path == folder.path
+                {
+                    pane.selectWhenListed(dest.lastPathComponent) { [weak pane] in
+                        pane?.select(name: dest.lastPathComponent)
+                    }
+                }
                 self?.reloadBothSides()
-                self?.activePane?.select(name: dest.lastPathComponent)
             } catch {
-                self?.reportArchiveError(L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
+                self?.reportArchiveError(
+                    L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
             }
         }
     }
 
     /// Extract each selected archive into its own folder in the current directory.
     func extractSelection() {
-        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
         let archives = pane.selectedLocalURLs().filter { Archiver.canExtract($0) }
-        guard !archives.isEmpty else { NSSound.beep(); return }
+        guard !archives.isEmpty else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -61,16 +93,25 @@ extension BrowserViewController {
                 do { try await Archiver.extract(archive, to: out) } catch { failed = true }
             }
             self.reloadBothSides()
-            if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+            if failed {
+                self.reportArchiveError(
+                    L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil)
+            }
         }
     }
 
     /// Extract each selected archive's contents directly into the current directory
     /// (no per-archive subfolder), matching a manager's "Extract Here".
     func extractHereSelection() {
-        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
         let archives = pane.selectedLocalURLs().filter { Archiver.canExtract($0) }
-        guard !archives.isEmpty else { NSSound.beep(); return }
+        guard !archives.isEmpty else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -79,16 +120,25 @@ extension BrowserViewController {
                 do { try await Archiver.extract(archive, to: folder) } catch { failed = true }
             }
             self.reloadBothSides()
-            if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+            if failed {
+                self.reportArchiveError(
+                    L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil)
+            }
         }
     }
 
     /// Choose a destination folder, then extract each selected archive into its own
     /// subfolder there ("Extract to Folder…").
     func extractToSelection() {
-        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
         let archives = pane.selectedLocalURLs().filter { Archiver.canExtract($0) }
-        guard !archives.isEmpty, let window = view.window else { NSSound.beep(); return }
+        guard !archives.isEmpty, let window = view.window else {
+            NSSound.beep()
+            return
+        }
         let picker = NSOpenPanel()
         picker.canChooseDirectories = true
         picker.canChooseFiles = false
@@ -106,7 +156,10 @@ extension BrowserViewController {
                     do { try await Archiver.extract(archive, to: out) } catch { failed = true }
                 }
                 self.reloadBothSides()
-                if failed { self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil) }
+                if failed {
+                    self.reportArchiveError(
+                        L("bvc.couldntExtract", "Couldn’t extract one or more archives"), nil)
+                }
             }
         }
     }
@@ -115,9 +168,13 @@ extension BrowserViewController {
     func peekArchive() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
             pane.selectedEntries.count == 1, let window = view.window
-        else { NSSound.beep(); return }
+        else {
+            NSSound.beep()
+            return
+        }
         guard let archive = pane.selectedLocalURLs().first, Archiver.canExtract(archive) else {
-            NSSound.beep(); return
+            NSSound.beep()
+            return
         }
         let folder = pane.currentURL
         Task { @MainActor in
@@ -142,9 +199,11 @@ extension BrowserViewController {
             guard changed, let window = self.view.window else { return }
             let alert = NSAlert()
             alert.messageText = String(
-                format: L("archive.saveBackTitle", "Save changes to %@?"), archive.lastPathComponent)
+                format: L("archive.saveBackTitle", "Save changes to %@?"), archive.lastPathComponent
+            )
             alert.informativeText = L(
-                "archive.saveBackBody", "You changed files inside this archive. Repack them into it?")
+                "archive.saveBackBody",
+                "You changed files inside this archive. Repack them into it?")
             alert.addButton(withTitle: L("archive.saveBackSave", "Save to Archive"))
             alert.addButton(withTitle: L("archive.saveBackDiscard", "Discard"))
             alert.beginSheetModal(for: window) { [weak self] response in
@@ -155,7 +214,8 @@ extension BrowserViewController {
                         self.reloadBothSides()
                     } catch {
                         self.reportArchiveError(
-                            L("archive.saveBackFailed", "Couldn’t save changes to the archive"), error)
+                            L("archive.saveBackFailed", "Couldn’t save changes to the archive"),
+                            error)
                     }
                 }
             }
@@ -170,7 +230,8 @@ extension BrowserViewController {
                 try await Archiver.extract(archive, to: out)
                 self.reloadBothSides()
             } catch {
-                self.reportArchiveError(L("bvc.couldntExtract", "Couldn’t extract one or more archives"), error)
+                self.reportArchiveError(
+                    L("bvc.couldntExtract", "Couldn’t extract one or more archives"), error)
             }
         }
     }
@@ -180,6 +241,10 @@ extension BrowserViewController {
         alert.messageText = title
         if let error { alert.informativeText = error.localizedDescription }  // not the raw Swift dump
         alert.addButton(withTitle: L("common.ok", "OK"))
-        if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { NSSound.beep() }
+        if let window = view.window {
+            alert.beginSheetModal(for: window) { _ in }
+        } else {
+            NSSound.beep()
+        }
     }
 }

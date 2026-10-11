@@ -120,7 +120,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         filmstrip.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
         filmstrip.setDraggingSourceOperationMask(.every, forLocal: false)  // effectAllowed="all", like Finder
         filmstrip.onActivate = { [weak self] indexPath in
-            guard let self, let item = (indexPath ?? self.filmstrip.selectionIndexPaths.first)?.item,
+            guard let self,
+                let item = (indexPath ?? self.filmstrip.selectionIndexPaths.first)?.item,
                 item < self.entries.count
             else { return }
             self.onOpen?(self.entries[item])
@@ -160,6 +161,12 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         composite.addSubview(previewName)
         composite.addSubview(scrollView)
         composite.addSubview(emptyLabel)
+        // A legacy horizontal scroller consumes clip-view height. The old 124pt outer
+        // frame left only 109pt for a 104pt item + 16pt insets, triggering AppKit's invalid
+        // flow-layout warning and clipping thumbnails. Budget the scroller explicitly.
+        let filmstripHeight =
+            layout.itemSize.height + layout.sectionInset.top + layout.sectionInset.bottom
+            + NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) + 4
         NSLayoutConstraint.activate([
             preview.topAnchor.constraint(equalTo: composite.topAnchor, constant: 16),
             preview.leadingAnchor.constraint(equalTo: composite.leadingAnchor, constant: 16),
@@ -171,7 +178,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             scrollView.leadingAnchor.constraint(equalTo: composite.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: composite.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: composite.bottomAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: 124),  // single thumbnail row
+            scrollView.heightAnchor.constraint(equalToConstant: filmstripHeight),
             emptyLabel.centerXAnchor.constraint(equalTo: preview.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: preview.centerYAnchor),
         ])
@@ -217,7 +224,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         guard !paths.isEmpty else { return nil }
         var union = NSRect.null
         for path in paths {
-            if let attrs = filmstrip.layoutAttributesForItem(at: path) { union = union.union(attrs.frame) }
+            if let attrs = filmstrip.layoutAttributesForItem(at: path) {
+                union = union.union(attrs.frame)
+            }
         }
         guard !union.isNull else { return nil }
         let visible = union.intersection(filmstrip.visibleRect)
@@ -256,7 +265,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     // MARK: PaneContentView
 
     var selectedEntries: [FileEntry] {
-        filmstrip.selectionIndexPaths.compactMap { $0.item < entries.count ? entries[$0.item] : nil }
+        filmstrip.selectionIndexPaths.compactMap {
+            $0.item < entries.count ? entries[$0.item] : nil
+        }
     }
 
     // MARK: In-place rename (Finder-style, so New Folder drops straight into editing here too)
@@ -289,7 +300,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         if let editor = field.currentEditor() {
             let ns = entry.name as NSString
             let ext = ns.pathExtension as NSString
-            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            let baseLength =
+                (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
             editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
         }
         return true
@@ -311,14 +323,16 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         editingEntry = nil
         renameCancelled = false
         if let index = entries.firstIndex(where: { $0.name == entry.name }),
-            let field = (filmstrip.item(at: IndexPath(item: index, section: 0)) as? IconItem)?.textField
+            let field = (filmstrip.item(at: IndexPath(item: index, section: 0)) as? IconItem)?
+                .textField
         {
             endInlineEditing(field)
             if field.currentEditor() != nil { filmstrip.window?.makeFirstResponder(filmstrip) }
         }
     }
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool
+    {
         if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
             renameCancelled = true
             filmstrip.window?.makeFirstResponder(filmstrip)
@@ -386,11 +400,15 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     // MARK: Data source / selection / drag
 
-    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int)
+        -> Int
+    {
         entries.count
     }
 
-    func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath)
+    func collectionView(
+        _ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath
+    )
         -> NSCollectionViewItem
     {
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
@@ -398,22 +416,30 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
         item.configure(
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
-            iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
+            iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless,
+            thumbnailURL: thumbnailURL,
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
-            underlined: indexPath.item == hoveredItem, accessibilityLabel: FileAXLabel.describe(entry))
+            underlined: indexPath.item == hoveredItem,
+            accessibilityLabel: FileAXLabel.describe(entry))
         item.view.alphaValue = alpha(for: entry)  // dim cut items until pasted
         return item
     }
 
-    func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
+    func collectionView(
+        _ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>
+    ) {
         selectionChanged()
     }
-    func collectionView(_ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>) {
+    func collectionView(
+        _ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>
+    ) {
         selectionChanged()
     }
 
-    func collectionView(_ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath)
+    func collectionView(
+        _ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath
+    )
         -> NSPasteboardWriting?
     {
         guard indexPath.item < entries.count, !entries[indexPath.item].isDataless,
@@ -447,7 +473,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     /// Move by default (else copy) between folders, with Command inverting it, matching the list.
     private func dropMovesByDefault(_ info: NSDraggingInfo) -> Bool {
         let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        return (dragMovesByDefault != commandHeld) && info.draggingSourceOperationMask.contains(.move)
+        return (dragMovesByDefault != commandHeld)
+            && info.draggingSourceOperationMask.contains(.move)
     }
 
     func collectionView(
@@ -460,11 +487,16 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         return true
     }
 
-    private static let cloudIcon = NSImage(
-        systemSymbolName: "icloud.and.arrow.down",
-        accessibilityDescription: L("cloud.notDownloaded", "In iCloud, not downloaded")) ?? NSImage()
+    private static let cloudIcon =
+        NSImage(
+            systemSymbolName: "icloud.and.arrow.down",
+            accessibilityDescription: L("cloud.notDownloaded", "In iCloud, not downloaded"))
+        ?? NSImage()
     private static func icon(for entry: FileEntry) -> NSImage {
         if let themed = IconSetManager.shared.icon(for: entry) { return themed }  // active icon set
-        return NSWorkspace.shared.icon(for: entry.isDirectory ? .folder : (UTType(filenameExtension: (entry.name as NSString).pathExtension) ?? .data))
+        return NSWorkspace.shared.icon(
+            for: entry.isDirectory
+                ? .folder
+                : (UTType(filenameExtension: (entry.name as NSString).pathExtension) ?? .data))
     }
 }

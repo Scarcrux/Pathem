@@ -39,8 +39,12 @@ extension BrowserViewController {
     /// Split the selected file into fixed-size parts (asks for a size in MB), off-main.
     func splitSelection() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
-            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first, !entry.isDirectory
-        else { NSSound.beep(); return }
+            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first,
+            !entry.isDirectory
+        else {
+            NSSound.beep()
+            return
+        }
         let file = pane.currentURL.appendingPathComponent(entry.name)
         Task { @MainActor in
             guard
@@ -50,10 +54,12 @@ extension BrowserViewController {
             else { return }
             let partSize = Int64(mb * 1_000_000)
             do {
-                _ = try await Task.detached { try FileSplitter.split(file, partSize: partSize) }.value
+                _ = try await Task.detached { try FileSplitter.split(file, partSize: partSize) }
+                    .value
                 self.activePane?.reloadIfShowingListing()
             } catch {
-                self.presentInfo(L("bvc.splitFailed", "Couldn’t split the file"), error.localizedDescription)
+                self.presentInfo(
+                    L("bvc.splitFailed", "Couldn’t split the file"), error.localizedDescription)
             }
         }
     }
@@ -62,15 +68,20 @@ extension BrowserViewController {
     func mergeSelection() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
             let entry = pane.selectedEntries.first
-        else { NSSound.beep(); return }
+        else {
+            NSSound.beep()
+            return
+        }
         let part = pane.currentURL.appendingPathComponent(entry.name)
         Task { @MainActor in
             do {
-                let merged = try await Task.detached { try FileSplitter.merge(firstPart: part) }.value
+                let merged = try await Task.detached { try FileSplitter.merge(firstPart: part) }
+                    .value
                 self.activePane?.reloadIfShowingListing()
                 self.activePane?.select(name: merged.lastPathComponent)
             } catch {
-                self.presentInfo(L("bvc.mergeFailed", "Couldn’t merge the parts"), error.localizedDescription)
+                self.presentInfo(
+                    L("bvc.mergeFailed", "Couldn’t merge the parts"), error.localizedDescription)
             }
         }
     }
@@ -78,7 +89,10 @@ extension BrowserViewController {
     /// Offload the selected downloaded iCloud files (evict the local copy; the cloud copy
     /// stays and the file becomes online-only).
     func offloadSelection() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs().filter { Backup.isOffloadable($0) }
         guard !urls.isEmpty else {
             presentInfo(
@@ -95,9 +109,15 @@ extension BrowserViewController {
 
     /// Copy the selection to a chosen destination as a backup (originals kept).
     func backupSelection() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        guard !urls.isEmpty, let window = view.window else {
+            NSSound.beep()
+            return
+        }
         backup(urls, over: window)
     }
 
@@ -106,7 +126,10 @@ extension BrowserViewController {
     /// git ISN'T protecting and is worth backing up (precious untracked data). Then offer to
     /// clean the first and back up the second.
     func repoReclaim() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         guard let window = view.window else { return }
         Task { @MainActor in
@@ -114,7 +137,10 @@ extension BrowserViewController {
             guard !items.isEmpty else {
                 self.presentInfo(
                     L("repo.notRepo", "Not a git repository"),
-                    L("repo.notRepoBody", "Reclaim only runs inside a git repository, where it can tell tracked files from regenerable junk and precious untracked data."))
+                    L(
+                        "repo.notRepoBody",
+                        "Reclaim only runs inside a git repository, where it can tell tracked files from regenerable junk and precious untracked data."
+                    ))
                 return
             }
             let regenerable = items.filter { $0.disposition == .regenerable }
@@ -134,32 +160,39 @@ extension BrowserViewController {
             alert.informativeText = String(
                 format: L(
                     "repo.summary",
-                    "Regenerable (safe to clean): %d, %@\nPrecious (untracked, worth backing up): %d, %@\nTracked (git already has these): %d"),
+                    "Regenerable (safe to clean): %d, %@\nPrecious (untracked, worth backing up): %d, %@\nTracked (git already has these): %d"
+                ),
                 regenerable.count, size(regenerable), precious.count, size(precious), tracked.count)
 
             // Offer only the actions that apply, mapped by button order.
             var actions: [() -> Void] = []
             if !regenerable.isEmpty {
                 alert.addButton(
-                    withTitle: String(format: L("repo.clean", "Clean Regenerable (%d)"), regenerable.count))
+                    withTitle: String(
+                        format: L("repo.clean", "Clean Regenerable (%d)"), regenerable.count))
                 let toTrash = urls(regenerable)
                 actions.append { [weak self] in self?.performLocalTrash(toTrash) }
             }
             if !precious.isEmpty {
                 alert.addButton(
-                    withTitle: String(format: L("repo.backup", "Back Up Precious… (%d)"), precious.count))
+                    withTitle: String(
+                        format: L("repo.backup", "Back Up Precious… (%d)"), precious.count))
                 let toBackUp = urls(precious)
                 actions.append { [weak self] in self?.backup(toBackUp, over: window) }
             }
             if actions.isEmpty {
                 self.presentInfo(
                     L("repo.nothing", "Nothing to reclaim"),
-                    L("repo.nothingBody", "Everything here is tracked by git. There's no regenerable junk to clean and no untracked data to back up."))
+                    L(
+                        "repo.nothingBody",
+                        "Everything here is tracked by git. There's no regenerable junk to clean and no untracked data to back up."
+                    ))
                 return
             }
             alert.addButton(withTitle: L("common.close", "Close"))
             alert.beginSheetModal(for: window) { response in
-                let index = response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+                let index =
+                    response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
                 if index >= 0 && index < actions.count { actions[index]() }
             }
         }
@@ -179,7 +212,8 @@ extension BrowserViewController {
             Task { @MainActor in
                 let result = await Task.detached { Backup.backup(urls, to: destination) }.value
                 if !result.failures.isEmpty {
-                    self.presentFailures(result.failures, title: L("backup.failed", "Couldn’t back up"))
+                    self.presentFailures(
+                        result.failures, title: L("backup.failed", "Couldn’t back up"))
                 } else {
                     self.presentInfo(
                         L("backup.done", "Backed up"),
@@ -194,13 +228,20 @@ extension BrowserViewController {
     /// Create an AES-256 encrypted disk image containing the selection, after prompting for
     /// a volume name and password.
     func encryptToDiskImage() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        guard !urls.isEmpty, let window = view.window else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
 
         let nameField = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
-        nameField.stringValue = urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Encrypted"
+        nameField.stringValue =
+            urls.count == 1 ? urls[0].deletingPathExtension().lastPathComponent : "Encrypted"
         let passField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 22))
         passField.placeholderString = L("dmg.password", "Password")
         func labeledRow(_ label: String, _ control: NSView) -> NSStackView {
@@ -213,7 +254,8 @@ extension BrowserViewController {
             return row
         }
         let accessory = NSStackView(views: [
-            labeledRow(L("dmg.name", "Name"), nameField), labeledRow(L("dmg.passwordLabel", "Password"), passField),
+            labeledRow(L("dmg.name", "Name"), nameField),
+            labeledRow(L("dmg.passwordLabel", "Password"), passField),
         ])
         accessory.orientation = .vertical
         accessory.alignment = .leading
@@ -230,7 +272,10 @@ extension BrowserViewController {
             guard response == .alertFirstButtonReturn, let self else { return }
             let name = nameField.stringValue.isEmpty ? "Encrypted" : nameField.stringValue
             let password = passField.stringValue
-            guard !password.isEmpty else { NSSound.beep(); return }
+            guard !password.isEmpty else {
+                NSSound.beep()
+                return
+            }
             Task { @MainActor in
                 do {
                     let dmg = try await Task.detached {
@@ -241,7 +286,8 @@ extension BrowserViewController {
                     self.activePane?.select(name: dmg.lastPathComponent)
                 } catch {
                     self.presentInfo(
-                        L("dmg.failed", "Couldn’t create the disk image"), error.localizedDescription)
+                        L("dmg.failed", "Couldn’t create the disk image"),
+                        error.localizedDescription)
                 }
             }
         }
@@ -250,16 +296,23 @@ extension BrowserViewController {
     /// Overwrite the selected files with random data and delete them, after a strong
     /// confirmation. Irreversible, and there is no Trash.
     func secureDeleteSelection() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty, let window = view.window else { NSSound.beep(); return }
+        guard !urls.isEmpty, let window = view.window else {
+            NSSound.beep()
+            return
+        }
         let alert = NSAlert()
         alert.alertStyle = .critical
         alert.messageText = String(
             format: L("bvc.secureDeleteQ", "Securely erase %d item(s)?"), urls.count)
         alert.informativeText = L(
             "bvc.secureDeleteBody",
-            "The files are overwritten with random data and deleted. This cannot be undone and does not use the Trash. On SSD or APFS storage, secure erasure is best-effort.")
+            "The files are overwritten with random data and deleted. This cannot be undone and does not use the Trash. On SSD or APFS storage, secure erasure is best-effort."
+        )
         alert.addButton(withTitle: L("bvc.secureDeleteConfirm", "Erase"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -268,7 +321,8 @@ extension BrowserViewController {
                 let result = await Task.detached { SecureDelete.shred(urls) }.value
                 self.activePane?.reloadIfShowingListing()
                 if !result.failures.isEmpty {
-                    self.presentFailures(result.failures, title: L("bvc.secureDeleteFailed", "Couldn’t erase"))
+                    self.presentFailures(
+                        result.failures, title: L("bvc.secureDeleteFailed", "Couldn’t erase"))
                 }
             }
         }
@@ -276,19 +330,31 @@ extension BrowserViewController {
 
     /// Create a symlink, alias, or hard link next to each selected item (undoable).
     func makeLinks(kind: FileOperations.LinkKind) {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
         let outcome = FileOperations.makeLinks(urls, kind: kind)
-        pane.reloadIfShowingListing()
         let createdNames = outcome.performed.map { $0.destination.lastPathComponent }
-        if let first = createdNames.first { pane.select(name: first) }
+        if let first = createdNames.first {
+            // The created row is not in the off-main listing yet. Select and reveal only
+            // after it lands, rather than silently leaving the source selected.
+            pane.selectWhenListed(first) { [weak pane] in pane?.select(name: first) }
+        }
+        pane.reloadIfShowingListing()
         if !createdNames.isEmpty {
             registerCreatedUndo(
-                names: createdNames, in: pane.currentURL, actionName: L("bvc.makeLinkAction", "Make Link"))
+                names: createdNames, in: pane.currentURL,
+                actionName: L("bvc.makeLinkAction", "Make Link"))
         }
         if !outcome.failures.isEmpty {
-            presentFailures(outcome.failures, title: L("bvc.makeLinkFailed", "Couldn’t create the link"))
+            presentFailures(
+                outcome.failures, title: L("bvc.makeLinkFailed", "Couldn’t create the link"))
         }
     }
 
@@ -299,7 +365,8 @@ extension BrowserViewController {
                 let mountPoint = try await DiskImage.attach(image)
                 (pane ?? self?.activePane)?.navigate(to: mountPoint)
             } catch {
-                self?.reportArchiveError(L("bvc.couldntMount", "Couldn’t mount the disk image"), error)
+                self?.reportArchiveError(
+                    L("bvc.couldntMount", "Couldn’t mount the disk image"), error)
             }
         }
     }
@@ -308,7 +375,10 @@ extension BrowserViewController {
     func ejectActiveVolume() {
         guard let pane = activePane, !pane.isRemote,
             let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
-        else { NSSound.beep(); return }
+        else {
+            NSSound.beep()
+            return
+        }
         ejectVolume(volume)
     }
 
@@ -317,11 +387,15 @@ extension BrowserViewController {
         // Hard backstop, independent of any volume flag: never eject the boot volume or a system
         // volume (a firmlinked /System/Volumes/* mount could otherwise slip through a flag check).
         let path = volume.standardizedFileURL.path
-        if path == "/" || path.hasPrefix("/System/") { NSSound.beep(); return }
+        if path == "/" || path.hasPrefix("/System/") {
+            NSSound.beep()
+            return
+        }
         let home = FileManager.default.homeDirectoryForCurrentUser
         for side in [leftTabs, rightTabs] {
             if let pane = side.activePane, !pane.isRemote,
-                pane.currentURL.path.hasPrefix(volume.path) {
+                pane.currentURL.path.hasPrefix(volume.path)
+            {
                 pane.navigate(to: home)
             }
         }
@@ -336,9 +410,11 @@ extension BrowserViewController {
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    self?.activePane?.flashStatus(String(format: L("bvc.ejected", "Ejected %@"), name))
+                    self?.activePane?.flashStatus(
+                        String(format: L("bvc.ejected", "Ejected %@"), name))
                 case .failure(let error):
-                    self?.reportArchiveError(L("bvc.couldntEject", "Couldn’t eject the volume"), error)
+                    self?.reportArchiveError(
+                        L("bvc.couldntEject", "Couldn’t eject the volume"), error)
                 }
             }
         }

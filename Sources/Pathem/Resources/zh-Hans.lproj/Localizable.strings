@@ -1748,3 +1748,5 @@
 "xattr.removeQuarantine" = "移除隔离标记";
 "xattr.title" = "扩展属性";
 "xattr.titleFor" = "扩展属性：%@";
+"bvc.cmd.showPackageContents" = "显示包内容";
+"menu.files.showPackageContents" = "显示包内容";

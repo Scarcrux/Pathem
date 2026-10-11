@@ -1748,3 +1748,5 @@
 "xattr.removeQuarantine" = "Quarantäne entfernen";
 "xattr.title" = "Erweiterte Attribute";
 "xattr.titleFor" = "Erweiterte Attribute: %@";
+"bvc.cmd.showPackageContents" = "Paketinhalt zeigen";
+"menu.files.showPackageContents" = "Paketinhalt zeigen";

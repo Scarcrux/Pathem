@@ -1748,3 +1748,5 @@
 "xattr.removeQuarantine" = "検疫を解除";
 "xattr.title" = "拡張属性";
 "xattr.titleFor" = "拡張属性: %@";
+"bvc.cmd.showPackageContents" = "パッケージの内容を表示";
+"menu.files.showPackageContents" = "パッケージの内容を表示";

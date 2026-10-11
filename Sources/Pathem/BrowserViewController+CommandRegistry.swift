@@ -230,9 +230,19 @@ extension BrowserViewController {
             enabled: { [weak self] in
                 guard let pane = self?.activePane, !pane.isRemote, pane.selectedEntries.count == 1
                 else { return false }
-                return true
+                return pane.selectedLocalURLs().first.map(FileContextMenuController.isLink) ?? false
             }
         ) { [weak self] in self?.showOriginal() }
+        add(
+            "files.showPackageContents", L("bvc.cmd.showPackageContents", "Show Package Contents"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane, !pane.isRemote,
+                    pane.selectedEntries.count == 1
+                else { return false }
+                return pane.selectedLocalURLs().first.map(FileContextMenuController.isPackage)
+                    ?? false
+            }
+        ) { [weak self] in self?.showPackageContents() }
         add(
             "files.makeHardlink", L("bvc.cmd.makeHardlink", "Make Hard Link"),
             enabled: hasLocalSelection

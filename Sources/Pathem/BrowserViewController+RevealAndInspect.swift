@@ -6,6 +6,13 @@ import PathemEngine
 // Split out of BrowserViewController.
 @MainActor
 extension BrowserViewController {
+    /// Explicitly browse a package; normal Open continues to hand it to its application.
+    func showPackageContents() {
+        guard let pane = activePane, !pane.isRemote else { return }
+        let urls = pane.selectedLocalURLs()
+        guard urls.count == 1, FileContextMenuController.isPackage(urls[0]) else { return }
+        pane.navigate(to: urls[0])
+    }
     func revealSelection() {
         if blockedByRemote() { return }
         guard let pane = activePane else { return }
@@ -25,11 +32,17 @@ extension BrowserViewController {
     /// Jump to the original of a selected alias or symlink: resolve its target and reveal it
     /// (navigate to the target's folder and select it), like Finder's Show Original.
     func showOriginal() {
-        guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, let url = pane.selectedLocalURLs().first else {
+            NSSound.beep()
+            return
+        }
         guard let target = Self.resolveOriginal(of: url) else {
             presentInfo(
                 L("bvc.showOriginalNoneTitle", "No original to show"),
-                L("bvc.showOriginalNoneBody", "This item isn’t an alias or symlink, or its original can’t be found (it may have been moved or deleted)."))
+                L(
+                    "bvc.showOriginalNoneBody",
+                    "This item isn’t an alias or symlink, or its original can’t be found (it may have been moved or deleted)."
+                ))
             return
         }
         pane.reveal(target)
@@ -63,8 +76,10 @@ extension BrowserViewController {
 
     /// Open Finder's own Get Info window for each URL (the optional default-app path).
     private static func openFinderGetInfo(_ urls: [URL]) {
-        let items = urls.map { "POSIX file \"\($0.path.replacingOccurrences(of: "\"", with: "\\\""))\"" }
-            .joined(separator: ", ")
+        let items = urls.map {
+            "POSIX file \"\($0.path.replacingOccurrences(of: "\"", with: "\\\""))\""
+        }
+        .joined(separator: ", ")
         let script = """
             tell application "Finder"
                 activate
@@ -85,7 +100,8 @@ extension BrowserViewController {
         if blockedByRemote() { return }
         guard let pane = activePane else { return }
         for entry in pane.selectedEntries where entry.isDataless {
-            let url = entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
+            let url =
+                entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
                 ?? pane.currentURL.appendingPathComponent(entry.name)  // location-aware
             try? FileManager.default.startDownloadingUbiquitousItem(at: url)
         }

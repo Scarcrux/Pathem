@@ -35,13 +35,17 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// The default order of the menu's entries: command ids plus the two submenu tokens.
     /// Separators aren't listed; they're auto-inserted between groups (see `group`).
     static let defaultEntries: [String] = [
-        "files.open", "files.openInNewTab", "files.openInThisPane", "files.openInOtherPane", "@openWith",
+        "files.open", "files.openInNewTab", "files.openInThisPane", "files.openInOtherPane",
+        "@openWith",
+        "files.showPackageContents", "view.quickLook", "files.showOriginal",
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
         "files.getInfo", "files.share", "files.download", "files.reveal", "files.revealInPathem",
         "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
-        "files.duplicate", "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste",
+        "files.duplicate", "files.makeAlias", "files.copy", "files.copyPath", "files.copyName",
+        "files.cut", "files.paste",
+        "files.compress", "files.compress7z",
         "files.extract", "files.extractHere", "files.extractTo",
         "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
     ]
@@ -55,9 +59,12 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             return 5  // set apart, like Finder
         case "@tags": return 1
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
-        case "files.duplicate", "files.copy", "files.copyPath", "files.copyName", "files.cut", "files.paste":
+        case "files.duplicate", "files.makeAlias", "files.copy", "files.copyPath", "files.copyName",
+            "files.cut", "files.paste":
             return 3
-        case "files.extract", "files.extractHere", "files.extractTo": return 4
+        case "files.compress", "files.compress7z", "files.extract", "files.extractHere",
+            "files.extractTo":
+            return 4
         case "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink": return 6  // torrent actions
         default: return 0  // open / info / rename actions
         }
@@ -69,7 +76,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "@openWith": return L("list.openWith", "Open With")
         case "@tags": return L("list.tags", "Tags")
         default:
-            return Dictionary(uniqueKeysWithValues: hideableCommands.map { ($0.id, $0.title) })[token]
+            return Dictionary(uniqueKeysWithValues: hideableCommands.map { ($0.id, $0.title) })[
+                token]
                 ?? token
         }
     }
@@ -77,11 +85,22 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     private static func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
     }
+    /// Metadata-only capability checks: do not resolve aliases or launch packages to build a menu.
+    static func isPackage(_ url: URL) -> Bool {
+        let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey])
+        return values?.isDirectory == true && values?.isPackage == true
+    }
+    static func isLink(_ url: URL) -> Bool {
+        let values = try? url.resourceValues(forKeys: [.isAliasFileKey, .isSymbolicLinkKey])
+        return values?.isAliasFile == true || values?.isSymbolicLink == true
+    }
     private static func isImage(_ url: URL) -> Bool {
-        (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .image) ?? false
+        (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType?.conforms(to: .image)
+            ?? false
     }
     private static let trashDir =
-        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash").standardizedFileURL.path
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        .standardizedFileURL.path
     private static let trashPrefix = trashDir + "/"
     private static func isInTrash(_ url: URL) -> Bool { url.path.hasPrefix(trashPrefix) }
     /// True when `url` is the Trash folder itself (so Empty Trash can show on its background).
@@ -93,7 +112,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         switch count {
         case 0: return L("bvc.newFolderWithSelectionAction", "New Folder with Selection")
         case 1: return L("cmenu.nfws.one", "New Folder with Selection (1 Item)")
-        default: return String(format: L("cmenu.nfws.many", "New Folder with Selection (%d Items)"), count)
+        default:
+            return String(
+                format: L("cmenu.nfws.many", "New Folder with Selection (%d Items)"), count)
         }
     }
 
@@ -101,6 +122,12 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// icon check. The single source of truth for what the menu can contain.
     static let hideableCommands: [(id: String, title: String)] = [
         ("files.open", L("common.open", "Open")),
+        ("files.showPackageContents", L("bvc.cmd.showPackageContents", "Show Package Contents")),
+        ("view.quickLook", L("bvc.cmd.quickLook", "Quick Look")),
+        ("files.showOriginal", L("bvc.cmd.showOriginal", "Show Original")),
+        ("files.makeAlias", L("bvc.cmd.makeAlias", "Make Alias")),
+        ("files.compress", L("bvc.cmd.compress", "Compress")),
+        ("files.compress7z", L("bvc.cmd.compress7z", "Compress to 7-Zip")),
         ("files.openInNewTab", L("bvc.cmd.openInNewTab", "Open in New Tab")),
         ("files.openInThisPane", L("bvc.cmd.openInThisPane", "Open in This Pane")),
         ("files.openInOtherPane", L("bvc.cmd.openInOtherPane", "Open in Other Pane")),
@@ -116,7 +143,10 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.deleteImmediately", L("bvc.cmd.deleteImmediately", "Delete Immediately")),
         ("files.emptyTrash", L("bvc.cmd.emptyTrash", "Empty Trash")),
         ("files.newFolder", L("list.newFolder", "New Folder")),
-        ("files.newFolderWithSelection", L("bvc.newFolderWithSelectionAction", "New Folder with Selection")),
+        (
+            "files.newFolderWithSelection",
+            L("bvc.newFolderWithSelectionAction", "New Folder with Selection")
+        ),
         ("files.newFile", L("bvc.cmd.newFile", "New File")),
         ("files.duplicate", L("bvc.cmd.duplicate", "Duplicate")),
         ("files.copy", L("list.copy", "Copy")),
@@ -141,7 +171,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
 
     private func rebuild() {
         menu.removeAllItems()
-        let titles = Dictionary(uniqueKeysWithValues: Self.hideableCommands.map { ($0.id, $0.title) })
+        let titles = Dictionary(
+            uniqueKeysWithValues: Self.hideableCommands.map { ($0.id, $0.title) })
         var lastGroup: Int?
         for token in ContextMenuLayout.ordered(default: Self.defaultEntries, user: menuOrder) {
             if hiddenItems.contains(token) { continue }  // user hid this entry
@@ -150,7 +181,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             switch token {
             case "@openWith":
                 // A submenu populated live in menuNeedsUpdate with the apps for the selection.
-                let openWith = NSMenuItem(title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
+                let openWith = NSMenuItem(
+                    title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
                 openWith.image = MenuIcons.image("app.dashed")
                 openWith.submenu = openWithMenu
                 menu.addItem(openWith)
@@ -205,10 +237,17 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             let showArchive = sample.contains { Archiver.canExtract($0) }
             let singleFolder = count == 1 && Self.isDirectory(urls[0])
             let inTrash = !urls.isEmpty && sample.allSatisfy { Self.isInTrash($0) }
-            let allTorrents = !urls.isEmpty && sample.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
+            let allTorrents =
+                !urls.isEmpty && sample.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
             for item in menu.items {
                 guard let id = item.representedObject as? String else { continue }
                 switch id {
+                case "files.showPackageContents":
+                    item.isHidden = !(count == 1 && Self.isPackage(urls[0]))
+                case "files.showOriginal":
+                    item.isHidden = !(count == 1 && Self.isLink(urls[0]))
+                case "files.compress", "files.compress7z", "files.makeAlias", "view.quickLook":
+                    item.isHidden = urls.isEmpty
                 case _ where Self.archiveCommandIDs.contains(id):
                     item.isHidden = !showArchive
                 case "files.newFolderWithSelection":
@@ -222,7 +261,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden = !(count == 1 && DocumentPreviewView.isViewable(urls[0]))
                 case "files.openInOtherPane":
                     // A folder (browse there) or a PDF/image (view in place); single selection only.
-                    item.isHidden = !(count == 1 && (singleFolder || DocumentPreviewView.isViewable(urls[0])))
+                    item.isHidden =
+                        !(count == 1 && (singleFolder || DocumentPreviewView.isViewable(urls[0])))
                 case "files.share":
                     item.isHidden = urls.isEmpty
                 case "files.setDesktopPicture":
@@ -245,7 +285,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                     item.isHidden =
                         urls.isEmpty
                         || (here != nil
-                            && urls.allSatisfy { $0.deletingLastPathComponent().standardizedFileURL == here })
+                            && urls.allSatisfy {
+                                $0.deletingLastPathComponent().standardizedFileURL == here
+                            })
                 default:
                     break
                 }
@@ -285,15 +327,22 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             item.isEnabled = false
             menu.addItem(item)
         }
-        guard let first = selectedURLs().first else { disabled(L("list.noSelection", "No selection")); return }
+        guard let first = selectedURLs().first else {
+            disabled(L("list.noSelection", "No selection"))
+            return
+        }
         // LaunchServices hands these back in an arbitrary order, so an app that only claims a
         // catch-all (Adobe Illustrator for a .txt) can sit near the top. Rank by how well each app
         // actually fits the file's type -- exact-type claims above broad ones -- with the OS default
         // pinned first. See OpenWithRanker.
         let preferred = NSWorkspace.shared.urlForApplication(toOpen: first)
         let apps = OpenWithRanker.ranked(
-            apps: NSWorkspace.shared.urlsForApplications(toOpen: first), for: first, defaultApp: preferred)
-        guard !apps.isEmpty else { disabled(L("list.noApplications", "No applications")); return }
+            apps: NSWorkspace.shared.urlsForApplications(toOpen: first), for: first,
+            defaultApp: preferred)
+        guard !apps.isEmpty else {
+            disabled(L("list.noApplications", "No applications"))
+            return
+        }
         for app in apps {
             let item = NSMenuItem(
                 title: FileManager.default.displayName(atPath: app.path),
@@ -308,7 +357,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         }
         menu.addItem(.separator())
         let other = NSMenuItem(
-            title: L("list.other", "Other…"), action: #selector(openWithOther(_:)), keyEquivalent: "")
+            title: L("list.other", "Other…"), action: #selector(openWithOther(_:)),
+            keyEquivalent: "")
         other.target = self
         menu.addItem(other)
         // Setting a persistent/scoped default is owned by BrowserViewController (opener rules),
@@ -323,7 +373,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         guard let app = sender.representedObject as? URL else { return }
         let urls = selectedURLs()
         guard !urls.isEmpty else { return }
-        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        NSWorkspace.shared.open(
+            urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
     @objc private func openWithOther(_ sender: Any?) {
@@ -334,6 +385,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         guard panel.runModal() == .OK, let app = panel.url else { return }
         let urls = selectedURLs()
         guard !urls.isEmpty else { return }
-        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        NSWorkspace.shared.open(
+            urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 }
