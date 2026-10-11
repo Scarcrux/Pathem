@@ -1,7 +1,67 @@
 {
-  "toolchain": "Apple Swift 6.4, XcodeDefault / SwiftPM native; exact fingerprints from debug and release on 2026-10-11",
+  "toolchain": "Apple Swift 6.4, XcodeDefault / SwiftPM native; debug/release fingerprints plus forced whole-debug inventory on 2026-10-11; prior cached inventory was incomplete",
   "policy": "Fail new first-party diagnostics. Retained exceptions are pending work, not a warning-free claim; vendor and toolchain notices are reported separately.",
   "exceptions": [
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLClose' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; forced inventory newly measured existing debt. Transport migration needs paired-device TLS acceptance, not a drop-in API rename. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLCreateContext' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt, not suppressed source. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLHandshake' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt, not suppressed source. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLRead' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt, not suppressed source. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLSetCertificate' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; client-identity migration needs paired-device TLS acceptance. Forced inventory debt. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLSetConnection' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt, not suppressed source. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLSetIOFuncs' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS callbacks; migration needs paired-device TLS acceptance. Forced inventory debt, not suppressed source. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLSetSessionOption' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; server-auth sequencing migration needs paired-device acceptance. Forced inventory debt. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'SSLWrite' was deprecated in macOS 10.15: No longer supported. Use Network.framework. [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt, not suppressed source. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'breakOnServerAuth' was deprecated in macOS 10.15 [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; auth sequencing migration needs paired-device acceptance. Forced inventory debt. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'clientSide' was deprecated in macOS 10.15 [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt. Mission 53."
+    },
+    {
+      "file": "Sources/PathemEngine/IOSDeviceClient.swift",
+      "message": "'streamType' was deprecated in macOS 10.15 [#DeprecatedDeclaration]",
+      "reason": "Unchanged usbmux custom-fd TLS bridge; migration needs paired-device TLS acceptance. Forced inventory debt. Mission 53."
+    },
     {
       "file": "Sources/Pathem/BrowserViewController+Archives.swift",
       "message": "'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]",

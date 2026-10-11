@@ -49,7 +49,9 @@ public struct RenameContext: Sendable, Equatable {
     public var created: Date?
     public var exifTaken: Date?
     public var parent: String
-    public init(modified: Date? = nil, created: Date? = nil, exifTaken: Date? = nil, parent: String = "") {
+    public init(
+        modified: Date? = nil, created: Date? = nil, exifTaken: Date? = nil, parent: String = ""
+    ) {
         self.modified = modified
         self.created = created
         self.exifTaken = exifTaken
@@ -100,7 +102,8 @@ public enum BatchRename {
         if !rule.find.isEmpty {
             if rule.useRegex, let regex = try? NSRegularExpression(pattern: rule.find) {
                 let range = NSRange(base.startIndex..., in: base)
-                base = regex.stringByReplacingMatches(in: base, range: range, withTemplate: rule.replace)
+                base = regex.stringByReplacingMatches(
+                    in: base, range: range, withTemplate: rule.replace)
             } else {
                 base = base.replacingOccurrences(of: rule.find, with: rule.replace)
             }
@@ -120,7 +123,8 @@ public enum BatchRename {
         var name = prefix + base + suffix
 
         if let start = rule.counterStart {
-            name = applyCounter(to: name, value: start + index * rule.counterStep, padding: rule.counterPadding)
+            name = applyCounter(
+                to: name, value: start + index * rule.counterStep, padding: rule.counterPadding)
         }
 
         return ext.isEmpty ? name : name + "." + ext
@@ -128,22 +132,37 @@ public enum BatchRename {
 
     /// The `{token}` vocabulary a rename prefix/suffix can use. Unknown tokens expand to empty.
     /// Dates take an optional strftime-style format after a colon, e.g. `{date:yyyyMMdd}`.
-    nonisolated(unsafe) static let tokenPattern = try! NSRegularExpression(pattern: #"\{([a-zA-Z.]+)(?::([^}]*))?\}"#)
+    #if compiler(>=6.4)
+    static let tokenPattern = makeTokenPattern()
+    #else
+    nonisolated(unsafe) static let tokenPattern = makeTokenPattern()
+    #endif
+
+    private static func makeTokenPattern() -> NSRegularExpression {
+        try! NSRegularExpression(pattern: #"\{([a-zA-Z.]+)(?::([^}]*))?\}"#)
+    }
 
     static func expandTokens(_ text: String, original: String, context: RenameContext) -> String {
         guard text.contains("{") else { return text }
         let source = text as NSString
         let result = NSMutableString(string: text)
-        let matches = tokenPattern.matches(in: text, range: NSRange(location: 0, length: source.length))
+        let matches = tokenPattern.matches(
+            in: text, range: NSRange(location: 0, length: source.length))
         for match in matches.reversed() {  // replace back-to-front so earlier ranges stay valid
             let name = source.substring(with: match.range(at: 1)).lowercased()
-            let format = match.range(at: 2).location != NSNotFound ? source.substring(with: match.range(at: 2)) : nil
-            result.replaceCharacters(in: match.range, with: tokenValue(name, format: format, original: original, context: context))
+            let format =
+                match.range(at: 2).location != NSNotFound
+                ? source.substring(with: match.range(at: 2)) : nil
+            result.replaceCharacters(
+                in: match.range,
+                with: tokenValue(name, format: format, original: original, context: context))
         }
         return result as String
     }
 
-    private static func tokenValue(_ name: String, format: String?, original: String, context: RenameContext) -> String {
+    private static func tokenValue(
+        _ name: String, format: String?, original: String, context: RenameContext
+    ) -> String {
         let ns = original as NSString
         func date(_ value: Date?) -> String {
             guard let value else { return "" }
@@ -191,9 +210,13 @@ public enum BatchRename {
 
     /// The renamed values for `names`. `contexts` supplies per-file `{token}` values (date,
     /// parent, EXIF); a shorter/empty array falls back to `.empty` (tokens expand to nothing).
-    public static func apply(_ rule: RenameRule, to names: [String], contexts: [RenameContext] = []) -> [String] {
+    public static func apply(_ rule: RenameRule, to names: [String], contexts: [RenameContext] = [])
+        -> [String]
+    {
         names.enumerated().map {
-            newName(for: $1, index: $0, rule: rule, context: $0 < contexts.count ? contexts[$0] : .empty)
+            newName(
+                for: $1, index: $0, rule: rule, context: $0 < contexts.count ? contexts[$0] : .empty
+            )
         }
     }
 
@@ -201,7 +224,8 @@ public enum BatchRename {
     /// name in the folder (used to catch a rename that would clobber a file not
     /// being renamed). `contexts` supplies per-file token values for the preview.
     public static func plan(
-        _ rule: RenameRule, names: [String], existing: Set<String> = [], contexts: [RenameContext] = []
+        _ rule: RenameRule, names: [String], existing: Set<String> = [],
+        contexts: [RenameContext] = []
     ) -> RenamePlan {
         let renamed = apply(rule, to: names, contexts: contexts)
         let pairs = zip(names, renamed).map { RenamePair(original: $0, renamed: $1) }
@@ -211,7 +235,10 @@ public enum BatchRename {
 
         var collisions = Set<String>()
         for (original, value) in zip(names, renamed) {
-            if value.isEmpty { collisions.insert(value); continue }
+            if value.isEmpty {
+                collisions.insert(value)
+                continue
+            }
             if counts[value]! > 1 { collisions.insert(value) }
             if value != original, existing.contains(value), !originals.contains(value) {
                 collisions.insert(value)
@@ -254,12 +281,15 @@ public enum BatchRename {
                 } else {
                     let fallback = FileOperations.uniqueDestination(originalURL)
                     if (try? fm.moveItem(at: item.temp, to: fallback)) != nil {
-                        failures.append("\(item.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))")
+                        failures.append(
+                            "\(item.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))"
+                        )
                     } else {
                         // Even the fallback move failed, so the file is still under the hidden temp
                         // name. Report that truthfully instead of claiming a name that doesn't exist.
                         failures.append(
-                            "\(item.original): \(error.localizedDescription) (recover it at \(item.temp.lastPathComponent))")
+                            "\(item.original): \(error.localizedDescription) (recover it at \(item.temp.lastPathComponent))"
+                        )
                     }
                 }
             }

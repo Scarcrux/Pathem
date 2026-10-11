@@ -29,9 +29,15 @@ public enum S3ListParser {
         f.dateFormat = format
         return f
     }
-    // read-only shared formatters, thread-safe for parsing; explicit for the older CI SDK
-    private nonisolated(unsafe) static let isoFractional = isoFormatter("yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX")
+    // Read-only shared formatters. Retain the older CI SDK's isolation fallback.
+    #if compiler(>=6.4)
+    private static let isoFractional = isoFormatter("yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX")
+    private static let isoPlain = isoFormatter("yyyy-MM-dd'T'HH:mm:ssXXXXX")
+    #else
+    private nonisolated(unsafe) static let isoFractional = isoFormatter(
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX")
     private nonisolated(unsafe) static let isoPlain = isoFormatter("yyyy-MM-dd'T'HH:mm:ssXXXXX")
+    #endif
 
     static func date(_ s: String) -> Date? {
         isoFractional.date(from: s) ?? isoPlain.date(from: s)
@@ -66,8 +72,14 @@ public enum S3ListParser {
         ) {
             text = ""
             switch elementName {
-            case "Contents": inContents = true; key = ""; size = 0; modified = nil
-            case "CommonPrefixes": inCommonPrefixes = true; key = ""
+            case "Contents":
+                inContents = true
+                key = ""
+                size = 0
+                modified = nil
+            case "CommonPrefixes":
+                inCommonPrefixes = true
+                key = ""
             default: break
             }
         }
@@ -92,14 +104,16 @@ public enum S3ListParser {
                 if key != prefix {
                     entries.append(
                         FileEntry(
-                            name: S3ListParser.relativeName(key, prefix: prefix), isDirectory: false,
+                            name: S3ListParser.relativeName(key, prefix: prefix),
+                            isDirectory: false,
                             size: size, modificationDate: modified))
                 }
             case "CommonPrefixes":
                 inCommonPrefixes = false
                 let name = S3ListParser.relativeName(key, prefix: prefix)
                 if !name.isEmpty {
-                    entries.append(FileEntry(name: name, isDirectory: true, size: 0, modificationDate: nil))
+                    entries.append(
+                        FileEntry(name: name, isDirectory: true, size: 0, modificationDate: nil))
                 }
             default: break
             }

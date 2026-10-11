@@ -39,13 +39,19 @@ public enum AzureListParser {
         return String(rest.split(separator: "/").last ?? Substring(rest))
     }
 
-    private nonisolated(unsafe) static let rfc1123: DateFormatter = {  // read-only shared, thread-safe for parsing
+    #if compiler(>=6.4)
+    private static let rfc1123 = makeRFC1123Formatter()
+    #else
+    private nonisolated(unsafe) static let rfc1123 = makeRFC1123Formatter()
+    #endif
+
+    private static func makeRFC1123Formatter() -> DateFormatter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone(identifier: "GMT")
         f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss 'GMT'"
         return f
-    }()
+    }
 
     static func date(_ s: String) -> Date? { rfc1123.date(from: s) }
 
@@ -75,9 +81,18 @@ public enum AzureListParser {
         ) {
             text = ""
             switch elementName {
-            case "Blob": inBlob = true; name = ""; size = 0; modified = nil
-            case "BlobPrefix": inBlobPrefix = true; name = ""
-            case "Container": inContainer = true; name = ""; modified = nil
+            case "Blob":
+                inBlob = true
+                name = ""
+                size = 0
+                modified = nil
+            case "BlobPrefix":
+                inBlobPrefix = true
+                name = ""
+            case "Container":
+                inContainer = true
+                name = ""
+                modified = nil
             default: break
             }
         }
@@ -114,7 +129,8 @@ public enum AzureListParser {
                 inContainer = false
                 if !name.isEmpty {
                     entries.append(
-                        FileEntry(name: name, isDirectory: true, size: 0, modificationDate: modified))
+                        FileEntry(
+                            name: name, isDirectory: true, size: 0, modificationDate: modified))
                 }
             default: break
             }

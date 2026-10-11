@@ -14,20 +14,28 @@ public enum WebDAVListParser {
         return delegate.entries
     }
 
-    // Configured once, used read-only for parsing (thread-safe). The older CI SDK does not mark
-    // DateFormatter Sendable; nonisolated(unsafe) states the safety for both toolchains.
-    private nonisolated(unsafe) static let httpDate: DateFormatter = {
+    // Configured once, read-only. Preserve the older CI SDK fallback; the verified modern
+    // toolchain checks DateFormatter Sendability without an unsafe declaration.
+    #if compiler(>=6.4)
+    private static let httpDate = makeHTTPDateFormatter()
+    #else
+    private nonisolated(unsafe) static let httpDate = makeHTTPDateFormatter()
+    #endif
+
+    private static func makeHTTPDateFormatter() -> DateFormatter {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = TimeZone(identifier: "GMT")
         f.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"  // RFC 1123, e.g. getlastmodified
         return f
-    }()
+    }
 
     /// Last path segment of an href (decoded), with any trailing slash removed.
     static func name(fromHref href: String) -> String {
         var path = href
-        if let url = URL(string: href), let p = url.path.removingPercentEncoding ?? url.path as String? {
+        if let url = URL(string: href),
+            let p = url.path.removingPercentEncoding ?? url.path as String?
+        {
             path = p  // full URL form: take just the path
         } else {
             path = href.removingPercentEncoding ?? href
@@ -69,7 +77,10 @@ public enum WebDAVListParser {
             text = ""
             switch elementName {
             case "response":
-                href = ""; length = 0; lastModified = nil; isCollection = false
+                href = ""
+                length = 0
+                lastModified = nil
+                isCollection = false
             case "resourcetype": inResourcetype = true
             case "collection": if inResourcetype { isCollection = true }
             default: break
@@ -84,9 +95,11 @@ public enum WebDAVListParser {
         ) {
             switch elementName {
             case "href": href = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            case "getcontentlength": length = Int64(text.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+            case "getcontentlength":
+                length = Int64(text.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
             case "getlastmodified":
-                lastModified = WebDAVListParser.httpDate.date(from: text.trimmingCharacters(in: .whitespacesAndNewlines))
+                lastModified = WebDAVListParser.httpDate.date(
+                    from: text.trimmingCharacters(in: .whitespacesAndNewlines))
             case "resourcetype": inResourcetype = false
             case "response":
                 let name = WebDAVListParser.name(fromHref: href)

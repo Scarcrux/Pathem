@@ -95,4 +95,6 @@ Browser cached opacity remains 0.746 and explicitly SKIP; no native golden is
 approved. All other unusable stable captures now fail rather than silently skip.
 The warning gate also tests owned instrument paths (8/8 controls). Final builds are
 incremental: zero emitted owned warnings is not a warning-free source claim; the
-last fresh inventory still has 15 exact remaining fingerprints.
+then-observed inventory had 15 exact remaining fingerprints; the subsequent forced
+whole-debug inventory disproved its exhaustiveness. See
+`COMPILER_STATICS_TESTING.md` for newly measured SecureTransport debt and fixes.

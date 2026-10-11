@@ -59,12 +59,18 @@ public enum ImageMetadata {
 
     /// EXIF stores dates as "yyyy:MM:dd HH:mm:ss" in no particular timezone; read and
     /// write use the same fixed formatter so a round-trip is stable.
-    private nonisolated(unsafe) static let exifDate: DateFormatter = {  // read-only shared; see note below
+    #if compiler(>=6.4)
+    private static let exifDate = makeEXIFDateFormatter()
+    #else
+    private nonisolated(unsafe) static let exifDate = makeEXIFDateFormatter()
+    #endif
+
+    private static func makeEXIFDateFormatter() -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
         return formatter
-    }()
+    }
 
     /// The current metadata of the image at `url` (best-effort; missing fields come
     /// back nil/empty).
@@ -76,13 +82,17 @@ public enum ImageMetadata {
         let tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any]
         let iptc = props[kCGImagePropertyIPTCDictionary] as? [CFString: Any]
 
-        let dateString = (exif?[kCGImagePropertyExifDateTimeOriginal] as? String)
+        let dateString =
+            (exif?[kCGImagePropertyExifDateTimeOriginal] as? String)
             ?? (tiff?[kCGImagePropertyTIFFDateTime] as? String)
-        let caption = (iptc?[kCGImagePropertyIPTCCaptionAbstract] as? String)
+        let caption =
+            (iptc?[kCGImagePropertyIPTCCaptionAbstract] as? String)
             ?? (tiff?[kCGImagePropertyTIFFImageDescription] as? String)
-        let author = firstString(iptc?[kCGImagePropertyIPTCByline])
+        let author =
+            firstString(iptc?[kCGImagePropertyIPTCByline])
             ?? (tiff?[kCGImagePropertyTIFFArtist] as? String)
-        let copyright = (iptc?[kCGImagePropertyIPTCCopyrightNotice] as? String)
+        let copyright =
+            (iptc?[kCGImagePropertyIPTCCopyrightNotice] as? String)
             ?? (tiff?[kCGImagePropertyTIFFCopyright] as? String)
         let keywords = (iptc?[kCGImagePropertyIPTCKeywords] as? [String]) ?? []
 
@@ -106,11 +116,14 @@ public enum ImageMetadata {
         var tiff = props[kCGImagePropertyTIFFDictionary] as? [CFString: Any] ?? [:]
         var iptc = props[kCGImagePropertyIPTCDictionary] as? [CFString: Any] ?? [:]
 
-        applyString(edit.caption, iptc: kCGImagePropertyIPTCCaptionAbstract, into: &iptc,
+        applyString(
+            edit.caption, iptc: kCGImagePropertyIPTCCaptionAbstract, into: &iptc,
             tiff: kCGImagePropertyTIFFImageDescription, into: &tiff)
-        applyString(edit.author, iptc: kCGImagePropertyIPTCByline, into: &iptc,
+        applyString(
+            edit.author, iptc: kCGImagePropertyIPTCByline, into: &iptc,
             tiff: kCGImagePropertyTIFFArtist, into: &tiff)
-        applyString(edit.copyright, iptc: kCGImagePropertyIPTCCopyrightNotice, into: &iptc,
+        applyString(
+            edit.copyright, iptc: kCGImagePropertyIPTCCopyrightNotice, into: &iptc,
             tiff: kCGImagePropertyTIFFCopyright, into: &tiff)
 
         switch edit.keywords {
@@ -151,7 +164,8 @@ public enum ImageMetadata {
         // edited properties, other frames keep their own so multi-image files survive.
         for index in 0..<count {
             let perImage: CFDictionary? =
-                index == 0 ? props as CFDictionary : CGImageSourceCopyPropertiesAtIndex(source, index, nil)
+                index == 0
+                ? props as CFDictionary : CGImageSourceCopyPropertiesAtIndex(source, index, nil)
             CGImageDestinationAddImageFromSource(dest, source, index, perImage)
         }
         guard CGImageDestinationFinalize(dest) else {

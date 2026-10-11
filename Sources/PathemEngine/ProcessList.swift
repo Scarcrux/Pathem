@@ -11,7 +11,9 @@ public struct RunningProcess: Sendable, Equatable, Identifiable {
     public let command: String
     public var id: Int32 { pid }
 
-    public init(pid: Int32, ppid: Int32, user: String, cpu: Double, mem: Double, rss: Int64, command: String) {
+    public init(
+        pid: Int32, ppid: Int32, user: String, cpu: Double, mem: Double, rss: Int64, command: String
+    ) {
         self.pid = pid
         self.ppid = ppid
         self.user = user
@@ -36,10 +38,17 @@ public enum ProcessList {
         return parse(String(decoding: data, as: UTF8.self))
     }
 
-    // Immutable compiled regex shared read-only (thread-safe for matching). The older CI SDK does
-    // not mark NSRegularExpression Sendable, so state the safety explicitly for both toolchains.
-    private nonisolated(unsafe) static let line = try! NSRegularExpression(
-        pattern: #"^\s*(\d+)\s+(\d+)\s+(\S+)\s+([0-9.]+)\s+([0-9.]+)\s+(\d+)\s+(.+?)\s*$"#)
+    // Immutable compiled regex shared read-only. Preserve the older CI SDK fallback.
+    #if compiler(>=6.4)
+    private static let line = makeLinePattern()
+    #else
+    private nonisolated(unsafe) static let line = makeLinePattern()
+    #endif
+
+    private static func makeLinePattern() -> NSRegularExpression {
+        try! NSRegularExpression(
+            pattern: #"^\s*(\d+)\s+(\d+)\s+(\S+)\s+([0-9.]+)\s+([0-9.]+)\s+(\d+)\s+(.+?)\s*$"#)
+    }
 
     static func parse(_ output: String) -> [RunningProcess] {
         var result: [RunningProcess] = []
