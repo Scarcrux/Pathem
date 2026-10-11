@@ -1,0 +1,86 @@
+# Pre-release batch: acceptance and limits
+
+Trigger: the owner requested execution of six queued coverage/polish jobs after
+repeated selection, search and transient UI reports. Queue staging was retired;
+implementation and acceptance remain separate from queue state.
+
+Write criteria before each sample. No public release, installed-app replacement,
+keychain changes, permission grants or live provider/storage mutations are in scope.
+
+## 1. Layout and listing boundaries
+
+Sample: a real window, disposable folders with identically named files, five actual
+content modes, minimum/default/wide sizes and representative pane ratios. A listing
+must actually finish; requested mode is not evidence of delivered mode. Clip frames
+must be positive, inside their pane, and panes must not overlap. A selected file must
+survive resizing and mode changes. After explicit reveal its rectangle must intersect
+the usable clip. Controls: zero-size, outside and partially clipped geometry must fail
+the containment predicate. Queued creation selection/callback must not act in a
+different directory, even when that directory contains an identically named file.
+Broken design: discarded timeout, checking only outer frames, or a race test that
+never delivers the destination listing. Drawer/provider connections and foreground
+keyboard dispatch are not inferred from layout geometry.
+
+## 2. Search
+
+Require delivered actual modes and real folder scans for local semantics. Add
+Unicode/punctuation, recursive hidden/package/symlink exclusions, binary/oversize
+content and bounded-result controls. Rapid query/scope/reopen callbacks must reject
+stale results. Injected whole-Mac index proves routing, not OS index completeness.
+
+## 3. Transient surfaces
+
+Inventory the production surfaces before changes. Geometry checks need long labels,
+small/wide hosts and actual controls; oversized/clipped controls must fail. Verify
+safe cancel/dismiss paths with fixtures. Do not infer native popup pixel quality or
+external Accessibility from frame assertions.
+
+## 4. Finder parity
+
+Inventory shipped actions and missing native integrations. Each bounded addition
+needs all-five-view menu presence, capability/selection disabled controls and real
+disposable-file operation checks. Never equate a fake cloud provider with live cloud
+sign-off; Services/Quick Actions depend on installed system providers.
+
+## 5. Compiler warnings
+
+Inventory fresh debug/release diagnostics, not historical counts. Reproduce semantic
+warnings with a differing control before correcting them. No unchecked Sendable,
+unsafe isolation assertions or blanket warning suppression. A warning gate must fail
+on an introduced known diagnostic and distinguish first-party/vendor messages.
+
+## 6. Visual evidence
+
+Valid files alone are insufficient. Run good, blank, corrupt and clipped controls
+through the same checker. Reject unusable captures and report why. Geometry and pixel
+sanity do not establish human-approved native appearance. Never automatically accept
+new golden images; environmental capture/native-speaker review remains pending.
+
+## Results
+
+### Layout sample
+
+Initial sample failed 10/148 checks: eight icon reveals and both cross-directory
+creation assertions. Waiting for layout did not cure icon reveals: valid item frames
+were thousands of points below the viewport while the clip stayed at y=0. Replacing
+`scrollToItems(nearestVerticalEdge)` with minimal `scrollToVisible` made all 148 pass.
+Creation selection/follow-up now carry their listing directory; mode swaps preserve
+the queued operation rather than replacing its selection. Expanded sample passes
+161/161 including geometry controls, 45 size/mode/ratio cells, origin callback-once,
+and sidebar/preview/Drop Stack/terminal/torrent frame slices at two sizes.
+
+Terminal and torrent toggles in this slice manipulate visibility only: they do not
+start a shell or connect a daemon. Torrent detail, tab interleavings, combined drawers,
+minimum usable interaction width and foreground keyboard acceptance remain open.
+Native pixel appearance is not established by these geometry checks.
+
+First full CI failed the historical no-nudge control (2px). Inspection showed its
+second item ended at y=202 in a 200pt clip: the claimed fully-visible treatment was
+not delivered. The control now uses 220pt and explicitly rejects a not-fully-visible
+item before measuring. Production reveal also skips entirely when the item is fully
+visible. All other debug scenarios passed in that failed run; packaging was not run.
+
+Final layout verification: `make ci` passed 15 XCTest plus 766 Swift Testing tests,
+20 debug E2E scenarios (including 161/161 layout, 49/49 interaction, 39/39 search,
+132/132 Finder) and 9 signed release-package launch checks. Existing compiler
+warnings remain; nonempty-render checks in this run are not native visual approval.

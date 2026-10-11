@@ -234,6 +234,9 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_FINDER_UI_TEST"] != nil {
             browser.runFinderUIAutomation()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_LAYOUT_UI_TEST"] != nil {
+            browser.runLayoutUIAutomation()
+        }
 
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a
         // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and

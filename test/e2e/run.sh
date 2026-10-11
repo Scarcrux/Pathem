@@ -151,6 +151,7 @@ scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$B
 scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN"
 scenario "file search UI + scopes"     'RESULT: PASS' env PATHEM_FILE_SEARCH_TEST=1 "$BIN"
 scenario "Finder actions across views" 'RESULT: PASS' env PATHEM_FINDER_UI_TEST=1 "$BIN"
+scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 scenario "file conflicts + undo/redo/trash" 'RESULT: PASS' env PATHEM_FILES_E2E=1 "$BIN"
 scenario "advanced filesystem tools"   'RESULT: PASS' env PATHEM_ADVANCED_FILES_E2E=1 "$BIN"
 scenario "archives + disk utilities"   'RESULT: PASS' env PATHEM_ARCHIVES_E2E=1 "$BIN"

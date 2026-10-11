@@ -364,7 +364,7 @@ extension BrowserViewController {
         let nudgeProbe = IconCollectionController(gallery: false)
         view.window?.contentView?.addSubview(nudgeProbe.scrollView)
         let nudge = nudgeProbe.debugSelectNudge(
-            listing: nudgeEntries, in: URL(fileURLWithPath: "/tmp"), height: 200, selectIndex: 1)
+            listing: nudgeEntries, in: URL(fileURLWithPath: "/tmp"), height: 220, selectIndex: 1)
         nudgeProbe.scrollView.removeFromSuperview()
         check("icon-select-visible-item-no-scroll", nudge < 1, "scrolled \(Int(nudge))px")
         // Gallery (preview + filmstrip): exercise setEntries so a crash/hang there is caught.

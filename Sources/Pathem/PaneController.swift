@@ -103,6 +103,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// reload is off-main, so a caller that just created an item cannot select it (or act on that
     /// selection) synchronously -- the row does not exist yet. See `selectWhenListed`.
     private var pendingAfterListing: (() -> Void)?
+    /// A same-named file in the next directory must not consume an old creation/reveal.
+    private var pendingListingDirectory: String?
 
     /// Select `name` once the (asynchronous) listing lands, then run `then` with it selected.
     /// This is what a "create a new item, then rename it" flow needs: reload() enumerates off the
@@ -110,6 +112,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func selectWhenListed(_ name: String, then: (() -> Void)? = nil) {
         pendingSelection = [name]
         pendingAfterListing = then
+        pendingListingDirectory = currentURL.standardizedFileURL.path
     }
 
     /// Consume a queued selection into the fresh listing, then run any queued follow-up (e.g. "New
@@ -119,6 +122,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// run we drop that now-redundant refresh; otherwise the rename field flashes and is lost, which
     /// reads as "it created the folder but never let me name it." Called from reload()'s completion.
     private func applyPendingAfterListing() {
+        if let directory = pendingListingDirectory,
+            directory != currentURL.standardizedFileURL.path
+        {
+            pendingSelection = nil
+            pendingAfterListing = nil
+            pendingListingDirectory = nil
+            return
+        }
+        pendingListingDirectory = nil
         if let pending = pendingSelection {
             content.selectNames(pending)
             pendingSelection = nil
@@ -1577,7 +1589,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         let hadFocus =
             responder === content.keyView || responder == nil || responder === window
             || (responder as? NSView).map { $0.isDescendant(of: toolbarStack) } == true
-        pendingSelection = Set(content.selectedEntries.map(\.name))
+        if pendingSelection == nil {
+            pendingSelection = Set(content.selectedEntries.map(\.name))
+            pendingListingDirectory = content.directoryURL?.standardizedFileURL.path
+        }
         currentMode = mode
         switch mode {
         case .list: content = FileListController()
@@ -1617,6 +1632,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             // Keep the selection visible after the re-sort: the reload carries the selection but
             // preserves the old scroll offset, so a selected item that moved would scroll off-screen.
             self.pendingAfterListing = { [weak self] in self?.content.revealSelection() }
+            self.pendingListingDirectory = self.currentURL.standardizedFileURL.path
             self.reload()
         }
         content.onSelectionChanged = { [weak self] in
@@ -2515,6 +2531,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// search and smart-result views, where the file lives outside the folder on screen.
     func reveal(_ url: URL) {
         pendingSelection = [url.lastPathComponent]
+        pendingAfterListing = nil
+        pendingListingDirectory = url.deletingLastPathComponent().standardizedFileURL.path
         navigate(to: url.deletingLastPathComponent())
     }
 

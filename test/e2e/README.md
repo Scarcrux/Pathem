@@ -35,6 +35,7 @@ does not fail the suite.
 | archives and disk tools | `PATHEM_ARCHIVES_E2E` | ZIP create/list/extract/repack, split/merge, backup, secure delete, encrypted DMG creation |
 | search and metadata | `PATHEM_SEARCH_METADATA_E2E` | literal/regex search, replace, Finder tags/comments and hashing against real files |
 | file search UI | `PATHEM_FILE_SEARCH_TEST` | real-window field-editor typing, filename/content controls and isolated folder scopes, recursion, keyboard Reveal/Open callback, stale-query/reopen/error/limit regressions and column/minimum-layout checks; whole-Mac routing uses a fixture index |
+| layout/listing boundaries | `PATHEM_LAYOUT_UI_TEST` | actual five modes, three sizes/ratios, usable clips, selection/reveal, directory-scoped creation callbacks and focused drawer frame slices; shell/daemon and combined drawer acceptance are not inferred |
 | developer tools | `PATHEM_DEVELOPER_E2E` | real Git init/status/stage/diff/commit and external-command expansion/execution |
 | remote WebDAV | `PATHEM_WEBDAV_E2E` | app → provider → system curl CRUD against a hermetic loopback WebDAV service |
 | settings / sidebar render | `PATHEM_PREFS_SHOT`, `PATHEM_SIDEBAR_SHOT` | panels render to non-empty images |
