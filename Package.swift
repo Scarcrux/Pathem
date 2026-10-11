@@ -65,7 +65,8 @@ let package = Package(
         // Engine tests (Swift Testing).
         .testTarget(
             name: "PathemEngineTests",
-            dependencies: ["PathemEngine"]
+            dependencies: ["PathemEngine"],
+            exclude: ["placeholder"]
         ),
 
         // Shared package conformance/native recorder checks run in the normal gate.

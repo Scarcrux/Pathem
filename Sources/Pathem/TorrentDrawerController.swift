@@ -1,5 +1,6 @@
 import AppKit
 import TorrentKit
+import UniformTypeIdentifiers
 
 /// The Torrents transfer drawer: a themed, embeddable panel that docks at the bottom of the browser
 /// window (like the terminal) and shows the live transfer list. Replaces the old standalone window.
@@ -61,14 +62,18 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         active = true
         apply([
             .init(
-                infoHash: "demo1", name: "ubuntu-24.04.1-desktop-amd64.iso", totalLength: 6_114_275_328,
+                infoHash: "demo1", name: "ubuntu-24.04.1-desktop-amd64.iso",
+                totalLength: 6_114_275_328,
                 downloaded: 4_096_512_000, fractionComplete: 0.67, downloadRate: 12_400_000,
                 uploadRate: 340_000, uploaded: 512_000_000, peersConnected: 48, state: .downloading,
                 savePath: "~/Downloads", etaSeconds: 190, ratio: 0.13),
             .init(
-                infoHash: "demo2", name: "debian-12.7.0-amd64-netinst.iso", totalLength: 660_602_880,
-                downloaded: 660_602_880, fractionComplete: 1.0, downloadRate: 0, uploadRate: 1_180_000,
-                uploaded: 1_520_000_000, peersConnected: 22, state: .seeding, savePath: "~/Downloads",
+                infoHash: "demo2", name: "debian-12.7.0-amd64-netinst.iso",
+                totalLength: 660_602_880,
+                downloaded: 660_602_880, fractionComplete: 1.0, downloadRate: 0,
+                uploadRate: 1_180_000,
+                uploaded: 1_520_000_000, peersConnected: 22, state: .seeding,
+                savePath: "~/Downloads",
                 etaSeconds: -1, ratio: 2.30),
             .init(
                 infoHash: "demo3", name: "blender-4.2.1-demo-scenes", totalLength: 3_221_225_472,
@@ -76,14 +81,18 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
                 uploadRate: 96_000, uploaded: 64_000_000, peersConnected: 17, state: .downloading,
                 savePath: "~/Downloads", etaSeconds: 415, ratio: 0.06),
             .init(
-                infoHash: "demo4", name: "archive.org-apollo17-hasselblad", totalLength: 8_589_934_592,
-                downloaded: 8_589_934_592, fractionComplete: 1.0, downloadRate: 0, uploadRate: 620_000,
+                infoHash: "demo4", name: "archive.org-apollo17-hasselblad",
+                totalLength: 8_589_934_592,
+                downloaded: 8_589_934_592, fractionComplete: 1.0, downloadRate: 0,
+                uploadRate: 620_000,
                 uploaded: 35_000_000_000, peersConnected: 9, state: .seeding, savePath: "~/Media",
                 etaSeconds: -1, ratio: 4.10),
             .init(
-                infoHash: "demo5", name: "fedora-workstation-40-x86_64.iso", totalLength: 2_147_483_648,
+                infoHash: "demo5", name: "fedora-workstation-40-x86_64.iso",
+                totalLength: 2_147_483_648,
                 downloaded: 257_698_037, fractionComplete: 0.12, downloadRate: 0, uploadRate: 0,
-                uploaded: 0, peersConnected: 0, state: .paused, savePath: "~/Downloads", etaSeconds: -1,
+                uploaded: 0, peersConnected: 0, state: .paused, savePath: "~/Downloads",
+                etaSeconds: -1,
                 ratio: 0.0),
         ])
     }
@@ -105,10 +114,16 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
 
         for (button, symbol, tip, action) in [
             (addButton, "doc.badge.plus", L("torrents.add", "Add Torrent…"), #selector(addTapped)),
-            (magnetButton, "link.badge.plus", L("torrents.addMagnet", "Add Magnet…"), #selector(addMagnetTapped)),
+            (
+                magnetButton, "link.badge.plus", L("torrents.addMagnet", "Add Magnet…"),
+                #selector(addMagnetTapped)
+            ),
             (pauseButton, "pause.fill", L("torrents.pause", "Pause"), #selector(pauseResumeTapped)),
             (removeButton, "trash", L("torrents.remove", "Remove…"), #selector(removeTapped)),
-            (limitsButton, "gauge.with.dots.needle.33percent", L("torrents.limits", "Speed Limits…"), #selector(limitsTapped)),
+            (
+                limitsButton, "gauge.with.dots.needle.33percent",
+                L("torrents.limits", "Speed Limits…"), #selector(limitsTapped)
+            ),
         ] as [(NSButton, String, String, Selector)] {
             button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: tip)
             button.bezelStyle = .texturedRounded
@@ -121,7 +136,9 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         let title = NSTextField(labelWithString: L("torrents.title", "Torrents"))
         title.font = .systemFont(ofSize: 11, weight: .semibold)
         title.textColor = .secondaryLabelColor
-        let controls = NSStackView(views: [title, NSView(), magnetButton, addButton, pauseButton, removeButton, limitsButton])
+        let controls = NSStackView(views: [
+            title, NSView(), magnetButton, addButton, pauseButton, removeButton, limitsButton,
+        ])
         controls.orientation = .horizontal
         controls.spacing = 6
         controls.edgeInsets = NSEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
@@ -159,7 +176,8 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         scroll.borderType = .noBorder
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
-        emptyLabel.stringValue = L("torrents.empty.short", "No torrents. Add a magnet or a .torrent file.")
+        emptyLabel.stringValue = L(
+            "torrents.empty.short", "No torrents. Add a magnet or a .torrent file.")
         emptyLabel.textColor = .tertiaryLabelColor
         emptyLabel.font = .systemFont(ofSize: 12)
         emptyLabel.alignment = .center
@@ -217,7 +235,8 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         let paused = sel?.state == .paused
         pauseButton.image = NSImage(
             systemSymbolName: paused ? "play.fill" : "pause.fill",
-            accessibilityDescription: paused ? L("torrents.resume", "Resume") : L("torrents.pause", "Pause"))
+            accessibilityDescription: paused
+                ? L("torrents.resume", "Resume") : L("torrents.pause", "Pause"))
     }
 
     /// A magnet that hasn't fetched its metadata yet: no file info, so no real progress to show.
@@ -229,7 +248,9 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
 
     func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < rows.count else { return nil }
         let status = rows[row]
 
@@ -238,44 +259,50 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
             // as working, not stuck at 0%.
             if isFetchingMetadata(status) {
                 let id = NSUserInterfaceItemIdentifier("fetching")
-                let spinner = (tableView.makeView(withIdentifier: id, owner: self) as? NSProgressIndicator) ?? {
-                    let p = NSProgressIndicator()
-                    p.identifier = id
-                    p.style = .bar
-                    p.isIndeterminate = true
-                    p.controlSize = .small
-                    return p
-                }()
+                let spinner =
+                    (tableView.makeView(withIdentifier: id, owner: self) as? NSProgressIndicator)
+                    ?? {
+                        let p = NSProgressIndicator()
+                        p.identifier = id
+                        p.style = .bar
+                        p.isIndeterminate = true
+                        p.controlSize = .small
+                        return p
+                    }()
                 spinner.startAnimation(nil)
                 return spinner
             }
             let id = NSUserInterfaceItemIdentifier("progress")
-            let bar = (tableView.makeView(withIdentifier: id, owner: self) as? TorrentProgressBar) ?? {
-                let b = TorrentProgressBar()
-                b.identifier = id
-                return b
-            }()
+            let bar =
+                (tableView.makeView(withIdentifier: id, owner: self) as? TorrentProgressBar)
+                ?? {
+                    let b = TorrentProgressBar()
+                    b.identifier = id
+                    return b
+                }()
             bar.fraction = status.fractionComplete
             bar.seeding = status.state == .seeding
             return bar
         }
 
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? {
-            let c = NSTableCellView()
-            c.identifier = id
-            let f = NSTextField(labelWithString: "")
-            f.lineBreakMode = .byTruncatingMiddle
-            f.translatesAutoresizingMaskIntoConstraints = false
-            c.addSubview(f)
-            c.textField = f
-            NSLayoutConstraint.activate([
-                f.leadingAnchor.constraint(equalTo: c.leadingAnchor, constant: 4),
-                f.trailingAnchor.constraint(equalTo: c.trailingAnchor, constant: -4),
-                f.centerYAnchor.constraint(equalTo: c.centerYAnchor),
-            ])
-            return c
-        }()
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? {
+                let c = NSTableCellView()
+                c.identifier = id
+                let f = NSTextField(labelWithString: "")
+                f.lineBreakMode = .byTruncatingMiddle
+                f.translatesAutoresizingMaskIntoConstraints = false
+                c.addSubview(f)
+                c.textField = f
+                NSLayoutConstraint.activate([
+                    f.leadingAnchor.constraint(equalTo: c.leadingAnchor, constant: 4),
+                    f.trailingAnchor.constraint(equalTo: c.trailingAnchor, constant: -4),
+                    f.centerYAnchor.constraint(equalTo: c.centerYAnchor),
+                ])
+                return c
+            }()
         cell.textField?.stringValue = value(for: status, column: tableColumn.identifier.rawValue)
         cell.textField?.font =
             tableColumn.identifier.rawValue == "name"
@@ -287,9 +314,11 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         switch column {
         case "name": return status.name
         case "down":
-            return status.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
+            return status.downloadRate > 1
+                ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
         case "up":
-            return status.uploadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.uploadRate)))/s" : "—"
+            return status.uploadRate > 1
+                ? "\(Self.size.string(fromByteCount: Int64(status.uploadRate)))/s" : "—"
         case "eta": return TorrentsWindowController.etaLabel(status.etaSeconds)
         case "ratio": return status.downloaded > 0 ? String(format: "%.2f", status.ratio) : "—"
         case "peers": return "\(status.peersConnected)"
@@ -299,7 +328,9 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     private func stateLabel(_ status: TorrentSession.Status) -> String {
-        if isFetchingMetadata(status) { return L("torrents.state.fetchingMeta", "Fetching details…") }
+        if isFetchingMetadata(status) {
+            return L("torrents.state.fetchingMeta", "Fetching details…")
+        }
         switch status.state {
         case .downloading:
             return status.peersConnected == 0
@@ -317,7 +348,10 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
 
     @objc private func addTapped() {
         let panel = NSOpenPanel()
-        panel.allowedFileTypes = ["torrent"]
+        panel.allowedContentTypes = [
+            UTType(filenameExtension: "torrent")
+                ?? UTType(importedAs: "org.bittorrent.torrent", conformingTo: .data)
+        ]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.prompt = L("torrents.add.prompt", "Add")
@@ -330,18 +364,25 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     @objc private func addMagnetTapped() {
         let alert = NSAlert()
         alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
-        alert.informativeText = L("torrents.addMagnet.message", "Paste a magnet link. Pathem fetches its details from peers, then downloads it to your torrent download folder.")
+        alert.informativeText = L(
+            "torrents.addMagnet.message",
+            "Paste a magnet link. Pathem fetches its details from peers, then downloads it to your torrent download folder."
+        )
         alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
         field.placeholderString = "magnet:?xt=urn:btih:…"
-        if let clip = NSPasteboard.general.string(forType: .string), clip.hasPrefix("magnet:") { field.stringValue = clip }
+        if let clip = NSPasteboard.general.string(forType: .string), clip.hasPrefix("magnet:") {
+            field.stringValue = clip
+        }
         alert.accessoryView = field
         alert.window.initialFirstResponder = field
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let uri = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard uri.hasPrefix("magnet:") else {
-            if !uri.isEmpty { showError(L("torrents.addMagnet.invalid", "That doesn't look like a magnet link.")) }
+            if !uri.isEmpty {
+                showError(L("torrents.addMagnet.invalid", "That doesn't look like a magnet link."))
+            }
             return
         }
         client.startIfNeeded()
@@ -357,7 +398,8 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         guard let sel = selected(), let window = hostWindow ?? view.window else { return }
         let alert = NSAlert()
         alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), sel.name)
-        alert.informativeText = L("torrents.remove.info", "You can keep the downloaded files or delete them.")
+        alert.informativeText = L(
+            "torrents.remove.info", "You can keep the downloaded files or delete them.")
         alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
         alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))

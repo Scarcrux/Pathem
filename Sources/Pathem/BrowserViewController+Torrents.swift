@@ -1,28 +1,41 @@
 import AppKit
 import TorrentKit
+import UniformTypeIdentifiers
 
 @MainActor
 extension BrowserViewController {
     /// Add every selected .torrent to the Torrents panel.
     func addSelectedTorrents() {
         let urls = selectedTorrentURLs
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
         for url in urls { addTorrentToPanel(url) }
     }
 
     /// Create a .torrent from the selected file or folder: prompt for a tracker + private flag,
     /// choose where to save, then hash off the main thread and reveal the result.
     func createTorrentFromSelection() {
-        guard let source = selectedSingleLocalURL else { NSSound.beep(); return }
+        guard let source = selectedSingleLocalURL else {
+            NSSound.beep()
+            return
+        }
 
         let alert = NSAlert()
-        alert.messageText = String(format: L("torrents.create.title", "Create Torrent from “%@”"), source.lastPathComponent)
-        alert.informativeText = L("torrents.create.message", "Optionally add a tracker. A private torrent won't use DHT or peer exchange.")
+        alert.messageText = String(
+            format: L("torrents.create.title", "Create Torrent from “%@”"), source.lastPathComponent
+        )
+        alert.informativeText = L(
+            "torrents.create.message",
+            "Optionally add a tracker. A private torrent won't use DHT or peer exchange.")
         alert.addButton(withTitle: L("torrents.create.next", "Choose Location…"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let tracker = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 22))
         tracker.placeholderString = L("torrents.create.tracker", "Tracker URL (optional)")
-        let privateCheck = NSButton(checkboxWithTitle: L("torrents.create.private", "Private torrent"), target: nil, action: nil)
+        let privateCheck = NSButton(
+            checkboxWithTitle: L("torrents.create.private", "Private torrent"), target: nil,
+            action: nil)
         let accessory = NSStackView(views: [tracker, privateCheck])
         accessory.orientation = .vertical
         accessory.spacing = 8
@@ -38,7 +51,10 @@ extension BrowserViewController {
 
         let save = NSSavePanel()
         save.nameFieldStringValue = source.lastPathComponent + ".torrent"
-        save.allowedFileTypes = ["torrent"]
+        save.allowedContentTypes = [
+            UTType(filenameExtension: "torrent")
+                ?? UTType(importedAs: "org.bittorrent.torrent", conformingTo: .data)
+        ]
         guard save.runModal() == .OK, let dest = save.url else { return }
 
         // Hashing can be slow for large content, so run it off the main thread.
@@ -61,10 +77,14 @@ extension BrowserViewController {
     /// Copy the magnet links of the selected .torrent files to the clipboard.
     func copySelectedMagnetLinks() {
         let links = selectedTorrentURLs.compactMap { url -> String? in
-            guard let data = try? Data(contentsOf: url), let torrent = try? TorrentFile.parse(data) else { return nil }
+            guard let data = try? Data(contentsOf: url), let torrent = try? TorrentFile.parse(data)
+            else { return nil }
             return torrent.magnetLink
         }
-        guard !links.isEmpty else { NSSound.beep(); return }
+        guard !links.isEmpty else {
+            NSSound.beep()
+            return
+        }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(links.joined(separator: "\n"), forType: .string)
     }
@@ -95,11 +115,17 @@ extension BrowserViewController {
     /// straight away. The user's in-app Add (drawer) never routes through here, so pasting a magnet
     /// yourself is never gated -- only links pushed in from outside.
     private func confirmInboundTorrentIfNeeded(_ label: String, add: @escaping () -> Void) {
-        guard prefs.confirmInboundTorrents else { add(); return }
+        guard prefs.confirmInboundTorrents else {
+            add()
+            return
+        }
         let alert = NSAlert()
-        alert.messageText = L("torrents.confirmInbound.title", "Add this download from another app?")
+        alert.messageText = L(
+            "torrents.confirmInbound.title", "Add this download from another app?")
         alert.informativeText = String(
-            format: L("torrents.confirmInbound.body", "Another app asked Pathem to download:\n\n%@"), label)
+            format: L(
+                "torrents.confirmInbound.body", "Another app asked Pathem to download:\n\n%@"),
+            label)
         alert.addButton(withTitle: L("torrents.confirmInbound.add", "Add"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         Task { @MainActor in
@@ -111,7 +137,8 @@ extension BrowserViewController {
     /// parameter if present, else a truncated form of the URI.
     private func magnetDisplayName(_ uri: String) -> String {
         if let components = URLComponents(string: uri),
-            let dn = components.queryItems?.first(where: { $0.name == "dn" })?.value, !dn.isEmpty {
+            let dn = components.queryItems?.first(where: { $0.name == "dn" })?.value, !dn.isEmpty
+        {
             return dn
         }
         return uri.count > 80 ? String(uri.prefix(80)) + "…" : uri

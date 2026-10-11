@@ -115,8 +115,11 @@ packaged_launch_probe() {
 
 echo "==> Building product"
 if [[ $PACKAGED == 1 ]]; then
-  INSTALL= ./scripts/package.sh >/tmp/pathem_e2e_pkg.log 2>&1 \
-    || { echo "${red}package.sh failed${rst}"; tail -8 /tmp/pathem_e2e_pkg.log; exit 1; }
+  PACKAGE_LOG="$E2E_SCRATCH/package-build.log"
+  INSTALL= ./scripts/package.sh >"$PACKAGE_LOG" 2>&1 \
+    || { echo "${red}package.sh failed${rst}"; tail -8 "$PACKAGE_LOG"; exit 1; }
+  cp "$PACKAGE_LOG" "$ROOT/.build/ci-release-build.log"
+  python3 scripts/check_warnings.py "$PACKAGE_LOG" || exit 1
   APP="$ROOT/.build/Pathem.app"
   BIN="$APP/Contents/MacOS/Pathem"
   echo "==> Packaged app: $APP"
@@ -153,6 +156,8 @@ scenario "file search UI + scopes"     'RESULT: PASS' env PATHEM_FILE_SEARCH_TES
 scenario "Finder actions across views" 'RESULT: PASS' env PATHEM_FINDER_UI_TEST=1 "$BIN"
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
+scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"
+scenario "media trim export + rejection" 'RESULT: PASS' env PATHEM_TRIM_SMOKE=1 "$BIN"
 scenario "file conflicts + undo/redo/trash" 'RESULT: PASS' env PATHEM_FILES_E2E=1 "$BIN"
 scenario "advanced filesystem tools"   'RESULT: PASS' env PATHEM_ADVANCED_FILES_E2E=1 "$BIN"
 scenario "archives + disk utilities"   'RESULT: PASS' env PATHEM_ARCHIVES_E2E=1 "$BIN"

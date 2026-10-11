@@ -89,7 +89,10 @@ e2e-env: preflight
 # The same checks the (now manual-only) GitHub Actions workflow runs.
 ci: preflight
 	python3 scripts/l10n_lint.py
-	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS)
+	python3 scripts/check_warnings.py --self-test
+	mkdir -p .build
+	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS) > .build/ci-debug-build.log 2>&1 || { tail -80 .build/ci-debug-build.log; exit 1; }
+	python3 scripts/check_warnings.py .build/ci-debug-build.log
 	"$(XCODE_SWIFT)" test $(SWIFTPM_FLAGS) --no-parallel
 	test/e2e/run.sh
 	test/e2e/run.sh --packaged

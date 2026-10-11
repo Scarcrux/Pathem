@@ -58,7 +58,9 @@ extension BrowserViewController {
         case "view.asTree": menuItem.state = activePane?.viewMode == .tree ? .on : .off
         case "nav.vimMode": menuItem.state = vimMode ? .on : .off
         case "view.arrangeNone":
-            menuItem.state = (activePane?.groupKey ?? .none) == .none ? .on : .off
+            menuItem.state =
+                (activePane?.groupKey ?? ViewFormat.GroupKey.none) == ViewFormat.GroupKey.none
+                ? .on : .off
         case "view.arrangeKind": menuItem.state = activePane?.groupKey == .kind ? .on : .off
         case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
         case "view.arrangeDate": menuItem.state = activePane?.groupKey == .dateModified ? .on : .off

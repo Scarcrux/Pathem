@@ -1,0 +1,81 @@
+{
+  "toolchain": "Apple Swift 6.4, XcodeDefault / SwiftPM native; exact fingerprints from debug and release on 2026-10-11",
+  "policy": "Fail new first-party diagnostics. Retained exceptions are pending work, not a warning-free claim; vendor and toolchain notices are reported separately.",
+  "exceptions": [
+    {
+      "file": "Sources/Pathem/BrowserViewController+Archives.swift",
+      "message": "'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]",
+      "reason": "Lifetime/cancellation review remains pending; a blanket weak/strong rewrite is not justified. Mission 53 warning cleanup."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+GitAndApps.swift",
+      "message": "'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]",
+      "reason": "Lifetime/cancellation review remains pending; a blanket weak/strong rewrite is not justified. Mission 53 warning cleanup."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+ItemCreation.swift",
+      "message": "value 'window' was defined but never used; consider replacing with boolean test [#NoUsage]",
+      "reason": "Behavior-preserving unused-binding cleanup remains pending in Mission 53; this exact diagnostic is inventoried, not suppressed."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+MediaTools.swift",
+      "message": "immutable value 'window' was never used; consider replacing with '_' or removing it [#NoUsage]",
+      "reason": "Behavior-preserving unused-binding cleanup remains pending in Mission 53; this exact diagnostic is inventoried, not suppressed."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+OrganizeWithAI.swift",
+      "message": "'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]",
+      "reason": "Lifetime/cancellation review remains pending; a blanket weak/strong rewrite is not justified. Mission 53 warning cleanup."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+SelectionInspection.swift",
+      "message": "immutable value 'window' was never used; consider replacing with '_' or removing it [#NoUsage]",
+      "reason": "Behavior-preserving unused-binding cleanup remains pending in Mission 53; this exact diagnostic is inventoried, not suppressed."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift",
+      "message": "'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]",
+      "reason": "Lifetime/cancellation review remains pending; a blanket weak/strong rewrite is not justified. Mission 53 warning cleanup."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+Servers.swift",
+      "message": "value 'window' was defined but never used; consider replacing with boolean test [#NoUsage]",
+      "reason": "Behavior-preserving unused-binding cleanup remains pending in Mission 53; this exact diagnostic is inventoried, not suppressed."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+SmokeTest.swift",
+      "message": "capture of 'dirProvider' with non-Sendable type 'NSFilePromiseProvider' in a '@Sendable' closure [#SendableClosureCaptures]",
+      "reason": "DEBUG file-promise fixture crosses a Sendable callback; replace with an isolated adapter rather than unchecked Sendable. Mission 53."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+SmokeTest.swift",
+      "message": "capture of 'promiseItem' with non-Sendable type 'NSFilePromiseProvider' in a '@Sendable' closure [#SendableClosureCaptures]",
+      "reason": "DEBUG file-promise fixture crosses a Sendable callback; replace with an isolated adapter rather than unchecked Sendable. Mission 53."
+    },
+    {
+      "file": "Sources/Pathem/BrowserViewController+SmokeTest.swift",
+      "message": "use '#selector' instead of explicitly constructing a 'Selector'",
+      "reason": "Selector migration remains pending; this exact diagnostic is inventoried separately from semantic Optional.none and actor violations. Mission 53."
+    },
+    {
+      "file": "Sources/Pathem/ColorRulesEditor.swift",
+      "message": "immutable value 'self' was never used; consider replacing with '_' or removing it [#NoUsage]",
+      "reason": "Behavior-preserving unused-binding cleanup remains pending in Mission 53; this exact diagnostic is inventoried, not suppressed."
+    },
+    {
+      "file": "Sources/Pathem/PathemApp.swift",
+      "message": "passing non-Sendable parameter 'body' to function expecting a '@Sendable' closure",
+      "reason": "DEBUG run-loop callback signature needs call-site/capture audit before becoming Sendable. Mission 53."
+    },
+    {
+      "file": "Sources/Pathem/PathemApp.swift",
+      "message": "use '#selector' instead of explicitly constructing a 'Selector'",
+      "reason": "Selector migration remains pending; this exact diagnostic is inventoried separately from semantic Optional.none and actor violations. Mission 53."
+    },
+    {
+      "file": "Sources/Pathem/ThumbnailProvider.swift",
+      "message": "capture of 'completion' with non-Sendable type '(NSImage) -> Void' in a '@Sendable' closure [#SendableClosureCaptures]",
+      "reason": "Quick Look callback contract and existing delivery box need live XPC plus isolation coverage; automation currently skips thumbnail generation. Mission 53."
+    }
+  ]
+}

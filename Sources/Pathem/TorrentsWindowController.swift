@@ -1,5 +1,6 @@
 import AppKit
 import TorrentKit
+import UniformTypeIdentifiers
 
 /// The Torrents panel: a live list of downloads driven by the out-of-process daemon. Add a
 /// .torrent, pause/resume, or remove; rows update from the daemon's ~1 Hz status broadcasts
@@ -25,7 +26,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     override init() {
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 860, height: 420),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
+            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered,
+            defer: true)
         super.init()
         window.title = L("torrents.title", "Torrents")
         window.delegate = self
@@ -84,7 +86,9 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         filesButton.target = self
         filesButton.action = #selector(filesTapped)
 
-        let controls = NSStackView(views: [addButton, magnetButton, NSView(), filesButton, limitsButton, pauseButton, removeButton])
+        let controls = NSStackView(views: [
+            addButton, magnetButton, NSView(), filesButton, limitsButton, pauseButton, removeButton,
+        ])
         controls.orientation = .horizontal
         controls.spacing = 8
 
@@ -117,7 +121,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         scroll.hasVerticalScroller = true
         scroll.borderType = .bezelBorder
 
-        emptyLabel.stringValue = L("torrents.empty", "No torrents. Add a .torrent file to start downloading.")
+        emptyLabel.stringValue = L(
+            "torrents.empty", "No torrents. Add a .torrent file to start downloading.")
         emptyLabel.textColor = .secondaryLabelColor
         emptyLabel.alignment = .center
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -180,14 +185,20 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     @objc private func addTapped() {
         let panel = NSOpenPanel()
-        panel.allowedFileTypes = ["torrent"]
+        panel.allowedContentTypes = [
+            UTType(filenameExtension: "torrent")
+                ?? UTType(importedAs: "org.bittorrent.torrent", conformingTo: .data)
+        ]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.prompt = L("torrents.add.prompt", "Add")
-        panel.message = L("torrents.add.message", "Choose one or more .torrent files. Downloads go to your Downloads folder.")
+        panel.message = L(
+            "torrents.add.message",
+            "Choose one or more .torrent files. Downloads go to your Downloads folder.")
         guard panel.runModal() == .OK else { return }
         client.startIfNeeded()
-        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)
+            .first?.path
         for url in panel.urls {
             client.addTorrent(fileAt: url.path, savePath: savePath)
         }
@@ -196,7 +207,10 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     @objc private func addMagnetTapped() {
         let alert = NSAlert()
         alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
-        alert.informativeText = L("torrents.addMagnet.message", "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder.")
+        alert.informativeText = L(
+            "torrents.addMagnet.message",
+            "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder."
+        )
         alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
 
@@ -212,11 +226,14 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let uri = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard uri.hasPrefix("magnet:") else {
-            if !uri.isEmpty { showError(L("torrents.addMagnet.invalid", "That doesn't look like a magnet link.")) }
+            if !uri.isEmpty {
+                showError(L("torrents.addMagnet.invalid", "That doesn't look like a magnet link."))
+            }
             return
         }
         client.startIfNeeded()
-        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+        let savePath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)
+            .first?.path
         client.addMagnet(uri, savePath: savePath)
     }
 
@@ -233,7 +250,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         guard let sel = selected() else { return }
         let alert = NSAlert()
         alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), sel.name)
-        alert.informativeText = L("torrents.remove.info", "You can keep the downloaded files or delete them.")
+        alert.informativeText = L(
+            "torrents.remove.info", "You can keep the downloaded files or delete them.")
         alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
         alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
@@ -251,10 +269,14 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             guard let self, hash == sel.infoHash else { return }
             self.client.onFiles = nil
             guard files.count > 1 else {
-                self.showError(L("torrents.files.single", "This torrent has a single file, so there's nothing to choose."))
+                self.showError(
+                    L(
+                        "torrents.files.single",
+                        "This torrent has a single file, so there's nothing to choose."))
                 return
             }
-            self.filesController.present(name: sel.name, files: files, over: self.window) { [weak self] wanted in
+            self.filesController.present(name: sel.name, files: files, over: self.window) {
+                [weak self] wanted in
                 self?.client.setFiles(sel.infoHash, wanted: wanted)
             }
         }
@@ -264,7 +286,9 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     @objc private func limitsTapped() {
         let alert = NSAlert()
         alert.messageText = L("torrents.limits.title", "Speed Limits")
-        alert.informativeText = L("torrents.limits.message", "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
+        alert.informativeText = L(
+            "torrents.limits.message",
+            "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
         alert.addButton(withTitle: L("torrents.limits.apply", "Apply"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
 
@@ -277,18 +301,29 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         }
         let downField = field(client.downLimit)
         let upField = field(client.upLimit)
-        let superSeed = NSButton(checkboxWithTitle: L("torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil, action: nil)
+        let superSeed = NSButton(
+            checkboxWithTitle: L(
+                "torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil,
+            action: nil)
         superSeed.state = client.superSeed ? .on : .off
-        let encrypt = NSButton(checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"), target: nil, action: nil)
+        let encrypt = NSButton(
+            checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"),
+            target: nil, action: nil)
         encrypt.state = client.encryptOutgoing ? .on : .off
-        let utp = NSButton(checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"), target: nil, action: nil)
+        let utp = NSButton(
+            checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"),
+            target: nil, action: nil)
         utp.state = client.preferUTP ? .on : .off
-        let vpn = NSButton(checkboxWithTitle: L("torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"), target: nil, action: nil)
+        let vpn = NSButton(
+            checkboxWithTitle: L(
+                "torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"),
+            target: nil, action: nil)
         vpn.state = client.bindToVPN ? .on : .off
         // Live status: which tunnel is bound, or a warning when the kill-switch has paused traffic.
         let vpnStatus = NSTextField(labelWithString: vpnStatusLine())
         vpnStatus.font = .systemFont(ofSize: 11)
-        vpnStatus.textColor = client.bindToVPN && client.vpnInterface == nil ? .systemRed : .secondaryLabelColor
+        vpnStatus.textColor =
+            client.bindToVPN && client.vpnInterface == nil ? .systemRed : .secondaryLabelColor
         let container = NSStackView(views: [
             labeledRow(L("torrents.limits.down", "Download"), downField),
             labeledRow(L("torrents.limits.up", "Upload"), upField),
@@ -318,7 +353,9 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             return L("torrents.vpn.off", "Not bound. Torrents use your normal connection.")
         }
         if let iface = client.vpnInterface {
-            return String(format: L("torrents.vpn.bound", "Bound to %@. Traffic only leaves over the VPN."), iface)
+            return String(
+                format: L("torrents.vpn.bound", "Bound to %@. Traffic only leaves over the VPN."),
+                iface)
         }
         return L("torrents.vpn.killed", "No VPN detected. Torrents paused to prevent leaks.")
     }
@@ -351,38 +388,44 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < rows.count else { return nil }
         let status = rows[row]
 
         if tableColumn.identifier.rawValue == "progress" {
             let id = NSUserInterfaceItemIdentifier("progress")
-            let bar = (tableView.makeView(withIdentifier: id, owner: self) as? TorrentProgressBar) ?? {
-                let b = TorrentProgressBar()
-                b.identifier = id
-                return b
-            }()
+            let bar =
+                (tableView.makeView(withIdentifier: id, owner: self) as? TorrentProgressBar)
+                ?? {
+                    let b = TorrentProgressBar()
+                    b.identifier = id
+                    return b
+                }()
             bar.fraction = status.fractionComplete
             bar.seeding = status.state == .seeding
             return bar
         }
 
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? {
-            let c = NSTableCellView()
-            c.identifier = id
-            let f = NSTextField(labelWithString: "")
-            f.lineBreakMode = .byTruncatingMiddle
-            f.translatesAutoresizingMaskIntoConstraints = false
-            c.addSubview(f)
-            c.textField = f
-            NSLayoutConstraint.activate([
-                f.leadingAnchor.constraint(equalTo: c.leadingAnchor, constant: 4),
-                f.trailingAnchor.constraint(equalTo: c.trailingAnchor, constant: -4),
-                f.centerYAnchor.constraint(equalTo: c.centerYAnchor),
-            ])
-            return c
-        }()
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? {
+                let c = NSTableCellView()
+                c.identifier = id
+                let f = NSTextField(labelWithString: "")
+                f.lineBreakMode = .byTruncatingMiddle
+                f.translatesAutoresizingMaskIntoConstraints = false
+                c.addSubview(f)
+                c.textField = f
+                NSLayoutConstraint.activate([
+                    f.leadingAnchor.constraint(equalTo: c.leadingAnchor, constant: 4),
+                    f.trailingAnchor.constraint(equalTo: c.trailingAnchor, constant: -4),
+                    f.centerYAnchor.constraint(equalTo: c.centerYAnchor),
+                ])
+                return c
+            }()
         cell.textField?.stringValue = value(for: status, column: tableColumn.identifier.rawValue)
         cell.textField?.font =
             tableColumn.identifier.rawValue == "name"
@@ -395,9 +438,11 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case "name": return status.name
         case "size": return Self.size.string(fromByteCount: status.totalLength)
         case "down":
-            return status.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
+            return status.downloadRate > 1
+                ? "\(Self.size.string(fromByteCount: Int64(status.downloadRate)))/s" : "—"
         case "up":
-            return status.uploadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(status.uploadRate)))/s" : "—"
+            return status.uploadRate > 1
+                ? "\(Self.size.string(fromByteCount: Int64(status.uploadRate)))/s" : "—"
         case "eta": return Self.etaLabel(status.etaSeconds)
         case "ratio": return status.downloaded > 0 ? String(format: "%.2f", status.ratio) : "—"
         case "peers": return "\(status.peersConnected)"
@@ -410,7 +455,9 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     static func etaLabel(_ seconds: Int) -> String {
         guard seconds >= 0 else { return "—" }
         if seconds < 60 { return "\(seconds)s" }
-        let m = seconds / 60, h = seconds / 3600, d = seconds / 86400
+        let m = seconds / 60
+        let h = seconds / 3600
+        let d = seconds / 86400
         if seconds < 3600 { return "\(m)m \(seconds % 60)s" }
         if seconds < 86400 { return "\(h)h \((seconds % 3600) / 60)m" }
         return "\(d)d \((seconds % 86400) / 3600)h"

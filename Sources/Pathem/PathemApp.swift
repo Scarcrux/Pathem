@@ -240,6 +240,9 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_UI_TEST"] != nil {
             browser.runTransientUIAutomation()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_COMPILER_UI_TEST"] != nil {
+            browser.runCompilerUIAutomation()
+        }
 
         // Live capture of every view mode (list, gallery, column, tree, icon) plus a
         // dual-pane hero shot: one PNG per mode via screencapture (real window chrome and
@@ -1082,12 +1085,12 @@ enum PathemApp {
                         buffer.frameLength = AVAudioFrameCount(44100 * 3)
                         try file.write(from: buffer)
                     }
-                    let srcDur = CMTimeGetSeconds(AVURLAsset(url: src).duration)
+                    let srcDur = CMTimeGetSeconds(try await AVURLAsset(url: src).load(.duration))
                     print("wrote src dur=\(String(format: "%.2f", srcDur))s")
                     let out = await TrimController.debugExport(
                         from: src, startSeconds: 0, endSeconds: 1)
                     if let out {
-                        let dur = CMTimeGetSeconds(AVURLAsset(url: out).duration)
+                        let dur = CMTimeGetSeconds(try await AVURLAsset(url: out).load(.duration))
                         ok =
                             FileManager.default.fileExists(atPath: out.path) && dur < srcDur
                             && dur > 0.4
@@ -1095,6 +1098,12 @@ enum PathemApp {
                     } else {
                         print("export returned nil")
                     }
+                    let missing = await TrimController.debugExport(
+                        from: dir.appendingPathComponent("missing.m4a"), startSeconds: 0,
+                        endSeconds: 1)
+                    print(
+                        "TRIMCONTROL: \(missing == nil ? "PASS" : "FAIL") missing-source-rejected")
+                    ok = ok && missing == nil
                 } catch {
                     print("generate failed: \(error.localizedDescription)")
                 }

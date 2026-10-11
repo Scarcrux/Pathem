@@ -141,3 +141,38 @@ empty/smart disabled controls pass across five actual views. Hiding Tags hides i
 labels too. Deep drilled-column sort/refresh sequences remain a separate boundary.
 Final `make ci` passes 15 XCTest + 772 Swift Testing, 21 debug scenarios (Finder
 198/198, search 59/59, layout 161/161, transient 52/52) and 9 packaged checks.
+
+### Compiler warnings
+
+Fresh pre-change debug/release inventory on Apple Swift 6.4: 28 unique first-party
+file/message fingerprints (line/column duplicates collapsed), not 28 warning sites.
+Vendor/toolchain notices are counted separately. Installed Arrange-menu control
+failed 2/4: Kind correctly checked, but None never checked because inferred
+`Optional<GroupKey>.none` is nil. Explicit enum cases restore 4/4.
+
+Trim completion now hops to MainActor; macOS-15-minimum async throwing export avoids
+capturing a non-Sendable export session in a completion queue. The real generated
+AAC fixture trims 3.00s to 1.00s; a missing-source control returns nil. Duration loads
+and torrent content-type panels use modern APIs. Current host resolves the torrent
+type to `org.bittorrent.torrent` with preferred extension `torrent`; picker behavior
+on other systems is not inferred. The empty tracked test placeholder is excluded
+from SwiftPM (preserved, not deleted); an unused pure URL binding is removed.
+
+The exact warning gate has six controls, including a new semantic warning, ANSI
+diagnostics, malformed owned diagnostics and vendor separation. It rejects the real
+old logs with 13 removed fingerprints and accepts the fresh debug log with 12 known
+fingerprints and no new diagnostics. Fifteen exact remaining exceptions explain why
+they are still open in `scripts/compiler-warning-baseline.json`: this is an
+incremental regression gate, not a warning-free claim. Interactive AVPlayer trimming
+and Quick Look's live XPC thumbnail path remain environmental acceptance boundaries.
+
+First full warning CI stopped at localization lint: migrating the export catch removed
+the only use of the localized empty-error fallback. Restored that fallback for an
+empty error description; retained the six translations. No later CI stage ran in
+that failed attempt.
+
+Final warning `make ci` passes: 15 XCTest + 772 Swift Testing, 23 debug scenarios
+(including Arrange 4/4 and valid/missing trim controls), 9 packaged checks. Fresh
+debug/release union has 15 remaining owned fingerprints (down from 28), no new or
+unparsed diagnostics. Raw CI logs are retained under `.build/ci-*-build.log`;
+remaining exceptions are explicit pending work, not suppressed compiler output.

@@ -39,11 +39,14 @@ final class TrimController: NSObject {
     private func beginWhenReady(attempts: Int) {
         if playerView.canBeginTrimming {
             playerView.beginTrimming { [weak self] result in
-                guard let self else { return }
-                if result == .okButton {
-                    self.export()
-                } else {
-                    self.window?.orderOut(nil)
+                let accepted = result == .okButton
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if accepted {
+                        self.export()
+                    } else {
+                        self.window?.orderOut(nil)
+                    }
                 }
             }
         } else if attempts < 20 {
@@ -65,25 +68,27 @@ final class TrimController: NSObject {
             return
         }
         let asset = AVURLAsset(url: url)
-        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else {
+        guard
+            let session = AVAssetExportSession(
+                asset: asset, presetName: AVAssetExportPresetPassthrough)
+        else {
             finishFailure(L("trim.noExport", "Couldn’t prepare the export."))
             return
         }
         let output = Self.uniqueOutput(for: url)
-        session.outputURL = output
-        session.outputFileType = Self.fileType(for: url, supported: session.supportedFileTypes)
+        let type = Self.fileType(for: url, supported: session.supportedFileTypes)
         session.timeRange = CMTimeRange(start: start, end: end)
-        session.exportAsynchronously { [weak self] in
-            let status = session.status
-            let error = session.error
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.window?.orderOut(nil)
-                if status == .completed {
-                    self.onExported?(output)
-                } else {
-                    self.finishFailure(error?.localizedDescription ?? L("trim.exportFailed", "The export failed."))
-                }
+        // The package minimum is macOS 15. Use its throwing async export instead of
+        // reading non-Sendable session/status/error from a completion queue.
+        Task { @MainActor [weak self] in
+            do {
+                try await session.export(to: output, as: type)
+                self?.window?.orderOut(nil)
+                self?.onExported?(output)
+            } catch {
+                let message = error.localizedDescription
+                self?.finishFailure(
+                    message.isEmpty ? L("trim.exportFailed", "The export failed.") : message)
             }
         }
     }
@@ -113,7 +118,9 @@ final class TrimController: NSObject {
         let byExtension: [String: AVFileType] = [
             "mov": .mov, "mp4": .mp4, "m4v": .m4v, "m4a": .m4a, "aac": .m4a,
         ]
-        if let wanted = byExtension[url.pathExtension.lowercased()], supported.contains(wanted) { return wanted }
+        if let wanted = byExtension[url.pathExtension.lowercased()], supported.contains(wanted) {
+            return wanted
+        }
         return supported.first ?? .mov
     }
 
@@ -121,17 +128,19 @@ final class TrimController: NSObject {
     /// same passthrough export the trim UI uses. Returns the output URL, or nil on failure.
     static func debugExport(from url: URL, startSeconds: Double, endSeconds: Double) async -> URL? {
         let asset = AVURLAsset(url: url)
-        guard let session = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetPassthrough) else { return nil }
+        guard
+            let session = AVAssetExportSession(
+                asset: asset, presetName: AVAssetExportPresetPassthrough)
+        else { return nil }
         let output = uniqueOutput(for: url)
-        session.outputURL = output
-        session.outputFileType = fileType(for: url, supported: session.supportedFileTypes)
+        let type = fileType(for: url, supported: session.supportedFileTypes)
         session.timeRange = CMTimeRange(
             start: CMTime(seconds: startSeconds, preferredTimescale: 600),
             end: CMTime(seconds: endSeconds, preferredTimescale: 600))
-        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-            session.exportAsynchronously { cont.resume() }
-        }
-        return session.status == .completed ? output : nil
+        do {
+            try await session.export(to: output, as: type)
+            return output
+        } catch { return nil }
     }
 
     private func makeWindow() -> NSWindow {
