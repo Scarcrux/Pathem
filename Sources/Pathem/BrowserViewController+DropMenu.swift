@@ -7,21 +7,31 @@ import PathemEngine
 @MainActor
 extension BrowserViewController {
     func showDropOntoFileMenu(dragged: [URL], target: URL) {
+        withDropOntoFileMenu(dragged: dragged, target: target) { popUpAtPointer($0) }
+    }
+
+    /// Keep construction and the tracking lifetime together; tests use the same menu
+    /// and handlers without needing a foreground native menu tracking loop.
+    func withDropOntoFileMenu(dragged: [URL], target: URL, present: (NSMenu) -> Void) {
         guard !dragged.isEmpty else { return }
         pendingDropContext = (dragged, target)
+        defer { pendingDropContext = nil }  // Escape, outside click and Cancel all end tracking.
         let menu = NSMenu()
         menu.addItem(dropItem(L("drop.moveHere", "Move Here"), #selector(dropMoveHere)))
         menu.addItem(dropItem(L("drop.copyHere", "Copy Here"), #selector(dropCopyHere)))
         menu.addItem(.separator())
-        menu.addItem(dropItem(L("drop.newFolder", "New Folder with Items"), #selector(dropNewFolder)))
+        menu.addItem(
+            dropItem(L("drop.newFolder", "New Folder with Items"), #selector(dropNewFolder)))
         menu.addItem(dropItem(L("drop.archive", "Create Archive"), #selector(dropArchive)))
         if dragged.count == 1 {
-            menu.addItem(dropItem(
-                String(format: L("drop.replace", "Replace “%@”"), target.lastPathComponent), #selector(dropReplace)))
+            menu.addItem(
+                dropItem(
+                    String(format: L("drop.replace", "Replace “%@”"), target.lastPathComponent),
+                    #selector(dropReplace)))
         }
         menu.addItem(.separator())
         menu.addItem(dropItem(L("common.cancel", "Cancel"), nil))
-        popUpAtPointer(menu)
+        present(menu)
     }
 
     private func dropItem(_ title: String, _ action: Selector?) -> NSMenuItem {
@@ -62,14 +72,23 @@ extension BrowserViewController {
             reloadBothSides()
             activePane?.select(name: name)
             if !outcome.performed.isEmpty {
-                registerUndo(outcome.performed, actionName: L("bvc.newFolderWithSelectionAction", "New Folder with Selection"))
+                registerUndo(
+                    outcome.performed,
+                    actionName: L("bvc.newFolderWithSelectionAction", "New Folder with Selection"))
             }
             if !outcome.failures.isEmpty {
-                presentFailures(outcome.failures, title: L("bvc.moveIntoFolderFailed", "Couldn’t move some items into the folder"))
+                presentFailures(
+                    outcome.failures,
+                    title: L("bvc.moveIntoFolderFailed", "Couldn’t move some items into the folder")
+                )
             }
         } catch {
             presentFailures(
-                [FileOperations.Failure(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
+                [
+                    FileOperations.Failure(
+                        name: L("bvc.newFolderVerb", "New Folder"),
+                        reason: error.localizedDescription)
+                ],
                 title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
         }
     }
@@ -86,7 +105,8 @@ extension BrowserViewController {
                 self?.reloadBothSides()
                 self?.activePane?.select(name: dest.lastPathComponent)
             } catch {
-                self?.reportArchiveError(L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
+                self?.reportArchiveError(
+                    L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
             }
         }
     }
@@ -97,14 +117,20 @@ extension BrowserViewController {
     /// registers an undo that restores both files.
     @objc private func dropReplace() {
         guard let (dragged, target) = pendingDropContext, let source = dragged.first else { return }
-        guard !transferInFlight else { NSSound.beep(); return }
+        guard !transferInFlight else {
+            NSSound.beep()
+            return
+        }
         let fm = FileManager.default
         var landed: NSURL?
         do {
             try fm.trashItem(at: target, resultingItemURL: &landed)
         } catch {
             presentFailures(
-                [FileOperations.Failure(name: target.lastPathComponent, reason: error.localizedDescription)],
+                [
+                    FileOperations.Failure(
+                        name: target.lastPathComponent, reason: error.localizedDescription)
+                ],
                 title: L("drop.replaceFailed", "Couldn’t replace the file"))
             return
         }
@@ -113,7 +139,10 @@ extension BrowserViewController {
         } catch {
             if let trashed = landed as URL? { try? fm.moveItem(at: trashed, to: target) }  // restore the target
             presentFailures(
-                [FileOperations.Failure(name: target.lastPathComponent, reason: error.localizedDescription)],
+                [
+                    FileOperations.Failure(
+                        name: target.lastPathComponent, reason: error.localizedDescription)
+                ],
                 title: L("drop.replaceFailed", "Couldn’t replace the file"))
             return
         }
@@ -124,7 +153,8 @@ extension BrowserViewController {
         if let trashed = landed as URL? {
             let footprint: Set<String> = [source.path, target.path, trashed.path]
             actionHistory.record(
-                name: L("drop.replaceAction", "Replace"), footprint: footprint, undoFootprint: footprint
+                name: L("drop.replaceAction", "Replace"), footprint: footprint,
+                undoFootprint: footprint
             ) { [weak self] in
                 guard let self else { return }
                 do {
@@ -133,7 +163,10 @@ extension BrowserViewController {
                     self.reloadBothSides()
                 } catch {
                     self.presentFailures(
-                        [FileOperations.Failure(name: target.lastPathComponent, reason: error.localizedDescription)],
+                        [
+                            FileOperations.Failure(
+                                name: target.lastPathComponent, reason: error.localizedDescription)
+                        ],
                         title: L("bvc.undoFailed", "Undo failed"))
                 }
             }

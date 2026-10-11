@@ -137,6 +137,13 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         if continuation != nil { resolve(nil) }  // dismissed without picking a button = Cancel
     }
 
+    #if DEBUG
+    var debugPopover: NSPopover? { popover }
+    func debugController(message: String, info: String, buttons: [String]) -> NSViewController {
+        makeController(message: message, info: info, buttons: buttons)
+    }
+    #endif
+
     /// Smoke check: the popover content builds with the expected controls and no layout crash.
     func debugBuildsController(buttons: [String]) -> Bool {
         let controller = makeController(message: "m", info: "i", buttons: buttons)

@@ -99,3 +99,23 @@ Final search verification: 14 engine tests and 59 UI checks pass; delivered unre
 content and cancellation now have controls. `make ci` passes 15 XCTest + 772 Swift
 Testing, 20 debug scenarios and 9 packaged checks. Live Spotlight completeness,
 native folder-picker/default-app behavior and deeper resize/tab races remain open.
+
+### Transient sample
+
+Initial 44-check sample failed three drop-dismiss cleanup checks and two long-label
+button-frame overlap checks. The drop context was never released on dismissal;
+the production tracking scope now clears it with `defer` on every exit. Inspection
+refuted a painted-button overlap: native 32pt frames include 5/7pt vertical alignment
+insets; their 20pt alignment rects have 8pt separation. Corrected the instrument to
+test AppKit's alignment geometry and added a known overlapping negative control.
+No restyle was made to the accepted conflict UI. Real popover dismissal/default
+button continuation and transfer cancellation/reopen/end lifecycle are exercised.
+
+Menu tracking appearance/edge positioning, physical Escape/Return delivery, alerts
+and native open/save panels remain environmental or future slices. An injected menu
+presenter exercises production construction/cleanup, not foreground menu tracking.
+
+Expanded transient sample passes 52/52, including repeated real popover default
+completion, a geometric overlap control and transfer cancellation exactly once.
+Final `make ci`: 15 XCTest + 772 Swift Testing, 21 debug scenarios and 9 signed
+release-package checks pass. No physical key or native menu appearance sign-off.

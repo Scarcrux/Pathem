@@ -10,18 +10,24 @@ final class TransferState: @unchecked Sendable {
     private var _cancelled = false
 
     var progress: FileOperations.Progress {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _progress
     }
     var isCancelled: Bool {
-        lock.lock(); defer { lock.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return _cancelled
     }
     func setProgress(_ value: FileOperations.Progress) {
-        lock.lock(); _progress = value; lock.unlock()
+        lock.lock()
+        _progress = value
+        lock.unlock()
     }
     func cancel() {
-        lock.lock(); _cancelled = true; lock.unlock()
+        lock.lock()
+        _cancelled = true
+        lock.unlock()
     }
 }
 
@@ -35,7 +41,8 @@ final class TransferProgress: NSObject {
     private let bar = NSProgressIndicator()
     private let titleLabel = NSTextField(labelWithString: "")
     private let detailLabel = NSTextField(labelWithString: "")
-    private let cancelButton = NSButton(title: L("common.cancel", "Cancel"), target: nil, action: nil)
+    private let cancelButton = NSButton(
+        title: L("common.cancel", "Cancel"), target: nil, action: nil)
 
     private weak var host: NSWindow?
     private var showing = false
@@ -156,4 +163,11 @@ final class TransferProgress: NSObject {
         titleLabel.stringValue = L("progress.cancelling", "Cancelling…")
         onCancel?()
     }
+
+    #if DEBUG
+    var debugPanel: NSPanel { panel }
+    var debugCancel: NSButton { cancelButton }
+    var debugBar: NSProgressIndicator { bar }
+    var debugControls: [NSView] { [titleLabel, bar, detailLabel, cancelButton] }
+    #endif
 }
