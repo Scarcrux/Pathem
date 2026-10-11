@@ -370,6 +370,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         return index < entries.count ? IndexPath(item: index, section: 0) : nil
     }
 
+    var supportsGrouping: Bool { true }
+
     func setGroupKey(_ key: ViewFormat.GroupKey) {
         guard key != grouping else { return }
         let selectedNames = Set(selectedEntries.map(\.name))

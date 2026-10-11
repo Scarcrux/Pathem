@@ -229,6 +229,7 @@ scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$B
 scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN"
 scenario "file search UI + scopes"     'RESULT: PASS' env PATHEM_FILE_SEARCH_TEST=1 "$BIN"
 scenario "Finder actions across views" 'RESULT: PASS' env PATHEM_FINDER_UI_TEST=1 "$BIN"
+scenario "background view + arrange menus" 'RESULT: PASS' env PATHEM_BACKGROUND_UI_TEST=1 "$BIN"
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
 scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"

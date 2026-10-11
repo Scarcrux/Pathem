@@ -654,7 +654,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.directoryURL = nav.current  // rows in this folder are draggable
         content.resolutionURL = nav.current
         content.setSortFormat(format)  // column view re-sorts its drilled columns to match
-        content.setGroupKey(format.groupKey)  // list view groups under section headers (else no-op)
+        content.setGroupKey(format.groupKey)  // list/icon group under headers (else no-op)
         content.showSortIndicator(key: format.sortKey, ascending: format.ascending)
 
         // Enumerate (and sort) the folder off the main thread: a huge or slow directory must not
@@ -1708,7 +1708,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// the toolbar switcher agree even when a remote/smart pane clamps Column to list.
     var viewMode: ViewFormat.ViewMode { currentMode }
 
-    /// The list view's grouping key (for the Arrange By menu's checkmarks).
+    /// Capability comes from the actual content, including remote/smart mode clamps.
+    var supportsGrouping: Bool { content.supportsGrouping }
+    /// The retained grouping key (for the Arrange By menu's checkmarks).
     var groupKey: ViewFormat.GroupKey { format.groupKey }
     /// Change the Arrange By grouping key, persist the folder's format, and reload.
     func setGroupKey(_ key: ViewFormat.GroupKey) {

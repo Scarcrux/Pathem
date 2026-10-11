@@ -3,7 +3,7 @@ import PathemEngine
 import UniformTypeIdentifiers
 
 /// The single file/selection context menu, shared by every pane view (list, icon, gallery,
-/// column) so the four can never drift apart. Add an item here once and it appears in all of
+/// column, tree) so the five can never drift apart. Add an item here once and it appears in all of
 /// them. Each view owns an instance, points `selectedURLs` at its own selection, and assigns
 /// `menu` to its table/collection. The standard items act through the responder chain
 /// (`BrowserViewController.performMenuCommand`); only the live "Open With" apps target this
@@ -14,7 +14,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     var hiddenItems: Set<String> = [] {
         didSet { if oldValue != hiddenItems { rebuild() } }
     }
-    /// The user's saved entry order (command ids + "@openWith"/"@tags"); empty = default.
+    /// The user's saved entry order (command ids + submenu tokens); empty = default.
     var menuOrder: [String] = [] {
         didSet { if oldValue != menuOrder { rebuild() } }
     }
@@ -32,7 +32,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.extract", "files.extractHere", "files.extractTo",
     ]
 
-    /// The default order of the menu's entries: command ids plus the two submenu tokens.
+    /// The default order of the menu's entries: command ids plus submenu tokens.
     /// Separators aren't listed; they're auto-inserted between groups (see `group`).
     static let defaultEntries: [String] = [
         "files.open", "files.openInNewTab", "files.openInThisPane", "files.openInOtherPane",
@@ -48,6 +48,22 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.compress", "files.compress7z",
         "files.extract", "files.extractHere", "files.extractTo",
         "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
+        "@view", "@arrange",
+    ]
+
+    private static let viewCommands: [(id: String, title: String)] = [
+        ("view.asList", L("bvc.cmd.asList", "as List")),
+        ("view.asIcons", L("bvc.cmd.asIcons", "as Icons")),
+        ("view.asGallery", L("bvc.cmd.asGallery", "as Gallery")),
+        ("view.asColumn", L("bvc.cmd.asColumns", "as Columns")),
+        ("view.asTree", L("bvc.cmd.asTree", "as Tree")),
+    ]
+    private static let arrangeCommands: [(id: String, title: String)] = [
+        ("view.arrangeNone", L("bvc.cmd.arrangeNone", "None")),
+        ("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")),
+        ("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")),
+        ("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified")),
+        ("view.arrangeTag", L("bvc.cmd.arrangeTag", "Tag")),
     ]
 
     /// The group an entry belongs to. A separator is auto-inserted wherever the group changes
@@ -58,6 +74,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash":
             return 5  // set apart, like Finder
         case "@tags": return 1
+        case "@view", "@arrange": return 7
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.duplicate", "files.makeAlias", "files.copy", "files.copyPath", "files.copyName",
             "files.cut", "files.paste":
@@ -75,6 +92,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         switch token {
         case "@openWith": return L("list.openWith", "Open With")
         case "@tags": return L("list.tags", "Tags")
+        case "@view": return L("menu.view", "View")
+        case "@arrange": return L("menu.group.arrangeBy", "Arrange By")
         default:
             return Dictionary(uniqueKeysWithValues: hideableCommands.map { ($0.id, $0.title) })[
                 token]
@@ -188,6 +207,23 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                 menu.addItem(openWith)
             case "@tags":
                 menu.addItem(makeTagsItem())
+            case "@view", "@arrange":
+                let parent = NSMenuItem(
+                    title: Self.title(for: token), action: nil, keyEquivalent: "")
+                parent.representedObject = token
+                parent.image = MenuIcons.image(token == "@view" ? "eye" : "rectangle.3.group")
+                let submenu = NSMenu(title: parent.title)
+                for command in token == "@view" ? Self.viewCommands : Self.arrangeCommands {
+                    let item = NSMenuItem(
+                        title: command.title,
+                        action: #selector(BrowserViewController.performMenuCommand(_:)),
+                        keyEquivalent: "")
+                    item.representedObject = command.id
+                    item.image = MenuIcons.image(forCommand: command.id)
+                    submenu.addItem(item)
+                }
+                parent.submenu = submenu
+                menu.addItem(parent)
             default:
                 guard let title = titles[token] else { continue }  // unknown id: skip
                 let item = NSMenuItem(
@@ -277,6 +313,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             for item in menu.items {
                 guard let id = item.representedObject as? String else { continue }
                 switch id {
+                case "@view", "@arrange":
+                    item.isHidden = !urls.isEmpty  // directory controls belong to the background
                 case "files.showPackageContents":
                     item.isHidden = !(count == 1 && Self.isPackage(urls[0]))
                 case "files.showOriginal":

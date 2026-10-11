@@ -210,3 +210,32 @@ physical input and environmental provider/storage acceptance, deeper transition
 interleavings, the remaining Finder inventory and 15 warning fingerprints are not
 closed by this batch. No installed-app replacement, publication, keychain changes,
 permission grants or live provider/storage writes.
+
+## Continuation: background menus and trustworthy warning delivery
+
+Background context now exposes View/Arrange By through existing commands. The
+263-check real-window matrix covers all five modes, all 25 delivered transitions,
+checkmarks, rendered grouping versus None, unsupported grouping refusal and
+inactive-pane isolation. It also convicts and fixes silently ignored hide/order
+configuration: those hooks were extension defaults rather than protocol witnesses.
+Saved duplicate/obsolete tokens are filtered while retaining first positions and
+appending new defaults. Two added ordering controls pass; native popup tracking
+remains unverified, and failed headless-enablement experiments are recorded in
+`BACKGROUND_MENU_TESTING.md`, not retained as production fixes.
+
+A forced whole-debug compile disproves the old cached warning inventory. Seven
+redundant-unsafe fingerprints (eight static declarations) use compiler-checked
+Swift 6.4 statics with unchanged older-toolchain fallback. Two TorrentKit C-string
+fingerprints are fixed with bounded decoding and five differing controls. Twelve
+unchanged SecureTransport device-bridge fingerprints are explicitly inventoried
+as pending migration debt requiring paired-device acceptance. The original strict
+inventory criterion failed; its measured debt amendment is recorded in
+`COMPILER_STATICS_TESTING.md`. CI now forces fresh warning delivery every time.
+
+Full integrated local CI exits zero: 15 XCTest tests, Swift Testing's 779-case run
+(five live opt-in tests explicitly skipped), 61 debug E2E checks plus one explicit
+browser-opacity skip, and 9/9 current-host packaged release checks. The emitted
+debug/release warning union has 27 exact known fingerprints, zero new/unparsed;
+this is not a warning-free claim. Mission 53 and the remaining configuration-hook,
+native visual/tracking, older-SDK and environmental boundaries stay open. No
+installed-app replacement, publication, keychain changes or permission grants.

@@ -234,6 +234,9 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_FINDER_UI_TEST"] != nil {
             browser.runFinderUIAutomation()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_UI_TEST"] != nil {
+            browser.runBackgroundMenuUIAutomation()
+        }
         if ProcessInfo.processInfo.environment["PATHEM_LAYOUT_UI_TEST"] != nil {
             browser.runLayoutUIAutomation()
         }

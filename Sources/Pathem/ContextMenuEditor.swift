@@ -10,14 +10,15 @@ final class ContextMenuEditorController: NSObject, NSTableViewDataSource, NSTabl
     private let table = NSTableView()
     private let rowType = NSPasteboard.PasteboardType("com.scarcrux.pathem.contextmenu-row")
 
-    /// The entries in display order (command ids and "@openWith"/"@tags").
+    /// The entries in display order (command ids and submenu tokens).
     private var entries: [String]
     private var hidden: Set<String>
     /// Fired on every edit so Settings can persist and re-apply to open panes.
     var onChange: ((_ order: [String], _ hidden: [String]) -> Void)?
 
     init(order: [String], hidden: [String]) {
-        entries = ContextMenuLayout.ordered(default: FileContextMenuController.defaultEntries, user: order)
+        entries = ContextMenuLayout.ordered(
+            default: FileContextMenuController.defaultEntries, user: order)
         self.hidden = Set(hidden)
         super.init()
         build()
@@ -41,9 +42,11 @@ final class ContextMenuEditorController: NSObject, NSTableViewDataSource, NSTabl
         scroll.borderType = .bezelBorder
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
-        let hint = NSTextField(wrappingLabelWithString: L(
-            "prefs.contextMenuEditorHint",
-            "Drag to reorder the file right-click menu. Uncheck an item to hide it. Dividers are added automatically."))
+        let hint = NSTextField(
+            wrappingLabelWithString: L(
+                "prefs.contextMenuEditorHint",
+                "Drag to reorder the file right-click menu. Uncheck an item to hide it. Dividers are added automatically."
+            ))
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
         hint.translatesAutoresizingMaskIntoConstraints = false
@@ -86,15 +89,19 @@ final class ContextMenuEditorController: NSObject, NSTableViewDataSource, NSTabl
 
     func numberOfRows(in tableView: NSTableView) -> Int { entries.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? EntryCell) ?? EntryCell(id: id)
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? EntryCell) ?? EntryCell(id: id)
         let token = entries[row]
         cell.checkbox.state = hidden.contains(token) ? .off : .on
         cell.checkbox.target = self
         cell.checkbox.action = #selector(toggleRow(_:))
         cell.checkbox.tag = row
-        cell.iconView.image = token == "@openWith" || token == "@tags"
+        cell.iconView.image =
+            token.hasPrefix("@")
             ? NSImage(systemSymbolName: "square.stack.3d.up", accessibilityDescription: nil)
             : MenuIcons.image(forCommand: token)
         cell.label.stringValue = FileContextMenuController.title(for: token)
@@ -108,7 +115,9 @@ final class ContextMenuEditorController: NSObject, NSTableViewDataSource, NSTabl
         commit()
     }
 
-    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int)
+        -> NSPasteboardWriting?
+    {
         let item = NSPasteboardItem()
         item.setString(String(row), forType: rowType)
         return item

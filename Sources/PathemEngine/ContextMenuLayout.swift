@@ -1,7 +1,7 @@
 import Foundation
 
 /// Ordering for the customizable file right-click menu. The menu is a list of entry
-/// tokens (command ids, plus "@openWith" / "@tags" for the two submenus); separators
+/// tokens (command ids, plus "@..." submenu entries); separators
 /// are auto-inserted between groups by the app, so they aren't part of this order.
 public enum ContextMenuLayout {
     /// The effective entry order: the user's saved order, filtered to entries that still
@@ -11,9 +11,9 @@ public enum ContextMenuLayout {
     public static func ordered(default def: [String], user: [String]) -> [String] {
         guard !user.isEmpty else { return def }
         let valid = Set(def)
-        var result = user.filter { valid.contains($0) }
-        let present = Set(result)
-        for token in def where !present.contains(token) { result.append(token) }
+        var present = Set<String>()
+        var result = user.filter { valid.contains($0) && present.insert($0).inserted }
+        for token in def where present.insert(token).inserted { result.append(token) }
         return result
     }
 }

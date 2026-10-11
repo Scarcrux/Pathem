@@ -21,6 +21,7 @@ extension BrowserViewController {
             self?.activePane?.selectedEntries.isEmpty == false
         }
         let taggableSelection: () -> Bool = { [weak self] in self?.canTagSelection ?? false }
+        let canArrange: () -> Bool = { [weak self] in self?.activePane?.supportsGrouping ?? false }
         add(
             "files.copyToOtherPane", L("bvc.cmd.copyToOtherPane", "Copy to Other Pane"),
             enabled: hasSelection
@@ -77,19 +78,23 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.saveViewPreset()
         }
-        add("view.arrangeNone", L("bvc.cmd.arrangeNone", "None")) { [weak self] in
+        add("view.arrangeNone", L("bvc.cmd.arrangeNone", "None"), enabled: canArrange) {
+            [weak self] in
             self?.activePane?.setGroupKey(.none)
         }
-        add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")) { [weak self] in
+        add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind"), enabled: canArrange) {
+            [weak self] in
             self?.activePane?.setGroupKey(.kind)
         }
-        add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")) { [weak self] in
+        add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size"), enabled: canArrange) {
+            [weak self] in
             self?.activePane?.setGroupKey(.size)
         }
-        add("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified")) { [weak self] in
+        add("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified"), enabled: canArrange) {
+            [weak self] in
             self?.activePane?.setGroupKey(.dateModified)
         }
-        add("view.arrangeTag", L("bvc.cmd.arrangeTag", "Tag")) { [weak self] in
+        add("view.arrangeTag", L("bvc.cmd.arrangeTag", "Tag"), enabled: canArrange) { [weak self] in
             self?.activePane?.setGroupKey(.tag)
         }
         add("view.zoomIn", L("bvc.cmd.zoomIn", "Zoom In")) { [weak self] in

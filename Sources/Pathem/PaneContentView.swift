@@ -78,12 +78,17 @@ protocol PaneContentView: AnyObject {
     /// quick-actions bar float next to the selected items.
     func selectionRectInWindow() -> NSRect?
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool)
-    /// Group the list under section headers by this key (list view only; others ignore it).
+    /// Whether this delivered content can render grouping, not merely retain its preference.
+    var supportsGrouping: Bool { get }
+    /// Group supported content under section headers; unsupported views ignore the key.
     func setGroupKey(_ key: ViewFormat.GroupKey)
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
     func setSortFormat(_ format: ViewFormat)
     func setCutPaths(_ paths: Set<String>)
+    /// Customization must dynamically dispatch to the delivered content's menu owner.
+    func setHiddenContextItems(_ ids: Set<String>)
+    func setContextMenuOrder(_ order: [String])
     func refreshDrilledColumns()
     func setGitStates(_ states: [String: GitFileState])
     /// Zoom the thumbnails (icon/gallery views); a no-op for list/column.
@@ -108,7 +113,8 @@ extension PaneContentView {
     func revealSelection() {}
     /// Most views embed their scroll view directly; the gallery overrides this.
     var contentView: NSView { scrollView }
-    /// Only the list view groups rows under headers; the others ignore the key.
+    var supportsGrouping: Bool { false }
+    /// Unsupported views ignore the grouping key.
     func setGroupKey(_ key: ViewFormat.GroupKey) {}
     /// Grid views don't render tag dots yet, so dropping the cache is a no-op.
     func invalidateTagCache() {}
@@ -166,6 +172,7 @@ extension PaneContentView {
 }
 
 extension FileListController: PaneContentView {
+    var supportsGrouping: Bool { true }
     var keyView: NSView { tableView }
     var onKeyChord: ((KeyChord) -> Bool)? {
         get { tableView.onKeyChord }
