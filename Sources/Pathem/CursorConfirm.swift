@@ -179,15 +179,21 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     /// Render the popover content to a PNG (PATHEM_CONFLICT_SHOT) to inspect button padding. The
     /// NSPopover bubble/tail is drawn by AppKit and isn't in this content view, so we paint a
     /// backing so the edges (and the inset around the buttons) are visible.
-    func debugRender(to path: String, message: String, info: String, buttons: [String]) {
+    func debugRender(
+        to path: String, message: String, info: String, buttons: [String],
+        appearance: NSAppearance? = nil
+    ) {
         let vc = makeController(message: message, info: info, buttons: buttons)
         vc.loadView()
         let v = vc.view
+        v.appearance = appearance
         v.layoutSubtreeIfNeeded()
         v.setFrameSize(v.fittingSize)
         v.layoutSubtreeIfNeeded()
         v.wantsLayer = true
-        v.layer?.backgroundColor = NSColor(calibratedWhite: 0.16, alpha: 1).cgColor
+        v.effectiveAppearance.performAsCurrentDrawingAppearance {
+            v.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        }
         v.layer?.cornerRadius = 10
         guard v.bounds.width > 1, let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else {
             return
@@ -195,7 +201,9 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         v.cacheDisplay(in: v.bounds, to: rep)
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: URL(fileURLWithPath: path))
-            print("CONFLICT SHOT: \(Int(v.bounds.width))x\(Int(v.bounds.height))")
+            print(
+                "CONFLICT SHOT: \(Int(v.bounds.width))x\(Int(v.bounds.height)) appearance=\(v.effectiveAppearance.name.rawValue) language=\(Locale.preferredLanguages.first ?? "unknown") buttons=\(buttons.joined(separator: " | "))"
+            )
         }
     }
 }

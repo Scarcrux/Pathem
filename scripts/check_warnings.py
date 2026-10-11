@@ -18,7 +18,7 @@ def first_party(path):
         relative = path.relative_to(ROOT).as_posix()
     except ValueError:
         return None
-    if relative.startswith(("Sources/", "Tests/")) and not relative.startswith("Sources/AppRelaunch/"):
+    if relative.startswith(("Sources/", "Tests/", "test/", "scripts/")) and not relative.startswith("Sources/AppRelaunch/"):
         return relative
     return None
 
@@ -59,6 +59,8 @@ def self_test():
         ("vendor-separated", verdict(".build/checkouts/vendor/Sources/Other.swift:7:2: warning: vendor warning", set())[0]),
         ("colored-warning-red", not verdict("\x1b[33m" + bad + "\x1b[0m", exceptions)[0]),
         ("malformed-owned-warning-red", not verdict("Sources/Pathem/Fixture.swift:7: warning: malformed", set())[0]),
+        ("capture-instrument-warning-red", not verdict("test/e2e/capture_quality.swift:7:2: warning: instrument warning", set())[0]),
+        ("script-instrument-warning-red", not verdict("scripts/Fixture.swift:7:2: warning: instrument warning", set())[0]),
     ]
     for name, ok in controls:
         print(f"WARNINGCONTROL: {'PASS' if ok else 'FAIL'} {name}")

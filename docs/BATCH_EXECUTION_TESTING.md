@@ -81,7 +81,7 @@ item before measuring. Production reveal also skips entirely when the item is fu
 visible. All other debug scenarios passed in that failed run; packaging was not run.
 
 Final layout verification: `make ci` passed 15 XCTest plus 766 Swift Testing tests,
-20 debug E2E scenarios (including 161/161 layout, 49/49 interaction, 39/39 search,
+20 debug E2E checks (including 161/161 layout, 49/49 interaction, 39/39 search,
 132/132 Finder) and 9 signed release-package launch checks. Existing compiler
 warnings remain; nonempty-render checks in this run are not native visual approval.
 
@@ -97,7 +97,7 @@ Reveal/dismiss/return navigation in all five modes; no default app is launched.
 
 Final search verification: 14 engine tests and 59 UI checks pass; delivered unreadable
 content and cancellation now have controls. `make ci` passes 15 XCTest + 772 Swift
-Testing, 20 debug scenarios and 9 packaged checks. Live Spotlight completeness,
+Testing, 20 debug checks and 9 packaged checks. Live Spotlight completeness,
 native folder-picker/default-app behavior and deeper resize/tab races remain open.
 
 ### Transient sample
@@ -117,7 +117,7 @@ presenter exercises production construction/cleanup, not foreground menu trackin
 
 Expanded transient sample passes 52/52, including repeated real popover default
 completion, a geometric overlap control and transfer cancellation exactly once.
-Final `make ci`: 15 XCTest + 772 Swift Testing, 21 debug scenarios and 9 signed
+Final `make ci`: 15 XCTest + 772 Swift Testing, 21 debug checks and 9 signed
 release-package checks pass. No physical key or native menu appearance sign-off.
 
 ### Finder slice
@@ -139,7 +139,7 @@ Expanded Finder sample passes 198/198 (previously 132). Named-label presence,
 mixed/all-selected states, real xattr writes/removal, selection retention and
 empty/smart disabled controls pass across five actual views. Hiding Tags hides its
 labels too. Deep drilled-column sort/refresh sequences remain a separate boundary.
-Final `make ci` passes 15 XCTest + 772 Swift Testing, 21 debug scenarios (Finder
+Final `make ci` passes 15 XCTest + 772 Swift Testing, 21 debug checks (Finder
 198/198, search 59/59, layout 161/161, transient 52/52) and 9 packaged checks.
 
 ### Compiler warnings
@@ -171,8 +171,42 @@ the only use of the localized empty-error fallback. Restored that fallback for a
 empty error description; retained the six translations. No later CI stage ran in
 that failed attempt.
 
-Final warning `make ci` passes: 15 XCTest + 772 Swift Testing, 23 debug scenarios
+Final warning `make ci` passes: 15 XCTest + 772 Swift Testing, 23 debug checks
 (including Arrange 4/4 and valid/missing trim controls), 9 packaged checks. Fresh
 debug/release union has 15 remaining owned fingerprints (down from 28), no new or
 unparsed diagnostics. Raw CI logs are retained under `.build/ci-*-build.log`;
 remaining exceptions are explicit pending work, not suppressed compiler output.
+
+### Visual evidence and trustworthy completion
+
+Criteria, controls and failed attempts are in `VISUAL_EVIDENCE_TESTING.md`.
+The old completion predicate fails three of six controls: PASS-before-exit-7,
+PASS-before-final-FAIL and PASS-before-timeout-142 all falsely pass. Require a
+successful exit and a final anchored, valid result token; preserve the existing
+colon-delimited Gate A result. Ten completion controls pass. Seven report-policy
+controls also pass after reproducing three blanket-SKIP failures: only the observed
+browser-opacity boundary can skip, while unusable stable captures must fail.
+
+The real ImageIO checker passes seven differing controls (good, black, white,
+transparent, corrupt, truncated and wrong-sized). It checks complete decoding,
+bounded dimensions/input, opacity and distributed contrast/detail. Settings/sidebar
+and eight conflict content fixtures pass pixel sanity. Actual light/dark appearance,
+English/German and default/long labels are delivered and logged; unsupported
+appearance exits 64 without a PNG. Captures use isolated per-run directories, so
+old global files cannot masquerade as new evidence. No new golden is approved.
+
+First visual CI fails only the over-strict Gate A parser, not virtualization.
+Second CI passes; final review then exposes overly broad skip classification.
+Final `make ci` after that correction passes 15 XCTest + 772 Swift Testing,
+60 debug E2E checks and nine signed release-package checks, with one explicit
+browser-opacity SKIP (opaque fraction 0.746). Counts are harness checks, not
+60 independently tested features; the final debug harness includes 20 product
+scenarios plus reporting, capture and delivery assertions. Warning controls now
+also cover test/script diagnostics (8/8); no baseline exceptions were added.
+
+All six bounded implementation slices are locally verified and landed separately.
+Broad Mission 53 remains open: native visual baselines/materials/placement,
+physical input and environmental provider/storage acceptance, deeper transition
+interleavings, the remaining Finder inventory and 15 warning fingerprints are not
+closed by this batch. No installed-app replacement, publication, keychain changes,
+permission grants or live provider/storage writes.

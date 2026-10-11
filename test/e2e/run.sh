@@ -37,6 +37,8 @@ cleanup() {
 }
 trap cleanup EXIT
 export PATHEM_CONFIG_DIR="$E2E_SCRATCH/config"
+export PATHEM_CAPTURE_DIR="$E2E_SCRATCH/captures"
+mkdir -p "$PATHEM_CAPTURE_DIR"
 
 # Let SwiftPM use its own trusted bare-repo cache even under git safe.bareRepository.
 export GIT_CONFIG_COUNT="${GIT_CONFIG_COUNT:-1}"
@@ -52,20 +54,87 @@ pass=0; fail=0; skip=0
 # Run a command with a wall-clock timeout (macOS has no `timeout`); no sleep involved.
 timeout_run() { perl -e 'alarm shift @ARGV; exec @ARGV or exit 127' "$@"; }
 
+scenario_succeeded() {
+  local command_status="$1" out="$2" expect="$3"
+  local result; result="$(grep -oE '^RESULT:.*' <<<"$out" | tail -1)"
+  [[ "$command_status" == 0 ]] \
+    && grep -qE '^RESULT: (PASS|SKIP)([[:space:]:]|$)' <<<"$result" \
+    && grep -qE "$expect" <<<"$result"
+}
+
+capture_disposition() {
+  local status="$1" out="$2" allow_transparency="${3:-0}"
+  if scenario_succeeded "$status" "$out" 'RESULT: PASS'; then printf 'PASS'
+  elif [[ "$allow_transparency" == 1 && "$status" == 1 ]] \
+    && grep -q '\[mostly-transparent\]' <<<"$out"; then printf 'SKIP'
+  else printf 'FAIL'; fi
+}
+
+scenario_self_test() {
+  local total=0 passed=0
+  completion_control() {
+    local name="$1" command_status="$2" out="$3" expect="$4" should_pass="$5" actual=0
+    scenario_succeeded "$command_status" "$out" "$expect" && actual=1
+    total=$((total+1))
+    if [[ "$actual" == "$should_pass" ]]; then
+      passed=$((passed+1)); printf 'SCENARIOCONTROL: PASS %s exit=%s accepted=%s\n' "$name" "$command_status" "$actual"
+    else
+      printf 'SCENARIOCONTROL: FAIL %s exit=%s accepted=%s expected=%s\n' "$name" "$command_status" "$actual" "$should_pass"
+    fi
+  }
+  completion_control good 0 'RESULT: PASS' 'RESULT: PASS' 1
+  completion_control legacy-colon-success 0 'RESULT: PASS: table materializes bounded cells' 'RESULT: PASS' 1
+  completion_control allowed-skip 0 'RESULT: SKIP fixture unavailable' 'RESULT: (PASS|SKIP)' 1
+  local out command_status
+  out="$(sh -c 'printf "RESULT: PASS\n"; exit 7')"; command_status=$?
+  completion_control pass-then-error "$command_status" "$out" 'RESULT: PASS' 0
+  completion_control final-fail 0 $'RESULT: PASS\nRESULT: FAIL' 'RESULT: PASS' 0
+  completion_control missing-result 0 'no structured result' 'RESULT: PASS' 0
+  completion_control malformed-result 0 'RESULT: PASSIVE' 'RESULT: PASS' 0
+  completion_control embedded-pass-in-failure 0 'RESULT: FAIL detail RESULT: PASS' 'RESULT: PASS' 0
+  completion_control unallowed-skip 0 'RESULT: SKIP' 'RESULT: PASS' 0
+  out="$(timeout_run 1 sh -c 'printf "RESULT: PASS\n"; exec sleep 3' 2>&1)"; command_status=$?
+  completion_control pass-then-timeout "$command_status" "$out" 'RESULT: PASS' 0
+  capture_control() {
+    local name="$1" status="$2" out="$3" allowed="$4" expected="$5" actual
+    actual="$(capture_disposition "$status" "$out" "$allowed")"
+    total=$((total+1))
+    if [[ "$actual" == "$expected" ]]; then
+      passed=$((passed+1)); printf 'CAPTUREPOLICY: PASS %s actual=%s\n' "$name" "$actual"
+    else printf 'CAPTUREPOLICY: FAIL %s actual=%s expected=%s\n' "$name" "$actual" "$expected"; fi
+  }
+  capture_control good 0 'RESULT: PASS' 0 PASS
+  capture_control strict-blank 1 $'CAPTURE: REJECT [flat-capture]\nRESULT: FAIL' 0 FAIL
+  capture_control strict-transparent 1 $'CAPTURE: REJECT [mostly-transparent]\nRESULT: FAIL' 0 FAIL
+  capture_control allowed-transparent 1 $'CAPTURE: REJECT [mostly-transparent]\nRESULT: FAIL' 1 SKIP
+  capture_control allowance-does-not-hide-blank 1 $'CAPTURE: REJECT [flat-capture]\nRESULT: FAIL' 1 FAIL
+  capture_control allowance-does-not-hide-missing 1 $'CAPTURE: REJECT [unreadable-or-too-large]\nRESULT: FAIL' 1 FAIL
+  capture_control pass-before-process-error 7 'RESULT: PASS' 0 FAIL
+  if [[ "$passed" == "$total" ]]; then printf 'RESULT: PASS (%s/%s)\n' "$passed" "$total"; return 0
+  else printf 'RESULT: FAIL (%s/%s)\n' "$passed" "$total"; return 1; fi
+}
+
+if [[ "${1:-}" == "--scenario-self-test" ]]; then
+  scenario_self_test
+  exit $?
+fi
+
 # scenario NAME  EXPECT_REGEX  -- command...
 scenario() {
   local name="$1" expect="$2"; shift 2
-  local out
+  local out command_status
   out="$(timeout_run 120 "$@" 2>&1)"
-  local result; result="$(grep -oE 'RESULT:.*' <<<"$out" | head -1)"
-  if grep -qE "$expect" <<<"$out"; then
-    if grep -q 'RESULT: SKIP' <<<"$out"; then
+  command_status=$?
+  local result; result="$(grep -oE '^RESULT:.*' <<<"$out" | tail -1)"
+  if scenario_succeeded "$command_status" "$out" "$expect"; then
+    if grep -q '^RESULT: SKIP' <<<"$result"; then
       printf "  %sSKIP%s  %-34s %s%s%s\n" "$yellow" "$rst" "$name" "$dim" "${result#RESULT: }" "$rst"; skip=$((skip+1))
     else
       printf "  %s ok %s  %-34s %s%s%s\n" "$green" "$rst" "$name" "$dim" "${result#RESULT: }" "$rst"; pass=$((pass+1))
     fi
   else
     printf "  %sFAIL%s  %-34s\n" "$red" "$rst" "$name"; fail=$((fail+1))
+    printf '        exit status: %s\n' "$command_status"
     sed 's/^/        /' <<<"$out" | tail -12
   fi
 }
@@ -144,12 +213,18 @@ else
 fi
 
 echo "==> Scenarios"
+CAPTURE_CHECKER="$E2E_SCRATCH/capture-quality"
+xcrun --toolchain XcodeDefault swiftc -swift-version 6 test/e2e/capture_quality.swift \
+  -o "$CAPTURE_CHECKER" >"$E2E_SCRATCH/capture-build.log" 2>&1 \
+  || { tail -30 "$E2E_SCRATCH/capture-build.log"; exit 1; }
+python3 scripts/check_warnings.py "$E2E_SCRATCH/capture-build.log" || exit 1
+scenario "capture discrimination controls" 'RESULT: PASS' "$CAPTURE_CHECKER" --self-test
+scenario "E2E completion controls" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --scenario-self-test
 scenario "launch + UI invariants"      'RESULT: PASS' env PATHEM_SMOKE=1 "$BIN"
 scenario "1M-row virtualization (Gate A)" 'RESULT: PASS' env PATHEM_GATE_A=1 "$BIN"
 scenario "localization bundled + resolves" 'RESULT: PASS' env PATHEM_L10N_SMOKE=1 "$BIN"
 scenario "organize-with-AI path"       'RESULT: (PASS|SKIP)' env PATHEM_AI_SMOKE=1 "$BIN"
 scenario "torrent + magnet daemon seam" 'RESULT: PASS' env PATHEM_TORRENTS_SMOKE=1 "$BIN"
-rm -f /tmp/pathem-e2e.png  # cleared before the flow so the render assert below sees a fresh one
 scenario "create + rename flow (real files)" 'RESULT: PASS' env PATHEM_E2E=1 "$BIN"
 scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN"
 scenario "file search UI + scopes"     'RESULT: PASS' env PATHEM_FILE_SEARCH_TEST=1 "$BIN"
@@ -214,13 +289,66 @@ else
   fail=$((fail+1))
 fi
 
-# Render harnesses: assert they produce non-empty PNGs (layout didn't collapse).
-rm -f /tmp/settings_general.png /tmp/sidebar.png
-env PATHEM_PREFS_SHOT=1 "$BIN" >/dev/null 2>&1
-env PATHEM_SIDEBAR_SHOT=1 "$BIN" >/dev/null 2>&1
-assert "settings panes render"  test -s /tmp/settings_general.png
-assert "sidebar renders"        test -s /tmp/sidebar.png
-assert "e2e flow render produced" test -s /tmp/pathem-e2e.png
+# Cached pixels are evidence only after decoding and discrimination. A renderer that cannot
+# composite native materials earns an explicit SKIP for visual acceptance, never a false PASS.
+verify_cached_capture() {
+  local name="$1" path="$2" allow_transparency="${3:-0}" out status disposition
+  out="$("$CAPTURE_CHECKER" "$path" 2>&1)"; status=$?
+  disposition="$(capture_disposition "$status" "$out" "$allow_transparency")"
+  if [[ "$disposition" == PASS ]]; then
+    printf '  %s ok %s  %s (pixel sanity only)\n' "$green" "$rst" "$name"; pass=$((pass+1))
+  elif [[ "$disposition" == SKIP ]]; then
+    printf '  %sSKIP%s  %s (cached pixels rejected; native appearance unverified)\n' "$yellow" "$rst" "$name"
+    sed 's/^/        /' <<<"$out"; skip=$((skip+1))
+  else
+    printf '  %sFAIL%s  %s (capture pipeline)\n' "$red" "$rst" "$name"
+    sed 's/^/        /' <<<"$out"; fail=$((fail+1))
+  fi
+}
+timeout_run 120 env PATHEM_PREFS_SHOT=1 "$BIN" >"$E2E_SCRATCH/prefs.log" 2>&1
+prefs_status=$?
+assert "settings capture process exits" test "$prefs_status" -eq 0
+timeout_run 120 env PATHEM_SIDEBAR_SHOT=1 "$BIN" >"$E2E_SCRATCH/sidebar.log" 2>&1
+sidebar_status=$?
+assert "sidebar capture process exits" test "$sidebar_status" -eq 0
+verify_cached_capture "settings pixels" "$PATHEM_CAPTURE_DIR/settings_general.png"
+verify_cached_capture "sidebar pixels" "$PATHEM_CAPTURE_DIR/sidebar.png"
+verify_cached_capture "browser flow pixels" "$PATHEM_CAPTURE_DIR/pathem-e2e.png" 1
+
+# Bounded representative theme/locale/long-label matrix, not an approved golden corpus.
+for appearance in light dark; do
+  for language in en de; do
+    for long_labels in 0 1; do
+      name="conflict $appearance/$language/long=$long_labels"
+      capture_dir="$PATHEM_CAPTURE_DIR/$appearance-$language-$long_labels"
+      mkdir -p "$capture_dir"
+      timeout_run 120 env PATHEM_CONFLICT_SHOT=1 PATHEM_CAPTURE_DIR="$capture_dir" \
+        PATHEM_CAPTURE_APPEARANCE="$appearance" PATHEM_CAPTURE_LONG_LABELS="$long_labels" \
+        "$BIN" -AppleLanguages "($language)" >"$capture_dir/delivery.log" 2>&1
+      capture_status=$?
+      assert "$name process exits" test "$capture_status" -eq 0
+      expected_appearance=NSAppearanceNameAqua
+      [[ "$appearance" == dark ]] && expected_appearance=NSAppearanceNameDarkAqua
+      assert "$name appearance + language delivered" \
+        grep -q "appearance=$expected_appearance language=$language" "$capture_dir/delivery.log"
+      if [[ "$long_labels" == 0 ]]; then
+        expected_label=Replace
+        [[ "$language" == de ]] && expected_label=Ersetzen
+        assert "$name translated action delivered" grep -q "buttons=$expected_label |" "$capture_dir/delivery.log"
+      else
+        assert "$name long labels delivered" grep -q 'buttons=Vorhandene Datei vollständig ersetzen |' "$capture_dir/delivery.log"
+      fi
+      verify_cached_capture "$name pixels" "$capture_dir/conflict.png"
+    done
+  done
+done
+invalid_dir="$PATHEM_CAPTURE_DIR/invalid"
+mkdir -p "$invalid_dir"
+timeout_run 120 env PATHEM_CONFLICT_SHOT=1 PATHEM_CAPTURE_DIR="$invalid_dir" \
+  PATHEM_CAPTURE_APPEARANCE=invalid "$BIN" >"$invalid_dir/delivery.log" 2>&1
+invalid_status=$?
+assert "unsupported appearance refused" test "$invalid_status" -eq 64
+assert "unsupported appearance writes no PNG" test ! -e "$invalid_dir/conflict.png"
 
 echo
 echo "==> ${pass} passed, ${skip} skipped, ${fail} failed"

@@ -90,6 +90,7 @@ e2e-env: preflight
 ci: preflight
 	python3 scripts/l10n_lint.py
 	python3 scripts/check_warnings.py --self-test
+	test/e2e/run.sh --scenario-self-test
 	mkdir -p .build
 	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS) > .build/ci-debug-build.log 2>&1 || { tail -80 .build/ci-debug-build.log; exit 1; }
 	python3 scripts/check_warnings.py .build/ci-debug-build.log

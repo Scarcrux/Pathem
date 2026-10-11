@@ -126,8 +126,8 @@ enum PathemApp {
         }
 
         if ProcessInfo.processInfo.environment["PATHEM_PREFS_SHOT"] != nil {
-            SettingsWindowController().debugRenderPanes(toDir: "/tmp")
-            BatchCreateController().debugRender(to: "/tmp/batch.png")
+            SettingsWindowController().debugRenderPanes(toDir: captureDirectory)
+            BatchCreateController().debugRender(to: capturePath("batch.png"))
             exit(0)
         }
 
@@ -439,11 +439,34 @@ enum PathemApp {
         // Headless render of the move/copy conflict popover content (PATHEM_CONFLICT_SHOT=1), to
         // inspect the button padding.
         if ProcessInfo.processInfo.environment["PATHEM_CONFLICT_SHOT"] != nil {
+            let requestedAppearance = ProcessInfo.processInfo.environment[
+                "PATHEM_CAPTURE_APPEARANCE"]
+            let appearance: NSAppearance?
+            switch requestedAppearance ?? "dark" {
+            case "light": appearance = NSAppearance(named: .aqua)
+            case "dark": appearance = NSAppearance(named: .darkAqua)
+            default:
+                print("CAPTURE ERROR: unsupported appearance; use light or dark")
+                exit(64)
+            }
+            let longLabels =
+                ProcessInfo.processInfo.environment["PATHEM_CAPTURE_LONG_LABELS"] == "1"
             CursorConfirm().debugRender(
-                to: "/tmp/conflict.png",
-                message: "1 item already exists at the destination",
-                info: "Choose how to handle the copy.",
-                buttons: ["Replace", "Keep Both", "Skip", "Cancel"])
+                to: capturePath("conflict.png"),
+                message: L("bvc.conflictOne", "1 item already exists at the destination"),
+                info: String(
+                    format: L("bvc.conflictHandle", "Choose how to handle the %@."),
+                    L("bvc.copyNoun", "copy")),
+                buttons: longLabels
+                    ? [
+                        "Vorhandene Datei vollständig ersetzen", "Beide Dateien dauerhaft behalten",
+                        "Diesen Eintrag überspringen", "Übertragung vollständig abbrechen",
+                    ]
+                    : [
+                        L("bvc.replace", "Replace"), L("bvc.keepBoth", "Keep Both"),
+                        L("bvc.skip", "Skip"), L("common.cancel", "Cancel"),
+                    ],
+                appearance: appearance)
             exit(0)
         }
 
@@ -717,7 +740,7 @@ enum PathemApp {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
                     return
                 }
-                browser.debugRenderSidebar(to: "/tmp/sidebar.png")
+                browser.debugRenderSidebar(to: Self.capturePath("sidebar.png"))
                 exit(0)
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)
@@ -1300,13 +1323,13 @@ enum PathemApp {
         step(5.3) {
             let ok = fm.fileExists(atPath: workspace.appendingPathComponent(fileName).path)
             results.append(("file-renamed-on-disk", ok, fileName))
-            browser.debugRender(to: "/tmp/pathem-e2e.png")  // offscreen capture, no Screen Recording needed
+            browser.debugRender(to: Self.capturePath("pathem-e2e.png"))  // cached capture; not native visual approval
         }
         step(6.0) {
             print("=== PATHEM_E2E: create -> rename flow ===")
             let ok = results.allSatisfy(\.ok)
             for r in results { print("\(r.ok ? "ok  " : "FAIL") \(r.name) (\(r.detail))") }
-            print("RESULT: \(ok ? "PASS" : "FAIL")   render: /tmp/pathem-e2e.png")
+            print("RESULT: \(ok ? "PASS" : "FAIL")   render: \(Self.capturePath("pathem-e2e.png"))")
             try? fm.removeItem(at: workspace)
             exit(ok ? 0 : 1)
         }
