@@ -84,3 +84,18 @@ Final layout verification: `make ci` passed 15 XCTest plus 766 Swift Testing tes
 20 debug E2E scenarios (including 161/161 layout, 49/49 interaction, 39/39 search,
 132/132 Finder) and 9 signed release-package launch checks. Existing compiler
 warnings remain; nonempty-render checks in this run are not native visual approval.
+
+### Search sample
+
+Four additional engine tests delivered Unicode/punctuation across a buffer boundary,
+oversize/binary content, explicit-package-root control, indexed package/symlink
+ancestor exclusion and a noncompliant index limit. Initial run failed exactly two
+criteria: indexed ancestors leaked and whole-Mac results exceeded the requested cap.
+The engine now checks all ancestors up to (not including) the chosen root and clamps
+indexed whole-Mac results itself. UI coverage adds actual-mode delivery and visible
+Reveal/dismiss/return navigation in all five modes; no default app is launched.
+
+Final search verification: 14 engine tests and 59 UI checks pass; delivered unreadable
+content and cancellation now have controls. `make ci` passes 15 XCTest + 772 Swift
+Testing, 20 debug scenarios and 9 packaged checks. Live Spotlight completeness,
+native folder-picker/default-app behavior and deeper resize/tab races remain open.

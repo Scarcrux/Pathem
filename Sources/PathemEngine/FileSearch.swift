@@ -46,7 +46,13 @@ public enum FileSearch {
         guard !request.keyword.isEmpty else { return Response() }
         switch request.scope {
         case .mac:
-            return sorted(await indexedSearch(request, nil, limit))
+            var response = sorted(await indexedSearch(request, nil, limit))
+            let boundedLimit = max(0, limit)
+            if response.urls.count > boundedLimit {
+                response.truncated = true
+                response.urls = Array(response.urls.prefix(boundedLimit))
+            }
+            return response
         case .folder(let root, let recursive):
             let worker = Task.detached(priority: .userInitiated) {
                 scan(request, root: root, recursive: recursive, limit: limit)
@@ -66,14 +72,24 @@ public enum FileSearch {
                 let scoped = indexed.urls.filter { url in
                     let path = url.standardizedFileURL.path
                     guard path.hasPrefix(prefix) else { return false }
-                    if (try? url.resourceValues(forKeys: [.isSymbolicLinkKey]))?.isSymbolicLink
-                        == true
-                    {
-                        return false
-                    }
                     let relative = String(path.dropFirst(prefix.count))
                     if relative.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
                         return false
+                    }
+                    // An indexed document can sit *under* a package or symlink even
+                    // when the leaf itself is ordinary. Match the direct traversal's
+                    // boundary at every ancestor, stopping before the explicit root.
+                    var ancestor = url.standardizedFileURL
+                    while ancestor.path != rootPath {
+                        let values = try? ancestor.resourceValues(forKeys: [
+                            .isSymbolicLinkKey, .isPackageKey,
+                        ])
+                        if values?.isSymbolicLink == true || values?.isPackage == true {
+                            return false
+                        }
+                        let parent = ancestor.deletingLastPathComponent()
+                        guard parent.path != ancestor.path else { return false }
+                        ancestor = parent
                     }
                     return recursive
                         || url.deletingLastPathComponent().standardizedFileURL.path == rootPath

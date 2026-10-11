@@ -37,7 +37,12 @@ extension BrowserViewController {
                 to: root.appendingPathComponent("nested/plants-child.txt"), atomically: true,
                 encoding: .utf8)
             pane.navigate(to: root)
-            check("search-fixture-listed", settle { pane.debugEntryCount == 3 })
+            check(
+                "search-fixture-listed",
+                settle {
+                    pane.currentURL.path == root.path && pane.debugHasEntry("plants-name.txt")
+                        && pane.debugEntryCount == 3
+                })
         } catch { return [("search-fixture-created", false, error.localizedDescription)] }
 
         // Check production entry points, not only the standalone controller.
@@ -210,13 +215,32 @@ extension BrowserViewController {
 
         for mode in ViewFormat.ViewMode.allCases {
             pane.setViewMode(mode)
+            check(
+                "search-actual-mode-\(mode.rawValue)",
+                settle { pane.viewMode == mode && pane.debugEntryCount == 3 })
             searchButton.performClick(nil)
             globalSearchController.debugSetKeyword("plants")
             check(
                 "search-view-\(mode.rawValue)-supported",
                 settle { !globalSearchController.debugBusy }
                     && globalSearchController.debugResults.count == 2)
-            globalSearchController.debugPanel.cancelOperation(nil)
+            globalSearchController.debugReveal.performClick(nil)
+            check(
+                "search-reveal-\(mode.rawValue)-selected-visible",
+                settle {
+                    pane.selectedEntries.first?.name == "plants-child.txt"
+                        && pane.selectionRectInWindow.map {
+                            $0.intersects(
+                                pane.contentClipView.convert(pane.contentClipView.bounds, to: nil))
+                        } == true
+                })
+            check(
+                "search-reveal-\(mode.rawValue)-dismisses",
+                !globalSearchController.debugPanel.isVisible)
+            pane.navigate(to: root)
+            check(
+                "search-return-root-\(mode.rawValue)",
+                settle { pane.currentURL.path == root.path && pane.debugEntryCount == 3 })
         }
         pane.setViewMode(.list)
         _ = settle { pane.debugEntryCount == 3 }
