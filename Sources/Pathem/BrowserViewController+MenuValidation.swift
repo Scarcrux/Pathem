@@ -6,26 +6,44 @@ import PathemEngine
 // out of BrowserViewController.
 @MainActor
 extension BrowserViewController {
+    var canTagSelection: Bool {
+        guard let pane = activePane else { return false }
+        return !pane.isRemote && !pane.isShowingSmartResults && !pane.selectedEntries.isEmpty
+    }
     /// Run a registry command from a menu item carrying its id in representedObject.
     @objc func performMenuCommand(_ sender: NSMenuItem) {
         if let id = sender.representedObject as? String { commands.perform(id) }
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(applyLabelFromMenu(_:)) { return canTagSelection }
         if menuItem.action == #selector(selectTerminalTheme(_:)) {
-            menuItem.state = (menuItem.representedObject as? String == terminal.theme.name) ? .on : .off
+            menuItem.state =
+                (menuItem.representedObject as? String == terminal.theme.name) ? .on : .off
             return true
         }
         // The Edit menu's Undo/Redo reflect the file-op history -- unless a text field is being
         // edited, in which case its own field-editor undo drives them.
         if menuItem.action == Selector(("undo:")) {
-            if isEditingText { menuItem.title = L("menu.undo", "Undo"); return view.window?.undoManager?.canUndo ?? false }
-            menuItem.title = actionHistory.undoActionName.map { String(format: L("menu.undoNamed", "Undo %@"), $0) } ?? L("menu.undo", "Undo")
+            if isEditingText {
+                menuItem.title = L("menu.undo", "Undo")
+                return view.window?.undoManager?.canUndo ?? false
+            }
+            menuItem.title =
+                actionHistory.undoActionName.map {
+                    String(format: L("menu.undoNamed", "Undo %@"), $0)
+                } ?? L("menu.undo", "Undo")
             return actionHistory.canUndo
         }
         if menuItem.action == Selector(("redo:")) {
-            if isEditingText { menuItem.title = L("menu.redo", "Redo"); return view.window?.undoManager?.canRedo ?? false }
-            menuItem.title = actionHistory.redoActionName.map { String(format: L("menu.redoNamed", "Redo %@"), $0) } ?? L("menu.redo", "Redo")
+            if isEditingText {
+                menuItem.title = L("menu.redo", "Redo")
+                return view.window?.undoManager?.canRedo ?? false
+            }
+            menuItem.title =
+                actionHistory.redoActionName.map {
+                    String(format: L("menu.redoNamed", "Redo %@"), $0)
+                } ?? L("menu.redo", "Redo")
             return actionHistory.canRedo
         }
         guard menuItem.action == #selector(performMenuCommand(_:)),
@@ -39,7 +57,8 @@ extension BrowserViewController {
         case "view.asColumn": menuItem.state = activePane?.viewMode == .column ? .on : .off
         case "view.asTree": menuItem.state = activePane?.viewMode == .tree ? .on : .off
         case "nav.vimMode": menuItem.state = vimMode ? .on : .off
-        case "view.arrangeNone": menuItem.state = (activePane?.groupKey ?? .none) == .none ? .on : .off
+        case "view.arrangeNone":
+            menuItem.state = (activePane?.groupKey ?? .none) == .none ? .on : .off
         case "view.arrangeKind": menuItem.state = activePane?.groupKey == .kind ? .on : .off
         case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
         case "view.arrangeDate": menuItem.state = activePane?.groupKey == .dateModified ? .on : .off
@@ -53,7 +72,9 @@ extension BrowserViewController {
         case "view.previewPane": menuItem.state = previewPane.isVisible ? .on : .off
         case "shelf.toggle":
             menuItem.state = shelf.view.isHidden ? .off : .on
-            menuItem.title = shelf.view.isHidden ? L("bvc.showShelf", "Show Drop Stack") : L("bvc.hideShelf", "Hide Drop Stack")
+            menuItem.title =
+                shelf.view.isHidden
+                ? L("bvc.showShelf", "Show Drop Stack") : L("bvc.hideShelf", "Hide Drop Stack")
         case "connections.newTabToggle": menuItem.state = prefs.openConnectionsInNewTab ? .on : .off
         case "files.newFolderWithSelection":
             menuItem.title = FileContextMenuController.newFolderWithSelectionTitle(

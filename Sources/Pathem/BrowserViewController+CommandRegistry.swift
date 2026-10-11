@@ -20,6 +20,7 @@ extension BrowserViewController {
         let hasSelection: () -> Bool = { [weak self] in
             self?.activePane?.selectedEntries.isEmpty == false
         }
+        let taggableSelection: () -> Bool = { [weak self] in self?.canTagSelection ?? false }
         add(
             "files.copyToOtherPane", L("bvc.cmd.copyToOtherPane", "Copy to Other Pane"),
             enabled: hasSelection
@@ -950,12 +951,13 @@ extension BrowserViewController {
         for color in FileTag.Color.displayOrder {
             add(
                 "tags.toggle.\(color.rawValue)",
-                String(format: L("bvc.cmd.tagColor", "Tag %@"), color.label), enabled: hasSelection
+                String(format: L("bvc.cmd.tagColor", "Tag %@"), color.label),
+                enabled: taggableSelection
             ) {
                 [weak self] in self?.activePane?.tagSelection(toggle: color)
             }
         }
-        add("tags.clear", L("bvc.cmd.clearTags", "Clear Tags"), enabled: hasSelection) {
+        add("tags.clear", L("bvc.cmd.clearTags", "Clear Tags"), enabled: taggableSelection) {
             [weak self] in self?.activePane?.clearSelectionTags()
         }
         add(

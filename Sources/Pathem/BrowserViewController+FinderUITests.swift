@@ -177,6 +177,59 @@ extension BrowserViewController {
                 view.layoutSubtreeIfNeeded()
             }
             select(["source.txt"], menu: menu)
+            let tagsMenu = menu.items.compactMap(\.submenu).first {
+                $0.items.contains { ($0.representedObject as? String) == "tags.clear" }
+            }
+            check(
+                "finder-named-labels-context-\(mode.rawValue)",
+                tagsMenu?.items.compactMap { $0.representedObject as? FileLabel }.count
+                    == LabelSet.default.labels.count)
+            if let tagsMenu, let label = LabelSet.default.labels.first,
+                let labelItem = tagsMenu.items.first(where: {
+                    ($0.representedObject as? FileLabel) == label
+                }),
+                let action = labelItem.action
+            {
+                let second = root.appendingPathComponent("ordinary")
+                do {
+                    try FileTags.setTags([label.tag], on: source)
+                    try FileTags.setTags([], on: second)
+                    select(["source.txt", "ordinary"], menu: menu)
+                    tagsMenu.delegate?.menuNeedsUpdate?(tagsMenu)
+                    check(
+                        "finder-label-mixed-\(mode.rawValue)",
+                        labelItem.state == .mixed && validateMenuItem(labelItem))
+                    check(
+                        "finder-label-dispatch-\(mode.rawValue)",
+                        window.firstResponder?.tryToPerform(action, with: labelItem) == true)
+                    check(
+                        "finder-label-written-both-\(mode.rawValue)",
+                        [source, second].allSatisfy { FileTags.tags(of: $0).contains(label.tag) })
+                    check(
+                        "finder-label-refresh-keeps-selection-\(mode.rawValue)",
+                        Set(pane.selectedEntries.map(\.name)) == ["source.txt", "ordinary"])
+                    tagsMenu.delegate?.menuNeedsUpdate?(tagsMenu)
+                    check(
+                        "finder-label-all-checkmarked-\(mode.rawValue)", labelItem.state == .on,
+                        "state=\(labelItem.state.rawValue) selection=\(pane.selectedEntries.map(\.name)) folder=\(pane.currentURL.lastPathComponent)"
+                    )
+                    select(["source.txt", "ordinary"], menu: menu)
+                    _ = window.firstResponder?.tryToPerform(action, with: labelItem)
+                    tagsMenu.delegate?.menuNeedsUpdate?(tagsMenu)
+                    check(
+                        "finder-label-toggle-removes-both-\(mode.rawValue)",
+                        labelItem.state == .off
+                            && [source, second].allSatisfy { FileTags.tags(of: $0).isEmpty })
+                    select([], menu: menu)
+                    check(
+                        "finder-label-empty-disabled-\(mode.rawValue)", !validateMenuItem(labelItem)
+                    )
+                } catch {
+                    check(
+                        "finder-label-fixture-\(mode.rawValue)", false, error.localizedDescription)
+                }
+                select(["source.txt"], menu: menu)
+            }
             check(
                 "finder-file-controls-\(mode.rawValue)",
                 ["files.compress", "files.compress7z", "files.makeAlias", "view.quickLook"]
@@ -343,6 +396,23 @@ extension BrowserViewController {
         } else {
             check("finder-race-other-pane", false)
         }
+        navigateRoot()
+        pane.showSmartResults(
+            [FileEntry(name: "source.txt", isDirectory: false, size: 1, modificationDate: nil)],
+            title: "Fixture smart results")
+        pane.debugSelectNames(["source.txt"])
+        check(
+            "finder-smart-tag-selection-delivered",
+            pane.isShowingSmartResults && pane.selectedEntries.count == 1)
+        check(
+            "finder-smart-tag-actions-disabled",
+            FileTag.Color.displayOrder.allSatisfy {
+                commands.command("tags.toggle.\($0.rawValue)")?.isEnabled() == false
+            } && commands.command("tags.clear")?.isEnabled() == false)
+        let labelValidation = NSMenuItem(
+            title: "Fixture label", action: #selector(applyLabelFromMenu(_:)), keyEquivalent: "")
+        check("finder-smart-label-disabled", !validateMenuItem(labelValidation))
+        navigateRoot()
         let customized = FileContextMenuController()
         customized.menuOrder = ["files.compress", "files.open"]
         customized.hiddenItems = ["files.makeAlias"]
@@ -355,6 +425,12 @@ extension BrowserViewController {
                 && customized.menu.items.contains {
                     ($0.representedObject as? String) == "files.showPackageContents"
                 })
+        customized.hiddenItems = ["@tags"]
+        check(
+            "finder-hide-tags-also-hides-labels",
+            !customized.menu.items.compactMap(\.submenu).contains {
+                $0.items.contains { $0.representedObject is FileLabel }
+            })
         // exit() does not run defer blocks; dispose the known fixture before exiting.
         try? fm.removeItem(at: root)
         finish()

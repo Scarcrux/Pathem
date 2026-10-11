@@ -119,3 +119,25 @@ Expanded transient sample passes 52/52, including repeated real popover default
 completion, a geometric overlap control and transfer cancellation exactly once.
 Final `make ci`: 15 XCTest + 772 Swift Testing, 21 debug scenarios and 9 signed
 release-package checks pass. No physical key or native menu appearance sign-off.
+
+### Finder slice
+
+Inventory is in `FINDER_FEATURE_MATRIX.md`. Six baseline failures reproduced missing
+named labels in all five shared context menus and enabled tag commands in a delivered
+smart-result selection whose handler refuses writes. Reuse existing named-label
+actions/xattr semantics in Tags; present mixed/all-selected states; gate tag/label
+enablement consistently to local non-smart selections. Broader Finder functionality
+and live providers remain pending exactly as the inventory states.
+
+First integrated label sample passed 192/193, failing only column all-selected state.
+Diagnostic showed `selection=[]` immediately after successful writes to both items.
+Mechanism: `PaneController.reload` calls `ColumnBrowserController.setSortFormat`,
+which reloaded tables without carrying selected names. Restore by names around each
+column re-sort; add an explicit selection-preservation check in all five views.
+
+Expanded Finder sample passes 198/198 (previously 132). Named-label presence,
+mixed/all-selected states, real xattr writes/removal, selection retention and
+empty/smart disabled controls pass across five actual views. Hiding Tags hides its
+labels too. Deep drilled-column sort/refresh sequences remain a separate boundary.
+Final `make ci` passes 15 XCTest + 772 Swift Testing, 21 debug scenarios (Finder
+198/198, search 59/59, layout 161/161, transient 52/52) and 9 packaged checks.

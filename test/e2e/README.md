@@ -37,6 +37,7 @@ does not fail the suite.
 | file search UI | `PATHEM_FILE_SEARCH_TEST` | real-window field-editor typing, filename/content controls and isolated folder scopes, recursion, keyboard Reveal/Open callback, stale-query/reopen/error/limit regressions and column/minimum-layout checks; whole-Mac routing uses a fixture index |
 | layout/listing boundaries | `PATHEM_LAYOUT_UI_TEST` | actual five modes, three sizes/ratios, usable clips, selection/reveal, directory-scoped creation callbacks and focused drawer frame slices; shell/daemon and combined drawer acceptance are not inferred |
 | transient surfaces | `PATHEM_TRANSIENT_UI_TEST` | production drop menu construction/cancel cleanup, native conflict-button alignment, real popover dismissal/default-action continuations, and transfer-sheet containment/cancel/end/reopen in light/dark; foreground tracking and physical keys remain unverified |
+| Finder context labels | `PATHEM_FINDER_UI_TEST` | named labels and colors share native Tags menus in five modes; mixed/all checkmarks, real tag xattrs/toggle removal, selection retention, empty/smart capability refusal and hide/customization controls |
 | developer tools | `PATHEM_DEVELOPER_E2E` | real Git init/status/stage/diff/commit and external-command expansion/execution |
 | remote WebDAV | `PATHEM_WEBDAV_E2E` | app → provider → system curl CRUD against a hermetic loopback WebDAV service |
 | settings / sidebar render | `PATHEM_PREFS_SHOT`, `PATHEM_SIDEBAR_SHOT` | panels render to non-empty images |

@@ -205,12 +205,23 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         let tags = NSMenuItem(title: L("list.tags", "Tags"), action: nil, keyEquivalent: "")
         tags.image = MenuIcons.image("tag")
         let tagsMenu = NSMenu()
+        tagsMenu.delegate = self
         for color in FileTag.Color.displayOrder {
             let item = NSMenuItem(
                 title: color.label, action: #selector(BrowserViewController.performMenuCommand(_:)),
                 keyEquivalent: "")
             item.representedObject = "tags.toggle.\(color.rawValue)"
             item.image = TagColors.dot(color)
+            tagsMenu.addItem(item)
+        }
+        tagsMenu.addItem(.separator())
+        // Reuse the same Finder-compatible named labels already offered in File > Label.
+        for label in LabelSet.default.labels {
+            let item = NSMenuItem(
+                title: label.name, action: #selector(BrowserViewController.applyLabelFromMenu(_:)),
+                keyEquivalent: "")
+            item.representedObject = label
+            item.image = TagColors.dot(label.color)
             tagsMenu.addItem(item)
         }
         tagsMenu.addItem(.separator())
@@ -226,6 +237,30 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     // MARK: - NSMenuDelegate
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+        if menu.items.contains(where: { $0.representedObject is FileLabel }) {
+            let urls = selectedURLs()
+            let tags = urls.prefix(2000).map { FileTags.tags(of: $0) }
+            for item in menu.items {
+                let matches: [Bool]
+                if let label = item.representedObject as? FileLabel {
+                    matches = tags.map {
+                        $0.contains { $0.name.caseInsensitiveCompare(label.name) == .orderedSame }
+                    }
+                } else if let id = item.representedObject as? String, id.hasPrefix("tags.toggle."),
+                    let raw = Int(id.dropFirst("tags.toggle.".count)),
+                    let color = FileTag.Color(rawValue: raw)
+                {
+                    matches = tags.map { $0.contains { $0.color == color } }
+                } else {
+                    continue
+                }
+                let any = matches.contains(true)
+                // Do not claim an all-selected checkmark based only on a bounded sample.
+                let all = !matches.isEmpty && matches.allSatisfy { $0 } && urls.count <= 2000
+                item.state = all ? .on : (any ? .mixed : .off)
+            }
+            return
+        }
         if menu === self.menu {
             // Right-click already moved the selection to the clicked item, so this is current.
             let urls = selectedURLs()

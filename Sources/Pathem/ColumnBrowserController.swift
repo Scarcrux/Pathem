@@ -27,6 +27,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private var storedResolutionURL: URL?
     private var trailingConstraint: NSLayoutConstraint?
     private var sortFormat = ViewFormat.default  // how every column (incl. drilled) is sorted
+    private var restoringSortSelection = false
     private let columnWidth: CGFloat = 220
     /// The one shared file context menu, same as every other pane view. Column view had no
     /// right-click menu at all before; now it gets the full set (Open With, Tags, Extract, ...).
@@ -205,8 +206,10 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     }
     private func applyBackground(to column: Column) {
         let transparent = (backgroundColor?.alphaComponent ?? 1) < 0.02
-        column.table.backgroundColor = transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
-        column.scroll.backgroundColor = transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
+        column.table.backgroundColor =
+            transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
+        column.scroll.backgroundColor =
+            transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
         column.scroll.drawsBackground = !transparent
     }
 
@@ -240,9 +243,11 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             trailingView = preview
         }
         if let trailingView {
-            trailingConstraint = container.trailingAnchor.constraint(equalTo: trailingView.trailingAnchor)
+            trailingConstraint = container.trailingAnchor.constraint(
+                equalTo: trailingView.trailingAnchor)
         } else {
-            trailingConstraint = container.trailingAnchor.constraint(equalTo: container.leadingAnchor)
+            trailingConstraint = container.trailingAnchor.constraint(
+                equalTo: container.leadingAnchor)
         }
         trailingConstraint?.isActive = true
         container.layoutSubtreeIfNeeded()
@@ -259,7 +264,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
             let sorted = format.sorted(entries)
             DispatchQueue.main.async {
-                guard let self, self.columns.indices.contains(index), self.columns.count == index + 1
+                guard let self, self.columns.indices.contains(index),
+                    self.columns.count == index + 1
                 else { return }  // a deeper column already opened, or the parent is gone
                 // The parent column must still have exactly this folder selected.
                 let parent = self.columns[index]
@@ -294,14 +300,22 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         return columns[index].entries.count
     }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        guard let index = columnIndex(of: tableView), row < columns[index].entries.count else { return nil }
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
+        guard let index = columnIndex(of: tableView), row < columns[index].entries.count else {
+            return nil
+        }
         let entry = columns[index].entries[row]
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
-        let ruleStyle = FileColorStyle.style(for: entry, rules: colorRules, baseFont: .systemFont(ofSize: 13))
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makeCell(id)
+        let ruleStyle = FileColorStyle.style(
+            for: entry, rules: colorRules, baseFont: .systemFont(ofSize: 13))
         cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: 13)
-        cell.textField?.textColor = ruleStyle?.color ?? (entry.isDataless ? .secondaryLabelColor : .labelColor)
+        cell.textField?.textColor =
+            ruleStyle?.color ?? (entry.isDataless ? .secondaryLabelColor : .labelColor)
         // Prefix a colored git-status letter and suffix tag dots when present (shared with the
         // list view). Middle truncation keeps both ends even when a long name is clipped.
         let folder = columns[index].folder
@@ -309,7 +323,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let dots = decorations.tagColors(for: entry, in: folder)
         if git != nil || !dots.isEmpty {
             cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
-                entry.name, git: git, dots: dots, size: 13, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color)
+                entry.name, git: git, dots: dots, size: 13, nameFont: ruleStyle?.font,
+                nameColor: ruleStyle?.color)
         } else {
             cell.textField?.stringValue = entry.name
         }
@@ -319,13 +334,17 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: columns[index].folder)
         // Dim cut items (until pasted), then hidden (dotfile) entries. Keyed on this column's
         // own folder, since a cut can live in any drilled column.
-        let isCut = !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: columns[index].folder))
+        let isCut =
+            !cutPaths.isEmpty
+            && cutPaths.contains(PaneItemKey.path(for: entry, in: columns[index].folder))
         cell.alphaValue = isCut ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
         return cell
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
-        guard let table = notification.object as? NSTableView, let index = columnIndex(of: table) else { return }
+        guard !restoringSortSelection else { return }  // sorting is not a new drill/preview gesture
+        guard let table = notification.object as? NSTableView, let index = columnIndex(of: table)
+        else { return }
         activeColumn = index
         onBecomeActive?()
         onSelectionChanged?()
@@ -419,16 +438,24 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             date.timeStyle = .short
             addRow(L("preview.kind", "Kind"), fileInfo.kind)
             addRow(L("preview.size", "Size"), formatter.string(fromByteCount: fileInfo.size))
-            if let created = fileInfo.created { addRow(L("preview.created", "Created"), date.string(from: created)) }
-            if let modified = fileInfo.modified { addRow(L("preview.modified", "Modified"), date.string(from: modified)) }
+            if let created = fileInfo.created {
+                addRow(L("preview.created", "Created"), date.string(from: created))
+            }
+            if let modified = fileInfo.modified {
+                addRow(L("preview.modified", "Modified"), date.string(from: modified))
+            }
         }
         return box
     }
 
     // MARK: Drag source (drag files OUT of a column to the other pane, Finder, other apps)
 
-    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
-        guard let index = columnIndex(of: tableView), row < columns[index].entries.count else { return nil }
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int)
+        -> NSPasteboardWriting?
+    {
+        guard let index = columnIndex(of: tableView), row < columns[index].entries.count else {
+            return nil
+        }
         let entry = columns[index].entries[row]
         guard !entry.isDataless else { return nil }  // don't drag online-only placeholders
         // A promise + file URL, so the drag lands in browsers/sandboxed apps and Finder alike.
@@ -442,7 +469,9 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         guard let index = columnIndex(of: tableView) else { return }
         let folder = columns[index].folder
         let urls = rowIndexes.compactMap { row -> URL? in
-            guard row < columns[index].entries.count, !columns[index].entries[row].isDataless else { return nil }
+            guard row < columns[index].entries.count, !columns[index].entries[row].isDataless else {
+                return nil
+            }
             return folder.appendingPathComponent(columns[index].entries[row].name)
         }
         FileDrag.addLegacyFilenames(urls, to: session.draggingPasteboard)
@@ -469,7 +498,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         _ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int,
         dropOperation: NSTableView.DropOperation
     ) -> Bool {
-        guard let index = columnIndex(of: tableView), let urls = draggedURLs(info), !urls.isEmpty else {
+        guard let index = columnIndex(of: tableView), let urls = draggedURLs(info), !urls.isEmpty
+        else {
             return false
         }
         var destination = columns[index].folder
@@ -557,7 +587,9 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
 extension ColumnBrowserController: PaneContentView {
     var scrollView: NSScrollView { outerScroll }
-    var keyView: NSView { columns.indices.contains(activeColumn) ? columns[activeColumn].table : container }
+    var keyView: NSView {
+        columns.indices.contains(activeColumn) ? columns[activeColumn].table : container
+    }
 
     var entries: [FileEntry] {
         columns.indices.contains(activeColumn) ? columns[activeColumn].entries : []
@@ -565,7 +597,9 @@ extension ColumnBrowserController: PaneContentView {
     var selectedEntries: [FileEntry] {
         guard columns.indices.contains(activeColumn) else { return [] }
         let col = columns[activeColumn]
-        return col.table.selectedRowIndexes.compactMap { $0 < col.entries.count ? col.entries[$0] : nil }
+        return col.table.selectedRowIndexes.compactMap {
+            $0 < col.entries.count ? col.entries[$0] : nil
+        }
     }
 
     var directoryURL: URL? {
@@ -588,7 +622,9 @@ extension ColumnBrowserController: PaneContentView {
         guard row >= 0, row < col.entries.count else { return false }
         let entry = col.entries[row]
         col.table.scrollRowToVisible(row)
-        guard let cell = col.table.view(atColumn: 0, row: row, makeIfNecessary: true) as? NSTableCellView,
+        guard
+            let cell = col.table.view(atColumn: 0, row: row, makeIfNecessary: true)
+                as? NSTableCellView,
             let field = cell.textField
         else { return false }
         editingEntry = entry
@@ -608,7 +644,8 @@ extension ColumnBrowserController: PaneContentView {
         if let editor = field.currentEditor() {
             let ns = entry.name as NSString
             let ext = ns.pathExtension as NSString
-            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            let baseLength =
+                (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
             editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
         }
         return true
@@ -633,7 +670,8 @@ extension ColumnBrowserController: PaneContentView {
         editingRow = -1
         renameCancelled = false
         if let table, row >= 0, row < table.numberOfRows,
-            let cell = table.view(atColumn: 0, row: row, makeIfNecessary: false) as? NSTableCellView,
+            let cell = table.view(atColumn: 0, row: row, makeIfNecessary: false)
+                as? NSTableCellView,
             let field = cell.textField
         {
             endInlineEditing(field)
@@ -641,7 +679,8 @@ extension ColumnBrowserController: PaneContentView {
         }
     }
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool
+    {
         if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
             renameCancelled = true
             editingTable?.window?.makeFirstResponder(editingTable)
@@ -662,7 +701,8 @@ extension ColumnBrowserController: PaneContentView {
         editingRow = -1
         renameCancelled = false
         if let table, row >= 0, row < table.numberOfRows {
-            table.reloadData(forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
+            table.reloadData(
+                forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
         }
         guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
         onInlineRename?(entry, newName)
@@ -678,18 +718,22 @@ extension ColumnBrowserController: PaneContentView {
         // An in-place refresh (a watcher tick on the root) updates the first column
         // without collapsing the drilled columns or losing focus/selection.
         if preserveState, let first = columns.first, first.folder == root {
-            let names = Set(first.table.selectedRowIndexes.compactMap {
-                $0 < columns[0].entries.count ? columns[0].entries[$0].name : nil
-            })
+            let names = Set(
+                first.table.selectedRowIndexes.compactMap {
+                    $0 < columns[0].entries.count ? columns[0].entries[$0].name : nil
+                })
             columns[0].entries = entries
             first.table.reloadData()
             var rows = IndexSet()
-            for (index, entry) in entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
+            for (index, entry) in entries.enumerated() where names.contains(entry.name) {
+                rows.insert(index)
+            }
             first.table.selectRowIndexes(rows, byExtendingSelection: false)
             refreshColumnTags()  // a watcher tick may include external tag edits
             return
         }
-        let wasFocused = outerScroll.window?.firstResponder === container
+        let wasFocused =
+            outerScroll.window?.firstResponder === container
             || columns.contains { $0.table === outerScroll.window?.firstResponder }
         previewColumn = nil
         let first = makeColumn(folder: root, entries: entries, index: 0)
@@ -707,7 +751,8 @@ extension ColumnBrowserController: PaneContentView {
         let target = columns[column]
         guard row < target.entries.count else { return }
         target.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        tableViewSelectionDidChange(Notification(name: NSTableView.selectionDidChangeNotification, object: target.table))
+        tableViewSelectionDidChange(
+            Notification(name: NSTableView.selectionDidChangeNotification, object: target.table))
     }
 
     func showPlaceholder(_ text: String?) {
@@ -737,7 +782,9 @@ extension ColumnBrowserController: PaneContentView {
         guard columns.indices.contains(activeColumn) else { return }
         let column = columns[activeColumn]
         var rows = IndexSet()
-        for (index, entry) in column.entries.enumerated() where names.contains(entry.name) { rows.insert(index) }
+        for (index, entry) in column.entries.enumerated() where names.contains(entry.name) {
+            rows.insert(index)
+        }
         column.table.selectRowIndexes(rows, byExtendingSelection: false)
     }
 
@@ -763,14 +810,17 @@ extension ColumnBrowserController: PaneContentView {
             let folder = columns[index].folder
             let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
             let sorted = sortFormat.sorted(entries)
-            let names = Set(columns[index].table.selectedRowIndexes.compactMap {
-                $0 < columns[index].entries.count ? columns[index].entries[$0].name : nil
-            })
+            let names = Set(
+                columns[index].table.selectedRowIndexes.compactMap {
+                    $0 < columns[index].entries.count ? columns[index].entries[$0].name : nil
+                })
             savedOffsets[index] = columns[index].scroll.contentView.bounds.origin
             columns[index].entries = sorted
             columns[index].table.reloadData()
             var rows = IndexSet()
-            for (row, entry) in sorted.enumerated() where names.contains(entry.name) { rows.insert(row) }
+            for (row, entry) in sorted.enumerated() where names.contains(entry.name) {
+                rows.insert(row)
+            }
             columns[index].table.selectRowIndexes(rows, byExtendingSelection: false)
         }
         relayout()
@@ -785,9 +835,22 @@ extension ColumnBrowserController: PaneContentView {
     /// so all columns order consistently, not just the first.
     func setSortFormat(_ format: ViewFormat) {
         sortFormat = format
+        restoringSortSelection = true
+        defer { restoringSortSelection = false }
         for index in columns.indices {
+            let column = columns[index]
+            let names = Set(
+                column.table.selectedRowIndexes.compactMap {
+                    $0 < column.entries.count ? column.entries[$0].name : nil
+                })
             columns[index].entries = format.sorted(columns[index].entries)
             columns[index].table.reloadData()
+            var selected = IndexSet()
+            for (row, entry) in columns[index].entries.enumerated() where names.contains(entry.name)
+            {
+                selected.insert(row)
+            }
+            columns[index].table.selectRowIndexes(selected, byExtendingSelection: false)
         }
     }
 }
