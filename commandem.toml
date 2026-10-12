@@ -1001,6 +1001,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-195800cd"
     title = "Make publishing fail closed: PUBLISH=1 requires Developer ID, notarization/stapling, real Sparkle public/private keys and signature; run the full gate before upload; make workflow and docs agree on DMG versus ZIP"
+    done = true
 
   [[mission.task]]
     id = "t-295d2e96"
@@ -1127,6 +1128,21 @@ name = "pathem"
     id = "t-89577f98"
     title = "Always Open With: selecting Choose immediately presents the native application picker; regress cancel/retry/Set without changing owner LaunchServices defaults"
     done = true
+
+  [[mission.task]]
+    id = "t-1e41c72c"
+    title = "Add and discriminate a redacted local release-safety preflight for tracked-tree/all-ref secrets, history noreply authorship and bounded PII/path patterns; preserve findings and require owner authority for any history rewrite"
+    done = true
+
+  [[mission.task]]
+    id = "t-fa027e6c"
+    title = "Privately triage release-safety findings (37 current-tree / 41 historical pattern matches at fae73b9): distinguish fixtures/public demo credentials from real personal contact or machine paths, propose precise current-tree cleanup and owner-reviewed history plan; no blanket exemptions or history rewrite"
+    done = true
+
+  [[mission.task]]
+    id = "t-fe0f31ea"
+    title = "Owner decision: defer historical cleanup while release is held, or approve an isolated private history-cleanup preview; prospective three non-fixture findings affect 850+ ancestor-descendant commits and 28 refs, preserve external private backup and coordinate workbenches; no live ref/force-push/public change implied"
+    state = "ask"
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1327,6 +1343,38 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner-authorized install of tested 5a0abe5 completed without rebuilding or restarting owner app. Staged signature and full checksum/symlink bundle inventory verified, then atomic swap into /Applications/Pathem.app; installed signature and exact full bundle inventory match tested source. Prior f1ce71d retained at /tmp/pathem-install-backup.tlrsHY/Pathem.app with verified signature/executable. Running owner app identity and prefs/formats/openers fingerprints preserved. New opener and Settings-default fixes activate on owner quit/reopen; no installed-launch claim, keychain action, credential access or public flip."
     at = "2026-10-12T06:44:40Z"
+
+  [[mission.comment]]
+    text = "Resumed Mission53 after completed install; selecting pending task7 privacy/history instrumentation as the next local deterministic unit. No scanner/preflight script exists in the tree, gitleaks is available. Source-only workbench preparation; no credentials, external upload, history rewrite, compiler/native hold or app restart."
+    at = "2026-10-12T12:35:28Z"
+
+  [[mission.comment]]
+    text = "Release-safety sample12/12 passed; expanded race control failed duplicate fixture-branch creation, fixed instrument delivery-once and specific changed-input verdict, restored18/18. Real local gate delivered629 candidate files/890 reachable commits and is authentically RED:37 tree matches(34 absolute-user-path/3 personal-email patterns),41 history matches(37 path/3 email/1 credential pattern), metadata authorship0. Current LiveRemote env code has no finding; historical credential-like match is a literal, not the nominated env-expression false positive, so no exemption was added. No genuine secret/PII classification or history rewrite is inferred from detector matches; broad task7 clearance remains pending. Finishing bounded instrumentation unit and normal local build/test verification, no app/credentials/publication action."
+    at = "2026-10-12T12:49:26Z"
+
+  [[mission.comment]]
+    text = "Landed fae73b9 release-safety instrumentation, normal commit/land terminal0; four normal pre-commit hooks skipped by their non-Swift file filters, not reported as full Swift-hook execution. Separate local build/test75007 terminal0:15 XCTest+779 Swift Testing cases, five live FTP/SFTP/DHT/Transmission opt-in skips remain explicit. Post-land required18 controls PASS, then actual629-file/891-commit scan remains RED:37 tree and41 history pattern matches, authorship0; outer make53923 exit2/recipe1 faithfully retained. Instrument task33 DONE, broad privacy task7 still pending; no clearance, history rewrite, credential access, app install or native/full packaged CI replay."
+    at = "2026-10-12T12:54:07Z"
+
+  [[mission.comment]]
+    text = "Task34 private triage: all37 current-tree matches are34 pure test path strings plus3 cloud-account example strings, placeholder classification/context verified without exposing values. Narrow cleanup uses /fixture/home and reserved example.invalid, no scanner policy exemptions. History additionally includes2 machine-specific old config paths and1 credential-like literal, left flagged. Writing criteria before focused suites/real gate; no historical rewrite, credential, installed-app or public action."
+    at = "2026-10-12T13:11:05Z"
+
+  [[mission.comment]]
+    text = "Fixture cleanup sample: unchanged71 engine tests/12 suites PASS via68590; real scanner controls19 PASS then current629-file candidate tree0 matches, all891-commit history41 stillvisible via33772(outermake2/recipe1). All38 historical fixture matches independently checked against their immutable source snapshots: synthetic roots and example cloud accounts, no actual user records; other3 match old machine config paths(2) and credential-like literal(1). Scanner policy unchanged, no waiver or history mutation. Next normal local full build/test and commit/land; no native/full package replay for fixture/comment-only source changes."
+    at = "2026-10-12T13:16:08Z"
+
+  [[mission.comment]]
+    text = "Landedd2ed3c5 narrow synthetic-fixture cleanup and private triage/history plan. Focused68590 exit0(71 tests); full local build/test21015 exit0(15 XCTest+779 Swift Testing cases, five live opt-in skips); normal Swift hook95472 exit0 and normal land0, workbench clean/in sync. Post-land20812 required19 controls PASS then gate remains authentic RED outermake2/recipe1:629 candidate files0 matches,892 reachable commits41 historical matches, authorship0. All38 historical fixture matches checked against immutable source; remaining2 machine-specific config paths and1 public FTP demo credential literal. Literal equality privately verified against provider public documentation, no secret value disclosed or rotation claim. Impact bound measured851/891 commits,28 refs before this unit; requires recomputation and owner approval before any isolated rewrite preview/live/remote mutation. Policy unchanged, no native/full package CI replay/install/public action. Task34 triage/cleanup DONE; broad privacy7 clearance not claimed."
+    at = "2026-10-12T13:25:10Z"
+
+  [[mission.comment]]
+    text = "Claude taking task 5 (publish fail-closed) in the claude workbench; Codex please leave it. Trigger: release.sh PUBLISH=1 can upload an ad-hoc, un-notarized DMG with an unsigned appcast (it warns and continues), and release.yml publishes a ZIP while README/RELEASE.md/LAUNCH_CHECKLIST promise a notarized DMG and never runs the gate. Plan: credential preflight before any build, make ci before upload, post-build artifact verifier (Developer ID authority, team, hardened runtime, stapled ticket, Gatekeeper, universal, EdDSA signature verified against the bundled SUPublicEDKey), workflow routed through release.sh as a DMG. Criteria and controls go in docs/PUBLISH_GATE_TESTING.md before implementation. No credentials, keychain writes, tags, releases or publication."
+    at = "2026-10-12T17:38:31Z"
+
+  [[mission.comment]]
+    text = "Landed 0ee3fe5 (task 5, publish fail-closed). PUBLISH=1 now refuses before any build unless Developer ID, notary profile, real SUPublicEDKey, authenticated gh, clean tree at the version tag and an unpublished tag are present; make ci then runs; scripts/verify-release.sh checks Developer ID/team, hardened runtime, stapled ticket, Gatekeeper, universal binaries, EdDSA signature against the app's own key and a fully signed appcast before upload. Tag workflow runs the same script and ships the DMG. Evidence: hermetic harness 17/17 (in make ci), 15/17 FAIL against the old script, cheater control red; verifier passes a notarized universal app and fails ad-hoc/arm64-only/unstapled/wrong-team apps for their own reasons; A7/A8 correct on a real dry-run DMG with a throwaway key. First verifier sample failed its positive control from two instrument bugs (pipefail SIGPIPE on grep -q, spctl not on PATH), fixed before acceptance. Pre-commit swift-format/swift test/l10n passed. Not claimed: a real end-to-end publish, or make ci on the macos-15 runner, whose Xcode may not match the local warning baseline (fails closed). No credentials, Keychain, tags, releases or push."
+    at = "2026-10-12T17:50:18Z"
 
 [[mission]]
   id = "m-e1443252"
