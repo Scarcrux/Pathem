@@ -1117,6 +1117,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-18cafeb9"
     title = "Diagnose intermittent CursorConfirm dismissal/default-action lifecycle failures: retain pending/shown/completion telemetry and require a stable causal reproduction before a production fix; never mask mandatory failures"
+    done = true
 
   [[mission.task]]
     id = "t-4333de50"
@@ -1147,6 +1148,10 @@ name = "pathem"
     id = "t-fe0f31ea"
     title = "Owner decision: defer historical cleanup while release is held, or approve an isolated private history-cleanup preview; prospective three non-fixture findings affect 850+ ancestor-descendant commits and 28 refs, preserve external private backup and coordinate workbenches; no live ref/force-push/public change implied"
     state = "ask"
+
+  [[mission.task]]
+    id = "t-118aa603"
+    title = "Diagnose why performClose immediately after a CursorConfirm popover's show() intermittently leaves it open (upstream event of the former 48/52); reproduce without injection before any production change"
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1411,6 +1416,14 @@ name = "pathem"
   [[mission.comment]]
     text = "Marking task7 done, not new work: it's already implemented and superseded by task33/34 (scripts/release_safety.py + release-safety.toml, landed fae73b9/d2ed3c5). Verified just now: 'make release-safety' runs a real gitleaks-backed gate with 19/19 passing unit tests (scripts/release_safety_test.py), scans the tracked candidate tree plus all reachable refs, and enforces noreply authorship. The specific LiveRemoteTests environment-variable concern this task named (PATHEM_LIVE_FTP_PASSWORD/PATHEM_LIVE_REBEX_PASSWORD identifiers in Tests/PathemEngineTests/LiveRemoteTests.swift, feared as a gitleaks false positive) produces zero findings against the current tracked tree (candidate-tree findings=0) -- confirmed empirically, not just by reading the prior triage comment. The gate is correctly RED on all-ref-history (41 findings, all pre-existing historical debt already triaged under task34 and gated on the owner's task35 decision), which is working as designed, not a defect in this task's deliverable. No source changes; this is a roadmap bookkeeping correction."
     at = "2026-10-12T18:59:13Z"
+
+  [[mission.comment]]
+    text = "Claude taking task29 (intermittent CursorConfirm lifecycle) in the claude workbench; Codex please leave BrowserViewController+TransientUITests.swift and CursorConfirm.swift alone meanwhile. Hypothesis from code reading, not yet convicted: the recorded 48/52 signature (dismiss check plus all three default-action checks fail, each with the popover shown and continuation pending) is one upstream failure cascading through the harness. Each reopen cycle waits on debugPopover?.isShown, which a stale popover left by a failed dismiss already satisfies, so the harness clicks the previous popover's button and resolves the previous task while the new ask() stays pending. Plan: preregister criteria in docs/CURSOR_CONFIRM_LIFECYCLE.md, reproduce the cascade deterministically with a DEBUG-only injected dismiss failure on the unchanged harness, then make each step wait for a new popover identity and confirm the injected failure reports as exactly one. Production CursorConfirm unchanged; why the original dismiss intermittently fails stays open unless separately convicted. Not reusing the stash's popoverDidShow readiness draft, which task29's own log measured at 47/52 and withdrew. No install/publication."
+    at = "2026-10-12T20:24:10Z"
+
+  [[mission.comment]]
+    text = "Landed 25ac4ab (task29). My first hypothesis (harness cascade alone) was refuted by its own sample: an injected dismiss failure on the unchanged harness gave 50/52, not the recorded 48/52. Its detail exposed a production bug instead, now convicted: popoverDidClose did not check which popover closed, so a replaced popover's late close cancelled the newer prompt (back-to-back prompts on unchanged code: prompt 2 resolved Cancel unanswered, close log stale+resolved). In the app, a prompt shown while a previous one is still closing vanished as Cancel. Fixed by resolving only for the current popover. With that fix, the injected dismiss failure reproduces the exact recorded 48/52 signature through a second, harness-only defect (a leftover popover satisfied each reopen cycle's isShown wait); the harness now waits for a new popover identity and reports one failure. Matrix: fixed/fixed uninjected 53/53 x4, injected 52/53 (only the injected step); masking control with the production fix reverted still fails back-to-back 52/53. swift test 779/779, debug e2e 66/1 standing skip/0 fail, warnings 0 new in debug and release. Residual moved to a new task: why performClose right after show() intermittently failed to close the first popover; not reproduced without injection, now reports as a single failure. Details docs/CURSOR_CONFIRM_LIFECYCLE.md. No install/publication."
+    at = "2026-10-12T20:39:28Z"
 
 [[mission]]
   id = "m-e1443252"
