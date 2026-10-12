@@ -1524,9 +1524,11 @@ enum PathemApp {
         let editMenu = NSMenu(title: L("menu.edit", "Edit"))
         editItem.submenu = editMenu
         editMenu.addItem(
-            withTitle: L("menu.undo", "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+            withTitle: L("menu.undo", "Undo"), action: #selector(BrowserViewController.undo(_:)),
+            keyEquivalent: "z")
         let redo = editMenu.addItem(
-            withTitle: L("menu.redo", "Redo"), action: Selector(("redo:")), keyEquivalent: "z")
+            withTitle: L("menu.redo", "Redo"), action: #selector(BrowserViewController.redo(_:)),
+            keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(commandItem("Undo History…", "edit.showHistory"))
         editMenu.addItem(.separator())

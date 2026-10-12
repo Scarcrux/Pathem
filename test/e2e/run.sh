@@ -146,6 +146,30 @@ assert() {
   else printf "  %sFAIL%s  %s\n" "$red" "$rst" "$name"; fail=$((fail+1)); fi
 }
 
+# Hardened Runtime holds for every build, including an ad-hoc dev build (package.sh signs
+# with --options runtime regardless): a regression here would otherwise stay invisible
+# until an actual notarization submission failed. Captures codesign's output before
+# matching -- grep -q closing the pipe early would SIGPIPE codesign under pipefail.
+hardened_runtime_enabled() {
+  local cd_line
+  cd_line="$(codesign -dv "$1" 2>&1 | grep '^CodeDirectory ')"
+  [[ "$cd_line" =~ flags=0x[0-9a-f]+\([^\)]*runtime ]]
+}
+
+# Sparkle only ever reads these fields once an update is published, so a malformed one
+# surfaces as "every user's auto-update silently does nothing" with no local signal.
+sparkle_metadata_well_formed() {
+  local plist="$1/Contents/Info.plist" feed version short minos
+  feed="$(/usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$plist" 2>/dev/null)"
+  version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist" 2>/dev/null)"
+  short="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist" 2>/dev/null)"
+  minos="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$plist" 2>/dev/null)"
+  [[ "$feed" =~ ^https://.+/appcast\.xml$ ]] \
+    && [[ "$version" =~ ^[0-9]+$ ]] \
+    && [[ "$short" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] \
+    && [[ "$minos" =~ ^[0-9]+(\.[0-9]+)*$ ]]
+}
+
 configuration_root_guard_probe() {
   local out command_status flag
   # A default invocation is safe against a release binary; debug flags must be explicit.
@@ -230,6 +254,20 @@ if [[ $PACKAGED == 1 ]]; then
   langs=$(ls -d "$APP/Contents/Resources/Pathem_Pathem.bundle/"*.lproj 2>/dev/null | wc -l | tr -d ' ')
   assert "all 6 languages bundled ($langs)" test "$langs" -eq 6
   assert "bundle signature verifies" codesign --verify --deep --strict "$APP"
+  assert "hardened runtime enabled" hardened_runtime_enabled "$BIN"
+  assert "Sparkle update metadata well-formed" sparkle_metadata_well_formed "$APP"
+  # Universal isn't forced here (every arch doubles this build's time, a cost tradeoff
+  # for CI minutes, not an engineering call); report what was actually produced, and only
+  # turn it into a failure if the caller explicitly asked ARCHS for more than one.
+  main_archs="$(lipo -archs "$BIN" 2>/dev/null)"
+  echo "    main executable architectures: ${main_archs:-unknown}"
+  if [[ "${ARCHS:-}" == *" "* ]]; then
+    missing_archs=""
+    for wanted_arch in $ARCHS; do
+      [[ " $main_archs " == *" $wanted_arch "* ]] || missing_archs+=" $wanted_arch"
+    done
+    assert "requested architectures present ($ARCHS)" test -z "$missing_archs"
+  fi
   scenario "release configuration-root guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN" PATHEM_RELEASE_TEST
   packaged_launch_probe
   echo
