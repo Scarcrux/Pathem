@@ -58,6 +58,47 @@ new golden images; environmental capture/native-speaker review remains pending.
 
 ## Results
 
+### Always Open With — acceptance written before the sample
+
+Trigger: selecting Choose in Always Open With appeared to do nothing. The popup
+has no selection action; the old implementation defers the picker until Set.
+Sample must mount the production sheet for an actual fixture selection, deliver
+the popup's native target/action, and observe a visible NSOpenPanel immediately,
+without pressing Set. No-picker-before-Choose is a differing control. Cancel must
+leave the opener sheet usable and preserve rules. Missing selection, a popup not
+mounted in the sheet, or an undelivered action invalidates the sample. All config
+must be isolated in a strict temporary descendant. Never apply system-wide scope,
+launch a chosen application, or mutate owner LaunchServices defaults in this test.
+After the sample, expand to cancel/retry, candidate Set/persistence, and empty
+candidate/custom selection state. Native picker acceptance and physical menu/key
+input must not be inferred from injected URL state.
+
+Baseline: the actual mounted fixture sheet passed selection, popup mounting,
+no-picker-before-Choose, and cancel-no-save controls, but failed action delivery and
+immediate picker presentation (4/6). This convicts the missing selection action,
+not a beta OS change or a native picker failure. The opener source is identical in
+the installed f1ce71d revision and the starting 539bc8f source.
+
+Fixed sample passes 7/7. Expanded mounted control run passes 35/35: immediate
+native picker, cancel/retry preserving app and scope, single-picker ownership,
+application-only filters, disabled Set during picking/without an app, actual Set
+saving file/folder rules to scratch config, and session-only rules leaving disk
+unchanged. Empty candidate lists still permit Choose. Custom URL insertion and
+deduplication exercise the shared completion-state helper with injected URLs, not
+physical native picker acceptance; a subsequent real picker Cancel restores that
+custom state. The system-wide scope is intentionally never applied. Sample
+delivery, differing control, immediate-presentation criterion and inert Cancel
+criterion all passed before the integrated gate was launched.
+
+Integrated verification: `make ci` passed 15 XCTest plus 779 Swift Testing cases,
+66 debug checks with one explicit cached-pixel capture skip and zero failures, and
+11 current-host ad-hoc release-package checks. The new opener scenario passed 35/35
+inside that run and configuration refusal guards passed 8/8. Fresh owned debug
+warning inventory: 26 known fingerprints, zero new/unparsed; existing warning debt
+was not removed by this change. Owner prefs/formats/openers fingerprints were
+unchanged across the integrated run. No installed-app replacement, system-default
+association write, or physical native-picker acceptance claim.
+
 ### Layout sample
 
 Initial sample failed 10/148 checks: eight icon reveals and both cross-directory

@@ -14,6 +14,7 @@ The pre-release batch adds bounded slices; the broad roadmap task stays pending.
 | Services / Quick Actions | App exports Open/Preview/Reveal in Pathem Services; Shortcuts picker exists | Generic context Services consumption and installed Quick Actions are not integrated/tested |
 | Cloud Download | `files.download` calls `startDownloadingUbiquitousItem` for dataless selection; hermetic cloud seams have separate coverage | Live provider download; keep-downloaded/remove-download actions are not implemented |
 | Eject | Sidebar uses a capability policy with positive/negative smoke controls; active-folder command checks volume path; handler has boot/system hard backstop | Unify command capability policy with sidebar; disposable virtual-volume UI routing; no real storage ejected by this batch |
+| Open With / Always Open With | Choose selection now dispatches immediately to a native application picker nested on the opener alert. 35 mounted-control checks cover cancel/retry, empty candidate state, and scratch file/folder/session saves | Physical menu/picker acceptance and system-wide LaunchServices writes are not exercised; custom URL completion state is injected |
 | Share | Native sharing picker exists, including system-dependent destinations | Live Messages/share-extension acceptance remains environmental |
 
 Sources of truth: `FileContextMenu.swift`, `BrowserViewController+CommandRegistry.swift`,
