@@ -41,9 +41,10 @@ extension BrowserViewController {
         let root = base.appendingPathComponent("root")
         let folder = root.appendingPathComponent("folder")
         let otherRoot = base.appendingPathComponent("other")
+        let galleryRoot = base.appendingPathComponent("gallery-tab")
         let stamp = Date(timeIntervalSince1970: 1_700_000_000)
         do {
-            for directory in [root, folder, otherRoot] {
+            for directory in [root, folder, otherRoot, galleryRoot] {
                 try fm.createDirectory(
                     at: directory.appendingPathComponent("nested"),
                     withIntermediateDirectories: true)
@@ -131,6 +132,8 @@ extension BrowserViewController {
         }
         prefs.defaultViewMode = .list
         let sample = ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_SAMPLE_ONLY"] == "1"
+        let gallerySample =
+            ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_GALLERY_SAMPLE"] == "1"
         let rule = ColorRule(
             name: "Alpha", field: .name, op: .beginsWith, value: "alpha", colorHex: "#CC3366",
             bold: true, italic: true)
@@ -246,7 +249,9 @@ extension BrowserViewController {
             return true
         }
         let modes: [ViewFormat.ViewMode] =
-            sample ? [.list, .icon] : [.list, .icon, .gallery, .column, .tree]
+            gallerySample
+            ? [.gallery]
+            : (sample ? [.list, .icon] : [.list, .icon, .gallery, .column, .tree])
         if let namedMode = ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_TRACE_VIEW"],
             let mode = ViewFormat.ViewMode(rawValue: namedMode)
         {
@@ -295,13 +300,10 @@ extension BrowserViewController {
                     nameField("alpha.txt", in: pane) != nil
                         && nameField("beta.bin", in: pane) != nil
                 })
-            let supported = mode != .gallery
             check(
                 "matching-rule-\(mode.rawValue)",
-                supported
-                    ? colored(nameField("alpha.txt", in: pane))
-                        && styled(nameField("alpha.txt", in: pane))
-                    : defaultStyle(nameField("alpha.txt", in: pane)))
+                colored(nameField("alpha.txt", in: pane))
+                    && styled(nameField("alpha.txt", in: pane)))
             check("unmatched-rule-\(mode.rawValue)", defaultStyle(nameField("beta.bin", in: pane)))
             var disabled = rule
             disabled.enabled = false
@@ -316,6 +318,76 @@ extension BrowserViewController {
             prefs.colorRules = ColorRules()
             applyPreferences()
             check("cleared-rule-\(mode.rawValue)", defaultStyle(nameField("alpha.txt", in: pane)))
+            if mode == .gallery {
+                let normalColor = nameField("alpha.txt", in: pane)?.textColor
+                let colorOnly = ColorRule(
+                    field: .name, op: .beginsWith, value: "alpha", colorHex: "#CC3366")
+                pane.setColorRules(ColorRules(rules: [colorOnly]))
+                let colorField = nameField("alpha.txt", in: pane)
+                check(
+                    "gallery-color-only",
+                    colored(colorField)
+                        && colorField?.font.map {
+                            NSFontManager.shared.traits(of: $0).intersection([
+                                .boldFontMask, .italicFontMask,
+                            ]).isEmpty
+                        } == true)
+                pane.setColorRules(
+                    ColorRules(rules: [
+                        ColorRule(field: .name, op: .beginsWith, value: "alpha", bold: true)
+                    ]))
+                let fontField = nameField("alpha.txt", in: pane)
+                check(
+                    "gallery-font-only",
+                    fontField != nil && fontField?.textColor == normalColor
+                        && fontField?.font.map {
+                            let traits = NSFontManager.shared.traits(of: $0)
+                            return traits.contains(.boldFontMask)
+                                && !traits.contains(.italicFontMask)
+                        } == true)
+                let second = ColorRule(
+                    field: .name, op: .beginsWith, value: "alpha", colorHex: "#3399CC")
+                let ordered = ColorRules(rules: [rule, second])
+                pane.setColorRules(ordered)
+                check(
+                    "gallery-first-matching-rule",
+                    colored(nameField("alpha.txt", in: pane))
+                        && styled(nameField("alpha.txt", in: pane)))
+                let sameField = nameField("alpha.txt", in: pane)
+                pane.setColorRules(ordered)
+                check(
+                    "gallery-same-rules-no-reload",
+                    sameField != nil && nameField("alpha.txt", in: pane) === sameField)
+                pane.applyStyle(
+                    rowHeight: prefs.rowHeight, fontSize: 23,
+                    alternatingRows: prefs.alternatingRows)
+                check(
+                    "gallery-rules-follow-font-size",
+                    colored(nameField("alpha.txt", in: pane))
+                        && styled(nameField("alpha.txt", in: pane))
+                        && nameField("alpha.txt", in: pane)?.font?.pointSize == 23)
+                pane.setColorRules(ColorRules(rules: [disabled, second]))
+                let nextColor = nameField("alpha.txt", in: pane)?.textColor?.usingColorSpace(.sRGB)
+                check(
+                    "gallery-disabled-first-falls-through",
+                    nextColor.map {
+                        abs($0.redComponent - 0.2) < 0.01
+                            && abs($0.greenComponent - 0.6) < 0.01
+                            && abs($0.blueComponent - 0.8) < 0.01
+                    } == true && !styled(nameField("alpha.txt", in: pane)))
+                pane.setColorRules(
+                    ColorRules(rules: [
+                        ColorRule(field: .name, op: .beginsWith, value: "alpha"), rule,
+                    ]))
+                check(
+                    "gallery-first-no-op-blocks-later-style",
+                    defaultStyle(nameField("alpha.txt", in: pane)))
+                applyPreferences()
+                check(
+                    "gallery-font-default-restored",
+                    nameField("alpha.txt", in: pane)?.font?.pointSize == CGFloat(prefs.fontSize)
+                        && defaultStyle(nameField("alpha.txt", in: pane)))
+            }
             check(
                 "mode-selection-retained-\(mode.rawValue)",
                 pane.selectedEntries.map(\.name) == ["beta.bin"])
@@ -328,6 +400,58 @@ extension BrowserViewController {
                 },
                 "directory=\(other.currentURL.path) count=\(other.debugEntryCount) selection=\(other.selectedEntries.map(\.name))"
             )
+        }
+        if gallerySample {
+            let originalIndex = leftTabs.activeTabIndex
+            let originalCount = leftTabs.tabCount
+            prefs.colorRules = rules
+            applyPreferences()
+            check("sample-gallery-default-command", commands.perform("view.useAsDefault"))
+            check(
+                "sample-gallery-default-input",
+                folderFormats.defaultFormat.viewMode == .gallery
+                    && !folderFormats.hasRule(for: galleryRoot.path))
+            leftTabs.openTab(at: galleryRoot)
+            let freshIndex = leftTabs.activeTabIndex
+            if let fresh = leftTabs.activePane {
+                check(
+                    "sample-gallery-initial-default",
+                    settle {
+                        fresh !== pane && fresh.viewMode == .gallery && fresh.debugEntryCount == 3
+                    }, "mode=\(fresh.viewMode.rawValue)")
+                check(
+                    "sample-gallery-initial-color",
+                    settle { colored(nameField("alpha.txt", in: fresh)) }
+                        && styled(nameField("alpha.txt", in: fresh)))
+                leftTabs.selectTab(originalIndex)
+                pane.debugClickViewSwitcher(.list)
+                check("sample-list-default-command", commands.perform("view.useAsDefault"))
+                check(
+                    "sample-sticky-and-exact-inputs",
+                    folderFormats.defaultFormat.viewMode == .list
+                        && !folderFormats.hasRule(for: otherRoot.path)
+                        && folderFormats.hasRule(for: root.path)
+                        && folderFormats.format(for: root.path).viewMode == .list)
+                leftTabs.selectTab(freshIndex)
+                fresh.navigate(to: otherRoot)
+                check(
+                    "sample-gallery-navigation-stays-sticky",
+                    settle {
+                        fresh.currentURL.standardizedFileURL.path == otherRoot.path
+                            && fresh.debugEntryCount == 3 && fresh.viewMode == .gallery
+                    })
+                fresh.navigate(to: root)
+                check(
+                    "sample-explicit-folder-overrides-sticky",
+                    settle {
+                        fresh.currentURL.standardizedFileURL.path == root.path
+                            && fresh.debugEntryCount == 4 && fresh.viewMode == .list
+                    })
+            } else {
+                check("sample-gallery-initial-default", false)
+            }
+            while leftTabs.tabCount > originalCount { leftTabs.closeActiveTab() }
+            finish()
         }
         if !sample {
             pane.debugClickViewSwitcher(.tree)
@@ -492,9 +616,7 @@ extension BrowserViewController {
                 check(
                     "retained-color-\(mode.rawValue)",
                     settle { nameField("alpha.txt", in: pane) != nil }
-                        && (mode == .gallery
-                            ? defaultStyle(nameField("alpha.txt", in: pane))
-                            : colored(nameField("alpha.txt", in: pane)))
+                        && colored(nameField("alpha.txt", in: pane))
                 )
             }
             pane.debugClickViewSwitcher(.list)
@@ -545,9 +667,74 @@ extension BrowserViewController {
                 check("new-tab-delivered", false)
             }
             while leftTabs.tabCount > originalTabs { leftTabs.closeActiveTab() }
+            pane.debugClickViewSwitcher(.gallery)
+            check(
+                "new-gallery-default-view-delivered",
+                settle { pane.viewMode == .gallery && pane.debugEntryCount == 4 })
+            check("new-gallery-default-action", commands.perform("view.useAsDefault"))
+            check(
+                "new-gallery-folder-has-no-saved-format",
+                !folderFormats.hasRule(for: galleryRoot.path)
+                    && folderFormats.defaultFormat.viewMode == .gallery)
+            leftTabs.openTab(at: galleryRoot)
+            if let fresh = leftTabs.activePane {
+                check(
+                    "new-gallery-tab-delivered",
+                    settle {
+                        fresh !== pane && fresh.viewMode == .gallery && fresh.debugEntryCount == 3
+                            && nameField("alpha.txt", in: fresh) != nil
+                    }, "mode=\(fresh.viewMode.rawValue) count=\(fresh.debugEntryCount)")
+                check(
+                    "new-gallery-tab-inherits-color-and-font",
+                    colored(nameField("alpha.txt", in: fresh))
+                        && styled(nameField("alpha.txt", in: fresh))
+                        && nameField("alpha.txt", in: fresh)?.font?.pointSize
+                            == CGFloat(prefs.fontSize)
+                )
+                fresh.debugSelectNames(["beta.bin"])
+                fresh.setColorRules(ColorRules())
+                check(
+                    "new-gallery-tab-override-is-isolated",
+                    fresh.selectedEntries.map(\.name) == ["beta.bin"]
+                        && defaultStyle(nameField("alpha.txt", in: fresh))
+                        && colored(nameField("alpha.txt", in: pane)))
+            } else {
+                check("new-gallery-tab-delivered", false)
+            }
+            while leftTabs.tabCount > originalTabs { leftTabs.closeActiveTab() }
             check(
                 "all-original-tabs-restored",
                 leftTabs.activePane === pane && rightTabs.tabCount == otherTabs)
+            for mode in [ViewFormat.ViewMode.list, .icon, .column, .tree] {
+                pane.debugClickViewSwitcher(mode)
+                check(
+                    "default-source-delivered-\(mode.rawValue)",
+                    settle { pane.viewMode == mode && pane.debugEntryCount == 4 })
+                check(
+                    "default-command-delivered-\(mode.rawValue)",
+                    commands.perform("view.useAsDefault")
+                        && folderFormats.defaultFormat.viewMode == mode
+                        && !folderFormats.hasRule(for: galleryRoot.path))
+                leftTabs.openTab(at: galleryRoot)
+                if let fresh = leftTabs.activePane {
+                    check(
+                        "default-new-tab-delivered-\(mode.rawValue)",
+                        settle {
+                            fresh !== pane && fresh.viewMode == mode && fresh.debugEntryCount == 3
+                                && nameField("alpha.txt", in: fresh) != nil
+                        }, "mode=\(fresh.viewMode.rawValue)")
+                    check(
+                        "default-new-tab-color-\(mode.rawValue)",
+                        colored(nameField("alpha.txt", in: fresh))
+                            && styled(nameField("alpha.txt", in: fresh)))
+                } else {
+                    check("default-new-tab-delivered-\(mode.rawValue)", false)
+                }
+                while leftTabs.tabCount > originalTabs { leftTabs.closeActiveTab() }
+                check(
+                    "default-original-tab-restored-\(mode.rawValue)",
+                    leftTabs.activePane === pane && rightTabs.tabCount == otherTabs)
+            }
             let otherBefore = nameField("alpha.txt", in: other)?.textColor
             pane.setColorRules(ColorRules())
             check(
@@ -670,6 +857,19 @@ extension BrowserViewController {
                     && collection.layoutAttributesForItem(at: selectedPath)?.frame.intersects(
                         collection.visibleRect) == true
             )
+            let collectionRules = ColorRules(rules: [
+                ColorRule(
+                    field: .name, op: .beginsWith, value: "item", colorHex: "#CC3366",
+                    bold: true, italic: true)
+            ])
+            pane.setColorRules(collectionRules)
+            check(
+                "collection-visible-color-retained-\(mode.rawValue)",
+                collection.selectionIndexPaths == [selectedPath]
+                    && collection.layoutAttributesForItem(at: selectedPath)?.frame.intersects(
+                        collection.visibleRect) == true
+                    && colored(nameField("item-092.txt", in: pane))
+                    && styled(nameField("item-092.txt", in: pane)))
             collection.selectionIndexPaths = [awayPath]
             collection.scrollToItems(
                 at: [scrollPath],
@@ -691,6 +891,15 @@ extension BrowserViewController {
                     && collection.layoutAttributesForItem(at: awayPath)?.frame.intersects(
                         collection.visibleRect) == false
             )
+            pane.setColorRules(ColorRules())
+            check(
+                "collection-away-color-clear-retained-\(mode.rawValue)",
+                collection.selectionIndexPaths == [awayPath]
+                    && abs(pane.contentClipView.bounds.origin.x - away.x) < 1
+                    && abs(pane.contentClipView.bounds.origin.y - away.y) < 1
+                    && collection.layoutAttributesForItem(at: awayPath)?.frame.intersects(
+                        collection.visibleRect) == false
+                    && defaultStyle(nameField("item-110.txt", in: pane)))
             collection.selectionIndexPaths = []
             let empty = pane.contentClipView.bounds.origin
             pane.applyStyle(
@@ -701,6 +910,27 @@ extension BrowserViewController {
                 collection.selectionIndexPaths.isEmpty
                     && abs(pane.contentClipView.bounds.origin.x - empty.x) < 1
                     && abs(pane.contentClipView.bounds.origin.y - empty.y) < 1)
+            pane.setColorRules(collectionRules)
+            check(
+                "collection-empty-color-keeps-scroll-\(mode.rawValue)",
+                collection.selectionIndexPaths.isEmpty
+                    && abs(pane.contentClipView.bounds.origin.x - empty.x) < 1
+                    && abs(pane.contentClipView.bounds.origin.y - empty.y) < 1
+                    && colored(nameField("item-110.txt", in: pane)))
+            let multiple: Set<IndexPath> = [scrollPath, IndexPath(item: 111, section: 0)]
+            collection.selectionIndexPaths = multiple
+            check(
+                "collection-multiple-color-input-\(mode.rawValue)",
+                collection.selectionIndexPaths == multiple
+                    && Set(pane.selectedEntries.map(\.name)) == ["item-110.txt", "item-111.txt"])
+            pane.setColorRules(ColorRules())
+            check(
+                "collection-multiple-color-retained-\(mode.rawValue)",
+                collection.selectionIndexPaths == multiple
+                    && Set(pane.selectedEntries.map(\.name)) == ["item-110.txt", "item-111.txt"]
+                    && abs(pane.contentClipView.bounds.origin.x - empty.x) < 1
+                    && abs(pane.contentClipView.bounds.origin.y - empty.y) < 1
+                    && defaultStyle(nameField("item-110.txt", in: pane)))
         }
         finish()
     }

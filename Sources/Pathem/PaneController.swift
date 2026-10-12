@@ -386,6 +386,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var format = ViewFormat.default
     /// Asks the browser for the saved format for a folder (the per-folder cascade).
     var resolveFormat: ((URL) -> ViewFormat)?
+    /// Init lists before callbacks are wired. The first configured resolution must honor
+    /// the saved default; sticky navigation only applies after an actual format is resolved.
+    private var hasResolvedFolderFormat = false
     /// Whether a folder has its own remembered format. When it doesn't, navigating into it
     /// keeps the current view mode (so Gallery/Column stays selected as you browse) instead
     /// of snapping back to the default.
@@ -641,7 +644,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             var resolved = resolveFormat(nav.current)
             // Unconfigured folders inherit the current view mode (sticky Gallery/Column),
             // rather than reverting to the default each time you open a subfolder.
-            if hasExplicitFormat?(nav.current) != true { resolved.viewMode = currentMode }
+            if hasResolvedFolderFormat, hasExplicitFormat?(nav.current) != true {
+                resolved.viewMode = currentMode
+            }
+            hasResolvedFolderFormat = true
             format = resolved
         }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it

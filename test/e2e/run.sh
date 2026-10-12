@@ -253,6 +253,7 @@ scenario "Finder actions across views" 'RESULT: PASS' env PATHEM_FINDER_UI_TEST=
 scenario "background view + arrange menus" 'RESULT: PASS' env PATHEM_BACKGROUND_UI_TEST=1 "$BIN"
 scenario "configuration-root refusal guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN"
 scenario "pane configuration + real tabs" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/content-prefs-config" PATHEM_CONTENT_PREFS_UI_TEST=1 "$BIN"
+scenario "gallery rules + initial defaults" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/gallery-prefs-config" PATHEM_CONTENT_PREFS_UI_TEST=1 PATHEM_CONTENT_PREFS_GALLERY_SAMPLE=1 "$BIN"
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
 scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"

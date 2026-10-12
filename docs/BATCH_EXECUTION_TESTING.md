@@ -268,3 +268,34 @@ union is 27 exact known/zero new/unparsed, not warning-free. Gallery coloring,
 Column density/fonts, native visual/physical/lifecycle acceptance and older-SDK/
 provider/device boundaries remain open. Missions 4/6 are explicitly owner-held.
 No installed-app replacement, signing credentials, keychain changes or publication.
+
+## Gallery parity and first configured view continuation
+
+Owner requested resuming Mission 53 after relaunch. Gallery lacked the shared
+filename-rule renderer entirely; a delivered sample failed only the matching style
+(12/13), with negative and selection controls passing. Gallery now uses the same
+`FileColorStyle` and equality-guarded appearance-preserving setter as Icons.
+Color-only/font-only/precedence/no-op/font-size controls pass, as do horizontal
+visible/offscreen/empty/multiple-selection rule-change regressions.
+
+New-tab expansion initially had invalid default-format inputs; those red results
+are retained in `CONTENT_CONFIGURATION_TESTING.md`. Once the registered
+`view.useAsDefault` command, effective default and absent folder override were
+proven, a real initialization bug remained: the first configured reload overwrote
+the saved Gallery default with initial List under a navigation-only sticky rule.
+Sticky mode now applies only after the first configured folder-format resolution.
+Small sample 29/29 proves initial default, later sticky navigation despite a
+differing global default, and explicit saved-folder precedence. Expanded matrix
+176/176 covers all five initial view modes and retains earlier preference checks.
+Both scenarios are mandatory with separate disposable configuration roots.
+
+Fresh full local CI passes: 15 XCTest and 779 Swift Testing cases (five explicit
+live skips), 64 debug scenarios/one browser-opacity skip/zero failures, current-host
+package 9/9, and 27 exact known/zero new/unparsed warning fingerprints. New matrix
+176/176 and focused sample 29/29 pass inside mandatory E2E; transient controls also
+pass 52/52 without implying a lifecycle fix. Normal commit hooks and land follow
+this recorded CI closure. Missions 4/6 remain held; Gallery Quick Look caption/
+physical visuals, Column font/density, intermittent
+popover causation, real Settings defaults versus saved global formats, and broader
+native/provider/device acceptance remain outside this slice. No install/keychain/
+permissions/signing/publication action.

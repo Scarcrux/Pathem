@@ -20,6 +20,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     private(set) var entries: [FileEntry] = []
     private var labelFontSize: CGFloat = 11
+    private var colorRules = ColorRules()
 
     /// The committed name of an in-place rename (Finder-style edit in the filmstrip).
     var onInlineRename: ((FileEntry, String) -> Void)?
@@ -393,6 +394,11 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     }
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}
+    func setColorRules(_ rules: ColorRules) {
+        guard rules != colorRules else { return }
+        PaneAppearanceReload.collection(filmstrip, in: scrollView) { colorRules = rules }
+    }
+
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
         PaneAppearanceReload.collection(filmstrip, in: scrollView) { labelFontSize = fontSize }
     }
@@ -413,6 +419,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
         let entry = entries[indexPath.item]
         let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
+        let ruleStyle = FileColorStyle.style(
+            for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
         item.configure(
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
             iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless,
@@ -420,6 +428,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
             underlined: indexPath.item == hoveredItem,
+            nameFont: ruleStyle?.font, nameColor: ruleStyle?.color,
             accessibilityLabel: FileAXLabel.describe(entry))
         item.view.alphaValue = alpha(for: entry)  // dim cut items until pasted
         return item

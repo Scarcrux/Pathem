@@ -1,5 +1,115 @@
 # Content configuration: acceptance before the sample
 
+## Gallery parity continuation: preregistered criteria
+
+Owner requested resuming Mission 53 after relaunch. Task 28 remains open because
+Gallery has no color-rule setter/storage and its actual `IconItem` renderer omits
+the shared `FileColorStyle` input. This is a missing implementation, not another
+protocol dispatch diagnosis. Scope: filmstrip filenames, not the separate Quick
+Look preview caption or new grouping/middle-click capabilities.
+
+Before production changes, run a Gallery-only real-window sample using the existing
+isolated configuration and four-entry fixture. Require actual Gallery delivery,
+realized alpha/beta filename fields, alpha RGB #CC3366 plus bold/italic, default
+unmatched beta, disabled/no-op/cleared alpha controls, and retention of the proven
+beta selection and inactive-pane state. Missing rendered alpha style must be red;
+default-looking controls alone cannot validate the instrument.
+
+After that sample passes with the smallest shared-renderer/preserving-setter change,
+expand to color-only/font-only rules, first-match precedence, per-view persistence,
+new Gallery tabs, and visible/offscreen/empty/multiple-selection horizontal viewport
+checks. Require nonzero scroll and genuinely differing visibility before claiming
+retention; verify actual styled fields, not private cached configuration. Same-rule
+delivery must not recycle the rendered item. All earlier scenarios stay mandatory,
+including configuration-root refusal and transient completion failures. Run local
+full CI and normal commit gates before landing. Preserve observed red runs/skips;
+physical input, visual goldens, Quick Look native rendering and environmental
+acceptance remain outside these assertions. Missions 4/6 stay owner-held. No
+installed app replacement, permissions, signing/keychain access or publication.
+
+## Gallery continuation observations
+
+Gallery continuation baseline: the first launch uses `/tmp` rather than the macOS
+per-user temporary root and correctly refuses with exit 64 before fixture delivery;
+that is an instrument setup error, not product evidence. With a config root under
+the actual `TMPDIR`, the Gallery-only sample is red 12/13. All fixture/field,
+selection and differing default controls pass; only matching RGB + font traits
+fails. Add Gallery's stored rules, equality guard and existing collection
+appearance-preserving setter, and pass shared `FileColorStyle` to its real filename
+cell. Keep the Quick Look caption and unrelated reload paths unchanged.
+
+Fixed Gallery-only sample passes 13/13; expanded rule sample passes 21/21. First
+expanded matrix is red 152/153: all color/viewport checks pass, but the new-tab
+instrument expects the global Gallery default on a folder with a saved List format.
+The browser correctly prefers that explicit folder format over the default. Use a
+separate unvisited three-entry fixture and assert its saved format is absent before
+opening the Gallery tab; do not change production folder-format precedence. This
+is an instrument delivery error, not a constructor regression.
+
+That correction is still red 152/154: `FolderFormats.format(for:)` always returns
+its fallback rather than nil, and changing `Preferences.defaultViewMode` does not
+deliver the separate saved global folder format. The absence predicate was invalid.
+Use `hasRule(for:)` to prove no override, deliver Gallery through the actual view
+switcher and existing `useCurrentViewAsDefault` action, then require the effective
+global folder format to be Gallery before the new-tab assertion. No production
+default-format semantics are changed; the instrument must deliver its own input.
+
+Delivered-command matrix is red 155/156: the actual view switch, command acceptance,
+effective Gallery global format and absent folder rule all pass, but a fresh pane
+still renders List. Unlike earlier undelivered inputs, this convicts a product
+constructor boundary. `PaneController.init` lists before callbacks are wired;
+the first configured reload then overwrites the resolved default with its initial
+List mode via the navigation-only sticky-view clause. Before fixing, extend the
+small Gallery sample to include this same actual command/new-tab boundary. Require
+the first configured resolution to honor the default, later navigation into an
+unconfigured folder to stay sticky despite a differing global default, and an
+explicit saved-folder rule to override it. No other reload/format paths change.
+
+Small constructor sample is red 26/29: the actual command/effective default and
+saved-rule controls pass, but first setup is List and subsequent navigation remains
+List. Its inherited-color failure also has an invalid input: only the originating
+pane override was set, not browser preferences. Deliver the rule through real
+preference application before interpreting inherited color. Fix only the stable
+first-resolution mechanism by retaining sticky mode after, not before, the first
+configured folder-format resolution. Keep that sample mandatory under its own
+isolated configuration alongside the expanded matrix in E2E.
+
+Fixed first-resolution sample passes 29/29 and the expanded matrix passes 156/156.
+The saved default now differs from initial List, the later default is changed back
+to List while Gallery navigation stays sticky, and the exact List folder override
+still wins. Before full CI, extend the registered-default-command/new-tab controls
+to List, Icons, Columns and Tree, require the actual target mode and rendered color
+in each, and restore original tabs after each case. This validates the shared
+first-resolution change across all five content types, not just its Gallery trigger.
+
+Final narrow sample passes 29/29, followed by expanded matrix 176/176. All five
+actual default-mode/new-tab controls pass, including rendered style and restoration
+of the original tabs. The new Gallery sample is mandatory and owns a distinct
+config root; the expanded matrix remains mandatory. Freeze these inputs for fresh
+local CI. These results do not resolve the intermittent CursorConfirm mechanism or
+the separate real-Settings default-format audit.
+
+### Gallery continuation full verification
+
+Fresh `make ci SWIFTPM_FLAGS='--build-system native --jobs 2'` exits zero.
+Debug build completes in 61.44 seconds with 343 matching owned-source compilation
+lines; debug/release union is 27 exact known warning fingerprints, zero new and
+zero unparsed, with no added exceptions. All 15 XCTest and the 779-case/161-suite
+Swift Testing run pass; five opt-in live FTP/SFTP/DHT/Transmission tests remain
+explicitly skipped. Debug E2E: 64 pass, one explicit browser-opacity skip, zero
+failures. Mandatory content matrix 176/176, Gallery/default sample 29/29, refusal
+guards 2/2, transient controls 52/52, search 59/59, Finder 198/198, background
+menus 263/263 and layout 161/161 pass. Current-host arm64 ad-hoc package: 9/9,
+including recursive signature, launch and one visible window. This is not universal,
+notarized, physical-input or visual-golden acceptance.
+
+Normal commit gates and landing follow this measured CI closure. The earlier red
+observations remain above; a green transient run does not resolve its intermittent
+cause. Real Settings default-format controls remain a separate pending audit. No
+installation, permission/keychain/signing credentials or publication action.
+
+## Original optional-hook audit
+
 Trigger: the menu witness bug prompted an audit of adjacent optional hooks.
 Source inspection finds four extension-only defaults for color rules, list display
 formats, middle-click enabling and its new-tab handler. Concrete implementations
@@ -202,7 +312,7 @@ earlier 48/52 observation remains unexplained/intermittent and is recorded as op
 native lifecycle work, not converted to SKIP or called fixed. The restored differing
 controls justify another full CI attempt; code inputs are frozen for that attempt.
 
-## Final verification
+## Original audit final verification (a8b04c3)
 
 Restored full `make ci SWIFTPM_FLAGS='--build-system native --jobs 2'` exits zero.
 Fresh debug compilation completes in 67.77 seconds and recompiles 323 owned-source
