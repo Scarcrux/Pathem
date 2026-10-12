@@ -3,7 +3,6 @@
 # self-description. Re-run `commandem add .` after editing.
 
 name = "pathem"
-working_dir = "."
 # icon_emoji = "🛰️"
 
 # --- Mode A: periodic checks -------------------------------------
@@ -26,749 +25,1285 @@ working_dir = "."
 # progress_total = 140
 # queue_file = "results/queue.txt"
 
-# >>> commandem roadmap (managed: edit phases in the Commandem app or `commandem roadmap`) >>>
-[[milestone]]
+# >>> commandem roadmap (managed: edit missions in the Commandem app or `commandem roadmap`) >>>
+[[campaign]]
+  id = "c-6e1329d4"
   title = "Launch public and convert visitors into GitHub stars"
   why = "The repo exists to earn stars that back a job search, so the finish line is a public launch that converts, not just working code. Done when the repo is public, pathem.app converts (a working notarized download plus Sparkle auto-update, not a greyed 'coming soon'), and the README and site are HN-ready. Fed by the website, launch-conversion, update-affordance, and public-flip phases."
   status = "next"
 
-[[milestone]]
+[[campaign]]
+  id = "c-a30e6340"
   title = "Make the million-row claim real and verifiable in the open"
   why = "Pathem's signature differentiator, and the top HN lever per DESIGN.md, is that it stays fast at 1,000,000 rows because only visible rows are built. Done when make gate-a reproduces the benchmark on any machine and a scroll demo sits above the fold on the site and README, so a skeptic can verify the headline claim instead of taking it on faith."
-  status = "next"
+  status = "done"
 
-[[milestone]]
+  [[campaign.comment]]
+    text = "Completed 2026-09-27: permission-free make gate-a-demo now renders and publishes the 10-second production-table proof above the fold on the README and site; make gate-a remains the independent bounded-cell assertion. Commit 9bf114e."
+    at = "2026-09-27T05:10:18Z"
+
+[[campaign]]
+  id = "c-3e81690a"
   title = "A power-user Finder replacement people trust and switch to"
   why = "Adoption (and stars) require parity-plus with Directory Opus, Path Finder, and ForkLift on a non-sandboxed build users trust with Full Disk Access. Done when the signature power features are complete, editor and Finder handoff ship, and the app stays hardened: tested dangerous corners, secure defaults, accessibility, localization, and no live-app rough edges."
   status = "now"
 
-[[phase]]
+[[mission]]
+  id = "m-e022b1ba"
   title = "App polish: refinement pass"
   status = "done"
   note = "Refinement, not features. From a fresh-eyes UX survey; ordered by impact over effort. Keystone (the toast channel) first: it unlocks the feedback wins below."
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Transient-status/toast channel reusing the per-pane status label (keystone)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Confirm silent successes: Copy Path / Name / Checksum flash a confirmation"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Consolidate empty-state copy (three phrasings for an empty folder today)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Make the permission-denied placeholder actionable (open Full Disk Access); fix FDA guide button hierarchy"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Fix themed-accent drift (QuickActions, size bar, transfer progress, AI sparkle, FDA badge)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Turn meaningful beep dead-ends into messages (transfer running, remote-only op, failed toggle)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Soften raw/technical strings (ACL row 'Sharing' -> Permissions; curl error; octal 644)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Accessibility labels, incrementally (functional image-only glyphs first)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Close view-parity gaps: tag dots + git badges in grids; honor single-click/hover outside the list"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-197658cc"
   title = "Website & conversion"
   status = "done"
   note = "Site is a funnel whose exits are dead until the repo goes public; make it launch-ready now."
-  milestone = "Launch public and convert visitors into GitHub stars"
+  campaign = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Optimize social-card.png (610 KB, 4-8x heavier than an OG card needs)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Show, don't just tell: real screenshots for torrents / terminal / remote (text-only today)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Honest download story: keep the Star CTA until a notarized build, then wire download + Sparkle appcast"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Minor SEO/PWA: web app manifest, SVG favicon, sitemap date refresh"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-cff2da79"
   title = "Localization hygiene"
   status = "done"
   note = "Catalogs drifted: en 812 keys vs ~1,502 in the other five locales; ~692 of 1,406 L() keys live only in the inline English fallback."
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Extract every referenced L() key; prune stale entries"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Ensure all six locales cover every key"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Add a coverage + plutil lint to the pre-commit hook"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-912b8e07"
   title = "The public flip (gated on user testing)"
   status = "later"
   note = "Do NOT start until the user says the testing gate is met. Define exit criteria first."
-  milestone = "Launch public and convert visitors into GitHub stars"
+  campaign = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Define the user-testing exit criteria"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Final manual QA pass; confirm screenshots are current"
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Cut a notarized direct download + EdDSA-signed Sparkle appcast"
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Final pass over README / LICENSE / SECURITY"
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Flip the repo public so the site starts converting"
 
-[[phase]]
+  [[mission.comment]]
+    text = "Owner explicitly requested a hold while Apple Developer credentials are pending. No signing/notarization/public flip or keychain work; resume only on owner direction."
+    at = "2026-10-11T23:41:22Z"
+
+[[mission]]
+  id = "m-c1bcddb9"
   title = "Post-launch engineering bets"
-  status = "later"
-  note = "Deferred capability work, after the launch runway."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  status = "done"
+  note = "Completed 2026-09-27. Trigger: the remaining god-object roadmap items still left SplitLayout and MenuInstaller/LazyMenu state on BrowserViewController. Evidence: 20 stored split/menu objects, delegate/constraint fields, install-once flags, and recent-folder state remained after PreviewPane extraction. Mechanism: prior method-only extensions did not remove shared mutable ownership. Change: BrowserSplitLayoutController now owns all nested split views, ratio/delegate policy and sidebar state; BrowserMenuInstaller owns five menus, lazy installation lifecycle and recent folders; narrow computed adapters avoid a risky 50-file flag day. Effect: 20 fields collapse to two retained owners (net 18 fewer browser stored properties). Smoke explicitly proves split delegate ownership and 5/5 menu installs. Verification: make ci passed 9 XCTest + 747 Swift Testing, debug 17/17 including UI 48/48, packaged 9/9. Commit 8b66223."
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Finish dissolving the BrowserViewController god-object (toolbar + split delegate already extracted)"
+    done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Torrent standalone parity: send-side PEX, persistent DHT routing table, UPnP-IGD, LEDBAT"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Enable the gated Swift extension runtime once there is real demand"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "BrowserViewController god-object: extracted transfer + undo/redo plumbing (1578 -> 1442 lines)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "BrowserViewController god-object: extracted rename + trash actions into their own files (1442 -> 1294 lines; cumulative 1578 -> 1294)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "God-object: extract stateful sub-controllers from BrowserViewController (PreviewPane, SplitLayout, MenuInstaller/LazyMenu) - move state, not just methods (129 stored props shared across 51 extension files)"
+    done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Gate the ~1,700 LOC smoke/screenshot/debug harness behind #if DEBUG or a non-shipping target (0 #if DEBUG today; SmokeTest.swift + DebugHooks + 11 screencapture blocks ship in the release binary)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "BrowserViewController god-object: extracted device-watch + ownership/ACL actions into their own files (1305 -> 1224 lines; cumulative 1578 -> 1224)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "God-object: moved device-watch STATE (timer + name cache) into an owned DeviceWatcher (129 -> 127 stored props). Remaining 5.6: the higher-coupling clusters (SplitLayout, PreviewPane, MenuInstaller)."
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "God-object: extracted navigation/sync/window-title cluster into BrowserViewController+Navigation (1221 -> 1100 lines; commit e03ccd1)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "God-object: extracted external-open/reveal/Photos cluster into BrowserViewController+ExternalOpen (1100 -> 1061 lines)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "God-object: extracted palette/batch-rename/select-by-pattern into BrowserViewController+CommandSurfaces (1061 -> 1026 lines; cumulative 1578 -> 1026)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "God-object: extracted PreviewPane STATE into an owned PreviewPaneController (view + visibility + width pin + auto-shown flag; 4 stored props -> 1; BrowserViewController 126 stored props). Deps via closures (selectedURL, sidebarWidth) like DeviceWatcher. Harness guards the toggle path: opens docked as a 3rd outerSplit subview, closes clean back to 2. Remaining 5.6: SplitLayout, MenuInstaller/LazyMenu."
     done = true
 
-[[phase]]
+  [[mission.comment]]
+    text = "Formatter touched the full legacy files it was given, so the diff includes mechanical swift-format churn in BrowserViewController and SmokeTest; behavioral changes remain isolated to layout/menu ownership and one smoke assertion."
+    at = "2026-09-27T04:41:21Z"
+
+[[mission]]
+  id = "m-af9369fc"
   title = "Finder handoff & editor integration"
-  status = "next"
-  note = "Blocked on owner action only: 6.1-6.5, 6.7, 6.8 shipped. The VS Code/Cursor extension (6.6) is publish-ready - authored, .vsix packaged (integrations/vscode-pathem), one-click Integrate wired, CI release workflow present (.github/workflows/vscode-extension-release.yml). Remaining is the Marketplace push itself, which needs the owner's publisher account + VSCE_PAT/OVSX_PAT secrets. Nothing further is doable without the user."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  status = "later"
+  note = "Engineering and local verification are complete. The remaining Marketplace/Open VSX publication is owner-only: GitHub Actions has neither VSCE_PAT nor OVSX_PAT, no publish tag/release exists, and those credentials must be created in the owner's publisher accounts and added directly as GitHub secrets (never sent in chat). The workflow is already gated to publish once present."
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "pathem CLI reveal/open contract (pathem reveal <path>, pathem open <dir>) as the seam every integration calls"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Reveal in Pathem: a second NSServices item + a select-and-reveal handler"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Preferences -> Integrations panel: detect installed editors; per-editor Integrate/Preview/Remove; opt-in, backup, reversible, merge-not-clobber, warn if running"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Sublime Text: write a User-package plugin + keymap + side-bar menu (edits its own config)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "TextMate + JetBrains: a bundle command / an External Tools entry"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "VS Code / Cursor: publish a small Pathem extension (their reveal is locked; a settings edit can't redirect it)"
+    state = "ask"
 
-  [[phase.task]]
+  [[mission.task]]
     title = "VS Code/Cursor extension authored + one-click Integrate wired + locally verified; Marketplace publish pending user's publisher account"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "CI: vscode-v* release workflow packages + publishes the extension (gated on VSCE_PAT/OVSX_PAT)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Add a typed open/reveal/preview handoff with bounded inert Jupyter notebook previews"
     done = true
 
-  [[phase.comment]]
-    text = "2026-09-29 Pathem handoff slice. Trigger/evidence: an external .ipynb open only revealed its parent and Pathem declared no notebook document type; the viewer accepted only PDF/images, so the requested preview intent had no route. Mechanism: the open/reveal URL contract lacked a distinct preview verb and notebooks had neither a UTI nor a safe renderer. Change: added pathem://preview plus CLI and Services entry, explicit visible failures, an Alternate-rank Jupyter UTI, and a bounded inert cell/text-output projection that ignores HTML/JavaScript. Review caught a synchronous metadata-check/read race before landing; the final reader opens one nonblocking descriptor, rejects nonregular files, caps bytes and rendered characters, parses off-main, and fences stale results. Effect: Commandem and other callers can deliberately reveal or safely preview a notebook without changing its system editor. Verification: 754 Swift tests, 158 suites, 17 debug E2E scenarios including 49/49 UI checks, 9/9 packaged-app checks, and independent review passed. Confidence: high for local URL/CLI/AppKit routing and parser safety; Commandem's chooser and third-party editor actions remain a separate integration slice. The roadmap edit was authored with commandem roadmap against an isolated clean manifest, then transplanted here because the primary checkout contains a concurrent schema-migration WIP that must remain untouched."
-    at = "2026-09-29T01:16:45Z"
+  [[mission.comment]]
+    text = "2026-09-29 Pathem handoff slice. Trigger/evidence: an external .ipynb open only revealed its parent and Pathem declared no notebook document type; the viewer accepted only PDF/images, so the requested preview intent had no route. Mechanism: the open/reveal URL contract lacked a distinct preview verb and notebooks had neither a UTI nor a safe renderer. Change: added pathem://preview plus CLI and Services entry, explicit visible failures, an Alternate-rank Jupyter UTI, and a bounded inert cell/text-output projection that ignores HTML/JavaScript. Review caught a synchronous metadata-check/read race before landing; the final reader opens one nonblocking descriptor, rejects nonregular files, caps bytes and rendered characters, parses off-main, and fences stale results. Effect: Commandem and other callers can deliberately reveal or safely preview a notebook without changing its system editor. Verification: 754 Swift tests, 158 suites, 17 debug E2E scenarios including 49/49 UI checks, 9/9 packaged-app checks, and independent review passed. Confidence: high for local URL/CLI/AppKit routing and parser safety; Commandem chooser and third-party editor actions remain a separate integration slice."
+    at = "2026-09-29T01:34:09Z"
 
-[[phase]]
+  [[mission.comment]]
+    text = "Owner explicitly requested a hold alongside release work while credentials are pending. Remaining extension publishing separately requires Marketplace/Open VSX publisher tokens; do not collect credentials in chat or attempt publication. Engineering completion remains recorded; resume only on owner direction."
+    at = "2026-10-11T23:41:23Z"
+
+[[mission]]
+  id = "m-3af18e65"
   title = "Photos library integration (PhotoKit)"
   status = "done"
   note = "Browse and export the macOS Photos library from inside Pathem, via PhotoKit (never touching the .photoslibrary bundle directly). The differentiating 'view/edit what Photos shows' feature; reuses machinery we own."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Photos sidebar location: browse albums / moments / people via PhotoKit (read access + permission prompt)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Export / drag assets out to the filesystem (originals via PHAssetResourceManager)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "View assets (thumbnails + Quick Look / internal viewer)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Later: edit back into Photos (PHAssetChangeRequest / adjustment data)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Edit-back safe slice shipped: Remove Location via PHAssetChangeRequest (metadata only, revertible). Full content edit-back (crop/adjustments via PHContentEditingOutput) remains a larger future item."
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-f50bd07d"
   title = "Vision-powered image smarts"
   status = "done"
   note = "Tap the same on-device Vision engine Photos uses (we already use it for OCR): subject lift / background removal, content auto-tagging into the organizer, and a near-duplicate photo culler atop DuplicateFinder/SemanticDedup."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Subject lift / remove background (VNGenerateForegroundInstanceMask) as a quick action + batch"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Content auto-tagging / classification feeding the on-device organizer + smart folders"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Near-duplicate photo culler (burst/quality scoring atop DuplicateFinder + SemanticDedup)"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-267d112f"
   title = "In-place media editing & conversion"
   status = "done"
   note = "Quick, one-shot edits that save a trip to another app -- crop/rotate/straighten/resize with save-a-copy, plus a batch media-conversion hub (image/video/audio) atop ImageConverter/MediaTools. Not a photo editor; stay in the quick-edit lane."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Light image edits: crop / rotate / straighten / resize with save-a-copy, + batch"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Media conversion hub (image / video / audio) atop ImageConverter + MediaTools"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-d40c687a"
   title = "Power-user file tooling"
   status = "done"
   note = "Classic superuser gaps that compound: a metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit, a first-class disk-space + duplicate cleanup flow, and rules-based auto-organize on watch folders (AutomationRule)."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Metadata editor (EXIF/IPTC + Finder tags/comments) with bulk edit"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Disk-space + duplicate cleanup as a first-class flow (DirectorySize + DuplicateFinder)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Rules-based auto-organize on watch folders (AutomationRule)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Remove Location: lossless in-place GPS strip (kCGImageMetadataShouldExcludeGPS) as a privacy op"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Size Browser largest-items view: extracted tested DiskUsage ranker; fixed symlink over-count"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-1da4f409"
   title = "Live-app polish & hardening (2026-07)"
   status = "done"
   note = "Shipped from live-app feedback + a multi-agent audit; recorded here so the roadmap is a complete record, not just future tracks."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Live transfer progress: speed/ETA/percent (copyfile streaming) + steady readout"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Inline naming in the icon grid; name/rename prompts no longer clip long names"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Eject for external USB/Thunderbolt SSDs + hardened heuristic (never system volumes)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Configurable torrent download folder + opt-in confirm for inbound magnet/torrent links"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Multi-agent correctness/security audit + fixes (URL parsing, copyfile stage, move rollback, retry bound)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "'…' overflow toolbar button with a Theme (appearance + built-in skins) picker"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Stale-build watch: 'Relaunch to Update' when a newer build is installed under a running app"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-5eb15499"
   title = "Audit fix: scale side-passes (Gate-A credibility)"
   status = "done"
   note = "From the 6-person committee audit (performance): the render path earns the 1M-row claim, but two O(total-entries) side-passes run on every folder open, contradicting the 'only visible rows realized' story. Highest-value perf work; makes the headline claim hold in practice on huge/networked folders."
-  milestone = "Make the million-row claim real and verifiable in the open"
+  campaign = "Make the million-row claim real and verifiable in the open"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Lazy visible-range tag decoration + bounded NSCache (stop the full-listing getxattr pass; FileListController.refreshTagsAsync issues up to 1M syscalls + a 1M-key dict to draw ~40 rows)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Semantic index: build lazily on first search / pref-gate; defer content snippets (SemanticSearchController.ensureIndex reads up to 5000 files' content on every navigation, seconds of CPU+disk whether or not the user searches)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "DuplicateFinder: head-block prefilter before full SHA-256, plus cancellation (two differing same-size 4GB files are both hashed in full today)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Cheap wins: skip the identity-map rebuild when ungrouped; use NLEmbedder.shared instead of a fresh NLEmbedding per index/search; precompute per-entry collation sort keys"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Deferred (optional): precompute per-entry collation sort keys -- localizedStandardCompare has no cheap Foundation collation-key equivalent, so it is not a cheap win"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Precomputed sort keys assessed and declined: Foundation exposes no ICU collation-key API, so any precomputed key sorts non-ASCII by codepoint (diverges from localizedStandardCompare and breaks the enumerator contract test). Kept as-is."
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-64c5c1c0"
   title = "Audit fix: dangerous-corner tests + CI auto-run"
   status = "done"
   note = "From the committee audit (testing): the core conflict matrix is well-covered, but the single highest data-loss corner (cross-volume move) is untested and nothing runs tests automatically on push/PR (ci.yml is workflow_dispatch-only, pre-commit opt-in)."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Cross-volume move test via hdiutil RAM disk: happy path + rollback when source-remove fails (FileOperations.swift:344-377, the copy-then-delete-source path)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Redo-of-Replace test + Trash Put-Back ledger / undo-redo re-registration chain test (both untested; the code warns redo-of-replace can trash the restored original)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Near-duplicate keeper-selection test with photo-like fixtures + CopyVerificationError mismatch-cleanup test"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Deflake DirectoryWatcher.firesWhenAFileIsCreated (poll-until-timeout + re-touch each pass; drop the two fixed sleeps racing the async FSEvents arm)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "CI: auto-run build + swift test on PR; add l10n lint + the smoke harness as gates (regressions are caught today only if a human runs make ci)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Remaining (lower priority): Trash Put-Back ledger undo/redo smoke check; near-dup keeper-selection test (needs photo-like Vision fixtures); CopyVerificationError mismatch-cleanup test"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-a31f2e93"
   title = "Audit fix: correctness feedback gaps"
   status = "done"
   note = "From the committee audit (correctness): NO crash or data-loss defect found; undo/redo, ProgressiveCopy, and metadata in-place writes were traced and verified sound. The remaining issues are silent-partial-success paths that give the user a wrong result with no feedback."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Detect intra-batch basename collisions + surface outcome.skipped in transfer completions (copying two same-named files silently drops one, no prompt/beep, because the pre-check only compares against the destination)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Metadata editor: collect and present per-item failures instead of try?-swallowing them (MetadataEditorController.swift:257-267 reports only 'Updated N')"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Failed Replace: append an explicit 'moved to Trash, could not restore' failure pointing at the trash location (FileOperations.swift:534 swallows the restore failure)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "BatchRename phase-2: only claim 'kept as X' when the fallback move actually succeeds (BatchRename.swift:186 lies about the location on a triple failure, hiding the file under a dotfile)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "P3s: temp-file cleanup on replaceItemAt failure (ImageMetadata/MetadataCleaner leak a .tmp); preserve animated-GIF loop count on in-place metadata edit; nil resultingItemURL -> locate the trashed item in .Trash"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-9cdabfd7"
   title = "Audit fix: security defaults & release gates"
   status = "done"
   note = "From the committee audit (security): no P0/P1; the codebase is unusually well-hardened (pathem:// validated navigational-only, injection-safe shell-outs via argument arrays + shellQuote, Keychain creds, Zip-Slip guards, out-of-process untrusted parsers). These are default/gate hardening items."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Default confirmInboundTorrents = true (or always confirm the first externally-handed magnet/torrent): today an inbound magnet silently downloads AND seeds/reshares into Downloads with no prompt"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Release gate: fail the build if SUPublicEDKey is still the placeholder; add a CI check that no Sparkle/EdDSA private key is in the tree or logs"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "SFTP: surface a 'new host key, accept?' prompt instead of silent StrictHostKeyChecking=accept-new (TOFU MITM window on first connect, which also holds the password)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "New-connection dialog: default to an encrypted protocol (sftp/ftps/webdavs) and warn on plaintext FTP/WebDAV (defaults to plain ftp today)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Deferred: SFTP new-host-key prompt (accept-new already rejects changed keys; a full known-hosts prompt needs out-of-process helper + UI plumbing)"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-b2532fac"
   title = "Launch conversion & product depth (stars)"
   status = "next"
-  note = "Near-complete; remaining items are owner-action. 16.1-16.4, 16.6, 16.8-16.11 shipped (scroll-benchmark gate, demo-workspace tour, batch-rename depth+presets, grouped dupe-resolve, full VoiceOver, Drop Stack rename). 16.5: shipped the verifiable slice (Quick Look localized to the Apple system term in all 5 locales; commit f98d8fa) + docs/L10N_GAPS.md as the native-reviewer worklist - the rest is a native-speaker quality pass I cannot fake. 16.7: scroll-GIF recording needs Screen Recording permission on the owner's machine (make gate-a-demo tooling is in place)."
-  milestone = "Launch public and convert visitors into GitHub stars"
+  note = "Autonomous engineering complete 2026-09-27. Trigger: the 1M scroll asset was blocked on TCC Screen Recording. Evidence: in-process AppKit capture produced 118 real frames; ffprobe verifies both README GIF and site MP4 at exactly 10.0s, and visual inspection confirmed the production table. Mechanism: external screencapture unnecessarily crossed the TCC boundary although Pathem owns its pixels. Change: Gate A renders frames from its content view, derives playback rate, and encodes/places both assets. Effect: make gate-a-demo works without Screen Recording; README/site proof is above the fold; make ci passes 9 XCTest + 747 Swift Testing, debug E2E 17/17 with UI 48/48, packaged 9/9. Commit 9bf114e. Only 16.5 native-speaker top-20 phrasing review remains; automation cannot honestly certify language quality."
+  campaign = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "THE ONE THING: capture a ~10s 1M-row scroll demo (GIF/video) above the fold on the site + README, backed by a reproducible `make gate-a` (the PATHEM_GATE_A path already materializes and scrolls 1M rows; DESIGN.md names this the #1 HN lever, and it is the one launch asset not built)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "First-run 'Load demo workspace' tour reusing DemoWorkspace.build (the polished fake workspace behind the marketing screenshots is wired only to a screenshot env var today, so a stranger's first launch is a bare home folder behind the FDA nag)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Batch rename depth: saved presets + a date/EXIF/{token} vocabulary ({date}, {counter}, {parent}, {exif.taken}) - the exact feature power users benchmark against NameMangler / A Better Finder Rename"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Grouped duplicate-resolve UX: keep one / trash the set + a reclaimable-space total (detection across DuplicateFinder/SemanticDedup/NearDuplicatePhotos is done; results dump to a flat list instead of the Gemini/dupeGuru grouped resolve flow)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Polish: surface buried differentiators (Shelf -> 'Drop Stack', Reclaim-space); a real list-row VoiceOver pass (size/kind/date + the unlabeled custom-drawn icon/gallery/column/tree cells); a native-speaker l10n quality pass on the top-20 visible strings"
+    state = "ask"
 
-  [[phase.task]]
+  [[mission.task]]
     title = "make gate-a target + reproducible 1M-row benchmark surfaced above the fold in README (the scroll GIF/video capture itself remains, a screen-recording step)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Follow-ups: batch-rename saved presets (config-as-data); the actual scroll-GIF recording + placement above the fold (make gate-a-demo tooling is in place, needs Screen Recording permission)"
+    done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "List-row VoiceOver: announces name + kind + size + date (was name-only). Remaining 16.5: custom-drawn icon/gallery/column/tree cell labels; Shelf resurface; native-speaker l10n pass"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Enriched VoiceOver label (name+kind+size+date) shared across list/icon/column views via FileAXLabel. Remaining 16.5: tree/gallery cell labels; native-speaker l10n pass; Shelf resurface"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "a11y sweep complete: all 5 file views (list/icon/column/gallery/tree) speak name+kind+size+date. Saved batch-rename presets shipped (RenamePresetStore). Remaining: native-speaker l10n pass; the scroll-GIF recording (make gate-a-demo)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Shelf renamed to 'Drop Stack' (market-recognized name) across commands/menus/panel + 6 locales; docs/PRE_PUBLIC.md written (post-audit state + owner-action items)"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-9f3d0261"
   title = "Live-app fixes: New Folder inline-rename race + toolbar icon sizing"
   status = "done"
   note = "New Folder / New Folder with Selection now let you name the item before the debounced folder-watcher reload cancels the inline rename. Toolbar icons default to Large (from Medium) with a new Extra Large (24pt) size; localized across six locales."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-f4a77d3a"
   title = "Live-app fixes 2: New File naming + relative date columns"
   status = "done"
   note = "New File now offers an inline rename on create (was: default name, no prompt), matching New Folder. Date columns default to relative (Today/Yesterday), matching Finder; still switchable in Settings."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-562ae462"
   title = "Live-app fixes 3: breadcrumb spring-loading (drag issue #1, paths half)"
   status = "done"
   note = "Dragging over a breadcrumb path component spring-loads (navigates into it) mid-drag, like Finder. Nav-button drops (up = move to parent) remain for the buttons half of the drag-across-nav report."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-1e2c6de0"
   title = "Live-app fixes 4: outstanding drag / size / layout + E2E testing"
   status = "done"
   note = "All live-app-4 items shipped. 20.3 (content pushes up in a small folder) was convicted, not guessed: a windowed smoke probe showed the icon grid's select/reveal used scrollToItems(.centeredVertically), scrolling 56px to re-center an already-visible item and yanking the top rows out of view. Fixed with .nearestVerticalEdge (minimal reveal, no-op when visible); probe now 0px. Commit a56877d."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Nav-button drops (drag #1, buttons half): up = drop-to-move into parent; spring-load up/back/forward mid-drag"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Multiple selected folders show a combined calculated size in the selection summary (#3)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Pane content 'pushes up' with only a few files: reproduce, then fix the async layout nudge (#5)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "Transfer 'queue you cant cancel': confirm remote Cancel All truly terminates jobs; surface the Transfers window (local moves dont queue) (#-transfer)"
     done = true
 
-  [[phase.task]]
+  [[mission.task]]
     title = "End-to-end feature testing with a screenshotting harness: drive real flows, capture, assert (#6)"
     done = true
 
-[[phase]]
+[[mission]]
+  id = "m-12dd9215"
   title = "Live-app fixes 5: Finder-style Dock menu (New Window/Tab + open tabs)"
   status = "done"
   note = "Right-clicking the Dock icon now offers New Window, New Tab, and a live list of open tabs (click to activate), via applicationDockMenu -- previously only OS defaults. Localized; smoke-guarded."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-e6da0cd6"
   title = "Live-app fixes 6: make the Dock menu actually useful (Recent Folders)"
   status = "done"
   note = "The initial Dock menu (phase 21) only had New Window/Tab + open tabs. Add a Recent Folders section (jump to any recently-visited folder in a new tab) reusing the existing persisted recentFolders store, so the Dock menu is a real launcher."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-f4b0815b"
   title = "Live-app fixes 7: New Folder shortcut (Cmd+Shift+N) + Duplicate in context menu"
   status = "done"
   note = "New Folder gained the Finder Cmd+Shift+N binding (had none). Duplicate (auto-creates 'X copy' via Cmd+D) added to the right-click context menu with an icon, where users expect it."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-3b9d9eaa"
   title = "Live-app fixes 8: inline rename in column/tree/gallery (not a sheet)"
   status = "done"
   note = "New Folder/File/Rename now begin an in-place edit in column, tree, and gallery too (were modal-sheet only outside list/icon); ports the list/icon pattern incl. cancel-on-reload."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-4a64ff5f"
   title = "Live-app: relaunch button verified; consider a prominent banner"
   status = "done"
   note = "Root cause: the title-bar UpdateButtonAccessory rendered inconsistently next to the unified toolbar - the watcher fired and isHidden=false (a false-positive smoke pass at fitting 147x20) yet nothing showed on the real window ('still nothing' after a manual trigger). Fix: RelaunchBanner, a full-width accent bar at the top of the browser content, driven by the same .pathemUpdateStateChanged state (Sparkle pending -> install; newer installed build -> relaunch). Smoke now asserts real size for both affordances (banner 547x36). Verified live: mtime-bumped exe, watcher fired ~26s, banner shown (user-confirmed). Commit 52a6614."
-  milestone = "Launch public and convert visitors into GitHub stars"
+  campaign = "Launch public and convert visitors into GitHub stars"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-f550185e"
   title = "Live-app fix: eject off the main thread (UI froze ~15s)"
   status = "done"
   note = "Eject ran unmountAndEjectDevice synchronously on the main thread, beachballing the app until the unmount finished. Now off-main with a status; UI stays responsive."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-09dd58ca"
   title = "Live-app fix: accidental micro-drag popped the Move Here menu"
   status = "done"
   note = "User report: 'asked to move files one at a time when I'm not trying to move.' Convicted (user-confirmed): a click with trackpad jitter starts a tiny NSTableView drag that lands on a neighbor and fired the drop-onto-file menu. Fix: a drop must travel >12pt from where the drag began to count as a move; cross-pane/app drops (no local start) unaffected. Only the list view calls onDropOntoFile. Smoke micro-drag-ignored; commit 3371919."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-8658ed18"
   title = "Live-app fix: New Folder/File skipped the inline rename (watcher reload cancelled it)"
   status = "done"
   note = "User: 'made a new folder and it didnt give me the inline rename.' Convicted: creating the folder fires an FSEvents tick for the same folder; the watcher's debounced reload lands just after the rename opens and setEntries cancels the edit. Phase-17 only cancelled an already-scheduled refresh; when FSEvents fires after the rename opens, a fresh reload cancels it. Fix: the pane defers reloads while content.isInlineEditing (polls until the edit ends). New smoke reload-cancels-inline-edit. Commit 6898759."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-51546304"
   title = "Live-app fix: New Folder inline rename cancelled by async folder-size refresh"
   status = "done"
   note = "User: 'worked for new file, not new folder; folder appeared then scrolled out of view, no inline rename.' Convicted with a scrolled 80-file probe + live tracing: the rename field opened then resigned ~20ms later (controlTextDidEndEditing, movement=0) because a partial reloadData(forRowIndexes:) recycled the editing cell -- the new folder's async FOLDER-SIZE refresh reloading its row. New File needs no size refresh, so it worked. Fix: cosmeticReload() defers folder-size/tag/git/extended-column reloads while editing, flushed by editEnded(). Smoke cosmetic-reload-keeps-inline-edit. Commit 7036ca7."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-4c98dad6"
   title = "Live-app fix: cut+paste of iCloud files duplicated them (no NSFileCoordinator)"
-  status = "next"
-  note = "User: cut+paste files from an iCloud Drive pane -> files stayed in source AND appeared in dest (openable), i.e. move became copy + duplicate; dest showed transient '?' icons. Convicted: source not removed even after re-nav; files open. Root cause: all file ops used raw FileManager, zero NSFileCoordinator; a raw move/remove on an iCloud item succeeds without the provider releasing the source. Fix (3c1a5da): route moves touching ubiquitous items through NSFileCoordinator (.forMoving/.forReplacing), materialize-on-read, and verify the source is gone (else MoveIncompleteError, not silent duplicate). Local moves unchanged. STATUS next: needs on-device iCloud verification -- I cannot reproduce dataless items headlessly."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  status = "done"
+  note = "Completed 2026-09-27. Trigger: the user-reported iCloud cut/paste duplication fix was proven only for materialized items. Evidence: the new live probe observed CloudKit upload, evicted an exact disposable fixture to NSURLUbiquitousItemDownloadingStatusNotDownloaded, moved it through production FileOperations, verified all 16 KiB, and confirmed source absence. Mechanism found during probing: resource values are cached per URL instance; legacy FileManager eviction returns Cocoa 512 on replicated iCloud Drive; public FileProvider eviction is restricted to the provider app. Change: fresh-URL polling plus macOS brctl eviction creates the real online-only precondition without touching user files. Effect: the exact online-only iCloud-to-local path passes and the unique fixture is cleaned. Full make ci remains green: 9 XCTest + 747 Swift Testing, debug 17/17/UI 48/48, packaged 9/9. Commit f15d951."
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+  [[mission.task]]
+    title = "Route local-to-iCloud moves using the ubiquitous destination folder"
+    done = true
+
+  [[mission.task]]
+    title = "Exercise iCloud-to-iCloud, iCloud-to-local, and local-to-iCloud in the real-window harness"
+    done = true
+
+  [[mission.task]]
+    title = "Verify payload bytes and delayed source absence across iCloud boundaries"
+    done = true
+
+  [[mission.task]]
+    title = "Reproduce and verify an evicted online-only iCloud item on device"
+    done = true
+
+  [[mission.comment]]
+    text = "Reactivated at user request on 2026-09-26: the iCloud cut/paste duplication remains annoying and is a data-integrity risk. Re-audit the coordinated move path and verify against a disposable real iCloud fixture before declaring the existing fix complete."
+    at = "2026-09-27T03:44:17Z"
+
+  [[mission.comment]]
+    text = "2026-09-26 causal update — Trigger: user reactivated the duplicate-on-cut issue. Evidence: the prior live test covered only iCloud→iCloud; a real CloudDocs probe showed the destination folder reports ubiquitous=true while its not-yet-created child reports false. Mechanism: move routing checked source or destination item, so local→iCloud could bypass NSFileCoordinator. Change: route using the destination folder too; add real-window iCloud→iCloud, iCloud→local, and local→iCloud cases with byte checks and a delayed no-resurrection assertion. Effect so far: focused FileOperations 27/27 and live UI 46/46. Negative result retained: a 1 MiB iCloud fixture never reached uploaded=true within 60 seconds, so eviction could not be requested and the exact online-only/dataless state remains unproven. Confidence: materialized real-iCloud crossings are proven; online-only remains environmental."
+    at = "2026-09-27T03:57:06Z"
+
+  [[mission.comment]]
+    text = "Full verification: make ci passed localization/build, 9 XCTest + 746 Swift Testing cases, debug product E2E 17/17 (including live iCloud UI 46/46), and packaged release E2E 9/9 with zero skips. Mission remains NOW solely for the evicted online-only fixture task; no broader materialized-iCloud boundary is untested."
+    at = "2026-09-27T04:01:16Z"
+
+  [[mission.comment]]
+    text = "Negative evidence retained: the first 180-second probe missed a completed CloudKit upload because NSURL cached uploaded=false; removeAllCachedResourceValues did not refresh it. A fresh URL did. FileManager.evictUbiquitousItem then failed Cocoa 512; FileProvider manager failed ProviderNotFound -2001 because external apps cannot control Apple's provider. brctl evict supplied the real OS user boundary and the production move passed."
+    at = "2026-09-27T04:58:03Z"
+
+[[mission]]
+  id = "m-8379f918"
   title = "Live-app fix: menu icons enlarged to 18pt (match toolbar) for easier clicking"
   status = "done"
   note = "User: menu icons difficult to click, wanted Chrome/toolbar size. MenuIcons were a fixed 14pt vs the 18pt toolbar default; bumped to 18pt (+ Open With app icons 16->18). Taller rows, bigger targets. Commit 092b229."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-8a76ae71"
   title = "Live-app fix: renamed folder scrolled out of view (reselect raced the async reload)"
   status = "done"
   note = "User + 40-folder probe: renaming a folder in list view scrolled it out of view (no scrollbar). commitLocalRename did reloadIfShowingListing() then select(name:newName) immediately -- select found nothing in the pre-reload listing and no-oped, so a re-sorting rename left the item off-screen. Fix: selectWhenListed(trimmed){ select(name:trimmed) } to reveal after the row exists. Probe visible false->true; E2E PASS. Commit pending."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-413ea19f"
   title = "UI-automation harness (PATHEM_UI_TEST): real-window interaction/scroll regression tests"
   status = "done"
   note = "Built the in-process UI-automation harness the headless smoke can't replace: drives real UI flows in a real sized key window, pumps the run loop to settle async reloads, asserts on real geometry (clip=698 content=975, genuinely scrollable -- vs the 102px squished-pane ad-hoc probes). Scenarios: new-folder-inline-rename, list-overflows-viewport, rename-resort-keeps-visible, sort-keeps-selection-visible. Proven to catch bugs: breaking the rename fix -> rename scenario FAILs (3/4). #if DEBUG (0 symbols in release). make ui-test. Commit 5469287. Limit: sort scenario vacuous (NSTableView auto-reveals in-harness) -- doesn't yet reproduce the user's sort case."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-7548adc3"
   title = "UI-automation harness: 9 scenarios, 3 proven regression guards"
   status = "done"
   note = "Extended PATHEM_UI_TEST (make ui-test) to 9 scenarios in a real sized window: new-folder/new-file inline rename, new-folder-rename-survives-refresh (populated folder), list-overflows-viewport, rename-resort-keeps-visible, sort-keeps-selection-visible, cut-paste move/populates/no-duplicate. Three PROVEN guards (break the fix -> scenario FAILs): rename-resort, cut-paste-move, new-folder-rename-survives-refresh. #if DEBUG (0 symbols in release). Commits 5469287, f40fa0c, 6452df0."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-f11deda9"
   title = "Live-app fix: Gallery auto-opened the far-right preview pane over the other pane"
   status = "done"
   note = "User: switching a pane to Gallery popped a preview of its selection across the window over the OTHER (list) pane. syncAutoPreview auto-opened the separate preview pane for gallery, but gallery self-previews (Quick Look + filmstrip) and the pane docks far-right -> a left gallery's preview landed over the right pane. Column was already exempted; gallery wasn't. Fix: nothing auto-opens the pane now; removed the vestigial pref toggle + stale l10n key. New harness guard gallery-no-auto-preview-pane (proven: original code -> 9/10). Commit 5678b6c."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-487b59a6"
   title = "UI-automation harness reaches the real iCloud coordinatedMove branch (14 scenarios)"
   status = "done"
   note = "Gap: the cut+paste scenario used a temp dir, which isn't ubiquitous, so isUbiquitous was false and the move never entered coordinatedMove -- the NSFileCoordinator path the 'iCloud paste duplicated files' fix lives in was untested. New scenario 4b creates temp subfolders under com~apple~CloudDocs (files there are ubiquitous immediately), cuts+pastes, and asserts move-not-copy: source cleared, dest populated, no duplicate on disk. It first asserts isUbiquitousItem=true so a plain-move fallback can't pass vacuously; skips cleanly with no iCloud Drive; self-cleaning. Proven: forcing copy-not-move in coordinatedMove flips it to 12/14. Can't reproduce the dataless/online-only symptom (no way to synthesize evicted files on demand) -- guards correctness of the coordinated move, not necessity for dataless files."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-b619f6dc"
   title = "Audit fix: flaky MSE test was a real decryption bug (undecrypted post-handshake leftovers)"
   status = "done"
   note = "Pre-release audit ran the suite in a loop: encryptedHandshakeAndMessageOverRealSocket failed 3/6 runs with handshakeMismatch. Convicted, not a test problem: MSEHandshake.Stream buffers raw socket bytes; bytes TCP coalesced past the handshake end came back via drainBuffer() as CIPHERTEXT and were appended to inbound undecrypted (only receiveRawChunk decrypts). recv's RC4 keystream sits exactly at the first post-handshake byte, so the peer's BT handshake parsed as garbage whenever coalescing happened -> timing-dependent flake, and a real-world bug for any encrypted peer whose handshake reply coalesces. Fix: decrypt the drained leftover through recvCipher at both call sites (initiator connect + responder acceptEncryptedHandshake). Evidence: 0/15 failures after (was 3/6; P~3e-5 if unchanged), 740 tests + smoke pass."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-676296d9"
   title = "Pre-release audit: 3 blockers, honest-copy gaps, one real bug fixed"
   status = "done"
   note = "Three-way audit (secrets/PII, release mechanics, claims-vs-evidence) before the public flip. FIXED during audit: flaky MSE test was a real decryption bug (0029efb); first-name PII removed from BonjourHost source+test; .claude/settings.json untracked. BLOCKERS remaining: (1) surname in git history via old ai.scarcrux bundle id, needs history rewrite or fresh-history publish before any flip; (2) private AppRelaunch dep means a public Pathem cannot swift build for anyone, and is why all 42 CI runs are red for a month (APPRELAUNCH_TOKEN auth fails), making the README CI-gated claim false in practice; (3) README Install section states a notarized self-updating DMG as fact but zero release assets ever shipped, release.yml fails on every tag in ~10s (missing secrets), Sparkle key is a placeholder. HONESTY GAPS: torrent copy contradicts itself (README says PEX/UPnP on-roadmap, site sells them as built; uTP off-by-default and never tested vs a real client); 8 remote backends marketed, only FTP+SFTP live-tested; 2 screenshots render staged fake data (discovery hosts, torrent statuses); dual CFBundleVersion schemes (plist 24 vs tag-derived 9000) would make Sparkle rank a later local release older. Graded strengths: Gate A harness real and reproducible; smoke+UI suites substantive; security hardening genuinely tested."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-1edda4d4"
   title = "Audit blockers resolved: history rewritten, AppRelaunch vendored, copy corrected"
   status = "done"
   note = "Cleared the three pre-flip blockers from phase 38. (1) git history rewrite: git filter-repo redacted the personal surname (old bundle id) and first name from every blob and commit message across all 22 tags; verified 0 pickaxe hits across all refs and a clean tree; force-pushed to origin (backups: /tmp bundle + mirror). Note: the surviving CI/download claims are true once CI is green and a release exists. (2) AppRelaunch vendored in-tree as a local Swift-5-mode target (commit a968bb7): a credential-free clone now builds and the APPRELAUNCH_TOKEN CI step is gone, so ci.yml should go green (it needed no secrets). (3) README+site copy corrected (aae8a0c): Download reframed as coming-with-first-release, PEX/UPnP marked shipped, uTP marked experimental, remote backends note live-tested vs unit-tested. STILL OPEN before an actual public flip (owner action): set the Sparkle key + release secrets and cut one real notarized release; unify the dual CFBundleVersion schemes; re-render the 2 staged screenshots (discovery hosts, torrent drawer) with real data; confirm ci.yml actually goes green on the next push."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-c716419e"
   title = "Blocker 4 (newly found): CI has never compiled the repo on the runner SDK"
-  status = "now"
+  status = "done"
   note = "Vendoring AppRelaunch got CI past the auth failure that masked everything, revealing CI has NEVER successfully compiled (0/45 runs, failures back to 2026-06-22). Cause: dev machine is macOS 26 SDK (Swift 6.3.3) where CIContext/DateFormatter/NSRegularExpression are Sendable, so non-isolated static lets of them compile locally; the macos-15 runner SDK does not mark them Sendable, so each is a Swift 6 strict-concurrency error there. The macOS 15 SDK cannot be reproduced on this machine (SDK ships with Xcode, not the toolchain), so CI is the only instrument. Fixed the whole PathemEngine set (SubjectLift.ciContext, ProcessList/BatchRename regexes, WebDAV/Azure/S3/ImageMetadata formatters) with nonisolated(unsafe) -- convicted by the language rule, not guessed. Engine builds locally. App-target statics verified next via CI. Commit e605748."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+  [[mission.comment]]
+    text = "Closed from hosted evidence on 2026-09-27: GitHub Actions run 34037494123 at commit 94a74d2 contains e605748 and passed Localization lint, Build, Engine tests, Gate A, and UI smoke on the runner SDK. Later run 34673223927 also passed Build and Engine tests before cancellation during UI smoke, independently confirming the original compile blocker stayed fixed. Confidence: the CI SDK compilation boundary is proven, not inferred from the local SDK."
+    at = "2026-09-27T04:06:59Z"
+
+[[mission]]
+  id = "m-b83660ad"
   title = "Live-app fix: toolbar icon size only resized the nav chevrons"
   status = "done"
   note = "User: changing the toolbar icon size only changed the navigation buttons. Convicted by code + an offscreen chrome render at small vs extraLarge: PaneController.applyIconSize re-imaged only back/forward/up; the view-switcher segments and the sort/action pull-down faces were built with an unsized Self.symbol and never re-applied, so they kept their creation-time size. The window toolbar had the same gap for its overflow (ellipsis) item, which the live-resize loop skipped (not a command item) so it only changed on relaunch. Fix: a sizedSymbol helper used at build time and re-applied live for every header control; the toolbar loop now covers the overflow item too. Instruments added (DEBUG-only, stripped from release, nm-verified): PATHEM_CONFIG_DIR pins prefs to a scratch dir, PATHEM_CHROME_RENDER renders the window chrome incl. toolbar offscreen (screencapture needs Screen Recording permission this box lacks). Note: cacheDisplay cannot draw the unified toolbar's system glyphs (white pills), so window-toolbar glyph size is verified by code path, the pane header by pixels. Smoke PASS, harness 16/16."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-3541937c"
   title = "Customizable pane header: show/hide each button (right-click the row or Actions > Header Buttons)"
   status = "done"
   note = "User asked why there is no Customize Toolbar option and how to rearrange/hide icons. Probed the real NSToolbar with menu(for:) at 18 points: every one offers the native Icon and Text / Icon Only / Text Only / Customize Toolbar menu (now a harness guard), so the window toolbar was fine; the row they meant is the per-pane header (nav chevrons, view switcher, sort, actions), custom chrome with no customization. Shipped: a global pref hiddenPaneHeaderButtons; PaneController.setHiddenHeaderButtons hides via the header NSStackView (collapses the slot); a right-click check-item menu on the header row plus the same list as a Header Buttons submenu of the pane Actions menu; the row spans full width and keeps its insets when everything is hidden so it can always be customized back. Verified by UI harness (22/22): a toggle hides in BOTH panes, persists to prefs, collapses the row (417 -> 340pt), the menu lists six items with correct states, and restore works. Safety: smoke + UI harness now default to a per-process scratch config dir (PATHEM_CONFIG_DIR instrument) so automated runs can never write the user's real prefs; verified byte-identical prefs.json after both runs. One new string (pane.headerButtons) in 6 locales."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-95809c03"
   title = "Pane header reordering (Cmd-drag) + window toolbar default without redundant nav, search centered"
   status = "done"
   note = "User: add reordering; also the top toolbar now shows redundant navigation buttons and the search bar is not centered, and the toolbar-vs-header distinction is confusing. Diagnosis: the saved toolbar arrangement has no TB Item Identifiers, so the window toolbar was never customized and always showed the default (Back/Forward/Up + 3 commands, search pushed right); larger icons made the always-present nav prominent and redundant next to the pane header chevrons and squeezed the search field. Fix 1 (default): drop nav from the window toolbar default (every pane header owns navigation; a window-level copy was also ambiguous about which pane it drives) and center search between two flexible spaces; nav stays in the customize palette. Fix 2 (reorder): HeaderButtonStack (NSStackView subclass) captures Cmd-clicks in hitTest and reorders on midpoint crossing during the drag, the same gesture as the window toolbar; pref paneHeaderButtonOrder with a normalizer that never drops a button; applied to every pane + new tabs; a menu hint line says the gesture. Verified by UI harness (30/30): programmatic reorder syncs both panes and persists; synthesized Cmd mouseDown/drag/up on the real stack moves Sort two places left and persists; normalizer handles garbage; window toolbar default has no nav and search sits between flexible spaces. Smoke PASS; real prefs untouched; debug hooks absent from release (nm). New string pane.headerReorderHint in 6 locales."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-57a5a0b4"
   title = "Live-app fixes: icon-mode zoom keys dead after a mode switch (focus), and the hidden-files eye could not hide"
   status = "done"
   note = "Two reports. (1) Cmd+= zoom-in did nothing in icon mode. Direct keyDown to the grid zoomed fine for =, + and -, so the key path was intact; the REAL dispatch (NSApp.sendEvent) reproduced it: after switching to icons with nothing focused (fresh window / after clicking chrome), the first responder was the bare NSWindow, so no content shortcut reached the grid until the user clicked into it. Mechanism: setViewMode handed focus to the new content only if the OLD content was first responder (hadFocus). Fix: also focus the new content when nothing was focused (window is first responder) or focus sat on this pane's own header controls; never steals from a text field or the other pane. Harness proves both flows (list-focused switch, nothing-focused switch) now zoom via real dispatch. (2) The eye did nothing: the user's prefs have showHiddenByDefault=true and visibility was showHidden || default, an OR that can never turn off, so the per-folder toggle was inert and the glyph always read shown. Fix: ViewFormat.hiddenOverride (Bool?, nil = follow default; backward-compatible decode), the eye sets it to !effective and it wins; applying a style clears it. Harness proves show/hide both ways with the default on (2->1->2) and off (1->2->1) with the glyph tracking. Negative result: ExternalCommandTests (real-process output streaming) failed once in one full run, then passed 6/6 reruns; a timing flake under parallel load, unrelated, left recorded not hidden. UI harness 39/39, smoke PASS, real prefs untouched, no debug hooks in the release binary."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-2a077cd4"
   title = "Live-app fix: Cmd+numpad-plus now zooms in"
   status = "done"
   note = "Trigger: Cmd+plus on the numeric keypad still did not zoom in, while keypad minus worked. Evidence: AppKit reports the dedicated keypad + as charactersIgnoringModifiers=\"+\" with shift=false; KeyChord.from only folded shiftedSymbols when shift=true, producing the unbound canonical chord \"cmd++\" while the keymap binds \"cmd+=\" to view.zoomIn. Mechanism: punctuation normalization was incorrectly coupled to modifier state instead of the delivered character. Change: always fold mapped punctuation when the key is not a named special key; added foldsNumpadPunctuationWithoutShift to assert both canonicalization and command lookup. Effect: Cmd+numpad-plus resolves to view.zoomIn. Verification: xcrun swift test passed all 607 tests in 121 suites. A prior plain swift test did not reach tests because PATH selected standalone Swift 6.1.2 against the Xcode 27 SDK; rerunning with Xcode's matched Swift 6.4 passed. Confidence: unit path proven; physical-key behavior is based on the reported AppKit event fields."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
-[[phase]]
+[[mission]]
+  id = "m-aa7a49eb"
   title = "Close the E2E audit gaps: magnet download, full product gate, and release probe"
   status = "done"
   note = "Trigger: an audit asked whether every feature, especially magnet links, had end-to-end coverage. Evidence: magnet tests stopped at parsing/BEP 9 units; daemon smoke only added a .torrent; Gate A and smoke were the only product scenarios in CI; packaged E2E relied on DEBUG hooks stripped from release; opt-in network tests returned early and appeared to pass. Mechanism: test layers existed but were disconnected, and the release harness assumed instrumentation it could not contain. Change: a hermetic tracker + real TCP BEP 9 peer resolves a magnet, downloads pieces, and verifies bytes; magnet promotion now keeps discovered peers; app/daemon smoke adds both .torrent and magnet forms; all deterministic scenarios plus an external signed-release probe run in make ci and CI; live tests are visibly disabled; TEST_MATRIX names hardware/public-network boundaries. Verification: final make ci passed localization, build, 9 XCTest + 742 Swift Testing cases, debug E2E 10/10 (including 39/39 UI), and packaged E2E 8/8 mandatory checks; its Accessibility window check honestly skipped for missing terminal permission. Negative results retained: two initial consolidated runs hit stale Swift 6.1 dependency-manifest cache state; absolute-path Xcode Swift fixed it. The first corrected commit hook then exposed a separate isolation bug: inherited GIT_INDEX_FILE made integration fixtures mutate the parent index and delete the worktree. The worktree was restored from Git, git subprocesses now strip only repository-routing env vars, fixture commits disable inherited hooks, and a simulated hook environment passed all 6 Git integration tests. Confidence: hermetic and package paths proven locally; public DHT/router/physical-device/third-party interoperability remain explicitly opt-in or manual."
-  milestone = "A power-user Finder replacement people trust and switch to"
+  campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
-[[phase]]
+
+[[mission]]
+  id = "m-7914b8f6"
+  title = "Expand product E2E across every deterministic audit gap"
+  status = "done"
+  note = "Trigger: the user asked to close every deterministic gap after the audit showed several feature families stopped at engine tests. Evidence: TEST_MATRIX had no product scenario for archive/disk utilities, search/metadata, Git/developer tools, file-operation history/conflicts, or torrent lifecycle persistence; remote providers had no hermetic product round-trip. Mechanism: the built executable's E2E dispatcher covered create/rename, UI interactions, and add-only torrent IPC, leaving cross-module and subprocess seams unexercised. Change: added mandatory real-I/O product scenarios for verified replace-copy, keep-both move, undo/redo, Trash/Put Back; ZIP create/list/extract/repack, split/merge, backup, secure delete and encrypted DMG; literal/regex search+replace, tags/comments/hashes; Git init/status/stage/diff/commit and external commands; app-provider-curl WebDAV CRUD against a loopback fixture; and torrent pause/limits/remove/restart/restore/resume. All scenarios use disposable config state. Findings fixed: macOS grep fallback now uses -E for documented extended regex; paused torrents now restore as paused rather than stopped, each with a focused integration test. Effect: make e2e expanded from 10 to 15 passing gates; final make ci passed localization/build, 9 XCTest + 744 Swift Testing cases in 155 suites, debug E2E 15/15, and packaged E2E 8/8 mandatory checks. The packaged Accessibility assertion honestly skipped without permission. Confidence: every deterministic local feature family has a product-boundary gate; physical devices, public DHT/router behavior, user-owned S3/Azure/FTP/SFTP services, OS permission sheets, Spotlight timing, and third-party interoperability remain explicitly environmental/manual."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+[[mission]]
+  id = "m-29843d0a"
+  title = "Deepen deterministic E2E with object storage and negative paths"
+  status = "done"
+  note = "Trigger: the user asked to keep expanding deterministic product coverage beyond the first audit. Evidence: S3/Azure had only parser/signer tests; advanced filesystem tools, archive variants, torrent file/detail commands, and multiple negative paths stopped below the executable boundary. Mechanism found: both object providers used curl -T /dev/null for trailing-slash folder markers, so curl appended the local basename and created an object named null; Azure also ignored explicit custom endpoint ports. Change: added strict hermetic HTTPS S3/Azure CRUD fixtures that cryptographically verify SigV4/Shared Key and reject bad secrets; fixed zero-byte marker PUTs and Azure endpoint ports; added product checks for batch create/rename, links, duplicates, size/symlink behavior, two-way sync, bulk attributes, 7-Zip/cross-folder archives, cancellation/error preservation, WebDAV 404s, and torrent invalid magnet/files/details/selection. Effect: make ci passes 9 XCTest + 746 Swift Testing tests, 17/17 debug E2E scenarios, and 8 mandatory release-package checks (Accessibility probe honestly skipped without permission). Confidence: deterministic local and loopback claims are proven; physical devices, public services/networks, permission dialogs, and third-party interoperability remain explicitly environmental."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+[[mission]]
+  id = "m-253341c9"
+  title = "Make the packaged window probe permissionless and mandatory"
+  status = "done"
+  note = "Trigger: the user granted/re-added Commandem UI-control permission twice, but the release window assertion still skipped. Evidence: tccd attributed the request to Commandem while rejecting it because the rebuilt ad-hoc host's current cdhash differed from the stored requirement; the same packaged Pathem process was independently visible through CGWindowListCopyWindowInfo. Mechanism: System Events required Accessibility to perform a read-only observation, coupling a deterministic package gate to an unstable host permission identity. Change: replaced AppleScript/System Events with a small external Core Graphics owner-PID/layer-0 probe; missing/unobservable windows now fail rather than skip; updated the test matrix and E2E documentation. Effect: make e2e-app passes 9/9 with one visible release window and zero skips; a clean full make ci passes localization/build, 9 XCTest + 746 Swift Testing tests in 156 suites, debug E2E 17/17, and packaged E2E 9/9. One preceding full run hit hdiutil Resource busy in encrypted-image creation; the isolated archive scenario then passed 10/10 and the clean full rerun passed, so it is recorded as transient device contention rather than hidden. Confidence: release liveness and visible-window presence are externally proven without Accessibility; this is not a full VoiceOver/assistive-technology audit."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+[[mission]]
+  id = "m-c06b0e6e"
+  title = "Automate environmental and interoperability coverage boundaries"
+  status = "done"
+  note = "Completed 2026-09-27. Trigger: deterministic coverage was green while host, hardware, provider, public-network, permission, and third-party seams remained unmeasured. Evidence: the new default environmental runner reports 6 PASS / 8 explicit SKIP / 0 FAIL; opt-ins passed Spotlight indexing, NFS provider parity, NAT-PMP, Transmission-to-Pathem verified transfer, and a public DHT retry with 10 peers. Mechanism: a single PASS/SKIP/FAIL contract distinguishes unavailable dependencies from tested behavior. Change: added disposable APFS/disk-image, 25k-tree, FTP/SFTP, permission/AX, provider/Spotlight, DHT/router, Transmission, hardware discovery, arbitrary-tool, generated 29-shortcut/9-drop-destination, macOS workflow, and human-signoff gates. Effect: UI is 48/48 and full make ci passes 9 XCTest + 747 Swift Testing, debug 17/17, packaged 9/9. Confidence: deterministic/loopback paths proven; public DHT fluctuated once before passing; absent Accessibility, physical disk and mobile hardware remain honest SKIPs rather than green claims. Commits e47eb7c and c05b7f2."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    title = "Hermetic cross-volume move plus disk-image attach/eject product gate"
+    done = true
+
+  [[mission.task]]
+    title = "Hermetic FTP and SFTP CRUD through the real out-of-process providers"
+    done = true
+
+  [[mission.task]]
+    title = "Accessibility-tree assertions plus Full Disk Access and permission-state probes"
+    done = true
+
+  [[mission.task]]
+    title = "Generated shortcut and drag/drop destination coverage matrix"
+    done = true
+
+  [[mission.task]]
+    title = "Spotlight indexing and large/provider-backed tree opt-in gate"
+    done = true
+
+  [[mission.task]]
+    title = "Public DHT, NAT-PMP/UPnP, and third-party torrent interoperability opt-in gates"
+    done = true
+
+  [[mission.task]]
+    title = "Physical iOS/USB/network-share verification runner with explicit PASS/SKIP/FAIL"
+    done = true
+
+  [[mission.task]]
+    title = "Older supported macOS compatibility workflow without increasing normal PR quota"
+    done = true
+
+  [[mission.task]]
+    title = "Interactive shell and arbitrary external-tool boundary checks"
+    done = true
+
+  [[mission.task]]
+    title = "Human localization, VoiceOver, and exploratory UX sign-off checklist"
+    done = true
+
+  [[mission.task]]
+    title = "Unified make e2e-env report that never turns missing hardware or credentials into a pass"
+    done = true
+
+  [[mission.comment]]
+    text = "Negative result retained: one opt-in public-DHT sample returned no peers, then an immediate identical retry returned 10. Treat peer discovery as availability-sensitive. Screen Recording preflight exits 77 because this host still denies the permission; no GIF was fabricated."
+    at = "2026-09-27T04:32:37Z"
+
+[[mission]]
+  id = "m-fe4a359b"
+  title = "Live-app fix: concurrent semantic-search crash"
+  status = "done"
+  note = "Trigger: searching for a file crashed Pathem and the user submitted the Apple crash report. Evidence: the 2026-09-28 20:00 crash report shows EXC_BAD_ACCESS inside BNNSFilterApplyBatch/NLEmbedding.vector(for:), while a second live worker was simultaneously in the same call path through NLEmbedder.shared. Mechanism: the process-wide NLEmbedding was declared nonisolated(unsafe) under an undocumented thread-safety assumption, allowing overlapping NaturalLanguage/CoreNLP inference. Change: all dimension/vector access now shares one locked reference state; removed the unsafe global assertion; added a deterministic 32-way concurrent regression with an overlap-detecting backend. Effect: focused regression passed 25/25 stress repetitions; make ci passed 748 Swift Testing cases plus 9 XCTest cases, debug E2E 17/17, and packaged E2E 9/9. Confidence: the concurrent call signature is directly observed in the crash and the synchronization invariant is deterministically tested; reproducing the original probabilistic framework SIGSEGV itself is neither required nor safe."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.comment]]
+    text = "Landed as ac3d92b. Installed an ad-hoc-signed local build with Developer ID and notary variables explicitly unset, so no keychain credential was requested. Post-install verification: /Applications/Pathem.app passes strict deep signature validation, the relaunched process stayed alive, and Core Graphics externally observed one visible layer-0 window without Accessibility permission."
+    at = "2026-09-29T00:20:46Z"
+
+[[mission]]
+  id = "m-f92102c1"
+  title = "Live-app fix: opened file stays visible after watcher re-sort"
+  status = "done"
+  note = "Completed 2026-09-28. Trigger: the user repeatedly reported that after opening a file, Pathem changed the viewport until that file was no longer visible. Evidence: a deterministic UI scenario selected the oldest visible file at row 0, changed its modification date as an external editor can, refreshed through the watcher path, and observed it re-sort to row 39 outside the unchanged viewport; with the fix removed, the suite failed exactly this check at 48/49. Mechanism: setEntries preserved selection by name and restored the old clip origin, but did not reconcile a visible selected item moving to a new sorted row. Change: capture a selected row only when it is visible before refresh, restore state, then minimally reveal its new row; an intentionally off-screen selection is not pulled back. Effect: the focused scenario passes 49/49; make ci passes localization, build, 9 XCTest plus 748 Swift Testing cases, debug E2E 17/17 including UI 49/49, and packaged E2E 9/9. Commit c721883. Confidence: the watcher/re-sort mechanism and negative pre-fix result are deterministic; the earlier black screenshots were unrelated capture artifacts and are not evidence for this defect."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+[[mission]]
+  id = "m-110a300a"
+  title = "Pre-release visual fidelity and release-path hardening"
+  status = "now"
+  note = "Audit opened 2026-10-03. Trigger: the user still sees UI artifacts and asked what coverage, polish, and testing remain before release. Proven baseline: make ci passes 9 XCTest plus 754 Swift Testing cases, debug E2E 17/17 with UI 49/49, and packaged E2E 9/9; make e2e-env passes 6, skips 9 explicitly, and fails 0. Evidence of remaining risk: CI accepts visibly corrupted black/white render captures because it checks only non-empty PNGs; current source line coverage is 81.15% across PathemEngine/TorrentKit/AppRelaunch but excludes the Pathem UI target; README/site screenshots date from July while UI code changed through September; a clean Xcode 27 build emits 60 unique warning sites including actor-isolation and Sendable diagnostics; the local PUBLISH=1 path can publish without Developer ID, notarization, or a Sparkle signature; the tag workflow publishes a ZIP while release docs promise a DMG and does not run the full gate; the current package probe is host-arch rather than the universal distribution path. Environmental gaps remain AX, physical storage/mobile, online-only iCloud, public DHT/router, Transmission, and provider/Spotlight opt-ins. Privacy audit found noreply authorship and no real tree PII; gitleaks has one reproducible false positive on an environment-variable name that needs a precise allowlist. Only one local Pathem crash report exists, the already-fixed 2026-09-28 embedding crash. Mechanism: functional assertions are deep, but visual fidelity and the actual publish artifact sit outside the strongest gates. Goal: make visual regressions and a bad release artifact fail before public launch, while preserving honest environmental skips."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-a9b2d5dc"
+    title = "Replace non-empty PNG checks with representative visual assertions: pixel sanity plus approved baselines for stable custom surfaces, and reject capture modes that render AppKit materials incorrectly"
+
+  [[mission.task]]
+    id = "t-ff130a84"
+    title = "Add a layout-transition matrix across minimum/default/wide windows, pane ratios, all five views, sidebar/preview/terminal/torrent/detail/Drop Stack toggles, resize and appearance changes; assert no overlap, clipping, zero-size views, selection loss, or viewport jumps"
+
+  [[mission.task]]
+    id = "t-34525866"
+    title = "Reproduce and fix the visible UI artifacts, starting with the rounded empty-row ghost bands on macOS 26/27; refresh every July README/site screenshot from the current build after fixes"
+
+  [[mission.task]]
+    id = "t-f26342e6"
+    title = "Exercise the actual distribution shape: universal arm64+x86_64 app and helpers, Hardened Runtime configuration, bundle/signature architecture checks, launch, CLI/open/reveal, and update metadata"
+
+  [[mission.task]]
+    id = "t-195800cd"
+    title = "Make publishing fail closed: PUBLISH=1 requires Developer ID, notarization/stapling, real Sparkle public/private keys and signature; run the full gate before upload; make workflow and docs agree on DMG versus ZIP"
+
+  [[mission.task]]
+    id = "t-295d2e96"
+    title = "Resolve the 60 unique Xcode 27 warning sites, prioritizing actor isolation, Sendable captures, the arrange-none ambiguity, TrimController, and deprecated APIs; gate against new warnings"
+
+  [[mission.task]]
+    id = "t-dddab6ee"
+    title = "Add a redacted gitleaks/history/PII release preflight with a precise allowlist for the LiveRemoteTests environment-variable false positive and noreply-authorship enforcement"
+
+  [[mission.task]]
+    id = "t-99c992cc"
+    title = "Run and record the remaining environmental sign-off: external AX tree, online-only iCloud, physical removable storage/mobile, Transmission, DHT/router, provider/Spotlight, second machine, and non-English/light-dark/accent/reduced-motion UI"
+
+  [[mission.task]]
+    id = "t-6f8b3fa7"
+    title = "Reconcile release documentation and goals: remove stale CI-on-push and screenshot TODO claims, update DESIGN status, complete branding/domain clearance, and keep the launch checklist aligned with the real pipeline"
+
+  [[mission.task]]
+    id = "t-b6a3dacd"
+    title = "Close Finder interaction-parity gaps: expose Compress/7-Zip, Quick Look, Make Alias/Show Original, iCloud keep/remove/download, Quick Actions and Services in contextual surfaces; implement Show Package Contents, volume Eject, richer Tags, and Finder-equivalent background/view actions with state-sensitive validation and regression coverage"
+
+  [[mission.task]]
+    id = "t-411f76f8"
+    title = "Inventory and exercise every transient UI surface—file conflict popover, file-on-file Move/Copy/Replace menu, transfer progress, confirmation/destructive sheets, alerts, open/save panels, menus and tooltips—in a real window across edges, small windows, light/dark mode, long locales, keyboard dismissal and repeated presentation; add behavior plus visual/layout assertions instead of headless construction checks"
+
+  [[mission.task]]
+    id = "t-a0bedd4a"
+    title = "Polish cramped conflict-popover buttons: deliberate 500-point width, comfortable insets and action spacing, and stacked fallback for long labels; verify layout and approve live preview"
+    done = true
+
+  [[mission.task]]
+    id = "t-4beb26ad"
+    title = "Make file search predictable and test the real UI: filename-first default, explicit semantic/content modes and scope, visible loading/no-results/error/truncation states; cover toolbar/Cmd-F typing, actual results, keyboard selection, open/reveal, clear/Escape/reopen, rapid-query/navigation races, all view modes, pane switching and viewport preservation"
+
+  [[mission.task]]
+    id = "t-52e0addf"
+    title = "Ship literal keyword search by filename or contents with This Folder, This Mac and Other Folder scopes, real results and keyboard actions, separated semantic commands, and deterministic core search UI regressions"
+    done = true
+
+  [[mission.task]]
+    id = "t-0dab798d"
+    title = "Expose core Finder context actions across all five views: Compress/7-Zip, Quick Look, Make Alias/Show Original, Show Package Contents; cover real operations, capabilities, selection visibility and async origin-pane races"
+    done = true
+
+  [[mission.task]]
+    id = "t-54bc808a"
+    title = "Fix gallery filmstrip clipping with legacy scrollbars; verify actual clip height versus item plus insets at minimum/default/wide sizes with legacy and overlay scrollers"
+    done = true
+
+  [[mission.task]]
+    id = "t-14f589bd"
+    title = "Batch execution: layout/listing regression matrix and directory-scoped creation callbacks"
+    done = true
+
+  [[mission.task]]
+    id = "t-ff853afe"
+    title = "Batch execution: search traversal, index bounds and five-view Reveal regressions"
+    done = true
+
+  [[mission.task]]
+    id = "t-b47f8501"
+    title = "Batch execution: transient control geometry, popover lifecycle and dismissed drop cleanup"
+    done = true
+
+  [[mission.task]]
+    id = "t-d3edaf74"
+    title = "Batch execution: context named labels, mixed states and column tag-selection retention"
+    done = true
+
+  [[mission.task]]
+    id = "t-224c7ab2"
+    title = "Batch execution: measured warning inventory, Arrange None/trim fixes and exact warning gate"
+    done = true
+
+  [[mission.task]]
+    id = "t-e2f571e5"
+    title = "Batch execution: discriminatory capture evidence and fail-closed E2E completion"
+    done = true
+
+  [[mission.task]]
+    id = "t-730c623d"
+    title = "Continue Finder parity: background View/Arrange menus with capability-aware actions and five-view routing regressions"
+    done = true
+
+  [[mission.task]]
+    id = "t-0514f505"
+    title = "Audit remaining optional content configuration hooks for static no-op dispatch: color rules, size/date formats and middle-click handlers"
+    done = true
+
+  [[mission.task]]
+    id = "t-80f351c1"
+    title = "Compile-checked shared statics on Swift 6.4 with preserved legacy SDK fallback; reject newly exposed redundant-unsafe warnings without new gate exceptions"
+    done = true
+
+  [[mission.task]]
+    id = "t-40c7e77f"
+    title = "Inventory remaining SecureTransport usbmux warnings and validate a replacement with paired-device TLS acceptance; retain only exact documented migration-debt fingerprints"
+
+  [[mission.task]]
+    id = "t-5831b255"
+    title = "Fix deprecated TorrentKit fixed-buffer C-string decoding with bounded UTF-8 controls and force fresh CI warning delivery instead of cache-only acceptance"
+    done = true
+
+  [[mission.task]]
+    id = "t-1eaab59c"
+    title = "Finish Gallery filename color-rule parity with real filmstrip styling/selection regressions; preserve the currently explicit unsupported boundary until tested"
+    done = true
+
+  [[mission.task]]
+    id = "t-18cafeb9"
+    title = "Diagnose intermittent CursorConfirm dismissal/default-action lifecycle failures: retain pending/shown/completion telemetry and require a stable causal reproduction before a production fix; never mask mandatory failures"
+
+  [[mission.task]]
+    id = "t-4333de50"
+    title = "Audit real Settings default-view/sort controls versus the separate saved global FolderFormats default: reproduce through mounted controls and effective new-tab format, distinguish intentional remembered-folder overrides from ignored defaults, then fix only convicted behavior"
+    done = true
+
+  [[mission.task]]
+    id = "t-4587edd9"
+    title = "Make packaged release-launch probes fail closed on missing/non-temp configuration roots and honor only an explicit isolated release-test root; verify owner configuration remains untouched"
+    done = true
+
+  [[mission.comment]]
+    text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
+    at = "2026-10-03T06:41:14Z"
+
+  [[mission.comment]]
+    text = "Transient-surface audit 2026-10-03: underlying replace/keep-both/skip operations are unit- and product-tested, but PATHEM_FILES_E2E supplies a resolution and bypasses CursorConfirm. PATHEM_CONFLICT_SHOT is not invoked by test/e2e/run.sh and debugRender captures only a fabricated content view, excluding the actual NSPopover bubble, pointer anchoring, screen-edge placement, focus, dismissal and repeated-presentation lifecycle. The file-on-file Move Here/Copy Here/New Folder/Create Archive/Replace NSMenu has no automated rendering or invocation test. The micro-drag regression checks only a pure 5pt-versus-40pt threshold helper, not a real AppKit drag/drop event or menu nonappearance. Therefore green conflict behavior does not substantiate glitch-free UI."
+    at = "2026-10-03T06:43:52Z"
+
+  [[mission.comment]]
+    text = "User clarification 2026-10-03: the conflict/drop UI defect is cramped button presentation, not missing behavior or unexpected invocation. Evidence: the current conflict capture is ~331x112 and CursorConfirm sizes its content to fittingSize; Replace, Keep Both, Skip and Cancel occupy one leading-aligned horizontal row with only 10pt gaps and no minimum content width or adaptive localized layout. Mechanism: intrinsic minimum sizing makes the entire popover hug four controls, and longer locales worsen it. Required polish: a wider deliberate dialog/popover width, comfortable button spacing and minimum hit widths, trailing/native action hierarchy, plus adaptive stacking when localized labels do not fit; verify the real NSPopover in small-window/edge/light-dark/long-locale cases."
+    at = "2026-10-03T08:33:26Z"
+
+  [[mission.comment]]
+    text = "Landed b9ef2e3 on main after user approval of the live preview. Trigger/evidence: conflict buttons looked cramped at roughly 331 points wide. Change: 500-point popover, 24-point horizontal and 20-point vertical insets, 14-point action gaps, 88-point minimum button widths, trailing alignment, and vertical equal-width fallback for long labels. Effect: English capture is 500x112 and the user accepted the actual NSPopover. Verification: make build and smoke passed (short-label row and long-label stack geometry), UI automation 49/49, commit-gate Swift tests and localization passed. Broader transient surfaces, all-locale live windows, and release readiness remain pending under this mission."
+    at = "2026-10-03T17:28:25Z"
+
+  [[mission.comment]]
+    text = "Search audit 2026-10-08 triggered by user reporting bad/unintuitive file search. Evidence: targeted local search tests pass 18/18 across 5 suites, but runSearchMetadata exercises ContentSearch directly and UI automation only checks search-toolbar positioning; no query-to-result-to-open/reveal UI scenario exists. Default toolbar/Cmd-F opens CommandPalette semantic mode: its table contains one Search for query row, while SemanticSearcher.rank returns all indexed items ordered by cosine similarity with no relevance cutoff or filename-priority contract. Indexing covers only direct children, excludes hidden files and caps at 5000 without visible truncation/loading/model-unavailable reporting. Column/remote/smart views reject search with a beep. Filename substring search is separate in GlobalSearchController with scopes, a 200-result limit, and no explicit loading or surfaced Spotlight failure. Mechanism: semantic reranking is presented as ordinary file search and engine-level coverage has been mistaken for interaction coverage. Proven by code inspection and the local engine run; exact user-visible failure has not been reproduced in this audit. Recommendation: predictable filename-first UI with explicit other modes, followed by deterministic real-window positive/negative fixtures and lifecycle regressions. No search implementation changes made."
+    at = "2026-10-08T15:39:02Z"
+
+  [[mission.comment]]
+    text = "Screenshot evidence 2026-10-09: latest owner capture (09:16) shows query plants in an inline search field with explicit Filenames / Name Contains plants and Content / Contains plants choices. This is a concrete usability reference, not a capture of Pathem CommandPalette: current Pathem toolbar is an NSButton opening the semantic command overlay and does not implement these name/content suggestions. Owner reports Pathem search worse than Finder. Requirement sharpened: normal file search should visibly distinguish literal filename matching from content matching and scope; semantic relevance must be an explicit option, not silently replace name matching. No implementation changes made since the prior audit; main remains b9ef2e3. Screenshot alone does not prove result correctness or performance; real query-to-result-to-open/reveal checks still required."
+    at = "2026-10-09T13:17:18Z"
+
+  [[mission.comment]]
+    text = "Landed 2a11f39 on main on 2026-10-09. Trigger: owner expects keyword matching in filenames or contents with explicit current-folder/whole-Mac/chosen-path scopes. Change: one toolbar/Cmd-F literal search window with filename/content selector, folder/Mac/other-folder picker, recursion toggle, actual results, Open/Reveal and keyboard selection; cancellable generations protect query/close/reopen. Local text scan merges scoped indexed documents, and This Mac uses Spotlight with explicit index boundaries, limits/errors/omissions. Convicted bug: initial UI test failed registered=false for Cmd-F because registerSavedSearchCommands removed every search.* command; now cleanup tracks owned IDs and cannot override built-ins. Verified make ci: 9 XCTest + 762 Swift tests, 18 debug scenarios, 39/39 new search UI checks, 49/49 existing interactions, and 9 signed release-package checks. German search UI 39/39; commit hooks passed after mandatory formatting. No install, keychain, public flip or publishing. Remaining: broader exhaustive search/navigation permutations, live index completeness, OS folder-picker/default-app interoperability and visual baseline approval; live capture exited 1 and black/white cached render was rejected, so neither is counted as visual success. Original broader search-coverage task remains open; shipped core is recorded separately."
+    at = "2026-10-09T13:46:15Z"
+
+  [[mission.comment]]
+    text = "Continuing non-release Mission 53 in the codex workbench: exposed existing Finder-like selection commands and implemented Show Package Contents. Acceptance criteria and positive/negative controls are preregistered in docs/FINDER_PARITY_TESTING.md. Initial sample exposed harness lifecycle/routing and async view-swap timing errors; correcting instrumentation before acceptance. Gallery flow-layout sizing warning also reproduced and remains under investigation. No release, keychain, installed-process restart, or public visibility changes."
+    at = "2026-10-11T12:41:35Z"
+
+  [[mission.comment]]
+    text = "Verified core Finder context parity and gallery geometry slice. Trigger: missing Finder actions and persistent UI artifacts. Existing compression/alias/original/Quick Look commands were absent from shared menus; package browsing lacked a command. Added selection-sensitive entries across all five real views and top-level File menu package browsing. Red controls reproduced alias/ZIP/7z selection before async listing completion; queued selection now targets the origin pane and navigation/pane-switch controls pass. Gallery measured 109pt clip for 120pt items plus insets due to a 15pt legacy scroller; derived 139pt outer height yields 124pt legacy and 139pt overlay clips at all three sizes. Final frozen-source make ci passed: 15 XCTest, 766 Swift Testing/160 suites, debug E2E 19/19 (UI49, search39, Finder132), packaged9; German Finder132 also passed. First CI failed because a late source edit invalidated release compilation; corrected and reran fully. docs/FINDER_PARITY_TESTING.md records controls, mechanism, failed runs and confidence. Tasks15/16 done; broad parity/layout/environmental/warning tasks remain open. No install/restart, keychain, or public release action."
+    at = "2026-10-11T12:55:05Z"
+
+  [[mission.comment]]
+    text = "Owner requested a queued batch of open non-release work on 2026-10-11. Reviewed all open Missions: 6/16 have owner-only publication/native-speaker sign-off, 4 is the manually gated public flip; actionable engineering is in Mission53. Queued six Codex plan-first jobs with existing stable task IDs, causal evidence, scoped acceptance/negative controls, durable-workbench and same-project coordination constraints, and stored make ci execution gates: 1 layout/viewport t-ff130a84 run1791729615-967c0bbb9e3a; 2 search boundaries t-4beb26ad run1791729634-cdf3b4a5fa6f; 3 transient surfaces t-411f76f8 run1791729634-76e40976c742; 4 remaining Finder parity t-b6a3dacd run1791729634-8ff4f3c7b2cb; 5 compiler warnings t-295d2e96 run1791729635-608674d0db75; 6 trustworthy visual checks t-a9b2d5dc run1791729635-688707d67319. Verified each stored run is queued, agent codex, mode plan, verify_cmd make ci. No new runner or implementation was started; tasks remain pending and Mission53 remains now. No publication/release, install/restart, permissions, keychain, or live-provider/hardware mutations. Queuing is not completion or environmental/visual acceptance."
+    at = "2026-10-11T14:41:04Z"
+
+  [[mission.comment]]
+    text = "Owner approved execution of the six-job batch. The current runner has no project/run-id filter and would drain unrelated projects; exact approve refuses queued runs until plans exist. Executing the six scoped Pathem work items serially in the existing codex durable workbench through this chat instead. Only their six still-queued plan entries were retired with exact kill --run to prevent duplicate dispatch; killed queue state is superseded staging, not completed implementation. Roadmap task completion remains gated on real implementation, targeted controls and local make ci; public flip, keychain, installed-app mutations and live provider/hardware sign-off remain excluded."
+    at = "2026-10-11T15:15:03Z"
+
+  [[mission.comment]]
+    text = "Layout sample first failed 10/148: cross-directory creation selection/callback leaked and eight icon reveals left valid offscreen frames below a clip stuck at y=0. Added directory scope and minimal rectangle reveal; expanded actual-window sample passes 161/161 with discriminating geometry controls. Full make ci is in progress. Broad t-ff130a84 remains pending for tab interleavings, combined drawers, torrent detail and usable interaction width."
+    at = "2026-10-11T15:25:25Z"
+
+  [[mission.comment]]
+    text = "Landed layout slice 60a48bb. Final make ci green: 15 XCTest plus 766 Swift Testing tests, 20 debug E2E, 9 packaged release checks. Initial CI failure retained in docs: old no-nudge fixture was 2pt clipped; corrected treatment is explicitly asserted, now 0px. Broad layout task remains open for combined drawers, tab interleavings, torrent detail and usable interaction widths. No install/restart/public/provider/keychain changes."
+    at = "2026-10-11T15:35:50Z"
+
+  [[mission.comment]]
+    text = "Search sample reproduced two failures: indexed content leaked package/symlink ancestors, and an injected index could exceed the whole-Mac result limit. Added ancestor confinement and engine-owned cap. Targeted sample now passes 14 engine tests and 59 real-window UI checks, including actual mode and visible Reveal across all five views; delivered unreadability and cancellation have differing positive controls. Full make ci running. Broad t-4beb26ad remains open for live Spotlight/native picker/default-app acceptance and further resize/navigation interleavings."
+    at = "2026-10-11T15:38:25Z"
+
+  [[mission.comment]]
+    text = "Landed search slice; local make ci passed 15 XCTest, 772 Swift Testing, 20 debug and 9 packaged checks. Search UI grew 39 to 59 and engine tests 8 to 14. Original two failing controls and measured fixes are recorded in docs/BATCH_EXECUTION_TESTING.md. Broad t-4beb26ad stays pending for live index/picker/default-app acceptance and further resize/tab interleavings."
+    at = "2026-10-11T15:44:26Z"
+
+  [[mission.comment]]
+    text = "Transient sample initially failed three stale drop-context assertions. Production tracking now releases context on every dismissal. Two apparent long-label frame overlaps were refuted by native alignment insets: 32pt frames wrap 20pt alignment rects with 8pt separation; corrected checker has a differing overlap control, no accepted-UI restyle. Expanded sample passes 52/52, real popover close/default continuation plus transfer light/dark cancel-once/end/reopen. Full make ci running. Broad t-411f76f8 remains pending for native menu tracking/edge placement, physical key dispatch and alerts/open/save panels."
+    at = "2026-10-11T15:48:43Z"
+
+  [[mission.comment]]
+    text = "Transient slice landed after make ci passed 15 XCTest, 772 Swift Testing, 21 debug E2E and 9 packaged checks. New actual-control harness is mandatory in debug E2E; 52/52 pass. Broad transient task remains open for native menu tracking/edge placement, physical keys and alert/open/save panels."
+    at = "2026-10-11T15:53:55Z"
+
+  [[mission.comment]]
+    text = "Finder inventory recorded in docs/FINDER_FEATURE_MATRIX.md. Baseline reproduced missing named labels in all five context menus and enabled smart-result tag commands; reuse existing labels/xattr actions and local non-smart capability checks. Integrated sample then exposed column selection loss after successful tag writes: setSortFormat reloaded tables without name restoration. Corrected and asserted selection preservation; sample now 198/198 versus 132 baseline. Full make ci running. Broad t-b6a3dacd remains pending for background actions, Services/Quick Actions, richer tag editing, live cloud storage actions and capability-aware Eject integration."
+    at = "2026-10-11T16:01:15Z"
+
+  [[mission.comment]]
+    text = "Finder labels/selection slice landed after local make ci: 15 XCTest, 772 Swift Testing, 21 debug and 9 packaged checks. Finder UI grew 132 to 198 checks; inventory makes missing background actions, Services/Quick Actions, arbitrary tag editing, live cloud controls and Eject integration explicit. Broad t-b6a3dacd remains pending; no live storage/provider mutation."
+    at = "2026-10-11T16:06:32Z"
+
+  [[mission.comment]]
+    text = "Fresh Apple Swift 6.4 debug/release inventory: 28 unique first-party file/message fingerprints, not historical 60 or warning-site count. Real installed Arrange control failed 2/4 due Optional<GroupKey>.none; explicit enum case now 4/4. Trim uses MainActor completion hop and macOS-15 async export; real AAC 3.00s to 1.00s, missing-source negative passes. Modern duration/torrent types and unused URL/placeholder warning addressed. Warning checker passes six differing controls, rejects actual old logs with 13 removed fingerprints, accepts current debug diagnostics with 12 known and zero new. Fifteen exact remaining exceptions have reasons; broad t-295d2e96 remains pending for lifetime/Sendable callback and leftover binding/selector work. Full make ci with debug/release warning gates running."
+    at = "2026-10-11T16:15:41Z"
+
+  [[mission.comment]]
+    text = "Warning slice landed: measured union reduced 28 to 15 unique owned fingerprints, exact pending-work baseline and debug/release gates. make ci passes 15 XCTest, 772 Swift Testing, 23 debug scenarios and 9 packaged checks; Arrange 4/4 and real 3s-to-1s trim plus missing-source rejection mandatory. Initial localized fallback lint failure recorded. Broad warning task remains pending for 15 remaining fingerprints and live interactive trim/thumbnail acceptance; no new unchecked Sendable or suppression."
+    at = "2026-10-11T16:23:22Z"
+
+  [[mission.comment]]
+    text = "Sixth bounded batch slice now: real controls exposed PASS-before-error/final-FAIL/timeout false greens (3/6), while nonempty browser PNG fails opacity sanity. Require exit success plus final RESULT, validate actual decoded pixels with seven differing controls, and sample delivered appearance/locale before the eight-cell cached-content matrix. Native goldens/TCC remain pending; no installed app or system permissions changed."
+    at = "2026-10-11T16:41:32Z"
+
+  [[mission.comment]]
+    text = "Six batch implementation slices landed separately: 60a48bb layout/listing, 4c026c3 search bounds/Reveal, 5d6b189 transient lifecycle, c5e6fb9 context labels/column selection, 3bfd7a5 measured warning fixes/gate, 32181d6 capture/completion evidence. Tasks 17-22 complete; Mission 53 remains now with the broader deterministic and environmental boundaries still pending. Earlier debug totals include render/report assertions, not that many independent features. No installed app replacement, public flip, keychain change, TCC grant or live provider/storage writes. Acceptance and causal failures recorded in docs/BATCH_EXECUTION_TESTING.md, docs/VISUAL_EVIDENCE_TESTING.md and docs/FINDER_FEATURE_MATRIX.md."
+    at = "2026-10-11T16:56:11Z"
+
+  [[mission.comment]]
+    text = "Owner requested continuing open Missions. Next bounded Finder slice: inventory explicitly records absent background View/Arrange submenus; inspection finds grouping implemented only by list/icon while registry accepts it elsewhere. Criteria written in docs/BACKGROUND_MENU_TESTING.md before sampling. First reproduce installed-menu absence and accepted no-op on delivered views; then reuse existing command spine, gate actual content capability, and verify local routing/customization/negative controls. Native tracking and broader Finder/live-provider acceptance remain pending."
+    at = "2026-10-11T20:42:49Z"
+
+  [[mission.comment]]
+    text = "Background slice advanced: baseline13/24 failures reproduce missing menus and accepted no-op grouping; saved-order unit sample5/6 exposes duplicate saved entries. Corrected sample24/24 UI and6/6 unit controls pass. Expanded installed-menu probe exposes static dispatch of hiding/ordering defaults (methods missing protocol requirements); adding the two requirements cures the three one-mode customization failures. Headless submenu effective flags remain an unproven native-tracking boundary: automatic/manual/parent-restoration probe attempts are recorded as negative, not product fixes. Real-window target validation/dispatch sample35/35 passes; final matrix and CI next. Other optional extension-only hooks are candidates requiring delivered controls, not diagnosed behavior yet."
+    at = "2026-10-11T21:08:30Z"
+
+  [[mission.comment]]
+    text = "Engine rebuild revealed seven pre-existing redundant-unsafe fingerprints previously hidden by cache (eight declarations), gate rejected19 owned/12 known/7 unrecognized. e605748 records old CI SDK compatibility purpose. Modern checked-static branch removes those diagnostics using identical once-created values; legacy declarations remain for compiler<6.4. Current sample builds pass warning gate with no added exceptions. Older SDK branch is preserved but not reverified; previous cached inventory was not exhaustive."
+    at = "2026-10-11T21:08:30Z"
+
+  [[mission.comment]]
+    text = "Forced unused-condition compile (53.51s, 460 delivered command lines) refutes previous cached warning inventory: gate red 28 owned/14 known/14 new. Seven redundant-unsafe warnings fixed without exceptions. Two TorrentKit array C-string deprecations will get bounded UTF-8 controls; twelve unchanged IOSDeviceClient SecureTransport fingerprints are explicit device-acceptance migration debt, not safe drop-in Network.framework fixes. Record exact debt rather than claiming warning-free source; native menu tracking remains unverified."
+    at = "2026-10-11T21:14:33Z"
+
+  [[mission.comment]]
+    text = "Landed background-menu slice 9f200fc after integrated local CI and commit hooks passed. Initial delivered probe failed 11/24; duplicate-order control red; expanded installed menus exposed hide/order protocol-extension no-ops. Existing implementations now dispatch through witnesses. Final matrix 263/263 includes all five modes, 25 actual transitions, rendered Kind/None controls, unsupported grouping refusal and inactive-pane isolation; ordering suite 6/6. Failed headless native-enablement experiments are documented, removed and not claimed as fixes. Native popup tracking remains open."
+    at = "2026-10-11T21:28:05Z"
+
+  [[mission.comment]]
+    text = "Landed warning-hardening 2dd2114. Seven SDK redundant-unsafe fingerprints fixed via compiler-checked Swift 6.4 declarations, preserving legacy fallback and initialization with no exceptions for those diagnostics. Forced whole-debug inventory disproved prior cached exhaustiveness and recorded a red result. Twelve unchanged SecureTransport fingerprints are newly measured exact migration debt under task 26, still pending paired-device validation. Older SDK branch preserved, not reverified."
+    at = "2026-10-11T21:28:05Z"
+
+  [[mission.comment]]
+    text = "Bounded TorrentKit C-buffer decoding passes 5/5 differing controls; CI now forces a unique unused compilation condition every run. Fresh debug compile delivered 321 owned-source entries (68.08s); debug/release union gate 27 exact known/zero new/unparsed. Old log still fails its two C-string diagnostics after TLS debt inventory, proving no broad exemption. Full CI terminal zero: 15 XCTest and 779-case Swift Testing run (five live opt-in tests skipped), debug E2E 61 pass/one browser-opacity skip/zero fail, current-host package 9/9. Both commits landed; broad Mission 53 remains now and tasks 24/26 remain pending. No install/publication/keychain/TCC/provider-storage actions."
+    at = "2026-10-11T21:28:06Z"
+
+  [[mission.comment]]
+    text = "Owner authorized installation. Installed the exact CI-tested current-host package for landed 9f200fc into /Applications/Pathem.app, preserving previous ad-hoc app as rollback at /tmp/pathem-install-backup.kWEvAA/Pathem.app. Recursive signature verifies; installed executable matches tested package (SHA-256 900881f47445f47294400f4f9887fbe31af3df2a6d476af33b2de629525c3013). Installed normal launch process 97244 stays alive with one visible window; absent-PID window control returns zero. No new build, keychain access, TCC grants or publication. Broader native/environmental acceptance remains open."
+    at = "2026-10-11T21:50:21Z"
+
+  [[mission.comment]]
+    text = "Owner requested continuing Mission 53 only. Start task 24: source audit finds color rules, list size/date formats, middle-click enabling and new-tab callback hooks only in protocol-extension defaults despite concrete implementations. Hypothesis: existential dispatch ignores them. Require real-window rendered positive/negative controls and middle mouse delivery, including settings retention through all five view swaps, before fixing only convicted hooks. Missions 4/6 on explicit owner hold; no keychain/signing/publication/install action."
+    at = "2026-10-11T23:41:23Z"
+
+  [[mission.comment]]
+    text = "Task 24 now reproduced and fixed in isolated workbench: ignored optional content hooks (baseline35/47 after corrected mouse delivery), selection-clearing display reloads (per-view negative controls), and new-tab defaults (six constructor failures). Corrected small sample71/71, expanded matrix132/132: real styles/formats/middle tabs, menu inheritance, Tree expansion, Column no-redrill, list/icon/gallery offscreen/empty/multiple/grouped viewport controls. Instrument errors and accidental failed-sample expansion are recorded honestly in CONTENT_CONFIGURATION_TESTING.md; now mandatory refusal guards and dedicated scenario config isolation. Inputs frozen for full CI; no claims for physical/native goldens or Gallery colors. Missions4/6 remain explicitly held; no signing/keychain/publish/install action."
+    at = "2026-10-12T00:35:38Z"
+
+  [[mission.comment]]
+    text = "First integrated CI was red: actual session2990 exit2 (make recipe1), refusal wrapper127 plus transient48/52; package not reached. Wrapper now executable and2/2. Parent52/52, no-constructor52/52, all five component controls52/52, and two restored full-constructor repeats52/52 refute stable constructor causation. Removed every bypass/readiness override; no speculative production popover change, only useful DEBUG failure-state telemetry. Restored matrix132/132, transient52/52 twice and refusal2/2. Intermittent native lifecycle now explicit pending task; frozen inputs for fresh full CI rerun. Missions4/6 held; no install/signing/keychain/publish."
+    at = "2026-10-12T01:09:48Z"
+
+  [[mission.comment]]
+    text = "Landed a8b04c3 after normal format/unit/l10n hooks and full restored CI terminal0. Four optional preference hooks now use real witnesses; scoped appearance reloads preserve selection/viewport, expanded Tree and drilled Column without navigation callbacks; fresh tabs inherit six preference groups. Real matrix132/132, refusal2/2, transient52/52;15 XCTest+779-case run (five live opt-in skips),debug63 pass/one browser-opacity skip/zero fail, current-host package9/9. Fresh warning union27 exact known/zero new/unparsed, no new exceptions. Earlier CI red and unconvicted intermittent lifecycle retained in CONTENT_CONFIGURATION_TESTING.md and pending task29, not called fixed. Gallery color parity task28 remains pending; broader Mission53 stays now. Owner holds4/6 preserved. No install/signing/keychain/publication."
+    at = "2026-10-12T01:22:46Z"
+
+  [[mission.comment]]
+    text = "Owner relaunched and requested resume. Task28 now: Gallery currently has no color-rule setter/storage and omits FileColorStyle at the actual IconItem filmstrip renderer. Before changing production, require isolated real-window matching/unmatched/disabled/no-op/cleared rendered controls and delivered selection on a small Gallery-only sample. Then add only the existing shared style resolution and appearance-preserving setter; expand to rule precedence/font-only/color-only, view swaps/new tabs and visible/offscreen/empty horizontal viewport controls after that sample passes. Criteria recorded in CONTENT_CONFIGURATION_TESTING.md. Missions4/6 held; no install/keychain/signing/publication or foreign process action."
+    at = "2026-10-12T02:17:20Z"
+
+  [[mission.comment]]
+    text = "Gallery parity sample13/13 and expanded rules21/21 green after baseline12/13. Expanded matrix152/153 then152/154 exposed two instrument errors: an existing folder override and using a nonoptional fallback as an absence predicate, plus no delivery of the separate global folder format. Correct the probe with hasRule and the real view.useAsDefault command. Source also suggests the Settings default preference and saved global format may diverge; added a separate pending audit task, not an unproven production fix. All color/viewport assertions already pass; no full CI until corrected matrix passes."
+    at = "2026-10-12T02:23:51Z"
+
+  [[mission.comment]]
+    text = "Task28 corrected sample29/29 and expanded matrix176/176 now pass. Gallery renders shared rules and preserves horizontal selection/viewport; new-tab extension convicted first configured default overwritten by initial List. Scoped hasResolvedFolderFormat guard honors initial defaults, preserves later sticky navigation and explicit saved-folder precedence; all five default-mode/new-tab controls pass. Two mandatory scenarios have distinct config roots. Red instrument and product controls retained in CONTENT_CONFIGURATION_TESTING.md. Inputs frozen for fresh full CI jobs2; task28 not yet marked done. Settings-vs-global-default audit and intermittent popover cause remain pending; Missions4/6 held."
+    at = "2026-10-12T02:30:38Z"
+
+  [[mission.comment]]
+    text = "Landed f1ce71d via normal workbench land after full fresh CI15019 exit0 and normal scoped commit hook55147 exit0 (format/unit/l10n passed; untouched gesture pin skipped). Task28 done: Gallery filmstrip now renders shared filename color/font rules, including default/disabled/no-op/first-match/font-only/color-only controls and horizontal visible/offscreen/empty/multiple selection retention. Delivered default-view command then exposed fresh panes retaining initial List despite saved Gallery; scoped first-resolution guard fixes only that initialization boundary while preserving later sticky navigation and explicit folder precedence. Small29/29 and expanded176/176 are mandatory with separate temp config roots and all five initial view modes. Fresh compile61.44s,343 owned-source compilation lines; warning union27 exact known/zero new/unparsed, no exceptions added. 15 XCTest+779 cases/161 suites with five live opt-in skips; debug64 pass/one browser-opacity skip/zero failures; current-host ad-hoc package9/9. Failed/undelivered instrument controls and stable product reds remain in CONTENT_CONFIGURATION_TESTING.md. Mission53 stays now; task29 intermittent popup mechanism and task30 actual Settings-vs-global-default audit remain pending, not claimed fixed. Missions4/6 remain held. Workbench clean/in sync; unrelated primary managed edits preserved. No install/permissions/keychain/signing/publication or foreign signals."
+    at = "2026-10-12T02:40:25Z"
+
+  [[mission.comment]]
+    text = "Owner authorized installation of latest landed changes. Installed the exact full-CI-tested f1ce71d current-host arm64 ad-hoc bundle into /Applications/Pathem.app using a verified staged copy and native atomic bundle exchange. Signature verifies recursively; installed executable SHA-256 539328e3b81f28e31155808ef5f2424ec91c301b42948835e3788c9a33bebb2b matches tested package. Initial recursive diff emitted framework symlink-loop notices, so independently verified complete checksum/symlink inventory with read-only rsync and a prior-binary mismatch control; inventory identical/control discriminates. Previous app retained at /tmp/pathem-install-backup.2KB0mO/Pathem.app, signature valid. Running owner app PID97244 and original start time preserved; no quit/relaunch/helper signal. New executable takes effect on next owner restart; installed fresh-launch acceptance not claimed, source package had already passed launch/window checks9/9. No rebuild/keychain/signing credentials/TCC grants/publication. Mission53 remains now, task29/30 pending, Missions4/6 held."
+    at = "2026-10-12T02:53:20Z"
+
+  [[mission.comment]]
+    text = "Owner selected task30 Settings default-view/sort audit. Source shows mounted Layout popups update Preferences while new panes resolve the separate saved FolderFormats default; load order and Use as Default can also diverge. This remains a hypothesis until actual controls deliver differing Gallery/List and size-desc/name-asc defaults into unconfigured new tabs. Write sample criteria before baseline; preserve exact/subtree rules, unrelated format fields, inactive selection, and existing sticky navigation. Missions4/6 stay held; no install/keychain/publication or foreign process action."
+    at = "2026-10-12T04:19:17Z"
+
+  [[mission.comment]]
+    text = "Task30 stably convicted by actual mounted Layout controls and reverse registered command: corrected baseline42/52 with differing sort-order controls; no production selection fix inferred from early instrument failures. Synchronize only view/sort/direction, retain exact/subtree rules and grouping/hidden fields, reconcile startup with saved-format precedence and prefs fallback when formats absent. Sample64/64, date86/86, startup82/82; full50-cell matrix588/588; config root refusals4/4. Tied date fixture and wrong direct-script toolchain PATH stopped before expansion and are recorded. New mandatory isolated Settings scenario; inputs frozen for fresh full CI jobs2. Task30 remains pending until gates/land; popup29 and broader53 boundaries remain open. Missions4/6 held, no install/keychain/credentials/publication or foreign signals."
+    at = "2026-10-12T04:50:37Z"
+
+  [[mission.comment]]
+    text = "Settings full CI34004 terminal0: new588/588, debug65 pass/one capture skip/zero fail, package9/9,15XCTest+779 cases. Safety review of the packaged probe found an existing isolation hole: ConfigStore honors PATHEM_CONFIG_DIR only in DEBUG, while real packaged launch uses PATHEM_RELEASE_TEST; release startup therefore rewrites normal owner prefs via applyPreferences, including the new default reconciliation. Owner prefs mtime observed at packaged-probe time; no before snapshot, so value delta unknown and no guessing/rollback authorized. Add a scoped safety task and isolate only explicit release-test launches, requiring temp-root refusal before startup; normal release configuration behavior unchanged. Rerun release guard/launch and integrated CI with owner-config hashes observed read-only. No install/keychain/publication or foreign signals."
+    at = "2026-10-12T05:10:10Z"
+
+  [[mission.comment]]
+    text = "Release-isolation safety sample accepted: bounded debug build36233 and release51105 terminal0; debug guards6/6, always-zero-exit synthetic control correctly refused, real release guards2/2; packaged sample19070 terminal0 with11/11 including scratch-pref creation. Owner prefs/formats hashes unchanged across this isolated package sample; no raw values logged or owner restoration. Wrapper defaults to release-only safety and normal debug E2E explicitly supplies all3 flags. Ordinary release behavior unchanged outside explicit PATHEM_RELEASE_TEST. Inputs now frozen for integrated CI rerun; first unsafe owner-profile probe remains honestly recorded, value delta unknown. No install/keychain/permissions/publication or foreign signals."
+    at = "2026-10-12T05:24:40Z"
+
+  [[mission.comment]]
+    text = "Landed 539bc8f via normal workbench land after integrated isolation CI74885 exit0 and normal commit hook80973 exit0 (format/unit/l10n passed, untouched gesture pin skipped). Task30 done: actual mounted controls reproduced42/52 split defaults; Settings/menu view+sort+direction now agree, source format wins at startup while prefs seed when formats absent, exact/subtree/grouping/hidden fields retained. 50 real view/sort/direction combinations plus startup/reverse/persistence controls588/588; corrected sample64, dates86, startup82 all pass. Task31 done: initial otherwise-green CI34004 legacy release probe rewrote normal prefs (observed mtime, before-value snapshot absent, value delta unknown); no guessing/restoration. Explicit release-test mode now validates temp roots before startup and never falls back to owner config. Debug refusals6/6, synthetic non-refusing control red, release2/2, scratch prefs verified; owner prefs/formats digests unchanged across isolated package sample and integrated rerun. Final fresh debug59.79s/344 compile lines, 26 known/zero new/unparsed; including fresh release sample retains27 known, no exceptions.15 XCTest+779 cases/161 suites, five explicit live opt-in skips; debug65 pass/one browser-opacity skip/zero fail; isolated current-host ad-hoc package11/11. Existing content176,Gallery29,transient52,search59,Finder198,background263,layout161 pass. Mechanical required Settings formatting recorded. Workbench clean/in sync; unrelated managed primary edits preserved. Mission53 stays now, popup29 and broader boundaries remain open; Missions4/6 held. No installation/owner app interruption/keychain/permission credentials/publication or foreign signals."
+    at = "2026-10-12T05:34:41Z"
+
+[[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
   title = "Share gesture engine and recording controls with Commandem"
@@ -776,16 +1311,16 @@ working_dir = "."
   note = "Owner requested modular gestures across both apps. Current source duplicates dominant-axis reduction and bindings, and Pathem capture stores unbounded points. Extract shared system-framework-only package with explicit prefix-versus-reject policy, preserved flat JSON/default file actions/native fallback, common recording/preview/cancellation controls, and checksum-pinned local dependency; verify real adapter compatibility before acceptance."
   issue = 0
 
-  [[phase.task]]
+  [[mission.task]]
     id = "t-138b2e24"
     title = "Adopt pinned shared GestureSupport core and recording canvas; preserve native actions/configuration and verify compatibility/full gates"
     done = true
 
-  [[phase.comment]]
+  [[mission.comment]]
     text = "Shared GestureSupport migration94f53d0 verified by complete normal Swift/format/pin/localization gates plus explicit full build3.66s. Same9fe9ab93 package as accepted Commandem54867e97; streaming compatibility, overflow/JSON/flick defaults and shared off-screen preview/Escape checks included. Initial inherited Git-routing failure, new SwiftTerm API mismatch and stale traits are retained with controls; corrected hooks/exact1.13 pin/owned-state reset accepted. Normal land refused only foreign primary roadmap. Integration will privately archive and restore all unrelated pending bytes/records, never commit them. No install/restart/provider/push or physical calibration claim."
     at = "2026-10-10T21:45:19Z"
 
-  [[phase.comment]]
+  [[mission.comment]]
     text = "Owner authorized no-restart install. Release source4af77c0 packaged with canonical recipe/source-root/jobs-only private wrapper, verified recursively signed ARM64 and exact byte inventory, then atomically exchanged at /Applications/Pathem.app. Original app PID864/start time preserved; old bundle retained for rollback. Commandem newer accepted source945/whole-mainb1 and universal CLI independently verified through peer normal no-kill delivery; earlier a5 preparation never installed. No app/helper quit, kill, launch, provider call, push or key/grant creation. Pending primary guidance/roadmap edits preserved; physical gesture behavior remains separately graded."
     at = "2026-10-11T00:48:25Z"
 # <<< commandem roadmap <<<
