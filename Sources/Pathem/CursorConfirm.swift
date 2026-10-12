@@ -134,10 +134,23 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     }
 
     func popoverDidClose(_ notification: Notification) {
-        if continuation != nil { resolve(nil) }  // dismissed without picking a button = Cancel
+        // A replaced popover finishes closing after the next prompt has started; its late
+        // close must not cancel that newer prompt. Only the current popover's close is a
+        // dismissal (click outside / Esc), which resolves as Cancel.
+        let isCurrent = (notification.object as? NSPopover) === popover
+        let wasPending = continuation != nil
+        if isCurrent, continuation != nil { resolve(nil) }
+        #if DEBUG
+        debugCloseEvents.append(
+            (current: isCurrent, pending: wasPending, resolved: wasPending && continuation == nil))
+        #endif
     }
 
     #if DEBUG
+    /// Every delegate close, in order: whether the closing popover was the current one, and
+    /// whether a prompt was pending when it arrived, and whether this close resolved it.
+    /// See docs/CURSOR_CONFIRM_LIFECYCLE.md.
+    var debugCloseEvents: [(current: Bool, pending: Bool, resolved: Bool)] = []
     var debugPopover: NSPopover? { popover }
     var debugHasPendingContinuation: Bool { continuation != nil }
     func debugController(message: String, info: String, buttons: [String]) -> NSViewController {

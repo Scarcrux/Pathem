@@ -19,6 +19,12 @@ extension BrowserViewController {
             } while Date() < end
             return condition()
         }
+        func closeLog() -> String {
+            cursorConfirm.debugCloseEvents.map {
+                ($0.current ? "current" : "stale")
+                    + ($0.resolved ? "+resolved" : $0.pending ? "+pending-ignored" : "")
+            }.joined(separator: ",")
+        }
         func finish() -> Never {
             let count = results.filter { $0 }.count
             print("RESULT: \(count == results.count ? "PASS" : "FAIL") (\(count)/\(results.count))")
@@ -127,23 +133,32 @@ extension BrowserViewController {
         check(
             "popover-present-delivered",
             settle { cursorConfirm.debugPopover?.isShown == true })
-        cursorConfirm.debugPopover?.performClose(nil)
+        // Control for docs/CURSOR_CONFIRM_LIFECYCLE.md: simulate the dismiss that intermittently
+        // failed to close, so the harness's handling of a stale popover can be observed.
+        let injectDismissFailure =
+            ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_INJECT_DISMISS_FAILURE"] != nil
+        if !injectDismissFailure { cursorConfirm.debugPopover?.performClose(nil) }
         check(
             "popover-dismiss-resumes-cancel",
             settle { dismissed && cursorConfirm.debugPopover == nil },
             "dismissed=\(dismissed) exists=\(cursorConfirm.debugPopover != nil) shown=\(cursorConfirm.debugPopover?.isShown ?? false) pending=\(cursorConfirm.debugHasPendingContinuation)"
         )
+        // Each step waits for a popover other than the one before it: a popover left open by an
+        // earlier failure also reports isShown, and acting on it would misattribute that one
+        // failure to every later step (docs/CURSOR_CONFIRM_LIFECYCLE.md).
+        func settleOnNewPopover(after previous: NSPopover?) -> Bool {
+            settle { cursorConfirm.debugPopover.map { $0 !== previous && $0.isShown } ?? false }
+        }
         for cycle in 0..<3 {
             var result: Int?
             var completed = false
+            let previous = cursorConfirm.debugPopover
             Task { @MainActor in
                 result = await cursorConfirm.ask(
                     message: "Fixture \(cycle)", buttons: ["Continue", "Cancel"], over: view)
                 completed = true
             }
-            check(
-                "popover-reopen-\(cycle)",
-                settle { cursorConfirm.debugPopover?.isShown == true })
+            check("popover-reopen-\(cycle)", settleOnNewPopover(after: previous))
             let action =
                 cursorConfirm.debugPopover?.contentViewController.map {
                     buttons(in: $0.view).first { $0.tag == 0 }
@@ -152,9 +167,45 @@ extension BrowserViewController {
             check(
                 "popover-default-completes-once-\(cycle)",
                 settle { completed && result == 0 && cursorConfirm.debugPopover == nil },
-                "completed=\(completed) result=\(String(describing: result)) exists=\(cursorConfirm.debugPopover != nil) shown=\(cursorConfirm.debugPopover?.isShown ?? false) pending=\(cursorConfirm.debugHasPendingContinuation) action=\(action != nil) enabled=\(action?.isEnabled ?? false)"
+                "completed=\(completed) result=\(String(describing: result)) exists=\(cursorConfirm.debugPopover != nil) shown=\(cursorConfirm.debugPopover?.isShown ?? false) pending=\(cursorConfirm.debugHasPendingContinuation) action=\(action != nil) enabled=\(action?.isEnabled ?? false) closes=\(closeLog())"
             )
         }
+
+        // Back-to-back prompts, as a batch copy asks about its next conflict as soon as the
+        // previous answer resumes. Prompt 2 is left up for a second, as a person reads it,
+        // so a late close event from prompt 1 has time to arrive before it is answered.
+        var firstAnswer: Int? = -1
+        var secondAnswer: Int? = -1
+        var secondDone = false
+        let beforeFirst = cursorConfirm.debugPopover
+        Task { @MainActor in
+            firstAnswer = await cursorConfirm.ask(
+                message: "First conflict", buttons: ["Continue", "Cancel"], over: view)
+            secondAnswer = await cursorConfirm.ask(
+                message: "Second conflict", buttons: ["Continue", "Cancel"], over: view)
+            secondDone = true
+        }
+        _ = settleOnNewPopover(after: beforeFirst)
+        let firstPopover = cursorConfirm.debugPopover
+        let firstButton =
+            firstPopover?.contentViewController.map {
+                buttons(in: $0.view).first { $0.tag == 0 }
+            } ?? nil
+        firstButton?.performClick(nil)
+        _ = settleOnNewPopover(after: firstPopover)
+        RunLoop.main.run(until: Date().addingTimeInterval(1))
+        let secondButton =
+            secondDone
+            ? nil
+            : cursorConfirm.debugPopover?.contentViewController.map {
+                buttons(in: $0.view).first { $0.tag == 0 }
+            } ?? nil
+        secondButton?.performClick(nil)
+        check(
+            "popover-back-to-back-keeps-second",
+            settle { secondDone } && firstAnswer == 0 && secondAnswer == 0,
+            "first=\(String(describing: firstAnswer)) second=\(String(describing: secondAnswer)) secondDone=\(secondDone) clickedSecond=\(secondButton != nil) closes=\(closeLog())"
+        )
 
         let progress = TransferProgress()
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
