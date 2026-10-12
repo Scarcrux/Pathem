@@ -4,15 +4,20 @@
 > easy to say, which is why it was chosen over the earlier "Pathom" (whose
 > meaning few people decode). The naming analysis below is the historical
 > Pathom screen; its domain/trademark facts are for `pathom.*` and have NOT
-> been re-run for `pathem.*`. TODO before any branding spend: confirm
-> `pathem.app` availability (RDAP) and run USPTO TESS clearance (Classes
-> 9 & 42).
+> been re-run for `pathem.*`. `pathem.app` is registered and already serving
+> the site (confirmed live, 2026-10-12), so that half of the pre-branding-spend
+> TODO is resolved. USPTO TESS clearance (Classes 9 & 42) has still not been
+> run; that is a legal judgment call for the owner, not an engineering one.
 
-Status: **design phase**. This document records the competitive analysis, the
-language/architecture decision, and the MVP cut. It is the output of a
-multi-agent research pass (5 research agents → 3 architecture proposals →
-judge → adversarial critic) whose load-bearing technical claims were verified
-on this machine (macOS 26.5.1, arm64, Swift 6.3.2).
+Status: **well past design phase**, built and under pre-release hardening (see
+the "Status (built)" subsection under §10 below, and `CLAUDE.md`'s "Current
+state"). This document
+still records the competitive analysis, the language/architecture decision,
+and the MVP cut as they were decided; treat everything below as the design
+record those decisions came from, not as the project's current state. It is
+the output of a multi-agent research pass (5 research agents → 3 architecture
+proposals → judge → adversarial critic) whose load-bearing technical claims
+were verified on this machine (macOS 26.5.1, arm64, Swift 6.3.2).
 
 ---
 
