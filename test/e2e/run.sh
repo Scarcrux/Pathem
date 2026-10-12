@@ -146,6 +146,27 @@ assert() {
   else printf "  %sFAIL%s  %s\n" "$red" "$rst" "$name"; fail=$((fail+1)); fi
 }
 
+configuration_root_guard_probe() {
+  local out command_status
+  out="$(env -u PATHEM_CONFIG_DIR PATHEM_CONTENT_PREFS_UI_TEST=1 "$BIN" 2>&1)"; command_status=$?
+  if [[ "$command_status" != 64 || "$out" != 'RESULT: FAIL configuration test requires an isolated temporary config root' ]]; then
+    printf 'RESULT: FAIL missing configuration root refusal (exit %s)\n' "$command_status"; return 1
+  fi
+  out="$(env PATHEM_CONFIG_DIR=/Applications PATHEM_CONTENT_PREFS_UI_TEST=1 "$BIN" 2>&1)"; command_status=$?
+  if [[ "$command_status" != 64 || "$out" != 'RESULT: FAIL configuration test refuses a non-temporary config root' ]]; then
+    printf 'RESULT: FAIL unsafe configuration root refusal (exit %s)\n' "$command_status"; return 1
+  fi
+  printf 'RESULT: PASS (2/2)\n'
+}
+
+# The timeout launcher execs an executable; a shell function name is not one.
+if [[ "${1:-}" == "--configuration-root-guards" ]]; then
+  BIN="${2:-}"
+  [[ -x "$BIN" ]] || { printf 'RESULT: FAIL guard probe requires a binary\n'; exit 2; }
+  configuration_root_guard_probe
+  exit $?
+fi
+
 # Release builds intentionally contain no PATHEM_* debug hooks. Probe the assembled product from
 # outside: launch the real binary, require it to stay alive, and inspect its on-screen window by
 # owner PID through read-only Core Graphics metadata (no Accessibility permission required).
@@ -230,6 +251,8 @@ scenario "on-screen UI interactions"   'RESULT: PASS' env PATHEM_UI_TEST=1 "$BIN
 scenario "file search UI + scopes"     'RESULT: PASS' env PATHEM_FILE_SEARCH_TEST=1 "$BIN"
 scenario "Finder actions across views" 'RESULT: PASS' env PATHEM_FINDER_UI_TEST=1 "$BIN"
 scenario "background view + arrange menus" 'RESULT: PASS' env PATHEM_BACKGROUND_UI_TEST=1 "$BIN"
+scenario "configuration-root refusal guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN"
+scenario "pane configuration + real tabs" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/content-prefs-config" PATHEM_CONTENT_PREFS_UI_TEST=1 "$BIN"
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
 scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"

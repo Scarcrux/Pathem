@@ -100,7 +100,9 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         guard row >= 0, let node = outline.item(atRow: row) as? Node else { return false }
         let entry = node.located
         outline.scrollRowToVisible(row)
-        guard let cell = outline.view(atColumn: 0, row: row, makeIfNecessary: true) as? NSTableCellView,
+        guard
+            let cell = outline.view(atColumn: 0, row: row, makeIfNecessary: true)
+                as? NSTableCellView,
             let field = cell.textField
         else { return false }
         editingEntry = entry
@@ -119,7 +121,8 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         if let editor = field.currentEditor() {
             let ns = entry.name as NSString
             let ext = ns.pathExtension as NSString
-            let baseLength = (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
+            let baseLength =
+                (!entry.isDirectory && ext.length > 0) ? ns.length - ext.length - 1 : ns.length
             editor.selectedRange = NSRange(location: 0, length: max(0, baseLength))
         }
         return true
@@ -142,7 +145,8 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         editingRow = -1
         renameCancelled = false
         if row >= 0, row < outline.numberOfRows,
-            let cell = outline.view(atColumn: 0, row: row, makeIfNecessary: false) as? NSTableCellView,
+            let cell = outline.view(atColumn: 0, row: row, makeIfNecessary: false)
+                as? NSTableCellView,
             let field = cell.textField
         {
             endInlineEditing(field)
@@ -150,7 +154,8 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         }
     }
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool
+    {
         if selector == #selector(NSResponder.cancelOperation(_:)) {  // Esc abandons the edit
             renameCancelled = true
             outline.window?.makeFirstResponder(outline)
@@ -187,7 +192,8 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         var previous: [String: Node] = [:]
         if preserveState { for node in roots { previous[node.entry.name] = node } }
         roots = newEntries.map { entry in
-            if let old = previous[entry.name], old.entry.modificationDate == entry.modificationDate {
+            if let old = previous[entry.name], old.entry.modificationDate == entry.modificationDate
+            {
                 return old
             }
             return Node(entry: entry, url: nodeURL(entry, parent: base))
@@ -227,10 +233,11 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}  // no sortable header in the tree
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
-        self.fontSize = fontSize
-        outline.rowHeight = rowHeight
-        outline.usesAlternatingRowBackgroundColors = alternatingRows
-        outline.reloadData()
+        reloadAppearancePreservingState {
+            self.fontSize = fontSize
+            outline.rowHeight = rowHeight
+            outline.usesAlternatingRowBackgroundColors = alternatingRows
+        }
     }
 
     func setBackgroundColor(_ color: NSColor?) {
@@ -243,14 +250,18 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     // MARK: Lazy children
 
     private func nodeURL(_ entry: FileEntry, parent: URL?) -> URL {
-        if let location = entry.location { return URL(fileURLWithPath: location).appendingPathComponent(entry.name) }
+        if let location = entry.location {
+            return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
+        }
         return (parent ?? URL(fileURLWithPath: "/")).appendingPathComponent(entry.name)
     }
 
     private func loadChildrenIfNeeded(_ node: Node) {
         guard node.children == nil, node.entry.isDirectory else { return }
-        let kids = (try? BulkEnumerator().entries(of: node.url, includingHidden: includesHidden)) ?? []
-        node.children = kids
+        let kids =
+            (try? BulkEnumerator().entries(of: node.url, includingHidden: includesHidden)) ?? []
+        node.children =
+            kids
             .sorted {
                 $0.isDirectory != $1.isDirectory
                     ? $0.isDirectory && !$1.isDirectory
@@ -263,7 +274,10 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     private func expandedPaths() -> Set<String> {
         var paths = Set<String>()
         func walk(_ node: Node) {
-            if outline.isItemExpanded(node) { paths.insert(node.url.path); node.children?.forEach(walk) }
+            if outline.isItemExpanded(node) {
+                paths.insert(node.url.path)
+                node.children?.forEach(walk)
+            }
         }
         roots.forEach(walk)
         return paths
@@ -296,15 +310,21 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
 
     // MARK: NSOutlineViewDelegate
 
-    func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
+    func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any)
+        -> NSView?
+    {
         guard let node = item as? Node else { return nil }
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
+        let cell =
+            (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makeCell(id)
         cell.textField?.stringValue = node.entry.name
         cell.textField?.setAccessibilityLabel(FileAXLabel.describe(node.entry))  // name + kind/size/date
-        let ruleStyle = FileColorStyle.style(for: node.entry, rules: colorRules, baseFont: .systemFont(ofSize: fontSize))
+        let ruleStyle = FileColorStyle.style(
+            for: node.entry, rules: colorRules, baseFont: .systemFont(ofSize: fontSize))
         cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: fontSize)
-        cell.textField?.textColor = ruleStyle?.color ?? (node.entry.isDataless ? .secondaryLabelColor : .labelColor)
+        cell.textField?.textColor =
+            ruleStyle?.color ?? (node.entry.isDataless ? .secondaryLabelColor : .labelColor)
         let baseIcon = FileIconCache.icon(  // kind-cached; bundles (.app) resolved per-file
             for: node.entry, in: node.url.deletingLastPathComponent())
         cell.imageView?.image = CloudBadge.decorate(
@@ -332,7 +352,9 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     @objc private func singleClicked() {
         guard singleClickToOpen else { return }
         let row = outline.clickedRow
-        guard row >= 0, let node = outline.item(atRow: row) as? Node, !node.entry.isDirectory else { return }
+        guard row >= 0, let node = outline.item(atRow: row) as? Node, !node.entry.isDirectory else {
+            return
+        }
         let flags = NSApp.currentEvent?.modifierFlags ?? []
         guard !flags.contains(.shift), !flags.contains(.command) else { return }
         onOpen?(node.located)
@@ -358,8 +380,14 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     private var colorRules = ColorRules()
     func setColorRules(_ rules: ColorRules) {
         guard rules != colorRules else { return }
-        colorRules = rules
-        outline.reloadData()
+        reloadAppearancePreservingState { colorRules = rules }
+    }
+
+    private func reloadAppearancePreservingState(_ update: () -> Void) {
+        let expanded = expandedPaths()
+        PaneAppearanceReload.table(
+            outline, in: scrollView, update: update,
+            afterReload: { self.reexpand(expanded) })
     }
 
     // MARK: Build

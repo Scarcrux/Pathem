@@ -566,8 +566,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     private var colorRules = ColorRules()
     func setColorRules(_ rules: ColorRules) {
         guard rules != colorRules else { return }
-        colorRules = rules
-        collection.reloadData()
+        PaneAppearanceReload.collection(collection, in: scrollView) { colorRules = rules }
     }
 
     var selectedEntries: [FileEntry] {
@@ -714,8 +713,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}  // no headers in a grid
 
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
-        labelFontSize = fontSize
-        collection.reloadData()
+        PaneAppearanceReload.collection(collection, in: scrollView) { labelFontSize = fontSize }
     }
 
     // MARK: In-place rename (Finder-style, so a new folder is named right in the grid)

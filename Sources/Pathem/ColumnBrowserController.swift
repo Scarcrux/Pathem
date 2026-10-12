@@ -38,7 +38,12 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     func setColorRules(_ rules: ColorRules) {
         guard rules != colorRules else { return }
         colorRules = rules
-        for column in columns { column.table.reloadData() }
+        let wasRestoring = restoringSortSelection
+        restoringSortSelection = true
+        defer { restoringSortSelection = wasRestoring }
+        for column in columns {
+            PaneAppearanceReload.table(column.table, in: column.scroll, update: {})
+        }
     }
 
     // PaneContentView callbacks.
@@ -341,7 +346,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {
-        guard !restoringSortSelection else { return }  // sorting is not a new drill/preview gesture
+        guard !restoringSortSelection else { return }  // display refreshes are not drill/preview gestures
         guard let table = notification.object as? NSTableView, let index = columnIndex(of: table)
         else { return }
         activeColumn = index

@@ -61,6 +61,23 @@ enum PathemApp {
     static var liveDialog: AnyObject?  // holds the PATHEM_DIALOG_SHOT window
 
     static func main() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil {
+            let env = ProcessInfo.processInfo.environment
+            let temporary = FileManager.default.temporaryDirectory.resolvingSymlinksInPath()
+            guard let path = env["PATHEM_CONFIG_DIR"], !path.isEmpty else {
+                print("RESULT: FAIL configuration test requires an isolated temporary config root")
+                exit(64)
+            }
+            let configured = URL(fileURLWithPath: path).resolvingSymlinksInPath()
+            guard configured.pathComponents.count > temporary.pathComponents.count,
+                configured.pathComponents.starts(with: temporary.pathComponents)
+            else {
+                print("RESULT: FAIL configuration test refuses a non-temporary config root")
+                exit(64)
+            }
+        }
+        #endif
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
         // deliver a fatal signal; the remote runner handles the error instead.
         signal(SIGPIPE, SIG_IGN)
@@ -236,6 +253,9 @@ enum PathemApp {
         }
         if ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_UI_TEST"] != nil {
             browser.runBackgroundMenuUIAutomation()
+        }
+        if ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil {
+            browser.runContentConfigurationUIAutomation()
         }
         if ProcessInfo.processInfo.environment["PATHEM_LAYOUT_UI_TEST"] != nil {
             browser.runLayoutUIAutomation()

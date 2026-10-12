@@ -308,22 +308,23 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Apply the user's size (decimal/binary) and date (relative/short/medium) formats to the
     /// size and date columns.
     func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {
-        byteFormatter.countStyle = size == .binary ? .binary : .file
-        switch date {
-        case .relative:
-            dateFormatter.dateStyle = .medium
-            dateFormatter.timeStyle = .short
-            dateFormatter.doesRelativeDateFormatting = true  // "Today" / "Yesterday"
-        case .short:
-            dateFormatter.dateStyle = .short
-            dateFormatter.timeStyle = .short
-            dateFormatter.doesRelativeDateFormatting = false
-        case .medium:
-            dateFormatter.dateStyle = .medium
-            dateFormatter.timeStyle = .none
-            dateFormatter.doesRelativeDateFormatting = false
+        reloadAppearancePreservingState {
+            byteFormatter.countStyle = size == .binary ? .binary : .file
+            switch date {
+            case .relative:
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .short
+                dateFormatter.doesRelativeDateFormatting = true  // "Today" / "Yesterday"
+            case .short:
+                dateFormatter.dateStyle = .short
+                dateFormatter.timeStyle = .short
+                dateFormatter.doesRelativeDateFormatting = false
+            case .medium:
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .none
+                dateFormatter.doesRelativeDateFormatting = false
+            }
         }
-        tableView.reloadData()
     }
 
     /// Distinguishes each list's column-autosave key so concurrent panes don't share one.
@@ -579,8 +580,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var colorRules = ColorRules()
     func setColorRules(_ rules: ColorRules) {
         guard rules != colorRules else { return }
-        colorRules = rules
-        tableView.reloadData()  // re-color the visible rows
+        reloadAppearancePreservingState { colorRules = rules }
     }
 
     private var middleClickNewTab = false
@@ -603,11 +603,21 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var configuredAlternating = true
 
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
-        listFontSize = fontSize
-        configuredAlternating = alternatingRows
-        tableView.rowHeight = rowHeight
-        if backgroundColor == nil { tableView.usesAlternatingRowBackgroundColors = alternatingRows }
-        tableView.reloadData()
+        reloadAppearancePreservingState {
+            listFontSize = fontSize
+            configuredAlternating = alternatingRows
+            tableView.rowHeight = rowHeight
+            if backgroundColor == nil {
+                tableView.usesAlternatingRowBackgroundColors = alternatingRows
+            }
+        }
+    }
+
+    /// Appearance changes do not change row identity/order. A raw reload clears
+    /// native selection on the verified SDK; keep its compact indexes and scroll
+    /// without rebuilding the listing or scheduling unrelated metadata work.
+    private func reloadAppearancePreservingState(_ update: () -> Void) {
+        PaneAppearanceReload.table(tableView, in: scrollView, update: update)
     }
 
     /// The active folder-background color (nil = default). Kept so applyStyle doesn't re-enable

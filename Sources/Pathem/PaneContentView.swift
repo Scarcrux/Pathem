@@ -89,6 +89,12 @@ protocol PaneContentView: AnyObject {
     /// Customization must dynamically dispatch to the delivered content's menu owner.
     func setHiddenContextItems(_ ids: Set<String>)
     func setContextMenuOrder(_ order: [String])
+    /// Optional content preferences must dispatch through concrete witnesses, not
+    /// statically select extension no-ops when called by PaneController.
+    func setColorRules(_ rules: ColorRules)
+    func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay)
+    func setMiddleClickOpensNewTab(_ enabled: Bool)
+    func setOpenInNewTabHandler(_ handler: ((URL) -> Void)?)
     func refreshDrilledColumns()
     func setGitStates(_ states: [String: GitFileState])
     /// Zoom the thumbnails (icon/gallery views); a no-op for list/column.

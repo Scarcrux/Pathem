@@ -239,3 +239,32 @@ debug/release warning union has 27 exact known fingerprints, zero new/unparsed;
 this is not a warning-free claim. Mission 53 and the remaining configuration-hook,
 native visual/tracking, older-SDK and environmental boundaries stay open. No
 installed-app replacement, publication, keychain changes or permission grants.
+
+## Continuation: delivered content preferences and constructor boundaries
+
+The optional-hook audit reproduces ignored color rules, list formats and middle
+clicks: methods existed only as extension defaults, so existential calls selected
+no-ops. Four requirements now use existing implementations. Delivered styling also
+convicts selection-clearing display reloads across five modes; scoped shared
+preservation retains compact native selections, scroll and expanded/drilled state,
+without rebuilding directory rows or scheduling unrelated metadata work. New tabs
+previously reset six content preferences; constructor and live application now use
+the same path. The real-window matrix passes 132/132, including six formatter
+combinations, native middle-button events and actual new tabs, menu inheritance,
+expanded Tree child identity, Column no-redrill, nonzero-scroll visible/offscreen/
+empty cases, multiple selection and group-header offsets. Refusal controls pass
+2/2 before browser startup; the scenario owns its temp config and cannot pollute
+other E2E scenarios. See `CONTENT_CONFIGURATION_TESTING.md` for preregistered
+criteria, instrument errors, red controls and confidence limits.
+
+First integrated CI fails its non-executable guard wrapper and transient lifecycle
+checks. The wrapper is corrected. Parent/component/restored comparisons do not
+establish a stable popover mechanism; no speculative production fix is shipped.
+Improved DEBUG failure-state telemetry remains, and the intermittent observation
+stays open. Final restored full CI exits zero: 15 XCTest, 779-case Swift Testing run
+(five explicit live skips), 63 debug checks/one browser-opacity skip/zero failures,
+and current-host package 9/9. Existing feature matrices remain green; fresh warning
+union is 27 exact known/zero new/unparsed, not warning-free. Gallery coloring,
+Column density/fonts, native visual/physical/lifecycle acceptance and older-SDK/
+provider/device boundaries remain open. Missions 4/6 are explicitly owner-held.
+No installed-app replacement, signing credentials, keychain changes or publication.

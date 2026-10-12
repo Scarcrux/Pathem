@@ -124,11 +124,15 @@ extension BrowserViewController {
                 message: "Fixture confirmation", buttons: ["Continue", "Cancel"], over: view)
             dismissed = result == nil
         }
-        check("popover-present-delivered", settle { cursorConfirm.debugPopover?.isShown == true })
+        check(
+            "popover-present-delivered",
+            settle { cursorConfirm.debugPopover?.isShown == true })
         cursorConfirm.debugPopover?.performClose(nil)
         check(
             "popover-dismiss-resumes-cancel",
-            settle { dismissed && cursorConfirm.debugPopover == nil })
+            settle { dismissed && cursorConfirm.debugPopover == nil },
+            "dismissed=\(dismissed) exists=\(cursorConfirm.debugPopover != nil) shown=\(cursorConfirm.debugPopover?.isShown ?? false) pending=\(cursorConfirm.debugHasPendingContinuation)"
+        )
         for cycle in 0..<3 {
             var result: Int?
             var completed = false
@@ -137,7 +141,9 @@ extension BrowserViewController {
                     message: "Fixture \(cycle)", buttons: ["Continue", "Cancel"], over: view)
                 completed = true
             }
-            check("popover-reopen-\(cycle)", settle { cursorConfirm.debugPopover?.isShown == true })
+            check(
+                "popover-reopen-\(cycle)",
+                settle { cursorConfirm.debugPopover?.isShown == true })
             let action =
                 cursorConfirm.debugPopover?.contentViewController.map {
                     buttons(in: $0.view).first { $0.tag == 0 }
@@ -145,7 +151,9 @@ extension BrowserViewController {
             action?.performClick(nil)
             check(
                 "popover-default-completes-once-\(cycle)",
-                settle { completed && result == 0 && cursorConfirm.debugPopover == nil })
+                settle { completed && result == 0 && cursorConfirm.debugPopover == nil },
+                "completed=\(completed) result=\(String(describing: result)) exists=\(cursorConfirm.debugPopover != nil) shown=\(cursorConfirm.debugPopover?.isShown ?? false) pending=\(cursorConfirm.debugHasPendingContinuation) action=\(action != nil) enabled=\(action?.isEnabled ?? false)"
+            )
         }
 
         let progress = TransferProgress()

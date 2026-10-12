@@ -394,8 +394,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
-        labelFontSize = fontSize
-        filmstrip.reloadData()
+        PaneAppearanceReload.collection(filmstrip, in: scrollView) { labelFontSize = fontSize }
     }
 
     // MARK: Data source / selection / drag

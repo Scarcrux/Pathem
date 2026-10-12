@@ -32,7 +32,8 @@ extension BrowserViewController {
                 current: terminal.theme.name,
                 follows: terminalFollows,
                 onSelectTheme: { [weak self] name in
-                    guard let self, let preset = TerminalTheme.presets.first(where: { $0.name == name })
+                    guard let self,
+                        let preset = TerminalTheme.presets.first(where: { $0.name == name })
                     else { return }
                     self.terminal.theme = preset
                     self.saveConfig(preset, to: Self.terminalThemeURL)
@@ -149,7 +150,8 @@ extension BrowserViewController {
     /// Push the skin's colors into the theme manager (which notifies the themed chrome) and tint
     /// the window/pane background. The accent is honored by Pathem-drawn elements via ThemeManager.
     func applyTheme() {
-        ThemeManager.shared.apply(accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)
+        ThemeManager.shared.apply(
+            accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)
         let tint = ThemeManager.shared.windowTint
         view.window?.backgroundColor = tint ?? .windowBackgroundColor
     }
@@ -157,7 +159,9 @@ extension BrowserViewController {
     /// Adopt the selected icon set; reload every listing so the new icons appear.
     func applyIconSet() {
         guard IconSetManager.shared.setCurrent(named: prefs.iconSetName) else { return }
-        for side in [leftTabs, rightTabs] { for pane in side.tabs { pane.reloadIfShowingListing() } }
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.reloadIfShowingListing() }
+        }
     }
 
     func applyCompactSidebar() {
@@ -216,12 +220,22 @@ extension BrowserViewController {
         }
     }
 
+    /// Keep existing panes and the new-tab constructor on the same content settings path.
+    func applyContentPreferences(to pane: PaneController) {
+        pane.applyStyle(
+            rowHeight: prefs.rowHeight, fontSize: prefs.fontSize,
+            alternatingRows: prefs.alternatingRows)
+        pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
+        pane.setContextMenuOrder(prefs.contextMenuOrder)
+        pane.setColorRules(prefs.colorRules)
+        pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)
+        pane.setMiddleClickOpensNewTab(prefs.middleClickOpensNewTab)
+    }
+
     func applyPreferences() {
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs {
-                pane.applyStyle(
-                    rowHeight: prefs.rowHeight, fontSize: prefs.fontSize,
-                    alternatingRows: prefs.alternatingRows)
+                applyContentPreferences(to: pane)
                 pane.setPathBar(atBottom: prefs.pathBarAtBottom)
                 pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
                 pane.dragMovesByDefault = prefs.dragMovesByDefault
@@ -232,15 +246,11 @@ extension BrowserViewController {
                 if wasHidden != prefs.showHiddenByDefault { pane.reloadIfShowingListing() }
                 pane.iconZoom = CGFloat(prefs.iconZoom)
                 pane.iconPointSize = CGFloat(prefs.toolbarIconSize.pointSize)
-                pane.setHiddenContextItems(Set(prefs.hiddenContextItems))
                 pane.setHeaderButtonOrder(prefs.paneHeaderButtonOrder)
                 pane.setHiddenHeaderButtons(Set(prefs.hiddenPaneHeaderButtons))
-                pane.setContextMenuOrder(prefs.contextMenuOrder)
-                pane.setColorRules(prefs.colorRules)
-                pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)
-                pane.setMiddleClickOpensNewTab(prefs.middleClickOpensNewTab)
                 pane.statusOptions = (
-                    prefs.statusShowItemCount, prefs.statusShowSize, prefs.statusShowFreeSpace)
+                    prefs.statusShowItemCount, prefs.statusShowSize, prefs.statusShowFreeSpace
+                )
             }
         }
         for side in [leftTabs, rightTabs] { side.newTabAtEnd = prefs.newTabAtEnd }
@@ -268,14 +278,17 @@ extension BrowserViewController {
             applyPreferences()  // applies + persists prefs
             // The view / folders-first defaults only bite on folders without a saved view, so refresh
             // the open panes to show the change now instead of on the next navigation.
-            for side in [leftTabs, rightTabs] { for pane in side.tabs { pane.reloadIfShowingListing() } }
+            for side in [leftTabs, rightTabs] {
+                for pane in side.tabs { pane.reloadIfShowingListing() }
+            }
         }
         if changed.isEmpty {
             presentInfo(
                 L("finder.match.noneTitle", "Already matches Finder"),
                 L(
                     "finder.match.noneBody",
-                    "Your settings already match your Finder preferences for the ones Pathem can mirror (show hidden files, keep folders on top, and the default view)."))
+                    "Your settings already match your Finder preferences for the ones Pathem can mirror (show hidden files, keep folders on top, and the default view)."
+                ))
         } else {
             presentInfo(
                 L("finder.match.doneTitle", "Matched Finder"),

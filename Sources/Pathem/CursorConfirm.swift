@@ -139,6 +139,7 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
 
     #if DEBUG
     var debugPopover: NSPopover? { popover }
+    var debugHasPendingContinuation: Bool { continuation != nil }
     func debugController(message: String, info: String, buttons: [String]) -> NSViewController {
         makeController(message: message, info: info, buttons: buttons)
     }

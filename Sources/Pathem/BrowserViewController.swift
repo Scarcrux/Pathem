@@ -500,6 +500,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 // New tabs honor the customized header too.
                 pane.setHeaderButtonOrder(self?.prefs.paneHeaderButtonOrder ?? [])
                 pane.setHiddenHeaderButtons(Set(self?.prefs.hiddenPaneHeaderButtons ?? []))
+                // A tab created after a settings change must not reset content preferences.
+                if let self { self.applyContentPreferences(to: pane) }
                 pane.onUploadFiles = {
                     [weak self, weak pane] urls, connection, remotePath, password in
                     guard let self, let pane else { return }
