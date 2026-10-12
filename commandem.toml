@@ -1018,7 +1018,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-6f8b3fa7"
     title = "Reconcile release documentation and goals: remove stale CI-on-push and screenshot TODO claims, update DESIGN status, complete branding/domain clearance, and keep the launch checklist aligned with the real pipeline"
-    done = true
+    state = "ask"
 
   [[mission.task]]
     id = "t-b6a3dacd"
@@ -1384,6 +1384,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Landed f99ca84 (task 9, release docs reconciliation). Checked README/LAUNCH_CHECKLIST/DESIGN.md: the stale CI-on-push claim was already gone (dropped 2026-09-12, before this mission opened) and badges already match Package.swift/Info.plist, so no change needed there. Found and fixed in DESIGN.md: confirmed pathem.app resolves live (HTTP 200, 2026-10-12) and recorded it, resolving half the branding TODO; USPTO trademark clearance left explicitly open as the owner's legal call. Fixed the top-of-file 'Status: design phase' line, which contradicted the accurate 'Status (built)' subsection a few hundred lines down. Docs-only; hooks skipped (no Swift/strings touched). No source/test/install/publication changes."
     at = "2026-10-12T17:56:57Z"
+
+  [[mission.comment]]
+    text = "Correcting my own task9 close: cycled done -> ask. The task bundles branding/domain clearance; I only resolved the domain half (pathem.app confirmed live). USPTO trademark clearance is still unresolved and is the owner's legal call, not an engineering one, so marking it fully done overstated it. Everything else in task9 (stale CI-on-push already gone, DESIGN status fixed, launch checklist already aligned) is genuinely done; f99ca84 stands. Task9 is ask pending an owner trademark-clearance decision, same pattern as task35."
+    at = "2026-10-12T17:57:41Z"
 
 [[mission]]
   id = "m-e1443252"
