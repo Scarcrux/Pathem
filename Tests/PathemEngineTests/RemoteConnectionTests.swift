@@ -6,11 +6,12 @@ import Testing
 @Suite struct RemoteConnectionTests {
     @Test func colorLabelAndLocalPathRoundTrip() throws {
         let original = RemoteConnection(
-            name: "Site", proto: .sftp, host: "example.com", colorLabel: "blue", localPath: "/Users/me/site")
+            name: "Site", proto: .sftp, host: "example.com", colorLabel: "blue",
+            localPath: "/fixture/home/site")
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(RemoteConnection.self, from: data)
         #expect(decoded.colorLabel == "blue")
-        #expect(decoded.localPath == "/Users/me/site")
+        #expect(decoded.localPath == "/fixture/home/site")
         #expect(FileTag.Color(nameKey: decoded.colorLabel) == .blue)
     }
 
@@ -105,10 +106,12 @@ import Testing
     @Test func keyFileRoundTripsAndDefaultsEmpty() throws {
         // An older connections.json (no keyFile) decodes to "" (password/agent auth).
         let old = try JSONDecoder().decode(
-            RemoteConnection.self, from: Data(#"{ "host": "ec2.example.com", "proto": "sftp" }"#.utf8))
+            RemoteConnection.self,
+            from: Data(#"{ "host": "ec2.example.com", "proto": "sftp" }"#.utf8))
         #expect(old.keyFile == "")
         // A saved key file round-trips.
-        let conn = RemoteConnection(name: "EC2", proto: .sftp, host: "ec2.example.com", keyFile: "~/.ssh/ec2.pem")
+        let conn = RemoteConnection(
+            name: "EC2", proto: .sftp, host: "ec2.example.com", keyFile: "~/.ssh/ec2.pem")
         let back = try JSONDecoder().decode(RemoteConnection.self, from: JSONEncoder().encode(conn))
         #expect(back.keyFile == "~/.ssh/ec2.pem")
     }

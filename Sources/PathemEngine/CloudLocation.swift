@@ -64,7 +64,9 @@ public enum CloudLocation {
         }
 
         // Legacy sync-folder roots in the home directory, and anything inside them.
-        for (name, service): (String, CloudService) in [("Dropbox", .dropbox), ("Google Drive", .googleDrive)] {
+        for (name, service): (String, CloudService) in [
+            ("Dropbox", .dropbox), ("Google Drive", .googleDrive),
+        ] {
             let root = h + "/" + name
             if p == root || p.hasPrefix(root + "/") { return service }
         }
@@ -72,7 +74,7 @@ public enum CloudLocation {
     }
 
     /// Map a `~/Library/CloudStorage` provider directory name to a service. The names look
-    /// like "Dropbox", "GoogleDrive-you@gmail.com", "OneDrive-Personal", "Box-Box".
+    /// like "Dropbox", "GoogleDrive-user@example.invalid", "OneDrive-Personal", "Box-Box".
     public static func provider(fromDirectory name: String) -> CloudService {
         let lower = name.lowercased()
         if lower.hasPrefix("icloud") { return .iCloud }  // e.g. "iCloudDrive-iCloudDrive (...)"

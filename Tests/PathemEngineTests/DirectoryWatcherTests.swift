@@ -20,11 +20,21 @@ import Testing
         final class Fired: @unchecked Sendable {
             private let lock = NSLock()
             private var value = false
-            func set() { lock.lock(); value = true; lock.unlock() }
-            var isSet: Bool { lock.lock(); defer { lock.unlock() }; return value }
+            func set() {
+                lock.lock()
+                value = true
+                lock.unlock()
+            }
+            var isSet: Bool {
+                lock.lock()
+                defer { lock.unlock() }
+                return value
+            }
         }
         let fired = Fired()
-        guard let watcher = DirectoryWatcher(path: dir.path, latency: 0.05, onChange: { fired.set() }) else {
+        guard
+            let watcher = DirectoryWatcher(path: dir.path, latency: 0.05, onChange: { fired.set() })
+        else {
             Issue.record("watcher failed to start")
             return
         }
@@ -46,7 +56,8 @@ import Testing
     /// deadlock in stop()) would crash or hang here.
     @Test func rapidStartStopIsSafe() throws {
         let fm = FileManager.default
-        let dir = fm.temporaryDirectory.appendingPathComponent("pathem-watch-stress-\(UUID().uuidString)")
+        let dir = fm.temporaryDirectory.appendingPathComponent(
+            "pathem-watch-stress-\(UUID().uuidString)")
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? fm.removeItem(at: dir) }
 
@@ -62,14 +73,22 @@ import Testing
     /// does not. This filter is what stops watching a busy tree (worst case "/") from reloading the
     /// pane several times a second on unrelated system activity.
     @Test func onlyDirectEntriesAndTheFolderItselfAffectTheListing() {
-        #expect(DirectoryWatcher.pathAffectsListing(event: "/Users/me/a.txt", watched: "/Users/me"))
-        #expect(DirectoryWatcher.pathAffectsListing(event: "/Users/me/sub", watched: "/Users/me"))
-        #expect(DirectoryWatcher.pathAffectsListing(event: "/Users/me", watched: "/Users/me"))  // WatchRoot
+        #expect(
+            DirectoryWatcher.pathAffectsListing(
+                event: "/fixture/home/a.txt", watched: "/fixture/home"))
+        #expect(
+            DirectoryWatcher.pathAffectsListing(
+                event: "/fixture/home/sub", watched: "/fixture/home"))
+        #expect(
+            DirectoryWatcher.pathAffectsListing(event: "/fixture/home", watched: "/fixture/home"))  // WatchRoot
         #expect(DirectoryWatcher.pathAffectsListing(event: "/Applications", watched: "/"))
         // Deep changes are ignored -- the flood the trace caught.
-        #expect(!DirectoryWatcher.pathAffectsListing(event: "/Users/me/sub/deep.txt", watched: "/Users/me"))
+        #expect(
+            !DirectoryWatcher.pathAffectsListing(
+                event: "/fixture/home/sub/deep.txt", watched: "/fixture/home"))
         #expect(!DirectoryWatcher.pathAffectsListing(event: "/private/var/log/x", watched: "/"))
-        #expect(!DirectoryWatcher.pathAffectsListing(event: "/Applications/A.app/Contents/x", watched: "/"))
+        #expect(
+            !DirectoryWatcher.pathAffectsListing(
+                event: "/Applications/A.app/Contents/x", watched: "/"))
     }
 }
-

@@ -37,7 +37,7 @@ struct SidebarSectionOrderTests {
 
     @Test func hideSystemItemRoundTripsAndIsIdempotent() throws {
         var sidebar = Sidebar(groups: [])
-        let gdrive = "/Users/me/Library/CloudStorage/GoogleDrive-old@x.com"
+        let gdrive = "/fixture/home/Library/CloudStorage/GoogleDrive-old@x.com"
         sidebar.hideSystemItem(gdrive)
         sidebar.hideSystemItem(gdrive)  // idempotent
         #expect(sidebar.hiddenSystemItems == [gdrive])
@@ -64,14 +64,15 @@ struct SidebarTests {
     }
 
     @Test func defaultHasFavorites() {
-        let s = Sidebar.makeDefault(home: URL(fileURLWithPath: "/Users/x"))
+        let s = Sidebar.makeDefault(home: URL(fileURLWithPath: "/fixture/home"))
         #expect(s.groups.count == 1)
         #expect(s.groups[0].title == "Favorites")
         #expect(
             s.groups[0].items.map(\.name) == [
-                "Home", "Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music", "Applications",
+                "Home", "Desktop", "Documents", "Downloads", "Pictures", "Movies", "Music",
+                "Applications",
             ])
-        #expect(s.groups[0].items[0].path == "/Users/x")
+        #expect(s.groups[0].items[0].path == "/fixture/home")
     }
 
     @Test func codableRoundTrip() throws {
@@ -137,7 +138,10 @@ extension UUID {
             bytes.append(UInt8(hex[i..<next], radix: 16)!)
             i = next
         }
-        self = UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-                           bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]))
+        self = UUID(
+            uuid: (
+                bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+                bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+            ))
     }
 }

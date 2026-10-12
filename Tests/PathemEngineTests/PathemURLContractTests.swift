@@ -8,11 +8,11 @@ import Testing
     @Test func buildsAndParsesEachVerb() throws {
         for verb in [PathemURLContract.Verb.open, .reveal, .preview] {
             let url = try #require(
-                PathemURLContract.url(verb: verb, path: "/Users/me/a folder/file.txt"))
+                PathemURLContract.url(verb: verb, path: "/fixture/home/a folder/file.txt"))
             #expect(url.scheme == "pathem")
             let parsed = try #require(PathemURLContract.parse(url))
             #expect(parsed.verb == verb)
-            #expect(parsed.path == "/Users/me/a folder/file.txt")  // spaces survive the round-trip
+            #expect(parsed.path == "/fixture/home/a folder/file.txt")  // spaces survive the round-trip
         }
     }
 
@@ -38,7 +38,7 @@ import Testing
     }
 
     @Test func pathWithQueryReservedCharactersSurvives() throws {
-        let tricky = "/Users/me/notes/a?b&c=d.txt"  // ? & = in the filename
+        let tricky = "/fixture/home/notes/a?b&c=d.txt"  // ? & = in the filename
         let url = try #require(PathemURLContract.url(verb: .reveal, path: tricky))
         let parsed = try #require(PathemURLContract.parse(url))
         #expect(parsed.path == tricky)

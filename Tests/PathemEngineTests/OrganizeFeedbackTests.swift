@@ -5,15 +5,19 @@ import Testing
 
 @Suite struct OrganizeFeedbackTests {
     private func tempURL() -> URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("pathem-fb-\(UUID().uuidString).json")
+        FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-fb-\(UUID().uuidString).json")
     }
 
     @Test func recordsAndScoresVerdicts() {
         let url = tempURL()
         defer { try? FileManager.default.removeItem(at: url) }
-        OrganizeFeedback.record(.init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .good), to: url)
-        OrganizeFeedback.record(.init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .good), to: url)
-        OrganizeFeedback.record(.init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .bad), to: url)
+        OrganizeFeedback.record(
+            .init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .good), to: url)
+        OrganizeFeedback.record(
+            .init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .good), to: url)
+        OrganizeFeedback.record(
+            .init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .bad), to: url)
 
         let log = OrganizeFeedback.load(from: url)
         #expect(log.entries.count == 3)
@@ -40,23 +44,35 @@ import Testing
     @Test func confidenceBiasIsBoundedAndSigned() {
         var log = OrganizeFeedback()
         // A pile of positive signals saturates at the +0.35 cap.
-        log.entries = Array(repeating: .init(ruleID: "installer", destination: nil, ext: "dmg", verdict: .good), count: 20)
+        log.entries = Array(
+            repeating: .init(ruleID: "installer", destination: nil, ext: "dmg", verdict: .good),
+            count: 20)
         #expect(log.confidenceBias(ruleID: "installer", ext: "dmg", destination: nil) == 0.35)
         // Negative signals go the other way.
-        log.entries = Array(repeating: .init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .skipped), count: 20)
+        log.entries = Array(
+            repeating: .init(ruleID: "by-kind", destination: "PDFs", ext: "pdf", verdict: .skipped),
+            count: 20)
         #expect(log.confidenceBias(ruleID: "by-kind", ext: "pdf", destination: "PDFs") == -0.35)
         // No data means no nudge.
-        #expect(OrganizeFeedback().confidenceBias(ruleID: "by-kind", ext: "pdf", destination: "PDFs") == 0)
+        #expect(
+            OrganizeFeedback().confidenceBias(ruleID: "by-kind", ext: "pdf", destination: "PDFs")
+                == 0)
     }
 
     @Test func preferredDestinationTracksMostRecentReroute() {
         var log = OrganizeFeedback()
         log.entries = [
-            .init(ruleID: "by-kind", destination: "Finance", ext: "pdf", verdict: .routed, destinationPath: "/Users/x/Documents/Finance"),
-            .init(ruleID: "by-kind", destination: "Taxes", ext: "pdf", verdict: .routed, destinationPath: "/Users/x/Documents/Taxes"),
+            .init(
+                ruleID: "by-kind", destination: "Finance", ext: "pdf", verdict: .routed,
+                destinationPath: "/fixture/home/Documents/Finance"),
+            .init(
+                ruleID: "by-kind", destination: "Taxes", ext: "pdf", verdict: .routed,
+                destinationPath: "/fixture/home/Documents/Taxes"),
         ]
         // Most recent correction wins.
-        #expect(log.preferredDestinationPath(ruleID: "by-kind", ext: "pdf") == "/Users/x/Documents/Taxes")
+        #expect(
+            log.preferredDestinationPath(ruleID: "by-kind", ext: "pdf")
+                == "/fixture/home/Documents/Taxes")
         #expect(log.preferredDestinationPath(ruleID: "by-kind", ext: "png") == nil)  // different type
         #expect(log.preferredDestinationPath(ruleID: "screenshots", ext: "pdf") == nil)  // different rule
     }

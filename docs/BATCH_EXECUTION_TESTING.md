@@ -110,6 +110,58 @@ Local unchanged-app verification passed build plus 15 XCTest and 779 Swift Testi
 cases. Full app/native/packaged CI was not replayed for this Python/Make/docs-only
 unit; its existing source-equivalent opener CI receipt remains separate evidence.
 
+### Release-safety fixture triage — criteria before cleanup
+
+The 37 current matches resolve to 34 static paths used as pure test inputs and
+three example Google Drive account addresses (one production comment, two test
+strings). Placeholder-account classification was checked without exposing values;
+the cloud recognizer receives an injected home and identifies the provider by its
+prefix, not the email domain. The path tests assert string parsing, precedence,
+serialization and direct-child filtering; they do not require a real user home.
+Replace only these examples with non-user fixture roots and reserved email domains.
+Do not add scanner exceptions or rewrite history.
+
+Sample criteria: relevant engine suites must preserve every existing assertion;
+reserved examples pass the real gate, while existing private-path/email/token
+controls still fail. The delivered candidate tree must fall from 37 to zero
+matches; historical findings must remain visible. Any regression, an unexpected
+historical green result or a detector weakened to obtain zero invalidates this
+cleanup. History inventory also identifies two machine-specific configuration
+paths and one credential-like literal; neither is automatically waived. Broad
+release privacy clearance, human PII review and history authority remain separate.
+
+Results: 71 existing engine tests in 12 suites pass after fixture substitution;
+19 real-scanner/control tests pass, including reserved-example acceptance and
+unchanged negative email/path/token controls. The candidate tree now has zero
+findings (previously 37). Historical scope remains RED with all 41 matches intact
+and zero authorship findings. The all-ref source review confirms 38 are synthetic
+examples; it does not waive them. The other two path matches are obsolete
+`.claude/settings.json` and `polaris.toml` machine configuration. The literal in
+the old opt-in FTP test matches the provider's [public demo documentation](https://dlptest.com/ftp-test/)
+and shared test-service host; only equality verdicts were emitted, never the
+value. This is not evidence of a private-account credential needing rotation,
+and no credential exemption was added.
+
+History plan (not executed): keep an access-restricted backup outside all
+release-scanned refs; coordinate every workbench/branch owner; review only the
+obsolete configuration paths and credential literal, and handle benign fixture
+matches with precise reviewed policy or neutral fixture replacements. The three
+non-fixture historical commits have 851 reachable descendants/self across an
+891-commit graph with 28 named refs at measurement. Those are an impact bound,
+not a completed rewrite or a request to force-push. Commit hashes, tags, remote
+tracking refs and agent references must be accounted for; original/private remote
+history can retain objects even after a rewrite. Require explicit owner approval
+before an isolated rewrite preview, any live ref mutation or remote rewrite.
+Public visibility remains separately forbidden without manual approval. Until a
+strategy is approved, keep the historical gate RED and current-tree cleanup green.
+
+Local full verification: app build and 15 XCTest plus 779 Swift Testing cases pass;
+the five live FTP/SFTP/DHT/Transmission opt-in skips remain explicit. Runtime code
+is unchanged apart from canonical formatting of one loop; the CloudLocation
+semantic edit is a comment, and all other Swift edits are synthetic test inputs.
+No native/packaged full CI replay, installed-app change, credential action or
+history mutation occurred for this unit.
+
 ### Always Open With — acceptance written before the sample
 
 Trigger: selecting Choose in Always Open With appeared to do nothing. The popup

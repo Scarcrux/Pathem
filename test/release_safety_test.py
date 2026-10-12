@@ -153,6 +153,14 @@ class ReleaseSafetyTests(unittest.TestCase):
         self.assertIn("rule=personal-email-address", result.stdout)
         self.assertNotIn("fixture" + "@gmail.com", result.stdout)
 
+    def test_reserved_fixture_examples_are_clean(self):
+        self.write("fixtures.swift", '// GoogleDrive-user@example.invalid\n'
+                   'let home = "/fixture/home"\n'
+                   'let folder = "/fixture/home/Library/CloudStorage/GoogleDrive-user@example.invalid"\n')
+        self.commit()
+        result = self.run_gate()
+        self.assertEqual(result.returncode, 0, result.stdout)
+
     def test_shallow_history_fails(self):
         shallow = self.repo / "shallow"
         self.git("clone", "-q", "--depth=1", self.repo.as_uri(), str(shallow))

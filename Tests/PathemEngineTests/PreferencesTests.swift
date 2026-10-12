@@ -41,7 +41,8 @@ import Testing
     }
 
     @Test func defaultViewAndSortRoundTrip() throws {
-        let prefs = Preferences(defaultViewMode: .icon, defaultSortKey: .date, defaultSortAscending: false)
+        let prefs = Preferences(
+            defaultViewMode: .icon, defaultSortKey: .date, defaultSortAscending: false)
         let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))
         #expect(decoded.defaultViewMode == .icon)
         #expect(decoded.defaultFormat.sortKey == .date)
@@ -53,10 +54,11 @@ import Testing
 
     @Test func startupAndOpenBehaviorRoundTrip() throws {
         let prefs = Preferences(
-            newTabLocation: .fixed, fixedStartFolder: "/Users/me/Work", middleClickOpensNewTab: false)
+            newTabLocation: .fixed, fixedStartFolder: "/fixture/home/Work",
+            middleClickOpensNewTab: false)
         let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))
         #expect(decoded.newTabLocation == .fixed)
-        #expect(decoded.fixedStartFolder == "/Users/me/Work")
+        #expect(decoded.fixedStartFolder == "/fixture/home/Work")
         #expect(decoded.middleClickOpensNewTab == false)
         // Defaults: last folder, middle-click on.
         #expect(Preferences.default.newTabLocation == .lastFolder)
