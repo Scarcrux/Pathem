@@ -1,0 +1,17 @@
+title = "Pathem release safety: default secrets plus bounded privacy patterns"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "personal-email-address"
+description = "Personal email provider address; requires private review"
+regex = '''(?i)[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:gmail|yahoo|outlook|hotmail|icloud|me|aol|protonmail|proton)\.(?:com|net)\b'''
+
+[[rules]]
+id = "absolute-user-path"
+description = "Absolute machine-specific home path; not releasable source"
+regex = '''(?:/Users/|/home/)[a-zA-Z0-9._-]+/'''
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''^(?:/Users/|/home/)(?:you|user|example|test)/$''']

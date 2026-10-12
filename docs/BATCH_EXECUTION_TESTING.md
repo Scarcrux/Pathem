@@ -58,6 +58,58 @@ new golden images; environmental capture/native-speaker review remains pending.
 
 ## Results
 
+### Release privacy/history gate — criteria before sampling
+
+Trigger: Mission 53 still lacks a redacted tree/history release preflight. The
+local gitleaks binary exists, but no repository scanner policy or wrapper does.
+The sample must run the real scanner on disposable tracked repositories: a clean
+noreply-authored tree/history must pass; a generated synthetic token must fail in
+both current content and deleted-file history; a non-noreply fixture author must
+fail without printing the address. Missing scanner, invalid/missing report, scan
+failure, shallow history, ignored source changes, and redaction failures must fail
+closed. Treat the exact LiveRemoteTests environment-variable expression as a
+candidate false positive, never allow its whole file or every PASSWORD expression.
+A real token on that line/path must still fail. Logs must contain only rule IDs,
+commit IDs and counts, not scanner snippets, secrets, author identities or paths.
+
+Only scale to the project's tracked tree/all reachable refs after each control
+has a verdict and scanner delivery is established by actual report/status. No
+history rewrite, credentials, keychain access, network upload or publication.
+Bounded PII pattern checks are not comprehensive human identity/branding clearance;
+any real finding is a release blocker to report, not permission to alter history.
+
+Sample verdict: 12 initial real-scanner controls passed (2.37s). An expanded
+control failed because its second mock invocation tried to create the same fixture
+branch again; no project scan was launched from that failed design. Deliver the
+mutation once and require two scan invocations plus the specific changed-input
+failure. Restored 18 controls passed (3.38s): clean/secret/deleted/unmerged/current
+inputs discriminate; noreply rejection, shallow/missing input/tool/report, scanner
+stderr suppression, malformed/unredacted report, and delivered ref/content races
+fail closed. Mutation and malformed-tool controls are injected; other scan fixtures
+use real local gitleaks v8.30.1. Log assertions reject the synthetic secret, fixture
+email and temporary path. The current LiveRemoteTests environment expressions
+produce no finding, so no exemption was added; a token in that same path still
+fails. These per-criterion verdicts permit the bounded local project scan, not
+publication or comprehensive PII certification.
+
+Actual project result is RED: 629 delivered candidate files, 890 reachable commits;
+37 candidate-tree matches (34 absolute-user-path, three personal-email patterns),
+41 historical matches (37 path, three email, one credential pattern), and zero
+author/committer metadata findings. The historical credential-like match is a
+literal in LiveRemoteTests, not an environment-variable expression; it is not
+waived and is not claimed to be an active authentic credential without private
+review. These are detector matches, not comprehensive proof of personal identity
+or credential compromise. No cleanup/rewrite/publication was performed. Metadata
+is intentionally withheld except counts and commit IDs; scanner reports are
+redacted and protected by a private temporary directory. Broad privacy release
+clearance remains pending; instrument acceptance is separate from a clean repo.
+
+`make release-safety` requires the discrimination controls first. It remains
+separate from routine app CI while historical release findings are unresolved.
+Local unchanged-app verification passed build plus 15 XCTest and 779 Swift Testing
+cases. Full app/native/packaged CI was not replayed for this Python/Make/docs-only
+unit; its existing source-equivalent opener CI receipt remains separate evidence.
+
 ### Always Open With — acceptance written before the sample
 
 Trigger: selecting Choose in Always Open With appeared to do nothing. The popup

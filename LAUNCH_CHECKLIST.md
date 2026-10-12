@@ -67,7 +67,12 @@ things a human has to look at.
 - [ ] **LICENSE** present and correct.
 - [ ] **SECURITY.md** has a real disclosure contact.
 - [ ] No secrets, tokens, absolute local paths, or private notes in the tree or
-      git history. `git log` authorship is uniform.
+      git history. Run `make release-safety` (runs the discrimination controls first)
+      (requires local gitleaks). The gate scans candidate files plus all reachable
+      refs and enforces noreply author/committer emails with redacted summaries.
+      Pattern checks do not certify all personal identities, addresses, phone
+      numbers or private prose: manual review remains required. A failure requires
+      private review/credential rotation as applicable, not automatic history edits.
 - [ ] `.github/workflows/release.yml` secrets exist (Developer ID cert, notary
       creds, `SPARKLE_PRIVATE_KEY`) if you want tag-triggered releases.
 - [ ] Optional: to publish the VS Code / Cursor extension, set `VSCE_PAT`

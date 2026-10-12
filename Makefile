@@ -38,7 +38,7 @@ export PATH := $(XCODE_SWIFT_BIN):$(PATH)
 endif
 SWIFTPM_FLAGS ?= --build-system native
 
-.PHONY: preflight build run test gate-a gate-a-demo smoke ui-test e2e e2e-app e2e-env ci app install watch watch-install icon dev-cert fmt clean
+.PHONY: preflight build run test gate-a gate-a-demo smoke ui-test e2e e2e-app e2e-env release-safety release-safety-controls ci app install watch watch-install icon dev-cert fmt clean
 
 preflight:
 	scripts/toolchain_preflight.sh
@@ -85,6 +85,14 @@ e2e-app: preflight
 # credentials, or opt-in public-network access never masquerades as a pass.
 e2e-env: preflight
 	test/environmental/run.sh
+
+# Local privacy/history gate; intentionally separate from routine CI until historical
+# release findings have been reviewed. Never uploads, rewrites history, or reads keys.
+release-safety: release-safety-controls
+	python3 scripts/release_safety.py
+
+release-safety-controls:
+	python3 -m unittest discover -s test -p release_safety_test.py -v
 
 # The same checks the (now manual-only) GitHub Actions workflow runs.
 ci: preflight
