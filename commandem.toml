@@ -1123,6 +1123,11 @@ name = "pathem"
     title = "Make packaged release-launch probes fail closed on missing/non-temp configuration roots and honor only an explicit isolated release-test root; verify owner configuration remains untouched"
     done = true
 
+  [[mission.task]]
+    id = "t-89577f98"
+    title = "Always Open With: selecting Choose immediately presents the native application picker; regress cancel/retry/Set without changing owner LaunchServices defaults"
+    done = true
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1302,6 +1307,26 @@ name = "pathem"
   [[mission.comment]]
     text = "Landed 539bc8f via normal workbench land after integrated isolation CI74885 exit0 and normal commit hook80973 exit0 (format/unit/l10n passed, untouched gesture pin skipped). Task30 done: actual mounted controls reproduced42/52 split defaults; Settings/menu view+sort+direction now agree, source format wins at startup while prefs seed when formats absent, exact/subtree/grouping/hidden fields retained. 50 real view/sort/direction combinations plus startup/reverse/persistence controls588/588; corrected sample64, dates86, startup82 all pass. Task31 done: initial otherwise-green CI34004 legacy release probe rewrote normal prefs (observed mtime, before-value snapshot absent, value delta unknown); no guessing/restoration. Explicit release-test mode now validates temp roots before startup and never falls back to owner config. Debug refusals6/6, synthetic non-refusing control red, release2/2, scratch prefs verified; owner prefs/formats digests unchanged across isolated package sample and integrated rerun. Final fresh debug59.79s/344 compile lines, 26 known/zero new/unparsed; including fresh release sample retains27 known, no exceptions.15 XCTest+779 cases/161 suites, five explicit live opt-in skips; debug65 pass/one browser-opacity skip/zero fail; isolated current-host ad-hoc package11/11. Existing content176,Gallery29,transient52,search59,Finder198,background263,layout161 pass. Mechanical required Settings formatting recorded. Workbench clean/in sync; unrelated managed primary edits preserved. Mission53 stays now, popup29 and broader boundaries remain open; Missions4/6 held. No installation/owner app interruption/keychain/permission credentials/publication or foreign signals."
     at = "2026-10-12T05:34:41Z"
+
+  [[mission.comment]]
+    text = "Owner reported Always Open With Choose does nothing. Source evidence: app popup has no target/action; resolveChosenApp is only called after Set. Writing mounted native-sheet regression before repair; isolated config guard required, no system-wide association changes or install in scope."
+    at = "2026-10-12T05:47:43Z"
+
+  [[mission.comment]]
+    text = "Mounted production-sheet baseline delivered file selection and Choose popup selection: 4/6, exactly missing action delivery and immediate picker presentation failed; no-picker-before and cancel/no-save controls passed. Installed f1ce71d opener source equals starting 539bc8f. Repair owns popup target/action and nests native app picker on alert; no OS-beta cause inferred."
+    at = "2026-10-12T05:50:49Z"
+
+  [[mission.comment]]
+    text = "Repaired immediate-selection native sample 7/7; expanded opener controls 35/35 including actual scratch file/folder Set and session-no-disk, retry Cancel, empty candidates, single picker and filters. Custom selection acceptance state is injected, not physical native picking; system-wide scope never applied. Full CI jobs2 now running as tool session52174."
+    at = "2026-10-12T05:54:16Z"
+
+  [[mission.comment]]
+    text = "Landed 5a0abe5: Always Open With Choose missing action reproduced in actual mounted sheet baseline4/6; fixed immediate native picker7/7, expanded35/35 and integrated35/35. Own full CI52174 exit0:15 XCTest+779 cases, debug66 PASS/1 explicit pixel SKIP/0 FAIL, guards8/8, current-host ad-hoc package11/11. Normal hook4187 exit0 and normal land exit0; workbench clean/in sync. Owner prefs/formats/openers fingerprints unchanged across CI. Custom native-picker acceptance is completion-state injection, not physical picking; system-wide association writes, install, keychain/credentials, public flip and broad environmental/native acceptance remain untouched."
+    at = "2026-10-12T06:15:47Z"
+
+  [[mission.comment]]
+    text = "Owner-authorized install of tested 5a0abe5 completed without rebuilding or restarting owner app. Staged signature and full checksum/symlink bundle inventory verified, then atomic swap into /Applications/Pathem.app; installed signature and exact full bundle inventory match tested source. Prior f1ce71d retained at /tmp/pathem-install-backup.tlrsHY/Pathem.app with verified signature/executable. Running owner app identity and prefs/formats/openers fingerprints preserved. New opener and Settings-default fixes activate on owner quit/reopen; no installed-launch claim, keychain action, credential access or public flip."
+    at = "2026-10-12T06:44:40Z"
 
 [[mission]]
   id = "m-e1443252"
