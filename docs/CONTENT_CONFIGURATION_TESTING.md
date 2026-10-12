@@ -1,5 +1,164 @@
 # Content configuration: acceptance before the sample
 
+## Settings default-view/sort audit: criteria before the sample
+
+Task 30 follows the delivered initial-tab fix. Settings' Layout popups write
+`Preferences`, while `resolveFormat` reads `FolderFormats`; the registered
+`view.useAsDefault` command writes only the latter. Before production changes,
+mount the actual embedded Settings panel in a real window, select Layout through
+its sidebar, find the actual popup controls by their installed actions, and send
+the selected-item action through each control's real target. Require those controls
+to belong to the test window and preferences to record the selected values.
+
+Small sample: Gallery + size descending must reach an unconfigured new tab with
+distinct alpha/charlie/bravo file-size ordering; List + name ascending must produce
+alpha/bravo/charlie. Add ascending/descending contrasts so ignoring a control fails.
+Exact remembered Tree/name and subtree Column/name folders must override the global
+default without their rules being rewritten. Existing pane selection must survive
+settings application. Never infer input delivery from defaults or mutate cached
+preferences instead of the mounted controls.
+
+After a discriminating sample, expand across all five views and all five sort keys
+in both directions. Verify rendered listings and effective formats, persistence
+and reopen behavior, and the reverse command-to-Settings direction. Reopen Settings
+and verify that an unrelated toggle does not revert a command-selected default.
+Load-time controls cover conflicting saved stores and a prefs-only configuration:
+an existing saved global format must not be overwritten by stale preferences, while
+a profile without formats must honor its preference defaults. Retain exact/subtree
+rules, unrelated global fields, and later sticky navigation. Use only disposable
+files/configuration; missing/non-temp config roots must fail before startup. No
+install, owner configuration access, permission grants, credentials or publication.
+Record red/instrument failures; sample first, full local CI and normal hooks before
+landing. This does not certify physical menu tracking, native visual goldens,
+language quality, or the separate intermittent popover mechanism.
+
+Initial Settings sample is red 25/36. Mounted actions and persisted preferences are
+delivered in all four cases; the name-ascending control passes, while Gallery/
+size-descending, size-ascending and name-descending effective formats/file order
+fail. The initial selection check ran before the replacement Tree's real rows
+arrived, so its four retention failures cannot convict a product change. Require
+actual three-row Tree/Column delivery before selecting. Also sample the reverse
+registered command-to-mounted-controls path and an unrelated toggle/reopen before
+choosing a synchronization fix; don't infer that direction from source alone.
+
+Second instrument run is red 29/44. Selection initially delivers, but later
+combined retention assertions fail; split immediate Settings application from the
+subsequent tab/listing lifecycle, re-establish input selection for each action,
+and retain post-tab selection telemetry rather than infer a Settings cause.
+`applyFormat` intentionally ignores grouping and clears a hidden override, so the
+reverse command's requested full-format input was invalid. Deliver grouping via
+its real setter and use the documented nil override before interpreting reverse
+defaults. No Tree or unrelated format behavior has been changed.
+
+Corrected delivered sample is red 42/52. All immediate selection inputs/actions,
+exact/subtree view/rule retention and post-tab selection telemetry pass. Forward
+defaults/file order fail in the three differing cases; name-ascending passes.
+The real reverse command's full-format input and effective global format pass,
+but preferences, mounted controls, unrelated-toggle agreement and reopen fail.
+Synchronize only view mode/sort key/direction between Settings and the existing
+effective global format; retain grouping/hidden fields and every exact/subtree
+rule. Load preferences before formats: existing saved formats retain precedence,
+while a profile with no formats seeds its three defaults from preferences. Update
+the mounted Settings callback model too so an unrelated edit cannot undo the
+command. No speculative Tree, selection or popover production change.
+
+Fixed mounted-control sample passes 52/52. Before expansion, validate independent
+filesystem-metadata references for all three date sorts in List, with ascending/
+descending contrasts; missing or tied fixture dates invalidate the instrument.
+Access/modification times use real `utimes`, not mocked FileEntry data. Separately
+sample normal browser startup in fresh owned windows with conflicting/prefs-only/
+formats-only configs before the full view/sort matrix. All configs and windows
+are disposable and session persistence is disabled. The startup sample must prove
+effective initial panes, mounted Settings values, unrelated preferences/format
+fields/rules, and persisted reconciliation—not just an in-memory helper.
+
+Metadata-enhanced basic sample passes 56/56. Date sample stops red 26/27 at its
+creation-time reference discriminator; modification-date asc/desc controls pass,
+but the fixture has missing/tied creation values after the time-setting sequence.
+This invalidates the fixture, not product sorting. No expanded run is launched.
+Set explicit creation dates after access/modification times and log measured
+reference values on failure; rerun the same small date sample before expanding.
+
+Corrected date sample passes 78/78 and startup sample passes 71/71. Independent
+date references differ across modification/creation/access sorts and direction;
+all three fresh-window startup cases produce the expected effective panes,
+mounted controls and persisted reconciliation. Before the full 26-combination
+matrix, add explicit seed-file delivery checks and test a subsequent Settings
+direction edit after `Use as Default View`, retaining its grouping/hidden policy,
+exact/subtree rules and actual new-tab order. Both config-root refusal modes must
+cover both content and Settings flags. The new scenario owns a separate temp root.
+
+Final strengthened basic/date/startup samples pass 64/64, 86/86 and 82/82.
+The empty-reference control rejects vacuous sorting comparisons. Subsequent
+Settings edits retain all unrelated global fields and exact/subtree rules, with
+persisted values and actual new-tab ordering. Seed-file controls prove startup
+treatments were delivered. This validates expanding from the proposed 26 cells
+to the complete 50-cell cross product: five actual views, five sort keys, both
+directions. Reset creation dates after each real time reset so later cross-view
+cases retain discriminating fixture metadata; rerun small samples before scaling.
+
+All three final samples pass again (64/64, 86/86, 82/82), followed by the complete
+50-cell matrix 588/588. Root refusals pass 4/4 for both automation flags. The first
+direct refusal-script invocation stopped in toolchain preflight because the shell
+selected Swiftly rather than Xcode; rerunning with the required Xcode PATH passes.
+No product/guard relaxation was made. Freeze source for full local CI. Required
+whole-file formatting of Settings is mechanical outside the named popup/model
+changes; no additional Settings behavior is intended. Older/partial/corrupt config
+variants beyond existing unit tolerance checks and real owner profiles have not
+been exercised by these disposable startup cases.
+
+First Settings full CI exits zero: 15 XCTest, 779 cases, debug65/one capture skip/
+zero fail, mandatory588/588, package9/9. Safety review then identifies a pre-existing
+packaged-probe isolation hole: release `ConfigStore` ignores the debug-only override
+while its normal startup saves preferences. Owner prefs mtime matches the packaged
+launch stage; there is no before snapshot, so actual value changes are unknown.
+Do not guess or restore owner values. This is not a Settings-default test failure
+or a claim that owner configuration was unchanged during that first packaged run.
+
+Before another packaged launch, make explicit `PATHEM_RELEASE_TEST` require a
+strict temporary descendant config root before AppKit/browser initialization;
+`ConfigStore` independently returns nil rather than owner fallback for missing,
+unsafe or uncreatable release-test roots. Ordinary release launches keep their
+existing configuration behavior. Sample missing/non-temp refusal with both debug
+and the real release binary, then require prefs to appear in scratch and observe
+owner prefs/formats hashes read-only before/after the isolated package stage.
+No owner app interruption or restoration, installation, permissions or credentials.
+All earlier negative results remain recorded; another full local CI is required.
+
+Isolation validation: debug refusal controls pass 6/6. An always-zero-exit synthetic
+binary is correctly rejected by the real guard wrapper, proving it can fail. Real
+release refusal controls pass 2/2; isolated packaged checks pass 11/11 including
+new refusal and scratch-prefs assertions. Owner prefs/formats aggregate hashes are
+identical before/after that isolated package stage; no values are logged or
+restored. The guard wrapper defaults to the release flag so a default call against
+a release binary is safe; the debug E2E explicitly supplies all three flags.
+Normal release launches still ignore debug configuration overrides; only explicit
+release-test mode opts into a strictly validated temporary root. Freeze these
+inputs for a new full CI run, with the original owner-write observation retained.
+
+### Settings and release isolation: final integrated verification
+
+The final frozen `make ci SWIFTPM_FLAGS='--build-system native --jobs 2'` exits
+zero. Fresh debug build completes in 59.79 seconds with 344 matching owned-source
+compilation lines. It reports 26 exact known/zero new/unparsed fingerprints; the
+fresh release-isolation build plus final logs retain the 27-known union, with no
+new exceptions. The final packaged build is warm, so its cached diagnostics are
+not an exhaustive new inventory or evidence that release warning debt disappeared.
+
+15 XCTest and 779 Swift Testing cases/161 suites pass (five live opt-in tests
+explicitly skipped). Debug E2E:65 passed, one explicit browser-opacity skip, zero
+failures. Settings588/588, content176/176, Gallery29/29, configuration refusals6/6,
+transients52/52, search59/59, Finder198/198, background263/263 and layout161/161
+pass. Isolated current-host arm64 ad-hoc package:11/11, including release refusals
+2/2, recursive signature, launch/window and actual scratch prefs creation.
+Owner prefs/formats hashes remain identical across both the isolated package sample
+and the full integrated rerun. The first unsafe probe's rewrite/value-delta
+uncertainty is retained above; no owner values were guessed or restored.
+
+Normal commit hooks and landing follow. This is not an installed-app update,
+universal/notarized acceptance, physical input/native visual certification or a
+popover cause/fix. Missions4/6 stay held; broader Mission53 boundaries remain open.
+
 ## Gallery parity continuation: preregistered criteria
 
 Owner requested resuming Mission 53 after relaunch. Task 28 remains open because

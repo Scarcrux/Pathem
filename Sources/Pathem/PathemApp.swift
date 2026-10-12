@@ -61,11 +61,17 @@ enum PathemApp {
     static var liveDialog: AnyObject?  // holds the PATHEM_DIALOG_SHOT window
 
     static func main() {
+        let launchEnvironment = ProcessInfo.processInfo.environment
         #if DEBUG
-        if ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil {
-            let env = ProcessInfo.processInfo.environment
+        let configurationTest =
+            launchEnvironment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil
+            || launchEnvironment["PATHEM_SETTINGS_DEFAULTS_UI_TEST"] != nil
+        #else
+        let configurationTest = false
+        #endif
+        if configurationTest || launchEnvironment["PATHEM_RELEASE_TEST"] != nil {
             let temporary = FileManager.default.temporaryDirectory.resolvingSymlinksInPath()
-            guard let path = env["PATHEM_CONFIG_DIR"], !path.isEmpty else {
+            guard let path = launchEnvironment["PATHEM_CONFIG_DIR"], !path.isEmpty else {
                 print("RESULT: FAIL configuration test requires an isolated temporary config root")
                 exit(64)
             }
@@ -77,7 +83,6 @@ enum PathemApp {
                 exit(64)
             }
         }
-        #endif
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
         // deliver a fatal signal; the remote runner handles the error instead.
         signal(SIGPIPE, SIG_IGN)
@@ -256,6 +261,9 @@ enum PathemApp {
         }
         if ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil {
             browser.runContentConfigurationUIAutomation()
+        }
+        if ProcessInfo.processInfo.environment["PATHEM_SETTINGS_DEFAULTS_UI_TEST"] != nil {
+            browser.runSettingsDefaultsUIAutomation()
         }
         if ProcessInfo.processInfo.environment["PATHEM_LAYOUT_UI_TEST"] != nil {
             browser.runLayoutUIAutomation()

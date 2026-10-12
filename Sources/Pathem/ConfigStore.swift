@@ -8,34 +8,52 @@ enum ConfigStore {
     /// `~/Library/Application Support/Pathem`, created if needed (nil if it can't be made).
     static func directory() -> URL? {
         let fm = FileManager.default
-        #if DEBUG
-            // Harness instrument: point every config file at a scratch directory so a screenshot or
-            // smoke run can pin preferences (toolbar icon size, say) without touching the user's real
-            // Application Support. Debug-only; never consulted in a release build.
-            let env = ProcessInfo.processInfo.environment
-            // The test harnesses (smoke, UI test) mutate preferences as part of their scenarios;
-            // they must never write the user's real config, so they default to a per-process
-            // scratch directory unless one is given explicitly.
-            let scratch =
-                env["PATHEM_CONFIG_DIR"]
-                ?? ((env["PATHEM_SMOKE"] != nil || env["PATHEM_UI_TEST"] != nil)
-                    ? fm.temporaryDirectory.appendingPathComponent(
-                        "pathem-config-\(ProcessInfo.processInfo.processIdentifier)").path
-                    : nil)
-            if let scratch {
-                let dir = URL(fileURLWithPath: scratch, isDirectory: true)
-                try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-                return dir
+        let env = ProcessInfo.processInfo.environment
+        // The packaged launch probe is a real release build. It must never fall back to
+        // owner configuration, even if a caller asks for a URL before the main entry guard.
+        if env["PATHEM_RELEASE_TEST"] != nil {
+            guard let path = env["PATHEM_CONFIG_DIR"], !path.isEmpty else { return nil }
+            let temporary = fm.temporaryDirectory.resolvingSymlinksInPath()
+            let dir = URL(fileURLWithPath: path, isDirectory: true).resolvingSymlinksInPath()
+            guard dir.pathComponents.count > temporary.pathComponents.count,
+                dir.pathComponents.starts(with: temporary.pathComponents)
+            else { return nil }
+            do { try fm.createDirectory(at: dir, withIntermediateDirectories: true) } catch {
+                return nil
             }
+            return dir
+        }
+        #if DEBUG
+        // Harness instrument: point every config file at a scratch directory so a screenshot or
+        // smoke run can pin preferences (toolbar icon size, say) without touching the user's real
+        // Application Support. Normal release launches ignore these debug overrides.
+        // The test harnesses (smoke, UI test) mutate preferences as part of their scenarios;
+        // they must never write the user's real config, so they default to a per-process
+        // scratch directory unless one is given explicitly.
+        let scratch =
+            env["PATHEM_CONFIG_DIR"]
+            ?? ((env["PATHEM_SMOKE"] != nil || env["PATHEM_UI_TEST"] != nil)
+                ? fm.temporaryDirectory.appendingPathComponent(
+                    "pathem-config-\(ProcessInfo.processInfo.processIdentifier)"
+                ).path
+                : nil)
+        if let scratch {
+            let dir = URL(fileURLWithPath: scratch, isDirectory: true)
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            return dir
+        }
         #endif
-        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        else {
             return nil
         }
         let dir = base.appendingPathComponent("Pathem", isDirectory: true)
         do {
             try fm.createDirectory(at: dir, withIntermediateDirectories: true)
         } catch {
-            NSLog("Pathem: cannot create Application Support directory: %@", String(describing: error))
+            NSLog(
+                "Pathem: cannot create Application Support directory: %@", String(describing: error)
+            )
             return nil  // callers stop rather than write into a nonexistent dir
         }
         return dir
@@ -53,7 +71,9 @@ enum ConfigStore {
         let aside = url.appendingPathExtension("corrupt")
         try? fm.removeItem(at: aside)
         try? fm.moveItem(at: url, to: aside)
-        NSLog("Pathem: %@ was unreadable; moved aside to %@", url.lastPathComponent, aside.lastPathComponent)
+        NSLog(
+            "Pathem: %@ was unreadable; moved aside to %@", url.lastPathComponent,
+            aside.lastPathComponent)
         return nil
     }
 

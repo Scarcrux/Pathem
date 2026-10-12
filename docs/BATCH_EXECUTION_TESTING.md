@@ -299,3 +299,45 @@ physical visuals, Column font/density, intermittent
 popover causation, real Settings defaults versus saved global formats, and broader
 native/provider/device acceptance remain outside this slice. No install/keychain/
 permissions/signing/publication action.
+
+## Settings global-default consistency continuation
+
+Owner selected Mission 53 task 30. Actual Layout popups changed and persisted
+Preferences, while unconfigured new tabs still resolved List/name/ascending from
+the separate FolderFormats store. A delivered differing-control sample failed
+42/52: forward defaults/file order and reverse command-to-preferences/mounted UI
+agreement failed, while input actions, name-ascending and override controls passed.
+Early selection/format-input mistakes are retained in CONTENT_CONFIGURATION_TESTING.
+
+Settings now updates only global view mode, sort key and direction. The existing
+menu command synchronizes the Settings callback model and persisted preferences.
+Startup loads preferences first, preserves an existing saved global format, and
+uses preference defaults only when formats are absent. Exact/subtree rules and
+unrelated grouping/hidden fields are retained; sticky navigation is unchanged.
+
+Sample 64/64, date-sort 86/86 and startup-store 82/82 pass before expansion. The
+full five-view/five-sort/two-direction matrix passes 588/588 with real mounted
+controls, file ordering, persistence, reverse commands, subsequent edits and three
+owned-window startup cases. Fixture date ties caused an explicit red discriminator,
+then were corrected before scaling. Empty references cannot pass sorting checks.
+Four early root-refusal controls cover both content and Settings flags; the new
+mandatory scenario has its own disposable configuration root. Full local CI and
+normal commit hooks remain the acceptance gate before landing. No install,
+keychain, permission/signing credentials or publication action; Missions 4/6 held.
+
+The first full Settings CI passed but exposed an existing packaged-probe safety
+hole: release builds ignored the debug config override and startup rewrote normal
+owner prefs. No before snapshot exists, so value changes cannot be quantified and
+no owner values were restored. Explicit release-test mode now requires a strict
+temporary config root before startup and never falls back to owner configuration;
+normal release behavior is unchanged. Refusals discriminate against a non-refusing
+synthetic control; debug6/6, release2/2 and isolated package11/11 pass. Owner prefs/
+formats hashes remain unchanged across the isolated package sample and final CI.
+
+Final integrated CI exits zero:15 XCTest,779 cases/161 suites with five opt-in live
+skips; debug65 pass/one browser-opacity skip/zero failures; Settings588/588 and all
+existing feature matrices pass; isolated package11/11. Fresh debug build59.79s,
+344 owned-source compilation lines,26 exact known/zero new/unparsed fingerprints;
+including the fresh release-isolation build retains27 known, not a warning-free
+claim from the warm final package log. Normal commit gates and land follow. No
+install, permission/credential changes, publication or claimed popover fix.

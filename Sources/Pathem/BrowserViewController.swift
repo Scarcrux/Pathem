@@ -441,9 +441,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadRecentDestinations()  // register Copy/Move To <recent> commands for the palette
         loadKeymap()
         loadGestures()
+        loadPreferences()
         loadFolderFormats()
         loadLayouts()
-        loadPreferences()
         loadSidebar()
         loadTerminalTheme()
         loadOpenerRules()

@@ -233,6 +233,7 @@ extension BrowserViewController {
     }
 
     func applyPreferences() {
+        applyDefaultViewPreferences()
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs {
                 applyContentPreferences(to: pane)

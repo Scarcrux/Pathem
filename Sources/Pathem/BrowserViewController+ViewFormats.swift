@@ -11,11 +11,42 @@ extension BrowserViewController {
     }
 
     func loadFolderFormats() {
-        if let saved = loadConfig(FolderFormats.self, from: Self.folderFormatsURL) { folderFormats = saved }
+        if let saved = loadConfig(FolderFormats.self, from: Self.folderFormatsURL) {
+            folderFormats = saved
+            // Preserve the effective saved view, not stale UI defaults from the other store.
+            synchronizeDefaultViewPreferences()
+        } else {
+            folderFormats.defaultFormat.viewMode = prefs.defaultViewMode
+            folderFormats.defaultFormat.sortKey = prefs.defaultSortKey
+            folderFormats.defaultFormat.ascending = prefs.defaultSortAscending
+        }
     }
 
     private func saveFolderFormats() {
         saveConfig(folderFormats, to: Self.folderFormatsURL)
+    }
+
+    /// Settings edits only these three fields; grouping/hidden policy and rules stay intact.
+    func applyDefaultViewPreferences() {
+        let previous = folderFormats.defaultFormat
+        folderFormats.defaultFormat.viewMode = prefs.defaultViewMode
+        folderFormats.defaultFormat.sortKey = prefs.defaultSortKey
+        folderFormats.defaultFormat.ascending = prefs.defaultSortAscending
+        if folderFormats.defaultFormat != previous { saveFolderFormats() }
+    }
+
+    /// The menu command and startup reconciliation must also update the Settings model.
+    private func synchronizeDefaultViewPreferences() {
+        let format = folderFormats.defaultFormat
+        let changed =
+            prefs.defaultViewMode != format.viewMode
+            || prefs.defaultSortKey != format.sortKey
+            || prefs.defaultSortAscending != format.ascending
+        prefs.defaultViewMode = format.viewMode
+        prefs.defaultSortKey = format.sortKey
+        prefs.defaultSortAscending = format.ascending
+        if changed { saveConfig(prefs, to: Self.preferencesURL) }
+        if settingsPanel != nil { settings.synchronizeDefaultFormat(format) }
     }
 
     /// Auto-remember: the active folder gets its own exact-path format.
@@ -30,6 +61,7 @@ extension BrowserViewController {
         guard let pane = activePane else { return }
         folderFormats.defaultFormat = pane.format
         saveFolderFormats()
+        synchronizeDefaultViewPreferences()
         leftTabs.activePane?.reloadIfShowingListing()
         rightTabs.activePane?.reloadIfShowingListing()
     }

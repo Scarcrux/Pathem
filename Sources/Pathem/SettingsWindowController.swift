@@ -9,7 +9,8 @@ import PathemEngine
 @MainActor
 final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
     enum Pane: String, CaseIterable {
-        case general, appearance, layout, menus, labels, search, terminal, transfers, shortcuts, gestures, integrations, updates
+        case general, appearance, layout, menus, labels, search, terminal, transfers, shortcuts,
+            gestures, integrations, updates
         var title: String {
             switch self {
             case .general: return L("settings.general", "General")
@@ -101,7 +102,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         sidebar.onSelect = { [weak self] key in
             if let pane = Pane(rawValue: key) { self?.select(pane) }
         }
-        sidebar.searchText = { [weak self] item in self?.paneSearchText[Pane(rawValue: item.key) ?? .general] ?? "" }
+        sidebar.searchText = { [weak self] item in
+            self?.paneSearchText[Pane(rawValue: item.key) ?? .general] ?? ""
+        }
 
         contentContainer.translatesAutoresizingMaskIntoConstraints = false
 
@@ -133,7 +136,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             contentContainer.trailingAnchor.constraint(equalTo: root.trailingAnchor),
         ])
         window.contentView = root
-        sidebar.setItems(Pane.allCases.map { .init(key: $0.rawValue, title: $0.title, symbol: $0.symbol) })
+        sidebar.setItems(
+            Pane.allCases.map { .init(key: $0.rawValue, title: $0.title, symbol: $0.symbol) })
     }
 
     /// Show the window, populated with current state.
@@ -229,7 +233,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             if let button = v as? NSButton, !button.title.isEmpty { parts.append(button.title) }
             if let field = v as? NSTextField {
                 if !field.stringValue.isEmpty { parts.append(field.stringValue) }
-                if let placeholder = field.placeholderString, !placeholder.isEmpty { parts.append(placeholder) }
+                if let placeholder = field.placeholderString, !placeholder.isEmpty {
+                    parts.append(placeholder)
+                }
             }
             v.subviews.forEach(walk)
         }
@@ -238,11 +244,13 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     private func select(_ pane: Pane) {
-        let view = paneViews[pane] ?? {
-            let built = build(pane)
-            paneViews[pane] = built
-            return built
-        }()
+        let view =
+            paneViews[pane]
+            ?? {
+                let built = build(pane)
+                paneViews[pane] = built
+                return built
+            }()
         contentContainer.subviews.forEach { $0.removeFromSuperview() }
         view.translatesAutoresizingMaskIntoConstraints = false
         contentContainer.addSubview(view)
@@ -256,65 +264,114 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private func build(_ pane: Pane) -> NSView {
         switch pane {
-        case .general: return form([
-            check(L("prefs.showHiddenByDefault", "Show hidden files in every folder"), \.showHiddenByDefault),
-            check(L("prefs.openConnectionsNewTab", "Open connections in a new tab"), \.openConnectionsInNewTab),
-            check(L("prefs.calculateFolderSizes", "Calculate folder sizes"), \.calculateFolderSizes),
-            check(L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"), \.confirmBeforeDelete),
-            labeled(L("prefs.conflictDefault", "When files already exist"), conflictDefaultControl()),
-            check(L("prefs.verifyCopies", "Verify copies with a checksum (slower)"), \.verifyCopies),
-            check(L("prefs.dragMovesByDefault", "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
-            check(L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"), \.useFinderGetInfo),
-            // (Removed "preview pane in Gallery/Column" toggle: both views draw their own inline
-            //  preview now, so the separate pane only duplicated the selection over the other pane.)
-            check(L("prefs.dragFlickActions", "Super-drag: right-drag an item to flick it (with a swipe trail)"), \.dragFlickActions),
-            labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
-            folderHandlerControl(),
-            magnetHandlerControl(),
-        ])
-        case .appearance: return form([
-            labeled(L("prefs.themeLabel", "Skin"), themeControl()),
-            labeled(L("prefs.accentLabel", "Accent color"), accentColorControl()),
-            labeled(L("prefs.windowTintLabel", "Window tint"), windowTintControl()),
-            labeled(L("prefs.iconSetLabel", "File icons"), iconSetControl()),
-            hint(L("prefs.themeHint", "The skin tints Pathem’s own selection, panes, tabs, and breadcrumb. Standard buttons still use the system accent.")),
-            labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
-            labeled(L("prefs.densityLabel", "Density"), densityControl()),
-            labeled(L("prefs.fontSizeLabel", "Font size"), fontControl()),
-            labeled(L("prefs.iconSizeLabel", "Toolbar icon size"), iconSizeControl()),
-            check(L("prefs.alternatingRows", "Alternating row colors"), \.alternatingRows),
-        ])
-        case .layout: return form([
-            check(L("prefs.showFullPath", "Show full path in the title bar"), \.showFullPathInTitle),
-            check(L("prefs.pathBarBottom", "Show the path bar at the bottom"), \.pathBarAtBottom),
-            check(L("prefs.compactSidebar", "Compact sidebar (icons only)"), \.compactSidebar),
-            check(L("prefs.monochromeSidebar", "Monochrome sidebar icons (Liquid Glass)"), \.monochromeSidebarIcons),
-            check(L("prefs.singleClickToOpen", "Open items with a single click"), \.singleClickToOpen),
-            check(L("prefs.underlineOnHover", "Underline the item under the pointer"), \.underlineOnHover),
-            check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
-            labeled(L("prefs.sizeFormatLabel", "File sizes"), sizeFormatControl()),
-            labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
-            labeled(L("prefs.defaultViewLabel", "New folders open as"), defaultViewControl()),
-            labeled(L("prefs.defaultSortLabel", "Default sort"), defaultSortControl()),
-            labeled(L("prefs.recentsLabel", "Recents shows"), recentsBasisControl()),
-            labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
-            labeled(L("prefs.newTabPosLabel", "New tab position"), newTabPositionControl()),
-            labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
-            labeled(L("prefs.newFolderNameLabel", "New Folder name"), textField(\.newFolderName, width: 180)),
-            labeled(L("prefs.newFileNameLabel", "New File name"), textField(\.newFileName, width: 180)),
-            check(L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"), \.middleClickOpensNewTab),
-            labeled(L("prefs.commanderLabel", "Commander F-keys"), commanderEditButton()),
-            hint(L("prefs.statusBarHint", "Status bar shows:")),
-            check(L("prefs.statusItemCount", "Item count"), \.statusShowItemCount),
-            check(L("prefs.statusSize", "Size (of the folder, or the selection)"), \.statusShowSize),
-            check(L("prefs.statusFreeSpace", "Free disk space"), \.statusShowFreeSpace),
-        ])
+        case .general:
+            return form([
+                check(
+                    L("prefs.showHiddenByDefault", "Show hidden files in every folder"),
+                    \.showHiddenByDefault),
+                check(
+                    L("prefs.openConnectionsNewTab", "Open connections in a new tab"),
+                    \.openConnectionsInNewTab),
+                check(
+                    L("prefs.calculateFolderSizes", "Calculate folder sizes"),
+                    \.calculateFolderSizes),
+                check(
+                    L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"),
+                    \.confirmBeforeDelete),
+                labeled(
+                    L("prefs.conflictDefault", "When files already exist"), conflictDefaultControl()
+                ),
+                check(
+                    L("prefs.verifyCopies", "Verify copies with a checksum (slower)"),
+                    \.verifyCopies),
+                check(
+                    L(
+                        "prefs.dragMovesByDefault",
+                        "Dragging items moves them (hold Command to copy)"), \.dragMovesByDefault),
+                check(
+                    L("prefs.useFinderGetInfo", "Use Finder’s Get Info window instead of Pathem’s"),
+                    \.useFinderGetInfo),
+                // (Removed "preview pane in Gallery/Column" toggle: both views draw their own inline
+                //  preview now, so the separate pane only duplicated the selection over the other pane.)
+                check(
+                    L(
+                        "prefs.dragFlickActions",
+                        "Super-drag: right-drag an item to flick it (with a swipe trail)"),
+                    \.dragFlickActions),
+                labeled(L("prefs.dragTrailLabel", "Swipe trail"), dragTrailControl()),
+                folderHandlerControl(),
+                magnetHandlerControl(),
+            ])
+        case .appearance:
+            return form([
+                labeled(L("prefs.themeLabel", "Skin"), themeControl()),
+                labeled(L("prefs.accentLabel", "Accent color"), accentColorControl()),
+                labeled(L("prefs.windowTintLabel", "Window tint"), windowTintControl()),
+                labeled(L("prefs.iconSetLabel", "File icons"), iconSetControl()),
+                hint(
+                    L(
+                        "prefs.themeHint",
+                        "The skin tints Pathem’s own selection, panes, tabs, and breadcrumb. Standard buttons still use the system accent."
+                    )),
+                labeled(L("prefs.appearanceLabel", "Appearance"), appearanceControl()),
+                labeled(L("prefs.densityLabel", "Density"), densityControl()),
+                labeled(L("prefs.fontSizeLabel", "Font size"), fontControl()),
+                labeled(L("prefs.iconSizeLabel", "Toolbar icon size"), iconSizeControl()),
+                check(L("prefs.alternatingRows", "Alternating row colors"), \.alternatingRows),
+            ])
+        case .layout:
+            return form([
+                check(
+                    L("prefs.showFullPath", "Show full path in the title bar"),
+                    \.showFullPathInTitle),
+                check(
+                    L("prefs.pathBarBottom", "Show the path bar at the bottom"), \.pathBarAtBottom),
+                check(L("prefs.compactSidebar", "Compact sidebar (icons only)"), \.compactSidebar),
+                check(
+                    L("prefs.monochromeSidebar", "Monochrome sidebar icons (Liquid Glass)"),
+                    \.monochromeSidebarIcons),
+                check(
+                    L("prefs.singleClickToOpen", "Open items with a single click"),
+                    \.singleClickToOpen),
+                check(
+                    L("prefs.underlineOnHover", "Underline the item under the pointer"),
+                    \.underlineOnHover),
+                check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
+                labeled(L("prefs.sizeFormatLabel", "File sizes"), sizeFormatControl()),
+                labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
+                labeled(L("prefs.defaultViewLabel", "New folders open as"), defaultViewControl()),
+                labeled(L("prefs.defaultSortLabel", "Default sort"), defaultSortControl()),
+                labeled(L("prefs.recentsLabel", "Recents shows"), recentsBasisControl()),
+                labeled(L("prefs.newTabLabel", "New tabs open to"), newTabLocationControl()),
+                labeled(L("prefs.newTabPosLabel", "New tab position"), newTabPositionControl()),
+                labeled(L("prefs.fixedFolderLabel", "Fixed folder"), fixedFolderControl()),
+                labeled(
+                    L("prefs.newFolderNameLabel", "New Folder name"),
+                    textField(\.newFolderName, width: 180)),
+                labeled(
+                    L("prefs.newFileNameLabel", "New File name"),
+                    textField(\.newFileName, width: 180)),
+                check(
+                    L("prefs.middleClickNewTab", "Middle-click opens folders in a new tab"),
+                    \.middleClickOpensNewTab),
+                labeled(L("prefs.commanderLabel", "Commander F-keys"), commanderEditButton()),
+                hint(L("prefs.statusBarHint", "Status bar shows:")),
+                check(L("prefs.statusItemCount", "Item count"), \.statusShowItemCount),
+                check(
+                    L("prefs.statusSize", "Size (of the folder, or the selection)"),
+                    \.statusShowSize),
+                check(L("prefs.statusFreeSpace", "Free disk space"), \.statusShowFreeSpace),
+            ])
         case .menus: return menusPane()
         case .labels: return labelsPane()
-        case .search: return form([
-            check(L("prefs.searchOCR", "Search image contents (OCR, slower)"), \.searchOCR),
-            hint(L("prefs.searchOCRHint", "Text and PDF contents are always indexed; image OCR is extra.")),
-        ])
+        case .search:
+            return form([
+                check(L("prefs.searchOCR", "Search image contents (OCR, slower)"), \.searchOCR),
+                hint(
+                    L(
+                        "prefs.searchOCRHint",
+                        "Text and PDF contents are always indexed; image OCR is extra.")),
+            ])
         case .terminal: return terminalPane()
         case .transfers: return transfersPane()
         case .shortcuts: return shortcutsPane()
@@ -342,16 +399,25 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         cliRow.spacing = 10
 
         let editors = ExternalEditors.installed().map(\.name)
-        let editorsText = editors.isEmpty
+        let editorsText =
+            editors.isEmpty
             ? L("integrations.noEditors", "No supported editors detected.")
-            : String(format: L("integrations.detected", "Detected editors: %@"), editors.joined(separator: ", "))
+            : String(
+                format: L("integrations.detected", "Detected editors: %@"),
+                editors.joined(separator: ", "))
 
         var rows: [NSView] = [
-            hint(L("integrations.servicesHint",
-                "Other apps can hand a file or folder to Pathem: use “Open in Pathem” or “Reveal in Pathem” from their Services menu, or the pathem command below.")),
+            hint(
+                L(
+                    "integrations.servicesHint",
+                    "Other apps can hand a file or folder to Pathem: use “Open in Pathem” or “Reveal in Pathem” from their Services menu, or the pathem command below."
+                )),
             labeled(L("integrations.cliLabel", "Terminal command"), cliRow),
-            hint(L("integrations.cliHint",
-                "Installs a “pathem” command on your PATH so “pathem reveal <path>” and “pathem open <dir>” work from any terminal. It’s a symlink to the bundled tool; removing it deletes only that link.")),
+            hint(
+                L(
+                    "integrations.cliHint",
+                    "Installs a “pathem” command on your PATH so “pathem reveal <path>” and “pathem open <dir>” work from any terminal. It’s a symlink to the bundled tool; removing it deletes only that link."
+                )),
             hint(editorsText),
         ]
         // Per-editor integrations (each fully reversible -- a Pathem-owned folder, never merging
@@ -363,11 +429,19 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             rows.append(editorRow(editor, index: index))
         }
         if !builtEditors.isEmpty {
-            rows.append(hint(L("integrations.editorHint",
-                "Adds “Reveal in Pathem” to the editor’s menus. Everything goes in a Pathem-owned folder, so Remove deletes only that. Preview shows the exact files.")))
+            rows.append(
+                hint(
+                    L(
+                        "integrations.editorHint",
+                        "Adds “Reveal in Pathem” to the editor’s menus. Everything goes in a Pathem-owned folder, so Remove deletes only that. Preview shows the exact files."
+                    )))
         }
-        rows.append(hint(L("integrations.editorsSoon",
-            "VS Code and Cursor lock their reveal, so Pathem ships a bundled “Reveal in Pathem” extension and installs it through the editor’s own command line; they appear above when detected. For any other editor, use the Services menu or the pathem command above.")))
+        rows.append(
+            hint(
+                L(
+                    "integrations.editorsSoon",
+                    "VS Code and Cursor lock their reveal, so Pathem ships a bundled “Reveal in Pathem” extension and installs it through the editor’s own command line; they appear above when detected. For any other editor, use the Services menu or the pathem command above."
+                )))
         return form(rows)
     }
 
@@ -379,7 +453,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         let button = NSButton(title: "", target: self, action: #selector(toggleEditor(_:)))
         button.bezelStyle = .rounded
         button.tag = index
-        let preview = NSButton(title: L("integrations.preview", "Preview…"), target: self, action: #selector(previewEditor(_:)))
+        let preview = NSButton(
+            title: L("integrations.preview", "Preview…"), target: self,
+            action: #selector(previewEditor(_:)))
         preview.bezelStyle = .rounded
         preview.tag = index
         let status = NSTextField(labelWithString: "")
@@ -397,16 +473,20 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func refreshEditorRow(_ index: Int) {
         guard index < builtEditors.count, index < editorButtons.count else { return }
         let editor = builtEditors[index]
-        editorButtons[index].title = editor.isInstalled()
+        editorButtons[index].title =
+            editor.isInstalled()
             ? L("integrations.cliRemove", "Remove")
             : L("integrations.integrate", "Integrate")
         if editor.isInstalled() {
             editorStatusLabels[index].stringValue = L("integrations.installed", "Installed")
         } else if editor.isEditorRunning() {
             editorStatusLabels[index].stringValue = String(
-                format: L("integrations.editorRunning", "%@ is running; restart it after integrating"), editor.name)
+                format: L(
+                    "integrations.editorRunning", "%@ is running; restart it after integrating"),
+                editor.name)
         } else {
-            editorStatusLabels[index].stringValue = L("integrations.cliNotInstalled", "Not installed")
+            editorStatusLabels[index].stringValue = L(
+                "integrations.cliNotInstalled", "Not installed")
         }
     }
 
@@ -422,12 +502,18 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 if editor.isEditorRunning() {
                     presentInfoAlert(
                         String(format: L("integrations.restartTitle", "Restart %@"), editor.name),
-                        String(format: L("integrations.restartBody", "The “Reveal in Pathem” items appear after you quit and reopen %@."), editor.name))
+                        String(
+                            format: L(
+                                "integrations.restartBody",
+                                "The “Reveal in Pathem” items appear after you quit and reopen %@."),
+                            editor.name))
                 }
             }
         } catch {
             presentInfoAlert(
-                String(format: L("integrations.editorFailed", "Couldn’t update the %@ integration"), editor.name),
+                String(
+                    format: L("integrations.editorFailed", "Couldn’t update the %@ integration"),
+                    editor.name),
                 error.localizedDescription)
         }
         refreshEditorRow(index)
@@ -447,18 +533,25 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         alert.messageText = title
         alert.informativeText = body
         alert.addButton(withTitle: L("common.ok", "OK"))
-        if let window = rootView.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+        if let window = rootView.window {
+            alert.beginSheetModal(for: window) { _ in }
+        } else {
+            alert.runModal()
+        }
     }
 
     private func refreshCLIStatus() {
         cliButton.isEnabled = PathemCLIInstall.bundledCLI != nil
-        cliButton.title = PathemCLIInstall.isInstalled()
+        cliButton.title =
+            PathemCLIInstall.isInstalled()
             ? L("integrations.cliRemove", "Remove")
             : L("integrations.cliInstall", "Install")
         if PathemCLIInstall.bundledCLI == nil {
-            cliStatusLabel.stringValue = L("integrations.cliUnavailable", "Not available in this build")
+            cliStatusLabel.stringValue = L(
+                "integrations.cliUnavailable", "Not available in this build")
         } else if let link = PathemCLIInstall.installedLink() {
-            cliStatusLabel.stringValue = String(format: L("integrations.cliInstalledAt", "Installed at %@"), link.path)
+            cliStatusLabel.stringValue = String(
+                format: L("integrations.cliInstalledAt", "Installed at %@"), link.path)
         } else {
             cliStatusLabel.stringValue = L("integrations.cliNotInstalled", "Not installed")
         }
@@ -476,7 +569,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             alert.messageText = L("integrations.cliFailed", "Couldn’t update the pathem command")
             alert.informativeText = error.localizedDescription
             alert.addButton(withTitle: L("common.ok", "OK"))
-            if let window = rootView.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+            if let window = rootView.window {
+                alert.beginSheetModal(for: window) { _ in }
+            } else {
+                alert.runModal()
+            }
         }
         refreshCLIStatus()
     }
@@ -491,10 +588,22 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         field.cell?.sendsActionOnEndEditing = true  // commit on Tab/click-away too
         return form([
             labeled(L("prefs.bandwidthLabel", "Limit transfer speed (KB/s)"), field),
-            hint(L("prefs.bandwidthHint", "Caps remote download and upload speed. 0 means unlimited.")),
-            labeled(L("prefs.torrentFolderLabel", "Torrent download folder"), torrentFolderControl()),
-            check(L("prefs.confirmInboundTorrents", "Ask before adding magnet/torrent links from other apps"), \.confirmInboundTorrents),
-            hint(L("prefs.confirmInboundTorrentsHint", "On by default: an inbound magnet also seeds what it downloads, so Pathem confirms any link another app or a webpage hands it. Turn off to add them without asking.")),
+            hint(
+                L(
+                    "prefs.bandwidthHint",
+                    "Caps remote download and upload speed. 0 means unlimited.")),
+            labeled(
+                L("prefs.torrentFolderLabel", "Torrent download folder"), torrentFolderControl()),
+            check(
+                L(
+                    "prefs.confirmInboundTorrents",
+                    "Ask before adding magnet/torrent links from other apps"),
+                \.confirmInboundTorrents),
+            hint(
+                L(
+                    "prefs.confirmInboundTorrentsHint",
+                    "On by default: an inbound magnet also seeds what it downloads, so Pathem confirms any link another app or a webpage hands it. Turn off to add them without asking."
+                )),
         ])
     }
     @objc private func bandwidthChanged(_ sender: NSTextField) {
@@ -505,14 +614,16 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let torrentFolderButton = NSButton()
 
     private func torrentFolderControl() -> NSView {
-        torrentFolderButton.title = prefs.torrentDownloadPath.isEmpty
+        torrentFolderButton.title =
+            prefs.torrentDownloadPath.isEmpty
             ? L("prefs.torrentFolderDefault", "Downloads (default)")
             : (prefs.torrentDownloadPath as NSString).lastPathComponent
         torrentFolderButton.bezelStyle = .rounded
         torrentFolderButton.target = self
         torrentFolderButton.action = #selector(chooseTorrentFolder)
         let reset = NSButton(
-            title: L("prefs.torrentFolderReset", "Use Downloads"), target: self, action: #selector(resetTorrentFolder))
+            title: L("prefs.torrentFolderReset", "Use Downloads"), target: self,
+            action: #selector(resetTorrentFolder))
         reset.bezelStyle = .rounded
         let row = NSStackView(views: [torrentFolderButton, reset])
         row.orientation = .horizontal
@@ -605,7 +716,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private var boolPaths: [ObjectIdentifier: WritableKeyPath<Preferences, Bool>] = [:]
 
     /// A text field bound to a String preference; commits on edit.
-    private func textField(_ keyPath: WritableKeyPath<Preferences, String>, width: CGFloat) -> NSView {
+    private func textField(_ keyPath: WritableKeyPath<Preferences, String>, width: CGFloat)
+        -> NSView
+    {
         let field = NSTextField(string: prefs[keyPath: keyPath])
         field.target = self
         field.action = #selector(stringFieldCommitted(_:))
@@ -640,7 +753,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func recentsBasisControl() -> NSView {
         let popup = NSPopUpButton()
         popup.addItems(withTitles: [
-            L("prefs.recentsModified", "Recently Modified"), L("prefs.recentsOpened", "Recently Opened"),
+            L("prefs.recentsModified", "Recently Modified"),
+            L("prefs.recentsOpened", "Recently Opened"),
         ])
         popup.selectItem(at: recentsBasisOrder.firstIndex(of: prefs.recentsBasis) ?? 0)
         popup.target = self
@@ -698,10 +812,12 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let themePopup = NSPopUpButton()
     private func themeControl() -> NSView {
         themePopup.removeAllItems()
-        themePopup.addItems(withTitles: ThemePreset.presets.map(\.name) + [L("prefs.themeCustom", "Custom")])
+        themePopup.addItems(
+            withTitles: ThemePreset.presets.map(\.name) + [L("prefs.themeCustom", "Custom")])
         let selected =
             ThemePreset.matching(
-                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)?
+                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
+                appearance: prefs.appearance)?
             .name ?? L("prefs.themeCustom", "Custom")
         themePopup.selectItem(withTitle: selected)
         themePopup.target = self
@@ -709,7 +825,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         return themePopup
     }
     @objc private func themeChanged(_ sender: NSPopUpButton) {
-        guard let preset = ThemePreset.presets.first(where: { $0.name == sender.titleOfSelectedItem }) else { return }
+        guard
+            let preset = ThemePreset.presets.first(where: { $0.name == sender.titleOfSelectedItem })
+        else { return }
         prefs.themeName = preset.name
         prefs.accentColorHex = preset.accentHex
         prefs.windowTintHex = preset.backgroundHex
@@ -740,8 +858,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func accentColorChanged(_ sender: NSColorWell) {
         prefs.accentColorHex = ThemeManager.hex(from: sender.color)
-        prefs.themeName = ThemePreset.matching(
-            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)?.name
+        prefs.themeName =
+            ThemePreset.matching(
+                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
+                appearance: prefs.appearance)?.name
             ?? L("prefs.themeCustom", "Custom")
         themePopup.selectItem(withTitle: prefs.themeName)
         onChange?(prefs)
@@ -754,7 +874,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         well.action = #selector(windowTintChanged(_:))
         well.widthAnchor.constraint(equalToConstant: 44).isActive = true
         // A button to clear the tint back to the system background (a color well can't be "empty").
-        let clear = NSButton(title: L("prefs.themeClearTint", "None"), target: self, action: #selector(clearWindowTint))
+        let clear = NSButton(
+            title: L("prefs.themeClearTint", "None"), target: self,
+            action: #selector(clearWindowTint))
         clear.bezelStyle = .rounded
         let stack = NSStackView(views: [well, clear])
         stack.orientation = .horizontal
@@ -763,17 +885,21 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     @objc private func windowTintChanged(_ sender: NSColorWell) {
         prefs.windowTintHex = ThemeManager.hex(from: sender.color)
-        prefs.themeName = ThemePreset.matching(
-            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)?.name
+        prefs.themeName =
+            ThemePreset.matching(
+                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
+                appearance: prefs.appearance)?.name
             ?? L("prefs.themeCustom", "Custom")
         themePopup.selectItem(withTitle: prefs.themeName)
         onChange?(prefs)
     }
     @objc private func clearWindowTint() {
         prefs.windowTintHex = ""
-        themePopup.selectItem(withTitle: ThemePreset.matching(
-            accentHex: prefs.accentColorHex, backgroundHex: "", appearance: prefs.appearance)?.name
-            ?? L("prefs.themeCustom", "Custom"))
+        themePopup.selectItem(
+            withTitle: ThemePreset.matching(
+                accentHex: prefs.accentColorHex, backgroundHex: "", appearance: prefs.appearance)?
+                .name
+                ?? L("prefs.themeCustom", "Custom"))
         onChange?(prefs)
     }
 
@@ -799,7 +925,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     /// A checkbox that makes Pathem (checked) or Finder (unchecked) the system's default app
     /// for opening folders. Reflects the live system state; the change is fully reversible.
     private func folderHandlerControl() -> NSView {
-        folderHandlerCheckbox.title = L("prefs.folderHandler", "Open folders in Pathem instead of Finder")
+        folderHandlerCheckbox.title = L(
+            "prefs.folderHandler", "Open folders in Pathem instead of Finder")
         folderHandlerCheckbox.state = FolderHandler.isPathem ? .on : .off
         folderHandlerCheckbox.target = self
         folderHandlerCheckbox.action = #selector(folderHandlerToggled(_:))
@@ -814,11 +941,15 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         alert.messageText = L("prefs.folderHandlerConfirmTitle", "Open folders in Pathem?")
         alert.informativeText = L(
             "prefs.folderHandlerConfirmBody",
-            "This makes Pathem the default app for opening folders system-wide, so a folder double-click or an app that opens a folder uses Pathem instead of Finder. It does not affect \u{201C}Reveal in Finder.\u{201D} You can switch back here anytime.")
+            "This makes Pathem the default app for opening folders system-wide, so a folder double-click or an app that opens a folder uses Pathem instead of Finder. It does not affect \u{201C}Reveal in Finder.\u{201D} You can switch back here anytime."
+        )
         alert.addButton(withTitle: L("prefs.folderHandlerUse", "Use Pathem"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
-            guard response == .alertFirstButtonReturn else { sender.state = .off; return }
+            guard response == .alertFirstButtonReturn else {
+                sender.state = .off
+                return
+            }
             self?.applyFolderHandler(toPathem: true, checkbox: sender)
         }
     }
@@ -828,13 +959,15 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 try await FolderHandler.setDefault(toPathem: toPathem)
             } catch {
                 let alert = NSAlert()
-                alert.messageText = L("prefs.folderHandlerFailed", "Couldn’t change the default folder app")
+                alert.messageText = L(
+                    "prefs.folderHandlerFailed", "Couldn’t change the default folder app")
                 // Recent macOS blocks replacing Finder as the default handler for folders and returns
                 // only a generic error; explain the likely cause rather than surface it raw.
                 alert.informativeText = String(
                     format: L(
                         "prefs.folderHandlerFailedBody",
-                        "This version of macOS may not allow replacing Finder as the default app for folders. You can still open folders in Pathem with drag-and-drop or “Open in Pathem.”\n\n(%@)"),
+                        "This version of macOS may not allow replacing Finder as the default app for folders. You can still open folders in Pathem with drag-and-drop or “Open in Pathem.”\n\n(%@)"
+                    ),
                     error.localizedDescription)
                 alert.beginSheetModal(for: self.window) { _ in }
             }
@@ -848,7 +981,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     /// A button that makes Pathem the default app for magnet links (and .torrent files), with a live
     /// status line. Reversible by setting another client back as the default in its own settings.
     private func magnetHandlerControl() -> NSView {
-        magnetHandlerButton.title = L("prefs.magnetHandler.make", "Make Pathem the Default for Magnet Links")
+        magnetHandlerButton.title = L(
+            "prefs.magnetHandler.make", "Make Pathem the Default for Magnet Links")
         magnetHandlerButton.bezelStyle = .rounded
         magnetHandlerButton.target = self
         magnetHandlerButton.action = #selector(makeMagnetHandlerDefault(_:))
@@ -864,7 +998,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func refreshMagnetHandlerState() {
         let isDefault = MagnetHandler.isPathem
         magnetHandlerButton.isEnabled = !isDefault
-        magnetHandlerStatus.stringValue = isDefault
+        magnetHandlerStatus.stringValue =
+            isDefault
             ? L("prefs.magnetHandler.isDefault", "Magnet links and .torrent files open in Pathem.")
             : L("prefs.magnetHandler.notDefault", "Magnet links currently open in another app.")
     }
@@ -874,7 +1009,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 try await MagnetHandler.makeDefault()
             } catch {
                 let alert = NSAlert()
-                alert.messageText = L("prefs.magnetHandler.failed", "Couldn’t change the default magnet app")
+                alert.messageText = L(
+                    "prefs.magnetHandler.failed", "Couldn’t change the default magnet app")
                 alert.informativeText = error.localizedDescription
                 alert.beginSheetModal(for: self.window) { _ in }
             }
@@ -888,7 +1024,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             L("prefs.newTabLast", "Last folder"), L("prefs.newTabHome", "Home"),
             L("prefs.newTabFixed", "Fixed folder"),
         ])
-        newTabPopup.selectItem(at: Preferences.NewTabLocation.allCases.firstIndex(of: prefs.newTabLocation) ?? 0)
+        newTabPopup.selectItem(
+            at: Preferences.NewTabLocation.allCases.firstIndex(of: prefs.newTabLocation) ?? 0)
         newTabPopup.target = self
         newTabPopup.action = #selector(newTabLocationChanged(_:))
         return newTabPopup
@@ -899,8 +1036,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     private func fixedFolderControl() -> NSView {
-        let name = prefs.fixedStartFolder.isEmpty
-            ? L("prefs.chooseFolder", "Choose…") : (prefs.fixedStartFolder as NSString).lastPathComponent
+        let name =
+            prefs.fixedStartFolder.isEmpty
+            ? L("prefs.chooseFolder", "Choose…")
+            : (prefs.fixedStartFolder as NSString).lastPathComponent
         fixedFolderButton.title = name
         fixedFolderButton.bezelStyle = .rounded
         fixedFolderButton.target = self
@@ -924,13 +1063,15 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private func commanderEditButton() -> NSView {
         let button = NSButton(
-            title: L("prefs.commanderEdit", "Customize…"), target: self, action: #selector(editCommanderKeys))
+            title: L("prefs.commanderEdit", "Customize…"), target: self,
+            action: #selector(editCommanderKeys))
         button.bezelStyle = .rounded
         return button
     }
     @objc private func editCommanderKeys() {
         let current =
-            prefs.commanderCommands.count == 6 ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
+            prefs.commanderCommands.count == 6
+            ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
         let sorted = commandList.sorted {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
@@ -970,13 +1111,16 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         }
     }
 
+    private let defaultViewPopup = NSPopUpButton()
     private func defaultViewControl() -> NSView {
-        let popup = NSPopUpButton()
+        let popup = defaultViewPopup
+        popup.removeAllItems()
         popup.addItems(withTitles: [
             L("view.list", "List"), L("view.icons", "Icons"), L("view.gallery", "Gallery"),
             L("view.column", "Column"), L("view.tree", "Tree"),
         ])
-        popup.selectItem(at: ViewFormat.ViewMode.allCases.firstIndex(of: prefs.defaultViewMode) ?? 0)
+        popup.selectItem(
+            at: ViewFormat.ViewMode.allCases.firstIndex(of: prefs.defaultViewMode) ?? 0)
         popup.target = self
         popup.action = #selector(defaultViewChanged(_:))
         return popup
@@ -988,13 +1132,26 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private let defaultSortKeyPopup = NSPopUpButton()
     private let defaultSortDirPopup = NSPopUpButton()
+    /// Keep the visible controls and their callback model aligned with the global view command.
+    func synchronizeDefaultFormat(_ format: ViewFormat) {
+        prefs.defaultViewMode = format.viewMode
+        prefs.defaultSortKey = format.sortKey
+        prefs.defaultSortAscending = format.ascending
+        defaultViewPopup.selectItem(
+            at: ViewFormat.ViewMode.allCases.firstIndex(of: format.viewMode) ?? 0)
+        defaultSortKeyPopup.selectItem(
+            at: ViewFormat.SortKey.allCases.firstIndex(of: format.sortKey) ?? 0)
+        defaultSortDirPopup.selectItem(at: format.ascending ? 0 : 1)
+    }
+
     private func defaultSortControl() -> NSView {
         defaultSortKeyPopup.removeAllItems()
         defaultSortKeyPopup.addItems(withTitles: [
             L("sort.name", "Name"), L("sort.size", "Size"), L("sort.dateModified", "Date Modified"),
             L("sort.dateCreated", "Date Created"), L("sort.dateAccessed", "Date Accessed"),
         ])
-        defaultSortKeyPopup.selectItem(at: ViewFormat.SortKey.allCases.firstIndex(of: prefs.defaultSortKey) ?? 0)
+        defaultSortKeyPopup.selectItem(
+            at: ViewFormat.SortKey.allCases.firstIndex(of: prefs.defaultSortKey) ?? 0)
         defaultSortKeyPopup.target = self
         defaultSortKeyPopup.action = #selector(defaultSortChanged)
         defaultSortDirPopup.removeAllItems()
@@ -1037,7 +1194,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             L("prefs.dateShort", "Short (7/8/26, 3:14 PM)"),
             L("prefs.dateMedium", "Medium (Jul 8, 2026)"),
         ])
-        popup.selectItem(at: Preferences.DateDisplay.allCases.firstIndex(of: prefs.dateDisplay) ?? 2)
+        popup.selectItem(
+            at: Preferences.DateDisplay.allCases.firstIndex(of: prefs.dateDisplay) ?? 2)
         popup.target = self
         popup.action = #selector(dateFormatChanged(_:))
         return popup
@@ -1050,10 +1208,12 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func iconSizeControl() -> NSView {
         let popup = NSPopUpButton()
         popup.addItems(withTitles: [
-            L("prefs.iconSmall", "Small"), L("prefs.iconMedium", "Medium"), L("prefs.iconLarge", "Large"),
+            L("prefs.iconSmall", "Small"), L("prefs.iconMedium", "Medium"),
+            L("prefs.iconLarge", "Large"),
             L("prefs.iconExtraLarge", "Extra Large"),
         ])
-        popup.selectItem(at: Preferences.IconSize.allCases.firstIndex(of: prefs.toolbarIconSize) ?? 1)
+        popup.selectItem(
+            at: Preferences.IconSize.allCases.firstIndex(of: prefs.toolbarIconSize) ?? 1)
         popup.target = self
         popup.action = #selector(iconSizeChanged(_:))
         return popup
@@ -1090,7 +1250,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         dragTrailDecayValue.widthAnchor.constraint(equalToConstant: 32).isActive = true
         let stack = NSStackView(views: [
             well, NSTextField(labelWithString: L("prefs.dragTrailWidth", "Width")), stepper,
-            dragTrailWidthValue, NSTextField(labelWithString: L("prefs.dragTrailDecay", "Trail time")),
+            dragTrailWidthValue,
+            NSTextField(labelWithString: L("prefs.dragTrailDecay", "Trail time")),
             decay, dragTrailDecayValue,
         ])
         stack.orientation = .horizontal
@@ -1120,7 +1281,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         editor.onChange = { [weak self] order, hidden in
             guard let self else { return }
             // A full default layout persists as empty, so it stays in sync with future defaults.
-            self.prefs.contextMenuOrder = order == FileContextMenuController.defaultEntries ? [] : order
+            self.prefs.contextMenuOrder =
+                order == FileContextMenuController.defaultEntries ? [] : order
             self.prefs.hiddenContextItems = hidden
             self.onChange?(self.prefs)
         }
@@ -1169,7 +1331,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func shortcutsPane() -> NSView {
         for id in ["command", "shortcut"] {
             let column = NSTableColumn(identifier: .init(id))
-            column.title = id == "command" ? L("shortcuts.colCommand", "Command") : L("shortcuts.colShortcut", "Shortcut")
+            column.title =
+                id == "command"
+                ? L("shortcuts.colCommand", "Command") : L("shortcuts.colShortcut", "Shortcut")
             column.width = id == "command" ? 320 : 130
             table.addTableColumn(column)
         }
@@ -1185,7 +1349,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
         recorder.onRecord = { [weak self] chord in self?.assignSelected(chord) }
         recorder.onClear = { [weak self] in self?.clearSelected() }
-        let clear = NSButton(title: L("shortcuts.clear", "Clear"), target: self, action: #selector(clearButton))
+        let clear = NSButton(
+            title: L("shortcuts.clear", "Clear"), target: self, action: #selector(clearButton))
         let restore = NSButton(
             title: L("shortcuts.restoreDefaults", "Restore Defaults"), target: self,
             action: #selector(restoreDefaults))
@@ -1312,12 +1477,14 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             wrappingLabelWithString:
                 L(
                     "gestures.help",
-                    "Hold the right mouse button and drag in a file view: ← back, → forward, ↑ enclosing folder. Pick a command, then right-drag in the box to rebind."))
+                    "Hold the right mouse button and drag in a file view: ← back, → forward, ↑ enclosing folder. Pick a command, then right-drag in the box to rebind."
+                ))
         help.font = .systemFont(ofSize: 11)
         help.textColor = .secondaryLabelColor
 
         let controls = NSStackView(views: [
-            NSTextField(labelWithString: L("gestures.setLabel", "Gesture:")), gestureRecorder, NSView(),
+            NSTextField(labelWithString: L("gestures.setLabel", "Gesture:")), gestureRecorder,
+            NSView(),
             restore,
         ])
         controls.orientation = .horizontal
@@ -1344,7 +1511,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             gestureConflictLabel.topAnchor.constraint(equalTo: controls.bottomAnchor, constant: 6),
             gestureConflictLabel.leadingAnchor.constraint(equalTo: scroll.leadingAnchor),
             gestureConflictLabel.trailingAnchor.constraint(equalTo: scroll.trailingAnchor),
-            gestureConflictLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            gestureConflictLabel.bottomAnchor.constraint(
+                equalTo: container.bottomAnchor, constant: -16),
             container.widthAnchor.constraint(equalToConstant: 560),
         ])
         gestureTable.reloadData()
@@ -1363,7 +1531,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func assignGesture(_ stroke: String) {
         guard let id = selectedGestureCommandID else { return }
         let previous = gestureEffective[stroke]
-        for (existing, command) in gestureEffective where command == id { gestureEffective[existing] = nil }
+        for (existing, command) in gestureEffective where command == id {
+            gestureEffective[existing] = nil
+        }
         gestureEffective[stroke] = id
         onGestureChange?(GestureMap.overlay(forEffective: gestureEffective))
         if let previous, previous != id {
@@ -1379,7 +1549,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private func clearGesture() {
         guard let id = selectedGestureCommandID else { return }
-        for (existing, command) in gestureEffective where command == id { gestureEffective[existing] = nil }
+        for (existing, command) in gestureEffective where command == id {
+            gestureEffective[existing] = nil
+        }
         gestureConflictLabel.stringValue = ""
         onGestureChange?(GestureMap.overlay(forEffective: gestureEffective))
         refreshGestures()
@@ -1401,7 +1573,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     func numberOfRows(in tableView: NSTableView) -> Int { commandList.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < commandList.count else { return nil }
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell =
@@ -1426,8 +1600,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             cell.textField?.stringValue = commandList[row].title
             cell.textField?.textColor = .labelColor
         case "gesture":
-            cell.textField?.stringValue = gestures(for: commandList[row].id).map(GestureFormat.display)
-                .joined(separator: ", ")
+            cell.textField?.stringValue = gestures(for: commandList[row].id).map(
+                GestureFormat.display
+            )
+            .joined(separator: ", ")
             cell.textField?.textColor = .secondaryLabelColor
         default:  // "shortcut"
             cell.textField?.stringValue = chords(for: commandList[row].id).map(ChordFormat.display)
@@ -1439,7 +1615,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     func tableViewSelectionDidChange(_ notification: Notification) {
         if notification.object as? NSTableView === gestureTable {
-            gestureRecorder.stroke = selectedGestureCommandID.flatMap { gestures(for: $0).first } ?? ""
+            gestureRecorder.stroke =
+                selectedGestureCommandID.flatMap { gestures(for: $0).first } ?? ""
             gestureConflictLabel.stringValue = ""
         } else {
             recorder.canonical = selectedCommandID.flatMap { chords(for: $0).first } ?? ""
@@ -1452,7 +1629,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func updatesPane() -> NSView {
         let configured = updater?.isConfigured ?? false
         let auto = NSButton(
-            checkboxWithTitle: L("update.autoCheck", "Check for updates automatically"), target: self,
+            checkboxWithTitle: L("update.autoCheck", "Check for updates automatically"),
+            target: self,
             action: #selector(autoCheckToggled(_:)))
         auto.state = (updater?.automaticChecks ?? false) ? .on : .off
         auto.isEnabled = configured
@@ -1467,14 +1645,17 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             ? L("update.viaSparkle", "Updates are delivered automatically via Sparkle.")
             : L(
                 "update.sourceBuild",
-                "This is a source or unsigned build. Download the latest notarized release from GitHub; those builds update themselves.")
+                "This is a source or unsigned build. Download the latest notarized release from GitHub; those builds update themselves."
+            )
         updatesStatus.lineBreakMode = .byWordWrapping
         (updatesStatus.cell as? NSTextFieldCell)?.wraps = true
         updatesStatus.preferredMaxLayoutWidth = 400
         return form([auto, checkNow, updatesStatus])
     }
 
-    @objc private func autoCheckToggled(_ sender: NSButton) { updater?.automaticChecks = (sender.state == .on) }
+    @objc private func autoCheckToggled(_ sender: NSButton) {
+        updater?.automaticChecks = (sender.state == .on)
+    }
     @objc private func checkNow() { updater?.checkForUpdates(self) }
 
     // MARK: Debug
@@ -1490,10 +1671,18 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         currentTerminalTheme = "Dark"
         if ProcessInfo.processInfo.environment["PATHEM_COLOR_RULES"] != nil {
             prefs.colorRules = ColorRules(rules: [
-                ColorRule(name: "Folders", field: .kind, op: .isAnyOf, value: "folder", colorHex: "#95D5B2", bold: true),
-                ColorRule(name: "Images", field: .ext, op: .isAnyOf, value: "png, jpg, gif", colorHex: "#8ECAE6"),
-                ColorRule(name: "Drafts", field: .name, op: .contains, value: "draft", colorHex: "#FFB703", italic: true),
-                ColorRule(name: "Big files", field: .size, op: .greaterThan, value: "50", colorHex: "#E76F51", bold: true),
+                ColorRule(
+                    name: "Folders", field: .kind, op: .isAnyOf, value: "folder",
+                    colorHex: "#95D5B2", bold: true),
+                ColorRule(
+                    name: "Images", field: .ext, op: .isAnyOf, value: "png, jpg, gif",
+                    colorHex: "#8ECAE6"),
+                ColorRule(
+                    name: "Drafts", field: .name, op: .contains, value: "draft",
+                    colorHex: "#FFB703", italic: true),
+                ColorRule(
+                    name: "Big files", field: .size, op: .greaterThan, value: "50",
+                    colorHex: "#E76F51", bold: true),
             ])
         }
         buildChrome()
@@ -1503,7 +1692,8 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             .flatMap(Pane.init(rawValue:)) ?? .general
         sidebar.select(key: startPane.rawValue)
         select(startPane)
-        if let query = ProcessInfo.processInfo.environment["PATHEM_SETTINGS_QUERY"], !query.isEmpty {
+        if let query = ProcessInfo.processInfo.environment["PATHEM_SETTINGS_QUERY"], !query.isEmpty
+        {
             sidebar.debugSearch(query)
         }
         window.centerOverMainWindow()
@@ -1533,7 +1723,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 root.cacheDisplay(in: root.bounds, to: rep)
                 if let data = rep.representation(using: .png, properties: [:]) {
                     try? data.write(to: URL(fileURLWithPath: "\(dir)/settings_window.png"))
-                    print("SETTINGS WINDOW SHOT: \(Int(root.bounds.width))x\(Int(root.bounds.height))")
+                    print(
+                        "SETTINGS WINDOW SHOT: \(Int(root.bounds.width))x\(Int(root.bounds.height))"
+                    )
                 }
             }
         }
@@ -1541,7 +1733,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             let view = build(pane)
             view.layoutSubtreeIfNeeded()
             let size = view.fittingSize
-            view.frame = NSRect(origin: .zero, size: NSSize(width: max(size.width, 460), height: max(size.height, 160)))
+            view.frame = NSRect(
+                origin: .zero,
+                size: NSSize(width: max(size.width, 460), height: max(size.height, 160)))
             view.layoutSubtreeIfNeeded()
             view.wantsLayer = true
             view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
@@ -1549,7 +1743,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             view.cacheDisplay(in: view.bounds, to: rep)
             if let data = rep.representation(using: .png, properties: [:]) {
                 try? data.write(to: URL(fileURLWithPath: "\(dir)/settings_\(pane.rawValue).png"))
-                print("SETTINGS SHOT: \(pane.rawValue) \(Int(view.bounds.width))x\(Int(view.bounds.height))")
+                print(
+                    "SETTINGS SHOT: \(pane.rawValue) \(Int(view.bounds.width))x\(Int(view.bounds.height))"
+                )
             }
         }
     }
