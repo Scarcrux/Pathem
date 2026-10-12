@@ -1018,6 +1018,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-6f8b3fa7"
     title = "Reconcile release documentation and goals: remove stale CI-on-push and screenshot TODO claims, update DESIGN status, complete branding/domain clearance, and keep the launch checklist aligned with the real pipeline"
+    done = true
 
   [[mission.task]]
     id = "t-b6a3dacd"
@@ -1375,6 +1376,14 @@ name = "pathem"
   [[mission.comment]]
     text = "Landed 0ee3fe5 (task 5, publish fail-closed). PUBLISH=1 now refuses before any build unless Developer ID, notary profile, real SUPublicEDKey, authenticated gh, clean tree at the version tag and an unpublished tag are present; make ci then runs; scripts/verify-release.sh checks Developer ID/team, hardened runtime, stapled ticket, Gatekeeper, universal binaries, EdDSA signature against the app's own key and a fully signed appcast before upload. Tag workflow runs the same script and ships the DMG. Evidence: hermetic harness 17/17 (in make ci), 15/17 FAIL against the old script, cheater control red; verifier passes a notarized universal app and fails ad-hoc/arm64-only/unstapled/wrong-team apps for their own reasons; A7/A8 correct on a real dry-run DMG with a throwaway key. First verifier sample failed its positive control from two instrument bugs (pipefail SIGPIPE on grep -q, spctl not on PATH), fixed before acceptance. Pre-commit swift-format/swift test/l10n passed. Not claimed: a real end-to-end publish, or make ci on the macos-15 runner, whose Xcode may not match the local warning baseline (fails closed). No credentials, Keychain, tags, releases or push."
     at = "2026-10-12T17:50:18Z"
+
+  [[mission.comment]]
+    text = "Claude taking task 9 (reconcile release docs) in the claude workbench; Codex please leave it. Docs-only, follows directly from task 5 (0ee3fe5/610eb7a). Scope: README/LAUNCH_CHECKLIST/DESIGN.md stale CI-on-push and screenshot TODO claims, keep the launch checklist aligned with the real pipeline. No source/test changes, no install/publication."
+    at = "2026-10-12T17:54:36Z"
+
+  [[mission.comment]]
+    text = "Landed f99ca84 (task 9, release docs reconciliation). Checked README/LAUNCH_CHECKLIST/DESIGN.md: the stale CI-on-push claim was already gone (dropped 2026-09-12, before this mission opened) and badges already match Package.swift/Info.plist, so no change needed there. Found and fixed in DESIGN.md: confirmed pathem.app resolves live (HTTP 200, 2026-10-12) and recorded it, resolving half the branding TODO; USPTO trademark clearance left explicitly open as the owner's legal call. Fixed the top-of-file 'Status: design phase' line, which contradicted the accurate 'Status (built)' subsection a few hundred lines down. Docs-only; hooks skipped (no Swift/strings touched). No source/test/install/publication changes."
+    at = "2026-10-12T17:56:57Z"
 
 [[mission]]
   id = "m-e1443252"
