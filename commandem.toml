@@ -1012,6 +1012,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-dddab6ee"
     title = "Add a redacted gitleaks/history/PII release preflight with a precise allowlist for the LiveRemoteTests environment-variable false positive and noreply-authorship enforcement"
+    done = true
 
   [[mission.task]]
     id = "t-99c992cc"
@@ -1406,6 +1407,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Landed 308989e (task 4, distribution shape), marked ask not done: real engineering is complete, but one genuine owner decision remains open. Added hardened_runtime_enabled and sparkle_metadata_well_formed to the packaged e2e leg (verified against a real positive, Pathem.app, and a real negative, /Applications/Battle.net.app, before wiring in); architecture is reported always and asserted only when ARCHS explicitly names more than one, so the existing single-arch default costs nothing extra. Confirmed ARCHS='arm64 x86_64' scripts/package.sh builds a genuinely universal ad-hoc bundle cleanly in 73.6s on this toolchain -- the Metal-toolchain concern in package.sh's own comment doesn't block the native SwiftPM build system here. Along the way, running the packaged leg under universal surfaced a real regression from task 6: PathemApp.swift's Selector((\"undo:\"))/Selector((\"redo:\")) only warn in release config, not debug, so my debug-only check wrongly called that baseline entry stale and pruned it. Fixed with #selector(BrowserViewController.undo(_:)/redo(_:)) (a real declaration exists, unlike draggingEnded:); reverified zero new warnings in both debug and release. Verified: swift test 779/779; packaged e2e 13/13 with no ARCHS (arm64 only, no new assertion) and 14/14 with ARCHS='arm64 x86_64' (both archs, assertion runs and passes). Owner decision still open: make the packaged CI/local leg build universal by default (catches a real cross-arch regression on every run) versus keep it opt-in (current state, zero added build time) -- that's a tradeoff against the account's Actions-minute budget, not mine to make. Not done, deliberately: exercising pathem-cli's open/reveal/preview live, since that shells out to /usr/bin/open pathem://... through LaunchServices to whichever Pathem.app is currently registered, risking the owner's actually-running app; the URL contract itself is already covered by PathemURLContractTests.swift. No install/publication."
     at = "2026-10-12T18:47:22Z"
+
+  [[mission.comment]]
+    text = "Marking task7 done, not new work: it's already implemented and superseded by task33/34 (scripts/release_safety.py + release-safety.toml, landed fae73b9/d2ed3c5). Verified just now: 'make release-safety' runs a real gitleaks-backed gate with 19/19 passing unit tests (scripts/release_safety_test.py), scans the tracked candidate tree plus all reachable refs, and enforces noreply authorship. The specific LiveRemoteTests environment-variable concern this task named (PATHEM_LIVE_FTP_PASSWORD/PATHEM_LIVE_REBEX_PASSWORD identifiers in Tests/PathemEngineTests/LiveRemoteTests.swift, feared as a gitleaks false positive) produces zero findings against the current tracked tree (candidate-tree findings=0) -- confirmed empirically, not just by reading the prior triage comment. The gate is correctly RED on all-ref-history (41 findings, all pre-existing historical debt already triaged under task34 and gated on the owner's task35 decision), which is working as designed, not a defect in this task's deliverable. No source changes; this is a roadmap bookkeeping correction."
+    at = "2026-10-12T18:59:13Z"
 
 [[mission]]
   id = "m-e1443252"
