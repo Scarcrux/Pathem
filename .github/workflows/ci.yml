@@ -27,6 +27,10 @@ jobs:
       - name: Localization lint
         run: python3 scripts/l10n_lint.py
 
+      # Hermetic: a throwaway repo and a fake gh, so it can never publish anything.
+      - name: Publish gate controls
+        run: test/release/publish_gate_test.sh
+
       - name: Build
         run: swift build --build-system native
 

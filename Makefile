@@ -99,6 +99,7 @@ ci: preflight
 	python3 scripts/l10n_lint.py
 	python3 scripts/check_warnings.py --self-test
 	test/e2e/run.sh --scenario-self-test
+	test/release/publish_gate_test.sh
 	mkdir -p .build
 	# An unused, unique condition forces owned-source diagnostics even on a warm cache.
 	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS) -Xswiftc -D -Xswiftc PATHEM_CI_WARNING_INVENTORY_$$(uuidgen | tr -d '-') > .build/ci-debug-build.log 2>&1 || { tail -80 .build/ci-debug-build.log; exit 1; }

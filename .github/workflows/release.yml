@@ -1,9 +1,14 @@
 name: Release
 
-# Push a version tag (e.g. v1.0.0) to build a universal, Developer ID-signed,
-# notarized, stapled Pathem.app, generate a signed Sparkle appcast, and attach
-# both to a GitHub Release. Existing installs then auto-update via Sparkle, and
-# the build-from-source path in the README still works.
+# Push a version tag (e.g. v1.0.0) to publish the same artifact the local runbook
+# does: scripts/release.sh with PUBLISH=1 runs the full gate (make ci), builds a
+# universal, Developer ID-signed, notarized, stapled Pathem.app, wraps it in the
+# DMG the README and RELEASE.md promise, signs it for Sparkle, verifies every
+# artifact (scripts/verify-release.sh), and only then creates the GitHub Release
+# with the DMG and appcast. Criteria: docs/PUBLISH_GATE_TESTING.md.
+#
+# The tag must equal the committed CFBundleShortVersionString; bump the version
+# and CFBundleVersion in Packaging/Info.plist, commit, then tag that commit.
 #
 # Required repository secrets (Settings > Secrets and variables > Actions):
 #   DEVELOPER_ID_CERT_P12       base64 of your "Developer ID Application" .p12
@@ -17,7 +22,8 @@ name: Release
 #                               paste the file's contents). The matching public
 #                               key goes in Packaging/Info.plist as SUPublicEDKey.
 #
-# Needs a paid Apple Developer account. Without the secrets the job fails fast.
+# Needs a paid Apple Developer account. A missing secret, a placeholder public key,
+# a failing gate or an artifact that fails verification stops the job before upload.
 
 on:
   push:
@@ -32,17 +38,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set version from tag
+      - name: Require the tag to match the committed version
         run: |
           set -euo pipefail
-          VERSION="${GITHUB_REF_NAME#v}"
-          # CFBundleVersion drives Sparkle's "is this newer?" check, so derive a
-          # monotonic integer from the semver tag (not github.run_number, which
-          # isn't ordered by tag). Each component must stay under 1000.
-          IFS=. read -r MAJOR MINOR PATCH <<< "${VERSION%%-*}"
-          BUILD=$(( ${MAJOR:-0} * 1000000 + ${MINOR:-0} * 1000 + ${PATCH:-0} ))
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Packaging/Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Packaging/Info.plist
+          # The publish preflight checks HEAD against the local tag ref.
+          git fetch --depth=1 origin "+refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          PLIST_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Packaging/Info.plist)"
+          if [ "${GITHUB_REF_NAME#v}" != "$PLIST_VERSION" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match CFBundleShortVersionString ${PLIST_VERSION}; bump and commit Packaging/Info.plist, then tag that commit"
+            exit 1
+          fi
 
       - name: Import Developer ID certificate
         env:
@@ -71,35 +76,23 @@ jobs:
           xcrun notarytool store-credentials pathem-notary \
             --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_PASSWORD"
 
-      - name: Build, sign, notarize, staple
+      - name: Gate, build, verify and publish (scripts/release.sh)
         env:
+          PUBLISH: "1"
           DEVELOPER_ID: ${{ secrets.DEVELOPER_ID }}
           NOTARY_PROFILE: pathem-notary
-        run: |
-          set -euo pipefail
-          scripts/package.sh   # DEVELOPER_ID set -> universal + Hardened Runtime + notarize + staple
-
-      - name: Package + signed appcast
-        env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-          mkdir -p dist
-          ditto -c -k --keepParent .build/Pathem.app "dist/Pathem-${GITHUB_REF_NAME}-universal.zip"
-          GENERATE_APPCAST="$(find .build/artifacts -name generate_appcast -type f | head -1)"
-          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle_ed_priv"
-          "$GENERATE_APPCAST" --ed-key-file "$RUNNER_TEMP/sparkle_ed_priv" \
-            --download-url-prefix "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/" \
-            dist
-          rm -f "$RUNNER_TEMP/sparkle_ed_priv"
-
-      - name: Create GitHub Release
-        env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          gh release create "${GITHUB_REF_NAME}" \
-            "dist/Pathem-${GITHUB_REF_NAME}-universal.zip" \
-            dist/appcast.xml \
-            --title "Pathem ${GITHUB_REF_NAME}" \
-            --generate-notes
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::the SPARKLE_PRIVATE_KEY secret is missing"
+            exit 1
+          fi
+          umask 077
+          export SPARKLE_KEY_FILE="$RUNNER_TEMP/sparkle_ed_priv"
+          printf '%s' "$SPARKLE_PRIVATE_KEY" > "$SPARKLE_KEY_FILE"
+          unset SPARKLE_PRIVATE_KEY
+          trap 'rm -f "$SPARKLE_KEY_FILE"' EXIT
+          scripts/release.sh
