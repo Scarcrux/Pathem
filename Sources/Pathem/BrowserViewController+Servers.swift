@@ -8,10 +8,11 @@ extension BrowserViewController {
     /// The manual "Connect to Server" dialog: mount an smb:// / afp:// / nfs:// address and
     /// browse the mount point in the active pane.
     func connectToServer() {
-        guard let window = view.window else { return }
+        guard view.window != nil else { return }
         let alert = NSAlert()
         alert.messageText = L("connect.title", "Connect to Server")
-        alert.informativeText = L("connect.hint", "Enter a server address, for example smb://host/share or afp://host.")
+        alert.informativeText = L(
+            "connect.hint", "Enter a server address, for example smb://host/share or afp://host.")
         alert.addButton(withTitle: L("connect.connect", "Connect"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 24))
@@ -37,7 +38,10 @@ extension BrowserViewController {
             } else if result.status != ECANCELED {  // ECANCELED = user dismissed the OS prompt
                 self.presentInfo(
                     L("smb.failedTitle", "Couldn’t connect"),
-                    String(format: L("connect.failedBody", "Couldn’t mount “%@”. Check the address and your credentials."), text))
+                    String(
+                        format: L(
+                            "connect.failedBody",
+                            "Couldn’t mount “%@”. Check the address and your credentials."), text))
             }
         }
     }
@@ -71,7 +75,10 @@ extension BrowserViewController {
                 self.presentInfo(
                     L("smb.failedTitle", "Couldn’t connect"),
                     String(
-                        format: L("smb.failedBody", "Couldn’t mount “%@”. Check that the share is available and your credentials are correct."),
+                        format: L(
+                            "smb.failedBody",
+                            "Couldn’t mount “%@”. Check that the share is available and your credentials are correct."
+                        ),
                         host))
             }
         }
@@ -86,10 +93,13 @@ extension BrowserViewController {
                 openOptions[kNAUIOptionKey] = kNAUIOptionAllowUI  // let the OS prompt for credentials
                 var mountpoints: Unmanaged<CFArray>?
                 let status = NetFSMountURLSync(
-                    url as CFURL, nil, nil, nil, openOptions as CFMutableDictionary, nil, &mountpoints)
+                    url as CFURL, nil, nil, nil, openOptions as CFMutableDictionary, nil,
+                    &mountpoints)
                 let paths = (mountpoints?.takeRetainedValue() as? [String]) ?? []
                 cont.resume(
-                    returning: (status == 0 ? paths.first.map { URL(fileURLWithPath: $0) } : nil, status))
+                    returning: (
+                        status == 0 ? paths.first.map { URL(fileURLWithPath: $0) } : nil, status
+                    ))
             }
         }
     }

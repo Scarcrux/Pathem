@@ -22,7 +22,8 @@ final class ThumbnailProvider {
         liveKeys.insert(key)
         guard liveKeys.count > 13_000 else { return }  // a bit above cache + noPreview limits
         liveKeys = liveKeys.filter {
-            cache.object(forKey: $0 as NSString) != nil || noPreview.object(forKey: $0 as NSString) != nil
+            cache.object(forKey: $0 as NSString) != nil
+                || noPreview.object(forKey: $0 as NSString) != nil
         }
     }
     private init() {
@@ -53,7 +54,8 @@ final class ThumbnailProvider {
 
     /// Generate a thumbnail off the main thread; `completion` runs on the main actor
     /// only if a representation is produced (callers guard against cell reuse).
-    func generate(_ url: URL, size: CGSize, scale: CGFloat, completion: @escaping (NSImage) -> Void) {
+    func generate(_ url: URL, size: CGSize, scale: CGFloat, completion: @escaping (NSImage) -> Void)
+    {
         // QuickLook thumbnailing depends on an XPC agent that a headless automation/CI session
         // lacks; there the framework traps ("BUG IN CLIENT OF ..." on a background thread).
         // Thumbnails aren't under test in that mode, so skip generation and leave the type icon.
@@ -66,7 +68,11 @@ final class ThumbnailProvider {
         if noPreview.object(forKey: cacheKey as NSString) != nil { return }  // known: no preview
         let request = QLThumbnailGenerator.Request(
             fileAt: url, size: size, scale: scale, representationTypes: .thumbnail)
-        QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { [weak self] representation, _ in
+        // Boxed into Delivery below anyway (@unchecked Sendable, main-actor-only); shadow
+        // here too so capturing it into this already-@Sendable callback doesn't also warn.
+        nonisolated(unsafe) let completion = completion
+        QLThumbnailGenerator.shared.generateBestRepresentation(for: request) {
+            [weak self] representation, _ in
             guard let representation else {
                 // Remember there's no preview so we don't re-request it on every scroll.
                 Task { @MainActor in
@@ -77,7 +83,8 @@ final class ThumbnailProvider {
             }
             // QuickLook calls back off the main actor; box the non-Sendable image +
             // completion (and capture the key as a Sendable String) to cross back.
-            let result = Delivery(image: representation.nsImage, key: cacheKey, completion: completion)
+            let result = Delivery(
+                image: representation.nsImage, key: cacheKey, completion: completion)
             Task { @MainActor in
                 self?.cache.setObject(result.image, forKey: result.key as NSString)
                 self?.noteLiveKey(result.key)

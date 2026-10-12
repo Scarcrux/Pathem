@@ -177,7 +177,7 @@ extension BrowserViewController {
             return
         }
         let folder = pane.currentURL
-        Task { @MainActor in
+        Task { @MainActor [self] in
             do {
                 let paths = try await Archiver.list(archive)
                 self.archiveContents.present(
@@ -194,7 +194,7 @@ extension BrowserViewController {
     func writeBackArchiveIfChanged(archive: URL, mountRoot: URL, original: [String: String]) {
         // RAR and other read-only formats can't be repacked; browse them without prompting.
         guard Archiver.canRepack(archive) else { return }
-        Task { @MainActor in
+        Task { @MainActor [self] in
             let changed = await Task.detached { Archiver.snapshot(of: mountRoot) != original }.value
             guard changed, let window = self.view.window else { return }
             let alert = NSAlert()

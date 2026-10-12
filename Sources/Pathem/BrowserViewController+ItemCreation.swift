@@ -18,11 +18,19 @@ extension BrowserViewController {
 
     func newFolder() {
         guard let pane = activePane else { return }
-        if pane.isShowingSmartResults { NSSound.beep(); return }  // no single destination
+        if pane.isShowingSmartResults {
+            NSSound.beep()
+            return
+        }  // no single destination
         if pane.isRemote {
             Task { @MainActor in
-                guard let name = await self.promptForName(title: L("bvc.newFolderPrompt", "New Folder"), default: self.defaultNewFolderName) else { return }
-                self.performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) { provider, connection, path, password in
+                guard
+                    let name = await self.promptForName(
+                        title: L("bvc.newFolderPrompt", "New Folder"),
+                        default: self.defaultNewFolderName)
+                else { return }
+                self.performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) {
+                    provider, connection, path, password in
                     try await provider.makeDirectory(
                         connection, path: PaneController.joinRemote(path, name), password: password)
                 }
@@ -30,15 +38,21 @@ extension BrowserViewController {
             return
         }
         do {
-            let name = try FileOperations.makeFolder(in: pane.currentURL, baseName: defaultNewFolderName)
+            let name = try FileOperations.makeFolder(
+                in: pane.currentURL, baseName: defaultNewFolderName)
             pane.reloadIfShowingListing()
             // Select it once the (off-main) listing lands, then offer to name it right away, the way
             // Finder drops you straight into renaming a new folder.
             pane.selectWhenListed(name) { [weak self] in self?.renameSelection() }
-            registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.newFolderVerb", "New Folder"))
+            registerNewItemUndo(
+                name: name, in: pane.currentURL, actionName: L("bvc.newFolderVerb", "New Folder"))
         } catch {
             presentFailures(
-                [FileOperations.Failure(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
+                [
+                    FileOperations.Failure(
+                        name: L("bvc.newFolderVerb", "New Folder"),
+                        reason: error.localizedDescription)
+                ],
                 title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
         }
     }
@@ -47,25 +61,40 @@ extension BrowserViewController {
     /// Ctrl-Cmd-N "New Folder with Selection"). Falls back to a plain New Folder when nothing
     /// is selected.
     func newFolderWithSelection() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let names = pane.selectedEntries.map(\.name)
-        guard !names.isEmpty else { newFolder(); return }
+        guard !names.isEmpty else {
+            newFolder()
+            return
+        }
         let directory = pane.currentURL
         do {
             let folderName = try FileOperations.makeFolder(
                 in: directory, baseName: L("bvc.newFolderWithItems", "New Folder With Items"))
             let outcome = FileOperations.move(
-                names, from: directory, to: directory.appendingPathComponent(folderName), onConflict: .keepBoth)
+                names, from: directory, to: directory.appendingPathComponent(folderName),
+                onConflict: .keepBoth)
             pane.reloadIfShowingListing()
             // Same as New Folder: select it once the async listing lands, then offer to name it.
             pane.selectWhenListed(folderName) { [weak self] in self?.renameSelection() }
-            registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
+            registerFolderWithSelectionUndo(
+                folderName: folderName, in: directory, moved: outcome.performed)
             if !outcome.failures.isEmpty {
-                presentFailures(outcome.failures, title: L("bvc.moveIntoFolderFailed", "Couldn’t move some items into the folder"))
+                presentFailures(
+                    outcome.failures,
+                    title: L("bvc.moveIntoFolderFailed", "Couldn’t move some items into the folder")
+                )
             }
         } catch {
             presentFailures(
-                [FileOperations.Failure(name: L("bvc.newFolderVerb", "New Folder"), reason: error.localizedDescription)],
+                [
+                    FileOperations.Failure(
+                        name: L("bvc.newFolderVerb", "New Folder"),
+                        reason: error.localizedDescription)
+                ],
                 title: L("bvc.couldntCreateFolder", "Couldn’t create folder"))
         }
     }
@@ -86,7 +115,8 @@ extension BrowserViewController {
             if !trash.failures.isEmpty {
                 self.presentFailures(trash.failures, title: L("bvc.undoFailed", "Undo failed"))
             }
-            self.registerFolderWithSelectionRedo(folderName: folderName, in: directory, moved: moved)
+            self.registerFolderWithSelectionRedo(
+                folderName: folderName, in: directory, moved: moved)
         }
     }
 
@@ -100,30 +130,41 @@ extension BrowserViewController {
         ) { [weak self] in
             guard let self else { return }
             let folderURL = directory.appendingPathComponent(folderName)
-            try? FileManager.default.createDirectory(at: folderURL, withIntermediateDirectories: true)
+            try? FileManager.default.createDirectory(
+                at: folderURL, withIntermediateDirectories: true)
             let names = moved.map { $0.source.lastPathComponent }
-            let outcome = FileOperations.move(names, from: directory, to: folderURL, onConflict: .keepBoth)
+            let outcome = FileOperations.move(
+                names, from: directory, to: folderURL, onConflict: .keepBoth)
             self.reloadBothSides()
-            self.registerFolderWithSelectionUndo(folderName: folderName, in: directory, moved: outcome.performed)
+            self.registerFolderWithSelectionUndo(
+                folderName: folderName, in: directory, moved: outcome.performed)
         }
     }
 
     /// Create a new empty file (local panes only); the Finder pain point this app fixes.
     func newFile() {
         guard let pane = activePane else { return }
-        if pane.isShowingSmartResults || pane.isRemote { NSSound.beep(); return }
+        if pane.isShowingSmartResults || pane.isRemote {
+            NSSound.beep()
+            return
+        }
         do {
-            let name = try FileOperations.makeFile(in: pane.currentURL, baseName: defaultNewFileName)
+            let name = try FileOperations.makeFile(
+                in: pane.currentURL, baseName: defaultNewFileName)
             pane.reloadIfShowingListing()
             // Select it once the (off-main) listing lands, then offer to name it right away, like
             // New Folder does -- a plain select(name:) here is a no-op, since the row doesn't exist
             // yet. (applyPendingAfterListing then drops the redundant watcher reload so the inline
             // rename isn't cancelled the instant it begins.)
             pane.selectWhenListed(name) { [weak self] in self?.renameSelection() }
-            registerNewItemUndo(name: name, in: pane.currentURL, actionName: L("bvc.cmd.newFile", "New File"))
+            registerNewItemUndo(
+                name: name, in: pane.currentURL, actionName: L("bvc.cmd.newFile", "New File"))
         } catch {
             presentFailures(
-                [FileOperations.Failure(name: L("bvc.cmd.newFile", "New File"), reason: error.localizedDescription)],
+                [
+                    FileOperations.Failure(
+                        name: L("bvc.cmd.newFile", "New File"), reason: error.localizedDescription)
+                ],
                 title: L("bvc.couldntCreateFile", "Couldn’t create file"))
         }
     }
@@ -167,18 +208,22 @@ extension BrowserViewController {
 
     /// List installed shortcuts (off-main), then pick one and run it on the selection.
     func showShortcutPicker() {
-        guard let window = view.window else { return }
+        guard view.window != nil else { return }
         Task { @MainActor in
             let names = await Task.detached { ShortcutsRunner.list() }.value
             guard !names.isEmpty else {
                 self.presentInfo(
                     L("shortcut.noneTitle", "No Shortcuts found"),
-                    L("shortcut.noneBody", "Create shortcuts in the Shortcuts app first (or the Shortcuts tool is unavailable)."))
+                    L(
+                        "shortcut.noneBody",
+                        "Create shortcuts in the Shortcuts app first (or the Shortcuts tool is unavailable)."
+                    ))
                 return
             }
             let alert = NSAlert()
             alert.messageText = L("shortcut.pickTitle", "Run Shortcut on Selection")
-            alert.informativeText = L("shortcut.pickBody", "The chosen shortcut runs once per selected file.")
+            alert.informativeText = L(
+                "shortcut.pickBody", "The chosen shortcut runs once per selected file.")
             let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 280, height: 26))
             popup.addItems(withTitles: names)
             alert.accessoryView = popup
@@ -197,33 +242,43 @@ extension BrowserViewController {
     }
 
     func showBatchCreate() {
-        guard let window = view.window, let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults
-        else { NSSound.beep(); return }
+        guard let window = view.window, let pane = activePane, !pane.isRemote,
+            !pane.isShowingSmartResults
+        else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         batchCreate.present(
             over: window,
-            create: { [weak self] names, kind in self?.runBatchCreate(names, kind: kind, in: folder) },
-            saveTemplate: { [weak self] names, kind in self?.saveBatchAsTemplate(names, kind: kind) })
+            create: { [weak self] names, kind in self?.runBatchCreate(names, kind: kind, in: folder)
+            },
+            saveTemplate: { [weak self] names, kind in self?.saveBatchAsTemplate(names, kind: kind)
+            })
     }
 
     private func runBatchCreate(_ names: [String], kind: BatchCreate.Kind, in folder: URL) {
         let result = BatchCreate.create(names, kind: kind, in: folder)
         reloadBothSides()
         if let first = result.created.first { paneShowing(folder)?.select(name: first) }
-        registerCreatedUndo(names: result.created, in: folder, actionName: L("batch.actionName", "Batch Create"))
+        registerCreatedUndo(
+            names: result.created, in: folder, actionName: L("batch.actionName", "Batch Create"))
         if !result.failures.isEmpty {
-            presentFailures(result.failures, title: L("batch.someFailed", "Some items couldn’t be created"))
+            presentFailures(
+                result.failures, title: L("batch.someFailed", "Some items couldn’t be created"))
         }
     }
 
     private func saveBatchAsTemplate(_ names: [String], kind: BatchCreate.Kind) {
         Task { @MainActor in
-            guard let name = await self.promptForName(
-                title: L("batch.saveTemplateTitle", "Save as Template"),
-                default: L("batch.templateDefaultName", "My Template"))
+            guard
+                let name = await self.promptForName(
+                    title: L("batch.saveTemplateTitle", "Save as Template"),
+                    default: L("batch.templateDefaultName", "My Template"))
             else { return }
             let entries = names.map { kind == .folders ? "\($0)/" : $0 }
-            self.createTemplates.append(CreateTemplate(id: UUID().uuidString, name: name, entries: entries))
+            self.createTemplates.append(
+                CreateTemplate(id: UUID().uuidString, name: name, entries: entries))
             self.saveTemplates()
         }
     }
@@ -240,15 +295,20 @@ extension BrowserViewController {
     }
 
     private func runTemplate(_ template: CreateTemplate) {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         let folder = pane.currentURL
         let result = template.instantiate(in: folder)
         reloadBothSides()
         if let first = result.created.first { paneShowing(folder)?.select(name: first) }
         registerCreatedUndo(
-            names: result.created, in: folder, actionName: L("templates.actionName", "New from Template"))
+            names: result.created, in: folder,
+            actionName: L("templates.actionName", "New from Template"))
         if !result.failures.isEmpty {
-            presentFailures(result.failures, title: L("batch.someFailed", "Some items couldn’t be created"))
+            presentFailures(
+                result.failures, title: L("batch.someFailed", "Some items couldn’t be created"))
         }
     }
 
@@ -256,7 +316,8 @@ extension BrowserViewController {
     func registerCreatedUndo(names: [String], in directory: URL, actionName: String) {
         guard !names.isEmpty else { return }
         let paths = Self.paths(names, in: directory)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
+            [weak self] in
             guard let self else { return }
             let result = FileOperations.trash(names, in: directory)
             self.reloadBothSides()
@@ -274,24 +335,31 @@ extension BrowserViewController {
         names: [String], in directory: URL, trashed: [FileOperations.Trashed], actionName: String
     ) {
         let paths = Self.paths(names, in: directory)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
+            [weak self] in
             guard let self else { return }
             let failures = FileOperations.untrash(trashed).failures
             self.reloadBothSides()
-            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
+            if !failures.isEmpty {
+                self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed"))
+            }
             self.registerCreatedUndo(names: names, in: directory, actionName: actionName)
         }
     }
 
     private func registerNewItemUndo(name: String, in directory: URL, actionName: String) {
         let paths = Self.paths([name], in: directory)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
+            [weak self] in
             guard let self else { return }
             let result = FileOperations.trash([name], in: directory)  // undo = trash the new item
             self.reloadBothSides()
-            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
+            if !result.failures.isEmpty {
+                self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed"))
+            }
             if !result.trashed.isEmpty {
-                self.registerNewItemRedo(name: name, in: directory, trashed: result.trashed, actionName: actionName)
+                self.registerNewItemRedo(
+                    name: name, in: directory, trashed: result.trashed, actionName: actionName)
             }
         }
     }
@@ -300,12 +368,15 @@ extension BrowserViewController {
         name: String, in directory: URL, trashed: [FileOperations.Trashed], actionName: String
     ) {
         let paths = Self.paths([name], in: directory)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
+            [weak self] in
             guard let self else { return }
             let failures = FileOperations.untrash(trashed).failures  // redo = restore the item
             self.reloadBothSides()
             self.paneShowing(directory)?.select(name: name)
-            if !failures.isEmpty { self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed")) }
+            if !failures.isEmpty {
+                self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed"))
+            }
             self.registerNewItemUndo(name: name, in: directory, actionName: actionName)
         }
     }

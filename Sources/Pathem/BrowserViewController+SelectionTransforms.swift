@@ -132,7 +132,7 @@ extension BrowserViewController {
         }
         let folder = pane.currentURL
         guard let window = view.window else { return }
-        Task { @MainActor in
+        Task { @MainActor [self] in
             let items = await RepoScan.classify(folder)
             guard !items.isEmpty else {
                 self.presentInfo(

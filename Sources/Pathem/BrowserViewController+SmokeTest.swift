@@ -71,7 +71,7 @@ extension BrowserViewController {
         // unrecognized selector, swallows the exception, and the drag session never concludes, so
         // every drag after a drag-out to another app is dead until relaunch. @objc on the override
         // is the fix; this guards against silently dropping it.
-        let draggingEndedSel = Selector(("draggingEnded:"))
+        let draggingEndedSel = NSSelectorFromString("draggingEnded:")
         let tableExposes = KeyTableView().responds(to: draggingEndedSel)
         let gridExposes = KeyCollectionView(frame: .zero).responds(to: draggingEndedSel)
         check(

@@ -38,9 +38,11 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
         scroll.borderType = .bezelBorder
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
-        let hint = NSTextField(wrappingLabelWithString: L(
-            "prefs.labelsHint",
-            "Color and style filenames by rules. Drag to reorder (the first enabled rule that matches wins); uncheck to disable. Double-click a rule to edit it."))
+        let hint = NSTextField(
+            wrappingLabelWithString: L(
+                "prefs.labelsHint",
+                "Color and style filenames by rules. Drag to reorder (the first enabled rule that matches wins); uncheck to disable. Double-click a rule to edit it."
+            ))
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
         hint.translatesAutoresizingMaskIntoConstraints = false
@@ -98,7 +100,9 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
 
     private static func opLabel(_ op: ColorRule.Op, field: ColorRule.Field) -> String {
         switch op {
-        case .isAnyOf: return field == .kind ? L("prefs.labelOpIs", "is") : L("prefs.labelOpAnyOf", "is any of")
+        case .isAnyOf:
+            return field == .kind
+                ? L("prefs.labelOpIs", "is") : L("prefs.labelOpAnyOf", "is any of")
         case .contains: return L("prefs.labelOpContains", "contains")
         case .beginsWith: return L("prefs.labelOpBegins", "begins with")
         case .endsWith: return L("prefs.labelOpEnds", "ends with")
@@ -146,11 +150,14 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
 
         let colorWell = NSColorWell()
         colorWell.color = ThemeManager.color(fromHex: rule.colorHex) ?? .systemGray
-        let noColor = NSButton(checkboxWithTitle: L("prefs.labelNoColor", "No color"), target: nil, action: nil)
+        let noColor = NSButton(
+            checkboxWithTitle: L("prefs.labelNoColor", "No color"), target: nil, action: nil)
         noColor.state = rule.colorHex.isEmpty ? .on : .off
-        let bold = NSButton(checkboxWithTitle: L("prefs.labelBold", "Bold"), target: nil, action: nil)
+        let bold = NSButton(
+            checkboxWithTitle: L("prefs.labelBold", "Bold"), target: nil, action: nil)
         bold.state = rule.bold ? .on : .off
-        let italic = NSButton(checkboxWithTitle: L("prefs.labelItalic", "Italic"), target: nil, action: nil)
+        let italic = NSButton(
+            checkboxWithTitle: L("prefs.labelItalic", "Italic"), target: nil, action: nil)
         italic.state = rule.italic ? .on : .off
 
         func labeled(_ title: String, _ control: NSView) -> NSView {
@@ -184,8 +191,8 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
         alert.accessoryView = form
 
         guard let host = view.window else { return }
-        alert.beginSheetModal(for: host) { [weak self] response in
-            guard let self, response == .alertFirstButtonReturn else { return }
+        alert.beginSheetModal(for: host) { response in
+            guard response == .alertFirstButtonReturn else { return }
             var edited = rule
             edited.name = name.stringValue
             edited.field = ColorRule.Field.allCases[field.indexOfSelectedItem]
@@ -252,9 +259,12 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
 
     func numberOfRows(in tableView: NSTableView) -> Int { rules.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? RuleCell) ?? RuleCell(id: id)
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? RuleCell) ?? RuleCell(id: id)
         let rule = rules[row]
         cell.checkbox.state = rule.enabled ? .on : .off
         cell.checkbox.target = self
@@ -285,7 +295,10 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
         }
         let op: String
         switch rule.op {
-        case .isAnyOf: op = rule.field == .kind ? L("prefs.labelOpIs", "is") : L("prefs.labelOpAnyOf", "is any of")
+        case .isAnyOf:
+            op =
+                rule.field == .kind
+                ? L("prefs.labelOpIs", "is") : L("prefs.labelOpAnyOf", "is any of")
         case .contains: op = L("prefs.labelOpContains", "contains")
         case .beginsWith: op = L("prefs.labelOpBegins", "begins with")
         case .endsWith: op = L("prefs.labelOpEnds", "ends with")
@@ -297,7 +310,9 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
         return "\(field) \(op) \(rule.value)\(unit)"
     }
 
-    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int)
+        -> NSPasteboardWriting?
+    {
         let item = NSPasteboardItem()
         item.setString(String(row), forType: rowType)
         return item
@@ -356,7 +371,8 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
     final class SwatchView: NSView {
         var fillColor: NSColor = .clear { didSet { needsDisplay = true } }
         override func draw(_ dirtyRect: NSRect) {
-            let path = NSBezierPath(roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 3, yRadius: 3)
+            let path = NSBezierPath(
+                roundedRect: bounds.insetBy(dx: 1, dy: 1), xRadius: 3, yRadius: 3)
             fillColor.setFill()
             path.fill()
             NSColor.separatorColor.setStroke()
