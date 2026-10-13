@@ -71,6 +71,12 @@ extension BrowserViewController {
             "other-initial-selection-delivered",
             settle { other.selectedEntries.map(\.name) == ["alpha.txt"] },
             "selection=\(other.selectedEntries.map(\.name))")
+        if ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_TAB_SAMPLE"] == "1" {
+            backgroundTabOwnershipChecks(
+                pane: pane, root: root, freshRoot: galleryRoot, report: check)
+            finish()
+        }
+        backgroundTabOwnershipChecks(pane: pane, root: root, freshRoot: galleryRoot, report: check)
         if ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_TRACE_ONLY"] == "1" {
             let stages: [(String, () -> Void)] = [
                 ("table-reload", { (other.keyView as? NSTableView)?.reloadData() }),
@@ -706,6 +712,7 @@ extension BrowserViewController {
                 "all-original-tabs-restored",
                 leftTabs.activePane === pane && rightTabs.tabCount == otherTabs)
             for mode in [ViewFormat.ViewMode.list, .icon, .column, .tree] {
+                let activationStart = leftTabs.debugActivationReceipts.count
                 pane.debugClickViewSwitcher(mode)
                 check(
                     "default-source-delivered-\(mode.rawValue)",
@@ -733,7 +740,9 @@ extension BrowserViewController {
                 while leftTabs.tabCount > originalTabs { leftTabs.closeActiveTab() }
                 check(
                     "default-original-tab-restored-\(mode.rawValue)",
-                    leftTabs.activePane === pane && rightTabs.tabCount == otherTabs)
+                    leftTabs.activePane === pane && rightTabs.tabCount == otherTabs,
+                    "active=\(leftTabs.activeTabIndex) count=\(leftTabs.tabCount) originalExists=\(leftTabs.tabs.contains { $0 === pane }) originalDisplayed=\(pane.containerView.window === window) receipts=\(leftTabs.debugActivationReceipts.dropFirst(activationStart).map { "source=\($0.sourceIndex),previous=\($0.previousIndex),displayed=\($0.sourceDisplayed)" })"
+                )
             }
             let otherBefore = nameField("alpha.txt", in: other)?.textColor
             pane.setColorRules(ColorRules())
@@ -933,6 +942,130 @@ extension BrowserViewController {
                     && defaultStyle(nameField("item-110.txt", in: pane)))
         }
         finish()
+    }
+
+    /// The refresh is real content delivery, not an injected onBecomeActive callback.
+    private func backgroundTabOwnershipChecks(
+        pane: PaneController, root: URL, freshRoot: URL,
+        report: (String, Bool, String) -> Void
+    ) {
+        func check(_ name: String, _ ok: Bool, _ detail: String = "") {
+            report("tab-owner-" + name, ok, detail)
+        }
+        func settle(_ condition: () -> Bool) -> Bool {
+            let end = Date().addingTimeInterval(3)
+            repeat {
+                if condition() { return true }
+                RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+            } while Date() < end
+            return condition()
+        }
+        let originalIndex = leftTabs.activeTabIndex
+        let originalCount = leftTabs.tabCount
+        for mode in [ViewFormat.ViewMode.list, .column] {
+            pane.debugClickViewSwitcher(mode)
+            let modeDelivered = settle {
+                pane.viewMode == mode && pane.debugEntryCount == 4
+                    && pane.currentURL.standardizedFileURL == root.standardizedFileURL
+                    && pane.containerView.window === view.window && leftTabs.activePane === pane
+            }
+            check("mode-delivered-" + mode.rawValue, modeDelivered)
+            guard modeDelivered else { return }
+            pane.debugSelectNames(["alpha.txt"])
+            let selectionDelivered = pane.selectedEntries.map(\.name) == ["alpha.txt"]
+            check("selection-delivered-" + mode.rawValue, selectionDelivered)
+            guard selectionDelivered else { return }
+            let displayedReceipt = leftTabs.debugActivationReceipts.count
+            pane.debugReloadContentInPlace()
+            if mode == .column {
+                check(
+                    "displayed-column-refresh-activation-received",
+                    leftTabs.debugActivationReceipts.dropFirst(displayedReceipt).contains {
+                        $0.sourceIndex == originalIndex && $0.sourceDisplayed
+                    })
+            }
+            check(
+                "displayed-refresh-control-" + mode.rawValue,
+                leftTabs.activePane === pane && pane.selectedEntries.map(\.name) == ["alpha.txt"]
+                    && pane.containerView.window === view.window)
+            leftTabs.openTab(at: freshRoot)
+            guard let fresh = leftTabs.activePane, fresh !== pane else {
+                check("new-tab-created-" + mode.rawValue, false)
+                return
+            }
+            let foregroundDelivered = settle {
+                fresh.currentURL.standardizedFileURL == freshRoot.standardizedFileURL
+                    && fresh.debugEntryCount == 3 && leftTabs.activePane === fresh
+                    && fresh.containerView.window === view.window
+                    && pane.containerView.superview == nil
+                    && leftTabs.tabCount == originalCount + 1
+            }
+            check("foreground-delivered-" + mode.rawValue, foregroundDelivered)
+            guard foregroundDelivered else { return }
+            let foregroundIndex = leftTabs.activeTabIndex
+            let hiddenReceipt = leftTabs.debugActivationReceipts.count
+            pane.debugReloadContentInPlace()
+            let hidden = leftTabs.debugActivationReceipts.dropFirst(hiddenReceipt)
+            if mode == .column {
+                check(
+                    "hidden-column-refresh-activation-received",
+                    hidden.contains {
+                        $0.sourceIndex == originalIndex && !$0.sourceDisplayed
+                            && $0.previousIndex == foregroundIndex
+                    },
+                    "receipts=\(hidden.map { "source=\($0.sourceIndex),previous=\($0.previousIndex),displayed=\($0.sourceDisplayed)" })"
+                )
+            } else {
+                check("hidden-list-no-activation-control", hidden.isEmpty)
+            }
+            check(
+                "hidden-refresh-preserves-active-" + mode.rawValue,
+                leftTabs.activePane === fresh && leftTabs.activeTabIndex == foregroundIndex,
+                "active=\(leftTabs.activeTabIndex) expected=\(foregroundIndex)")
+            check(
+                "hidden-refresh-keeps-displayed-" + mode.rawValue,
+                fresh.containerView.window === view.window && pane.containerView.superview == nil)
+            let marker = root.appendingPathComponent("watcher-" + mode.rawValue + ".txt")
+            let watcherReceipt = leftTabs.debugActivationReceipts.count
+            do {
+                try Data("watcher fixture".utf8).write(to: marker)
+            } catch {
+                check("watcher-fixture-written-" + mode.rawValue, false, error.localizedDescription)
+                return
+            }
+            check(
+                "watcher-listing-delivered-" + mode.rawValue,
+                settle { pane.debugHasEntry(marker.lastPathComponent) })
+            if mode == .column {
+                check(
+                    "watcher-hidden-column-activation-received",
+                    leftTabs.debugActivationReceipts.dropFirst(watcherReceipt).contains {
+                        $0.sourceIndex == originalIndex && !$0.sourceDisplayed
+                    })
+            }
+            check(
+                "watcher-preserves-active-" + mode.rawValue,
+                leftTabs.activePane === fresh && fresh.containerView.window === view.window,
+                "active=\(leftTabs.activeTabIndex) expected=\(foregroundIndex)")
+            try? FileManager.default.removeItem(at: marker)
+            check("watcher-fixture-removed-" + mode.rawValue, settle { pane.debugEntryCount == 4 })
+            if let other = rightTabs.activePane {
+                other.keyView.window?.makeFirstResponder(other.keyView)
+                check("other-side-focus-delivered-" + mode.rawValue, activeSide === rightTabs)
+                fresh.keyView.window?.makeFirstResponder(fresh.keyView)
+                check(
+                    "foreground-focus-restored-" + mode.rawValue,
+                    activeSide === leftTabs && leftTabs.activePane === fresh)
+            }
+            leftTabs.closeActiveTab()
+            check(
+                "close-targets-visible-tab-" + mode.rawValue,
+                leftTabs.activePane === pane && leftTabs.tabs.contains { $0 === pane }
+                    && !leftTabs.tabs.contains { $0 === fresh }
+                    && pane.containerView.window === view.window,
+                "originalExists=\(leftTabs.tabs.contains { $0 === pane }) freshExists=\(leftTabs.tabs.contains { $0 === fresh })"
+            )
+        }
     }
 }
 #endif

@@ -39,7 +39,7 @@ Direct folder search excludes hidden entries and package internals, does not fol
 and does not read online-only files. Contents mode scans UTF-8 text up to 32 MiB per file and merges
 scope-checked Spotlight document matches (PDF/Office and installed importers); omissions and an
 unavailable document index are reported. Whole-Mac contents search uses Spotlight's indexed text.
-Live Spotlight, OS folder-picker interaction,
+Live Spotlight, OS folder-picker approval/physical interaction,
 and default-app interoperability remain environmental, not hermetic coverage claims.
 
 ## Search presentation / native folder-picker boundary

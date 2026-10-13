@@ -1174,6 +1174,11 @@ name = "pathem"
   [[mission.task]]
     id = "t-a9b0c25a"
     title = "Fix proven hidden-Column tab ownership: native baseline18/20 delivered a hidden refresh activation, changed activeIndex without changing displayed pane, and Close Tab removed the hidden original. Guard activation by displayed-pane identity, retain actual receipts and contrasting List/displayed-pane controls, plus real background watcher and cross-pane focus regressions. Earlier first-launch ContentPrefs attribution remains Task39 pending."
+    done = true
+
+  [[mission.task]]
+    id = "t-1102dce4"
+    title = "Diagnose disk-image E2E Resource busy: final Task41 CI passed all UI checks (ContentPrefs204/204, search99/99) but archives scenario failed at hdiutil create after eight archive/file checks passed. Preserve failed CI; identify actual tool/fixture ownership and reproduce without foreign signals or inferring resource contention. Do not waive disk-image acceptance."
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1486,6 +1491,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner approved Apple Developer signing: ran scripts/setup-sparkle-key.sh (new EdDSA key, private half in login Keychain, backed up to ~/Private/pathem-secrets/sparkle_private_key.pem mode 600 outside the repo), committed the real SUPublicEDKey as a minimal one-line plist edit (bca8f3e, reverted PlistBuddy's incidental full-file reformat/comment-strip first) and pushed. Then built+installed with the real Developer ID Application cert (team K466Z7J2AS) found already in the owner's keychain: universal, Hardened Runtime, not yet notarized (owner hasn't run notarytool store-credentials; that's still open). Installed via the same atomic file-swap as prior installs, no quit/kill of the owner's running app; previous ad-hoc bundle backed up. Also pushed bd6f64f (Codex's search fix) and source-reviewed Codex's task 39 TabbedPaneController guard (correct; traced that newTab/selectTab/moveTab bypass the guarded callback entirely, so only the convicted hidden-pane false-activation case is affected). No notarization, publication or history action."
     at = "2026-10-13T07:19:12Z"
+
+  [[mission.comment]]
+    text = "Task41 verified: hidden-Column baseline18/20 convicted wrong active index/Close target. Displayed-pane guard with DEBUG receipt before rejection passes sample31/31, real background watcher/listing removal and both-side focus, full ContentPrefs204/204; Claude source review accepted. Final CI30116 terminal2 remains RED: build/warnings new0 and15XCTest+782 pass, debug65PASS/1captureSKIP/1disk-imageFAIL Resource busy; prior ContentPrefs failure now passes204. Isolated archive10/10 passes (intermittence, not cause); Task42 pending. After actual CI closure adopted bca8f3e/ddee6b6 metadata; separate ad-hoc arm64 packaged13/13 passes with updated public key. Historical158/176 attribution remains Task39 pending. No install/credentials/keychain/public/history action from this lane."
+    at = "2026-10-13T07:29:09Z"
 
 [[mission]]
   id = "m-e1443252"

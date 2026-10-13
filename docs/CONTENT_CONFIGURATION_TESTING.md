@@ -492,3 +492,78 @@ list-only size/date/middle-click capabilities remain bounded as before. Physical
 input, native appearance/goldens, older SDKs and device/provider boundaries stay
 open. Missions 4/6 remain owner-held. No installation, keychain, permission grants,
 signing credentials, repository visibility change or publication.
+
+## Task 39: active-tab ownership, criteria before sampling
+
+Trigger/evidence: the current full CI fails pane configuration 158/176 while search
+passes 99/99; Claude observed 158/176 on unchanged main too. Its source review suggests
+a background Column selection notification changes TabbedPaneController.activeIndex
+without swapping the displayed pane. This is a hypothesis, not yet a causal verdict
+for the intermittent first launch. The normal CI logger retained only the failure
+tail; exact first-failure attribution requires explicit activation/window receipts.
+
+Bounded sample: two real tabs with disposable roots. Prepare a displayed Column pane
+and a real selected filename, then deliver the existing same-entries in-place refresh
+(the content path used for watcher refreshes, not an injected activation callback).
+The displayed refresh must preserve selection/ownership and receive a displayed
+activation event. Contrast a hidden List refresh: no activation event, active/displayed
+pane and Close Tab target must agree. With Column hidden behind a newly opened tab,
+require actual activation receipt naming its source index, previous active index and
+whether the source was displayed. Then require active index to remain the visible tab
+and Close Tab to close that visible tab, retaining the original background pane.
+
+Missing mode/selection/foreground delivery or missing Column receipt invalidates the
+instrument. A hidden Column event that changes ownership and closes the hidden pane
+convicts that bug; no such event/change refutes this proposed deterministic mechanism.
+This sample does not by itself prove it caused the earlier intermittent full test.
+Do not change production tab behavior before this verdict. After a discriminating
+sample, trace the full configuration/default-tab loop and add background watcher
+and cross-pane/focus controls. No owner files, installed apps, credentials or physical
+mouse/keyboard input are involved.
+
+Bounded baseline: build 0, native sample 1 (18/20). All mode/selection/foreground
+delivery criteria pass. Displayed Column refresh receives a displayed activation;
+hidden List refresh emits none and Close Tab retains the original pane. Hidden
+Column refresh receives `source=0,previous=1,displayed=false`, changes active index
+to 0 while fresh tab 1 remains displayed, then Close Tab removes the original hidden
+pane and leaves the fresh pane. This convicts the active-tab ownership bug, not yet
+its responsibility for the earlier intermittent CI. Before production repair, add
+the same receipt details to the full default-view restore loop and run a fresh build
+and native full scenario. A failed restore without hidden activation/original removal
+would refute the proposed attribution and require a different instrument.
+
+Fresh full native trace passes 176/176: a hidden-column activation is recorded
+(`source=0,previous=1,displayed=false`), then the displayed fresh pane re-activates
+before close. Thus this run does not attribute the earlier 158/176 failure. The
+deterministic wrong-tab closure remains proven by 18/20; retain the full-loop receipt
+details rather than calling historical causation settled. Narrow repair accepts
+activation only from this side's displayed pane, with DEBUG receipt before the guard
+so rejection cannot hide event delivery. The new ownership controls are mandatory
+in ordinary ContentPrefs E2E. Before expansion, verify real disposable file creation
+reaches the hidden pane's watcher/listing and a hidden Column activation, without
+changing foreground ownership; removal must return the original fixture count.
+Both displayed sides must still gain focus normally. Missing watcher/focus delivery
+invalidates the additional control rather than justifying a timeout-based pass.
+
+Treatment sample passes 31/31, including the actual hidden Column watcher activation,
+real listing addition/removal and both-side focus. Full native scenario passes 204/204.
+Claude's source-only review finds no blocker: primary newTab/selectTab/moveTab paths
+set ownership and mount the pane directly, so the guard only rejects false secondary
+activation. Other TabbedPaneController changes are required swift-format reflow.
+
+Final frozen CI is **not green**: exit 2, fresh warning gate has zero new/unparsed,
+15 XCTest and 782 Swift Testing cases pass; debug E2E is 65 passed/1 cached-pixel skip/
+1 failure. ContentPrefs passes 204/204 (previously failed 158/176), Gallery 57/57,
+search 99/99, settings 588/588 and transients 53/53. The sole current failure is
+encrypted disk-image creation: `hdiutil create` reports `Resource busy` after the
+eight prior archive checks passed. Cause is unknown; no resource/foreign/tab-change
+attribution. An isolated archive diagnostic then passes 10/10; this proves intermittence,
+not a green whole CI or a fix. New Task 42 retains that failure for diagnosis.
+
+After CI closure, adopted Claude's public Sparkle-key/roadmap commits (bca8f3e/ddee6b6)
+without changing the tested app source. Separate current-host arm64, ad-hoc packaged
+E2E passes 13/13 against the newer Info.plist; release warning inventory has zero new
+warnings, signature/hardened-runtime/update metadata verify, app launches with a
+visible window and only scratch config. This is not notarized/universal/distribution
+acceptance or an installed-app change. Task 41's proven wrong-tab closure is fixed;
+Task 39's original intermittent attribution remains pending with improved receipts.

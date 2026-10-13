@@ -39,6 +39,15 @@ final class TabbedPaneController: NSObject {
     private(set) var tabs: [PaneController] = []
     private(set) var activeIndex = 0
 
+    #if DEBUG
+    struct ActivationReceipt {
+        let sourceIndex: Int
+        let previousIndex: Int
+        let sourceDisplayed: Bool
+    }
+    private(set) var debugActivationReceipts: [ActivationReceipt] = []
+    #endif
+
     /// Identifies this side on a tab drag's pasteboard, so a drop can tell "same side" (reorder)
     /// from "other side" (move across) and find the tab's origin.
     let sideID = UUID().uuidString
@@ -85,7 +94,8 @@ final class TabbedPaneController: NSObject {
         tabBar.setHuggingPriority(.required, for: .vertical)
         tabBar.setClippingResistancePriority(.required, for: .vertical)
 
-        plusButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: L("tabs.newTab", "New Tab"))
+        plusButton.image = NSImage(
+            systemSymbolName: "plus", accessibilityDescription: L("tabs.newTab", "New Tab"))
         plusButton.toolTip = L("tabs.newTab", "New Tab")  // icon-only: name on hover like every other control
         plusButton.bezelStyle = .texturedRounded
         plusButton.setButtonType(.momentaryPushIn)
@@ -156,8 +166,15 @@ final class TabbedPaneController: NSObject {
             var isDir: ObjCBool = false
             return fm.fileExists(atPath: $0.element, isDirectory: &isDir) && isDir.boolValue
         }
-        guard !survivors.isEmpty else { openInitialTab(); showActivePane(); refreshTabBar(); return }
-        for survivor in survivors { newTab(at: URL(fileURLWithPath: survivor.element), focus: false) }
+        guard !survivors.isEmpty else {
+            openInitialTab()
+            showActivePane()
+            refreshTabBar()
+            return
+        }
+        for survivor in survivors {
+            newTab(at: URL(fileURLWithPath: survivor.element), focus: false)
+        }
         // Map the saved active index (an original offset) to the surviving tab at
         // or after it, falling back to the last tab.
         let mapped = survivors.firstIndex(where: { $0.offset >= active }) ?? (survivors.count - 1)
@@ -188,7 +205,17 @@ final class TabbedPaneController: NSObject {
         let pane = PaneController(start: url)
         configurePane?(pane)
         pane.onBecomeActive = { [weak self, weak pane] in
-            guard let self, let pane, let index = self.tabs.firstIndex(where: { $0 === pane }) else { return }
+            guard let self, let pane, let index = self.tabs.firstIndex(where: { $0 === pane })
+            else { return }
+            #if DEBUG
+            self.debugActivationReceipts.append(
+                .init(
+                    sourceIndex: index, previousIndex: self.activeIndex,
+                    sourceDisplayed: pane.containerView.superview === self.content))
+            #endif
+            // Background Column refreshes emit activation while restoring selection.
+            // Ownership follows the displayed tab, not a hidden pane's callback.
+            guard pane.containerView.superview === self.content else { return }
             self.activeIndex = index
             self.refreshTabBar()
             self.onPaneBecameActive?(pane)
@@ -226,7 +253,9 @@ final class TabbedPaneController: NSObject {
 
     // MARK: - Tab dragging (reorder here, move across, tear off)
 
-    private var chipViews: [TabChipView] { tabBar.arrangedSubviews.compactMap { $0 as? TabChipView } }
+    private var chipViews: [TabChipView] {
+        tabBar.arrangedSubviews.compactMap { $0 as? TabChipView }
+    }
 
     /// Where a tab dropped at `point` (in tab-bar coordinates) would be inserted: after every chip
     /// whose midpoint the cursor is past.
@@ -250,7 +279,8 @@ final class TabbedPaneController: NSObject {
                 ? tabBar.convert(chips[chips.count - 1].frame, to: containerView).maxX + 2
                 : tabBar.convert(chips[index].frame, to: containerView).minX - 2)
         dropIndicator.layer?.backgroundColor = ThemeManager.shared.accent.cgColor
-        dropIndicator.frame = NSRect(x: x, y: tabBar.frame.minY + 3, width: 2, height: max(0, tabBar.frame.height - 6))
+        dropIndicator.frame = NSRect(
+            x: x, y: tabBar.frame.minY + 3, width: 2, height: max(0, tabBar.frame.height - 6))
         dropIndicator.isHidden = false
     }
 
@@ -372,7 +402,8 @@ final class TabbedPaneController: NSObject {
         chip.wantsLayer = true
         chip.layer?.cornerRadius = 5
         chip.layer?.backgroundColor =
-            active ? ThemeManager.shared.accent.withAlphaComponent(0.22).cgColor : NSColor.clear.cgColor
+            active
+            ? ThemeManager.shared.accent.withAlphaComponent(0.22).cgColor : NSColor.clear.cgColor
         // The whole chip selects the tab, not just the label -- clicking its padding or empty
         // space is what a user expects. Only the close button (below) is carved out.
         chip.onSelect = { [weak self] in self?.selectTab(index) }
@@ -400,7 +431,9 @@ final class TabbedPaneController: NSObject {
         if closable {
             let close = NSButton(title: "", target: self, action: #selector(closeClicked(_:)))
             close.tag = index
-            close.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("tabs.closeTab", "Close Tab"))
+            close.image = NSImage(
+                systemSymbolName: "xmark", accessibilityDescription: L("tabs.closeTab", "Close Tab")
+            )
             close.imagePosition = .imageOnly
             close.isBordered = false
             close.translatesAutoresizingMaskIntoConstraints = false
@@ -410,10 +443,12 @@ final class TabbedPaneController: NSObject {
                 close.centerYAnchor.constraint(equalTo: chip.centerYAnchor),
                 close.trailingAnchor.constraint(equalTo: chip.trailingAnchor, constant: -4),
                 close.widthAnchor.constraint(equalToConstant: 16),
-                name.trailingAnchor.constraint(lessThanOrEqualTo: close.leadingAnchor, constant: -2),
+                name.trailingAnchor.constraint(
+                    lessThanOrEqualTo: close.leadingAnchor, constant: -2),
             ])
         } else {
-            name.trailingAnchor.constraint(equalTo: chip.trailingAnchor, constant: -8).isActive = true
+            name.trailingAnchor.constraint(equalTo: chip.trailingAnchor, constant: -8).isActive =
+                true
         }
         return chip
     }
@@ -443,11 +478,15 @@ final class TabbedPaneController: NSObject {
         add(L("tabs.moveToOtherPane", "Move to Other Pane"), #selector(moveTabToOtherPane(_:)))
         menu.addItem(.separator())
         if closable { add(L("tabs.closeTab", "Close Tab"), #selector(closeTabMenu(_:))) }
-        if tabs.count > 1 { add(L("tabs.closeOthers", "Close Other Tabs"), #selector(closeOtherTabs(_:))) }
+        if tabs.count > 1 {
+            add(L("tabs.closeOthers", "Close Other Tabs"), #selector(closeOtherTabs(_:)))
+        }
         return menu
     }
 
-    private func tabURL(_ tag: Int) -> URL? { tabs.indices.contains(tag) ? tabs[tag].currentURL : nil }
+    private func tabURL(_ tag: Int) -> URL? {
+        tabs.indices.contains(tag) ? tabs[tag].currentURL : nil
+    }
 
     @objc private func copyTabPath(_ sender: NSMenuItem) {
         guard let url = tabURL(sender.tag) else { return }
@@ -546,7 +585,9 @@ private final class TabChipView: NSView, NSDraggingSource {
 
     /// The chip's own pixels, so the thing under the cursor looks like the tab being dragged.
     private func snapshot() -> NSImage {
-        guard let rep = bitmapImageRepForCachingDisplay(in: bounds) else { return NSImage(size: bounds.size) }
+        guard let rep = bitmapImageRepForCachingDisplay(in: bounds) else {
+            return NSImage(size: bounds.size)
+        }
         cacheDisplay(in: bounds, to: rep)
         let image = NSImage(size: bounds.size)
         image.addRepresentation(rep)
@@ -564,8 +605,12 @@ private final class TabBarStack: NSStackView {
     var showInsertion: ((Int?) -> Void)?
     var dropTab: ((_ side: String, _ index: Int, _ insertAt: Int) -> Bool)?
 
-    override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation { update(sender) }
-    override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation { update(sender) }
+    override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
+        update(sender)
+    }
+    override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation {
+        update(sender)
+    }
 
     override func draggingExited(_ sender: (any NSDraggingInfo)?) {
         showInsertion?(nil)
