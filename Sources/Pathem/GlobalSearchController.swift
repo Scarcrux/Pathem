@@ -43,6 +43,7 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     private var searchTask: Task<Void, Never>?
     private var isSearching = false
     private var folderPicker: NSOpenPanel?
+    private var committedScopeIndex = 0
 
     private var mode: FileSearch.Mode { modePopup.indexOfSelectedItem == 0 ? .filename : .contents }
     private var scope: FileSearch.Scope {
@@ -70,6 +71,7 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         self.onOpen = onOpen
         modePopup.selectItem(at: 0)
         scopePopup.selectItem(at: everywhere ? 1 : 0)
+        committedScopeIndex = scopePopup.indexOfSelectedItem
         subfolders.state = .on
         searchField.stringValue = ""
         setResults([])
@@ -189,6 +191,7 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     }
 
     @objc private func optionsChanged() {
+        committedScopeIndex = scopePopup.indexOfSelectedItem
         updateLocation()
         performSearch()
     }
@@ -201,6 +204,9 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     }
     @objc private func chooseFolder() {
         guard folderPicker == nil else { return }
+        // Selecting Other Folder changes the popup before its action fires. Keep
+        // the last committed scope so native Cancel can undo that pending choice.
+        let returnScope = committedScopeIndex
         invalidate()
         setResults([])
         let picker = NSOpenPanel()
@@ -220,8 +226,8 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
             if result == .OK, let url = picker.url {
                 self.otherFolder = url
                 self.scopePopup.selectItem(at: 2)
-            } else if self.otherFolder == nil {
-                self.scopePopup.selectItem(at: 0)
+            } else {
+                self.scopePopup.selectItem(at: returnScope)
             }
             self.optionsChanged()
         }

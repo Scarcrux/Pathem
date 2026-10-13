@@ -1170,6 +1170,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-3ab66d6d"
     title = "Verify picker Cancel preserves prior This Mac scope: Claude source review notes ordinary Cancel with no otherFolder always selects This Folder; reproduce through native completion before deciding whether/how to restore the prior scope. Separate from the convicted stale-session callback repair."
+    done = true
 
   [[mission.task]]
     id = "t-a9b0c25a"
@@ -1511,6 +1512,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Task42 (hdiutil create 'Resource busy', one full-CI occurrence): not reproduced, so no retry shipped. The exact command standalone: 0/40 idle and 0/30 under synthetic CPU+disk load, plus Codex's isolated 10/10. Landed 673eeaa as an instrument instead: the archive scenario's disk-image step now records the error, the attached-image count and one immediate diagnostic retry while the check still fails, and later archive checks keep running. Injected run: FAIL with the error, attached-images=8, diagnostic-retry=ok; ordinary run 10/10 with identical check names. All 8 attached images are system images (simulator runtimes, Metal toolchain), recorded as the baseline. Task42 stays open until a CI occurrence is captured. Side finding: hdiutil create with -volname/-format/-encryption is deprecated on this macOS in favour of 'diskutil image create'; noted only."
     at = "2026-10-13T09:13:29Z"
+
+  [[mission.comment]]
+    text = "Task40 verified: native baseline28/36 proved Cancel from initial Mac filename and installed-action Mac Contents reset scope toFolder and changed request/results/Open (Folder control passed; actual native receipts delivered). Committed-scope capture/restoration fix passes sample36/36, six-cell72/72 and mandatory fullsearch170/170. Adopted Claude updater isolation c2cfec5 and strict42 instrument673eeaa/4a3bdb4 after actual handoffs. FullCI56871 terminal0: fresh warnings15known/new0/unparsed0,15XCTest+782 cases PASS, debug66PASS/1standing cached-pixelSKIP/0FAIL, ContentPrefs204, archives10; current-host arm64 ad-hoc packaged14/14 with updater-disabled receipt. Earlier negatives retained;39 original attribution and42 Resource busy remain OPEN (one green CI is not causation). No installed/owner-default/keychain/signing/public/history action from this lane."
+    at = "2026-10-13T09:29:33Z"
 
 [[mission]]
   id = "m-e1443252"

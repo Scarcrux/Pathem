@@ -53,6 +53,9 @@ extension BrowserViewController {
                 })
         } catch { return [("search-fixture-created", false, error.localizedDescription)] }
 
+        if ProcessInfo.processInfo.environment["PATHEM_SEARCH_CANCEL_SCOPE_SAMPLE"] == "1" {
+            return checks + fileSearchCancelScopeChecks(over: window, root: root)
+        }
         if ProcessInfo.processInfo.environment["PATHEM_SEARCH_SESSION_SAMPLE"] == "1" {
             return checks + fileSearchSessionChecks(over: window, root: root)
         }
@@ -244,6 +247,7 @@ extension BrowserViewController {
         delayed.debugPanel.cancelOperation(nil)
 
         checks += fileSearchSessionChecks(over: window, root: root)
+        checks += fileSearchCancelScopeChecks(over: window, root: root)
 
         for mode in ViewFormat.ViewMode.allCases {
             pane.setViewMode(mode)
@@ -349,6 +353,121 @@ extension BrowserViewController {
         let passed = checks.filter(\.ok).count
         print("RESULT: \(passed == checks.count ? "PASS" : "FAIL") (\(passed)/\(checks.count))")
         exit(passed == checks.count ? 0 : 1)
+    }
+
+    /// Native picker cancellation, with an injected index backend to distinguish scopes.
+    private func fileSearchCancelScopeChecks(over window: NSWindow, root: URL)
+        -> [(name: String, ok: Bool, detail: String)]
+    {
+        var checks: [(name: String, ok: Bool, detail: String)] = []
+        func settle(_ condition: () -> Bool) -> Bool {
+            let end = Date().addingTimeInterval(3)
+            repeat {
+                if condition() { return true }
+                RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+            } while Date() < end
+            return condition()
+        }
+        let cases: [(label: String, scopeIndex: Int, modeIndex: Int, scopeViaAction: Bool)] = [
+            ("folder-name", 0, 0, false),
+            ("folder-contents", 0, 1, false),
+            ("mac-name-presented", 1, 0, false),
+            ("mac-name-action", 1, 0, true),
+            ("mac-contents-presented", 1, 1, false),
+            ("mac-contents-action", 1, 1, true),
+        ]
+        for sample in cases {
+            func check(_ name: String, _ ok: Bool, _ detail: String = "") {
+                checks.append(("search-cancel-" + sample.label + "-" + name, ok, detail))
+            }
+            let controller = GlobalSearchController { request in
+                let scope = request.scope == .mac ? "mac" : "folder"
+                let mode = request.mode == .filename ? "name" : "contents"
+                return .init(urls: [
+                    root.appendingPathComponent(scope + "-" + mode + "-" + request.keyword)
+                ])
+            }
+            defer { controller.debugPanel.cancelOperation(nil) }
+            var opened: URL?
+            controller.present(
+                over: window, currentFolder: root,
+                everywhere: sample.scopeIndex == 1 && !sample.scopeViaAction,
+                onReveal: { _ in }, onOpen: { opened = $0 })
+            if sample.scopeViaAction {
+                controller.debugScope.selectItem(at: sample.scopeIndex)
+                check(
+                    "initial-scope-action-delivered",
+                    controller.debugScope.sendAction(
+                        controller.debugScope.action, to: controller.debugScope.target))
+            }
+            if sample.modeIndex == 1 {
+                controller.debugMode.selectItem(at: 1)
+                check(
+                    "contents-action-delivered",
+                    controller.debugMode.sendAction(
+                        controller.debugMode.action, to: controller.debugMode.target))
+            }
+            check(
+                "initial-options-delivered",
+                controller.debugScope.indexOfSelectedItem == sample.scopeIndex
+                    && controller.debugMode.indexOfSelectedItem == sample.modeIndex)
+            let expectedScope: FileSearch.Scope =
+                sample.scopeIndex == 1 ? .mac : .folder(root, recursive: true)
+            let expected = root.appendingPathComponent(
+                (sample.scopeIndex == 1 ? "mac" : "folder") + "-"
+                    + (sample.modeIndex == 1 ? "contents" : "name") + "-current")
+            controller.debugSetKeyword("current")
+            check(
+                "initial-backend-delivered",
+                settle { !controller.debugBusy && controller.debugResults == [expected] }
+                    && controller.debugCompletedBackendRequests.last?.scope == expectedScope)
+            controller.debugScope.selectItem(at: 2)
+            check(
+                "other-folder-action-delivered",
+                controller.debugScope.sendAction(
+                    controller.debugScope.action, to: controller.debugScope.target))
+            guard settle({ controller.debugPanel.attachedSheet?.isVisible == true }),
+                let picker = controller.debugPanel.attachedSheet as? NSOpenPanel
+            else {
+                check("native-picker-mounted", false)
+                return checks
+            }
+            check(
+                "native-picker-mounted",
+                picker.sheetParent === controller.debugPanel && picker.canChooseDirectories
+                    && !picker.canChooseFiles && !picker.allowsMultipleSelection)
+            check(
+                "picker-clears-actionable-results",
+                controller.debugResults.isEmpty && !controller.debugOpen.isEnabled
+                    && !controller.debugReveal.isEnabled)
+            let receipts = controller.debugFolderPickerCompletions
+            let responses = controller.debugCompletedBackendRequests.count
+            picker.cancel(nil)
+            check(
+                "native-cancel-completion-received",
+                settle {
+                    controller.debugFolderPickerCompletions == receipts + 1
+                        && controller.debugPanel.attachedSheet == nil
+                })
+            check(
+                "cancel-restores-prior-scope",
+                controller.debugScope.indexOfSelectedItem == sample.scopeIndex,
+                "scope=\(controller.debugScope.indexOfSelectedItem) expected=\(sample.scopeIndex)")
+            check(
+                "cancel-retains-mode", controller.debugMode.indexOfSelectedItem == sample.modeIndex)
+            check(
+                "cancel-requests-original-scope",
+                settle {
+                    controller.debugCompletedBackendRequests.count == responses + 1
+                        && !controller.debugBusy
+                }
+                    && controller.debugCompletedBackendRequests.last?.scope == expectedScope
+                    && controller.debugCompletedBackendRequests.last?.keyword == "current")
+            check("cancel-restores-results", controller.debugResults == [expected])
+            controller.debugOpen.performClick(nil)
+            check("cancel-open-targets-original-result", opened == expected)
+        }
+        return checks
     }
 
     /// Native picker cancellation, with an injected index backend to distinguish scopes.

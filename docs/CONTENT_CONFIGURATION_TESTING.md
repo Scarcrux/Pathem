@@ -567,3 +567,13 @@ warnings, signature/hardened-runtime/update metadata verify, app launches with a
 visible window and only scratch config. This is not notarized/universal/distribution
 acceptance or an installed-app change. Task 41's proven wrong-tab closure is fixed;
 Task 39's original intermittent attribution remains pending with improved receipts.
+
+Historical isolation correction: later Claude evidence found that the real Sparkle
+key added in bca8f3e also started the updater during the 13-check packaged probe,
+writing Sparkle state to the owner's application defaults and fetching its appcast.
+The earlier "only scratch config" statement verified ConfigStore placement, not
+all owner-default isolation; do not infer the latter from those 13 passes. Peer
+repair c2cfec5 explicitly disables the updater for PATHEM_RELEASE_TEST and adds a
+mandatory probe receipt; its separate 14/14 package verdict is recorded in
+PUBLISH_GATE_TESTING. Future probes must adopt this repair. No owner-default cleanup
+or keychain operation was performed by this lane; the negative evidence is retained.

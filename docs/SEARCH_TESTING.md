@@ -133,3 +133,72 @@ Browser cached-pixel capture is explicitly skipped (native appearance unverified
 The make process exits 2 and does not reach packaged E2E. Concurrent Claude packaging
 was recorded as a possible resource confound, never inferred as the failure cause.
 No search installation, keychain/credential operation or public release was performed.
+
+## Task 40: cancelled picker must retain the previous scope
+
+Criteria before baseline: with no selected Other Folder, search for a real keyword
+in This Folder (differing control), initially presented This Mac filename mode, and
+This Mac contents mode delivered through the installed scope/mode popup actions.
+Use a scope/mode-distinguishable injected backend, require initial results and
+request receipt, then select Other Folder through its installed action. The visible
+NSOpenPanel must be attached and directory-only; prior results/actions must clear.
+Deliver native Cancel and require an explicit completion receipt and re-search
+receipt. Scope, mode, keyword, results and the real Open button's recorded callback
+must retain their pre-picker meaning. This Folder must remain Folder; Mac must
+remain Mac, so indiscriminately selecting Folder fails the Mac contrasts.
+
+An absent picker/action/backend/completion invalidates the instrument. Open callbacks
+record only fixture URLs; never approve a user directory or launch an application.
+This is native controller/action coverage, not physical popup interaction or live
+Spotlight completeness. Source-only preparation waits for Claude's actual current
+updater-isolation native/compiler terminal before running. No production repair
+before the baseline convicts the scope transition; no packaged probes before the
+peer's updater isolation repair is accepted.
+
+Baseline build exit 0; native sample exit 1, 28/36. All initial action/options/backend,
+native sheet, action-clearing and completion receipts pass; the Folder filename
+control passes. Both Mac cases fail exactly scope restoration, original-scope
+request, results and Open URL (eight invariants). Mode is retained. Cause: the
+owned completion selected This Folder whenever no Other Folder was remembered,
+without considering the scope from which the picker was opened.
+
+Treatment tracks the last committed popup scope (including initial Mac presentation),
+captures it before the pending Other choice and restores it on Cancel. Accepted
+native selection still commits Other Folder; re-choosing an existing folder keeps
+Other on Cancel. Existing stale-picker ownership remains unchanged. The three-case
+regression is mandatory in normal search E2E, not only an optional sample. Verify
+the bounded sample before expanding scope/action/keyword cases or ordinary CI.
+
+Treatment build/sample both exit 0, 36/36; the eight former invariant failures pass
+with native completion and backend receipts still required. Design is discriminating:
+the Folder control passed on old source while both Mac cases went red. Before the
+ordinary full suite, expand to six cells: both filename/contents modes for This Folder,
+and both modes through each Mac entry path (initial presentation or installed scope
+action). All six must retain their original scope/mode/query/results/Open URL. This
+does not change native-approval or physical-menu limitations. Existing session checks
+must also retain Other Folder's nonrecursive Contents request after re-choose Cancel.
+
+Expanded build and native matrix exit 0, 72/72; ordinary full search exit 0,
+170/170 (previously 99). All six scope/mode/entry-path cells pass with actual native
+Cancel and re-search receipts, including prior committed Other Folder retention in
+the existing session controls. All Open callbacks in the new cases record the
+original-scope result. No native approval/live index/physical-input claim is added.
+Whole CI waits for Claude's strict archive failure instrument to be verified/landed
+so another disk-image failure retains context rather than being silently retried.
+
+Final local `make ci` exits 0 after adopting verified peer archive instrumentation
+673eeaa/4a3bdb4 and updater isolation c2cfec5. Fresh debug warning inventory is 15 exact
+known, zero new/unparsed; 15 XCTest and 782 Swift Testing cases pass (opt-in live
+network tests retain their explicit skips). Debug E2E is 66 passed, one standing
+cached-browser-pixel skip, zero failures; search is 170/170 and ContentPrefs 204/204.
+The strict archive/disk-image scenario passes 10/10 in this run. Packaged current-host
+arm64 ad-hoc checks pass 14/14, including the actual updater-disabled release-probe
+receipt. No owner-default cleanup, installation, signing credentials, keychain,
+public release or history mutation was performed by this lane.
+
+The prior Mac-Cancel baseline 28/36 and earlier unrelated CI negatives remain above.
+One green CI does not settle Task 39's original intermittent attribution or Task 42's
+disk-image Resource busy cause; both retain diagnostic receipts/open tracking. The
+new single-result cases validate scope/mode routing, not arbitrary multi-result
+selection/viewport retention across a re-query. Native appearance, physical input,
+native picker approval and live Spotlight completeness remain separate boundaries.
