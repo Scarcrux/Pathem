@@ -1171,6 +1171,10 @@ name = "pathem"
     id = "t-3ab66d6d"
     title = "Verify picker Cancel preserves prior This Mac scope: Claude source review notes ordinary Cancel with no otherFolder always selects This Folder; reproduce through native completion before deciding whether/how to restore the prior scope. Separate from the convicted stale-session callback repair."
 
+  [[mission.task]]
+    id = "t-a9b0c25a"
+    title = "Fix proven hidden-Column tab ownership: native baseline18/20 delivered a hidden refresh activation, changed activeIndex without changing displayed pane, and Close Tab removed the hidden original. Guard activation by displayed-pane identity, retain actual receipts and contrasting List/displayed-pane controls, plus real background watcher and cross-pane focus regressions. Earlier first-launch ContentPrefs attribution remains Task39 pending."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1474,6 +1478,14 @@ name = "pathem"
   [[mission.comment]]
     text = "Task38 verified search repair: native baseline11/14 convicted stale picker completion resetting a new Mac search/results/Open URL. Owned-picker identity cleared before native cancellation and guarded on completion; sample16/16, revised native matrix37/37, full search99/99 (formerly59) with actual old/new backend receipts. Claude source review found no blocker. Attempted native picker OK harness API raised not-implemented and was stopped/documented, not a production crash or native-acceptance pass. Full CI terminal2: build/warning gate no new warnings, 15 XCTest+782 cases PASS, debugE2E65PASS/1captureSKIP/1FAIL at mandatory ContentPrefs158/176; packaged E2E not reached. Task39 remains pending/causal hypothesis, no masking. Search not installed; release/credentials/history decisions remain held."
     at = "2026-10-13T07:03:31Z"
+
+  [[mission.comment]]
+    text = "Task39/41: deterministic native baseline18/20 proves hidden Column refresh activation source0/previous1/displayed=false steals active index while tab1 stays visible, Close removes wrong hidden original. Unmodified-production full trace176/176 recovered through foreground activation, so historical158/176 attribution remains open. Narrow displayed-pane activation guard sample31/31 passes with actual background file watcher delivery/removal, rejected hidden Column receipt retained, and both-side focus controls. Full native/CI verification pending; no search/tab installation."
+    at = "2026-10-13T07:14:20Z"
+
+  [[mission.comment]]
+    text = "Owner approved Apple Developer signing: ran scripts/setup-sparkle-key.sh (new EdDSA key, private half in login Keychain, backed up to ~/Private/pathem-secrets/sparkle_private_key.pem mode 600 outside the repo), committed the real SUPublicEDKey as a minimal one-line plist edit (bca8f3e, reverted PlistBuddy's incidental full-file reformat/comment-strip first) and pushed. Then built+installed with the real Developer ID Application cert (team K466Z7J2AS) found already in the owner's keychain: universal, Hardened Runtime, not yet notarized (owner hasn't run notarytool store-credentials; that's still open). Installed via the same atomic file-swap as prior installs, no quit/kill of the owner's running app; previous ad-hoc bundle backed up. Also pushed bd6f64f (Codex's search fix) and source-reviewed Codex's task 39 TabbedPaneController guard (correct; traced that newTab/selectTab/moveTab bypass the guarded callback entirely, so only the convicted hidden-pane false-activation case is affected). No notarization, publication or history action."
+    at = "2026-10-13T07:19:12Z"
 
 [[mission]]
   id = "m-e1443252"
