@@ -41,3 +41,95 @@ scope-checked Spotlight document matches (PDF/Office and installed importers); o
 unavailable document index are reported. Whole-Mac contents search uses Spotlight's indexed text.
 Live Spotlight, OS folder-picker interaction,
 and default-app interoperability remain environmental, not hermetic coverage claims.
+
+## Search presentation / native folder-picker boundary
+
+Criteria written before sampling: the picker must be a visible real NSOpenPanel
+attached to the search panel, reached through the scope popup's installed action.
+Cancel in the same presentation is the differing control: return to This Folder
+and remain idle for an empty keyword. Re-present search for another root with
+This Mac while that picker is still open. Confirm the new root/scope/query is
+delivered and the backend produces a distinguishable Mac result. Then deliver the
+old picker's native Cancel completion and require the newer scope, results and
+callbacks to remain unchanged. Count completion receipt explicitly; disappearance
+or a fixed delay alone is not evidence that the handler ran.
+
+An undelivered popup action, absent/unmounted picker, missing completion receipt,
+or an unexecuted replacement backend invalidates the sample. The native picker
+may be cancelled but must never approve any user folder. All roots/configuration
+are disposable; Open callbacks record URLs rather than launching an application.
+No physical menu/key dispatch, live Spotlight completeness or default-app behavior
+is inferred from this controller/API-level session test. Do not change production
+behavior before the baseline convicts a mechanism. Extend the close/reopen and
+mode/scope matrix only after the bounded control/sample has a verdict.
+
+The existing deliberately delayed query/reopen controls also require backend-start
+and controller-response receipts, not a 250ms/800ms elapsed-time assumption. Both
+old and new responses must actually reach the controller before comparing results;
+the cancelled old response must return after reopen before claiming it was rejected.
+All receipt instrumentation is DEBUG-only and does not change release behavior.
+
+2026-10-13 bounded baseline: debug build passed, then the native sample exited 1,
+11/14 checks passed. Every delivery criterion passed: installed scope action,
+mounted directory-only sheet, ordinary Cancel completion/control, replacement Mac
+backend, and stale native Cancel completion receipt. The three invariants failed:
+scope changed from This Mac to This Folder; `mac-current` became `folder-current`;
+Open called the replacement callback with the wrong URL (the old callback was not
+called). The completion had no presentation/picker ownership check and unconditionally
+called `optionsChanged()`, which re-searched the newer keyword using the reset scope.
+
+Treatment: retain the active picker, relinquish its identity before cancelling it
+on present/dismiss/window-close, and reject a completion not belonging to that
+picker. Refuse duplicate picker actions while one is owned. Query generations
+remain separate: typing/options in the same presentation must not accidentally
+invalidate an otherwise legitimate picker. The treatment sample also reads the
+replacement root from the visible location label before delivering This Mac's
+installed scope action. Validation results follow only after actual execution.
+
+Treatment bounded verdict: build exit 0; native sample exit 0, 16/16. All delivery
+and differing-control criteria passed, and all three former invariant failures
+passed with `mac-current` preserved. Added root-label and actual Mac-action checks
+also passed. This validates the bounded instrument, not physical interaction or
+whole-Mac index completeness.
+
+Next extension criteria (written before execution): duplicate installed popup
+actions must retain the same attached picker without completing/replacing it.
+Both the actual window close and search-panel Cancel action must cancel an owned
+picker; its completion must arrive, leave the panel closed/idle, and not overwrite
+a newly presented query/root. Ordinary picker Cancel after an already-selected
+fixture folder must retain that folder and the current Contents/subfolder options,
+and really re-run that request. The initial extension design attempted native
+acceptance of only a disposable fixture root (never a user directory). Test the
+normal query and close/reopen response receipts
+in the full search suite too. A missing delivery or root outside the disposable
+fixture invalidates the test; do not bless a visually disappeared sheet alone.
+
+Extension instrument failure: the first extended build passed, but the test exited
+134 when `acceptedPicker.ok(nil)` raised `NSGenericException`,
+`-[NSSavePanel ok:] : not implemented`. This was a harness action, not a production
+search failure; the earlier checks were not emitted before the abort and are not
+counted as passes. Stop native acceptance via this API. Revised design seeds the
+selected-folder precondition through the existing DEBUG fixture helper, verifies
+the delivered root/options, then drives the real Choose button and native Cancel
+completion. Ordinary Cancel on a new picker (must change Other to This Folder)
+already discriminates a guard that rejects all completions. Native acceptance
+remains environmental/unproven; fixture seeding is not claimed as OS acceptance.
+
+Revised extension build and native sample pass, 37/37. Both actual window `close()`
+and panel Cancel actions deliver the old picker completion while the re-opened Mac
+query retains its own results. Duplicate action retains the original picker;
+real Choose/native Cancel preserves the seeded Contents/nonrecursive folder request.
+Full search now passes 99/99 (previously 59), including four additional explicit
+backend start/response checks and 36 native session checks. Claude's source-only
+peer review found no blocking issue in the ownership/cancellation ordering.
+
+Full local `make ci` is **not green**: fresh build/warning inventory (no new warnings),
+15 XCTest and 782 Swift Testing cases pass. Debug E2E finishes 65 passed, 1 skipped,
+1 failed; search passes 99/99 there too. The mandatory pane-configuration scenario
+fails 158/176, also observed by Claude on unchanged main before this search unit;
+its tab-ownership hypothesis is tracked separately as Task 39, not treated as proven
+or waived. The normal logger retained the failure tail, not every failed check name.
+Browser cached-pixel capture is explicitly skipped (native appearance unverified).
+The make process exits 2 and does not reach packaged E2E. Concurrent Claude packaging
+was recorded as a possible resource confound, never inferred as the failure cause.
+No search installation, keychain/credential operation or public release was performed.

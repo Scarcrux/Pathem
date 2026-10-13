@@ -42,6 +42,7 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     private var generation = 0
     private var searchTask: Task<Void, Never>?
     private var isSearching = false
+    private var folderPicker: NSOpenPanel?
 
     private var mode: FileSearch.Mode { modePopup.indexOfSelectedItem == 0 ? .filename : .contents }
     private var scope: FileSearch.Scope {
@@ -62,6 +63,7 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         over window: NSWindow, currentFolder: URL, everywhere: Bool = false,
         onReveal: @escaping (URL) -> Void, onOpen: @escaping (URL) -> Void
     ) {
+        cancelFolderPicker()
         invalidate()
         self.currentFolder = currentFolder
         self.onReveal = onReveal
@@ -85,10 +87,21 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         isSearching = false
     }
 
-    func windowWillClose(_ notification: Notification) { invalidate() }
+    func windowWillClose(_ notification: Notification) {
+        cancelFolderPicker()
+        invalidate()
+    }
     private func dismiss() {
+        cancelFolderPicker()
         invalidate()
         panel.orderOut(nil)
+    }
+    private func cancelFolderPicker() {
+        let picker = folderPicker
+        // Relinquish ownership before cancelling: AppKit may deliver completion later,
+        // after present() has installed a new scope, results and action callbacks.
+        folderPicker = nil
+        picker?.cancel(nil)
     }
     func controlTextDidChange(_ obj: Notification) { performSearch() }
 
@@ -108,6 +121,9 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled else { return }
             let response = await backend(request)
+            #if DEBUG
+            self?.debugCompletedBackendRequests.append(request)
+            #endif
             guard !Task.isCancelled, let self, gen == self.generation, self.panel.isVisible else {
                 return
             }
@@ -184,9 +200,11 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         optionsChanged()
     }
     @objc private func chooseFolder() {
+        guard folderPicker == nil else { return }
         invalidate()
         setResults([])
         let picker = NSOpenPanel()
+        folderPicker = picker
         picker.canChooseDirectories = true
         picker.canChooseFiles = false
         picker.allowsMultipleSelection = false
@@ -194,6 +212,11 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         picker.prompt = L("filesearch.choose", "Choose Folder")
         picker.beginSheetModal(for: panel) { [weak self] result in
             guard let self else { return }
+            #if DEBUG
+            self.debugFolderPickerCompletions += 1
+            #endif
+            guard self.folderPicker === picker else { return }
+            self.folderPicker = nil
             if result == .OK, let url = picker.url {
                 self.otherFolder = url
                 self.scopePopup.selectItem(at: 2)
@@ -358,6 +381,8 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     }
 
     #if DEBUG
+    private(set) var debugFolderPickerCompletions = 0
+    private(set) var debugCompletedBackendRequests: [FileSearch.Request] = []
     var debugPanel: NSPanel { panel }
     var debugField: NSSearchField { searchField }
     var debugMode: NSPopUpButton { modePopup }
@@ -365,9 +390,11 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     var debugSubfolders: NSButton { subfolders }
     var debugResults: [URL] { results }
     var debugStatus: String { statusLabel.stringValue }
+    var debugLocation: String { locationLabel.stringValue }
     var debugBusy: Bool { isSearching }
     var debugOpen: NSButton { openButton }
     var debugReveal: NSButton { revealButton }
+    var debugChooseButton: NSButton { chooseButton }
     func debugChooseFolder(_ url: URL) {
         otherFolder = url
         scopePopup.selectItem(at: 2)

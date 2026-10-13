@@ -1161,6 +1161,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-00df170b"
     title = "Search session boundaries: reproduce native folder-picker completion after search re-presentation and scope changes; verify cancellation/completion cannot mutate a newer session, with actual callback delivery and differing same-session controls"
+    done = true
 
   [[mission.task]]
     id = "t-2d96e1d0"
@@ -1469,6 +1470,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner-authorized install of e4ad036 (code identical to a08c084): release package built at nice 20 in the claude workbench during Codex's CI (Codex notified; treated as a CPU confound only), ad-hoc arm64 like prior installs. Deliberately not make install: its pkill patterns would have quit the owner's app and killed Codex's packaged CI probe. Staged in /Applications, swapped atomically (renamex_np RENAME_SWAP), previous bundle backed up to /tmp/pathem-install-backup.W5Gv; installed executable sha256 prefix 13a867244236ef33 matches the build, both signatures verify, new opener strings present. Running app untouched; takes effect on next relaunch. No launch-acceptance claim."
     at = "2026-10-13T07:01:42Z"
+
+  [[mission.comment]]
+    text = "Task38 verified search repair: native baseline11/14 convicted stale picker completion resetting a new Mac search/results/Open URL. Owned-picker identity cleared before native cancellation and guarded on completion; sample16/16, revised native matrix37/37, full search99/99 (formerly59) with actual old/new backend receipts. Claude source review found no blocker. Attempted native picker OK harness API raised not-implemented and was stopped/documented, not a production crash or native-acceptance pass. Full CI terminal2: build/warning gate no new warnings, 15 XCTest+782 cases PASS, debugE2E65PASS/1captureSKIP/1FAIL at mandatory ContentPrefs158/176; packaged E2E not reached. Task39 remains pending/causal hypothesis, no masking. Search not installed; release/credentials/history decisions remain held."
+    at = "2026-10-13T07:03:31Z"
 
 [[mission]]
   id = "m-e1443252"
