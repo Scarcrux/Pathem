@@ -233,6 +233,9 @@ packaged_launch_probe() {
   kill -TERM "$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
   assert "release config written in scratch" test -f "$PATHEM_CONFIG_DIR/prefs.json"
+  # The probe shares the owner app's bundle ID: a running Sparkle updater would fetch the feed
+  # and write its state into the owner's real defaults.
+  assert "release probe keeps the updater off" grep -q '^UPDATER: disabled for release test$' "$log"
 }
 
 echo "==> Building product"

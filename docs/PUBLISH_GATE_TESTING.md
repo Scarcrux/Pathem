@@ -118,3 +118,39 @@ image, whose Xcode may not match the local Xcode 27 warning baseline, so the gat
 may refuse a good release. That fails closed and publishes nothing, but the runner image
 needs checking before the first tag. Whether a tag created by `gh release create` also
 starts the tag workflow is not verified. If it does, that run refuses at P7.
+
+## Updater isolation for release-test launches (2026-10-13)
+
+Trigger: committing a real `SUPublicEDKey` (bca8f3e) activated Sparkle in every packaged
+build. The packaged E2E probe launches the release app with `PATHEM_RELEASE_TEST`, under
+the same bundle ID as the owner's installed app, so Sparkle fetched the (private, 404)
+feed and wrote `SUHasLaunchedBefore` and `SULastCheckTime` into the owner's real
+`com.scarcrux.pathem` defaults. Evidence: `SULastCheckTime` was 03:28 local while the
+owner's only Pathem process was started the day before on a placeholder-key build.
+
+Change: `UpdaterController` never starts the updater when `PATHEM_RELEASE_TEST` is set,
+and says so on stdout; the packaged probe asserts that line.
+
+Criteria, written before the sample. The two Sparkle keys are first removed from the
+owner's defaults; only test launches ever created them.
+
+- U1 Control: a release-test launch of the unfixed build (main 6fedb20) recreates
+  `SUHasLaunchedBefore`. If it does not, the launch never exercised the leak and U2
+  proves nothing.
+- U2 Fix: the same launch of the fixed build leaves both keys absent and prints
+  `UPDATER: disabled for release test`.
+- Not exercised: a normal (non-test) launch still starting the updater, because that
+  launch would use the owner's real configuration. Checked by reading the code: the
+  only change to `isConfigured` is the added `!isReleaseTest` term.
+
+Results (each a release-test launch with a scratch config, stopped after 8 s, owner
+Sparkle keys removed beforehand):
+
+- U1 PASS (red as required): the unfixed main build recreated `SUHasLaunchedBefore` and
+  `SULastCheckTime` (a fresh check at 08:50 UTC).
+- U2 PASS: the fixed build left both keys absent and printed the line. The first fixed
+  run left the keys absent but lost the line, because `print()` output to a file is
+  buffered and the probe ends the app with SIGTERM; the line now uses an unbuffered
+  write, the same as the other test hooks.
+- Full `test/e2e/run.sh --packaged`: 14/14, including the new assertion, with the owner's
+  Sparkle keys still absent afterwards.

@@ -4,7 +4,8 @@ import Sparkle
 extension Notification.Name {
     /// Posted whenever `pendingUpdateVersion` changes, so the window's update button can
     /// show/hide itself. Broadcast (not per-window) because the updater is app-global.
-    static let pathemUpdateStateChanged = Notification.Name("com.scarcrux.pathem.updateStateChanged")
+    static let pathemUpdateStateChanged = Notification.Name(
+        "com.scarcrux.pathem.updateStateChanged")
 }
 
 /// Wraps Sparkle's standard updater. The updater only starts when the bundle
@@ -32,7 +33,15 @@ final class UpdaterController: NSObject, @preconcurrency SPUStandardUserDriverDe
 
     override init() {
         let key = (Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") as? String) ?? ""
-        isConfigured = !key.isEmpty && key != Self.placeholderKey
+        // A release-test launch (the packaged E2E probe) shares this bundle ID with the owner's
+        // installed app, so a running updater would fetch the feed and write its state into the
+        // owner's real defaults. Tests never start it.
+        let isReleaseTest = ProcessInfo.processInfo.environment["PATHEM_RELEASE_TEST"] != nil
+        isConfigured = !key.isEmpty && key != Self.placeholderKey && !isReleaseTest
+        if isReleaseTest {
+            // Unbuffered: the probe ends this process with SIGTERM, which would drop a print().
+            FileHandle.standardOutput.write(Data("UPDATER: disabled for release test\n".utf8))
+        }
         super.init()
         // Self is now available, so we can be the user-driver delegate for gentle reminders.
         // startingUpdater: false on unconfigured builds, so Sparkle never errors about a
