@@ -371,13 +371,33 @@ enum DeterministicE2E {
             shredded.failures.isEmpty && shredded.deleted == ["shred.txt"]
                 && !fm.fileExists(atPath: doomed.path))
 
-        let image = try await DiskImage.createEncrypted(
-            from: [original], volumeName: "Pathem-E2E", password: "deterministic-test-password",
-            in: root)
-        report.check(
-            "encrypted-disk-image-created",
-            DiskImage.isDiskImage(image)
-                && ((try? image.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) > 0)
+        // An intermittent `hdiutil create` failure (docs/DISK_IMAGE_TESTING.md) used to abort the
+        // whole scenario. Record what the system looked like and whether an immediate retry
+        // works, but keep the check failed: the retry is diagnosis, not acceptance.
+        let injectDiskImageFailure =
+            ProcessInfo.processInfo.environment["PATHEM_E2E_INJECT_DMG_FAILURE"] != nil
+        do {
+            let firstItems =
+                injectDiskImageFailure
+                ? [root.appendingPathComponent("missing-source.txt")] : [original]
+            let image = try await DiskImage.createEncrypted(
+                from: firstItems, volumeName: "Pathem-E2E",
+                password: "deterministic-test-password", in: root)
+            report.check(
+                "encrypted-disk-image-created",
+                DiskImage.isDiskImage(image)
+                    && ((try? image.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) > 0)
+        } catch {
+            let info = runProcess("/usr/bin/hdiutil", ["info"])
+            let attached = info.output.components(separatedBy: "image-path").count - 1
+            let retried = try? await DiskImage.createEncrypted(
+                from: [original], volumeName: "Pathem-E2E-retry",
+                password: "deterministic-test-password", in: root)
+            report.check(
+                "encrypted-disk-image-created", false,
+                "error=\(String(describing: error)) attached-images=\(attached) "
+                    + "diagnostic-retry=\(retried == nil ? "failed" : "ok")")
+        }
 
         let damaged = root.appendingPathComponent("damaged.zip")
         try Data("not-a-zip".utf8).write(to: damaged)
