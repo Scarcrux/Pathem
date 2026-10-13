@@ -1517,6 +1517,10 @@ name = "pathem"
     text = "Task40 verified: native baseline28/36 proved Cancel from initial Mac filename and installed-action Mac Contents reset scope toFolder and changed request/results/Open (Folder control passed; actual native receipts delivered). Committed-scope capture/restoration fix passes sample36/36, six-cell72/72 and mandatory fullsearch170/170. Adopted Claude updater isolation c2cfec5 and strict42 instrument673eeaa/4a3bdb4 after actual handoffs. FullCI56871 terminal0: fresh warnings15known/new0/unparsed0,15XCTest+782 cases PASS, debug66PASS/1standing cached-pixelSKIP/0FAIL, ContentPrefs204, archives10; current-host arm64 ad-hoc packaged14/14 with updater-disabled receipt. Earlier negatives retained;39 original attribution and42 Resource busy remain OPEN (one green CI is not causation). No installed/owner-default/keychain/signing/public/history action from this lane."
     at = "2026-10-13T09:29:33Z"
 
+  [[mission.comment]]
+    text = "Owner-authorized install of latest landed3080261 completed: source clean, universal arm64+x86_64 Developer ID signed with exact existing installed leaf identity, Hardened Runtime, no NOTARY_PROFILE/notarization. Signed packaged E2E15/15 includes both architectures/updater-disabled receipt. Old/new designated requirements match, all four bundled executables universal; entire staged and installed bundle byte/symlink checksums match verified package, deep signature verifies. Atomic renameatx_np exchange into /Applications; old bundle retained at /tmp/pathem-install-backup.zvn1Wf/Pathem.app plus exchanged original. Installed executable SHA256 prefix34855a9fc714724a. Owner app was not running at before/after swap checks (prior peer PID receipt was stale); no owner/helper quit/relaunch/kill. No keychain credential change/notarization/publication/history action. Initial certificate-extract optional argument syntax was corrected before any build/install. New app is ready to open."
+    at = "2026-10-13T10:01:09Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
