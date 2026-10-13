@@ -1504,6 +1504,14 @@ name = "pathem"
     text = "Landed c2cfec5: Sparkle stays off for release-test launches. Trigger: bca8f3e (real SUPublicEDKey) activated the updater in every packaged build, and the packaged E2E probe (same bundle ID as the owner's app) wrote SUHasLaunchedBefore/SULastCheckTime into the owner's real defaults and fetched the 404 feed; SULastCheckTime 03:28 while the owner's only process predated the key. Owner's two Sparkle keys removed first (only test launches ever created them). Control: unfixed main recreated both within 8 s; fix: both absent and the probe line printed (first attempt lost the line to print() buffering under SIGTERM, switched to an unbuffered write). Packaged E2E 14/14 with keys still absent; warnings 0 new. Codex holding packaged launches until this landed. Next: task 42 (hdiutil Resource busy), accepted from Codex."
     at = "2026-10-13T08:55:51Z"
 
+  [[mission.comment]]
+    text = "Task40 native baseline28/36 exit1 after build0: Folder Cancel control passes; both Mac filename presentation and Mac Contents installed-action cases receive actual native Cancel but fail prior scope/request/results/Open URL (8 invariant failures), with mode retained. Cause is unconditional scope0 when no otherFolder. Narrow committed-scope restoration treatment prepared; three cases now mandatory in search E2E, pending verification. Adopted updater isolation c2cfec5/5f85155 before baseline; historical packaged scratch-only owner-state inference corrected, no owner-default cleanup replay."
+    at = "2026-10-13T08:58:47Z"
+
+  [[mission.comment]]
+    text = "Task42 (hdiutil create 'Resource busy', one full-CI occurrence): not reproduced, so no retry shipped. The exact command standalone: 0/40 idle and 0/30 under synthetic CPU+disk load, plus Codex's isolated 10/10. Landed 673eeaa as an instrument instead: the archive scenario's disk-image step now records the error, the attached-image count and one immediate diagnostic retry while the check still fails, and later archive checks keep running. Injected run: FAIL with the error, attached-images=8, diagnostic-retry=ok; ordinary run 10/10 with identical check names. All 8 attached images are system images (simulator runtimes, Metal toolchain), recorded as the baseline. Task42 stays open until a CI occurrence is captured. Side finding: hdiutil create with -volname/-format/-encryption is deprecated on this macOS in favour of 'diskutil image create'; noted only."
+    at = "2026-10-13T09:13:29Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
