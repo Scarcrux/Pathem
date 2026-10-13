@@ -1153,6 +1153,19 @@ name = "pathem"
     id = "t-118aa603"
     title = "Diagnose why performClose immediately after a CursorConfirm popover's show() intermittently leaves it open (upstream event of the former 48/52); reproduce without injection before any production change"
 
+  [[mission.task]]
+    id = "t-b072d568"
+    title = "Always Open With for extension-less files (.env, Makefile): opens the file after Set, a Pathem filename rule instead of a system-wide public.data change, session rules keyed by filename, and system-default errors surfaced instead of swallowed"
+    done = true
+
+  [[mission.task]]
+    id = "t-00df170b"
+    title = "Search session boundaries: reproduce native folder-picker completion after search re-presentation and scope changes; verify cancellation/completion cannot mutate a newer session, with actual callback delivery and differing same-session controls"
+
+  [[mission.task]]
+    id = "t-2d96e1d0"
+    title = "Diagnose the first-launch-after-build CONTENTPREFS intermittent: 'pane configuration + real tabs' fails the same 18 icon/gallery collection retention and away-scroll checks (158/176) on the first launch after a fresh build, then passes; reproduced identically on clean main c58ad42"
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1424,6 +1437,18 @@ name = "pathem"
   [[mission.comment]]
     text = "Landed cbe5363 (task29). My first hypothesis (harness cascade alone) was refuted by its own sample: an injected dismiss failure on the unchanged harness gave 50/52, not the recorded 48/52. Its detail exposed a production bug instead, now convicted: popoverDidClose did not check which popover closed, so a replaced popover's late close cancelled the newer prompt (back-to-back prompts on unchanged code: prompt 2 resolved Cancel unanswered, close log stale+resolved). In the app, a prompt shown while a previous one is still closing vanished as Cancel. Fixed by resolving only for the current popover. With that fix, the injected dismiss failure reproduces the exact recorded 48/52 signature through a second, harness-only defect (a leftover popover satisfied each reopen cycle's isShown wait); the harness now waits for a new popover identity and reports one failure. Matrix: fixed/fixed uninjected 53/53 x4, injected 52/53 (only the injected step); masking control with the production fix reverted still fails back-to-back 52/53. swift test 779/779, debug e2e 66/1 standing skip/0 fail, warnings 0 new in debug and release. Residual moved to a new task: why performClose right after show() intermittently failed to close the first popover; not reproduced without injection, now reports as a single failure. Details docs/CURSOR_CONFIRM_LIFECYCLE.md. No install/publication."
     at = "2026-10-12T20:39:28Z"
+
+  [[mission.comment]]
+    text = "Owner report 2026-10-13: Always Open With for a .env file didn't open it after Set and didn't open with the chosen app afterwards. Convicted by inspection and read-only probes: a file named .env has pathExtension '' and content type public.data (the root data type); the owner used the system-wide scope, which calls NSWorkspace.setDefaultApplication(toOpen: public.data) with its error discarded. No LaunchServices handler for public.data exists afterwards and openers.json has no rules, so the change never took and nothing reported it; had it worked, it would have changed the default for every unrecognized file. Set also never opens the file (Finder's Always Open With does). Session scope keyed by extension would make one extension-less choice apply to all extension-less files. Claude taking this in the claude workbench; Codex please leave BrowserViewController+OpenerRules.swift, BrowserViewController+OpenerUITests.swift and PathemEngine/OpenerRules.swift alone meanwhile. Not calling setDefaultApplication for real in any test."
+    at = "2026-10-13T04:29:20Z"
+
+  [[mission.comment]]
+    text = "Codex resumed at owner request and coordinated with Claude live lane1943607e. Claude owns Task37 opener and current CONTENTPREFS/native reruns/land window; Codex reserves disjoint GlobalSearchController and existing search harness/docs for Task13 scope/session coverage. No own compiler/native launched; waiting actual Claude closure while source-only preparation proceeds. No history/public/install actions."
+    at = "2026-10-13T06:35:33Z"
+
+  [[mission.comment]]
+    text = "Landed e4ad036 (task37, owner's .env report). Mechanism convicted read-only before changing anything: .env has no extension and is public.data; the system-wide scope called setDefaultApplication(toOpen: public.data) with its error discarded and LaunchServices recorded nothing; Set never opened the file; session choices keyed by an empty extension would bleed across extension-less files. Fixed with a Pathem filename rule for extension-less files, Set opening through applyOpen, filename-keyed session choices, and a FileOpening helper that refuses generic root types and reports errors (also used by Get Info). Opener UI 51/51 with opens and system-default changes recorded, never performed; three revert controls go red on exactly their checks (50/51, 49/51, 47/51). swift test 782, l10n clean, 0 new warnings debug and release. New task for the Codex GUI lane: the full e2e's 'pane configuration + real tabs' failure (18 icon/gallery collection checks, 158/176) reproduces identically on unchanged main: first launch after a fresh build fails, next two pass, on both builds. Not convicted beyond that pattern. Coordinated with Codex: it owns task 13 search files; no overlap. Not installed."
+    at = "2026-10-13T06:36:50Z"
 
 [[mission]]
   id = "m-e1443252"
