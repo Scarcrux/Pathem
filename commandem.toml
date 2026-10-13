@@ -1496,6 +1496,14 @@ name = "pathem"
     text = "Task41 verified: hidden-Column baseline18/20 convicted wrong active index/Close target. Displayed-pane guard with DEBUG receipt before rejection passes sample31/31, real background watcher/listing removal and both-side focus, full ContentPrefs204/204; Claude source review accepted. Final CI30116 terminal2 remains RED: build/warnings new0 and15XCTest+782 pass, debug65PASS/1captureSKIP/1disk-imageFAIL Resource busy; prior ContentPrefs failure now passes204. Isolated archive10/10 passes (intermittence, not cause); Task42 pending. After actual CI closure adopted bca8f3e/ddee6b6 metadata; separate ad-hoc arm64 packaged13/13 passes with updated public key. Historical158/176 attribution remains Task39 pending. No install/credentials/keychain/public/history action from this lane."
     at = "2026-10-13T07:29:09Z"
 
+  [[mission.comment]]
+    text = "Task40 resumed source-only: preregistered native Cancel prior-scope controls (Folder filename, initial Mac filename presentation, Mac Contents via installed popup actions) with actual picker/completion/backend receipts and Open callback URLs. Production unchanged until baseline; compiler/native launch waits actual Claude updater-isolation gate closure. Correction: earlier exact-chat no_matching_live_lane receipts did not prove Claude was inactive; provider-address message delivered to live lane."
+    at = "2026-10-13T08:55:13Z"
+
+  [[mission.comment]]
+    text = "Landed c2cfec5: Sparkle stays off for release-test launches. Trigger: bca8f3e (real SUPublicEDKey) activated the updater in every packaged build, and the packaged E2E probe (same bundle ID as the owner's app) wrote SUHasLaunchedBefore/SULastCheckTime into the owner's real defaults and fetched the 404 feed; SULastCheckTime 03:28 while the owner's only process predated the key. Owner's two Sparkle keys removed first (only test launches ever created them). Control: unfixed main recreated both within 8 s; fix: both absent and the probe line printed (first attempt lost the line to print() buffering under SIGTERM, switched to an unbuffered write). Packaged E2E 14/14 with keys still absent; warnings 0 new. Codex holding packaged launches until this landed. Next: task 42 (hdiutil Resource busy), accepted from Codex."
+    at = "2026-10-13T08:55:51Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
