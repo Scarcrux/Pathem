@@ -168,7 +168,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Scoped default-opener rules (by file / folder / type), persisted.
     var openerRules = OpenerRules()
     /// Session-only opener overrides, keyed by lowercased extension (not persisted).
-    var sessionOpenersByType: [String: String] = [:]
+    var sessionOpenersByKind: [String: String] = [:]  // OpenerRules.kindKey -> app path
     /// Saved workspace layouts (pane paths + split position).
     var layouts = Layouts()
     /// Fuzzy command palette over the registry (Cmd-Shift-P).

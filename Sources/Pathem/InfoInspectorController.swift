@@ -36,7 +36,9 @@ final class InfoInspectorController: NSObject {
         let exact = groupedNumber.string(from: NSNumber(value: info.size)) ?? "\(info.size)"
         var text = String(format: L("info.sizeExact", "%@ (%@ bytes)"), human, exact)
         if info.allocatedSize > 0 {
-            text += String(format: L("info.sizeOnDisk", ", %@ on disk"), byteFormatter.string(fromByteCount: info.allocatedSize))
+            text += String(
+                format: L("info.sizeOnDisk", ", %@ on disk"),
+                byteFormatter.string(fromByteCount: info.allocatedSize))
         }
         return text
     }
@@ -100,14 +102,17 @@ final class InfoInspectorController: NSObject {
         }
         openWithApps = apps
         for app in apps {
-            let item = NSMenuItem(title: FileManager.default.displayName(atPath: app.path), action: nil, keyEquivalent: "")
+            let item = NSMenuItem(
+                title: FileManager.default.displayName(atPath: app.path), action: nil,
+                keyEquivalent: "")
             let icon = workspace.icon(forFile: app.path)
             icon.size = NSSize(width: 16, height: 16)
             item.image = icon
             popup.menu?.addItem(item)
         }
         if !apps.isEmpty { popup.menu?.addItem(.separator()) }
-        popup.menu?.addItem(NSMenuItem(title: L("info.otherApp", "Other…"), action: nil, keyEquivalent: ""))
+        popup.menu?.addItem(
+            NSMenuItem(title: L("info.otherApp", "Other…"), action: nil, keyEquivalent: ""))
         popup.target = self
         popup.action = #selector(openWithChanged(_:))
         popup.selectItem(at: 0)
@@ -119,16 +124,40 @@ final class InfoInspectorController: NSObject {
         // Public API sets the handler per content type (Finder's "Change All"), not per file.
         let type = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType ?? .data
         let index = sender.indexOfSelectedItem
+        let app: URL
         if index >= 0, index < openWithApps.count {
-            NSWorkspace.shared.setDefaultApplication(at: openWithApps[index], toOpen: type) { _ in }
+            app = openWithApps[index]
         } else {
             let picker = NSOpenPanel()
             picker.directoryURL = URL(fileURLWithPath: "/Applications")
             picker.allowedContentTypes = [.application]
             picker.allowsMultipleSelection = false
-            guard picker.runModal() == .OK, let app = picker.url else { sender.selectItem(at: 0); return }
-            NSWorkspace.shared.setDefaultApplication(at: app, toOpen: type) { _ in }
+            guard picker.runModal() == .OK, let chosen = picker.url else {
+                sender.selectItem(at: 0)
+                return
+            }
+            app = chosen
         }
+        guard !FileOpening.isGeneric(type) else {
+            sender.selectItem(at: 0)
+            report(FileOpening.genericTitle, FileOpening.genericBody(url.lastPathComponent))
+            return
+        }
+        Task { @MainActor in
+            do {
+                try await FileOpening.setSystemDefault(app: app, for: type)
+            } catch {
+                sender.selectItem(at: 0)
+                self.report(FileOpening.failedTitle, error.localizedDescription)
+            }
+        }
+    }
+
+    private func report(_ title: String, _ body: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = body
+        alert.beginSheetModal(for: panel)
     }
 
     override init() {
@@ -179,7 +208,8 @@ final class InfoInspectorController: NSObject {
         // Size the panel to fit the (variable) field list.
         panel.layoutIfNeeded()
         let fitting = stack.fittingSize
-        panel.setContentSize(NSSize(width: max(340, fitting.width + 40), height: fitting.height + 36))
+        panel.setContentSize(
+            NSSize(width: max(340, fitting.width + 40), height: fitting.height + 36))
         if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
     }
@@ -200,13 +230,21 @@ final class InfoInspectorController: NSObject {
             iconView.image = NSWorkspace.shared.icon(forFile: info.path)  // immediate fallback
             loadThumbnail(for: urls[0])  // replace with a real QuickLook preview when it renders
             titleLabel.stringValue = info.name
-            addField(L("info.kindLabel", "Kind"), info.isSymbolicLink ? L("info.aliasSymlink", "Alias / Symlink") : info.kind)
+            addField(
+                L("info.kindLabel", "Kind"),
+                info.isSymbolicLink ? L("info.aliasSymlink", "Alias / Symlink") : info.kind)
             if info.isDataless {
-                addField(L("info.sizeLabel", "Size"), L("info.onlineOnly", "Online only (not downloaded)"))
+                addField(
+                    L("info.sizeLabel", "Size"),
+                    L("info.onlineOnly", "Online only (not downloaded)"))
             } else if info.isDirectory {
                 // Item count now, then fill in the recursive size once it's totted up off-main.
-                let countText = info.itemCount.map { String(format: L("info.itemsValue", "%d items"), $0) } ?? ""
-                let sizeField = addField(L("info.sizeLabel", "Size"), countText.isEmpty ? L("info.calculating", "Calculating…") : countText)
+                let countText =
+                    info.itemCount.map { String(format: L("info.itemsValue", "%d items"), $0) }
+                    ?? ""
+                let sizeField = addField(
+                    L("info.sizeLabel", "Size"),
+                    countText.isEmpty ? L("info.calculating", "Calculating…") : countText)
                 let url = urls[0]
                 let formatter = byteFormatter
                 Task { @MainActor in
@@ -218,16 +256,30 @@ final class InfoInspectorController: NSObject {
             } else {
                 addField(L("info.sizeLabel", "Size"), sizeDescription(info))
             }
-            addField(L("info.whereLabel", "Where"), (info.path as NSString).deletingLastPathComponent)
-            if let created = info.created { addField(L("info.createdLabel", "Created"), dateFormatter.string(from: created)) }
-            if let modified = info.modified { addField(L("info.modifiedLabel", "Modified"), dateFormatter.string(from: modified)) }
-            if let accessed = info.accessed { addField(L("info.accessedLabel", "Last opened"), dateFormatter.string(from: accessed)) }
-            if let added = info.added { addField(L("info.addedLabel", "Added"), dateFormatter.string(from: added)) }
+            addField(
+                L("info.whereLabel", "Where"), (info.path as NSString).deletingLastPathComponent)
+            if let created = info.created {
+                addField(L("info.createdLabel", "Created"), dateFormatter.string(from: created))
+            }
+            if let modified = info.modified {
+                addField(L("info.modifiedLabel", "Modified"), dateFormatter.string(from: modified))
+            }
+            if let accessed = info.accessed {
+                addField(
+                    L("info.accessedLabel", "Last opened"), dateFormatter.string(from: accessed))
+            }
+            if let added = info.added {
+                addField(L("info.addedLabel", "Added"), dateFormatter.string(from: added))
+            }
             let sources = FileMetadata.whereFroms(of: urls[0])
             if let from = sources.first { addField(L("info.whereFromLabel", "Where from"), from) }
             if let app = FileMetadata.appInfo(of: urls[0]) {
-                if let version = app.version { addField(L("info.versionLabel", "Version"), version) }
-                if let copyright = app.copyright { addField(L("info.copyrightLabel", "Copyright"), copyright) }
+                if let version = app.version {
+                    addField(L("info.versionLabel", "Version"), version)
+                }
+                if let copyright = app.copyright {
+                    addField(L("info.copyrightLabel", "Copyright"), copyright)
+                }
             }
             if !info.isDirectory, urls[0].isFileURL {
                 addCustomField(L("info.openWithLabel", "Open with"), openWithControl(for: urls[0]))
@@ -256,14 +308,21 @@ final class InfoInspectorController: NSObject {
             if let acl = FileMetadata.aclEntries(of: urls[0]) {
                 addField(L("info.aclLabel", "Permissions"), acl.joined(separator: "\n"))
             }
-            if !info.tags.isEmpty { addField(L("info.tagsLabel", "Tags"), info.tags.joined(separator: ", ")) }
-            if let type = info.contentType, !info.isDirectory { addField(L("info.typeLabel", "Type"), type) }
+            if !info.tags.isEmpty {
+                addField(L("info.tagsLabel", "Tags"), info.tags.joined(separator: ", "))
+            }
+            if let type = info.contentType, !info.isDirectory {
+                addField(L("info.typeLabel", "Type"), type)
+            }
             if urls[0].isFileURL, !info.isDataless {
-                let lock = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleLocked(_:)))
+                let lock = NSButton(
+                    checkboxWithTitle: "", target: self, action: #selector(toggleLocked(_:)))
                 lock.state = info.isLocked ? .on : .off
                 addCustomField(L("info.lockedLabel", "Locked"), lock)
                 if !info.isDirectory, !urls[0].pathExtension.isEmpty {
-                    let hide = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleHideExtension(_:)))
+                    let hide = NSButton(
+                        checkboxWithTitle: "", target: self,
+                        action: #selector(toggleHideExtension(_:)))
                     hide.state = FileMetadata.hidesExtension(urls[0]) ? .on : .off
                     addCustomField(L("info.hideExtensionLabel", "Hide extension"), hide)
                 }
@@ -271,10 +330,14 @@ final class InfoInspectorController: NSObject {
             if !info.isDirectory, !info.isDataless {
                 let url = urls[0]
                 // Image dimensions read off the main thread (ImageIO can touch disk).
-                if let type = UTType(filenameExtension: url.pathExtension), type.conforms(to: .image) {
-                    let dimField = addField(L("info.dimensionsLabel", "Dimensions"), L("info.reading", "Reading…"))
+                if let type = UTType(filenameExtension: url.pathExtension),
+                    type.conforms(to: .image)
+                {
+                    let dimField = addField(
+                        L("info.dimensionsLabel", "Dimensions"), L("info.reading", "Reading…"))
                     Task { @MainActor in
-                        let label = await Task.detached { MediaMetadata.dimensionsLabel(of: url) }.value
+                        let label = await Task.detached { MediaMetadata.dimensionsLabel(of: url) }
+                            .value
                         guard self.inspectedURL == url else { return }
                         dimField.stringValue = label ?? L("info.unknown", "unknown")
                     }
@@ -292,10 +355,16 @@ final class InfoInspectorController: NSObject {
             // folder tally, and total size always agree.
             let infos = urls.compactMap { FileInfo.gather(for: $0) }
             titleLabel.stringValue = String(format: L("info.itemsCount", "%d items"), infos.count)
-            let totalSize = infos.filter { !$0.isDirectory && !$0.isDataless }.reduce(Int64(0)) { $0 + $1.size }
+            let totalSize = infos.filter { !$0.isDirectory && !$0.isDataless }.reduce(Int64(0)) {
+                $0 + $1.size
+            }
             let folders = infos.filter(\.isDirectory).count
-            addField(L("info.itemsLabel", "Items"), "\(infos.count) (\(folders) folder\(folders == 1 ? "" : "s"))")
-            addField(L("info.totalSizeLabel", "Total Size"), byteFormatter.string(fromByteCount: totalSize))
+            addField(
+                L("info.itemsLabel", "Items"),
+                "\(infos.count) (\(folders) folder\(folders == 1 ? "" : "s"))")
+            addField(
+                L("info.totalSizeLabel", "Total Size"),
+                byteFormatter.string(fromByteCount: totalSize))
         }
     }
 

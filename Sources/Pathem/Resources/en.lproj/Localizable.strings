@@ -285,6 +285,7 @@
 "bvc.cmd.showHiddenFiles" = "Show Hidden Files";
 "bvc.cmd.showHistory" = "Undo History…";
 "bvc.cmd.showOriginal" = "Show Original";
+"bvc.cmd.showPackageContents" = "Show Package Contents";
 "bvc.cmd.showPathBarAtBottom" = "Show Path Bar at Bottom";
 "bvc.cmd.showShelf" = "Show Drop Stack";
 "bvc.cmd.sizeBrowser" = "Size Browser…";
@@ -466,7 +467,7 @@
 "bvc.scopeAllExt" = "All .%@ files (system-wide)";
 "bvc.scopeThisFile" = "This file";
 "bvc.scopeThisFolder" = "Files in this folder";
-"bvc.scopeThisKind" = "Files of this kind (system-wide)";
+"bvc.scopeThisName" = "All files named “%@” (in Pathem)";
 "bvc.scopeThisSession" = "Just this session";
 "bvc.searchCmdTitle" = "Search: %@";
 "bvc.searchCount" = "Search: %@ (%d)";
@@ -1051,6 +1052,9 @@
 "offload.failed" = "Couldn’t offload";
 "offload.none" = "Nothing to offload";
 "offload.noneBody" = "Select downloaded iCloud files to free their local space.";
+"opener.genericBody" = "macOS treats “%@” as a generic file, so a system default would apply to every file it can’t identify. In Always Open With, choose “All files named …” instead.";
+"opener.genericTitle" = "This kind can’t have a system-wide default";
+"opener.systemFailedTitle" = "Couldn’t change the default app";
 "organize.action" = "Organize";
 "organize.done.body" = "Moved %d, trashed %d";
 "organize.done.skipped" = ", %d skipped";
@@ -1676,5 +1680,4 @@
 "xattr.removeQuarantine" = "Remove Quarantine";
 "xattr.title" = "Extended Attributes";
 "xattr.titleFor" = "Extended Attributes: %@";
-"bvc.cmd.showPackageContents" = "Show Package Contents";
-"menu.files.showPackageContents" = "Show Package Contents";
+

@@ -285,6 +285,7 @@
 "bvc.cmd.showHiddenFiles" = "隠しファイルを表示";
 "bvc.cmd.showHistory" = "取り消し履歴…";
 "bvc.cmd.showOriginal" = "オリジナルを表示";
+"bvc.cmd.showPackageContents" = "パッケージの内容を表示";
 "bvc.cmd.showPathBarAtBottom" = "パスバーを下部に表示";
 "bvc.cmd.showShelf" = "Drop Stack を表示";
 "bvc.cmd.sizeBrowser" = "サイズブラウザ…";
@@ -466,7 +467,6 @@
 "bvc.scopeAllExt" = "すべての.%@ファイル";
 "bvc.scopeThisFile" = "このファイル";
 "bvc.scopeThisFolder" = "このフォルダ内のファイル";
-"bvc.scopeThisKind" = "この種類のファイル";
 "bvc.scopeThisSession" = "このセッションのみ";
 "bvc.searchCmdTitle" = "検索: %@";
 "bvc.searchCount" = "検索: %@（%d）";
@@ -1025,6 +1025,7 @@
 "menu.files.peekArchive" = "アーカイブの内容を表示";
 "menu.files.rename" = "名称変更…";
 "menu.files.reveal" = "Finderに表示";
+"menu.files.showPackageContents" = "パッケージの内容を表示";
 "menu.files.trash" = "ゴミ箱に入れる";
 "menu.files.verifyChecksum" = "チェックサムを検証…";
 "menu.git.commit" = "コミット…";
@@ -1748,5 +1749,7 @@
 "xattr.removeQuarantine" = "検疫を解除";
 "xattr.title" = "拡張属性";
 "xattr.titleFor" = "拡張属性: %@";
-"bvc.cmd.showPackageContents" = "パッケージの内容を表示";
-"menu.files.showPackageContents" = "パッケージの内容を表示";
+"bvc.scopeThisName" = "「%@」という名前のすべてのファイル（Pathem内）";
+"opener.genericTitle" = "この種類にはシステム全体のデフォルトを設定できません";
+"opener.genericBody" = "macOSは「%@」を汎用ファイルとして扱うため、システムのデフォルトを設定すると識別できないすべてのファイルに適用されます。代わりに「常にこのアプリケーションで開く」で「…という名前のすべてのファイル」を選んでください。";
+"opener.systemFailedTitle" = "デフォルトのアプリケーションを変更できませんでした";

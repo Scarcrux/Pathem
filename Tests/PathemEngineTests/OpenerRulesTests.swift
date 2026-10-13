@@ -57,4 +57,35 @@ import Testing
         let back = try JSONDecoder().decode(OpenerRules.self, from: JSONEncoder().encode(r))
         #expect(back == r)
     }
+
+    @Test func extensionlessNamesGetTheirOwnKindKey() {
+        #expect(OpenerRules.kindKey(forFileName: ".env") == "name:.env")
+        #expect(OpenerRules.kindKey(forFileName: "Makefile") == "name:makefile")
+        #expect(OpenerRules.kindKey(forFileName: "notes.TXT") == "txt")
+        #expect(OpenerRules.kindKey(forFileName: ".env.local") == "local")
+        // Two different extension-less files must never share a key.
+        #expect(
+            OpenerRules.kindKey(forFileName: ".env")
+                != OpenerRules.kindKey(forFileName: "Makefile"))
+    }
+
+    @Test func nameRuleMatchesOnlyThatName() {
+        var r = OpenerRules()
+        r.setName(".ENV", app: "/Applications/Code.app")
+        #expect(r.app(forName: ".env") == "/Applications/Code.app")
+        #expect(r.app(forName: "Makefile") == nil)
+        #expect(r.app(forName: ".gitignore") == nil)
+    }
+
+    @Test func olderFileWithoutNameMapStillLoadsItsRules() throws {
+        let json = #"{"byFile":{"/a/b.txt":"/Applications/X.app"},"byFolder":{},"byType":{}}"#
+        let r = try JSONDecoder().decode(OpenerRules.self, from: Data(json.utf8))
+        #expect(r.byFile["/a/b.txt"] == "/Applications/X.app")
+        #expect(r.byName.isEmpty)
+        var withName = r
+        withName.setName(".env", app: "/Applications/Code.app")
+        let round = try JSONDecoder().decode(
+            OpenerRules.self, from: JSONEncoder().encode(withName))
+        #expect(round == withName)
+    }
 }

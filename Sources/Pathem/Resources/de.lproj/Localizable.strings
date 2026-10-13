@@ -285,6 +285,7 @@
 "bvc.cmd.showHiddenFiles" = "Ausgeblendete Dateien anzeigen";
 "bvc.cmd.showHistory" = "Widerrufsverlauf…";
 "bvc.cmd.showOriginal" = "Original zeigen";
+"bvc.cmd.showPackageContents" = "Paketinhalt zeigen";
 "bvc.cmd.showPathBarAtBottom" = "Pfadleiste unten anzeigen";
 "bvc.cmd.showShelf" = "Drop Stack einblenden";
 "bvc.cmd.sizeBrowser" = "Größenbrowser…";
@@ -466,7 +467,6 @@
 "bvc.scopeAllExt" = "Alle .%@-Dateien";
 "bvc.scopeThisFile" = "Diese Datei";
 "bvc.scopeThisFolder" = "Dateien in diesem Ordner";
-"bvc.scopeThisKind" = "Dateien dieser Art";
 "bvc.scopeThisSession" = "Nur diese Sitzung";
 "bvc.searchCmdTitle" = "Suche: %@";
 "bvc.searchCount" = "Suche: %@ (%d)";
@@ -1025,6 +1025,7 @@
 "menu.files.peekArchive" = "Archivinhalt anzeigen";
 "menu.files.rename" = "Umbenennen…";
 "menu.files.reveal" = "Im Finder zeigen";
+"menu.files.showPackageContents" = "Paketinhalt zeigen";
 "menu.files.trash" = "In den Papierkorb legen";
 "menu.files.verifyChecksum" = "Prüfsumme verifizieren…";
 "menu.git.commit" = "Commit…";
@@ -1748,5 +1749,7 @@
 "xattr.removeQuarantine" = "Quarantäne entfernen";
 "xattr.title" = "Erweiterte Attribute";
 "xattr.titleFor" = "Erweiterte Attribute: %@";
-"bvc.cmd.showPackageContents" = "Paketinhalt zeigen";
-"menu.files.showPackageContents" = "Paketinhalt zeigen";
+"bvc.scopeThisName" = "Alle Dateien namens „%@“ (in Pathem)";
+"opener.genericTitle" = "Für diese Art ist kein systemweiter Standard möglich";
+"opener.genericBody" = "macOS behandelt „%@“ als allgemeine Datei, daher würde ein systemweiter Standard für jede Datei gelten, die es nicht erkennt. Wähle stattdessen unter „Immer öffnen mit“ die Option „Alle Dateien namens …“.";
+"opener.systemFailedTitle" = "Standard-App konnte nicht geändert werden";

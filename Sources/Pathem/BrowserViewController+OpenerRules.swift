@@ -28,22 +28,20 @@ extension BrowserViewController {
             addTorrentToPanel(url)
             return
         }
-        // Precedence: a specific file/folder rule, then a session-by-type override,
-        // then a persisted type rule, else the system default.
+        // Precedence: a specific file/folder rule, then a session override for this kind,
+        // then a persisted filename rule (names with no extension, which the system can't
+        // express as a type) or extension rule, else the system default.
+        let name = url.lastPathComponent
         let appPath =
-            openerRules.appByFileOrFolder(path: url.path) ?? sessionOpenersByType[ext]
-            ?? openerRules.app(forType: ext)
-        if let appPath {
-            NSWorkspace.shared.open(
-                [url], withApplicationAt: URL(fileURLWithPath: appPath),
-                configuration: NSWorkspace.OpenConfiguration())
-        } else {
-            NSWorkspace.shared.open(url)
-        }
+            openerRules.appByFileOrFolder(path: url.path)
+            ?? sessionOpenersByKind[OpenerRules.kindKey(forFileName: name)]
+            ?? (ext.isEmpty ? openerRules.app(forName: name) : openerRules.app(forType: ext))
+        FileOpening.open(url, with: appPath.map { URL(fileURLWithPath: $0) })
     }
 
-    /// Scope for "Always Open With".
-    private enum OpenerScope: Int { case file, folder, type, session }
+    /// Scope for "Always Open With". `kind` is all files with this extension (a system-wide
+    /// default), or for a name with no extension, all files with this exact name (in Pathem).
+    private enum OpenerScope: Int { case file, folder, kind, session }
 
     /// Set a default opener for the active selection. Shown from Open With.
     @objc func setDefaultOpener(_ sender: Any?) {
@@ -74,7 +72,9 @@ extension BrowserViewController {
         scopePopup.addItem(withTitle: L("bvc.scopeThisFolder", "Files in this folder"))
         scopePopup.addItem(
             withTitle: ext.isEmpty
-                ? L("bvc.scopeThisKind", "Files of this kind (system-wide)")
+                ? String(
+                    format: L("bvc.scopeThisName", "All files named “%@” (in Pathem)"),
+                    fileURL.lastPathComponent)
                 : String(format: L("bvc.scopeAllExt", "All .%@ files (system-wide)"), ext))
         scopePopup.addItem(withTitle: L("bvc.scopeThisSession", "Just this session"))
 
@@ -94,23 +94,40 @@ extension BrowserViewController {
     }
 
     private func saveOpener(appPath: String, for fileURL: URL, ext: String, scope: OpenerScope) {
+        let name = fileURL.lastPathComponent
+        let app = URL(fileURLWithPath: appPath)
         switch scope {
         case .file: openerRules.setFile(fileURL.path, app: appPath)
         case .folder: openerRules.setFolder(fileURL.deletingLastPathComponent().path, app: appPath)
-        case .type:
-            // "Files of this kind" is Finder's "Change All": set the real system default
-            // (LaunchServices) so Pathem, Finder, and every other app agree, and drop any local
-            // per-type rule so the system stays authoritative even if the default changes later.
+        case .kind where ext.isEmpty: openerRules.setName(name, app: appPath)
+        case .kind:
+            // All files with this extension is Finder's "Change All": set the real system
+            // default (LaunchServices) so Pathem, Finder, and every other app agree, and drop
+            // any local per-type rule so the system stays authoritative.
             let type =
                 (try? fileURL.resourceValues(forKeys: [.contentTypeKey]))?.contentType
-                ?? UTType(filenameExtension: ext) ?? .data
-            NSWorkspace.shared.setDefaultApplication(
-                at: URL(fileURLWithPath: appPath), toOpen: type
-            ) { _ in }
+                ?? UTType(filenameExtension: ext)
+            guard let type, !FileOpening.isGeneric(type) else {
+                presentInfo(FileOpening.genericTitle, FileOpening.genericBody(name))
+                return
+            }
             openerRules.clearType(ext)
-        case .session: sessionOpenersByType[ext] = appPath
+            saveConfig(openerRules, to: Self.openersURL)
+            Task { @MainActor in
+                do {
+                    try await FileOpening.setSystemDefault(app: app, for: type)
+                    FileOpening.open(fileURL, with: app)
+                } catch {
+                    self.presentInfo(FileOpening.failedTitle, error.localizedDescription)
+                }
+            }
+            return
+        case .session: sessionOpenersByKind[OpenerRules.kindKey(forFileName: name)] = appPath
         }
         if scope != .session { saveConfig(openerRules, to: Self.openersURL) }
+        // Like Finder's Always Open With, open the file now, through the same resolution a
+        // later double-click uses, so the saved choice is what opens it.
+        applyOpen(fileURL)
     }
 }
 

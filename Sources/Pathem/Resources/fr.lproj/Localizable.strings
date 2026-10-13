@@ -285,6 +285,7 @@
 "bvc.cmd.showHiddenFiles" = "Afficher les fichiers masqués";
 "bvc.cmd.showHistory" = "Historique d'annulation…";
 "bvc.cmd.showOriginal" = "Afficher l'original";
+"bvc.cmd.showPackageContents" = "Afficher le contenu du paquet";
 "bvc.cmd.showPathBarAtBottom" = "Afficher la barre de chemin en bas";
 "bvc.cmd.showShelf" = "Afficher le Drop Stack";
 "bvc.cmd.sizeBrowser" = "Explorateur de tailles…";
@@ -466,7 +467,6 @@
 "bvc.scopeAllExt" = "Tous les fichiers .%@";
 "bvc.scopeThisFile" = "Ce fichier";
 "bvc.scopeThisFolder" = "Les fichiers de ce dossier";
-"bvc.scopeThisKind" = "Les fichiers de ce type";
 "bvc.scopeThisSession" = "Uniquement cette session";
 "bvc.searchCmdTitle" = "Rechercher : %@";
 "bvc.searchCount" = "Rechercher : %@ (%d)";
@@ -1025,6 +1025,7 @@
 "menu.files.peekArchive" = "Afficher le contenu de l’archive";
 "menu.files.rename" = "Renommer…";
 "menu.files.reveal" = "Afficher dans le Finder";
+"menu.files.showPackageContents" = "Afficher le contenu du paquet";
 "menu.files.trash" = "Placer dans la corbeille";
 "menu.files.verifyChecksum" = "Vérifier la somme de contrôle…";
 "menu.git.commit" = "Valider…";
@@ -1748,5 +1749,7 @@
 "xattr.removeQuarantine" = "Supprimer la quarantaine";
 "xattr.title" = "Attributs étendus";
 "xattr.titleFor" = "Attributs étendus : %@";
-"bvc.cmd.showPackageContents" = "Afficher le contenu du paquet";
-"menu.files.showPackageContents" = "Afficher le contenu du paquet";
+"bvc.scopeThisName" = "Tous les fichiers nommés « %@ » (dans Pathem)";
+"opener.genericTitle" = "Ce type ne peut pas avoir d’application par défaut pour tout le système";
+"opener.genericBody" = "macOS traite « %@ » comme un fichier générique : une application par défaut pour tout le système s’appliquerait à tous les fichiers qu’il ne sait pas identifier. Dans « Toujours ouvrir avec », choisissez plutôt « Tous les fichiers nommés … ».";
+"opener.systemFailedTitle" = "Impossible de modifier l’application par défaut";

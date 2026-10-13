@@ -33,13 +33,20 @@ extension BrowserViewController {
             check("host", false)
             finish()
         }
+        // Record opens and system-default changes instead of launching apps or changing
+        // LaunchServices (docs/OPENER_RULES_TESTING.md).
+        FileOpening.debugRequests = []
         do {
-            try fm.createDirectory(at: root, withIntermediateDirectories: true)
-            try Data("Fixture".utf8).write(to: root.appendingPathComponent("fixture.txt"))
+            try fm.createDirectory(
+                at: root.appendingPathComponent("other"), withIntermediateDirectories: true)
+            for name in ["fixture.txt", ".env", "other/.env", "Makefile", "LICENSE"] {
+                try Data("Fixture".utf8).write(to: root.appendingPathComponent(name))
+            }
         } catch {
             check("fixture", false)
             finish()
         }
+        pane.showHiddenByDefault = true  // .env is a dotfile
         pane.navigate(to: root)
         guard settle({ pane.entries.contains { $0.name == "fixture.txt" } }) else {
             check("listing", false)
@@ -75,6 +82,7 @@ extension BrowserViewController {
         window.endSheet(sheet, returnCode: .alertSecondButtonReturn)
         check(
             "cancel-does-not-save", settle { window.attachedSheet == nil } && openerRules == before)
+        check("cancel-opens-nothing", FileOpening.debugRequests == [])
         if ProcessInfo.processInfo.environment["PATHEM_OPENER_SAMPLE"] == "1" { finish() }
 
         func showOpener() -> (NSWindow, DefaultOpenerApplicationPopup, NSPopUpButton, NSButton)? {
@@ -169,9 +177,110 @@ extension BrowserViewController {
             default:
                 check(
                     "session-scope-memory-only",
-                    sessionOpenersByType["txt"] == app.path && disk == diskBefore)
+                    sessionOpenersByKind["txt"] == app.path && disk == diskBefore)
             }
+            check(
+                "set-opens-file-with-choice-\(scopeIndex)",
+                FileOpening.debugRequests?.last == "open \(file.path) with \(app.path)")
         }
+
+        // Extension-less files: a filename rule in Pathem, never a public.data system default.
+        // Clear the file/folder/session rules above first: the folder rule covers this whole
+        // fixture folder and would answer for every file below.
+        openerRules.byFile = [:]
+        openerRules.byFolder = [:]
+        sessionOpenersByKind = [:]
+        let env = root.appendingPathComponent(".env")
+        let envType = (try? env.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+        check("env-is-generic-type", envType.map(FileOpening.isGeneric) == true)
+        pane.debugSelectNames([".env"])
+        check("env-selection-delivered", pane.selectedEntries.map(\.name) == [".env"])
+        FileOpening.debugRequests = []
+        guard let (envSheet, envPopup, envScope, envSet) = showOpener(),
+            let envApp = envPopup.selectedItem?.representedObject as? URL
+        else {
+            check("env-controls", false)
+            finish()
+        }
+        check(
+            "env-scope-names-the-file",
+            envScope.itemTitles.count == 4
+                && envScope.itemTitles[2]
+                    == String(
+                        format: L("bvc.scopeThisName", "All files named “%@” (in Pathem)"), ".env")
+        )
+        envScope.selectItem(at: 2)
+        envSet.performClick(nil)
+        check(
+            "env-set-dismisses", settle { window.attachedSheet == nil && !envSheet.isVisible })
+        let envDisk = loadConfig(OpenerRules.self, from: Self.openersURL)
+        check(
+            "env-name-rule-saved",
+            openerRules.app(forName: ".env") == envApp.path
+                && envDisk?.app(forName: ".env") == envApp.path)
+        check(
+            "env-no-system-default-request",
+            FileOpening.debugRequests?.contains { $0.hasPrefix("system-default") } == false)
+        check(
+            "env-set-opens-with-choice",
+            FileOpening.debugRequests?.last == "open \(env.path) with \(envApp.path)")
+        // Later opens go through applyOpen, the path a double-click uses.
+        let otherEnv = root.appendingPathComponent("other/.env")
+        let makefile = root.appendingPathComponent("Makefile")
+        FileOpening.debugRequests = []
+        applyOpen(otherEnv)
+        applyOpen(makefile)
+        check(
+            "env-rule-reaches-same-name-elsewhere",
+            FileOpening.debugRequests?.first == "open \(otherEnv.path) with \(envApp.path)")
+        check(
+            "env-rule-not-other-extensionless",
+            FileOpening.debugRequests?.last == "open \(makefile.path) with system")
+
+        // A session choice for one extension-less file must not bleed to the others.
+        let license = root.appendingPathComponent("LICENSE")
+        pane.debugSelectNames(["LICENSE"])
+        guard pane.selectedEntries.map(\.name) == ["LICENSE"],
+            let (sessionSheet, sessionPopup, sessionScope, sessionSet) = showOpener(),
+            let sessionApp = sessionPopup.selectedItem?.representedObject as? URL
+        else {
+            check("session-extensionless-controls", false)
+            finish()
+        }
+        sessionScope.selectItem(at: 3)
+        sessionSet.performClick(nil)
+        _ = settle { window.attachedSheet == nil && !sessionSheet.isVisible }
+        FileOpening.debugRequests = []
+        applyOpen(license)
+        applyOpen(makefile)
+        check(
+            "session-extensionless-applies-to-that-name",
+            FileOpening.debugRequests?.first == "open \(license.path) with \(sessionApp.path)")
+        check(
+            "session-extensionless-not-other-names",
+            FileOpening.debugRequests?.last == "open \(makefile.path) with system")
+
+        // Files with an extension keep the system-wide scope, for their specific type.
+        pane.debugSelectNames(["fixture.txt"])
+        guard let (typeSheet, typePopup, typeScope, typeSet) = showOpener(),
+            let typeApp = typePopup.selectedItem?.representedObject as? URL
+        else {
+            check("type-scope-controls", false)
+            finish()
+        }
+        FileOpening.debugRequests = []
+        typeScope.selectItem(at: 2)
+        typeSet.performClick(nil)
+        _ = settle { window.attachedSheet == nil && !typeSheet.isVisible }
+        check(
+            "type-scope-requests-specific-type-then-opens",
+            settle { (FileOpening.debugRequests?.count ?? 0) >= 2 }
+                && FileOpening.debugRequests
+                    == [
+                        "system-default \(typeApp.path) public.plain-text",
+                        "open \(file.path) with \(typeApp.path)",
+                    ]
+        )
 
         let emptyAlert = NSAlert()
         emptyAlert.addButton(withTitle: L("bvc.set", "Set"))

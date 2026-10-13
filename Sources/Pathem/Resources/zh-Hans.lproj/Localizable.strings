@@ -285,6 +285,7 @@
 "bvc.cmd.showHiddenFiles" = "显示隐藏文件";
 "bvc.cmd.showHistory" = "撤销历史…";
 "bvc.cmd.showOriginal" = "显示原身";
+"bvc.cmd.showPackageContents" = "显示包内容";
 "bvc.cmd.showPathBarAtBottom" = "在底部显示路径栏";
 "bvc.cmd.showShelf" = "显示 Drop Stack";
 "bvc.cmd.sizeBrowser" = "大小浏览器…";
@@ -466,7 +467,6 @@
 "bvc.scopeAllExt" = "所有 .%@ 文件";
 "bvc.scopeThisFile" = "此文件";
 "bvc.scopeThisFolder" = "此文件夹中的文件";
-"bvc.scopeThisKind" = "此类文件";
 "bvc.scopeThisSession" = "仅此会话";
 "bvc.searchCmdTitle" = "搜索：%@";
 "bvc.searchCount" = "搜索：%@（%d）";
@@ -1025,6 +1025,7 @@
 "menu.files.peekArchive" = "查看压缩包内容";
 "menu.files.rename" = "重新命名…";
 "menu.files.reveal" = "在 Finder 中显示";
+"menu.files.showPackageContents" = "显示包内容";
 "menu.files.trash" = "移到废纸篓";
 "menu.files.verifyChecksum" = "校验校验和…";
 "menu.git.commit" = "提交…";
@@ -1748,5 +1749,7 @@
 "xattr.removeQuarantine" = "移除隔离标记";
 "xattr.title" = "扩展属性";
 "xattr.titleFor" = "扩展属性：%@";
-"bvc.cmd.showPackageContents" = "显示包内容";
-"menu.files.showPackageContents" = "显示包内容";
+"bvc.scopeThisName" = "所有名为“%@”的文件（在 Pathem 中）";
+"opener.genericTitle" = "此类型无法设置系统级默认应用";
+"opener.genericBody" = "macOS 将“%@”视为通用文件，因此系统默认应用会作用于所有无法识别的文件。请改为在“始终以此打开”中选择“所有名为…的文件”。";
+"opener.systemFailedTitle" = "无法更改默认应用";
