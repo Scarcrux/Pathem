@@ -168,7 +168,9 @@ if [[ -n "${NOTARY_PROFILE:-}" && -n "${DEVELOPER_ID:-}" ]]; then
 	rm -f "$zip"
 	# Confirm Gatekeeper will actually accept the stapled app (catches a notarization
 	# or stapling problem before a user ever sees it).
-	spctl --assess --type exec --verbose=4 "$APP"
+	# Absolute path: spctl lives in /usr/sbin, which not every shell has on PATH; a bare call
+	# exited 127 here after a successful notarization and staple.
+	/usr/sbin/spctl --assess --type exec --verbose=4 "$APP"
 elif [[ -n "${DEVELOPER_ID:-}" ]]; then
 	echo "==> Skipping notarization (set NOTARY_PROFILE to enable)"
 fi
