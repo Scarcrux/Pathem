@@ -232,7 +232,7 @@
 	<key>SUFeedURL</key>
 	<string>https://github.com/Scarcrux/Pathem/releases/latest/download/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>REPLACE_WITH_SPARKLE_PUBLIC_KEY</string>
+	<string>y0Bp4u87uFWk1i2k7TUTxRI95NyV/d3e3Exe4JAifDI=</string>
 	<key>SUEnableAutomaticChecks</key>
 	<true/>
 </dict>
