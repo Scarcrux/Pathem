@@ -1335,6 +1335,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     ) -> Bool {
         springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: info), !urls.isEmpty else { return false }
+        guard !resolvedDragOperation(for: info).isEmpty else { return false }
         // A drag that began in this list but barely moved is a click with jitter, not a move. Ignore
         // it so a plain click near another file no longer pops the "Move Here / Copy Here" menu.
         if let window = tableView.window,
@@ -1408,16 +1409,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     /// When dragging items between folders moves by default (Settings > General);
-    /// Command then copies. When off (the Finder-like default) it copies and Command
+    /// Command then copies. When off it copies and Command
     /// moves.
-    var dragMovesByDefault = false
+    var dragMovesByDefault = Preferences.default.dragMovesByDefault
 
     /// Resolve copy vs move from the default and the Command modifier (which inverts
     /// it). Move only when the source actually offers it (e.g. same volume).
     private func resolvedDragOperation(for info: NSDraggingInfo) -> NSDragOperation {
-        let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        let wantMove = dragMovesByDefault != commandHeld  // Command inverts the default
-        return wantMove && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
+        FileDrag.operation(for: info, movesByDefault: dragMovesByDefault)
     }
 
     // MARK: NSTableViewDelegate

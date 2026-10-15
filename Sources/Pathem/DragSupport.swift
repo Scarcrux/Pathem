@@ -87,6 +87,18 @@ final class FilePromiseFulfiller: NSObject, NSFilePromiseProviderDelegate, @unch
 
 /// Shared helpers for dragging files out to other apps.
 enum FileDrag {
+    /// One policy for all folder drop targets. Command inverts the user's default;
+    /// never advertise or perform a move the drag source did not offer.
+    @MainActor
+    static func operation(
+        for info: NSDraggingInfo, movesByDefault: Bool
+    ) -> NSDragOperation {
+        let flags = NSApp.currentEvent?.modifierFlags ?? []
+        let wantsMove = movesByDefault != flags.contains(.command)
+        if wantsMove && info.draggingSourceOperationMask.contains(.move) { return .move }
+        return info.draggingSourceOperationMask.contains(.copy) ? .copy : []
+    }
+
     /// The deprecated-but-still-widely-read filenames type. Modern apps take `public.file-url`
     /// (which our per-item pasteboard writers already provide), but cross-platform / older apps
     /// (e.g. VMware Fusion, some Java and Electron apps) only look for `NSFilenamesPboardType`
@@ -110,7 +122,8 @@ enum FileDrag {
         if isDirectory(url) || isTextLike(url) {
             return url as NSURL
         }
-        let item = FileDragItem(fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
+        let item = FileDragItem(
+            fileType: contentType(of: url).identifier, delegate: FilePromiseFulfiller.shared)
         item.sourceURL = url
         // userInfo is what survives when Foundation rebuilds the provider for file-provider XPC
         // fulfillment (Messages); the delegate reads the source from here. See source(from:).
@@ -161,11 +174,13 @@ enum FileDrag {
     /// This is what makes an in-app pane-to-pane drop reliable.
     static func readFileURLs(from pasteboard: NSPasteboard) -> [URL]? {
         if let urls = pasteboard.readObjects(
-            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty
+            forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL],
+            !urls.isEmpty
         {
             return urls
         }
-        if let paths = pasteboard.propertyList(forType: filenamesType) as? [String], !paths.isEmpty {
+        if let paths = pasteboard.propertyList(forType: filenamesType) as? [String], !paths.isEmpty
+        {
             return paths.map { URL(fileURLWithPath: $0) }
         }
         return nil

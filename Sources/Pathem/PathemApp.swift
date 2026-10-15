@@ -67,6 +67,7 @@ enum PathemApp {
             launchEnvironment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SETTINGS_DEFAULTS_UI_TEST"] != nil
             || launchEnvironment["PATHEM_OPENER_UI_TEST"] != nil
+            || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
         #else
         let configurationTest = false
         #endif
@@ -259,6 +260,9 @@ enum PathemApp {
         }
         if ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_UI_TEST"] != nil {
             browser.runBackgroundMenuUIAutomation()
+        }
+        if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil {
+            browser.runSidebarTransferUIAutomation()
         }
         if ProcessInfo.processInfo.environment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil {
             browser.runContentConfigurationUIAutomation()

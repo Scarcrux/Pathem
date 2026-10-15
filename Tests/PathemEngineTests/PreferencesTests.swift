@@ -11,6 +11,18 @@ import Testing
         #expect(prefs.rowHeight == 24)  // 13 + 11, matches the historical default
         #expect(prefs.sizeFormat == .decimal)  // Finder-style KB/MB by default
         #expect(prefs.dateDisplay == .relative)  // Finder-style "Today at 3:14 PM" by default
+        #expect(prefs.dragMovesByDefault)
+    }
+
+    @Test func dragDefaultMovesButPreservesExplicitCopyPreference() throws {
+        let legacy = try JSONDecoder().decode(Preferences.self, from: Data("{}".utf8))
+        #expect(legacy.dragMovesByDefault)
+        for moves in [false, true] {
+            let saved = Preferences(dragMovesByDefault: moves)
+            let restored = try JSONDecoder().decode(
+                Preferences.self, from: JSONEncoder().encode(saved))
+            #expect(restored.dragMovesByDefault == moves)
+        }
     }
 
     @Test func sizeAndDateFormatsRoundTrip() throws {

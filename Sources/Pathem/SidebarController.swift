@@ -8,6 +8,19 @@ enum SmartQuery: Equatable {
     case namedTag(String)  // a custom Finder tag (not one of the seven colors)
 }
 
+/// Own file Paste while the source list is focused. An inline rename's field
+/// editor remains first responder and continues to handle text Paste itself.
+@MainActor
+private final class SidebarOutlineView: NSOutlineView {
+    var onPaste: (() -> Void)?
+    var canPaste: (() -> Bool)?
+    @objc func paste(_ sender: Any?) { onPaste?() }
+    override func validateUserInterfaceItem(_ item: NSValidatedUserInterfaceItem) -> Bool {
+        item.action == #selector(paste(_:))
+            ? canPaste?() == true : super.validateUserInterfaceItem(item)
+    }
+}
+
 /// A fully customizable Finder-style source list. The user's own groups and
 /// shortcuts come from an editable `Sidebar` model (persisted as sidebar.json):
 /// drag to reorder within and across groups, rename inline, change a shortcut's
@@ -16,11 +29,11 @@ enum SmartQuery: Equatable {
 /// editable. Selecting a row hands its URL to `onSelect`.
 @MainActor
 final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate,
-    NSMenuDelegate, NSTextFieldDelegate
+    NSMenuDelegate, NSTextFieldDelegate, NSMenuItemValidation
 {
     let containerView = NSVisualEffectView()
     private let scrollView = NSScrollView()
-    private let outline = NSOutlineView()
+    private let outline = SidebarOutlineView()
 
     /// The editable part of the sidebar. Set by the browser after loading, then
     /// kept in sync; every edit calls `onModelChange` so it can be persisted.
@@ -75,6 +88,21 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var onEjectVolume: ((URL) -> Void)?
     /// Files were dropped onto a folder item (Favorite/Volume/Cloud): move/copy them in.
     var onDropFilesIntoFolder: ((_ urls: [URL], _ folder: URL, _ move: Bool) -> Void)?
+    var dragMovesByDefault = Preferences.default.dragMovesByDefault
+    var onPasteIntoFolder: ((URL) -> Void)?
+    var canPasteIntoFolder: ((URL) -> Bool)?
+
+    var selectedPasteFolder: URL? {
+        pasteFolder(for: outline.item(atRow: outline.selectedRow) as? Node)
+    }
+    var hasKeyboardFocus: Bool { outline.window?.firstResponder === outline }
+
+    private func pasteFolder(for node: Node?) -> URL? {
+        guard let node, node.isFolderLocation, let url = node.url,
+            url.isFileURL, Self.isDirectory(url)
+        else { return nil }
+        return url
+    }
     /// Files were dropped onto a Tag: apply that color tag to them.
     var onApplyTag: ((_ urls: [URL], _ color: FileTag.Color) -> Void)?
     /// The AirDrop row was clicked: AirDrop the active pane's current selection.
@@ -272,6 +300,19 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         outline.autoresizesOutlineColumn = false
         outline.dataSource = self
         outline.delegate = self
+        outline.onPaste = { [weak self] in
+            guard let self, let folder = self.selectedPasteFolder,
+                self.canPasteIntoFolder?(folder) == true
+            else {
+                NSSound.beep()
+                return
+            }
+            self.onPasteIntoFolder?(folder)
+        }
+        outline.canPaste = { [weak self] in
+            guard let self, let folder = self.selectedPasteFolder else { return false }
+            return self.canPasteIntoFolder?(folder) == true
+        }
         // Double-click a folder (or group header) to expand/collapse it. The default
         // double-click doesn't reliably toggle a lazily-loaded folder (its children aren't
         // there yet at click time), so drive it explicitly.
@@ -1323,7 +1364,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             if case .smart(.tag) = node.kind { return .copy }  // apply tag
             if case .airdrop = node.kind { return .copy }  // send via AirDrop
             if case .trash = node.kind { return .move }  // always trashes, regardless of Command
-            if let url = node.url, Self.isDirectory(url) { return Self.dropOperationForEvent() }
+            if pasteFolder(for: node) != nil {
+                return FileDrag.operation(for: info, movesByDefault: dragMovesByDefault)
+            }
         }
         // Dropping folders from a pane: add them to a user group as shortcuts,
         // either into the group or between/onto existing favorites.
@@ -1345,9 +1388,6 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     static func isDirectory(_ url: URL) -> Bool {
         (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false
-    }
-    static func dropOperationForEvent() -> NSDragOperation {
-        NSApp.currentEvent?.modifierFlags.contains(.command) == true ? .move : .copy
     }
 
     func outlineView(
@@ -1373,8 +1413,10 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 onTrashFiles?(urls)
                 return true
             }
-            if let url = node.url, Self.isDirectory(url) {
-                onDropFilesIntoFolder?(urls, url, Self.dropOperationForEvent() == .move)
+            if let url = pasteFolder(for: node) {
+                let operation = FileDrag.operation(for: info, movesByDefault: dragMovesByDefault)
+                guard !operation.isEmpty else { return false }
+                onDropFilesIntoFolder?(urls, url, operation == .move)
                 return true
             }
         }
@@ -1452,8 +1494,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     // MARK: Context menu
 
     func menuNeedsUpdate(_ menu: NSMenu) {
-        menu.removeAllItems()
         let node = outline.item(atRow: outline.clickedRow) as? Node
+        updateMenu(menu, for: node)
+    }
+
+    private func updateMenu(_ menu: NSMenu, for node: Node?) {
+        menu.removeAllItems()
         menuTargetNode = node
 
         func add(_ title: String, _ selector: Selector) {
@@ -1466,6 +1512,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             add(L("sidebar.copyPath", "Copy Path"), #selector(copyPathTarget))
             // Folder locations (favorites, cloud drives, volumes, system places) also open elsewhere.
             if node.isFolderLocation {
+                add(L("list.paste", "Paste"), #selector(pasteIntoTarget(_:)))
                 add(L("bvc.cmd.openInNewTab", "Open in New Tab"), #selector(openInNewTabTarget))
                 add(
                     L("sidebar.openInOtherPane", "Open in Other Pane"),
@@ -1535,6 +1582,54 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         }
         return connection
     }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        guard menuItem.action == #selector(pasteIntoTarget(_:)) else { return true }
+        guard let folder = pasteFolder(for: menuTargetNode) else { return false }
+        return canPasteIntoFolder?(folder) == true
+    }
+
+    @objc private func pasteIntoTarget(_ sender: Any?) {
+        guard let folder = pasteFolder(for: menuTargetNode), canPasteIntoFolder?(folder) == true
+        else {
+            NSSound.beep()
+            return
+        }
+        onPasteIntoFolder?(folder)
+    }
+
+    #if DEBUG
+    var debugOutline: NSOutlineView { outline }
+    func debugExpandFolder(_ url: URL) {
+        if let node = debugNode(for: url) { outline.expandItem(node) }
+    }
+    func debugMenu(for url: URL) -> NSMenu? {
+        guard let node = debugNode(for: url) else { return nil }
+        let menu = NSMenu()
+        updateMenu(menu, for: node)
+        for item in menu.items where item.action != nil {
+            item.isEnabled = validateMenuItem(item)
+        }
+        return menu
+    }
+    private func debugNode(for url: URL) -> Node? {
+        (0..<outline.numberOfRows).compactMap { outline.item(atRow: $0) as? Node }
+            .first { $0.url?.standardizedFileURL.path == url.standardizedFileURL.path }
+    }
+    func debugDrop(_ info: NSDraggingInfo, into url: URL, accept: Bool) -> NSDragOperation {
+        guard let node = debugNode(for: url) else { return [] }
+        let operation = outlineView(
+            outline, validateDrop: info, proposedItem: node,
+            proposedChildIndex: NSOutlineViewDropOnItemIndex)
+        if accept, !operation.isEmpty {
+            guard
+                outlineView(
+                    outline, acceptDrop: info, item: node, childIndex: NSOutlineViewDropOnItemIndex)
+            else { return [] }
+        }
+        return operation
+    }
+    #endif
 
     @objc private func connectTarget() { targetConnection().map { onSelectConnection?($0) } }
     @objc private func connectInNewTabTarget() {

@@ -27,6 +27,14 @@ permission is never counted as a pass. See [ENVIRONMENTAL_TESTING.md](ENVIRONMEN
 
 ## Commands and CI policy
 
+The sidebar-transfer regression (`PATHEM_SIDEBAR_TRANSFER_UI_TEST`) additionally
+dispatches native sidebar Paste actions against real temporary files, checks cut
+versus copy and undo, and delivers private drag pasteboards/modifier events through
+sidebar/breadcrumb/Up delegates. Both drag defaults, Command inversion, copy-only
+sources and unsupported-operation refusal are distinct controls. See
+[SIDEBAR_TRANSFER_TESTING.md](SIDEBAR_TRANSFER_TESTING.md) for the causal contract;
+this does not claim physical dragging in third-party apps or provider hydration.
+
 - `make ci` runs localization lint, a full serial engine test pass, the complete debug product E2E
   suite, and the release-package gate. GitHub Actions runs the same layers.
 - `make e2e-app` is the release-bundle gate. Launch liveness, an externally observed visible window,

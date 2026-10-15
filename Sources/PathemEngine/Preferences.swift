@@ -25,10 +25,14 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// (KiB, MiB; 1024-based).
     public enum SizeFormat: String, Codable, Sendable, CaseIterable { case decimal, binary }
     /// How dates are shown: relative ("Yesterday at 3:14 PM"), short numeric, or medium.
-    public enum DateDisplay: String, Codable, Sendable, CaseIterable { case relative, short, medium }
+    public enum DateDisplay: String, Codable, Sendable, CaseIterable {
+        case relative, short, medium
+    }
 
     /// Where a new tab or window opens: the current folder, Home, or a fixed folder.
-    public enum NewTabLocation: String, Codable, Sendable, CaseIterable { case lastFolder, home, fixed }
+    public enum NewTabLocation: String, Codable, Sendable, CaseIterable {
+        case lastFolder, home, fixed
+    }
 
     /// What the Recents smart location surfaces: files recently changed (default) or recently
     /// opened. Finder's Recents is "recently opened"; "modified" is often more useful in a file
@@ -111,7 +115,7 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// default. Applies to copies only; a move leaves no source to compare against.
     public var verifyCopies: Bool
     /// Dragging items between folders moves them by default (hold Command to copy).
-    /// Off keeps the Finder-like default of copy (hold Command to move).
+    /// Off selects copy instead (hold Command to move).
     public var dragMovesByDefault: Bool
     /// Cap remote transfer speed in KB/s (0 = unlimited).
     public var bandwidthLimitKBps: Int
@@ -185,7 +189,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         compactSidebar: Bool = false, monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
-        dragMovesByDefault: Bool = false, appearance: Appearance = .system,
+        dragMovesByDefault: Bool = true, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, torrentDownloadPath: String = "",
         confirmInboundTorrents: Bool = true, showHiddenByDefault: Bool = false,
         useFinderGetInfo: Bool = false, previewInGalleryView: Bool = false,
@@ -200,7 +204,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         recentsBasis: RecentsBasis = .modified,
         newTabLocation: NewTabLocation = .lastFolder, fixedStartFolder: String = "",
         middleClickOpensNewTab: Bool = true, commanderCommands: [String] = [],
-        statusShowItemCount: Bool = true, statusShowSize: Bool = true, statusShowFreeSpace: Bool = false,
+        statusShowItemCount: Bool = true, statusShowSize: Bool = true,
+        statusShowFreeSpace: Bool = false,
         newFolderName: String = "untitled folder", newFileName: String = "untitled file",
         newTabAtEnd: Bool = true,
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
@@ -282,21 +287,28 @@ public struct Preferences: Codable, Sendable, Equatable {
         // try? for the enum: an unknown raw value falls back rather than failing the file.
         density = (try? c.decode(Density.self, forKey: .density)) ?? d.density
         fontSize = try c.decodeIfPresent(Int.self, forKey: .fontSize) ?? d.fontSize
-        alternatingRows = try c.decodeIfPresent(Bool.self, forKey: .alternatingRows) ?? d.alternatingRows
+        alternatingRows =
+            try c.decodeIfPresent(Bool.self, forKey: .alternatingRows) ?? d.alternatingRows
         searchOCR = try c.decodeIfPresent(Bool.self, forKey: .searchOCR) ?? d.searchOCR
         showFullPathInTitle =
             try c.decodeIfPresent(Bool.self, forKey: .showFullPathInTitle) ?? d.showFullPathInTitle
-        pathBarAtBottom = try c.decodeIfPresent(Bool.self, forKey: .pathBarAtBottom) ?? d.pathBarAtBottom
+        pathBarAtBottom =
+            try c.decodeIfPresent(Bool.self, forKey: .pathBarAtBottom) ?? d.pathBarAtBottom
         openConnectionsInNewTab =
-            try c.decodeIfPresent(Bool.self, forKey: .openConnectionsInNewTab) ?? d.openConnectionsInNewTab
+            try c.decodeIfPresent(Bool.self, forKey: .openConnectionsInNewTab)
+            ?? d.openConnectionsInNewTab
         calculateFolderSizes =
-            try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes) ?? d.calculateFolderSizes
-        compactSidebar = try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
+            try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes)
+            ?? d.calculateFolderSizes
+        compactSidebar =
+            try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
         monochromeSidebarIcons =
-            try c.decodeIfPresent(Bool.self, forKey: .monochromeSidebarIcons) ?? d.monochromeSidebarIcons
+            try c.decodeIfPresent(Bool.self, forKey: .monochromeSidebarIcons)
+            ?? d.monochromeSidebarIcons
         confirmBeforeDelete =
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
-        conflictDefault = (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault
+        conflictDefault =
+            (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault
         verifyCopies = try c.decodeIfPresent(Bool.self, forKey: .verifyCopies) ?? d.verifyCopies
         dragMovesByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .dragMovesByDefault) ?? d.dragMovesByDefault
@@ -304,15 +316,18 @@ public struct Preferences: Codable, Sendable, Equatable {
         bandwidthLimitKBps =
             try c.decodeIfPresent(Int.self, forKey: .bandwidthLimitKBps) ?? d.bandwidthLimitKBps
         torrentDownloadPath =
-            try c.decodeIfPresent(String.self, forKey: .torrentDownloadPath) ?? d.torrentDownloadPath
+            try c.decodeIfPresent(String.self, forKey: .torrentDownloadPath)
+            ?? d.torrentDownloadPath
         confirmInboundTorrents =
-            try c.decodeIfPresent(Bool.self, forKey: .confirmInboundTorrents) ?? d.confirmInboundTorrents
+            try c.decodeIfPresent(Bool.self, forKey: .confirmInboundTorrents)
+            ?? d.confirmInboundTorrents
         showHiddenByDefault =
             try c.decodeIfPresent(Bool.self, forKey: .showHiddenByDefault) ?? d.showHiddenByDefault
         useFinderGetInfo =
             try c.decodeIfPresent(Bool.self, forKey: .useFinderGetInfo) ?? d.useFinderGetInfo
         previewInGalleryView =
-            try c.decodeIfPresent(Bool.self, forKey: .previewInGalleryView) ?? d.previewInGalleryView
+            try c.decodeIfPresent(Bool.self, forKey: .previewInGalleryView)
+            ?? d.previewInGalleryView
         iconZoom = try c.decodeIfPresent(Double.self, forKey: .iconZoom) ?? d.iconZoom
         singleClickToOpen =
             try c.decodeIfPresent(Bool.self, forKey: .singleClickToOpen) ?? d.singleClickToOpen
@@ -320,35 +335,49 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .underlineOnHover) ?? d.underlineOnHover
         instantTooltips =
             try c.decodeIfPresent(Bool.self, forKey: .instantTooltips) ?? d.instantTooltips
-        toolbarIconSize = (try? c.decode(IconSize.self, forKey: .toolbarIconSize)) ?? d.toolbarIconSize
+        toolbarIconSize =
+            (try? c.decode(IconSize.self, forKey: .toolbarIconSize)) ?? d.toolbarIconSize
         hiddenContextItems =
-            try c.decodeIfPresent([String].self, forKey: .hiddenContextItems) ?? d.hiddenContextItems
+            try c.decodeIfPresent([String].self, forKey: .hiddenContextItems)
+            ?? d.hiddenContextItems
         hiddenPaneHeaderButtons =
-            try c.decodeIfPresent([String].self, forKey: .hiddenPaneHeaderButtons) ?? d.hiddenPaneHeaderButtons
+            try c.decodeIfPresent([String].self, forKey: .hiddenPaneHeaderButtons)
+            ?? d.hiddenPaneHeaderButtons
         paneHeaderButtonOrder =
-            try c.decodeIfPresent([String].self, forKey: .paneHeaderButtonOrder) ?? d.paneHeaderButtonOrder
+            try c.decodeIfPresent([String].self, forKey: .paneHeaderButtonOrder)
+            ?? d.paneHeaderButtonOrder
         contextMenuOrder =
             try c.decodeIfPresent([String].self, forKey: .contextMenuOrder) ?? d.contextMenuOrder
         colorRules = try c.decodeIfPresent(ColorRules.self, forKey: .colorRules) ?? d.colorRules
         sizeFormat = (try? c.decode(SizeFormat.self, forKey: .sizeFormat)) ?? d.sizeFormat
         dateDisplay = (try? c.decode(DateDisplay.self, forKey: .dateDisplay)) ?? d.dateDisplay
-        defaultViewMode = (try? c.decode(ViewFormat.ViewMode.self, forKey: .defaultViewMode)) ?? d.defaultViewMode
-        defaultSortKey = (try? c.decode(ViewFormat.SortKey.self, forKey: .defaultSortKey)) ?? d.defaultSortKey
-        defaultSortAscending = try c.decodeIfPresent(Bool.self, forKey: .defaultSortAscending) ?? d.defaultSortAscending
+        defaultViewMode =
+            (try? c.decode(ViewFormat.ViewMode.self, forKey: .defaultViewMode)) ?? d.defaultViewMode
+        defaultSortKey =
+            (try? c.decode(ViewFormat.SortKey.self, forKey: .defaultSortKey)) ?? d.defaultSortKey
+        defaultSortAscending =
+            try c.decodeIfPresent(Bool.self, forKey: .defaultSortAscending)
+            ?? d.defaultSortAscending
         foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? d.foldersFirst
-        recentsBasis = try c.decodeIfPresent(RecentsBasis.self, forKey: .recentsBasis) ?? d.recentsBasis
-        newTabLocation = (try? c.decode(NewTabLocation.self, forKey: .newTabLocation)) ?? d.newTabLocation
-        fixedStartFolder = try c.decodeIfPresent(String.self, forKey: .fixedStartFolder) ?? d.fixedStartFolder
+        recentsBasis =
+            try c.decodeIfPresent(RecentsBasis.self, forKey: .recentsBasis) ?? d.recentsBasis
+        newTabLocation =
+            (try? c.decode(NewTabLocation.self, forKey: .newTabLocation)) ?? d.newTabLocation
+        fixedStartFolder =
+            try c.decodeIfPresent(String.self, forKey: .fixedStartFolder) ?? d.fixedStartFolder
         middleClickOpensNewTab =
-            try c.decodeIfPresent(Bool.self, forKey: .middleClickOpensNewTab) ?? d.middleClickOpensNewTab
+            try c.decodeIfPresent(Bool.self, forKey: .middleClickOpensNewTab)
+            ?? d.middleClickOpensNewTab
         commanderCommands =
             try c.decodeIfPresent([String].self, forKey: .commanderCommands) ?? d.commanderCommands
         statusShowItemCount =
             try c.decodeIfPresent(Bool.self, forKey: .statusShowItemCount) ?? d.statusShowItemCount
-        statusShowSize = try c.decodeIfPresent(Bool.self, forKey: .statusShowSize) ?? d.statusShowSize
+        statusShowSize =
+            try c.decodeIfPresent(Bool.self, forKey: .statusShowSize) ?? d.statusShowSize
         statusShowFreeSpace =
             try c.decodeIfPresent(Bool.self, forKey: .statusShowFreeSpace) ?? d.statusShowFreeSpace
-        newFolderName = try c.decodeIfPresent(String.self, forKey: .newFolderName) ?? d.newFolderName
+        newFolderName =
+            try c.decodeIfPresent(String.self, forKey: .newFolderName) ?? d.newFolderName
         newFileName = try c.decodeIfPresent(String.self, forKey: .newFileName) ?? d.newFileName
         newTabAtEnd = try c.decodeIfPresent(Bool.self, forKey: .newTabAtEnd) ?? d.newTabAtEnd
         dragFlickActions =
@@ -360,8 +389,10 @@ public struct Preferences: Codable, Sendable, Equatable {
         dragTrailDecay =
             try c.decodeIfPresent(Double.self, forKey: .dragTrailDecay) ?? d.dragTrailDecay
         themeName = try c.decodeIfPresent(String.self, forKey: .themeName) ?? d.themeName
-        accentColorHex = try c.decodeIfPresent(String.self, forKey: .accentColorHex) ?? d.accentColorHex
-        windowTintHex = try c.decodeIfPresent(String.self, forKey: .windowTintHex) ?? d.windowTintHex
+        accentColorHex =
+            try c.decodeIfPresent(String.self, forKey: .accentColorHex) ?? d.accentColorHex
+        windowTintHex =
+            try c.decodeIfPresent(String.self, forKey: .windowTintHex) ?? d.windowTintHex
         iconSetName = try c.decodeIfPresent(String.self, forKey: .iconSetName) ?? d.iconSetName
     }
 }

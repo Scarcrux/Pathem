@@ -516,6 +516,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
                 .compare(destPath, options: .caseInsensitive) != .orderedSame
         }
         guard !incoming.isEmpty else { return false }
+        guard !resolvedDragOperation(info).isEmpty else { return false }
         onDropFiles?(incoming, resolvedDragOperation(info) == .move, destination)
         return true
     }
@@ -526,12 +527,10 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
     /// Move dragged items between folders by default (else copy); Command inverts it, matching
     /// the list. Driven by the pref via PaneController.
-    var dragMovesByDefault = false
+    var dragMovesByDefault = Preferences.default.dragMovesByDefault
 
     private func resolvedDragOperation(_ info: NSDraggingInfo) -> NSDragOperation {
-        let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        let wantMove = dragMovesByDefault != commandHeld  // Command inverts the default
-        return wantMove && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
+        FileDrag.operation(for: info, movesByDefault: dragMovesByDefault)
     }
 
     @objc private func doubleClicked(_ sender: Any?) {

@@ -938,6 +938,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     ) -> Bool {
         springLoader.cancel()  // the drop resolved; don't spring afterward
         guard let urls = draggedURLs(from: draggingInfo), !urls.isEmpty else { return false }
+        guard !resolvedDragOperation(draggingInfo).isEmpty else { return false }
         var folder: URL?
         if dropOperation == .on, let ei = entryIndex(at: indexPath), entries[ei].isDirectory {
             folder = fileURL(for: entries[ei])
@@ -988,12 +989,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
 
     /// Move dragged items between folders by default (else copy); Command inverts it, matching
     /// the list. Driven by the pref via PaneController.
-    var dragMovesByDefault = false
+    var dragMovesByDefault = Preferences.default.dragMovesByDefault
 
     private func resolvedDragOperation(_ info: NSDraggingInfo) -> NSDragOperation {
-        let commandHeld = NSApp.currentEvent?.modifierFlags.contains(.command) ?? false
-        let wantMove = dragMovesByDefault != commandHeld  // Command inverts the default
-        return wantMove && info.draggingSourceOperationMask.contains(.move) ? .move : .copy
+        FileDrag.operation(for: info, movesByDefault: dragMovesByDefault)
     }
 
     // MARK: Icons

@@ -232,6 +232,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var isTransferring: Bool { transferInFlight }
     /// File paths currently marked for cut (dimmed until pasted or cleared).
     var cutPaths: Set<String> = []
+    #if DEBUG
+    /// UI regression scenarios must not replace the owner's system clipboard.
+    var debugFilePasteboard: NSPasteboard?
+    #endif
     var sidebarWidthConstraint: NSLayoutConstraint? { splitLayout.sidebarWidthConstraint }
     var compactSidebar: Bool {
         get { splitLayout.compactSidebar }
@@ -604,6 +608,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onEjectVolume = { [weak self] volume in self?.ejectVolume(volume) }
         sidebar.onDropFilesIntoFolder = { [weak self] urls, folder, move in
             self?.dropFiles(urls, move: move, into: folder)
+        }
+        sidebar.onPasteIntoFolder = { [weak self] folder in self?.pasteFiles(into: folder) }
+        sidebar.canPasteIntoFolder = { [weak self] folder in
+            self?.canPasteFiles(into: folder) == true
         }
         sidebar.onApplyTag = { [weak self] urls, color in self?.applyTag(color, to: urls) }
         sidebar.onAirDrop = { [weak self] in

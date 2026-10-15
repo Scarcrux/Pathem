@@ -165,7 +165,7 @@ extension PaneContentView {
     /// List, icon, gallery, and column all report a selection rect now; this default is only a
     /// fallback (the bar then centers on the pane).
     func selectionRectInWindow() -> NSRect? { nil }
-    /// Only the list view distinguishes drag copy vs move for now.
+    /// Views without file-drop support (the tree) do not consume this preference.
     var dragMovesByDefault: Bool {
         get { false }
         set {}

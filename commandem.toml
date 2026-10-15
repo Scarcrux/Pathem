@@ -1545,4 +1545,20 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner authorized no-restart install. Release source4af77c0 packaged with canonical recipe/source-root/jobs-only private wrapper, verified recursively signed ARM64 and exact byte inventory, then atomically exchanged at /Applications/Pathem.app. Original app PID864/start time preserved; old bundle retained for rollback. Commandem newer accepted source945/whole-mainb1 and universal CLI independently verified through peer normal no-kill delivery; earlier a5 preparation never installed. No app/helper quit, kill, launch, provider call, push or key/grant creation. Pending primary guidance/roadmap edits preserved; physical gesture behavior remains separately graded."
     at = "2026-10-11T00:48:25Z"
+
+[[mission]]
+  id = "m-35085af3"
+  title = "Live-app: sidebar paste destinations and consistent drag defaults"
+  status = "done"
+  note = "Completed 2026-10-15. Trigger: cut files could not be pasted into sidebar folders and unmodified drags copied despite the saved move preference being enabled. Evidence/mechanism: sidebar lacked Paste and responder routing, clipboard Paste always targeted activePane, sidebar/breadcrumb/Up hard-coded copy, and newly created tabs omitted drag preference propagation. Change: explicit-destination clipboard Paste shares cut markers/dimming/conflicts/undo; real-folder sidebar menus and keyboard routing validate availability; all supported folder-drop views use one source-mask-aware Command-inverting policy, including existing/new tabs and navigation targets. New/missing preferences default to move while saved copy remains respected. Effect: focused native regression repeats 38/38; local build/warnings (15 known, zero new), 15 XCTest plus 783 Swift Testing cases pass; full product rerun 67 PASS/1 explicit transparent-capture SKIP/0 FAIL; ARM64 local package 14/14. Initial full CI failed my new-flag allowlist omission (fixed; guards 10/10) and a WebDAV fixture startup (unchanged rerun 5/5, cause unknown); all normal gate components subsequently passed individually, not a claimed clean monolithic CI run. Confidence: real cut/copy/undo/source removal and destination routing plus policy delivery proven; physical third-party dragging/provider hydration unclaimed. No owner preference edits, install/restart, notarization or publication."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.comment]]
+    text = "Focused native-window regression now passes 38/38 with disposable files/config and a private clipboard. Proven: cut/copy into clicked favorite/system destinations, source removal versus preservation, undo, sidebar keyboard Paste, inline rename ownership, invalid/busy clipboard controls, existing/new-tab settings propagation, 12 sidebar/breadcrumb/Up policy rows, and a real expanded-child drag move. Instrument failures were retained in docs/SIDEBAR_TRANSFER_TESTING.md; full make ci is running. Existing explicitly saved copy preference is preserved; new/missing settings default to move."
+    at = "2026-10-15T05:51:26Z"
+
+  [[mission.comment]]
+    text = "Read-only owner preference check confirms move is already enabled, so unexpected copies are a preference-propagation bug, not an unset option. Fresh warning gate passes 15 known/0 new; 15 XCTest and 783 Swift Testing cases pass. Product rerun passes 67 checks, explicitly skips one cached-transparent browser image, fails zero; sidebar regression repeats 38/38, guards 10/10. First broad run failed my omitted new-flag allowlist entry (corrected) and WebDAV fixture startup (unchanged rerun passes 5/5; cause unknown). Local release package verification remains in progress; no install/restart/publication."
+    at = "2026-10-15T06:10:36Z"
 # <<< commandem roadmap <<<

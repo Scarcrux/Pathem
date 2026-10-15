@@ -184,9 +184,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         didSet { content.onMouseGesture = onMouseGestureHandler }
     }
     /// Drag default (move vs copy), re-applied to whichever content is active.
-    var dragMovesByDefault = false {
-        didSet { content.dragMovesByDefault = dragMovesByDefault }
+    var dragMovesByDefault = Preferences.default.dragMovesByDefault {
+        didSet {
+            content.dragMovesByDefault = dragMovesByDefault
+            breadcrumb.dragMovesByDefault = dragMovesByDefault
+            upButton.dragMovesByDefault = dragMovesByDefault
+        }
     }
+    #if DEBUG
+    var debugDragPreferences: [Bool] {
+        [content.dragMovesByDefault, breadcrumb.dragMovesByDefault, upButton.dragMovesByDefault]
+    }
+    #endif
     /// The focusable view of the active content (for first-responder handoff).
     var keyView: NSView { content.keyView }
     private(set) var nav: NavigationState

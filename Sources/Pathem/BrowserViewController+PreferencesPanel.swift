@@ -222,6 +222,7 @@ extension BrowserViewController {
 
     /// Keep existing panes and the new-tab constructor on the same content settings path.
     func applyContentPreferences(to pane: PaneController) {
+        pane.dragMovesByDefault = prefs.dragMovesByDefault
         pane.applyStyle(
             rowHeight: prefs.rowHeight, fontSize: prefs.fontSize,
             alternatingRows: prefs.alternatingRows)
@@ -234,12 +235,12 @@ extension BrowserViewController {
 
     func applyPreferences() {
         applyDefaultViewPreferences()
+        sidebar.dragMovesByDefault = prefs.dragMovesByDefault
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs {
                 applyContentPreferences(to: pane)
                 pane.setPathBar(atBottom: prefs.pathBarAtBottom)
                 pane.setCalculateFolderSizes(prefs.calculateFolderSizes)
-                pane.dragMovesByDefault = prefs.dragMovesByDefault
                 pane.setClickBehavior(
                     singleClick: prefs.singleClickToOpen, underlineHover: prefs.underlineOnHover)
                 let wasHidden = pane.showHiddenByDefault

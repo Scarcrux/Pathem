@@ -4,6 +4,12 @@ import PathemEngine
 // File clipboard: cut / copy / paste of files via the pasteboard, routed from the
 // Edit menu. Split out of BrowserViewController.
 extension BrowserViewController {
+    var filePasteboard: NSPasteboard {
+        #if DEBUG
+        if let debugFilePasteboard { return debugFilePasteboard }
+        #endif
+        return .general
+    }
     // MARK: - File clipboard (cut / copy / paste)
     //
     // Routed via the Edit menu's cut:/copy:/paste:. When the search field is
@@ -16,10 +22,8 @@ extension BrowserViewController {
     /// Open the clipboard viewer on the current file clipboard: the copied/cut items and
     /// whether a paste copies or moves them, with paste-here and clear.
     func showClipboard() {
-        let pasteboard = NSPasteboard.general
-        let urls =
-            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
-            as? [URL] ?? []
+        let pasteboard = filePasteboard
+        let urls = FileDrag.readFileURLs(from: pasteboard) ?? []
         let isCut = pasteboard.data(forType: Self.cutPasteboardType) != nil
         clipboardViewer.present(
             items: urls, isCut: isCut, over: view.window,
@@ -32,31 +36,66 @@ extension BrowserViewController {
             })
     }
 
-    @objc func paste(_ sender: Any?) { pasteInto(activePane) }
+    @objc func paste(_ sender: Any?) {
+        // Toolbar/registry commands can bypass the outline's responder action.
+        if sidebar.hasKeyboardFocus {
+            guard let folder = sidebar.selectedPasteFolder else {
+                NSSound.beep()
+                return
+            }
+            pasteFiles(into: folder)
+        } else {
+            pasteInto(activePane)
+        }
+    }
 
     /// Paste the file clipboard into a specific pane's folder: the active pane for the
     /// Edit-menu Paste, or the other pane for the quick-bar "Paste in Other Pane" follow-up.
     func pasteInto(_ pane: PaneController?) {
-        guard let pane else { NSSound.beep(); return }
-        if pane.isRemote || pane.isShowingSmartResults { NSSound.beep(); return }  // needs one dest folder
-        guard !transferInFlight else { NSSound.beep(); return }  // don't prompt for a refused op
-        let pasteboard = NSPasteboard.general
-        let urls =
-            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
-            as? [URL] ?? []
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard let pane else {
+            NSSound.beep()
+            return
+        }
+        if pane.isRemote || pane.isShowingSmartResults {
+            NSSound.beep()
+            return
+        }  // needs one dest folder
+        pasteFiles(into: pane.currentURL)
+    }
+
+    func canPasteFiles(into destination: URL) -> Bool {
+        destination.isFileURL && SidebarController.isDirectory(destination)
+            && !transferInFlight && FileDrag.hasFileURLs(filePasteboard)
+    }
+
+    /// Sidebar menu targets are explicit folders, not the active pane or selected row.
+    /// Share the clipboard semantics (cut marker, dimming, conflicts and undo) with pane Paste.
+    func pasteFiles(into destination: URL) {
+        guard canPasteFiles(into: destination) else {
+            NSSound.beep()
+            return
+        }
+        let pasteboard = filePasteboard
+        let urls = FileDrag.readFileURLs(from: pasteboard) ?? []
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
 
         let isMove = pasteboard.data(forType: Self.cutPasteboardType) != nil
-        let destination = pane.currentURL
 
         let conflicts = FileOperations.conflicts(urls: urls, into: destination)
-        resolveThenTransfer(urls: urls, into: destination, move: isMove, conflictCount: conflicts.count) {
+        resolveThenTransfer(
+            urls: urls, into: destination, move: isMove, conflictCount: conflicts.count
+        ) {
             [weak self] outcome in
             guard let self else { return }
             self.leftTabs.activePane?.reloadIfShowingListing()
             self.rightTabs.activePane?.reloadIfShowingListing()
             if !outcome.performed.isEmpty {
-                self.registerUndo(outcome.performed, actionName: isMove ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
+                self.registerUndo(
+                    outcome.performed,
+                    actionName: isMove ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
             if isMove {
                 pasteboard.clearContents()  // cut items are gone; don't move them twice
@@ -64,7 +103,9 @@ extension BrowserViewController {
                 self.applyCutPaths()  // clear the dimming
                 self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))  // drop moved rows
             }
-            if !outcome.failures.isEmpty { self.presentFailures(outcome.failures, title: L("bvc.pasteFailed", "Paste failed")) }
+            if !outcome.failures.isEmpty {
+                self.presentFailures(outcome.failures, title: L("bvc.pasteFailed", "Paste failed"))
+            }
         }
     }
 
@@ -72,10 +113,16 @@ extension BrowserViewController {
         guard let pane = activePane else { return }
         // Copy/cut only writes URLs (no mutation), so it's safe in smart-result views;
         // selectedLocalURLs resolves each item to its real folder. Remote has no local URL.
-        guard !pane.isRemote else { NSSound.beep(); return }
+        guard !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
         let urls = pane.selectedLocalURLs()
-        guard !urls.isEmpty else { NSSound.beep(); return }
-        let pasteboard = NSPasteboard.general
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let pasteboard = filePasteboard
         pasteboard.clearContents()
         pasteboard.writeObjects(urls as [NSURL])
         if cut {
