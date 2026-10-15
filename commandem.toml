@@ -1554,6 +1554,11 @@ name = "pathem"
   campaign = "A power-user Finder replacement people trust and switch to"
   issue = 0
 
+  [[mission.task]]
+    id = "t-15b70d8b"
+    title = "Install the verified sidebar-transfer fix as a universal Developer ID signed/notarized app, preserving the running process and a rollback copy"
+    done = true
+
   [[mission.comment]]
     text = "Focused native-window regression now passes 38/38 with disposable files/config and a private clipboard. Proven: cut/copy into clicked favorite/system destinations, source removal versus preservation, undo, sidebar keyboard Paste, inline rename ownership, invalid/busy clipboard controls, existing/new-tab settings propagation, 12 sidebar/breadcrumb/Up policy rows, and a real expanded-child drag move. Instrument failures were retained in docs/SIDEBAR_TRANSFER_TESTING.md; full make ci is running. Existing explicitly saved copy preference is preserved; new/missing settings default to move."
     at = "2026-10-15T05:51:26Z"
@@ -1561,4 +1566,12 @@ name = "pathem"
   [[mission.comment]]
     text = "Read-only owner preference check confirms move is already enabled, so unexpected copies are a preference-propagation bug, not an unset option. Fresh warning gate passes 15 known/0 new; 15 XCTest and 783 Swift Testing cases pass. Product rerun passes 67 checks, explicitly skips one cached-transparent browser image, fails zero; sidebar regression repeats 38/38, guards 10/10. First broad run failed my omitted new-flag allowlist entry (corrected) and WebDAV fixture startup (unchanged rerun passes 5/5; cause unknown). Local release package verification remains in progress; no install/restart/publication."
     at = "2026-10-15T06:10:36Z"
+
+  [[mission.comment]]
+    text = "Owner requested install. Installed app is universal, Developer ID team K466Z7J2AS, with valid notarization; reuse exact installed signing identity and existing pathem-notary profile rather than downgrade trust. Build source32d161a in an isolated install workbench, verify before atomic exchange; do not use package INSTALL mode because it kills the owner app/helpers. No publication or repository visibility change."
+    at = "2026-10-15T06:28:55Z"
+
+  [[mission.comment]]
+    text = "Owner-requested install completed 2026-10-15 from verified source32d161a. Exact installed leaf identity preserved (public SHA1 99842B5A6A3B15AEF88EC89CE9A1B67E46F4B9C8); universal arm64+x86_64 app and all three helpers, Hardened Runtime. Existing pathem-notary profile submission9acfb991 Accepted and stapled; source, staged and installed verify-release A1-A6 all pass; warning inventory12 known/0 new. Private release-mode launch exposes one window with updater disabled; only that probe PID32387 was terminated. Atomic renameatx_np exchange validated on positive/refusal controls, then installed; complete regular-file SHA256 and symlink inventories match the verified package. Installed main SHA256 d95c227be6aa4449356bba18b0fe990299026ea4b2630a731275a6e3d29706c0. Rollback /Applications/.pathem-rollback.VBf7u8/Pathem.app retains the exact pre-swap executable and also passes A1-A6. Process evidence correction: the installer before/after filtered snapshots were empty, so equality is NOT proof of uninterrupted owner PID. Initial owner PID38939 later absent; PID44118 started42s after swap and lsof inode matches the installed executable, proving the fixed build is running now. No owner/helper quit, kill or relaunch command was issued, but uninterrupted continuity is unclaimed. No keychain credential/grant changes, public release, push or visibility change."
+    at = "2026-10-15T06:36:56Z"
 # <<< commandem roadmap <<<
