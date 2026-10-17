@@ -68,6 +68,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_SETTINGS_DEFAULTS_UI_TEST"] != nil
             || launchEnvironment["PATHEM_OPENER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
+            || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
         #else
         let configurationTest = false
         #endif

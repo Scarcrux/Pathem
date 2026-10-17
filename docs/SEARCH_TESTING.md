@@ -202,3 +202,18 @@ disk-image Resource busy cause; both retain diagnostic receipts/open tracking. T
 new single-result cases validate scope/mode routing, not arbitrary multi-result
 selection/viewport retention across a re-query. Native appearance, physical input,
 native picker approval and live Spotlight completeness remain separate boundaries.
+
+## Task 43: keyboard, explicit Reveal and real pane-viewport continuation
+
+The mandatory native suite now includes all-five-view/both-pane nonzero viewport
+and selection controls, real field-editor queries, matching/no-match/clear/reopen,
+actual accepted-listing and backend receipts, nonfirst-result Return/keypad Enter,
+origin-pane visibility/ownership, and controlled old/new response/navigation races.
+It passes **465/465** after three convicted repairs: keypad Enter activation,
+post-listing explicit Reveal scrolling (without changing generic restoration),
+and non-activating programmatic Column selection. Search automation now requires
+its own temporary configuration root before startup. See
+[SEARCH_INTERACTION_MATRIX.md](SEARCH_INTERACTION_MATRIX.md) for criteria, the
+red sample/counterfactual, corrected instrument and exact confidence boundaries.
+This does not approve native visual baselines, OS picker acceptance, live Spotlight
+completeness, physical input, or external default-application interoperability.

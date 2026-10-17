@@ -9,7 +9,11 @@ private final class FileSearchPanel: NSPanel {
 private final class FileSearchTable: NSTableView {
     var reveal: (() -> Void)?
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 36 { reveal?() } else { super.keyDown(with: event) }
+        if event.keyCode == 36 || event.keyCode == 76 {
+            reveal?()  // Return and the numeric keypad's Enter activate the same result.
+        } else {
+            super.keyDown(with: event)
+        }
     }
 }
 
@@ -395,6 +399,7 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     var debugScope: NSPopUpButton { scopePopup }
     var debugSubfolders: NSButton { subfolders }
     var debugResults: [URL] { results }
+    var debugTable: NSTableView { table }
     var debugStatus: String { statusLabel.stringValue }
     var debugLocation: String { locationLabel.stringValue }
     var debugBusy: Bool { isSearching }

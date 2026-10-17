@@ -28,6 +28,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private var trailingConstraint: NSLayoutConstraint?
     private var sortFormat = ViewFormat.default  // how every column (incl. drilled) is sorted
     private var restoringSortSelection = false
+    private var selectingProgrammatically = false
     private let columnWidth: CGFloat = 220
     /// The one shared file context menu, same as every other pane view. Column view had no
     /// right-click menu at all before; now it gets the full set (Open With, Tags, Extract, ...).
@@ -350,7 +351,9 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         guard let table = notification.object as? NSTableView, let index = columnIndex(of: table)
         else { return }
         activeColumn = index
-        onBecomeActive?()
+        // Programmatic Reveal/selection restoration updates this column, but
+        // must not steal active-side ownership from a pane the user has focused.
+        if !selectingProgrammatically { onBecomeActive?() }
         onSelectionChanged?()
         // Single folder selected -> reveal its contents in the next column.
         let selected = table.selectedRowIndexes
@@ -769,6 +772,9 @@ extension ColumnBrowserController: PaneContentView {
         guard columns.indices.contains(activeColumn) else { return }
         let column = columns[activeColumn]
         guard let row = column.entries.firstIndex(where: { $0.name == name }) else { return }
+        let wasSelecting = selectingProgrammatically
+        selectingProgrammatically = true
+        defer { selectingProgrammatically = wasSelecting }
         column.table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
         // Only scroll when the row is actually off screen. An operation on a visible
         // file (rename, new-folder-with-selection) reloads the column, and forcing
@@ -788,6 +794,9 @@ extension ColumnBrowserController: PaneContentView {
         for (index, entry) in column.entries.enumerated() where names.contains(entry.name) {
             rows.insert(index)
         }
+        let wasSelecting = selectingProgrammatically
+        selectingProgrammatically = true
+        defer { selectingProgrammatically = wasSelecting }
         column.table.selectRowIndexes(rows, byExtendingSelection: false)
     }
 

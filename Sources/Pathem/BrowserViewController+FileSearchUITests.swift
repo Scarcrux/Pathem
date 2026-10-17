@@ -59,6 +59,15 @@ extension BrowserViewController {
         if ProcessInfo.processInfo.environment["PATHEM_SEARCH_SESSION_SAMPLE"] == "1" {
             return checks + fileSearchSessionChecks(over: window, root: root)
         }
+        if ProcessInfo.processInfo.environment["PATHEM_SEARCH_MATRIX_SAMPLE"] == "1"
+            || ProcessInfo.processInfo.environment["PATHEM_SEARCH_MATRIX_COLUMN_SAMPLE"] == "1"
+        {
+            return checks
+                + fileSearchInteractionMatrix(
+                    root: root, sample: true,
+                    columnOnly: ProcessInfo.processInfo.environment[
+                        "PATHEM_SEARCH_MATRIX_COLUMN_SAMPLE"] == "1")
+        }
 
         // Check production entry points, not only the standalone controller.
         loadSavedSearches()
@@ -344,6 +353,7 @@ extension BrowserViewController {
         }
         controller.debugPanel.cancelOperation(nil)
         check("search-escape-dismisses", !controller.debugPanel.isVisible)
+        checks += fileSearchInteractionMatrix(root: root, sample: false)
         return checks
     }
 

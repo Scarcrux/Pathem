@@ -1181,6 +1181,11 @@ name = "pathem"
     id = "t-1102dce4"
     title = "Diagnose disk-image E2E Resource busy: final Task41 CI passed all UI checks (ContentPrefs204/204, search99/99) but archives scenario failed at hdiutil create after eight archive/file checks passed. Preserve failed CI; identify actual tool/fixture ownership and reproduce without foreign signals or inferring resource contention. Do not waive disk-image acceptance."
 
+  [[mission.task]]
+    id = "t-eb31737d"
+    title = "Search continuation: fix table keypad Enter and offscreen explicit Reveal; verify nonzero viewport/selection retention in all five views and both panes plus delivered navigation/reopen races"
+    done = true
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1528,6 +1533,18 @@ name = "pathem"
   [[mission.comment]]
     text = "File-safety audit follow-through is separately completed in Mission56: six proven Undo/Redo/clipboard/history defects fixed, mandatory native sidebar-transfer scenario expanded38 to88 checks, and full local CI passes15 XCTest+786 Swift Testing,67 product passes/one standing visual skip,ARM64 ad-hoc package14/14. This advances transfer/history behavior coverage but does not close broad visual/layout/search/transient-UI/environmental acceptance or explain36/39/42. Publication and owner-gated tasks remain held."
     at = "2026-10-17T21:31:54Z"
+
+  [[mission.comment]]
+    text = "Owner requested Mission53 continuation. Taking53.13 remaining real-window interaction matrix in isolated codex-search-matrix. Existing170 checks cover literal modes/pickers and one three-row List pane-switch case, not the nonzero-viewport/all-five-view/both-pane or multi-result keyboard activation cross product. Write criteria/sample controls first; retain visual/native-picker/live-index limitations and other lanes edits."
+    at = "2026-10-17T21:58:09Z"
+
+  [[mission.comment]]
+    text = "Task53.43 bounded evidence: first search sample50/53 repeatedly convicts missing keypad Enter activation and explicit Reveal selecting offscreen (raw List clip0,-28, selectedmatch090, nil visible rect). Fixes pass53/53; gated navigation/reopen receipts pass66/66. First full417/443 invalidated repeated same-mode snapshot setup, so added DEBUG accepted-listing counters plus actual other-pane first-responder receipts before production retention changes. Corrected Column70/72 convicts active-side theft; original names-only Reveal counterfactual68/72 proves it predates new scroll callback. Activation-only programmatic-selector guard preserves preview/selection/user focus. Corrected Column72/72 and List/Gallery70/70 pass. Full corrected matrix/CI pending;53.13 broad/native visual/environmental limitations and36/39/42 remain open. No install/public/history/credentials."
+    at = "2026-10-17T22:18:08Z"
+
+  [[mission.comment]]
+    text = "Task53.43 complete: corrected full native search465/465 across all five views/both panes, compared with original170 checks and discriminating red50/53+Column70/72 controls. Fix keypad Enter, explicit Reveal visibility and programmatic Column active-side theft only; counterfactual and invalid first-expansion instrument retained in docs/SEARCH_INTERACTION_MATRIX.md. Final make ci exit0:15 XCTest+786 Swift Testing,product67pass/one standing transparent browser-image skip/0fail,search465,configrootguards12,ARM64 ad-hoc package14/14;fresh debug15/release12 known warnings,zero new/unparsed. Broad53.13 and53 visual/environmental acceptance remain open;passing current popover/contentprefs/hdiutil checks does not close36/39/42. No install/publication/history/credentials;owner-gated asks untouched."
+    at = "2026-10-17T22:34:16Z"
 
 [[mission]]
   id = "m-e1443252"

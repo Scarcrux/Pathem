@@ -156,6 +156,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         (content as? FileListController)?.debugListContentHeight ?? 0
     }
     var debugEntryCount: Int { entries.count }
+    #if DEBUG
+    private(set) var debugListingCompletions = 0
+    #endif
     func debugHasEntry(_ name: String) -> Bool { entries.contains { $0.name == name } }
     func debugEntryPosition(_ name: String) -> Int? { entries.firstIndex { $0.name == name } }
     func debugSelectNames(_ names: [String]) { content.selectNames(Set(names)) }
@@ -719,6 +722,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             // queued follow-up (e.g. "new folder, now rename it") now that its row exists and is
             // selected -- and drop the redundant watcher refresh that would cancel the rename.
             self.applyPendingAfterListing()
+            #if DEBUG
+            self.debugListingCompletions += 1
+            #endif
             self.updateStatus()
             self.refreshGitStatusAsync()
         }
@@ -2547,8 +2553,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// so the file ends up selected and scrolled into view in the fresh folder. Useful from
     /// search and smart-result views, where the file lives outside the folder on screen.
     func reveal(_ url: URL) {
-        pendingSelection = [url.lastPathComponent]
-        pendingAfterListing = nil
+        let name = url.lastPathComponent
+        pendingSelection = [name]
+        // Generic selection restoration deliberately does not scroll (view swaps
+        // and in-place reloads must preserve the viewport). An explicit Reveal
+        // instead promises to show this item after the fresh listing arrives.
+        pendingAfterListing = { [weak self] in self?.content.select(name: name) }
         pendingListingDirectory = url.deletingLastPathComponent().standardizedFileURL.path
         navigate(to: url.deletingLastPathComponent())
     }
