@@ -31,7 +31,7 @@ does not fail the suite.
 | torrent daemon seam | `PATHEM_TORRENTS_SMOKE` | app spawns daemon; `.torrent` and magnet commands appear in status |
 | create + rename | `PATHEM_E2E` | real folder/file creation and rename reach disk |
 | on-screen interactions | `PATHEM_UI_TEST` | 39 real-window rename/move/view/toolbar interaction checks |
-| sidebar transfers | `PATHEM_SIDEBAR_TRANSFER_UI_TEST` | private-clipboard cut/copy into clicked favorites and system folders, undo, keyboard Paste, invalid-target controls, new-tab preference propagation, and shared sidebar/breadcrumb/Up drag validation/acceptance with both defaults and Command inversion; requires an isolated temporary config root |
+| sidebar transfers + file safety | `PATHEM_SIDEBAR_TRANSFER_UI_TEST` | 88 native checks: private-clipboard cut/copy into sidebar folders, undo, keyboard Paste, drag preferences, created-item restore collisions, selective-undo dependencies, partial/failed/skipped cut-paste and retry, newer clipboard ownership, and engine-cancellation bookkeeping; requires an isolated temporary config root |
 | file lifecycle | `PATHEM_FILES_E2E` | replace/keep-both conflicts, verified copy, move, undo/redo, Trash and Put Back on real files |
 | archives and disk tools | `PATHEM_ARCHIVES_E2E` | ZIP create/list/extract/repack, split/merge, backup, secure delete, encrypted DMG creation |
 | search and metadata | `PATHEM_SEARCH_METADATA_E2E` | literal/regex search, replace, Finder tags/comments and hashing against real files |

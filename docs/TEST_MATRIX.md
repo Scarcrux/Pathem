@@ -34,6 +34,12 @@ sidebar/breadcrumb/Up delegates. Both drag defaults, Command inversion, copy-onl
 sources and unsupported-operation refusal are distinct controls. See
 [SIDEBAR_TRANSFER_TESTING.md](SIDEBAR_TRANSFER_TESTING.md) for the causal contract;
 this does not claim physical dragging in third-party apps or provider hydration.
+The same mandatory scenario now includes file-safety regression checks (88 total):
+created-item restore collisions, selective-undo ancestor dependencies, real
+partial/skipped/failed cut-paste and retry, newer clipboard/Cut ownership, and
+engine-cancellation bookkeeping. Engine tests additionally cover dependent
+Replace Undo/Redo identity and failed-Redo rollback. See
+[FILE_SAFETY_TESTING.md](FILE_SAFETY_TESTING.md) for red/green evidence and boundaries.
 
 - `make ci` runs localization lint, a full serial engine test pass, the complete debug product E2E
   suite, and the release-package gate. GitHub Actions runs the same layers.

@@ -1525,6 +1525,10 @@ name = "pathem"
     text = "First notarized Pathem (owner stored notarytool credentials as profile pathem-notary): universal Developer ID package of main 487bc48 (code = 3080261) submitted as 54870ba4, Accepted, stapled; scripts/verify-release.sh app 6/6 including A4 stapled ticket and A5 Gatekeeper ('accepted, source=Notarized Developer ID'). This closes task 5's 'not claimed: real Developer ID/notarization' for the app itself; still unexercised end to end: the DMG, Sparkle signature and appcast publish path, and the tag workflow on GitHub's runner (needs the repo secrets). Owner-requested install of that notarized build done by staged atomic swap (sha256 prefix 7a0bc297, verify-release 6/6 on the installed copy), Codex's previous build backed up. Found and fixed (landed): package.sh's final Gatekeeper check called bare spctl and exited 127 when /usr/sbin wasn't on PATH. No publication."
     at = "2026-10-13T10:26:59Z"
 
+  [[mission.comment]]
+    text = "File-safety audit follow-through is separately completed in Mission56: six proven Undo/Redo/clipboard/history defects fixed, mandatory native sidebar-transfer scenario expanded38 to88 checks, and full local CI passes15 XCTest+786 Swift Testing,67 product passes/one standing visual skip,ARM64 ad-hoc package14/14. This advances transfer/history behavior coverage but does not close broad visual/layout/search/transient-UI/environmental acceptance or explain36/39/42. Publication and owner-gated tasks remain held."
+    at = "2026-10-17T21:31:54Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
@@ -1574,4 +1578,50 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner-requested install completed 2026-10-15 from verified source32d161a. Exact installed leaf identity preserved (public SHA1 99842B5A6A3B15AEF88EC89CE9A1B67E46F4B9C8); universal arm64+x86_64 app and all three helpers, Hardened Runtime. Existing pathem-notary profile submission9acfb991 Accepted and stapled; source, staged and installed verify-release A1-A6 all pass; warning inventory12 known/0 new. Private release-mode launch exposes one window with updater disabled; only that probe PID32387 was terminated. Atomic renameatx_np exchange validated on positive/refusal controls, then installed; complete regular-file SHA256 and symlink inventories match the verified package. Installed main SHA256 d95c227be6aa4449356bba18b0fe990299026ea4b2630a731275a6e3d29706c0. Rollback /Applications/.pathem-rollback.VBf7u8/Pathem.app retains the exact pre-swap executable and also passes A1-A6. Process evidence correction: the installer before/after filtered snapshots were empty, so equality is NOT proof of uninterrupted owner PID. Initial owner PID38939 later absent; PID44118 started42s after swap and lsof inode matches the installed executable, proving the fixed build is running now. No owner/helper quit, kill or relaunch command was issued, but uninterrupted continuity is unclaimed. No keychain credential/grant changes, public release, push or visibility change."
     at = "2026-10-15T06:36:56Z"
+
+[[mission]]
+  id = "m-79df6c60"
+  title = "File-operation audit: restore identity and clipboard safety"
+  status = "done"
+  note = "Completed 2026-10-17 after the owner requested continuation of the audit. Six reproduced mechanisms: dependent Replace Undo order; missing failed-Redo rollback; stale creation-restore identity; clipboard ownership/partial-cut cleanup; exact-only history footprints. Regressions first: engine14 issues and native60/73. Narrow fixes plus fresh local make ci pass15 XCTest+786 Swift Testing, native88/88, product67 PASS/1 explicit visual SKIP/0FAIL, current-host ARM64 ad-hoc package14/14. No warning exceptions added. Historical53 intermittents/visual/environmental gates remain open; no install, universal/notarized acceptance or public release claimed."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-5b110206"
+    title = "Reverse dependent Replace undo safely and preserve forward redo order"
+    done = true
+
+  [[mission.task]]
+    id = "t-a0bc942b"
+    title = "Restore displaced destination when Replace redo fails"
+    done = true
+
+  [[mission.task]]
+    id = "t-5ce70154"
+    title = "Track actual restored paths for created-item undo/redo"
+    done = true
+
+  [[mission.task]]
+    id = "t-8025f343"
+    title = "Retain newer clipboard ownership during cut-paste completion"
+    done = true
+
+  [[mission.task]]
+    id = "t-439f30a4"
+    title = "Keep skipped, failed and cancelled cut items available for another paste"
+    done = true
+
+  [[mission.task]]
+    id = "t-91a094cd"
+    title = "Reject selective undo across ancestor/descendant path dependencies"
+    done = true
+
+  [[mission.comment]]
+    text = "Sample criteria recorded first in docs/FILE_SAFETY_TESTING.md. Old source: new engine suite fails with 14 issues; native baseline 60/73 with expected independent controls green. Narrow fixes: focused engine35/35 and initial native73/73. Added expanded newer-Cut/cancellation/retry/refused-Undo checks before full local gate. First native /tmp path was correctly refused64; corrected to the host temporary root. Existing LinkOperationsTests stale-variable warning appears in both baseline and treatment; no suppression or exception added. No install/publication/owner clipboard or preferences."
+    at = "2026-10-17T21:21:41Z"
+
+  [[mission.comment]]
+    text = "Verified all six audit mechanisms and completed the batch. Baseline new engine cases14 issues; native60/73. Fixes: reverse dependent Undo with forward successful Redo order/refusal guard; rollback failed Replace Redo; actual restored creation paths; snapshot-owned clipboard consumption of successful moves only; separator-aware ancestor history guard. Focused35/35; native73/73 then expanded88/88 (newer actual Cut, engine cancellation/retry, refused-Undo no-Redo). Full local make ci exit0: fresh debug warnings15 known/new0;15 XCTest+786 Swift Testing/162 suites; product67 PASS/1 existing transparent-capture SKIP/0FAIL; current-host ARM64 ad-hoc packaged14/14, release warnings12 known/new0. Initial bad /tmp probe correctly refused64 before corrected launch; baseline failures preserved in docs/FILE_SAFETY_TESTING.md. Existing test stale-variable warning not suppressed. No universal/notarized-distribution/install or native Cancel-button claim; broader53 remains now, including historical36/39/42. Normal commit/land next, no push/public/owner-app restart or credential changes."
+    at = "2026-10-17T21:31:53Z"
 # <<< commandem roadmap <<<

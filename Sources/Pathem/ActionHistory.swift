@@ -83,9 +83,23 @@ final class ActionHistory {
         guard undoStack.indices.contains(index) else { return false }
         let target = undoStack[index]
         for newer in undoStack[(index + 1)...] {
-            if !newer.footprint.isDisjoint(with: target.undoFootprint) { return false }
-            if !newer.undoFootprint.isDisjoint(with: target.footprint) { return false }
+            if Self.overlap(newer.footprint, target.undoFootprint) { return false }
+            if Self.overlap(newer.undoFootprint, target.footprint) { return false }
         }
         return true
+    }
+
+    /// Directory operations touch their descendants, not just their exact root
+    /// spelling. Case-insensitive comparison is conservative on sensitive volumes;
+    /// separators keep /folder and /folder2 independent.
+    private static func overlap(_ lhs: Set<String>, _ rhs: Set<String>) -> Bool {
+        let a = lhs.map { URL(fileURLWithPath: $0).standardizedFileURL.path.lowercased() }
+        let b = rhs.map { URL(fileURLWithPath: $0).standardizedFileURL.path.lowercased() }
+        return a.contains { first in
+            b.contains { second in
+                first == second || first == "/" || second == "/"
+                    || first.hasPrefix(second + "/") || second.hasPrefix(first + "/")
+            }
+        }
     }
 }

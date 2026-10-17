@@ -14,7 +14,10 @@ extension BrowserViewController {
         resolution: FileOperations.ConflictResolution,
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
-        guard !transferInFlight else { NSSound.beep(); return }  // one transfer at a time
+        guard !transferInFlight else {
+            NSSound.beep()
+            return
+        }  // one transfer at a time
         // Central backstop: never copy/move a folder into itself or its own subtree. Every entry
         // point funnels through here (drop, F5/F6, clipboard paste, shelf), so guarding once
         // covers them all -- a folder dropped into its own descendant would otherwise recurse and
@@ -24,7 +27,9 @@ extension BrowserViewController {
             NSSound.beep()
             presentInfo(
                 L("bvc.selfCopyTitle", "Can’t put a folder inside itself"),
-                L("bvc.selfCopyBody", "A folder can’t be copied or moved into itself or one of its own subfolders."))
+                L(
+                    "bvc.selfCopyBody",
+                    "A folder can’t be copied or moved into itself or one of its own subfolders."))
             return
         }
         transferInFlight = true  // so Quit warns mid-transfer
@@ -37,7 +42,10 @@ extension BrowserViewController {
             // Skip resolution or a name clash never silently drops files with no feedback.
             if !outcome.skipped.isEmpty {
                 self?.activePane?.flashStatus(
-                    String(format: L("bvc.transferSkipped", "%d item(s) skipped (name already in use)"), outcome.skipped.count))
+                    String(
+                        format: L(
+                            "bvc.transferSkipped", "%d item(s) skipped (name already in use)"),
+                        outcome.skipped.count))
             }
             completion(outcome)
         }
@@ -61,7 +69,9 @@ extension BrowserViewController {
         let message =
             conflictCount == 1
             ? L("bvc.conflictOne", "1 item already exists at the destination")
-            : String(format: L("bvc.conflictMany", "%d items already exist at the destination"), conflictCount)
+            : String(
+                format: L("bvc.conflictMany", "%d items already exist at the destination"),
+                conflictCount)
         let info = String(
             format: L("bvc.conflictHandle", "Choose how to handle the %@."),
             move ? L("bvc.moveNoun", "move") : L("bvc.copyNoun", "copy"))
@@ -89,13 +99,15 @@ extension BrowserViewController {
     ) {
         func run(_ resolution: FileOperations.ConflictResolution) {
             runTransfer(
-                urls: urls, into: destination, move: move, resolution: resolution, completion: completion)
+                urls: urls, into: destination, move: move, resolution: resolution,
+                completion: completion)
         }
         guard conflictCount > 0 else { return run(.skip) }
         // A non-Ask default (Settings > General) skips the prompt and resolves automatically.
         if let preset = prefs.conflictDefault.resolution { return run(preset) }
         Task { @MainActor in
-            guard let chosen = await askConflictResolution(conflictCount: conflictCount, move: move) else {
+            guard let chosen = await askConflictResolution(conflictCount: conflictCount, move: move)
+            else {
                 return  // user cancelled
             }
             run(chosen)
@@ -104,26 +116,38 @@ extension BrowserViewController {
 
     func registerUndo(_ performed: [FileOperations.Performed], actionName: String) {
         let paths = Self.paths(of: performed)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
+            [weak self] in
             guard let self else { return }
             let result = FileOperations.undo(performed)
             self.reloadBothSides()
-            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed")) }
-            self.registerTransferRedo(performed, actionName: actionName)  // wire up redo
+            if !result.failures.isEmpty {
+                self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed"))
+            }
+            // A refused/failed inverse must not become a Redo against a file
+            // that never moved back. Keep only the successful forward-ordered set.
+            if !result.performed.isEmpty {
+                self.registerTransferRedo(result.performed, actionName: actionName)
+            }
         }
     }
 
     private func registerTransferRedo(_ performed: [FileOperations.Performed], actionName: String) {
         let paths = Self.paths(of: performed)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) { [weak self] in
+        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
+            [weak self] in
             guard let self else { return }
             let result = FileOperations.redo(performed)
             self.reloadBothSides()
-            if !result.failures.isEmpty { self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed")) }
+            if !result.failures.isEmpty {
+                self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed"))
+            }
             // Re-register undo for exactly what redo re-applied, with the fresh trash locations
             // redo recorded for any Replace. Using the stale original list would trash the wrong
             // file on the next undo when a replace was involved or an op failed.
-            if !result.performed.isEmpty { self.registerUndo(result.performed, actionName: actionName) }
+            if !result.performed.isEmpty {
+                self.registerUndo(result.performed, actionName: actionName)
+            }
         }
     }
 
@@ -132,14 +156,26 @@ extension BrowserViewController {
     var isEditingText: Bool { view.window?.firstResponder is NSText }
 
     @objc func undo(_ sender: Any?) {
-        if isEditingText, let um = view.window?.undoManager, um.canUndo { um.undo(); return }
-        guard actionHistory.canUndo else { NSSound.beep(); return }
+        if isEditingText, let um = view.window?.undoManager, um.canUndo {
+            um.undo()
+            return
+        }
+        guard actionHistory.canUndo else {
+            NSSound.beep()
+            return
+        }
         actionHistory.undo()
     }
 
     @objc func redo(_ sender: Any?) {
-        if isEditingText, let um = view.window?.undoManager, um.canRedo { um.redo(); return }
-        guard actionHistory.canRedo else { NSSound.beep(); return }
+        if isEditingText, let um = view.window?.undoManager, um.canRedo {
+            um.redo()
+            return
+        }
+        guard actionHistory.canRedo else {
+            NSSound.beep()
+            return
+        }
         actionHistory.redo()
     }
 

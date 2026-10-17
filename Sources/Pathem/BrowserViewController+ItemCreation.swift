@@ -338,46 +338,20 @@ extension BrowserViewController {
         actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
             [weak self] in
             guard let self else { return }
-            let failures = FileOperations.untrash(trashed).failures
+            let result = FileOperations.untrash(trashed)
             self.reloadBothSides()
-            if !failures.isEmpty {
-                self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed"))
+            if !result.failures.isEmpty {
+                self.presentFailures(result.failures, title: L("bvc.redoFailed", "Redo failed"))
             }
-            self.registerCreatedUndo(names: names, in: directory, actionName: actionName)
+            // An occupied original path causes untrash to choose a new name.
+            // Never let the next Undo trash the unrelated occupant of the old name.
+            let restoredNames = result.restored.map(\.lastPathComponent)
+            if let first = restoredNames.first { self.paneShowing(directory)?.select(name: first) }
+            self.registerCreatedUndo(names: restoredNames, in: directory, actionName: actionName)
         }
     }
 
     private func registerNewItemUndo(name: String, in directory: URL, actionName: String) {
-        let paths = Self.paths([name], in: directory)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
-            [weak self] in
-            guard let self else { return }
-            let result = FileOperations.trash([name], in: directory)  // undo = trash the new item
-            self.reloadBothSides()
-            if !result.failures.isEmpty {
-                self.presentFailures(result.failures, title: L("bvc.undoFailed", "Undo failed"))
-            }
-            if !result.trashed.isEmpty {
-                self.registerNewItemRedo(
-                    name: name, in: directory, trashed: result.trashed, actionName: actionName)
-            }
-        }
-    }
-
-    private func registerNewItemRedo(
-        name: String, in directory: URL, trashed: [FileOperations.Trashed], actionName: String
-    ) {
-        let paths = Self.paths([name], in: directory)
-        actionHistory.record(name: actionName, footprint: paths, undoFootprint: paths) {
-            [weak self] in
-            guard let self else { return }
-            let failures = FileOperations.untrash(trashed).failures  // redo = restore the item
-            self.reloadBothSides()
-            self.paneShowing(directory)?.select(name: name)
-            if !failures.isEmpty {
-                self.presentFailures(failures, title: L("bvc.redoFailed", "Redo failed"))
-            }
-            self.registerNewItemUndo(name: name, in: directory, actionName: actionName)
-        }
+        registerCreatedUndo(names: [name], in: directory, actionName: actionName)
     }
 }

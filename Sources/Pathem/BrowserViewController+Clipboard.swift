@@ -76,6 +76,7 @@ extension BrowserViewController {
             return
         }
         let pasteboard = filePasteboard
+        let changeCount = pasteboard.changeCount
         let urls = FileDrag.readFileURLs(from: pasteboard) ?? []
         guard !urls.isEmpty else {
             NSSound.beep()
@@ -83,6 +84,7 @@ extension BrowserViewController {
         }
 
         let isMove = pasteboard.data(forType: Self.cutPasteboardType) != nil
+        guard pasteboard.changeCount == changeCount else { return }
 
         let conflicts = FileOperations.conflicts(urls: urls, into: destination)
         resolveThenTransfer(
@@ -98,15 +100,36 @@ extension BrowserViewController {
                     actionName: isMove ? L("bvc.moveAction", "Move") : L("bvc.copyAction", "Copy"))
             }
             if isMove {
-                pasteboard.clearContents()  // cut items are gone; don't move them twice
-                self.cutPaths = []
-                self.applyCutPaths()  // clear the dimming
+                self.finishCutPaste(
+                    urls: urls, pasteboard: pasteboard, changeCount: changeCount,
+                    performed: outcome.performed)
                 self.pruneSmartEntries(Set(outcome.performed.map(\.source.path)))  // drop moved rows
             }
             if !outcome.failures.isEmpty {
                 self.presentFailures(outcome.failures, title: L("bvc.pasteFailed", "Paste failed"))
             }
         }
+    }
+
+    /// Consume only successful moves from the snapshot that started this Paste.
+    /// Skipped/failed/cancelled members remain available; a later clipboard owner
+    /// (including a newer cut in this window) must not have its contents/dimming erased.
+    func finishCutPaste(
+        urls: [URL], pasteboard: NSPasteboard, changeCount: Int,
+        performed: [FileOperations.Performed]
+    ) {
+        guard pasteboard.changeCount == changeCount, !performed.isEmpty else { return }
+        let moved = Set(performed.filter { $0.action == .moved }.map(\.source.path))
+        guard !moved.isEmpty else { return }
+        let remaining = urls.filter { !moved.contains($0.path) }
+        pasteboard.clearContents()
+        if !remaining.isEmpty {
+            pasteboard.writeObjects(remaining as [NSURL])
+            pasteboard.addTypes([Self.cutPasteboardType], owner: nil)
+            pasteboard.setData(Data(), forType: Self.cutPasteboardType)
+        }
+        cutPaths = Set(remaining.map(\.path))
+        applyCutPaths()
     }
 
     func writeSelectionToPasteboard(cut: Bool) {

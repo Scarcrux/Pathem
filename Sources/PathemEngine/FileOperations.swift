@@ -499,11 +499,24 @@ public enum FileOperations {
     public static func undo(_ performed: [Performed]) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
-        for op in performed {
+        var blockedDestinations = Set<String>()
+        // Later Replace operations may have displaced an earlier member of this
+        // very batch. Unwind in reverse or we move/trash the later member's bytes
+        // as though they belonged to the earlier member.
+        for op in performed.reversed() {
+            let destinationPath = op.destination.standardizedFileURL.path
+            guard !blockedDestinations.contains(destinationPath) else {
+                outcome.failures.append(
+                    Failure(
+                        name: op.destination.lastPathComponent,
+                        reason: "a later operation at this destination couldn’t be undone"))
+                continue
+            }
             do {
                 switch op.action {
                 case .moved:
                     guard !fm.fileExists(atPath: op.source.path) else {
+                        blockedDestinations.insert(destinationPath)
                         outcome.failures.append(
                             Failure(
                                 name: op.destination.lastPathComponent,
@@ -520,6 +533,7 @@ public enum FileOperations {
                     do {
                         try fm.moveItem(at: trashed, to: op.destination)
                     } catch {
+                        blockedDestinations.insert(destinationPath)
                         outcome.failures.append(
                             Failure(
                                 name: op.destination.lastPathComponent,
@@ -530,11 +544,15 @@ public enum FileOperations {
                 }
                 outcome.performed.append(op)
             } catch {
+                blockedDestinations.insert(destinationPath)
                 outcome.failures.append(
                     Failure(
                         name: op.destination.lastPathComponent, reason: error.localizedDescription))
             }
         }
+        // Callers feed these successful inverses to redo(), which must replay
+        // the original forward order, not our reverse execution order.
+        outcome.performed.reverse()
         return outcome
     }
 
@@ -548,8 +566,8 @@ public enum FileOperations {
         let fm = FileManager.default
         var outcome = Outcome()
         for op in performed {
+            var replacedTrash: URL?
             do {
-                var replacedTrash: URL?
                 // Undo of a Replace restored the overwritten original to the destination. Redo must
                 // displace it again (to a fresh trash location), or the copy/move below fails
                 // "file exists" and a later undo would trash the restored original by mistake.
@@ -567,9 +585,24 @@ public enum FileOperations {
                         action: op.action, source: op.source, destination: op.destination,
                         replacedOriginalTrashed: replacedTrash))
             } catch {
+                let transferError = error
+                if let trashed = replacedTrash {
+                    do {
+                        try fm.moveItem(at: trashed, to: op.destination)
+                    } catch {
+                        outcome.failures.append(
+                            Failure(
+                                name: op.destination.lastPathComponent,
+                                reason: "Redo failed: \(transferError.localizedDescription). "
+                                    + "The replaced file couldn’t be restored and remains at \(trashed.path): "
+                                    + error.localizedDescription))
+                        continue
+                    }
+                }
                 outcome.failures.append(
                     Failure(
-                        name: op.destination.lastPathComponent, reason: error.localizedDescription))
+                        name: op.destination.lastPathComponent,
+                        reason: transferError.localizedDescription))
             }
         }
         return outcome

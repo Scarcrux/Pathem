@@ -289,6 +289,7 @@ extension BrowserViewController {
                     && fm.fileExists(
                         atPath: child.appendingPathComponent(file.lastPathComponent).path)
             })
+        checkFileSafety(root: root.appendingPathComponent("safety"), check: check, settle: settle)
         finish()
     }
 }
