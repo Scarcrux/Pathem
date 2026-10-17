@@ -1186,6 +1186,18 @@ name = "pathem"
     title = "Search continuation: fix table keypad Enter and offscreen explicit Reveal; verify nonzero viewport/selection retention in all five views and both panes plus delivered navigation/reopen races"
     done = true
 
+  [[mission.task]]
+    id = "t-b6a6b664"
+    title = "P1 audit: reproduce and fix ContentSearch numeric-colon path parsing and out-of-scope Replace All writes; use unambiguous tool output and independent write-scope ownership, with rg/grep, hostile legal paths and ordinary controls. Current-source disposable fixture rewrote outside sibling scope while intended scope:12:folder/note.txt remained unchanged; see docs/MISSION_53_AUDIT.md."
+
+  [[mission.task]]
+    id = "t-a43ecaae"
+    title = "P1 audit: preserve unsaved PDF markup when Save fails during navigation/view changes. Source show/prepareToClose discard false and dismissViewer removes regardless; reproduce native failed-save versus successful Save/Discard/Done before repair, propagate refusal through navigation callers. Source-confirmed, native failure not yet tested; see docs/MISSION_53_AUDIT.md."
+
+  [[mission.task]]
+    id = "t-aee642ef"
+    title = "P2 audit: invalidate legacy FindInFiles pending work on re-presentation, clear and dismissal, capture request callbacks and check replacement-completion ownership. Current unchanged controller native harness delivered old A rows into folder-B/new Open callback and restored rows after empty query; same-session control passed. Add real regression coverage; see docs/MISSION_53_AUDIT.md."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1545,6 +1557,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Task53.43 complete: corrected full native search465/465 across all five views/both panes, compared with original170 checks and discriminating red50/53+Column70/72 controls. Fix keypad Enter, explicit Reveal visibility and programmatic Column active-side theft only; counterfactual and invalid first-expansion instrument retained in docs/SEARCH_INTERACTION_MATRIX.md. Final make ci exit0:15 XCTest+786 Swift Testing,product67pass/one standing transparent browser-image skip/0fail,search465,configrootguards12,ARM64 ad-hoc package14/14;fresh debug15/release12 known warnings,zero new/unparsed. Broad53.13 and53 visual/environmental acceptance remain open;passing current popover/contentprefs/hdiutil checks does not close36/39/42. No install/publication/history/credentials;owner-gated asks untouched."
     at = "2026-10-17T22:34:16Z"
+
+  [[mission.comment]]
+    text = "Owner-requested follow-up audit on bde8cea found two dynamically reproduced failures and one source-confirmed data-loss path; no fixes applied. Current ContentSearch/RemoteRunner + real search tool changed an outside disposable sibling on numeric-colon folder path while intended file stayed unchanged. Actual unchanged FindInFiles controller/gated backends accepted old-session and pre-clear replies; normal controls pass. Markup failed-Save refusal discarded by show/prepareToClose/dismissViewer is static-confirmed, native failure reproduction pending. Criteria/receipts retained in /tmp/pathem-audit.diFUPr; durable report docs/MISSION_53_AUDIT.md. New44/45/46 remain pending;53now and prior owner asks/intermittents unchanged. No install/publication/owner-data changes; prior green CI is not coverage of these failures."
+    at = "2026-10-17T22:40:00Z"
 
 [[mission]]
   id = "m-e1443252"
