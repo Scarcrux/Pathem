@@ -1206,6 +1206,18 @@ name = "pathem"
     id = "t-caa5bf22"
     title = "Owner reports unwanted/repeated Move prompts and unclear apply-to-all. Exact resolveThenTransfer gated control-flow probe admits2 pending asks while transferInFlight=false; no-conflict/preset controls pass. Identify actual conflict versus file-drop versus Downloads suggestion surface before repair; hold/deduplicate batch ownership through confirmation, label batch scope explicitly, verify Cancel/retry and distinct requests. Downloads starts per ordinary window without preference gate; pending owner prompt identification. See docs/LIVE_FILE_OPERATION_DIAGNOSIS.md."
 
+  [[mission.task]]
+    id = "t-f7196aa7"
+    title = "Downloads suggestion audit: original queue algorithm with controlled name snapshots offers same arrival in two controllers and queues current a.pdf again after delivered absent/reappear snapshots; existing/hidden/partial/drain controls pass. Design shared ownership, current/pending identity dedup and explicit opt-in/batch-dismiss controls without auto-approving future moves; verify actual watcher/native delivery before claiming owner symptom fixed. docs/MOVE_PROMPT_AUDIT.md."
+
+  [[mission.task]]
+    id = "t-ace24e2e"
+    title = "Trash confirmation audit: exact trashSelection with gated fake confirmer/no-I/O recorder admits repeated same-batch requests (2 asks/1 replaced); empty/Cancel/local-pref/whole-selection controls pass and remote permanent delete still requires confirmation. Add logical pending-batch ownership/dedup while retaining Cancel/retry, distinct requests and permanent-delete safety; native popover lifecycle remains unverified. docs/MOVE_PROMPT_AUDIT.md."
+
+  [[mission.task]]
+    id = "t-b7a1d8ba"
+    title = "List file-on-file menu audit: exact helpers reject self/folder controls and allow genuine incoming sources, but same-folder neighbor gives incoming=0 plus fileTarget=b.txt. acceptDrop chooses file-menu branch before no-op filter; Move Here can cause source-self conflict. Define intentional on-file menu versus no-op drop routing, preserve explicit grouping/archive/replace and engine self-transfer guard, verify real drag/cancel/viewport behavior. docs/MOVE_PROMPT_AUDIT.md."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1573,6 +1585,10 @@ name = "pathem"
   [[mission.comment]]
     text = "2026-10-20 owner live report traced in docs/LIVE_FILE_OPERATION_DIAGNOSIS.md: installed executable hash matches verified32d161a receipt; relevant List/drop/Downloads logic unchanged in current4024a18. Existing List test protects automatic file-follow scroll that contradicts owner stationary-viewport expectation. Gated exact-method/no-I/O admission probe proves2 concurrent asks before transferInFlight; single/no-conflict/preset controls discriminate. Conflict decision already batch-wide but labelled unclearly; other move surfaces differ. Live CUA access not approved, no alternate UI bypass; actual prompt identity/native symptom reproduction unknown and selectable question pending. Added47/48 pending; no behavior change, install/restart/config/clipboard/fullCI or acceptance claim."
     at = "2026-10-20T07:01:47Z"
+
+  [[mission.comment]]
+    text = "Owner requested checking all four possible unwanted move surfaces rather than identifying one. Bounded headless exact-method/algorithm diagnostics completed: List same-folder file target bypasses ordinary incoming no-op filtering; conflict admission repeats previous2asks-before-transfer result; original Downloads queue duplicates across2controllers and requeues current file after delivered absent/reappear snapshots; exact Trash selection repeats2asks/1replacement. Contrasting normal/no-conflict/preset/self/folder/existing/hidden/partial/Cancel/whole-batch/remote-safety controls pass. Fake UI/planner/watcher/mutation boundaries explicit; these are NOT native/window/OS-watcher or actual-owner-symptom reproductions. No real move/delete, source fix, owner settings, app restart/install/permission or fullCI. Reports docs/MOVE_PROMPT_AUDIT.md; findings49-51 pending;47/48/36 stayopen and no blanket Yes-to-all-delete authorization."
+    at = "2026-10-20T07:55:15Z"
 
 [[mission]]
   id = "m-e1443252"
