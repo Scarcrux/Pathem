@@ -20,7 +20,9 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     func ask(message: String, info: String = "", buttons: [String], over anchor: NSView) async
         -> Int?
     {
-        if continuation != nil { resolve(nil) }  // a prior prompt is still open: cancel it first
+        // A second command must not replace a decision the user is still reading.
+        // Treat the new request as refused; the current prompt retains ownership.
+        guard continuation == nil else { return nil }
         return await withCheckedContinuation { (cont: CheckedContinuation<Int?, Never>) in
             self.continuation = cont
             let pop = NSPopover()

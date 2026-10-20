@@ -25,6 +25,18 @@ import Testing
         }
     }
 
+    @Test func downloadSuggestionsRequireExplicitOptIn() throws {
+        #expect(!Preferences.default.downloadSuggestionsEnabled)
+        let legacy = try JSONDecoder().decode(Preferences.self, from: Data("{}".utf8))
+        #expect(!legacy.downloadSuggestionsEnabled)
+        for enabled in [false, true] {
+            let prefs = Preferences(downloadSuggestionsEnabled: enabled)
+            let restored = try JSONDecoder().decode(
+                Preferences.self, from: JSONEncoder().encode(prefs))
+            #expect(restored.downloadSuggestionsEnabled == enabled)
+        }
+    }
+
     @Test func sizeAndDateFormatsRoundTrip() throws {
         let prefs = Preferences(sizeFormat: .binary, dateDisplay: .relative)
         let decoded = try JSONDecoder().decode(Preferences.self, from: JSONEncoder().encode(prefs))

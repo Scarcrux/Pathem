@@ -1201,22 +1201,31 @@ name = "pathem"
   [[mission.task]]
     id = "t-a3d04d60"
     title = "Owner reports passive edit/move refresh still changes viewport/location. List setEntries deliberately auto-follows visible selection after resort and UI test asserts row0->39 remains visible; transfer revealDropped also scrolls displayed destinations. Reproduce scrolled edits/moves plus inline/drag after refresh scheduling across views, separate actual directory from viewport, preserve passive viewport and retain explicit Reveal control. Source diagnosis, native symptom not yet reproduced; docs/LIVE_FILE_OPERATION_DIAGNOSIS.md."
+    done = true
 
   [[mission.task]]
     id = "t-caa5bf22"
     title = "Owner reports unwanted/repeated Move prompts and unclear apply-to-all. Exact resolveThenTransfer gated control-flow probe admits2 pending asks while transferInFlight=false; no-conflict/preset controls pass. Identify actual conflict versus file-drop versus Downloads suggestion surface before repair; hold/deduplicate batch ownership through confirmation, label batch scope explicitly, verify Cancel/retry and distinct requests. Downloads starts per ordinary window without preference gate; pending owner prompt identification. See docs/LIVE_FILE_OPERATION_DIAGNOSIS.md."
+    done = true
 
   [[mission.task]]
     id = "t-f7196aa7"
     title = "Downloads suggestion audit: original queue algorithm with controlled name snapshots offers same arrival in two controllers and queues current a.pdf again after delivered absent/reappear snapshots; existing/hidden/partial/drain controls pass. Design shared ownership, current/pending identity dedup and explicit opt-in/batch-dismiss controls without auto-approving future moves; verify actual watcher/native delivery before claiming owner symptom fixed. docs/MOVE_PROMPT_AUDIT.md."
+    done = true
 
   [[mission.task]]
     id = "t-ace24e2e"
     title = "Trash confirmation audit: exact trashSelection with gated fake confirmer/no-I/O recorder admits repeated same-batch requests (2 asks/1 replaced); empty/Cancel/local-pref/whole-selection controls pass and remote permanent delete still requires confirmation. Add logical pending-batch ownership/dedup while retaining Cancel/retry, distinct requests and permanent-delete safety; native popover lifecycle remains unverified. docs/MOVE_PROMPT_AUDIT.md."
+    done = true
 
   [[mission.task]]
     id = "t-b7a1d8ba"
     title = "List file-on-file menu audit: exact helpers reject self/folder controls and allow genuine incoming sources, but same-folder neighbor gives incoming=0 plus fileTarget=b.txt. acceptDrop chooses file-menu branch before no-op filter; Move Here can cause source-self conflict. Define intentional on-file menu versus no-op drop routing, preserve explicit grouping/archive/replace and engine self-transfer guard, verify real drag/cancel/viewport behavior. docs/MOVE_PROMPT_AUDIT.md."
+    done = true
+
+  [[mission.task]]
+    id = "t-24b01d7e"
+    title = "Owner reports Copy via hotkey or button then Paste into a message loses filename/info compared with drag into the same message. Both Pathem copy routes call writeSelectionToPasteboard and write NSURL items only; drag additionally advertises legacy filenames and, for non-text files, typed file promises. Destination app/file type and receiver-selected representation not yet established. Reproduce with private pasteboards/fixtures and receiver controls before changing export policy; preserve text attachment versus inline behavior, multi-file/Cut semantics, and original names/bytes."
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1589,6 +1598,30 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner requested checking all four possible unwanted move surfaces rather than identifying one. Bounded headless exact-method/algorithm diagnostics completed: List same-folder file target bypasses ordinary incoming no-op filtering; conflict admission repeats previous2asks-before-transfer result; original Downloads queue duplicates across2controllers and requeues current file after delivered absent/reappear snapshots; exact Trash selection repeats2asks/1replacement. Contrasting normal/no-conflict/preset/self/folder/existing/hidden/partial/Cancel/whole-batch/remote-safety controls pass. Fake UI/planner/watcher/mutation boundaries explicit; these are NOT native/window/OS-watcher or actual-owner-symptom reproductions. No real move/delete, source fix, owner settings, app restart/install/permission or fullCI. Reports docs/MOVE_PROMPT_AUDIT.md; findings49-51 pending;47/48/36 stayopen and no blanket Yes-to-all-delete authorization."
     at = "2026-10-20T07:55:15Z"
+
+  [[mission.comment]]
+    text = "Owner explicitly approved designing/fixing/testing viewport and all four prompt causes. Isolated codex-prompt-fixes: passive List refresh retains clip, explicit Reveal/sort remains; synchronous confirmation admission before Task plus non-replacing confirmer; ordinary drops follow folder policy/no-op filters, Option explicitly requests advanced menu; Downloads opt-in legacy-off with per-session path dedup/shared claims and Dismiss All. Criteria appended to MOVE_PROMPT_AUDIT before native baseline sample. Tests use temporary config/files/private pasteboard and intercepted Trash, no owner UI/install/defaults. Native baseline build in progress;47-51 not marked done."
+    at = "2026-10-20T08:05:44Z"
+
+  [[mission.comment]]
+    text = "Bounded native treatment is ACTUALLY TERMINAL: corrected red baseline19/24; first treatment67/74 exposed independent rename Reveal and Tree selection loss plus a URL-representation false negative. Corrected instrument counterfactual reinstated old List follow and moved clip1611->3277; treatment holds1611. Temporary counterfactual removed. Final sample82/82 and integrated mandatory Sidebar178/178 (88 prior+90 stability) pass, including five views/Undo/Redo, prompt identity/Cancel/batch, ordinary/Option drops, mounted Downloads controls, actual private-folder FSEvents and Settings opt-in/out. Full normal make ci/jobs2 now running;47-51 stay pending until its actual terminal. No install or claim for36/39/42."
+    at = "2026-10-20T08:33:38Z"
+
+  [[mission.comment]]
+    text = "First full CI actually red exit2:15 XCTest+787 Swift PASS;product66PASS/1standing visualSKIP/1FAIL UI48/49;package not reached. Cached UI repeated48/49. Diagnostic-only unchanged assertion measured metadata resort selection correct but legal header-inset clip -28 clamped to0. Replaced manual zero clamp with AppKit constrainBoundsRect; focused treatment now active. Old UI Cut/Paste also wrote system clipboard; changed suite to unique debug board, informed owner of earlier clipboard hazard; no restoration over newer copies. New owner Copy-vs-drag report queued53.52; URLs-only Copy versus richer drag source difference known but receiver unconfirmed, no speculative export fix."
+    at = "2026-10-20T08:47:51Z"
+
+  [[mission.comment]]
+    text = "Inset follow-through sample actually terminal0:build12.68s, older UI49/49 with same metadata assertion now -28->-28, Sidebar178/178. Fresh normal full CI/jobs2 running frozen source; forced debug build0/71.87s,15known/0new warning sites. Both earlier full-CI66/1/1 red and repeated48/49 receipts retained; no failure hidden.53.47-51 not complete until final CI/package terminal,53.52 receiver remains unconfirmed."
+    at = "2026-10-20T08:53:01Z"
+
+  [[mission.comment]]
+    text = "Combined unchanged-contract treatment actually terminal0:startup smokePASS(shrink875->0),UI49/49(metadata inset -28->-28),Sidebar178/178. Third normal full CI/jobs2 now active on frozen lower-bound-only source. Earlier AppKit-only regression explicitly retained in MOVE_PROMPT_AUDIT; no assertion loosened. No install or claim for remaining broad Mission53/intermittents;53.52 pending receiver identification."
+    at = "2026-10-20T08:59:08Z"
+
+  [[mission.comment]]
+    text = "Completed53.47-51 for reproduced mechanisms. Final third normal make ci/jobs2 ACTUALLY TERMINAL0:15XCTest+787Swift,debug product67PASS/1standing transparent-browser-captureSKIP/0FAIL(UI49/49,Sidebar178/178),ARM64 ad-hoc package14/14;fresh debug15/release12 known warnings,0new/0unparsed,6locale lint1688keys. Passive resort/rename/Undo/Redo preserve viewport+selection across5views; late edit defers apply; original shrink875->0 and header inset -28->-28 both retained. Synchronous prompt admission/identity and batch labels; ordinary drops no accidental advanced menu, Option retains it; Downloads legacy-off opt-in, dedup/shared claims/Dismiss All/private FSEvents/Settings controls. Corrected red19/24,67/74 and two red fullCI runs plus my rejected AppKit-only shrink regression retained in MOVE_PROMPT_AUDIT. Normal commit hook/land next. No install/restart/publication or broad53/intermittent36/39/42 acceptance. New52Copy-vs-drag receiver unconfirmed stayspending; oldUI clipboard hazard isolated and disclosed."
+    at = "2026-10-20T09:12:04Z"
 
 [[mission]]
   id = "m-e1443252"

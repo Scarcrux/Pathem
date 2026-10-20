@@ -34,12 +34,22 @@ sidebar/breadcrumb/Up delegates. Both drag defaults, Command inversion, copy-onl
 sources and unsupported-operation refusal are distinct controls. See
 [SIDEBAR_TRANSFER_TESTING.md](SIDEBAR_TRANSFER_TESTING.md) for the causal contract;
 this does not claim physical dragging in third-party apps or provider hydration.
-The same mandatory scenario now includes file-safety regression checks (88 total):
+The same mandatory scenario includes 88 sidebar/file-safety regression checks:
 created-item restore collisions, selective-undo ancestor dependencies, real
 partial/skipped/failed cut-paste and retry, newer clipboard/Cut ownership, and
 engine-cancellation bookkeeping. Engine tests additionally cover dependent
 Replace Undo/Redo identity and failed-Redo rollback. See
 [FILE_SAFETY_TESTING.md](FILE_SAFETY_TESTING.md) for red/green evidence and boundaries.
+It now additionally runs 90 operation-stability checks (178 total): real prompt
+ownership/Cancel/batch controls, private-pasteboard admission, nonzero passive
+refresh and rename viewports across all five views, late inline-edit deferral,
+ordinary versus Option file drops, and opt-in Downloads queues, shared claims,
+Dismiss All, mounted controls and a real disposable-folder watcher. See
+[MOVE_PROMPT_AUDIT.md](MOVE_PROMPT_AUDIT.md) for red baselines, counterfactuals and
+limits; these do not close the independent intermittent lifecycle tasks.
+The separate 49-check UI interaction suite also protects the table-header inset
+at the top of a passive metadata refresh (`-28` remains `-28`) and uses a private
+clipboard for its Cut/Paste fixtures rather than replacing the owner's clipboard.
 
 - `make ci` runs localization lint, a full serial engine test pass, the complete debug product E2E
   suite, and the release-package gate. GitHub Actions runs the same layers.

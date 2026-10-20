@@ -228,6 +228,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Runs a local copy/move with a progress sheet; one transfer at a time.
     let transferRunner = TransferRunner()  // driven by runTransfer (BrowserViewController+Transfers)
     var transferInFlight = false
+    /// Acquire synchronously before scheduling a file-operation confirmation.
+    /// Pending decisions are not replaceable or implicitly queued approvals.
+    var fileConfirmationPending = false
+    var fileOperationBusy: Bool { transferInFlight || fileConfirmationPending }
     /// Whether a copy/move is running (so the app can warn before quitting).
     var isTransferring: Bool { transferInFlight }
     /// File paths currently marked for cut (dimmed until pasted or cleared).
@@ -235,6 +239,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     #if DEBUG
     /// UI regression scenarios must not replace the owner's system clipboard.
     var debugFilePasteboard: NSPasteboard?
+    /// Observe real confirmation dispatch without touching the owner's Trash.
+    var debugTrashHandler: (([URL]) -> Void)?
     #endif
     var sidebarWidthConstraint: NSLayoutConstraint? { splitLayout.sidebarWidthConstraint }
     var compactSidebar: Bool {
@@ -409,6 +415,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         NSLayoutConstraint.activate([
             downloadChip.centerXAnchor.constraint(equalTo: split.centerXAnchor),
             downloadChip.topAnchor.constraint(equalTo: split.topAnchor, constant: 12),
+            downloadChip.widthAnchor.constraint(
+                lessThanOrEqualTo: split.widthAnchor, constant: -24),
         ])
         downloadSuggestions.onApplied = { [weak self] performed in
             if !performed.isEmpty {
@@ -420,9 +428,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         configureShelf()
         // Watch Downloads for one-click filing, except in demo mode and under the smoke
         // harness (which must stay deterministic).
-        if demoLayout == nil, ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == nil {
-            downloadSuggestions.start(feedbackURL: Self.organizeFeedbackURL)
-        }
+        updateDownloadSuggestions()
         setupAutomation()
     }
 

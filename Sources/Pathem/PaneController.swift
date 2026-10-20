@@ -158,6 +158,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var debugEntryCount: Int { entries.count }
     #if DEBUG
     private(set) var debugListingCompletions = 0
+    var debugWillApplyListing: (() -> Void)?
     #endif
     func debugHasEntry(_ name: String) -> Bool { entries.contains { $0.name == name } }
     func debugEntryPosition(_ name: String) -> Int? { entries.firstIndex { $0.name == name } }
@@ -634,6 +635,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Refresh the listing. In-place refreshes (sort, file op, watcher) preserve
     /// the selection and scroll; navigation passes preserveState: false to reset.
     func reload(preserveState: Bool = true) {
+        if preserveState, remote == nil, !smartActive, content.isInlineEditing {
+            directoryChangedOnDisk(watched: nav.current)
+            return
+        }
         ReloadDebug.log(
             "reload folder=\(nav.current.lastPathComponent) preserve=\(preserveState) "
                 + "remote=\(remote != nil) smart=\(smartActive)")
@@ -699,6 +704,17 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             // Apply only if still the same listing (see canApplyListing). directoryURL was
             // already set synchronously above, so drag works even if this completion is dropped.
             guard let self, self.canApplyListing(for: dir, generation: generation) else { return }
+            #if DEBUG
+            let beforeApply = self.debugWillApplyListing
+            self.debugWillApplyListing = nil
+            beforeApply?()
+            #endif
+            // Editing may have begun after this asynchronous listing was requested.
+            // Re-enumerate after editing ends instead of recycling its field editor.
+            if preserveState, self.content.isInlineEditing {
+                self.directoryChangedOnDisk(watched: dir)
+                return
+            }
             switch outcome {
             case .success(let sorted):
                 self.displayEntries(sorted, preserveState: preserveState)

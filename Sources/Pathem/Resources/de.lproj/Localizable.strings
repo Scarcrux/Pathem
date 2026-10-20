@@ -1753,3 +1753,11 @@
 "opener.genericTitle" = "Für diese Art ist kein systemweiter Standard möglich";
 "opener.genericBody" = "macOS behandelt „%@“ als allgemeine Datei, daher würde ein systemweiter Standard für jede Datei gelten, die es nicht erkennt. Wähle stattdessen unter „Immer öffnen mit“ die Option „Alle Dateien namens …“.";
 "opener.systemFailedTitle" = "Standard-App konnte nicht geändert werden";
+"bvc.replaceAll" = "Alle ersetzen";
+"bvc.keepBothAll" = "Alle doppelt behalten";
+"bvc.skipAll" = "Alle überspringen";
+"bvc.conflictBatch" = "Ihre Auswahl gilt für alle Konflikte dieses Vorgangs.";
+"prefs.downloadSuggestions" = "Ablagevorschläge für neue Downloads anbieten";
+"download.dismissAll" = "Alle schließen";
+"bvc.confirmTrashCount" = "%d ausgewählte Objekte in den Papierkorb bewegen?";
+"bvc.moveAllToTrash" = "Alle in den Papierkorb";

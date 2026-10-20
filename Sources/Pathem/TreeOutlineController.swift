@@ -183,6 +183,13 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
     func setEntries(_ newEntries: [FileEntry], preserveState: Bool) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         let expanded = preserveState ? expandedPaths() : []
+        let selectedPaths: Set<String> =
+            preserveState
+            ? Set(
+                outline.selectedRowIndexes.compactMap {
+                    (outline.item(atRow: $0) as? Node)?.url.standardizedFileURL.path
+                }) : []
+        let origin = scrollView.contentView.bounds.origin
         let base = directoryURL
         includesHidden = newEntries.contains { $0.name.hasPrefix(".") }
         // On an in-place refresh (a watcher tick), reuse the previous node for any top-level
@@ -200,6 +207,22 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         }
         outline.reloadData()
         reexpand(expanded)
+        if preserveState {
+            // reloadData can clear even a reused node's selection. Restore by
+            // full location (not name: expanded subfolders can share filenames).
+            var rows = IndexSet()
+            for row in 0..<outline.numberOfRows {
+                if let node = outline.item(atRow: row) as? Node,
+                    selectedPaths.contains(node.url.standardizedFileURL.path)
+                {
+                    rows.insert(row)
+                }
+            }
+            outline.selectRowIndexes(rows, byExtendingSelection: false)
+            outline.layoutSubtreeIfNeeded()
+            scrollView.contentView.scroll(to: origin)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+        }
     }
 
     func showPlaceholder(_ text: String?) {

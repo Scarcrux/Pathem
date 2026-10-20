@@ -278,6 +278,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 check(
                     L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"),
                     \.confirmBeforeDelete),
+                check(
+                    L("prefs.downloadSuggestions", "Offer filing suggestions for new downloads"),
+                    \.downloadSuggestionsEnabled),
                 labeled(
                     L("prefs.conflictDefault", "When files already exist"), conflictDefaultControl()
                 ),

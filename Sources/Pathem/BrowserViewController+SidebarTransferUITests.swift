@@ -4,7 +4,7 @@ import PathemEngine
 
 /// A real private pasteboard delivered through the production destination delegates.
 @MainActor
-private final class TransferDraggingInfo: NSObject, @MainActor NSDraggingInfo {
+final class TransferDraggingInfo: NSObject, @MainActor NSDraggingInfo {
     let draggingPasteboard: NSPasteboard
     var draggingSourceOperationMask: NSDragOperation = [.copy, .move]
     var draggingDestinationWindow: NSWindow?
@@ -62,6 +62,10 @@ extension BrowserViewController {
         }
         guard let window = view.window, let pane = leftTabs.activePane else {
             check("window-and-pane", false)
+            finish()
+        }
+        if ProcessInfo.processInfo.environment["PATHEM_OPERATION_STABILITY_SAMPLE"] == "1" {
+            checkOperationStability(root: root, check: check, settle: settle)
             finish()
         }
         // nextEvent establishes NSApp.currentEvent; sendEvent alone does not do so
@@ -290,6 +294,8 @@ extension BrowserViewController {
                         atPath: child.appendingPathComponent(file.lastPathComponent).path)
             })
         checkFileSafety(root: root.appendingPathComponent("safety"), check: check, settle: settle)
+        checkOperationStability(
+            root: root.appendingPathComponent("stability"), check: check, settle: settle)
         finish()
     }
 }

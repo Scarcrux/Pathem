@@ -643,9 +643,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Replace the listing. With `preserveState` (an in-place refresh: a sort, a
     /// file op, a watcher tick) the selection is restored by name and the scroll
-    /// position is held, so the list never jumps or deselects under the user. If a
-    /// selected row was visible before the refresh, keep that same row visible if
-    /// re-sorting moves it; do not reveal a selection the user had scrolled away from.
+    /// position is held, so a background metadata change cannot drag the viewport
+    /// after a re-sorted selection. Only explicit sort/Reveal commands reveal it.
     /// Without it (navigation, search results) the view resets to the top.
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
@@ -664,16 +663,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             return
         }
         let selectedNames = Set(selectedEntries.map(\.name))
-        // Opening a file can change its metadata in the receiving app. The folder watcher then
-        // re-lists and re-sorts the folder; preserving only the old clip origin can strand the
-        // selected file at its new row outside the viewport. Anchor one selected row that is
-        // actually visible now, so the refresh keeps the user's point of reference without
-        // yanking back to a selection they intentionally scrolled away from.
-        let visibleSelectionAnchor = tableView.selectedRowIndexes.first { row in
-            tableView.rect(ofRow: row).intersects(tableView.visibleRect)
-        }.flatMap { row in
-            entryIndex(forRow: row).map { self.entries[$0].name }
-        }
         let origin = scrollView.contentView.bounds.origin
         // A view that had no rows is being filled for the first time -- a fresh list built by a
         // view-mode swap. There is no scroll position worth preserving there, and restoring the
@@ -699,15 +688,16 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             if !displayRows.isEmpty { tableView.scrollRowToVisible(0) }
             return
         }
-        let maxY = max(0, tableView.frame.height - scrollView.contentView.bounds.height)
-        scrollView.contentView.scroll(to: NSPoint(x: origin.x, y: min(max(origin.y, 0), maxY)))
-        scrollView.reflectScrolledClipView(scrollView.contentView)
-        if let visibleSelectionAnchor,
-            let row = rows(forNames: [visibleSelectionAnchor]).first,
-            !tableView.rect(ofRow: row).intersects(tableView.visibleRect)
-        {
-            tableView.scrollRowToVisible(row)
-        }
+        // The legal top can be negative (the table header's adjusted inset).
+        // Clamping it to zero shifts an otherwise stationary top viewport by
+        // 28 points. Use AppKit's legal lower bound, retaining the existing
+        // upper clamp: a listing shrunk below the viewport still returns to 0.
+        let clip = scrollView.contentView
+        let proposed = NSRect(origin: origin, size: clip.bounds.size)
+        let minY = min(0, clip.constrainBoundsRect(proposed).minY)
+        let maxY = max(0, tableView.frame.height - clip.bounds.height)
+        clip.scroll(to: NSPoint(x: origin.x, y: min(max(origin.y, minY), maxY)))
+        scrollView.reflectScrolledClipView(clip)
     }
 
     // MARK: - Scroll-clamp diagnostics (the shrink-while-scrolled regression check)
@@ -1304,7 +1294,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         {
             tableView.setDropRow(row, dropOperation: .on)
             armSpring(atRow: row, folder: folder)  // dwell here to spring the folder open
-        } else if fileRow(at: row, excluding: urls) != nil {
+        } else if NSApp.currentEvent?.modifierFlags.contains(.option) == true,
+            fileRow(at: row, excluding: urls) != nil
+        {
             // Dropping onto another file: highlight it: the drop offers a menu (group / archive /
             // replace) rather than the meaningless "into a file".
             springLoader.cancel()
@@ -1350,7 +1342,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             onDropFiles?(incoming, resolvedDragOperation(for: info) == .move, folder)
             return true
         }
-        if let target = fileRow(at: row, excluding: urls) {
+        if NSApp.currentEvent?.modifierFlags.contains(.option) == true,
+            let target = fileRow(at: row, excluding: urls)
+        {
             onDropOntoFile?(urls, target)  // dropped onto a file -> the drop menu decides what to do
             return true
         }

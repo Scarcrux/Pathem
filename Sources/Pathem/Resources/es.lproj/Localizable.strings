@@ -1753,3 +1753,11 @@
 "opener.genericTitle" = "Este tipo no puede tener una aplicación predeterminada en todo el sistema";
 "opener.genericBody" = "macOS trata «%@» como un archivo genérico, así que una aplicación predeterminada del sistema se aplicaría a todos los archivos que no puede identificar. En «Abrir siempre con», elige «Todos los archivos llamados…».";
 "opener.systemFailedTitle" = "No se pudo cambiar la aplicación predeterminada";
+"bvc.replaceAll" = "Reemplazar todo";
+"bvc.keepBothAll" = "Conservar ambos en todos";
+"bvc.skipAll" = "Omitir todo";
+"bvc.conflictBatch" = "Tu elección se aplica a todos los conflictos de esta operación.";
+"prefs.downloadSuggestions" = "Sugerir carpetas para las nuevas descargas";
+"download.dismissAll" = "Descartar todo";
+"bvc.confirmTrashCount" = "¿Mover los %d elementos seleccionados a la papelera?";
+"bvc.moveAllToTrash" = "Mover todos a la papelera";

@@ -1,9 +1,10 @@
 # All four move-prompt paths — 2026-10-20
 
 Trigger: owner cannot identify the exact unwanted prompt and requested checking
-all four candidates. Audited source: `34bb79b`. No production fix or installation
-is included. This follows `LIVE_FILE_OPERATION_DIAGNOSIS.md`; viewport Task 53.47
-and existing popover intermittent Task 53.36 remain open.
+all four candidates. Initial audited source: `34bb79b`; the initial audit below
+changed no production behavior. The later approved implementation and validation
+are recorded at the end. This follows `LIVE_FILE_OPERATION_DIAGNOSIS.md`.
+The separate popover intermittent Task 53.36 remains open.
 
 ## Results
 
@@ -129,3 +130,154 @@ clipboard change, debug marker, app restart, installation, permissions grant,
 credential access, publication or full CI run. Only one disposable fixture was
 temporarily moved out and back to deliver the two directory-name snapshots.
 All findings remain pending repairs; this documentation unit is not a shipped fix.
+
+## Approved implementation scope — 2026-10-20
+
+Owner requested design, fixes and tests. Passive List refresh must preserve its
+clip offset instead of following re-sorted selection; explicit sort/Reveal still
+scrolls. Transfer completion must not force destination scroll. A browser owns
+confirmation admission synchronously before scheduling the ask, through Cancel or
+execution handoff; another ask must never replace it. Conflict decisions and local
+Trash already cover a batch and should say so. Distinct requests while busy are
+refused, not silently queued for later destructive execution. Permanent delete
+warnings remain mandatory. Option-drop explicitly requests the advanced file menu;
+ordinary drops use folder routing and reject same-folder no-ops.
+
+Downloads suggestions become opt-in (legacy absent setting is off). Per-enabled
+session, each path is suggested once and only one window can claim it. Stop clears
+pending UI/claims; async completion cannot resurrect a stopped session. Dismiss All
+clears the current queue without enabling automatic moves or approving future
+arrivals. No global Yes-to-all destructive setting is added.
+
+Before broad validation, a bounded native sample must prove pending confirmation
+identity/count survives duplicate transfer/Trash requests, Cancel releases it,
+ordinary/multi-item controls still work, and passive re-sort holds a nonzero
+viewport while explicit Reveal works. Downloads tests must contrast existing,
+hidden/partial, ordinary new and absent/reappear arrivals, two controllers, stop
+and Dismiss All. Drop tests must contrast ordinary same-folder no-op, incoming
+drop, and explicit Option advanced menu. Native checks use private fixtures/config
+and pasteboards, not the owner window. Do not change failed assertions or widen
+timeouts to obtain a pass. Retain red baseline receipts before production changes.
+
+### Baseline receipts
+
+The first diagnostic build caught a missing `includingHidden` argument in the new
+test harness; corrected before any native verdict. First native run was 18/24;
+one Option-menu positive control incorrectly inherited the preceding unwanted-menu
+count. Correcting that counter to compare its own before/after receipt yields a
+repeatable **19/24** baseline. The five red assertions are duplicate-conflict prompt
+identity, duplicate-Trash identity, cross-action prompt ownership, passive metadata
+viewport retention, and ordinary same-folder no-op drop. Independent batch-copy,
+Cancel/retry, intercepted whole-selection Trash, nonzero viewport and actual resort
+delivery, explicit Reveal/sort, Option menu and fixture-integrity controls pass.
+
+Baseline logs: `/tmp/pathem-prompt-fixes-baseline-native-2.log`; the earlier red
+instrument/build outputs remain under the same prefix. A later patch attempt used
+pre-formatting context and was rejected without edits; reapplied with exact current
+context. Production changes follow this corrected baseline, not the invalid count.
+
+Treatment sample additionally exercises a real edit begun at the listing-apply
+boundary, passive refresh/rename in all five views, a directly competing confirmer,
+and actual controller queues/controls for Downloads with private fixtures.
+
+### Treatment and discriminating controls
+
+The first treatment sample was **67/74**, not an acceptance pass. All five rename
+checks exposed a separate explicit Reveal callback; Tree refresh lost selection.
+Geometry receipts separated a third, instrument-only issue: List retained the
+exact clip `(0,1611)`, but equivalent directory URLs differed in representation.
+That identity check now compares standardized paths; the clip assertion remains.
+Tree retained its clip but selected nothing, so it now restores selection by full
+node path after rebuilding rows. Rename and its Undo/Redo select the new identity
+after enumeration without invoking Reveal.
+
+A temporary counterfactual reinstated only the old List auto-follow branch. With
+the corrected instrument it moved the clip from `1611` to `3277` and failed the
+passive-viewport assertion; the treatment retained `1611`. The counterfactual was
+removed before the passing build. This validates discrimination rather than
+weakening the scroll expectation to match the implementation.
+
+The repaired bounded sample passes **82/82**. The integrated mandatory Sidebar
+scenario passes **178/178** (the existing 88 plus 90 operation-stability checks).
+Additional controls exercise private-pasteboard Paste admission during a pending
+prompt, actual FSEvents from a disposable watched folder, watcher stop, and the
+mounted General Settings opt-in/out control. Downloads queue tests also use two
+controllers and an actually mounted bar in a 720-point window; all button frames
+fit. The five view refresh/rename checks use nonzero clip offsets and delivered
+listing receipts; rename Undo/Redo preserves identity and clip. Batch acceptance
+copies two real fixture files once; Trash acceptance intercepts the exact selected
+fixture snapshot without touching the owner's Trash. Cancel/retry and explicit
+sort/Reveal remain independent positive controls.
+
+Evidence logs under `/tmp/pathem-prompt-fixes-`: `treatment-native.log`,
+`geometry-native.log`, `counterfactual-native.log`, `final-sample-native.log`, and
+`integration-native.log`; all associated build results are retained. Rejected
+stale-context patches made no changes. Localization lint passes all six catalogs.
+The first full CI was **red**, exit 2: 15 XCTest plus 787 Swift Testing passed;
+product 66 PASS / one standing visual SKIP / one FAIL. Package was correctly not
+reached. Cached full-output reproduction repeated the older UI suite's 48/49.
+Added details without changing its assertion measured a valid inset top offset
+`(0,-28)` becoming `(0,0)` during metadata refresh; sort and selection were correct.
+This convicted the old manual zero-based clamp, not auto-follow. The repair uses
+`NSClipView.constrainBoundsRect` after layout, preserving legal adjusted insets
+while still constraining a shrunken listing. The focused treatment build exits 0
+(12.68 seconds), older UI **49/49** and Sidebar **178/178** exit 0. The identical
+metadata assertion now reports `-28 -> -28`, with delivered resort and selection
+unchanged. Fresh full CI is running; no final acceptance or installation is
+claimed yet. Receipts: `inset-build.log`, `ui-inset.log`, `inset-stability.log`.
+
+The second full CI was also **red**, exit 2: engine tests passed again; product
+66 PASS / one standing visual SKIP / one FAIL. Older UI was 49/49 and Sidebar
+178/178, but startup smoke failed. Complete cached reproduction convicted a
+regression introduced by the AppKit-only clamp: shrinking a 40-row list to two
+returned `875 -> -22`, while the unchanged established shrink assertion requires
+zero. That repair was rejected. The revised change retains the original upper
+clamp (short listings still return to zero) and uses AppKit only to determine the
+legal lower bound for a previously negative inset. Neither the inset-retention
+nor shrink assertion is changed. Combined treatment exits 0: startup smoke PASS
+with shrink `875 -> 0`, older UI **49/49** with inset `-28 -> -28`, and Sidebar
+**178/178**. A fresh full CI run follows this discriminating sample.
+Receipts: `ci-second-red.log`, `smoke-repro.log` under the same log prefix.
+
+The older UI suite's Cut/Paste fixtures also used the system clipboard, unlike
+the new private-board Sidebar checks. It now uses a unique debug pasteboard and
+releases it before exit. Earlier full-CI/reproduction runs could replace the
+owner's clipboard; no original clipboard value was saved or restored, and a
+newer owner copy must not be overwritten by a speculative restoration. This is
+separate from the newly reported Copy-versus-drag metadata discrepancy (53.52):
+both Copy entry points write URLs only, whereas drag also advertises legacy
+filenames and non-text promises. The receiving app/representation is still
+unknown; no exporter change is justified by that source difference alone.
+
+Additional logs: `ci-first-red.log`, `ui-repro.log`, `ui-geometry.log` under the
+same `/tmp/pathem-prompt-fixes-` prefix. The geometry run retained the same red
+assertion and reports `moved=true`, `visible=false`, selected `opened-00.txt`,
+before `-28`, after `0`.
+
+These tests prove the named refresh/admission/menu/queue mechanisms, not physical
+third-party dragging, owner-session symptom frequency, native-speaker translation
+approval, or the separate intermittent close failure (53.36), first-launch
+preferences failure (53.39), or disk-image busy failure (53.42).
+
+### Final verification
+
+The third, normal `make ci SWIFTPM_FLAGS='--build-system native --jobs 2'`
+finishes **exit 0** on the lower-bound-only repair:
+
+- 15 XCTest and 787 Swift Testing tests pass.
+- Debug product: **67 PASS / one standing transparent-browser-capture SKIP /
+  zero FAIL**, including older UI 49/49 and Sidebar 178/178.
+- Current-host ARM64 ad-hoc package: **14/14**, including strict signature,
+  Hardened Runtime, bundle/helpers/languages, isolated release launch and visible
+  window. This is not a universal/distribution/notarization acceptance claim.
+- Fresh diagnostic inventories: debug 15 known, release 12 known, **zero new or
+  unparsed**; all six localization catalogs pass (1,688 canonical keys).
+
+Final logs are `/tmp/pathem-prompt-fixes-ci.log`,
+`/tmp/pathem-prompt-fixes-ci-debug-build.log` and
+`/tmp/pathem-prompt-fixes-ci-release-build.log`; the two red CI logs remain intact.
+Tasks 53.47–51 are complete for these reproduced mechanisms. Mission 53 stays
+`now`; broad visual/environmental acceptance and 53.36/39/42 are not closed.
+The new Copy-versus-drag report stays pending as 53.52 until the receiving app and
+representation are established. No export-policy fix is claimed for it.
+No owner-app installation, restart, publication, credentials or permissions grant.

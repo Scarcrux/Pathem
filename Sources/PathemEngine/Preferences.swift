@@ -108,6 +108,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     /// Ask for confirmation before moving local items to the Trash (off by default,
     /// since the Trash is reversible).
     public var confirmBeforeDelete: Bool
+    /// Optional ambient filing UI. Absent legacy settings remain off, never implicit opt-in.
+    public var downloadSuggestionsEnabled: Bool
     /// What to do when a move/copy hits a name collision. `.ask` prompts (the default); the
     /// others resolve automatically so no dialog appears.
     public var conflictDefault: ConflictDefault
@@ -187,7 +189,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         compactSidebar: Bool = false, monochromeSidebarIcons: Bool = false,
-        confirmBeforeDelete: Bool = false,
+        confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
         dragMovesByDefault: Bool = true, appearance: Appearance = .system,
         bandwidthLimitKBps: Int = 0, torrentDownloadPath: String = "",
@@ -266,6 +268,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.compactSidebar = compactSidebar
         self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
+        self.downloadSuggestionsEnabled = downloadSuggestionsEnabled
         self.conflictDefault = conflictDefault
         self.verifyCopies = verifyCopies
         self.dragMovesByDefault = dragMovesByDefault
@@ -307,6 +310,8 @@ public struct Preferences: Codable, Sendable, Equatable {
             ?? d.monochromeSidebarIcons
         confirmBeforeDelete =
             try c.decodeIfPresent(Bool.self, forKey: .confirmBeforeDelete) ?? d.confirmBeforeDelete
+        downloadSuggestionsEnabled =
+            try c.decodeIfPresent(Bool.self, forKey: .downloadSuggestionsEnabled) ?? false
         conflictDefault =
             (try? c.decode(ConflictDefault.self, forKey: .conflictDefault)) ?? d.conflictDefault
         verifyCopies = try c.decodeIfPresent(Bool.self, forKey: .verifyCopies) ?? d.verifyCopies

@@ -1753,3 +1753,11 @@
 "opener.genericTitle" = "この種類にはシステム全体のデフォルトを設定できません";
 "opener.genericBody" = "macOSは「%@」を汎用ファイルとして扱うため、システムのデフォルトを設定すると識別できないすべてのファイルに適用されます。代わりに「常にこのアプリケーションで開く」で「…という名前のすべてのファイル」を選んでください。";
 "opener.systemFailedTitle" = "デフォルトのアプリケーションを変更できませんでした";
+"bvc.replaceAll" = "すべて置き換える";
+"bvc.keepBothAll" = "すべて両方を残す";
+"bvc.skipAll" = "すべてスキップ";
+"bvc.conflictBatch" = "この選択は、この操作のすべての競合に適用されます。";
+"prefs.downloadSuggestions" = "新しいダウンロードの整理先を提案する";
+"download.dismissAll" = "すべて閉じる";
+"bvc.confirmTrashCount" = "選択した%d項目をゴミ箱に移動しますか？";
+"bvc.moveAllToTrash" = "すべてゴミ箱に移動";

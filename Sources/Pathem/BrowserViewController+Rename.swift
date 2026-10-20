@@ -30,10 +30,14 @@ extension BrowserViewController {
                 guard entry.rawName == nil else {
                     self.presentInfo(
                         L("bvc.cantRenameTitle", "Can’t rename this item"),
-                        L("bvc.cantRenameBody", "Its name isn’t valid UTF-8, which remote operations don’t support yet."))
+                        L(
+                            "bvc.cantRenameBody",
+                            "Its name isn’t valid UTF-8, which remote operations don’t support yet."
+                        ))
                     return
                 }
-                self.performRemoteOp(pane, verb: L("bvc.renameVerb", "Rename")) { provider, connection, path, password in
+                self.performRemoteOp(pane, verb: L("bvc.renameVerb", "Rename")) {
+                    provider, connection, path, password in
                     try await provider.rename(
                         connection, from: PaneController.joinRemote(path, entry.name),
                         to: PaneController.joinRemote(path, newName), password: password)
@@ -55,11 +59,9 @@ extension BrowserViewController {
             try FileOperations.rename(entry.name, to: trimmed, in: directory)
             registerRenameUndo(from: trimmed, to: entry.name, in: directory)
             pane.reloadIfShowingListing()
-            // Select + scroll to the renamed item AFTER the (async) listing lands. A plain
-            // select(name:) here ran against the pre-reload listing, where the new name doesn't
-            // exist yet, so it no-oped -- and a rename that re-sorts the item then left it scrolled
-            // out of view. selectWhenListed defers the reveal until the row actually exists.
-            pane.selectWhenListed(trimmed) { [weak pane] in pane?.select(name: trimmed) }
+            // Carry identity into the fresh listing without revealing it: renaming
+            // may re-sort the row, but must not move the user's viewport.
+            pane.selectWhenListed(trimmed)
         } catch {
             presentFailures(
                 [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
@@ -69,15 +71,18 @@ extension BrowserViewController {
 
     func registerRenameUndo(from current: String, to original: String, in directory: URL) {
         let paths: Set<String> = [
-            directory.appendingPathComponent(current).path, directory.appendingPathComponent(original).path,
+            directory.appendingPathComponent(current).path,
+            directory.appendingPathComponent(original).path,
         ]
-        actionHistory.record(name: L("bvc.renameVerb", "Rename"), footprint: paths, undoFootprint: paths) {
+        actionHistory.record(
+            name: L("bvc.renameVerb", "Rename"), footprint: paths, undoFootprint: paths
+        ) {
             [weak self] in
             guard let self else { return }
             do {
                 try FileOperations.rename(current, to: original, in: directory)
                 self.reloadBothSides()
-                self.paneShowing(directory)?.select(name: original)
+                self.paneShowing(directory)?.selectWhenListed(original)
                 self.registerRenameUndo(from: original, to: current, in: directory)  // redo
             } catch {
                 self.presentFailures(

@@ -1680,4 +1680,11 @@
 "xattr.removeQuarantine" = "Remove Quarantine";
 "xattr.title" = "Extended Attributes";
 "xattr.titleFor" = "Extended Attributes: %@";
-
+"bvc.replaceAll" = "Replace All";
+"bvc.keepBothAll" = "Keep Both for All";
+"bvc.skipAll" = "Skip All";
+"bvc.conflictBatch" = "Your choice applies to all conflicts in this operation.";
+"prefs.downloadSuggestions" = "Offer filing suggestions for new downloads";
+"download.dismissAll" = "Dismiss All";
+"bvc.confirmTrashCount" = "Move %d selected items to the Trash?";
+"bvc.moveAllToTrash" = "Move All to Trash";

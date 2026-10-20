@@ -36,18 +36,24 @@ extension BrowserViewController {
                 // folder. Skip a name that has no safe last component (e.g. "..").
                 guard let safeName = Self.safeLocalName(entry.name) else { return nil }
                 let local = self.uniqueLocalURL(dir.appendingPathComponent(safeName))
-                return TransferQueueController.Item(name: safeName, totalBytes: entry.size, progressFile: local) {
+                return TransferQueueController.Item(
+                    name: safeName, totalBytes: entry.size, progressFile: local
+                ) {
                     try await provider.download(
                         ctx.connection, remotePath: remotePath, to: local, password: ctx.password)
                 }
             }
-            guard !self.transferInFlight else {
-            self.activePane?.flashStatus(L("flash.transferBusy", "A transfer is already running"), isError: true)
-            return  // one transfer at a time
-        }
+            guard !self.fileOperationBusy else {
+                self.activePane?.flashStatus(
+                    L("flash.transferBusy", "A transfer is already running"), isError: true)
+                return  // one transfer at a time
+            }
             self.transferInFlight = true  // so Quit warns mid-transfer
             self.transferController.run(
-                items, title: String(format: L("bvc.downloadingFrom", "Downloading from %@"), ctx.connection.host), over: window
+                items,
+                title: String(
+                    format: L("bvc.downloadingFrom", "Downloading from %@"), ctx.connection.host),
+                over: window
             ) { [weak self] failures, cancelled in
                 self?.transferInFlight = false
                 self?.reportTransfer(failures, cancelled: cancelled, verb: "download")
@@ -77,14 +83,20 @@ extension BrowserViewController {
         guard !files.isEmpty else {
             presentInfo(
                 L("upload.foldersUnsupportedTitle", "Can’t upload folders yet"),
-                L("upload.foldersUnsupportedBody", "Uploading whole folders to a remote server isn’t supported yet. Select individual files to upload them."))
+                L(
+                    "upload.foldersUnsupportedBody",
+                    "Uploading whole folders to a remote server isn’t supported yet. Select individual files to upload them."
+                ))
             return
         }
         if files.count < urls.count {
             // A mixed drop: the folders were dropped silently. Say so, but still upload the files.
             presentInfo(
                 L("upload.foldersSkippedTitle", "Folders skipped"),
-                L("upload.foldersSkippedBody", "Folder upload isn’t supported yet, so only the files in this drop will be uploaded."))
+                L(
+                    "upload.foldersSkippedBody",
+                    "Folder upload isn’t supported yet, so only the files in this drop will be uploaded."
+                ))
         }
         let provider = RemoteProviders.make(for: connection.proto)
         let items = files.map { url -> TransferQueueController.Item in
@@ -92,17 +104,21 @@ extension BrowserViewController {
             let size = Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
             // No local target to poll for an upload, so progressFile is nil (indeterminate bar);
             // totalBytes is still carried for the queue's summary.
-            return TransferQueueController.Item(name: url.lastPathComponent, totalBytes: size, progressFile: nil) {
+            return TransferQueueController.Item(
+                name: url.lastPathComponent, totalBytes: size, progressFile: nil
+            ) {
                 try await provider.upload(url, to: connection, remotePath: dest, password: password)
             }
         }
-        guard !transferInFlight else {
-            activePane?.flashStatus(L("flash.transferBusy", "A transfer is already running"), isError: true)
+        guard !fileOperationBusy else {
+            activePane?.flashStatus(
+                L("flash.transferBusy", "A transfer is already running"), isError: true)
             return  // one transfer at a time
         }
         transferInFlight = true  // so Quit warns mid-transfer
         transferController.run(
-            items, title: String(format: L("bvc.uploadingTo", "Uploading to %@"), connection.host), over: window
+            items, title: String(format: L("bvc.uploadingTo", "Uploading to %@"), connection.host),
+            over: window
         ) { [weak self, weak pane] failures, cancelled in
             self?.transferInFlight = false
             pane?.refreshRemote()  // show the newly uploaded files
@@ -112,10 +128,12 @@ extension BrowserViewController {
 
     /// Temp directory for remote files opened locally.
     private static var remoteTempDir: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Remote", isDirectory: true)
+        FileManager.default.temporaryDirectory.appendingPathComponent(
+            "Pathem-Remote", isDirectory: true)
     }
     private static var archiveTempDir: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("Pathem-Archives", isDirectory: true)
+        FileManager.default.temporaryDirectory.appendingPathComponent(
+            "Pathem-Archives", isDirectory: true)
     }
 
     /// Remove leftover opened-remote files and extracted archives from a previous run.
@@ -149,18 +167,25 @@ extension BrowserViewController {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         // The name comes from a server listing: reduce it to a safe last component so it can't
         // escape the temp dir (the file is then handed to NSWorkspace.open).
-        guard let safeName = Self.safeLocalName(name) else { NSSound.beep(); return }
+        guard let safeName = Self.safeLocalName(name) else {
+            NSSound.beep()
+            return
+        }
         let local = uniqueLocalURL(dir.appendingPathComponent(safeName))
         let provider = RemoteProviders.make(for: connection.proto)
         let item = TransferQueueController.Item(name: name) {
-            try await provider.download(connection, remotePath: remotePath, to: local, password: password)
+            try await provider.download(
+                connection, remotePath: remotePath, to: local, password: password)
         }
-        guard !transferInFlight else {
-            activePane?.flashStatus(L("flash.transferBusy", "A transfer is already running"), isError: true)
+        guard !fileOperationBusy else {
+            activePane?.flashStatus(
+                L("flash.transferBusy", "A transfer is already running"), isError: true)
             return  // one transfer at a time
         }
         transferInFlight = true  // so Quit warns mid-transfer
-        transferController.run([item], title: String(format: L("bvc.opening", "Opening %@"), name), over: window) { [weak self] failures, cancelled in
+        transferController.run(
+            [item], title: String(format: L("bvc.opening", "Opening %@"), name), over: window
+        ) { [weak self] failures, cancelled in
             self?.transferInFlight = false
             guard !cancelled else { return }
             if failures.isEmpty {
@@ -190,7 +215,8 @@ extension BrowserViewController {
     func reportTransfer(_ failures: [(String, Error)], cancelled: Bool, verb: String) {
         guard !failures.isEmpty, let window = view.window else { return }  // success/cancel is silent
         let alert = NSAlert()
-        alert.messageText = failures.count == 1 ? "A \(verb) failed" : "\(failures.count) \(verb)s failed"
+        alert.messageText =
+            failures.count == 1 ? "A \(verb) failed" : "\(failures.count) \(verb)s failed"
         alert.informativeText = failures.prefix(8)
             .map { "\($0.0): \(Self.describeRemote($0.1))" }
             .joined(separator: "\n")
@@ -201,12 +227,28 @@ extension BrowserViewController {
         guard let error = error as? RemoteError else { return error.localizedDescription }
         switch error {
         case .unsupported(let message): return message
-        case .curl(let code, let message): return message.isEmpty ? String(format: L("bvc.connectionFailedCode", "The connection failed (code %d)"), code) : message
+        case .curl(let code, let message):
+            return message.isEmpty
+                ? String(
+                    format: L("bvc.connectionFailedCode", "The connection failed (code %d)"), code)
+                : message
         case .curlMissing: return L("bvc.curlMissing", "curl was not found")
-        case .sftp(let code, let message): return message.isEmpty ? String(format: L("bvc.connectionFailedCode", "The connection failed (code %d)"), code) : message
+        case .sftp(let code, let message):
+            return message.isEmpty
+                ? String(
+                    format: L("bvc.connectionFailedCode", "The connection failed (code %d)"), code)
+                : message
         case .sftpMissing: return L("bvc.sftpMissing", "sftp was not found")
-        case .device(let code, let message): return message.isEmpty ? String(format: L("bvc.deviceFailedCode", "The device connection failed (code %d)"), code) : message
-        case .deviceToolMissing(let tool): return String(format: L("bvc.deviceToolMissing", "%@ is not installed. Install it to browse this device."), tool)
+        case .device(let code, let message):
+            return message.isEmpty
+                ? String(
+                    format: L("bvc.deviceFailedCode", "The device connection failed (code %d)"),
+                    code) : message
+        case .deviceToolMissing(let tool):
+            return String(
+                format: L(
+                    "bvc.deviceToolMissing",
+                    "%@ is not installed. Install it to browse this device."), tool)
         }
     }
 }

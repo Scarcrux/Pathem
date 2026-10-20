@@ -1753,3 +1753,11 @@
 "opener.genericTitle" = "Ce type ne peut pas avoir d’application par défaut pour tout le système";
 "opener.genericBody" = "macOS traite « %@ » comme un fichier générique : une application par défaut pour tout le système s’appliquerait à tous les fichiers qu’il ne sait pas identifier. Dans « Toujours ouvrir avec », choisissez plutôt « Tous les fichiers nommés … ».";
 "opener.systemFailedTitle" = "Impossible de modifier l’application par défaut";
+"bvc.replaceAll" = "Tout remplacer";
+"bvc.keepBothAll" = "Tout conserver en double";
+"bvc.skipAll" = "Tout ignorer";
+"bvc.conflictBatch" = "Votre choix s’applique à tous les conflits de cette opération.";
+"prefs.downloadSuggestions" = "Proposer un classement pour les nouveaux téléchargements";
+"download.dismissAll" = "Tout fermer";
+"bvc.confirmTrashCount" = "Placer les %d éléments sélectionnés dans la corbeille ?";
+"bvc.moveAllToTrash" = "Tout mettre à la corbeille";

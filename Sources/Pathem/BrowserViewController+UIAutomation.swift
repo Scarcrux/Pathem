@@ -11,6 +11,10 @@ import PathemEngine
 @MainActor
 extension BrowserViewController {
     func runUIAutomation() -> Never {
+        // This suite drives Cut/Paste too. Do not replace the user's clipboard
+        // while CI is exercising its disposable file fixtures.
+        let pasteboard = NSPasteboard.withUniqueName()
+        debugFilePasteboard = pasteboard
         var results: [(name: String, ok: Bool, detail: String)] = []
         func check(_ name: String, _ ok: Bool, _ detail: String = "") {
             results.append((name, ok, detail))
@@ -101,11 +105,18 @@ extension BrowserViewController {
             "content=\(Int(activePane?.debugListContentHeight ?? 0)) clip=\(Int(activePane?.debugListClipHeight ?? 0))"
         )
 
-        // Scenario 2: renaming a folder that re-sorts to the bottom keeps it in view.
+        // Scenario 2: rename retains selection without following the re-sorted item.
         do {
+            let clip = activePane?.keyView.enclosingScrollView?.contentView
+            let offset = clip?.bounds.origin
             debugCommitRename("folder-000", to: "folder-zzz")  // sorts to the bottom
-            let visible = waitUntil(3) { self.activePane?.debugRowVisible("folder-zzz") == true }
-            check("rename-resort-keeps-visible", visible)
+            let renamed = waitUntil(3) {
+                self.activePane?.selectedEntries.map(\.name) == ["folder-zzz"]
+            }
+            check(
+                "rename-resort-keeps-viewport",
+                renamed && activePane?.debugRowVisible("folder-zzz") == false
+                    && offset != nil && clip?.bounds.origin == offset)
         }
 
         // Scenario 3: sorting by a column header keeps the selected item in view.
@@ -127,7 +138,7 @@ extension BrowserViewController {
 
         // Scenario 3b: an external app can update an opened file's metadata. The watcher-driven
         // refresh then re-sorts it without going through the explicit column-header callback above.
-        // A file that was visible when opened must remain visible at its new row.
+        // Passive metadata refresh preserves viewport, unlike explicit sort/Reveal above.
         do {
             let baseDate = Date(timeIntervalSince1970: 1_700_000_000)
             let dir = makeDir("open-refresh") { dir in
@@ -145,6 +156,8 @@ extension BrowserViewController {
             pumpRunLoop(0.3)
             activePane?.select(name: "opened-00.txt")  // oldest: visible at the top
             pumpRunLoop(0.2)
+            let clip = activePane?.keyView.enclosingScrollView?.contentView
+            let offset = clip?.bounds.origin
             try? fm.setAttributes(
                 [.modificationDate: baseDate.addingTimeInterval(10_000)],
                 ofItemAtPath: dir.appendingPathComponent("opened-00.txt").path)
@@ -152,7 +165,13 @@ extension BrowserViewController {
             let moved = waitUntil(3) { self.activePane?.debugEntryPosition("opened-00.txt") == 39 }
             pumpRunLoop(0.2)
             let visible = activePane?.debugRowVisible("opened-00.txt") == true
-            check("open-metadata-refresh-keeps-selection-visible", moved && visible)
+            check(
+                "open-metadata-refresh-keeps-viewport",
+                moved && !visible
+                    && activePane?.selectedEntries.map(\.name) == ["opened-00.txt"]
+                    && offset != nil && clip?.bounds.origin == offset,
+                "moved=\(moved) visible=\(visible) selected=\(activePane?.selectedEntries.map(\.name) ?? []) before=\(String(describing: offset)) after=\(String(describing: clip?.bounds.origin))"
+            )
         }
 
         // Scenario 4: cut+paste is a real move -- source cleared, dest populated, no duplicate. This
@@ -689,6 +708,8 @@ extension BrowserViewController {
             check("window-toolbar-default-search-centered", centered)
         }
 
+        debugFilePasteboard = nil
+        pasteboard.releaseGlobally()
         for r in results {
             FileHandle.standardError.write(
                 Data("UITEST: \(r.ok ? "PASS" : "FAIL")  \(r.name)  \(r.detail)\n".utf8))

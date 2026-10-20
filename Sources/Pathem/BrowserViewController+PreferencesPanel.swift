@@ -234,6 +234,7 @@ extension BrowserViewController {
     }
 
     func applyPreferences() {
+        updateDownloadSuggestions()
         applyDefaultViewPreferences()
         sidebar.dragMovesByDefault = prefs.dragMovesByDefault
         for side in [leftTabs, rightTabs] {
@@ -268,6 +269,18 @@ extension BrowserViewController {
         saveConfig(prefs, to: Self.preferencesURL)
         semanticSearch.includeOCR = prefs.searchOCR
         semanticSearch.invalidate()  // a pref (e.g. OCR) may change how folders index; next search rebuilds
+    }
+
+    func updateDownloadSuggestions() {
+        // Test launches must never observe the owner's Downloads folder.
+        let testing = ProcessInfo.processInfo.environment.keys.contains {
+            $0.hasPrefix("PATHEM_") && ($0.hasSuffix("_TEST") || $0 == "PATHEM_SMOKE")
+        }
+        if prefs.downloadSuggestionsEnabled, demoLayout == nil, !testing {
+            downloadSuggestions.start(feedbackURL: Self.organizeFeedbackURL)
+        } else {
+            downloadSuggestions.stop()
+        }
     }
 
     /// Read the user's Finder preferences and apply the ones Pathem has an equivalent for -- show

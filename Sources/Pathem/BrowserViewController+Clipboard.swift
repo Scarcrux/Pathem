@@ -65,7 +65,7 @@ extension BrowserViewController {
 
     func canPasteFiles(into destination: URL) -> Bool {
         destination.isFileURL && SidebarController.isDirectory(destination)
-            && !transferInFlight && FileDrag.hasFileURLs(filePasteboard)
+            && !fileOperationBusy && FileDrag.hasFileURLs(filePasteboard)
     }
 
     /// Sidebar menu targets are explicit folders, not the active pane or selected row.

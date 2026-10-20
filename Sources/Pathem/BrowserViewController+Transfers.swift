@@ -14,7 +14,7 @@ extension BrowserViewController {
         resolution: FileOperations.ConflictResolution,
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
-        guard !transferInFlight else {
+        guard !fileOperationBusy else {
             NSSound.beep()
             return
         }  // one transfer at a time
@@ -72,15 +72,18 @@ extension BrowserViewController {
             : String(
                 format: L("bvc.conflictMany", "%d items already exist at the destination"),
                 conflictCount)
-        let info = String(
-            format: L("bvc.conflictHandle", "Choose how to handle the %@."),
-            move ? L("bvc.moveNoun", "move") : L("bvc.copyNoun", "copy"))
+        let info =
+            String(
+                format: L("bvc.conflictHandle", "Choose how to handle the %@."),
+                move ? L("bvc.moveNoun", "move") : L("bvc.copyNoun", "copy"))
+            + " "
+            + L("bvc.conflictBatch", "Your choice applies to all conflicts in this operation.")
         // A popover at the pointer, near the drop -- not a sheet at the title bar.
         let choice = await cursorConfirm.ask(
             message: message, info: info,
             buttons: [
-                L("bvc.replace", "Replace"), L("bvc.keepBoth", "Keep Both"),
-                L("bvc.skip", "Skip"), L("common.cancel", "Cancel"),
+                L("bvc.replaceAll", "Replace All"), L("bvc.keepBothAll", "Keep Both for All"),
+                L("bvc.skipAll", "Skip All"), L("common.cancel", "Cancel"),
             ], over: view)
         switch choice {
         case 0: return .replace
@@ -97,6 +100,7 @@ extension BrowserViewController {
         urls: [URL], into destination: URL, move: Bool, conflictCount: Int,
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
+        guard !fileOperationBusy else { return }
         func run(_ resolution: FileOperations.ConflictResolution) {
             runTransfer(
                 urls: urls, into: destination, move: move, resolution: resolution,
@@ -105,11 +109,14 @@ extension BrowserViewController {
         guard conflictCount > 0 else { return run(.skip) }
         // A non-Ask default (Settings > General) skips the prompt and resolves automatically.
         if let preset = prefs.conflictDefault.resolution { return run(preset) }
+        fileConfirmationPending = true
         Task { @MainActor in
+            defer { fileConfirmationPending = false }
             guard let chosen = await askConflictResolution(conflictCount: conflictCount, move: move)
             else {
                 return  // user cancelled
             }
+            fileConfirmationPending = false  // atomic handoff to runTransfer on the main actor
             run(chosen)
         }
     }

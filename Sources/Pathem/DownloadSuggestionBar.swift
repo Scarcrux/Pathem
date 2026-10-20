@@ -7,12 +7,14 @@ import AppKit
 final class DownloadSuggestionBar: NSView {
     var onMove: (() -> Void)?
     var onDismiss: (() -> Void)?
+    var onDismissAll: (() -> Void)?
 
     private let blur = NSVisualEffectView()
     private let icon = NSImageView()
     private let label = NSTextField(labelWithString: "")
     private let moveButton = NSButton()
     private let closeButton = NSButton()
+    private let dismissAllButton = NSButton()
 
     init() {
         super.init(frame: .zero)
@@ -43,6 +45,7 @@ final class DownloadSuggestionBar: NSView {
         icon.translatesAutoresizingMaskIntoConstraints = false
         label.font = .systemFont(ofSize: 12)
         label.lineBreakMode = .byTruncatingMiddle
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         moveButton.title = L("download.move", "Move")
         moveButton.bezelStyle = .rounded
@@ -59,7 +62,12 @@ final class DownloadSuggestionBar: NSView {
         closeButton.target = self
         closeButton.action = #selector(dismissTapped)
 
-        let stack = NSStackView(views: [icon, label, moveButton, closeButton])
+        dismissAllButton.title = L("download.dismissAll", "Dismiss All")
+        dismissAllButton.bezelStyle = .rounded
+        dismissAllButton.controlSize = .small
+        dismissAllButton.target = self
+        dismissAllButton.action = #selector(dismissAllTapped)
+        let stack = NSStackView(views: [icon, label, moveButton, dismissAllButton, closeButton])
         stack.orientation = .horizontal
         stack.alignment = .centerY
         stack.spacing = 8
@@ -84,7 +92,8 @@ final class DownloadSuggestionBar: NSView {
 
     override func layout() {
         super.layout()
-        layer?.shadowPath = CGPath(roundedRect: bounds, cornerWidth: 11, cornerHeight: 11, transform: nil)
+        layer?.shadowPath = CGPath(
+            roundedRect: bounds, cornerWidth: 11, cornerHeight: 11, transform: nil)
     }
 
     /// Show the chip for a newly-arrived file and where it would go.
@@ -95,7 +104,8 @@ final class DownloadSuggestionBar: NSView {
         image.size = NSSize(width: 18, height: 18)
         icon.image = image
         label.stringValue = String(
-            format: L("download.suggestion", "Move %@ to %@"), fileURL.lastPathComponent, destinationName)
+            format: L("download.suggestion", "Move %@ to %@"), fileURL.lastPathComponent,
+            destinationName)
         isHidden = false
     }
 
@@ -103,6 +113,11 @@ final class DownloadSuggestionBar: NSView {
 
     @objc private func moveTapped() { onMove?() }
     @objc private func dismissTapped() { onDismiss?() }
+    @objc private func dismissAllTapped() { onDismissAll?() }
+
+    #if DEBUG
+    var debugDismissAllButton: NSButton { dismissAllButton }
+    #endif
 
     /// Test hook: the visible suggestion text, or nil when hidden.
     var debugVisibleText: String? { isHidden ? nil : label.stringValue }
