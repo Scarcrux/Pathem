@@ -281,3 +281,57 @@ Tasks 53.47–51 are complete for these reproduced mechanisms. Mission 53 stays
 The new Copy-versus-drag report stays pending as 53.52 until the receiving app and
 representation are established. No export-policy fix is claimed for it.
 No owner-app installation, restart, publication, credentials or permissions grant.
+
+## 53.52 — Apple Messages follow-up: first hypothesis refuted
+
+The owner identifies **Apple Messages** as the receiver and selects the broad
+"Text, code, or another file" category. Exact extension and the name/content
+Messages substitutes are still requested; that category does not establish that
+the actual file satisfies `FileDrag.isTextLike`.
+
+Source review alone was insufficient: the earlier suggestion that Copy lacks the
+legacy filenames representation is **refuted on this host**. The bounded native
+probe compiles unchanged `DragSupport.swift` from `65c1202`, uses the exact
+ordinary Copy URL-writing sequence, actual drag writers/legacy helper, unique
+pasteboards and disposable files. It does not invoke the browser Copy responder,
+a physical drag session, or Messages. Criteria were written before execution in
+`PREREGISTRATION.md` under the study root below.
+
+| Criterion | Verdict and receipt |
+| --- | --- |
+| Copy preserves original names/URLs | PASS: `.txt`, `.html`, `.swift`, and Unicode/space-containing `.json` names, all four items and standardized paths round-trip. |
+| Text and binary controls discriminate | PASS: all four text fixtures omit a promise; the PNG classification control supplies one. PNG bytes are only a type fixture, not a valid-image acceptance check. |
+| Copy and drag resolve the same text files | PASS: both real-reader paths return the same four names/locations. |
+| Copy lacks legacy filenames while drag supplies them | **FAIL / hypothesis rejected**: `NSFilenamesPboardType` is available for Copy too. Board-level advertised type sets match even before URL reads. |
+| File reader accepts files, rejects unrelated text | PASS: modern-only and legacy-only positive controls return all four files; unrelated-text negative control is refused. |
+
+Both standalone compilations exit 0 with empty build logs. Both probe executions
+exit **1** because the unchanged missing-legacy hypothesis assertion fails; this
+is a qualified negative result, not a passing regression suite or a product bug
+verdict. The second run only adds initial-type/per-item receipts, leaving that
+assertion unchanged. It rules out a conversion caused by our earlier URL reads.
+
+There is a smaller remaining export distinction: explicit `addLegacyFilenames`
+adds a dynamic UTI representation to the first drag pasteboard item; ordinary
+Copy's items advertise `public.file-url` only. Both board-level type sets include
+the bridged legacy types and both still preserve original file identities. No
+claim that this per-item distinction causes Messages' behavior is justified.
+Adding a promise to every copied text file would also disregard the documented
+Messages text-inlining regression (`0c78b29`, superseding `5647c10`). Do not ship
+either speculative change without receiver evidence.
+
+The probe logs also emit `sandbox_extension_consume failed` diagnostics while
+reading private-board file references. URL/name checks still pass, but receiver
+access grants and actual Messages attachment/content interpretation are **not
+validated**. No permissions bypass or expansion was attempted.
+
+Study root (criteria, source instrument, both build and result logs):
+`/var/folders/v1/xgbblcwn3b93qpcvjvxqzxvc0000gn/T/pathem-clipboard-diagnostic.dBLwTH`.
+Installed owner binary SHA256 still matches the earlier verified receipt:
+`d95c227be6aa4449356bba18b0fe990299026ea4b2630a731275a6e3d29706c0`.
+No production source, owner clipboard, owner file, Messages conversation,
+installation or running owner application was changed. Task 53.52 stays pending;
+the exact extension and substituted filename/content are needed to choose the
+next receiver-specific reproduction. Full application CI is not rerun for this
+documentation-only negative-result unit; the previous verified `65c1202` source
+and its successful CI remain unchanged.
