@@ -1198,6 +1198,14 @@ name = "pathem"
     id = "t-aee642ef"
     title = "P2 audit: invalidate legacy FindInFiles pending work on re-presentation, clear and dismissal, capture request callbacks and check replacement-completion ownership. Current unchanged controller native harness delivered old A rows into folder-B/new Open callback and restored rows after empty query; same-session control passed. Add real regression coverage; see docs/MISSION_53_AUDIT.md."
 
+  [[mission.task]]
+    id = "t-a3d04d60"
+    title = "Owner reports passive edit/move refresh still changes viewport/location. List setEntries deliberately auto-follows visible selection after resort and UI test asserts row0->39 remains visible; transfer revealDropped also scrolls displayed destinations. Reproduce scrolled edits/moves plus inline/drag after refresh scheduling across views, separate actual directory from viewport, preserve passive viewport and retain explicit Reveal control. Source diagnosis, native symptom not yet reproduced; docs/LIVE_FILE_OPERATION_DIAGNOSIS.md."
+
+  [[mission.task]]
+    id = "t-caa5bf22"
+    title = "Owner reports unwanted/repeated Move prompts and unclear apply-to-all. Exact resolveThenTransfer gated control-flow probe admits2 pending asks while transferInFlight=false; no-conflict/preset controls pass. Identify actual conflict versus file-drop versus Downloads suggestion surface before repair; hold/deduplicate batch ownership through confirmation, label batch scope explicitly, verify Cancel/retry and distinct requests. Downloads starts per ordinary window without preference gate; pending owner prompt identification. See docs/LIVE_FILE_OPERATION_DIAGNOSIS.md."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1561,6 +1569,10 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner-requested follow-up audit on bde8cea found two dynamically reproduced failures and one source-confirmed data-loss path; no fixes applied. Current ContentSearch/RemoteRunner + real search tool changed an outside disposable sibling on numeric-colon folder path while intended file stayed unchanged. Actual unchanged FindInFiles controller/gated backends accepted old-session and pre-clear replies; normal controls pass. Markup failed-Save refusal discarded by show/prepareToClose/dismissViewer is static-confirmed, native failure reproduction pending. Criteria/receipts retained in /tmp/pathem-audit.diFUPr; durable report docs/MISSION_53_AUDIT.md. New44/45/46 remain pending;53now and prior owner asks/intermittents unchanged. No install/publication/owner-data changes; prior green CI is not coverage of these failures."
     at = "2026-10-17T22:40:00Z"
+
+  [[mission.comment]]
+    text = "2026-10-20 owner live report traced in docs/LIVE_FILE_OPERATION_DIAGNOSIS.md: installed executable hash matches verified32d161a receipt; relevant List/drop/Downloads logic unchanged in current4024a18. Existing List test protects automatic file-follow scroll that contradicts owner stationary-viewport expectation. Gated exact-method/no-I/O admission probe proves2 concurrent asks before transferInFlight; single/no-conflict/preset controls discriminate. Conflict decision already batch-wide but labelled unclearly; other move surfaces differ. Live CUA access not approved, no alternate UI bypass; actual prompt identity/native symptom reproduction unknown and selectable question pending. Added47/48 pending; no behavior change, install/restart/config/clipboard/fullCI or acceptance claim."
+    at = "2026-10-20T07:01:47Z"
 
 [[mission]]
   id = "m-e1443252"
