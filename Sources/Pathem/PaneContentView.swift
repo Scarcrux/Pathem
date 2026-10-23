@@ -41,6 +41,9 @@ protocol PaneContentView: AnyObject {
     /// Folder for drag (nil during search) and for resolving a row to a URL.
     var directoryURL: URL? { get set }
     var resolutionURL: URL? { get set }
+    /// Device/provider paths are not host paths, even when they start with '/'.
+    var allowsLocalMetadata: Bool { get set }
+    func cancelPendingWork()
 
     var onOpen: ((FileEntry) -> Void)? { get set }
     var onBecomeActive: (() -> Void)? { get set }
@@ -117,6 +120,11 @@ protocol PaneContentView: AnyObject {
 }
 
 extension PaneContentView {
+    var allowsLocalMetadata: Bool {
+        get { true }
+        set {}
+    }
+    func cancelPendingWork() {}
     func setViewOptions(_ options: FolderViewOptions) {}
     var onViewOptionsChanged: ((FolderViewOptions) -> Void)? {
         get { nil }

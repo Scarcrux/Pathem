@@ -380,7 +380,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         let rows = FileGrouping.rows(
             entries, by: grouping, now: Date(),
             tagColors: { [weak self] in
-                self?.decorations.tagColors(for: $0, in: self?.directoryURL) ?? []
+                guard let self, self.allowsLocalMetadata else { return [] }
+                return self.decorations.tagColors(for: $0, in: self.directoryURL)
             })
         var built: [(title: String, entryIndices: [Int])] = []
         for row in rows {
@@ -444,6 +445,19 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
 
     var directoryURL: URL?
     var resolutionURL: URL?
+    var allowsLocalMetadata = true {
+        didSet {
+            guard allowsLocalMetadata != oldValue else { return }
+            if !allowsLocalMetadata {
+                decorations.refreshTags(entries: [], directory: nil)
+                decorations.setGitStates([:])
+                // Reconfigure reused items with nil thumbnail URLs, so a late local thumbnail
+                // cannot replace a remote item's generic icon after this context switch.
+                collection.reloadData()
+            }
+            // Re-enabling waits for setEntries: the old rows can still belong to a remote host.
+        }
+    }
     var onOpen: ((FileEntry) -> Void)?
     var onBecomeActive: (() -> Void)?
     var onSelectionChanged: (() -> Void)?
@@ -581,7 +595,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         }
         collection.onSelectionMutated = { [weak self] in self?.onSelectionChanged?() }
         contextMenu.selectedURLs = { [weak self] in self?.contextSelectionURLs() ?? [] }
-        contextMenu.currentFolder = { [weak self] in self?.directoryURL }
+        contextMenu.currentFolder = { [weak self] in
+            guard let self, self.allowsLocalMetadata else { return nil }
+            return self.directoryURL
+        }
         collection.menu = contextMenu.menu
 
         scrollView.documentView = collection
@@ -622,6 +639,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
 
     /// The selection as file URLs, for the shared menu's archive gating and Open With.
     private func contextSelectionURLs() -> [URL] {
+        guard allowsLocalMetadata else { return [] }
         let base = directoryURL
         return selectedEntries.compactMap { entry in
             if let location = entry.location {
@@ -636,7 +654,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     /// Paths currently marked for cut, dimmed until pasted or the cut is cleared.
     private var cutPaths: Set<String> = []
     private func isCut(_ entry: FileEntry) -> Bool {
-        !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: directoryURL))
+        allowsLocalMetadata && !cutPaths.isEmpty
+            && cutPaths.contains(PaneItemKey.path(for: entry, in: directoryURL))
     }
     /// Cut items dim most, then hidden (dotfile) items; everything else is opaque.
     private func alpha(for entry: FileEntry) -> CGFloat {
@@ -683,7 +702,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         collection.reloadData()
         if !selectedNames.isEmpty { selectNames(selectedNames) }
         // Read tag colors off-main, then redraw once if any item shows a dot (untagged is free).
-        decorations.refreshTags(entries: entries, directory: directoryURL)
+        decorations.refreshTags(
+            entries: allowsLocalMetadata ? entries : [],
+            directory: allowsLocalMetadata ? directoryURL : nil)
     }
 
     /// Repro/instrument for "content pushes up when I select an item in a small folder" (#5):
@@ -713,7 +734,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     }
 
     func setGitStates(_ states: [String: GitFileState]) {
-        if decorations.setGitStates(states) { collection.reloadData() }
+        if decorations.setGitStates(allowsLocalMetadata ? states : [:]) { collection.reloadData() }
     }
 
     func invalidateTagCache() { decorations.invalidateTags() }
@@ -889,8 +910,11 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         guard let ei = entryIndex(at: indexPath) else { return item }
         let entry = entries[ei]
         let base = entry.isDataless ? Self.cloudIcon : Self.icon(for: entry)
-        let image = CloudBadge.decorate(
-            base, for: entry, in: directoryURL, size: NSSize(width: iconSize, height: iconSize))
+        let image =
+            allowsLocalMetadata
+            ? CloudBadge.decorate(
+                base, for: entry, in: directoryURL, size: NSSize(width: iconSize, height: iconSize))
+            : base
         // Real content thumbnails for files only; never for folders or online-only
         // (dataless) items, where generating one could fault a download.
         let thumbnailURL =
@@ -901,8 +925,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         item.configure(
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
             dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
-            git: decorations.gitState(for: entry, in: directoryURL),
-            tags: decorations.tagColors(for: entry, in: directoryURL),
+            git: allowsLocalMetadata ? decorations.gitState(for: entry, in: directoryURL) : nil,
+            tags: allowsLocalMetadata ? decorations.tagColors(for: entry, in: directoryURL) : [],
             underlined: ei == hoveredItem, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color,
             accessibilityLabel: FileAXLabel.describe(entry),
             labelPosition: viewOptions.labelPosition ?? .below)
@@ -1018,6 +1042,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
 
     /// The on-disk URL of an entry (smart-result rows carry their own folder).
     private func fileURL(for entry: FileEntry) -> URL? {
+        guard allowsLocalMetadata else { return nil }
         if let location = entry.location {
             return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
         }

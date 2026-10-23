@@ -28,6 +28,9 @@ public struct FileEntry: Sendable, Hashable {
     /// UTF-8 (so `name`, a lossy decode, doesn't lose them). `nil` for local
     /// entries and remote names that are already valid UTF-8.
     public let rawName: Data?
+    /// Prepared, optional Finder sort/group metadata. Gathering is separate from
+    /// enumeration and comparison so ordinary name listings keep their hot path.
+    public var viewMetadata: FileViewMetadata?
 
     /// A hidden entry (a dotfile). These only appear in a listing when "show hidden files"
     /// is on, so the UI dims them to set them apart from ordinary files (as Finder does).
@@ -36,7 +39,8 @@ public struct FileEntry: Sendable, Hashable {
     public init(
         name: String, isDirectory: Bool, size: Int64, modificationDate: Date?,
         creationDate: Date? = nil, accessDate: Date? = nil,
-        isDataless: Bool = false, location: String? = nil, rawName: Data? = nil
+        isDataless: Bool = false, location: String? = nil, rawName: Data? = nil,
+        viewMetadata: FileViewMetadata? = nil
     ) {
         self.name = name
         self.isDirectory = isDirectory
@@ -47,6 +51,7 @@ public struct FileEntry: Sendable, Hashable {
         self.isDataless = isDataless
         self.location = location
         self.rawName = rawName
+        self.viewMetadata = viewMetadata
     }
 
     /// Build an entry for a file at a known URL (used for smart-location results).
@@ -64,5 +69,6 @@ public struct FileEntry: Sendable, Hashable {
         self.isDataless = false
         self.location = url.deletingLastPathComponent().path
         self.rawName = nil
+        self.viewMetadata = nil
     }
 }

@@ -72,6 +72,11 @@ extension BrowserViewController {
             checkViewOptions(root: root, check: check, settle: settle)
             finish()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_SORT_GROUP_SAMPLE"] == "1" {
+            checkSortGroupDelivery(
+                root: root.appendingPathComponent("sort-group"), check: check, settle: settle)
+            finish()
+        }
         // nextEvent establishes NSApp.currentEvent; sendEvent alone does not do so
         // before NSApplication.run. Verify receipt before exercising the delegates.
         func withCommand(_ command: Bool, action: () -> Void) -> Bool {
@@ -302,6 +307,8 @@ extension BrowserViewController {
             root: root.appendingPathComponent("stability"), check: check, settle: settle)
         checkViewOptions(
             root: root.appendingPathComponent("view-options"), check: check, settle: settle)
+        checkSortGroupDelivery(
+            root: root.appendingPathComponent("sort-group"), check: check, settle: settle)
         finish()
     }
 }

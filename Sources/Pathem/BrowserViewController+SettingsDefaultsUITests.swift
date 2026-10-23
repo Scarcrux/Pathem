@@ -1,5 +1,6 @@
 #if DEBUG
 import AppKit
+import CoreServices
 import Darwin
 import PathemEngine
 
@@ -51,6 +52,8 @@ extension BrowserViewController {
                 let access = [2000, 3000, 1000]
                 let modification = [3000, 1000, 2000]
                 var times = [
+                    // Deliberately distinct filesystem access times are NOT
+                    // Date Last Opened: that UI key uses Spotlight last-used.
                     timeval(tv_sec: time_t(1_700_000_000 + access[index]), tv_usec: 0),
                     timeval(tv_sec: time_t(1_700_000_000 + modification[index]), tv_usec: 0),
                 ]
@@ -143,7 +146,8 @@ extension BrowserViewController {
                     $0.action == NSSelectorFromString("defaultViewChanged:")
                 }),
                 let key = popups.first(where: {
-                    $0.action == NSSelectorFromString("defaultSortChanged") && $0.numberOfItems == 5
+                    $0.action == NSSelectorFromString("defaultSortChanged")
+                        && $0.numberOfItems == ViewFormat.SortKey.allCases.count
                 }),
                 let direction = popups.first(where: {
                     $0.action == NSSelectorFromString("defaultSortChanged") && $0.numberOfItems == 2
@@ -185,51 +189,131 @@ extension BrowserViewController {
                 }
             }
             if datesOnly {
-                for key in [ViewFormat.SortKey.date, .dateCreated, .dateAccessed] {
+                for key in [ViewFormat.SortKey.date, .dateCreated, .dateAccessed, .dateAdded] {
                     for ascending in [true, false] { cases.append((.list, key, ascending)) }
                 }
             }
         }
-        func expectedOrder(_ key: ViewFormat.SortKey, ascending: Bool) throws -> [String] {
+        func expectedOrder(_ key: ViewFormat.SortKey, ascending: Bool) throws -> (
+            order: [String], distinct: Bool, allTied: Bool, evidence: String
+        ) {
+            // Independent oracle: read Foundation/Spotlight directly, never
+            // production enrichment or ViewFormat.sorted. Ordinary fixtures
+            // discriminate name/size/modified/created. Same-kind .bin files,
+            // untagged files, and absent/equal provider dates instead exercise
+            // stable name-ascending ties in BOTH sort directions. Synthetic
+            // metadata tests separately discriminate all new sort keys.
             let metadata = try names.map { name in
                 try ordinary.appendingPathComponent(name).resourceValues(forKeys: [
                     .fileSizeKey, .contentModificationDateKey, .creationDateKey,
-                    .contentAccessDateKey,
+                    .localizedTypeDescriptionKey, .addedToDirectoryDateKey, .tagNamesKey,
                 ])
             }
-            func value(_ index: Int) -> Double? {
+            let lastOpened: [Date?] = names.map { name in
+                guard key == .dateAccessed,
+                    let item = MDItemCreate(
+                        kCFAllocatorDefault, ordinary.appendingPathComponent(name).path as CFString)
+                else { return nil }
+                return MDItemCopyAttribute(item, kMDItemLastUsedDate) as? Date
+            }
+            let tags = metadata.map { values in
+                Array(Set((values.tagNames ?? []).filter { !$0.isEmpty })).sorted {
+                    let result = $0.localizedStandardCompare($1)
+                    return result == .orderedSame ? $0 < $1 : result == .orderedAscending
+                }
+            }
+            func numericValue(_ index: Int) -> Double? {
                 switch key {
-                case .name: return Double(index)
                 case .size: return metadata[index].fileSize.map(Double.init)
                 case .date: return metadata[index].contentModificationDate?.timeIntervalSince1970
                 case .dateCreated: return metadata[index].creationDate?.timeIntervalSince1970
-                case .dateAccessed: return metadata[index].contentAccessDate?.timeIntervalSince1970
+                case .dateAccessed: return lastOpened[index]?.timeIntervalSince1970
+                case .dateAdded: return metadata[index].addedToDirectoryDate?.timeIntervalSince1970
+                case .name, .kind, .tags: return nil
                 }
             }
-            let values = names.indices.compactMap(value)
-            guard values.count == 3 && Set(values).count == 3 else {
+            func compare(_ left: Int, _ right: Int) -> ComparisonResult {
+                switch key {
+                case .name: return names[left].localizedStandardCompare(names[right])
+                case .kind:
+                    return (metadata[left].localizedTypeDescription ?? "").localizedStandardCompare(
+                        metadata[right].localizedTypeDescription ?? "")
+                case .tags:
+                    for (a, b) in zip(tags[left], tags[right]) {
+                        let comparison = a.localizedStandardCompare(b)
+                        if comparison != .orderedSame { return comparison }
+                    }
+                    if tags[left].count == tags[right].count { return .orderedSame }
+                    return tags[left].count < tags[right].count
+                        ? .orderedAscending : .orderedDescending
+                case .size, .date, .dateCreated, .dateAccessed, .dateAdded:
+                    let a = numericValue(left) ?? Date.distantPast.timeIntervalSince1970
+                    let b = numericValue(right) ?? Date.distantPast.timeIntervalSince1970
+                    if a == b { return .orderedSame }
+                    return a < b ? .orderedAscending : .orderedDescending
+                }
+            }
+            let distinct = names.indices.allSatisfy { left in
+                names.indices.allSatisfy { right in
+                    left == right || compare(left, right) != .orderedSame
+                }
+            }
+            let allTied = names.indices.allSatisfy { compare(0, $0) == .orderedSame }
+            let unknownOrUntagged: Int
+            switch key {
+            case .name: unknownOrUntagged = 0
+            case .kind:
+                unknownOrUntagged = metadata.filter { $0.localizedTypeDescription == nil }.count
+            case .tags: unknownOrUntagged = tags.filter(\.isEmpty).count
+            case .size, .date, .dateCreated, .dateAccessed, .dateAdded:
+                unknownOrUntagged = names.indices.filter { numericValue($0) == nil }.count
+            }
+            let evidence =
+                "key=\(key.rawValue) distinct=\(distinct) allTied=\(allTied) unknownOrUntagged=\(unknownOrUntagged)"
+            if [.name, .size, .date, .dateCreated].contains(key),
+                !distinct || unknownOrUntagged != 0
+            {
                 throw NSError(
                     domain: "SettingsDefaultsFixture", code: 1,
                     userInfo: [
                         NSLocalizedDescriptionKey:
-                            "\(key.rawValue) requires three distinct fixture values, measured=\(values)"
+                            "\(key.rawValue) requires three distinct known fixture values; \(evidence)"
                     ])
             }
-            return names.indices.sorted {
-                ascending ? values[$0] < values[$1] : values[$0] > values[$1]
+            let order = names.indices.sorted { left, right in
+                let comparison = compare(left, right)
+                if comparison == .orderedSame {
+                    let byName = names[left].localizedStandardCompare(names[right])
+                    return byName == .orderedSame
+                        ? names[left] < names[right] : byName == .orderedAscending
+                }
+                return comparison == (ascending ? .orderedAscending : .orderedDescending)
             }.map { names[$0] }
+            return (order, distinct, allTied, evidence)
         }
         let originalTabs = leftTabs.tabCount
         for (index, item) in cases.enumerated() {
             let expected: [String]
             do {
-                if item.1 == .dateAccessed { try resetTimes(in: ordinary) }
-                expected = try expectedOrder(item.1, ascending: item.2)
-                check(
-                    "fixture-reference-discriminates-\(index)",
-                    expected != Array(expected.reversed()))
+                let reference = try expectedOrder(item.1, ascending: item.2)
+                let opposite = try expectedOrder(item.1, ascending: !item.2)
+                expected = reference.order
+                if reference.distinct {
+                    check(
+                        "fixture-reference-distinct-directions-\(index)",
+                        expected != opposite.order, reference.evidence)
+                } else {
+                    let nameAscending = names.sorted {
+                        $0.localizedStandardCompare($1) == .orderedAscending
+                    }
+                    check(
+                        "fixture-reference-tie-or-unknown-control-\(index)",
+                        !reference.allTied
+                            || (expected == nameAscending && opposite.order == nameAscending),
+                        reference.evidence)
+                }
             } catch {
-                check("fixture-reference-discriminates-\(index)", false, error.localizedDescription)
+                check("fixture-reference-measured-\(index)", false, error.localizedDescription)
                 finish()
             }
             pane.debugSelectNames(["bravo.bin"])
@@ -295,7 +379,9 @@ extension BrowserViewController {
                 && prefs.defaultSortAscending)
         check(
             "reverse-mounted-controls",
-            controls.0.indexOfSelectedItem == 1 && controls.1.indexOfSelectedItem == 2
+            controls.0.indexOfSelectedItem == ViewFormat.ViewMode.allCases.firstIndex(of: .icon)
+                && controls.1.indexOfSelectedItem
+                    == ViewFormat.SortKey.allCases.firstIndex(of: .date)
                 && controls.2.indexOfSelectedItem == 0)
         if let toggle = settingsPanel.map({ descendants($0, as: NSButton.self) })?.first(where: {
             $0.title == L("prefs.showFullPath", "Show full path in the title bar")
@@ -314,7 +400,9 @@ extension BrowserViewController {
         if let reopened = layoutPanel(in: self) {
             check(
                 "reopened-controls-agree",
-                reopened.0.indexOfSelectedItem == 1 && reopened.1.indexOfSelectedItem == 2
+                reopened.0.indexOfSelectedItem == ViewFormat.ViewMode.allCases.firstIndex(of: .icon)
+                    && reopened.1.indexOfSelectedItem
+                        == ViewFormat.SortKey.allCases.firstIndex(of: .date)
                     && reopened.2.indexOfSelectedItem == 0)
             var updatedDefault = commandFormat
             updatedDefault.ascending = false
@@ -347,7 +435,7 @@ extension BrowserViewController {
                     })
                 check(
                     "edited-default-new-tab-order",
-                    positions(fresh, (try? expectedOrder(.date, ascending: false)) ?? []))
+                    positions(fresh, (try? expectedOrder(.date, ascending: false).order) ?? []))
             } else {
                 check("edited-default-new-tab", false)
             }

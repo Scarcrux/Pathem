@@ -64,17 +64,9 @@ final class ViewOptionsController: NSObject {
             L("pane.columns", "Columns"), L("pane.tree", "Tree"),
         ])
         mode.selectItem(at: ViewFormat.ViewMode.allCases.firstIndex(of: format.viewMode) ?? 0)
-        sort.addItems(withTitles: [
-            L("list.columnName", "Name"), L("list.columnSize", "Size"),
-            L("list.columnDate", "Date Modified"), L("list.columnDateCreated", "Date Created"),
-            L("list.columnDateAccessed", "Date Last Opened"),
-        ])
+        sort.addItems(withTitles: ViewFormat.SortKey.allCases.map(\.localizedTitle))
         sort.selectItem(at: ViewFormat.SortKey.allCases.firstIndex(of: format.sortKey) ?? 0)
-        group.addItems(withTitles: [
-            L("bvc.cmd.arrangeNone", "None"), L("list.columnKind", "Kind"),
-            L("list.columnSize", "Size"), L("list.columnDate", "Date Modified"),
-            L("list.columnTags", "Tags"),
-        ])
+        group.addItems(withTitles: ViewFormat.GroupKey.allCases.map(\.localizedTitle))
         group.selectItem(at: ViewFormat.GroupKey.allCases.firstIndex(of: format.groupKey) ?? 0)
         dates.addItems(withTitles: [
             L("prefs.dateShort", "Short (7/8/26, 3:14 PM)"),

@@ -65,6 +65,14 @@ extension BrowserViewController {
         case "view.arrangeSize": menuItem.state = activePane?.groupKey == .size ? .on : .off
         case "view.arrangeDate": menuItem.state = activePane?.groupKey == .dateModified ? .on : .off
         case "view.arrangeTag": menuItem.state = activePane?.groupKey == .tag ? .on : .off
+        case _ where ViewFormat.GroupKey.allCases.contains(where: { $0.commandID == id }):
+            menuItem.state =
+                ViewFormat.GroupKey.allCases.first(where: { $0.commandID == id })
+                    == activePane?.groupKey ? .on : .off
+        case _ where ViewFormat.SortKey.allCases.contains(where: { $0.commandID == id }):
+            menuItem.state =
+                ViewFormat.SortKey.allCases.first(where: { $0.commandID == id })
+                    == activePane?.sortKey ? .on : .off
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.demoMode": menuItem.state = isDemoMode ? .on : .off

@@ -13,6 +13,7 @@ public enum FileColumns {
         public var whereFrom: String?
         public var comment: String?
         public var dateAdded: Date?
+        public var lastOpenedDate: Date?
         public var tags: String?
         public var cloudStatus: String?
         public var sharedBy: String?
@@ -40,10 +41,16 @@ public enum FileColumns {
         public static let whereFrom = Request(rawValue: 1 << 3)
         public static let comment = Request(rawValue: 1 << 4)
         public static let finder = Request(rawValue: 1 << 5)
+        public static let lastOpened = Request(rawValue: 1 << 6)
     }
 
     public static func gather(_ url: URL, _ request: Request) -> Extended {
         var info = Extended()
+        if request.contains(.lastOpened),
+            let item = MDItemCreate(kCFAllocatorDefault, url.path as CFString)
+        {
+            info.lastOpenedDate = MDItemCopyAttribute(item, kMDItemLastUsedDate) as? Date
+        }
         if request.contains(.dimensions) {
             info.dimensions = MediaMetadata.dimensionsLabel(of: url)
         }
@@ -59,16 +66,19 @@ public enum FileColumns {
         }
         if request.contains(.comment) { info.comment = FileMetadata.finderComment(of: url) }
         if request.contains(.finder) {
+            // A cold combined request silently omits tagNames on local files on
+            // the verified SDK; a prior tag-only read can hide that defect.
+            let basic = try? url.resourceValues(forKeys: [.addedToDirectoryDateKey, .tagNamesKey])
             let values = try? url.resourceValues(forKeys: [
-                .addedToDirectoryDateKey, .tagNamesKey, .isUbiquitousItemKey,
+                .isUbiquitousItemKey,
                 .ubiquitousItemDownloadingStatusKey, .ubiquitousItemIsDownloadingKey,
                 .ubiquitousItemIsUploadingKey, .ubiquitousItemIsUploadedKey,
                 .ubiquitousItemDownloadingErrorKey, .ubiquitousItemUploadingErrorKey,
                 .ubiquitousItemIsSharedKey, .ubiquitousSharedItemOwnerNameComponentsKey,
                 .ubiquitousSharedItemMostRecentEditorNameComponentsKey,
             ])
-            info.dateAdded = values?.addedToDirectoryDate
-            info.tags = values?.tagNames?.joined(separator: ", ")
+            info.dateAdded = basic?.addedToDirectoryDate
+            info.tags = basic?.tagNames?.joined(separator: ", ")
             // State tokens are localized by the UI, never fabricated from file ownership.
             if values?.isUbiquitousItem == true {
                 if values?.ubiquitousItemDownloadingError != nil

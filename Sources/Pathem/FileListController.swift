@@ -267,8 +267,41 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private var extendedReadScheduled = false
     #if DEBUG
     var debugExtendedCacheCount: Int { extendedInfo.count }
+    var debugPendingExtendedReadCount: Int { pendingExtendedReads.count }
+    var debugPendingTagReadCount: Int { pendingTagReads.count }
+    private(set) var debugPreviewRequestCount = 0
+    private(set) var debugExtendedReadRequests = 0
+
+    /// Drive the real cell-rendering path without relying on a particular
+    /// column being onscreen in the host window.
+    func debugColumnText(_ columnID: String, entryName: String) -> String? {
+        guard let index = entries.firstIndex(where: { $0.name == entryName }),
+            let row = row(forEntryIndex: index),
+            let column = tableView.tableColumn(withIdentifier: .init(columnID))
+        else { return nil }
+        return (self.tableView(tableView, viewFor: column, row: row) as? NSTableCellView)?
+            .textField?.stringValue
+    }
     #endif
     private var extendedGeneration = 0
+    private let localMetadataGen = GenerationBox()
+    private var localMetadataGeneration = 0
+    /// Explicit provider boundary. An absolute device/server `entry.location`
+    /// must never be interpreted as a path on the host (smart local results,
+    /// which also have no directoryURL, still allow metadata).
+    var allowsLocalMetadata = true {
+        didSet {
+            guard oldValue != allowsLocalMetadata else { return }
+            localMetadataGeneration = localMetadataGen.bump()
+            clearTagState()
+            extendedGeneration += 1
+            extendedInfo.removeAll(keepingCapacity: true)
+            pendingExtendedReads.removeAll(keepingCapacity: true)
+            previewFiles.removeAll(keepingCapacity: true)
+            _ = sizeGen.bump()
+            folderSizeCache.removeAll(keepingCapacity: true)
+        }
+    }
     /// Git state per absolute path (set by the pane after an off-main `git status`).
     private var gitStates: [String: GitFileState] = [:]
     /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
@@ -465,13 +498,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
         }
         /// Only columns backed by a ViewFormat sort key get a clickable header.
-        var isSortable: Bool { [.name, .size, .date, .dateCreated, .dateAccessed].contains(self) }
+        var isSortable: Bool {
+            [.name, .kind, .size, .date, .dateCreated, .dateAccessed, .dateAdded, .tags].contains(
+                self)
+        }
         /// Shown by default; the rest are opt-in via the header menu (persisted).
         var defaultVisible: Bool { [.name, .size, .date].contains(self) }
         /// Metadata-derived columns whose values are computed off-main and cached.
         var isExtended: Bool {
             [
-                .dimensions, .permissions, .owner, .whereFrom, .comment, .dateAdded, .tags,
+                .dimensions, .permissions, .owner, .whereFrom, .comment, .dateAccessed, .dateAdded,
+                .tags,
                 .cloudStatus, .sharedBy, .modifiedBy, .version,
             ].contains(self)
         }
@@ -1538,9 +1575,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: listFontSize)
             let defaultColor: NSColor = entry.isDataless ? .secondaryLabelColor : .labelColor
             cell.textField?.textColor = ruleStyle?.color ?? defaultColor
-            let baseIcon =
-                entry.isDataless ? Self.cloudIcon : FileIconCache.icon(for: entry, in: directoryURL)
-            cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: directoryURL)
+            let baseIcon: NSImage
+            if entry.isDataless {
+                baseIcon = Self.cloudIcon
+            } else if allowsLocalMetadata {
+                baseIcon = FileIconCache.icon(for: entry, in: directoryURL)
+            } else {
+                // FileIconCache intentionally reads each package's own icon.
+                // A remote .app/.bundle path is not a host package: use only
+                // the generic type icon, without resolving its location.
+                let type: UTType =
+                    entry.isDirectory
+                    ? .folder
+                    : (UTType(filenameExtension: (entry.name as NSString).pathExtension) ?? .data)
+                baseIcon = NSWorkspace.shared.icon(for: type)
+            }
+            cell.imageView?.image =
+                allowsLocalMetadata
+                ? CloudBadge.decorate(baseIcon, for: entry, in: directoryURL) : baseIcon
             let iconSize = CGFloat(deliveredViewOptions?.listIconSize ?? 16)
             for constraint in cell.imageView?.constraints ?? []
             where constraint.firstAttribute == .width || constraint.firstAttribute == .height {
@@ -1548,17 +1600,25 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
             let identity = ObjectIdentifier(cell)
             previewFiles[identity] = nil
-            if deliveredViewOptions?.showIconPreviews == true, !entry.isDirectory,
+            if allowsLocalMetadata, deliveredViewOptions?.showIconPreviews == true,
+                !entry.isDirectory,
                 !entry.isDataless,
                 let base = entry.location.map({ URL(fileURLWithPath: $0) }) ?? directoryURL
             {
                 let url = base.appendingPathComponent(entry.name)
                 previewFiles[identity] = url.path
+                let generation = localMetadataGeneration
+                #if DEBUG
+                debugPreviewRequestCount += 1
+                #endif
                 ThumbnailProvider.shared.generate(
                     url, size: .init(width: iconSize, height: iconSize),
                     scale: cell.window?.backingScaleFactor ?? 2
                 ) { [weak self, weak cell] image in
-                    guard let self, let cell, self.previewFiles[identity] == url.path else {
+                    guard let self, let cell, self.allowsLocalMetadata,
+                        self.localMetadataGeneration == generation,
+                        self.previewFiles[identity] == url.path
+                    else {
                         return
                     }
                     cell.imageView?.image = CloudBadge.decorate(
@@ -1607,7 +1667,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 cell.textField?.stringValue = byteFormatter.string(fromByteCount: entry.size)
             }
         case .kind:
-            cell.textField?.stringValue = FileAXLabel.kind(for: entry)
+            cell.textField?.stringValue = entry.viewMetadata?.kind ?? FileAXLabel.kind(for: entry)
         case .date:
             cell.textField?.stringValue =
                 entry.modificationDate.map { dateFormatter.string(from: $0) } ?? ""
@@ -1616,7 +1676,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 entry.creationDate.map { dateFormatter.string(from: $0) } ?? ""
         case .dateAccessed:
             cell.textField?.stringValue =
-                entry.accessDate.map { dateFormatter.string(from: $0) } ?? ""
+                (entry.viewMetadata?.lastOpenedDate ?? extendedValue(for: entry)?.lastOpenedDate)
+                .map { dateFormatter.string(from: $0) } ?? ""
         case .ext:
             cell.textField?.stringValue =
                 entry.isDirectory ? "" : (entry.name as NSString).pathExtension.lowercased()
@@ -1644,8 +1705,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             switch Column(rawValue: id.rawValue) {
             case .dateAdded:
                 cell.textField?.stringValue =
-                    info?.dateAdded.map { dateFormatter.string(from: $0) } ?? ""
-            case .tags: cell.textField?.stringValue = info?.tags ?? ""
+                    (entry.viewMetadata?.dateAdded ?? info?.dateAdded).map {
+                        dateFormatter.string(from: $0)
+                    } ?? ""
+            case .tags:
+                cell.textField?.stringValue =
+                    info?.tags ?? entry.viewMetadata.map { $0.tagNames.joined(separator: ", ") }
+                    ?? ""
             case .sharedBy: cell.textField?.stringValue = info?.sharedBy ?? ""
             case .modifiedBy: cell.textField?.stringValue = info?.modifiedBy ?? ""
             case .version: cell.textField?.stringValue = info?.version ?? ""
@@ -1822,7 +1888,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// later redraw shows the dots. A cached empty array means "read, no tags" and is
     /// distinct from a miss, so it never re-enqueues.
     private func tagColors(for entry: FileEntry) -> [FileTag.Color] {
-        guard directoryURL != nil else { return [] }  // search results span folders: no dots
+        guard allowsLocalMetadata, directoryURL != nil else { return [] }  // search results span folders: no dots
         let key = cacheKey(for: entry)
         if let cached = tagCache[key] { return cached }
         // Tag grouping needs every tag up front to build its buckets and reads them
@@ -1834,6 +1900,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Queue a tag read for `key`, coalescing every miss during one cell-layout pass
     /// into a single background batch on the next runloop turn.
     private func scheduleTagRead(_ key: String) {
+        guard allowsLocalMetadata else { return }
         pendingTagReads.insert(key)
         guard !tagReadScheduled else { return }
         tagReadScheduled = true
@@ -1844,18 +1911,24 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tagReadScheduled = false
         let keys = pendingTagReads
         pendingTagReads.removeAll()
-        guard !keys.isEmpty else { return }
+        guard allowsLocalMetadata, !keys.isEmpty else { return }
         let generation = tagReadGeneration  // captured; only navigation/invalidation bumps it
+        let localGeneration = localMetadataGeneration
+        let localGen = localMetadataGen
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var result: [String: [FileTag.Color]] = [:]
             result.reserveCapacity(keys.count)
             for key in keys {
+                guard localGen.isCurrent(localGeneration) else { return }
                 result[key] = FileTags.tags(of: URL(fileURLWithPath: key)).map(\.color).filter {
                     $0 != .none
                 }
             }
             DispatchQueue.main.async {
-                guard let self, self.tagReadGeneration == generation else { return }  // folder changed: drop
+                guard let self, self.allowsLocalMetadata,
+                    self.tagReadGeneration == generation,
+                    self.localMetadataGeneration == localGeneration
+                else { return }  // folder/provider changed: drop
                 for (key, colors) in result { self.tagCache[key] = colors }  // cache empties too, so no re-enqueue
                 // Redraw the visible rows only when a dot actually appeared, so the
                 // common untagged folder never triggers a second reload.
@@ -1939,7 +2012,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// A cached folder size, or nil when not computed (or the option is off).
     private func folderSize(for entry: FileEntry) -> DirectorySize.Measurement? {
-        guard calculateFolderSizes, entry.isDirectory, directoryURL != nil else { return nil }
+        guard allowsLocalMetadata, calculateFolderSizes, entry.isDirectory, directoryURL != nil
+        else { return nil }
         return folderSizeCache[cacheKey(for: entry)]
     }
 
@@ -1959,7 +2033,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// (reusing already-computed sizes). The walk stops early once its generation is
     /// stale (a newer listing or the option turned off), and each publish is O(1).
     private func refreshFolderSizesAsync() {
-        guard calculateFolderSizes, let dir = directoryURL else { return }
+        guard allowsLocalMetadata, calculateFolderSizes, let dir = directoryURL else { return }
         let generation = sizeGen.bump()
         let folders: [(name: String, row: Int)] = entries.enumerated()
             .compactMap { row, entry in entry.isDirectory ? (entry.name, row) : nil }
@@ -2043,7 +2117,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// visible rows (see tagColors), so there is nothing eager to do. Generation-guarded
     /// so a later listing supersedes an in-flight read.
     private func refreshTagsAsync() {
-        guard let dir = directoryURL else {
+        guard allowsLocalMetadata, let dir = directoryURL else {
             clearTagState()
             return
         }
@@ -2053,10 +2127,13 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let base = dir.path
         let names = entries.map(\.name)
         let known = tagCache
+        let localGeneration = localMetadataGeneration
+        let localGen = localMetadataGen
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var result: [String: [FileTag.Color]] = [:]
             result.reserveCapacity(names.count)
             for name in names {
+                guard localGen.isCurrent(localGeneration) else { return }
                 let path = Self.key(base: base, name: name)  // same key construction as viewFor's lookups
                 if let cached = known[path] {
                     result[path] = cached
@@ -2066,7 +2143,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 }
             }
             DispatchQueue.main.async {
-                guard let self, self.tagReadGeneration == generation else { return }
+                guard let self, self.allowsLocalMetadata,
+                    self.tagReadGeneration == generation,
+                    self.localMetadataGeneration == localGeneration
+                else { return }
                 self.tagCache = result
                 // Don't rebuild/reload while an inline rename is open (it recycles the editing cell
                 // and ends the edit); catch up in editEnded, which also rebuilds the tag buckets.
@@ -2087,6 +2167,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     /// Which metadata columns are currently visible (so the pass only does needed work).
     private func visibleExtendedRequest() -> FileColumns.Request {
+        guard allowsLocalMetadata else { return [] }
         var request: FileColumns.Request = []
         func on(_ column: Column, _ flag: FileColumns.Request) {
             if let col = tableView.tableColumn(withIdentifier: .init(column.rawValue)),
@@ -2100,6 +2181,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         on(.owner, .owner)
         on(.whereFrom, .whereFrom)
         on(.comment, .comment)
+        on(.dateAccessed, .lastOpened)
         for column: Column in [.dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version] {
             on(column, .finder)
         }
@@ -2129,6 +2211,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     }
 
     private func extendedValue(for entry: FileEntry) -> FileColumns.Extended? {
+        guard allowsLocalMetadata else { return nil }
         let key = Self.key(base: entry.location ?? directoryURL?.path, name: entry.name)
         if let info = extendedInfo[key] { return info }
         guard key.hasPrefix("/"), pendingExtendedReads.count < 512 else { return nil }
@@ -2145,16 +2228,25 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let keys = pendingExtendedReads
         pendingExtendedReads.removeAll(keepingCapacity: true)
         let request = visibleExtendedRequest()
-        guard !request.isEmpty, !keys.isEmpty else { return }
+        guard allowsLocalMetadata, !request.isEmpty, !keys.isEmpty else { return }
         let generation = extendedGeneration
+        let localGeneration = localMetadataGeneration
+        let localGen = localMetadataGen
+        #if DEBUG
+        debugExtendedReadRequests += keys.count
+        #endif
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var result: [String: FileColumns.Extended] = [:]
             result.reserveCapacity(keys.count)
             for key in keys {
+                guard localGen.isCurrent(localGeneration) else { return }
                 result[key] = FileColumns.gather(URL(fileURLWithPath: key), request)
             }
             DispatchQueue.main.async {
-                guard let self, self.extendedGeneration == generation else { return }
+                guard let self, self.allowsLocalMetadata,
+                    self.extendedGeneration == generation,
+                    self.localMetadataGeneration == localGeneration
+                else { return }
                 if self.extendedInfo.count > 4096 {
                     self.extendedInfo.removeAll(keepingCapacity: true)
                 }

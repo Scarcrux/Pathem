@@ -1570,14 +1570,12 @@ enum PathemApp {
         viewMenu.addItem(commandItem("as Tree", "view.asTree", "5"))
         viewMenu.addItem(
             submenu(
-                L("menu.group.arrangeBy", "Arrange By"),
-                [
-                    commandItem("None", "view.arrangeNone"),
-                    commandItem("Kind", "view.arrangeKind"),
-                    commandItem("Size", "view.arrangeSize"),
-                    commandItem("Date Modified", "view.arrangeDate"),
-                    commandItem("Tag", "view.arrangeTag"),
-                ]))
+                L("viewchoice.groupBy", "Group By"),
+                ViewFormat.GroupKey.allCases.map { commandItem($0.localizedTitle, $0.commandID) }))
+        viewMenu.addItem(
+            submenu(
+                L("viewchoice.sortBy", "Sort By"),
+                ViewFormat.SortKey.allCases.map { commandItem($0.localizedTitle, $0.commandID) }))
         viewMenu.addItem(.separator())
         viewMenu.addItem(commandItem("Zoom In", "view.zoomIn"))
         viewMenu.addItem(commandItem("Zoom Out", "view.zoomOut"))
@@ -1821,7 +1819,11 @@ enum PathemApp {
         // is why Cmd+K was firing the Cmd+Shift+K "Connections…" item. Uppercase whenever shift is set.
         let effectiveKey = mods.contains(.shift) ? key.uppercased() : key
         let item = NSMenuItem(
-            title: L("menu.\(commandID)", title),  // localized by command id; English is the fallback
+            title: ViewFormat.SortKey.allCases.first(where: { $0.commandID == commandID })?
+                .localizedTitle
+                ?? ViewFormat.GroupKey.allCases.first(where: { $0.commandID == commandID })?
+                .localizedTitle
+                ?? L("menu.\(commandID)", title),
             action: #selector(BrowserViewController.performMenuCommand(_:)),
             keyEquivalent: effectiveKey)
         item.representedObject = commandID

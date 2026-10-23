@@ -23,13 +23,15 @@ enum FileIconCache {
         "component", "qlgenerator", "saver", "wdgt", "xpc", "systemextension",
     ]
 
-    static func icon(for entry: FileEntry, in directory: URL? = nil) -> NSImage {
+    static func icon(
+        for entry: FileEntry, in directory: URL? = nil, allowFileLookup: Bool = true
+    ) -> NSImage {
         if let themed = IconSetManager.shared.icon(for: entry) { return themed }  // active icon set
         let ext = (entry.name as NSString).pathExtension.lowercased()
 
         // Bundles: real icon, keyed by path. Checked BEFORE isDirectory, because an .app bundle is
         // a directory and would otherwise fall into the shared "folder" icon.
-        if bundleKinds.contains(ext) {
+        if allowFileLookup, bundleKinds.contains(ext) {
             let path = PaneItemKey.path(for: entry, in: directory)
             let key = "\u{0}path\u{0}" + path
             if let hit = cache[key] { return hit }

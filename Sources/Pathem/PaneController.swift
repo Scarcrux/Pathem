@@ -508,11 +508,101 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// uniformly (local, smart, flat, remote). A context change (preserveState ==
     /// false, i.e. navigation or a new smart/remote view) clears the filter; an
     /// in-place refresh keeps it.
-    private func displayEntries(_ entries: [FileEntry], preserveState: Bool) {
+    private var metadataRevision = 0
+    private var metadataWork: Task<Void, Never>?
+    #if DEBUG
+    private(set) var debugMetadataDeliveries = 0
+    private(set) var debugMetadataTerminals = 0
+    var debugMetadataLoader: (@Sendable ([FileEntry], URL?, ViewFormat, Bool) async -> [FileEntry])?
+    var debugRemoteProviderFactory: ((RemoteConnection.Proto) -> RemoteProvider)?
+    #endif
+
+    private func invalidateViewMetadata() {
+        metadataRevision += 1
+        metadataWork?.cancel()
+        metadataWork = nil
+    }
+
+    private func displayEntries(
+        _ entries: [FileEntry], preserveState: Bool, sortAfterEnrichment: Bool = true,
+        afterApply: (() -> Void)? = nil
+    ) {
+        invalidateViewMetadata()
+        let snapshot: ViewFormat = {
+            var value = format
+            if !supportsGrouping { value.groupKey = .none }
+            return value
+        }()
+        // Do not add metadata work to the ordinary name/size/date-modified path.
+        guard !snapshot.metadataRequirements.isEmpty, !entries.isEmpty else {
+            commitDisplayEntries(entries, preserveState: preserveState)
+            afterApply?()
+            return
+        }
+        let revision = metadataRevision
+        let local = remote == nil
+        let directory = local && !smartActive ? nav.current : nil
+        #if DEBUG
+        let loader = debugMetadataLoader
+        #endif
+        metadataWork = Task { @MainActor [weak self] in
+            defer {
+                #if DEBUG
+                self?.debugMetadataTerminals += 1
+                #endif
+            }
+            let worker = Task.detached(priority: .userInitiated) {
+                #if DEBUG
+                if let loader {
+                    let values = await loader(entries, directory, snapshot, local)
+                    return sortAfterEnrichment ? snapshot.sorted(values) : values
+                }
+                #endif
+                let values = ListingViewMetadata.enrich(
+                    entries, directory: directory, format: snapshot, allowEntryLocations: local)
+                return sortAfterEnrichment ? snapshot.sorted(values) : values
+            }
+            let enriched = await withTaskCancellationHandler {
+                await worker.value
+            } onCancel: {
+                worker.cancel()
+            }
+            guard !Task.isCancelled, let self, self.metadataRevision == revision else { return }
+            self.deliverViewMetadata(
+                enriched, snapshot: snapshot, revision: revision,
+                preserveState: preserveState, afterApply: afterApply)
+        }
+    }
+
+    private func deliverViewMetadata(
+        _ entries: [FileEntry], snapshot: ViewFormat, revision: Int,
+        preserveState: Bool, afterApply: (() -> Void)?
+    ) {
+        guard metadataRevision == revision else { return }
+        // Metadata completion is another asynchronous listing boundary: don't recycle an editor.
+        if preserveState, content.isInlineEditing {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                self?.deliverViewMetadata(
+                    entries, snapshot: snapshot, revision: revision,
+                    preserveState: preserveState, afterApply: afterApply)
+            }
+            return
+        }
+        if smartActive { smartEntries = entries }
+        commitDisplayEntries(entries, preserveState: preserveState)
+        #if DEBUG
+        debugMetadataDeliveries += 1
+        #endif
+        afterApply?()
+    }
+
+    private func commitDisplayEntries(_ entries: [FileEntry], preserveState: Bool) {
         permissionButton.isHidden = true  // any successful/empty listing clears the permission prompt
         if !preserveState, !filterText.isEmpty { clearFilterField() }
         sourceEntries = entries
+        content.setGroupKey(format.groupKey)
         content.setEntries(filtered(entries), preserveState: preserveState)
+        updateStatus()
     }
 
     private func filtered(_ entries: [FileEntry]) -> [FileEntry] {
@@ -554,10 +644,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Replace the listing with an explicit set (e.g. ranked search results).
     func showResults(_ entries: [FileEntry]) {
+        pendingSelection = nil
+        pendingAfterListing = nil
+        pendingListingDirectory = nil
         showingSearchResults = true
         content.directoryURL = nil  // disable row drag during search
         content.resolutionURL = nav.current  // but results are from this folder, so actions resolve
-        displayEntries(entries, preserveState: false)
+        displayEntries(entries, preserveState: false, sortAfterEnrichment: false)
         content.showPlaceholder(
             entries.isEmpty
                 ? String(format: L("pane.noMatchesFor", "No matches for “%@”"), self.searchQuery)
@@ -599,6 +692,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// resolves across folders. It's read-only: the browser blocks file ops here
     /// (they assume a single current folder). Back or selecting a folder leaves it.
     func showSmartResults(_ entries: [FileEntry], title: String, preservingState: Bool = false) {
+        pendingAfterListing = nil
+        pendingListingDirectory = nil
         networkHostNames = []  // a plain smart view carries no mountable hosts (Network sets them after)
         networkActive = false
         remote = nil
@@ -676,6 +771,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             directoryChangedOnDisk(watched: nav.current)
             return
         }
+        invalidateViewMetadata()
         ReloadDebug.log(
             "reload folder=\(nav.current.lastPathComponent) preserve=\(preserveState) "
                 + "remote=\(remote != nil) smart=\(smartActive)")
@@ -768,14 +864,35 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 self.directoryChangedOnDisk(watched: dir)
                 return
             }
+            let finished: @MainActor @Sendable () -> Void = { [weak self] in
+                guard let self else { return }
+                self.applyPendingAfterListing()
+                #if DEBUG
+                self.debugListingCompletions += 1
+                #endif
+                self.updateStatus()
+                self.refreshGitStatusAsync()
+            }
             switch outcome {
             case .success(let sorted):
-                self.displayEntries(sorted, preserveState: preserveState)
-                // setEntries refreshes only the root column; re-enumerate drilled ones too
-                // so a file op inside a drilled column shows its result (no-op elsewhere).
-                if preserveState { self.content.refreshDrilledColumns() }
-                self.content.showPlaceholder(
-                    sorted.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+                self.displayEntries(sorted, preserveState: preserveState) { [weak self] in
+                    guard let self else { return }
+                    // setEntries refreshes only the root column; re-enumerate drilled ones too
+                    // so a file op inside a drilled column shows its result (no-op elsewhere).
+                    let finishListing: @MainActor @Sendable () -> Void = { [weak self] in
+                        guard let self, self.canApplyListing(for: dir, generation: generation)
+                        else { return }
+                        self.content.showPlaceholder(
+                            sorted.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
+                        finished()
+                    }
+                    if preserveState, let columns = self.content as? ColumnBrowserController {
+                        columns.refreshDrilledColumns(afterApply: finishListing)
+                    } else {
+                        if preserveState { self.content.refreshDrilledColumns() }
+                        finishListing()
+                    }
+                }
             case .failure:
                 // A read failure (permission denied, missing) looks identical to an
                 // empty folder unless we say so.
@@ -786,16 +903,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                         "Couldn’t read this folder.\nPathem may need Full Disk Access "
                             + "(System Settings ▸ Privacy & Security ▸ Full Disk Access)."))
                 self.permissionButton.isHidden = false  // give the failure an action
+                finished()
             }
             // Carry a queued selection into the fresh content (view-mode swap), then run any
             // queued follow-up (e.g. "new folder, now rename it") now that its row exists and is
             // selected -- and drop the redundant watcher refresh that would cancel the rename.
-            self.applyPendingAfterListing()
-            #if DEBUG
-            self.debugListingCompletions += 1
-            #endif
-            self.updateStatus()
-            self.refreshGitStatusAsync()
         }
         breadcrumb.setURL(nav.current)
         // Inside an archive, show a friendly "archive ▸ sub ▸ dir" label, not the raw
@@ -1027,6 +1139,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Switch this pane to browse a remote server. The local location is kept so
     /// going up from the remote root returns here.
     func openRemote(_ connection: RemoteConnection, password: String) {
+        invalidateViewMetadata()
+        contentRequestToken += 1
+        smartActive = false
+        smartEntries = []
+        networkActive = false
+        networkHostNames = []
+        pendingSelection = nil
+        pendingAfterListing = nil
+        pendingListingDirectory = nil
         // Stop watching the local folder while remote, so local disk changes
         // don't trigger spurious remote re-lists or local re-indexing.
         watcher?.stop()
@@ -1054,15 +1175,22 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     /// List the current remote folder off the main thread (via the provider).
+    private var remoteListingRevision = 0
     private func reloadRemote() {
         guard let session = remote else { return }
+        invalidateViewMetadata()
+        remoteListingRevision += 1
+        let listingRevision = remoteListingRevision
         showingSearchResults = false
         onDidNavigate?()  // clear the (local) search field as the remote folder changes
         // Column view can't render a single remote listing; use list for remote.
         applyViewMode(format.viewMode == .column ? .list : format.viewMode)
         pendingSelection = nil  // clear AFTER the swap (which would set it) so it can't leak forward
+        content.allowsLocalMetadata = false
         content.directoryURL = nil  // remote items aren't local-draggable yet
         content.resolutionURL = nil
+        sourceEntries = []
+        content.setEntries([], preserveState: false)
         content.showPlaceholder(
             String(format: L("pane.loadingHost", "Loading %@…"), session.connection.host))
         breadcrumb.isHidden = true
@@ -1074,21 +1202,30 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         forwardButton.isEnabled = false
         upButton.isEnabled = true  // up goes to the parent, or back to local at the root
 
+        #if DEBUG
+        let provider =
+            debugRemoteProviderFactory?(session.connection.proto)
+            ?? RemoteProviders.make(for: session.connection.proto)
+        #else
         let provider = RemoteProviders.make(for: session.connection.proto)
+        #endif
         Task { [weak self] in
             do {
                 let entries = try await provider.list(
                     session.connection, path: session.path, password: session.password)
-                guard let self, let cur = self.remote, cur.path == session.path,
-                    cur.connection.id == session.connection.id
+                guard let self, self.remoteListingRevision == listingRevision,
+                    let cur = self.remote, cur.path == session.path,
+                    cur.connection == session.connection, cur.password == session.password
                 else { return }
+                self.sourceEntries = entries  // retain provider values while selected metadata is pending
                 self.displayEntries(self.format.sorted(entries), preserveState: false)
                 self.content.showPlaceholder(
                     entries.isEmpty ? L("pane.folderEmpty", "This folder is empty") : nil)
                 self.updateStatus()
             } catch {
-                guard let self, let cur = self.remote, cur.path == session.path,
-                    cur.connection.id == session.connection.id
+                guard let self, self.remoteListingRevision == listingRevision,
+                    let cur = self.remote, cur.path == session.path,
+                    cur.connection == session.connection, cur.password == session.password
                 else { return }
                 self.displayEntries([], preserveState: false)
                 self.content.showPlaceholder(
@@ -1151,6 +1288,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Stop watching the folder; called when this pane's tab is closed.
     func teardown() {
+        invalidateViewMetadata()
+        _ = reloadGen.bump()
+        contentRequestToken += 1
+        content.cancelPendingWork()
+        remoteListingRevision += 1
         watcher?.stop()
         watcher = nil
         pendingRefresh?.cancel()
@@ -1288,6 +1430,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Move into nav.current: refresh the listing, watch the new folder for
     /// on-disk changes, and tell the browser the folder changed.
     private func enterDirectory() {
+        invalidateViewMetadata()
+        remote = nil  // a local navigation explicitly leaves the provider context
+        pendingSelection = nil
+        pendingAfterListing = nil
+        pendingListingDirectory = nil
         smartActive = false  // entering a real folder leaves any smart-result view
         networkHostNames = []
         networkActive = false
@@ -1667,6 +1814,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Swap the content view when the folder's view mode changes, carrying over
     /// the callbacks, style, selection, and keyboard focus.
     private func applyViewMode(_ mode: ViewFormat.ViewMode) {
+        if remote == nil, !content.allowsLocalMetadata {
+            // Never re-enable host readers while old device-path rows are still delivered.
+            sourceEntries = []
+            content.setEntries([], preserveState: false)
+        }
+        content.allowsLocalMetadata = remote == nil
         viewSwitcher.selectedSegment = segmentIndex(mode)  // keep the switcher in sync
         guard mode != currentMode else { return }
         ReloadDebug.log("viewmode-swap folder=\(nav.current.lastPathComponent) mode=\(mode)")
@@ -1687,6 +1840,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         currentMode = mode
         deliveredFolderOptions = nil
+        content.cancelPendingWork()
         switch mode {
         case .list: content = FileListController()
         case .icon: content = makeIconContent(gallery: false)
@@ -1694,6 +1848,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         case .column: content = ColumnBrowserController()
         case .tree: content = TreeOutlineController()
         }
+        content.allowsLocalMetadata = remote == nil
         wireContent()
         embedContent()
         if let s = lastStyle {
@@ -1728,15 +1883,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
         content.setOpenInNewTabHandler { [weak self] url in self?.onOpenInNewTab?(url) }
         content.onSortChanged = { [weak self] key, ascending in
-            guard let self else { return }
-            self.format.sortKey = key
-            self.format.ascending = ascending
-            self.rememberFormat?(self.nav.current, self.format)
-            // Keep the selection visible after the re-sort: the reload carries the selection but
-            // preserves the old scroll offset, so a selected item that moved would scroll off-screen.
-            self.pendingAfterListing = { [weak self] in self?.content.revealSelection() }
-            self.pendingListingDirectory = self.currentURL.standardizedFileURL.path
-            self.reload()
+            self?.applySort(key: key, ascending: ascending, reveal: true)
         }
         content.onSelectionChanged = { [weak self] in
             self?.updateStatus()
@@ -1815,8 +1962,14 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var groupKey: ViewFormat.GroupKey { format.groupKey }
     /// Change the Arrange By grouping key, persist the folder's format, and reload.
     func setGroupKey(_ key: ViewFormat.GroupKey) {
+        guard supportsGrouping else { return }
         guard format.groupKey != key else { return }
         format.groupKey = key
+        if smartActive || remote != nil {
+            displayEntries(
+                format.sorted(smartActive ? smartEntries : sourceEntries), preserveState: true)
+            return
+        }
         rememberFormat?(nav.current, format)
         reload()
     }
@@ -2493,9 +2646,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             item.state = format.sortKey == key ? .on : .off
             menu.addItem(item)
         }
-        addKey(L("pane.sortName", "Name"), .name)
-        addKey(L("pane.sortSize", "Size"), .size)
-        addKey(L("pane.sortDateModified", "Date Modified"), .date)
+        for key in ViewFormat.SortKey.allCases { addKey(key.localizedTitle, key) }
         menu.addItem(.separator())
         let ascending = NSMenuItem(
             title: L("pane.sortAscending", "Ascending"), action: #selector(sortAscending),
@@ -2521,17 +2672,27 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     @objc private func sortAscending() { applySort(key: format.sortKey, ascending: true) }
     @objc private func sortDescending() { applySort(key: format.sortKey, ascending: false) }
 
-    private func applySort(key: ViewFormat.SortKey, ascending: Bool) {
+    var sortKey: ViewFormat.SortKey { format.sortKey }
+
+    func applySort(key: ViewFormat.SortKey, ascending: Bool, reveal: Bool = false) {
         format.sortKey = key
         format.ascending = ascending
-        if smartActive {
+        if smartActive || remote != nil {
             // Re-sort the held results in memory; don't persist onto the folder.
-            displayEntries(format.sorted(smartEntries), preserveState: true)
+            displayEntries(
+                format.sorted(smartActive ? smartEntries : sourceEntries), preserveState: true
+            ) { [weak self] in
+                if reveal { self?.content.revealSelection() }
+            }
             content.showSortIndicator(key: key, ascending: ascending)
             return
         }
         rememberFormat?(nav.current, format)
-        if remote != nil { reloadRemote() } else { reload() }
+        if reveal {
+            pendingAfterListing = { [weak self] in self?.content.revealSelection() }
+            pendingListingDirectory = currentURL.standardizedFileURL.path
+        }
+        reload()
         content.showSortIndicator(key: key, ascending: ascending)
     }
 
@@ -2634,13 +2795,15 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// search and smart-result views, where the file lives outside the folder on screen.
     func reveal(_ url: URL) {
         let name = url.lastPathComponent
+        // Navigation cancels old queued actions. Arm this explicit destination-owned
+        // selection afterward, before MainActor can deliver its asynchronous listing.
+        navigate(to: url.deletingLastPathComponent())
         pendingSelection = [name]
         // Generic selection restoration deliberately does not scroll (view swaps
         // and in-place reloads must preserve the viewport). An explicit Reveal
         // instead promises to show this item after the fresh listing arrives.
         pendingAfterListing = { [weak self] in self?.content.select(name: name) }
         pendingListingDirectory = url.deletingLastPathComponent().standardizedFileURL.path
-        navigate(to: url.deletingLastPathComponent())
     }
 
     /// Navigate without recording history (clears back/forward). Used by demo-mode

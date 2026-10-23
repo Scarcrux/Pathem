@@ -42,6 +42,18 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     var directoryURL: URL?
     var resolutionURL: URL?
+    var allowsLocalMetadata = true {
+        didSet {
+            guard allowsLocalMetadata != oldValue else { return }
+            if !allowsLocalMetadata {
+                decorations.refreshTags(entries: [], directory: nil)
+                decorations.setGitStates([:])
+                filmstrip.reloadData()
+                updatePreview(for: selectedEntries.first ?? entries.first)
+            }
+            // setEntries will render the new local context; never preview the old remote rows.
+        }
+    }
     var onOpen: ((FileEntry) -> Void)?
     var onBecomeActive: (() -> Void)?
     var onSelectionChanged: (() -> Void)?
@@ -79,7 +91,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     var onDragSession: ((DragSessionEvent) -> Void)?
 
     func setGitStates(_ states: [String: GitFileState]) {
-        if decorations.setGitStates(states) { filmstrip.reloadData() }
+        if decorations.setGitStates(allowsLocalMetadata ? states : [:]) { filmstrip.reloadData() }
     }
 
     func invalidateTagCache() { decorations.invalidateTags() }
@@ -138,7 +150,10 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         contextMenu.selectedURLs = { [weak self] in
             self?.selectedEntries.compactMap { self?.fileURL(for: $0) } ?? []
         }
-        contextMenu.currentFolder = { [weak self] in self?.directoryURL }
+        contextMenu.currentFolder = { [weak self] in
+            guard let self, self.allowsLocalMetadata else { return nil }
+            return self.directoryURL
+        }
         filmstrip.menu = contextMenu.menu
         scrollView.documentView = filmstrip
         scrollView.hasHorizontalScroller = true
@@ -212,7 +227,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     private var cutPaths: Set<String> = []
     private func isCut(_ entry: FileEntry) -> Bool {
-        !cutPaths.isEmpty && cutPaths.contains(PaneItemKey.path(for: entry, in: directoryURL))
+        allowsLocalMetadata && !cutPaths.isEmpty
+            && cutPaths.contains(PaneItemKey.path(for: entry, in: directoryURL))
     }
     private func alpha(for entry: FileEntry) -> CGFloat { isCut(entry) ? 0.45 : 1.0 }
 
@@ -245,6 +261,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     }
 
     private func fileURL(for entry: FileEntry) -> URL? {
+        guard allowsLocalMetadata else { return nil }
         if let location = entry.location {
             return URL(fileURLWithPath: location).appendingPathComponent(entry.name)
         }
@@ -261,12 +278,17 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     /// selectable text, rendered images), falling back to the file icon for folders and
     /// online-only items. This is what makes the gallery a real preview rather than a big icon.
     private func updatePreview(for entry: FileEntry?) {
-        guard let entry, let url = fileURL(for: entry) else {
+        guard let entry else {
             preview.show(nil)
             previewName.stringValue = ""
             return
         }
         previewName.stringValue = entry.name
+        guard let url = fileURL(for: entry) else {
+            preview.show(
+                nil, fallbackIcon: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry))
+            return
+        }
         preview.show(
             url, isDirectory: entry.isDirectory, isDataless: entry.isDataless,
             fallbackIcon: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry))
@@ -377,7 +399,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         if paths.isEmpty, !entries.isEmpty { paths = [IndexPath(item: 0, section: 0)] }  // preview the first
         filmstrip.selectionIndexPaths = paths
         selectionChanged()
-        decorations.refreshTags(entries: entries, directory: directoryURL)
+        decorations.refreshTags(
+            entries: allowsLocalMetadata ? entries : [],
+            directory: allowsLocalMetadata ? directoryURL : nil)
     }
 
     func showPlaceholder(_ text: String?) {
@@ -444,8 +468,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
             iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless,
             thumbnailURL: thumbnailURL,
-            git: decorations.gitState(for: entry, in: directoryURL),
-            tags: decorations.tagColors(for: entry, in: directoryURL),
+            git: allowsLocalMetadata ? decorations.gitState(for: entry, in: directoryURL) : nil,
+            tags: allowsLocalMetadata ? decorations.tagColors(for: entry, in: directoryURL) : [],
             underlined: indexPath.item == hoveredItem,
             nameFont: ruleStyle?.font, nameColor: ruleStyle?.color,
             accessibilityLabel: FileAXLabel.describe(entry))

@@ -1,5 +1,4 @@
 /* Pathem UI strings (English source) */
-
 "acl.add" = "Add";
 "acl.added" = "Added.";
 "acl.allow" = "Allow";
@@ -132,11 +131,7 @@
 "bvc.cmd.aiSummarize" = "Summarize Folder";
 "bvc.cmd.applyStyle" = "Apply Style…";
 "bvc.cmd.applyViewToSubfolders" = "Apply View to Subfolders";
-"bvc.cmd.arrangeDate" = "Date Modified";
-"bvc.cmd.arrangeKind" = "Kind";
 "bvc.cmd.arrangeNone" = "None";
-"bvc.cmd.arrangeSize" = "Size";
-"bvc.cmd.arrangeTag" = "Tag";
 "bvc.cmd.asColumns" = "as Columns";
 "bvc.cmd.asGallery" = "as Gallery";
 "bvc.cmd.asIcons" = "as Icons";
@@ -852,6 +847,9 @@
 "group.earlier" = "Earlier";
 "group.folder" = "Folder";
 "group.folders" = "Folders";
+"group.nameNumbers" = "0–9";
+"group.nameOther" = "Other";
+"group.noApplication" = "No Application";
 "group.noTag" = "No Tag";
 "group.prev30" = "Previous 30 Days";
 "group.prev7" = "Previous 7 Days";
@@ -1017,7 +1015,6 @@
 "menu.externalCommands" = "External Commands";
 "menu.file" = "File";
 "menu.go" = "Go";
-"menu.group.arrangeBy" = "Arrange By";
 "menu.group.find" = "Find";
 "menu.group.folderBackground" = "Folder Background";
 "menu.group.folderTools" = "Folder Tools";
@@ -1159,10 +1156,7 @@
 "pane.share" = "Share…";
 "pane.showHidden" = "Show Hidden Files";
 "pane.sortAscending" = "Ascending";
-"pane.sortDateModified" = "Date Modified";
 "pane.sortDescending" = "Descending";
-"pane.sortName" = "Name";
-"pane.sortSize" = "Size";
 "pane.sortTooltip" = "Sort";
 "pane.tagFailedBody" = "%d item(s) couldn’t be updated. They may be on a read-only volume, or Pathem may need Full Disk Access.";
 "pane.tagFailedTitle" = "Couldn’t change tags";
@@ -1553,12 +1547,7 @@
 "smb.unreachableBody" = "Couldn’t resolve “%@” on the network. It may have gone offline.";
 "smb.unreachableTitle" = "Can’t reach that computer";
 "sort.ascending" = "Ascending";
-"sort.dateAccessed" = "Date Accessed";
-"sort.dateCreated" = "Date Created";
-"sort.dateModified" = "Date Modified";
 "sort.descending" = "Descending";
-"sort.name" = "Name";
-"sort.size" = "Size";
 "sync.confirmGo" = "Sync";
 "sync.confirmTitle" = "Sync %@ ↔ %@";
 "sync.conflictsNote" = "%d file(s) changed on both sides at the same time; those are left untouched.\n\n";
@@ -1697,6 +1686,9 @@
 "view.icons" = "Icons";
 "view.list" = "List";
 "view.tree" = "Tree";
+"viewchoice.application" = "Application";
+"viewchoice.groupBy" = "Group By";
+"viewchoice.sortBy" = "Sort By";
 "viewer.done" = "Done";
 "viewopts.absoluteDates" = "Non-relative date style";
 "viewopts.ascending" = "Ascending";

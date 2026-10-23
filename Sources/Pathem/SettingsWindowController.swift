@@ -1211,10 +1211,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private func defaultSortControl() -> NSView {
         defaultSortKeyPopup.removeAllItems()
-        defaultSortKeyPopup.addItems(withTitles: [
-            L("sort.name", "Name"), L("sort.size", "Size"), L("sort.dateModified", "Date Modified"),
-            L("sort.dateCreated", "Date Created"), L("sort.dateAccessed", "Date Accessed"),
-        ])
+        defaultSortKeyPopup.addItems(withTitles: ViewFormat.SortKey.allCases.map(\.localizedTitle))
         defaultSortKeyPopup.selectItem(
             at: ViewFormat.SortKey.allCases.firstIndex(of: prefs.defaultSortKey) ?? 0)
         defaultSortKeyPopup.target = self

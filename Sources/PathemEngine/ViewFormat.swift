@@ -6,11 +6,12 @@ import Foundation
 /// view mode; the sort logic lives here so it is unit-testable.
 public struct ViewFormat: Codable, Sendable, Equatable {
     public enum SortKey: String, Codable, Sendable, CaseIterable {
-        case name, size, date, dateCreated, dateAccessed
+        case name, kind, dateAccessed, dateAdded, date, dateCreated, size, tags
     }
     /// How the list view groups rows under section headers (`none` = flat, the default).
     public enum GroupKey: String, Codable, Sendable, CaseIterable {
-        case none, kind, size, dateModified, tag
+        case none, name, kind, application, dateAccessed, dateAdded, dateModified, dateCreated,
+            size, tag
     }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
     /// grid views (gallery uses larger thumbnails); `column` is miller columns.
@@ -71,6 +72,28 @@ public struct ViewFormat: Codable, Sendable, Equatable {
 
     public static let `default` = ViewFormat()
 
+    /// Only request metadata needed by the chosen sort/group. Name, size and
+    /// enumerated dates require no additional filesystem or Spotlight work.
+    public var metadataRequirements: FileViewMetadata.Requirements {
+        var result: FileViewMetadata.Requirements = []
+        switch sortKey {
+        case .kind: result.insert(.kind)
+        case .dateAccessed: result.insert(.lastOpened)
+        case .dateAdded: result.insert(.dateAdded)
+        case .tags: result.insert(.tags)
+        case .name, .date, .dateCreated, .size: break
+        }
+        switch groupKey {
+        case .kind: result.insert(.kind)
+        case .application: result.insert(.application)
+        case .dateAccessed: result.insert(.lastOpened)
+        case .dateAdded: result.insert(.dateAdded)
+        case .tag: result.insert(.tags)
+        case .none, .name, .dateModified, .dateCreated, .size: break
+        }
+        return result
+    }
+
     /// Sort entries per this format. Folders-first (when set) is independent of
     /// the sort direction; ties fall back to a stable localized name compare.
     public func sorted(_ entries: [FileEntry]) -> [FileEntry] {
@@ -97,16 +120,49 @@ public struct ViewFormat: Codable, Sendable, Equatable {
                 if da == db { return nameAscending(a, b) }
                 ordered = da < db
             case .dateAccessed:
-                let da = a.accessDate ?? .distantPast
-                let db = b.accessDate ?? .distantPast
+                // Legacy callers may supply accessDate without enrichment. Once
+                // gathered, an absent Spotlight last-open date stays unknown;
+                // filesystem access (e.g. indexing) is not a user opening it.
+                let da = lastOpened(a) ?? .distantPast
+                let db = lastOpened(b) ?? .distantPast
                 if da == db { return nameAscending(a, b) }
                 ordered = da < db
+            case .dateAdded:
+                let da = a.viewMetadata?.dateAdded ?? .distantPast
+                let db = b.viewMetadata?.dateAdded ?? .distantPast
+                if da == db { return nameAscending(a, b) }
+                ordered = da < db
+            case .kind:
+                let comparison = (a.viewMetadata?.kind ?? "").localizedStandardCompare(
+                    b.viewMetadata?.kind ?? "")
+                if comparison == .orderedSame { return nameAscending(a, b) }
+                ordered = comparison == .orderedAscending
+            case .tags:
+                let comparison = compareTags(
+                    a.viewMetadata?.tagNames ?? [], b.viewMetadata?.tagNames ?? [])
+                if comparison == .orderedSame { return nameAscending(a, b) }
+                ordered = comparison == .orderedAscending
             }
             return ascending ? ordered : !ordered
         }
     }
 
     private func nameAscending(_ a: FileEntry, _ b: FileEntry) -> Bool {
-        a.name.localizedStandardCompare(b.name) == .orderedAscending
+        let comparison = a.name.localizedStandardCompare(b.name)
+        return comparison == .orderedSame ? a.name < b.name : comparison == .orderedAscending
+    }
+
+    private func lastOpened(_ entry: FileEntry) -> Date? {
+        if let metadata = entry.viewMetadata { return metadata.lastOpenedDate }
+        return entry.accessDate
+    }
+
+    private func compareTags(_ a: [String], _ b: [String]) -> ComparisonResult {
+        for (left, right) in zip(a, b) {
+            let comparison = left.localizedStandardCompare(right)
+            if comparison != .orderedSame { return comparison }
+        }
+        if a.count == b.count { return .orderedSame }
+        return a.count < b.count ? .orderedAscending : .orderedDescending
     }
 }

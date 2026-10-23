@@ -10,6 +10,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     NSTextFieldDelegate
 {
     private struct Column {
+        let id = UUID()
         let folder: URL
         var entries: [FileEntry]
         let scroll: NSScrollView
@@ -46,6 +47,40 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private var storedResolutionURL: URL?
     private var trailingConstraint: NSLayoutConstraint?
     private var sortFormat = ViewFormat.default  // how every column (incl. drilled) is sorted
+    private struct PendingFolderOpen: Sendable {
+        let token: Int
+        let folder: URL
+        let index: Int
+        let parentID: UUID
+        let root: URL?
+    }
+    private var pendingFolderOpen: PendingFolderOpen?
+    private var folderOpenGeneration = 0
+    private var columnWorkGeneration = 0
+    private var deferredDrilledRefresh = false
+    private var deferredDrilledCompletions: [@MainActor () -> Void] = []
+    private var pendingDrilledRefreshGeneration: Int?
+    var isRefreshingDrilledColumns: Bool {
+        deferredDrilledRefresh || pendingDrilledRefreshGeneration == columnWorkGeneration
+    }
+    #if DEBUG
+    var debugWillApplyColumnLoad: (() -> Void)?
+    var debugWillApplyDrilledRefresh: (() -> Void)?
+    var debugHasPendingColumnLoad: Bool { pendingFolderOpen != nil }
+    var debugColumnFolders: [URL] { columns.map(\.folder) }
+    func debugColumnNames(_ index: Int) -> [String] {
+        columns.indices.contains(index) ? columns[index].entries.map(\.name) : []
+    }
+    func debugColumnOffset(_ index: Int) -> NSPoint? {
+        columns.indices.contains(index) ? columns[index].scroll.contentView.bounds.origin : nil
+    }
+    func debugSetColumnOffset(_ origin: NSPoint, inColumn index: Int) {
+        guard columns.indices.contains(index) else { return }
+        let column = columns[index]
+        column.scroll.contentView.scroll(to: origin)
+        column.scroll.reflectScrolledClipView(column.scroll.contentView)
+    }
+    #endif
     private var restoringSortSelection = false
     private var selectingProgrammatically = false
     private let columnWidth: CGFloat = 220
@@ -198,6 +233,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         table.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }  // right-drag flick + trail
         table.onBecomeActive = { [weak self, weak table] in
             guard let self, let table, let i = self.columnIndex(of: table) else { return }
+            guard !self.restoringSortSelection else { return }
             self.activeColumn = i
             self.onBecomeActive?()
         }
@@ -283,23 +319,61 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     /// Load a folder's children off the main thread, then append the next column,
     /// but only if that folder is still the active selection (no newer click won).
     private func openFolder(_ folder: URL, after index: Int) {
+        guard columns.indices.contains(index) else { return }
+        columnWorkGeneration += 1
+        folderOpenGeneration += 1
+        let request = PendingFolderOpen(
+            token: folderOpenGeneration, folder: folder, index: index,
+            parentID: columns[index].id, root: rootURL)
+        pendingFolderOpen = request
         if columns.count > index + 1 { columns.removeSubrange((index + 1)...) }  // drop deeper now
         relayout()
+        loadPendingFolder(request)
+    }
+
+    private func loadPendingFolder(_ request: PendingFolderOpen) {
         let format = sortFormat
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
-            let sorted = format.sorted(entries)
+            let entries =
+                (try? BulkEnumerator().entries(of: request.folder, includingHidden: false)) ?? []
+            let sorted = format.sorted(
+                ListingViewMetadata.enrich(entries, directory: request.folder, format: format))
             DispatchQueue.main.async {
-                guard let self, self.columns.indices.contains(index),
-                    self.columns.count == index + 1
+                guard let self, self.pendingFolderOpen?.token == request.token,
+                    self.rootURL == request.root,
+                    self.columns.indices.contains(request.index),
+                    self.columns[request.index].id == request.parentID,
+                    self.columns.count == request.index + 1
                 else { return }  // a deeper column already opened, or the parent is gone
+                #if DEBUG
+                let beforeApply = self.debugWillApplyColumnLoad
+                self.debugWillApplyColumnLoad = nil
+                beforeApply?()
+                #endif
+                guard self.pendingFolderOpen?.token == request.token,
+                    self.rootURL == request.root,
+                    self.columns.indices.contains(request.index),
+                    self.columns[request.index].id == request.parentID,
+                    self.columns.count == request.index + 1
+                else { return }
                 // The parent column must still have exactly this folder selected.
-                let parent = self.columns[index]
+                let parent = self.columns[request.index]
                 let selected = parent.table.selectedRowIndexes
                 guard selected.count == 1, let row = selected.first, row < parent.entries.count,
-                    parent.folder.appendingPathComponent(parent.entries[row].name) == folder
-                else { return }
-                let new = self.makeColumn(folder: folder, entries: sorted, index: index + 1)
+                    parent.folder.appendingPathComponent(parent.entries[row].name) == request.folder
+                else {
+                    self.pendingFolderOpen = nil
+                    return
+                }
+                // A sort can change while the same folder is still selected. Keep the user's
+                // pending drill, but do not append a column prepared with obsolete metadata.
+                guard self.sortFormat == format else {
+                    self.loadPendingFolder(request)
+                    return
+                }
+                self.pendingFolderOpen = nil
+                let new = self.makeColumn(
+                    folder: request.folder, entries: sorted, index: request.index + 1)
                 self.columns.append(new)
                 self.relayout()
                 new.table.reloadData()
@@ -371,6 +445,11 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         guard let table = notification.object as? NSTableView, let index = columnIndex(of: table)
         else { return }
         activeColumn = index
+        // Any new gesture supersedes a pending read, even a file/multiple selection which
+        // does not start another folder read. An in-place listing restoration is filtered above.
+        folderOpenGeneration += 1
+        pendingFolderOpen = nil
+        columnWorkGeneration += 1
         // Programmatic Reveal/selection restoration updates this column, but
         // must not steal active-side ownership from a pane the user has focused.
         if !selectingProgrammatically { onBecomeActive?() }
@@ -633,7 +712,17 @@ extension ColumnBrowserController: PaneContentView {
 
     var directoryURL: URL? {
         get { columns.indices.contains(activeColumn) ? columns[activeColumn].folder : rootURL }
-        set { rootURL = newValue }
+        set {
+            if rootURL != newValue {
+                folderOpenGeneration += 1
+                pendingFolderOpen = nil
+                columnWorkGeneration += 1
+                deferredDrilledRefresh = false
+                deferredDrilledCompletions = []
+                pendingDrilledRefreshGeneration = nil
+            }
+            rootURL = newValue
+        }
     }
     var resolutionURL: URL? {
         get { storedResolutionURL }
@@ -729,6 +818,14 @@ extension ColumnBrowserController: PaneContentView {
         editingTable = nil
         editingRow = -1
         renameCancelled = false
+        defer {
+            if deferredDrilledRefresh {
+                deferredDrilledRefresh = false
+                let completions = deferredDrilledCompletions
+                deferredDrilledCompletions = []
+                refreshDrilledColumns(afterApply: { completions.forEach { $0() } })
+            }
+        }
         if let table, row >= 0, row < table.numberOfRows {
             table.reloadData(
                 forRowIndexes: IndexSet(integer: row), columnIndexes: IndexSet(integer: 0))
@@ -740,6 +837,9 @@ extension ColumnBrowserController: PaneContentView {
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         guard let root = rootURL else {
+            pendingFolderOpen = nil
+            folderOpenGeneration += 1
+            columnWorkGeneration += 1
             columns = []
             relayout()
             return
@@ -749,22 +849,16 @@ extension ColumnBrowserController: PaneContentView {
         if preserveState, let first = columns.first, first.folder == root {
             // Restoring selection is not a user drill gesture. Otherwise reselecting the
             // root's folder opens it again, replaces the child table and steals activeColumn.
-            restoringSortSelection = true
-            defer { restoringSortSelection = false }
-            let names = Set(
-                first.table.selectedRowIndexes.compactMap {
-                    $0 < columns[0].entries.count ? columns[0].entries[$0].name : nil
-                })
-            columns[0].entries = entries
-            first.table.reloadData()
-            var rows = IndexSet()
-            for (index, entry) in entries.enumerated() where names.contains(entry.name) {
-                rows.insert(index)
+            preservingColumnState {
+                columns[0].entries = entries
+                first.table.reloadData()
             }
-            first.table.selectRowIndexes(rows, byExtendingSelection: false)
             refreshColumnTags()  // a watcher tick may include external tag edits
             return
         }
+        pendingFolderOpen = nil
+        folderOpenGeneration += 1
+        columnWorkGeneration += 1
         let wasFocused =
             outerScroll.window?.firstResponder === container
             || columns.contains { $0.table === outerScroll.window?.firstResponder }
@@ -843,68 +937,149 @@ extension ColumnBrowserController: PaneContentView {
         }
     }
 
+    /// Preserve state at delivery time, not when the worker starts: the user can scroll,
+    /// select another row or focus the other pane while a metadata read is running.
+    private func preservingColumnState(_ update: () -> Void) {
+        let wasRestoring = restoringSortSelection
+        restoringSortSelection = true
+        defer { restoringSortSelection = wasRestoring }
+        let outerOrigin = outerScroll.contentView.bounds.origin
+        let activeID = columns.indices.contains(activeColumn) ? columns[activeColumn].id : nil
+        let focusedTable = columns.first { $0.table === outerScroll.window?.firstResponder }?.table
+        let states = columns.map { column in
+            (
+                column.id,
+                Set(
+                    column.table.selectedRowIndexes.compactMap {
+                        $0 < column.entries.count ? column.entries[$0].name : nil
+                    }),
+                column.scroll.contentView.bounds.origin
+            )
+        }
+        update()
+        for (id, names, origin) in states {
+            guard let column = columns.first(where: { $0.id == id }) else { continue }
+            let rows = IndexSet(
+                column.entries.indices.filter { names.contains(column.entries[$0].name) })
+            column.table.selectRowIndexes(rows, byExtendingSelection: false)
+            column.table.layoutSubtreeIfNeeded()
+            column.scroll.contentView.scroll(to: origin)
+            column.scroll.reflectScrolledClipView(column.scroll.contentView)
+        }
+        if let activeID, let index = columns.firstIndex(where: { $0.id == activeID }) {
+            activeColumn = index
+        } else {
+            activeColumn = min(activeColumn, max(0, columns.count - 1))
+        }
+        outerScroll.contentView.scroll(to: outerOrigin)
+        outerScroll.reflectScrolledClipView(outerScroll.contentView)
+        if let focusedTable, columns.contains(where: { $0.table === focusedTable }),
+            outerScroll.window?.firstResponder !== focusedTable
+        {
+            outerScroll.window?.makeFirstResponder(focusedTable)
+        }
+    }
+
     /// Re-enumerate the drilled (non-root) columns after a file operation, so an op
     /// inside a drilled column shows its result instead of stale rows. The root
     /// column is refreshed separately by setEntries; here we prune any column whose
     /// folder vanished and reload the rest, preserving each column's selection.
     func refreshDrilledColumns() {
-        guard columns.count > 1 else { return }
-        restoringSortSelection = true
-        defer { restoringSortSelection = false }
-        let fm = FileManager.default
-        while columns.count > 1, !fm.fileExists(atPath: columns[columns.count - 1].folder.path) {
-            columns.removeLast()  // the folder this column showed was deleted/moved
+        refreshDrilledColumns(afterApply: {})
+    }
+
+    /// The pane's queued create/reveal can only run once its active drilled column is fresh.
+    /// Completion belongs to this read, not a shared callback that a later sort could replace.
+    func refreshDrilledColumns(afterApply: @escaping @MainActor () -> Void) {
+        guard columns.count > 1 else {
+            afterApply()
+            return
         }
-        if activeColumn >= columns.count { activeColumn = max(0, columns.count - 1) }
-        // relayout() below tears down and re-adds every column's scroll view, which can
-        // reset the vertical offset. Capture each column's scroll position so a file op
-        // in a drilled column doesn't jump that column back to the top.
-        var savedOffsets: [Int: NSPoint] = [:]
-        for index in columns.indices where index > 0 {
-            let folder = columns[index].folder
-            let entries = (try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? []
-            let sorted = sortFormat.sorted(entries)
-            let names = Set(
-                columns[index].table.selectedRowIndexes.compactMap {
-                    $0 < columns[index].entries.count ? columns[index].entries[$0].name : nil
-                })
-            savedOffsets[index] = columns[index].scroll.contentView.bounds.origin
-            columns[index].entries = sorted
-            columns[index].table.reloadData()
-            var rows = IndexSet()
-            for (row, entry) in sorted.enumerated() where names.contains(entry.name) {
-                rows.insert(row)
+        if isInlineEditing {
+            deferredDrilledRefresh = true
+            deferredDrilledCompletions.append(afterApply)
+            return
+        }
+        deferredDrilledRefresh = false
+        columnWorkGeneration += 1
+        let generation = columnWorkGeneration
+        pendingDrilledRefreshGeneration = generation
+        let root = rootURL
+        let format = sortFormat
+        let targets = columns.dropFirst().map { ($0.id, $0.folder) }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let results = targets.map { id, folder in
+                let exists = FileManager.default.fileExists(atPath: folder.path)
+                let entries =
+                    exists
+                    ? ((try? BulkEnumerator().entries(of: folder, includingHidden: false)) ?? [])
+                    : []
+                return (
+                    id, folder, exists,
+                    format.sorted(
+                        ListingViewMetadata.enrich(entries, directory: folder, format: format))
+                )
             }
-            columns[index].table.selectRowIndexes(rows, byExtendingSelection: false)
-        }
-        relayout()
-        for (index, origin) in savedOffsets where columns.indices.contains(index) {
-            let clip = columns[index].scroll.contentView
-            clip.scroll(to: origin)
-            columns[index].scroll.reflectScrolledClipView(clip)
+            DispatchQueue.main.async {
+                guard let self, self.columnWorkGeneration == generation,
+                    self.rootURL == root, self.sortFormat == format
+                else { return }
+                #if DEBUG
+                let beforeApply = self.debugWillApplyDrilledRefresh
+                self.debugWillApplyDrilledRefresh = nil
+                beforeApply?()
+                #endif
+                guard self.columnWorkGeneration == generation,
+                    self.rootURL == root, self.sortFormat == format,
+                    targets.count == self.columns.count - 1,
+                    targets.enumerated().allSatisfy({ offset, target in
+                        self.columns[offset + 1].id == target.0
+                            && self.columns[offset + 1].folder == target.1
+                    })
+                else { return }
+                if self.isInlineEditing {
+                    self.pendingDrilledRefreshGeneration = nil
+                    self.deferredDrilledRefresh = true
+                    self.deferredDrilledCompletions.append(afterApply)
+                    return
+                }
+                self.pendingDrilledRefreshGeneration = nil
+                self.preservingColumnState {
+                    for (id, folder, exists, entries) in results {
+                        guard
+                            let index = self.columns.firstIndex(where: {
+                                $0.id == id && $0.folder == folder
+                            })
+                        else { continue }
+                        if !exists {
+                            self.columns.removeSubrange(index...)
+                            self.previewColumn = nil
+                            break
+                        }
+                        self.columns[index].entries = entries
+                        self.columns[index].table.reloadData()
+                    }
+                    self.relayout()
+                }
+                afterApply()
+            }
         }
     }
 
     /// Adopt the pane's sort and re-sort every open column (including drilled ones)
     /// so all columns order consistently, not just the first.
     func setSortFormat(_ format: ViewFormat) {
+        guard sortFormat != format else { return }
         sortFormat = format
-        restoringSortSelection = true
-        defer { restoringSortSelection = false }
-        for index in columns.indices {
-            let column = columns[index]
-            let names = Set(
-                column.table.selectedRowIndexes.compactMap {
-                    $0 < column.entries.count ? column.entries[$0].name : nil
-                })
-            columns[index].entries = format.sorted(columns[index].entries)
-            columns[index].table.reloadData()
-            var selected = IndexSet()
-            for (row, entry) in columns[index].entries.enumerated() where names.contains(entry.name)
-            {
-                selected.insert(row)
+        columnWorkGeneration += 1
+        preservingColumnState {
+            for index in columns.indices {
+                columns[index].entries = format.sorted(columns[index].entries)
+                columns[index].table.reloadData()
             }
-            columns[index].table.selectRowIndexes(selected, byExtendingSelection: false)
         }
+        // Comparisons above are pure and immediate. Additional filesystem/Spotlight/default-app
+        // reads for a newly selected key happen only in the guarded background worker.
+        if !format.metadataRequirements.isEmpty { refreshDrilledColumns() }
     }
 }

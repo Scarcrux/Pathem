@@ -1786,6 +1786,7 @@ name = "pathem"
   [[mission.task]]
     id = "t-31ecba1b"
     title = "Reproduce/fix Group and header-Sort delivery in smart/remote views without persisting local fallback rules; verify expanded Tree sort policy"
+    done = true
 
   [[mission.task]]
     id = "t-89011ba8"
@@ -1803,6 +1804,10 @@ name = "pathem"
     id = "t-0e9bf044"
     title = "Exercise vertically scrolled drilled Column plus preview/date-format rebuild; preserve each child offset if control convicts a reset"
 
+  [[mission.task]]
+    id = "t-5d9519ef"
+    title = "Reproduce loaded Tree child size/mtime staleness after content-only edits with unchanged parent-directory mtime; design targeted invalidation if confirmed"
+
   [[mission.comment]]
     text = "Parallel audit expanded remote Rename to local↔remote mode crossings. Rename now captures operation kind/context before sheet, checks exact connection/path/credentials at acceptance, and aborts if ownership changed. Predicate controls cover unchanged local/remote and changed mode/path/server/credentials; full delayed real-sheet/provider reproduction remains pending. Download collision and stale archive completion still unimplemented/source-confirmed findings."
     at = "2026-10-23T05:35:19Z"
@@ -1814,4 +1819,43 @@ name = "pathem"
   [[mission.comment]]
     text = "Further read-only download audit: TransferQueueController.retry unconditionally removes progressFile before reusing the closure/path. Coupled with sanitized-name collisions or external replacement, Retry can delete an unowned destination. Source-confirmed deletion path; no destructive reproduction or owner mutation. Batch name reservation alone is insufficient: design per-attempt owned staging, no-replace final publication and identity-proven cleanup."
     at = "2026-10-23T05:45:58Z"
+
+  [[mission.comment]]
+    text = "Mission59 implements and verifies this item:8sort/10group controls; actual smart header/group delivery with zero fallback writes; remote provider-held rows survive pending-metadata sort changes; actual Tree child sorting/metadata, inline-edit deferral, collapse and teardown ownership. Focused192/192 and823units pass. Separate Column preview/date-format task, download Retry/collisions, delayed Rename and archive controls remain pending."
+    at = "2026-10-23T16:40:29Z"
+
+  [[mission.comment]]
+    text = "Final read-only Tree review confirmed unchanged preexisting mechanism in HEAD: root Node reuse keys on parent modificationDate and keeps loaded children; extra metadata enrichment does not restat child size/mtime. Content-only nested edits may therefore retain stale stat fields. Source-confirmed limitation, functional reproduction pending; not claimed fixed by Mission59."
+    at = "2026-10-23T16:56:22Z"
+
+[[mission]]
+  id = "m-768176ca"
+  title = "Finder Group By and Sort By screenshot parity"
+  status = "done"
+  note = "Owner supplied Finder menu screenshots and requested implementation. Confirmed8 Sort choices vs5 and10 Group choices vs5. Implement missing kind/dateAdded/named-tag sorting and name/application/lastOpened/added/created grouping, consistent menus/settings/headers, selected-key off-main metadata, correct Spotlight lastOpened semantics, smart/remote no-fallback-write delivery and nested Column/Tree sorting. Preserve old raw keys, selection/location/viewport and validate discriminatory unit/native controls; no install/publication implied."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-fd6d8124"
+    title = "Implement screenshot-matched8 sort and10 group choices across menus/settings/headers with stable saved keys"
+    done = true
+
+  [[mission.task]]
+    id = "t-ecb69b67"
+    title = "Deliver selected metadata and grouping safely across local/smart/remote/Column/Tree views without fallback writes or location jumps"
+    done = true
+
+  [[mission.task]]
+    id = "t-42523b8a"
+    title = "Verify discriminatory unit/native suites and local bundle; record known AI and environmental gate failures"
+    done = true
+
+  [[mission.comment]]
+    text = "Screenshot menus and native picker/header controls pass;8 Sort and10 Group choices with stable IDs. Fullfocused native2 passed191/191; cold20file diagnostic then convicted combined Finder/iCloud tag read masking, split requests and added cold+untagged control. Latest units823PASS. Completing final focused rerun then broader normal CI/local bundle; release AI1026 remains unwaived."
+    at = "2026-10-23T16:39:17Z"
+
+  [[mission.comment]]
+    text = "Completed source and verification:823unitsPASS; actual native search465/465, Finder198/198, sidebar429/429 including193focused sort/group controls; background308, defaults918, content206, gallery59, layout161, transient53 pass in broad run. Local ARM64 ad-hoc bundle14/14 PASS. Own Reveal regression in first broad CI corrected and all affected suites rerun green; last fullCI remains64/1/3, not rerun or claimed green. Prior AI1026/release gates remain open. No install, owner-app restart or publication. Mission58 retains remaining remote/Tree audit work."
+    at = "2026-10-23T16:57:10Z"
 # <<< commandem roadmap <<<

@@ -71,11 +71,9 @@ extension BrowserViewController {
             (.list, "view.asList"), (.icon, "view.asIcons"), (.gallery, "view.asGallery"),
             (.column, "view.asColumn"), (.tree, "view.asTree"),
         ]
-        let groups: [(ViewFormat.GroupKey, String)] = [
-            (.none, "view.arrangeNone"), (.kind, "view.arrangeKind"),
-            (.size, "view.arrangeSize"), (.dateModified, "view.arrangeDate"),
-            (.tag, "view.arrangeTag"),
-        ]
+        let groups: [(ViewFormat.GroupKey, String)] = ViewFormat.GroupKey.allCases.map {
+            ($0, $0.commandID)
+        }
         let sampleOnly = ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_SAMPLE_ONLY"] == "1"
         func actionEnabled(_ entry: NSMenuItem) -> Bool {
             guard let action = entry.action else { return false }

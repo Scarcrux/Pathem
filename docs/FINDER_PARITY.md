@@ -293,3 +293,116 @@ guards, actual launch/visible window, scratch config persistence and updater-dis
 Release compiler inventory:12known/0new. This is local bundle verification, not universal,
 Developer-ID/notarized distribution, installation or publication. Mission57's full-validation
 task remains pending because live AI1026 is unresolved; no full-CI-green claim is made.
+
+## Mission59: screenshot-matched sorting and grouping
+
+Trigger: owner supplied the actual Finder Sort By and Group By menus and requested fixes.
+The Sort screenshot has8 choices (an earlier chat count of9 was wrong), Group has10 including
+None. Source confirms sort lacked Kind/DateAdded/Tags; group lacked Name/Application/LastOpened/
+DateAdded/DateCreated. Toolbar offered only3 sorts. Existing smart header-sort/group delivery
+could persist a local fallback format or never visibly apply. Expanded Tree children used
+fixed name order. Date Last Opened displayed POSIX access time, not Spotlight last-used time.
+
+Criteria written before new controls run: every native picker/menu must expose all8/10 in
+screenshot order; old raw config and command IDs must retain meaning. Real List headers must
+select the new sort keys. Pure ordering must distinguish values that contradict filename order,
+both directions and stable name ties/folders-first. Group headers must reflect independent
+lastOpened/added/created dates, named (including colorless) tags and resolved application names;
+unavailable data stays explicitly unknown. Current Name grouping is initial-based; no claim
+of exact Finder's name bucket ranges or multi-tag duplication semantics follows from a menu.
+
+Metadata is selected-key-only, off-main and never read in comparator/drawing/group bucketing.
+The normal name/size/modified/created path must request none. Remote/synthetic entries cannot
+probe same-named files in a retained local directory. Smart group/sort must change actual rows/
+headers with zero saved-folder writes; contrasting local actions must persist. A suspended
+metadata request must visibly enter, then navigation/new sort/teardown must reject its late
+delivery. Column and Tree tests must check existing/new child sorting and actual completion,
+not just root order or a menu checkmark, preserving identity/selection/scroll. UI tests use
+injected metadata/provider boundaries and disposable files; no owner file contents or services
+may be modified. Real metadata fixtures separately establish type/tags/date-added delivery;
+Spotlight absence is a known-unknown control, never fabricated filesystem access time.
+
+Preexisting AI1026 and visual/environmental release limits remain open; this work does not
+waive them or authorize installation/restart/publication.
+
+Integration review convicted additional boundaries before native validation: unconditional
+post-metadata sorting displaced explicit ranked-search order; a sort change while a remote
+provider's first metadata request was held could discard the only raw listing; a partial
+Kind snapshot hid correctly loaded Tags cells; absolute device paths could reach host-only
+lazy metadata readers. The treatment preserves search input order, retains provider values
+before enrichment, prefers independently gathered visible tags, and delivers an explicit local
+metadata capability to the actual content. Remote previews and package-icon path lookup are
+also denied rather than treating `/device/path` as a host path. Tree's independent child
+delivery now waits event-driven for inline editing to end and revalidates ownership; view swap
+and teardown cancel its workers. Deterministic gate controls hold actual worker completions
+before sort/navigation/collapse/edit/close, rather than relying on timing luck.
+
+First local compile ACTUAL exit2: test fixture used the SDK's new macOS26-only writable
+tagNames property despite Pathem's lower deployment target; the Column completion adapter
+also needed an explicit MainActor/Sendable annotation. Replaced the fixture setter with the
+existing FileMetadata API and annotated the callback; this failed run is not a test pass.
+Second compile ACTUAL exit2: a new remote-path control attempted to mutate immutable
+FileEntry.location. FileEntry(contentsOf:) already records the actual parent; removed that
+redundant test assignment. No production compiler errors remained in this run.
+
+Third build/unit gate ACTUAL exit0:15 XCTest and807 Swift Testing tests pass (822 total).
+Focused native1 ACTUAL exit1:186/190. All menu/ordering/smart/remote/Column controls passed;
+Tags rendering and three dependent Tree editor/resort/collapse checks failed. The Tree
+instrument could gate an earlier valid worker that became canceled before the current worker
+arrived. Treatment: record worker generation and require the current generation to be held
+before starting the editor. A separate disposable Foundation control refuted the hypothesis
+that combined iCloud URL resource keys prevent named-tag reads: single and combined key sets
+both returned the actual named tag. Keep the remaining Tags failure open until instrumented.
+
+Fourth build/unit ACTUAL exit0 (822 tests). Focused native2 ACTUAL exit0:191/191,
+including current-generation Tree editing/collapse/teardown controls. A diagnostic nevertheless
+showed direct named tags present while a cold FileColumns.gather returned nil. The first
+Foundation control above had primed the URL with a tag-only read, so it did not test the cold
+condition and its broad refutation was invalid. A corrected20-file control requested the
+combined Finder+iCloud key set FIRST:20/20 returned missing tags; subsequent independent
+tag-only reads returned all20 correctly. Split the ordinary dateAdded/tagNames request from
+provider-specific iCloud keys, preserving optional-field unknowns; add a cold first-read unit
+test plus contrasting untagged fixture and retain the native actual-cell check. This fixes a
+measured SDK interaction rather than relying on whichever background reader won the race.
+
+Additional ownership invalidations: remote entry invalidates outstanding smart-content tokens;
+teardown invalidates outer enumeration generations as well as metadata and child workers.
+Local navigation explicitly leaves remote context, clearing delivered remote rows before
+re-enabling host readers. No provider path is interpreted as a host path during that transition.
+
+Fifth local build/unit gate ACTUAL exit0:15 XCTest +808 Swift Testing (823 total), including
+cold first-read tagged fixtures and untagged contrast. Final focused native3 ACTUAL exit0:
+192/192. It covers every screenshot choice, native menus/pickers/header sorting, group
+renderers, opposed metadata values in both directions, smart0writes versus local persistence,
+remote1provider-list despite sort changes while hydration is held, old-result rejection,
+Column child order/location/selection/scroll, and current-generation Tree child order/editor/
+collapse/close. Native1 remains the recorded186/190 failed instrument run, not silently erased.
+
+Broad CI1 ACTUAL exit2:823 unit tests pass; clean warning inventory15known/0new; all six
+localizations pass. Debug E2E summary64PASS/1standing-captureSKIP/3FAIL: search449/465,
+Finder196/198, sidebar425/428. Background menus308/308, content206/206, gallery59/59,
+settings-defaults918/918, opener51/51, layout161/161 and transient53/53 passed. Root's new
+ordinary-navigation pending-action clear introduced a regression: reveal queued its explicit
+selection BEFORE navigate, which then canceled it. The source-convicted correction navigates
+first and arms that destination-owned selection synchronously afterward, before the MainActor
+can deliver its async listing; ordinary navigation still cancels stale actions. Added an
+explicit Reveal positive control; existing search matrix covers the contrasting navigate-away
+case. Affected suites must be rerun with full logs; do not count the old CI as green.
+
+Post-correction build/unit ACTUAL exit0:823 tests. Full affected native retests ACTUAL
+natural exit0 each: Finder198/198, search465/465, sidebar/transfers429/429 (including the
+new explicit Reveal control and all193 focused sort/group checks). The unchanged search
+navigate-away negative control passes, so the correction restores explicit Reveal without
+allowing old queued actions to cross directories. These retests resolve CI1's three failed
+scenarios; the last complete CI invocation itself remains the recorded64/1/3, not rewritten
+as a green run. Prior independent live AI1026 was not re-probed or waived by this batch.
+
+Local packaged target ACTUAL exit0:14PASS/0SKIP/0FAIL; ARM64 ad-hoc bundle, six languages,
+helper completeness, strict signature, hardened runtime, scratch-only configuration, visible
+launch and updater-disabled receipt. Release warning inventory12known/0new. No installation,
+owner-process restart, Developer-ID/notarized distribution or publication occurred.
+
+Final source audit also records an unchanged limitation for Mission58: reused loaded Tree
+children retain enumerated size/mtime when only file contents change and parent-directory
+mtime does not. This batch refreshes selected extra metadata, not those stored stat fields;
+a targeted content-only-edit fixture and invalidation design remain pending, not claimed fixed.

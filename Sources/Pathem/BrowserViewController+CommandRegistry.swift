@@ -78,24 +78,19 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.saveViewPreset()
         }
-        add("view.arrangeNone", L("bvc.cmd.arrangeNone", "None"), enabled: canArrange) {
-            [weak self] in
-            self?.activePane?.setGroupKey(.none)
+        for key in ViewFormat.GroupKey.allCases {
+            add(key.commandID, key.localizedTitle, enabled: canArrange) { [weak self] in
+                self?.activePane?.setGroupKey(key)
+            }
         }
-        add("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind"), enabled: canArrange) {
-            [weak self] in
-            self?.activePane?.setGroupKey(.kind)
-        }
-        add("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size"), enabled: canArrange) {
-            [weak self] in
-            self?.activePane?.setGroupKey(.size)
-        }
-        add("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified"), enabled: canArrange) {
-            [weak self] in
-            self?.activePane?.setGroupKey(.dateModified)
-        }
-        add("view.arrangeTag", L("bvc.cmd.arrangeTag", "Tag"), enabled: canArrange) { [weak self] in
-            self?.activePane?.setGroupKey(.tag)
+        for key in ViewFormat.SortKey.allCases {
+            add(
+                key.commandID, key.localizedTitle,
+                enabled: { [weak self] in self?.activePane != nil }
+            ) { [weak self] in
+                guard let pane = self?.activePane else { return }
+                pane.applySort(key: key, ascending: pane.format.ascending)
+            }
         }
         add("view.zoomIn", L("bvc.cmd.zoomIn", "Zoom In")) { [weak self] in
             self?.activePane?.zoomContent(0.15)

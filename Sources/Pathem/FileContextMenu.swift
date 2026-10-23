@@ -48,7 +48,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.compress", "files.compress7z",
         "files.extract", "files.extractHere", "files.extractTo",
         "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
-        "@view", "@arrange",
+        "@view", "@arrange", "@sort",
     ]
 
     private static let viewCommands: [(id: String, title: String)] = [
@@ -58,13 +58,10 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("view.asColumn", L("bvc.cmd.asColumns", "as Columns")),
         ("view.asTree", L("bvc.cmd.asTree", "as Tree")),
     ]
-    private static let arrangeCommands: [(id: String, title: String)] = [
-        ("view.arrangeNone", L("bvc.cmd.arrangeNone", "None")),
-        ("view.arrangeKind", L("bvc.cmd.arrangeKind", "Kind")),
-        ("view.arrangeSize", L("bvc.cmd.arrangeSize", "Size")),
-        ("view.arrangeDate", L("bvc.cmd.arrangeDate", "Date Modified")),
-        ("view.arrangeTag", L("bvc.cmd.arrangeTag", "Tag")),
-    ]
+    private static let arrangeCommands: [(id: String, title: String)] =
+        ViewFormat.GroupKey.allCases.map { ($0.commandID, $0.localizedTitle) }
+    private static let sortCommands: [(id: String, title: String)] =
+        ViewFormat.SortKey.allCases.map { ($0.commandID, $0.localizedTitle) }
 
     /// The group an entry belongs to. A separator is auto-inserted wherever the group changes
     /// between two visible entries, so reordering keeps sensible dividers with no manual
@@ -74,7 +71,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash":
             return 5  // set apart, like Finder
         case "@tags": return 1
-        case "@view", "@arrange": return 7
+        case "@view", "@arrange", "@sort": return 7
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.duplicate", "files.makeAlias", "files.copy", "files.copyPath", "files.copyName",
             "files.cut", "files.paste":
@@ -93,7 +90,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "@openWith": return L("list.openWith", "Open With")
         case "@tags": return L("list.tags", "Tags")
         case "@view": return L("menu.view", "View")
-        case "@arrange": return L("menu.group.arrangeBy", "Arrange By")
+        case "@arrange": return L("viewchoice.groupBy", "Group By")
+        case "@sort": return L("viewchoice.sortBy", "Sort By")
         default:
             return Dictionary(uniqueKeysWithValues: hideableCommands.map { ($0.id, $0.title) })[
                 token]
@@ -207,13 +205,16 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                 menu.addItem(openWith)
             case "@tags":
                 menu.addItem(makeTagsItem())
-            case "@view", "@arrange":
+            case "@view", "@arrange", "@sort":
                 let parent = NSMenuItem(
                     title: Self.title(for: token), action: nil, keyEquivalent: "")
                 parent.representedObject = token
                 parent.image = MenuIcons.image(token == "@view" ? "eye" : "rectangle.3.group")
                 let submenu = NSMenu(title: parent.title)
-                for command in token == "@view" ? Self.viewCommands : Self.arrangeCommands {
+                for command in token == "@view"
+                    ? Self.viewCommands
+                    : (token == "@sort" ? Self.sortCommands : Self.arrangeCommands)
+                {
                     let item = NSMenuItem(
                         title: command.title,
                         action: #selector(BrowserViewController.performMenuCommand(_:)),
@@ -313,7 +314,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             for item in menu.items {
                 guard let id = item.representedObject as? String else { continue }
                 switch id {
-                case "@view", "@arrange":
+                case "@view", "@arrange", "@sort":
                     item.isHidden = !urls.isEmpty  // directory controls belong to the background
                 case "files.showPackageContents":
                     item.isHidden = !(count == 1 && Self.isPackage(urls[0]))
