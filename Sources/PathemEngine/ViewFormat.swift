@@ -14,7 +14,9 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     }
     /// How the listing is drawn. `list` is the dense table; `icon`/`gallery` are
     /// grid views (gallery uses larger thumbnails); `column` is miller columns.
-    public enum ViewMode: String, Codable, Sendable, CaseIterable { case list, icon, gallery, column, tree }
+    public enum ViewMode: String, Codable, Sendable, CaseIterable {
+        case list, icon, gallery, column, tree
+    }
 
     public var sortKey: SortKey
     public var ascending: Bool
@@ -26,11 +28,13 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     public var foldersFirst: Bool
     public var viewMode: ViewMode
     public var groupKey: GroupKey
+    public var options: FolderViewOptions
 
     public init(
         sortKey: SortKey = .name, ascending: Bool = true,
         showHidden: Bool = false, hiddenOverride: Bool? = nil, foldersFirst: Bool = true,
-        viewMode: ViewMode = .list, groupKey: GroupKey = .none
+        viewMode: ViewMode = .list, groupKey: GroupKey = .none,
+        options: FolderViewOptions = FolderViewOptions()
     ) {
         self.sortKey = sortKey
         self.ascending = ascending
@@ -39,10 +43,12 @@ public struct ViewFormat: Codable, Sendable, Equatable {
         self.foldersFirst = foldersFirst
         self.viewMode = viewMode
         self.groupKey = groupKey
+        self.options = options
     }
 
     private enum CodingKeys: String, CodingKey {
-        case sortKey, ascending, showHidden, hiddenOverride, foldersFirst, viewMode, groupKey
+        case sortKey, ascending, showHidden, hiddenOverride, foldersFirst, viewMode, groupKey,
+            options
     }
 
     // Decode each key if present so older formats.json (without viewMode, etc.)
@@ -58,6 +64,9 @@ public struct ViewFormat: Codable, Sendable, Equatable {
         foldersFirst = try c.decodeIfPresent(Bool.self, forKey: .foldersFirst) ?? true
         viewMode = (try? c.decode(ViewMode.self, forKey: .viewMode)) ?? .list
         groupKey = (try? c.decode(GroupKey.self, forKey: .groupKey)) ?? .none
+        options =
+            (try? c.decode(FolderViewOptions.self, forKey: .options))?.normalized
+            ?? FolderViewOptions()
     }
 
     public static let `default` = ViewFormat()

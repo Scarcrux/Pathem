@@ -26,6 +26,18 @@ extension BrowserViewController {
         saveConfig(folderFormats, to: Self.folderFormatsURL)
     }
 
+    func synchronizeViewDefaults() {
+        saveFolderFormats()
+        synchronizeDefaultViewPreferences()
+        applyPreferences()
+    }
+
+    func rememberSubtreeView(_ url: URL, _ format: ViewFormat) {
+        folderFormats.clearRulesUnder(url.path)
+        folderFormats.setSubtree(url.path, format)
+        saveFolderFormats()
+    }
+
     /// Settings edits only these three fields; grouping/hidden policy and rules stay intact.
     func applyDefaultViewPreferences() {
         let previous = folderFormats.defaultFormat
@@ -46,7 +58,23 @@ extension BrowserViewController {
         prefs.defaultSortKey = format.sortKey
         prefs.defaultSortAscending = format.ascending
         if changed { saveConfig(prefs, to: Self.preferencesURL) }
-        if settingsPanel != nil { settings.synchronizeDefaultFormat(format) }
+        if settingsPanel != nil { settings.synchronizeDefaultFormat(format, shared: prefs) }
+    }
+
+    /// Both default-setting entry points leave shared Settings as the authority.
+    func setDefaultViewFormat(_ format: ViewFormat) {
+        folderFormats.defaultFormat = format
+        prefs.fontSize = format.options.fontSize ?? prefs.fontSize
+        prefs.dateDisplay = format.options.dateDisplay ?? prefs.dateDisplay
+        prefs.iconZoom = format.options.iconScale ?? prefs.iconZoom
+        prefs.calculateFolderSizes =
+            format.options.calculateFolderSizes ?? prefs.calculateFolderSizes
+        folderFormats.defaultFormat.options.fontSize = nil
+        folderFormats.defaultFormat.options.dateDisplay = nil
+        folderFormats.defaultFormat.options.iconScale = nil
+        folderFormats.defaultFormat.options.calculateFolderSizes = nil
+        saveConfig(prefs, to: Self.preferencesURL)
+        synchronizeViewDefaults()
     }
 
     /// Auto-remember: the active folder gets its own exact-path format.
@@ -59,22 +87,18 @@ extension BrowserViewController {
     /// folders that don't have their own remembered format.
     func useCurrentViewAsDefault() {
         guard let pane = activePane else { return }
-        folderFormats.defaultFormat = pane.format
-        saveFolderFormats()
-        synchronizeDefaultViewPreferences()
+        setDefaultViewFormat(pane.format)
         leftTabs.activePane?.reloadIfShowingListing()
         rightTabs.activePane?.reloadIfShowingListing()
     }
 
     /// Apply the active pane's current view to its whole subtree, then refresh
     /// both panes so any visible descendants pick up the new format. Descendant
-    /// exact rules are cleared first, otherwise they would shadow the new subtree
+    /// rules are cleared first, otherwise they would shadow the new subtree
     /// rule and silently keep their old view.
     func applyViewToSubfolders() {
         guard let pane = activePane else { return }
-        folderFormats.clearExactRulesUnder(pane.currentURL.path)
-        folderFormats.setSubtree(pane.currentURL.path, pane.format)
-        saveFolderFormats()
+        rememberSubtreeView(pane.viewOptionsURL, pane.format)
         leftTabs.activePane?.reloadIfShowingListing()
         rightTabs.activePane?.reloadIfShowingListing()
     }

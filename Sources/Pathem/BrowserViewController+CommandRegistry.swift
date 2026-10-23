@@ -694,7 +694,20 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.useCurrentViewAsDefault()
         }
-        add("view.calculateSizes", L("bvc.cmd.calculateAllSizes", "Calculate All Sizes")) {
+        add(
+            "view.options", L("viewopts.title", "View Options"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane else { return false }
+                return !pane.isRemote && !pane.isShowingSmartResults
+            }
+        ) { [weak self] in self?.showViewOptions() }
+        add(
+            "view.calculateSizes", L("bvc.cmd.calculateAllSizes", "Calculate All Sizes"),
+            enabled: { [weak self] in
+                guard let pane = self?.activePane else { return false }
+                return !pane.isRemote && !pane.isShowingSmartResults && pane.viewMode == .list
+            }
+        ) {
             [weak self] in self?.toggleCalculateSizes()
         }
         add("view.compactSidebar", L("bvc.cmd.compactSidebar", "Compact Sidebar")) { [weak self] in

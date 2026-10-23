@@ -11,6 +11,7 @@
 #                    arch for local builds (fast, and avoids needing the Metal
 #                    toolchain that a universal SwiftTerm build requires);
 #                    "arm64 x86_64" when DEVELOPER_ID is set (distribution).
+#   SWIFT_BUILD_JOBS compiler workers (default: 2, including packaging invoked by CI).
 #   DEVELOPER_ID     "Developer ID Application: Name (TEAMID)" to sign for release
 #                    with Hardened Runtime (required before notarization)
 #   NOTARY_PROFILE   a notarytool keychain profile name; if set together with
@@ -55,6 +56,8 @@ APP="$BUILD_DIR/$APP_NAME.app"
 # under some Xcode 26 setups); a single-arch build only COPIES the shader
 # (SwiftTerm compiles it at runtime), so this path needs no Metal toolchain.
 echo "==> Building $APP_NAME ($CONFIG; $ARCHS)"
+SWIFT_BUILD_JOBS="${SWIFT_BUILD_JOBS:-2}"
+[[ "$SWIFT_BUILD_JOBS" =~ ^[1-9][0-9]*$ ]] || { echo "error: SWIFT_BUILD_JOBS must be a positive integer" >&2; exit 1; }
 binaries=()
 archBinDirs=()  # per-arch bin dirs, so out-of-process helpers can be lipo'd across arches
 frameworkBinDir=""
@@ -63,7 +66,7 @@ frameworkBinDir=""
 helperNames=(pathem-afc pathem-torrentd pathem-cli)
 for arch in $ARCHS; do
 	echo "    building $arch"
-	swift build --build-system native -c "$CONFIG" --arch "$arch"
+	swift build --build-system native -c "$CONFIG" --arch "$arch" --jobs "$SWIFT_BUILD_JOBS"
 	archBinDir="$(swift build --build-system native -c "$CONFIG" --arch "$arch" --show-bin-path)"
 	[[ -x "$archBinDir/$APP_NAME" ]] || { echo "error: binary not found at $archBinDir/$APP_NAME" >&2; exit 1; }
 	binaries+=("$archBinDir/$APP_NAME")

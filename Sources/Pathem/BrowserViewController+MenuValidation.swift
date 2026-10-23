@@ -68,7 +68,10 @@ extension BrowserViewController {
         case "view.fullPathTitle": menuItem.state = prefs.showFullPathInTitle ? .on : .off
         case "view.pathBarBottom": menuItem.state = prefs.pathBarAtBottom ? .on : .off
         case "view.demoMode": menuItem.state = isDemoMode ? .on : .off
-        case "view.calculateSizes": menuItem.state = prefs.calculateFolderSizes ? .on : .off
+        case "view.calculateSizes":
+            menuItem.state =
+                (activePane?.effectiveViewOptions.calculateFolderSizes ?? prefs.calculateFolderSizes)
+                ? .on : .off
         case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
         case "view.previewPane": menuItem.state = previewPane.isVisible ? .on : .off

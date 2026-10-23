@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 import PathemEngine
 
 // On-device AI actions: suggest a file name, summarize a folder, and the natural-language command
@@ -7,63 +8,35 @@ import PathemEngine
 // are stored properties).
 @MainActor
 extension BrowserViewController {
-    /// Suggest a new name for the single selected file with the on-device model, prefilling a
-    /// standard rename sheet. The sheet opens immediately (name preselected) and the suggestion
-    /// fills in when it lands, so the model's latency never blocks the UI. Applying goes through
-    /// the normal rename + undo path.
+    /// Open the shared rename sheet with an on-device suggestion. The explicit Use action
+    /// avoids overwriting typing; confirmation follows the normal extension-warning + undo path.
     func aiRenameSelection() {
         guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults,
-            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first, !entry.isDirectory
-        else { NSSound.beep(); return }
-        guard AIAssistant.isAvailable else {
-            presentInfo(L("ai.unavailableTitle", "On-device AI unavailable"), AIAssistant.availability.reason)
+            pane.selectedEntries.count == 1, let entry = pane.selectedEntries.first,
+            !entry.isDirectory
+        else {
+            NSSound.beep()
             return
         }
-        let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
-        let url = directory.appendingPathComponent(entry.name)
-        let ext = (entry.name as NSString).pathExtension
-
-        let alert = NSAlert()
-        alert.messageText = String(format: L("ai.renameTitle", "AI Rename “%@”"), entry.name)
-        alert.informativeText = L("ai.renameHint", "Suggesting a name… you can edit it or type your own.")
-        alert.addButton(withTitle: L("bvc.renameButton", "Rename"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        field.stringValue = entry.name
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-
-        // Fetch the suggestion concurrently and drop it into the field when it arrives.
-        Task { @MainActor in
-            let preview = await Task.detached { Self.textPreview(of: url) }.value
-            guard let base = await AIAssistant.suggestName(currentName: entry.name, content: preview) else { return }
-            guard field.window != nil else { return }  // sheet already dismissed
-            field.stringValue = ext.isEmpty ? base : "\(base).\(ext)"
-            field.selectText(nil)
+        guard AIAssistant.isAvailable else {
+            presentInfo(
+                L("ai.unavailableTitle", "On-device AI unavailable"),
+                AIAssistant.availability.reason)
+            return
         }
-
-        Task { @MainActor in
-            guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
-            let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !newName.isEmpty, newName != entry.name else { return }
-            do {
-                try FileOperations.rename(entry.name, to: newName, in: directory)
-                self.registerRenameUndo(from: newName, to: entry.name, in: directory)
-                pane.reloadIfShowingListing()
-                pane.select(name: newName)
-            } catch {
-                self.presentFailures(
-                    [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
-                    title: L("bvc.renameFailed", "Rename failed"))
-            }
-        }
+        renameSelection(suggestions: true)
     }
 
     /// Summarize the current folder's contents with the on-device model, shown in the output panel.
     func aiSummarizeFolder() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+            NSSound.beep()
+            return
+        }
         guard AIAssistant.isAvailable else {
-            presentInfo(L("ai.unavailableTitle", "On-device AI unavailable"), AIAssistant.availability.reason)
+            presentInfo(
+                L("ai.unavailableTitle", "On-device AI unavailable"),
+                AIAssistant.availability.reason)
             return
         }
         let folder = pane.currentURL
@@ -72,7 +45,8 @@ extension BrowserViewController {
             title: String(format: L("ai.summaryTitle", "Summary of %@"), folder.lastPathComponent),
             loading: L("ai.summarizing", "Summarizing…")
         ) {
-            await AIAssistant.summarizeFolder(folderName: folder.lastPathComponent, itemNames: names)
+            await AIAssistant.summarizeFolder(
+                folderName: folder.lastPathComponent, itemNames: names)
                 ?? L("ai.summaryFailed", "Couldn’t generate a summary.")
         }
     }
@@ -85,15 +59,31 @@ extension BrowserViewController {
             "swift", "py", "js", "ts", "rb", "go", "rs", "c", "h", "cpp", "java", "sh",
             "html", "css", "rtf", "tex", "org", "ini", "toml", "conf",
         ]
+        var before = stat()
         guard textExtensions.contains(url.pathExtension.lowercased()),
-            let handle = try? FileHandle(forReadingFrom: url)
-        else { return nil }
+            lstat(url.path, &before) == 0,
+            mayReadTextPreview(mode: before.st_mode, flags: before.st_flags)
+        else { return nil }  // never follow a symlink, hydrate a placeholder, or open a FIFO
+        let descriptor = open(url.path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK)
+        guard descriptor >= 0 else { return nil }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
         defer { try? handle.close() }
+        var opened = stat()
+        guard fstat(descriptor, &opened) == 0,
+            opened.st_dev == before.st_dev, opened.st_ino == before.st_ino,
+            mayReadTextPreview(mode: opened.st_mode, flags: opened.st_flags)
+        else { return nil }
         let data = (try? handle.read(upToCount: 4096)) ?? Data()
-        guard let text = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+        guard
+            let text = String(data: data, encoding: .utf8)?.trimmingCharacters(
+                in: .whitespacesAndNewlines),
             !text.isEmpty
         else { return nil }
         return text
+    }
+
+    nonisolated static func mayReadTextPreview(mode: mode_t, flags: UInt32) -> Bool {
+        mode & S_IFMT == S_IFREG && flags & UInt32(0x4000_0000) == 0
     }
 
     /// Open the natural-language command bar.
@@ -115,7 +105,9 @@ extension BrowserViewController {
         {
             return (command.id, command.title)
         }
-        if let id = CommandResolver.resolve(query, commands: items), let command = commands.command(id) {
+        if let id = CommandResolver.resolve(query, commands: items),
+            let command = commands.command(id)
+        {
             return (command.id, command.title)
         }
         return nil

@@ -263,6 +263,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Values for the metadata-derived columns (dimensions, permissions, …), keyed by path,
     /// computed off-main only when such a column is visible.
     private var extendedInfo: [String: FileColumns.Extended] = [:]
+    private var pendingExtendedReads = Set<String>()
+    private var extendedReadScheduled = false
+    #if DEBUG
+    var debugExtendedCacheCount: Int { extendedInfo.count }
+    #endif
     private var extendedGeneration = 0
     /// Git state per absolute path (set by the pane after an off-main `git status`).
     private var gitStates: [String: GitFileState] = [:]
@@ -302,8 +307,75 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .short
+        f.doesRelativeDateFormatting = true
         return f
     }()
+
+    var onViewOptionsChanged: ((FolderViewOptions) -> Void)?
+    private var deliveredViewOptions: FolderViewOptions?
+    private var applyingViewOptions = false
+    private lazy var inheritedColumns = tableView.tableColumns.filter { !$0.isHidden }.map {
+        $0.identifier.rawValue
+    }
+    private lazy var inheritedWidths = Dictionary(
+        uniqueKeysWithValues: tableView.tableColumns.map {
+            ($0.identifier.rawValue, Double($0.width))
+        })
+    private var previewFiles: [ObjectIdentifier: String] = [:]
+
+    func setViewOptions(_ options: FolderViewOptions) {
+        guard deliveredViewOptions != options else { return }
+        // Capture before the first override. A lazy RHS of `columns ?? inheritedColumns`
+        // would otherwise initialize only on Reset and snapshot the override as its default.
+        let fallbackColumns = inheritedColumns
+        let fallbackWidths = inheritedWidths
+        deliveredViewOptions = options
+        applyingViewOptions = true
+        defer { applyingViewOptions = false }
+        reloadAppearancePreservingState {
+            let visible = options.columns ?? fallbackColumns
+            for column in tableView.tableColumns {
+                column.isHidden = !visible.contains(column.identifier.rawValue)
+                if let width = options.columnWidths?[column.identifier.rawValue] {
+                    column.width = CGFloat(width)
+                } else if let width = fallbackWidths[column.identifier.rawValue] {
+                    column.width = CGFloat(width)
+                }
+            }
+            for (position, id) in visible.enumerated() {
+                if let index = tableView.tableColumns.firstIndex(where: {
+                    $0.identifier.rawValue == id
+                }), position < tableView.tableColumns.count {
+                    tableView.moveColumn(index, toColumn: position)
+                }
+            }
+        }
+        refreshExtendedColumnsAsync()
+    }
+
+    private func rememberColumns() {
+        guard !applyingViewOptions else { return }
+        var options = FolderViewOptions()
+        options.columns = tableView.tableColumns.filter { !$0.isHidden }.map {
+            $0.identifier.rawValue
+        }
+        options.columnWidths = Dictionary(
+            uniqueKeysWithValues: tableView.tableColumns.map {
+                ($0.identifier.rawValue, Double($0.width))
+            })
+        onViewOptionsChanged?(options)
+    }
+
+    private var userIsAdjustingColumns: Bool {
+        guard !tableView.inLiveResize, let event = NSApp.currentEvent else { return false }
+        return [.leftMouseDown, .leftMouseDragged, .leftMouseUp].contains(event.type)
+    }
+    func tableViewColumnDidResize(_ notification: Notification) {
+        if userIsAdjustingColumns { rememberColumns() }
+    }
+    func tableViewColumnDidMove(_ notification: Notification) {
+        if userIsAdjustingColumns { rememberColumns() }
+    }
 
     /// Apply the user's size (decimal/binary) and date (relative/short/medium) formats to the
     /// size and date columns.
@@ -333,6 +405,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     private enum Column: String, CaseIterable {
         case name, size, kind, date, dateCreated, dateAccessed, ext, git, path
         case dimensions, permissions, owner, whereFrom, comment
+        case dateAdded, tags, cloudStatus, sharedBy, modifiedBy, version
         var title: String {
             switch self {
             case .name: return L("list.columnName", "Name")
@@ -349,6 +422,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .owner: return L("list.columnOwner", "Owner")
             case .whereFrom: return L("list.columnWhereFrom", "Where From")
             case .comment: return L("list.columnComment", "Comment")
+            case .dateAdded: return L("list.columnDateAdded", "Date Added")
+            case .tags: return L("list.columnTags", "Tags")
+            case .cloudStatus: return L("list.columnCloudStatus", "iCloud Status")
+            case .sharedBy: return L("list.columnSharedBy", "Shared By")
+            case .modifiedBy: return L("list.columnModifiedBy", "Last Modified By")
+            case .version: return L("list.columnVersion", "Version")
             }
         }
         var width: CGFloat {
@@ -364,6 +443,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .owner: return 120
             case .whereFrom: return 160
             case .comment: return 200
+            case .dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version: return 150
             }
         }
         /// The width the column can be squeezed to before the list gives up and scrolls
@@ -381,6 +461,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .permissions: return 84
             case .owner: return 80
             case .whereFrom, .comment: return 100
+            case .dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version: return 100
             }
         }
         /// Only columns backed by a ViewFormat sort key get a clickable header.
@@ -389,8 +470,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         var defaultVisible: Bool { [.name, .size, .date].contains(self) }
         /// Metadata-derived columns whose values are computed off-main and cached.
         var isExtended: Bool {
-            [.dimensions, .permissions, .owner, .whereFrom, .comment].contains(self)
+            [
+                .dimensions, .permissions, .owner, .whereFrom, .comment, .dateAdded, .tags,
+                .cloudStatus, .sharedBy, .modifiedBy, .version,
+            ].contains(self)
         }
+    }
+
+    static var viewOptionColumns: [(id: String, title: String)] {
+        Column.allCases.map { ($0.rawValue, $0.title) }
     }
 
     override init() {
@@ -435,8 +523,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         Self.instanceCount += 1
         // v2: bump the autosave key so the previously-persisted (Date-stretched) column widths are
         // discarded and the sensible defaults above take effect.
-        tableView.autosaveName = "PathemFileList.v3.\(Self.instanceCount)"
-        tableView.autosaveTableColumns = true
+        if !PathemApp.isAutomationLaunch {
+            tableView.autosaveName = "PathemFileList.v3.\(Self.instanceCount)"
+            tableView.autosaveTableColumns = true
+        }
         tableView.headerView?.menu = makeHeaderMenu()
 
         tableView.dataSource = self
@@ -1451,6 +1541,30 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let baseIcon =
                 entry.isDataless ? Self.cloudIcon : FileIconCache.icon(for: entry, in: directoryURL)
             cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: directoryURL)
+            let iconSize = CGFloat(deliveredViewOptions?.listIconSize ?? 16)
+            for constraint in cell.imageView?.constraints ?? []
+            where constraint.firstAttribute == .width || constraint.firstAttribute == .height {
+                constraint.constant = iconSize
+            }
+            let identity = ObjectIdentifier(cell)
+            previewFiles[identity] = nil
+            if deliveredViewOptions?.showIconPreviews == true, !entry.isDirectory,
+                !entry.isDataless,
+                let base = entry.location.map({ URL(fileURLWithPath: $0) }) ?? directoryURL
+            {
+                let url = base.appendingPathComponent(entry.name)
+                previewFiles[identity] = url.path
+                ThumbnailProvider.shared.generate(
+                    url, size: .init(width: iconSize, height: iconSize),
+                    scale: cell.window?.backingScaleFactor ?? 2
+                ) { [weak self, weak cell] image in
+                    guard let self, let cell, self.previewFiles[identity] == url.path else {
+                        return
+                    }
+                    cell.imageView?.image = CloudBadge.decorate(
+                        image, for: entry, in: self.directoryURL)
+                }
+            }
             let colors = tagColors(for: entry)
             let git = gitState(for: entry)
             if colors.isEmpty, git == nil {
@@ -1513,8 +1627,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             cell.textField?.stringValue = entry.location ?? directoryURL?.path ?? ""
             cell.textField?.textColor = .secondaryLabelColor
         case .dimensions, .permissions, .owner, .whereFrom, .comment:
-            let info = extendedInfo[
-                Self.key(base: entry.location ?? directoryURL?.path, name: entry.name)]
+            let info = extendedValue(for: entry)
             let value: String?
             switch Column(rawValue: id.rawValue) {
             case .dimensions: value = info?.dimensions
@@ -1526,6 +1639,33 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
             cell.textField?.stringValue = value ?? ""
             cell.textField?.textColor = .secondaryLabelColor
+        case .dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version:
+            let info = extendedValue(for: entry)
+            switch Column(rawValue: id.rawValue) {
+            case .dateAdded:
+                cell.textField?.stringValue =
+                    info?.dateAdded.map { dateFormatter.string(from: $0) } ?? ""
+            case .tags: cell.textField?.stringValue = info?.tags ?? ""
+            case .sharedBy: cell.textField?.stringValue = info?.sharedBy ?? ""
+            case .modifiedBy: cell.textField?.stringValue = info?.modifiedBy ?? ""
+            case .version: cell.textField?.stringValue = info?.version ?? ""
+            case .cloudStatus:
+                switch info?.cloudStatus {
+                case "error": cell.textField?.stringValue = L("cloud.error", "Sync error")
+                case "downloading":
+                    cell.textField?.stringValue = L("cloud.downloading", "Downloading")
+                case "uploading": cell.textField?.stringValue = L("cloud.uploading", "Uploading")
+                case "online": cell.textField?.stringValue = L("cloud.online", "In iCloud")
+                case "pending":
+                    cell.textField?.stringValue = L("cloud.pending", "Waiting to upload")
+                case "downloaded": cell.textField?.stringValue = L("cloud.downloaded", "Downloaded")
+                default: cell.textField?.stringValue = ""
+                }
+            default: break
+            }
+            cell.toolTip = L(
+                "columns.metadataHint",
+                "Blank when the file or its provider does not supply this metadata.")
         case .none:
             break
         }
@@ -1611,6 +1751,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         column.isHidden.toggle()
         // Showing a metadata column needs its values computed; hiding one lets the pass stop.
         if Column(rawValue: id)?.isExtended == true { refreshExtendedColumnsAsync() }
+        rememberColumns()
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
@@ -1653,7 +1794,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         if withIcon {
             let icon = NSImageView()
             icon.translatesAutoresizingMaskIntoConstraints = false
-            icon.imageScaling = .scaleProportionallyDown
+            icon.imageScaling = .scaleProportionallyUpOrDown
             cell.addSubview(icon)
             cell.imageView = icon
             NSLayoutConstraint.activate([
@@ -1959,32 +2100,66 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         on(.owner, .owner)
         on(.whereFrom, .whereFrom)
         on(.comment, .comment)
+        for column: Column in [.dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version] {
+            on(column, .finder)
+        }
         return request
     }
 
     /// Compute the visible metadata columns off-main, then cache and redraw. Skips entirely
     /// when none are shown (the common case), so it costs nothing by default.
     func refreshExtendedColumnsAsync() {
-        let request = visibleExtendedRequest()
-        guard !request.isEmpty else {
-            if !extendedInfo.isEmpty { extendedInfo = [:] }
+        extendedGeneration += 1
+        extendedInfo.removeAll(keepingCapacity: true)
+        pendingExtendedReads.removeAll(keepingCapacity: true)
+        guard !visibleExtendedRequest().isEmpty else { return }
+        let generation = extendedGeneration
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.extendedGeneration == generation else { return }
+            self.reloadExtendedAppearance()
+        }
+    }
+
+    private func reloadExtendedAppearance() {
+        guard editingEntry == nil else {
+            deferredCosmeticReload = true
             return
         }
-        extendedGeneration += 1
+        reloadAppearancePreservingState {}
+    }
+
+    private func extendedValue(for entry: FileEntry) -> FileColumns.Extended? {
+        let key = Self.key(base: entry.location ?? directoryURL?.path, name: entry.name)
+        if let info = extendedInfo[key] { return info }
+        guard key.hasPrefix("/"), pendingExtendedReads.count < 512 else { return nil }
+        pendingExtendedReads.insert(key)
+        if !extendedReadScheduled {
+            extendedReadScheduled = true
+            DispatchQueue.main.async { [weak self] in self?.flushExtendedReads() }
+        }
+        return nil
+    }
+
+    private func flushExtendedReads() {
+        extendedReadScheduled = false
+        let keys = pendingExtendedReads
+        pendingExtendedReads.removeAll(keepingCapacity: true)
+        let request = visibleExtendedRequest()
+        guard !request.isEmpty, !keys.isEmpty else { return }
         let generation = extendedGeneration
-        let base = directoryURL?.path
-        let items = entries.map { (name: $0.name, location: $0.location) }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var result: [String: FileColumns.Extended] = [:]
-            result.reserveCapacity(items.count)
-            for item in items {
-                let path = Self.key(base: item.location ?? base, name: item.name)
-                result[path] = FileColumns.gather(URL(fileURLWithPath: path), request)
+            result.reserveCapacity(keys.count)
+            for key in keys {
+                result[key] = FileColumns.gather(URL(fileURLWithPath: key), request)
             }
             DispatchQueue.main.async {
                 guard let self, self.extendedGeneration == generation else { return }
-                self.extendedInfo = result
-                self.cosmeticReload()
+                if self.extendedInfo.count > 4096 {
+                    self.extendedInfo.removeAll(keepingCapacity: true)
+                }
+                self.extendedInfo.merge(result) { _, new in new }
+                self.reloadExtendedAppearance()
             }
         }
     }

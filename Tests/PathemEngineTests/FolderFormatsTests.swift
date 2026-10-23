@@ -75,6 +75,32 @@ import Testing
         #expect(formats.format(for: "/a") == byDate)
     }
 
+    @Test func replaceDescendantViewsClearsNestedSubtreesButPreservesRootAndSiblings() {
+        for root in ["/a", "/a/"] {
+            var formats = FolderFormats()
+            formats.setExact("/a", byDate)
+            formats.setSubtree("/a/b", byDate)
+            formats.setExact("/a/b/c", byDate)
+            formats.setSubtree("/ab", byDate)
+            formats.setExact("/other", byDate)
+            formats.clearRulesUnder(root)
+            formats.setSubtree(root, bySize)
+            #expect(formats.format(for: "/a") == byDate)
+            #expect(formats.format(for: "/a/b") == bySize)
+            #expect(formats.format(for: "/a/b/c") == bySize)
+            #expect(formats.format(for: "/ab/child") == byDate)
+            #expect(formats.format(for: "/other") == byDate)
+        }
+        for (old, new) in [("/a/", "/a"), ("/a", "/a/")] {
+            var formats = FolderFormats()
+            formats.setSubtree(old, byDate)
+            formats.clearRulesUnder(new)
+            formats.setSubtree(new, bySize)
+            #expect(formats.format(for: "/a/child") == bySize)
+            #expect(formats.rules.count == 1)
+        }
+    }
+
     @Test func codableRoundTrip() throws {
         var formats = FolderFormats()
         formats.setExact("/a", byDate)

@@ -156,7 +156,12 @@ extension BrowserViewController {
             // New Folder does -- a plain select(name:) here is a no-op, since the row doesn't exist
             // yet. (applyPendingAfterListing then drops the redundant watcher reload so the inline
             // rename isn't cancelled the instant it begins.)
-            pane.selectWhenListed(name) { [weak self] in self?.renameSelection() }
+            pane.selectWhenListed(name) { [weak self, weak pane] in
+                guard let self, let pane, self.activePane === pane else { return }
+                // An empty new file has no contents to name. Preserve its immediate inline
+                // editor instead of opening a modal AI sheet that also blocks later shortcuts.
+                self.renameSelection(suggestions: false)
+            }
             registerNewItemUndo(
                 name: name, in: pane.currentURL, actionName: L("bvc.cmd.newFile", "New File"))
         } catch {

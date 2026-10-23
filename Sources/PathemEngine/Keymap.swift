@@ -98,6 +98,7 @@ public struct Keymap: Codable, Sendable {
         "cmd+shift+.": "view.toggleHidden",
         // Shift-Cmd-F is the View > Filter menu equivalent (since the Cmd-F search rework), which
         // wins over this keymap entry anyway. Find in Files stays on the menu and command palette.
+        "cmd+j": "view.options",
         "cmd+=": "view.zoomIn",
         "cmd+shift+=": "view.zoomIn",
         "cmd+-": "view.zoomOut",

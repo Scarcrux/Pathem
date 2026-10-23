@@ -93,6 +93,8 @@ protocol PaneContentView: AnyObject {
     /// statically select extension no-ops when called by PaneController.
     func setColorRules(_ rules: ColorRules)
     func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay)
+    func setViewOptions(_ options: FolderViewOptions)
+    var onViewOptionsChanged: ((FolderViewOptions) -> Void)? { get set }
     func setMiddleClickOpensNewTab(_ enabled: Bool)
     func setOpenInNewTabHandler(_ handler: ((URL) -> Void)?)
     func refreshDrilledColumns()
@@ -115,6 +117,11 @@ protocol PaneContentView: AnyObject {
 }
 
 extension PaneContentView {
+    func setViewOptions(_ options: FolderViewOptions) {}
+    var onViewOptionsChanged: ((FolderViewOptions) -> Void)? {
+        get { nil }
+        set {}
+    }
     /// Default no-op; the list view (the one with sortable column headers) overrides it.
     func revealSelection() {}
     /// Most views embed their scroll view directly; the gallery overrides this.

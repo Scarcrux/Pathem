@@ -9,6 +9,18 @@ import PathemTerminal
 extension BrowserViewController {
     func loadPreferences() {
         if let saved = loadConfig(Preferences.self, from: Self.preferencesURL) { prefs = saved }
+        NotificationCenter.default.removeObserver(
+            self, name: .pathemTrashRetentionChanged, object: nil)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(synchronizeTrashRetentionPreference),
+            name: .pathemTrashRetentionChanged, object: nil)
+        trashRetention.initialize(enabled: prefs.trashAfter30Days)
+        synchronizeTrashRetentionPreference()
+    }
+
+    @objc func synchronizeTrashRetentionPreference() {
+        prefs.trashAfter30Days = trashRetention.enabled
+        settings.synchronizeTrashRetention(trashRetention.enabled)
     }
 
     func showPreferences() {
@@ -20,6 +32,9 @@ extension BrowserViewController {
         if rightTabs.containerView.frame.width < 120 {
             setRightPaneFraction(0.5)
             view.layoutSubtreeIfNeeded()
+        }
+        settings.onTrashRetentionChange = { [weak self] enabled in
+            self?.trashRetention.setPreference(enabled)
         }
         let content = settings.makeEmbedded(
             prefs: prefs,
@@ -47,9 +62,7 @@ extension BrowserViewController {
                     }
                 }),
             onChange: { [weak self] updated in
-                guard let self else { return }
-                self.prefs = updated
-                self.applyPreferences()
+                self?.receiveSettingsPreferences(updated)
             },
             onKeymapChange: { [weak self] overlay in
                 guard let self else { return }
@@ -70,6 +83,12 @@ extension BrowserViewController {
             panel.trailingAnchor.constraint(equalTo: rightTabs.containerView.trailingAnchor),
         ])
         settingsPanel = panel
+    }
+
+    func receiveSettingsPreferences(_ updated: Preferences) {
+        prefs = updated
+        prefs.trashAfter30Days = trashRetention.enabled
+        applyPreferences()
     }
 
     /// Wrap the embedded settings content in an opaque panel with a header (title + Done),
@@ -186,8 +205,11 @@ extension BrowserViewController {
     }
 
     func toggleCalculateSizes() {
-        prefs.calculateFolderSizes.toggle()
-        applyPreferences()  // turns folder-size computation on/off in every pane
+        guard let pane = activePane else { return }
+        var options = pane.format.options
+        options.calculateFolderSizes =
+            !(pane.effectiveViewOptions.calculateFolderSizes ?? prefs.calculateFolderSizes)
+        pane.setFolderViewOptions(options)
     }
 
     /// Apply preferences to every tab in both sides, persist them, and rebuild the
@@ -231,9 +253,12 @@ extension BrowserViewController {
         pane.setColorRules(prefs.colorRules)
         pane.setFormats(size: prefs.sizeFormat, date: prefs.dateDisplay)
         pane.setMiddleClickOpensNewTab(prefs.middleClickOpensNewTab)
+        pane.baseViewOptions = folderFormats.defaultFormat.options.inheriting(.defaults(prefs))
+        pane.applyFolderViewOptions()
     }
 
     func applyPreferences() {
+        synchronizeTrashRetentionPreference()
         updateDownloadSuggestions()
         applyDefaultViewPreferences()
         sidebar.dragMovesByDefault = prefs.dragMovesByDefault
@@ -254,6 +279,7 @@ extension BrowserViewController {
                 pane.statusOptions = (
                     prefs.statusShowItemCount, prefs.statusShowSize, prefs.statusShowFreeSpace
                 )
+                pane.applyFolderViewOptions()
             }
         }
         for side in [leftTabs, rightTabs] { side.newTabAtEnd = prefs.newTabAtEnd }

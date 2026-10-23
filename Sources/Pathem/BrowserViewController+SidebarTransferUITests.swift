@@ -68,6 +68,10 @@ extension BrowserViewController {
             checkOperationStability(root: root, check: check, settle: settle)
             finish()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_VIEW_OPTIONS_SAMPLE"] == "1" {
+            checkViewOptions(root: root, check: check, settle: settle)
+            finish()
+        }
         // nextEvent establishes NSApp.currentEvent; sendEvent alone does not do so
         // before NSApplication.run. Verify receipt before exercising the delegates.
         func withCommand(_ command: Bool, action: () -> Void) -> Bool {
@@ -296,6 +300,8 @@ extension BrowserViewController {
         checkFileSafety(root: root.appendingPathComponent("safety"), check: check, settle: settle)
         checkOperationStability(
             root: root.appendingPathComponent("stability"), check: check, settle: settle)
+        checkViewOptions(
+            root: root.appendingPathComponent("view-options"), check: check, settle: settle)
         finish()
     }
 }

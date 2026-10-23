@@ -1,4 +1,5 @@
 import AppKit
+import PathemEngine
 import TorrentKit
 import UniformTypeIdentifiers
 
@@ -55,6 +56,16 @@ extension BrowserViewController {
             UTType(filenameExtension: "torrent")
                 ?? UTType(importedAs: "org.bittorrent.torrent", conformingTo: .data)
         ]
+        // Save suggestions share the same explicit-accept rule as rename; model latency
+        // must never overwrite a filename the user is currently typing.
+        let nameField = NSTextField(string: save.nameFieldStringValue)
+        let suggestion =
+            prefs.suggestFilenames && AIAssistant.isAvailable
+            ? FilenameSuggestionController(
+                field: nameField, url: source, dataless: false, extensionOverride: "torrent") : nil
+        suggestion?.onApply = { [weak save] name in save?.nameFieldStringValue = name }
+        save.accessoryView = suggestion?.view
+        defer { suggestion?.cancel() }
         guard save.runModal() == .OK, let dest = save.url else { return }
 
         // Hashing can be slow for large content, so run it off the main thread.

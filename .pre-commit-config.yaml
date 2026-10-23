@@ -16,7 +16,7 @@ repos:
         files: ^vendor/GestureSupport/
       - id: swift-test
         name: swift test
-        entry: bash -c 'unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR GIT_PREFIX; exec xcrun --toolchain XcodeDefault swift test --build-system native'
+        entry: bash -c 'unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_COMMON_DIR GIT_PREFIX; exec xcrun --toolchain XcodeDefault swift test --build-system native --jobs 2'
         language: system
         pass_filenames: false
         files: \.swift$

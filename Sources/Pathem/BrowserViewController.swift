@@ -165,6 +165,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var gestureMap = GestureMap.standard
     /// Per-folder saved view formats (the exact/subtree cascade), shared by both panes.
     var folderFormats = FolderFormats()
+    let trashRetention = TrashRetentionController.shared
     /// Scoped default-opener rules (by file / folder / type), persisted.
     var openerRules = OpenerRules()
     /// Session-only opener overrides, keyed by lowercased extension (not persisted).
@@ -440,7 +441,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        Self.cleanupRemoteTemp()
+        Self.prepareRemoteTemp()
         registerCommands()
         loadSavedSearches()  // register before macros so a macro can run a search
         loadFolderBackgrounds()

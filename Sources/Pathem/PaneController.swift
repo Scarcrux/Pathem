@@ -17,12 +17,48 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Icon/gallery zoom multiplier, persisted by the browser across view switches/launches.
     var iconZoom: CGFloat = 1
     var onIconZoomChanged: ((CGFloat) -> Void)?
+    var baseViewOptions = FolderViewOptions()
+    private var deliveredFolderOptions: FolderViewOptions?
+
+    var effectiveViewOptions: FolderViewOptions {
+        format.options.inheriting(baseViewOptions)
+    }
+
+    func applyFolderViewOptions() {
+        let options = effectiveViewOptions
+        guard deliveredFolderOptions != options else { return }
+        deliveredFolderOptions = options
+        if let style = lastStyle, let font = options.fontSize {
+            content.applyStyle(
+                rowHeight: max(
+                    style.rowHeight + CGFloat(font) - style.fontSize,
+                    currentMode == .list ? CGFloat((options.listIconSize ?? 16) + 2) : 0),
+                fontSize: CGFloat(font), alternatingRows: style.alternating)
+        }
+        if let formats = lastFormats {
+            content.setFormats(size: formats.size, date: options.dateDisplay ?? formats.date)
+        }
+        content.setCalculateFolderSizes(options.calculateFolderSizes ?? calculateFolderSizes)
+        content.setViewOptions(options)
+    }
+
+    func setFolderViewOptions(_ options: FolderViewOptions) {
+        format.options = options.normalized
+        rememberFormat?(viewOptionsURL, format)
+        reload()
+    }
+
+    /// One format styles the whole pane, including retained drilled Column tables.
+    /// File operations use currentURL instead (the active Column folder).
+    var viewOptionsURL: URL { nav.current }
 
     private func makeIconContent(gallery: Bool) -> IconCollectionController {
         let controller = IconCollectionController(gallery: gallery, scale: iconZoom)
         controller.onZoomChanged = { [weak self] scale in
-            self?.iconZoom = scale
-            self?.onIconZoomChanged?(scale)
+            guard let self else { return }
+            self.iconZoom = scale
+            self.format.options.iconScale = Double(scale)
+            self.rememberFormat?(self.currentURL, self.format)
         }
         return controller
     }
@@ -68,6 +104,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.setColorRules(rules)
     }
     func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {
+        deliveredFolderOptions = nil
         lastFormats = (size, date)
         content.setFormats(size: size, date: date)
     }
@@ -668,6 +705,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             format = resolved
         }
         applyViewMode(format.viewMode)  // may swap the content view before we fill it
+        applyFolderViewOptions()
         // Set the directory synchronously (it's cheap and independent of the async read). It gates
         // row draggability -- the list resolves each row's file URL against it in
         // pasteboardWriterForRow -- so it must be set the instant the content view exists. Leaving
@@ -684,6 +722,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         // freeze the UI. Existing rows stay on screen until the fresh ones arrive; a stale read of
         // a folder we've since left is dropped by the generation guard.
         let dir = nav.current
+        let showLibrary =
+            effectiveViewOptions.showLibraryFolder == true
+            && nav.current.standardizedFileURL
+                == FileManager.default.homeDirectoryForCurrentUser.standardizedFileURL
         let includeHidden = hiddenShown
         let fmt = format
         let generation = reloadGen.bump()
@@ -694,8 +736,19 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             let outcome: Result<[FileEntry], Error> = await Task.detached(priority: .userInitiated)
             {
                 do {
-                    let entries = try BulkEnumerator().entries(
+                    var entries = try BulkEnumerator().entries(
                         of: dir, includingHidden: includeHidden)
+                    // Add only Library, never enumerate-and-unhide every other UF_HIDDEN item.
+                    if showLibrary, !includeHidden,
+                        !entries.contains(where: { $0.name == "Library" })
+                    {
+                        let library = dir.appendingPathComponent("Library", isDirectory: true)
+                        if (try? library.resourceValues(forKeys: [.isDirectoryKey]).isDirectory)
+                            == true
+                        {
+                            entries.append(FileEntry(contentsOf: library))
+                        }
+                    }
                     return .success(fmt.sorted(entries))
                 } catch {
                     return .failure(error)
@@ -1105,6 +1158,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Apply display preferences to this pane's list.
     func applyStyle(rowHeight: Double, fontSize: Int, alternatingRows: Bool) {
+        deliveredFolderOptions = nil
         lastStyle = (CGFloat(rowHeight), CGFloat(fontSize), alternatingRows)
         content.applyStyle(
             rowHeight: CGFloat(rowHeight), fontSize: CGFloat(fontSize),
@@ -1119,6 +1173,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Toggle Finder-style "calculate all sizes" for this pane's list.
     func setCalculateFolderSizes(_ on: Bool) {
+        deliveredFolderOptions = nil
         calculateFolderSizes = on
         content.setCalculateFolderSizes(on)
     }
@@ -1631,6 +1686,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             pendingListingDirectory = content.directoryURL?.standardizedFileURL.path
         }
         currentMode = mode
+        deliveredFolderOptions = nil
         switch mode {
         case .list: content = FileListController()
         case .icon: content = makeIconContent(gallery: false)
@@ -1658,6 +1714,16 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Wire the active content's callbacks (run on creation and on every swap).
     private func wireContent() {
+        content.onViewOptionsChanged = { [weak self] changed in
+            guard let self, !self.isRemote, !self.isShowingSmartResults else { return }
+            guard
+                self.content.directoryURL?.standardizedFileURL
+                    == self.currentURL.standardizedFileURL
+            else { return }
+            self.format.options.columns = changed.columns
+            self.format.options.columnWidths = changed.columnWidths
+            self.rememberFormat?(self.currentURL, self.format)
+        }
         content.onOpen = { [weak self] entry in self?.descend(into: entry) }
         content.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
         content.setOpenInNewTabHandler { [weak self] url in self?.onOpenInNewTab?(url) }
@@ -1708,12 +1774,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Apply a whole saved view format (a Style): sort, hidden, folders-first, and view
     /// mode, then re-list and update the sort indicator.
     func applyFormat(_ style: ViewFormat) {
-        format.sortKey = style.sortKey
-        format.ascending = style.ascending
-        format.showHidden = style.showHidden
+        format = style
         format.hiddenOverride = nil  // a style states hidden-ness outright; drop the eye's per-folder override
-        format.foldersFirst = style.foldersFirst
-        setViewMode(style.viewMode)  // swaps the content controller when the mode changes
+        rememberFormat?(viewOptionsURL, format)
+        applyViewMode(style.viewMode)
         reload()  // re-list with the new sort/hidden/folders-first
         content.showSortIndicator(key: style.sortKey, ascending: style.ascending)
     }

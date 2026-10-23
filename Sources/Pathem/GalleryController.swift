@@ -20,7 +20,14 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
 
     private(set) var entries: [FileEntry] = []
     private var labelFontSize: CGFloat = 11
+    private var filmstripHeightConstraint: NSLayoutConstraint?
     private var colorRules = ColorRules()
+    private var showIconPreviews = true
+    func setViewOptions(_ options: FolderViewOptions) {
+        let show = options.showIconPreviews ?? true
+        guard show != showIconPreviews else { return }
+        PaneAppearanceReload.collection(filmstrip, in: scrollView) { showIconPreviews = show }
+    }
 
     /// The committed name of an in-place rename (Finder-style edit in the filmstrip).
     var onInlineRename: ((FileEntry, String) -> Void)?
@@ -168,6 +175,9 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         let filmstripHeight =
             layout.itemSize.height + layout.sectionInset.top + layout.sectionInset.bottom
             + NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) + 4
+        filmstripHeightConstraint = scrollView.heightAnchor.constraint(
+            equalToConstant: filmstripHeight)
+        filmstripHeightConstraint?.isActive = true
         NSLayoutConstraint.activate([
             preview.topAnchor.constraint(equalTo: composite.topAnchor, constant: 16),
             preview.leadingAnchor.constraint(equalTo: composite.leadingAnchor, constant: 16),
@@ -179,7 +189,6 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             scrollView.leadingAnchor.constraint(equalTo: composite.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: composite.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: composite.bottomAnchor),
-            scrollView.heightAnchor.constraint(equalToConstant: filmstripHeight),
             emptyLabel.centerXAnchor.constraint(equalTo: preview.centerXAnchor),
             emptyLabel.centerYAnchor.constraint(equalTo: preview.centerYAnchor),
         ])
@@ -400,7 +409,16 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     }
 
     func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
-        PaneAppearanceReload.collection(filmstrip, in: scrollView) { labelFontSize = fontSize }
+        PaneAppearanceReload.collection(filmstrip, in: scrollView) {
+            labelFontSize = fontSize
+            if let layout = filmstrip.collectionViewLayout as? NSCollectionViewFlowLayout {
+                layout.itemSize.height = max(104, 64 + ceil(fontSize * 2) + 12)
+                filmstripHeightConstraint?.constant =
+                    layout.itemSize.height + layout.sectionInset.top + layout.sectionInset.bottom
+                    + NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) + 4
+                layout.invalidateLayout()
+            }
+        }
     }
 
     // MARK: Data source / selection / drag
@@ -418,7 +436,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     {
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
         let entry = entries[indexPath.item]
-        let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
+        let thumbnailURL =
+            (entry.isDirectory || entry.isDataless || !showIconPreviews) ? nil : fileURL(for: entry)
         let ruleStyle = FileColorStyle.style(
             for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
         item.configure(

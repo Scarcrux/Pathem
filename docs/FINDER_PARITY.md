@@ -1,0 +1,295 @@
+# Finder settings parity
+
+Trigger: the owner supplied Finder's List View Options and requested all nine audited gaps.
+The source default for dates was already relative, but the owner's persisted `medium` value
+overrode it. That local preference was changed separately; do not migrate explicit user choices.
+
+## Acceptance criteria (written before the sample)
+
+- Old format JSON loads without losing rules; new per-folder options survive round-trip.
+- Exact/subtree/default scopes retain their existing precedence. Explicit non-relative dates
+  remain selectable; Today/Yesterday rendering is checked separately from the stored enum.
+- Real native controls apply to the originating folder, never a newly activated pane.
+- List columns, icon geometry, preview toggles and label position reflect delivered options;
+  switching folders and view modes does not leak another folder's overrides or jump the viewport.
+- Metadata reports real available data; unsupported sharing/version fields must not be invented.
+  A plain local file is a contrasting empty/unavailable control.
+- Filename suggestions never overwrite typing or a newer/dismissed rename. Rename stays usable
+  without Apple Intelligence. The original extension is retained by suggestions.
+- Extension-change warnings gate the actual operation; Cancel must leave the file unchanged.
+- Trash cleanup is opt-in, never infers age from modification/creation dates, never traverses
+  links or arbitrary configured roots, and only removes objects whose actual Trash date is older
+  than 30 days. Young/unknown-age/link/outside-root fixtures must survive. No owner Trash tests.
+- Focused tests/build and native UI controls pass before broader CI. A red result is retained,
+  not erased by loosening assertions. Full hardware/receiver integration remains separate.
+
+## Follow-up audit
+
+After implementing and verifying the parity batch, audit asynchronous UI ownership, settings
+delivery, remote/local operation boundaries and regressions. Record evidence, mechanism and
+confidence; do not mix speculative fixes into this feature batch.
+
+## Implementation and sample evidence
+
+- Added optional, bounded `ViewFormat.options` for dates, text, icons, previews, spacing,
+  label position, columns/widths, folder sizes and the Home Library exception. Existing
+  exact/subtree/default precedence is retained. Explicit dates are not migrated away.
+- Added View > View Options (Cmd-J), explicit folder/subtree/default application and
+  capability-disabled controls. The sheet owns its originating URL across asynchronous work.
+- Added real Date Added, Tags, iCloud Status, Shared By, Last Modified By and Version values.
+  Sharing uses the iCloud owner/most-recent-editor resource keys, not filesystem ownership;
+  version uses Spotlight's kMDItemVersion. Blanks explicitly mean absent provider metadata.
+  Metadata reads are lazy, generation-guarded and cache-bounded, not a whole-folder walk.
+- Ordinary eligible Rename now offers an explicit-accept suggestion, and the torrent Save
+  panel uses the same acceptance rule. On-device model readiness gates automatic presentation;
+  no model means ordinary inline rename. Suggestions retain the output extension and cannot
+  overwrite typing or deliver after cancellation. Other apps' Save dialogs are outside Pathem.
+- Extension changes use a Cancel-first warning before the real rename. The sheet captures the
+  original local folder. Both manual AI Rename and ordinary Rename share this path.
+- 30-day cleanup is OFF by default. While Pathem is running, the shared daily worker processes
+  the home Trash only; unknown date-added values, symlinks and changed identities are retained.
+  Opt-out cancels between deletions. External-volume Trash and execution while Pathem is closed
+  are not implemented; do not describe this as a system-wide Finder policy.
+
+Retained sample records (local `/tmp/pathem-finder-*` logs):
+
+- `focused.log`: initial build and seven focused tests PASS.
+- `focused2.log`: FAIL: missing PathemEngine import in the Save adapter. The import correction
+  was made before that compiler had fully closed, also producing an input-modified error.
+  Subsequent build inputs were frozen through actual terminal; do not count this run as green.
+- `focused3.log`: corrected build and seven focused tests PASS.
+- `native1.log`: configuration guard correctly REFUSED a `/tmp` root outside the system's
+  canonical temporary directory. Retried using `mktemp -d` under the actual temp directory.
+- `native2.log`: 193/194. Relative date text, native controls, suggestion cancellation and
+  extension Cancel/Confirm PASS; inherited-column reset FAIL.
+- `focused4.log`: eight tests PASS, including an actual filesystem move proving date-added is
+  fresh while content modification time remains old. No owner Trash was touched.
+- `native3.log`: 196/197. Grid geometry and visible-window metadata PASS; same column-reset
+  assertion still FAIL. Disabling AppKit autosave for automation did NOT fix this failure:
+  the autosave attribution was refuted. Isolation remains valuable independently because
+  tests must not read/write owner column defaults.
+- Convicted cause: `explicitColumns ?? lazyInheritedColumns` never initialized the fallback
+  on the first explicit override; Reset then captured that override as its inherited layout.
+  Eagerly snapshot the fallback before any mutation. The original reset assertion is unchanged.
+
+Live iCloud sharing/provider metadata, real model output, external receiver integration and
+an installed owner window remain environmental boundaries, not passes inferred from fixtures.
+
+## Follow-up safety finding: shared remote scratch cleanup
+
+Evidence: `BrowserViewController.viewDidLoad` calls `cleanupRemoteTemp` for every browser window.
+That method recursively removes the fixed `Pathem-Remote` and `Pathem-Archives` directories,
+despite its comment saying it runs once. A second window or a test process can therefore remove
+another window/process's opened remote files or mounted archive working copies. This is a direct
+source-confirmed delete path; no destructive reproduction against shared/owner roots is allowed.
+
+The first full gate was deliberately terminated at its own verified make PID before E2E launches
+after this finding. It had passed the fresh warning inventory (15 known, 0 new), but is NOT a
+full green gate. The earlier native launches predate this discovery; no owner-file loss has been
+established, and lack of a failure report is not proof of no effect.
+
+Fix design: each process owns a UUID session scratch namespace. Browser creation prepares
+directories idempotently and never sweeps previous or legacy namespaces. Automated launches
+place that namespace under their guarded, isolated configuration root. Prior editable remote
+files are retained rather than guessed disposable; a future explicit recovery/cleanup UI can
+manage them with user intent.
+
+Sample criteria before running: two distinct sessions must have distinct paths; preparing a
+second session and preparing the first twice must preserve an existing sentinel's bytes. A real
+second browser window must preserve a sentinel in its first window's session. Tests must use
+only disposable roots and must not read or delete the legacy shared directories.
+
+Safety sample: `focused6.log` PASS 9/9, including distinct session paths and repeated preparation
+preserving both remote and archive sentinels. `native5.log` PASS 199/199, including a real second
+BrowserViewController view load preserving the first browser's remote working-copy bytes. The
+old destructive path was not replayed against any shared directory.
+
+## Further audit findings (Mission 58; remaining validation and fixes)
+
+1. **P1, download destination reservation.** In `downloadSelectedRemote`, all queue items are
+   built before any download starts. `safeLocalName` maps both `report.txt` and a legal Unix
+   filename containing a backslash before `report.txt` to `report.txt`. `uniqueLocalURL` only
+   checks the current disk, so both queued items can choose the same absent destination.
+   Curl downloads use `-o` and SFTP uses `get`; neither queue reserves the first choice. Proven
+   by source/path construction; actual receiver overwrite still needs an isolated provider test.
+   Design direction: reserve normalized destination keys across the batch and create safely;
+   keep a distinct same-name/Unicode/case-insensitive-volume control.
+2. **P1, remote Rename origin ownership.** Originally the sheet chose operation kind and read
+   `pane.remoteContext` at acceptance, permitting changed path/server and local↔remote mode
+   crossings. This batch captures the origin before presenting and rejects changed kind,
+   connection, path or credentials before dispatch. Discriminatory predicates pass; real
+   delayed-sheet/provider acceptance remains untested. A reconnect to identical context is
+   not separately invalidated by a session generation. Retain that validation in Mission58.
+3. **P2, stale archive mount completion.** `browseArchive` awaits extraction, then unconditionally
+   calls `pane.mountArchive`; that method changes navigation and focus. There is no origin or
+   generation check between extraction completion and mount, so navigation away can be undone
+   by a late completion. Source-confirmed missing ownership guard; native delayed-extractor
+   reproduction remains pending. An unchanged-origin completion must continue to mount.
+
+These findings do not close older Mission 53 tasks 44–46 or environmental release gates. The
+batch's fixes do not establish that an arbitrary live location/scroll change has this cause.
+
+## Full-gate negative results and next controls
+
+CI2 completed all 811 unit tests and the warning inventory (15 known, 0 new), but product E2E
+was 64 PASS / 1 standing transparent-capture SKIP / 3 FAIL. Packaged release was not reached.
+Failures: live Organize AI reports ModelManagerError 1026 despite available status; create/rename
+blocks extensionless-file -> `.txt`; native UI was 43/49, including real-dispatch zoom failures.
+The focused 201-check sidebar suite and search465/Finder198/background263/layout161 checks pass.
+Do not waive any of these failures or turn an AI error into a successful/skip result.
+
+Controls written before running: repeat UI49 alone to retain every failure, without changing
+assertions. Separately build a tiny FoundationModels-only program, importing no Pathem code,
+and send one synthetic plain-text request. If it also fails with 1026, that establishes an
+independent framework/service failure, not its exact cause; if it succeeds, investigate Pathem's
+structured-generation path. No system update, service restart or Apple Intelligence toggle is
+authorized by this diagnostic. The existing OrganizeAI.swift source is unchanged in this batch.
+
+Control outcome: `/tmp/pathem-model-control.swift` imports only Foundation/FoundationModels.
+Build PASS; execution exit2, availability `available`, then the same underlying
+ModelManagerServices.ModelManagerError1026. Thus the live generation failure also occurs outside
+Pathem; its exact system/service cause remains unknown. Host inspection: macOS27.0.1,
+Xcode27.1, selected SDK27.0. Apple staff discuss SDK/OS matching as a possible cause in
+<https://developer.apple.com/forums/thread/842733>; that is a hypothesis, not a diagnosis here.
+No settings, services or OS/toolchain installations were changed.
+
+UI-only repeat retained the same six failures (43/49). The next treatment improved to46/49:
+unchanged-folder delivery is now cached; metadata does no redraw when no extended columns are
+visible, and metadata redraws defer during inline edit and preserve native selection/viewport.
+Appearance restoration retains a legal negative table-header inset while preserving zero as the
+upper clamp when a document shrinks (the previously measured contradictory controls).
+
+The three remaining failures were New File inline naming and real-dispatch zoom. Instrumentation
+showed a pending sheet, zero received key events, and unchanged scale. Convicted cause: New File's
+post-listing callback calls ordinary Rename, which now offered the automatic AI sheet for an empty
+file. Its existing inline-name contract was lost, and the modal sheet consumed later shortcuts.
+New File now explicitly requests ordinary inline naming (and checks its originating pane is still
+active). Subsequent ordinary Rename still offers suggestions. No zoom key-routing fix was guessed.
+
+`focused8.log`: nine focused tests PASS. `ui49-treatment2.log`: original49/49 PASS, including
+real dispatch receipts (no sheet; keys0->2, scale1.15->1.30->1.15) and negative-inset refresh.
+`native7.log`:201/201 PASS. Adding the first filename extension is now allowed without a warning;
+replacing/removing an existing extension still has Cancel/Confirm controls. Full CI3 adds native
+late-Apply origin ownership and nested-symlink/replaced-entry Trash controls before final acceptance.
+
+## Parallel review controls (written before execution)
+
+Three independent read-only reviewers found four view-ownership/default bugs, list icon glyph
+upscaling, stale-window retention re-enablement, and a suggestion preview cloud/cancellation gap.
+The treatment must preserve drilled Column location/selection and child rules while saving the
+pane-root format; both default commands must leave global Settings authoritative. Nested subtree
+rules must be replaced but sibling/root rules retained. A small-image/large-box control must
+distinguish glyph enlargement from an enlarged box. Open Settings must preserve newly applied
+font/date defaults on an unrelated edit. Two windows must remain retention-OFF after a stale
+snapshot, and no timer/worker may start during automation. Text preview must read an ordinary
+fixture but reject symlinks, nonregular modes, and dataless flags. A suspended preview canceled
+before completion must invoke no model; the uncanceled control must invoke exactly once and
+still require explicit Use. Any failure is a failed sample, not a waiver.
+
+CI3's retained log establishes 811 unit passes and the original UI49/sidebar204 passes, but ends
+during conflict capture with no retained final summary/terminal status. Its process no longer
+exists. Treat this run as incomplete, not a claimed 66/1/1 result. The independent AI1026 failure
+remains recorded; packaged verification is still required after review treatments.
+
+Review sample: updated unit suite PASS (15 XCTest +797 Swift Testing). Native236 sample was
+232/236; isolated repeat54/58 retained the same four failures. Column receipts prove the root
+font18 and child sentinel11 were saved correctly, but refresh returned the active location to
+the root, replaced the key table, selected the child folder instead of its file, and moved the
+horizontal origin463->182. Mechanism: restoring root/drilled selection during reload invoked
+the normal selection delegate, which treated it as a fresh drill. Treatment suppresses those
+gesture callbacks while restoring selection, as the existing sort/style paths already do.
+
+The first icon instrument was INVALID: NSCell.imageRect reported the whole48/64 box for both
+UpOrDown and Down controls, so it could not discriminate scaling. No product regression was
+inferred from that instrument. Replace it with actual drawing of a synthetic16pt red image
+into an RGBA bitmap, requiring positive Down-control pixels and >2x red pixels in treatment.
+Production icon constraints are asserted separately before any test frame assignment.
+
+New Group/Sort source audit (screenshots not yet attached): smart-result header sorting returns
+through smart reload without reordering; smart/remote grouping does not deliver grouping and
+persists onto the local fallback folder; expanded Tree children retain fixed name ordering.
+These preexisting paths are queued in Mission58, not claimed fixed by the view-options batch.
+
+Treatment sample PASS58/58. Column receipts: root18/child11 retained, child file selected,
+same key table, one completed listing, horizontal origin463->463. The interim root-ownership
+assertion compared equivalent directory URLs with different trailing-slash spelling; checking
+their canonical path corrected that test, not the product. Direct NSImageView.draw produced
+zero pixels in both controls (another invalid instrument); drawing its real image cell through
+the bitmap context discriminated:48pt=2304 red pixels,64pt=4096, Down=256 in both. Constraints48/64
+also pass. No full-window visual-fidelity claim follows from this targeted raster control.
+
+Stale-retention native controls pass across two real Settings instances, replayed stale full
+snapshot, unrelated checkbox edit, saved preferences OFF, and refused stale reseed; automation
+starts no cleanup worker/timer. Preview regular/symlink/mode/flag controls and canceled/uncanceled
+delayed-preview generator counts pass. Rename context predicates pass unchanged local/remote
+and changed mode/path/server/credentials; this is predicate/source-wiring coverage, not a
+delayed real remote-provider acceptance test. Those broader Mission58 controls remain open.
+
+Normal commit-hook Swift tests and local packaging now cap workers at2; no tests were removed,
+weakened, skipped or waived to impose that resource cap. No installed app, OS setting, owner
+Trash, updater, signing credential or public distribution changed.
+
+## Next audit units (design only; no claimed treatment)
+
+Download collision is coupled to `TransferQueueController.retry`: it unconditionally removes
+`progressFile` before reusing the old closure/path. Source inspection confirms providers write
+directly to that destination. Reservation alone is insufficient. Plan batch-distinct normalized
+names, fresh per-attempt owned staging on the destination volume, and no-replace publication
+(macOS renameatx_np/RENAME_EXCL, failing closed if unsupported). Retry must never delete a public
+destination or reuse an earlier attempt's ownership. Reproduce via an injected writing provider
+through the real queue, using distinct payloads and colliding sanitized names. Controls must
+retain preexisting files, dangling-symlink outside targets, destinations created after enqueue,
+and replacements before Retry; cover Unicode/case policies and cancellation before start.
+No live provider overwrite has been exercised, and this batch does not fix those queue paths.
+
+Archive completion needs per-pane request UUID plus terminal teardown state, not path equality
+alone: navigation away/back, smart/remote replacement, overlapping extraction, Column effective
+directory changes and close must invalidate ownership. Watcher/style refresh must not. Guard at
+the final mount mutation boundary; stale errors must not present alerts or take focus. Each
+attempt needs its own session-owned scratch child; remove only an unmounted exact attempt after
+its extractor has actually terminated. A continuation-gated extractor should distinguish normal
+mount/failure, navigation away/back, both completion orders of overlapping requests, teardown,
+and stale failure, while asserting untouched sibling/mounted sentinels and actual handler terminal.
+
+Group/header-Sort should share the working sort delivery path: smart results reorder/rebucket
+held entries without fallback-folder writes; remote grouping rebuckets current content without
+network re-listing; local changes still persist. Test actual rows/headers/sections using values
+whose size order contradicts name order, plus a remembered-format write spy and unsupported-mode
+controls. Tree needs delivered sort policy for both loaded and newly expanded children while
+retaining node identity/expanded paths/selection/viewport; avoid whole-subtree reload on unchanged
+watcher refresh. Screenshots are still needed for exact Finder option-list comparison.
+
+CI4 ACTUAL terminal: make exit2; unit812 PASS, warning inventory15known/0new, product E2E
+64PASS/1standing-captureSKIP/3FAIL. OriginalUI49, sidebar236, search465, Finder198,
+background263, Settings588 and other product checks pass. Failures: independent AI1026,
+content201/204 and gallery54/57. Isolated background-tab sample28/31 names the exact three:
+displayed/hidden/watcher Column refresh activation receipts are absent. Every active-tab,
+selection, displayed-window, actual watcher listing and explicit focus/close invariant passes.
+These assertions required the unwanted restoration-generated callbacks now intentionally
+suppressed; they are obsolete instrumentation, not evidence of a tab-ownership regression.
+
+Revised control criteria before execution: passive displayed/hidden/watcher Column refresh
+must emit NO activation callbacks and must preserve all existing ownership invariants. Exercise
+the TabStrip ownership gate separately through its production captured-source callback: a
+displayed source must activate from the other side (positive control), while a hidden source
+must reach the gate with a recorded receipt but cannot replace the foreground tab (negative
+control). Keep all previous listing/selection/window/focus/close assertions. This retains a
+discriminatory gate test without requiring the fixed refresh bug to recur.
+
+Revised isolated sample PASS33/33; visible positive and hidden delivered-but-rejected controls
+both pass, alongside all previous behavior invariants. Incremental compile warning gate:0new.
+Full affected content/gallery suites and the normal packaged target are the next acceptance
+checks. No production code changed after CI4; this treatment changes only its obsolete test
+instrument and adds the two explicit gate controls.
+
+Full affected retests ACTUAL natural exit0: content206/206, gallery59/59. All previous
+behavior assertions remain and the two additional explicit activation controls pass. The last
+full make-ci invocation remains recorded64/1/3 (not rewritten as green); affected suite retests
+resolve its two test-instrument failures. Independent live AI1026 remains unresolved.
+
+Packaged target ACTUAL natural exit0:14PASS/0SKIP/0FAIL, ARM64 ad-hoc bundle with helper and
+six-language completeness, strict signature, hardened runtime, update metadata, config-root
+guards, actual launch/visible window, scratch config persistence and updater-disabled receipt.
+Release compiler inventory:12known/0new. This is local bundle verification, not universal,
+Developer-ID/notarized distribution, installation or publication. Mission57's full-validation
+task remains pending because live AI1026 is unresolved; no full-CI-green claim is made.

@@ -1,3 +1,4 @@
+import CoreServices
 import Foundation
 
 /// Values for the optional, metadata-derived list columns (dimensions, permissions, owner,
@@ -11,6 +12,12 @@ public enum FileColumns {
         public var owner: String?
         public var whereFrom: String?
         public var comment: String?
+        public var dateAdded: Date?
+        public var tags: String?
+        public var cloudStatus: String?
+        public var sharedBy: String?
+        public var modifiedBy: String?
+        public var version: String?
         public init(
             dimensions: String? = nil, permissions: String? = nil, owner: String? = nil,
             whereFrom: String? = nil, comment: String? = nil
@@ -32,20 +39,67 @@ public enum FileColumns {
         public static let owner = Request(rawValue: 1 << 2)
         public static let whereFrom = Request(rawValue: 1 << 3)
         public static let comment = Request(rawValue: 1 << 4)
+        public static let finder = Request(rawValue: 1 << 5)
     }
 
     public static func gather(_ url: URL, _ request: Request) -> Extended {
         var info = Extended()
-        if request.contains(.dimensions) { info.dimensions = MediaMetadata.dimensionsLabel(of: url) }
+        if request.contains(.dimensions) {
+            info.dimensions = MediaMetadata.dimensionsLabel(of: url)
+        }
         if request.contains(.permissions) || request.contains(.owner) {
             let file = FileInfo.gather(for: url)
             if request.contains(.permissions) { info.permissions = file?.permissions }
             if request.contains(.owner) { info.owner = file?.owner }
         }
         if request.contains(.whereFrom) {
-            info.whereFrom = FileMetadata.whereFroms(of: url).first.flatMap { URL(string: $0)?.host }
+            info.whereFrom = FileMetadata.whereFroms(of: url).first.flatMap {
+                URL(string: $0)?.host
+            }
         }
         if request.contains(.comment) { info.comment = FileMetadata.finderComment(of: url) }
+        if request.contains(.finder) {
+            let values = try? url.resourceValues(forKeys: [
+                .addedToDirectoryDateKey, .tagNamesKey, .isUbiquitousItemKey,
+                .ubiquitousItemDownloadingStatusKey, .ubiquitousItemIsDownloadingKey,
+                .ubiquitousItemIsUploadingKey, .ubiquitousItemIsUploadedKey,
+                .ubiquitousItemDownloadingErrorKey, .ubiquitousItemUploadingErrorKey,
+                .ubiquitousItemIsSharedKey, .ubiquitousSharedItemOwnerNameComponentsKey,
+                .ubiquitousSharedItemMostRecentEditorNameComponentsKey,
+            ])
+            info.dateAdded = values?.addedToDirectoryDate
+            info.tags = values?.tagNames?.joined(separator: ", ")
+            // State tokens are localized by the UI, never fabricated from file ownership.
+            if values?.isUbiquitousItem == true {
+                if values?.ubiquitousItemDownloadingError != nil
+                    || values?.ubiquitousItemUploadingError != nil
+                {
+                    info.cloudStatus = "error"
+                } else if values?.ubiquitousItemIsDownloading == true {
+                    info.cloudStatus = "downloading"
+                } else if values?.ubiquitousItemIsUploading == true {
+                    info.cloudStatus = "uploading"
+                } else if values?.ubiquitousItemDownloadingStatus == .notDownloaded {
+                    info.cloudStatus = "online"
+                } else if values?.ubiquitousItemIsUploaded == false {
+                    info.cloudStatus = "pending"
+                } else {
+                    info.cloudStatus = "downloaded"
+                }
+            }
+            if values?.ubiquitousItemIsShared == true {
+                let formatter = PersonNameComponentsFormatter()
+                info.sharedBy = values?.ubiquitousSharedItemOwnerNameComponents.map {
+                    formatter.string(from: $0)
+                }
+                info.modifiedBy = values?.ubiquitousSharedItemMostRecentEditorNameComponents.map {
+                    formatter.string(from: $0)
+                }
+            }
+            if let item = MDItemCreate(kCFAllocatorDefault, url.path as CFString) {
+                info.version = MDItemCopyAttribute(item, kMDItemVersion) as? String
+            }
+        }
         return info
     }
 }

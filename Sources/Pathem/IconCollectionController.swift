@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 /// reports activation (double-click / Return) and right-clicks.
 @MainActor
 final class KeyCollectionView: NSCollectionView {
+    private(set) var debugKeyDownCount = 0
     var onKeyChord: ((KeyChord) -> Bool)?
     var onMouseGesture: ((String) -> Bool)?
     /// Cmd-scroll zoom: reports the vertical scroll delta when Command is held.
@@ -118,6 +119,9 @@ final class KeyCollectionView: NSCollectionView {
     }
 
     override func keyDown(with event: NSEvent) {
+        #if DEBUG
+        debugKeyDownCount += 1
+        #endif
         let flags = event.modifierFlags
         let chord = KeyChord.from(
             keyCode: event.keyCode, characters: event.charactersIgnoringModifiers,
@@ -175,6 +179,34 @@ final class IconItem: NSCollectionViewItem {
     private let label = NSTextField(labelWithString: "")
     private var iconWidth: NSLayoutConstraint?
     private var iconHeight: NSLayoutConstraint?
+    private var positionConstraints: [NSLayoutConstraint] = []
+    private var position: FolderViewOptions.LabelPosition?
+
+    private func setLabelPosition(_ next: FolderViewOptions.LabelPosition) {
+        guard position != next else { return }
+        position = next
+        NSLayoutConstraint.deactivate(positionConstraints)
+        if next == .right {
+            label.alignment = .left
+            positionConstraints = [
+                icon.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 4),
+                icon.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                label.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 8),
+                label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
+                label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            ]
+        } else {
+            label.alignment = .center
+            positionConstraints = [
+                icon.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
+                icon.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                label.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 4),
+                label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 2),
+                label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -2),
+            ]
+        }
+        NSLayoutConstraint.activate(positionConstraints)
+    }
     /// The file this cell is showing; guards an async thumbnail against cell reuse.
     private var representedURL: URL?
 
@@ -199,23 +231,21 @@ final class IconItem: NSCollectionViewItem {
         iconWidth = w
         iconHeight = h
         NSLayoutConstraint.activate([
-            icon.topAnchor.constraint(equalTo: root.topAnchor, constant: 4),
-            icon.centerXAnchor.constraint(equalTo: root.centerXAnchor),
             w, h,
-            label.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 4),
-            label.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 2),
-            label.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -2),
         ])
         view = root
+        setLabelPosition(.below)
     }
 
     func configure(
         name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
         thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = [],
         underlined: Bool = false,
-        nameFont: NSFont? = nil, nameColor: NSColor? = nil, accessibilityLabel: String? = nil
+        nameFont: NSFont? = nil, nameColor: NSColor? = nil, accessibilityLabel: String? = nil,
+        labelPosition: FolderViewOptions.LabelPosition = .below
     ) {
         loadViewIfNeeded()
+        setLabelPosition(labelPosition)
         // Clear any in-place-edit appearance in case this cell was reused mid-rename.
         label.isEditable = false
         label.isBordered = false
@@ -298,6 +328,20 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     private(set) var entries: [FileEntry] = []
     private let gallery: Bool
     private var scale: CGFloat = 1
+    private var viewOptions = FolderViewOptions()
+    func setViewOptions(_ options: FolderViewOptions) {
+        guard viewOptions != options else { return }
+        viewOptions = options
+        scale = CGFloat(options.iconScale ?? 1)
+        PaneAppearanceReload.collection(collection, in: scrollView) {
+            if let layout = collection.collectionViewLayout as? NSCollectionViewFlowLayout {
+                layout.itemSize = cellSize
+                layout.minimumInteritemSpacing = CGFloat(options.gridSpacing ?? 8)
+                layout.minimumLineSpacing = CGFloat(options.gridSpacing ?? 8)
+                layout.invalidateLayout()
+            }
+        }
+    }
     /// Harness accessors: the current zoom scale, and the key view that receives keyDown.
     var debugScale: CGFloat { scale }
     var debugKeyView: NSView { collection }
@@ -305,9 +349,12 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     private var iconSize: CGFloat { (baseIconSize * scale).rounded() }
     private var cellSize: NSSize {
         let side = iconSize
+        if viewOptions.labelPosition == .right {
+            return NSSize(width: side + 172, height: max(side + 8, labelFontSize * 2 + 12))
+        }
         return gallery
-            ? NSSize(width: side + 54, height: side + 54)
-            : NSSize(width: side + 40, height: side + 36)
+            ? NSSize(width: side + 54, height: side + max(54, ceil(labelFontSize * 2) + 8))
+            : NSSize(width: side + 40, height: side + max(36, ceil(labelFontSize * 2) + 8))
     }
     private var labelFontSize: CGFloat = 12
     /// Reports a new zoom scale so the pane can persist it across view switches/launches.
@@ -846,7 +893,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
             base, for: entry, in: directoryURL, size: NSSize(width: iconSize, height: iconSize))
         // Real content thumbnails for files only; never for folders or online-only
         // (dataless) items, where generating one could fault a download.
-        let thumbnailURL = (entry.isDirectory || entry.isDataless) ? nil : fileURL(for: entry)
+        let thumbnailURL =
+            (entry.isDirectory || entry.isDataless || viewOptions.showIconPreviews == false)
+            ? nil : fileURL(for: entry)
         let ruleStyle = FileColorStyle.style(
             for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
         item.configure(
@@ -855,7 +904,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
             git: decorations.gitState(for: entry, in: directoryURL),
             tags: decorations.tagColors(for: entry, in: directoryURL),
             underlined: ei == hoveredItem, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color,
-            accessibilityLabel: FileAXLabel.describe(entry))
+            accessibilityLabel: FileAXLabel.describe(entry),
+            labelPosition: viewOptions.labelPosition ?? .below)
         // Dim hidden (dotfile) items so they read as hidden when "show hidden files" is on,
         // as Finder does, and dim cut items until pasted. Set on every configure (cells are
         // reused) so it never sticks.

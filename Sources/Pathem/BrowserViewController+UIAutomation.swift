@@ -624,7 +624,10 @@ extension BrowserViewController {
                     pumpRunLoop(0.2)
                 }
                 func fr() -> String {
-                    window.firstResponder.map { String(describing: type(of: $0)) } ?? "nil"
+                    let responder =
+                        window.firstResponder.map { String(describing: type(of: $0)) } ?? "nil"
+                    return
+                        "\(responder) active=\(NSApp.isActive) key=\(NSApp.keyWindow === window) own=\(window.firstResponder === activePane?.keyView) sheet=\(window.attachedSheet != nil)"
                 }
                 setActiveViewMode(.list)
                 pumpRunLoop(0.3)
@@ -633,13 +636,16 @@ extension BrowserViewController {
                 pumpRunLoop(0.4)
                 let frA = fr()
                 let a0 = activePane?.debugIconScale ?? -1
+                let countA =
+                    (activePane?.debugIconKeyView as? KeyCollectionView)?.debugKeyDownCount ?? -1
                 send(key("=", "=", code: 24))
                 let a1 = activePane?.debugIconScale ?? -1
                 send(key("-", "-", code: 27))
                 let a2 = activePane?.debugIconScale ?? -1
                 check(
                     "icon-zoom-real-dispatch-list-focused-then-switch", a1 > a0 && a2 < a1,
-                    "firstResponder=\(frA) scale \(a0) -> \(a1) -> \(a2)")
+                    "firstResponder=\(frA) keys=\(countA)->\((activePane?.debugIconKeyView as? KeyCollectionView)?.debugKeyDownCount ?? -1) scale \(a0) -> \(a1) -> \(a2)"
+                )
                 setActiveViewMode(.list)
                 pumpRunLoop(0.3)
                 window.makeFirstResponder(nil)
@@ -647,11 +653,14 @@ extension BrowserViewController {
                 pumpRunLoop(0.4)
                 let frB = fr()
                 let b0 = activePane?.debugIconScale ?? -1
+                let countB =
+                    (activePane?.debugIconKeyView as? KeyCollectionView)?.debugKeyDownCount ?? -1
                 send(key("=", "=", code: 24))
                 let b1 = activePane?.debugIconScale ?? -1
                 check(
                     "icon-zoom-real-dispatch-nothing-focused-then-switch", b1 > b0,
-                    "firstResponder=\(frB) scale \(b0) -> \(b1)")
+                    "firstResponder=\(frB) keys=\(countB)->\((activePane?.debugIconKeyView as? KeyCollectionView)?.debugKeyDownCount ?? -1) scale \(b0) -> \(b1)"
+                )
             } else {
                 check("icon-zoom-in-cmd-equals", false, "no icon key view")
             }

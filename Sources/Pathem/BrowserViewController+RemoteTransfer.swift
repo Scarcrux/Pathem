@@ -126,22 +126,42 @@ extension BrowserViewController {
         }
     }
 
-    /// Temp directory for remote files opened locally.
+    private static let sessionScratch: SessionScratch = {
+        let temporary = FileManager.default.temporaryDirectory.resolvingSymlinksInPath()
+        var base = temporary
+        if PathemApp.isAutomationLaunch,
+            let path = ProcessInfo.processInfo.environment["PATHEM_CONFIG_DIR"]
+        {
+            let candidate = URL(fileURLWithPath: path, isDirectory: true).resolvingSymlinksInPath()
+            if candidate.pathComponents.count > temporary.pathComponents.count,
+                candidate.pathComponents.starts(with: temporary.pathComponents)
+            {
+                base = candidate
+            }
+        }
+        return SessionScratch(base: base)
+    }()
+
+    /// Each process owns a namespace. Never clean another process's editable downloads.
     private static var remoteTempDir: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent(
-            "Pathem-Remote", isDirectory: true)
+        sessionScratch.remote
     }
     private static var archiveTempDir: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent(
-            "Pathem-Archives", isDirectory: true)
+        sessionScratch.archives
     }
 
-    /// Remove leftover opened-remote files and extracted archives from a previous run.
-    /// Done once at launch so it never deletes something in use this session.
-    static func cleanupRemoteTemp() {
-        try? FileManager.default.removeItem(at: remoteTempDir)
-        try? FileManager.default.removeItem(at: archiveTempDir)
+    /// Idempotent across windows. Previous and legacy namespaces are intentionally retained.
+    static func prepareRemoteTemp() {
+        do { try sessionScratch.prepare() } catch {
+            NSLog(
+                "Pathem: could not prepare this session's remote working directory: %@",
+                error.localizedDescription)
+        }
     }
+
+    #if DEBUG
+    static var debugRemoteScratchRoot: URL { sessionScratch.remote }
+    #endif
 
     /// Extract an archive to a fresh temp folder and browse it as a folder.
     func browseArchive(_ archive: URL, in pane: PaneController, origin: URL) {

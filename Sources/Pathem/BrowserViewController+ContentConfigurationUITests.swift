@@ -979,10 +979,19 @@ extension BrowserViewController {
             pane.debugReloadContentInPlace()
             if mode == .column {
                 check(
-                    "displayed-column-refresh-activation-received",
-                    leftTabs.debugActivationReceipts.dropFirst(displayedReceipt).contains {
-                        $0.sourceIndex == originalIndex && $0.sourceDisplayed
-                    })
+                    "displayed-column-refresh-no-activation",
+                    leftTabs.debugActivationReceipts.dropFirst(displayedReceipt).isEmpty)
+                // Refresh no longer impersonates focus. Test the captured-source gate
+                // explicitly, with a positive source that must activate the visible side.
+                let controlReceipt = leftTabs.debugActivationReceipts.count
+                if let other = rightTabs.activePane { setActiveSide(rightTabs, pane: other) }
+                pane.onBecomeActive?()
+                check(
+                    "displayed-explicit-activation-control",
+                    activeSide === leftTabs && leftTabs.activePane === pane
+                        && leftTabs.debugActivationReceipts.dropFirst(controlReceipt).contains {
+                            $0.sourceIndex == originalIndex && $0.sourceDisplayed
+                        })
             }
             check(
                 "displayed-refresh-control-" + mode.rawValue,
@@ -1008,8 +1017,12 @@ extension BrowserViewController {
             let hidden = leftTabs.debugActivationReceipts.dropFirst(hiddenReceipt)
             if mode == .column {
                 check(
-                    "hidden-column-refresh-activation-received",
-                    hidden.contains {
+                    "hidden-column-refresh-no-activation", hidden.isEmpty)
+                let controlReceipt = leftTabs.debugActivationReceipts.count
+                pane.onBecomeActive?()
+                check(
+                    "hidden-explicit-activation-reaches-gate",
+                    leftTabs.debugActivationReceipts.dropFirst(controlReceipt).contains {
                         $0.sourceIndex == originalIndex && !$0.sourceDisplayed
                             && $0.previousIndex == foregroundIndex
                     },
@@ -1038,10 +1051,8 @@ extension BrowserViewController {
                 settle { pane.debugHasEntry(marker.lastPathComponent) })
             if mode == .column {
                 check(
-                    "watcher-hidden-column-activation-received",
-                    leftTabs.debugActivationReceipts.dropFirst(watcherReceipt).contains {
-                        $0.sourceIndex == originalIndex && !$0.sourceDisplayed
-                    })
+                    "watcher-hidden-column-no-activation",
+                    leftTabs.debugActivationReceipts.dropFirst(watcherReceipt).isEmpty)
             }
             check(
                 "watcher-preserves-active-" + mode.rawValue,

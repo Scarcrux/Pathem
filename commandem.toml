@@ -1722,4 +1722,96 @@ name = "pathem"
   [[mission.comment]]
     text = "Verified all six audit mechanisms and completed the batch. Baseline new engine cases14 issues; native60/73. Fixes: reverse dependent Undo with forward successful Redo order/refusal guard; rollback failed Replace Redo; actual restored creation paths; snapshot-owned clipboard consumption of successful moves only; separator-aware ancestor history guard. Focused35/35; native73/73 then expanded88/88 (newer actual Cut, engine cancellation/retry, refused-Undo no-Redo). Full local make ci exit0: fresh debug warnings15 known/new0;15 XCTest+786 Swift Testing/162 suites; product67 PASS/1 existing transparent-capture SKIP/0FAIL; current-host ARM64 ad-hoc packaged14/14, release warnings12 known/new0. Initial bad /tmp probe correctly refused64 before corrected launch; baseline failures preserved in docs/FILE_SAFETY_TESTING.md. Existing test stale-variable warning not suppressed. No universal/notarized-distribution/install or native Cancel-button claim; broader53 remains now, including historical36/39/42. Normal commit/land next, no push/public/owner-app restart or credential changes."
     at = "2026-10-17T21:31:53Z"
+
+[[mission]]
+  id = "m-1331afb7"
+  title = "Finder view options and settings parity"
+  status = "now"
+  note = "Trigger: owner compared Finder View Options with Pathem and requested all nine audited gaps addressed. Evidence: list columns exclude Date Added/tags/cloud/shared/version metadata; format model omits per-folder typography/date/icons/columns; ordinary rename lacks suggestions and extension warning; no opt-in aged Trash cleanup. Scope: consolidated options, scoped persistence, supported metadata with honest unavailable states, Library visibility, icon controls, safe rename and opt-in cleanup. Relative dates remain default; owner files/Trash must not be used as mutation fixtures."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-c03d5ea0"
+    title = "Implement and verify consolidated folder View Options, persistence and relative dates"
+    done = true
+
+  [[mission.task]]
+    id = "t-06b81c2f"
+    title = "Add metadata columns and icon/grid/Library controls with native delivery checks"
+    done = true
+
+  [[mission.task]]
+    id = "t-c71509d2"
+    title = "Add safe ordinary-rename suggestions, extension warning and opt-in 30-day Trash retention"
+    done = true
+
+  [[mission.task]]
+    id = "t-d6d4073f"
+    title = "Run focused tests, native UI and full local gates; retain failures honestly"
+
+  [[mission.task]]
+    id = "t-f9383f06"
+    title = "Post-batch audit: async ownership, setting delivery, operation safety and cross-view regressions"
+    done = true
+
+  [[mission.comment]]
+    text = "Implementation sample in progress. Prewritten acceptance criteria: docs/FINDER_PARITY.md. Focused jobs2 build owns the second native slot beside observed Commandem hook root38803. First localization coverage check green across six locales. Not yet claiming compiled/native behavior, live iCloud metadata, model output or owner Trash deletion."
+    at = "2026-10-23T03:26:40Z"
+
+  [[mission.comment]]
+    text = "Follow-up audit found source-confirmed shared-temp deletion in each BrowserViewController.viewDidLoad. Stopped only our verified CI make89543 (exit143) before more E2E app launches; full CI1 is incomplete, not green. No owner loss established. Fixing namespace ownership before any further native launch; criteria and retained failures in docs/FINDER_PARITY.md."
+    at = "2026-10-23T03:43:23Z"
+
+  [[mission.comment]]
+    text = "Three parallel read-only reviews convicted pane-root vs drilled-folder ownership, stale/shared default snapshots, nested subtree replacement, small-icon non-upscaling, stale-window Trash re-enablement, preview hydration and cancellation sequencing. Root treatments and discriminatory native controls added; verification pending. CI3 retained unit811/UI49/sidebar204 green, but log has no final terminal and is recorded incomplete. Live Apple AI1026 remains independently reproducible outside Pathem. No install/restart/publication."
+    at = "2026-10-23T05:33:05Z"
+
+  [[mission.comment]]
+    text = "Actual CI4: unit812PASS, warning15known/0new, originalUI49PASS, sidebar236PASS, search465/Finder198/background263/Settings588PASS; E2E64PASS/1standingcaptureSKIP/3FAIL. Isolated28/31 proves three obsolete activation-receipt expectations; no tab/window/selection/watcher/focus invariant failed. Revised passive-no-activation plus visible-positive/hidden-rejected gate controls33/33PASS; full affected content206/206 and gallery59/59 naturallyPASS. No production change after CI4. Live AI1026 remains independent/unresolved; validation task stays pending. Normal local packaged target underway, not installed/restarted."
+    at = "2026-10-23T05:56:09Z"
+
+  [[mission.comment]]
+    text = "Packaged target ACTUALLY CLOSED natural0:14PASS/0SKIP/0FAIL; ARM64 local ad-hoc bundle, helpers/six locales/signature/hardened runtime/update metadata/config guards/launch/visible window/scratch persistence/updater-off allPASS. Release warnings12known/0new. No install/restart/publication. Full-validation task remains pending for independently reproduced Apple AI1026; full CI not claimed green. Source unit ready for normal commit gate and immediate land."
+    at = "2026-10-23T06:01:03Z"
+
+[[mission]]
+  id = "m-51d5dc66"
+  title = "Post-parity ownership and remote-operation audit"
+  status = "next"
+  note = "Owner requested further audits after Finder parity. Shared remote/archive temp deletion is replaced by per-process namespaces and verified with two browser instances in Mission57. Rename captures and guards origin kind/connection/path/credentials; predicate/source-wiring controls pass, delayed real-sheet/provider validation remains open. Next bounded fixtures: sanitized download destination collisions, stale archive extraction completion, Group/header-Sort smart/remote delivery and expanded Tree sort. Findings are source-confirmed; do not claim provider/UI reproduction or closure. Existing Mission53 tasks44-46 remain open."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-31ecba1b"
+    title = "Reproduce/fix Group and header-Sort delivery in smart/remote views without persisting local fallback rules; verify expanded Tree sort policy"
+
+  [[mission.task]]
+    id = "t-89011ba8"
+    title = "Reserve sanitized remote download destinations across the batch; reproduce collision safely before receiver changes"
+
+  [[mission.task]]
+    id = "t-689d4e95"
+    title = "Verify delayed Rename sheet dispatch across mode/path/server changes with recording provider and unchanged-origin control"
+
+  [[mission.task]]
+    id = "t-01331b47"
+    title = "Reproduce delayed archive extraction navigation reversal and add origin/generation ownership guard"
+
+  [[mission.task]]
+    id = "t-0e9bf044"
+    title = "Exercise vertically scrolled drilled Column plus preview/date-format rebuild; preserve each child offset if control convicts a reset"
+
+  [[mission.comment]]
+    text = "Parallel audit expanded remote Rename to local↔remote mode crossings. Rename now captures operation kind/context before sheet, checks exact connection/path/credentials at acceptance, and aborts if ownership changed. Predicate controls cover unchanged local/remote and changed mode/path/server/credentials; full delayed real-sheet/provider reproduction remains pending. Download collision and stale archive completion still unimplemented/source-confirmed findings."
+    at = "2026-10-23T05:35:19Z"
+
+  [[mission.comment]]
+    text = "User has Group By/Sort By screenshots pending attachment. Source audit: View/context lack Sort submenu; pane Sort omits Created/Last Opened. Convicted preexisting branches: smart header Sort reload returns without reordering, smart/remote Group does not deliver setGroupKey and persists nav.current, Tree expanded children ignore chosen sort. No Finder screenshot parity claim yet; no live reproduction or fixes for these paths yet."
+    at = "2026-10-23T05:37:44Z"
+
+  [[mission.comment]]
+    text = "Further read-only download audit: TransferQueueController.retry unconditionally removes progressFile before reusing the closure/path. Coupled with sanitized-name collisions or external replacement, Retry can delete an unowned destination. Source-confirmed deletion path; no destructive reproduction or owner mutation. Batch name reservation alone is insufficient: design per-attempt owned staging, no-replace final publication and identity-proven cleanup."
+    at = "2026-10-23T05:45:58Z"
 # <<< commandem roadmap <<<

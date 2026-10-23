@@ -51,6 +51,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     let rootView = NSView()
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
+    var onTrashRetentionChange: ((Bool) -> Void)?
     private var contextMenuEditor: ContextMenuEditorController?  // retains the Menus pane editor
     private var colorRulesEditor: ColorRulesEditorController?  // retains the Labels pane editor
 
@@ -342,6 +343,22 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 check(L("prefs.instantTooltips", "Show tooltips instantly"), \.instantTooltips),
                 labeled(L("prefs.sizeFormatLabel", "File sizes"), sizeFormatControl()),
                 labeled(L("prefs.dateFormatLabel", "Dates"), dateFormatControl()),
+                check(
+                    L("prefs.suggestFilenames", "Suggest filenames when renaming (on-device AI)"),
+                    \.suggestFilenames),
+                check(
+                    L("prefs.warnExtension", "Warn before changing a filename extension"),
+                    \.warnBeforeChangingExtension),
+                check(
+                    L(
+                        "prefs.trash30days",
+                        "Permanently remove items from Home Trash after 30 days"),
+                    \.trashAfter30Days),
+                hint(
+                    L(
+                        "prefs.trash30daysHint",
+                        "Only while Pathem is running. External-volume Trash and items with unknown entry dates are left alone."
+                    )),
                 labeled(L("prefs.defaultViewLabel", "New folders open as"), defaultViewControl()),
                 labeled(L("prefs.defaultSortLabel", "Default sort"), defaultSortControl()),
                 labeled(L("prefs.recentsLabel", "Recents shows"), recentsBasisControl()),
@@ -718,6 +735,22 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
     private var boolPaths: [ObjectIdentifier: WritableKeyPath<Preferences, Bool>] = [:]
 
+    #if DEBUG
+    var debugPreferences: Preferences { prefs }
+    var debugFontDefault: Int { fontStepper.integerValue }
+    func debugTogglePreference(_ keyPath: WritableKeyPath<Preferences, Bool>) -> Bool {
+        func find(_ view: NSView) -> NSButton? {
+            if let button = view as? NSButton, boolPaths[ObjectIdentifier(button)] == keyPath {
+                return button
+            }
+            return view.subviews.compactMap(find).first
+        }
+        guard let button = paneViews.values.compactMap(find).first else { return false }
+        button.performClick(nil)
+        return true
+    }
+    #endif
+
     /// A text field bound to a String preference; commits on edit.
     private func textField(_ keyPath: WritableKeyPath<Preferences, String>, width: CGFloat)
         -> NSView
@@ -772,7 +805,25 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     @objc private func checkToggled(_ sender: NSButton) {
         guard let keyPath = boolPaths[ObjectIdentifier(sender)] else { return }
         prefs[keyPath: keyPath] = (sender.state == .on)
+        if keyPath == \Preferences.trashAfter30Days {
+            onTrashRetentionChange?(prefs.trashAfter30Days)
+        }
         onChange?(prefs)
+    }
+
+    func synchronizeTrashRetention(_ enabled: Bool) {
+        prefs.trashAfter30Days = enabled
+        synchronizeCheck(\Preferences.trashAfter30Days)
+    }
+
+    private func synchronizeCheck(_ keyPath: WritableKeyPath<Preferences, Bool>) {
+        func update(_ view: NSView) {
+            if let button = view as? NSButton, boolPaths[ObjectIdentifier(button)] == keyPath {
+                button.state = prefs[keyPath: keyPath] ? .on : .off
+            }
+            view.subviews.forEach(update)
+        }
+        paneViews.values.forEach(update)
     }
 
     /// Order of the conflict-default popup, matching the ConflictDefault cases.
@@ -1136,7 +1187,18 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let defaultSortKeyPopup = NSPopUpButton()
     private let defaultSortDirPopup = NSPopUpButton()
     /// Keep the visible controls and their callback model aligned with the global view command.
-    func synchronizeDefaultFormat(_ format: ViewFormat) {
+    func synchronizeDefaultFormat(_ format: ViewFormat, shared: Preferences? = nil) {
+        if let shared {
+            prefs.fontSize = shared.fontSize
+            prefs.dateDisplay = shared.dateDisplay
+            prefs.iconZoom = shared.iconZoom
+            prefs.calculateFolderSizes = shared.calculateFolderSizes
+            fontStepper.integerValue = prefs.fontSize
+            fontValue.stringValue = "\(prefs.fontSize)"
+            dateFormatPopup.selectItem(
+                at: Preferences.DateDisplay.allCases.firstIndex(of: prefs.dateDisplay) ?? 0)
+            synchronizeCheck(\Preferences.calculateFolderSizes)
+        }
         prefs.defaultViewMode = format.viewMode
         prefs.defaultSortKey = format.sortKey
         prefs.defaultSortAscending = format.ascending
@@ -1190,8 +1252,10 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         onChange?(prefs)
     }
 
+    private let dateFormatPopup = NSPopUpButton()
     private func dateFormatControl() -> NSView {
-        let popup = NSPopUpButton()
+        let popup = dateFormatPopup
+        popup.removeAllItems()
         popup.addItems(withTitles: [
             L("prefs.dateRelative", "Relative (Yesterday at 3:14 PM)"),
             L("prefs.dateShort", "Short (7/8/26, 3:14 PM)"),
@@ -1306,12 +1370,13 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     private let fontValue = NSTextField(labelWithString: "13")
+    private let fontStepper = NSStepper()
     private let dragTrailWidthValue = NSTextField(labelWithString: "6")
     private let dragTrailDecayValue = NSTextField(labelWithString: "0.6s")
     private func fontControl() -> NSView {
-        let stepper = NSStepper()
-        stepper.minValue = 10
-        stepper.maxValue = 18
+        let stepper = fontStepper
+        stepper.minValue = 9
+        stepper.maxValue = 24
         stepper.increment = 1
         stepper.integerValue = prefs.fontSize
         stepper.target = self

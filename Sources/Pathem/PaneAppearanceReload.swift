@@ -60,8 +60,11 @@ enum PaneAppearanceReload {
     private static func restoreOrigin(_ origin: NSPoint, document: NSView, scroll: NSScrollView) {
         let maxX = max(0, document.frame.width - scroll.contentView.bounds.width)
         let maxY = max(0, document.frame.height - scroll.contentView.bounds.height)
+        let clip = scroll.contentView
+        let minY = min(
+            0, clip.constrainBoundsRect(NSRect(origin: origin, size: clip.bounds.size)).minY)
         scroll.contentView.scroll(
-            to: NSPoint(x: min(max(origin.x, 0), maxX), y: min(max(origin.y, 0), maxY)))
+            to: NSPoint(x: min(max(origin.x, 0), maxX), y: min(max(origin.y, minY), maxY)))
         scroll.reflectScrolledClipView(scroll.contentView)
     }
 }

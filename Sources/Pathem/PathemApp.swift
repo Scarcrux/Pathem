@@ -1560,6 +1560,8 @@ enum PathemApp {
         mainMenu.addItem(viewItem)
         let viewMenu = NSMenu(title: L("menu.view", "View"))
         viewItem.submenu = viewMenu
+        viewMenu.addItem(
+            commandItem(L("viewopts.title", "View Options") + "…", "view.options", "j"))
         // View modes + arrangement stay at the top level (the most-used controls).
         viewMenu.addItem(commandItem("as List", "view.asList", "1"))
         viewMenu.addItem(commandItem("as Icons", "view.asIcons", "2"))

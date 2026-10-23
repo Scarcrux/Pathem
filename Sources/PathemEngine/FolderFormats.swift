@@ -53,7 +53,9 @@ public struct FolderFormats: Codable, Sendable {
     /// navigation only for folders the user hasn't explicitly configured.
     public func hasRule(for path: String) -> Bool {
         if rules.contains(where: { $0.scope == .exact && $0.path == path }) { return true }
-        return rules.contains { $0.scope == .subtree && !$0.path.isEmpty && Self.isUnder(path, $0.path) }
+        return rules.contains {
+            $0.scope == .subtree && !$0.path.isEmpty && Self.isUnder(path, $0.path)
+        }
     }
 
     /// The format for `path`: exact rule, else the most specific (longest)
@@ -64,7 +66,9 @@ public struct FolderFormats: Codable, Sendable {
         }
         // An empty path is never a valid subtree root (it would match everything);
         // guards against a malformed/defaulted rule governing the whole disk.
-        let matches = rules.filter { $0.scope == .subtree && !$0.path.isEmpty && Self.isUnder(path, $0.path) }
+        let matches = rules.filter {
+            $0.scope == .subtree && !$0.path.isEmpty && Self.isUnder(path, $0.path)
+        }
         if let best = matches.max(by: { $0.path.count < $1.path.count }) {
             return best.format
         }
@@ -79,7 +83,9 @@ public struct FolderFormats: Codable, Sendable {
 
     /// Apply a format to this folder and all descendants (apply-to-subfolders).
     public mutating func setSubtree(_ path: String, _ format: ViewFormat) {
-        rules.removeAll { $0.scope == .subtree && $0.path == path }
+        rules.removeAll {
+            $0.scope == .subtree && Self.isUnder($0.path, path) && Self.isUnder(path, $0.path)
+        }
         rules.append(Rule(path: path, scope: .subtree, format: format))
     }
 
@@ -88,6 +94,12 @@ public struct FolderFormats: Codable, Sendable {
     /// user had previously customized one by one.
     public mutating func clearExactRulesUnder(_ path: String) {
         rules.removeAll { $0.scope == .exact && $0.path != path && Self.isUnder($0.path, path) }
+    }
+
+    /// Explicit replacement of descendant views clears both exact and subtree overrides.
+    public mutating func clearRulesUnder(_ path: String) {
+        guard !path.isEmpty else { return }
+        rules.removeAll { Self.isUnder($0.path, path) && !Self.isUnder(path, $0.path) }
     }
 
     static func isUnder(_ path: String, _ prefix: String) -> Bool {

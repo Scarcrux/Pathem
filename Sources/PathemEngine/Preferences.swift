@@ -4,6 +4,10 @@ import Foundation
 /// (row height is a Double the app converts to CGFloat) so it stays in the
 /// engine and unit-testable.
 public struct Preferences: Codable, Sendable, Equatable {
+    public var warnBeforeChangingExtension = true
+    public var suggestFilenames = true
+    /// Explicit opt-in. Cleanup uses date added to Trash, not the file's content age.
+    public var trashAfter30Days = false
     public enum Density: String, Codable, Sendable, CaseIterable { case compact, comfortable }
     /// App appearance: follow the system, or force Light/Dark.
     public enum Appearance: String, Codable, Sendable, CaseIterable { case system, light, dark }
@@ -287,6 +291,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Preferences.default
+        warnBeforeChangingExtension =
+            try c.decodeIfPresent(Bool.self, forKey: .warnBeforeChangingExtension) ?? true
+        suggestFilenames = try c.decodeIfPresent(Bool.self, forKey: .suggestFilenames) ?? true
+        trashAfter30Days = try c.decodeIfPresent(Bool.self, forKey: .trashAfter30Days) ?? false
         // try? for the enum: an unknown raw value falls back rather than failing the file.
         density = (try? c.decode(Density.self, forKey: .density)) ?? d.density
         fontSize = try c.decodeIfPresent(Int.self, forKey: .fontSize) ?? d.fontSize

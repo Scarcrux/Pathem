@@ -21,6 +21,25 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private let placeholder = NSTextField(labelWithString: "")
     private var columns: [Column] = []
     private var previewColumn: NSView?  // a file preview shown after the last column
+    private var previewTarget: (url: URL, dataless: Bool)?
+    private var dateDisplay = Preferences.DateDisplay.relative
+    private var sizeDisplay = Preferences.SizeFormat.decimal
+    private var columnFontSize: CGFloat = 13
+    private var columnRowHeight: CGFloat = 20
+    private var alternatingRows = false
+
+    func setFormats(size: Preferences.SizeFormat, date: Preferences.DateDisplay) {
+        guard dateDisplay != date || sizeDisplay != size else { return }
+        dateDisplay = date
+        sizeDisplay = size
+        if let target = previewTarget, previewColumn != nil {
+            let origin = outerScroll.contentView.bounds.origin
+            previewColumn = makePreviewColumn(for: target.url, isDataless: target.dataless)
+            relayout()
+            outerScroll.contentView.scroll(to: origin)
+            outerScroll.reflectScrolledClipView(outerScroll.contentView)
+        }
+    }
     private let previewWidth: CGFloat = 280
     private var activeColumn = 0
     private var rootURL: URL?
@@ -165,7 +184,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private func makeColumn(folder: URL, entries: [FileEntry], index: Int) -> Column {
         let table = KeyTableView()
         table.headerView = nil
-        table.rowHeight = 20
+        table.rowHeight = columnRowHeight
+        table.usesAlternatingRowBackgroundColors = alternatingRows
         table.allowsMultipleSelection = true
         table.tag = index
         table.dataSource = self
@@ -318,8 +338,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
             ?? Self.makeCell(id)
         let ruleStyle = FileColorStyle.style(
-            for: entry, rules: colorRules, baseFont: .systemFont(ofSize: 13))
-        cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: 13)
+            for: entry, rules: colorRules, baseFont: .systemFont(ofSize: columnFontSize))
+        cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: columnFontSize)
         cell.textField?.textColor =
             ruleStyle?.color ?? (entry.isDataless ? .secondaryLabelColor : .labelColor)
         // Prefix a colored git-status letter and suffix tag dots when present (shared with the
@@ -329,7 +349,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let dots = decorations.tagColors(for: entry, in: folder)
         if git != nil || !dots.isEmpty {
             cell.textField?.attributedStringValue = FileNameDecoration.decoratedName(
-                entry.name, git: git, dots: dots, size: 13, nameFont: ruleStyle?.font,
+                entry.name, git: git, dots: dots, size: columnFontSize, nameFont: ruleStyle?.font,
                 nameColor: ruleStyle?.color)
         } else {
             cell.textField?.stringValue = entry.name
@@ -377,6 +397,7 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     /// instead of centered free-floating lines. Quick Look renders many file types (PDFs, text,
     /// code, images, media) rather than just a static thumbnail.
     private func makePreviewColumn(for url: URL, isDataless: Bool) -> NSView {
+        previewTarget = (url, isDataless)
         let box = NSView()
 
         // Preview well: a subtle rounded surface the (arbitrary aspect) preview floats in, so
@@ -440,9 +461,11 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
         if let fileInfo = FileInfo.gather(for: url) {
             let formatter = ByteCountFormatter()
+            formatter.countStyle = sizeDisplay == .binary ? .binary : .file
             let date = DateFormatter()
-            date.dateStyle = .medium
-            date.timeStyle = .short
+            date.dateStyle = dateDisplay == .short ? .short : .medium
+            date.timeStyle = dateDisplay == .medium ? .none : .short
+            date.doesRelativeDateFormatting = dateDisplay == .relative
             addRow(L("preview.kind", "Kind"), fileInfo.kind)
             addRow(L("preview.size", "Size"), formatter.string(fromByteCount: fileInfo.size))
             if let created = fileInfo.created {
@@ -724,6 +747,10 @@ extension ColumnBrowserController: PaneContentView {
         // An in-place refresh (a watcher tick on the root) updates the first column
         // without collapsing the drilled columns or losing focus/selection.
         if preserveState, let first = columns.first, first.folder == root {
+            // Restoring selection is not a user drill gesture. Otherwise reselecting the
+            // root's folder opens it again, replaces the child table and steals activeColumn.
+            restoringSortSelection = true
+            defer { restoringSortSelection = false }
             let names = Set(
                 first.table.selectedRowIndexes.compactMap {
                     $0 < columns[0].entries.count ? columns[0].entries[$0].name : nil
@@ -801,7 +828,20 @@ extension ColumnBrowserController: PaneContentView {
     }
 
     func showSortIndicator(key: ViewFormat.SortKey, ascending: Bool) {}
-    func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {}
+    func applyStyle(rowHeight: CGFloat, fontSize: CGFloat, alternatingRows: Bool) {
+        let wasRestoring = restoringSortSelection
+        restoringSortSelection = true
+        defer { restoringSortSelection = wasRestoring }
+        columnFontSize = fontSize
+        columnRowHeight = rowHeight
+        self.alternatingRows = alternatingRows
+        for column in columns {
+            PaneAppearanceReload.table(column.table, in: column.scroll) {
+                column.table.rowHeight = rowHeight
+                column.table.usesAlternatingRowBackgroundColors = alternatingRows
+            }
+        }
+    }
 
     /// Re-enumerate the drilled (non-root) columns after a file operation, so an op
     /// inside a drilled column shows its result instead of stale rows. The root
@@ -809,6 +849,8 @@ extension ColumnBrowserController: PaneContentView {
     /// folder vanished and reload the rest, preserving each column's selection.
     func refreshDrilledColumns() {
         guard columns.count > 1 else { return }
+        restoringSortSelection = true
+        defer { restoringSortSelection = false }
         let fm = FileManager.default
         while columns.count > 1, !fm.fileExists(atPath: columns[columns.count - 1].folder.path) {
             columns.removeLast()  // the folder this column showed was deleted/moved
