@@ -1858,4 +1858,8 @@ name = "pathem"
   [[mission.comment]]
     text = "Completed source and verification:823unitsPASS; actual native search465/465, Finder198/198, sidebar429/429 including193focused sort/group controls; background308, defaults918, content206, gallery59, layout161, transient53 pass in broad run. Local ARM64 ad-hoc bundle14/14 PASS. Own Reveal regression in first broad CI corrected and all affected suites rerun green; last fullCI remains64/1/3, not rerun or claimed green. Prior AI1026/release gates remain open. No install, owner-app restart or publication. Mission58 retains remaining remote/Tree audit work."
     at = "2026-10-23T16:57:10Z"
+
+  [[mission.comment]]
+    text = "Owner requested installation after source handoff. Fresh frozen 8c32a39 ARM64 build with existing Developer ID identity passed all 14 package checks. Installed by prevalidated atomic bundle exchange, preserving prior notarized bundle for rollback; installed full bytes/symlinks match tested bundle and strict signature satisfies prior designated requirement. Main SHA256 e7dad414b7ad2165c948101432c77a99e8d6d9221ce3bb8326589fd95242df96. Running PID 45412 and birth time unchanged; no app/helper signals or restart. New code takes effect on relaunch. No notarization or publication."
+    at = "2026-10-23T20:58:17Z"
 # <<< commandem roadmap <<<

@@ -406,3 +406,25 @@ Final source audit also records an unchanged limitation for Mission58: reused lo
 children retain enumerated size/mtime when only file contents change and parent-directory
 mtime does not. This batch refreshes selected extra metadata, not those stored stat fields;
 a targeted content-only-edit fixture and invalidation design remain pending, not claimed fixed.
+
+## Owner-requested installation
+
+After the source-only handoff, the owner explicitly requested installation. Rebuilt frozen
+8c32a39 in an isolated install workbench, ARM64/jobs2, using the existing Developer ID signing
+identity without notarization or publication. Packaged verification ACTUAL exit0:14/14;
+strict deep signature, hardened runtime, resources/helpers and isolated visible launch pass.
+
+The stock install branch uses broad app/helper pkill, so it was not invoked. Staged the verified
+bundle on the Applications volume and confirmed it satisfies the previous app's designated
+requirement. A first requirement check omitted codesign's literal-source '=' prefix and failed
+before changing the installed app; corrected against the local manual and verified successfully.
+Real renamex_np controls proved missing-source rejection, atomic exchange and rollback on
+disposable directories before exchanging the two app bundles. The old notarized bundle remains
+at /Applications/.Pathem-install.9Ccsxc/PreviousPathem.app and still passes strict signature checks.
+
+Post-install signature and full byte/symlink comparison pass. BSD diff initially warned about
+framework symlink loops; its documented --no-dereference comparison then passed without warnings.
+Installed main-binary SHA256 e7dad414b7ad2165c948101432c77a99e8d6d9221ce3bb8326589fd95242df96.
+Running app PID45412 and its original birth time remain unchanged; no app/helper was signaled,
+quit or relaunched. The installed update takes effect on the next relaunch. This is a locally
+signed installation, not a new notarized distribution or a public release.
