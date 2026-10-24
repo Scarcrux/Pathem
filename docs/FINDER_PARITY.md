@@ -496,3 +496,25 @@ Broader native regressions ACTUAL natural exit0: full sidebar/transfer/view-opti
 suite636/636 (including207 dialog checks) and transient controls/cancellation53/53. Final
 incremental app build passes with0 owned warnings. Full CI and package/install were not run for
 this source-only patch. Owner app PID56392/birth time remains unchanged; no owner process signals.
+
+### Owner-requested dialog-fix installation
+
+After the source-only handoff, the owner requested installation of f95725f. Built the frozen
+source in a separate install workbench after coordinator admission and actual FIFO handoff.
+The long queue delay was an external hung test gate, subsequently released by its owner;
+this lane did not signal or change it. ARM64/jobs2, existing stable signing identity, no
+notarization or publication. Packaged verification ACTUAL exit0:14PASS/0SKIP/0FAIL, including
+strict signature, hardened runtime, resources/helpers, isolated visible launch and updater-off.
+
+Before changing Applications, real disposable-directory controls proved missing-source
+rejection, atomic exchange and rollback. The expected missing-source diagnostic is a passing
+negative control, not an installation failure. Staged bundle satisfied the installed app's
+designated requirement and matched the tested bundle's full bytes/symlinks. Atomic exchange
+then installed the new app without any owner app/helper signal, quit or restart.
+
+Post-install strict signature and full byte/symlink comparison pass. Installed main-binary
+SHA2569a0e65091cb5fdecffed09fcd1a41bf425dda166afdaf2cd402810aef72d193d.
+Previous signed bundle remains at /Applications/.Pathem-install.F6gWSG/PreviousPathem.app and
+passes strict signature verification. The earlier notarized rollback bundle was not touched.
+The FIFO wrapper ACTUALLY exited0 and released its native slot. Full CI was not rerun by this
+installation; the source patch's unit/native results remain separately recorded above.

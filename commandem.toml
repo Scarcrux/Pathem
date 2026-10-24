@@ -1890,6 +1890,11 @@ name = "pathem"
     title = "Audit related forms and verify corrected Connections path-row constraints"
     done = true
 
+  [[mission.task]]
+    id = "t-41174568"
+    title = "Build and verify signed local f95725f package, install recoverably without owner process signals"
+    done = true
+
   [[mission.comment]]
     text = "Native baseline reproduced zero-frame fitting380x78 reserving260wide; measured frame reserves412wide. Corrected production Rename/dynamic filename suggestion (also Save), Commander accessories and provably incompatible Connections250in230 rows. Focused207/207 and full sidebar636/636 pass, build/unit823 pass. Early native sample201/207,203/207,205/207 instrument failures retained in docs; cached PNG rejected. Remaining source-only form risks queued Mission58. No install/restart/live AI; full CI not claimed."
     at = "2026-10-24T17:05:25Z"
@@ -1897,4 +1902,12 @@ name = "pathem"
   [[mission.comment]]
     text = "Final broader native transient53/53 passes naturally; source-only audit complete, remaining unconfirmed candidates tracked in Mission58. Owner app unchanged; no install/restart. Full-CI and package gates not rerun."
     at = "2026-10-24T17:05:49Z"
+
+  [[mission.comment]]
+    text = "Owner requested local installation of landed f95725f dialog fixes. Preparing frozen isolated ARM64 jobs2 package, existing signing identity, package verification and recoverable no-kill bundle exchange; waiting for an admitted native slot. No publication/notarization/restart planned."
+    at = "2026-10-24T17:39:30Z"
+
+  [[mission.comment]]
+    text = "Owner-requested frozen f95725f installation ACTUALLY CLOSED natural0 after governed FIFO handoff. Signed ARM64/jobs2 package14/14 passes; designated requirement, strict signatures and full installed bytes/symlinks match. Real atomic missing-source/exchange/rollback controls pass; previous signed bundle preserved at /Applications/.Pathem-install.F6gWSG/PreviousPathem.app. Installed main SHA2569a0e65091cb5fdecffed09fcd1a41bf425dda166afdaf2cd402810aef72d193d. No owner process signals/restart, notarization/publication or full-CI claim; native slot fully released."
+    at = "2026-10-24T21:15:00Z"
 # <<< commandem roadmap <<<
