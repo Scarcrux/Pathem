@@ -1123,14 +1123,30 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         return button
     }
     @objc private func editCommanderKeys() {
+        let (alert, popups) = Self.makeCommanderKeysDialog(
+            commands: commandList, current: prefs.commanderCommands)
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn, let self else { return }
+            self.prefs.commanderCommands = popups.map {
+                ($0.selectedItem?.representedObject as? String) ?? ""
+            }
+            self.onChange?(self.prefs)
+        }
+    }
+
+    /// Build the real dialog independently of presentation, so the complete alert can be
+    /// measured in native layout checks without committing any preference changes.
+    static func makeCommanderKeysDialog(
+        commands: [(id: String, title: String)], current: [String]
+    ) -> (alert: NSAlert, popups: [NSPopUpButton]) {
         let current =
-            prefs.commanderCommands.count == 6
-            ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
-        let sorted = commandList.sorted {
+            current.count == 6 ? current : CommanderBar.defaultCommandIDs
+        let sorted = commands.sorted {
             $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
         }
         let popups: [NSPopUpButton] = (0..<6).map { index in
             let popup = NSPopUpButton()
+            popup.cell?.lineBreakMode = .byTruncatingTail
             for command in sorted {
                 let item = NSMenuItem(title: command.title, action: nil, keyEquivalent: "")
                 item.representedObject = command.id
@@ -1141,29 +1157,43 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             }
             return popup
         }
-        let rows = (0..<6).map { labeled("F\(3 + $0)", popups[$0]) }
+        // A popup's natural width follows its longest translated command. Bound it so
+        // an unusually long title cannot stretch the sheet past a laptop display.
+        let naturalPopupWidth = popups.map { $0.fittingSize.width }.max() ?? 0
+        let width = min(520, max(320, ceil(naturalPopupWidth) + 38))
+        let rows = (0..<6).map { index in
+            let label = NSTextField(labelWithString: "F\(3 + index)")
+            label.widthAnchor.constraint(equalToConstant: 30).isActive = true
+            let popup = popups[index]
+            popup.widthAnchor.constraint(equalToConstant: width - 38).isActive = true
+            let row = NSStackView(views: [label, popup])
+            row.orientation = .horizontal
+            row.spacing = 8
+            return row
+        }
         let form = NSStackView(views: rows)
         form.orientation = .vertical
         form.alignment = .leading
         form.spacing = 8
-        form.translatesAutoresizingMaskIntoConstraints = false
-        form.widthAnchor.constraint(equalToConstant: 320).isActive = true
 
         let alert = NSAlert()
         alert.messageText = L("prefs.commanderSheetTitle", "Commander F-keys")
         alert.informativeText = L(
             "prefs.commanderSheetBody", "Choose the command each F-key runs in Commander mode.")
-        alert.accessoryView = form
+        // NSAlert positions an accessory using its frame; a width constraint on a
+        // zero-frame stack alone leaves the controls outside the reserved sheet area.
+        let accessory = MeasuredAccessoryView(content: form, width: width)
+        alert.accessoryView = accessory
         alert.addButton(withTitle: L("common.save", "Save"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        alert.beginSheetModal(for: window) { [weak self] response in
-            guard response == .alertFirstButtonReturn, let self else { return }
-            self.prefs.commanderCommands = popups.map {
-                ($0.selectedItem?.representedObject as? String) ?? ""
-            }
-            self.onChange?(self.prefs)
-        }
+        return (alert, popups)
     }
+
+    #if DEBUG
+    func debugMakeCommanderKeysDialog() -> (alert: NSAlert, popups: [NSPopUpButton]) {
+        Self.makeCommanderKeysDialog(commands: commandList, current: prefs.commanderCommands)
+    }
+    #endif
 
     private let defaultViewPopup = NSPopUpButton()
     private func defaultViewControl() -> NSView {

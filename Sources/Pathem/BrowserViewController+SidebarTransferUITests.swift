@@ -68,6 +68,10 @@ extension BrowserViewController {
             checkOperationStability(root: root, check: check, settle: settle)
             finish()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_DIALOG_LAYOUT_SAMPLE"] == "1" {
+            checkDialogLayout(check: check, settle: settle)
+            finish()
+        }
         if ProcessInfo.processInfo.environment["PATHEM_VIEW_OPTIONS_SAMPLE"] == "1" {
             checkViewOptions(root: root, check: check, settle: settle)
             finish()
@@ -307,6 +311,7 @@ extension BrowserViewController {
             root: root.appendingPathComponent("stability"), check: check, settle: settle)
         checkViewOptions(
             root: root.appendingPathComponent("view-options"), check: check, settle: settle)
+        checkDialogLayout(check: check, settle: settle)
         checkSortGroupDelivery(
             root: root.appendingPathComponent("sort-group"), check: check, settle: settle)
         finish()

@@ -1808,6 +1808,10 @@ name = "pathem"
     id = "t-5d9519ef"
     title = "Reproduce loaded Tree child size/mtime staleness after content-only edits with unchanged parent-directory mtime; design targeted invalidation if confirmed"
 
+  [[mission.task]]
+    id = "t-966c171e"
+    title = "Native geometry audit for unproven localized/fixed-height forms: Connections warning/root height, Templates, External Commands, speed limits, remote Keychain checkbox and color-rule style row"
+
   [[mission.comment]]
     text = "Parallel audit expanded remote Rename to local↔remote mode crossings. Rename now captures operation kind/context before sheet, checks exact connection/path/credentials at acceptance, and aborts if ownership changed. Predicate controls cover unchanged local/remote and changed mode/path/server/credentials; full delayed real-sheet/provider reproduction remains pending. Download collision and stale archive completion still unimplemented/source-confirmed findings."
     at = "2026-10-23T05:35:19Z"
@@ -1862,4 +1866,35 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner requested installation after source handoff. Fresh frozen 8c32a39 ARM64 build with existing Developer ID identity passed all 14 package checks. Installed by prevalidated atomic bundle exchange, preserving prior notarized bundle for rollback; installed full bytes/symlinks match tested bundle and strict signature satisfies prior designated requirement. Main SHA256 e7dad414b7ad2165c948101432c77a99e8d6d9221ce3bb8326589fd95242df96. Running PID 45412 and birth time unchanged; no app/helper signals or restart. New code takes effect on relaunch. No notarization or publication."
     at = "2026-10-23T20:58:17Z"
+
+[[mission]]
+  id = "m-8cfe9b8e"
+  title = "Rename sheet clipping and related accessory layout audit"
+  status = "done"
+  note = "Owner screenshot shows filename and suggested-name controls overlapping the Rename prompt and clipped at sheet edge. Reproduce native whole-sheet geometry before changes; inspect zero-frame NSStackView accessory sizing and similar alerts/save panels, fix convicted mechanisms, verify long/dynamic/localized content and cancellation without owner file mutations."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-f34e3271"
+    title = "Reproduce screenshot against good and bad native controls; record actual geometry"
+    done = true
+
+  [[mission.task]]
+    id = "t-01a31db2"
+    title = "Fix measured Rename, Commander and save accessories; verify dynamic delivery and cancellation"
+    done = true
+
+  [[mission.task]]
+    id = "t-8ac48d9b"
+    title = "Audit related forms and verify corrected Connections path-row constraints"
+    done = true
+
+  [[mission.comment]]
+    text = "Native baseline reproduced zero-frame fitting380x78 reserving260wide; measured frame reserves412wide. Corrected production Rename/dynamic filename suggestion (also Save), Commander accessories and provably incompatible Connections250in230 rows. Focused207/207 and full sidebar636/636 pass, build/unit823 pass. Early native sample201/207,203/207,205/207 instrument failures retained in docs; cached PNG rejected. Remaining source-only form risks queued Mission58. No install/restart/live AI; full CI not claimed."
+    at = "2026-10-24T17:05:25Z"
+
+  [[mission.comment]]
+    text = "Final broader native transient53/53 passes naturally; source-only audit complete, remaining unconfirmed candidates tracked in Mission58. Owner app unchanged; no install/restart. Full-CI and package gates not rerun."
+    at = "2026-10-24T17:05:49Z"
 # <<< commandem roadmap <<<

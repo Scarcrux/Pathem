@@ -15,35 +15,15 @@ extension BrowserViewController {
             !pane.isRemote && !entry.isDirectory
             && (suggestions ?? prefs.suggestFilenames) && AIAssistant.isAvailable
         if !offerSuggestions, !pane.isRemote, pane.beginInlineRename() { return }
-        let alert = NSAlert()
-        // Keep the name in the editable field, not the title: a long filename in the title would
-        // stretch or clip the sheet. The informative line explains what the field is for.
-        alert.messageText = L("bvc.renameTitleShort", "Rename")
-        alert.informativeText = L("bvc.renamePrompt", "Enter a new name for this item.")
-        alert.addButton(withTitle: L("bvc.renameButton", "Rename"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = Self.nameField(prefilled: entry.name)
         let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
         let originRemote = pane.remoteContext
-        let suggestion =
-            offerSuggestions
-            ? FilenameSuggestionController(
-                field: field, url: directory.appendingPathComponent(entry.name),
-                dataless: entry.isDataless) : nil
-        if let suggestion {
-            let stack = NSStackView(views: [field, suggestion.view])
-            stack.orientation = .vertical
-            stack.alignment = .leading
-            stack.spacing = 8
-            stack.widthAnchor.constraint(equalToConstant: 380).isActive = true
-            field.widthAnchor.constraint(equalToConstant: 380).isActive = true
-            alert.accessoryView = stack
-        } else {
-            alert.accessoryView = field
-        }
-        alert.window.initialFirstResponder = field
+        let dialog = RenameDialogController(
+            name: entry.name, url: directory.appendingPathComponent(entry.name),
+            dataless: entry.isDataless, offerSuggestions: offerSuggestions)
+        let alert = dialog.alert
+        let field = dialog.field
         Task { @MainActor in
-            defer { suggestion?.cancel() }
+            defer { dialog.cancel() }
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
             let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !newName.isEmpty, newName != entry.name else { return }

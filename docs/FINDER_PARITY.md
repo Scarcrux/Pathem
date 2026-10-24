@@ -428,3 +428,71 @@ Installed main-binary SHA256 e7dad414b7ad2165c948101432c77a99e8d6d9221ce3bb83265
 Running app PID45412 and its original birth time remain unchanged; no app/helper was signaled,
 quit or relaunched. The installed update takes effect on the next relaunch. This is a locally
 signed installation, not a new notarized distribution or a public release.
+
+## Rename and related dialog layout audit
+
+Trigger: owner screenshot shows Rename's field and suggestion controls overlapping the prompt
+and clipped at the sheet's right edge. The owner requested a fix and an audit of similar issues.
+Source candidate: a zero-frame NSStackView is installed as NSAlert.accessoryView with width
+constraints but no measured frame. Existing tests cover standalone suggestion behavior, not
+the complete alert. This is a hypothesis until native frame measurements reproduce it.
+
+Criteria before native probes: ordinary field-only Rename must be the good control; the current
+suggestion-stack construction must be capable of failing containment/overlap checks. Record
+accessory frame/fittingSize and full sheet bounds, actual field/label/button alignment rects.
+The fix must keep all visible controls inside the accessory and complete sheet, below message/
+prompt and above action buttons, with no unintended overlap. Exercise long generic filenames,
+late suggestion/error text, suggestions absent, light/dark appearance and translated labels.
+Present/cancel actual sheets on disposable windows; no owner files or live model requests.
+Audit other NSAlert/NSSavePanel accessories using the same construction and reproduce candidates
+before changing them. Known-good manually framed accessories must not regress. A geometrically
+rejected render is not a visual pass; any failed run stays recorded. No installation/restart
+or change to the Rename operation/confirmation semantics is implied by this work.
+
+Native baseline ACTUAL exit0 reproduced the screenshot: the current constrained stack had
+frame0x0 and fittingSize380x78; NSAlert reserved a260x138 content area, placing the380-point
+field at x130 (outside the sheet). The ordinary framed-field control was contained in412x162.
+Measuring the identical stack before attachment produced412x216 and contained all controls.
+The instrument therefore discriminates the broken and good constructions, rather than just
+checking expected values. A frame-owned measured accessory is the selected correction;
+asynchronous suggestion changes must remeasure the parent and alert too.
+
+Audit of37 accessory assignments found the same zero-frame construction in Commander F-key
+settings and torrent-save suggestions. A separate Connections path-row contradiction fixes
+each field at250 points inside a230-point horizontal row, before its Choose button/spacing;
+this cannot satisfy containment. Other fixed-height/localized forms remain risks until tested,
+not proven bugs. Failed suggestion delivery also previously left an earlier successful
+suggestion enabled; clearing both its value and Use state prevents stale application.
+
+Implemented measured frame-owned accessories for Rename, its filename suggestion controller
+(also the torrent Save panel), and Commander settings. Inner content retains Auto Layout;
+dynamic suggestion height propagates to the parent and NSAlert.layout without touching the
+field. Connections fields now flex within230-point rows while preserving usable field and
+Choose-button widths. Rename/provider/confirmation behavior and save/cancel persistence are
+unchanged. Production-used factories let checks inspect the actual surfaces, not a replica.
+
+Validation: cold jobs2 build/test ACTUAL exit0,15 XCTest+808 Swift Testing cases. Six-language
+catalog lint passes. Warning inventory reports one newly inventoried diagnostic in unchanged
+LinkOperationsTests.swift ('stale' can be let); this audit introduces no production diagnostic,
+and the inventory run itself is recorded as FAIL rather than waived/full-CI-green.
+
+Focused native sample ACTUAL final exit0:207/207 checks, including positive and deliberately
+clipped/overlapping negative geometry controls; actual Rename sheets with suggestions on/off,
+300…520-point fields, late wrapped success/error, typing/caret/focus preservation, stale-delivery
+rejection, two appearances, English/German/Japanese-sized chrome; real Commander long popups,
+six-language230-point path rows, and cancel-only NSSavePanels. Initial sample201/207 and followups
+203/207,205/207 remain failed runs: receipts convicted duplicated popup/button child title fields
+in the overlap instrument and NSSavePanel's separate NSAccessoryViewWindow identity, not control
+clipping. The instrument now counts distinct controls and requires actual sheet/accessory visibility.
+An initial /tmp config-root launch was correctly refused64; the sample uses the platform temporary
+root. Cached PNG lacked native chrome and was rejected, not counted as screenshot verification;
+the complete native geometry/interaction checks are the UI evidence. No live AI requests occurred.
+
+Remaining hypotheses are explicitly queued in Mission58: Connections warning/root height,
+Templates/External Commands hints, speed-limit forms, remote Keychain checkbox and color-rule
+style-row localization. These were identified by source audit, not claimed reproduced or fixed.
+
+Broader native regressions ACTUAL natural exit0: full sidebar/transfer/view-options/sort-group
+suite636/636 (including207 dialog checks) and transient controls/cancellation53/53. Final
+incremental app build passes with0 owned warnings. Full CI and package/install were not run for
+this source-only patch. Owner app PID56392/birth time remains unchanged; no owner process signals.

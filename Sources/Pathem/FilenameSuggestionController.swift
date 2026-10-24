@@ -5,7 +5,7 @@ import PathemEngine
 /// explicit Use button can do that. Cancelling invalidates delivery, even if the model ignores cancellation.
 @MainActor
 final class FilenameSuggestionController: NSObject {
-    let view: NSStackView
+    let view: MeasuredAccessoryView
     private let label = NSTextField(wrappingLabelWithString: "")
     private let button = NSButton(
         title: L("names.use", "Use Suggested Name"), target: nil, action: nil)
@@ -14,18 +14,25 @@ final class FilenameSuggestionController: NSObject {
     private var suggestion: String?
     private var generation = 0
     var onApply: ((String) -> Void)?
+    var onLayoutChanged: (() -> Void)?
+    private let labelWidth: NSLayoutConstraint
 
     init(
         field: NSTextField, url: URL, dataless: Bool, extensionOverride: String? = nil,
         generateAutomatically: Bool = true
     ) {
         self.field = field
-        view = NSStackView(views: [label, button])
+        let stack = NSStackView(views: [label, button])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 6
+        label.preferredMaxLayoutWidth = 380
+        label.lineBreakMode = .byCharWrapping
+        labelWidth = label.widthAnchor.constraint(equalToConstant: 380)
+        labelWidth.isActive = true
+        view = MeasuredAccessoryView(content: stack, width: 380)
         super.init()
-        view.orientation = .vertical
-        view.alignment = .leading
-        view.spacing = 6
-        label.preferredMaxLayoutWidth = 360
+        view.onSizeChanged = { [weak self] in self?.onLayoutChanged?() }
         button.target = self
         button.action = #selector(useSuggestion)
         button.isEnabled = false
@@ -33,11 +40,13 @@ final class FilenameSuggestionController: NSObject {
             AIAssistant.isAvailable
             ? L("names.loading", "Suggesting a filename on this Mac…")
             : AIAssistant.availability.reason
+        view.resizeToFit()
         guard AIAssistant.isAvailable, !dataless, generateAutomatically else {
             if dataless {
                 label.stringValue = L(
                     "names.onlineOnly",
                     "Download this file before suggesting a name from its contents.")
+                view.resizeToFit()
             }
             return
         }
@@ -49,6 +58,12 @@ final class FilenameSuggestionController: NSObject {
             suggest: { name, preview in
                 await AIAssistant.suggestName(currentName: name, content: preview)
             })
+    }
+
+    func setLayoutWidth(_ width: CGFloat) {
+        label.preferredMaxLayoutWidth = width
+        labelWidth.constant = width
+        view.setWidth(width)
     }
 
     private func start(
@@ -78,13 +93,19 @@ final class FilenameSuggestionController: NSObject {
             label.stringValue = suggestion ?? ""
             button.isEnabled = true
         } else {
+            suggestion = nil
+            button.isEnabled = false
             label.stringValue = L(
                 "names.failed", "No suggestion available. You can still enter a name.")
         }
+        view.resizeToFit()
     }
 
     #if DEBUG
     private(set) var debugFinished = false
+    var debugLabel: NSTextField { label }
+    var debugButton: NSButton { button }
+    func debugFail() { receive(nil, ext: "", token: 0) }
     func debugStart(
         preview: @escaping @MainActor (URL) async -> String?,
         suggest: @escaping @MainActor (String, String?) async -> String?

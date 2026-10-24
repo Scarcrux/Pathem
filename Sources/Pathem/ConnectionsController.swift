@@ -35,13 +35,16 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     /// Show a warning when the selected protocol sends credentials in the clear.
     @objc private func protoChanged() {
-        guard let popup = editingProtoPopup, popup.indexOfSelectedItem < RemoteConnection.Proto.allCases.count
+        guard let popup = editingProtoPopup,
+            popup.indexOfSelectedItem < RemoteConnection.Proto.allCases.count
         else { return }
         let proto = RemoteConnection.Proto.allCases[popup.indexOfSelectedItem]
         editingPlaintextWarning?.stringValue =
             proto.isPlaintext
-            ? L("conn.plaintextWarning",
-                "This protocol sends your credentials and files unencrypted. Prefer SFTP, FTPS, or WebDAV (HTTPS).")
+            ? L(
+                "conn.plaintextWarning",
+                "This protocol sends your credentials and files unencrypted. Prefer SFTP, FTPS, or WebDAV (HTTPS)."
+            )
             : ""
     }
 
@@ -99,7 +102,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         let add = button(L("conn.addButton", "Add"), #selector(addNew))
         let edit = button(L("conn.editButton", "Edit"), #selector(editSelected))
         let remove = button(L("common.remove", "Remove"), #selector(removeSelected))
-        let importFZ = button(L("conn.importButton", "Import from FileZilla…"), #selector(importFileZilla))
+        let importFZ = button(
+            L("conn.importButton", "Import from FileZilla…"), #selector(importFileZilla))
         let spacer = NSView()
         spacer.setContentHuggingPriority(.init(1), for: .horizontal)
         let connect = button(L("conn.connectButton", "Connect"), #selector(connectSelected))
@@ -213,7 +217,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             let openPanel = NSOpenPanel()
             openPanel.message = L(
                 "conn.chooseSiteManager",
-                "Choose FileZilla's sitemanager.xml (usually in ~/.config/filezilla). It imports your saved sites, not passwords.")
+                "Choose FileZilla's sitemanager.xml (usually in ~/.config/filezilla). It imports your saved sites, not passwords."
+            )
             openPanel.allowedContentTypes = [.xml]
             openPanel.allowsMultipleSelection = false
             openPanel.showsHiddenFiles = true
@@ -232,10 +237,14 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         guard !imported.isEmpty else {
             info(
                 L("conn.importEmptyTitle", "No sites found"),
-                L("conn.importEmptyBody", "That FileZilla file didn’t contain any sites Pathem could import."))
+                L(
+                    "conn.importEmptyBody",
+                    "That FileZilla file didn’t contain any sites Pathem could import."))
             return
         }
-        func key(_ c: RemoteConnection) -> String { "\(c.proto.rawValue)|\(c.host)|\(c.effectivePort)|\(c.user)" }
+        func key(_ c: RemoteConnection) -> String {
+            "\(c.proto.rawValue)|\(c.host)|\(c.effectivePort)|\(c.user)"
+        }
         var existing = Set(connections.map(key))
         let before = connections.count
         for site in imported where existing.insert(key(site)).inserted { connections.append(site) }
@@ -246,7 +255,9 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             info(
                 L("conn.importNoneNewTitle", "Already imported"),
                 String(
-                    format: L("conn.importNoneNewBody", "All %d site(s) in that file are already in your list."),
+                    format: L(
+                        "conn.importNoneNewBody",
+                        "All %d site(s) in that file are already in your list."),
                     imported.count))
         }
     }
@@ -269,7 +280,8 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
         openPanel.canChooseFiles = true
         openPanel.canChooseDirectories = false
         openPanel.showsHiddenFiles = true
-        openPanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".ssh")
+        openPanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".ssh")
         openPanel.prompt = L("conn.chooseKeyPrompt", "Use Key")
         openPanel.beginSheetModal(for: panel) { [weak self] response in
             guard response == .OK, let url = openPanel.url else { return }
@@ -290,13 +302,17 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     private func editConnection(_ existing: RemoteConnection?) {
         let alert = NSAlert()
-        alert.messageText = existing == nil ? L("conn.newConnectionTitle", "New Connection") : L("conn.editConnectionTitle", "Edit Connection")
+        alert.messageText =
+            existing == nil
+            ? L("conn.newConnectionTitle", "New Connection")
+            : L("conn.editConnectionTitle", "Edit Connection")
 
         let proto = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
         proto.addItems(withTitles: RemoteConnection.Proto.allCases.map(\.label))
         // Default new connections to SFTP (encrypted), not plain FTP: FTP/WebDAV send Basic-auth
         // credentials in the clear.
-        proto.selectItem(at: RemoteConnection.Proto.allCases.firstIndex(of: existing?.proto ?? .sftp) ?? 0)
+        proto.selectItem(
+            at: RemoteConnection.Proto.allCases.firstIndex(of: existing?.proto ?? .sftp) ?? 0)
         proto.target = self
         proto.action = #selector(protoChanged)
         let plaintextWarning = NSTextField(labelWithString: "")
@@ -315,47 +331,63 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             return f
         }
         let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
-        let host = field(L("conn.hostPlaceholder", "Host (S3/Azure endpoint; blank = default)"), existing?.host ?? "")
+        let host = field(
+            L("conn.hostPlaceholder", "Host (S3/Azure endpoint; blank = default)"),
+            existing?.host ?? "")
         editingHostField = host
         let s3Endpoint = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
-        s3Endpoint.addItems(withTitles: Self.s3Endpoints.map(\.name) + [L("conn.s3Other", "Other…")])
+        s3Endpoint.addItems(
+            withTitles: Self.s3Endpoints.map(\.name) + [L("conn.s3Other", "Other…")])
         s3Endpoint.target = self
         s3Endpoint.action = #selector(s3EndpointChanged(_:))
-        let port = field(L("conn.portPlaceholder", "Port (blank = default)"), existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
-        let user = field(L("conn.userPlaceholder", "User (S3 access key / Azure account)"), existing?.user ?? "")
-        let path = field(L("conn.pathPlaceholder", "Path (S3 /bucket, Azure /container)"), existing?.path ?? "/")
-        let region = field(L("conn.regionPlaceholder", "Region (S3, e.g. us-east-1)"), existing?.region ?? "")
-        let keyFile = field(L("conn.keyFilePlaceholder", "SFTP private key (e.g. ~/.ssh/id_ed25519)"), existing?.keyFile ?? "")
+        let port = field(
+            L("conn.portPlaceholder", "Port (blank = default)"),
+            existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
+        let user = field(
+            L("conn.userPlaceholder", "User (S3 access key / Azure account)"), existing?.user ?? "")
+        let path = field(
+            L("conn.pathPlaceholder", "Path (S3 /bucket, Azure /container)"), existing?.path ?? "/")
+        let region = field(
+            L("conn.regionPlaceholder", "Region (S3, e.g. us-east-1)"), existing?.region ?? "")
+        let keyFile = field(
+            L("conn.keyFilePlaceholder", "SFTP private key (e.g. ~/.ssh/id_ed25519)"),
+            existing?.keyFile ?? "")
         editingKeyFileField = keyFile
-        keyFile.widthAnchor.constraint(equalToConstant: 250).isActive = true
-        let chooseKey = NSButton(title: L("conn.chooseKey", "Choose…"), target: self, action: #selector(chooseKeyFile))
+        let chooseKey = NSButton(
+            title: L("conn.chooseKey", "Choose…"), target: self, action: #selector(chooseKeyFile))
         chooseKey.bezelStyle = .rounded
-        let keyRow = NSStackView(views: [keyFile, chooseKey])
-        keyRow.orientation = .horizontal
-        keyRow.spacing = 6
+        let keyRow = Self.pathChooserRow(field: keyFile, button: chooseKey)
 
         // Per-site color label (a sidebar dot) and default local directory.
         let colorPopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
         let colorNames = [""] + FileTag.Color.displayOrder.map(\.nameKey)
-        colorPopup.addItems(withTitles: [L("conn.colorNone", "None")] + FileTag.Color.displayOrder.map(\.label))
-        colorPopup.selectItem(at: max(0, colorNames.firstIndex(of: existing?.colorLabel ?? "") ?? 0))
-        let group = field(L("conn.groupPlaceholder", "Group (organizes sites in the sidebar; optional)"), existing?.group ?? "")
-        let localPath = field(L("conn.localPathPlaceholder", "Local folder to open on connect (optional)"), existing?.localPath ?? "")
-        let chooseLocal = NSButton(title: L("conn.chooseLocal", "Choose…"), target: self, action: #selector(chooseLocalPath))
+        colorPopup.addItems(
+            withTitles: [L("conn.colorNone", "None")] + FileTag.Color.displayOrder.map(\.label))
+        colorPopup.selectItem(
+            at: max(0, colorNames.firstIndex(of: existing?.colorLabel ?? "") ?? 0))
+        let group = field(
+            L("conn.groupPlaceholder", "Group (organizes sites in the sidebar; optional)"),
+            existing?.group ?? "")
+        let localPath = field(
+            L("conn.localPathPlaceholder", "Local folder to open on connect (optional)"),
+            existing?.localPath ?? "")
+        let chooseLocal = NSButton(
+            title: L("conn.chooseLocal", "Choose…"), target: self,
+            action: #selector(chooseLocalPath))
         chooseLocal.bezelStyle = .rounded
         editingLocalPathField = localPath
-        localPath.widthAnchor.constraint(equalToConstant: 250).isActive = true
-        let localRow = NSStackView(views: [localPath, chooseLocal])
-        localRow.orientation = .horizontal
-        localRow.spacing = 6
+        let localRow = Self.pathChooserRow(field: localPath, button: chooseLocal)
 
         let rows = NSStackView(views: [
             labeled(L("conn.protocolLabel", "Protocol"), proto), plaintextWarning,
             labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
-            labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user), labeled(L("conn.pathLabel", "Path"), path),
-            labeled(L("conn.regionLabel", "Region"), region), labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
+            labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user),
+            labeled(L("conn.pathLabel", "Path"), path),
+            labeled(L("conn.regionLabel", "Region"), region),
+            labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
             labeled(L("conn.keyFileLabel", "Key File"), keyRow),
-            labeled(L("conn.colorLabel2", "Color"), colorPopup), labeled(L("conn.groupLabel", "Group"), group),
+            labeled(L("conn.colorLabel2", "Color"), colorPopup),
+            labeled(L("conn.groupLabel", "Group"), group),
             labeled(L("conn.localLabel", "Local dir"), localRow),
         ])
         rows.orientation = .vertical
@@ -376,7 +408,10 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             // Azure from the account: <account>.blob.core.windows.net); every other
             // protocol needs a valid, non-smuggling host.
             if chosen == .s3 || chosen == .azure {
-                if !host.isEmpty, !RemoteConnection.isValidHost(host) { NSSound.beep(); return }
+                if !host.isEmpty, !RemoteConnection.isValidHost(host) {
+                    NSSound.beep()
+                    return
+                }
             } else if host.isEmpty || !RemoteConnection.isValidHost(host) {
                 NSSound.beep()
                 return
@@ -385,14 +420,16 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             // a plain login name. Other protocols pass the user via curl's stdin config
             // (safely quoted), where email-style names with "@" are legitimate.
             if chosen == .sftp,
-                !RemoteConnection.isValidUser(user.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+                !RemoteConnection.isValidUser(
+                    user.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             {
                 NSSound.beep()
                 return
             }
             let conn = RemoteConnection(
                 id: existing?.id ?? UUID(),
-                name: name.stringValue.isEmpty ? (host.isEmpty ? chosen.label : host) : name.stringValue,
+                name: name.stringValue.isEmpty
+                    ? (host.isEmpty ? chosen.label : host) : name.stringValue,
                 proto: chosen, host: host, port: Int(port.stringValue) ?? 0,
                 user: user.stringValue, path: path.stringValue.isEmpty ? "/" : path.stringValue,
                 region: region.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -403,13 +440,33 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
                 group: group.stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             // Resolve the target by identity, not the captured row index, which can
             // go stale if the list changed while this modeless sheet was open.
-            if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id }) {
+            if let existing, let idx = self.connections.firstIndex(where: { $0.id == existing.id })
+            {
                 self.connections[idx] = conn
             } else {
                 self.connections.append(conn)
             }
             self.commit()
         }
+    }
+
+    /// The enclosing labeled row owns its 230-point control width. A former fixed
+    /// 250-point field could not fit inside it, even before spacing and Choose.
+    /// Let the path scroll within the remaining width without squeezing the button.
+    static func pathChooserRow(field: NSTextField, button: NSButton) -> NSStackView {
+        field.translatesAutoresizingMaskIntoConstraints = false
+        field.usesSingleLineMode = true
+        field.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        field.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        field.widthAnchor.constraint(greaterThanOrEqualToConstant: 80).isActive = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let row = NSStackView(views: [field, button])
+        row.orientation = .horizontal
+        row.distribution = .fill
+        row.spacing = 6
+        return row
     }
 
     private func labeled(_ title: String, _ control: NSView) -> NSView {
@@ -429,9 +486,13 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
 
     func numberOfRows(in tableView: NSTableView) -> Int { displayed.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         let id = NSUserInterfaceItemIdentifier("cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makeCell(id)
         let conn = displayed[row]
         cell.textField?.stringValue = "\(conn.name)\n\(conn.proto.label)  \(conn.displayURL)"
         return cell
