@@ -35,7 +35,11 @@ async function run() {
     fs.createReadStream(filename).pipe(response);
   });
   server.listen(0, "127.0.0.1"); await once(server, "listening");
-  const base = "http://127.0.0.1:" + server.address().port;
+  // Explicit override is for read-only post-deployment checks of the same routes.
+  // The default remains a local server; no remote access is added to the normal gate.
+  const base = process.env.PATHEM_DOCS_TEST_ORIGIN
+    ? new URL(process.env.PATHEM_DOCS_TEST_ORIGIN).origin
+    : "http://127.0.0.1:" + server.address().port;
   chrome = spawn(chromePath, ["--headless=new", "--disable-gpu", "--remote-debugging-port=0", "--user-data-dir=" + profile, "--no-first-run", "--no-default-browser-check", "--disable-background-networking", "--disable-extensions", "about:blank"], {detached: true, stdio: ["ignore", "ignore", "pipe"]});
   const endpoint = await new Promise((resolve, reject) => {
     let stderr = "";

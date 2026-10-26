@@ -1934,7 +1934,20 @@ name = "pathem"
     title = "Verify deterministic generation, links, source anchors, search, browser matrix and screenshot quality; wire normal gate"
     done = true
 
+  [[mission.task]]
+    id = "t-819a6f89"
+    title = "Publish approved static site to existing pathem.app hosting and verify production guide routes/search"
+    done = true
+
   [[mission.comment]]
     text = "Built21 English user guides/70 sections/203 numbered steps, crawlable static /docs/ hub with progressive local full-text search, responsive topic nav, related guides, TOCs, homepage discovery and sitemap. Source anchors cover actual commands/preferences and current limitations (relative dates/default move, unavailable public download and mainline MTP). Actual local generation,9 static/source/link tests+4 search tests PASS; final real Chrome152 checks natural0 incl all21 guides at1280/390/320, light/dark contrast, search/fallback/no-script, negative clipping control and owned-group closure. Four screenshots inspected. Initial bad evidence anchor rejected and first owned Chrome helper closure defect corrected/recorded. No owner app/browser profile changes, Swift/native app rebuild, full app CI, install, push, deploy or visibility change. Normal website gate wired; publication separate."
     at = "2026-10-26T11:03:45Z"
+
+  [[mission.comment]]
+    text = "Owner explicitly requested deployment of landed d90be85 documentation. Existing Cloudflare Pages pathem project already serves pathem.app; retain current public website audience, private repository visibility and provider. Publish only verified site/ assets after recording prior production deployment, then verify live guide routes and search index. No Git push, app source upload, app release or hosting migration."
+    at = "2026-10-26T18:51:24Z"
+
+  [[mission.comment]]
+    text = "Owner explicitly approved deployment. Existing Cloudflare Pages pathem/main production, same pathem.app host/public audience; only unchanged d90be85 site/ tree uploaded (no private app source, Git history or authoring metadata). Wrangler4.122.0 natural0,47 assets28new19reused; deployment870f2623-91b0-4b70-85ce-bd48749e3b48, priorc984c0a0-ac03-4030-8648-29e53c15ece0 retained for rollback. Live https://pathem.app/docs/ verified:27 responses200 exact local-byte match plus missing-guide404; real production Chrome152 checks natural0 incl live search, 21 guides at3 widths, fallbacks/no-script and owned-group closure. Live screenshot inspected, local13 tests pass. No DNS/audience/repository visibility changes, Git push, app build/install or native phase. Added explicit read-only browser-origin override for repeatable deployment checks."
+    at = "2026-10-26T18:55:40Z"
 # <<< commandem roadmap <<<

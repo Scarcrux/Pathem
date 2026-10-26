@@ -44,6 +44,9 @@ requiring a browser or adding Node to the native source gate.
 `docs-browser` uses Node 22+ with built-in WebSocket and a dedicated headless Chrome
 profile; it does not touch the user's browser or installed app. Set
 `PATHEM_DOCS_CHROME` if Chrome is elsewhere and `PATHEM_DOCS_CAPTURES` for screenshots.
+For read-only post-deployment checks, set `PATHEM_DOCS_TEST_ORIGIN=https://pathem.app`.
+The normal gate still defaults to the local server; the override does not deploy
+anything or change the live site. All interactions use an isolated browser profile.
 Temporary profiles are removed; screenshots are retained outside the checkout by
 default. No Swift/app build or install is necessary for this website-only change.
 
@@ -86,3 +89,29 @@ closed naturally with 146 checks, then 152 after expanding the checks. No owner
 browser profile or app process was touched. No Swift/native app rebuild, install,
 full application CI, push, deployment, or repository-visibility change occurred.
 Normal commit-gate results are recorded in the roadmap/commit receipt.
+
+## Owner-approved publication receipt
+
+The owner explicitly requested deployment after the source-only handoff. Discovery
+confirmed the existing Cloudflare Pages `pathem` project serves `pathem.app`, uses
+production branch `main`, and has no Git provider integration. Retained that host
+and public website audience; did not create a separate Site or change repository
+visibility. Uploaded only the unchanged `site/` tree from d90be85, excluding app
+source, internal authoring/evidence metadata, Git history and credentials.
+
+Wrangler4.122.0 ACTUAL exit0:47 assets,28 newly uploaded/19 reused, then successful
+production deployment870f2623-91b0-4b70-85ce-bd48749e3b48. Deployment URL:
+https://870f2623.pathem.pages.dev. Public guide hub: https://pathem.app/docs/.
+Prior production deploymentc984c0a0-ac03-4030-8648-29e53c15ece0 remains in Pages
+history for rollback; it was not deleted. Commit metadata identifies d90be85;
+the dirty flag truthfully covers local roadmap/test-receipt work, not site changes.
+
+Post-deployment ACTUAL exit0:27 production responses (home, guide index, all21
+guides, CSS, JS, search index and sitemap) returned200 and matched local bytes
+exactly. A nonexistent guide returned404, proving this was not a landing-page/SPA
+fallback. The complete real-browser suite against https://pathem.app also exited0:
+152 checks, including mobile/desktop layouts, actual search/keyboard behavior,
+blocked-index fallback, no-script access, and owned browser-group closure. Live
+screenshots confirmed the expected documentation UI. Local docs-check13 tests
+also pass. No app build/install, Git push, DNS/access change or private app-source
+publication occurred.
