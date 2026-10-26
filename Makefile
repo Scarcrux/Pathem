@@ -43,6 +43,18 @@ SWIFTPM_FLAGS ?= --build-system native
 preflight:
 	scripts/toolchain_preflight.sh
 
+.PHONY: docs docs-check docs-browser
+docs:
+	python3 scripts/build_site_docs.py
+
+docs-check:
+	python3 scripts/build_site_docs.py --check
+	python3 -m unittest discover -s test -p site_docs_test.py -v
+	node --test test/site_docs_search_test.cjs
+
+docs-browser: docs-check
+	node test/site_docs_browser.cjs
+
 build: preflight
 	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS)
 

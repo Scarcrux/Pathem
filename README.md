@@ -54,11 +54,13 @@ is faster.)
 - Stays fast in large folders. Only the rows on screen are built, so 100k or even
   a million files scroll without lag.
 - Drag and drop: drag files between panes, to and from Finder, or onto the
-  sidebar. Copy by default, hold Command to move.
+  sidebar. The drag default is configurable (move for fresh preferences); hold
+  Command to request the opposite operation where the source and target support it.
 - Full cut, copy, and paste for files and folders (Cmd-C / Cmd-X / Cmd-V), across
   panes and with Finder and other apps. Cut items stay dimmed until you paste
-  them, name clashes prompt to skip, replace, or keep both, and every paste is
-  undoable.
+  them, and the default conflict policy asks whether to skip, replace, or keep
+  both. Supported local operations have undo history; remote actions should not
+  be assumed reversible.
 - A customizable sidebar. Reorder shortcuts by drag, rename them, change their
   icons, and organize them into your own groups. Cloud services and mounted
   volumes show up automatically below your groups.
@@ -74,8 +76,8 @@ is faster.)
   command registry and keymap.
 - Per-folder saved views, saved layouts, Quick Look (Space), and batch rename.
 - Quick navigation: an editable path bar, back, forward, up, and double-click or
-  Return to open a folder. Sortable columns (name, size, date modified), folders
-  first.
+  Command-Down to open a folder. Return renames the selection. Sortable columns
+  (name, size, date modified), folders first.
 - Cloud-aware. It browses iCloud, Dropbox, Drive, and OneDrive folders (each shown
   with a small service badge so a "Documents" in iCloud reads apart from one in
   Drive) and never silently downloads online-only files just to list or index them.
@@ -182,6 +184,15 @@ crash-isolated, that inherit none of the app's access. Credentials go to tools
 over stdin, never on a command line, and remote paths and names are escaped so a
 crafted filename can't smuggle a shell or protocol option (there are tests for
 each of these).
+
+## User guides
+
+The website guide library contains 21 task-oriented guides covering setup, file
+operations, views and relative dates, search, cloud/devices, remote connections,
+customization, and troubleshooting. Its static output is in `site/docs/`.
+For local preview, generation, and verification, see
+[the documentation maintenance guide](docs/WEBSITE_DOCUMENTATION.md).
+Publishing the website is a separate step; generating these files does not deploy it.
 
 ## Install
 

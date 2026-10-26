@@ -1910,4 +1910,31 @@ name = "pathem"
   [[mission.comment]]
     text = "Owner-requested frozen f95725f installation ACTUALLY CLOSED natural0 after governed FIFO handoff. Signed ARM64/jobs2 package14/14 passes; designated requirement, strict signatures and full installed bytes/symlinks match. Real atomic missing-source/exchange/rollback controls pass; previous signed bundle preserved at /Applications/.Pathem-install.F6gWSG/PreviousPathem.app. Installed main SHA2569a0e65091cb5fdecffed09fcd1a41bf425dda166afdaf2cd402810aef72d193d. No owner process signals/restart, notarization/publication or full-CI claim; native slot fully released."
     at = "2026-10-24T21:15:00Z"
+
+[[mission]]
+  id = "m-56bd5b13"
+  title = "Website documentation library and step-by-step guides"
+  status = "done"
+  note = "Owner requested extensive website documentation. Evidence: live/local site is a marketing landing page without docs navigation or user guides; repository docs largely cover internal verification. Build accessible, searchable static documentation with task guides verified against command/menu/preferences source, release-status honesty, local link/content/browser checks. No publication or app/native rebuild."
+  campaign = "A power-user Finder replacement people trust and switch to"
+  issue = 0
+
+  [[mission.task]]
+    id = "t-80b66483"
+    title = "Audit website gaps and map user workflows to actual command, settings and provider source"
+    done = true
+
+  [[mission.task]]
+    id = "t-55e08a59"
+    title = "Build 21 crawlable step-by-step guides with local search, responsive navigation and homepage discovery"
+    done = true
+
+  [[mission.task]]
+    id = "t-1afe1f14"
+    title = "Verify deterministic generation, links, source anchors, search, browser matrix and screenshot quality; wire normal gate"
+    done = true
+
+  [[mission.comment]]
+    text = "Built21 English user guides/70 sections/203 numbered steps, crawlable static /docs/ hub with progressive local full-text search, responsive topic nav, related guides, TOCs, homepage discovery and sitemap. Source anchors cover actual commands/preferences and current limitations (relative dates/default move, unavailable public download and mainline MTP). Actual local generation,9 static/source/link tests+4 search tests PASS; final real Chrome152 checks natural0 incl all21 guides at1280/390/320, light/dark contrast, search/fallback/no-script, negative clipping control and owned-group closure. Four screenshots inspected. Initial bad evidence anchor rejected and first owned Chrome helper closure defect corrected/recorded. No owner app/browser profile changes, Swift/native app rebuild, full app CI, install, push, deploy or visibility change. Normal website gate wired; publication separate."
+    at = "2026-10-26T11:03:45Z"
 # <<< commandem roadmap <<<

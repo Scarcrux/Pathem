@@ -3,6 +3,18 @@
 repos:
   - repo: local
     hooks:
+      - id: site-docs
+        name: website guide generation, links and search
+        entry: make docs-check
+        language: system
+        pass_filenames: false
+        files: ^(site/|docs/website/|scripts/build_site_docs\.py$|test/site_docs|Makefile$)
+      - id: site-docs-source-contracts
+        name: guide source anchors and generated output
+        entry: python3 scripts/build_site_docs.py --check
+        language: system
+        pass_filenames: false
+        files: ^Sources/(Pathem|PathemEngine|pathem-cli)/
       - id: swift-format
         name: swift-format
         entry: xcrun --toolchain XcodeDefault swift-format format --in-place --configuration .swift-format

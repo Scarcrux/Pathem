@@ -137,7 +137,8 @@
     color: var(--text);
   }
   .nav-links .ghost:hover { border-color: var(--accent); background: var(--glow); }
-  @media (max-width: 620px) { .nav-links a:not(.ghost) { display: none; } }
+  @media (max-width: 620px) { .nav-links a:not(.ghost):not(.guide-link) { display: none; } .nav-links { gap: .75rem; } }
+  @media (max-width: 420px) { .nav-links .ghost { display: none; } }
 
   /* ---- hero ---- */
   .hero { padding: clamp(2.5rem, 6vw, 5.5rem) 0 2rem; }
@@ -441,6 +442,7 @@
     <a href="#clipboard">Clipboard</a>
     <a href="#features">Features</a>
     <a href="#views">Views</a>
+    <a class="guide-link" href="/docs/">Guides</a>
     <span class="ghost" style="color:var(--muted)" title="Open-source release coming soon">GitHub &middot; soon</span>
   </nav>
 </header>
@@ -483,7 +485,7 @@
       <div class="clip-copy">
         <span class="eyebrow">~/clipboard</span>
         <h2>Cut, copy, paste. For files, done right.</h2>
-        <p>Press <b>&#8984;X</b> and the files dim until you paste them somewhere else; nothing moves until you say where. When names clash, Pathem asks whether to <b>skip, replace, or keep both</b>, so a paste never overwrites anything silently. And the whole operation is one <b>&#8984;Z</b> away from never having happened.</p>
+        <p>Press <b>&#8984;X</b> and the files dim until you paste them somewhere else; nothing moves until you choose a destination. With the default Ask policy, name clashes prompt you to <b>skip, replace, or keep both</b> for that operation. Supported local operations have <b>&#8984;Z</b> undo history.</p>
         <div class="clip-keys">
           <div class="keyrow"><kbd>&#8984;X</kbd><span>cut</span></div>
           <div class="keyrow"><kbd>&#8984;C</kbd><span>copy</span></div>
@@ -513,7 +515,7 @@
             </div>
           </div>
         </div>
-        <p class="clip-note">cut items stay dimmed until you paste &middot; every paste is undoable</p>
+        <p class="clip-note">cut items stay dimmed until you paste &middot; undo history for supported local operations</p>
       </div>
     </div>
   </section>
@@ -646,6 +648,16 @@
     <p class="car-hint">click a mode above, or use the arrow keys</p>
   </section>
 
+  <section class="sec wrap" id="guides">
+    <div class="sec-head">
+      <span class="eyebrow">~/guides</span>
+      <h2>A clear next step.</h2>
+      <p>Learn a task from start to finish, with practical steps, safety checks, and help when the result is not what you expected.</p>
+    </div>
+    <p><a href="/docs/first-steps/">Take a first tour</a> &middot; <a href="/docs/copy-move/">Copy and move safely</a> &middot; <a href="/docs/views-dates/">Views and relative dates</a></p>
+    <p><a href="/docs/">Browse all 21 step-by-step guides &rarr;</a></p>
+  </section>
+
   <section class="sec keys-sec wrap">
     <div class="sec-head">
       <span class="eyebrow">~/keyboard</span>
@@ -655,12 +667,12 @@
       <div class="keyrow"><kbd>F5</kbd><span>Copy to other pane</span></div>
       <div class="keyrow"><kbd>F6</kbd><span>Move to other pane</span></div>
       <div class="keyrow"><kbd>&#8984;X</kbd><span>Cut files, dimmed until pasted</span></div>
-      <div class="keyrow"><kbd>&#8984;V</kbd><span>Paste, undoable</span></div>
+      <div class="keyrow"><kbd>&#8984;V</kbd><span>Paste into the chosen destination</span></div>
       <div class="keyrow"><kbd>&#8984;K</kbd><span>Command palette</span></div>
       <div class="keyrow"><kbd>Space</kbd><span>Quick Look</span></div>
       <div class="keyrow"><kbd>&#8963;`</kbd><span>Terminal here</span></div>
       <div class="keyrow"><kbd>&#8984;1</kbd><kbd>&hellip;</kbd><kbd>&#8984;5</kbd><span>Switch view</span></div>
-      <div class="keyrow"><kbd>&#8984;Z</kbd><span>Undo any operation</span></div>
+      <div class="keyrow"><kbd>&#8984;Z</kbd><span>Undo supported local operations</span></div>
     </div>
   </section>
 </main>
@@ -672,6 +684,7 @@
       <b class="wm">Path<i>em</i></b>
     </div>
     <div class="foot-links">
+      <a href="/docs/">Documentation &amp; guides</a>
       <span style="color:var(--muted);font-size:.92rem">MIT &middot; GitHub, security policy &amp; roadmap publish with the open-source release</span>
     </div>
   </div>

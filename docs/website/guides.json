@@ -1,0 +1,1643 @@
+{
+    "updated": "2026-10-26",
+    "categories": [
+        {
+            "id": "start",
+            "title": "Start here"
+        },
+        {
+            "id": "files",
+            "title": "Everyday file work"
+        },
+        {
+            "id": "find",
+            "title": "Find and organize"
+        },
+        {
+            "id": "connect",
+            "title": "Connections and tools"
+        },
+        {
+            "id": "personalize",
+            "title": "Make it yours"
+        },
+        {
+            "id": "help",
+            "title": "Help and troubleshooting"
+        }
+    ],
+    "guides": [
+        {
+            "id": "install",
+            "title": "Installation and permissions",
+            "category": "start",
+            "description": "Understand build availability, macOS requirements, safe installation, and Full Disk Access before your first session.",
+            "keywords": [
+                "setup",
+                "download",
+                "Gatekeeper",
+                "macOS",
+                "permission denied"
+            ],
+            "sources": [
+                {
+                    "path": "README.md",
+                    "needles": [
+                        "A prebuilt download is not published yet",
+                        "Full Disk Access"
+                    ]
+                },
+                {
+                    "path": "scripts/package.sh",
+                    "needles": [
+                        "INSTALL",
+                        "pkill"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "before-you-start",
+                    "title": "Before you start",
+                    "paragraphs": [
+                        "Pathem requires macOS 15 or later. The website does not currently offer a public prebuilt download, and the source repository may require access. These guides describe the current application; they are not a claim that a public release is already available.",
+                        "If you already have a trusted packaged build, use the steps below. If not, wait for an announced release or use an authorized source checkout. Do not download an unrelated app with the same name or disable macOS security protections to make an unknown copy run."
+                    ]
+                },
+                {
+                    "id": "packaged-build",
+                    "title": "Install a trusted packaged build",
+                    "steps": [
+                        "Finish or pause file operations in any existing Pathem session. Save work before replacing an application.",
+                        "If supplied in a disk image, open it and inspect the application and publisher information. Follow the instructions that accompany that specific build.",
+                        "Place Pathem.app in Applications. Do not run a long-term installation from inside a mounted disk image.",
+                        "Open Pathem from Applications. If macOS rejects the signature or warns that the app is damaged, stop and obtain a trusted build rather than removing quarantine or disabling Gatekeeper.",
+                        "Open a normal folder in your home directory first. Confirm you can browse and preview a harmless test file before configuring broader access."
+                    ],
+                    "note": "A locally signed development build is not the same thing as a notarized public release. Availability, automatic updates, and supported architectures depend on the build you received."
+                },
+                {
+                    "id": "permissions",
+                    "title": "Grant Full Disk Access only when needed",
+                    "steps": [
+                        "If a protected folder reports an access error, open System Settings, then Privacy & Security, then Full Disk Access.",
+                        "Add the installed Pathem.app and enable its entry if you want it to browse protected locations. This is a broad permission; grant it only to a build you trust.",
+                        "Quit and reopen Pathem if macOS requests it. Return to the same folder and retry.",
+                        "If access still fails, check that the entry points to the installed app, not a discarded source-build copy. Volume permissions, disconnected servers, and online-only cloud files are separate issues."
+                    ],
+                    "note": "Do not grant Accessibility or Screen Recording merely to browse files. These are separate macOS permissions, not substitutes for filesystem access."
+                },
+                {
+                    "id": "source-build",
+                    "title": "For developers with source access",
+                    "paragraphs": [
+                        "Use the repository's build instructions and its selected Xcode toolchain. From an authorized checkout, make run builds and launches a development copy; make app assembles a local application bundle. A source build does not require a paid Apple Developer account.",
+                        "The current make install workflow can stop running Pathem and helper processes while replacing the app. Finish transfers and save work before using it. Signing, notarization, and publication are separate distribution steps; do not assume a local build has those properties."
+                    ]
+                }
+            ],
+            "related": [
+                "first-steps",
+                "troubleshooting",
+                "cli"
+            ]
+        },
+        {
+            "id": "first-steps",
+            "title": "Your first five minutes",
+            "category": "start",
+            "description": "Learn the two-pane window, create a practice folder, and complete a small file operation without risking important data.",
+            "keywords": [
+                "beginner",
+                "tutorial",
+                "getting started",
+                "command palette"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "files.newFolder",
+                        "files.copyToOtherPane",
+                        "palette.show"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Keymap.swift",
+                    "needles": [
+                        "files.rename",
+                        "cmd+down"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "prepare",
+                    "title": "Prepare a harmless practice folder",
+                    "paragraphs": [
+                        "Start with disposable sample files, not your only copy of an important document. Each pane has its own folder and tabs. Clicking inside a pane makes it the source for most commands; the other pane is often the destination.",
+                        "Menu labels in these guides use the English interface. Keyboard shortcuts are the defaults, so customized bindings can differ. On keyboards that use F-keys for media controls, you may need Fn or Globe with an F-key."
+                    ]
+                },
+                {
+                    "id": "tour",
+                    "title": "Take a first tour",
+                    "steps": [
+                        "Open a trusted Pathem build and click the left pane. Use the path bar or the sidebar to open a folder you control.",
+                        "Create a folder with Command-Shift-N and name it Pathem Practice. Double-click it to enter it; use Command-Up to go to its parent.",
+                        "Place a disposable text file in the practice folder. Select it and press Space to try Quick Look, then dismiss the preview.",
+                        "Select the same file and press Return to rename it. Return starts renaming; use double-click or Command-Down to open a selected item.",
+                        "Click the other pane and open a different practice folder. Click back in the source pane and run Copy to Other Pane from the command palette, or use F5.",
+                        "Check that the copied file appears in the destination and the original remains in the source. Use this visible source/destination check before larger transfers."
+                    ],
+                    "note": "Do not use a move as your first test. A copy makes it easier to understand which pane owns the selection while keeping the original in place."
+                },
+                {
+                    "id": "discover",
+                    "title": "Find actions without memorizing menus",
+                    "steps": [
+                        "Press Command-K to open Command Palette. Command-Shift-P is also a default palette binding.",
+                        "Type an action such as New Folder, View Options, Connections, or Preferences. Select the intended command rather than an action with a similar name.",
+                        "If a command is unavailable, close the palette and check its prerequisites: an active pane, a selection, a local folder, or an appropriate file type.",
+                        "Open Preferences when you are ready to adjust dates, drag behavior, or appearance. Change one setting at a time, then return to your practice folder to see its effect."
+                    ]
+                },
+                {
+                    "id": "next",
+                    "title": "What to learn next",
+                    "paragraphs": [
+                        "Use the copy/move guide before working with important folders. The views guide explains which choices are saved for a folder and which are global defaults. The troubleshooting guide starts with reversible checks rather than resetting app data."
+                    ]
+                }
+            ],
+            "related": [
+                "copy-move",
+                "views-dates",
+                "navigation-tabs"
+            ]
+        },
+        {
+            "id": "navigation-tabs",
+            "title": "Navigate panes, folders, and tabs",
+            "category": "start",
+            "description": "Move through folders deliberately, keep multiple locations open, and understand the active pane.",
+            "keywords": [
+                "path bar",
+                "back",
+                "forward",
+                "tabs",
+                "synchronized browsing",
+                "workspace"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/PathemEngine/Keymap.swift",
+                    "needles": [
+                        "nav.editPath",
+                        "tab.new",
+                        "nav.back",
+                        "nav.up"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "view.syncBrowsing",
+                        "workspace.save",
+                        "layout.save"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "navigate",
+                    "title": "Open a specific location",
+                    "steps": [
+                        "Click the pane you want to change. Commands operate on that pane unless their name explicitly says Other Pane.",
+                        "Press Command-L or Command-Shift-G to edit the path. Enter an existing local folder path, such as ~/Downloads, and confirm.",
+                        "Use Command-Up for the enclosing folder. Use Command-[ and Command-] to move backward and forward through that pane's history.",
+                        "Select a folder and double-click it or press Command-Down to enter it. Return is the rename shortcut, not the open shortcut.",
+                        "Use the breadcrumb path bar to orient yourself before copying, moving, extracting, or creating files. The path bar can be placed at the bottom in Preferences."
+                    ]
+                },
+                {
+                    "id": "tabs",
+                    "title": "Keep useful folders in tabs",
+                    "steps": [
+                        "Activate the intended pane and press Command-T for New Tab. Its initial folder follows your new-tab preference.",
+                        "Navigate the new tab to another folder. Switch tabs without changing the other pane's location.",
+                        "Use Command-Shift-] and Command-Shift-[ to cycle tabs with the default keymap, or click a tab directly.",
+                        "Close an unneeded tab with its close control or Close Tab. Before closing the last tab or a window, finish any work you still need to inspect.",
+                        "In Preferences, adjust where new tabs open and whether they are placed at the end or next to the current tab. Existing tabs are not relocated by changing a default."
+                    ]
+                },
+                {
+                    "id": "sync",
+                    "title": "Use synchronized browsing intentionally",
+                    "paragraphs": [
+                        "Sync Browsing is useful for parallel folder trees, such as two project copies with matching subfolders. It is a navigation aid, not a file synchronization or backup command."
+                    ],
+                    "steps": [
+                        "Open the corresponding starting directories in the two panes.",
+                        "Run Sync Browsing from the command palette. Navigate into a matching child folder and verify both paths before doing any file work.",
+                        "Turn Sync Browsing off when you want the panes to navigate independently. If the other side has no matching child, inspect the displayed paths rather than assuming a match exists."
+                    ],
+                    "note": "For repeatable setups, Save Layout and Save Workspace are available commands. Restoring a saved setup still requires its folders and volumes to exist; a saved location is not a backup of its files."
+                }
+            ],
+            "related": [
+                "first-steps",
+                "copy-move",
+                "sidebar"
+            ]
+        },
+        {
+            "id": "copy-move",
+            "title": "Copy, cut, paste, and resolve conflicts",
+            "category": "files",
+            "description": "Choose an explicit destination, distinguish copy from move, and handle existing filenames without surprises.",
+            "keywords": [
+                "clipboard",
+                "paste favorites",
+                "sidebar",
+                "skip",
+                "replace",
+                "keep both",
+                "undo",
+                "yes to all"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "files.copyTo",
+                        "files.moveTo",
+                        "files.pasteOtherPane",
+                        "edit.showHistory"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "conflictDefault",
+                        "verifyCopies",
+                        "confirmBeforeDelete"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+Transfers.swift",
+                    "needles": ["Replace All", "Keep Both for All", "Skip All", "Your choice applies to all conflicts in this operation."]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "copy-or-cut",
+                    "title": "Use the clipboard with a visible destination",
+                    "steps": [
+                        "Select the files in the source pane. Check that the selection contains only the intended items, especially in a search or flat view.",
+                        "Press Command-C to copy, or Command-X to cut for a later move. Cut items are marked; cutting alone does not relocate them.",
+                        "Open the destination folder. For a favorite or another sidebar location, select the intended folder and verify the paste target; opening it in a pane first makes the destination unambiguous.",
+                        "Press Command-V. If the target is unavailable or not writable, stop and resolve that error instead of repeatedly issuing Paste.",
+                        "Wait for the operation to finish and inspect the destination. For a copy, the source remains; for a successful move, the source no longer contains the moved items."
+                    ]
+                },
+                {
+                    "id": "other-pane",
+                    "title": "Transfer directly between panes",
+                    "steps": [
+                        "Open the source on one side and the destination on the other. Confirm the destination path, not just its folder name.",
+                        "Activate the source pane and select the intended files.",
+                        "Use Copy to Other Pane (F5) or Move to Other Pane (F6). Commander F-key assignments can be customized; the named palette commands avoid ambiguity.",
+                        "For a different destination, use Copy To… or Move To… and review the chosen folder before accepting."
+                    ]
+                },
+                {
+                    "id": "conflicts",
+                    "title": "Read a conflict before applying it",
+                    "paragraphs": [
+                        "A filename conflict is different from a move confirmation. A conflict means the destination already contains an item with the same name. The local transfer dialog offers Replace All, Keep Both for All, Skip All, and Cancel; it states that the choice applies to all conflicts in this operation.",
+                        "Skip All leaves conflicting destination items alone, Replace All can overwrite destination data, and Keep Both for All preserves distinct names. Check that the decision is appropriate for the entire operation before choosing it. It is not permission for an unrelated later transfer, and other kinds of confirmation may use different choices."
+                    ],
+                    "note": "Preferences > General > When files already exist controls the default policy. Ask is the default. Check this setting if conflict prompts disappear or a previous automatic choice is surprising."
+                },
+                {
+                    "id": "verify-undo",
+                    "title": "Verify, cancel, and recover",
+                    "paragraphs": [
+                        "For important local copies, enable Verify copies with a checksum (slower) before the operation. Verification rereads the files and can take longer; it applies to copies, not moves.",
+                        "Use the operation's Cancel control once and wait for its outcome. Cancellation is not a guarantee that no files were transferred. Inspect both sides before retrying.",
+                        "Undo History and Command-Z support local operations where an undo record is available. Remote/provider actions and permanently deleted data must not be assumed reversible. Maintain a separate backup; undo is not one."
+                    ]
+                }
+            ],
+            "related": [
+                "drag-drop",
+                "navigation-tabs",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "drag-drop",
+            "title": "Control drag-and-drop behavior",
+            "category": "files",
+            "description": "Set your default drag operation, override it deliberately, and distinguish a file drop from a sidebar shortcut.",
+            "keywords": [
+                "drag creates copy",
+                "move default",
+                "Command",
+                "favorite",
+                "preference"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "dragMovesByDefault: Bool = true",
+                        "hold Command to copy"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/SettingsWindowController.swift",
+                    "needles": [
+                        "Dragging items moves them (hold Command to copy)"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "set-default",
+                    "title": "Choose the default in Preferences",
+                    "steps": [
+                        "Open Preferences from the command palette, then select General.",
+                        "Find Dragging items moves them (hold Command to copy). Enabled means move is the preferred default; disabled means copy is the preferred default.",
+                        "Choose the behavior you actually want. New preferences default to move; an existing saved preference may still be set differently.",
+                        "Test the setting using a disposable file between two writable local practice folders. Confirm the source and destination after the drop before using important data."
+                    ],
+                    "note": "The source application, destination provider, and supported drag operations can limit the action. Do not assume a remote target or a drag originating in another application can perform the same move as two local folders."
+                },
+                {
+                    "id": "override",
+                    "title": "Override one drop deliberately",
+                    "steps": [
+                        "Begin dragging the selected file onto a real folder or the other pane's file area.",
+                        "Hold Command to request the opposite operation: copy when move is the default, or move when copy is the default.",
+                        "Inspect the drag feedback and destination before releasing. If it shows a copy operation when you need a move, cancel the drag and use Cut/Paste or Move To… instead.",
+                        "Wait for completion and verify the result on both sides. A successful-looking pointer change is not proof that the filesystem operation finished."
+                    ]
+                },
+                {
+                    "id": "sidebar",
+                    "title": "Understand sidebar drop zones",
+                    "paragraphs": [
+                        "Dropping onto a destination folder and adding a folder as a sidebar shortcut are different tasks. Use a destination row for file transfer; use the sidebar's favorites organization controls when you want a reusable shortcut.",
+                        "If the target is unclear, open the sidebar folder in a pane and use Copy, Cut/Paste, Copy To…, or Move To…. An explicit destination is safer than guessing which small drop zone is active.",
+                        "Super-drag is a separate, optional gesture feature. Leave it disabled while learning ordinary drag and drop; do not treat a flick outside a destination as a normal transfer."
+                    ]
+                }
+            ],
+            "related": [
+                "copy-move",
+                "sidebar",
+                "customization"
+            ]
+        },
+        {
+            "id": "rename",
+            "title": "Rename a file and use name suggestions",
+            "category": "files",
+            "description": "Rename without moving a file, preserve its extension, and apply on-device suggestions only when you choose.",
+            "keywords": [
+                "filename",
+                "Return",
+                "F2",
+                "AI rename",
+                "suggested name",
+                "extension"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+Rename.swift",
+                    "needles": [
+                        "beginInlineRename",
+                        "warnBeforeChangingExtension",
+                        "renameContextMatches"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/FilenameSuggestionController.swift",
+                    "needles": [
+                        "Use Suggested Name",
+                        "onApply",
+                        "generation"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/AIAssistant.swift",
+                    "needles": [
+                        "macOS 26",
+                        "Apple Intelligence"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "rename",
+                    "title": "Rename one selected item",
+                    "steps": [
+                        "Select exactly one item in the intended folder. Press Return or F2, or run the Rename action.",
+                        "Edit the name in the inline field or Rename dialog. Use a descriptive base name and keep the extension unless you intend to change the file type association.",
+                        "Confirm the name. If Pathem warns about an extension change, review the old and new extensions before proceeding.",
+                        "Verify the item under its new name in the same folder. Renaming may change its sorted position; it does not mean the file moved into a different directory."
+                    ]
+                },
+                {
+                    "id": "suggestions",
+                    "title": "Try an on-device filename suggestion",
+                    "steps": [
+                        "Open Preferences > Layout and enable Suggest filenames when renaming (on-device AI) if it is not already enabled.",
+                        "Use a local, downloaded file on a Mac with the required Apple Intelligence model available. A cloud placeholder must be downloaded before its contents can be used.",
+                        "Start Rename or the available AI Rename action. Continue typing your own name if you prefer; a response should not replace what you typed by itself.",
+                        "Read the proposed name. Choose Use Suggested Name only if you want to put it into the editable field.",
+                        "Review the final field, including its extension, then choose Rename. Cancel closes the dialog without accepting the suggested name."
+                    ],
+                    "note": "Apple's on-device language-model features require macOS 26 and an available Apple Intelligence model. A disabled setting, unsupported Mac, unavailable model, or remote item is not evidence that ordinary renaming is broken."
+                },
+                {
+                    "id": "troubleshoot",
+                    "title": "If renaming does not complete",
+                    "paragraphs": [
+                        "Check for a read-only folder, an existing destination name, or a provider restriction. Avoid names containing a path separator; a rename field is not a destination-path field.",
+                        "Do not navigate between unrelated local and remote locations while accepting a remote rename. If the operation context changed, cancel and start again in the correct folder.",
+                        "If a long name is only partly visible, move the caret through the field to inspect it rather than shortening a meaningful name just to fit the dialog. Use Batch Rename for a deliberate multi-file naming rule."
+                    ]
+                }
+            ],
+            "related": [
+                "batch-rename",
+                "semantic-ai",
+                "views-dates"
+            ]
+        },
+        {
+            "id": "batch-rename",
+            "title": "Rename many files with a preview",
+            "category": "files",
+            "description": "Build a repeatable renaming rule, inspect every proposed name, and catch collisions before applying it.",
+            "keywords": [
+                "batch rename",
+                "number",
+                "prefix",
+                "suffix",
+                "regex",
+                "preset"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BatchRenameController.swift",
+                    "needles": [
+                        "Include extension",
+                        "Current",
+                        "New name",
+                        "Numbering",
+                        "Prefix",
+                        "Preset"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "prepare",
+                    "title": "Prepare the selection",
+                    "paragraphs": [
+                        "Start with files in one local working folder and keep a backup of important originals. A preview is a planning aid, not a replacement for a backup. Narrow the selection before opening Batch Rename so unrelated files are not part of the plan.",
+                        "For a first test, use sample names such as scan-a.txt and scan-b.txt. Keep the extension outside the transformation unless changing it is intentional."
+                    ]
+                },
+                {
+                    "id": "rule",
+                    "title": "Create and inspect a naming rule",
+                    "steps": [
+                        "Select the target files and run Batch Rename… from Command Palette.",
+                        "Use Find and Replace for a shared piece of text. Leave Regex off unless you specifically need a regular expression and understand what it matches.",
+                        "Use Prefix or Suffix to add consistent text, or choose a case conversion. Make one change at a time and inspect the Current and New name columns.",
+                        "For a numbered sequence, enable Numbering and set Start and Pad. Check the actual preview order rather than assuming it matches the order you clicked files.",
+                        "Leave Include extension off for ordinary base-name edits. If enabled, confirm that each resulting extension still describes its file.",
+                        "Read the entire preview and resolve any collision or invalid-name warning. Do not accept a transformation merely because the first row looks right.",
+                        "Choose Rename only when the plan is correct. Wait for completion and inspect the folder; if an operation fails, review which names actually changed before retrying."
+                    ]
+                },
+                {
+                    "id": "presets",
+                    "title": "Reuse a reviewed rule",
+                    "steps": [
+                        "After checking the preview, use the preset Save control to name a reusable rule.",
+                        "On a later batch, select that preset and inspect the new preview against the new files. A saved rule does not guarantee collision-free results in a different folder.",
+                        "Cancel the panel when experimenting if you do not want to apply the plan. Deleting a preset removes the saved rule, not the selected files."
+                    ],
+                    "note": "Metadata tokens can depend on real file metadata. If a token yields an unexpected name or missing value, stop and inspect that file instead of applying the entire batch blindly."
+                }
+            ],
+            "related": [
+                "rename",
+                "copy-move",
+                "tags-smart-folders"
+            ]
+        },
+        {
+            "id": "views-dates",
+            "title": "Views, sorting, grouping, and relative dates",
+            "category": "find",
+            "description": "Choose a useful folder view, separate sorting from grouping, and show dates such as Today and Yesterday.",
+            "keywords": [
+                "relative dates",
+                "Today",
+                "Yesterday",
+                "sort by",
+                "group by",
+                "Finder view options",
+                "folders first"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/PathemEngine/ViewFormat.swift",
+                    "needles": [
+                        "case list, icon, gallery, column, tree",
+                        "dateAccessed, dateAdded",
+                        "application"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "dateDisplay: DateDisplay = .relative",
+                        "foldersFirst: Bool = true"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/SettingsWindowController.swift",
+                    "needles": [
+                        "Relative (Yesterday at 3:14 PM)",
+                        "Dates"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "choose-view",
+                    "title": "Choose a view for the task",
+                    "steps": [
+                        "Open a folder and activate its pane. Use Command-1 for List, Command-2 for Icons, Command-3 for Gallery, Command-4 for Columns, or Command-5 for Tree.",
+                        "Use List for detailed comparison, Icons for thumbnails, Gallery for visual review, Columns for walking a hierarchy, and Tree for expanding subfolders in place.",
+                        "Open View Options with Command-J. Adjust the options available for the current view, such as displayed metadata and folder presentation.",
+                        "Leave the folder and return to check the saved result. A folder's saved format can override the global default for new or unconfigured folders."
+                    ]
+                },
+                {
+                    "id": "sort-group",
+                    "title": "Sort items and group them separately",
+                    "steps": [
+                        "Choose Sort By from the view controls or the folder background menu. Select a key such as Name, Kind, Size, Tags, or a date.",
+                        "Choose the direction separately. Keep folders on top is independent of ascending versus descending order.",
+                        "Choose Group By when you want section headings rather than one flat sequence. Group keys include names, kinds, applications, dates, size, and tags where supported.",
+                        "Choose no grouping to return to a flat listing. Sorting still controls the order of items after grouping is removed.",
+                        "If an option is unavailable in a remote or special view, use a supported key rather than expecting metadata the provider does not supply."
+                    ],
+                    "note": "Last opened and Date added depend on available metadata. An unknown value is not the same as the file's modification date. Grouping by application also depends on local application associations."
+                },
+                {
+                    "id": "relative-dates",
+                    "title": "Show Today and Yesterday",
+                    "steps": [
+                        "Open Preferences and select Layout.",
+                        "Find Dates and choose Relative (Yesterday at 3:14 PM). Relative dates are the default for a fresh preferences configuration.",
+                        "Return to a folder with a date column. Recent dates use relative labels when appropriate; older dates may still use calendar dates.",
+                        "If you need a numeric or more explicit calendar format, select Short or Medium in the same Dates control. Existing saved preferences are not discarded simply because a new default changes."
+                    ],
+                    "note": "Relative labels follow the Mac's locale, calendar, and time zone. They describe dates, not an automatic grouping rule; use Group By separately to create date sections."
+                }
+            ],
+            "related": [
+                "navigation-tabs",
+                "customization",
+                "search"
+            ]
+        },
+        {
+            "id": "sidebar",
+            "title": "Favorites, sidebar groups, and recent folders",
+            "category": "find",
+            "description": "Keep frequently used locations close, organize shortcuts, and avoid confusing a shortcut with the folder it points to.",
+            "keywords": [
+                "favorites",
+                "bookmarks",
+                "sidebar",
+                "recents",
+                "groups",
+                "paste"
+            ],
+            "sources": [
+                {
+                    "path": "README.md",
+                    "needles": [
+                        "Reorder shortcuts by drag",
+                        "organize them into your own groups"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "RecentsBasis",
+                        "recentsBasis: RecentsBasis = .modified",
+                        "compactSidebar"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/SidebarController.swift",
+                    "needles": ["Add Current Folder", "New Group", "Remove from Sidebar"]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "favorites",
+                    "title": "Make a useful set of favorites",
+                    "steps": [
+                        "Open a frequently used folder in a pane and confirm its full path. Identically named cloud and local folders may be different locations.",
+                        "Right-click the sidebar and choose Add Current Folder when available. Confirm the resulting shortcut opens the intended directory.",
+                        "Reorder favorite shortcuts by dragging their sidebar rows. Use the sidebar's group controls to separate work, personal projects, or temporary tasks.",
+                        "Use the shortcut's context menu to rename its display label or change its icon when available. A shortcut label is not the same as renaming the folder on disk.",
+                        "Remove an unused shortcut using its sidebar context menu. Read the action carefully: removing a place from the sidebar should not be confused with trashing files in a pane."
+                    ]
+                },
+                {
+                    "id": "use-locations",
+                    "title": "Use sidebar destinations safely",
+                    "steps": [
+                        "Click a sidebar folder to browse it in the active pane. Check which pane is active before changing locations.",
+                        "To copy or move files there, opening the destination in a pane first gives you a clear path to inspect. Then use Paste or an explicit Copy To… or Move To… action.",
+                        "If dropping onto a sidebar destination, inspect the drag operation and target row before releasing. Reordering a shortcut and transferring a file use different drop zones.",
+                        "For cloud locations and volumes, check availability before starting a transfer. A sidebar row can remain useful even when its underlying provider is disconnected."
+                    ]
+                },
+                {
+                    "id": "recents",
+                    "title": "Understand Recents and compact mode",
+                    "paragraphs": [
+                        "Recents can be based on recently modified or recently opened files. Pathem defaults to recently modified; this can differ from what you expect from Finder's Recents. Change the Recents basis in Preferences if you want the other behavior.",
+                        "Compact sidebar mode uses icons with less space. Turn it off when learning unfamiliar places, particularly when several services contain a Documents or Downloads folder. Monochrome icons are another independent appearance choice.",
+                        "A recent location or favorite is a reference to a path. It neither backs up the contents nor guarantees that an external volume is mounted."
+                    ]
+                }
+            ],
+            "related": [
+                "copy-move",
+                "cloud-devices",
+                "navigation-tabs"
+            ]
+        },
+        {
+            "id": "search",
+            "title": "Search names, contents, and locations",
+            "category": "find",
+            "description": "Choose a search scope deliberately, distinguish filtering from searching, and act only on current results.",
+            "keywords": [
+                "Command F",
+                "filter",
+                "This Folder",
+                "This Mac",
+                "contents",
+                "Spotlight",
+                "find in files"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/PathemApp.swift",
+                    "needles": [
+                        "Search This Folder…",
+                        "search.palette",
+                        "Filter…"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/GlobalSearchController.swift",
+                    "needles": [
+                        "This Folder",
+                        "This Mac",
+                        "Searches text files directly",
+                        "Search Files"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "files.findInFiles",
+                        "search.semantic",
+                        "nav.findFiles"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "literal-search",
+                    "title": "Find a file by name or contents",
+                    "steps": [
+                        "Open the folder you want to start from, then press Command-F for Search This Folder…. Use Find Files Everywhere… when your intended scope is the Mac rather than the current folder.",
+                        "In Search Files, choose whether to search filenames or contents. A filename query and a text-content query answer different questions.",
+                        "Set the scope to This Folder, This Mac, or another selected folder. Check the subfolder option when available; do not assume a folder search is recursive without checking it.",
+                        "Enter a distinctive word. Wait for the current search to finish before selecting a result or changing files.",
+                        "Read the result's location as well as its name. Use the available Open or Reveal action to inspect it in context before performing a move, delete, or rename.",
+                        "If the results are too broad, narrow the location or query. If they are empty, check the mode and scope before concluding the file does not exist."
+                    ]
+                },
+                {
+                    "id": "filter",
+                    "title": "Use a filter for the current listing",
+                    "paragraphs": [
+                        "Filter… narrows the displayed listing. It is not the same as searching another folder, searching file contents, or finding every matching file on the Mac. A forgotten filter can make an ordinary folder look incomplete."
+                    ],
+                    "steps": [
+                        "Run Filter… from the command palette or View menu when you only want to narrow the current listing.",
+                        "Enter a small part of an expected filename and confirm that the visible rows change.",
+                        "Clear the filter before comparing the whole directory or diagnosing a missing file. Check Show Hidden Files separately for dotfiles."
+                    ]
+                },
+                {
+                    "id": "limits",
+                    "title": "Know what content search can find",
+                    "paragraphs": [
+                        "Content search can read text files directly and use Spotlight for other documents. This Mac results and indexed document contents depend on Spotlight availability and coverage. Encrypted, unindexed, inaccessible, or online-only content may not be found.",
+                        "Find in Files… is a separate text-search workflow with pattern and replacement options. Test the query first and back up files before using replacement; a broad replacement is a write operation, not ordinary search.",
+                        "Semantic Search This Folder… ranks by meaning and is separate from exact name/content search. Use literal search for a specific filename, then semantic search when you remember the topic rather than the wording."
+                    ]
+                }
+            ],
+            "related": [
+                "semantic-ai",
+                "tags-smart-folders",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "semantic-ai",
+            "title": "Semantic search and on-device AI",
+            "category": "find",
+            "description": "Understand which tools use semantic embeddings, which require Apple Intelligence, and how to review suggestions safely.",
+            "keywords": [
+                "Apple Intelligence",
+                "NaturalLanguage",
+                "OCR",
+                "AI",
+                "privacy",
+                "model unavailable"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "Semantic Search This Folder…",
+                        "Ask Pathem (Natural Language)…",
+                        "Toggle Image OCR in Search"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "searchOCR: Bool = false"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/AIAssistant.swift",
+                    "needles": [
+                        "macOS 26",
+                        "Apple Intelligence"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "two-systems",
+                    "title": "Separate semantic search from the language model",
+                    "paragraphs": [
+                        "Semantic search uses Apple's NaturalLanguage embeddings to rank local filenames and supported text by meaning. It is not the same as an Apple Intelligence language-model request and does not require Apple Intelligence just to use the semantic-search workflow.",
+                        "Ask Pathem and AI filename suggestions have different requirements. The Apple on-device language model requires macOS 26, supported hardware, and an available Apple Intelligence model. Model availability can depend on the Mac's current configuration; the app reports availability rather than making an unsupported Mac download a third-party model."
+                    ]
+                },
+                {
+                    "id": "semantic",
+                    "title": "Search a local folder by topic",
+                    "steps": [
+                        "Open a small local folder containing downloaded documents you recognize. Start with a controlled sample so you can judge whether the results make sense.",
+                        "Run Semantic Search This Folder… from Command Palette.",
+                        "Describe the topic, such as notes about planning a garden, rather than typing an exact filename. Allow indexing work to finish before judging the ranking.",
+                        "Open or reveal a result and inspect the actual document. A high semantic rank indicates similarity, not proof that the contents answer your question.",
+                        "If you know a precise filename or phrase, compare with ordinary Search This Folder…. An exact search may be more useful than a semantic ranking."
+                    ]
+                },
+                {
+                    "id": "ocr",
+                    "title": "Opt into image OCR when useful",
+                    "steps": [
+                        "Keep OCR off for your first semantic-search test. It is disabled by default and can add indexing cost.",
+                        "If your task requires text inside images, enable the search OCR preference or use Toggle Image OCR in Search.",
+                        "Repeat the test with a downloaded image containing clear text. Check the result itself for recognition mistakes.",
+                        "Turn OCR off again if you do not need it or indexing becomes expensive. Do not expect OCR to recover text from every image or every cloud placeholder."
+                    ]
+                },
+                {
+                    "id": "review",
+                    "title": "Review AI output before acting",
+                    "paragraphs": [
+                        "Use Ask Pathem (Natural Language)… only for a task you can inspect. Review the interpreted command and any confirmation before accepting a file-changing operation. For an important move, the explicit Copy To… or Move To… command is easier to verify.",
+                        "Filename suggestions should not overwrite your typed name until you choose Use Suggested Name. An unavailable or failed model does not prevent manual renaming. Cloud placeholders must be downloaded deliberately if their content is needed.",
+                        "On-device processing describes these AI features; it does not mean all of Pathem is offline. Remote transfers, cloud providers, torrents, and update checks can use the network for their own purposes."
+                    ]
+                }
+            ],
+            "related": [
+                "search",
+                "rename",
+                "cloud-devices"
+            ]
+        },
+        {
+            "id": "tags-smart-folders",
+            "title": "Tags, smart locations, and flat views",
+            "category": "find",
+            "description": "Organize references to files without mistaking a collected or flattened view for a new physical folder.",
+            "keywords": [
+                "tags",
+                "smart folder",
+                "collection",
+                "Recents",
+                "Flat View",
+                "organize"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "tags.clear",
+                        "files.addToCollection",
+                        "view.flatView",
+                        "files.organize"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+SmartFolders.swift",
+                    "needles": [
+                        "Smart"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "tags",
+                    "title": "Apply and inspect tags",
+                    "steps": [
+                        "Select a small set of local files that support tagging. Use the available Tags actions in the context menu or command palette.",
+                        "Assign a tag and confirm its label or color appears on the selected files. Filesystem or provider limitations may make tagging unavailable.",
+                        "Use a tag location in the sidebar or sort/group by Tags to inspect the tagged items.",
+                        "Use Clear Tags only when you intend to remove their tag metadata. Clearing a tag is different from removing a shortcut or moving a file."
+                    ]
+                },
+                {
+                    "id": "views",
+                    "title": "Work safely in collected results",
+                    "steps": [
+                        "Open the smart location or collection you need, or use Add to Collection… for a supported selection.",
+                        "Inspect each item's location. Two identically named results can belong to different real directories.",
+                        "Reveal an item in its actual folder before a destructive operation if its origin is unclear.",
+                        "When using Flat View, remember that items may come from multiple subfolders. A flat listing changes what is shown; it is not a request to physically move all items into one directory."
+                    ]
+                },
+                {
+                    "id": "organize",
+                    "title": "Separate browsing from reorganization",
+                    "paragraphs": [
+                        "A tag, smart result, collection, or flat view can provide another way to find an item while leaving its actual path unchanged. Moving, renaming, trashing, or applying an organization plan changes the real file instead.",
+                        "Organize Folder… is an explicit file-management workflow, not merely a visual grouping setting. Preview its proposed destinations and keep a backup before applying a large plan. For a purely visual arrangement, use Group By in the folder view.",
+                        "If a smart view is unexpectedly empty, check the underlying query, scope, permissions, and provider availability. Do not create duplicate copies of files just because one derived view fails to show them."
+                    ]
+                }
+            ],
+            "related": [
+                "search",
+                "views-dates",
+                "copy-move"
+            ]
+        },
+        {
+            "id": "previews-open-with",
+            "title": "Preview files and choose an opening app",
+            "category": "files",
+            "description": "Inspect before opening, distinguish a one-time application choice from a saved rule, and understand file-copy formats.",
+            "keywords": [
+                "Quick Look",
+                "Open With",
+                "default application",
+                "Apple Messages",
+                "filename",
+                "clipboard attachment"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "view.quickLook",
+                        "files.open",
+                        "files.copyPath",
+                        "files.copyURL",
+                        "files.copyName"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+OpenerRules.swift",
+                    "needles": [
+                        "Always Open With",
+                        "kind"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "preview",
+                    "title": "Inspect a file without changing its opener",
+                    "steps": [
+                        "Select one local, available file and press Space for Quick Look.",
+                        "Check that the preview corresponds to the selected file. Some formats depend on macOS preview support; an unsupported preview does not necessarily mean the file is damaged.",
+                        "Close the preview and open the file with double-click or Command-Down when you are ready. Return renames the item instead.",
+                        "If a cloud file is online-only, decide whether to download it first. Previewing contents can require bytes that ordinary directory browsing does not."
+                    ]
+                },
+                {
+                    "id": "opener",
+                    "title": "Choose an application deliberately",
+                    "steps": [
+                        "Select the file and open its context menu. Use Open With for a one-time app choice.",
+                        "If using Always Open With, read the scope of the rule in the chooser before saving. A persistent rule should be intentional, not an accidental consequence of one opening.",
+                        "Test the rule on a disposable file of the intended type. A rule for one extension must not be assumed to cover every file or a file with no extension.",
+                        "If a file opens in the wrong app, review the saved opening rule and the Mac's own association. Changing a filename extension just to force an opener can create confusion."
+                    ]
+                },
+                {
+                    "id": "opening-scopes",
+                    "title": "Understand saved opening scopes",
+                    "bullets": [
+                        "This file: a specific file rule in Pathem.",
+                        "Files in this folder: a folder-scoped rule in Pathem.",
+                        "All .extension files (system-wide): changes the macOS default for that file type, affecting Finder and other apps too. For a name without an extension, the exact-name option is limited to Pathem instead.",
+                        "Just this session: a temporary selection that is not the same as changing the system default."
+                    ],
+                    "note": "Saving the opener also opens the file through the selected app. Check both the app and scope before choosing Set."
+                },
+                {
+                    "id": "clipboard",
+                    "title": "Copy a file versus copying its name",
+                    "paragraphs": [
+                        "Copy writes a file reference for receiving applications that accept file attachments. Copy Path, Copy Name, and Copy as File URL are different commands with different results. Use Copy Name when you specifically want text, not an attachment.",
+                        "When pasting into a message, inspect the unsent attachment and filename before sending. The receiving app can import, rename, convert, or choose a different clipboard representation; drag-and-drop and keyboard paste are not guaranteed to use identical import paths in every application.",
+                        "If a recipient app changes a filename, compare the same harmless file using Copy/Paste and a drag into an unsent draft. Record the app, source action, and result without sending private test data. Do not assume a successful file copy means the receiving app preserved every piece of metadata."
+                    ]
+                }
+            ],
+            "related": [
+                "rename",
+                "copy-move",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "archives",
+            "title": "Create and extract archives safely",
+            "category": "files",
+            "description": "Compress a selection, extract into a deliberate destination, and inspect the result without overwriting important data.",
+            "keywords": [
+                "zip",
+                "archive",
+                "compress",
+                "extract",
+                "destination",
+                "disk image"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "files.compress",
+                        "files.extractHere",
+                        "files.extractTo"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+Archives.swift",
+                    "needles": [
+                        "extract",
+                        "archive"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "compress",
+                    "title": "Create an archive from a local selection",
+                    "steps": [
+                        "Select the local files or folders you intend to include. Check hidden items and unrelated selections before proceeding.",
+                        "Run Compress from Command Palette or the context menu.",
+                        "Review the name and destination offered by the workflow. Do not overwrite your only existing archive without a backup.",
+                        "Wait for completion and inspect the resulting archive. If you need to prove its contents, extract a test copy into a disposable folder and compare the expected files."
+                    ]
+                },
+                {
+                    "id": "extract",
+                    "title": "Extract into an explicit folder",
+                    "steps": [
+                        "Select a supported local archive. Download an online-only placeholder first if you intentionally want to read its contents.",
+                        "Prefer Extract to Folder… when the destination matters. Choose an empty practice or working directory rather than a folder full of irreplaceable data.",
+                        "Use Extract Here only after confirming the current folder is the intended destination.",
+                        "Review any password, existing-file, or extraction warning rather than repeatedly accepting it.",
+                        "Wait for the operation to finish, then inspect the output tree. A partly extracted folder after cancellation or failure is not proof of a complete archive."
+                    ]
+                },
+                {
+                    "id": "safety",
+                    "title": "Know the limits",
+                    "paragraphs": [
+                        "Available archive behavior depends on the format and tools in the current build. A familiar extension alone is not proof that an archive is valid or supported. Keep the original until you have verified its output.",
+                        "Do not execute an extracted application or script merely because extraction succeeded. Treat untrusted archives as untrusted content. Review unexpected absolute paths, permissions errors, and unusually large extraction requests before continuing.",
+                        "A disk image is not just a ZIP archive. Use the image's mount or disk-image workflow and eject mounted images when finished. If macOS reports Resource busy, finish work in the mounted volume and retry rather than forcing a broad process termination."
+                    ]
+                }
+            ],
+            "related": [
+                "copy-move",
+                "cloud-devices",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "cloud-devices",
+            "title": "Cloud files, external disks, and mobile devices",
+            "category": "connect",
+            "description": "Understand online-only files, mounted volumes, iOS access, and the current Android/MTP limitation.",
+            "keywords": [
+                "iCloud",
+                "Dropbox",
+                "OneDrive",
+                "Google Drive",
+                "USB",
+                "Android",
+                "MTP",
+                "iPhone",
+                "iPad",
+                "AFC",
+                "eject"
+            ],
+            "sources": [
+                {
+                    "path": "README.md",
+                    "needles": [
+                        "never silently downloads online-only files",
+                        "iOS"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/DeviceWatcher.swift",
+                    "needles": [
+                        "Device"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "files.download",
+                        "files.ejectVolume"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "cloud",
+                    "title": "Browse a synchronized cloud folder",
+                    "steps": [
+                        "Install and sign into the provider's own sync application if the service requires one. Pathem browses available provider folders; it does not create an account for you.",
+                        "Open the provider's location from the sidebar or its actual local path. Confirm the service badge and path so you do not confuse cloud Documents with a local Documents directory.",
+                        "Browse filenames without assuming every file is downloaded. Directory browsing and indexing should not silently fetch all online-only contents.",
+                        "When you need the bytes of a placeholder, use the available Download action or the provider's own controls, then wait for availability before previewing, renaming with AI, or transferring contents.",
+                        "Check provider sync status after changes. A local operation finishing does not prove that an upload to the service has completed."
+                    ]
+                },
+                {
+                    "id": "volumes",
+                    "title": "Use an external disk",
+                    "steps": [
+                        "Connect the device and wait for macOS to mount its volume. Look for it in Pathem's sidebar or browse the mounted path.",
+                        "If it is absent, check Finder or Disk Utility to distinguish a macOS mount problem from a missing Pathem sidebar entry. Do not initialize or erase a disk merely to make it appear.",
+                        "Before a large copy, check free space, write access, and the chosen source and destination. Enable copy verification when appropriate.",
+                        "Finish transfers, close documents using the volume, and use Eject Volume or the sidebar eject action when available. If ejection reports that the disk is busy, resolve the active use before unplugging it."
+                    ]
+                },
+                {
+                    "id": "mobile",
+                    "title": "Recognize mobile-device boundaries",
+                    "paragraphs": [
+                        "iPhone and iPad access uses a separate AFC helper and depends on a connected, trusted/paired device and the content iOS exposes. It is not unrestricted access to the phone's filesystem; individual apps and device state can limit available documents.",
+                        "The currently documented mainline build does not provide Android MTP browsing. An Android phone using MTP is not an ordinary mounted macOS disk and may not appear in Finder either. Do not assume a USB cable or a sidebar refresh will add missing protocol support.",
+                        "For an Android connection, first verify the cable can carry data and the phone's chosen USB mode. If the device does not expose a mounted volume, use a trusted MTP-capable workflow or another supported transfer route. Do not format the phone or enable unrelated developer/security settings as a substitute for missing MTP support."
+                    ],
+                    "note": "Physical-device and provider availability must be checked on your actual setup. A simulated or unit-tested device path is not proof of compatibility with every phone, cable, or OS version."
+                }
+            ],
+            "related": [
+                "connections",
+                "copy-move",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "connections",
+            "title": "Connect to servers and object storage",
+            "category": "connect",
+            "description": "Save an explicit connection, confirm its security and path, and test a small transfer before trusting a large one.",
+            "keywords": [
+                "SFTP",
+                "FTP",
+                "WebDAV",
+                "S3",
+                "object storage",
+                "credentials",
+                "TLS",
+                "FileZilla"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/ConnectionsController.swift",
+                    "needles": [
+                        "Connections",
+                        "Import from FileZilla…",
+                        "New Connection",
+                        "Use Key"
+                    ]
+                },
+                {
+                    "path": "README.md",
+                    "needles": [
+                        "S3",
+                        "WebDAV",
+                        "SFTP",
+                        "FTP"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "prepare",
+                    "title": "Collect the right details",
+                    "paragraphs": [
+                        "Obtain the protocol, host or endpoint, account name, authentication method, and initial path from the server administrator or service configuration. A local cloud-sync folder and a direct S3/WebDAV connection are different access methods.",
+                        "Use least-privilege test credentials when possible. Do not paste passwords, access keys, private keys, or unredacted connection exports into a support report. A security warning is information to investigate, not a routine prompt to bypass."
+                    ]
+                },
+                {
+                    "id": "connect",
+                    "title": "Save and test a connection",
+                    "steps": [
+                        "Run Connections… from Command Palette. Choose Add to create a new saved site.",
+                        "Select the actual protocol and enter a clear display name. Fill in the host/endpoint, port if needed, user, and initial path for that protocol.",
+                        "For SFTP key authentication, use the key-file chooser for the intended private key. Do not substitute a public .pub file for a private key when a private key is required.",
+                        "For object storage, verify the bucket/container path, region, endpoint, and account fields against your provider's configuration. Similar-looking S3-compatible services can require different endpoints.",
+                        "Save the connection and choose Connect. Review host identity, encryption, and credential prompts carefully.",
+                        "List a harmless directory, download a small file into a test folder, and compare its contents. If write access is intended, upload a disposable file to a dedicated test location and confirm it there before a large transfer."
+                    ]
+                },
+                {
+                    "id": "manage",
+                    "title": "Keep destinations and credentials distinct",
+                    "steps": [
+                        "Use a connection group, color, or paired local folder to make similar sites easier to distinguish. Confirm the remote path, not only the saved site's friendly name.",
+                        "When copying between a local and remote pane, inspect the direction explicitly. Remote actions do not necessarily have the same undo guarantees as local filesystem operations.",
+                        "Use Import from FileZilla… only with a file you control. Inspect imported sites and authentication choices before connecting; an import is not a connectivity or security test.",
+                        "If a transfer fails, check its actual partial result before retrying. Authentication, host verification, path permissions, network availability, and rate limits are different causes."
+                    ]
+                },
+                {
+                    "id": "security",
+                    "title": "Do not ignore plaintext or certificate warnings",
+                    "paragraphs": [
+                        "SFTP and FTP are different protocols. Plain FTP can expose credentials and file content; prefer an encrypted protocol supported by your server. For WebDAV and object storage, use the expected secure endpoint and do not disable certificate validation to hide an error.",
+                        "Protocol support in Pathem does not guarantee that every server, authentication configuration, or vendor extension has been tested. Start with a small read/write check on your actual server. Never use a production overwrite as the first connectivity test."
+                    ]
+                }
+            ],
+            "related": [
+                "cloud-devices",
+                "copy-move",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "terminal",
+            "title": "Use the terminal and external commands",
+            "category": "connect",
+            "description": "Open a shell near your files, control folder following, and review external command templates before running them.",
+            "keywords": [
+                "terminal",
+                "shell",
+                "external commands",
+                "scripts",
+                "folder follows",
+                "Control backtick"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "Toggle Terminal",
+                        "Terminal Follows Folder",
+                        "Open Terminal Here",
+                        "External Commands…"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/ExternalCommandsController.swift",
+                    "needles": [
+                        "%F/%N/%D/%P",
+                        "External Commands"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "terminal",
+                    "title": "Open and orient the embedded terminal",
+                    "steps": [
+                        "Activate the pane whose folder you want to work in, then run Toggle Terminal. Control-backtick is the default terminal shortcut.",
+                        "Run pwd in the shell and compare the result with the intended folder. Do this before any command that can change or remove files.",
+                        "Use Terminal Follows Folder to control whether navigation updates the shell location. Do not assume an existing shell always follows a newly active pane.",
+                        "Navigate to another practice folder and run pwd again to verify the behavior. If you want a separate terminal application instead, use Open Terminal Here where available.",
+                        "Hide the terminal when finished. A visible file pane and a terminal prompt can point at different locations; the actual shell's working directory governs its commands."
+                    ]
+                },
+                {
+                    "id": "external",
+                    "title": "Add a small external command safely",
+                    "steps": [
+                        "Open External Commands… from Command Palette and create a clearly named command.",
+                        "Review the supported template placeholders shown in the editor. Read their meaning there rather than guessing which one expands to filenames versus full paths.",
+                        "Start with a harmless command that prints or inspects selected test files. Do not start with deletion, recursive permission changes, or a template copied from an untrusted source.",
+                        "Select disposable files with spaces in their names and test the command. Inspect the expanded behavior and exit result before adding it to your toolbar or keymap.",
+                        "Edit or remove a command when you no longer need it. Renaming a command's display title does not make an unsafe shell template safe."
+                    ],
+                    "note": "External commands run tools with your account's access. Pathem's path quoting reduces accidental parsing problems; it does not validate the intent or safety of a script you choose to run."
+                },
+                {
+                    "id": "troubleshoot",
+                    "title": "If a shell command fails",
+                    "paragraphs": [
+                        "Check the command's working directory, executable availability, shell configuration, and selected files. A command that works in a different terminal may rely on PATH entries or startup files that are not present in this session.",
+                        "Do not troubleshoot a failed command by adding sudo or broadening permissions blindly. Reproduce it with harmless input and capture the error without secrets. For editor handoffs rather than shell scripts, the pathem command-line tool is usually a simpler integration."
+                    ]
+                }
+            ],
+            "related": [
+                "cli",
+                "customization",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "customization",
+            "title": "Customize settings, shortcuts, and Commander",
+            "category": "personalize",
+            "description": "Make Pathem fit your workflow while keeping global defaults, saved folder views, and F-key bindings separate.",
+            "keywords": [
+                "preferences",
+                "settings",
+                "keyboard",
+                "Commander",
+                "F3",
+                "F8",
+                "appearance",
+                "toolbar",
+                "context menu"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/SettingsWindowController.swift",
+                    "needles": [
+                        "case .general",
+                        "case .appearance",
+                        "case .layout",
+                        "Commander F-keys"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Keymap.swift",
+                    "needles": [
+                        "keymap.json",
+                        "merging(userBindings",
+                        "f5",
+                        "cmd+shift+p"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "Customize Toolbar…",
+                        "Commander Mode",
+                        "Use as Default View"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "settings",
+                    "title": "Change one preference at a time",
+                    "steps": [
+                        "Open Preferences from Command Palette. Use the settings sidebar or search to find the relevant control.",
+                        "Use Appearance for skin, accent, density, fonts, and icon size. Use Layout for path-bar position, date format, and related presentation controls.",
+                        "Use General for drag behavior, existing-file policy, copy verification, and Trash confirmation. Read the wording before changing a safety-related preference.",
+                        "Return to a practice folder and verify the effect. If it looks unchanged, check whether a folder-specific saved view is overriding a global default.",
+                        "Keep optional behaviors such as automatic Trash cleanup or extra gesture actions off until you understand their scope. They are not required for ordinary browsing."
+                    ]
+                },
+                {
+                    "id": "keys",
+                    "title": "Customize keyboard actions deliberately",
+                    "steps": [
+                        "Open Preferences > Shortcuts and identify the named command you want to change. Use the command palette to verify what that command actually does first.",
+                        "Assign a shortcut that does not conflict with a text-editing shortcut you rely on. Test it with a harmless selection and with a text field focused.",
+                        "Keep a note of changed bindings. These guides and the website shortcut overview show defaults, not your customized map.",
+                        "If you edit keymap.json directly, back up the file first and use valid JSON with canonical chord names. An empty command value removes a default binding; it is not a request to execute an empty command."
+                    ]
+                },
+                {
+                    "id": "commander",
+                    "title": "Set up Commander F-keys",
+                    "steps": [
+                        "Run Commander Mode to show the Commander-style command bar.",
+                        "Open the Commander customization control in Preferences and inspect the six F3–F8 assignments.",
+                        "Choose commands by name, save the dialog, and test each button against disposable files. Cancel leaves the existing assignments unchanged.",
+                        "If a Mac keyboard treats F-keys as brightness or media keys, use Fn/Globe as appropriate or adjust the Mac's keyboard behavior. Changing Commander assignments does not change the operating system's media-key mode."
+                    ],
+                    "note": "Toolbar and context-menu customization are separate from keyboard bindings. Hiding an action from one surface does not necessarily remove its command or disable its shortcut."
+                }
+            ],
+            "related": [
+                "views-dates",
+                "drag-drop",
+                "navigation-tabs"
+            ]
+        },
+        {
+            "id": "torrents",
+            "title": "Manage torrent transfers",
+            "category": "connect",
+            "description": "Add a deliberate transfer, inspect its destination, control activity, and understand that completed downloads can seed.",
+            "keywords": [
+                "magnet",
+                "torrent",
+                "BitTorrent",
+                "download",
+                "pause",
+                "seed",
+                "remove",
+                "limits"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "Torrents",
+                        "Add to Torrents",
+                        "Create Torrent…"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "confirmInboundTorrents: Bool = true",
+                        "torrentDownloadPath",
+                        "bandwidthLimitKBps"
+                    ]
+                },
+                {
+                    "path": "README.md",
+                    "needles": [
+                        "seeds",
+                        "pause or resume",
+                        "keeping or deleting"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "prepare",
+                    "title": "Check the destination and network implications",
+                    "paragraphs": [
+                        "Use a torrent or magnet from a source you trust and content you intend to share. BitTorrent activity communicates with other peers; a completed download can continue uploading as a seed. It is not a private cloud download.",
+                        "Confirm the download directory and available space before adding a large transfer. The torrent download-path preference falls back to Downloads if its configured location is empty or no longer exists. Check the actual displayed destination rather than relying on an old setting."
+                    ]
+                },
+                {
+                    "id": "add",
+                    "title": "Add and inspect a transfer",
+                    "steps": [
+                        "Open Torrents from Command Palette or the Tools menu.",
+                        "Use the torrent interface to add a .torrent file or paste a magnet link. For a selected local .torrent file, Add to Torrents is also available.",
+                        "If another application hands Pathem a torrent or magnet, review the incoming confirmation. Confirmation is enabled by default to prevent an unintended background add.",
+                        "Review the transfer name, available file selection, and destination. A magnet may need to retrieve metadata before it can show the full file list.",
+                        "Watch progress and status, not just the presence of a row. Check peers and trackers if a transfer remains idle; no available peers is different from a filesystem write failure.",
+                        "Use Pause when you want activity to stop temporarily. Resume only when the network and destination are appropriate."
+                    ]
+                },
+                {
+                    "id": "remove",
+                    "title": "Stop, remove, or retain downloaded data",
+                    "steps": [
+                        "Inspect whether a finished transfer is still seeding. Pause it if you do not want further peer activity.",
+                        "Use Remove only after reading whether the action keeps or deletes downloaded files. Removing a transfer and deleting its data are different choices.",
+                        "Set upload/download or related limits in the torrent controls as needed, then verify the displayed behavior. Limits and experimental transport options are not guarantees of anonymity or connectivity.",
+                        "After restarting Pathem, inspect restored transfers before assuming they are paused or complete. Persistent state lets transfers resume; it is not proof that a prior download finished successfully."
+                    ],
+                    "note": "Public-network, router, and other-client interoperability depends on the real environment. A local test does not guarantee inbound peer reachability on every network."
+                }
+            ],
+            "related": [
+                "cloud-devices",
+                "connections",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "cli",
+            "title": "Use Pathem from the command line",
+            "category": "personalize",
+            "description": "Install the bundled command-line handoff and use open, reveal, or preview with an existing path.",
+            "keywords": [
+                "CLI",
+                "editor",
+                "terminal",
+                "pathem reveal",
+                "pathem open",
+                "pathem preview",
+                "PATH",
+                "integration"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/pathem-cli/main.swift",
+                    "needles": [
+                        "usage: pathem <open|reveal|preview> <path>",
+                        "fileExists(atPath",
+                        "currentDirectoryPath"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/PathemCLIInstall.swift",
+                    "needles": [
+                        "/usr/local/bin",
+                        ".local/bin",
+                        "linkPointsToUs",
+                        "notBundled"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/SettingsWindowController.swift",
+                    "needles": ["Integrations", "Terminal command", "integrations.cliInstall"]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "install-command",
+                    "title": "Make the bundled CLI available",
+                    "steps": [
+                        "Use a packaged Pathem.app containing the command-line helper. A bare source-run process may not include the installable bundled CLI.",
+                        "Open Preferences > Integrations. In the Terminal command row, choose Install. Read the resulting Installed at path to see which writable directory was selected.",
+                        "Open a new terminal or refresh your shell's command lookup. Run command -v pathem to check which executable will be used.",
+                        "If the command cannot be installed, inspect the reported directory or conflicting file. Do not delete an unrelated executable merely to make room for Pathem's link.",
+                        "If a user-owned directory such as ~/.local/bin is chosen, ensure your own shell includes that directory in PATH. Do not add broad writable locations to PATH just to avoid understanding the error."
+                    ]
+                },
+                {
+                    "id": "commands",
+                    "title": "Choose the correct handoff",
+                    "paragraphs": [
+                        "Open navigates into a directory, reveal selects an item in its parent folder, and preview opens the read-only viewer. Each command takes one existing path; relative paths are resolved from the shell's current directory."
+                    ],
+                    "code": "pathem open \"$HOME/Downloads\"\npathem reveal \"$HOME/Downloads/example.txt\"\npathem preview \"$HOME/Downloads/example.txt\"",
+                    "steps": [
+                        "Replace the example filename with a harmless file that actually exists. Quote paths containing spaces.",
+                        "Use reveal when your editor should select a file in its folder rather than merely open its parent directory.",
+                        "Inspect the folder or viewer that appears in Pathem. A successful handoff is not a file copy and does not create a missing path.",
+                        "For editor integrations, pass the selected file's real path through the integration's documented placeholder syntax. Test one file with spaces before configuring a broader action."
+                    ]
+                },
+                {
+                    "id": "remove",
+                    "title": "Troubleshoot or remove the handoff",
+                    "paragraphs": [
+                        "A missing-path error means the CLI could not find the requested path before handing it to the app. A command-not-found error is a shell/PATH problem. A different application opening the URL is a LaunchServices association issue; these require different fixes.",
+                        "The app's CLI removal control removes only the symlink it recognizes as its own. Moving or replacing Pathem.app can change where a saved link points; check command -v and the installed app location before reinstalling it.",
+                        "Do not use a shell handoff as a way to bypass filesystem permissions. The receiving app still operates under the access macOS grants it."
+                    ]
+                }
+            ],
+            "related": [
+                "terminal",
+                "install",
+                "troubleshooting"
+            ]
+        },
+        {
+            "id": "troubleshooting",
+            "title": "Troubleshoot without losing your setup",
+            "category": "help",
+            "description": "Work through missing files, unavailable actions, unexpected transfers, and permission problems using reversible checks first.",
+            "keywords": [
+                "bug",
+                "support",
+                "reset",
+                "scroll",
+                "dialog",
+                "missing",
+                "permission",
+                "report",
+                "crash"
+            ],
+            "sources": [
+                {
+                    "path": "Sources/PathemEngine/Preferences.swift",
+                    "needles": [
+                        "dragMovesByDefault",
+                        "conflictDefault",
+                        "showHiddenByDefault",
+                        "dateDisplay"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+CommandRegistry.swift",
+                    "needles": [
+                        "view.filter",
+                        "files.reveal",
+                        "edit.showHistory"
+                    ]
+                },
+                {
+                    "path": "README.md",
+                    "needles": [
+                        "Reset Pathem Data",
+                        "Full Disk Access"
+                    ]
+                }
+            ],
+            "sections": [
+                {
+                    "id": "first-checks",
+                    "title": "Start with reversible checks",
+                    "steps": [
+                        "Record the visible error and what you were trying to do before dismissing it. Remove private names, paths, server details, and credentials from any report.",
+                        "Check the active pane, current path, selection, and destination. Identical folder names in different volumes or cloud services are not the same directory.",
+                        "Clear a listing filter and check Show Hidden Files when items seem to disappear. For search results, verify query, mode, scope, and indexing limits.",
+                        "Check whether the folder is local, remote, read-only, disconnected, or online-only. These distinctions explain many unavailable actions.",
+                        "Wait for a current operation to finish or cancel it once before retrying. Repeatedly clicking an operation can make its outcome harder to understand."
+                    ]
+                },
+                {
+                    "id": "symptoms",
+                    "title": "Match the symptom to the right setting",
+                    "bullets": [
+                        "A drag copies instead of moving: inspect the drag-default preference, modifier keys, source application, and provider capabilities. Use an explicit Move To… for comparison.",
+                        "Repeated prompts: distinguish an incoming request, a move confirmation, a filename conflict, and an extension warning. Record the prompt title and the action that triggered each one; do not disable unrelated safety prompts blindly.",
+                        "Unexpected dates: inspect Preferences > Layout > Dates. Relative date labels and date grouping are separate choices.",
+                        "A command is disabled: select an appropriate item and verify whether the command requires a local folder, supported file type, model, or provider.",
+                        "Scroll or location jumps during a file change: record the view, sort/group keys, open tabs, operation, and whether the change came from Pathem or another application. Use disposable files for a reproduction."
+                    ],
+                    "note": "Do not treat every issue as corrupted preferences. Resetting data first removes evidence and can erase a carefully configured workspace without identifying the cause."
+                },
+                {
+                    "id": "permissions",
+                    "title": "Check access and availability",
+                    "steps": [
+                        "For protected local folders, review the installed app's Full Disk Access entry and follow any macOS relaunch request.",
+                        "For a cloud file, verify it is downloaded when an operation needs contents. For an external disk, check whether macOS mounted it and whether it is writable.",
+                        "For a remote site, separate authentication, host/certificate verification, connectivity, and path permissions. Keep secrets out of screenshots and exported diagnostics.",
+                        "For an app-specific opening or paste problem, compare the same harmless file in the same receiving app. Record whether you used Copy, Copy Name, a drag, or another action."
+                    ]
+                },
+                {
+                    "id": "report",
+                    "title": "Write a useful report before resetting anything",
+                    "paragraphs": [
+                        "Include the Pathem build/version, macOS version, view mode, local/cloud/remote context, exact steps, expected result, actual result, and whether the problem repeats. A short recording of a disposable example is more useful than an unredacted screenshot of private files.",
+                        "If restart is appropriate, finish transfers and save editor work first. Keep a backup of any configuration you intend to preserve. Reset Pathem Data is a separate destructive cleanup workflow that can clear settings and restore folder-opening behavior; it is not a routine diagnostic step.",
+                        "A successful workaround does not prove the original cause. Report what the workaround changed so a later fix can address the actual mechanism rather than hide the symptom."
+                    ]
+                }
+            ],
+            "related": [
+                "install",
+                "copy-move",
+                "views-dates"
+            ]
+        }
+    ]
+}
