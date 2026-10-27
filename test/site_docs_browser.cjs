@@ -118,6 +118,70 @@ async function run() {
     fs.writeFileSync(path.join(artifacts, name + ".png"), Buffer.from(data, "base64"));
   }
 
+  async function screenshotLayout() {
+    return evaluate(`(() => {
+      const figures = [...document.querySelectorAll('#built-in figure')];
+      const visible = element => {
+        if (!element) return false;
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width>0 && rect.height>0 && style.display!=='none' && style.visibility!=='hidden' && Number(style.opacity)>0;
+      };
+      return {
+        count:figures.length,
+        captions:figures.every(figure => getComputedStyle(figure).opacity==='1' && visible(figure.querySelector('figcaption')) &&
+          visible(figure.querySelector('figcaption h3')) && figure.querySelector('figcaption p')?.textContent.trim().length>20 &&
+          !figure.querySelector('.window figcaption')),
+        images:figures.every(figure => {
+          const image=figure.querySelector('img'); const rect=image.getBoundingClientRect();
+          return image.complete && image.naturalWidth>0 && rect.width>0 && rect.left>=0 && rect.right<=innerWidth+1;
+        }),
+        separated:figures.every((figure,i) => !i || figure.getBoundingClientRect().top-figures[i-1].getBoundingClientRect().bottom>=24),
+        overflow:document.documentElement.scrollWidth>innerWidth+1
+      };
+    })()`);
+  }
+  async function homepageShots(name) {
+    // Deliver the real lazy-load/scroll-reveal path, not a construction-only DOM check.
+    for (let i=0;i<4;i++) {
+      await evaluate(`document.querySelectorAll('#built-in figure')[${i}].scrollIntoView({behavior:'instant',block:'center'})`);
+      await evaluate(`Promise.all([...document.querySelectorAll('#built-in img')].slice(0,${i+1}).map(image => image.decode()))`);
+      await waitFor(`document.querySelectorAll('#built-in figure')[${i}].classList.contains('in')`);
+      await evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`);
+      await evaluate(`Promise.all(document.querySelectorAll('#built-in figure')[${i}].getAnimations().map(animation => animation.finished))`);
+    }
+    const state=await screenshotLayout();
+    check(name + ' four captioned screenshots', state.count===4 && state.captions);
+    check(name + ' loaded images within viewport', state.images && !state.overflow);
+    check(name + ' screenshots visibly separated', state.separated);
+  }
+
+  await viewport(1280, true); await navigate('/');
+  await homepageShots('homepage sample');
+  await evaluate(`document.querySelectorAll('#built-in figure').forEach(figure => figure.style.setProperty('margin','0','important'));
+    document.querySelector('#built-in .feature-shots').style.gap='0px'`);
+  check('screenshot instrument rejects joined figures', !(await screenshotLayout()).separated);
+  await evaluate(`document.querySelectorAll('#built-in figure').forEach(figure => figure.style.removeProperty('margin'));
+    document.querySelector('#built-in .feature-shots').style.removeProperty('gap');
+    document.querySelector('#built-in figcaption').style.display='none'`);
+  check('screenshot instrument rejects hidden caption', !(await screenshotLayout()).captions);
+  await evaluate(`document.querySelector('#built-in figcaption').style.removeProperty('display')`);
+  await homepageShots('restored screenshot control');
+  for (const width of [1280,390,320]) for (const dark of [true,false]) {
+    await viewport(width,dark); await navigate('/');
+    const name='homepage-'+width+'-'+(dark?'dark':'light');
+    await homepageShots(name);
+    // Fit the complete four-feature stack in one evidence image without changing layout width.
+    const clip=await evaluate(`(() => {const r=document.querySelector('#built-in').getBoundingClientRect();
+      return {x:r.left+scrollX,y:r.top+scrollY,width:r.width,height:r.height,scale:1};})()`);
+    const {data}=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip},sessionId);
+    fs.writeFileSync(path.join(artifacts,name+'.png'),Buffer.from(data,'base64'));
+  }
+  if (process.argv.includes('--homepage-only')) {
+    check('no uncaught browser errors',exceptions.length===0);
+    await send('Browser.close'); assertionsPassed=true; return;
+  }
+
   for (const width of [1280, 390, 320]) {
     await viewport(width, true); await navigate("/");
     check("landing-page guide link visible at " + width, await evaluate(`(() => {

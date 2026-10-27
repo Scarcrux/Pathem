@@ -52,6 +52,32 @@ default. No Swift/app build or install is necessary for this website-only change
 
 ## Browser criteria, written before the run
 
+### Built-in screenshot regression
+
+The owner reported four joined, unlabeled screenshots on the homepage. The live
+HTML has no figcaptions, and `figure.window { margin: 0 }` overrides the less
+specific `.stage` margin. Before changing that markup, the focused browser check
+must fail on this baseline. Acceptance: exactly four figures, each with a visible
+feature heading and explanatory figcaption, loaded screenshot, caption outside
+the clipped window frame, at least 24px between figures, and no horizontal
+overflow at 1280, 390 and 320px in light and dark appearances. A synthetic
+zero-gap control and a hidden-caption control must each be rejected by the same
+measurement, followed by a restored good control. Capture and inspect actual
+desktop/mobile screenshots. Run with `node test/site_docs_browser.cjs
+--homepage-only`; these checks also run in the normal full browser suite.
+
+Verification: the unchanged homepage failed the actual browser caption assertion
+(exit1). After separating figures into an explicitly spaced grid and adding four
+visible figcaptions outside window frames, the focused run passed28 checks. The
+final `make docs-browser` exited0: nine static/source tests, four search tests,
+and178 browser checks. Joined-figure and hidden-caption controls were rejected,
+then restored controls passed. Initial screenshots caught the harness capturing
+during the reveal animation; it now waits for actual animation completion and
+requires fully opaque figures. Final desktop-dark and mobile-light captures were
+visually inspected: all four screenshots and captions are clear and separated.
+This verifies layout, not freshness of the existing July app screenshots. No
+native app build or install was needed.
+
 The initial sample must deliver actual desktop and mobile layouts, reject a
 synthetically overflowing page, restore a known-good layout, and expand a real
 mobile navigation menu. Only then run the full guide matrix. Every guide must

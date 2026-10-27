@@ -216,6 +216,12 @@
   .titlebar .path { font-family: var(--mono); font-size: .78rem; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .window img, .window video { display: block; width: 100%; height: auto; }
   figure.window { margin: 0; }
+  /* Independent feature figures: captions stay outside the clipped window chrome. */
+  .feature-shots { display: grid; gap: clamp(2.5rem, 5vw, 4rem); margin-top: 1.8rem; }
+  .feature-shot { margin: 0; min-width: 0; }
+  .feature-shot figcaption { margin-top: 1rem; max-width: 65ch; }
+  .feature-shot h3 { margin: 0; font-size: 1.2rem; line-height: 1.3; }
+  .feature-shot figcaption p { margin: .4rem 0 0; color: var(--muted); }
 
   /* ---- stats strip ---- */
   .stats {
@@ -582,22 +588,48 @@
       <h2>More than a file browser</h2>
       <p>A native BitTorrent client, every remote and cloud backend, an embedded terminal, and Preview-grade PDF markup, all built in. No extra apps.</p>
     </div>
-    <figure class="stage window reveal">
+    <div class="feature-shots">
+    <figure class="feature-shot reveal">
+      <div class="window">
       <img src="/assets/view-torrent.webp" width="1100" height="692" loading="lazy" alt="Pathem's built-in torrent client: a transfer drawer below the dual-pane browser lists five torrents (Ubuntu and Blender downloading, Debian and an Internet Archive set seeding, Fedora paused), each with progress, down and up speed, ETA, ratio, peers, and status." />
+      </div>
+      <figcaption>
+        <h3>BitTorrent, built in</h3>
+        <p>Add a magnet link or torrent file, then follow downloads, speeds, peers, and seeding in the transfer drawer.</p>
+      </figcaption>
     </figure>
-    <figure class="stage window reveal">
+    <figure class="feature-shot reveal">
+      <div class="window">
       <img src="/assets/view-remote.webp" width="1100" height="692" loading="lazy" alt="Pathem browsing the network: one pane lists discovered hosts (living-room-nas, media-server, OrbStack, Studio-Mac), the other shows a photo gallery, and the sidebar holds favorites, network locations, iCloud Drive, Dropbox, volumes, and smart folders." />
+      </div>
+      <figcaption>
+        <h3>Remote and network browsing</h3>
+        <p>Find network hosts and keep remote connections, cloud folders, and local files within the same dual-pane workspace.</p>
+      </figcaption>
     </figure>
-    <figure class="stage window reveal">
+    <figure class="feature-shot reveal">
+      <div class="window">
       <img src="/assets/view-terminal.webp" width="1280" height="872" loading="lazy" alt="Pathem's embedded terminal docked below the dual-pane browser, running sw_vers and swift --version and showing the macOS and Swift versions at a shell prompt that follows the active folder." />
+      </div>
+      <figcaption>
+        <h3>A terminal that follows your folder</h3>
+        <p>Open an embedded shell below the browser and work in the active directory without switching apps.</p>
+      </figcaption>
     </figure>
-    <figure class="stage window reveal">
+    <figure class="feature-shot reveal">
+      <div class="window">
       <div class="titlebar">
         <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
         <span class="path">Project Brief.pdf &middot; Markup</span>
       </div>
       <img src="/assets/view-markup.webp" width="1020" height="616" loading="lazy" alt="A PDF open in Pathem's markup viewer: a line of the document is highlighted in yellow, a red arrow points to it, and a blue sticky note sits in the margin. Highlight, draw, add shapes and notes, sign, and save, all without leaving the file manager." />
+      </div>
+      <figcaption>
+        <h3>PDF markup without leaving Pathem</h3>
+        <p>Highlight passages, draw shapes, add notes, and sign PDFs, then save your changes from the built-in viewer.</p>
+      </figcaption>
     </figure>
+    </div>
   </section>
 
   <section class="sec wrap" id="views">
