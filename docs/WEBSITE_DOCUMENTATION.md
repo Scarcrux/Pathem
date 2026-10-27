@@ -141,3 +141,20 @@ blocked-index fallback, no-script access, and owned browser-group closure. Live
 screenshots confirmed the expected documentation UI. Local docs-check13 tests
 also pass. No app build/install, Git push, DNS/access change or private app-source
 publication occurred.
+
+## Homepage screenshot repair deployment
+
+Owner-requested follow-up527f6e1 separates the four built-in feature screenshots
+and adds visible explanatory captions. Normal commit hooks passed and the change
+landed before deployment. Wrangler4.122.0 exited0 deploying the existing `site/`
+root to the existing `pathem` production project/main branch:
+https://86087ee4.pathem.pages.dev. Only index.html was uploaded;46 assets were
+reused. Prior deployment870f2623 remains available for rollback. No private app
+source, internal evidence, credentials, Git history or visibility changes shipped.
+
+Read-only production browser verification at https://pathem.app exited0 with28
+checks: all four captioned images loaded and separated at1280/390/320px in both
+appearances, contrasting joined/hidden-caption controls, no browser exceptions,
+and actual owned-browser closure. The live mobile-light capture was inspected.
+Production homepage SHA256 matched local index.html exactly:
+`5b4d590949c63cde98b5995bd858296658f9972a7c4506d63897489f7f231a14`.

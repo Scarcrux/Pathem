@@ -1635,6 +1635,10 @@ name = "pathem"
     text = "Homepage screenshot repair verified: original browser run exit1 at missing captions; dedicated feature grid and four visible figcaptions outside clipped frames now pass. Focused28 checks; final make docs-browser terminal0 with9 static+4 search+178 browser checks at1280/390/320 light-dark. Same instrument rejects joined figures and hidden captions then accepts restoration. Initial mid-animation captures rejected; harness now waits actual animation completion and full opacity. Final desktop/mobile captures visually inspected. Existing app screenshot freshness and broader53.3 remain open; no app/native/install action. Preparing normal commit/land and existing public site-only deployment requested by owner."
     at = "2026-10-27T01:42:28Z"
 
+  [[mission.comment]]
+    text = "Homepage repair527f6e1 now deployed to existing pathem.app via Pages86087ee4 (wrangler terminal0, only index.html uploaded/46assets reused; previous production retained). Live browser terminal0:28 checks at1280/390/320 light-dark, all four loaded captioned separated screenshots, contrasting joined/hidden-caption controls, owned Chrome group closed; live mobile capture inspected. Live HTML SHA256 exactly matches local5b4d590949c63cde98b5995bd858296658f9972a7c4506d63897489f7f231a14. No private-source publication, app build/install or visibility change. Homepage issue complete; broader visual-artifact/screenshot-refresh task remains open."
+    at = "2026-10-27T01:43:35Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
