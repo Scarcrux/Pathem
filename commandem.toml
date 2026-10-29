@@ -31,6 +31,7 @@ name = "pathem"
   title = "Launch public and convert visitors into GitHub stars"
   why = "The repo exists to earn stars that back a job search, so the finish line is a public launch that converts, not just working code. Done when the repo is public, pathem.app converts (a working notarized download plus Sparkle auto-update, not a greyed 'coming soon'), and the README and site are HN-ready. Fed by the website, launch-conversion, update-affordance, and public-flip phases."
   status = "next"
+  theater = "public-launches"
 
 [[campaign]]
   id = "c-a30e6340"
@@ -47,6 +48,7 @@ name = "pathem"
   title = "A power-user Finder replacement people trust and switch to"
   why = "Adoption (and stars) require parity-plus with Directory Opus, Path Finder, and ForkLift on a non-sandboxed build users trust with Full Disk Access. Done when the signature power features are complete, editor and Finder handoff ship, and the app stays hardened: tested dangerous corners, secure defaults, accessibility, localization, and no live-app rough edges."
   status = "now"
+  theater = "products"
 
 [[mission]]
   id = "m-e022b1ba"
