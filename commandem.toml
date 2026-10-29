@@ -25,6 +25,9 @@ name = "pathem"
 # progress_total = 140
 # queue_file = "results/queue.txt"
 
+[op]
+missions = ["m-1331afb7", "m-b2532fac"]
+
 # >>> commandem roadmap (managed: edit missions in the Commandem app or `commandem roadmap`) >>>
 [[campaign]]
   id = "c-6e1329d4"
