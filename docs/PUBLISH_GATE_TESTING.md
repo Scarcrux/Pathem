@@ -154,3 +154,23 @@ Sparkle keys removed beforehand):
   write, the same as the other test hooks.
 - Full `test/e2e/run.sh --packaged`: 14/14, including the new assertion, with the owner's
   Sparkle keys still absent afterwards.
+
+## DMG signing and notarization (2026-11-11)
+
+Trigger: the first full local dry run produced a DMG that was not signed or notarized
+itself (`spctl`: "no usable signature"); only the app inside was.
+
+Change: `release.sh` signs the DMG with Developer ID, notarizes and staples it when a
+notary profile is set, and does so before the Sparkle signature, because stapling changes
+the file. `verify-release.sh dmg` (A9) checks the Developer ID leaf and team, the stapled
+ticket and Gatekeeper acceptance, and a publish must pass it.
+
+Results from a second dry run (`PUBLISH` unset, nothing uploaded to GitHub):
+
+- A9 PASS on the produced DMG, 3/3. Both notarizations (app, DMG) were Accepted.
+- A1 to A6, A7 and A8 still PASS, so the Sparkle signature covers the stapled DMG.
+- Controls: an unsigned DMG fails all three A9 checks; the real DMG with a wrong expected
+  team fails the team check only.
+
+Not exercised: the A9 call inside a real `PUBLISH=1` run, and downloading the DMG in a
+browser on another Mac (the quarantine path).

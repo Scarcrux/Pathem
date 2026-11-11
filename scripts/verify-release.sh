@@ -9,6 +9,8 @@
 #       A4 stapled ticket, A5 Gatekeeper, A6 universal executables
 #   scripts/verify-release.sh signature <Pathem.app> <update.dmg> <base64 edSignature>
 #       A7 the DMG's EdDSA signature verifies against the app's own SUPublicEDKey
+#   scripts/verify-release.sh dmg <update.dmg> <TEAMID>
+#       A9 the DMG itself is Developer ID signed by the team, stapled, and accepted by Gatekeeper
 #   scripts/verify-release.sh appcast <appcast.xml> <download url> <update.dmg> <base64 edSignature>
 #       A8 the item for that URL carries the signature and the DMG's byte length, and
 #          every item in the feed is signed
@@ -23,7 +25,7 @@ pass() { printf 'PASS %s\n' "$*"; }
 fail() { printf 'FAIL %s\n' "$*"; failures=$((failures + 1)); }
 
 usage() {
-	sed -n '6,14p' "$0" >&2
+	sed -n '6,16p' "$0" >&2
 	exit 2
 }
 
@@ -111,6 +113,31 @@ verify_signature() {
 	fi
 }
 
+verify_dmg() {
+	local dmg="$1" team="$2"
+	[[ -r "$dmg" ]] || { fail "A9 unreadable DMG: $dmg"; return; }
+	local details leaf actual_team
+	details="$(codesign -dvv "$dmg" 2>&1)"
+	leaf="$(sed -n 's/^Authority=//p' <<<"$details" | head -1)"
+	actual_team="$(sed -n 's/^TeamIdentifier=//p' <<<"$details" | head -1)"
+	if codesign --verify --strict "$dmg" 2>/dev/null \
+		&& [[ "$leaf" == "Developer ID Application: "* && "$actual_team" == "$team" ]]; then
+		pass "A9 DMG signed with Developer ID, team $actual_team"
+	else
+		fail "A9 DMG leaf '${leaf:-none (unsigned)}' team '${actual_team:-none}' (want Developer ID Application, team $team)"
+	fi
+	if xcrun stapler validate "$dmg" >/dev/null 2>&1; then
+		pass "A9 DMG notarization ticket stapled"
+	else
+		fail "A9 DMG has no stapled notarization ticket"
+	fi
+	if /usr/sbin/spctl --assess --type open --context context:primary-signature "$dmg" 2>/dev/null; then
+		pass "A9 Gatekeeper accepts the DMG"
+	else
+		fail "A9 Gatekeeper rejects the DMG"
+	fi
+}
+
 verify_appcast() {
 	local appcast="$1" url="$2" dmg="$3" sig="$4"
 	[[ -r "$appcast" && -r "$dmg" ]] || { fail "A8 unreadable appcast or DMG"; return; }
@@ -134,6 +161,7 @@ verify_appcast() {
 case "${1:-}" in
 	app) [[ $# -eq 3 ]] || usage; verify_app "$2" "$3" ;;
 	signature) [[ $# -eq 4 ]] || usage; verify_signature "$2" "$3" "$4" ;;
+	dmg) [[ $# -eq 3 ]] || usage; verify_dmg "$2" "$3" ;;
 	appcast) [[ $# -eq 5 ]] || usage; verify_appcast "$2" "$3" "$4" "$5" ;;
 	*) usage ;;
 esac

@@ -138,6 +138,22 @@ hdiutil create -volname "$APP_NAME $VERSION" -srcfolder "$STAGE" -ov -format UDZ
 rm -rf "$STAGE"
 echo "    $(du -h "$DMG" | cut -f1)  $DMG"
 
+# 2b) Sign, notarize and staple the DMG itself, so the download is accepted on its own and
+#     not only the app inside it. This must happen before the Sparkle signature below:
+#     stapling changes the file's bytes.
+if [[ -n "${DEVELOPER_ID:-}" ]]; then
+	echo "==> Signing the DMG"
+	codesign --force --timestamp --sign "$DEVELOPER_ID" "$DMG"
+	if [[ -n "${NOTARY_PROFILE:-}" ]]; then
+		echo "==> Notarizing the DMG"
+		xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+		xcrun stapler staple "$DMG"
+	fi
+fi
+if [[ $PUBLISHING == 1 ]]; then
+	"$ROOT/scripts/verify-release.sh" dmg "$DMG" "$TEAM_ID"
+fi
+
 # 3) Sign the DMG with the Sparkle EdDSA key (SPARKLE_KEY_FILE, else the login
 #    Keychain). A dry run without a key emits an unsigned appcast for inspection and
 #    warns; a publish refuses, and the signature must verify against the public key

@@ -98,6 +98,7 @@ the same `teamID` in any extension's `manifest.json`.
    - build a universal (arm64 + x86_64), Hardened-Runtime-signed bundle
      (`scripts/package.sh`), notarize and staple it, and verify the result;
    - wrap it in `dist/Pathem-<version>.dmg` with a drag-to-Applications target;
+   - sign, notarize and staple the DMG itself, and verify it;
    - sign the DMG with your Sparkle key and verify that signature against the
      public key inside the app;
    - regenerate `dist/appcast.xml` (newest release first, each item pointing at
