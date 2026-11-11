@@ -1237,6 +1237,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-bce3e9fd"
     title = "Sign, notarize and staple the release DMG itself (release.sh only notarizes the app inside; dry-run DMG is unsigned, 'no usable signature'), and add a verify-release check for it"
+    done = true
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1661,6 +1662,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "2026-11-11, owner-requested after the release audit. Landed 74f97c8 (task 44): Replace All rewrote an outside sibling for a 'scope:12:folder' path, reproduced by a new engine test (8 expectations red), fixed with --null tool output plus an independent in-folder check; 9 tests green; rg branch not run end to end (rg not installed here; its --null bytes compared with a real rg binary). Landed 924e74e (task 45): failed Save lost PDF markup on navigate/view switch/open, reproduced by a control build in PATHEM_SMOKE (file never got the markup), fixed by propagating the refusal; 3 new smoke checks, real modal buttons not clicked (test hook). Landed 26bcb35: bundled changelog 0.9.0 entry refreshed, root CHANGELOG.md pointer, README install status corrected (audit correction: a changelog did exist, in the app bundle). First full local release dry run (PUBLISH unset): universal build, notarization Accepted and stapled, DMG 19 MB, Sparkle signature from the Keychain key, appcast; verify-release app 6/6 (also on the app inside the mounted DMG), signature A7 PASS, appcast A8 PASS, valid XML. Finding, filed as a new task: the DMG itself is unsigned and un-notarized. dist/ removed. Not exercised: gh release create, the tag workflow, an actual update between versions. Owner given the gh secret set steps for the seven workflow secrets."
     at = "2026-11-11T12:56:21Z"
+
+  [[mission.comment]]
+    text = "Landed task 53.53: release.sh signs, notarizes and staples the DMG before the Sparkle signature; verify-release dmg (A9) required for publish. Second local dry run: both notarizations Accepted, A9 3/3, A1-A8 still pass; controls (unsigned DMG, wrong team) fail correctly. Owner-requested install of that notarized universal build (main d211f51 code incl. tasks 44/45 fixes) by atomic swap, sha256 prefix 6af865e85e15, verify-release 6/6 installed; previous build backed up at /tmp/pathem-install-backup.fE1c. The owner's app was running (PID 61950) and was not touched, so the fixes apply on next relaunch. Nothing published."
+    at = "2026-11-11T13:04:54Z"
 
 [[mission]]
   id = "m-e1443252"
