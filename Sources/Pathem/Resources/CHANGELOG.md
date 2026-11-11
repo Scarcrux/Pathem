@@ -5,10 +5,19 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
-## 0.9.0 - 2026-07-26
-- Live Quick Look previews in the column view's preview column and the gallery view's large preview, so both show real file content (scrollable PDFs, playable media, selectable text, images) instead of a static icon-sized thumbnail.
-- A visible update button appears in the window title bar when a new version is ready to install, so updates no longer rely on a background prompt you might miss. Clicking it opens the installer with its release notes; nothing is forced on you until you click.
-- This Release Notes window: an in-app changelog you can open any time from the Help menu.
+## 0.9.0 - 2026-11-11
+- Finder parity: the full set of Finder sort and group options, per-folder view options, in-place rename in every view, a Finder-style Dock menu with recent folders, spring-loaded path segments and navigation buttons during a drag, and Compress, Quick Look, Make Alias, Show Original and Show Package Contents in the right-click menu.
+- Search: one search window for filenames or file contents, with This Folder, This Mac and Other Folder scopes. Replace in files now only ever changes files inside the folder you chose.
+- Always Open With works for files with no extension, such as .env and Makefile, and opens the file as soon as you set it.
+- PDF and image viewing in a pane, with Preview-style markup. Unsaved markup is kept if a save fails, instead of being lost when you navigate away.
+- Photos library browsing and export, Remove Background, Auto-Tag by Content, a near-duplicate photo culler, a crop editor, and audio and video conversion.
+- A bulk metadata editor (EXIF, IPTC, Finder tags and comments), Remove Location, batch-rename presets with date, parent-folder and EXIF tokens, and a grouped duplicate resolver.
+- Customizable pane header: show, hide and reorder its buttons. Tabs can be reordered, moved between panes and torn off into a window.
+- Reveal in Pathem for VS Code and Cursor, alongside the existing editor integrations. Jupyter notebooks preview safely inside Pathem.
+- Live Quick Look previews in the column and gallery views.
+- A visible update button in the window title bar when a new version is ready, and this Release Notes window.
+- Confirmation popovers no longer cancel themselves when one follows another quickly, and closing a tab can no longer close a tab you are not looking at.
+- All six languages are fully translated.
 
 ## 0.8.0 - 2026-07-20
 - Native Swift BitTorrent engine with an optional confirm for inbound magnet and torrent links and a configurable download folder.

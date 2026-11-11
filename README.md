@@ -201,13 +201,17 @@ Build from source today (below). A prebuilt download is not published yet.
 ### Download (coming with the first release)
 
 There is no `.dmg` on [Releases](https://github.com/Scarcrux/Pathem/releases)
-yet. The first tagged release will be a universal (Apple Silicon + Intel),
-Developer ID-signed, notarized, stapled build you can drag to Applications with
-no Gatekeeper warnings and no build step, and it will update itself via Sparkle
-(App menu > Check for Updates…). The release pipeline that produces it
-(`.github/workflows/release.yml`, triggered on a `v*` tag) is in place; the
-signing keys and notarization credentials are the remaining setup. Until then,
-build from source.
+yet. The first release will be a universal (Apple Silicon + Intel), Developer
+ID-signed, notarized, stapled build you can drag to Applications with no
+Gatekeeper warnings and no build step, and it will update itself via Sparkle
+(App menu > Check for Updates…).
+
+Where that stands: the app has been built, signed and notarized locally and passes
+the release verifier (`scripts/verify-release.sh`), and the update-signing key is
+in place. Publishing refuses to run unless every signing requirement is met and
+the full test gate passes (see [RELEASE.md](RELEASE.md)). What remains is cutting
+the first release itself. Until then, build from source. What changed in each
+version is in the [changelog](CHANGELOG.md).
 
 ### Build from source
 
