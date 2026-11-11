@@ -28,14 +28,18 @@ public enum ContentSearch {
         guard !query.isEmpty else { return [] }
         let output: String
         if let rg = ripgrep {
-            var args = ["--line-number", "--no-heading", "--color", "never", "--max-count", "100"]
+            // --null ends each path with NUL, so a path containing ":<digits>:" or a newline
+            // cannot be mistaken for the path/line boundary.
+            var args = [
+                "--null", "--line-number", "--no-heading", "--color", "never", "--max-count", "100",
+            ]
             if !regex { args.append("--fixed-strings") }
             if !caseSensitive { args.append("--ignore-case") }
             args += ["--", query, folder.path]  // -- so a query starting with "-" isn't a flag
             guard let result = try? await RemoteRunner.run(rg, args) else { return [] }
             output = String(decoding: result.0, as: UTF8.self)
         } else {
-            var args = ["-rnI"]  // recursive, line numbers, skip binary files
+            var args = ["-rnI", "--null"]  // recursive, line numbers, skip binaries, NUL after path
             if !caseSensitive { args.append("-i") }
             // The UI's regex contract uses extended syntax (groups and `|`). macOS grep defaults
             // to basic regex, where those are literals, so explicitly select ERE when rg is absent.
@@ -66,7 +70,9 @@ public enum ContentSearch {
     ) async -> ReplaceResult {
         let matches = await search(
             query, in: folder, regex: regex, caseSensitive: caseSensitive, maxResults: 1_000_000)
-        let files = Set(matches.map(\.path))
+        // Independent write-scope check: only files strictly inside `folder` are rewritten,
+        // whatever the search tool printed.
+        let files = Set(matches.map(\.path)).filter { isInside($0, folder) }
         var filesChanged = 0
         var replacements = 0
         for path in files {
@@ -82,6 +88,14 @@ public enum ContentSearch {
             replacements += count
         }
         return ReplaceResult(filesChanged: filesChanged, replacements: replacements)
+    }
+
+    /// Whether `path` is strictly inside `folder`, after resolving `..` and symlinks. Replace
+    /// All checks this itself and never trusts a path just because the search tool printed it.
+    static func isInside(_ path: String, _ folder: URL) -> Bool {
+        let root = folder.standardizedFileURL.resolvingSymlinksInPath().path
+        let target = URL(fileURLWithPath: path).standardizedFileURL.resolvingSymlinksInPath().path
+        return target.hasPrefix(root.hasSuffix("/") ? root : root + "/")
     }
 
     /// Pure replacement over one string; returns the new text and how many matches were
@@ -114,21 +128,24 @@ public enum ContentSearch {
         return (text.replacingOccurrences(of: query, with: replacement, options: compare), count)
     }
 
-    /// Parse "path:line:text" output (the common rg/grep -n form). A path may contain a
-    /// colon, so match the *last* "path:digits:" boundary by anchoring on ":<digits>:".
+    /// Parse `path NUL line ":" text "\n"` records (rg/grep `--null -n`). The path ends at
+    /// the NUL, so it may contain colons, digits or newlines; the text ends at the newline.
+    /// Records without a NUL are refused rather than guessed at.
     static func parse(_ output: String, limit: Int) -> [Match] {
         var matches: [Match] = []
-        for raw in output.split(whereSeparator: \.isNewline) {
-            let lineString = String(raw)
-            guard let range = lineString.range(of: #":\d+:"#, options: .regularExpression) else {
-                continue
-            }
-            let path = String(lineString[lineString.startIndex..<range.lowerBound])
-            let number = Int(lineString[range].dropFirst().dropLast()) ?? 0
-            let text = String(lineString[range.upperBound...])
-            guard !path.isEmpty else { continue }
-            matches.append(Match(path: path, line: number, text: text))
-            if matches.count >= limit { break }
+        var rest = Substring(output)
+        while matches.count < limit, let nul = rest.firstIndex(of: "\u{0}") {
+            let path = String(rest[rest.startIndex..<nul])
+            let afterNul = rest[rest.index(after: nul)...]
+            let lineEnd = afterNul.firstIndex(where: \.isNewline) ?? afterNul.endIndex
+            let record = afterNul[afterNul.startIndex..<lineEnd]
+            rest = lineEnd < afterNul.endIndex ? afterNul[afterNul.index(after: lineEnd)...] : ""
+            guard let colon = record.firstIndex(of: ":"),
+                let number = Int(record[record.startIndex..<colon]), !path.isEmpty
+            else { continue }
+            matches.append(
+                Match(path: path, line: number, text: String(record[record.index(after: colon)...]))
+            )
         }
         return matches
     }
