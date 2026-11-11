@@ -1194,10 +1194,12 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-b6a6b664"
     title = "P1 audit: reproduce and fix ContentSearch numeric-colon path parsing and out-of-scope Replace All writes; use unambiguous tool output and independent write-scope ownership, with rg/grep, hostile legal paths and ordinary controls. Current-source disposable fixture rewrote outside sibling scope while intended scope:12:folder/note.txt remained unchanged; see docs/MISSION_53_AUDIT.md."
+    done = true
 
   [[mission.task]]
     id = "t-a43ecaae"
     title = "P1 audit: preserve unsaved PDF markup when Save fails during navigation/view changes. Source show/prepareToClose discard false and dismissViewer removes regardless; reproduce native failed-save versus successful Save/Discard/Done before repair, propagate refusal through navigation callers. Source-confirmed, native failure not yet tested; see docs/MISSION_53_AUDIT.md."
+    done = true
 
   [[mission.task]]
     id = "t-aee642ef"
@@ -1231,6 +1233,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-24b01d7e"
     title = "Owner reports Copy via hotkey or button then Paste into a message loses filename/info compared with drag into the same message. Both Pathem copy routes call writeSelectionToPasteboard and write NSURL items only; drag additionally advertises legacy filenames and, for non-text files, typed file promises. Destination app/file type and receiver-selected representation not yet established. Reproduce with private pasteboards/fixtures and receiver controls before changing export policy; preserve text attachment versus inline behavior, multi-file/Cut semantics, and original names/bytes."
+
+  [[mission.task]]
+    id = "t-bce3e9fd"
+    title = "Sign, notarize and staple the release DMG itself (release.sh only notarizes the app inside; dry-run DMG is unsigned, 'no usable signature'), and add a verify-release check for it"
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1647,6 +1653,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Release audit 2026-11-11 at main 0cf3319 (= origin, repo PRIVATE). PROVEN GREEN: make ci exit 0 (15 XCTest + 808 Swift Testing, debug E2E 67/1 standing pixel skip/0 fail, packaged 14/14, warnings 0 new); publish gate 17/17; candidate tree 0 safety findings; authorship 0; Developer ID cert present; notary profile works; Sparkle keychain key matches Info.plist and the backup file exists; no Pathem crash reports. BLOCKERS: (1) release-safety RED on history, 41 findings (37 paths, 3 emails, 1 credential pattern), owner decision task 35 still open; (2) GitHub has zero Actions secrets, so the tag workflow cannot sign/notarize, and its last 5 runs (v0.5.1 to v0.8.0, July) all failed in ~10 s; (3) 13 June pre-releases v0.3.x (no assets) and 22 tags are on the remote and become visible at a public flip, while Info.plist says 0.9.0 build 24 with no v0.9.0 tag; (4) P1 audit tasks 44 (ContentSearch Replace All out-of-scope writes) and 45 (PDF markup lost when Save fails) open; (5) README/site screenshots still 2026-07-04; README says signing keys are the remaining setup (stale, they exist locally). NEVER EXERCISED: DMG + Sparkle signature + appcast publish path with real credentials; tag workflow on macos-15 runner; update from one version to the next. Also: no CHANGELOG; LAUNCH_CHECKLIST 0/33 ticked; feed URL 404 (expected while private); installed app is an Oct 24 arm64 Developer ID build, not notarized (fine locally, not a release artifact). No changes made by this audit."
     at = "2026-11-11T11:29:53Z"
+
+  [[mission.comment]]
+    text = "Claude taking tasks 44 (ContentSearch numeric-colon parsing / out-of-scope Replace All) and 45 (PDF markup lost on failed Save) in the claude workbench at owner request, plus README/CHANGELOG refresh and a local release dry run (no GitHub upload). Codex please leave ContentSearch.swift, FindInFiles*, DocumentPreviewView/Markup files, README.md, CHANGELOG.md alone meanwhile."
+    at = "2026-11-11T12:46:44Z"
+
+  [[mission.comment]]
+    text = "2026-11-11, owner-requested after the release audit. Landed 74f97c8 (task 44): Replace All rewrote an outside sibling for a 'scope:12:folder' path, reproduced by a new engine test (8 expectations red), fixed with --null tool output plus an independent in-folder check; 9 tests green; rg branch not run end to end (rg not installed here; its --null bytes compared with a real rg binary). Landed 924e74e (task 45): failed Save lost PDF markup on navigate/view switch/open, reproduced by a control build in PATHEM_SMOKE (file never got the markup), fixed by propagating the refusal; 3 new smoke checks, real modal buttons not clicked (test hook). Landed 26bcb35: bundled changelog 0.9.0 entry refreshed, root CHANGELOG.md pointer, README install status corrected (audit correction: a changelog did exist, in the app bundle). First full local release dry run (PUBLISH unset): universal build, notarization Accepted and stapled, DMG 19 MB, Sparkle signature from the Keychain key, appcast; verify-release app 6/6 (also on the app inside the mounted DMG), signature A7 PASS, appcast A8 PASS, valid XML. Finding, filed as a new task: the DMG itself is unsigned and un-notarized. dist/ removed. Not exercised: gh release create, the tag workflow, an actual update between versions. Owner given the gh secret set steps for the seven workflow secrets."
+    at = "2026-11-11T12:56:21Z"
 
 [[mission]]
   id = "m-e1443252"
