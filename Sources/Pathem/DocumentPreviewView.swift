@@ -260,8 +260,16 @@ final class DocumentPreviewView: NSView {
     /// A corrupt or encrypted PDF (nil document, or one that loads locked) falls through to Quick
     /// Look, which shows a corrupt file gracefully and prompts for an encrypted PDF's password --
     /// where PDFView would just render blank behind dead zoom/print buttons.
-    func show(_ url: URL?) {
-        offerToSaveIfEdited()  // don't silently drop markup when navigating away
+    /// Returns false, leaving the current document in place, when it has unsaved markup, the user
+    /// chose Save and the write failed: replacing it would lose the markup.
+    @discardableResult
+    func show(_ url: URL?) -> Bool {
+        guard offerToSaveIfEdited() else { return false }
+        display(url)
+        return true
+    }
+
+    private func display(_ url: URL?) {
         currentURL = url
         notebookLoadID = UUID()
         if let url, Self.isNotebook(url) {
@@ -425,7 +433,7 @@ final class DocumentPreviewView: NSView {
             // Only surface a modal when actually on screen; the headless render/test harness runs this
             // view with no window, where runModal() would block the process forever instead of letting
             // the caller see the false return and exit.
-            if window != nil {
+            if window != nil, debugSaveChoice == nil {
                 let alert = NSAlert()
                 alert.messageText = L("markup.saveFailed", "Couldn't save the PDF.")
                 alert.informativeText = url.path
@@ -446,6 +454,11 @@ final class DocumentPreviewView: NSView {
     @discardableResult
     func offerToSaveIfEdited() -> Bool {
         guard isEdited, currentURL != nil else { return true }
+        if let debugSaveChoice {
+            if debugSaveChoice { guard saveMarkup() else { return false } }
+            isEdited = false
+            return true
+        }
         let alert = NSAlert()
         alert.messageText = L("markup.saveChanges", "Save your markup?")
         alert.informativeText = currentURL?.lastPathComponent ?? ""
@@ -459,6 +472,15 @@ final class DocumentPreviewView: NSView {
     }
 
     // MARK: Test hooks
+
+    /// Answers the "Save your markup?" prompt without a modal (true = Save, false = Discard) and
+    /// silences the save-failed alert, so the unsaved-markup paths can run in the smoke harness.
+    var debugSaveChoice: Bool?
+    var debugIsEdited: Bool { isEdited }
+    @discardableResult
+    func debugAddUnsavedHighlight() -> Bool {
+        pdfView.debugAddHighlight(CGRect(x: 40, y: 40, width: 120, height: 14))
+    }
 
     /// Add a highlight and save, for the markup round-trip smoke check.
     @discardableResult
@@ -589,8 +611,8 @@ final class PaneDocumentViewer: NSView {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     func show(_ url: URL) {
+        guard viewer.show(url) else { return }
         titleLabel.stringValue = url.lastPathComponent
-        viewer.show(url)
     }
 
     /// Turn on markup mode, arm the Draw tool, and lay down sample annotations, for the marquee shot
@@ -608,8 +630,11 @@ final class PaneDocumentViewer: NSView {
     }
 
     /// Offer to save before an incidental teardown (browsing away, view-mode switch). Called by
-    /// PaneController.dismissViewer; a no-op when there's nothing unsaved.
-    func prepareToClose() { viewer.offerToSaveIfEdited() }
+    /// PaneController.dismissViewer; true when there's nothing unsaved. False means the user chose
+    /// Save and the write failed, so the caller must keep the viewer open.
+    func prepareToClose() -> Bool { viewer.offerToSaveIfEdited() }
+
+    var debugViewer: DocumentPreviewView { viewer }
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53 { dismiss() } else { super.keyDown(with: event) }  // 53 = Escape

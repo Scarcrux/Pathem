@@ -1327,7 +1327,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     func descend(into entry: FileEntry) {
-        dismissViewer()  // opening something closes any document viewer overlay
+        // Opening something closes any document viewer overlay, unless its markup couldn't be saved.
+        guard dismissViewer() else { return }
         // In the Network view, an unmounted host has no real folder -- mount it instead of navigating.
         if networkHostNames.contains(entry.name) {
             onMountNetworkHost?(entry.name)
@@ -1931,7 +1932,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     func setViewMode(_ mode: ViewFormat.ViewMode) {
         guard mode != format.viewMode else { return }
-        dismissViewer()  // the view switcher sits above the overlay; switching mode closes the viewer
+        // The view switcher sits above the overlay; switching mode closes the viewer, unless its
+        // markup couldn't be saved.
+        guard dismissViewer() else { return }
         format.viewMode = mode
         if smartActive {
             // Re-apply in memory; don't persist a format rule onto the underlying
@@ -2744,7 +2747,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
 
     /// Jump to an arbitrary folder (used when restoring a layout).
     func navigate(to url: URL) {
-        dismissViewer()  // browsing away closes any open document viewer
+        // Browsing away closes any open document viewer, unless its markup couldn't be saved.
+        guard dismissViewer() else { return }
         nav.go(to: url.standardizedFileURL)
         enterDirectory()
     }
@@ -2752,7 +2756,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// Show `url` in a full-pane document viewer (PDF/image), overlaying this pane's browser until
     /// dismissed. Used by "Open in Other Pane" so the dual-pane becomes files-plus-document.
     func presentViewer(_ url: URL) {
-        dismissViewer()
+        guard dismissViewer() else { return }
         let overlay = PaneDocumentViewer()
         overlay.translatesAutoresizingMaskIntoConstraints = false
         overlay.onDone = { [weak self] in self?.dismissViewer() }
@@ -2772,13 +2776,20 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// to save unsaved markup first, so browsing away / switching view mode / opening another file
     /// doesn't silently drop annotations. (The Done button already offered; that clears the edited
     /// flag, so this doesn't prompt twice.)
-    func dismissViewer() {
-        guard let paneViewer else { return }
-        paneViewer.prepareToClose()
+    ///
+    /// Returns false, leaving the viewer open, when the user chose Save and the write failed:
+    /// callers must stop whatever would have replaced it, or the markup is lost.
+    @discardableResult
+    func dismissViewer() -> Bool {
+        guard let paneViewer else { return true }
+        guard paneViewer.prepareToClose() else { return false }
         paneViewer.removeFromSuperview()
         self.paneViewer = nil
         containerView.window?.makeFirstResponder(content.keyView)
+        return true
     }
+
+    var debugDocumentViewer: DocumentPreviewView? { paneViewer?.debugViewer }
 
     /// Whether the document viewer overlay is currently showing (for the smoke check).
     var isShowingViewer: Bool { paneViewer != nil }

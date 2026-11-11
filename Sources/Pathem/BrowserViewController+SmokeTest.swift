@@ -1801,6 +1801,52 @@ extension BrowserViewController {
             "open-viewable-presents-viewer", activePane?.isShowingViewer == true,
             "showing=\(activePane?.isShowingViewer == true)")
         activePane?.dismissViewer()
+        // Unsaved PDF markup must survive a failed Save: navigation, a view-mode switch and
+        // opening another document all have to stop instead of tearing the viewer down.
+        if let pane = activePane {
+            let fm = FileManager.default
+            let attrs = { (mode: Int) in [FileAttributeKey.posixPermissions: mode] }
+            let elsewhere = fm.temporaryDirectory
+            let startMode = pane.viewMode
+            let otherMode: ViewFormat.ViewMode = startMode == .list ? .icon : .list
+            pane.presentViewer(openPDF)
+            let before = (try? Data(contentsOf: openPDF)) ?? Data()
+            let edited = pane.debugDocumentViewer?.debugAddUnsavedHighlight() == true
+            pane.debugDocumentViewer?.debugSaveChoice = true  // "Save"
+            try? fm.setAttributes(attrs(0o444), ofItemAtPath: openPDF.path)
+            try? fm.setAttributes(attrs(0o555), ofItemAtPath: openDir.path)
+            pane.navigate(to: elsewhere)
+            pane.setViewMode(otherMode)
+            pane.presentViewer(openPDF)
+            let kept =
+                pane.isShowingViewer && pane.debugDocumentViewer?.debugIsEdited == true
+                && pane.currentURL.standardizedFileURL == openDir.standardizedFileURL
+                && pane.viewMode == startMode
+            check(
+                "markup-failed-save-blocks-teardown", edited && kept,
+                "edited=\(edited) showing=\(pane.isShowingViewer) stillEdited=\(pane.debugDocumentViewer?.debugIsEdited == true) at=\(pane.currentURL.lastPathComponent) mode=\(pane.viewMode.rawValue)"
+            )
+            // Control: once the file is writable, the same Save succeeds and navigation proceeds.
+            try? fm.setAttributes(attrs(0o755), ofItemAtPath: openDir.path)
+            try? fm.setAttributes(attrs(0o644), ofItemAtPath: openPDF.path)
+            pane.navigate(to: elsewhere)
+            let saved = (try? Data(contentsOf: openPDF)) ?? Data()
+            check(
+                "markup-successful-save-allows-navigation",
+                !pane.isShowingViewer && saved != before
+                    && pane.currentURL.standardizedFileURL == elsewhere.standardizedFileURL,
+                "showing=\(pane.isShowingViewer) fileChanged=\(saved != before)")
+            // Control: Discard leaves the file untouched and lets the teardown through.
+            pane.navigate(to: openDir)
+            pane.presentViewer(openPDF)
+            pane.debugDocumentViewer?.debugAddUnsavedHighlight()
+            pane.debugDocumentViewer?.debugSaveChoice = false  // "Discard"
+            pane.navigate(to: elsewhere)
+            check(
+                "markup-discard-allows-navigation",
+                !pane.isShowingViewer && ((try? Data(contentsOf: openPDF)) ?? Data()) == saved,
+                "showing=\(pane.isShowingViewer)")
+        }
         try? FileManager.default.removeItem(at: openDir)
         // Regression (LAST -- it swaps the active pane's view mode): a view-mode swap builds a fresh
         // content view, and its rows must stay draggable. directoryURL -- which each list row
