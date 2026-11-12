@@ -2036,4 +2036,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "3a300b7 after the owner's live Delete Now on Rust build output left ~110 GB behind with a permission alert: deletion is now best-effort (continues past failures, retries read-only folders, reports count + first path + system error). The original permission error's mechanism is NOT identified (nothing odd on disk afterwards); the new error text is the instrument. Header no longer duplicates the window title; summary moved left."
     at = "2026-11-12T12:41:11Z"
+
+  [[mission.comment]]
+    text = "Owner re-ran Delete Now on the 3a300b7 build: folder emptied (110 GB to 76 KB) but alert said 23 items left, No such file or directory. Reproduced with 4 concurrent deletes (3 of 9 runs red); fixed: vanished folders count as deleted, button stays disabled with a Deleting… note during a run. 30 of 30 green after. Unproven whether the second actor was a second click or another process; the first-ever permission error remains unexplained."
+    at = "2026-11-12T16:31:06Z"
 # <<< commandem roadmap <<<
