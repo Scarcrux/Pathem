@@ -1,4 +1,5 @@
 /* Pathem UI strings (Español) */
+
 "acl.add" = "Añadir";
 "acl.added" = "Añadido.";
 "acl.allow" = "Permitir";
@@ -526,7 +527,6 @@
 "cleanup.notedGood" = "Registrado como útil";
 "cleanup.notedKeep" = "Registrado y desmarcado";
 "cleanup.panelTitle" = "Limpieza";
-"cleanup.partialScan" = " (análisis parcial)";
 "cleanup.phaseDuplicates" = "analizando duplicados…";
 "cleanup.phaseScanning" = "Analizando archivos…";
 "cleanup.recommendWithAI" = "Recomendar con la AI";
@@ -1799,3 +1799,13 @@
 "xattr.removeQuarantine" = "Eliminar cuarentena";
 "xattr.title" = "Atributos extendidos";
 "xattr.titleFor" = "Atributos extendidos: %@";
+"cleanup.progress" = "%@ elementos analizados…";
+"cleanup.stop" = "Detener";
+"cleanup.stoppedPartial" = " · detenido antes de terminar, resultados parciales (%@ elementos analizados)";
+"cleanup.dupPartial" = " · duplicados comprobados solo en los primeros %@ archivos";
+"cleanup.emptyTrash" = "Vaciar la papelera…";
+"cleanup.emptyTrashTip" = "Los elementos de la papelera siguen ocupando espacio hasta que se vacía";
+"cleanup.movedToTrash" = "%@ movidos a la papelera. Vacía la papelera para liberar el espacio.";
+"cleanup.groupSmallDuplicates" = "%@ copias duplicadas pequeñas";
+"cleanup.groupCount" = "%@ × %@";
+"cleanup.groupLocations" = "En %@ ubicaciones, por ejemplo %@";

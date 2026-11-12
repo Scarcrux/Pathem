@@ -1,4 +1,5 @@
 /* Pathem UI strings (简体中文) */
+
 "acl.add" = "添加";
 "acl.added" = "已添加。";
 "acl.allow" = "允许";
@@ -526,7 +527,6 @@
 "cleanup.notedGood" = "已记为好评";
 "cleanup.notedKeep" = "已记录，并取消勾选";
 "cleanup.panelTitle" = "清理";
-"cleanup.partialScan" = "（部分扫描）";
 "cleanup.phaseDuplicates" = "正在分析重复项…";
 "cleanup.phaseScanning" = "正在扫描文件…";
 "cleanup.recommendWithAI" = "用 AI 推荐";
@@ -1799,3 +1799,13 @@
 "xattr.removeQuarantine" = "移除隔离标记";
 "xattr.title" = "扩展属性";
 "xattr.titleFor" = "扩展属性：%@";
+"cleanup.progress" = "已扫描 %@ 个项目…";
+"cleanup.stop" = "停止";
+"cleanup.stoppedPartial" = " · 已提前停止，结果不完整（已扫描 %@ 个项目）";
+"cleanup.dupPartial" = " · 仅在前 %@ 个文件中检查了重复项";
+"cleanup.emptyTrash" = "清倒废纸篓…";
+"cleanup.emptyTrashTip" = "移到废纸篓的项目在清倒废纸篓之前仍会占用空间";
+"cleanup.movedToTrash" = "已将 %@ 移到废纸篓。清倒废纸篓后才会释放空间。";
+"cleanup.groupSmallDuplicates" = "%@ 个较小的重复副本";
+"cleanup.groupCount" = "%@ × %@";
+"cleanup.groupLocations" = "位于 %@ 个位置，例如 %@";

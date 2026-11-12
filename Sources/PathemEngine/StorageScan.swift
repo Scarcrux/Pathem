@@ -24,7 +24,13 @@ public enum StorageScan {
     /// Folders whose contents are excluded from the duplicate scan (junk + noise).
     static var duplicateExclusions: Set<String> { junkDirectories.union(excludedDirectories) }
 
-    public enum Category: String, Sendable, Codable { case junk, duplicate, large, old }
+    /// Cache folders: listed for review with their size, never descended into or pre-checked.
+    static let cacheDirectories: Set<String> = ["Caches", ".cache"]
+
+    public enum Category: String, Sendable, Codable { case junk, duplicate, large, old, cache }
+
+    /// How many files the duplicate pass examines; beyond this the duplicate results are partial.
+    public static let duplicateFileLimit = 300_000
 
     public struct Item: Sendable, Equatable {
         public let path: String
@@ -32,7 +38,9 @@ public enum StorageScan {
         public let category: Category
         public let reason: String
         public let isDirectory: Bool
-        public init(path: String, size: Int64, category: Category, reason: String, isDirectory: Bool) {
+        public init(
+            path: String, size: Int64, category: Category, reason: String, isDirectory: Bool
+        ) {
             self.path = path
             self.size = size
             self.category = category
@@ -46,7 +54,13 @@ public enum StorageScan {
         public var duplicates: [Item] = []
         public var large: [Item] = []
         public var old: [Item] = []
+        public var caches: [Item] = []
+        /// True only when the walk was stopped before it finished (cancelled or an explicit limit).
         public var truncated = false
+        /// Entries visited by the walk, and regular files among them (for progress and for
+        /// telling whether the duplicate pass covered everything).
+        public var itemsScanned = 0
+        public var filesScanned = 0
         /// Bytes that are safe to remove (junk + duplicate extras); large/old are review-only.
         public var safeReclaimable: Int64 {
             (junk + duplicates).reduce(0) { $0 + $1.size }
@@ -57,77 +71,142 @@ public enum StorageScan {
     /// below so it can show quick results first, but this keeps a one-call entry point.
     public static func scan(
         _ root: URL, oldAfterDays: Int = 180, largeThreshold: Int64 = 50_000_000,
-        oldMinSize: Int64 = 5_000_000, maxPerReviewCategory: Int = 30, maxItems: Int = 300_000
+        oldMinSize: Int64 = 5_000_000, maxPerReviewCategory: Int = 30, maxItems: Int = .max
     ) -> Report {
         var report = scanQuick(
-            root, oldAfterDays: oldAfterDays, largeThreshold: largeThreshold, oldMinSize: oldMinSize,
+            root, oldAfterDays: oldAfterDays, largeThreshold: largeThreshold,
+            oldMinSize: oldMinSize,
             maxPerReviewCategory: maxPerReviewCategory, maxItems: maxItems)
-        report.duplicates = duplicates(root, maxItems: maxItems)
+        report.duplicates = duplicates(root)
         return report
     }
 
-    /// The fast phase: junk, large, and old files from a single walk (no hashing), so
-    /// results can be shown almost immediately while duplicates are still computing.
+    /// The fast phase: junk, caches, large, and old files from a single walk (no hashing), so
+    /// results can be shown while duplicates are still computing. The walk covers the whole
+    /// tree: it only stops early when `isCancelled` returns true or an explicit `maxItems` is
+    /// hit, and then sets `truncated`. Only candidate files are kept, so memory stays small.
     public static func scanQuick(
         _ root: URL, oldAfterDays: Int = 180, largeThreshold: Int64 = 50_000_000,
-        oldMinSize: Int64 = 5_000_000, maxPerReviewCategory: Int = 30, maxItems: Int = 300_000
+        oldMinSize: Int64 = 5_000_000, maxPerReviewCategory: Int = 30, maxItems: Int = .max,
+        progress: ((Int) -> Void)? = nil, isCancelled: () -> Bool = { false }
     ) -> Report {
         let fm = FileManager.default
         let keys: [URLResourceKey] = [.isDirectoryKey, .fileSizeKey, .contentModificationDateKey]
+        let cutoff = Date(timeIntervalSinceNow: -Double(oldAfterDays) * 86_400)
         var report = Report()
-        var files: [(path: String, size: Int64, mtime: Date)] = []
+        var large: [(path: String, size: Int64)] = []
+        var old: [(path: String, size: Int64)] = []
         var count = 0
         var stack = [root]
-        while let dir = stack.popLast() {
-            if count >= maxItems { report.truncated = true; break }
-            guard let entries = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: keys, options: [])
+        walk: while let dir = stack.popLast() {
+            if isCancelled() || count >= maxItems {
+                report.truncated = true
+                break
+            }
+            guard
+                let entries = try? fm.contentsOfDirectory(
+                    at: dir, includingPropertiesForKeys: keys, options: [])
             else { continue }
             for entry in entries {
                 count += 1
-                if count >= maxItems { report.truncated = true; break }
+                if count >= maxItems {
+                    report.truncated = true
+                    break walk
+                }
+                if count % 5000 == 0 {
+                    progress?(count)
+                    if isCancelled() {
+                        report.truncated = true
+                        break walk
+                    }
+                }
                 let values = try? entry.resourceValues(forKeys: Set(keys))
+                let name = entry.lastPathComponent
                 if values?.isDirectory == true {
-                    if junkDirectories.contains(entry.lastPathComponent) {
+                    if junkDirectories.contains(name) {
                         report.junk.append(
                             Item(
                                 path: entry.path, size: DirectorySize.total(of: entry).bytes,
-                                category: .junk, reason: entry.lastPathComponent, isDirectory: true))
-                    } else if excludedDirectories.contains(entry.lastPathComponent) {
-                        continue  // skip caches/VCS/system noise entirely (no descend, no listing)
+                                category: .junk, reason: name, isDirectory: true))
+                    } else if cacheDirectories.contains(name) {
+                        report.caches.append(
+                            Item(
+                                path: entry.path, size: DirectorySize.total(of: entry).bytes,
+                                category: .cache, reason: name, isDirectory: true))
+                    } else if excludedDirectories.contains(name) {
+                        continue  // skip VCS/system noise entirely (no descend, no listing)
                     } else {
                         stack.append(entry)  // descend
                     }
                 } else {
                     let size = Int64(values?.fileSize ?? 0)
-                    if entry.lastPathComponent == ".DS_Store" {
+                    if name == ".DS_Store" {
                         report.junk.append(
-                            Item(path: entry.path, size: size, category: .junk, reason: ".DS_Store", isDirectory: false))
-                    } else {
-                        files.append((entry.path, size, values?.contentModificationDate ?? .distantPast))
+                            Item(
+                                path: entry.path, size: size, category: .junk, reason: ".DS_Store",
+                                isDirectory: false))
+                        continue
+                    }
+                    report.filesScanned += 1
+                    if size >= largeThreshold { large.append((entry.path, size)) }
+                    if size >= oldMinSize,
+                        (values?.contentModificationDate ?? .distantPast) < cutoff
+                    {
+                        old.append((entry.path, size))
                     }
                 }
             }
         }
-
-        report.large =
-            files.filter { $0.size >= largeThreshold }.sorted { $0.size > $1.size }
-            .prefix(maxPerReviewCategory)
-            .map { Item(path: $0.path, size: $0.size, category: .large, reason: "large file", isDirectory: false) }
-
-        let cutoff = Date(timeIntervalSinceNow: -Double(oldAfterDays) * 86_400)
-        report.old =
-            files.filter { $0.mtime < cutoff && $0.size >= oldMinSize }.sorted { $0.size > $1.size }
-            .prefix(maxPerReviewCategory)
-            .map {
-                Item(path: $0.path, size: $0.size, category: .old, reason: "unused for a long time", isDirectory: false)
-            }
-
+        report.itemsScanned = count
+        report.large = large.sorted { $0.size > $1.size }.prefix(maxPerReviewCategory).map {
+            Item(
+                path: $0.path, size: $0.size, category: .large, reason: "large file",
+                isDirectory: false)
+        }
+        report.old = old.sorted { $0.size > $1.size }.prefix(maxPerReviewCategory).map {
+            Item(
+                path: $0.path, size: $0.size, category: .old, reason: "unused for a long time",
+                isDirectory: false)
+        }
         return report
+    }
+
+    /// One row of the Cleanup list: a single big item, or many small items of one kind folded
+    /// together so thousands of tiny folders don't bury the few that matter.
+    public struct Group: Sendable, Equatable {
+        public let category: Category
+        public let kind: String
+        public let items: [Item]
+        public var size: Int64 { items.reduce(0) { $0 + $1.size } }
+        public var isSingle: Bool { items.count == 1 }
+    }
+
+    /// Group `items` per (category, kind): each item of at least `individualAtLeast` bytes gets
+    /// its own row, and the smaller ones of that kind fold into one row. Biggest row first.
+    public static func grouped(_ items: [Item], individualAtLeast: Int64) -> [Group] {
+        var singles: [Group] = []
+        var folded: [String: [Item]] = [:]
+        var order: [String] = []
+        for item in items {
+            if item.size >= individualAtLeast {
+                singles.append(Group(category: item.category, kind: item.reason, items: [item]))
+            } else {
+                let key = item.category.rawValue + "\u{0}" + item.reason
+                if folded[key] == nil { order.append(key) }
+                folded[key, default: []].append(item)
+            }
+        }
+        let groups =
+            singles
+            + order.compactMap { key in
+                folded[key].map { Group(category: $0[0].category, kind: $0[0].reason, items: $0) }
+            }
+        return groups.sorted { $0.size > $1.size }
     }
 
     /// The slow phase: duplicate copies (content-hashed). Run after `scanQuick` so the
     /// user already sees junk/large/old while this completes.
-    public static func duplicates(_ root: URL, maxItems: Int = 300_000) -> [Item] {
+    public static func duplicates(_ root: URL, maxItems: Int = duplicateFileLimit) -> [Item] {
         var items: [Item] = []
         // Exclude caches/VCS/build dirs so results are meaningful files, not noise.
         for group in DuplicateFinder.find(
@@ -137,7 +216,8 @@ public enum StorageScan {
                 guard let location = extra.location else { continue }
                 items.append(
                     Item(
-                        path: (location as NSString).appendingPathComponent(extra.name), size: extra.size,
+                        path: (location as NSString).appendingPathComponent(extra.name),
+                        size: extra.size,
                         category: .duplicate, reason: "duplicate copy", isDirectory: false))
             }
         }

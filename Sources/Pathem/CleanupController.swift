@@ -7,14 +7,29 @@ import PathemEngine
 /// to recommend which are safe. Junk + duplicates are pre-checked; large/old are
 /// review-only.
 @MainActor
-final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDelegate {
+final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDelegate,
+    NSWindowDelegate
+{
+    /// Asks the browser to run its Empty Trash flow (confirmation included); the argument is
+    /// called once the Trash has been emptied, so the disk bar can show the space freed.
+    var onEmptyTrash: ((@escaping () -> Void) -> Void)?
     /// Called with the items Cleanup moved to the Trash, so the browser can record their origins
     /// (Put Back) and register an undo, like the other trash flows.
     var onTrashed: (([FileOperations.Trashed]) -> Void)?
     private struct Row {
-        let item: StorageScan.Item
+        let group: StorageScan.Group
         var checked: Bool
+        /// A single item, or the first of a folded group (for the icon and Reveal).
+        var item: StorageScan.Item { group.items[0] }
+        var size: Int64 { group.size }
+        var key: String {
+            group.isSingle ? item.path : "group:\(group.category.rawValue):\(group.kind)"
+        }
     }
+
+    /// Items at least this big get their own row; smaller ones of the same kind fold together.
+    private static let individualJunkBytes: Int64 = 100_000_000
+    private static let individualDuplicateBytes: Int64 = 10_000_000
 
     private let panel: NSPanel
     private let titleLabel = NSTextField(labelWithString: L("cleanup.title", "Cleanup"))
@@ -25,7 +40,11 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private let spinner = NSProgressIndicator()
     private let aiButton = NSButton()
     private let trashButton = NSButton()
+    private let stopButton = NSButton()
     private let gen = GenerationBox()
+    /// Bumped by Stop: the walk ends early but keeps what it found (unlike `gen`, which
+    /// discards a superseded scan).
+    private let stopBox = GenerationBox()
     private var rows: [Row] = []
     /// The shared behavior log, loaded at scan time so pre-checking reflects what the
     /// user tends to remove vs keep.
@@ -48,15 +67,31 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     override init() {
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 640, height: 520),
-            styleMask: [.titled, .closable, .resizable, .utilityWindow], backing: .buffered, defer: true)
+            styleMask: [.titled, .closable, .resizable, .utilityWindow], backing: .buffered,
+            defer: true)
         super.init()
         panel.title = L("cleanup.panelTitle", "Cleanup")
+        panel.delegate = self
         build()
     }
 
     /// True once the panel's content (including the detail pane) has been built, for the
     /// layout smoke check.
     var debugContentReady: Bool { (panel.contentView?.subviews.isEmpty == false) }
+
+    /// Smoke hooks: load a report as if a scan had finished, read the rows back, and trash.
+    func debugLoad(_ report: StorageScan.Report, root: URL) {
+        self.root = root
+        quickReport = report
+        rebuildRows()
+        updateSummary()
+    }
+    var debugRows: [(title: String, count: Int, size: Int64, checked: Bool)] {
+        rows.map { (Self.title(for: $0.group), $0.group.items.count, $0.size, $0.checked) }
+    }
+    var debugSummary: String { summaryLabel.stringValue }
+    var debugTrashNote: String { lastTrashNote }
+    func debugTrashChecked() { trashChecked() }
 
     func present(for url: URL, over window: NSWindow?) {
         root = url
@@ -144,9 +179,24 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             action: #selector(openSystemStorage))
         systemSettings.bezelStyle = .rounded
         systemSettings.toolTip = L(
-            "cleanup.systemStorageTip", "Open Storage in System Settings (for app, photo, and system categories)")
+            "cleanup.systemStorageTip",
+            "Open Storage in System Settings (for app, photo, and system categories)")
 
-        let header = NSStackView(views: [titleLabel, spinner, NSView(), summaryLabel])
+        stopButton.title = L("cleanup.stop", "Stop")
+        stopButton.bezelStyle = .rounded
+        stopButton.controlSize = .small
+        stopButton.target = self
+        stopButton.action = #selector(stopScan)
+        stopButton.isHidden = true
+        let emptyTrash = NSButton(
+            title: L("cleanup.emptyTrash", "Empty Trash…"), target: self,
+            action: #selector(emptyTrashClicked))
+        emptyTrash.bezelStyle = .rounded
+        emptyTrash.toolTip = L(
+            "cleanup.emptyTrashTip",
+            "Items moved to the Trash still take up space until the Trash is emptied")
+
+        let header = NSStackView(views: [titleLabel, spinner, stopButton, NSView(), summaryLabel])
         header.orientation = .horizontal
         header.spacing = 8
         summaryLabel.setContentHuggingPriority(.init(1), for: .horizontal)
@@ -154,7 +204,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         diskStats.orientation = .vertical
         diskStats.alignment = .leading
         diskStats.spacing = 3
-        let actions = NSStackView(views: [aiButton, systemSettings, NSView(), reveal, trashButton])
+        let actions = NSStackView(
+            views: [aiButton, systemSettings, NSView(), reveal, emptyTrash, trashButton])
         actions.orientation = .horizontal
         actions.spacing = 12
 
@@ -207,8 +258,11 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         goodButton.title = L("organize.review.good", "Good")
         goodButton.image = NSImage(systemSymbolName: "hand.thumbsup", accessibilityDescription: nil)
         badButton.title = L("cleanup.keep", "Keep it")
-        badButton.image = NSImage(systemSymbolName: "hand.thumbsdown", accessibilityDescription: nil)
-        for (button, action) in [(goodButton, #selector(markGood)), (badButton, #selector(markBad))] {
+        badButton.image = NSImage(
+            systemSymbolName: "hand.thumbsdown", accessibilityDescription: nil)
+        for (button, action) in [
+            (goodButton, #selector(markGood)), (badButton, #selector(markBad)),
+        ] {
             button.bezelStyle = .rounded
             button.controlSize = .small
             button.imagePosition = .imageLeading
@@ -238,32 +292,71 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     // MARK: Scan
 
     private var quickReport: StorageScan.Report?
+    /// Shown after trashing: the space is not free until the Trash is emptied.
+    private var lastTrashNote = ""
 
-    /// Two-phase so results appear fast: the quick walk (junk/large/old) shows almost
-    /// immediately, then the slower duplicate analysis fills in, with a live status.
+    /// Two-phase so results appear fast: the walk (junk/caches/large/old) covers the whole
+    /// folder with live progress, then the slower duplicate analysis fills in. Stop ends the
+    /// walk early and keeps what was found, clearly marked as partial.
     private func scan() {
         titleLabel.stringValue = String(
             format: L("cleanup.scanning", "Scanning %@…"), root.lastPathComponent)
         summaryLabel.stringValue = L("cleanup.phaseScanning", "Scanning files…")
         rows = []
         quickReport = nil
+        lastTrashNote = ""
         memory = Self.feedbackURL().map { OrganizeFeedback.load(from: $0) } ?? OrganizeFeedback()
         table.reloadData()
         trashButton.isEnabled = false
         spinner.startAnimation(nil)
+        stopButton.isHidden = false
         let generation = gen.bump()
+        let stopToken = stopBox.bump()
         let url = root
-        // Main-actor Task so `self` never crosses an isolation boundary (the older CI toolchain
-        // flags sending a non-Sendable self into MainActor.run); the blocking scans run on
-        // detached tasks that capture only the Sendable `url`.
+        let gen = self.gen
+        let stopBox = self.stopBox
+        // Main-actor Task so `self` never crosses an isolation boundary; the blocking scans run
+        // on detached tasks that capture only Sendable values.
         Task { [weak self] in
-            let quick = await Task.detached(priority: .utility) { StorageScan.scanQuick(url) }.value
+            let quick = await Task.detached(priority: .utility) {
+                StorageScan.scanQuick(
+                    url,
+                    progress: { count in
+                        Task { @MainActor [weak self] in
+                            guard let self, gen.isCurrent(generation) else { return }
+                            self.summaryLabel.stringValue = String(
+                                format: L("cleanup.progress", "Scanned %@ items…"),
+                                Self.countText(count))
+                        }
+                    },
+                    isCancelled: { !gen.isCurrent(generation) || !stopBox.isCurrent(stopToken) })
+            }.value
             guard let self, self.gen.isCurrent(generation) else { return }
             self.applyQuick(quick)
+            guard !quick.truncated else {
+                self.applyDuplicates([])
+                return
+            }
             let dups = await Task.detached(priority: .utility) { StorageScan.duplicates(url) }.value
             guard self.gen.isCurrent(generation) else { return }
             self.applyDuplicates(dups)
         }
+    }
+
+    @objc private func stopScan() { _ = stopBox.bump() }
+
+    /// Closing the panel abandons a running scan instead of letting it walk the disk unseen.
+    func windowWillClose(_ notification: Notification) {
+        _ = gen.bump()
+        spinner.stopAnimation(nil)
+        stopButton.isHidden = true
+    }
+
+    /// Coming back to the panel (after emptying the Trash elsewhere, say) shows current space.
+    func windowDidBecomeKey(_ notification: Notification) { updateDiskStats() }
+
+    private static func countText(_ count: Int) -> String {
+        NumberFormatter.localizedString(from: NSNumber(value: count), number: .decimal)
     }
 
     private func applyQuick(_ report: StorageScan.Report) {
@@ -276,9 +369,29 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     private func applyDuplicates(_ items: [StorageScan.Item]) {
         spinner.stopAnimation(nil)
+        stopButton.isHidden = true
         quickReport?.duplicates = items
         rebuildRows()
-        updateSummary(extra: (quickReport?.truncated ?? false) ? L("cleanup.partialScan", " (partial scan)") : "")
+        updateSummary()
+    }
+
+    /// What the scan did not cover, said plainly: a walk stopped early, or a duplicate pass
+    /// that only examines the first files of a very large folder.
+    private var coverageNote: String {
+        guard let report = quickReport else { return "" }
+        if report.truncated {
+            return String(
+                format: L(
+                    "cleanup.stoppedPartial",
+                    " · stopped early, results are partial (%@ items scanned)"),
+                Self.countText(report.itemsScanned))
+        }
+        if report.filesScanned > StorageScan.duplicateFileLimit {
+            return String(
+                format: L("cleanup.dupPartial", " · duplicates checked in the first %@ files only"),
+                Self.countText(StorageScan.duplicateFileLimit))
+        }
+        return ""
     }
 
     /// Rebuild the row list from the latest report, preserving any check toggles the
@@ -289,26 +402,40 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             table.reloadData()
             return
         }
-        let priorChecked = Dictionary(rows.map { ($0.item.path, $0.checked) }, uniquingKeysWith: { a, _ in a })
-        func row(_ item: StorageScan.Item) -> Row {
+        let priorChecked = Dictionary(
+            rows.map { ($0.key, $0.checked) }, uniquingKeysWith: { a, _ in a })
+        func row(_ group: StorageScan.Group) -> Row {
             // Keep any toggle the user already made; otherwise use the learned default.
-            Row(item: item, checked: priorChecked[item.path] ?? defaultChecked(for: item))
+            var row = Row(group: group, checked: false)
+            row.checked = priorChecked[row.key] ?? defaultChecked(for: group.category)
+            return row
         }
-        rows = (report.junk + report.duplicates + report.large + report.old).map(row)
+        // Safe-to-remove first, then review-only; biggest first within each section, with small
+        // items of one kind folded into a single row.
+        let groups =
+            StorageScan.grouped(report.junk, individualAtLeast: Self.individualJunkBytes)
+            + StorageScan.grouped(
+                report.duplicates, individualAtLeast: Self.individualDuplicateBytes)
+            + StorageScan.grouped(report.caches, individualAtLeast: Self.individualJunkBytes)
+            + StorageScan.grouped(report.large, individualAtLeast: 0)
+            + StorageScan.grouped(report.old, individualAtLeast: 0)
+        rows = groups.map(row)
         table.reloadData()
     }
 
     /// Junk and duplicates start checked; large and old start unchecked. The learned
     /// signal for the category nudges that, so a category you consistently remove becomes
     /// pre-checked and one you consistently keep does not.
-    private func defaultChecked(for item: StorageScan.Item) -> Bool {
-        base(for: item.category) + learnedBias(for: item.category) >= 0.5
+    private func defaultChecked(for category: StorageScan.Category) -> Bool {
+        // Caches are review-only whatever was learned: apps rebuild them, but some hold
+        // downloads or offline data.
+        category != .cache && base(for: category) + learnedBias(for: category) >= 0.5
     }
 
     private func base(for category: StorageScan.Category) -> Double {
         switch category {
         case .junk, .duplicate: return 0.8
-        case .large, .old: return 0.2
+        case .large, .old, .cache: return 0.2
         }
     }
 
@@ -319,14 +446,16 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     }
 
     private func updateSummary(extra: String = "") {
-        let checked = rows.filter(\.checked).reduce(Int64(0)) { $0 + $1.item.size }
-        let safe = rows.filter { $0.item.category == .junk || $0.item.category == .duplicate }
-            .reduce(Int64(0)) { $0 + $1.item.size }
+        let checked = rows.filter(\.checked).reduce(Int64(0)) { $0 + $1.size }
+        let safe = rows.filter { $0.group.category == .junk || $0.group.category == .duplicate }
+            .reduce(Int64(0)) { $0 + $1.size }
         summaryLabel.stringValue =
-            String(
+            lastTrashNote
+            + String(
                 format: L("cleanup.summary", "%@ checked · %@ safe to remove"),
                 byteFormatter.string(fromByteCount: checked),
-                byteFormatter.string(fromByteCount: safe)) + extra
+                byteFormatter.string(fromByteCount: safe)) + extra + coverageNote
+        summaryLabel.toolTip = summaryLabel.stringValue
         trashButton.isEnabled = checked > 0
     }
 
@@ -334,29 +463,35 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     func numberOfRows(in tableView: NSTableView) -> Int { rows.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < rows.count else { return nil }
         let item = rows[row].item
+        let group = rows[row].group
         switch tableColumn.identifier.rawValue {
         case "check":
             let id = NSUserInterfaceItemIdentifier("check")
-            let button = (tableView.makeView(withIdentifier: id, owner: self) as? NSButton) ?? {
-                let b = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleRow(_:)))
-                b.identifier = id
-                return b
-            }()
+            let button =
+                (tableView.makeView(withIdentifier: id, owner: self) as? NSButton)
+                ?? {
+                    let b = NSButton(
+                        checkboxWithTitle: "", target: self, action: #selector(toggleRow(_:)))
+                    b.identifier = id
+                    return b
+                }()
             button.tag = row
             button.state = rows[row].checked ? .on : .off
             return button
         case "name":
             let cell = Self.textCell(tableView, owner: self, icon: true)
-            cell.textField?.stringValue = (item.path as NSString).lastPathComponent
+            cell.textField?.stringValue = Self.title(for: group)
             cell.imageView?.image = NSWorkspace.shared.icon(forFile: item.path)
-            cell.textField?.toolTip = item.path
+            cell.textField?.toolTip = group.isSingle ? item.path : Self.locations(of: group)
             return cell
         case "size":
             let cell = Self.textCell(tableView, owner: self, icon: false)
-            cell.textField?.stringValue = byteFormatter.string(fromByteCount: item.size)
+            cell.textField?.stringValue = byteFormatter.string(fromByteCount: group.size)
             return cell
         default:
             let cell = Self.textCell(tableView, owner: self, icon: false)
@@ -376,11 +511,14 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     func tableViewSelectionDidChange(_ notification: Notification) {
         let selected = table.selectedRow
-        guard rows.indices.contains(selected) else { clearDetail(); return }
-        let item = rows[selected].item
-        detailName.stringValue = (item.path as NSString).lastPathComponent
-        detailPath.stringValue = item.path
-        detailWhy.stringValue = whyText(for: item)
+        guard rows.indices.contains(selected) else {
+            clearDetail()
+            return
+        }
+        let group = rows[selected].group
+        detailName.stringValue = Self.title(for: group)
+        detailPath.stringValue = group.isSingle ? group.items[0].path : Self.locations(of: group)
+        detailWhy.stringValue = whyText(for: group)
         feedbackNote.stringValue = ""
         goodButton.isEnabled = true
         badButton.isEnabled = true
@@ -397,14 +535,35 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     /// The reasoning line: category, why it was flagged, size, and whether it is safe to
     /// remove (junk/duplicate) or should be reviewed first (large/old).
-    private func whyText(for item: StorageScan.Item) -> String {
+    /// A single item shows its name; a folded group shows how many of what ("13,909 × __pycache__").
+    private static func title(for group: StorageScan.Group) -> String {
+        if group.isSingle { return (group.items[0].path as NSString).lastPathComponent }
+        if group.category == .duplicate {
+            return String(
+                format: L("cleanup.groupSmallDuplicates", "%@ small duplicate copies"),
+                countText(group.items.count))
+        }
+        return String(
+            format: L("cleanup.groupCount", "%@ × %@"), countText(group.items.count), group.kind)
+    }
+
+    private static func locations(of group: StorageScan.Group) -> String {
+        let parents = Set(group.items.map { ($0.path as NSString).deletingLastPathComponent })
+        return String(
+            format: L("cleanup.groupLocations", "In %@ locations, for example %@"),
+            countText(parents.count), group.items[0].path)
+    }
+
+    private func whyText(for group: StorageScan.Group) -> String {
+        let item = (category: group.category, reason: group.kind, size: group.size)
         let safe = item.category == .junk || item.category == .duplicate
         let disposition =
             safe
             ? L("cleanup.safeToRemove", "safe to remove")
             : L("cleanup.reviewFirst", "review before deleting")
         var text = String(
-            format: L("cleanup.whyDetail", "%@ · %@ · %@ · %@"), item.category.rawValue, item.reason,
+            format: L("cleanup.whyDetail", "%@ · %@ · %@ · %@"), item.category.rawValue,
+            item.reason,
             byteFormatter.string(fromByteCount: item.size), disposition)
         // Surface the learned lean when it is strong enough to have moved the default.
         let bias = learnedBias(for: item.category)
@@ -447,7 +606,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     /// surfaces feed one behavior signal.
     private static func feedbackURL() -> URL? {
         let fm = FileManager.default
-        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+        guard let base = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        else {
             return nil
         }
         let dir = base.appendingPathComponent("Pathem", isDirectory: true)
@@ -458,28 +618,62 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     // MARK: Actions
 
     @objc private func trashChecked() {
-        let urls = rows.filter(\.checked).map { URL(fileURLWithPath: $0.item.path) }
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        let urls = rows.filter(\.checked).flatMap { $0.group.items }.map {
+            URL(fileURLWithPath: $0.path)
+        }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
         // Record the accept/skip decision as behavioral signal (checked = removed), so the
         // next scan's pre-checking reflects what the user actually does.
         if let url = Self.feedbackURL() {
             OrganizeFeedback.record(
                 rows.map {
                     .init(
-                        ruleID: "cleanup:\($0.item.category.rawValue)", destination: nil,
+                        ruleID: "cleanup:\($0.group.category.rawValue)", destination: nil,
                         ext: ($0.item.path as NSString).pathExtension.lowercased(),
                         verdict: $0.checked ? .applied : .skipped)
                 }, to: url)
         }
         let result = FileOperations.trash(urls: urls)
         let trashed = Set(result.trashed.map(\.original.path))
-        rows.removeAll { trashed.contains($0.item.path) }
-        table.reloadData()
+        // Drop what was trashed from every report list, then regroup: a folded row keeps only
+        // the items that could not be removed.
+        let freed = rows.flatMap { $0.group.items }.filter { trashed.contains($0.path) }
+            .reduce(Int64(0)) { $0 + $1.size }
+        for keyPath in [
+            \StorageScan.Report.junk, \.duplicates, \.caches, \.large, \.old,
+        ] {
+            quickReport?[keyPath: keyPath].removeAll { trashed.contains($0.path) }
+        }
+        rebuildRows()
+        if freed > 0 {
+            lastTrashNote =
+                String(
+                    format: L(
+                        "cleanup.movedToTrash",
+                        "Moved %@ to the Trash. Empty the Trash to free the space."),
+                    byteFormatter.string(fromByteCount: freed)) + " · "
+        }
         updateSummary()
+        updateDiskStats()
         // Hand the trashed items to the browser so they're undoable and Put Back works, like the
         // other trash flows (Cleanup was the only one that trashed with no record).
         if !result.trashed.isEmpty { onTrashed?(result.trashed) }
         if !result.failures.isEmpty { presentTrashFailures(result.failures) }
+    }
+
+    @objc private func emptyTrashClicked() {
+        guard let onEmptyTrash else {
+            NSSound.beep()
+            return
+        }
+        onEmptyTrash { [weak self] in
+            self?.lastTrashNote = ""
+            self?.updateSummary()
+            self?.updateDiskStats()
+        }
     }
 
     /// Tell the user which items couldn't be removed, instead of a bare beep that leaves
@@ -488,13 +682,16 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let detail = failures.prefix(8).map { "• \($0.name): \($0.reason)" }.joined(separator: "\n")
         let more =
             failures.count > 8
-            ? "\n" + String(format: L("cleanup.moreFailures", "…and %d more."), failures.count - 8) : ""
+            ? "\n" + String(format: L("cleanup.moreFailures", "…and %d more."), failures.count - 8)
+            : ""
         let alert = NSAlert()
         alert.messageText = String(
             format: L("cleanup.trashFailedTitle", "%d item(s) couldn’t be removed"), failures.count)
         alert.informativeText =
             detail + more + "\n\n"
-            + L("cleanup.trashFailedHint", "They may be in use, or Pathem may need Full Disk Access to delete them.")
+            + L(
+                "cleanup.trashFailedHint",
+                "They may be in use, or Pathem may need Full Disk Access to delete them.")
         alert.addButton(withTitle: L("common.ok", "OK"))
         alert.beginSheetModal(for: panel) { _ in }
     }
@@ -516,7 +713,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let urls = table.selectedRowIndexes.compactMap {
             $0 < rows.count ? URL(fileURLWithPath: rows[$0].item.path) : nil
         }
-        guard !urls.isEmpty else { NSSound.beep(); return }
+        guard !urls.isEmpty else {
+            NSSound.beep()
+            return
+        }
         NSWorkspace.shared.activateFileViewerSelecting(urls)
     }
 
@@ -528,31 +728,44 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             return
         }
         #if canImport(FoundationModels)
-            if #available(macOS 26, *) {
-                let items = rows.map { (path: ($0.item.path as NSString).lastPathComponent, size: $0.item.size, reason: "\($0.item.category.rawValue), \($0.item.reason)") }
-                guard !items.isEmpty else { NSSound.beep(); return }
-                aiButton.isEnabled = false
-                summaryLabel.stringValue = L("ai.cleanup.thinking", "Asking the model…")
-                Task { @MainActor in
-                    defer { self.aiButton.isEnabled = true }
-                    guard let advice = await recommendCleanup(items: items) else {
-                        self.summaryLabel.stringValue = L(
-                            "ai.cleanup.noRec", "The model had no recommendation.")
-                        return
-                    }
-                    for index in advice.safeToDelete where index >= 0 && index < self.rows.count {
-                        self.rows[index].checked = true
-                    }
-                    self.table.reloadData()
-                    self.updateSummary(extra: advice.summary.isEmpty ? "" : ": \(advice.summary)")
-                }
+        if #available(macOS 26, *) {
+            let items = rows.map {
+                (
+                    path: Self.title(for: $0.group), size: $0.size,
+                    reason: "\($0.group.category.rawValue), \($0.group.kind)"
+                )
             }
+            guard !items.isEmpty else {
+                NSSound.beep()
+                return
+            }
+            aiButton.isEnabled = false
+            summaryLabel.stringValue = L("ai.cleanup.thinking", "Asking the model…")
+            Task { @MainActor in
+                defer { self.aiButton.isEnabled = true }
+                guard let advice = await recommendCleanup(items: items) else {
+                    self.summaryLabel.stringValue = L(
+                        "ai.cleanup.noRec", "The model had no recommendation.")
+                    return
+                }
+                for index in advice.safeToDelete
+                where index >= 0 && index < self.rows.count
+                    && self.rows[index].group.category != .cache
+                {
+                    self.rows[index].checked = true
+                }
+                self.table.reloadData()
+                self.updateSummary(extra: advice.summary.isEmpty ? "" : ": \(advice.summary)")
+            }
+        }
         #endif
     }
 
     private static func textCell(_ table: NSTableView, owner: Any?, icon: Bool) -> NSTableCellView {
         let id = NSUserInterfaceItemIdentifier(icon ? "nameCell" : "plainCell")
-        if let reused = table.makeView(withIdentifier: id, owner: owner) as? NSTableCellView { return reused }
+        if let reused = table.makeView(withIdentifier: id, owner: owner) as? NSTableCellView {
+            return reused
+        }
         let cell = NSTableCellView()
         cell.identifier = id
         let field = NSTextField(labelWithString: "")

@@ -1020,6 +1020,54 @@ extension BrowserViewController {
         check("organize-review-builds", review.debugRowCount == 2, "\(review.debugRowCount) rows")
         // Cleanup panel (with its new detail pane) must construct without a layout crash.
         check("cleanup-builds", CleanupController().debugContentReady, "content ready")
+        // Cleanup on a real temp tree: small junk of one kind folds into one row, caches are
+        // listed but never pre-checked, and trashing removes every item of a folded row and
+        // says the space is not free until the Trash is emptied.
+        do {
+            let fm = FileManager.default
+            let tree = fm.temporaryDirectory.appendingPathComponent(
+                "pathem-cleanup-\(UUID().uuidString)")
+            for index in 0..<12 {
+                let dir = tree.appendingPathComponent("p\(index)/__pycache__")
+                try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+                try? Data(count: 100).write(to: dir.appendingPathComponent("m.pyc"))
+            }
+            let cache = tree.appendingPathComponent("app/Caches")
+            try? fm.createDirectory(at: cache, withIntermediateDirectories: true)
+            try? Data(count: 5000).write(to: cache.appendingPathComponent("blob"))
+            try? Data(count: 10).write(to: tree.appendingPathComponent("keep.txt"))
+            let report = StorageScan.scanQuick(tree)
+            let panel = CleanupController()
+            var handedOver = 0
+            var inTrash: [URL] = []
+            panel.onTrashed = {
+                handedOver = $0.count
+                inTrash = $0.map(\.trashed)
+            }
+            panel.debugLoad(report, root: tree)
+            let rows = panel.debugRows
+            let junk = rows.first { $0.title.contains("__pycache__") }
+            let cacheRow = rows.first { $0.title == "Caches" }
+            check(
+                "cleanup-folds-small-junk-and-lists-caches",
+                rows.count == 2 && junk?.count == 12 && junk?.size == 1200 && junk?.checked == true
+                    && cacheRow?.size == 5000 && cacheRow?.checked == false && !report.truncated,
+                "rows=\(rows.map { "\($0.title):\($0.count):\($0.checked)" })")
+            panel.debugTrashChecked()
+            let left = (0..<12).filter {
+                fm.fileExists(atPath: tree.appendingPathComponent("p\($0)/__pycache__").path)
+            }.count
+            check(
+                "cleanup-trashes-folded-row-and-explains-trash",
+                left == 0 && handedOver == 12 && fm.fileExists(atPath: cache.path)
+                    && fm.fileExists(atPath: tree.appendingPathComponent("keep.txt").path)
+                    && panel.debugRows.map(\.title) == ["Caches"]
+                    && !panel.debugTrashNote.isEmpty
+                    && panel.debugSummary.hasPrefix(panel.debugTrashNote),
+                "left=\(left) handed=\(handedOver) summary=\(panel.debugSummary)")
+            for url in inTrash { try? fm.removeItem(at: url) }  // don't leave fixtures in the owner's Trash
+            try? fm.removeItem(at: tree)
+        }
         // The ambient download chip must render its suggestion text without crashing.
         let chip = DownloadSuggestionBar()
         chip.show(fileURL: URL(fileURLWithPath: "/tmp/invoice.pdf"), destinationName: "PDFs")

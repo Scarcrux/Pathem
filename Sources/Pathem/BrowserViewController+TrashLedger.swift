@@ -102,7 +102,7 @@ extension BrowserViewController {
     }
 
     /// Permanently erase everything in the (home) Trash, after a confirmation at the pointer.
-    func emptyTrash() {
+    func emptyTrash(then completion: (() -> Void)? = nil) {
         guard !fileOperationBusy else { return }
         let items =
             (try? FileManager.default.contentsOfDirectory(
@@ -129,6 +129,7 @@ extension BrowserViewController {
             }
             saveConfig(self.trashOrigins, to: Self.trashOriginsURL)
             self.reloadBothSides()
+            completion?()
             if failed > 0 {
                 self.presentInfo(
                     L("bvc.emptyTrashPartialTitle", "Some items couldn’t be erased"),

@@ -5,7 +5,8 @@ import Testing
 
 @Suite struct StorageScanTests {
     private func tempDir() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-scan-\(UUID().uuidString)")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-scan-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }
@@ -55,12 +56,61 @@ import Testing
         let oldFile = root.appendingPathComponent("ancient.bin")
         try write(2_500_000, oldFile)
         try FileManager.default.setAttributes(
-            [.modificationDate: Date(timeIntervalSinceNow: -400 * 86_400)], ofItemAtPath: oldFile.path)
+            [.modificationDate: Date(timeIntervalSinceNow: -400 * 86_400)],
+            ofItemAtPath: oldFile.path)
 
         let report = StorageScan.scan(root, largeThreshold: 1_000_000, oldMinSize: 1_000_000)
         #expect(report.large.contains { $0.path.hasSuffix("huge.bin") })
         #expect(report.old.contains { $0.path.hasSuffix("ancient.bin") })
         #expect(report.duplicates.count == 1)  // one extra copy of a.dat
         #expect(report.duplicates.first?.size == 3_000_000)
+    }
+
+    @Test func walksPastTheOldCutoffAndListsCaches() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        for index in 0..<40 { try write(10, root.appendingPathComponent("a/f\(index).txt")) }
+        try write(5000, root.appendingPathComponent("z/deep/.build/out.o"))
+        try write(700, root.appendingPathComponent("z/Caches/blob"))
+        // Control: with a limit, the walk stops early and says so.
+        let limited = StorageScan.scanQuick(root, maxItems: 10)
+        #expect(limited.truncated)
+        // Default: no cutoff, everything found, not marked partial.
+        let full = StorageScan.scanQuick(root)
+        #expect(!full.truncated)
+        #expect(full.junk.contains { $0.reason == ".build" && $0.size == 5000 })
+        #expect(full.caches.map(\.size) == [700])
+        #expect(full.caches.first?.category == .cache)
+        #expect(full.filesScanned == 40)
+        #expect(!full.large.contains { $0.path.contains("Caches") })
+    }
+
+    @Test func reportsProgressAndStopsWhenCancelled() throws {
+        let root = try tempDir()
+        defer { try? FileManager.default.removeItem(at: root) }
+        for index in 0..<6000 {
+            try write(1, root.appendingPathComponent("d\(index % 3)/f\(index)"))
+        }
+        var ticks: [Int] = []
+        let full = StorageScan.scanQuick(root, progress: { ticks.append($0) })
+        #expect(ticks == [5000] && !full.truncated && full.filesScanned == 6000)
+        let stopped = StorageScan.scanQuick(root, isCancelled: { true })
+        #expect(stopped.truncated && stopped.filesScanned == 0)
+    }
+
+    @Test func groupsSmallItemsPerKindBiggestFirst() {
+        func item(_ kind: String, _ size: Int64, _ n: Int) -> StorageScan.Item {
+            .init(
+                path: "/x/\(n)/\(kind)", size: size, category: .junk, reason: kind,
+                isDirectory: true)
+        }
+        let items =
+            (0..<500).map { item("__pycache__", 10, $0) }
+            + [item(".build", 9000, 600), item(".build", 20, 601), item("node_modules", 30, 602)]
+        let groups = StorageScan.grouped(items, individualAtLeast: 1000)
+        #expect(groups.map(\.kind) == [".build", "__pycache__", "node_modules", ".build"])
+        #expect(groups.map(\.items.count) == [1, 500, 1, 1])
+        #expect(groups.map(\.size) == [9000, 5000, 30, 20])
+        #expect(groups.reduce(0) { $0 + $1.items.count } == items.count)
     }
 }

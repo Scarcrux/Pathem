@@ -1,4 +1,5 @@
 /* Pathem UI strings (English source) */
+
 "acl.add" = "Add";
 "acl.added" = "Added.";
 "acl.allow" = "Allow";
@@ -518,23 +519,32 @@
 "cleanup.colSize" = "Size";
 "cleanup.colWhy" = "Why";
 "cleanup.diskUsage" = "%@ used of %@ · %@ free";
+"cleanup.dupPartial" = " · duplicates checked in the first %@ files only";
+"cleanup.emptyTrash" = "Empty Trash…";
+"cleanup.emptyTrashTip" = "Items moved to the Trash still take up space until the Trash is emptied";
+"cleanup.groupCount" = "%@ × %@";
+"cleanup.groupLocations" = "In %@ locations, for example %@";
+"cleanup.groupSmallDuplicates" = "%@ small duplicate copies";
 "cleanup.keep" = "Keep it";
 "cleanup.learnedKeep" = " · learned: you usually keep these";
 "cleanup.learnedRemove" = " · learned: you usually remove these";
 "cleanup.moreFailures" = "…and %d more.";
 "cleanup.moveCheckedToTrash" = "Move Checked to Trash";
+"cleanup.movedToTrash" = "Moved %@ to the Trash. Empty the Trash to free the space.";
 "cleanup.notedGood" = "Noted as good";
 "cleanup.notedKeep" = "Noted, and unchecked";
 "cleanup.panelTitle" = "Cleanup";
-"cleanup.partialScan" = " (partial scan)";
 "cleanup.phaseDuplicates" = "analyzing duplicates…";
 "cleanup.phaseScanning" = "Scanning files…";
+"cleanup.progress" = "Scanned %@ items…";
 "cleanup.recommendWithAI" = "Recommend with AI";
 "cleanup.reveal" = "Reveal";
 "cleanup.reviewFirst" = "review before deleting";
 "cleanup.safeToRemove" = "safe to remove";
 "cleanup.scanning" = "Scanning %@…";
 "cleanup.selectRow" = "Select an item to see details";
+"cleanup.stop" = "Stop";
+"cleanup.stoppedPartial" = " · stopped early, results are partial (%@ items scanned)";
 "cleanup.summary" = "%@ checked · %@ safe to remove";
 "cleanup.systemStorage" = "System Storage…";
 "cleanup.systemStorageTip" = "Open Storage in System Settings (for app, photo, and system categories)";
@@ -1725,3 +1735,4 @@
 "xattr.removeQuarantine" = "Remove Quarantine";
 "xattr.title" = "Extended Attributes";
 "xattr.titleFor" = "Extended Attributes: %@";
+

@@ -909,6 +909,7 @@ extension BrowserViewController {
                 self?.registerTrashUndo(trashed)
                 self?.reloadBothSides()
             }
+            self.cleanup.onEmptyTrash = { [weak self] done in self?.emptyTrash(then: done) }
             self.cleanup.present(for: url, over: self.view.window)
         }
         add(

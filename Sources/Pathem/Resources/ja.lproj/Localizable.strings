@@ -1,4 +1,5 @@
 /* Pathem UI strings (日本語) */
+
 "acl.add" = "追加";
 "acl.added" = "追加しました。";
 "acl.allow" = "許可";
@@ -526,7 +527,6 @@
 "cleanup.notedGood" = "良好として記録しました";
 "cleanup.notedKeep" = "記録し、チェックを外しました";
 "cleanup.panelTitle" = "クリーンアップ";
-"cleanup.partialScan" = "（部分スキャン）";
 "cleanup.phaseDuplicates" = "重複を分析中…";
 "cleanup.phaseScanning" = "ファイルをスキャン中…";
 "cleanup.recommendWithAI" = "AIで推奨";
@@ -1799,3 +1799,13 @@
 "xattr.removeQuarantine" = "検疫を解除";
 "xattr.title" = "拡張属性";
 "xattr.titleFor" = "拡張属性: %@";
+"cleanup.progress" = "%@項目をスキャン済み…";
+"cleanup.stop" = "停止";
+"cleanup.stoppedPartial" = " · 途中で停止、結果は一部のみ（%@項目をスキャン）";
+"cleanup.dupPartial" = " · 重複は最初の%@ファイルのみ確認";
+"cleanup.emptyTrash" = "ゴミ箱を空にする…";
+"cleanup.emptyTrashTip" = "ゴミ箱に入れた項目は、ゴミ箱を空にするまで容量を使い続けます";
+"cleanup.movedToTrash" = "%@をゴミ箱に入れました。容量を空けるにはゴミ箱を空にしてください。";
+"cleanup.groupSmallDuplicates" = "%@個の小さな重複コピー";
+"cleanup.groupCount" = "%@ × %@";
+"cleanup.groupLocations" = "%@か所にあります（例: %@）";

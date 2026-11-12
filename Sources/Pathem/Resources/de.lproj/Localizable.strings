@@ -1,4 +1,5 @@
 /* Pathem UI strings (Deutsch) */
+
 "acl.add" = "Hinzufügen";
 "acl.added" = "Hinzugefügt.";
 "acl.allow" = "Erlauben";
@@ -526,7 +527,6 @@
 "cleanup.notedGood" = "Als gut vermerkt";
 "cleanup.notedKeep" = "Vermerkt und abgewählt";
 "cleanup.panelTitle" = "Aufräumen";
-"cleanup.partialScan" = " (Teilscan)";
 "cleanup.phaseDuplicates" = "Duplikate werden analysiert…";
 "cleanup.phaseScanning" = "Dateien werden geprüft…";
 "cleanup.recommendWithAI" = "Mit KI empfehlen";
@@ -1799,3 +1799,13 @@
 "xattr.removeQuarantine" = "Quarantäne entfernen";
 "xattr.title" = "Erweiterte Attribute";
 "xattr.titleFor" = "Erweiterte Attribute: %@";
+"cleanup.progress" = "%@ Objekte durchsucht …";
+"cleanup.stop" = "Stopp";
+"cleanup.stoppedPartial" = " · vorzeitig gestoppt, Ergebnisse unvollständig (%@ Objekte durchsucht)";
+"cleanup.dupPartial" = " · Duplikate nur in den ersten %@ Dateien geprüft";
+"cleanup.emptyTrash" = "Papierkorb entleeren …";
+"cleanup.emptyTrashTip" = "Objekte im Papierkorb belegen weiter Speicherplatz, bis der Papierkorb entleert wird";
+"cleanup.movedToTrash" = "%@ in den Papierkorb gelegt. Entleere den Papierkorb, um den Platz freizugeben.";
+"cleanup.groupSmallDuplicates" = "%@ kleine Duplikate";
+"cleanup.groupCount" = "%@ × %@";
+"cleanup.groupLocations" = "An %@ Orten, zum Beispiel %@";

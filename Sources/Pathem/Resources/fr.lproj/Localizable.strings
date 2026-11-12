@@ -1,4 +1,5 @@
 /* Pathem UI strings (Français) */
+
 "acl.add" = "Ajouter";
 "acl.added" = "Ajouté.";
 "acl.allow" = "Autoriser";
@@ -526,7 +527,6 @@
 "cleanup.notedGood" = "Noté comme bon";
 "cleanup.notedKeep" = "Noté, et décoché";
 "cleanup.panelTitle" = "Nettoyage";
-"cleanup.partialScan" = " (analyse partielle)";
 "cleanup.phaseDuplicates" = "analyse des doublons…";
 "cleanup.phaseScanning" = "Analyse des fichiers…";
 "cleanup.recommendWithAI" = "Recommander avec l’IA";
@@ -1799,3 +1799,13 @@
 "xattr.removeQuarantine" = "Supprimer la quarantaine";
 "xattr.title" = "Attributs étendus";
 "xattr.titleFor" = "Attributs étendus : %@";
+"cleanup.progress" = "%@ éléments analysés…";
+"cleanup.stop" = "Arrêter";
+"cleanup.stoppedPartial" = " · arrêté avant la fin, résultats partiels (%@ éléments analysés)";
+"cleanup.dupPartial" = " · doublons vérifiés dans les %@ premiers fichiers seulement";
+"cleanup.emptyTrash" = "Vider la corbeille…";
+"cleanup.emptyTrashTip" = "Les éléments placés dans la corbeille occupent encore de l’espace tant qu’elle n’est pas vidée";
+"cleanup.movedToTrash" = "%@ placés dans la corbeille. Videz la corbeille pour libérer l’espace.";
+"cleanup.groupSmallDuplicates" = "%@ petites copies en double";
+"cleanup.groupCount" = "%@ × %@";
+"cleanup.groupLocations" = "Dans %@ emplacements, par exemple %@";
