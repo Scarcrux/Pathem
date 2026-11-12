@@ -141,7 +141,28 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         view.layoutSubtreeIfNeeded()
         guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
         view.cacheDisplay(in: view.bounds, to: rep)
-        try? rep.representation(using: .png, properties: [:])?.write(
+        // cacheDisplay draws the views on a transparent backing, so in Dark Mode the light
+        // header text and button titles vanish against a white page. Put the window's own
+        // background underneath, as the real window does.
+        guard
+            let out = NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: rep.pixelsWide, pixelsHigh: rep.pixelsHigh,
+                bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0),
+            let context = NSGraphicsContext(bitmapImageRep: out)
+        else { return }
+        out.size = rep.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        panel.effectiveAppearance.performAsCurrentDrawingAppearance {
+            NSColor.windowBackgroundColor.setFill()
+            NSRect(origin: .zero, size: rep.size).fill()
+        }
+        rep.draw(
+            in: NSRect(origin: .zero, size: rep.size), from: .zero, operation: .sourceOver,
+            fraction: 1, respectFlipped: false, hints: nil)
+        NSGraphicsContext.restoreGraphicsState()
+        try? out.representation(using: .png, properties: [:])?.write(
             to: URL(fileURLWithPath: path))
     }
     /// Delete the checked rebuilds-tier places as the confirmed button does, synchronously.
@@ -162,8 +183,16 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
         updateDiskStats()  // instant: overall capacity/used/free
-        deepScanButton.title = String(
-            format: L("reclaim.deepScan", "Deep Scan “%@”…"), url.lastPathComponent)
+        // The folder name goes in the tooltip: in the title it made the button row wider
+        // than the window.
+        deepScanButton.title = L("reclaim.deepScanShort", "Deep Scan…")
+        deepScanButton.toolTip =
+            String(format: L("reclaim.deepScan", "Deep Scan “%@”…"), url.lastPathComponent)
+            + "\n"
+            + L(
+                "reclaim.deepScanTip",
+                "Walk this folder for project build folders, large and old files, and duplicates. Can take minutes on a big folder."
+            )
         quickReport = nil
         lastTrashNote = ""
         measurePlaces()
@@ -349,17 +378,13 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         deepScanButton.bezelStyle = .rounded
         deepScanButton.target = self
         deepScanButton.action = #selector(deepScanClicked)
-        deepScanButton.toolTip = L(
-            "reclaim.deepScanTip",
-            "Walk this folder for project build folders, large and old files, and duplicates. Can take minutes on a big folder."
-        )
         let actions = NSStackView(
             views: [
                 deepScanButton, aiButton, systemSettings, NSView(), reveal, emptyTrash,
                 deleteNowButton, trashButton,
             ])
         actions.orientation = .horizontal
-        actions.spacing = 12
+        actions.spacing = 8
 
         let detail = buildDetailPane()
 
@@ -378,6 +403,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 scroll.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
                 diskStats.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
                 detail.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
+                actions.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
+                header.widthAnchor.constraint(equalTo: root.widthAnchor, constant: -28),
                 diskBar.widthAnchor.constraint(equalTo: diskStats.widthAnchor),
             ])
         }

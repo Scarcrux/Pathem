@@ -1821,6 +1821,7 @@
 "reclaim.summary" = "%@ se reconstruyen · %@ se vuelven a descargar · %@ por revisar · %@ marcados";
 "reclaim.measuring" = "actualizando tamaños, %d de %d ubicaciones conocidas…";
 "reclaim.deepScan" = "Análisis profundo de «%@»…";
+"reclaim.deepScanShort" = "Análisis profundo…";
 "reclaim.deepScanTip" = "Recorre esta carpeta en busca de carpetas de compilación, archivos grandes o antiguos y duplicados. Puede tardar minutos en una carpeta grande.";
 "reclaim.deleteNow" = "Eliminar ahora…";
 "reclaim.deleteNowTip" = "Elimina de forma permanente los elementos marcados que se reconstruyen automáticamente, sin pasar por la papelera";

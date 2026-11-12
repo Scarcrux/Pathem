@@ -1821,6 +1821,7 @@
 "reclaim.summary" = "%@ se reconstruisent · %@ se retéléchargent · %@ à vérifier · %@ cochés";
 "reclaim.measuring" = "mise à jour des tailles, %d emplacements connus sur %d…";
 "reclaim.deepScan" = "Analyse approfondie de « %@ »…";
+"reclaim.deepScanShort" = "Analyse approfondie…";
 "reclaim.deepScanTip" = "Parcourt ce dossier à la recherche de dossiers de compilation, de fichiers volumineux ou anciens et de doublons. Peut prendre plusieurs minutes sur un gros dossier.";
 "reclaim.deleteNow" = "Supprimer maintenant…";
 "reclaim.deleteNowTip" = "Supprime définitivement les éléments cochés qui se reconstruisent automatiquement, sans passer par la corbeille";

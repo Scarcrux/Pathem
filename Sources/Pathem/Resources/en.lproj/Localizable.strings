@@ -1394,6 +1394,7 @@
 "quit.transferTitle" = "A file transfer is still in progress";
 "reclaim.colWhat" = "What happens if you delete it";
 "reclaim.deepScan" = "Deep Scan “%@”…";
+"reclaim.deepScanShort" = "Deep Scan…";
 "reclaim.deepScanTip" = "Walk this folder for project build folders, large and old files, and duplicates. Can take minutes on a big folder.";
 "reclaim.deleteFailedTitle" = "%d place(s) couldn’t be fully deleted";
 "reclaim.deleteNow" = "Delete Now…";

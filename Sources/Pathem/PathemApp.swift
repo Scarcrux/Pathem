@@ -491,7 +491,11 @@ enum PathemApp {
             Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
                 MainActor.assumeIsolated {
                     let elapsed = Date().timeIntervalSince(started)
-                    guard browser.cleanup.debugPlacesDone || elapsed > 900 else { return }
+                    // PATHEM_RECLAIM_SHOT_AFTER=<seconds> renders early, for layout checks.
+                    let limit =
+                        ProcessInfo.processInfo.environment["PATHEM_RECLAIM_SHOT_AFTER"]
+                        .flatMap(Double.init) ?? 900
+                    guard browser.cleanup.debugPlacesDone || elapsed > limit else { return }
                     print(
                         "RECLAIM SHOT: measured=\(browser.cleanup.debugPlacesDone) seconds=\(Int(elapsed)) rows=\(browser.cleanup.debugPlaceRows.count)"
                     )

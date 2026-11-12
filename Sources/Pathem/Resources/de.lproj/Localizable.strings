@@ -1821,6 +1821,7 @@
 "reclaim.summary" = "%@ wird neu erstellt · %@ wird erneut geladen · %@ zu prüfen · %@ ausgewählt";
 "reclaim.measuring" = "Größen werden aktualisiert, %d von %d bekannten Orten …";
 "reclaim.deepScan" = "„%@“ gründlich durchsuchen …";
+"reclaim.deepScanShort" = "Gründlich durchsuchen …";
 "reclaim.deepScanTip" = "Durchsucht diesen Ordner nach Build-Ordnern, großen und alten Dateien sowie Duplikaten. Kann bei großen Ordnern Minuten dauern.";
 "reclaim.deleteNow" = "Jetzt löschen …";
 "reclaim.deleteNowTip" = "Löscht die ausgewählten Objekte, die automatisch neu erstellt werden, endgültig und ohne Papierkorb";
