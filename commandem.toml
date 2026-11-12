@@ -1667,6 +1667,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Landed task 53.53: release.sh signs, notarizes and staples the DMG before the Sparkle signature; verify-release dmg (A9) required for publish. Second local dry run: both notarizations Accepted, A9 3/3, A1-A8 still pass; controls (unsigned DMG, wrong team) fail correctly. Owner-requested install of that notarized universal build (main d211f51 code incl. tasks 44/45 fixes) by atomic swap, sha256 prefix 6af865e85e15, verify-release 6/6 installed; previous build backed up at /tmp/pathem-install-backup.fE1c. The owner's app was running (PID 61950) and was not touched, so the fixes apply on next relaunch. Nothing published."
     at = "2026-11-11T13:04:54Z"
 
+  [[mission.comment]]
+    text = "Landed task 53. (owner report: Cleanup ineffective). Measured before: 300k-item cutoff made Home report 4 GB junk while ~/Code alone had 124 GB; 14,047 ungrouped junk rows; Caches skipped; Trash-only with stale disk bar. After, same disk: 517 GB junk + 457 GB caches in 144 rows, not partial, 10.6M items in 9.5 min. Full walk with progress/Stop, grouped rows, review-only caches, disk bar refresh, Empty Trash button. 6 engine tests + 2 smoke checks; live panel controls not clicked in a real window; duplicate pass still capped at 300k files (stated in the UI). Not installed yet."
+    at = "2026-11-12T00:10:08Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
