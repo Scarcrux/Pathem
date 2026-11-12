@@ -2005,16 +2005,23 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-3e7b76bf"
     title = "Engine: ReclaimCatalog of known places with consequence tiers, existence checks, uncatalogued-cache discovery, and a guarded Delete Now for the rebuilds tier"
+    done = true
 
   [[mission.task]]
     id = "t-c3ef831b"
     title = "Window: catalog rows sized progressively, consequence column, summary by tier, Delete Now with confirmation, deep scan on request with overlap removed"
+    done = true
 
   [[mission.task]]
     id = "t-46ceea91"
     title = "Project build folders show how stale the project is"
+    done = true
 
   [[mission.task]]
     id = "t-6565823c"
     title = "Verify in a real window and install"
+
+  [[mission.comment]]
+    text = "Landed 0e42dfc (catalog engine, 4 tests incl. forged-path and symlink refusals) and the Reclaim Space window. Real-disk read-only run: 54 rows, 372.6 GB rebuilds / 319.05 GB re-downloads / 61.79 GB review; measuring all places took 204 s (rows appear progressively; DirectorySize is the bottleneck, a faster sizer is a follow-up). Smoke: known-place rows and Delete Now tier guard pass. Unverified: header/button layout (render method does not draw them) and live clicks on Deep Scan, Stop, Delete Now sheet, Empty Trash. Task 4 (verify in a real window and install) stays open."
+    at = "2026-11-12T10:57:09Z"
 # <<< commandem roadmap <<<
