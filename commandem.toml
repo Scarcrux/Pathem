@@ -2032,4 +2032,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "ac7248b: fixed the in-app render (it drew on a transparent backing, hiding light text in Dark Mode); the fixed render exposed the button row overflowing the window with no margins. Row and header now share the table's inset, scan button reads Deep Scan… with the folder in its tooltip. Re-rendered: all buttons inside the margins. Still unverified: live clicks. screencapture from the session still fails (could not create image from display) even with Commandem listed as permitted."
     at = "2026-11-12T11:59:58Z"
+
+  [[mission.comment]]
+    text = "3a300b7 after the owner's live Delete Now on Rust build output left ~110 GB behind with a permission alert: deletion is now best-effort (continues past failures, retries read-only folders, reports count + first path + system error). The original permission error's mechanism is NOT identified (nothing odd on disk afterwards); the new error text is the instrument. Header no longer duplicates the window title; summary moved left."
+    at = "2026-11-12T12:41:11Z"
 # <<< commandem roadmap <<<
