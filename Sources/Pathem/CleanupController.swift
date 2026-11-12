@@ -209,7 +209,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let remembered = Self.loadRememberedSizes()
         placeSizes = remembered.filter { id, _ in candidates.contains { $0.place.id == id } }
         placesMeasured = 0
-        titleLabel.stringValue = L("reclaim.windowTitle", "Reclaim Space")
+        // The window's title bar already says "Reclaim Space"; the label is for scan status.
+        titleLabel.stringValue = ""
+        titleLabel.isHidden = true
         rebuildRows()
         updateSummary()
         guard !candidates.isEmpty else { return }
@@ -290,8 +292,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     private func build() {
         titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
-        summaryLabel.font = .systemFont(ofSize: 11)
-        summaryLabel.textColor = .secondaryLabelColor
+        summaryLabel.font = .systemFont(ofSize: 12)
         summaryLabel.lineBreakMode = .byTruncatingTail
         spinner.style = .spinning
         spinner.controlSize = .small
@@ -359,10 +360,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             "cleanup.emptyTrashTip",
             "Items moved to the Trash still take up space until the Trash is emptied")
 
-        let header = NSStackView(views: [titleLabel, spinner, stopButton, NSView(), summaryLabel])
+        let header = NSStackView(views: [titleLabel, summaryLabel, spinner, stopButton, NSView()])
         header.orientation = .horizontal
         header.spacing = 8
-        summaryLabel.setContentHuggingPriority(.init(1), for: .horizontal)
+        summaryLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let diskStats = NSStackView(views: [diskBar, diskLabel])
         diskStats.orientation = .vertical
         diskStats.alignment = .leading
@@ -480,6 +481,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private func scan() {
         titleLabel.stringValue = String(
             format: L("cleanup.scanning", "Scanning %@…"), root.lastPathComponent)
+        titleLabel.isHidden = false
         summaryLabel.stringValue = L("cleanup.phaseScanning", "Scanning files…")
         quickReport = nil
         lastTrashNote = ""
@@ -542,6 +544,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         quickReport = report
         titleLabel.stringValue = String(
             format: L("cleanup.titleFor", "Cleanup: %@"), root.lastPathComponent)
+        titleLabel.isHidden = false
         rebuildRows()
         updateSummary(extra: " · " + L("cleanup.phaseDuplicates", "analyzing duplicates…"))
     }
@@ -992,13 +995,30 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 var failed: [String] = []
                 for candidate in targets {
                     do { try ReclaimCatalog.deleteNow(candidate, home: home) } catch {
-                        failed.append("\(candidate.place.name): \(error.localizedDescription)")
+                        failed.append(Self.describe(error, for: candidate))
                     }
                 }
                 return failed
             }.value
             self?.finishDeleteNow(targets, failures: failures)
         }
+    }
+
+    /// One line per place that could not be emptied, naming the first item left behind and
+    /// the system's reason, so "why" does not need a second investigation.
+    nonisolated private static func describe(
+        _ error: Error, for candidate: ReclaimCatalog.Candidate
+    ) -> String {
+        guard
+            case ReclaimCatalog.DeleteError.incomplete(let left, let firstPath, let reason) = error
+        else { return "\(candidate.place.name): \(error.localizedDescription)" }
+        return String(
+            format: L(
+                "reclaim.deleteIncomplete",
+                "%1$@: %2$d item(s) left behind, starting with %3$@ (%4$@). Everything else was deleted."
+            ),
+            candidate.place.name, left, (firstPath as NSString).abbreviatingWithTildeInPath,
+            reason)
     }
 
     /// Re-measure what was deleted (a folder that could only be partly removed keeps its row
@@ -1015,10 +1035,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         if debugMinimumPlaceBytes == nil { Self.saveRememberedSizes(placeSizes) }
         guard !failures.isEmpty, panel.isVisible else { return }
         let alert = NSAlert()
-        alert.messageText = String(
-            format: L("reclaim.deleteFailedTitle", "%d place(s) couldn’t be fully deleted"),
-            failures.count)
-        alert.informativeText = failures.prefix(8).joined(separator: "\n")
+        alert.messageText = L("reclaim.deleteFailedHeading", "Some items couldn’t be deleted")
+        alert.informativeText = failures.prefix(8).joined(separator: "\n\n")
         alert.addButton(withTitle: L("common.ok", "OK"))
         alert.beginSheetModal(for: panel) { _ in }
     }

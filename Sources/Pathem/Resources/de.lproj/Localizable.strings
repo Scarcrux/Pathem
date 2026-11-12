@@ -1828,4 +1828,5 @@
 "reclaim.deleteNowTitle" = "%@ endgültig löschen?";
 "reclaim.deleteNowBody" = "Diese Objekte werden beim nächsten Lauf des jeweiligen Werkzeugs automatisch neu erstellt. Der Papierkorb wird übersprungen, und das lässt sich nicht widerrufen. Andere ausgewählte Objekte sind nicht betroffen.";
 "reclaim.deleteNowConfirm" = "Endgültig löschen";
-"reclaim.deleteFailedTitle" = "%d Ort(e) konnten nicht vollständig gelöscht werden";
+"reclaim.deleteFailedHeading" = "Einige Objekte konnten nicht gelöscht werden";
+"reclaim.deleteIncomplete" = "%1$@: %2$d Objekt(e) übrig, beginnend mit %3$@ (%4$@). Alles andere wurde gelöscht.";

@@ -1828,4 +1828,5 @@
 "reclaim.deleteNowTitle" = "¿Eliminar %@ de forma permanente?";
 "reclaim.deleteNowBody" = "Estos elementos se vuelven a crear automáticamente la próxima vez que se ejecuta cada herramienta. Esto no pasa por la papelera y no se puede deshacer. Los demás elementos marcados no se ven afectados.";
 "reclaim.deleteNowConfirm" = "Eliminar permanentemente";
-"reclaim.deleteFailedTitle" = "No se pudieron eliminar por completo %d ubicación(es)";
+"reclaim.deleteFailedHeading" = "No se pudieron eliminar algunos elementos";
+"reclaim.deleteIncomplete" = "%1$@: quedan %2$d elemento(s), empezando por %3$@ (%4$@). Todo lo demás se eliminó.";

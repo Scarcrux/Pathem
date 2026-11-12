@@ -144,7 +144,12 @@ public enum ReclaimCatalog {
         }
     }
 
-    public enum DeleteError: Error, Equatable { case notAllowed(String) }
+    public enum DeleteError: Error, Equatable {
+        case notAllowed(String)
+        /// Everything removable was removed; `left` items remain. `firstPath` and `reason`
+        /// (the system's own error text) name the first one, so the cause can be found.
+        case incomplete(left: Int, firstPath: String, reason: String)
+    }
 
     /// Permanently delete a place's contents, skipping the Trash. Allowed only for a catalog
     /// place in the `rebuilds` tier that resolves inside `home`: everything else must go
@@ -162,9 +167,81 @@ public enum ReclaimCatalog {
         guard candidate.url.standardizedFileURL.path == expected.standardizedFileURL.path,
             resolved.hasPrefix(root + "/")
         else { throw DeleteError.notAllowed(candidate.url.path) }
-        for child in try fm.contentsOfDirectory(at: candidate.url, includingPropertiesForKeys: nil)
-        {
-            try fm.removeItem(at: child)
+        var removal = Removal()
+        for child in try fm.contentsOfDirectory(atPath: candidate.url.path) {
+            removal.remove(candidate.url.path + "/" + child)
+        }
+        if removal.left > 0 {
+            throw DeleteError.incomplete(
+                left: removal.left, firstPath: removal.firstPath, reason: removal.reason)
+        }
+    }
+
+    /// Best-effort recursive removal that never follows symlinks. One item that cannot be
+    /// removed does not stop the rest (FileManager.removeItem gives up at the first error,
+    /// which left most of a 231 GB folder behind). Tools such as Go and Cargo write
+    /// read-only folders into their caches, so a permission failure is retried once after
+    /// making the parent folder writable and clearing the item's locked flag.
+    private struct Removal {
+        var left = 0
+        var firstPath = ""
+        var reason = ""
+
+        mutating func remove(_ path: String) {
+            var info = stat()
+            guard lstat(path, &info) == 0 else {
+                if errno != ENOENT { fail(path) }
+                return
+            }
+            guard info.st_mode & S_IFMT == S_IFDIR else {
+                attempt(path) { unlink($0) }
+                return
+            }
+            var handle = opendir(path)
+            if handle == nil, errno == EACCES || errno == EPERM {
+                chmod(path, (info.st_mode & 0o7777) | 0o700)
+                handle = opendir(path)
+            }
+            guard let handle else {
+                fail(path)
+                return
+            }
+            var names: [String] = []
+            while let entry = readdir(handle) {
+                let name = withUnsafePointer(to: &entry.pointee.d_name) {
+                    $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXPATHLEN)) {
+                        String(cString: $0)
+                    }
+                }
+                if name != "." && name != ".." { names.append(name) }
+            }
+            closedir(handle)
+            let before = left
+            for name in names { remove(path + "/" + name) }
+            // A folder that still holds something cannot go; its child is already counted.
+            guard left == before else { return }
+            attempt(path) { rmdir($0) }
+        }
+
+        private mutating func attempt(_ path: String, _ call: (String) -> Int32) {
+            if call(path) == 0 || errno == ENOENT { return }
+            if errno == EACCES || errno == EPERM {
+                let parent = (path as NSString).deletingLastPathComponent
+                var info = stat()
+                if lstat(parent, &info) == 0 { chmod(parent, (info.st_mode & 0o7777) | 0o700) }
+                lchflags(path, 0)
+                if call(path) == 0 || errno == ENOENT { return }
+            }
+            fail(path)
+        }
+
+        private mutating func fail(_ path: String) {
+            let code = errno
+            if left == 0 {
+                firstPath = path
+                reason = String(cString: strerror(code))
+            }
+            left += 1
         }
     }
 }

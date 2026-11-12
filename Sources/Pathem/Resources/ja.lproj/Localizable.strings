@@ -1828,4 +1828,5 @@
 "reclaim.deleteNowTitle" = "%@を完全に削除しますか？";
 "reclaim.deleteNowBody" = "これらは各ツールの次回実行時に自動的に作り直されます。ゴミ箱を経由せず、取り消せません。ほかの選択項目には影響しません。";
 "reclaim.deleteNowConfirm" = "完全に削除";
-"reclaim.deleteFailedTitle" = "%dか所を完全には削除できませんでした";
+"reclaim.deleteFailedHeading" = "一部の項目を削除できませんでした";
+"reclaim.deleteIncomplete" = "%1$@：%2$d 項目が残りました。最初の項目：%3$@（%4$@）。それ以外はすべて削除されました。";

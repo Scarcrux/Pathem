@@ -1828,4 +1828,5 @@
 "reclaim.deleteNowTitle" = "Supprimer définitivement %@ ?";
 "reclaim.deleteNowBody" = "Ces éléments sont recréés automatiquement à la prochaine exécution de chaque outil. Cette action ne passe pas par la corbeille et ne peut pas être annulée. Les autres éléments cochés ne sont pas concernés.";
 "reclaim.deleteNowConfirm" = "Supprimer définitivement";
-"reclaim.deleteFailedTitle" = "%d emplacement(s) n’ont pas pu être entièrement supprimés";
+"reclaim.deleteFailedHeading" = "Certains éléments n’ont pas pu être supprimés";
+"reclaim.deleteIncomplete" = "%1$@ : %2$d élément(s) restant(s), à commencer par %3$@ (%4$@). Tout le reste a été supprimé.";

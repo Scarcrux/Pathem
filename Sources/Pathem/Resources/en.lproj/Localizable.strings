@@ -1396,7 +1396,8 @@
 "reclaim.deepScan" = "Deep Scan “%@”…";
 "reclaim.deepScanShort" = "Deep Scan…";
 "reclaim.deepScanTip" = "Walk this folder for project build folders, large and old files, and duplicates. Can take minutes on a big folder.";
-"reclaim.deleteFailedTitle" = "%d place(s) couldn’t be fully deleted";
+"reclaim.deleteFailedHeading" = "Some items couldn’t be deleted";
+"reclaim.deleteIncomplete" = "%1$@: %2$d item(s) left behind, starting with %3$@ (%4$@). Everything else was deleted.";
 "reclaim.deleteNow" = "Delete Now…";
 "reclaim.deleteNowBody" = "These are recreated automatically the next time each tool runs. This skips the Trash and can’t be undone. Other checked items are not affected.";
 "reclaim.deleteNowConfirm" = "Delete Permanently";

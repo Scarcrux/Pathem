@@ -1828,4 +1828,5 @@
 "reclaim.deleteNowTitle" = "永久删除 %@？";
 "reclaim.deleteNowBody" = "这些内容会在各工具下次运行时自动重新生成。此操作不经过废纸篓，且无法撤销。其他已勾选的项目不受影响。";
 "reclaim.deleteNowConfirm" = "永久删除";
-"reclaim.deleteFailedTitle" = "有 %d 个位置未能完全删除";
+"reclaim.deleteFailedHeading" = "部分项目无法删除";
+"reclaim.deleteIncomplete" = "%1$@：剩余 %2$d 个项目，第一个是 %3$@（%4$@）。其余均已删除。";

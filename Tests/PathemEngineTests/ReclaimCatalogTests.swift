@@ -114,4 +114,49 @@ import Testing
         }
         #expect(fm.fileExists(atPath: elsewhere.appendingPathComponent("precious").path))
     }
+
+    /// Caches hold read-only folders (Go and Cargo write them). Delete Now must clear them,
+    /// and when something truly cannot go it must remove the rest and name what is left.
+    @Test func deleteNowClearsReadOnlyFoldersAndReportsWhatIsLeft() throws {
+        let home = try home()
+        let fm = FileManager.default
+        let place = home.appendingPathComponent("Library/Caches/go-build")
+        let locked = place.appendingPathComponent("ro/inner")
+        let stuck = place.appendingPathComponent("stuck/file")
+        defer {
+            _ = stuck.path.withCString { chflags($0, 0) }
+            try? fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: locked.path)
+            try? fm.removeItem(at: home)
+        }
+        try write(10, locked.appendingPathComponent("a"))
+        try write(10, place.appendingPathComponent("plain/b"))
+        try fm.setAttributes([.posixPermissions: 0o555], ofItemAtPath: locked.path)
+        try fm.setAttributes(
+            [.posixPermissions: 0o555], ofItemAtPath: locked.deletingLastPathComponent().path)
+        // Control: the plain FileManager delete, which this replaced, fails on this tree.
+        #expect(throws: (any Error).self) {
+            try fm.removeItem(at: place.appendingPathComponent("ro"))
+        }
+        let candidate = ReclaimCatalog.candidates(home: home).first { $0.place.id == "go-build" }!
+        try ReclaimCatalog.deleteNow(candidate, home: home)
+        #expect(try fm.contentsOfDirectory(atPath: place.path).isEmpty)
+
+        // A file inside a folder that is put back read-only by the system (here: an
+        // append-only parent, which chmod cannot override) stays; everything else goes.
+        try write(10, stuck)
+        try write(10, place.appendingPathComponent("plain/c"))
+        let parent = stuck.deletingLastPathComponent().path
+        #expect(parent.withCString { chflags($0, UInt32(UF_APPEND)) } == 0)
+        defer { _ = parent.withCString { chflags($0, 0) } }
+        do {
+            try ReclaimCatalog.deleteNow(candidate, home: home)
+            Issue.record("expected an incomplete delete")
+        } catch let ReclaimCatalog.DeleteError.incomplete(left, firstPath, reason) {
+            #expect(left == 1)
+            #expect(firstPath.hasSuffix("stuck/file"))
+            #expect(!reason.isEmpty)
+        }
+        #expect(fm.fileExists(atPath: stuck.path))
+        #expect(!fm.fileExists(atPath: place.appendingPathComponent("plain").path))
+    }
 }
