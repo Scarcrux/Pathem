@@ -116,12 +116,29 @@ than the primary checkout:
   new source or test files there while concurrent work is possible.
 - Commit one coherent unit in the workbench and immediately run `commandem
   workbench land <agent> <project>` so the agent branch returns to trunk.
+  For a workbench created for a single task, land with `--rm` (`commandem
+  workbench land <agent> <project> --rm`) so it is removed once landed;
+  idle per-task workbenches otherwise pile up (203 copies and 453 GB on
+  2026-10-13). `commandem workbench prune` lists any that remain.
+- Never run `git stash` in a workbench: stashes are shared by every worktree
+  of the repository, so a pop can apply another lane's changes. Set work aside
+  with a temporary WIP commit on your own branch instead.
 - If work already began in the primary checkout, migrate only the changes you
   own into your workbench. Preserve every other dirty or untracked file.
 
 Do not bypass a workbench or its commit gate to save time. Shared-checkout
 collisions waste builds, tokens, and user time; isolation is part of finishing
 the work, not an optional cleanup step.
+
+## Wait for background work without sleep loops
+
+When you are waiting on a long-running command, build, test run or agent,
+do not poll with `sleep N && <check>` chains: the agent harness refuses them,
+and each poll wastes a turn. Start the work in the background and let its
+completion notify you (in Claude Code: `run_in_background`, or the Monitor
+tool with an until-loop for a condition). macOS ships neither GNU `timeout`
+nor `tac`; Commandem supplies fallbacks on an agent's PATH, but prefer
+bounded tools over wrapping commands in `timeout`.
 
 ## Renaming a project folder: migrate its chat history
 
