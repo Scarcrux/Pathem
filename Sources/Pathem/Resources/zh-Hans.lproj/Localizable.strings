@@ -1819,7 +1819,7 @@
 "reclaim.large" = "大文件；请先检查";
 "reclaim.old" = "长期未更改；请先检查";
 "reclaim.summary" = "可重新生成 %@ · 可重新下载 %@ · 待检查 %@ · 已勾选 %@";
-"reclaim.measuring" = "正在测量已知位置（%d/%d）…";
+"reclaim.measuring" = "正在更新大小（已知位置 %d/%d）…";
 "reclaim.deepScan" = "深度扫描“%@”…";
 "reclaim.deepScanTip" = "遍历此文件夹，查找构建文件夹、大文件、旧文件和重复项。大文件夹可能需要几分钟。";
 "reclaim.deleteNow" = "立即删除…";

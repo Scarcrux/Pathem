@@ -1819,7 +1819,7 @@
 "reclaim.large" = "Fichier volumineux ; à vérifier d’abord";
 "reclaim.old" = "Inchangé depuis longtemps ; à vérifier d’abord";
 "reclaim.summary" = "%@ se reconstruisent · %@ se retéléchargent · %@ à vérifier · %@ cochés";
-"reclaim.measuring" = "mesure de %d emplacements connus sur %d…";
+"reclaim.measuring" = "mise à jour des tailles, %d emplacements connus sur %d…";
 "reclaim.deepScan" = "Analyse approfondie de « %@ »…";
 "reclaim.deepScanTip" = "Parcourt ce dossier à la recherche de dossiers de compilation, de fichiers volumineux ou anciens et de doublons. Peut prendre plusieurs minutes sur un gros dossier.";
 "reclaim.deleteNow" = "Supprimer maintenant…";

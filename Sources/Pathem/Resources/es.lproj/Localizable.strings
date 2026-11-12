@@ -1819,7 +1819,7 @@
 "reclaim.large" = "Archivo grande; revisar primero";
 "reclaim.old" = "Sin cambios desde hace mucho; revisar primero";
 "reclaim.summary" = "%@ se reconstruyen · %@ se vuelven a descargar · %@ por revisar · %@ marcados";
-"reclaim.measuring" = "midiendo %d de %d ubicaciones conocidas…";
+"reclaim.measuring" = "actualizando tamaños, %d de %d ubicaciones conocidas…";
 "reclaim.deepScan" = "Análisis profundo de «%@»…";
 "reclaim.deepScanTip" = "Recorre esta carpeta en busca de carpetas de compilación, archivos grandes o antiguos y duplicados. Puede tardar minutos en una carpeta grande.";
 "reclaim.deleteNow" = "Eliminar ahora…";

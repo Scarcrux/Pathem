@@ -483,6 +483,11 @@ enum PathemApp {
             let started = Date()
             browser.cleanup.present(
                 for: FileManager.default.homeDirectoryForCurrentUser, over: window)
+            // What the window shows before anything is measured: sizes remembered from last time.
+            FileHandle.standardOutput.write(
+                Data(
+                    "RECLAIM OPEN: rows=\(browser.cleanup.debugPlaceRows.count) summary=\(browser.cleanup.debugSummary)\n"
+                        .utf8))
             Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
                 MainActor.assumeIsolated {
                     let elapsed = Date().timeIntervalSince(started)

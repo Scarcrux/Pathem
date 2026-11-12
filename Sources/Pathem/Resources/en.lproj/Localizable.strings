@@ -1403,7 +1403,7 @@
 "reclaim.deleteNowTitle" = "Permanently delete %@?";
 "reclaim.duplicate" = "Duplicate copy; one original is kept";
 "reclaim.large" = "Large file; review first";
-"reclaim.measuring" = "measuring %d of %d known places…";
+"reclaim.measuring" = "updating sizes, %d of %d known places…";
 "reclaim.old" = "Not changed in a long time; review first";
 "reclaim.rebuilds" = "Rebuilds automatically";
 "reclaim.rebuildsDetail" = "Build output or a cache. The tool recreates it the next time it runs; the first build or launch afterwards is slower.";

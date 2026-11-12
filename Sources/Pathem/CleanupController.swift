@@ -175,7 +175,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let generation = gen.bump()
         home = FileManager.default.homeDirectoryForCurrentUser
         candidates = ReclaimCatalog.candidates(home: home)
-        placeSizes = [:]
+        // Show the sizes measured last time at once, then refresh each in the background:
+        // the first uncached read of a very large folder takes minutes.
+        let remembered = Self.loadRememberedSizes()
+        placeSizes = remembered.filter { id, _ in candidates.contains { $0.place.id == id } }
         placesMeasured = 0
         titleLabel.stringValue = L("reclaim.windowTitle", "Reclaim Space")
         rebuildRows()
@@ -203,12 +206,33 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                     self.placesMeasured += 1
                     self.rebuildRows()
                     self.updateSummary()
+                    // Per result, so closing the window mid-run keeps what was measured.
+                    Self.saveRememberedSizes(self.placeSizes)
                 }
             }
             guard let self, gen.isCurrent(generation) else { return }
             if self.quickReport == nil { self.spinner.stopAnimation(nil) }
             self.updateSummary()
+            Self.saveRememberedSizes(self.placeSizes)
         }
+    }
+
+    private static func rememberedSizesURL() -> URL? {
+        ConfigStore.directory()?.appendingPathComponent("reclaim-sizes.json")
+    }
+
+    private static func loadRememberedSizes() -> [String: Int64] {
+        guard let url = rememberedSizesURL(), let data = try? Data(contentsOf: url) else {
+            return [:]
+        }
+        return (try? JSONDecoder().decode([String: Int64].self, from: data)) ?? [:]
+    }
+
+    private static func saveRememberedSizes(_ sizes: [String: Int64]) {
+        guard let url = rememberedSizesURL(), let data = try? JSONEncoder().encode(sizes) else {
+            return
+        }
+        try? data.write(to: url, options: .atomic)
     }
 
     /// Volume capacity, used, and free for the scanned folder's disk (like the macOS
@@ -615,7 +639,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             text +=
                 " · "
                 + String(
-                    format: L("reclaim.measuring", "measuring %d of %d known places…"),
+                    format: L("reclaim.measuring", "updating sizes, %d of %d known places…"),
                     placesMeasured, candidates.count)
         }
         summaryLabel.stringValue = text
@@ -961,6 +985,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         rebuildRows()
         updateSummary()
         updateDiskStats()
+        if debugMinimumPlaceBytes == nil { Self.saveRememberedSizes(placeSizes) }
         guard !failures.isEmpty, panel.isVisible else { return }
         let alert = NSAlert()
         alert.messageText = String(

@@ -1819,7 +1819,7 @@
 "reclaim.large" = "大きなファイル（先に確認してください）";
 "reclaim.old" = "長期間変更されていません（先に確認してください）";
 "reclaim.summary" = "再作成 %@ · 再ダウンロード %@ · 要確認 %@ · 選択中 %@";
-"reclaim.measuring" = "既知の場所を計測中（%d/%d）…";
+"reclaim.measuring" = "サイズを更新中（既知の場所 %d/%d）…";
 "reclaim.deepScan" = "“%@”を詳細スキャン…";
 "reclaim.deepScanTip" = "このフォルダを走査して、ビルドフォルダ、大きなファイルや古いファイル、重複を探します。大きなフォルダでは数分かかることがあります。";
 "reclaim.deleteNow" = "今すぐ削除…";

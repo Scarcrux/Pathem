@@ -1819,7 +1819,7 @@
 "reclaim.large" = "Große Datei; erst prüfen";
 "reclaim.old" = "Lange nicht geändert; erst prüfen";
 "reclaim.summary" = "%@ wird neu erstellt · %@ wird erneut geladen · %@ zu prüfen · %@ ausgewählt";
-"reclaim.measuring" = "%d von %d bekannten Orten gemessen …";
+"reclaim.measuring" = "Größen werden aktualisiert, %d von %d bekannten Orten …";
 "reclaim.deepScan" = "„%@“ gründlich durchsuchen …";
 "reclaim.deepScanTip" = "Durchsucht diesen Ordner nach Build-Ordnern, großen und alten Dateien sowie Duplikaten. Kann bei großen Ordnern Minuten dauern.";
 "reclaim.deleteNow" = "Jetzt löschen …";
