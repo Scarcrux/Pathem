@@ -2024,4 +2024,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Landed 0e42dfc (catalog engine, 4 tests incl. forged-path and symlink refusals) and the Reclaim Space window. Real-disk read-only run: 54 rows, 372.6 GB rebuilds / 319.05 GB re-downloads / 61.79 GB review; measuring all places took 204 s (rows appear progressively; DirectorySize is the bottleneck, a faster sizer is a follow-up). Smoke: known-place rows and Delete Now tier guard pass. Unverified: header/button layout (render method does not draw them) and live clicks on Deep Scan, Stop, Delete Now sheet, Empty Trash. Task 4 (verify in a real window and install) stays open."
     at = "2026-11-12T10:57:09Z"
+
+  [[mission.comment]]
+    text = "53c25bd sizing: parallel readdir/fstatat walk (contract-tested against the old enumerator) plus remembered sizes shown on open. Real home, read-only, fresh config: first open 0 rows (control), all measured in 142 s; second open showed all 54 rows at once, refresh 176 s (was 204 s before). Negative result: the cold 231 GB Rust folder is disk-bound (218 s parallel vs 204 s reference), so the walk alone gives only a modest, load-confounded gain; the immediate display is the dependable fix. Not yet verified: header and button layout and live clicks in a real window."
+    at = "2026-11-12T11:33:53Z"
 # <<< commandem roadmap <<<
