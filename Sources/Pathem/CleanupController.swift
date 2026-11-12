@@ -19,11 +19,14 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private struct Row {
         let group: StorageScan.Group
         var checked: Bool
+        /// Set for a known place from the catalog (sized directly, not found by a scan).
+        var candidate: ReclaimCatalog.Candidate?
         /// A single item, or the first of a folded group (for the icon and Reveal).
         var item: StorageScan.Item { group.items[0] }
         var size: Int64 { group.size }
         var key: String {
-            group.isSingle ? item.path : "group:\(group.category.rawValue):\(group.kind)"
+            if let candidate { return "place:" + candidate.place.id }
+            return group.isSingle ? item.path : "group:\(group.category.rawValue):\(group.kind)"
         }
     }
 
@@ -41,6 +44,15 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private let aiButton = NSButton()
     private let trashButton = NSButton()
     private let stopButton = NSButton()
+    private let deleteNowButton = NSButton()
+    private let deepScanButton = NSButton()
+    /// Known places found on this disk, and the sizes measured so far.
+    private var candidates: [ReclaimCatalog.Candidate] = []
+    private var placeSizes: [String: Int64] = [:]
+    private var placesMeasured = 0
+    private var home = FileManager.default.homeDirectoryForCurrentUser
+    /// Catalog places smaller than this are not worth a row.
+    private static let minimumPlaceBytes: Int64 = 50_000_000
     private let gen = GenerationBox()
     /// Bumped by Stop: the walk ends early but keeps what it found (unlike `gen`, which
     /// discards a superseded scan).
@@ -66,11 +78,14 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     override init() {
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 640, height: 520),
-            styleMask: [.titled, .closable, .resizable, .utilityWindow], backing: .buffered,
+            contentRect: NSRect(x: 0, y: 0, width: 820, height: 620),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered,
             defer: true)
         super.init()
-        panel.title = L("cleanup.panelTitle", "Cleanup")
+        panel.title = L("reclaim.windowTitle", "Reclaim Space")
+        panel.isFloatingPanel = false
+        panel.hidesOnDeactivate = false
+        panel.minSize = NSSize(width: 700, height: 480)
         panel.delegate = self
         build()
     }
@@ -82,6 +97,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     /// Smoke hooks: load a report as if a scan had finished, read the rows back, and trash.
     func debugLoad(_ report: StorageScan.Report, root: URL) {
         self.root = root
+        candidates = []
+        placeSizes = [:]
         quickReport = report
         rebuildRows()
         updateSummary()
@@ -92,13 +109,106 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     var debugSummary: String { summaryLabel.stringValue }
     var debugTrashNote: String { lastTrashNote }
     func debugTrashChecked() { trashChecked() }
+    /// Load known places under a (temporary) home with their real sizes, synchronously.
+    func debugLoadPlaces(home: URL, minimumBytes: Int64) {
+        self.home = home
+        debugMinimumPlaceBytes = minimumBytes
+        candidates = ReclaimCatalog.candidates(home: home)
+        placeSizes = Dictionary(
+            uniqueKeysWithValues: candidates.map {
+                ($0.place.id, DirectorySize.total(of: $0.url).bytes)
+            })
+        placesMeasured = candidates.count
+        rebuildRows()
+        updateSummary()
+    }
+    private var debugMinimumPlaceBytes: Int64?
+    func debugCheck(title: String) {
+        guard let index = rows.firstIndex(where: { rowTitle($0) == title }) else { return }
+        rows[index].checked = true
+        updateSummary()
+    }
+    var debugPlaceRows: [(title: String, what: String, size: Int64, checked: Bool)] {
+        rows.filter { $0.candidate != nil }.map {
+            (rowTitle($0), whatHappens($0), $0.size, $0.checked)
+        }
+    }
+    var debugDeleteNowEnabled: Bool { deleteNowButton.isEnabled }
+    var debugPlacesDone: Bool { !candidates.isEmpty && placesMeasured >= candidates.count }
+    /// Save a picture of the window's content, to check the layout without a screen recording.
+    func debugRender(to path: String) {
+        guard let view = panel.contentView else { return }
+        view.layoutSubtreeIfNeeded()
+        guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        try? rep.representation(using: .png, properties: [:])?.write(
+            to: URL(fileURLWithPath: path))
+    }
+    /// Delete the checked rebuilds-tier places as the confirmed button does, synchronously.
+    func debugDeleteNowConfirmed() -> [String] {
+        let targets = deletableNow.compactMap(\.candidate)
+        var failed: [String] = []
+        for candidate in targets {
+            do { try ReclaimCatalog.deleteNow(candidate, home: home) } catch {
+                failed.append(candidate.place.name)
+            }
+        }
+        finishDeleteNow(targets, failures: failed)
+        return failed
+    }
 
     func present(for url: URL, over window: NSWindow?) {
         root = url
         if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
-        updateDiskStats()  // instant: overall capacity/used/free, before the scan runs
-        scan()
+        updateDiskStats()  // instant: overall capacity/used/free
+        deepScanButton.title = String(
+            format: L("reclaim.deepScan", "Deep Scan “%@”…"), url.lastPathComponent)
+        quickReport = nil
+        lastTrashNote = ""
+        measurePlaces()
+    }
+
+    /// Size the known places, a few at a time, showing each row as soon as it is measured.
+    /// This is the default view: seconds, where walking the whole disk takes minutes.
+    private func measurePlaces() {
+        let generation = gen.bump()
+        home = FileManager.default.homeDirectoryForCurrentUser
+        candidates = ReclaimCatalog.candidates(home: home)
+        placeSizes = [:]
+        placesMeasured = 0
+        titleLabel.stringValue = L("reclaim.windowTitle", "Reclaim Space")
+        rebuildRows()
+        updateSummary()
+        guard !candidates.isEmpty else { return }
+        spinner.startAnimation(nil)
+        let pending = candidates
+        let gen = self.gen
+        Task { [weak self] in
+            await withTaskGroup(of: (String, Int64).self) { group in
+                var next = 0
+                func add() {
+                    guard next < pending.count else { return }
+                    let candidate = pending[next]
+                    next += 1
+                    group.addTask(priority: .utility) {
+                        (candidate.place.id, DirectorySize.total(of: candidate.url).bytes)
+                    }
+                }
+                for _ in 0..<4 { add() }
+                for await (id, bytes) in group {
+                    add()
+                    guard let self, gen.isCurrent(generation) else { continue }
+                    self.placeSizes[id] = bytes
+                    self.placesMeasured += 1
+                    self.rebuildRows()
+                    self.updateSummary()
+                }
+            }
+            guard let self, gen.isCurrent(generation) else { return }
+            if self.quickReport == nil { self.spinner.stopAnimation(nil) }
+            self.updateSummary()
+        }
     }
 
     /// Volume capacity, used, and free for the scanned folder's disk (like the macOS
@@ -145,7 +255,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         for (id, title, width) in [
             ("check", "", CGFloat(24)), ("name", L("cleanup.colItem", "Item"), 280),
             ("size", L("cleanup.colSize", "Size"), 90),
-            ("category", L("cleanup.colWhy", "Why"), 130),
+            ("category", L("reclaim.colWhat", "What happens if you delete it"), 250),
         ] {
             let column = NSTableColumn(identifier: .init(id))
             column.title = title
@@ -204,8 +314,26 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         diskStats.orientation = .vertical
         diskStats.alignment = .leading
         diskStats.spacing = 3
+        deleteNowButton.title = L("reclaim.deleteNow", "Delete Now…")
+        deleteNowButton.bezelStyle = .rounded
+        deleteNowButton.target = self
+        deleteNowButton.action = #selector(deleteNowClicked)
+        deleteNowButton.isEnabled = false
+        deleteNowButton.toolTip = L(
+            "reclaim.deleteNowTip",
+            "Permanently delete the checked items that rebuild automatically, skipping the Trash")
+        deepScanButton.bezelStyle = .rounded
+        deepScanButton.target = self
+        deepScanButton.action = #selector(deepScanClicked)
+        deepScanButton.toolTip = L(
+            "reclaim.deepScanTip",
+            "Walk this folder for project build folders, large and old files, and duplicates. Can take minutes on a big folder."
+        )
         let actions = NSStackView(
-            views: [aiButton, systemSettings, NSView(), reveal, emptyTrash, trashButton])
+            views: [
+                deepScanButton, aiButton, systemSettings, NSView(), reveal, emptyTrash,
+                deleteNowButton, trashButton,
+            ])
         actions.orientation = .horizontal
         actions.spacing = 12
 
@@ -302,14 +430,13 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         titleLabel.stringValue = String(
             format: L("cleanup.scanning", "Scanning %@…"), root.lastPathComponent)
         summaryLabel.stringValue = L("cleanup.phaseScanning", "Scanning files…")
-        rows = []
         quickReport = nil
         lastTrashNote = ""
         memory = Self.feedbackURL().map { OrganizeFeedback.load(from: $0) } ?? OrganizeFeedback()
-        table.reloadData()
-        trashButton.isEnabled = false
+        rebuildRows()
         spinner.startAnimation(nil)
         stopButton.isHidden = false
+        deepScanButton.isEnabled = false
         let generation = gen.bump()
         let stopToken = stopBox.bump()
         let url = root
@@ -344,6 +471,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     }
 
     @objc private func stopScan() { _ = stopBox.bump() }
+    @objc private func deepScanClicked() { scan() }
 
     /// Closing the panel abandons a running scan instead of letting it walk the disk unseen.
     func windowWillClose(_ notification: Notification) {
@@ -370,6 +498,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     private func applyDuplicates(_ items: [StorageScan.Item]) {
         spinner.stopAnimation(nil)
         stopButton.isHidden = true
+        deepScanButton.isEnabled = true
         quickReport?.duplicates = items
         rebuildRows()
         updateSummary()
@@ -397,13 +526,35 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     /// Rebuild the row list from the latest report, preserving any check toggles the
     /// user made while the scan was still running.
     private func rebuildRows() {
-        guard let report = quickReport else {
-            rows = []
+        let priorChecked = Dictionary(
+            rows.map { ($0.key, $0.checked) }, uniquingKeysWith: { a, _ in a })
+        // Known places first: measured so far, big enough to matter, biggest first. They are
+        // never pre-checked; the user decides.
+        let minimum = debugMinimumPlaceBytes ?? Self.minimumPlaceBytes
+        let placeRows: [Row] = candidates.compactMap { candidate -> Row? in
+            guard let bytes = placeSizes[candidate.place.id], bytes >= minimum else { return nil }
+            let item = StorageScan.Item(
+                path: candidate.url.path, size: bytes, category: .cache,
+                reason: candidate.place.name, isDirectory: true)
+            var row = Row(
+                group: .init(category: .cache, kind: candidate.place.name, items: [item]),
+                checked: false, candidate: candidate)
+            row.checked = priorChecked[row.key] ?? false
+            return row
+        }.sorted { $0.size > $1.size }
+        guard var report = quickReport else {
+            rows = placeRows
             table.reloadData()
             return
         }
-        let priorChecked = Dictionary(
-            rows.map { ($0.key, $0.checked) }, uniquingKeysWith: { a, _ in a })
+        // The deep scan must not list a known place a second time (or its parent or contents).
+        for keyPath in [
+            \StorageScan.Report.junk, \.duplicates, \.caches, \.large, \.old,
+        ] {
+            report[keyPath: keyPath].removeAll {
+                ReclaimCatalog.overlaps($0.path, with: candidates)
+            }
+        }
         func row(_ group: StorageScan.Group) -> Row {
             // Keep any toggle the user already made; otherwise use the learned default.
             var row = Row(group: group, checked: false)
@@ -419,7 +570,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             + StorageScan.grouped(report.caches, individualAtLeast: Self.individualJunkBytes)
             + StorageScan.grouped(report.large, individualAtLeast: 0)
             + StorageScan.grouped(report.old, individualAtLeast: 0)
-        rows = groups.map(row)
+        rows = placeRows + groups.map(row)
         table.reloadData()
     }
 
@@ -447,16 +598,30 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     private func updateSummary(extra: String = "") {
         let checked = rows.filter(\.checked).reduce(Int64(0)) { $0 + $1.size }
-        let safe = rows.filter { $0.group.category == .junk || $0.group.category == .duplicate }
-            .reduce(Int64(0)) { $0 + $1.size }
-        summaryLabel.stringValue =
+        func total(_ tier: ReclaimCatalog.Consequence) -> Int64 {
+            rows.filter { self.tier(of: $0) == tier }.reduce(Int64(0)) { $0 + $1.size }
+        }
+        var text =
             lastTrashNote
             + String(
-                format: L("cleanup.summary", "%@ checked · %@ safe to remove"),
-                byteFormatter.string(fromByteCount: checked),
-                byteFormatter.string(fromByteCount: safe)) + extra + coverageNote
-        summaryLabel.toolTip = summaryLabel.stringValue
+                format: L(
+                    "reclaim.summary",
+                    "%@ rebuilds automatically · %@ re-downloads · %@ to review · %@ checked"),
+                byteFormatter.string(fromByteCount: total(.rebuilds)),
+                byteFormatter.string(fromByteCount: total(.redownloads)),
+                byteFormatter.string(fromByteCount: total(.review)),
+                byteFormatter.string(fromByteCount: checked)) + extra + coverageNote
+        if placesMeasured < candidates.count {
+            text +=
+                " · "
+                + String(
+                    format: L("reclaim.measuring", "measuring %d of %d known places…"),
+                    placesMeasured, candidates.count)
+        }
+        summaryLabel.stringValue = text
+        summaryLabel.toolTip = text
         trashButton.isEnabled = checked > 0
+        deleteNowButton.isEnabled = !deletableNow.isEmpty
     }
 
     // MARK: Table
@@ -485,7 +650,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             return button
         case "name":
             let cell = Self.textCell(tableView, owner: self, icon: true)
-            cell.textField?.stringValue = Self.title(for: group)
+            cell.textField?.stringValue = rowTitle(rows[row])
             cell.imageView?.image = NSWorkspace.shared.icon(forFile: item.path)
             cell.textField?.toolTip = group.isSingle ? item.path : Self.locations(of: group)
             return cell
@@ -495,8 +660,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             return cell
         default:
             let cell = Self.textCell(tableView, owner: self, icon: false)
-            cell.textField?.stringValue = "\(item.category.rawValue) · \(item.reason)"
+            cell.textField?.stringValue = whatHappens(rows[row])
             cell.textField?.textColor = .secondaryLabelColor
+            cell.textField?.toolTip = cell.textField?.stringValue
             return cell
         }
     }
@@ -516,9 +682,11 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             return
         }
         let group = rows[selected].group
-        detailName.stringValue = Self.title(for: group)
+        detailName.stringValue = rowTitle(rows[selected])
         detailPath.stringValue = group.isSingle ? group.items[0].path : Self.locations(of: group)
-        detailWhy.stringValue = whyText(for: group)
+        detailWhy.stringValue =
+            rows[selected].candidate.map { self.explanation(for: $0.place.consequence) }
+            ?? whyText(for: group)
         feedbackNote.stringValue = ""
         goodButton.isEnabled = true
         badButton.isEnabled = true
@@ -552,6 +720,68 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         return String(
             format: L("cleanup.groupLocations", "In %@ locations, for example %@"),
             countText(parents.count), group.items[0].path)
+    }
+
+    private func rowTitle(_ row: Row) -> String {
+        row.candidate?.place.name ?? Self.title(for: row.group)
+    }
+
+    /// Which consequence tier a row counts toward in the summary.
+    private func tier(of row: Row) -> ReclaimCatalog.Consequence {
+        if let candidate = row.candidate { return candidate.place.consequence }
+        return row.group.category == .junk ? .rebuilds : .review
+    }
+
+    private func consequenceText(_ consequence: ReclaimCatalog.Consequence) -> String {
+        switch consequence {
+        case .rebuilds: return L("reclaim.rebuilds", "Rebuilds automatically")
+        case .redownloads: return L("reclaim.redownloads", "Re-downloads when needed")
+        case .review: return L("reclaim.review", "Review first")
+        }
+    }
+
+    private func explanation(for consequence: ReclaimCatalog.Consequence) -> String {
+        switch consequence {
+        case .rebuilds:
+            return L(
+                "reclaim.rebuildsDetail",
+                "Build output or a cache. The tool recreates it the next time it runs; the first build or launch afterwards is slower."
+            )
+        case .redownloads:
+            return L(
+                "reclaim.redownloadsDetail",
+                "Downloaded files. They are fetched again from the internet when next needed, which can take a while for large ones."
+            )
+        case .review:
+            return L(
+                "reclaim.reviewDetail",
+                "May contain things that exist nowhere else. Open it and look before deleting.")
+        }
+    }
+
+    /// The "what happens if you delete it" column: the consequence for a known place, and for
+    /// scan results the kind plus, for a project's build folder, how long it has sat unused.
+    private func whatHappens(_ row: Row) -> String {
+        if let candidate = row.candidate { return consequenceText(candidate.place.consequence) }
+        let group = row.group
+        switch group.category {
+        case .junk:
+            var text = consequenceText(.rebuilds)
+            if group.isSingle, let modified = group.items[0].modified {
+                let days = Int(Date().timeIntervalSince(modified) / 86_400)
+                if days >= 30 {
+                    text +=
+                        " · "
+                        + String(
+                            format: L("reclaim.stale", "not changed for %d months"), days / 30)
+                }
+            }
+            return text
+        case .duplicate: return L("reclaim.duplicate", "Duplicate copy; one original is kept")
+        case .cache: return consequenceText(.review)
+        case .large: return L("reclaim.large", "Large file; review first")
+        case .old: return L("reclaim.old", "Not changed in a long time; review first")
+        }
     }
 
     private func whyText(for group: StorageScan.Group) -> String {
@@ -647,6 +877,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         ] {
             quickReport?[keyPath: keyPath].removeAll { trashed.contains($0.path) }
         }
+        candidates.removeAll { trashed.contains($0.url.path) }
         rebuildRows()
         if freed > 0 {
             lastTrashNote =
@@ -662,6 +893,82 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         // other trash flows (Cleanup was the only one that trashed with no record).
         if !result.trashed.isEmpty { onTrashed?(result.trashed) }
         if !result.failures.isEmpty { presentTrashFailures(result.failures) }
+    }
+
+    // MARK: Delete Now (rebuilds tier only)
+
+    /// Checked known places that rebuild automatically: the only rows that may skip the Trash.
+    private var deletableNow: [Row] {
+        rows.filter { $0.checked && $0.candidate?.place.consequence == .rebuilds }
+    }
+
+    @objc private func deleteNowClicked() {
+        let targets = deletableNow
+        guard !targets.isEmpty else {
+            NSSound.beep()
+            return
+        }
+        let total = targets.reduce(Int64(0)) { $0 + $1.size }
+        let list = targets.map {
+            "• \(rowTitle($0)) (\(byteFormatter.string(fromByteCount: $0.size)))"
+        }.joined(separator: "\n")
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(
+            format: L("reclaim.deleteNowTitle", "Permanently delete %@?"),
+            byteFormatter.string(fromByteCount: total))
+        alert.informativeText =
+            list + "\n\n"
+            + L(
+                "reclaim.deleteNowBody",
+                "These are recreated automatically the next time each tool runs. This skips the Trash and can’t be undone. Other checked items are not affected."
+            )
+        alert.addButton(withTitle: L("reclaim.deleteNowConfirm", "Delete Permanently"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.beginSheetModal(for: panel) { [weak self] response in
+            if response == .alertFirstButtonReturn { self?.deleteCheckedNow() }
+        }
+    }
+
+    private func deleteCheckedNow() {
+        let targets = deletableNow.compactMap(\.candidate)
+        guard !targets.isEmpty else { return }
+        let home = self.home
+        deleteNowButton.isEnabled = false
+        spinner.startAnimation(nil)
+        Task { [weak self] in
+            let failures = await Task.detached(priority: .utility) { () -> [String] in
+                var failed: [String] = []
+                for candidate in targets {
+                    do { try ReclaimCatalog.deleteNow(candidate, home: home) } catch {
+                        failed.append("\(candidate.place.name): \(error.localizedDescription)")
+                    }
+                }
+                return failed
+            }.value
+            self?.finishDeleteNow(targets, failures: failures)
+        }
+    }
+
+    /// Re-measure what was deleted (a folder that could only be partly removed keeps its row
+    /// with the real remaining size), refresh the totals, and report any failures.
+    private func finishDeleteNow(_ targets: [ReclaimCatalog.Candidate], failures: [String]) {
+        spinner.stopAnimation(nil)
+        for candidate in targets {
+            placeSizes[candidate.place.id] = DirectorySize.total(of: candidate.url).bytes
+        }
+        lastTrashNote = ""
+        rebuildRows()
+        updateSummary()
+        updateDiskStats()
+        guard !failures.isEmpty, panel.isVisible else { return }
+        let alert = NSAlert()
+        alert.messageText = String(
+            format: L("reclaim.deleteFailedTitle", "%d place(s) couldn’t be fully deleted"),
+            failures.count)
+        alert.informativeText = failures.prefix(8).joined(separator: "\n")
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.beginSheetModal(for: panel) { _ in }
     }
 
     @objc private func emptyTrashClicked() {
@@ -731,8 +1038,8 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         if #available(macOS 26, *) {
             let items = rows.map {
                 (
-                    path: Self.title(for: $0.group), size: $0.size,
-                    reason: "\($0.group.category.rawValue), \($0.group.kind)"
+                    path: self.rowTitle($0), size: $0.size,
+                    reason: self.whatHappens($0)
                 )
             }
             guard !items.isEmpty else {

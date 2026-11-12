@@ -38,9 +38,13 @@ public enum StorageScan {
         public let category: Category
         public let reason: String
         public let isDirectory: Bool
+        /// When a junk folder last changed, so a stale project's build output stands out.
+        public let modified: Date?
         public init(
-            path: String, size: Int64, category: Category, reason: String, isDirectory: Bool
+            path: String, size: Int64, category: Category, reason: String, isDirectory: Bool,
+            modified: Date? = nil
         ) {
+            self.modified = modified
             self.path = path
             self.size = size
             self.category = category
@@ -127,7 +131,8 @@ public enum StorageScan {
                         report.junk.append(
                             Item(
                                 path: entry.path, size: DirectorySize.total(of: entry).bytes,
-                                category: .junk, reason: name, isDirectory: true))
+                                category: .junk, reason: name, isDirectory: true,
+                                modified: values?.contentModificationDate))
                     } else if cacheDirectories.contains(name) {
                         report.caches.append(
                             Item(
@@ -177,6 +182,11 @@ public enum StorageScan {
         public let category: Category
         public let kind: String
         public let items: [Item]
+        public init(category: Category, kind: String, items: [Item]) {
+            self.category = category
+            self.kind = kind
+            self.items = items
+        }
         public var size: Int64 { items.reduce(0) { $0 + $1.size } }
         public var isSingle: Bool { items.count == 1 }
     }

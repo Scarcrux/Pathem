@@ -1020,6 +1020,59 @@ extension BrowserViewController {
         check("organize-review-builds", review.debugRowCount == 2, "\(review.debugRowCount) rows")
         // Cleanup panel (with its new detail pane) must construct without a layout crash.
         check("cleanup-builds", CleanupController().debugContentReady, "content ready")
+        // Reclaim Space known places on a temp home: sized, labelled with what deleting costs,
+        // never pre-checked, and Delete Now only ever touches the rebuilds tier.
+        do {
+            let fm = FileManager.default
+            let fakeHome = fm.temporaryDirectory.appendingPathComponent(
+                "pathem-reclaim-home-\(UUID().uuidString)")
+            func put(_ bytes: Int, _ path: String) {
+                let url = fakeHome.appendingPathComponent(path)
+                try? fm.createDirectory(
+                    at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+                try? Data(count: bytes).write(to: url)
+            }
+            put(9000, "Library/Caches/go-build/aa/obj")
+            put(7000, ".cache/huggingface/model.bin")
+            put(3000, "Library/Caches/mystery-tool/data")
+            let panel = CleanupController()
+            panel.debugLoadPlaces(home: fakeHome, minimumBytes: 1)
+            let places = panel.debugPlaceRows
+            check(
+                "reclaim-lists-known-places-with-consequences",
+                places.map(\.title) == ["Go build cache", "Hugging Face models", "mystery-tool"]
+                    && places.map(\.size) == [9000, 7000, 3000]
+                    && places.map(\.what) == [
+                        L("reclaim.rebuilds", "Rebuilds automatically"),
+                        L("reclaim.redownloads", "Re-downloads when needed"),
+                        L("reclaim.review", "Review first"),
+                    ] && places.allSatisfy { !$0.checked } && !panel.debugDeleteNowEnabled,
+                "rows=\(places.map { "\($0.title)|\($0.what)|\($0.size)" })")
+            panel.debugCheck(title: "Hugging Face models")
+            panel.debugCheck(title: "mystery-tool")
+            let refusedForOtherTiers = !panel.debugDeleteNowEnabled
+            panel.debugCheck(title: "Go build cache")
+            let enabledForRebuilds = panel.debugDeleteNowEnabled
+            let failed = panel.debugDeleteNowConfirmed()
+            let goLeft =
+                (try? fm.contentsOfDirectory(
+                    atPath: fakeHome.appendingPathComponent("Library/Caches/go-build").path))?.count
+            check(
+                "reclaim-delete-now-only-rebuilds-tier",
+                refusedForOtherTiers && enabledForRebuilds && failed.isEmpty && goLeft == 0
+                    && fm.fileExists(
+                        atPath: fakeHome.appendingPathComponent(".cache/huggingface/model.bin").path
+                    )
+                    && fm.fileExists(
+                        atPath: fakeHome.appendingPathComponent("Library/Caches/mystery-tool/data")
+                            .path)
+                    && panel.debugPlaceRows.map(\.title) == [
+                        "Hugging Face models", "mystery-tool",
+                    ],
+                "refused=\(refusedForOtherTiers) enabled=\(enabledForRebuilds) failed=\(failed) goLeft=\(String(describing: goLeft)) rows=\(panel.debugPlaceRows.map(\.title))"
+            )
+            try? fm.removeItem(at: fakeHome)
+        }
         // Cleanup on a real temp tree: small junk of one kind folds into one row, caches are
         // listed but never pre-checked, and trashing removes every item of a folded row and
         // says the space is not free until the Trash is emptied.

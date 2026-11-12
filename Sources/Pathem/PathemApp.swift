@@ -476,6 +476,30 @@ enum PathemApp {
             }
         }
 
+        // Open Reclaim Space against the real home folder, wait for every known place to be
+        // measured, print how long that took, and save a picture of the window
+        // (PATHEM_RECLAIM_SHOT=<png path>). Read-only: nothing is checked or deleted.
+        if let shot = ProcessInfo.processInfo.environment["PATHEM_RECLAIM_SHOT"] {
+            let started = Date()
+            browser.cleanup.present(
+                for: FileManager.default.homeDirectoryForCurrentUser, over: window)
+            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in
+                MainActor.assumeIsolated {
+                    let elapsed = Date().timeIntervalSince(started)
+                    guard browser.cleanup.debugPlacesDone || elapsed > 900 else { return }
+                    print(
+                        "RECLAIM SHOT: measured=\(browser.cleanup.debugPlacesDone) seconds=\(Int(elapsed)) rows=\(browser.cleanup.debugPlaceRows.count)"
+                    )
+                    for row in browser.cleanup.debugPlaceRows.prefix(12) {
+                        print("RECLAIM ROW: \(row.title) | \(row.what) | \(row.size)")
+                    }
+                    print("RECLAIM SUMMARY: \(browser.cleanup.debugSummary)")
+                    browser.cleanup.debugRender(to: shot)
+                    exit(0)
+                }
+            }
+        }
+
         // Headless render of the move/copy conflict popover content (PATHEM_CONFLICT_SHOT=1), to
         // inspect the button padding.
         if ProcessInfo.processInfo.environment["PATHEM_CONFLICT_SHOT"] != nil {
