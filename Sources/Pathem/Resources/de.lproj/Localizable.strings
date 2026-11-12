@@ -1830,3 +1830,4 @@
 "reclaim.deleteNowConfirm" = "Endgültig löschen";
 "reclaim.deleteFailedHeading" = "Einige Objekte konnten nicht gelöscht werden";
 "reclaim.deleteIncomplete" = "%1$@: %2$d Objekt(e) übrig, beginnend mit %3$@ (%4$@). Alles andere wurde gelöscht.";
+"reclaim.deleting" = "%@ wird gelöscht …";

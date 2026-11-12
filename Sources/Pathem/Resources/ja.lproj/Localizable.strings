@@ -1830,3 +1830,4 @@
 "reclaim.deleteNowConfirm" = "完全に削除";
 "reclaim.deleteFailedHeading" = "一部の項目を削除できませんでした";
 "reclaim.deleteIncomplete" = "%1$@：%2$d 項目が残りました。最初の項目：%3$@（%4$@）。それ以外はすべて削除されました。";
+"reclaim.deleting" = "%@ を削除中…";

@@ -675,8 +675,17 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         summaryLabel.stringValue = text
         summaryLabel.toolTip = text
         trashButton.isEnabled = checked > 0
-        deleteNowButton.isEnabled = !deletableNow.isEmpty
+        // Never while a delete is running: a second run over the same folders races the
+        // first and reports its work as "No such file or directory".
+        deleteNowButton.isEnabled = !deletableNow.isEmpty && deletingNames == nil
+        if let deletingNames {
+            let note = String(format: L("reclaim.deleting", "Deleting %@…"), deletingNames)
+            summaryLabel.stringValue = note + " · " + text
+        }
     }
+
+    /// Names of the places being deleted right now, or nil when no delete is running.
+    private var deletingNames: String?
 
     // MARK: Table
 
@@ -986,9 +995,10 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     private func deleteCheckedNow() {
         let targets = deletableNow.compactMap(\.candidate)
-        guard !targets.isEmpty else { return }
+        guard !targets.isEmpty, deletingNames == nil else { return }
         let home = self.home
-        deleteNowButton.isEnabled = false
+        deletingNames = targets.map(\.place.name).joined(separator: ", ")
+        updateSummary()
         spinner.startAnimation(nil)
         Task { [weak self] in
             let failures = await Task.detached(priority: .utility) { () -> [String] in
@@ -1025,6 +1035,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     /// with the real remaining size), refresh the totals, and report any failures.
     private func finishDeleteNow(_ targets: [ReclaimCatalog.Candidate], failures: [String]) {
         spinner.stopAnimation(nil)
+        deletingNames = nil
         for candidate in targets {
             placeSizes[candidate.place.id] = DirectorySize.total(of: candidate.url).bytes
         }

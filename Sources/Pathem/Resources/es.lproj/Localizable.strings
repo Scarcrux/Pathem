@@ -1830,3 +1830,4 @@
 "reclaim.deleteNowConfirm" = "Eliminar permanentemente";
 "reclaim.deleteFailedHeading" = "No se pudieron eliminar algunos elementos";
 "reclaim.deleteIncomplete" = "%1$@: quedan %2$d elemento(s), empezando por %3$@ (%4$@). Todo lo demás se eliminó.";
+"reclaim.deleting" = "Eliminando %@…";

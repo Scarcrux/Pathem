@@ -1403,6 +1403,7 @@
 "reclaim.deleteNowConfirm" = "Delete Permanently";
 "reclaim.deleteNowTip" = "Permanently delete the checked items that rebuild automatically, skipping the Trash";
 "reclaim.deleteNowTitle" = "Permanently delete %@?";
+"reclaim.deleting" = "Deleting %@…";
 "reclaim.duplicate" = "Duplicate copy; one original is kept";
 "reclaim.large" = "Large file; review first";
 "reclaim.measuring" = "updating sizes, %d of %d known places…";

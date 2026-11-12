@@ -187,7 +187,7 @@ public enum ReclaimCatalog {
         var firstPath = ""
         var reason = ""
 
-        mutating func remove(_ path: String) {
+        mutating func remove(_ path: String, retry: Bool = true) {
             var info = stat()
             guard lstat(path, &info) == 0 else {
                 if errno != ENOENT { fail(path) }
@@ -203,7 +203,9 @@ public enum ReclaimCatalog {
                 handle = opendir(path)
             }
             guard let handle else {
-                fail(path)
+                // Gone since lstat: something else (a second delete, the tool cleaning its
+                // own cache) removed it first, which is the outcome wanted.
+                if errno != ENOENT { fail(path) }
                 return
             }
             var names: [String] = []
@@ -220,6 +222,12 @@ public enum ReclaimCatalog {
             for name in names { remove(path + "/" + name) }
             // A folder that still holds something cannot go; its child is already counted.
             guard left == before else { return }
+            if rmdir(path) == 0 || errno == ENOENT { return }
+            // Something was written into the folder after it was listed: go round once more.
+            if errno == ENOTEMPTY, retry {
+                remove(path, retry: false)
+                return
+            }
             attempt(path) { rmdir($0) }
         }
 

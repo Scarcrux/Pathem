@@ -1830,3 +1830,4 @@
 "reclaim.deleteNowConfirm" = "永久删除";
 "reclaim.deleteFailedHeading" = "部分项目无法删除";
 "reclaim.deleteIncomplete" = "%1$@：剩余 %2$d 个项目，第一个是 %3$@（%4$@）。其余均已删除。";
+"reclaim.deleting" = "正在删除 %@…";

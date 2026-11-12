@@ -159,4 +159,32 @@ import Testing
         #expect(fm.fileExists(atPath: stuck.path))
         #expect(!fm.fileExists(atPath: place.appendingPathComponent("plain").path))
     }
+
+    /// Two deletes of the same place at once (a second click during a long delete, or a
+    /// build tool cleaning its own folders) must not report the other's work as a failure.
+    @Test func concurrentDeletesOfOnePlaceBothSucceed() async throws {
+        let home = try home()
+        let fm = FileManager.default
+        defer { try? fm.removeItem(at: home) }
+        let place = home.appendingPathComponent("Library/Caches/go-build")
+        for index in 0..<4000 {
+            try write(1, place.appendingPathComponent("d\(index % 40)/e\(index % 25)/f\(index)"))
+        }
+        let candidate = ReclaimCatalog.candidates(home: home).first { $0.place.id == "go-build" }!
+        let errors = await withTaskGroup(of: String?.self) { group in
+            for _ in 0..<4 {
+                group.addTask {
+                    do {
+                        try ReclaimCatalog.deleteNow(candidate, home: home)
+                        return nil
+                    } catch { return "\(error)" }
+                }
+            }
+            var found: [String] = []
+            for await error in group { if let error { found.append(error) } }
+            return found
+        }
+        #expect(errors.isEmpty, "\(errors)")
+        #expect(try fm.contentsOfDirectory(atPath: place.path).isEmpty)
+    }
 }
