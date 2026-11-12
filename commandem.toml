@@ -1994,4 +1994,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Owner explicitly approved deployment. Existing Cloudflare Pages pathem/main production, same pathem.app host/public audience; only unchanged d90be85 site/ tree uploaded (no private app source, Git history or authoring metadata). Wrangler4.122.0 natural0,47 assets28new19reused; deployment870f2623-91b0-4b70-85ce-bd48749e3b48, priorc984c0a0-ac03-4030-8648-29e53c15ece0 retained for rollback. Live https://pathem.app/docs/ verified:27 responses200 exact local-byte match plus missing-guide404; real production Chrome152 checks natural0 incl live search, 21 guides at3 widths, fallbacks/no-script and owned-group closure. Live screenshot inspected, local13 tests pass. No DNS/audience/repository visibility changes, Git push, app build/install or native phase. Added explicit read-only browser-origin override for repeatable deployment checks."
     at = "2026-10-26T18:55:40Z"
+
+[[mission]]
+  id = "m-69a3fc7c"
+  title = "Reclaim Space: make Cleanup better than macOS Storage for power users"
+  status = "now"
+  note = "Owner-approved design 2026-11-12 after asking whether Cleanup beats the built-in Storage screen (it did not: no breakdown, 9.5 min scan, flat list). Evidence on the owner's disk: reclaimable space sits in a few dozen known places (Rust cargo-targets 162 GB, Hugging Face models 70 GB, go-build 47 GB, DerivedData 24 GB, npm 20 GB, simulators 19 GB) that macOS files under Documents/System Data. Design: (1) curated catalog of known places sized directly, each with a plain consequence (rebuilds automatically / re-downloads / review); (2) project build folders with staleness; (3) deep scan (large/old/duplicates) only on request; (4) a real window with a summary bar; (5) hand Photos/iCloud/apps to System Storage and 'where did my space go' to Size Browser. Owner chose: Trash by default plus 'Delete now' for the rebuilds tier only."
+  issue = 0
+
+  [[mission.task]]
+    id = "t-3e7b76bf"
+    title = "Engine: ReclaimCatalog of known places with consequence tiers, existence checks, uncatalogued-cache discovery, and a guarded Delete Now for the rebuilds tier"
+
+  [[mission.task]]
+    id = "t-c3ef831b"
+    title = "Window: catalog rows sized progressively, consequence column, summary by tier, Delete Now with confirmation, deep scan on request with overlap removed"
+
+  [[mission.task]]
+    id = "t-46ceea91"
+    title = "Project build folders show how stale the project is"
+
+  [[mission.task]]
+    id = "t-6565823c"
+    title = "Verify in a real window and install"
 # <<< commandem roadmap <<<
