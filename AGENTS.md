@@ -44,32 +44,45 @@ hard rule, not a default to weigh against convenience.
   cloned, cached, or indexed within seconds), so the bar is prior
   approval, never after-the-fact disclosure.
 
-## Isolate concurrent repository work in agent workbenches
+## Isolate concurrent repository work in a small pool of workbenches
 
 Before changing files in a tracked repository, check `commandem workbench ls
 <project>`. When another agent or session may be working in the repository,
-make every implementation change in your provider's durable workbench rather
-than the primary checkout:
+make implementation changes in a workbench rather than the primary checkout,
+and REUSE a small fixed pool of workbenches instead of creating one per task:
 
-- Create it once with `commandem workbench new <agent> <project>`, then work
-  from the directory reported by `commandem workbench ls <project>`.
-- Keep the primary checkout as the integration lane. Do not create or leave
-  new source or test files there while concurrent work is possible.
-- Commit one coherent unit in the workbench and immediately run `commandem
-  workbench land <agent> <project>` so the agent branch returns to trunk.
-  For a workbench created for a single task, land with `--rm` (`commandem
-  workbench land <agent> <project> --rm`) so it is removed once landed;
-  idle per-task workbenches otherwise pile up (203 copies and 453 GB on
-  2026-10-13). `commandem workbench prune` lists any that remain.
+- Use at most four workbenches per provider per repository, with stable names
+  such as `claude-1` .. `claude-4` or `codex-1` .. `codex-4`. Create one with
+  `commandem workbench new <agent> <project>` only when every existing slot is
+  busy and fewer than four exist. Never create a workbench for a single task.
+- Work from the directory `commandem workbench ls <project>` reports. Keep the
+  primary checkout as the integration lane; do not leave new source or test
+  files there while concurrent work is possible.
+- Commit one coherent unit and run `commandem workbench land <agent>
+  <project>` so the branch returns to trunk. Keep the workbench (no `--rm`):
+  the next task starts in the same slot with a warm build.
+- Respect this machine's build limit. How many full app or Swift builds can
+  run at once depends on the computer (a fast laptop may handle two, a smaller
+  one only one, a large workstation more); the owner sets it per machine. Until
+  `commandem` exposes the limit, run heavy builds, test runs and commits whose
+  hooks build one at a time under the shared lock:
+  `lockf -k /tmp/commandem-swift-build.lock <command>`, with capped jobs
+  (e.g. `COMMANDEM_SWIFT_JOBS=4`). Run one `go test` at a time, scoped to the
+  packages you changed.
+- Remove a workbench only with `commandem workbench rm <agent> <project>` (or
+  `workbench prune`), never by deleting its folder: a deleted folder leaves a
+  dead project entry behind.
 - Never run `git stash` in a workbench: stashes are shared by every worktree
   of the repository, so a pop can apply another lane's changes. Set work aside
   with a temporary WIP commit on your own branch instead.
 - If work already began in the primary checkout, migrate only the changes you
   own into your workbench. Preserve every other dirty or untracked file.
 
-Do not bypass a workbench or its commit gate to save time. Shared-checkout
-collisions waste builds, tokens, and user time; isolation is part of finishing
-the work, not an optional cleanup step.
+Why: one workbench per task produced 102 registered workbenches (66 of them
+dead entries) and hundreds of GB of copies, and eight parallel full builds
+drove load to ~400 on a 16-core Mac so every build and hook timed out
+(2026-11-12). Do not bypass a workbench or its commit gate to save time;
+isolation is part of finishing the work, not an optional cleanup step.
 
 ## Wait for background work without sleep loops
 
@@ -110,6 +123,17 @@ materially advance a Mission, update it in the SAME session via
 Mission you are working on to `now`, and add a new Mission for new work you
 took on. Do not let shipped work go unrecorded, and do not wait to be
 asked.
+
+If you are working from an agent workbench (a linked git worktree, its own
+registered project distinct from the base repo), `<project>` means YOUR
+WORKBENCH'S OWN registered project name, not the base project's name —
+`commandem roadmap <base-project>` resolves by name regardless of your cwd,
+so run from a workbench it silently writes the base checkout's
+commandem.toml instead of yours. `commandem roadmap`/`manifest --write`/
+`policy add`/`roles set`/`limits set`/`prefs --set` all refuse a write whose
+cwd sits in a different git worktree than the resolved project and name the
+correct pattern to use instead; pass the verb's own `--primary` flag only
+when you deliberately mean to edit that other worktree from here.
 
 A healthy roadmap always names current work: at least one Mission in `now`
 or `next`. `commandem health` flags a roadmap with none (the
@@ -252,6 +276,51 @@ internal build/install status updates to `tell all`, landing unrelated
 noise on every one of ~80 registered projects' boards -- entirely
 avoidable by addressing the one project the conversation was actually
 about.
+
+## Coordinating lanes: a silent lane is a usage problem until proven otherwise
+
+When you coordinate other agent lanes and one goes quiet, stops replying, or
+reads as "idle", check its ACCOUNT USAGE LIMIT first. Do this before you wait,
+re-send status pings, or tell the owner you are "waiting on" it.
+
+- Map the lane to its process and account (for example the `--account` on its
+  `commandem chat --agent ...` process) and check that account's weekly or
+  short-window usage.
+- "Accepted by a live lane" in announce history means the note reached a chat
+  process. It does NOT mean the agent can act on it.
+- If the lane is usage-limited, say so to the owner immediately. Then hand its
+  remaining work to a lane on an account WITH headroom, preferably one already
+  waiting and already holding the context, and tell the limited lane to stand
+  down so the work cannot be done twice.
+- Never leave owner-visible work stalled behind a lane you have not confirmed
+  can act.
+- Re-resolve every lane address immediately before EACH send. An app relaunch
+  changes lane addresses, and a stale address can still report "accepted" while
+  delivering to a different lane, such as one at 100% usage. Map address to
+  session (`announce --lanes --json`), session to account (the chat process's
+  `--account`), and account to usage (`commandem usage --fleet --json`). Re-check usage before every reassignment as well, so you do not hand
+  work to another limited lane.
+
+This exists because on 2026-10-30 a recovery lane silently hit its Codex
+account limit mid-delivery, and the coordinator kept reporting "waiting on it"
+for hours. Meanwhile a lane on a different account sat idle with the context
+needed to finish. The owner had to point that out and reassign the work by
+hand.
+
+## Structure replies so they can be scanned
+
+The owner reads replies in a themed chat that colours headings, bold lead-ins,
+lists, code and status words. A reply written as one plain paragraph gets none
+of that. When a reply has more than one point:
+
+- Start with one plain sentence giving the outcome.
+- Use a short `##` heading per topic when there are two or more topics.
+- Use a bullet per item, each opening with a short **bold** lead-in.
+- Put commit ids, file paths, commands and identifiers in `backticks`.
+- Use a small table for results across several items.
+
+Do not pad: structure is for scanning, not length. A one-line answer stays one
+line.
 
 ## Lessons from your own history
 
