@@ -1727,9 +1727,16 @@ extension BrowserViewController {
             let skipped = skipList.debugSizeCell(named: "plain")
             skipList.debugSelect(named: "plain")
             let offered = skipList.canCalculateSelectedFolderSizes
+            let menuBefore = skipList.debugContextMenuOffersCalculateSize()
             skipList.calculateSelectedFolderSizes()
             let asked = settle(skipList)
             let stillOffered = skipList.canCalculateSelectedFolderSizes
+            let menuAfter = skipList.debugContextMenuOffersCalculateSize()
+            check(
+                "folder-sizes-context-menu-offers-calculate-size",
+                menuBefore == true && menuAfter == false
+                    && commands.all.contains { $0.id == "files.calculateSize" },
+                "before=\(String(describing: menuBefore)) after=\(String(describing: menuAfter))")
 
             FolderSizeSkipSettings.debugSet(enabled: false)
             let (plainDir, plainEntries) = fixture()

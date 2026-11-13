@@ -412,6 +412,28 @@ extension BrowserViewController {
             "view-defaults-unrelated-edit-does-not-revert",
             prefs.fontSize == 18 && prefs.dateDisplay == .relative)
 
+        // Folder-size skip: the real Settings checkbox and "Also skip" field reach the lists.
+        settings.debugShowGeneralPane()
+        let skipBefore = FolderSizeSkipSettings.enabled
+        let toggled = settings.debugTogglePreference(\.skipCacheFolderSizes)
+        check(
+            "settings-folder-size-skip-checkbox-delivered",
+            toggled && FolderSizeSkipSettings.enabled == !skipBefore
+                && prefs.skipCacheFolderSizes == !skipBefore)
+        _ = settings.debugTogglePreference(\.skipCacheFolderSizes)
+        let typed = settings.debugCommitStringPreference(
+            \.folderSizeExclusions, "archive, ~/Movies/Raw")
+        check(
+            "settings-folder-size-also-skip-delivered",
+            typed && FolderSizeSkipSettings.userRules == ["archive", "~/Movies/Raw"]
+                && FolderSizeSkipSettings.reason(for: "/Volumes/Work/archive") == .excluded
+                && FolderSizeSkipSettings.enabled == skipBefore)
+        _ = settings.debugCommitStringPreference(\.folderSizeExclusions, "")
+        check(
+            "settings-folder-size-also-skip-cleared",
+            FolderSizeSkipSettings.userRules.isEmpty
+                && FolderSizeSkipSettings.reason(for: "/Volumes/Work/archive") == nil)
+
         check("retention-test-automation-no-owner-trash", PathemApp.isAutomationLaunch)
         if PathemApp.isAutomationLaunch {
             let retentionBefore = trashRetention.enabled

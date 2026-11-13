@@ -2070,6 +2070,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         debugLayout(width: 600, height: 300)
         setCalculateFolderSizes(true)
     }
+    /// Whether the right-click menu, updated for the current selection as AppKit would before
+    /// showing it, offers Calculate Size (nil when the item is not in the menu at all).
+    func debugContextMenuOffersCalculateSize() -> Bool? {
+        contextMenu.menuNeedsUpdate(contextMenu.menu)
+        guard
+            let item = contextMenu.menu.items.first(where: {
+                ($0.representedObject as? String) == "files.calculateSize"
+            })
+        else { return nil }
+        return !item.isHidden
+    }
     func debugSelect(named name: String) {
         guard let index = entries.firstIndex(where: { $0.name == name }),
             let row = row(forEntryIndex: index)

@@ -762,6 +762,21 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         button.performClick(nil)
         return true
     }
+    /// Type into the real text field bound to a String preference and commit it.
+    func debugCommitStringPreference(
+        _ keyPath: WritableKeyPath<Preferences, String>, _ text: String
+    ) -> Bool {
+        func find(_ view: NSView) -> NSTextField? {
+            if let field = view as? NSTextField, stringPaths[ObjectIdentifier(field)] == keyPath {
+                return field
+            }
+            return view.subviews.compactMap(find).first
+        }
+        guard let field = paneViews.values.compactMap(find).first else { return false }
+        field.stringValue = text
+        return field.sendAction(field.action, to: field.target)
+    }
+    func debugShowGeneralPane() { select(.general) }
     #endif
 
     /// A text field bound to a String preference; commits on edit.
