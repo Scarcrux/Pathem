@@ -2040,4 +2040,12 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Owner re-ran Delete Now on the 3a300b7 build: folder emptied (110 GB to 76 KB) but alert said 23 items left, No such file or directory. Reproduced with 4 concurrent deletes (3 of 9 runs red); fixed: vanished folders count as deleted, button stays disabled with a Deleting… note during a run. 30 of 30 green after. Unproven whether the second actor was a second click or another process; the first-ever permission error remains unexplained."
     at = "2026-11-12T16:31:06Z"
+
+[[mission]]
+  id = "m-b4ebb9d9"
+  title = "Folder sizes: cancellable walk, bounded threads, exclude list"
+  status = "next"
+  note = "Trigger: 2026-11-13, Finder sat at about 119% CPU because \"Calculate all sizes\" was on by default and it kept walking ~/Library (Go build cache, simulator devices); owner asked whether Pathem has the same problem. Evidence (code read, not run): FileListController.refreshFolderSizesAsync checks its generation only between folders, so DirectorySize.total cannot be cancelled mid-walk; each walk uses concurrentPerform over every core and up to 6 folders are walked at once; there is no exclude list. What already holds: the option is off by default and sizes are cached on disk by folder mtime. Change: (1) a cancel flag checked per directory inside ParallelWalk, honoured on navigate-away and on switching the option off; (2) one shared cap on total walker threads across folders, at utility QoS; (3) an exclude list in Settings (paths and name patterns such as ~/Library/Caches and node_modules) whose folders show a dash with a tooltip saying why. Tests seen red first for each; measure CPU and time on a large tree before and after. Confidence: mechanisms read from source, effect unmeasured."
+  issue = 0
+  estimate = "M"
 # <<< commandem roadmap <<<
