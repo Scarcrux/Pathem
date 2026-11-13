@@ -262,6 +262,7 @@ extension BrowserViewController {
         updateDownloadSuggestions()
         applyDefaultViewPreferences()
         sidebar.dragMovesByDefault = prefs.dragMovesByDefault
+        FolderSizeSkipSettings.apply(prefs)
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs {
                 applyContentPreferences(to: pane)

@@ -1320,6 +1320,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.setCalculateFolderSizes(on)
     }
 
+    var canCalculateSelectedFolderSizes: Bool { content.canCalculateSelectedFolderSizes }
+    func calculateSelectedFolderSizes() { content.calculateSelectedFolderSizes() }
+
     /// Dim the given paths (items marked for cut), carried across view-mode swaps.
     func setCutPaths(_ paths: Set<String>) {
         cutPaths = paths

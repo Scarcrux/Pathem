@@ -300,6 +300,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             previewFiles.removeAll(keepingCapacity: true)
             _ = sizeGen.bump()
             folderSizeCache.removeAll(keepingCapacity: true)
+            forcedSizePaths.removeAll()
         }
     }
     /// Git state per absolute path (set by the pane after an off-main `git status`).
@@ -307,6 +308,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// Folder sizes (Finder's "calculate all sizes"), computed off-main and cached.
     private var calculateFolderSizes = false
     private var folderSizeCache: [String: DirectorySize.Measurement] = [:]
+    /// Skipped folders (caches, temporary, build output) the user asked to size anyway.
+    private var forcedSizePaths: Set<String> = []
     /// Thread-safe generation so the background size walk can be cancelled (a new
     /// listing or disabling the option bumps it, stopping in-flight walks).
     private let sizeGen = GenerationBox()
@@ -596,9 +599,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             self, selector: #selector(columnResized(_:)),
             name: NSTableView.columnDidResizeNotification,
             object: tableView)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(folderSizeSkipSettingsChanged),
+            name: FolderSizeSkipSettings.changed, object: nil)
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
         contextMenu.currentFolder = { [weak self] in self?.directoryURL }
+        contextMenu.canCalculateSize = { [weak self] in
+            self?.canCalculateSelectedFolderSizes == true
+        }
         tableView.menu = contextMenu.menu
         tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }
         tableView.onMiddleClick = { [weak self] row in self?.middleClicked(row) }
@@ -1660,11 +1669,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                     cell.textField?.stringValue =
                         byteFormatter.string(fromByteCount: measure.bytes)
                         + (measure.complete ? "" : "+")
+                    cell.toolTip = nil
+                } else if let reason = folderSizeSkipReason(for: entry) {
+                    // Deliberately not sized: say so, instead of a "--" that looks unfinished.
+                    cell.textField?.stringValue = "—"
+                    cell.toolTip = FolderSizeSkipSettings.explanation(reason)
                 } else {
                     cell.textField?.stringValue = "--"
+                    cell.toolTip = nil
                 }
             } else {
                 cell.textField?.stringValue = byteFormatter.string(fromByteCount: entry.size)
+                cell.toolTip = nil
             }
         case .kind:
             cell.textField?.stringValue = entry.viewMetadata?.kind ?? FileAXLabel.kind(for: entry)
@@ -2017,11 +2033,69 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return folderSizeCache[cacheKey(for: entry)]
     }
 
+    /// Why this folder is left out of the automatic size walk (nil when it is sized, when the
+    /// option is off, or once the user asked for this folder's size).
+    private func folderSizeSkipReason(for entry: FileEntry) -> FolderSizeSkip.Reason? {
+        guard allowsLocalMetadata, calculateFolderSizes, entry.isDirectory, directoryURL != nil
+        else { return nil }
+        let path = cacheKey(for: entry)
+        return forcedSizePaths.contains(path) ? nil : FolderSizeSkipSettings.reason(for: path)
+    }
+
+    /// Whether "Calculate Size" would do anything for the current selection.
+    var canCalculateSelectedFolderSizes: Bool {
+        selectedEntries.contains { folderSizeSkipReason(for: $0) != nil }
+    }
+
+    /// Size the selected skipped folders now, at the user's request.
+    func calculateSelectedFolderSizes() {
+        let wanted = selectedEntries.filter { folderSizeSkipReason(for: $0) != nil }
+        guard !wanted.isEmpty else { return }
+        for entry in wanted { forcedSizePaths.insert(cacheKey(for: entry)) }
+        tableView.reloadData()
+        refreshFolderSizesAsync()
+    }
+
+    @objc private func folderSizeSkipSettingsChanged() {
+        guard calculateFolderSizes else { return }
+        tableView.reloadData()
+        refreshFolderSizesAsync()
+    }
+
+    #if DEBUG
+    /// List `entries` for `dir` with folder sizes on, at a real geometry, for the smoke test.
+    func debugLoadWithFolderSizes(_ entries: [FileEntry], in dir: URL) {
+        directoryURL = dir
+        setEntries(entries, preserveState: false)
+        debugLayout(width: 600, height: 300)
+        setCalculateFolderSizes(true)
+    }
+    func debugSelect(named name: String) {
+        guard let index = entries.firstIndex(where: { $0.name == name }),
+            let row = row(forEntryIndex: index)
+        else { return }
+        tableView.selectRowIndexes([row], byExtendingSelection: false)
+    }
+    /// The size column's text and tooltip for a folder row, for the smoke test.
+    func debugSizeCell(named name: String) -> (text: String, tip: String?)? {
+        guard let index = entries.firstIndex(where: { $0.name == name }),
+            let row = row(forEntryIndex: index)
+        else { return nil }
+        let column = tableView.column(withIdentifier: .init(Column.size.rawValue))
+        guard column >= 0,
+            let cell = tableView.view(atColumn: column, row: row, makeIfNecessary: true)
+                as? NSTableCellView
+        else { return nil }
+        return (cell.textField?.stringValue ?? "", cell.toolTip)
+    }
+    #endif
+
     /// Turn the "calculate all sizes" option on or off.
     func setCalculateFolderSizes(_ on: Bool) {
         guard on != calculateFolderSizes else { return }
         calculateFolderSizes = on
         if on {
+            tableView.reloadData()  // skipped folders show their dash and reason at once
             refreshFolderSizesAsync()
         } else {
             _ = sizeGen.bump()  // cancel any in-flight computation
@@ -2040,6 +2114,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let known = folderSizeCache
         let gen = sizeGen
         let base = dir.path
+        // Caches, temporary folders and build output are not walked unless asked for; a size
+        // already on record for one is still shown, since that costs nothing.
+        let skipped = Set(
+            entries.filter { folderSizeSkipReason(for: $0) != nil }.map { cacheKey(for: $0) })
         let sizeColumn = tableView.column(withIdentifier: .init(Column.size.rawValue))
         // Each folder's subtree walk is independent, so compute several at once instead
         // of one-at-a-time. Workers stride through the list (interleaved) and each keeps
@@ -2064,23 +2142,15 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                     let folder = folders[index]
                     let path = Self.key(base: base, name: folder.name)  // same key as viewFor
                     let size: DirectorySize.Measurement
-                    if let inSession = known[path] {
-                        size = inSession  // computed already this session
-                    } else {
-                        // Persistent cache: reuse the stored size unless the folder's mtime changed,
-                        // turning a full recursive walk into a single stat on a revisit / after a
-                        // restart. Only walk (and record) on a miss.
-                        let url = URL(fileURLWithPath: path)
-                        let mtime = FolderSizeStore.mtimeKey(of: url)
-                        if let cached = FolderSizeStore.shared.measurement(
-                            forPath: path, mtime: mtime)
-                        {
-                            size = cached
-                        } else {
-                            size = DirectorySize.total(of: url)
-                            FolderSizeStore.shared.record(
-                                path: path, measurement: size, mtime: mtime)
-                        }
+                    switch Self.resolveFolderSize(
+                        path: path, known: known, skipped: skipped,
+                        isCancelled: { !gen.isCurrent(generation) })
+                    {
+                    case .size(let resolved): size = resolved
+                    case .skipped:
+                        index += workers
+                        continue
+                    case .cancelled: return
                     }
                     batch.append((path, folder.name, folder.row, size))
                     if batch.count >= 16 { flush() }
@@ -2090,6 +2160,58 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
         }
     }
+
+    private enum FolderSizeOutcome {
+        case size(DirectorySize.Measurement)
+        case skipped, cancelled
+    }
+
+    /// One folder's size for the list: this session's value, else the stored value while the
+    /// folder's mtime is unchanged (a single stat instead of a recursive walk), else a walk.
+    /// A skipped folder (cache, temporary, build output) is never walked here, but a size
+    /// already on record for it is still returned, since that costs nothing. The walk stops
+    /// part-way, not only between folders, once `isCancelled` turns true.
+    nonisolated private static func resolveFolderSize(
+        path: String, known: [String: DirectorySize.Measurement], skipped: Set<String>,
+        isCancelled: @escaping @Sendable () -> Bool
+    ) -> FolderSizeOutcome {
+        if let inSession = known[path] { return .size(inSession) }
+        let url = URL(fileURLWithPath: path)
+        let mtime = FolderSizeStore.mtimeKey(of: url)
+        if let cached = FolderSizeStore.shared.measurement(forPath: path, mtime: mtime) {
+            return .size(cached)
+        }
+        if skipped.contains(path) { return .skipped }
+        guard let walked = DirectorySize.total(of: url, isCancelled: isCancelled) else {
+            return .cancelled
+        }
+        FolderSizeStore.shared.record(path: path, measurement: walked, mtime: mtime)
+        return .size(walked)
+    }
+
+    #if DEBUG
+    /// The smoke test runs inside a main-queue block, where the background walk's results
+    /// cannot be delivered. This resolves every folder with the same per-folder rule and
+    /// publishes through the same path, synchronously.
+    func debugResolveFolderSizesNow() {
+        guard calculateFolderSizes else { return }
+        let generation = sizeGen.bump()
+        let skipped = Set(
+            entries.filter { folderSizeSkipReason(for: $0) != nil }.map { cacheKey(for: $0) })
+        var done: [(path: String, name: String, row: Int, size: DirectorySize.Measurement)] = []
+        for (row, entry) in entries.enumerated() where entry.isDirectory {
+            let path = cacheKey(for: entry)
+            if case .size(let size) = Self.resolveFolderSize(
+                path: path, known: folderSizeCache, skipped: skipped, isCancelled: { false })
+            {
+                done.append((path, entry.name, row, size))
+            }
+        }
+        publishFolderSizes(
+            done, generation: generation,
+            sizeColumn: tableView.column(withIdentifier: .init(Column.size.rawValue)))
+    }
+    #endif
 
     /// Apply a batch of computed folder sizes and redraw just those rows' size cells.
     private func publishFolderSizes(

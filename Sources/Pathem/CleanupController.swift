@@ -226,13 +226,16 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                     let candidate = pending[next]
                     next += 1
                     group.addTask(priority: .utility) {
-                        (candidate.place.id, DirectorySize.total(of: candidate.url).bytes)
+                        // Closing the window (or a newer run) stops the walk part-way.
+                        let size = DirectorySize.total(
+                            of: candidate.url, isCancelled: { !gen.isCurrent(generation) })
+                        return (candidate.place.id, size?.bytes ?? -1)
                     }
                 }
                 for _ in 0..<4 { add() }
                 for await (id, bytes) in group {
                     add()
-                    guard let self, gen.isCurrent(generation) else { continue }
+                    guard let self, gen.isCurrent(generation), bytes >= 0 else { continue }
                     self.placeSizes[id] = bytes
                     self.placesMeasured += 1
                     self.rebuildRows()

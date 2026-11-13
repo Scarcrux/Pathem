@@ -104,6 +104,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var openConnectionsInNewTab: Bool
     /// Compute and show folder sizes in the list (Finder's "Calculate all sizes").
     public var calculateFolderSizes: Bool
+    /// Leave caches, temporary folders and build output out of the automatic folder-size walk.
+    public var skipCacheFolderSizes: Bool
+    /// More folders to leave out: paths or folder names, separated by commas.
+    public var folderSizeExclusions: String
     /// Hide sidebar row labels (icons only) and narrow it, for a compact sidebar.
     public var compactSidebar: Bool
     /// Render sidebar place icons as monochrome templates that tint with the sidebar (a clean,
@@ -192,6 +196,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         alternatingRows: Bool = true, searchOCR: Bool = false,
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
+        skipCacheFolderSizes: Bool = true, folderSizeExclusions: String = "",
         compactSidebar: Bool = false, monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
@@ -269,6 +274,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.pathBarAtBottom = pathBarAtBottom
         self.openConnectionsInNewTab = openConnectionsInNewTab
         self.calculateFolderSizes = calculateFolderSizes
+        self.skipCacheFolderSizes = skipCacheFolderSizes
+        self.folderSizeExclusions = folderSizeExclusions
         self.compactSidebar = compactSidebar
         self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
@@ -311,6 +318,12 @@ public struct Preferences: Codable, Sendable, Equatable {
         calculateFolderSizes =
             try c.decodeIfPresent(Bool.self, forKey: .calculateFolderSizes)
             ?? d.calculateFolderSizes
+        skipCacheFolderSizes =
+            try c.decodeIfPresent(Bool.self, forKey: .skipCacheFolderSizes)
+            ?? d.skipCacheFolderSizes
+        folderSizeExclusions =
+            try c.decodeIfPresent(String.self, forKey: .folderSizeExclusions)
+            ?? d.folderSizeExclusions
         compactSidebar =
             try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
         monochromeSidebarIcons =

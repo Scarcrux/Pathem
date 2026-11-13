@@ -277,6 +277,19 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                     L("prefs.calculateFolderSizes", "Calculate folder sizes"),
                     \.calculateFolderSizes),
                 check(
+                    L(
+                        "prefs.skipCacheFolderSizes",
+                        "Skip caches, temporary and build folders when calculating sizes"),
+                    \.skipCacheFolderSizes),
+                labeled(
+                    L("prefs.folderSizeExclusions", "Also skip"),
+                    textField(\.folderSizeExclusions, width: 260)),
+                hint(
+                    L(
+                        "prefs.folderSizeExclusionsHint",
+                        "Folder names or paths, separated by commas, for example node_modules, ~/Movies/Raw. Skipped folders show a dash; right-click one and choose Calculate Size to measure it."
+                    )),
+                check(
                     L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"),
                     \.confirmBeforeDelete),
                 check(

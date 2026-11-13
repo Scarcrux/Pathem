@@ -1831,3 +1831,12 @@
 "reclaim.deleteFailedHeading" = "Certains éléments n’ont pas pu être supprimés";
 "reclaim.deleteIncomplete" = "%1$@ : %2$d élément(s) restant(s), à commencer par %3$@ (%4$@). Tout le reste a été supprimé.";
 "reclaim.deleting" = "Suppression de %@…";
+"sizes.skip.cache" = "Dossier de cache";
+"sizes.skip.temporary" = "Dossier temporaire";
+"sizes.skip.regenerable" = "Dossier de build ou de dépendances";
+"sizes.skip.excluded" = "Dans votre liste d’exclusions des Réglages";
+"sizes.skip.how" = "Taille non calculée automatiquement. Faites un clic droit et choisissez Calculer la taille pour la mesurer.";
+"bvc.cmd.calculateSize" = "Calculer la taille";
+"prefs.skipCacheFolderSizes" = "Ignorer les dossiers de cache, temporaires et de build lors du calcul des tailles";
+"prefs.folderSizeExclusions" = "Ignorer aussi";
+"prefs.folderSizeExclusionsHint" = "Noms de dossiers ou chemins, séparés par des virgules, par exemple node_modules, ~/Movies/Raw. Les dossiers ignorés affichent un tiret ; faites un clic droit et choisissez Calculer la taille pour en mesurer un.";

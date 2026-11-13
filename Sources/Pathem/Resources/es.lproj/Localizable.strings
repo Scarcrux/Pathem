@@ -1831,3 +1831,12 @@
 "reclaim.deleteFailedHeading" = "No se pudieron eliminar algunos elementos";
 "reclaim.deleteIncomplete" = "%1$@: quedan %2$d elemento(s), empezando por %3$@ (%4$@). Todo lo demás se eliminó.";
 "reclaim.deleting" = "Eliminando %@…";
+"sizes.skip.cache" = "Carpeta de caché";
+"sizes.skip.temporary" = "Carpeta temporal";
+"sizes.skip.regenerable" = "Carpeta de compilación o dependencias";
+"sizes.skip.excluded" = "En su lista de exclusiones en Ajustes";
+"sizes.skip.how" = "No se calcula automáticamente. Haga clic derecho y elija Calcular tamaño para medirla.";
+"bvc.cmd.calculateSize" = "Calcular tamaño";
+"prefs.skipCacheFolderSizes" = "Omitir carpetas de caché, temporales y de compilación al calcular tamaños";
+"prefs.folderSizeExclusions" = "Omitir también";
+"prefs.folderSizeExclusionsHint" = "Nombres de carpeta o rutas, separados por comas, por ejemplo node_modules, ~/Movies/Raw. Las carpetas omitidas muestran un guion; haga clic derecho y elija Calcular tamaño para medir una.";

@@ -22,6 +22,7 @@ enum MenuIcons {
         case "files.share": return "square.and.arrow.up"
         case "files.setDesktopPicture": return "photo"
         case "files.getInfo": return "info.circle"
+        case "files.calculateSize": return "sum"
         case "files.download": return "arrow.down.circle"
         case "files.reveal": return "arrow.up.forward.square"
         case "files.revealInPathem": return "dot.viewfinder"

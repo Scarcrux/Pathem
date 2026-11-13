@@ -23,6 +23,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// The pane's current folder, so folder-scoped actions (Empty Trash) can show with nothing
     /// selected. Set by the owning view.
     var currentFolder: () -> URL? = { nil }
+    /// Whether the selection holds a folder the automatic size walk skipped. Set by the list.
+    var canCalculateSize: () -> Bool = { false }
 
     /// The shared context menu; assign to a view's `menu`.
     let menu = NSMenu()
@@ -39,7 +41,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "@openWith",
         "files.showPackageContents", "view.quickLook", "files.showOriginal",
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
-        "files.getInfo", "files.share", "files.download", "files.reveal", "files.revealInPathem",
+        "files.getInfo", "files.calculateSize", "files.share", "files.download", "files.reveal",
+        "files.revealInPathem",
         "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
@@ -149,6 +152,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.openInThisPane", L("bvc.cmd.openInThisPane", "Open in This Pane")),
         ("files.openInOtherPane", L("bvc.cmd.openInOtherPane", "Open in Other Pane")),
         ("files.getInfo", L("list.getInfo", "Get Info")),
+        ("files.calculateSize", L("bvc.cmd.calculateSize", "Calculate Size")),
         ("files.download", L("list.download", "Download")),
         ("files.share", L("list.share", "Share…")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
@@ -339,6 +343,9 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                         !(count == 1 && (singleFolder || DocumentPreviewView.isViewable(urls[0])))
                 case "files.share":
                     item.isHidden = urls.isEmpty
+                case "files.calculateSize":
+                    // Only for folders the automatic size walk skipped (caches and the like).
+                    item.isHidden = !canCalculateSize()
                 case "files.setDesktopPicture":
                     item.isHidden = !(urls.count == 1 && Self.isImage(urls[0]))
                 case "files.putBack", "files.deleteImmediately":

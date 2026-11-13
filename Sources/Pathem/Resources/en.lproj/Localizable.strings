@@ -146,6 +146,7 @@
 "bvc.cmd.batchCreate" = "Batch Create…";
 "bvc.cmd.batchRename" = "Batch Rename…";
 "bvc.cmd.calculateAllSizes" = "Calculate All Sizes";
+"bvc.cmd.calculateSize" = "Calculate Size";
 "bvc.cmd.changeOwner" = "Change Owner (Admin)…";
 "bvc.cmd.cleanup" = "Cleanup…";
 "bvc.cmd.clearFolderBg" = "Remove Background";
@@ -1249,6 +1250,8 @@
 "prefs.folderHandlerFailed" = "Couldn’t change the default folder app";
 "prefs.folderHandlerFailedBody" = "This version of macOS may not allow replacing Finder as the default app for folders. You can still open folders in Pathem with drag-and-drop or “Open in Pathem.”\n\n(%@)";
 "prefs.folderHandlerUse" = "Use Pathem";
+"prefs.folderSizeExclusions" = "Also skip";
+"prefs.folderSizeExclusionsHint" = "Folder names or paths, separated by commas, for example node_modules, ~/Movies/Raw. Skipped folders show a dash; right-click one and choose Calculate Size to measure it.";
 "prefs.fontSizeLabel" = "Font size";
 "prefs.iconExtraLarge" = "Extra Large";
 "prefs.iconLarge" = "Large";
@@ -1314,6 +1317,7 @@
 "prefs.sizeBinary" = "Binary (KiB, MiB)";
 "prefs.sizeDecimal" = "Decimal (KB, MB)";
 "prefs.sizeFormatLabel" = "File sizes";
+"prefs.skipCacheFolderSizes" = "Skip caches, temporary and build folders when calculating sizes";
 "prefs.statusBarHint" = "Status bar shows:";
 "prefs.statusFreeSpace" = "Free disk space";
 "prefs.statusItemCount" = "Item count";
@@ -1561,6 +1565,11 @@
 "sidebar.volumesHeader" = "Volumes";
 "size.enclosingFolder" = "Enclosing Folder";
 "size.windowTitle" = "Size Browser";
+"sizes.skip.cache" = "Cache folder";
+"sizes.skip.excluded" = "On your skip list in Settings";
+"sizes.skip.how" = "Not sized automatically. Right-click and choose Calculate Size to measure it.";
+"sizes.skip.regenerable" = "Build or dependency folder";
+"sizes.skip.temporary" = "Temporary folder";
 "slideshow.hint" = "Space: play/pause    ←/→: previous/next    Esc: exit";
 "smart.audio" = "audio";
 "smart.contains" = "containing u{201C}%@u{201D}";

@@ -1831,3 +1831,12 @@
 "reclaim.deleteFailedHeading" = "一部の項目を削除できませんでした";
 "reclaim.deleteIncomplete" = "%1$@：%2$d 項目が残りました。最初の項目：%3$@（%4$@）。それ以外はすべて削除されました。";
 "reclaim.deleting" = "%@ を削除中…";
+"sizes.skip.cache" = "キャッシュフォルダ";
+"sizes.skip.temporary" = "一時フォルダ";
+"sizes.skip.regenerable" = "ビルドまたは依存関係のフォルダ";
+"sizes.skip.excluded" = "設定の除外リストにあります";
+"sizes.skip.how" = "自動ではサイズを計算しません。右クリックして「サイズを計算」を選ぶと計測します。";
+"bvc.cmd.calculateSize" = "サイズを計算";
+"prefs.skipCacheFolderSizes" = "サイズ計算でキャッシュ、一時、ビルドのフォルダをスキップ";
+"prefs.folderSizeExclusions" = "追加でスキップ";
+"prefs.folderSizeExclusionsHint" = "フォルダ名またはパスをカンマ区切りで指定します（例：node_modules, ~/Movies/Raw）。スキップしたフォルダにはダッシュが表示され、右クリックして「サイズを計算」を選ぶと計測できます。";

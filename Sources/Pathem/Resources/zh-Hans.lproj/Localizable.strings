@@ -1831,3 +1831,12 @@
 "reclaim.deleteFailedHeading" = "部分项目无法删除";
 "reclaim.deleteIncomplete" = "%1$@：剩余 %2$d 个项目，第一个是 %3$@（%4$@）。其余均已删除。";
 "reclaim.deleting" = "正在删除 %@…";
+"sizes.skip.cache" = "缓存文件夹";
+"sizes.skip.temporary" = "临时文件夹";
+"sizes.skip.regenerable" = "构建或依赖文件夹";
+"sizes.skip.excluded" = "在“设置”的跳过列表中";
+"sizes.skip.how" = "不会自动计算大小。右键点按并选择“计算大小”即可测量。";
+"bvc.cmd.calculateSize" = "计算大小";
+"prefs.skipCacheFolderSizes" = "计算大小时跳过缓存、临时和构建文件夹";
+"prefs.folderSizeExclusions" = "同时跳过";
+"prefs.folderSizeExclusionsHint" = "文件夹名称或路径，用逗号分隔，例如 node_modules, ~/Movies/Raw。跳过的文件夹显示短横线；右键点按并选择“计算大小”即可测量。";

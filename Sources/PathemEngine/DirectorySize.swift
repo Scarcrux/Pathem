@@ -20,15 +20,89 @@ public enum DirectorySize {
     /// Symlinks are not followed; unreadable items are skipped but flip `complete`
     /// to false so the caller knows the total is an undercount.
     public static func total(of url: URL) -> Measurement {
+        total(of: url, isCancelled: { false }) ?? Measurement(bytes: 0, complete: false)
+    }
+
+    /// As `total(of:)`, but gives up as soon as `isCancelled` returns true and returns nil,
+    /// so a caller that no longer wants the answer (the user navigated away, closed the
+    /// window, or switched folder sizes off) stops paying for the walk. `isCancelled` is
+    /// asked once per folder read, from several threads.
+    public static func total(of url: URL, isCancelled: @escaping @Sendable () -> Bool)
+        -> Measurement?
+    {
         var rootInfo = stat()
         guard lstat(url.path, &rootInfo) == 0, rootInfo.st_mode & S_IFMT == S_IFDIR else {
             return Measurement(bytes: 0, complete: false)
         }
-        let walk = ParallelWalk(root: url.path)
-        DispatchQueue.concurrentPerform(
-            iterations: max(2, ProcessInfo.processInfo.activeProcessorCount)
-        ) { _ in walk.work() }
-        return Measurement(bytes: walk.bytes, complete: walk.complete)
+        // The calling thread is itself a walker, so it waits for a place under the cap.
+        guard WalkerPool.shared.acquire(isCancelled: isCancelled) else { return nil }
+        let walk = ParallelWalk(root: url.path, isCancelled: isCancelled)
+        walk.work(asCaller: true)
+        walk.helpers.wait()
+        WalkerPool.shared.release()
+        return walk.cancelled ? nil : Measurement(bytes: walk.bytes, complete: walk.complete)
+    }
+
+    /// The most threads that walk folders at once, across every walk in the process. Without
+    /// one shared cap each walk took every core, and the file list runs six walks at a time.
+    public static var walkerLimit: Int { WalkerPool.shared.limit }
+
+    /// One process-wide budget of walker threads. A walk's calling thread always holds one
+    /// place; extra helper threads join only while places are free and leave as soon as
+    /// another walk is waiting, so a small folder is not stuck behind a huge one.
+    final class WalkerPool: @unchecked Sendable {
+        static let shared = WalkerPool()
+        private let condition = NSCondition()
+        private var inUse = 0
+        private var waiting = 0
+        private var highest = 0
+        private var cap = max(2, ProcessInfo.processInfo.activeProcessorCount / 2)
+
+        var limit: Int {
+            get { condition.withLock { cap } }
+            set {
+                condition.withLock { cap = max(1, newValue) }
+                condition.broadcast()
+            }
+        }
+        /// The most places ever held at once since `resetPeak`, for the cap's test.
+        var peak: Int { condition.withLock { highest } }
+        func resetPeak() { condition.withLock { highest = inUse } }
+        var hasWaiters: Bool { condition.withLock { waiting > 0 } }
+
+        func acquire(isCancelled: () -> Bool) -> Bool {
+            condition.lock()
+            defer { condition.unlock() }
+            waiting += 1
+            defer { waiting -= 1 }
+            while inUse >= cap {
+                // Wake regularly: a cancelled caller must not sit in the queue.
+                _ = condition.wait(until: Date().addingTimeInterval(0.05))
+                if inUse >= cap, isCancelled() { return false }
+            }
+            take()
+            return true
+        }
+
+        func tryAcquire() -> Bool {
+            condition.lock()
+            defer { condition.unlock() }
+            guard inUse < cap, waiting == 0 else { return false }
+            take()
+            return true
+        }
+
+        func release() {
+            condition.lock()
+            inUse -= 1
+            condition.unlock()
+            condition.signal()
+        }
+
+        private func take() {
+            inUse += 1
+            highest = max(highest, inUse)
+        }
     }
 
     /// A directory walk shared by several threads: every folder is one unit of work on a
@@ -37,21 +111,63 @@ public enum DirectorySize {
     /// sized with fstatat, which is several times faster on a large tree than one
     /// FileManager enumerator fetching resource values per file.
     private final class ParallelWalk: @unchecked Sendable {
+        private static let helperQueue = DispatchQueue(
+            label: "pathem.directory-size.helpers", qos: .utility, attributes: .concurrent)
         private let lock = NSLock()
         private var stack: [String]
         private var active = 0
+        private var helperCount = 0
+        private let isCancelled: @Sendable () -> Bool
+        let helpers = DispatchGroup()
         private(set) var bytes: Int64 = 0
         private(set) var complete = true
+        private(set) var cancelled = false
 
-        init(root: String) { stack = [root] }
+        init(root: String, isCancelled: @escaping @Sendable () -> Bool) {
+            stack = [root]
+            self.isCancelled = isCancelled
+        }
 
-        func work() {
+        /// Add a helper thread when there is a backlog of folders and a free place.
+        private func addHelperIfUseful() {
+            lock.lock()
+            let backlog = stack.count
+            let current = helperCount
+            lock.unlock()
+            guard backlog > 4 * (current + 1), WalkerPool.shared.tryAcquire() else { return }
+            lock.lock()
+            helperCount += 1
+            lock.unlock()
+            helpers.enter()
+            Self.helperQueue.async {
+                self.work(asCaller: false)
+                self.lock.lock()
+                self.helperCount -= 1
+                self.lock.unlock()
+                WalkerPool.shared.release()
+                self.helpers.leave()
+            }
+        }
+
+        func work(asCaller: Bool) {
+            var handled = 0
             while true {
+                if isCancelled() {
+                    lock.lock()
+                    cancelled = true
+                    lock.unlock()
+                }
                 lock.lock()
+                if cancelled {
+                    lock.unlock()
+                    return
+                }
                 guard let directory = stack.popLast() else {
                     let finished = active == 0
                     lock.unlock()
                     if finished { return }
+                    // A helper gives its place up rather than idle while another walk waits.
+                    if !asCaller, WalkerPool.shared.hasWaiters { return }
                     usleep(200)  // another thread is still listing a folder that may add work
                     continue
                 }
@@ -104,6 +220,13 @@ public enum DirectorySize {
                 stack.append(contentsOf: folders)
                 active -= 1
                 lock.unlock()
+
+                handled += 1
+                if asCaller {
+                    if handled % 8 == 1 { addHelperIfUseful() }
+                } else if WalkerPool.shared.hasWaiters {
+                    return  // let the waiting walk have this place
+                }
             }
         }
     }

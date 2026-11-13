@@ -596,6 +596,12 @@ extension BrowserViewController {
             [weak self] in self?.verifyChecksum()
         }
         add(
+            "files.calculateSize", L("bvc.cmd.calculateSize", "Calculate Size"),
+            enabled: { [weak self] in self?.activePane?.canCalculateSelectedFolderSizes == true }
+        ) {
+            [weak self] in self?.activePane?.calculateSelectedFolderSizes()
+        }
+        add(
             "files.reveal", L("bvc.cmd.revealInFinder", "Reveal in Finder"),
             enabled: { [weak self] in self?.activePane != nil }
         ) {

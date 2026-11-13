@@ -1831,3 +1831,12 @@
 "reclaim.deleteFailedHeading" = "Einige Objekte konnten nicht gelöscht werden";
 "reclaim.deleteIncomplete" = "%1$@: %2$d Objekt(e) übrig, beginnend mit %3$@ (%4$@). Alles andere wurde gelöscht.";
 "reclaim.deleting" = "%@ wird gelöscht …";
+"sizes.skip.cache" = "Cache-Ordner";
+"sizes.skip.temporary" = "Temporärer Ordner";
+"sizes.skip.regenerable" = "Build- oder Abhängigkeitsordner";
+"sizes.skip.excluded" = "Auf Ihrer Ausschlussliste in den Einstellungen";
+"sizes.skip.how" = "Wird nicht automatisch berechnet. Rechtsklick und „Größe berechnen“ wählen, um ihn zu messen.";
+"bvc.cmd.calculateSize" = "Größe berechnen";
+"prefs.skipCacheFolderSizes" = "Cache-, temporäre und Build-Ordner bei der Größenberechnung überspringen";
+"prefs.folderSizeExclusions" = "Auch überspringen";
+"prefs.folderSizeExclusionsHint" = "Ordnernamen oder Pfade, durch Kommas getrennt, zum Beispiel node_modules, ~/Movies/Raw. Übersprungene Ordner zeigen einen Strich; per Rechtsklick und „Größe berechnen“ lässt sich einer messen.";

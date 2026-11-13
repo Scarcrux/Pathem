@@ -1694,6 +1694,56 @@ extension BrowserViewController {
             "uninstall-hooks",
             cmdIDs.contains("app.resetData") && (FolderHandler.isPathem || !FolderHandler.isPathem),
             "reset=\(cmdIDs.contains("app.resetData"))")
+        // Folder sizes leave caches and temporary folders alone until asked. The fixture lives
+        // under the system temporary root, so its folder is a "temporary" one: skipped with a
+        // reason, sized by Calculate Size, and (the control) sized unprompted once the skip is
+        // switched off.
+        do {
+            let fm = FileManager.default
+            func fixture() -> (URL, [FileEntry]) {
+                let dir = fm.temporaryDirectory.appendingPathComponent(
+                    "pathem-skip-\(UUID().uuidString)")
+                try? fm.createDirectory(
+                    at: dir.appendingPathComponent("plain"), withIntermediateDirectories: true)
+                try? Data(count: 4096).write(to: dir.appendingPathComponent("plain/data.bin"))
+                return (
+                    dir,
+                    [FileEntry(name: "plain", isDirectory: true, size: 0, modificationDate: nil)]
+                )
+            }
+            func settle(_ list: FileListController) -> String {
+                list.debugResolveFolderSizesNow()
+                return list.debugSizeCell(named: "plain")?.text ?? ""
+            }
+            let wasEnabled = FolderSizeSkipSettings.enabled
+            defer { FolderSizeSkipSettings.debugSet(enabled: wasEnabled) }
+
+            FolderSizeSkipSettings.debugSet(enabled: true)
+            let (skipDir, skipEntries) = fixture()
+            defer { try? fm.removeItem(at: skipDir) }
+            let skipList = FileListController()
+            skipList.debugLoadWithFolderSizes(skipEntries, in: skipDir)
+            _ = settle(skipList)  // resolving must not size a skipped folder
+            let skipped = skipList.debugSizeCell(named: "plain")
+            skipList.debugSelect(named: "plain")
+            let offered = skipList.canCalculateSelectedFolderSizes
+            skipList.calculateSelectedFolderSizes()
+            let asked = settle(skipList)
+            let stillOffered = skipList.canCalculateSelectedFolderSizes
+
+            FolderSizeSkipSettings.debugSet(enabled: false)
+            let (plainDir, plainEntries) = fixture()
+            defer { try? fm.removeItem(at: plainDir) }
+            let plainList = FileListController()
+            plainList.debugLoadWithFolderSizes(plainEntries, in: plainDir)
+            let unprompted = settle(plainList)
+            check(
+                "folder-sizes-skip-temporary-until-asked",
+                skipped?.text == "—" && (skipped?.tip ?? "").isEmpty == false && offered
+                    && asked.contains("KB") && !stillOffered && unprompted.contains("KB"),
+                "skipped=\(skipped?.text ?? "nil") tip=\((skipped?.tip ?? "").prefix(40)) offered=\(offered) asked=\(asked) stillOffered=\(stillOffered) controlUnprompted=\(unprompted)"
+            )
+        }
         let fcFile = FileManager.default.temporaryDirectory.appendingPathComponent(
             "pathem-fc-\(UUID().uuidString).txt")
         try? "x".write(to: fcFile, atomically: true, encoding: .utf8)

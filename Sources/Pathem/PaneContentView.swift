@@ -87,6 +87,9 @@ protocol PaneContentView: AnyObject {
     func setGroupKey(_ key: ViewFormat.GroupKey)
     func invalidateTagCache()
     func setCalculateFolderSizes(_ on: Bool)
+    /// Whether the selection holds a folder left out of the automatic size walk.
+    var canCalculateSelectedFolderSizes: Bool { get }
+    func calculateSelectedFolderSizes()
     func setSortFormat(_ format: ViewFormat)
     func setCutPaths(_ paths: Set<String>)
     /// Customization must dynamically dispatch to the delivered content's menu owner.
@@ -141,6 +144,8 @@ extension PaneContentView {
     func invalidateTagCache() {}
     /// Only the list view shows a size column, so others ignore this.
     func setCalculateFolderSizes(_ on: Bool) {}
+    var canCalculateSelectedFolderSizes: Bool { false }
+    func calculateSelectedFolderSizes() {}
     /// Only column view re-sorts its own drilled columns; list/icon/gallery are
     /// (re)sorted by the pane before setEntries.
     func setSortFormat(_ format: ViewFormat) {}
