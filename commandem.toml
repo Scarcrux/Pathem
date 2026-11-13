@@ -2056,4 +2056,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "293be43 implements all three parts. (1) DirectorySize.total(of:isCancelled:) stops part-way; file list and Reclaim Space pass their generation. (2) One process-wide walker pool, half the cores. (3) FolderSizeSkip (StorageScan + ReclaimCatalog lists + temp roots): skipped rows show a dash with a reason and a Calculate Size context action; Settings has the skip toggle and an Also skip list. Each has a test with a control. Measured, six real folders at once (744 GB, noisy machine): capped 273/282 s CPU vs 368/410 s uncapped, same wall time (about 68 to 87 s). Not done: a folder that only contains a cache (~/Library, a project with node_modules) is still walked in full. Unverified live: context menu item, Settings rows. Process note: an over-broad formatter run swept 103 unrelated files into the first local commit; rebuilt before landing."
     at = "2026-11-13T13:09:05Z"
+
+  [[mission.comment]]
+    text = "Scripted checks added for the two parts previously marked unverified: the context menu offers Calculate Size for a skipped folder and hides it after sizing (smoke); the real Settings checkbox and Also skip field deliver to the lists (settings harness 61/61). Remaining gap is visual only. Installed build 0fb5e21 already contains the feature; these checks are DEBUG-only."
+    at = "2026-11-13T14:06:55Z"
 # <<< commandem roadmap <<<
