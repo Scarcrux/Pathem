@@ -1676,6 +1676,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task 46 done in 8a8654a: reproduced red first in the real panel with a backend that answers on command (3 controls pass, 5 stale cases fail on the unfixed controller), then 8/8 green three times; checks now run in the sidebar-transfer suite (647/647). Task 52 (copy vs drag) investigated, NOT fixed: on a private pasteboard, Pathem's Copy (NSURL only) gives public.file-url plus a system-synthesised NSFilenamesPboardType and no plain string; an AppKit rich text view pastes it as an attachment that keeps the filename, a plain text view pastes the path. So native rich receivers lose nothing. One candidate receiver was read in source: Commandem's chat paste (ChatActions.addClipboardImages) turns pasted images into base64 with no name, while its drop path takes the file. Whether that is the owner's case is unconfirmed; no export change made. Screenshots: real composited captures now work by running screencapture from a .command opened in Terminal (verified on a demo window)."
     at = "2026-11-15T13:01:43Z"
 
+  [[mission.comment]]
+    text = "2026-11-15 (owner: demos and site media look dull). Landed: 26f0a1f terminal drawer blanked the window on macOS 27.2.1 (both split halves 0 pt; adjustSubviews after toggle; red-first check in the sidebar suite, 650/650). 5084a6c task 3 artifacts: ghost stripes below the last row gone in list and tree; icon-view names no longer clipped on the second line; tagged names centred. 38473d8 new demo workspace (real project trees incl. a git working tree, PDFs with pages, code-drawn photographs, varied sizes/dates/tags) plus PATHEM_SITE_SHOT and scripts/site-shots.sh. Site commit: ten screenshots re-captured, hero is now the dual-pane image, 1M-row video moved to its own section. NOT deployed to pathem.app (needs owner approval). Limits: captures are 1x on this display; README still links the site rather than embedding images. Task 3 stays open until the site is deployed and the README checked."
+    at = "2026-11-15T13:46:57Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
