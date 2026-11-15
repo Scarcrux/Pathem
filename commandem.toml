@@ -1204,6 +1204,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-aee642ef"
     title = "P2 audit: invalidate legacy FindInFiles pending work on re-presentation, clear and dismissal, capture request callbacks and check replacement-completion ownership. Current unchanged controller native harness delivered old A rows into folder-B/new Open callback and restored rows after empty query; same-session control passed. Add real regression coverage; see docs/MISSION_53_AUDIT.md."
+    done = true
 
   [[mission.task]]
     id = "t-a3d04d60"
@@ -1671,6 +1672,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Landed task 53. (owner report: Cleanup ineffective). Measured before: 300k-item cutoff made Home report 4 GB junk while ~/Code alone had 124 GB; 14,047 ungrouped junk rows; Caches skipped; Trash-only with stale disk bar. After, same disk: 517 GB junk + 457 GB caches in 144 rows, not partial, 10.6M items in 9.5 min. Full walk with progress/Stop, grouped rows, review-only caches, disk bar refresh, Empty Trash button. 6 engine tests + 2 smoke checks; live panel controls not clicked in a real window; duplicate pass still capped at 300k files (stated in the UI). Not installed yet."
     at = "2026-11-12T00:10:08Z"
 
+  [[mission.comment]]
+    text = "Task 46 done in 8a8654a: reproduced red first in the real panel with a backend that answers on command (3 controls pass, 5 stale cases fail on the unfixed controller), then 8/8 green three times; checks now run in the sidebar-transfer suite (647/647). Task 52 (copy vs drag) investigated, NOT fixed: on a private pasteboard, Pathem's Copy (NSURL only) gives public.file-url plus a system-synthesised NSFilenamesPboardType and no plain string; an AppKit rich text view pastes it as an attachment that keeps the filename, a plain text view pastes the path. So native rich receivers lose nothing. One candidate receiver was read in source: Commandem's chat paste (ChatActions.addClipboardImages) turns pasted images into base64 with no name, while its drop path takes the file. Whether that is the owner's case is unconfirmed; no export change made. Screenshots: real composited captures now work by running screencapture from a .command opened in Terminal (verified on a demo window)."
+    at = "2026-11-15T13:01:43Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
@@ -1818,6 +1823,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Packaged target ACTUALLY CLOSED natural0:14PASS/0SKIP/0FAIL; ARM64 local ad-hoc bundle, helpers/six locales/signature/hardened runtime/update metadata/config guards/launch/visible window/scratch persistence/updater-off allPASS. Release warnings12known/0new. No install/restart/publication. Full-validation task remains pending for independently reproduced Apple AI1026; full CI not claimed green. Source unit ready for normal commit gate and immediate land."
     at = "2026-10-23T06:01:03Z"
+
+  [[mission.comment]]
+    text = "Task 4 in progress 2026-11-15: sidebar-transfer suite first gave 643/647 (four Rename-sheet initial-controls-contained failures). Convicted and fixed in b2923f4: accessory measured detached is 3 pt short of its in-window size on macOS 27.2.1 (name field fitting height 21 vs 24). Suite now 647/647. Full make ci running."
+    at = "2026-11-15T13:01:43Z"
 
 [[mission]]
   id = "m-51d5dc66"
