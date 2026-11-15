@@ -5,7 +5,7 @@ import PathemEngine
 /// matches, and open one. The actual search + open run in the browser via callbacks.
 @MainActor
 final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewDelegate,
-    NSSearchFieldDelegate
+    NSSearchFieldDelegate, NSWindowDelegate
 {
     private let panel: NSPanel
     private let queryField = NSSearchField()
@@ -18,17 +18,42 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     private let replaceButton = NSButton(title: "", target: nil, action: nil)
     private var matches: [ContentSearch.Match] = []
     private let gen = GenerationBox()
+    /// Whether the spinner is running (NSProgressIndicator has no getter for it).
+    private var busy = false {
+        didSet { busy ? spinner.startAnimation(nil) : spinner.stopAnimation(nil) }
+    }
 
-    private var onSearch: ((_ query: String, _ regex: Bool, _ caseSensitive: Bool) async -> [ContentSearch.Match])?
+    private var onSearch:
+        ((_ query: String, _ regex: Bool, _ caseSensitive: Bool) async -> [ContentSearch.Match])?
     private var onOpen: ((ContentSearch.Match) -> Void)?
-    private var onReplace: ((_ query: String, _ replacement: String, _ regex: Bool, _ caseSensitive: Bool) async -> ContentSearch.ReplaceResult)?
+    private var onReplace:
+        (
+            (_ query: String, _ replacement: String, _ regex: Bool, _ caseSensitive: Bool) async ->
+                ContentSearch.ReplaceResult
+        )?
 
     override init() {
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 620, height: 460),
             styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: true)
         super.init()
+        panel.delegate = self
         build()
+    }
+
+    /// Drop whatever is still running: its answer belongs to a query, folder or window that
+    /// is no longer on screen. Every result handler checks the generation this bumps.
+    private func invalidatePendingWork() {
+        _ = gen.bump()
+        busy = false
+    }
+
+    /// Closing the panel abandons a running search instead of filling an unseen list.
+    func windowWillClose(_ notification: Notification) {
+        invalidatePendingWork()
+        matches = []
+        statusLabel.stringValue = ""
+        table.reloadData()
     }
 
     func present(
@@ -37,6 +62,9 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         open: @escaping (ContentSearch.Match) -> Void,
         replace: @escaping (String, String, Bool, Bool) async -> ContentSearch.ReplaceResult
     ) {
+        // A request from the previous folder may still be running; its rows must not land
+        // in this folder's list, where Open would hand them to this folder's callback.
+        invalidatePendingWork()
         onSearch = search
         onOpen = open
         onReplace = replace
@@ -65,7 +93,8 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         statusLabel.textColor = .secondaryLabelColor
 
         for (id, title, width) in [
-            ("loc", L("find.location", "Location"), CGFloat(220)), ("text", L("find.match", "Match"), 360),
+            ("loc", L("find.location", "Location"), CGFloat(220)),
+            ("text", L("find.match", "Match"), 360),
         ] {
             let column = NSTableColumn(identifier: .init(id))
             column.title = title
@@ -84,7 +113,9 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         scroll.borderType = .bezelBorder
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
-        let controls = NSStackView(views: [queryField, regexCheck, caseCheck, spinner, NSView(), statusLabel])
+        let controls = NSStackView(views: [
+            queryField, regexCheck, caseCheck, spinner, NSView(), statusLabel,
+        ])
         controls.orientation = .horizontal
         controls.spacing = 8
         queryField.setContentHuggingPriority(.init(1), for: .horizontal)
@@ -119,7 +150,8 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         }
     }
 
-    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool {
+    func control(_ control: NSControl, textView: NSTextView, doCommandBy selector: Selector) -> Bool
+    {
         if selector == #selector(NSResponder.insertNewline(_:)) {
             runSearch()
             return true
@@ -130,23 +162,26 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     @objc private func runSearch() {
         let query = queryField.stringValue
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
+            invalidatePendingWork()  // or the running request refills the cleared list
             matches = []
             table.reloadData()
             statusLabel.stringValue = ""
             return
         }
         let generation = gen.bump()
-        spinner.startAnimation(nil)
+        let search = onSearch  // this request's own callback, not whatever is set later
+        busy = true
         statusLabel.stringValue = L("find.searching", "Searching…")
         let regex = regexCheck.state == .on
         let caseSensitive = caseCheck.state == .on
         Task { @MainActor in
-            let results = await self.onSearch?(query, regex, caseSensitive) ?? []
+            let results = await search?(query, regex, caseSensitive) ?? []
             guard self.gen.isCurrent(generation) else { return }
-            self.spinner.stopAnimation(nil)
+            self.busy = false
             self.matches = results
             self.table.reloadData()
-            self.statusLabel.stringValue = String(format: L("find.results", "%d matches"), results.count)
+            self.statusLabel.stringValue = String(
+                format: L("find.results", "%d matches"), results.count)
         }
     }
 
@@ -160,26 +195,59 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         let alert = NSAlert()
         alert.messageText = L("find.confirmReplaceTitle", "Replace in files?")
         alert.informativeText = String(
-            format: L("find.confirmReplaceBody", "Replace every match of \"%@\" in the matched files. This cannot be undone."),
+            format: L(
+                "find.confirmReplaceBody",
+                "Replace every match of \"%@\" in the matched files. This cannot be undone."),
             query)
         alert.addButton(withTitle: L("find.replaceAll", "Replace All"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
+        performReplaceAll(query: query, replacement: replacement)
+    }
 
+    private func performReplaceAll(query: String, replacement: String) {
         let regex = regexCheck.state == .on
         let caseSensitive = caseCheck.state == .on
-        spinner.startAnimation(nil)
+        // The replace itself always runs to completion (it edits files), but its report and
+        // the follow-up search belong only to the session that asked for it.
+        let generation = gen.bump()
+        let replace = onReplace
+        busy = true
         statusLabel.stringValue = L("find.replacing", "Replacing…")
         Task { @MainActor in
-            let result = await self.onReplace?(query, replacement, regex, caseSensitive)
+            let result =
+                await replace?(query, replacement, regex, caseSensitive)
                 ?? ContentSearch.ReplaceResult(filesChanged: 0, replacements: 0)
-            self.spinner.stopAnimation(nil)
+            guard self.gen.isCurrent(generation) else { return }
+            self.busy = false
             self.statusLabel.stringValue = String(
                 format: L("find.replacedResult", "Replaced %d in %d files"), result.replacements,
                 result.filesChanged)
             self.runSearch()  // refresh the match list against the edited files
         }
     }
+
+    #if DEBUG
+    var debugRowCount: Int { matches.count }
+    var debugStatus: String { statusLabel.stringValue }
+    var debugTitle: String { panel.title }
+    var debugBusy: Bool { busy }
+    /// Type a query and submit it, as Return in the search field does.
+    func debugSearch(_ query: String) {
+        queryField.stringValue = query
+        runSearch()
+    }
+    func debugOpenRow(_ row: Int) {
+        table.selectRowIndexes([row], byExtendingSelection: false)
+        openSelected()
+    }
+    func debugClose() { panel.close() }
+    /// Replace All with the confirmation already given.
+    func debugReplaceAllConfirmed(with replacement: String) {
+        replaceField.stringValue = replacement
+        performReplaceAll(query: queryField.stringValue, replacement: replacement)
+    }
+    #endif
 
     @objc private func openSelected() {
         let row = table.selectedRow
@@ -188,7 +256,9 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     func numberOfRows(in tableView: NSTableView) -> Int { matches.count }
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < matches.count else { return nil }
         let match = matches[row]
         let id = NSUserInterfaceItemIdentifier("cell")
@@ -210,7 +280,8 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
                 return c
             }()
         if tableColumn.identifier.rawValue == "loc" {
-            cell.textField?.stringValue = "\((match.path as NSString).lastPathComponent):\(match.line)"
+            cell.textField?.stringValue =
+                "\((match.path as NSString).lastPathComponent):\(match.line)"
             cell.textField?.font = .systemFont(ofSize: 12)
             cell.textField?.toolTip = match.path
         } else {
