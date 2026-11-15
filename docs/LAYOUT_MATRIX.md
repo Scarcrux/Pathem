@@ -97,6 +97,31 @@ The design is broken if an injection leaves the matrix green, if a predicate con
 fails a check other than its own, or if the clean three-cell run is red for a reason that
 is not a real defect.
 
+## Launch isolation (added 2026-11-15, answering the implementing lane)
+
+The implementing lane found three ways a matrix launch could touch state it does not own.
+All three are accepted as part of Unit 1, in their own first commit, before the harness:
+
+1. Demo root. `DemoWorkspace.build()` deletes and recreates one fixed folder
+   (`<temp>/Pathem-Demo`), so two launches, or a harness and an app the owner has in demo
+   mode, share and destroy each other's tree. Add a root parameter: automation launches
+   pass a unique folder (for example from `PATHEM_DEMO_ROOT`, refused unless it is inside
+   the system temporary directory) and remove it on exit. The interactive default stays as
+   it is.
+2. Preferences. A launch with any automation flag must not read or write the window-frame
+   autosave, and the matrix must leave `UserDefaults` as it found it: capture the keys it
+   can change (`pathem.terminalVisible` and any panel-visibility key it toggles), and
+   restore them before exit, including on a failing run. Prefer not writing at all where a
+   small guard on `isAutomationLaunch` does it. An unbundled debug binary uses its own
+   defaults domain, not the installed app's, but harness runs still must not leak into
+   each other.
+3. Guard list. Add `PATHEM_LAYOUT_MATRIX_TEST` to the configuration-root refusal guards in
+   `test/e2e/run.sh`, so it refuses to run without a scratch `PATHEM_CONFIG_DIR`.
+
+Evidence each holds: a check that the demo root used is the unique one and is gone after
+exit; a before/after dump of the defaults keys showing no change; the guard scenario
+refusing the flag without a config directory.
+
 ## Findings
 
 The full matrix will probably find real defects. For each: do not loosen the check to get
