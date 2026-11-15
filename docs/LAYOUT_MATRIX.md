@@ -124,6 +124,67 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Unit 2 final review verdict: READY, not landed
+
+The134-cell covering set drops the12 unreachable sidebar-hidden cells and adds
+seven deliberate controls/cycles. Each cell starts with fresh panes, settled
+listings and real tag metadata,200pt sidebar (250pt in the deliberate custom
+cells), hidden panels and a local selection anchor. Actual Home/Photos crumbs
+and native tag decorations are present in inspected renders. Geometry checks
+and tolerances were not loosened. This is a covering set, not a full cross product
+or pixel/material approval.
+
+| Criterion | Final evidence | Verdict |
+|---|---|---|
+| Budget and determinism |134 unique cells per run;67.989,67.323,66.357sec; identical eight failing pairs, intersection=union | PASS |
+| Native versus comparison result |1184/1192 native exit1 each; exact baseline comparison and clean driver exit0 each | PASS comparison; native RED preserved |
+| Predicate controls |15/15 each clean/injection launch | PASS |
+| Selection, viewport and setup |All134 cell checks pass; zero decoration pane callbacks; no selection/viewport/structure side effects; both real Gallery preview-follow probes pass | PASS |
+| F2 and F3 repairs |14 compact-header containment checks and28 empty/populated Drop Stack containment/text checks pass each clean run | PASS |
+| Terminal regression |Actual skipped-adjustSubviews delivery; native1138/1192 exit1,68.937sec; terminal check1 below40pt; baseline rejects46 new pairs | PASS expected RED |
+| Icon regression |Actual old-size delivery; native1140/1192 exit1,68.982sec;13 short labels in the named icon cell; baseline rejects44 new pairs | PASS expected RED |
+| Accessory regression |Actual attached-remeasurement skip; native1183/1192 exit1,67.108sec; Rename accessory71pt fails check2; baseline rejects one new pair | PASS expected RED |
+| Baseline discrimination |Nine comparator controls plus actual-log MATCH/NEW/STALE controls3/3; every actual injection is rejected as new | PASS |
+| Focused existing suites |Smoke PASS; sidebar650/650, content preferences206/206, Finder198/198, UI49/49; preferences unchanged each | PASS |
+| Final full CI |826 tests/168 suites; E2E68 pass/1 skip/0 fail; packaged14/14; make exit0 and independent preference wrapper exit0 | PASS with named skip |
+
+The checked-in `test/layout_matrix_known_findings.json` contains only:
+
+| ID | Cells/checks retained red | Status |
+|---|---|---|
+| LM2-F1b |Custom sidebar dark/light check8 (two pairs) | Known250pt width returns to200pt; no fix authorized |
+| LM2-F4 |Gallery terminal+torrent dark/light check4 (two pairs) | Known preview-name collapse with paired drawers; no fix authorized |
+| LM2-F6 |Column terminal+torrent dark/light checks2/4 (four pairs) | Known preview name outside squeezed parent; no fix authorized |
+
+F1's hidden-sidebar axis is dropped as unreachable. F2/F3 are repaired separately;
+F5 is repaired separately in Icon, Gallery and Column. No setup or selection
+failures are baselined. New failures and listed findings that stop failing both
+fail the gate. The scenario is wired into `test/e2e/run.sh`; its Swift builds now
+honor the two-job limit. Native-red artifacts retain geometry receipts/renders;
+matching owner preference dumps are never written.
+
+Both CI outcomes remain recorded: first make0/privacy-wrapper1 exposed the
+automation-family gap and led to the separately authorized isolation repair and
+conditional restoration; second make0/privacy-wrapper0 verifies the repair.
+The single skip is browser-flow pixel verification: cached pixels rejected,
+native appearance unverified. No native pixel/material acceptance is claimed.
+Final package is local arm64/ad-hoc; no installation, notarization, publication,
+deployment or display-mode change. Source changes are committed separately;
+Unit2 land still requires coordinator acknowledgment.
+
+Final receipts: `.build/layout-final-clean-{1,2,3}.log`,
+`.build/layout-final-{terminal-collapse,icon-label-short,accessory-short}.log`,
+`.build/layout-affected-summary.log`, `.build/layout-final-ci.log` and
+`.build/layout-final-ci-receipt.log`. The first CI logs are retained under
+`.build/first-*`; private mismatch snapshots were removed after verified restore.
+Final passing CI/focused/isolation scratch directories were removed. Complete
+defaults comparison is memory-only on passing runs. The three deterministic
+runs precede the automation-family follow-up, which leaves their already-matched
+matrix launch unchanged; the final full CI reruns and accepts the same matrix
+baseline after that follow-up. Additional checks: privacy-retention controls2/2,
+completion/capture controls17/17, shell syntax and diff checks pass. Full remote
+distribution, hardware and public-release boundaries remain outside this unit.
+
 ### Full-CI isolation follow-up: criteria and call-site audit
 
 First full CI: make exit0 (826 tests/168 suites; debug E2E68 pass/1 skip/0 fail;

@@ -278,9 +278,9 @@ if [[ $PACKAGED == 1 ]]; then
   [[ $fail -eq 0 ]]
   exit
 else
-  swift build --build-system native >/tmp/pathem_e2e_build.log 2>&1 \
+  swift build --build-system native --jobs "${COMMANDEM_SWIFT_JOBS:-2}" >/tmp/pathem_e2e_build.log 2>&1 \
     || { echo "${red}swift build failed${rst}"; tail -8 /tmp/pathem_e2e_build.log; exit 1; }
-  BIN="$(swift build --build-system native --show-bin-path)/Pathem"
+  BIN="$(swift build --build-system native --jobs "${COMMANDEM_SWIFT_JOBS:-2}" --show-bin-path)/Pathem"
 fi
 
 echo "==> Scenarios"
