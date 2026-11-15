@@ -1775,6 +1775,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-15/16 owner rulings on destructive Return defaults. (a) Delete Immediately, Empty Trash and remote Delete: intended as they are, Return confirms. Owner: 'we already have confirmations for those and this isn't a file manager meant for newbs.' (b) Reclaim Space Delete Now (TS-F2): owner chose 'Go back to the original: Return deletes'. My earlier ruling that Cancel should be the default was wrong for this product and is withdrawn; task 58 closed as not-a-defect. (c) Conflict popover (TS-F1): Keep Both on Return stands, chosen explicitly by the owner."
     at = "2026-11-16T00:14:14Z"
 
+  [[mission.comment]]
+    text = "Task11 Unit0/1 started after owner/coordinator handoff. Contract clarifications received: physical wrapper rows unclassed plus transitive classified caller rows, implicit menus flagged with attachments, Reclaim Delete Now A-destructive, ten B alerts structural across6locales/2sizes plus3sheet lifecycles. Initial lexical scanner nine controls PASS; counts exploratory until provenance/classification/table and CLI gate complete. Coordinator manually confirms CleanupController4production presentations/4builders on8a0220f. No native phase, sidebar edits or visual-baseline work. Rebased over coordinator sidebar fix before any matrix gate; task1 waits task11 sampleack. Criteria docs/TRANSIENT_SURFACES_RECEIPTS.md."
+    at = "2026-11-15T20:54:13Z"
+
+  [[mission.comment]]
+    text = "Task11 in progress, not READY. Inventory scanner13 controls PASS including real CLI new/stale rejection and nested/multiargument wrappers. Reclaim destructive Return defect explicitly authorized: real-path red check6 deliveredReturn/response1000 and removed only owned Go-cache fixture; no prefs changes. Separate factory/default repair now passes Return/Escape/click native1/1 each with response1001/1001/1000, correct fixture preservation/deletion, zero active Escape monitors afterdismissal, both defaults unchanged and demos removed. Refuted no-input probes, Escape-loss and default-cell-loss attempts retained. Zero new warnings; inprocess render inspected only for structure. Owner authorized separate TS-F1 KeepBoth Return fix, not yet implemented; four other TrashLedger destructive default callers enumerated, unchanged pending ruling. Full inventory/table, three-surface sample/controls and B10x6x2 remain incomplete; visual baselines not started. No land/install/deploy/displaychange."
+    at = "2026-11-15T21:23:35Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

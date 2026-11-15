@@ -41,3 +41,67 @@ discovery was subsequently added). Those counts are drafts, not a complete
 inventory or coverage claim. Classification, wrapper callers, explicit file
 exclusions, attachment provenance, checked-in table and real CLI gate controls
 are still required. No native build/launch has run for this task yet.
+
+## Authorized focused Reclaim default regression, before executing it
+
+Coordinator confirms Reclaim Delete Permanently on Return is unintended and
+authorizes a separate fix with its factory extraction. Preserve the original
+button behavior first, then exercise check6 through the real controller path
+over an owned fake-home Go cache fixture. Record the native default button,
+actual Return event delivery, actual completion response and fixture bytes after
+the asynchronous deletion path finishes. The pre-fix control must fail check6;
+after repair Return must produce Cancel and preserve the file, Escape must
+cancel, and Delete must remain reachable by click and marked destructive.
+Both defaults domains must remain unchanged. This focused regression is not the
+full three-surface sample or approval of the incomplete inventory.
+
+Conflict Replace-on-Return is not marked intended. Preserve it as TS-F1 pending
+the owner's decision, without changing the popover. Source inspection shows
+FileOperations replace moves the overwritten destination to Trash, records
+`replacedOriginalTrashed`, and undo restores it. Existing copy/move/redo replace
+tests passed in the prior full CI. Cmd-Z uses the registered action history;
+this new sample has not yet verified that keyboard path through the popover.
+No new test will touch real Trash to upgrade that claim.
+
+### Reclaim focused verdict
+
+The genuine pre-fix native control is
+`.build/transient-reclaim-key-ready-red.log`: Return delivered, response1000,
+sheet closed, owned fixture removed, check6 FAIL, native exit1. Both defaults
+domains unchanged and the unique demo removed. Earlier missing-button/no-input
+probes are instrument failures, retained separately and not claimed as this red.
+
+Cancel now owns the Return default without changing visible order or the Delete
+response index. Delete is marked destructive and has no key equivalent. Simply
+giving Cancel Return lost Escape; simply restoring Escape cleared AppKit's
+default cell and lost Return. Both refuted attempts are retained in the
+`transient-reclaim-*-verified.log` / `*-final.log` artifacts. A scoped local key
+monitor handles Escape only for this attached sheet and is removed at its native
+completion. The shared production presenter is used unchanged by the real path.
+
+Final native Return, Escape and click controls each pass1/1: responses1001,
+1001 and1000 respectively. Return/Escape preserve the owned bytes; clicking the
+marked Delete removes only the fixture. Each has activeMonitors=0 after closing,
+unchanged defaults and removed demo. Logs:
+`.build/transient-reclaim-{return,escape,click}-final-receipt.log`.
+Passing scratch was removed after retaining native logs/renders in `.build`;
+six earlier owned passing scratch roots were likewise copied and removed. Native
+red roots remain for evidence. Matching owner preference dumps were never made.
+Build0 and zero-new-warning check pass (three known sites). The in-process render
+was inspected for structure only; native material/pixel fidelity is not claimed.
+Full three-surface sample, inventory acceptance and complete task11 coverage are
+still pending. No land, install, deployment or display-mode change.
+
+### Conflict-default ruling and remaining callers
+
+Owner has now chosen Keep Both on Return. TS-F1 is authorized for a separate
+fix, with unchanged visible order, explicit default index and Keep Both/Keep Both
+for All real fixture proofs. Replace remains click-only. Existing capture and
+default-action assertions must be updated to that intent. Not implemented yet.
+
+Other production CursorConfirm callers are in TrashLedger: permanent local delete
+(line83), Empty Trash(117), permanent remote delete(209), and move to Trash(239).
+Their current first-button/Return actions are Delete, Empty Trash, Delete and
+Move to Trash respectively. The first three are irreversible; local Trash is
+recoverable by Put Back/undo. These are reported, not changed without a ruling.
+The conflict-preview caller in PathemApp is DEBUG-only and will adopt Keep Both.

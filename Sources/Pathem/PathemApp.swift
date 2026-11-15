@@ -70,6 +70,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
             || launchEnvironment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
+            || launchEnvironment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil
         #else
         let configurationTest = false
         #endif
@@ -317,6 +318,13 @@ enum PathemApp {
         }
         if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_UI_TEST"] != nil {
             browser.runTransientUIAutomation()
+        }
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            guard let demoLayout else {
+                print("RESULT: FAIL transient surfaces require isolated demo")
+                exit(64)
+            }
+            browser.runTransientSurfaceSample(demo: demoLayout)
         }
         if ProcessInfo.processInfo.environment["PATHEM_COMPILER_UI_TEST"] != nil {
             browser.runCompilerUIAutomation()

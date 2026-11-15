@@ -134,6 +134,17 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         }
     }
     var debugDeleteNowEnabled: Bool { deleteNowButton.isEnabled }
+    #if DEBUG
+    private(set) static var debugTransientEscapeMonitors = 0
+    var debugTransientWindow: NSWindow { panel }
+    var debugTransientDeletePending: Bool { deletingNames != nil }
+    private(set) var debugTransientLastResponse: NSApplication.ModalResponse?
+    private(set) var debugTransientLastAlert: NSAlert?
+    func debugTransientPresentDeleteNow() {
+        panel.makeKeyAndOrderFront(nil)
+        deleteNowClicked()
+    }
+    #endif
     var debugPlacesDone: Bool { !candidates.isEmpty && placesMeasured >= candidates.count }
     /// Save a picture of the window's content, to check the layout without a screen recording.
     func debugRender(to path: String) {
@@ -978,21 +989,65 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         let list = targets.map {
             "• \(rowTitle($0)) (\(byteFormatter.string(fromByteCount: $0.size)))"
         }.joined(separator: "\n")
+        let alert = Self.deleteNowAlert(
+            totalDescription: byteFormatter.string(fromByteCount: total), itemList: list)
+        #if DEBUG
+        debugTransientLastResponse = nil
+        debugTransientLastAlert = alert
+        #endif
+        Self.presentDeleteNowAlert(alert, for: panel) { [weak self] response in
+            #if DEBUG
+            self?.debugTransientLastResponse = response
+            #endif
+            if response == .alertFirstButtonReturn { self?.deleteCheckedNow() }
+        }
+    }
+
+    /// The production confirmation, shared with structural and input regression checks.
+    static func deleteNowAlert(totalDescription: String, itemList: String) -> NSAlert {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = String(
-            format: L("reclaim.deleteNowTitle", "Permanently delete %@?"),
-            byteFormatter.string(fromByteCount: total))
+            format: L("reclaim.deleteNowTitle", "Permanently delete %@?"), totalDescription)
         alert.informativeText =
-            list + "\n\n"
+            itemList + "\n\n"
             + L(
                 "reclaim.deleteNowBody",
                 "These are recreated automatically the next time each tool runs. This skips the Trash and can’t be undone. Other checked items are not affected."
             )
-        alert.addButton(withTitle: L("reclaim.deleteNowConfirm", "Delete Permanently"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        alert.beginSheetModal(for: panel) { [weak self] response in
-            if response == .alertFirstButtonReturn { self?.deleteCheckedNow() }
+        let delete = alert.addButton(withTitle: L("reclaim.deleteNowConfirm", "Delete Permanently"))
+        delete.hasDestructiveAction = true
+        delete.keyEquivalent = ""
+        let cancel = alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        cancel.keyEquivalent = "\r"
+        alert.window.defaultButtonCell = cancel.cell as? NSButtonCell
+        return alert
+    }
+
+    /// NSButton exposes one key equivalent. Keep Return on the safe default and
+    /// route Escape only for this sheet, removing the monitor at native dismissal.
+    static func presentDeleteNowAlert(
+        _ alert: NSAlert, for host: NSWindow,
+        completion: @escaping (NSApplication.ModalResponse) -> Void
+    ) {
+        let monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak alert] event in
+            guard event.keyCode == 53, let alert,
+                event.window === alert.window, alert.window.sheetParent === host
+            else { return event }
+            alert.buttons[1].performClick(nil)
+            return nil
+        }
+        #if DEBUG
+        if monitor != nil { debugTransientEscapeMonitors += 1 }
+        #endif
+        alert.beginSheetModal(for: host) { response in
+            if let monitor {
+                NSEvent.removeMonitor(monitor)
+                #if DEBUG
+                debugTransientEscapeMonitors -= 1
+                #endif
+            }
+            completion(response)
         }
     }
 
