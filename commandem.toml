@@ -994,6 +994,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-ff130a84"
     title = "Add a layout-transition matrix across minimum/default/wide windows, pane ratios, all five views, sidebar/preview/terminal/torrent/detail/Drop Stack toggles, resize and appearance changes; assert no overlap, clipping, zero-size views, selection loss, or viewport jumps"
+    done = true
 
   [[mission.task]]
     id = "t-34525866"
@@ -1239,6 +1240,18 @@ missions = ["m-1331afb7", "m-b2532fac"]
     id = "t-bce3e9fd"
     title = "Sign, notarize and staple the release DMG itself (release.sh only notarizes the app inside; dry-run DMG is unsigned, 'no usable signature'), and add a verify-release check for it"
     done = true
+
+  [[mission.task]]
+    id = "t-86917091"
+    title = "LM2-F1b: Compact sidebar forgets a user-set width after on/off. Keep the custom-sidebar check8 regression and exact known finding in test/layout_matrix_known_findings.json; preserve the width set within split delegate limits."
+
+  [[mission.task]]
+    id = "t-b6136c1d"
+    title = "LM2-F4: Gallery name label has zero height with terminal + torrent at default size. Resolve the paired-drawer layout design; retain dark/light check4 receipts in test/layout_matrix_known_findings.json."
+
+  [[mission.task]]
+    id = "t-d36755d1"
+    title = "LM2-F6: Column preview name falls outside its parent with terminal + torrent at default size. Resolve the paired-drawer layout design; retain dark/light check2/check4 receipts in test/layout_matrix_known_findings.json."
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1739,6 +1752,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Unit2 READY for coordinator review, NOT landed. Final134-cell set drops unreachable sidebar-hidden12 and adds7 controls/cycles; clean3 identical8-pair failing sets, native1184/1192 exit1 each, exact baseline drivers0 at67.989/67.323/66.357s. Only F1b custom-sidebar check8x2,F4 Gallery paired-drawer check4x2,F6 Column paired-drawer checks2/4x2 retained; F2/F3 and Icon/Gallery/ColumnF5 repaired separately. All134 setup/selection/viewport and both actual preview-follow probes PASS, zero cosmetic pane callbacks. Three full injections targetedRED/native1, negative drivers0; baseline rejects46/44/1 new pairs. Focused5 PASS:smoke,sidebar650,content206,Finder198,UI49. FirstCI make0/privacy1 exposed omitted automation families; separate2295974 repairs classification/Downloads isolation and multiwindow assumption after audited callsites/red11 controls. Authorized conditional3-key restoration verified; private snapshots deleted. SecondCI make0/privacy0,826tests/168suites,E2E68pass/1browser-pixelSkip/0fail,packaged14/14. FinalCI matrix matches same baseline after isolation repair. Comparator9/9, actualbaseline3/3,privacy2/2,completion17/17. Baseline checked in with strict new/stale gate; cappedjobs2. No land/install/notary/deploy/displaychange; await coordinatorack, task2 not marked done prematurely. Full criteria receipts docs/LAYOUT_MATRIX.md."
     at = "2026-11-15T18:57:05Z"
+
+  [[mission.comment]]
+    text = "Unit2 independently accepted by coordinator on c4e5cf0: rerun134cells/66.8sec exact8 baseline, icon injection1140/1192 RED, comparator9/9, real site-shot thumbnails/tags/Home/selection preserved. Task2 marked done and three open F1b/F4/F6 follow-ups added, each linked to strict known-findings baseline. Authorized rebase/land/push only; no install/deploy/displaychange."
+    at = "2026-11-15T19:03:10Z"
 
 [[mission]]
   id = "m-e1443252"
