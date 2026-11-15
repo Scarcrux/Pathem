@@ -68,6 +68,16 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     var debugWillApplyDrilledRefresh: (() -> Void)?
     var debugHasPendingColumnLoad: Bool { pendingFolderOpen != nil }
     var debugColumnFolders: [URL] { columns.map(\.folder) }
+    func debugMatrixFirstVisibleName() -> String? {
+        let visible = columns.filter { $0.scroll.frame.intersects(outerScroll.contentView.bounds) }
+        guard !visible.isEmpty else { return nil }
+        return visible.map { column in
+            let range = column.table.rows(in: column.table.visibleRect)
+            guard range.location != NSNotFound, column.entries.indices.contains(range.location)
+            else { return "<empty>" }
+            return column.folder.lastPathComponent + ":" + column.entries[range.location].name
+        }.joined(separator: "|")
+    }
     func debugColumnNames(_ index: Int) -> [String] {
         columns.indices.contains(index) ? columns[index].entries.map(\.name) : []
     }

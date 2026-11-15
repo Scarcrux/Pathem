@@ -355,6 +355,17 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     /// Harness accessors: the current zoom scale, and the key view that receives keyDown.
     var debugScale: CGFloat { scale }
     var debugKeyView: NSView { collection }
+    #if DEBUG
+    func debugMatrixFirstVisibleName() -> String? {
+        let paths = collection.indexPathsForVisibleItems().sorted {
+            let a = collection.layoutAttributesForItem(at: $0)?.frame ?? .zero
+            let b = collection.layoutAttributesForItem(at: $1)?.frame ?? .zero
+            return a.minY == b.minY ? a.minX < b.minX : a.minY < b.minY
+        }
+        guard let path = paths.first, let index = entryIndex(at: path) else { return nil }
+        return entries[index].name
+    }
+    #endif
     private var baseIconSize: CGFloat { gallery ? 96 : 56 }
     private var iconSize: CGFloat { (baseIconSize * scale).rounded() }
     private var cellSize: NSSize {
@@ -367,7 +378,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         // short, which cut the bottom off the second line).
         #if DEBUG
         if LayoutMatrixGeometry.injection == "icon-label-short" {
-            print("LAYOUTMATRIX: INJECT icon-label-short restoring point-size allocation")
+            LayoutMatrixGeometry.traceInjection(
+                "icon-label-short", "restoring point-size allocation")
             return gallery
                 ? NSSize(width: side + 54, height: side + max(54, ceil(labelFontSize * 2) + 8))
                 : NSSize(width: side + 40, height: side + max(36, ceil(labelFontSize * 2) + 8))

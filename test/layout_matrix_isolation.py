@@ -2,10 +2,13 @@
 """Bounded real-launch isolation checks. Never installs or writes owner defaults."""
 import os
 import pathlib
-import plistlib
+import shutil
 import subprocess
 import sys
 import tempfile
+from layout_matrix_support import defaults_snapshot, verify_defaults
+
+os.umask(0o077)
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BIN = ROOT / '.build/debug/Pathem'
@@ -17,18 +20,7 @@ swift = subprocess.check_output(['xcrun', '--toolchain', 'XcodeDefault', '--find
 os.environ['PATH'] = str(pathlib.Path(swift).parent) + os.pathsep + os.environ['PATH']
 
 
-def defaults_snapshot():
-    result = {}
-    for domain in ['Pathem', 'com.scarcrux.pathem']:
-        output = subprocess.run(['/usr/bin/defaults', 'export', domain, '-'], capture_output=True)
-        values = plistlib.loads(output.stdout) if output.returncode == 0 else {}
-        # Check the entire domain, not just the keys currently known to be written.
-        result[domain] = values
-    return result
-
-
 before = defaults_snapshot()
-(scratch / 'defaults-before.plist').write_bytes(plistlib.dumps(before))
 base = dict(os.environ, PATHEM_CONFIG_DIR=str(scratch / 'config'), PATHEM_RELEASE_TEST='1')
 base.pop('PATHEM_LAYOUT_MATRIX_TEST', None)
 for label, root in [('outside', '/Applications/pathem-demo-refused'), ('existing', str(scratch))]:
@@ -49,6 +41,7 @@ env = dict(base, PATHEM_DEMO='1', PATHEM_DEMO_ROOT=str(demo), PATHEM_SITE_SHOT='
            PATHEM_SITE_OUT=str(capture), PATHEM_SITE_SETTLE='4')
 run = subprocess.run([str(BIN)], env=env, capture_output=True, timeout=40)
 (scratch / 'launch.log').write_bytes(run.stdout + run.stderr)
+assert verify_defaults(before, scratch), 'defaults changed; differing dumps retained privately'
 assert run.returncode == 0, 'site-shot launch failed; see private receipt'
 receipts = run.stdout.decode().splitlines()
 for action in ['used', 'removed']:
@@ -57,8 +50,7 @@ for action in ['used', 'removed']:
     assert len(paths) == 1 and pathlib.Path(paths[0]).resolve() == demo.resolve()
 assert not demo.exists() and capture.stat().st_size > 1000
 print('ISOLATION PASS unique demo root delivered and removed; terminal capture delivered')
-after = defaults_snapshot()
-(scratch / 'defaults-after.plist').write_bytes(plistlib.dumps(after))
-assert before == after, 'defaults changed; before/after dumps retained privately'
+assert verify_defaults(before, scratch), 'defaults changed; differing dumps retained privately'
 print('ISOLATION PASS complete before/after defaults domains unchanged')
-print('RESULT: PASS isolation; receipts ' + str(scratch))
+shutil.rmtree(scratch)
+print('RESULT: PASS isolation; own scratch removed, matching preferences not written')

@@ -94,7 +94,19 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     #if DEBUG
     func debugMatrixFirstVisibleName() -> String? {
         if let list = content as? FileListController { return list.debugMatrixFirstVisibleName() }
-        return nil  // Unit 1 viewport checks are list-only; view switches are exempt.
+        if let icons = content as? IconCollectionController {
+            return icons.debugMatrixFirstVisibleName()
+        }
+        if let gallery = content as? GalleryController {
+            return gallery.debugMatrixFirstVisibleName()
+        }
+        if let columns = content as? ColumnBrowserController {
+            return columns.debugMatrixFirstVisibleName()
+        }
+        if let tree = content as? TreeOutlineController {
+            return tree.debugMatrixFirstVisibleName()
+        }
+        return nil
     }
     #endif
     func setHiddenContextItems(_ ids: Set<String>) {

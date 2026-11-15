@@ -5,6 +5,12 @@ import PathemEngine
 /// Shared by the real tree walk, the synthetic controls and the regression probes.
 @MainActor
 enum LayoutMatrixGeometry {
+    private static var deliveredInjections = Set<String>()
+    static func traceInjection(_ name: String, _ detail: String) {
+        if deliveredInjections.insert(name).inserted {
+            print("LAYOUTMATRIX: INJECT \(name) \(detail)")
+        }
+    }
     struct Failure {
         let check: Int
         let view: NSView
@@ -137,6 +143,7 @@ extension BrowserViewController {
     func runLayoutMatrixAutomation(demo: DemoWorkspace.Layout) -> Never {
         var passed = 0
         var total = 0
+        var capturedCells = Set<String>()
         let env = ProcessInfo.processInfo.environment
         let output = env["PATHEM_LAYOUT_MATRIX_OUT"] ?? demo.root.deletingLastPathComponent().path
         func check(
@@ -151,7 +158,7 @@ extension BrowserViewController {
                 } ?? ""
             print(
                 "LAYOUTMATRIX: \(ok ? "PASS" : "FAIL") \(cell) check\(number)\(receipt) \(detail)")
-            if !ok {
+            if !ok && capturedCells.insert(cell).inserted {
                 debugRenderWindowAt2x(to: output + "/\(cell)-check\(number).png")
                 if cell == "rename-initial-control",
                     let sheet = view.window?.attachedSheet?.contentView,
@@ -310,6 +317,10 @@ extension BrowserViewController {
                 nodes.append(sidebar.containerView)
             }
             if !terminal.view.isHidden { nodes.append(terminal.view) }
+            if previewPane.isVisible { nodes.append(previewPane.view) }
+            if !torrentDrawer.view.isHidden { nodes.append(torrentDrawer.view) }
+            if !shelf.view.isHidden { nodes.append(shelf.view) }
+            if !torrentDetail.isHidden { nodes.append(torrentDetail) }
             return nodes
         }
         func frames() -> [NSRect] { regions().map { $0.convert($0.bounds, to: view) } }
@@ -334,60 +345,70 @@ extension BrowserViewController {
                 if failures.isEmpty {
                     check(cell, number, true)
                 } else {
-                    for failure in failures {
-                        check(cell, number, false, failure.view, failure.detail)
-                    }
+                    let failure = failures[0]
+                    check(
+                        cell, number, false, failure.view,
+                        "count=\(failures.count) \(failure.detail)")
                 }
             }
             // Capture even on green: the external constraint-log checker has evidence
             // for conflicts AppKit may log without marking any region ambiguous.
-            debugRenderWindowAt2x(to: output + "/\(cell).png")
+            if env["PATHEM_LAYOUT_MATRIX_FULL"] == nil {
+                debugRenderWindowAt2x(to: output + "/\(cell).png")
+            }
             print("LAYOUTMATRIX: END \(cell)")
             fflush(stdout)
         }
-        inspect("default-list")
-        originalFrames = frames()
-        let beforeIcon = expectedSelection
-        left.debugClickViewSwitcher(.icon)
-        check("default-icon", 0, settle { left.viewMode == .icon && left.debugEntryCount > 0 })
-        inspect("default-icon")
-        check(
-            "default-icon", 6, LayoutMatrixGeometry.sameSelection(beforeIcon, selectionState()),
-            left.containerView)
-        print("LAYOUTMATRIX: EXEMPT default-icon check7 view-switch")
-        left.debugClickViewSwitcher(.list)
-        check("return-list", 0, settle { left.viewMode == .list && left.debugEntryCount > 0 })
-        check(
-            "return-list", 6,
-            LayoutMatrixGeometry.sameSelection(expectedSelection, selectionState()),
-            left.containerView)
-        print("LAYOUTMATRIX: EXEMPT return-list check7 view-switch")
-        let firstVisible = viewport()
-        check("viewport-delivered", 0, firstVisible != nil)
-        toggleTerminal()
-        view.layoutSubtreeIfNeeded()
-        inspect("default-list-terminal")
-        check(
-            "default-list-terminal", 6,
-            LayoutMatrixGeometry.sameSelection(expectedSelection, selectionState()),
-            left.containerView)
-        check(
-            "default-list-terminal", 7, LayoutMatrixGeometry.sameViewport(firstVisible, viewport()),
-            left.contentClipView)
-        toggleTerminal()
-        _ = settle {
-            terminal.view.isHidden && abs(outerSplit.frame.height - vSplit.bounds.height) <= 2
+        if env["PATHEM_LAYOUT_MATRIX_FULL"] != nil {
+            runFullLayoutMatrix(
+                demo: demo, inspect: inspect, check: check, settle: settle,
+                frames: frames, selection: selectionState, viewport: viewport)
+        } else {
+            inspect("default-list")
+            originalFrames = frames()
+            let beforeIcon = expectedSelection
+            left.debugClickViewSwitcher(.icon)
+            check("default-icon", 0, settle { left.viewMode == .icon && left.debugEntryCount > 0 })
+            inspect("default-icon")
+            check(
+                "default-icon", 6, LayoutMatrixGeometry.sameSelection(beforeIcon, selectionState()),
+                left.containerView)
+            print("LAYOUTMATRIX: EXEMPT default-icon check7 view-switch")
+            left.debugClickViewSwitcher(.list)
+            check("return-list", 0, settle { left.viewMode == .list && left.debugEntryCount > 0 })
+            check(
+                "return-list", 6,
+                LayoutMatrixGeometry.sameSelection(expectedSelection, selectionState()),
+                left.containerView)
+            print("LAYOUTMATRIX: EXEMPT return-list check7 view-switch")
+            let firstVisible = viewport()
+            check("viewport-delivered", 0, firstVisible != nil)
+            toggleTerminal()
+            view.layoutSubtreeIfNeeded()
+            inspect("default-list-terminal")
+            check(
+                "default-list-terminal", 6,
+                LayoutMatrixGeometry.sameSelection(expectedSelection, selectionState()),
+                left.containerView)
+            check(
+                "default-list-terminal", 7,
+                LayoutMatrixGeometry.sameViewport(firstVisible, viewport()),
+                left.contentClipView)
+            toggleTerminal()
+            _ = settle {
+                terminal.view.isHidden && abs(outerSplit.frame.height - vSplit.bounds.height) <= 2
+            }
+            check(
+                "terminal-restored", 6,
+                LayoutMatrixGeometry.sameSelection(expectedSelection, selectionState()),
+                left.containerView)
+            check(
+                "terminal-restored", 7, LayoutMatrixGeometry.sameViewport(firstVisible, viewport()),
+                left.contentClipView)
+            check(
+                "terminal-restored", 8, LayoutMatrixGeometry.sameFrames(originalFrames, frames()),
+                outerSplit)
         }
-        check(
-            "terminal-restored", 6,
-            LayoutMatrixGeometry.sameSelection(expectedSelection, selectionState()),
-            left.containerView)
-        check(
-            "terminal-restored", 7, LayoutMatrixGeometry.sameViewport(firstVisible, viewport()),
-            left.contentClipView)
-        check(
-            "terminal-restored", 8, LayoutMatrixGeometry.sameFrames(originalFrames, frames()),
-            outerSplit)
 
         // Initial native Rename sheet, with the production suggestion accessory.
         let dialog = RenameDialogController(

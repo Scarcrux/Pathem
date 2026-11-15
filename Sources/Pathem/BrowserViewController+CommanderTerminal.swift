@@ -56,7 +56,7 @@ extension BrowserViewController {
         // space back either. Ask the split to lay its subviews out again first.
         #if DEBUG
         if LayoutMatrixGeometry.injection == "terminal-collapse" {
-            print("LAYOUTMATRIX: INJECT terminal-collapse skipping adjustSubviews")
+            LayoutMatrixGeometry.traceInjection("terminal-collapse", "skipping adjustSubviews")
         } else {
             vSplit.adjustSubviews()
         }

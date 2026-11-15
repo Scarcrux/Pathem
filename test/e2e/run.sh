@@ -123,7 +123,7 @@ fi
 scenario() {
   local name="$1" expect="$2"; shift 2
   local out command_status
-  out="$(timeout_run 120 "$@" 2>&1)"
+  out="$(timeout_run "${PATHEM_SCENARIO_TIMEOUT:-120}" "$@" 2>&1)"
   command_status=$?
   local result; result="$(grep -oE '^RESULT:.*' <<<"$out" | tail -1)"
   if scenario_succeeded "$command_status" "$out" "$expect"; then
@@ -308,6 +308,7 @@ scenario "gallery rules + initial defaults" 'RESULT: PASS' env PATHEM_CONFIG_DIR
 scenario "settings defaults + startup stores" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/settings-defaults-config" PATHEM_SETTINGS_DEFAULTS_UI_TEST=1 "$BIN"
 scenario "Always Open With application picker" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/opener-config" PATHEM_OPENER_UI_TEST=1 "$BIN"
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
+PATHEM_SCENARIO_TIMEOUT=245 scenario "layout transition covering matrix" 'RESULT: PASS' caffeinate -d -i python3 "$ROOT/test/layout_matrix_sample.py" clean --full
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
 scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"
 scenario "media trim export + rejection" 'RESULT: PASS' env PATHEM_TRIM_SMOKE=1 "$BIN"

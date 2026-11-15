@@ -45,7 +45,11 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
         titleLabel.font = .systemFont(ofSize: 14, weight: .semibold)
         titleLabel.lineBreakMode = .byTruncatingMiddle
 
-        let close = NSButton(image: NSImage(systemSymbolName: "xmark.circle.fill", accessibilityDescription: L("common.close", "Close"))!, target: self, action: #selector(closeTapped))
+        let close = NSButton(
+            image: NSImage(
+                systemSymbolName: "xmark.circle.fill",
+                accessibilityDescription: L("common.close", "Close"))!, target: self,
+            action: #selector(closeTapped))
         close.isBordered = false
         close.toolTip = L("torrents.detail.close", "Back to files")
 
@@ -73,17 +77,22 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
         overview.edgeInsets = NSEdgeInsets(top: 8, left: 16, bottom: 8, right: 16)
         overview.translatesAutoresizingMaskIntoConstraints = false
 
-        setupTable(filesTable, filesScroll, [
-            ("wanted", "", 26), ("path", L("torrents.col.name", "Name"), 360),
-            ("size", L("torrents.col.size", "Size"), 100),
-        ])
-        setupTable(peersTable, peersScroll, [
-            ("address", L("torrents.detail.address", "Address"), 180),
-            ("client", L("torrents.detail.client", "Client"), 160),
-            ("progress", L("torrents.col.progress", "Progress"), 90),
-            ("flags", L("torrents.detail.flags", "Flags"), 120),
-        ])
-        setupTable(trackersTable, trackersScroll, [("url", L("torrents.detail.source", "Source"), 480)])
+        setupTable(
+            filesTable, filesScroll,
+            [
+                ("wanted", "", 26), ("path", L("torrents.col.name", "Name"), 360),
+                ("size", L("torrents.col.size", "Size"), 100),
+            ])
+        setupTable(
+            peersTable, peersScroll,
+            [
+                ("address", L("torrents.detail.address", "Address"), 180),
+                ("client", L("torrents.detail.client", "Client"), 160),
+                ("progress", L("torrents.col.progress", "Progress"), 90),
+                ("flags", L("torrents.detail.flags", "Flags"), 120),
+            ])
+        setupTable(
+            trackersTable, trackersScroll, [("url", L("torrents.detail.source", "Source"), 480)])
 
         addSubview(header)
         for v in [overview, filesScroll, peersScroll, trackersScroll] {
@@ -104,7 +113,9 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
         overview.isHidden = false
     }
 
-    private func setupTable(_ table: NSTableView, _ scroll: NSScrollView, _ cols: [(String, String, CGFloat)]) {
+    private func setupTable(
+        _ table: NSTableView, _ scroll: NSScrollView, _ cols: [(String, String, CGFloat)]
+    ) {
         for (id, heading, width) in cols {
             let c = NSTableColumn(identifier: .init(id))
             c.title = heading
@@ -124,6 +135,15 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
     }
 
     // MARK: show / refresh
+
+    #if DEBUG
+    /// Geometry-only demo staging, using the real title/overview path without a daemon.
+    func debugStageMatrixDetail(_ status: TorrentSession.Status) {
+        infoHash = status.infoHash
+        titleLabel.stringValue = status.name
+        renderOverview(status)
+    }
+    #endif
 
     func show(_ status: TorrentSession.Status) {
         infoHash = status.infoHash
@@ -180,16 +200,30 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
             overview.addArrangedSubview(r)
         }
         let pct = String(format: "%.1f%%", s.fractionComplete * 100)
-        let state = s.state == .seeding ? L("torrents.state.seeding", "Seeding")
-            : (s.state == .paused ? L("torrents.state.paused", "Paused")
-                : (s.totalLength == 0 ? L("torrents.state.fetchingMeta", "Fetching details…")
+        let state =
+            s.state == .seeding
+            ? L("torrents.state.seeding", "Seeding")
+            : (s.state == .paused
+                ? L("torrents.state.paused", "Paused")
+                : (s.totalLength == 0
+                    ? L("torrents.state.fetchingMeta", "Fetching details…")
                     : L("torrents.state.downloading", "Downloading")))
         row(L("torrents.detail.status", "Status"), state)
-        row(L("torrents.detail.progress", "Progress"), "\(pct)  (\(Self.size.string(fromByteCount: s.downloaded)) of \(Self.size.string(fromByteCount: s.totalLength)))")
-        row(L("torrents.col.down", "Down"), s.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(s.downloadRate)))/s" : "—")
-        row(L("torrents.col.up", "Up"), s.uploadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(s.uploadRate)))/s" : "—")
+        row(
+            L("torrents.detail.progress", "Progress"),
+            "\(pct)  (\(Self.size.string(fromByteCount: s.downloaded)) of \(Self.size.string(fromByteCount: s.totalLength)))"
+        )
+        row(
+            L("torrents.col.down", "Down"),
+            s.downloadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(s.downloadRate)))/s" : "—"
+        )
+        row(
+            L("torrents.col.up", "Up"),
+            s.uploadRate > 1 ? "\(Self.size.string(fromByteCount: Int64(s.uploadRate)))/s" : "—")
         row(L("torrents.col.eta", "ETA"), TorrentsWindowController.etaLabel(s.etaSeconds))
-        row(L("torrents.col.ratio", "Ratio"), s.downloaded > 0 ? String(format: "%.2f", s.ratio) : "—")
+        row(
+            L("torrents.col.ratio", "Ratio"),
+            s.downloaded > 0 ? String(format: "%.2f", s.ratio) : "—")
         row(L("torrents.detail.uploaded", "Uploaded"), Self.size.string(fromByteCount: s.uploaded))
         row(L("torrents.col.peers", "Peers"), "\(s.peersConnected)")
         row(L("torrents.detail.savePath", "Location"), s.savePath)
@@ -210,7 +244,8 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
         let idx = sender.tag
         guard idx >= 0, idx < files.count else { return }
         files[idx].wanted = sender.state == .on
-        client.setFiles(infoHash, wanted: files.enumerated().filter { $0.element.wanted }.map(\.offset))
+        client.setFiles(
+            infoHash, wanted: files.enumerated().filter { $0.element.wanted }.map(\.offset))
     }
 
     // MARK: table data
@@ -224,10 +259,13 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
         }
     }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let col = tableColumn?.identifier.rawValue else { return nil }
         if tableView == filesTable, col == "wanted" {
-            let check = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleWanted(_:)))
+            let check = NSButton(
+                checkboxWithTitle: "", target: self, action: #selector(toggleWanted(_:)))
             check.tag = row
             check.state = files[row].wanted ? .on : .off
             return check
@@ -246,7 +284,10 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
             default:
                 var flags: [String] = []
                 if p.encrypted { flags.append(L("torrents.detail.enc", "encrypted")) }
-                flags.append(p.choked ? L("torrents.detail.choked", "choked") : L("torrents.detail.active", "active"))
+                flags.append(
+                    p.choked
+                        ? L("torrents.detail.choked", "choked")
+                        : L("torrents.detail.active", "active"))
                 text = flags.joined(separator: ", ")
             }
         case trackersTable: text = trackers[row]
@@ -258,7 +299,9 @@ final class TorrentDetailView: NSView, NSTableViewDataSource, NSTableViewDelegat
     private func cell(_ string: String, mono: Bool) -> NSView {
         let f = NSTextField(labelWithString: string)
         f.lineBreakMode = .byTruncatingMiddle
-        f.font = mono ? .monospacedDigitSystemFont(ofSize: 11, weight: .regular) : .systemFont(ofSize: 12)
+        f.font =
+            mono
+            ? .monospacedDigitSystemFont(ofSize: 11, weight: .regular) : .systemFont(ofSize: 12)
         return f
     }
 

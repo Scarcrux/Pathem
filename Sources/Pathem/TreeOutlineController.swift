@@ -59,6 +59,14 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
 
     let scrollView = NSScrollView()
     private let outline = KeyOutlineView()
+    #if DEBUG
+    func debugMatrixFirstVisibleName() -> String? {
+        let range = outline.rows(in: outline.visibleRect)
+        guard range.location != NSNotFound, let node = outline.item(atRow: range.location) as? Node
+        else { return nil }
+        return node.entry.name
+    }
+    #endif
     private let placeholder = NSTextField(labelWithString: "")
     private let contextMenu = FileContextMenuController()
     private var roots: [Node] = []

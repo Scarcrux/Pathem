@@ -124,6 +124,106 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Unit 2 covering set, registered before execution
+
+Unit 1 was independently rerun and accepted by the coordinator, authorizing its
+land and Unit 2. Full runs cover 139 cells: 15 dark size/view baselines; 35 dark
+default-size view/panel combinations; 14 dark minimum/wide list/panel cells;
+10 dark default-size view/panel-pair cells; four dark matching non-list panes;
+two dark non-even list ratios; all 56 default-size cells repeated in light;
+and three explicit list resize transitions (minimum, wide, default). Every
+panel cell includes an on/off transition and restoration checks. Default-size
+view baselines traverse all five modes and back. This is a covering set, not
+the cross product. No panel pair or axis is dropped initially.
+
+Acceptance remains fewer than 150 cells and less than 240 seconds per native
+launch, including controls. The bounded runner must report cell count, native
+exit, elapsed wall time, all findings, and the three independently delivered
+regressions. The existing three-cell mode remains the small instrument check.
+Unknown real failures remain red and are reported with render paths; no check
+or tolerance is relaxed to admit the covering set. Preference snapshots stay
+in memory and are written mode0600 only on differences. Passing clean runs
+remove their own scratch tree. Red runs retain their log and renders, but never
+write matching owner defaults to disk. Torrent geometry uses demo rows and a
+detail staging hook without daemon/network activity; it does not test transport.
+
+### Unit 2 end-to-end receipt: instrument ready, product gate RED
+
+Unit 1 landed normally at `ea0843b`, with the pool workbench retained. Unit 2
+implements the 139-cell set above and wires the clean driver into
+`test/e2e/run.sh`. This scenario alone gets a 245-second outer bound; its native
+child is bounded to 240 seconds. Other scenarios retain their 120-second bound.
+No full `make ci` was run and Unit 2 is NOT landed pending coordinator review.
+
+Final source was built under the shared lock; all following native runs used
+`caffeinate -d -i` and the same shared lock. Display readback stayed 5120x1440.
+
+| Full case | Cells | Native wall seconds | Native result | Driver exit |
+|---|---:|---:|---|---:|
+| No injection | 139 | 24.434 | FAIL 1090/1239, exit1 | 1 |
+| terminal-collapse | 139 | 25.273 | FAIL 992/1239, exit1 | 0, expected regression observed |
+| icon-label-short | 139 | 23.739 | FAIL 1048/1239, exit1 | 0, expected regression observed |
+| accessory-short | 139 | 26.440 | FAIL 1037/1239, exit1 | 0, expected regression observed |
+
+All runs delivered all 15 predicate controls, all 139 unique cells and all
+planned axes/pairs. No cells were dropped, no check tolerance changed and no
+red cell was skipped. Each `(cell, check)` has exactly one PASS/FAIL receipt;
+geometry failures report the count and the first offending class/id/frame.
+Each injection emits one delivery receipt. The no-injection run explicitly
+passes the three targeted assertions that the respective injection fails:
+`default-list-terminal-dark check1`, `default-icon-none-dark check4`, and
+`rename-initial-control check2`. This comparison was checked against the raw
+logs; an already-red unrelated cell is not used to claim discrimination.
+
+All four runs preserved both complete defaults domains in memory, removed their
+unique demo roots on exit, and confirmed no torrent daemon was running. Matching
+defaults dumps were absent on disk. No-injection remains a failed native/driver
+gate, not a passing suite. Injection-driver zero means only that its intended
+negative control was observed; those native failures and unrelated findings
+remain unchanged. No constraint-conflict logs were present.
+
+#### Open findings, not fixed or waived
+
+| ID | Receipt and observation | Confidence / next boundary |
+|---|---|---|
+| LM2-F1 | `minimum-list-sidebar-hidden-dark check8`: sidebar131pt before versus111pt after; compact restoration may return200pt rather than prior width. Twenty-five check8 failures in the final clean run. | Allocated-frame drift observed. Hidden-sidebar is a direct split fixture, not an exposed app command. Some compact/pair failures follow that earlier drift; independent product mechanisms remain for triage. |
+| LM2-F2 | `default-list-compact-sidebar-dark check2`: four NSTextFields at(2,-4,25,14) inside6pt cells. | Structural containment violation. Render shows fitting icons; empty/section-header labels may be intentionally collapsed. Do not claim visible clipping without semantic triage. |
+| LM2-F3 | `default-list-drop-stack-dark check2/check4`: empty text179x16 allocated in a630x0 NSScrollView, measured text needs14pt. | Out-of-bounds allocation observed. Render still shows the empty text; pixel clipping is not proven. All 12 tested Drop Stack cells remain red. |
+| LM2-F4 | `default-gallery-terminal+torrent-dark check4`: two preview-name fields have zero height, e.g.(14,147,421,0), need16pt; corresponding light case also fails. | Zero-height allocated labels observed with the two drawers. Mechanism not yet convicted. |
+| LM2-F5 | First final clean selection failure: `wide-icon-none-dark check6`, incoming left/Tromsø Aurora.jpg + right/Lofoten Dawn.jpg; setup loses the left name. Eighty-six downstream check6 failures retain the global anchor. | The earlier full run first lost selection at a different cell. Before/setup/shown/restored names are now recorded. These correlated failures are not86 independent bugs, nor attributed to an injection or timing cause. |
+
+The final clean run has149 failed assertions: check2=24, check4=14, check6=86,
+check8=25; no check0/1/3/5/7 failures. LM2-F1 through LM2-F5 were posted separately
+on the Pathem board with raw receipts and representative renders before any fix.
+No new production behavior repair is included in this unit.
+
+Evidence: `.build/layout-unit2-final-{clean,terminal-collapse,icon-label-short,accessory-short}.log`.
+These logs name their retained private directories:
+`pathem-matrix-clean-malssmpr`, `pathem-matrix-terminal-collapse-kf332dgj`,
+`pathem-matrix-icon-label-short-jq9wxwvg`, and
+`pathem-matrix-accessory-short-dx67ajqr`. Earlier full receipt
+`pathem-matrix-clean-hpuxfx3m` is retained:139 cells,44.270sec,1104/1238, exit1.
+Its representative compact, Drop Stack and Gallery-pair captures were inspected.
+Later instrumentation only adds selection-phase names, once-per-injection
+delivery, and no-daemon attestation; it does not repair any red cell.
+
+Privacy follow-up: owner preference exports now stay in memory. Only a mismatch
+writes before/after evidence (mode0600, under0700 scratch); two synthetic tests
+discriminate matching/no-files versus different/private-files behavior. Native
+passing runs delete their exact owned scratch. Failing native runs keep logs and
+renders but do not dump matching preferences, including expected injection-red
+runs. Thirty-two historical preference snapshot files from this lane's exact
+owned Unit 1 artifacts were deleted; geometry logs/renders remain. Historical
+statements below describe the original runs, not current retention.
+
+Additional checks: the revised three-cell sample passed45/45 and removed its
+passing scratch; isolation probe passed and removed its scratch; support tests
+2/2, E2E completion/capture-policy controls17/17, shell syntax, Python compilation
+and `git diff --check` passed. Full product E2E, packaged E2E, Release build,
+installation, deployment and display-mode changes were NOT RUN. Ordinary commit
+hook results are reported separately. READY means reviewable instrument and
+open findings, not a green release gate or permission to land.
+
 ### Unit 1 isolation prerequisite
 
 The isolated automation demo now uses a new directory, rejects existing and

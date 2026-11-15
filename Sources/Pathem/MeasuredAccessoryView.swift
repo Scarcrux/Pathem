@@ -39,7 +39,8 @@ final class MeasuredAccessoryView: NSView {
         guard window != nil else { return }
         #if DEBUG
         if LayoutMatrixGeometry.injection == "accessory-short" {
-            print("LAYOUTMATRIX: INJECT accessory-short skipping attached remeasurement")
+            LayoutMatrixGeometry.traceInjection(
+                "accessory-short", "skipping attached remeasurement")
             return
         }
         #endif

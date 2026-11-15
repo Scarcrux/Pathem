@@ -15,6 +15,16 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     private let preview = QuickLookPreview()  // live Quick Look of the selected item
     private let previewName = NSTextField(labelWithString: "")
     private let filmstrip = KeyCollectionView()
+    #if DEBUG
+    func debugMatrixFirstVisibleName() -> String? {
+        let paths = filmstrip.indexPathsForVisibleItems().sorted {
+            (filmstrip.layoutAttributesForItem(at: $0)?.frame.minX ?? 0)
+                < (filmstrip.layoutAttributesForItem(at: $1)?.frame.minX ?? 0)
+        }
+        guard let index = paths.first?.item, entries.indices.contains(index) else { return nil }
+        return entries[index].name
+    }
+    #endif
     private let emptyLabel = NSTextField(labelWithString: "")
     private static let itemID = NSUserInterfaceItemIdentifier("gallery-item")
 
