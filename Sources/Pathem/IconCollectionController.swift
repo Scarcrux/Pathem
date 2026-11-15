@@ -262,7 +262,17 @@ final class IconItem: NSCollectionViewItem {
             let decorated = FileNameDecoration.decoratedName(
                 name, git: git, dots: tags, size: fontSize, nameFont: nameFont, nameColor: nameColor
             )
-            label.attributedStringValue = underlined ? Self.underline(decorated) : decorated
+            // An attributed name carries its own paragraph style, so without this a tagged
+            // name sits left-aligned under the icon while untagged ones are centred.
+            let aligned = NSMutableAttributedString(
+                attributedString: underlined ? Self.underline(decorated) : decorated)
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.alignment = label.alignment
+            paragraph.lineBreakMode = .byWordWrapping  // the cell still truncates the last line
+            aligned.addAttribute(
+                .paragraphStyle, value: paragraph,
+                range: NSRange(location: 0, length: aligned.length))
+            label.attributedStringValue = aligned
         } else if underlined {
             label.attributedStringValue = NSAttributedString(
                 string: name,
@@ -352,9 +362,15 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         if viewOptions.labelPosition == .right {
             return NSSize(width: side + 172, height: max(side + 8, labelFontSize * 2 + 12))
         }
+        // Room for two full lines of the name under the icon: 4 pt above the icon, 4 pt between
+        // icon and name, and the font's real line height (twice the point size is 2 to 4 pt
+        // short, which cut the bottom off the second line).
+        let lineHeight = NSLayoutManager().defaultLineHeight(
+            for: .systemFont(ofSize: labelFontSize))
+        let labelRoom = 8 + ceil(lineHeight * 2) + 2
         return gallery
-            ? NSSize(width: side + 54, height: side + max(54, ceil(labelFontSize * 2) + 8))
-            : NSSize(width: side + 40, height: side + max(36, ceil(labelFontSize * 2) + 8))
+            ? NSSize(width: side + 54, height: side + max(54, labelRoom))
+            : NSSize(width: side + 40, height: side + max(36, labelRoom))
     }
     private var labelFontSize: CGFloat = 12
     /// Reports a new zoom scale so the pane can persist it across view switches/launches.

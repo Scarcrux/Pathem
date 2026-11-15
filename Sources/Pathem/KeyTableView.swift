@@ -12,6 +12,13 @@ final class KeyTableView: NSTableView {
     /// Return true if the right-button stroke was handled (then the menu is suppressed).
     var onMouseGesture: ((String) -> Bool)?
     var onBecomeActive: (() -> Void)?
+
+    /// Alternating row stripes stop at the last real row. With the inset table style AppKit
+    /// keeps drawing rounded stripes down the empty part of the list (macOS 26 and 27), which
+    /// read as loading placeholders for rows that will never arrive.
+    override func drawBackground(inClipRect clipRect: NSRect) {
+        drawStripesOnlyBehindRows(in: clipRect) { super.drawBackground(inClipRect: $0) }
+    }
     /// A right-drag that started on a row: the super-drag flick + its swipe trail. Kept on the
     /// right button so it never collides with a left-drag (which is normal drag-and-drop).
     var onSuperDrag: ((DragSessionEvent) -> Void)?
@@ -62,9 +69,10 @@ final class KeyTableView: NSTableView {
         let navStroke = gestureTracker.end(event)
         if superDragStartRow >= 0 {
             // Reduce start->end to a single cardinal (same threshold as the trail's live hint).
-            let flick = superDragStartWindow.map {
-                MouseGesture.reduce([$0, event.locationInWindow], minSegment: 44)
-            } ?? ""
+            let flick =
+                superDragStartWindow.map {
+                    MouseGesture.reduce([$0, event.locationInWindow], minSegment: 44)
+                } ?? ""
             onSuperDrag?(.ended(flick: flick.isEmpty ? nil : flick))
             superDragStartRow = -1
             superDragStartWindow = nil
@@ -127,5 +135,26 @@ final class KeyTableView: NSTableView {
             if let background = onBackgroundMenu?() { return background }
         }
         return super.menu(for: event)
+    }
+}
+
+extension NSTableView {
+    /// Shared by the list and tree views: fill the clip with the plain background, then let
+    /// AppKit draw its alternating stripes only over the rows that exist.
+    func drawStripesOnlyBehindRows(in clipRect: NSRect, drawStripes: (NSRect) -> Void) {
+        guard usesAlternatingRowBackgroundColors else {
+            drawStripes(clipRect)
+            return
+        }
+        let lastRowBottom = numberOfRows > 0 ? rect(ofRow: numberOfRows - 1).maxY : 0
+        let rows = NSRect(x: bounds.minX, y: 0, width: bounds.width, height: lastRowBottom)
+        backgroundColor.setFill()
+        clipRect.fill()
+        let striped = clipRect.intersection(rows)
+        guard !striped.isEmpty else { return }
+        NSGraphicsContext.saveGraphicsState()
+        NSBezierPath(rect: striped).addClip()
+        drawStripes(striped)
+        NSGraphicsContext.restoreGraphicsState()
     }
 }

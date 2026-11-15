@@ -5,6 +5,10 @@ import UniformTypeIdentifiers
 /// An NSOutlineView subclass that offers each key press to a handler (keymap chords) and reports
 /// when it becomes first responder, mirroring KeyTableView for the tree view.
 final class KeyOutlineView: NSOutlineView {
+    /// Stripes stop at the last real row, as in the list view (see KeyTableView).
+    override func drawBackground(inClipRect clipRect: NSRect) {
+        drawStripesOnlyBehindRows(in: clipRect) { super.drawBackground(inClipRect: $0) }
+    }
     var onKeyChord: ((KeyChord) -> Bool)?
     var onBecomeActive: (() -> Void)?
 
