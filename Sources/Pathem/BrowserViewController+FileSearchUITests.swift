@@ -138,11 +138,21 @@ extension BrowserViewController {
         check(
             "search-other-folder-confined",
             finished() && controller.debugResults.map(\.lastPathComponent) == ["plants-child.txt"])
+        // With Spotlight indexing switched off on the machine (mdutil reports "Indexing
+        // disabled"), content search correctly adds its text-only note. Both are "no matches".
+        let noMatches = L("filesearch.noMatches", "No matching files.")
+        let noMatchStatuses = [
+            noMatches,
+            noMatches + " "
+                + L(
+                    "filesearch.textOnly",
+                    "Document index unavailable; showing text-file matches only."),
+        ]
         type("does-not-exist")
         check(
             "search-no-matches",
             finished() && controller.debugResults.isEmpty
-                && controller.debugStatus == L("filesearch.noMatches", "No matching files."))
+                && noMatchStatuses.contains(controller.debugStatus))
         type("")
         check(
             "search-clear-is-idle",
