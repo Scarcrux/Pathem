@@ -1684,6 +1684,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-15: site deployed to pathem.app with owner approval (Pages 7ec71718, site/ tree of main 7669fd6 only; live page and hero sha verified). Notarized universal build of 7669fd6 installed to /Applications (sha 8bc63967, A1-A6 pass). Full make ci on 7669fd6: exit 0, 826 Swift tests, product E2E 67 passed / 1 skipped (browser flow pixels, standing) / 0 failed, packaged 14/14."
     at = "2026-11-15T15:01:01Z"
 
+  [[mission.comment]]
+    text = "2026-11-15: site and README screenshots re-captured at 2x (2880x1800) by switching the 1x display to a scaled HiDPI mode for a few minutes and restoring it (d60aae3; scripts/display-mode.swift). Deployed with owner approval (Pages cea21f8d); live hero is 2880x1800 and its sha matches the repo. Task 2 design is docs/LAYOUT_MATRIX.md (3fcf5d7); implementation handed to @pathem-codex-2, Unit 1 sample first."
+    at = "2026-11-15T16:12:30Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
