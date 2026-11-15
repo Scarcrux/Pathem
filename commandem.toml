@@ -1720,6 +1720,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "F5 accepted by coordinator, narrow Icon and Column fixes separately authorized; F6 Column paired-drawer label is known/no fix. Added actual per-decoration selection/viewport/structure snapshots and PaneController callback counter. Raw-reload red control134 cells native1120/1170 exit1,18 extra viewport failures from newly instrumented Icon reload effects; old22setup/2view-cycle/8geometry failures retained. Counter observes553 setup/navigation callbacks and zero during cosmetic reloads, proving silent native selection loss. Build0 after explicit actor-safe counter capture; original compile error retained. Comparator9/9, privacy2/2, completion/capture17/17 pass. No baseline yet; no land/install/deploy/displaychange. Coordinator permits one makeci after repaired three-run/injection/affected-suite gates."
     at = "2026-11-15T18:03:33Z"
 
+  [[mission.comment]]
+    text = "F5 Icon-only repair verified: visible-item reloadItems hypothesis refuted (1131/1170,77.254s), retained negative. Final direct existing-label updates avoid any collection reload, thumbnails or item replacement; grouped-tag path unchanged. Native134cells1138/1170 exit1 in70.174s, no Icon selection loss or decoration viewport/structure/callback effects. View-cycle now first loses selection on icon->gallery in both appearances with actual gallery-tag-reload beforeBigSur/afterempty. New Gallery evidence requires coordinator authorization before any Gallery change. Column22setup failures remain for its separate authorized fix. Prefs unchanged/demo removed/15controls pass. No baseline,land,install,deploy,displaychange ormakeci."
+    at = "2026-11-15T18:09:26Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

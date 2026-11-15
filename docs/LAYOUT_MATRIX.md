@@ -124,6 +124,26 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### F5 Icon repair and newly exposed Gallery evidence
+
+The proposed visible-item `reloadItems` repair was refuted by its real run:
+1131/1170 native exit1,77.254sec, with both list-to-icon losses still present and
+seven viewport failures. Retained in `.build/layout-f5-icon-regression.log`;
+it is not the final repair. Updating existing visible labels directly avoids any
+collection reload, thumbnail request or item replacement. The shared name-render
+routine keeps its existing font, alignment, rule, hover, tag and git formatting;
+the tag-grouped structural branch is unchanged.
+
+The direct-label run has no Icon selection loss or decoration viewport/structure
+effect and zero decoration pane callbacks:134 cells,1138/1170 native exit1 in
+70.174sec. Both view cycles now first lose selection on icon-to-gallery instead,
+with actual `gallery-tag-reload before=["Big Sur Coast.jpg"] after=[]` receipts.
+That is new direct Gallery evidence, not a green view-cycle result or permission
+to change Gallery. Column's22 setup failures remain for its separate repair.
+Evidence: `.build/layout-f5-icon-direct-regression.log`, private root
+`pathem-matrix-clean-11vkaw6_`. Preferences unchanged, demo removed,15 controls
+pass. No known-findings baseline exists until selection is fully resolved.
+
 ### F5 repair criteria, registered before the instrument run
 
 Coordinator accepted F5 after independently comparing the three32-pair failing

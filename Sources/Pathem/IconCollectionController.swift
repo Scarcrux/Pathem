@@ -253,6 +253,31 @@ final class IconItem: NSCollectionViewItem {
         icon.image = image  // type icon shows immediately; a thumbnail replaces it when ready
         iconWidth?.constant = iconSize
         iconHeight?.constant = iconSize
+        updateDecoratedName(
+            name: name, fontSize: fontSize, dimmed: dimmed, git: git, tags: tags,
+            underlined: underlined, nameFont: nameFont, nameColor: nameColor)
+        // VoiceOver reads the clean description, not the git letter and tag glyphs.
+        label.setAccessibilityLabel(accessibilityLabel ?? name)
+
+        representedURL = thumbnailURL
+        guard let url = thumbnailURL else { return }
+        let size = CGSize(width: iconSize, height: iconSize)
+        if let hit = ThumbnailProvider.shared.cached(url, size: size) {
+            icon.image = hit
+            return
+        }
+        let scale = view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak self] image in
+            guard let self, self.representedURL == url else { return }  // cell wasn't reused
+            self.icon.image = image
+        }
+    }
+
+    /// Change cached name decorations without replacing the native collection item.
+    func updateDecoratedName(
+        name: String, fontSize: CGFloat, dimmed: Bool, git: GitFileState?, tags: [FileTag.Color],
+        underlined: Bool, nameFont: NSFont?, nameColor: NSColor?
+    ) {
         let font = nameFont ?? .systemFont(ofSize: fontSize)  // a color rule can style the name
         label.font = font
         label.textColor = nameColor ?? (dimmed ? .secondaryLabelColor : .labelColor)
@@ -280,23 +305,7 @@ final class IconItem: NSCollectionViewItem {
         } else {
             label.stringValue = name
         }
-        // VoiceOver otherwise reads the attributed name's git letter + tag-dot glyphs; give it a
-        // clean spoken description (name + kind/size/date) instead (A8).
-        label.setAccessibilityLabel(accessibilityLabel ?? name)
         updateHighlight()
-
-        representedURL = thumbnailURL
-        guard let url = thumbnailURL else { return }
-        let size = CGSize(width: iconSize, height: iconSize)
-        if let hit = ThumbnailProvider.shared.cached(url, size: size) {
-            icon.image = hit
-            return
-        }
-        let scale = view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-        ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak self] image in
-            guard let self, self.representedURL == url else { return }  // cell wasn't reused
-            self.icon.image = image
-        }
     }
 
     /// Add a single underline across an already-decorated name (for hover-to-open feedback).
@@ -576,7 +585,24 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
             collection.reloadData()
             selectNames(names)
         } else {
-            collection.reloadData()
+            // Even reloadItems silently discards selection on this SDK. Update
+            // the existing labels, leaving item identity and thumbnails alone.
+            for path in collection.indexPathsForVisibleItems() {
+                guard let index = entryIndex(at: path),
+                    let item = collection.item(at: path) as? IconItem
+                else { continue }
+                let entry = entries[index]
+                let style = FileColorStyle.style(
+                    for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
+                item.updateDecoratedName(
+                    name: entry.name, fontSize: labelFontSize, dimmed: entry.isDataless,
+                    git: allowsLocalMetadata
+                        ? decorations.gitState(for: entry, in: directoryURL) : nil,
+                    tags: allowsLocalMetadata
+                        ? decorations.tagColors(for: entry, in: directoryURL) : [],
+                    underlined: index == hoveredItem, nameFont: style?.font, nameColor: style?.color
+                )
+            }
         }
         #if DEBUG
         if grouping != .tag {
