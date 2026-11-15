@@ -1712,6 +1712,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "ReviewF2 repaired in own unit: header textField.isHidden nowtracks showsLabels onreuse, no rowheight or predicatechange. Redfirst compact header14pt child inside6pt row retained; postrepair all14 compact/custom sidebar check2 cells PASS. Full134-cell native1115/1169 exit1 in76.957s remainsred onotherfindings, not fullsuitePASS. Build0, normalhooks pendingthiscommit. Same actualrun showsF3 emptyDropStack area0pt versuspopulated20pt, so missing minimum scrollheight convicted beforeF3fix. Actual DEBUGcallbackreceipts show icon tagreload losesBigSur on ownlist->icon transition and column tagreload losesBigSur duringsetup; no baselineJSON whileF5 unresolved. No Unit2land,CI,install,deploy ordisplaychange."
     at = "2026-11-15T17:38:42Z"
 
+  [[mission.comment]]
+    text = "F3 verified in three frozen full134-cell native runs: empty/populated DropStack check2/check4 all28 PASS each after minimum20pt scroll allocation; F2 all14 compact check2 PASS each. Runs1137/1169 nativeexit1 at71.432s,74.442s,77.028s; exact failure sets identical32, no new/stale drift. Fifteen controls each, realHome/Photos, prefs unchanged/demo removed/no daemon each. Remaining22 Column setup selection losses plus2 own list->icon check6 failures reproduce three times with actual raw tagreload beforeBigSur/afterempty; F5 unresolved, no baseline. F1b andF4 retained, new Column paired-drawer label check2/4 needs triage. F3 own fix commit pending normalhooks. No makeci,land,install,deploy ordisplaychange."
+    at = "2026-11-15T17:55:07Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

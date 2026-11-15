@@ -102,6 +102,9 @@ final class ShelfController: NSObject {
         let clip = scroll.contentView
         scroll.documentView = chipsStack
         NSLayoutConstraint.activate([
+            // Empty chips have no intrinsic height. Reserve the same vertical room
+            // as a populated chip so the empty hint stays inside its scroll view.
+            scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 20),
             chipsStack.leadingAnchor.constraint(equalTo: clip.leadingAnchor, constant: 2),
             chipsStack.trailingAnchor.constraint(lessThanOrEqualTo: clip.trailingAnchor),
             chipsStack.centerYAnchor.constraint(equalTo: clip.centerYAnchor),

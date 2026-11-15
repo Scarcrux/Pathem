@@ -124,6 +124,32 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Review repair F3: empty Drop Stack allocation
+
+The populated-state control convicted the empty allocation: the same scroll view
+had height0 with no chips and height20 with a chip, while its empty hint needed
+14pt. Give the scroll view a20pt minimum, preserving the populated minimum and
+the existing72pt bar. No geometry check, tolerance or text metric changes.
+
+Three frozen full134-cell runs each passed all28 Drop Stack containment/text
+checks (empty and populated) and all14 F2 compact-header containment checks.
+All15 predicate controls passed each time. Full native results remain RED:
+1137/1169 exit1 in71.432,74.442 and77.028sec. The exact failing set is identical
+across all three runs (32 pairs, intersection=union); this is focused F3/F2
+verification, not full-suite acceptance. The22 Column setup-selection failures
+and two own view-cycle selection failures remain unresolved and unbaselined.
+
+Build exited0 under the shared lock; all native launches were caffeinated and
+locked. Display readback5120x1440, unchanged. Each run confirms unchanged
+in-memory owner defaults, removed unique demo, actual Home/Photos breadcrumbs,
+real tag-cache delivery, no torrent daemon and no constraint conflicts. Evidence:
+`.build/layout-review-determinism-{1,2,3}.log`, private roots
+`pathem-matrix-clean-a0ifpt9k`, `pathem-matrix-clean-q1aupii5`, and
+`pathem-matrix-clean-x46pva82`. The Gallery paired-drawer render was inspected:
+actual Home/Photos and native left tag dots are present. Original F3 red receipts
+and renders are retained. No make ci, Unit2 land, install, deployment or display
+change. Ordinary commit-hook results are reported separately.
+
 ### Review repair F2: compact section-header labels
 
 The accepted F2 mechanism is a section-header NSTextField left unhidden when its
