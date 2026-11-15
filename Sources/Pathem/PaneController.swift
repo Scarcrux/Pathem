@@ -92,6 +92,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
     var contentClipView: NSClipView { content.scrollView.contentView }
     #if DEBUG
+    func debugMatrixGalleryPreviewFollowsSelection() -> Bool {
+        (content as? GalleryController)?.debugMatrixPreviewFollowsSelection() ?? false
+    }
     func debugMatrixFirstVisibleName() -> String? {
         if let list = content as? FileListController { return list.debugMatrixFirstVisibleName() }
         if let icons = content as? IconCollectionController {

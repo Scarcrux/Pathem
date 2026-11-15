@@ -261,6 +261,7 @@ extension BrowserViewController {
                 var selectionKept = true
                 var viewportKept = baseline != nil
                 var transitionReceipt = ""
+                var galleryPreviewFollowed = true
                 LayoutMatrixGeometry.currentCell = label + "-transition"
                 if cell.populated {
                     shelf.add([photos.appendingPathComponent("Big Sur Coast.jpg")])
@@ -284,6 +285,11 @@ extension BrowserViewController {
                         selectionKept =
                             selectionKept
                             && LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
+                        if next == .gallery {
+                            galleryPreviewFollowed =
+                                left.debugMatrixGalleryPreviewFollowsSelection()
+                            selectionKept = selectionKept && galleryPreviewFollowed
+                        }
                         previous = next
                     }
                     print(
@@ -342,7 +348,7 @@ extension BrowserViewController {
                 if setupSelectionDelivered {
                     check(
                         label, 6, selectionKept && decorationsKeptSelection, left.containerView,
-                        "expected=\(expectedSelection) shown=\(shownSelection) restored=\(selection()) \(transitionReceipt) decorationUpdates=\(decorations.count) paneCallbacks=\(paneCallbacks) decorationSelectionKept=\(decorationsKeptSelection)"
+                        "expected=\(expectedSelection) shown=\(shownSelection) restored=\(selection()) \(transitionReceipt) decorationUpdates=\(decorations.count) paneCallbacks=\(paneCallbacks) decorationSelectionKept=\(decorationsKeptSelection) galleryPreviewFollowed=\(galleryPreviewFollowed)"
                     )
                 } else {
                     print(

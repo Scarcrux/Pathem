@@ -1724,6 +1724,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "F5 Icon-only repair verified: visible-item reloadItems hypothesis refuted (1131/1170,77.254s), retained negative. Final direct existing-label updates avoid any collection reload, thumbnails or item replacement; grouped-tag path unchanged. Native134cells1138/1170 exit1 in70.174s, no Icon selection loss or decoration viewport/structure/callback effects. View-cycle now first loses selection on icon->gallery in both appearances with actual gallery-tag-reload beforeBigSur/afterempty. New Gallery evidence requires coordinator authorization before any Gallery change. Column22setup failures remain for its separate authorized fix. Prefs unchanged/demo removed/15controls pass. No baseline,land,install,deploy,displaychange ormakeci."
     at = "2026-11-15T18:09:26Z"
 
+  [[mission.comment]]
+    text = "Gallery repair explicitly authorized after new direct beforeBigSur/afterempty evidence. Verified direct existing-label redraw, no collection or QuickLook reload. Native134cells1138/1170 exit1 in68.877s: both actual select-other/restore preview-follow probes PASS; unchanged preview target/name/show-call counter and filmstrip offset, zero pane callbacks, check7 both PASS. View-cycle first-loss now gallery->column, so check6 remains RED until separately authorized Column fix. Prefs unchanged/demo removed/15controls pass, build0/warning checker zero new warnings. Gallery own commit pending hooks. No baseline,land,install,deploy,displaychange ormakeci."
+    at = "2026-11-15T18:13:37Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

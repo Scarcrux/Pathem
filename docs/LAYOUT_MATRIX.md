@@ -124,6 +124,31 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Gallery repair criteria, registered before execution
+
+Coordinator independently confirmed the two icon-to-gallery failures after the
+Icon repair and authorized a separate Gallery fix. Update existing filmstrip
+labels using the Icon name-render routine, without reloading items or Quick Look.
+Gallery decoration snapshots must preserve selection, first visible item, exact
+filmstrip origin, preview target/name and actual QuickLookPreview.show call count,
+with zero pane selection callbacks. In both view-cycle cells, after tag delivery,
+select a different file and verify selection and actual preview target follow it,
+with a positive show-call increment, then restore Big Sur and verify its preview.
+The callback count and preview-call instruments therefore have real positive
+delivery controls. Keep the two original Gallery red receipts and the failed
+reloadItems attempt; do not baseline unresolved selection failures.
+
+Gallery repair receipt:134 cells,1138/1170 native exit1 in68.877sec, retained
+in `.build/layout-f5-gallery-regression.log` and private root
+`pathem-matrix-clean-0n98i72d`. Gallery no longer clears selection; both view
+cycles now first lose it on gallery-to-column. Both actual preview-follow probes
+pass. Decoration snapshots record unchanged preview target/name and show-call
+count, unchanged filmstrip offset and zero pane callbacks; no decoration-effect
+line is present. Check7 passes in both view cycles. Column setup/selection losses
+remain red for the next separate repair, so check6 is not claimed green yet.
+Preferences unchanged, demo removed,15 controls pass. Build0 and warning check
+passes with zero new warnings (three known sites). No baseline or land.
+
 ### F5 Icon repair and newly exposed Gallery evidence
 
 The proposed visible-item `reloadItems` repair was refuted by its real run:

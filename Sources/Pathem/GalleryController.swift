@@ -16,6 +16,33 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     private let previewName = NSTextField(labelWithString: "")
     private let filmstrip = KeyCollectionView()
     #if DEBUG
+    private var debugMatrixTagRefreshes = 0
+    private func debugMatrixDecorationState() -> LayoutMatrixGeometry.DecorationState {
+        .init(
+            names: selectedEntries.map(\.name), firstVisible: debugMatrixFirstVisibleName(),
+            origins: [scrollView.contentView.bounds.origin],
+            structure: [
+                String(preview.debugShowCount),
+                preview.debugShownURL?.lastPathComponent ?? "no-preview", previewName.stringValue,
+            ],
+            callbacks: LayoutMatrixGeometry.selectionCallbacks)
+    }
+    func debugMatrixPreviewFollowsSelection() -> Bool {
+        let original = Set(selectedEntries.map(\.name))
+        guard debugMatrixTagRefreshes > 0, original == ["Big Sur Coast.jpg"],
+            let other = entries.first(where: { !$0.isDirectory && !original.contains($0.name) })
+        else { return false }
+        let before = preview.debugShowCount
+        selectNames([other.name])
+        let followed =
+            selectedEntries.map(\.name) == [other.name]
+            && preview.debugShownURL == fileURL(for: other) && previewName.stringValue == other.name
+            && preview.debugShowCount > before
+        selectNames(original)
+        return followed && Set(selectedEntries.map(\.name)) == original
+            && preview.debugShownURL?.lastPathComponent == "Big Sur Coast.jpg"
+            && previewName.stringValue == "Big Sur Coast.jpg"
+    }
     func debugMatrixFirstVisibleName() -> String? {
         let paths = filmstrip.indexPathsForVisibleItems().sorted {
             (filmstrip.layoutAttributesForItem(at: $0)?.frame.minX ?? 0)
@@ -96,14 +123,34 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         super.init()
         build()
         decorations.onTagsChanged = { [weak self] in
+            guard let self else { return }
             #if DEBUG
-            let matrixBefore = self?.selectedEntries.map(\.name) ?? []
+            let matrixBefore = self.debugMatrixDecorationState()
+            self.debugMatrixTagRefreshes += 1
             #endif
-            self?.filmstrip.reloadData()
+            // Tags are cosmetic. Replacing filmstrip items silently clears
+            // native selection, so redraw existing labels without touching Quick Look.
+            for path in self.filmstrip.indexPathsForVisibleItems() {
+                guard self.entries.indices.contains(path.item),
+                    let item = self.filmstrip.item(at: path) as? IconItem
+                else { continue }
+                let entry = self.entries[path.item]
+                let style = FileColorStyle.style(
+                    for: entry, rules: self.colorRules,
+                    baseFont: .systemFont(ofSize: self.labelFontSize))
+                item.updateDecoratedName(
+                    name: entry.name, fontSize: self.labelFontSize, dimmed: entry.isDataless,
+                    git: self.allowsLocalMetadata
+                        ? self.decorations.gitState(for: entry, in: self.directoryURL) : nil,
+                    tags: self.allowsLocalMetadata
+                        ? self.decorations.tagColors(for: entry, in: self.directoryURL) : [],
+                    underlined: path.item == self.hoveredItem, nameFont: style?.font,
+                    nameColor: style?.color)
+            }
             #if DEBUG
-            LayoutMatrixGeometry.traceDecoration(
-                "gallery-tag-reload", before: matrixBefore,
-                after: self?.selectedEntries.map(\.name) ?? [])
+            LayoutMatrixGeometry.recordDecoration(
+                "gallery-tag-reload", before: matrixBefore, after: self.debugMatrixDecorationState()
+            )
             #endif
         }
         filmstrip.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }

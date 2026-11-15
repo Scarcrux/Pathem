@@ -11,6 +11,10 @@ final class QuickLookPreview: NSView {
     private let quickLook = QLPreviewView(frame: .zero, style: .normal) ?? QLPreviewView()
     private let iconView = NSImageView()
     private var shownURL: URL?
+    #if DEBUG
+    private(set) var debugShowCount = 0
+    var debugShownURL: URL? { shownURL }
+    #endif
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -48,7 +52,13 @@ final class QuickLookPreview: NSView {
     /// (or the file's Finder icon) rather than driving Quick Look -- previewing a dataless file
     /// would force it to download. Everything else Quick Look renders live; a type with no
     /// generator shows its own big type icon inside the view, which is the graceful outcome.
-    func show(_ url: URL?, isDirectory: Bool = false, isDataless: Bool = false, fallbackIcon: NSImage? = nil) {
+    func show(
+        _ url: URL?, isDirectory: Bool = false, isDataless: Bool = false,
+        fallbackIcon: NSImage? = nil
+    ) {
+        #if DEBUG
+        debugShowCount += 1
+        #endif
         guard let url, !isDirectory, !isDataless else {
             quickLook.previewItem = nil
             quickLook.isHidden = true
