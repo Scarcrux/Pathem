@@ -105,3 +105,26 @@ Their current first-button/Return actions are Delete, Empty Trash, Delete and
 Move to Trash respectively. The first three are irreversible; local Trash is
 recoverable by Put Back/undo. These are reported, not changed without a ruling.
 The conflict-preview caller in PathemApp is DEBUG-only and will adopt Keep Both.
+
+Coordinator subsequently ruled that the four TrashLedger callers stay unchanged:
+permanent local Delete is TS-F3, Empty Trash TS-F4 and remote Delete TS-F5, all
+check6 red and not intended, pending the owner's decision. Recoverable Move to
+Trash is intended. The new conflict red control resolves the real prompt only,
+without executing Replace. After repair the real transfer control must use owned
+fixtures, leave original bytes intact and create kept-both copies. An explicit
+DEBUG transfer-boundary guard must prevent accidental Replace from touching
+Trash in that integration probe. Single/multi default probes must really deliver
+Return and return Keep Both, with Replace still first visually but click-only;
+Escape must still cancel. No production default change is made before the red.
+
+### TS-F1 focused verdict
+
+The valid red controls are `.build/transient-conflict-default-{single,many}-window-red.log`: the native window accepted Return, the real prompt completed with Replace, and check 6 failed. No operation ran. Earlier app-dispatch probes did not deliver input and are instrument failures, not valid reds.
+
+CursorConfirm now accepts an explicit default index. The conflict path alone uses index 1 for Return and index 3 for Escape, leaving visible order and all other callers unchanged. Final single/multiple default, Escape, and single/multiple real-transfer probes each pass 1/1 in `transient-conflict-*-final.log`. The owned transfer fixtures preserve original bytes and create one or two verified kept-both copies. A DEBUG guard is deliberately tested before I/O, then reports zero accidental Replace attempts during the real Keep Both transfer (`transient-conflict-guard-receipt.log`). No real Trash was touched.
+
+Input proof uses NSWindow.performKeyEquivalent; external physical-keyboard or accessibility delivery is not claimed. App-wide and non-key-window Escape dispatch attempts failed and remain recorded. Waiting for the second prompt's native button readiness fixed an instrument defect, not product behaviour.
+
+The existing transient suite initially failed exactly four obsolete Replace-on-Return assertions (49/53). Updating those assertions and the conflict reopen expectation to the owner's Keep Both decision gives 53/53, native exit 0 (`transient-legacy-intent-summary.log`). All eight English/German light/dark short/long captures report actual default tag 1 and Escape tag 3; the dark capture visibly emphasizes Keep Both. Configuration-root refusals pass 2/2. The build and zero-new-warning gate pass. Every final focused launch reports unchanged preferences and demo removal; passing scratch is removed without writing matching preference dumps.
+
+TS-F3 local permanent Delete, TS-F4 Empty Trash, and TS-F5 remote permanent Delete remain unchanged, check 6 red and not intended pending the owner's ruling. Recoverable Move to Trash remains intended. This focused fix does not complete the inventory or the three-surface sample. No land, install, deployment, or display change.

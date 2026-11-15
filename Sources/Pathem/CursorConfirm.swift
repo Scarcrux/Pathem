@@ -16,8 +16,11 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     private var continuation: CheckedContinuation<Int?, Never>?
 
     /// Present `message` (plus optional `info`) with `buttons` laid out left to right, anchored at
-    /// the current mouse location within `anchor`. Button 0 is the default (triggered by Return).
-    func ask(message: String, info: String = "", buttons: [String], over anchor: NSView) async
+    /// the current mouse location within `anchor`. The explicit default index owns Return.
+    func ask(
+        message: String, info: String = "", buttons: [String], defaultIndex: Int = 0,
+        cancelIndex: Int? = nil, over anchor: NSView
+    ) async
         -> Int?
     {
         // A second command must not replace a decision the user is still reading.
@@ -27,7 +30,8 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
             self.continuation = cont
             let pop = NSPopover()
             pop.contentViewController = makeController(
-                message: message, info: info, buttons: buttons)
+                message: message, info: info, buttons: buttons, defaultIndex: defaultIndex,
+                cancelIndex: cancelIndex)
             pop.behavior = .transient  // click outside / Esc dismisses (treated as Cancel)
             pop.delegate = self
             self.popover = pop
@@ -47,7 +51,10 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         return NSRect(x: x, y: y, width: 1, height: 1)
     }
 
-    private func makeController(message: String, info: String, buttons: [String])
+    private func makeController(
+        message: String, info: String, buttons: [String], defaultIndex: Int = 0,
+        cancelIndex: Int? = nil
+    )
         -> NSViewController
     {
         let vc = NSViewController()
@@ -68,7 +75,11 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
             let button = NSButton(title: name, target: self, action: #selector(clicked(_:)))
             button.tag = index
             button.bezelStyle = .rounded
-            if index == 0 { button.keyEquivalent = "\r" }  // default action
+            if index == defaultIndex {
+                button.keyEquivalent = "\r"
+            } else if index == cancelIndex {
+                button.keyEquivalent = "\u{1b}"
+            }
             button.widthAnchor.constraint(greaterThanOrEqualToConstant: Self.minimumButtonWidth)
                 .isActive = true
             actionButtons.append(button)
@@ -155,8 +166,15 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     var debugCloseEvents: [(current: Bool, pending: Bool, resolved: Bool)] = []
     var debugPopover: NSPopover? { popover }
     var debugHasPendingContinuation: Bool { continuation != nil }
-    func debugController(message: String, info: String, buttons: [String]) -> NSViewController {
-        makeController(message: message, info: info, buttons: buttons)
+    func debugController(
+        message: String, info: String, buttons: [String], defaultIndex: Int = 0,
+        cancelIndex: Int? = nil
+    )
+        -> NSViewController
+    {
+        makeController(
+            message: message, info: info, buttons: buttons, defaultIndex: defaultIndex,
+            cancelIndex: cancelIndex)
     }
     #endif
 
@@ -197,9 +215,13 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     /// backing so the edges (and the inset around the buttons) are visible.
     func debugRender(
         to path: String, message: String, info: String, buttons: [String],
+        defaultIndex: Int = 0,
+        cancelIndex: Int? = nil,
         appearance: NSAppearance? = nil
     ) {
-        let vc = makeController(message: message, info: info, buttons: buttons)
+        let vc = makeController(
+            message: message, info: info, buttons: buttons, defaultIndex: defaultIndex,
+            cancelIndex: cancelIndex)
         vc.loadView()
         let v = vc.view
         v.appearance = appearance
@@ -217,8 +239,14 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
         v.cacheDisplay(in: v.bounds, to: rep)
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: URL(fileURLWithPath: path))
+            let actions =
+                v.subviews.compactMap { $0 as? NSStackView }.first?.arrangedSubviews.compactMap {
+                    $0 as? NSButton
+                } ?? []
+            let actualDefault = actions.first { $0.keyEquivalent == "\r" }?.tag
+            let actualCancel = actions.first { $0.keyEquivalent == "\u{1b}" }?.tag
             print(
-                "CONFLICT SHOT: \(Int(v.bounds.width))x\(Int(v.bounds.height)) appearance=\(v.effectiveAppearance.name.rawValue) language=\(Locale.preferredLanguages.first ?? "unknown") buttons=\(buttons.joined(separator: " | "))"
+                "CONFLICT SHOT: \(Int(v.bounds.width))x\(Int(v.bounds.height)) appearance=\(v.effectiveAppearance.name.rawValue) language=\(Locale.preferredLanguages.first ?? "unknown") defaultTag=\(String(describing: actualDefault)) cancelTag=\(String(describing: actualCancel)) buttons=\(buttons.joined(separator: " | "))"
             )
         }
     }

@@ -6,6 +6,11 @@ import PathemEngine
 extension BrowserViewController {
     /// Focused red-first control. The complete three-surface sample is built next.
     func runTransientSurfaceSample(demo: DemoWorkspace.Layout) -> Never {
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_FOCUS"]?.hasPrefix(
+            "conflict-") == true
+        {
+            runTransientConflictProbe(demo: demo)
+        }
         func settle(_ condition: () -> Bool) -> Bool {
             let deadline = Date().addingTimeInterval(4)
             repeat {

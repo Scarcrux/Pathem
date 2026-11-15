@@ -84,7 +84,7 @@ extension BrowserViewController {
             buttons: [
                 L("bvc.replaceAll", "Replace All"), L("bvc.keepBothAll", "Keep Both for All"),
                 L("bvc.skipAll", "Skip All"), L("common.cancel", "Cancel"),
-            ], over: view)
+            ], defaultIndex: 1, cancelIndex: 3, over: view)
         switch choice {
         case 0: return .replace
         case 1: return .keepBoth

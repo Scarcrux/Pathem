@@ -585,7 +585,7 @@ enum PathemApp {
                         L("bvc.replace", "Replace"), L("bvc.keepBoth", "Keep Both"),
                         L("bvc.skip", "Skip"), L("common.cancel", "Cancel"),
                     ],
-                appearance: appearance)
+                defaultIndex: 1, cancelIndex: 3, appearance: appearance)
             exit(0)
         }
 
@@ -599,6 +599,8 @@ enum PathemApp {
                         message: "1 item already exists at the destination",
                         info: "Choose how to handle the copy.",
                         buttons: ["Replace", "Keep Both", "Skip", "Cancel"],
+                        defaultIndex: 1,
+                        cancelIndex: 3,
                         over: browser.view)
                 }
             }

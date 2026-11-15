@@ -8,6 +8,10 @@ import PathemEngine
 /// mechanics of running one and showing its progress.
 @MainActor
 final class TransferRunner {
+    #if DEBUG
+    var debugRefuseReplace = false
+    private(set) var debugReplaceRefusals = 0
+    #endif
     private let progress = TransferProgress()
 
     /// Copy or move `urls` into `destination`. The sheet appears only after 0.25s, so quick
@@ -17,6 +21,18 @@ final class TransferRunner {
         resolution: FileOperations.ConflictResolution, verify: Bool = false, over window: NSWindow?,
         completion: @escaping (FileOperations.Outcome) -> Void
     ) {
+        #if DEBUG
+        // Fail closed before I/O if the default-key fixture tries to Replace.
+        if debugRefuseReplace, case .replace = resolution {
+            debugReplaceRefusals += 1
+            var refused = FileOperations.Outcome()
+            refused.failures = [
+                .init(name: "owned-fixture", reason: "Test guard refused Replace before I/O")
+            ]
+            completion(refused)
+            return
+        }
+        #endif
         let verb = move ? L("bvc.moving", "Moving") : L("bvc.copying", "Copying")
         let state = TransferState()
 
@@ -52,7 +68,8 @@ final class TransferRunner {
         }
 
         Task { @MainActor [weak self] in
-            let outcome = await Task.detached(priority: .userInitiated) { () -> FileOperations.Outcome in
+            let outcome = await Task.detached(priority: .userInitiated) {
+                () -> FileOperations.Outcome in
                 if move {
                     return FileOperations.move(
                         urls: urls, into: destination, onConflict: resolution,

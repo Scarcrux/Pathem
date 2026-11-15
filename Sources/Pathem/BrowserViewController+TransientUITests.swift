@@ -91,7 +91,9 @@ extension BrowserViewController {
             ] {
                 let vc = cursorConfirm.debugController(
                     message: String(repeating: "Long confirmation message. ", count: 6),
-                    info: String(repeating: "Context. ", count: 8), buttons: titles)
+                    info: String(repeating: "Context. ", count: 8), buttons: titles,
+                    defaultIndex: 1, cancelIndex: 3
+                )
                 let content = vc.view
                 content.appearance = NSAppearance(named: appearance)
                 content.setFrameSize(vc.preferredContentSize)
@@ -117,8 +119,11 @@ extension BrowserViewController {
                     "alignment=\(alignmentRects)")
                 check(
                     "conflict-default-action",
-                    buttons.first?.keyEquivalent == "\r"
-                        && buttons.dropFirst().allSatisfy { $0.keyEquivalent.isEmpty })
+                    buttons.map(\.tag) == [0, 1, 2, 3]
+                        && buttons[1].keyEquivalent == "\r"
+                        && buttons[3].keyEquivalent == "\u{1b}"
+                        && buttons[0].keyEquivalent.isEmpty && buttons[2].keyEquivalent.isEmpty,
+                    "owner intent: Keep Both returns, Cancel escapes; visible order unchanged")
             }
         }
         // Real popover and continuation lifecycle, not just its content constructor.
@@ -150,23 +155,30 @@ extension BrowserViewController {
             settle { cursorConfirm.debugPopover.map { $0 !== previous && $0.isShown } ?? false }
         }
         for cycle in 0..<3 {
+            // Conflict keeps its visible order but Return now means Keep Both.
+            // The other cycles retain the safe generic caller's original index0.
+            let defaultIndex = cycle == 1 ? 1 : 0
+            let titles =
+                cycle == 1 ? ["Replace", "Keep Both", "Skip", "Cancel"] : ["Continue", "Cancel"]
             var result: Int?
             var completed = false
             let previous = cursorConfirm.debugPopover
             Task { @MainActor in
                 result = await cursorConfirm.ask(
-                    message: "Fixture \(cycle)", buttons: ["Continue", "Cancel"], over: view)
+                    message: "Fixture \(cycle)", buttons: titles, defaultIndex: defaultIndex,
+                    cancelIndex: cycle == 1 ? 3 : nil,
+                    over: view)
                 completed = true
             }
             check("popover-reopen-\(cycle)", settleOnNewPopover(after: previous))
             let action =
                 cursorConfirm.debugPopover?.contentViewController.map {
-                    buttons(in: $0.view).first { $0.tag == 0 }
+                    buttons(in: $0.view).first { $0.tag == defaultIndex }
                 } ?? nil
             action?.performClick(nil)
             check(
                 "popover-default-completes-once-\(cycle)",
-                settle { completed && result == 0 && cursorConfirm.debugPopover == nil },
+                settle { completed && result == defaultIndex && cursorConfirm.debugPopover == nil },
                 "completed=\(completed) result=\(String(describing: result)) exists=\(cursorConfirm.debugPopover != nil) shown=\(cursorConfirm.debugPopover?.isShown ?? false) pending=\(cursorConfirm.debugHasPendingContinuation) action=\(action != nil) enabled=\(action?.isEnabled ?? false) closes=\(closeLog())"
             )
         }

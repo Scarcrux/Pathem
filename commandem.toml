@@ -1783,6 +1783,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 in progress, not READY. Inventory scanner13 controls PASS including real CLI new/stale rejection and nested/multiargument wrappers. Reclaim destructive Return defect explicitly authorized: real-path red check6 deliveredReturn/response1000 and removed only owned Go-cache fixture; no prefs changes. Separate factory/default repair now passes Return/Escape/click native1/1 each with response1001/1001/1000, correct fixture preservation/deletion, zero active Escape monitors afterdismissal, both defaults unchanged and demos removed. Refuted no-input probes, Escape-loss and default-cell-loss attempts retained. Zero new warnings; inprocess render inspected only for structure. Owner authorized separate TS-F1 KeepBoth Return fix, not yet implemented; four other TrashLedger destructive default callers enumerated, unchanged pending ruling. Full inventory/table, three-surface sample/controls and B10x6x2 remain incomplete; visual baselines not started. No land/install/deploy/displaychange."
     at = "2026-11-15T21:23:35Z"
 
+  [[mission.comment]]
+    text = "Task11 progress: TS-F1 fixed on private branch after valid native single/multiple Return reds. Explicit Keep Both default preserves button order; Return/Escape and real one/two-clash fixture copies pass, originals intact, DEBUG Replace safety control proven. Existing transient suite 53/53 after four default-intent assertion updates, eight captures and two root refusals pass; preferences unchanged. TS-F3/F4/F5 unchanged pending owner; inventory and sample acceptance still pending."
+    at = "2026-11-15T22:52:27Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
