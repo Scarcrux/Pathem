@@ -1254,6 +1254,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
     id = "t-d36755d1"
     title = "LM2-F6: Column preview name falls outside its parent with terminal + torrent at default size. Resolve the paired-drawer layout design; retain dark/light check2/check4 receipts in test/layout_matrix_known_findings.json."
 
+  [[mission.task]]
+    id = "t-f23c3ab5"
+    title = "TS-F1: conflict popover makes Replace the Return default. Owner decision 2026-11-15: Return triggers Keep Both (Keep Both for All in the multi-item case); Replace by click only; button order unchanged. Assigned to @pathem-codex-2 with task 11."
+
+  [[mission.task]]
+    id = "t-aa5f4a9a"
+    title = "TS-F2: Reclaim Space Delete Now makes Delete Permanently the Return default. Defect (irreversible, skips the Trash): Cancel becomes the default. Assigned to @pathem-codex-2 with task 11."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
