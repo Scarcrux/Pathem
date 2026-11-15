@@ -9,7 +9,7 @@ import PathemEngine
 extension BrowserViewController {
     static let siteShotNames = [
         "hero", "list", "icons", "gallery", "columns", "tree", "terminal", "torrent", "remote",
-        "markup",
+        "markup", "views",
     ]
 
     /// Lay out one composition. Runs in three beats (navigate, switch view, select) because
@@ -34,6 +34,10 @@ extension BrowserViewController {
         case "icons":
             leftSide = Side(folder: at("Photos"), mode: .icon, select: "Tromsø Aurora.jpg")
             rightSide = Side(folder: at("Documents"), mode: .list, select: nil)
+        case "views":  // README: icon and gallery views side by side
+            leftSide = Side(folder: at("Photos"), mode: .icon, select: nil)
+            rightSide = Side(folder: at("Photos"), mode: .gallery, select: "Dolomites Ridge.jpg")
+            activeLeft = false
         case "gallery":
             leftSide = Side(folder: at("Photos"), mode: .gallery, select: "Tromsø Aurora.jpg")
             rightSide = Side(folder: at("Projects/aurora-ios"), mode: .list, select: nil)
