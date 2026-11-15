@@ -1244,6 +1244,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-86917091"
     title = "LM2-F1b: Compact sidebar forgets a user-set width after on/off. Keep the custom-sidebar check8 regression and exact known finding in test/layout_matrix_known_findings.json; preserve the width set within split delegate limits."
+    done = true
 
   [[mission.task]]
     id = "t-b6136c1d"
@@ -1756,6 +1757,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Unit2 independently accepted by coordinator on c4e5cf0: rerun134cells/66.8sec exact8 baseline, icon injection1140/1192 RED, comparator9/9, real site-shot thumbnails/tags/Home/selection preserved. Task2 marked done and three open F1b/F4/F6 follow-ups added, each linked to strict known-findings baseline. Authorized rebase/land/push only; no install/deploy/displaychange."
     at = "2026-11-15T19:03:10Z"
+
+  [[mission.comment]]
+    text = "2026-11-15: task 54 (LM2-F1b) fixed. Root cause was wider than the finding: applyCompactSidebar ran on every preference change and reset a resized sidebar to 200 pt. Now only moves the divider when compact mode changes and restores the prior width. Baseline is F4 + F6 only. Designs for task 11 (docs/TRANSIENT_SURFACES.md) and task 1 (docs/VISUAL_BASELINES.md) written and handed to @pathem-codex-2, task 11 Unit 0/1 first."
+    at = "2026-11-15T20:49:00Z"
 
 [[mission]]
   id = "m-e1443252"
