@@ -1687,9 +1687,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "2026-11-15: site and README screenshots re-captured at 2x (2880x1800) by switching the 1x display to a scaled HiDPI mode for a few minutes and restoring it (d60aae3; scripts/display-mode.swift). Deployed with owner approval (Pages cea21f8d); live hero is 2880x1800 and its sha matches the repo. Task 2 design is docs/LAYOUT_MATRIX.md (3fcf5d7); implementation handed to @pathem-codex-2, Unit 1 sample first."
     at = "2026-11-15T16:12:30Z"
+
   [[mission.comment]]
     text = "Layout matrix Unit 1 pre-launch review at 3fcf5d7: docs/LAYOUT_MATRIX.md read, codex-2 pool allocated, no implementation or native launch yet. Safety clarification posted on Pathem board: DemoWorkspace.build deletes a fixed shared temporary root; main window autosave and terminal toggle write standard defaults before/during sample; new flag has no isolated config-root refusal guard. PATHEM_CONFIG_DIR does not isolate NSUserDefaults. Holding execution pending coordinator acceptance of narrow DEBUG launch isolation and unique demo root or an approved isolated launcher. No eight-check/sample/injection verdict claimed, no full expansion, owner preferences, display, installed app or website touched."
     at = "2026-11-15T15:21:15Z"
+
+  [[mission.comment]]
+    text = "Unit 1 launch isolation implemented after accepted bd48b24 contract. Lock-held debug build0; bounded caffeinated real site-shot terminal probe0: existing/outside demo roots refused2/2; missing/unsafe matrix config roots refused2/2; requested unique demo used and removed; real capture inspected; full before/after Pathem and com.scarcrux.pathem defaults exports unchanged. Display5120x1440 read only. Earlier instrument failures retained (Swiftly PATH preflight, var/private-var path spelling), then corrected. First isolation-only commit before harness; no install, deploy, full matrix or land."
+    at = "2026-11-15T16:17:06Z"
 
 [[mission]]
   id = "m-e1443252"

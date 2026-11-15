@@ -192,7 +192,7 @@ extension BrowserViewController {
         if didSetInitialSplit { outerSplit.setPosition(width, ofDividerAt: 0) }  // resize live
         // In icons-only mode the labels are hidden, so tooltips are how you identify an icon --
         // make them instant. Otherwise honor the preference.
-        if compactSidebar {
+        if compactSidebar && !PathemApp.isAutomationLaunch {
             UserDefaults.standard.set(1, forKey: "NSInitialToolTipDelay")
         } else {
             applyTooltipDelay()
@@ -365,6 +365,7 @@ extension BrowserViewController {
     /// restore the default. A live toggle applies to tooltips shown after this point;
     /// AppKit may cache the value, so a relaunch guarantees it.
     func applyTooltipDelay() {
+        guard !PathemApp.isAutomationLaunch else { return }
         let key = "NSInitialToolTipDelay"
         if prefs.instantTooltips {
             UserDefaults.standard.set(1, forKey: key)  // 1 ms, effectively instant

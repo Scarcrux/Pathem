@@ -124,6 +124,27 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Unit 1 isolation prerequisite
+
+The isolated automation demo now uses a new directory, rejects existing and
+non-temporary roots before creating AppKit state, and removes its tree at normal
+process exit. Interactive demo behavior is unchanged. All automation skips window
+frame restoration/autosave and terminal visibility/tooltip defaults writes.
+The matrix flag is included in the configuration-root guard and its E2E probes.
+
+Verification: `make build` under the shared lock exited 0. The bounded
+`test/layout_matrix_isolation.py` real launch exited 0: two unsafe demo-root
+refusals, two config-root refusals, a unique root used and removed, an actual
+terminal site-shot capture, and complete before/after exports of both `Pathem`
+and `com.scarcrux.pathem` defaults domains unchanged. The capture was inspected.
+Run with `caffeinate -d -i` under the shared lock; display readback was 5120x1440,
+no mode change. Private evidence directory: `pathem-matrix-isolation-suu02g4k`.
+Two earlier instrument failures are retained: the guard launch selected Swiftly
+instead of Xcode (fixed by selecting Xcode's PATH), and `/var` versus
+`/private/var` receipt spelling (fixed by resolving both paths before comparison).
+Neither is claimed as a product failure. Abrupt termination such as SIGKILL cannot
+run an exit handler; the runner retains its private scratch on failure.
+
 The full matrix will probably find real defects. For each: do not loosen the check to get
 to green. Record the receipt, convict the mechanism, fix it in its own commit with the
 cell as its regression test, or record it as an open finding on Mission 53 if the fix is

@@ -55,7 +55,9 @@ extension BrowserViewController {
         // setPosition cannot recover from that; hiding again did not give the browser its
         // space back either. Ask the split to lay its subviews out again first.
         vSplit.adjustSubviews()
-        UserDefaults.standard.set(show, forKey: "pathem.terminalVisible")
+        if !PathemApp.isAutomationLaunch {
+            UserDefaults.standard.set(show, forKey: "pathem.terminalVisible")
+        }
         guard show else { return }
         terminal.ensureStarted(
             in: activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser)

@@ -19,9 +19,10 @@ enum DemoWorkspace {
         let volumes: [(name: String, url: URL)]
     }
 
-    static func build() -> Layout {
+    static func build(root: URL? = nil) -> Layout {
         let fm = FileManager.default
-        let root = fm.temporaryDirectory.appendingPathComponent("Pathem-Demo", isDirectory: true)
+        let root =
+            root ?? fm.temporaryDirectory.appendingPathComponent("Pathem-Demo", isDirectory: true)
         try? fm.removeItem(at: root)  // fresh each launch
         try? fm.createDirectory(at: root, withIntermediateDirectories: true)
 

@@ -69,6 +69,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_OPENER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
+            || launchEnvironment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
         #else
         let configurationTest = false
         #endif
@@ -84,6 +85,33 @@ enum PathemApp {
             else {
                 print("RESULT: FAIL configuration test refuses a non-temporary config root")
                 exit(64)
+            }
+        }
+        // Automation owns a new, private demo tree. Never delete an existing directory
+        // supplied through the environment, including a symlink to another launch's tree.
+        var automationDemoRoot: URL?
+        if isAutomationLaunch && launchEnvironment["PATHEM_DEMO"] != nil {
+            let temporary = FileManager.default.temporaryDirectory.resolvingSymlinksInPath()
+            let root =
+                launchEnvironment["PATHEM_DEMO_ROOT"].map { URL(fileURLWithPath: $0) }
+                ?? temporary.appendingPathComponent("pathem-demo-\(UUID().uuidString)")
+            let resolved = root.resolvingSymlinksInPath()
+            guard resolved.pathComponents.count > temporary.pathComponents.count,
+                resolved.pathComponents.starts(with: temporary.pathComponents),
+                !FileManager.default.fileExists(atPath: root.path)
+            else {
+                print(
+                    "RESULT: FAIL automation demo root must be a new directory inside system temp")
+                exit(64)
+            }
+            automationDemoRoot = resolved
+            atexit_b {
+                do {
+                    try FileManager.default.removeItem(at: resolved)
+                    print("DEMOISOLATION: removed \(resolved.path)")
+                } catch {
+                    fputs("DEMOISOLATION: FAIL cleanup\n", stderr)
+                }
             }
         }
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
@@ -190,7 +218,9 @@ enum PathemApp {
         let viewShot = ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
         // Privacy-safe demo mode (PATHEM_DEMO=1): a fake workspace + sidebar for screenshots.
         let demoLayout =
-            ProcessInfo.processInfo.environment["PATHEM_DEMO"] != nil ? DemoWorkspace.build() : nil
+            ProcessInfo.processInfo.environment["PATHEM_DEMO"] != nil
+            ? DemoWorkspace.build(root: automationDemoRoot) : nil
+        if let automationDemoRoot { print("DEMOISOLATION: used \(automationDemoRoot.path)") }
         let start =
             viewShot ? Self.makeSampleFolder() : FileManager.default.homeDirectoryForCurrentUser
         // An automation launch (smoke test, screenshot, or a render/test harness) navigates panes to
@@ -210,11 +240,11 @@ enum PathemApp {
         // collapses the window to a sliver) and center. setFrameAutosaveName then
         // persists future moves/resizes.
         let frameName = NSWindow.FrameAutosaveName("com.scarcrux.pathem.mainWindow")
-        if !window.setFrameUsingName(frameName) {
+        if isAutomationLaunch || !window.setFrameUsingName(frameName) {
             window.setContentSize(NSSize(width: 1100, height: 700))
             window.center()
         }
-        window.setFrameAutosaveName(frameName)
+        if !isAutomationLaunch { window.setFrameAutosaveName(frameName) }
         let delegate = PathemAppDelegate()
         delegate.browser = browser
         delegate.updater = updater  // keep the updater alive for the app's lifetime
