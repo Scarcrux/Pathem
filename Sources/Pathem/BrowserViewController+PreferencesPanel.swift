@@ -184,12 +184,23 @@ extension BrowserViewController {
     }
 
     func applyCompactSidebar() {
+        let wasCompact = compactSidebar
         compactSidebar = prefs.compactSidebar
         sidebar.setShowsLabels(!compactSidebar)
         sidebar.setMonochromeIcons(prefs.monochromeSidebarIcons)
-        let width: CGFloat = compactSidebar ? Self.compactSidebarWidth : 200
-        sidebarWidthConstraint?.constant = width
-        if didSetInitialSplit { outerSplit.setPosition(width, ofDividerAt: 0) }  // resize live
+        // This runs on every preference change, so it may only move the divider when compact
+        // mode itself changes. Setting the width unconditionally snapped a sidebar the user
+        // had resized back to 200 pt whenever any setting changed, and coming out of compact
+        // mode forgot the width they had before.
+        if compactSidebar != wasCompact {
+            if compactSidebar {
+                let current = outerSplit.arrangedSubviews.first?.frame.width ?? 0
+                if didSetInitialSplit, current >= 140 { expandedSidebarWidth = current }
+            }
+            let width = compactSidebar ? Self.compactSidebarWidth : expandedSidebarWidth
+            sidebarWidthConstraint?.constant = width
+            if didSetInitialSplit { outerSplit.setPosition(width, ofDividerAt: 0) }  // resize live
+        }
         // In icons-only mode the labels are hidden, so tooltips are how you identify an icon --
         // make them instant. Otherwise honor the preference.
         if compactSidebar && !PathemApp.isAutomationLaunch {

@@ -248,6 +248,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         get { splitLayout.compactSidebar }
         set { splitLayout.compactSidebar = newValue }
     }
+    var expandedSidebarWidth: CGFloat {
+        get { splitLayout.expandedSidebarWidth }
+        set { splitLayout.expandedSidebarWidth = newValue }
+    }
     static let compactSidebarWidth = BrowserSplitLayoutController.compactSidebarWidth
     /// Guided Full Disk Access walkthrough (first launch, until granted).
     private lazy var fdaGuide = FullDiskAccessGuide()

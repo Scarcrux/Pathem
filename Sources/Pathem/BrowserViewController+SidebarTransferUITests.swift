@@ -72,6 +72,10 @@ extension BrowserViewController {
             checkDialogLayout(check: check, settle: settle)
             finish()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_WIDTH_SAMPLE"] == "1" {
+            checkSidebarWidthKept(check: check, settle: settle)
+            finish()
+        }
         if ProcessInfo.processInfo.environment["PATHEM_TERMINAL_DRAWER_SAMPLE"] == "1" {
             checkTerminalDrawer(check: check, settle: settle)
             finish()
@@ -322,6 +326,7 @@ extension BrowserViewController {
         checkDialogLayout(check: check, settle: settle)
         checkFindInFiles(check: check, settle: settle)
         checkTerminalDrawer(check: check, settle: settle)
+        checkSidebarWidthKept(check: check, settle: settle)
         checkSortGroupDelivery(
             root: root.appendingPathComponent("sort-group"), check: check, settle: settle)
         finish()

@@ -1,18 +1,6 @@
 {
   "findings": [
     {
-      "id": "LM2-F1b",
-      "cell": "default-list-custom-sidebar-dark",
-      "check": 8,
-      "reason": "Compact on/off replaces a user-set 250pt sidebar with the fixed 200pt expanded width. Accepted open finding."
-    },
-    {
-      "id": "LM2-F1b",
-      "cell": "default-list-custom-sidebar-light",
-      "check": 8,
-      "reason": "Compact on/off replaces a user-set 250pt sidebar with the fixed 200pt expanded width. Accepted open finding."
-    },
-    {
       "id": "LM2-F4",
       "cell": "default-gallery-terminal+torrent-dark",
       "check": 4,

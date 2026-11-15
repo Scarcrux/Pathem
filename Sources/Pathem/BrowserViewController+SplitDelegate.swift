@@ -13,6 +13,9 @@ final class BrowserSplitLayoutController: NSObject, NSSplitViewDelegate {
     private(set) var sidebarWidthConstraint: NSLayoutConstraint?
     var didSetInitialSplit = false
     var compactSidebar = false
+    /// The sidebar's width outside compact mode, remembered so leaving compact mode returns
+    /// to what the user had, not to the default.
+    var expandedSidebarWidth: CGFloat = 200
 
     static let compactSidebarWidth: CGFloat = 60
 
