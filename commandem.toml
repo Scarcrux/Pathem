@@ -1680,6 +1680,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-15 (owner: demos and site media look dull). Landed: 26f0a1f terminal drawer blanked the window on macOS 27.2.1 (both split halves 0 pt; adjustSubviews after toggle; red-first check in the sidebar suite, 650/650). 5084a6c task 3 artifacts: ghost stripes below the last row gone in list and tree; icon-view names no longer clipped on the second line; tagged names centred. 38473d8 new demo workspace (real project trees incl. a git working tree, PDFs with pages, code-drawn photographs, varied sizes/dates/tags) plus PATHEM_SITE_SHOT and scripts/site-shots.sh. Site commit: ten screenshots re-captured, hero is now the dual-pane image, 1M-row video moved to its own section. NOT deployed to pathem.app (needs owner approval). Limits: captures are 1x on this display; README still links the site rather than embedding images. Task 3 stays open until the site is deployed and the README checked."
     at = "2026-11-15T13:46:57Z"
 
+  [[mission.comment]]
+    text = "2026-11-15: site deployed to pathem.app with owner approval (Pages 7ec71718, site/ tree of main 7669fd6 only; live page and hero sha verified). Notarized universal build of 7669fd6 installed to /Applications (sha 8bc63967, A1-A6 pass). Full make ci on 7669fd6: exit 0, 826 Swift tests, product E2E 67 passed / 1 skipped (browser flow pixels, standing) / 0 failed, packaged 14/14."
+    at = "2026-11-15T15:01:01Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
