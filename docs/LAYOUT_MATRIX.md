@@ -124,6 +124,29 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### F5 Column repair: selection resolved before baseline creation
+
+Column tag delivery now updates only existing visible name cells using the same
+render routine as cell creation. Off-screen rows read the new cache when reused.
+No table reload, programmatic reselect, scroll, drill or preview rebuild occurs.
+The red-first22 setup losses and gallery-to-column losses are retained above.
+
+The repaired134-cell run passes every setup, selection and viewport assertion:
+1184/1192 native exit1 in68.680sec. Exactly eight accepted geometry failures
+remain: F1b custom sidebar check8 x2, F4 Gallery paired drawers check4 x2,
+F6 Column paired drawers checks2/4 x2. All134 cell receipts report zero pane
+selection callbacks during decoration updates; no decoration selection,
+viewport or structural effect is recorded. Both actual Gallery preview-follow
+probes pass. Evidence: `.build/layout-f5-column-regression.log`, private root
+`pathem-matrix-clean-swafjjtd`. Build0, zero new warnings,15 controls pass,
+owner defaults unchanged and unique demo removed. This resolves F5 and permits
+creating the exact known-findings baseline; it does not waive the eight red
+geometry checks. Normal hooks and remaining gates are reported separately.
+
+Per-cell fresh pane/listing/tag baselines raise the original approximately25sec
+run to approximately70sec. That is an intentional isolation cost inside the
+240sec budget, not a claim that the older order-dependent instrument was better.
+
 ### Gallery repair criteria, registered before execution
 
 Coordinator independently confirmed the two icon-to-gallery failures after the

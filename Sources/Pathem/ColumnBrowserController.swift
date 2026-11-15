@@ -177,7 +177,19 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             let matrixBefore = self.debugMatrixDecorationState()
             #endif
             for column in self.columns {
-                column.table.reloadData()
+                // A cosmetic tag change must not act like a row selection or
+                // rebuild the preview. Off-screen rows read the cache on reuse.
+                let range = column.table.rows(in: column.table.visibleRect)
+                guard range.location != NSNotFound else { continue }
+                let end = min(NSMaxRange(range), column.entries.count)
+                guard range.location < end else { continue }
+                for row in range.location..<end {
+                    guard
+                        let cell = column.table.view(atColumn: 0, row: row, makeIfNecessary: false)
+                            as? NSTableCellView
+                    else { continue }
+                    self.configureName(cell, entry: column.entries[row], in: column.folder)
+                }
             }
             #if DEBUG
             LayoutMatrixGeometry.recordDecoration(
@@ -454,6 +466,19 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let cell =
             (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
             ?? Self.makeCell(id)
+        configureName(cell, entry: entry, in: columns[index].folder)
+        let baseIcon = FileIconCache.icon(for: entry, in: columns[index].folder)  // kind-cached; bundles per-file
+        cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: columns[index].folder)
+        // Dim cut items (until pasted), then hidden (dotfile) entries. Keyed on this column's
+        // own folder, since a cut can live in any drilled column.
+        let isCut =
+            !cutPaths.isEmpty
+            && cutPaths.contains(PaneItemKey.path(for: entry, in: columns[index].folder))
+        cell.alphaValue = isCut ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
+        return cell
+    }
+
+    private func configureName(_ cell: NSTableCellView, entry: FileEntry, in folder: URL) {
         let ruleStyle = FileColorStyle.style(
             for: entry, rules: colorRules, baseFont: .systemFont(ofSize: columnFontSize))
         cell.textField?.font = ruleStyle?.font ?? .systemFont(ofSize: columnFontSize)
@@ -461,7 +486,6 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             ruleStyle?.color ?? (entry.isDataless ? .secondaryLabelColor : .labelColor)
         // Prefix a colored git-status letter and suffix tag dots when present (shared with the
         // list view). Middle truncation keeps both ends even when a long name is clipped.
-        let folder = columns[index].folder
         let git = gitStates.isEmpty ? nil : gitStates[PaneItemKey.path(for: entry, in: folder)]
         let dots = decorations.tagColors(for: entry, in: folder)
         if git != nil || !dots.isEmpty {
@@ -472,15 +496,6 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             cell.textField?.stringValue = entry.name
         }
         cell.textField?.setAccessibilityLabel(FileAXLabel.describe(entry))  // name + kind/size/date, not glyphs
-        let baseIcon = FileIconCache.icon(for: entry, in: columns[index].folder)  // kind-cached; bundles per-file
-        cell.imageView?.image = CloudBadge.decorate(baseIcon, for: entry, in: columns[index].folder)
-        // Dim cut items (until pasted), then hidden (dotfile) entries. Keyed on this column's
-        // own folder, since a cut can live in any drilled column.
-        let isCut =
-            !cutPaths.isEmpty
-            && cutPaths.contains(PaneItemKey.path(for: entry, in: columns[index].folder))
-        cell.alphaValue = isCut ? 0.45 : (entry.isHidden ? 0.5 : 1.0)
-        return cell
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) {

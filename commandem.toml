@@ -1728,6 +1728,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Gallery repair explicitly authorized after new direct beforeBigSur/afterempty evidence. Verified direct existing-label redraw, no collection or QuickLook reload. Native134cells1138/1170 exit1 in68.877s: both actual select-other/restore preview-follow probes PASS; unchanged preview target/name/show-call counter and filmstrip offset, zero pane callbacks, check7 both PASS. View-cycle first-loss now gallery->column, so check6 remains RED until separately authorized Column fix. Prefs unchanged/demo removed/15controls pass, build0/warning checker zero new warnings. Gallery own commit pending hooks. No baseline,land,install,deploy,displaychange ormakeci."
     at = "2026-11-15T18:13:37Z"
 
+  [[mission.comment]]
+    text = "F5 Column-only repair verified: update existing visible name cells through same renderer as cell creation; no table reload/reselect, scroll, drill or preview rebuild. Native134cells1184/1192 exit1 in68.680s: all setup/selection/viewport checks PASS, zero pane callbacks on all134 cell decoration receipts, no decorator side effects, both Gallery preview-follow probes PASS. Exactly8 accepted geometry pairs remain F1b(check8x2),F4(check4x2),F6(check2/check4x2). F5 resolved before any baseline file. Build0/zero new warnings/15controls pass, prefs unchanged/demo removed. Column separate commit pending hooks, then baseline3runs/injections/five affected suites and one authorizedmakeci. No land/install/deploy/displaychange."
+    at = "2026-11-15T18:17:37Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
