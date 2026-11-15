@@ -1798,6 +1798,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-d6d4073f"
     title = "Run focused tests, native UI and full local gates; retain failures honestly"
+    done = true
 
   [[mission.task]]
     id = "t-f9383f06"
@@ -1827,6 +1828,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Task 4 in progress 2026-11-15: sidebar-transfer suite first gave 643/647 (four Rename-sheet initial-controls-contained failures). Convicted and fixed in b2923f4: accessory measured detached is 3 pt short of its in-window size on macOS 27.2.1 (name field fitting height 21 vs 24). Suite now 647/647. Full make ci running."
     at = "2026-11-15T13:01:43Z"
+
+  [[mission.comment]]
+    text = "Task 4 done 2026-11-15 on main 00f2caf: make ci exit 0. 826 Swift tests in 168 suites pass; product E2E 67 passed, 1 skipped (browser flow pixels: cached pixels rejected, native appearance unverified, the standing skip), 0 failed; packaged 14/14. First run of the day was 66/1/1: search-no-matches failed because Spotlight indexing is disabled on this Mac (mdutil: Indexing disabled) and the check assumed it was on; check fixed in 0fee551, product unchanged. Not covered on this machine as a result: the indexed-document half of content search."
+    at = "2026-11-15T13:15:47Z"
 
 [[mission]]
   id = "m-51d5dc66"
