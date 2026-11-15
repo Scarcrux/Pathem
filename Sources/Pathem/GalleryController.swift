@@ -24,6 +24,12 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         guard let index = paths.first?.item, entries.indices.contains(index) else { return nil }
         return entries[index].name
     }
+    func debugMatrixTagsReady() -> Bool {
+        guard let entry = entries.first(where: { $0.name == "Lofoten Dawn.jpg" }) else {
+            return false
+        }
+        return decorations.tagColors(for: entry, in: directoryURL).contains(.orange)
+    }
     #endif
     private let emptyLabel = NSTextField(labelWithString: "")
     private static let itemID = NSUserInterfaceItemIdentifier("gallery-item")
@@ -89,7 +95,17 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     override init() {
         super.init()
         build()
-        decorations.onTagsChanged = { [weak self] in self?.filmstrip.reloadData() }
+        decorations.onTagsChanged = { [weak self] in
+            #if DEBUG
+            let matrixBefore = self?.selectedEntries.map(\.name) ?? []
+            #endif
+            self?.filmstrip.reloadData()
+            #if DEBUG
+            LayoutMatrixGeometry.traceDecoration(
+                "gallery-tag-reload", before: matrixBefore,
+                after: self?.selectedEntries.map(\.name) ?? [])
+            #endif
+        }
         filmstrip.onHover = { [weak self] indexPath in self?.setHovered(indexPath?.item ?? -1) }
         filmstrip.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
         // Forward focus so clicking the gallery makes its pane active + focused, like list/tree.

@@ -29,6 +29,12 @@ final class ShelfController: NSObject {
     var isEmpty: Bool { model.isEmpty }
     var count: Int { model.count }
     var items: [URL] { model.items }
+    #if DEBUG
+    var debugMatrixItemAreaHeight: CGFloat {
+        LayoutMatrixGeometry.walk(view).compactMap { $0 as? NSScrollView }.first?.bounds.height
+            ?? -1
+    }
+    #endif
     /// PATHEM_UI_TEST: the Drop Stack's background remains an active file-URL destination.
     var debugFileDropHandlerWired: Bool {
         view.registeredDraggedTypes.contains(.fileURL) && view.onDropURLs != nil

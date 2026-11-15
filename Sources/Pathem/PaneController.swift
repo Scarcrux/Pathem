@@ -108,6 +108,21 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         return nil
     }
+    func debugMatrixRefreshBreadcrumb() {
+        breadcrumb.setURL(nil)
+        breadcrumb.setURL(currentURL)
+    }
+    var debugMatrixBreadcrumbTitles: [String] { breadcrumb.debugMatrixTitles }
+    func debugMatrixTagsReady() -> Bool {
+        if let list = content as? FileListController { return list.debugMatrixTagsReady() }
+        if let icons = content as? IconCollectionController { return icons.debugMatrixTagsReady() }
+        if let gallery = content as? GalleryController { return gallery.debugMatrixTagsReady() }
+        if let columns = content as? ColumnBrowserController {
+            return columns.debugMatrixTagsReady()
+        }
+        // Tree has no native tag decoration path; do not fake one for screenshots.
+        return content is TreeOutlineController
+    }
     #endif
     func setHiddenContextItems(_ ids: Set<String>) {
         lastHiddenContextItems = ids

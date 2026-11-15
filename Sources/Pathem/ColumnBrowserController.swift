@@ -70,13 +70,23 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     var debugColumnFolders: [URL] { columns.map(\.folder) }
     func debugMatrixFirstVisibleName() -> String? {
         let visible = columns.filter { $0.scroll.frame.intersects(outerScroll.contentView.bounds) }
-        guard !visible.isEmpty else { return nil }
-        return visible.map { column in
+        if visible.isEmpty {
+            guard let previewColumn, previewColumn.frame.intersects(outerScroll.contentView.bounds)
+            else { return nil }
+            return previewTarget.map { "preview:" + $0.url.lastPathComponent }
+        }
+        return visible.prefix(1).map { column in
             let range = column.table.rows(in: column.table.visibleRect)
             guard range.location != NSNotFound, column.entries.indices.contains(range.location)
             else { return "<empty>" }
             return column.folder.lastPathComponent + ":" + column.entries[range.location].name
         }.joined(separator: "|")
+    }
+    func debugMatrixTagsReady() -> Bool {
+        guard let column = columns.first,
+            let entry = column.entries.first(where: { $0.name == "Lofoten Dawn.jpg" })
+        else { return false }
+        return decorations.tagColors(for: entry, in: column.folder).contains(.orange)
     }
     func debugColumnNames(_ index: Int) -> [String] {
         columns.indices.contains(index) ? columns[index].entries.map(\.name) : []
@@ -162,7 +172,21 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private lazy var decorations: PaneDecorationCache = {
         let cache = PaneDecorationCache()
         cache.onTagsChanged = { [weak self] in
-            for column in self?.columns ?? [] { column.table.reloadData() }
+            for column in self?.columns ?? [] {
+                #if DEBUG
+                let matrixBefore = column.table.selectedRowIndexes.compactMap {
+                    column.entries.indices.contains($0) ? column.entries[$0].name : nil
+                }
+                #endif
+                column.table.reloadData()
+                #if DEBUG
+                let matrixAfter = column.table.selectedRowIndexes.compactMap {
+                    column.entries.indices.contains($0) ? column.entries[$0].name : nil
+                }
+                LayoutMatrixGeometry.traceDecoration(
+                    "column-tag-reload", before: matrixBefore, after: matrixAfter)
+                #endif
+            }
         }
         return cache
     }()

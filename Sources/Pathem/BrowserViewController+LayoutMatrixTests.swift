@@ -5,6 +5,13 @@ import PathemEngine
 /// Shared by the real tree walk, the synthetic controls and the regression probes.
 @MainActor
 enum LayoutMatrixGeometry {
+    static var currentCell = "sample"
+    static func traceDecoration(_ kind: String, before: [String], after: [String]) {
+        guard ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_TEST"] != nil,
+            before != after
+        else { return }
+        print("LAYOUTMATRIX: DECORATION \(currentCell) \(kind) before=\(before) after=\(after)")
+    }
     private static var deliveredInjections = Set<String>()
     static func traceInjection(_ name: String, _ detail: String) {
         if deliveredInjections.insert(name).inserted {
@@ -305,14 +312,17 @@ extension BrowserViewController {
         let selected = left.selectedEntries.map(\.name).sorted()
         check("selection-delivered", 0, selected == ["Tromsø Aurora.jpg"])
         func selectionState() -> [String] {
-            left.selectedEntries.map { "left/" + $0.name }
-                + right.selectedEntries.map { "right/" + $0.name }
+            (leftTabs.activePane?.selectedEntries ?? []).map { "left/" + $0.name }
+                + (rightTabs.activePane?.selectedEntries ?? []).map { "right/" + $0.name }
         }
         let expectedSelection = selectionState()
         if !terminal.view.isHidden { toggleTerminal() }
 
         func regions() -> [NSView] {
-            var nodes: [NSView] = [left.contentClipView, right.contentClipView]
+            var nodes: [NSView] = [
+                leftTabs.activePane?.contentClipView ?? left.contentClipView,
+                rightTabs.activePane?.contentClipView ?? right.contentClipView,
+            ]
             if !sidebar.containerView.isHiddenOrHasHiddenAncestor {
                 nodes.append(sidebar.containerView)
             }
@@ -325,8 +335,8 @@ extension BrowserViewController {
         }
         func frames() -> [NSRect] { regions().map { $0.convert($0.bounds, to: view) } }
         func viewport() -> String? {
-            guard let l = left.debugMatrixFirstVisibleName(),
-                let r = right.debugMatrixFirstVisibleName()
+            guard let l = leftTabs.activePane?.debugMatrixFirstVisibleName(),
+                let r = rightTabs.activePane?.debugMatrixFirstVisibleName()
             else { return nil }
             return l + "/" + r
         }

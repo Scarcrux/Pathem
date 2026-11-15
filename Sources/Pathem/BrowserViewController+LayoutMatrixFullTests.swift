@@ -10,10 +10,10 @@ extension BrowserViewController {
         inspect: (String) -> Void,
         check: (String, Int, Bool, NSView?, String) -> Void,
         settle: (() -> Bool) -> Bool,
-        frames: () -> [NSRect], selection: () -> [String], viewport: () -> String?
+        frames: @escaping () -> [NSRect], selection: () -> [String], viewport: () -> String?
     ) {
-        guard let window = view.window, let left = leftTabs.activePane,
-            let right = rightTabs.activePane
+        guard let window = view.window, var left = leftTabs.activePane,
+            var right = rightTabs.activePane
         else { return }
         struct Cell {
             let name: String
@@ -24,6 +24,9 @@ extension BrowserViewController {
             var matching = false
             var ratio = 0.5
             var resize = false
+            var customWidth = false
+            var populated = false
+            var cycle = ""
         }
         let modes: [ViewFormat.ViewMode] = [.list, .icon, .gallery, .column, .tree]
         let sizes = [
@@ -32,7 +35,7 @@ extension BrowserViewController {
             ("wide", NSSize(width: 1680, height: 1000)),
         ]
         let panels = [
-            "sidebar-hidden", "compact-sidebar", "preview", "terminal", "torrent", "drop-stack",
+            "compact-sidebar", "preview", "terminal", "torrent", "drop-stack",
             "detail",
         ]
         var plan: [Cell] = []
@@ -73,6 +76,18 @@ extension BrowserViewController {
                     name: "default-list-ratio-\(Int(ratio*100))", size: defaultSize, mode: .list,
                     panel: "none", ratio: ratio))
         }
+        plan.append(
+            Cell(
+                name: "default-list-custom-sidebar", size: defaultSize, mode: .list,
+                panel: "compact-sidebar", customWidth: true))
+        plan.append(
+            Cell(
+                name: "default-list-drop-stack-items", size: defaultSize, mode: .list,
+                panel: "drop-stack", populated: true))
+        plan.append(
+            Cell(
+                name: "default-list-view-cycle", size: defaultSize, mode: .list, panel: "none",
+                cycle: "views"))
         let defaultRow = plan.filter { $0.size == defaultSize }
         for var cell in defaultRow {
             cell.dark = false
@@ -84,8 +99,12 @@ extension BrowserViewController {
                     name: "resize-\(sizes[index].0)", size: sizes[index].1, mode: .list,
                     panel: "none", resize: true))
         }
-        check("plan", 0, plan.count == 139, view, "cells=\(plan.count) dropped=none")
-        print("LAYOUTMATRIX: PLAN cells=\(plan.count) dropped=none budgetSeconds=240")
+        plan.append(
+            Cell(
+                name: "resize-cycle", size: defaultSize, mode: .list, panel: "none", cycle: "sizes")
+        )
+        check("plan", 0, plan.count == 134, view, "cells=\(plan.count) dropped=sidebar-hidden")
+        print("LAYOUTMATRIX: PLAN cells=\(plan.count) dropped=sidebar-hidden budgetSeconds=240")
 
         func layout() {
             window.contentView?.layoutSubtreeIfNeeded()
@@ -93,16 +112,27 @@ extension BrowserViewController {
         }
         func mode(_ pane: PaneController, _ desired: ViewFormat.ViewMode) -> Bool {
             pane.debugClickViewSwitcher(desired)
-            return settle { pane.viewMode == desired && pane.debugHasEntry("Tromsø Aurora.jpg") }
+            return settle {
+                window.displayIfNeeded()
+                return pane.viewMode == desired && pane.debugHasEntry("Big Sur Coast.jpg")
+                    && pane.debugMatrixTagsReady()
+            }
+        }
+        func stableLayout() -> Bool {
+            var previous: [NSRect] = []
+            var unchanged = 0
+            return settle {
+                layout()
+                window.displayIfNeeded()
+                let current = frames()
+                unchanged = current == previous ? unchanged + 1 : 0
+                previous = current
+                return unchanged >= 2
+            }
         }
         func panel(_ name: String, shown: Bool) {
             switch name {
             case "none": break
-            case "sidebar-hidden":
-                // The app has no hide-sidebar command. Stage the supported split's
-                // hidden-subview state directly; compact mode uses the real command.
-                sidebar.containerView.isHidden = shown
-                outerSplit.adjustSubviews()
             case "compact-sidebar":
                 if compactSidebar != shown { toggleCompactSidebar() }
             case "preview":
@@ -130,60 +160,184 @@ extension BrowserViewController {
             }
             layout()
         }
-        let expectedSelection = selection()
         var count = 0
         let started = Date()
         for cell in plan {
             autoreleasepool {
                 let label = cell.name + (cell.dark ? "-dark" : "-light")
-                let incomingSelection = selection()
-                let oldViewport = viewport()
-                let viewSwitch =
-                    left.viewMode != cell.mode
-                    || right.viewMode != (cell.matching ? cell.mode : .list)
-                let delivered =
-                    mode(left, cell.mode) && mode(right, cell.matching ? cell.mode : .list)
-                if cell.resize && count == plan.count - 3 {
-                    window.setContentSize(defaultSize)
-                    setRightPaneFraction(0.5)
-                    layout()
-                }
+                LayoutMatrixGeometry.currentCell = label + "-setup"
+                // Every cell owns a fresh, settled baseline. No previous cell can
+                // donate its lost selection, drawer state, sidebar width or listing.
+                if !terminal.view.isHidden { toggleTerminal() }
+                hideTorrentsDrawer()
+                hideTorrentDetail()
+                if previewPane.isVisible { togglePreviewPane() }
+                shelf.clear()
+                setShelfVisible(false)
+                if compactSidebar { toggleCompactSidebar() }
+                sidebarWidthConstraint?.constant = 200
                 window.appearance = NSAppearance(named: cell.dark ? .darkAqua : .aqua)
-                window.setContentSize(cell.size)
-                if !cell.resize { setRightPaneFraction(cell.ratio) }
+                window.setContentSize(
+                    cell.resize || cell.cycle == "sizes" ? defaultSize : cell.size)
+                vSplit.adjustSubviews()
+                outerSplit.adjustSubviews()
                 layout()
+                outerSplit.setPosition(200, ofDividerAt: 0)
+                layout()
+                setRightPaneFraction(cell.ratio)
+                let photos = demo.root.appendingPathComponent("Photos", isDirectory: true)
+                folderFormats = FolderFormats(defaultFormat: prefs.defaultFormat)
+                leftTabs.restoreTabs([photos.path], active: 0)
+                rightTabs.restoreTabs([photos.path], active: 0)
+                guard let newLeft = leftTabs.activePane, let newRight = rightTabs.activePane else {
+                    check(label, 0, false, view, "fresh pane setup failed")
+                    return
+                }
+                left = newLeft
+                right = newRight
+                var delivered = true
+                for pane in [left, right] {
+                    pane.setViewMode(.list)
+                    let generation = pane.debugListingCompletions
+                    pane.navigate(to: photos)
+                    let loaded = settle {
+                        pane.debugListingCompletions > generation
+                            && pane.debugHasEntry("Big Sur Coast.jpg")
+                    }
+                    delivered = loaded && delivered
+                }
+                // Compare canonical paths, then use the ancestor's directory URL.
+                // Environment-created roots can lack a trailing directory slash;
+                // URL equality then differs despite an identical filesystem path.
+                if let ancestor = BreadcrumbBar.ancestors(of: left.currentURL).first(where: {
+                    $0.resolvingSymlinksInPath().path == demo.root.resolvingSymlinksInPath().path
+                }) {
+                    if count == 0 {
+                        print(
+                            "LAYOUTMATRIX: DEMO rootDirectory=\(demo.root.hasDirectoryPath) ancestorDirectory=\(ancestor.hasDirectoryPath) URLMatch=\(ancestor == demo.root) canonicalPathMatch=true"
+                        )
+                    }
+                    BreadcrumbBar.demoRoot = ancestor
+                }
+                let leftReady = mode(left, cell.mode)
+                let rightReady = mode(right, cell.matching ? cell.mode : .list)
+                applyPreferences()
+                delivered =
+                    leftReady && rightReady && delivered
+                    && settle {
+                        window.displayIfNeeded()
+                        return left.debugMatrixTagsReady() && right.debugMatrixTagsReady()
+                    }
+                for pane in [left, right] {
+                    pane.debugMatrixRefreshBreadcrumb()
+                    pane.select(name: "Big Sur Coast.jpg")
+                }
+                let desiredSelection = ["left/Big Sur Coast.jpg", "right/Big Sur Coast.jpg"]
+                delivered =
+                    delivered && LayoutMatrixGeometry.sameSelection(desiredSelection, selection())
+                delivered =
+                    delivered
+                    && [left, right].allSatisfy {
+                        $0.debugMatrixBreadcrumbTitles == [L("breadcrumb.home", "Home"), "Photos"]
+                    }
+                // Layout/metadata are complete before the per-cell anchor is taken.
+                delivered = stableLayout() && delivered
+                layout()
+                outerSplit.setPosition(cell.customWidth ? 250 : 200, ofDividerAt: 0)
+                layout()
+                setRightPaneFraction(cell.ratio)
+                layout()
+                if !cell.customWidth { delivered = stableLayout() && delivered }
+                delivered =
+                    delivered
+                    && abs(sidebar.containerView.frame.width - (cell.customWidth ? 250 : 200)) <= 1
+                let expectedSelection = selection()
+                let setupSelectionDelivered = LayoutMatrixGeometry.sameSelection(
+                    desiredSelection, expectedSelection)
+                delivered = delivered && setupSelectionDelivered
                 let beforeFrames = frames()
                 let baseline = viewport()
-                var selectionKept = LayoutMatrixGeometry.sameSelection(
-                    expectedSelection, selection())
-                let setupSelection = selection()
+                var selectionKept = true
                 var viewportKept = baseline != nil
-                if !viewSwitch {
-                    viewportKept =
-                        viewportKept && LayoutMatrixGeometry.sameViewport(oldViewport, baseline)
-                }
-                if viewSwitch {
-                    print("LAYOUTMATRIX: EXEMPT \(label) check7 setup-view-switch-only")
+                var transitionReceipt = ""
+                LayoutMatrixGeometry.currentCell = label + "-transition"
+                if cell.populated {
+                    shelf.add([photos.appendingPathComponent("Big Sur Coast.jpg")])
                 }
                 panel(cell.panel, shown: true)
+                if cell.resize {
+                    window.setContentSize(cell.size)
+                    layout()
+                }
+                if cell.cycle == "views" {
+                    var previous = ViewFormat.ViewMode.list
+                    for next in modes.dropFirst() + [.list] {
+                        let arrived = mode(left, next)
+                        delivered = arrived && delivered
+                        if !LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
+                            && transitionReceipt.isEmpty
+                        {
+                            transitionReceipt =
+                                "lost-on=\(previous.rawValue)->\(next.rawValue) names=\(selection())"
+                        }
+                        selectionKept =
+                            selectionKept
+                            && LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
+                        previous = next
+                    }
+                    print("LAYOUTMATRIX: EXEMPT \(label) check7 view-cycle")
+                }
+                if cell.cycle == "sizes" {
+                    for index in [0, 2, 1] {
+                        window.setContentSize(sizes[index].1)
+                        layout()
+                        if !LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
+                            && transitionReceipt.isEmpty
+                        {
+                            transitionReceipt =
+                                "lost-on=resize-\(sizes[index].0) names=\(selection())"
+                        }
+                        selectionKept =
+                            selectionKept
+                            && LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
+                        viewportKept =
+                            viewportKept && LayoutMatrixGeometry.sameViewport(baseline, viewport())
+                    }
+                }
+                delivered = stableLayout() && delivered
                 inspect(label)
+                let shownItemAreaHeight = shelf.debugMatrixItemAreaHeight
                 let shownSelection = selection()
                 selectionKept =
                     selectionKept
                     && LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
-                viewportKept =
-                    viewportKept && LayoutMatrixGeometry.sameViewport(baseline, viewport())
+                if cell.cycle != "views" {
+                    viewportKept =
+                        viewportKept && LayoutMatrixGeometry.sameViewport(baseline, viewport())
+                }
                 panel(cell.panel, shown: false)
+                delivered = stableLayout() && delivered
                 selectionKept =
                     selectionKept
                     && LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
-                viewportKept =
-                    viewportKept && LayoutMatrixGeometry.sameViewport(baseline, viewport())
-                check(label, 0, delivered, left.containerView, "mode/fixture delivered")
+                if cell.cycle != "views" {
+                    viewportKept =
+                        viewportKept && LayoutMatrixGeometry.sameViewport(baseline, viewport())
+                }
                 check(
-                    label, 6, selectionKept, left.containerView,
-                    "expected=\(expectedSelection) incoming=\(incomingSelection) setup=\(setupSelection) shown=\(shownSelection) restored=\(selection())"
+                    label, 0, delivered, left.containerView,
+                    "settled cell-local baseline; sidebar=\(cell.customWidth ? 250 : 200) breadcrumb=\(left.debugMatrixBreadcrumbTitles) tagsReady=\(left.debugMatrixTagsReady()),\(right.debugMatrixTagsReady()) populated=\(cell.populated) itemAreaHeight=\(shownItemAreaHeight)"
                 )
+                if setupSelectionDelivered {
+                    check(
+                        label, 6, selectionKept, left.containerView,
+                        "expected=\(expectedSelection) shown=\(shownSelection) restored=\(selection()) \(transitionReceipt)"
+                    )
+                } else {
+                    print(
+                        "LAYOUTMATRIX: INVALID \(label) check6 setup-selection-not-delivered; check0 fails"
+                    )
+                }
                 check(
                     label, 7, viewportKept, left.contentClipView,
                     "before=\(String(describing: baseline)) after=\(String(describing: viewport()))"
@@ -199,8 +353,8 @@ extension BrowserViewController {
             }
         }
         check(
-            "full-completion", 0, count == 139 && Date().timeIntervalSince(started) < 240, view,
-            "cells=\(count) seconds=\(Date().timeIntervalSince(started)) dropped=none")
+            "full-completion", 0, count == 134 && Date().timeIntervalSince(started) < 240, view,
+            "cells=\(count) seconds=\(Date().timeIntervalSince(started)) dropped=sidebar-hidden")
         check(
             "full-transport-isolated", 0, !TorrentDaemonClient.shared.isRunning, view,
             "demo-only torrent geometry")

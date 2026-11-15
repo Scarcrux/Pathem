@@ -124,6 +124,28 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Unit 2 review revision, criteria before rerunning
+
+Coordinator review rejects the unreachable sidebar-hidden axis and the inherited
+global selection anchor. Drop all12 sidebar-hidden cells, explicitly recording
+that drop. Reset panels, pane listings/modes, sidebar200pt, ratio and selection
+before every cell. Select only after actual listing and metadata delivery; then
+compare selection through that cell's own transition, never against a prior cell.
+Add two deliberate250pt compact-sidebar round trips (F1b), two populated Drop
+Stack cells, two view-cycle cells and one resize-cycle cell:134 cells, preserving
+the earlier pairs and size/view/light axes, still under150 and240 seconds.
+The custom width is staged by the split position within its delegate limits.
+
+Before any known-findings baseline is created, run the final no-injection set
+three times. Report exact failing-set intersection/differences and each actual
+selection-loss transition. No correlated inherited selection failures may be
+baselined. The eventual exact cell/check/ID baseline must reject both new and
+stale failures. Keep native exit1 as native RED even if the separate baseline
+comparison succeeds. Coordinator authorizes F2 and a convicted F3 repair only,
+each in its own commit. F1b and F4 stay open; no speculative production repair.
+Presentation acceptance requires actual Home/Photos breadcrumb labels and real
+tag-cache delivery (not injected tag data) before selection/capture.
+
 ### Unit 2 covering set, registered before execution
 
 Unit 1 was independently rerun and accepted by the coordinator, authorizing its

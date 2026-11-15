@@ -122,6 +122,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         return nil
     }
+    func debugMatrixTagsReady() -> Bool {
+        guard let entry = entries.first(where: { $0.name == "Lofoten Dawn.jpg" }) else {
+            return false
+        }
+        return tagCache[cacheKey(for: entry)]?.contains(.orange) == true
+    }
     #endif
     /// The table row showing the entry at `index`, or nil if not currently displayed. O(1) via
     /// the reverse index (or the identity, when flat) instead of an O(n) scan of displayRows.

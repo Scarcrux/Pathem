@@ -32,6 +32,11 @@ final class BreadcrumbBar: NSView {
     /// In demo mode, breadcrumbs show the path from this fake root (labeled "Home"), hiding the
     /// real temp-directory prefix so screenshots look clean.
     static var demoRoot: URL?
+    #if DEBUG
+    var debugMatrixTitles: [String] {
+        stack.arrangedSubviews.compactMap { ($0 as? BreadcrumbSegment)?.title }
+    }
+    #endif
 
     override init(frame: NSRect) {
         super.init(frame: frame)

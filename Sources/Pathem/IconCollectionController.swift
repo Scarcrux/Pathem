@@ -365,6 +365,12 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         guard let path = paths.first, let index = entryIndex(at: path) else { return nil }
         return entries[index].name
     }
+    func debugMatrixTagsReady() -> Bool {
+        guard let entry = entries.first(where: { $0.name == "Lofoten Dawn.jpg" }) else {
+            return false
+        }
+        return decorations.tagColors(for: entry, in: directoryURL).contains(.orange)
+    }
     #endif
     private var baseIconSize: CGFloat { gallery ? 96 : 56 }
     private var iconSize: CGFloat { (baseIconSize * scale).rounded() }
@@ -560,6 +566,9 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     /// When grouping by tag, the newly-read tags change the buckets, so rebuild the sections
     /// (preserving selection); otherwise just redraw the dots.
     private func tagsDidChange() {
+        #if DEBUG
+        let matrixBefore = selectedEntries.map(\.name)
+        #endif
         if grouping == .tag {
             let names = Set(selectedEntries.map(\.name))
             rebuildSections()
@@ -569,6 +578,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         } else {
             collection.reloadData()
         }
+        #if DEBUG
+        LayoutMatrixGeometry.traceDecoration(
+            "icon-tag-reload", before: matrixBefore, after: selectedEntries.map(\.name))
+        #endif
     }
 
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
