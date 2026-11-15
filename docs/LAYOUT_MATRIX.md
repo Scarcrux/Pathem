@@ -124,6 +124,43 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### F5 repair criteria, registered before the instrument run
+
+Coordinator accepted F5 after independently comparing the three32-pair failing
+sets. Repair Icon and Column in separate commits. Keep Gallery unchanged and
+preserve tag-grouped Icon's existing structural path. Prefer updating visible
+decorations over a full data reload. Before each cosmetic callback, capture
+selection, first visible item, exact scroll origins and the count of callbacks
+actually delivered to PaneController. Column also captures column identities,
+active column, navigation generations and preview identity. After the callback,
+require identical selection/viewport/structure and zero pane selection callbacks.
+Aggregate these receipts into check6 and check7 for the cell. View-cycle check7
+exempts intentional mode navigation only; it still checks each decoration update.
+
+Red control: run the real matrix with this instrument and the original raw
+reloads, retaining any selection/viewport/callback side effects. After each view
+repair, its previously failing cells must stop losing selection, with no viewport
+movement or structural/preview mutation. After both, expect exactly eight failing
+pairs: F1b custom-sidebar check8 in both appearances, F4 Gallery terminal+torrent
+check4 in both, F6 Column terminal+torrent checks2/4 in both. F6 is an accepted
+known finding, no repair now. Only then create the exact known-findings baseline,
+run three times plus the three injection controls and affected existing suites.
+Coordinator now permits one make ci after those checks, but no Unit2 land.
+
+Instrument red control:134 cells,1120/1170 native exit1 in the retained
+`.build/layout-f5-instrument-red.log`. The existing22 setup, two view-cycle
+selection and eight accepted geometry failures remain; the new per-decoration
+viewport assertion additionally fails18 cells while raw Icon reload temporarily
+empties the visible items. Actual pane callback counter observes553 callbacks
+over setup/navigation (positive delivery control), with zero during cosmetic
+reloads. This proves that raw reload can silently clear native selection without
+a pane callback. Build0 after explicitly capturing the main-actor counter rather
+than an invalid nonisolated property default; the original compile failure is
+retained in `layout-f5-instrument-build.log`. No production F5 repair yet.
+Comparator controls9/9, preference-retention controls2/2 and completion/capture
+controls17/17 pass. The first direct completion-control invocation was refused
+for selecting Swiftly; the corrected invocation explicitly selects Xcode Swift.
+
 ### Review repair F3: empty Drop Stack allocation
 
 The populated-state control convicted the empty allocation: the same scroll view

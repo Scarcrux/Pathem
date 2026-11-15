@@ -1716,6 +1716,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "F3 verified in three frozen full134-cell native runs: empty/populated DropStack check2/check4 all28 PASS each after minimum20pt scroll allocation; F2 all14 compact check2 PASS each. Runs1137/1169 nativeexit1 at71.432s,74.442s,77.028s; exact failure sets identical32, no new/stale drift. Fifteen controls each, realHome/Photos, prefs unchanged/demo removed/no daemon each. Remaining22 Column setup selection losses plus2 own list->icon check6 failures reproduce three times with actual raw tagreload beforeBigSur/afterempty; F5 unresolved, no baseline. F1b andF4 retained, new Column paired-drawer label check2/4 needs triage. F3 own fix commit pending normalhooks. No makeci,land,install,deploy ordisplaychange."
     at = "2026-11-15T17:55:07Z"
 
+  [[mission.comment]]
+    text = "F5 accepted by coordinator, narrow Icon and Column fixes separately authorized; F6 Column paired-drawer label is known/no fix. Added actual per-decoration selection/viewport/structure snapshots and PaneController callback counter. Raw-reload red control134 cells native1120/1170 exit1,18 extra viewport failures from newly instrumented Icon reload effects; old22setup/2view-cycle/8geometry failures retained. Counter observes553 setup/navigation callbacks and zero during cosmetic reloads, proving silent native selection loss. Build0 after explicit actor-safe counter capture; original compile error retained. Comparator9/9, privacy2/2, completion/capture17/17 pass. No baseline yet; no land/install/deploy/displaychange. Coordinator permits one makeci after repaired three-run/injection/affected-suite gates."
+    at = "2026-11-15T18:03:33Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

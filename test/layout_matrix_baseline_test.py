@@ -42,6 +42,10 @@ class KnownFindingsTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare('LAYOUTMATRIX: FAIL fixture check6', {'findings': [dict(self.baseline['findings'][0], check=6)]})
 
+    def test_boolean_check_rejected(self):
+        with self.assertRaises(ValueError):
+            compare('LAYOUTMATRIX: FAIL fixture check1', {'findings': [dict(self.baseline['findings'][0], check=True)]})
+
 
 if __name__ == '__main__':
     unittest.main()

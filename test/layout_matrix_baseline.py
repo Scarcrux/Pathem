@@ -28,7 +28,7 @@ def compare(log, baseline):
         if not entry.get('id') or not entry.get('reason'):
             raise ValueError('Known findings require an ID and causal reason')
         key = (entry['cell'], entry['check'])
-        if not isinstance(entry['check'], int) or entry['check'] not in {1, 2, 3, 4, 5, 7, 8}:
+        if type(entry['check']) is not int or entry['check'] not in {1, 2, 3, 4, 5, 7, 8}:
             raise ValueError('Setup and unresolved selection failures cannot be baselined')
         if key in expected:
             raise ValueError('Duplicate baseline cell/check')

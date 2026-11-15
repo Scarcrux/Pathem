@@ -1923,6 +1923,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             self?.applySort(key: key, ascending: ascending, reveal: true)
         }
         content.onSelectionChanged = { [weak self] in
+            #if DEBUG
+            LayoutMatrixGeometry.selectionCallbacks += 1
+            #endif
             self?.updateStatus()
             self?.onSelectionChanged?()
         }

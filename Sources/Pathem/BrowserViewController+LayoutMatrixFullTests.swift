@@ -165,6 +165,7 @@ extension BrowserViewController {
         for cell in plan {
             autoreleasepool {
                 let label = cell.name + (cell.dark ? "-dark" : "-light")
+                let decorationStart = LayoutMatrixGeometry.decorationReceipts.count
                 LayoutMatrixGeometry.currentCell = label + "-setup"
                 // Every cell owns a fresh, settled baseline. No previous cell can
                 // donate its lost selection, drawer state, sidebar width or listing.
@@ -285,7 +286,9 @@ extension BrowserViewController {
                             && LayoutMatrixGeometry.sameSelection(expectedSelection, selection())
                         previous = next
                     }
-                    print("LAYOUTMATRIX: EXEMPT \(label) check7 view-cycle")
+                    print(
+                        "LAYOUTMATRIX: EXEMPT \(label) check7 intentional-view-navigation-only; decoration viewport still checked"
+                    )
                 }
                 if cell.cycle == "sizes" {
                     for index in [0, 2, 1] {
@@ -328,10 +331,18 @@ extension BrowserViewController {
                     label, 0, delivered, left.containerView,
                     "settled cell-local baseline; sidebar=\(cell.customWidth ? 250 : 200) breadcrumb=\(left.debugMatrixBreadcrumbTitles) tagsReady=\(left.debugMatrixTagsReady()),\(right.debugMatrixTagsReady()) populated=\(cell.populated) itemAreaHeight=\(shownItemAreaHeight)"
                 )
+                let decorations = LayoutMatrixGeometry.decorationReceipts.dropFirst(decorationStart)
+                let paneCallbacks = decorations.reduce(0) { $0 + $1.callbacks }
+                let decorationsKeptSelection = decorations.allSatisfy {
+                    $0.selectionKept && $0.structureKept && $0.callbacks == 0
+                }
+                let decorationsKeptViewport = decorations.allSatisfy {
+                    $0.viewportKept && $0.structureKept
+                }
                 if setupSelectionDelivered {
                     check(
-                        label, 6, selectionKept, left.containerView,
-                        "expected=\(expectedSelection) shown=\(shownSelection) restored=\(selection()) \(transitionReceipt)"
+                        label, 6, selectionKept && decorationsKeptSelection, left.containerView,
+                        "expected=\(expectedSelection) shown=\(shownSelection) restored=\(selection()) \(transitionReceipt) decorationUpdates=\(decorations.count) paneCallbacks=\(paneCallbacks) decorationSelectionKept=\(decorationsKeptSelection)"
                     )
                 } else {
                     print(
@@ -339,8 +350,8 @@ extension BrowserViewController {
                     )
                 }
                 check(
-                    label, 7, viewportKept, left.contentClipView,
-                    "before=\(String(describing: baseline)) after=\(String(describing: viewport()))"
+                    label, 7, viewportKept && decorationsKeptViewport, left.contentClipView,
+                    "before=\(String(describing: baseline)) after=\(String(describing: viewport())) decorationUpdates=\(decorations.count) decorationViewportKept=\(decorationsKeptViewport)"
                 )
                 if cell.panel != "none" {
                     check(
@@ -358,6 +369,9 @@ extension BrowserViewController {
         check(
             "full-transport-isolated", 0, !TorrentDaemonClient.shared.isRunning, view,
             "demo-only torrent geometry")
+        check(
+            "selection-callback-instrument", 0, LayoutMatrixGeometry.selectionCallbacks > 0, view,
+            "actual pane selection callbacks observed=\(LayoutMatrixGeometry.selectionCallbacks)")
         // Reset the host geometry before the shared native Rename regression control.
         window.setContentSize(defaultSize)
         layout()

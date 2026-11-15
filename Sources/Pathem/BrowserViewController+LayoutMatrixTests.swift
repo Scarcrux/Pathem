@@ -6,6 +6,39 @@ import PathemEngine
 @MainActor
 enum LayoutMatrixGeometry {
     static var currentCell = "sample"
+    static var selectionCallbacks = 0
+    struct DecorationState {
+        let names: [String]
+        let firstVisible: String?
+        let origins: [NSPoint]
+        let structure: [String]
+        let callbacks: Int
+    }
+    struct DecorationReceipt {
+        let selectionKept: Bool
+        let viewportKept: Bool
+        let structureKept: Bool
+        let callbacks: Int
+    }
+    static var decorationReceipts: [DecorationReceipt] = []
+    static func recordDecoration(_ kind: String, before: DecorationState, after: DecorationState) {
+        guard ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_TEST"] != nil else {
+            return
+        }
+        let receipt = DecorationReceipt(
+            selectionKept: before.names == after.names,
+            viewportKept: before.firstVisible == after.firstVisible
+                && before.origins == after.origins,
+            structureKept: before.structure == after.structure,
+            callbacks: after.callbacks - before.callbacks)
+        decorationReceipts.append(receipt)
+        traceDecoration(kind, before: before.names, after: after.names)
+        if !receipt.viewportKept || !receipt.structureKept || receipt.callbacks != 0 {
+            print(
+                "LAYOUTMATRIX: DECORATION-EFFECT \(currentCell) \(kind) viewportKept=\(receipt.viewportKept) structureKept=\(receipt.structureKept) paneCallbacks=\(receipt.callbacks)"
+            )
+        }
+    }
     static func traceDecoration(_ kind: String, before: [String], after: [String]) {
         guard ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_TEST"] != nil,
             before != after

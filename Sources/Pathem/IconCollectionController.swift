@@ -567,7 +567,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
     /// (preserving selection); otherwise just redraw the dots.
     private func tagsDidChange() {
         #if DEBUG
-        let matrixBefore = selectedEntries.map(\.name)
+        let matrixBefore = debugMatrixDecorationState()
         #endif
         if grouping == .tag {
             let names = Set(selectedEntries.map(\.name))
@@ -579,10 +579,21 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
             collection.reloadData()
         }
         #if DEBUG
-        LayoutMatrixGeometry.traceDecoration(
-            "icon-tag-reload", before: matrixBefore, after: selectedEntries.map(\.name))
+        if grouping != .tag {
+            LayoutMatrixGeometry.recordDecoration(
+                "icon-tag-reload", before: matrixBefore, after: debugMatrixDecorationState())
+        }
         #endif
     }
+
+    #if DEBUG
+    private func debugMatrixDecorationState() -> LayoutMatrixGeometry.DecorationState {
+        .init(
+            names: selectedEntries.map(\.name), firstVisible: debugMatrixFirstVisibleName(),
+            origins: [scrollView.contentView.bounds.origin], structure: [],
+            callbacks: LayoutMatrixGeometry.selectionCallbacks)
+    }
+    #endif
 
     func setClickBehavior(singleClick: Bool, underlineHover: Bool) {
         collection.singleClickToOpen = singleClick

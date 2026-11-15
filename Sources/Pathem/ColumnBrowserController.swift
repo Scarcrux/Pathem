@@ -172,21 +172,17 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private lazy var decorations: PaneDecorationCache = {
         let cache = PaneDecorationCache()
         cache.onTagsChanged = { [weak self] in
-            for column in self?.columns ?? [] {
-                #if DEBUG
-                let matrixBefore = column.table.selectedRowIndexes.compactMap {
-                    column.entries.indices.contains($0) ? column.entries[$0].name : nil
-                }
-                #endif
+            guard let self else { return }
+            #if DEBUG
+            let matrixBefore = self.debugMatrixDecorationState()
+            #endif
+            for column in self.columns {
                 column.table.reloadData()
-                #if DEBUG
-                let matrixAfter = column.table.selectedRowIndexes.compactMap {
-                    column.entries.indices.contains($0) ? column.entries[$0].name : nil
-                }
-                LayoutMatrixGeometry.traceDecoration(
-                    "column-tag-reload", before: matrixBefore, after: matrixAfter)
-                #endif
             }
+            #if DEBUG
+            LayoutMatrixGeometry.recordDecoration(
+                "column-tag-reload", before: matrixBefore, after: self.debugMatrixDecorationState())
+            #endif
         }
         return cache
     }()
@@ -196,6 +192,19 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private func refreshColumnTags() {
         decorations.refreshTags(groups: columns.map { (entries: $0.entries, directory: $0.folder) })
     }
+
+    #if DEBUG
+    private func debugMatrixDecorationState() -> LayoutMatrixGeometry.DecorationState {
+        .init(
+            names: selectedEntries.map(\.name), firstVisible: debugMatrixFirstVisibleName(),
+            origins: [outerScroll.contentView.bounds.origin]
+                + columns.map { $0.scroll.contentView.bounds.origin },
+            structure: columns.map { $0.id.uuidString } + [
+                String(activeColumn), String(folderOpenGeneration), String(columnWorkGeneration),
+                previewColumn.map { String(describing: ObjectIdentifier($0)) } ?? "no-preview",
+            ], callbacks: LayoutMatrixGeometry.selectionCallbacks)
+    }
+    #endif
 
     /// Git working-tree states keyed by absolute path; drives the per-name status letter.
     private var gitStates: [String: GitFileState] = [:]
