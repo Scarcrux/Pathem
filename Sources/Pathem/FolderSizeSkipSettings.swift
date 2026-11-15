@@ -8,6 +8,9 @@ enum FolderSizeSkipSettings {
     static let changed = Notification.Name("PathemFolderSizeSkipSettingsChanged")
     private(set) static var enabled = true
     private(set) static var userRules: [String] = []
+    /// The demo workspace lives under the system temporary folder, which would otherwise mark
+    /// every folder in it as "temporary" and leave the tour's size column full of dashes.
+    static var demoRoot: String?
 
     static func apply(_ prefs: Preferences) {
         let rules = FolderSizeSkip.rules(from: prefs.folderSizeExclusions)
@@ -29,6 +32,9 @@ enum FolderSizeSkipSettings {
     static func reason(for path: String) -> FolderSizeSkip.Reason? {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         let reason = FolderSizeSkip.reason(for: path, home: home, userRules: userRules)
+        if reason == .temporary, let demoRoot, path == demoRoot || path.hasPrefix(demoRoot + "/") {
+            return nil
+        }
         return enabled || reason == .excluded ? reason : nil
     }
 

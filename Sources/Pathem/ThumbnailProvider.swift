@@ -59,15 +59,26 @@ final class ThumbnailProvider {
         // QuickLook thumbnailing depends on an XPC agent that a headless automation/CI session
         // lacks; there the framework traps ("BUG IN CLIENT OF ..." on a background thread).
         // Thumbnails aren't under test in that mode, so skip generation and leave the type icon.
-        if PathemApp.isAutomationLaunch { return }
+        // A staged website screenshot (PATHEM_SITE_SHOT) runs in a real login session and exists
+        // to show thumbnails, so it is the one automation launch that generates them.
+        if PathemApp.isAutomationLaunch,
+            ProcessInfo.processInfo.environment["PATHEM_SITE_SHOT"] == nil
+        {
+            return
+        }
         let cacheKey = key(url, size)
         if let hit = cache.object(forKey: cacheKey as NSString) {
             completion(hit)
             return
         }
         if noPreview.object(forKey: cacheKey as NSString) != nil { return }  // known: no preview
+        // At list-row sizes a bare content thumbnail of a text document is a blank white
+        // square. The icon representation (the page with its folded corner, as Finder draws
+        // it) stays recognisable; larger sizes keep the plain content thumbnail.
+        let small = max(size.width, size.height) <= 32
         let request = QLThumbnailGenerator.Request(
-            fileAt: url, size: size, scale: scale, representationTypes: .thumbnail)
+            fileAt: url, size: size, scale: scale,
+            representationTypes: small ? .icon : .thumbnail)
         // Boxed into Delivery below anyway (@unchecked Sendable, main-actor-only); shadow
         // here too so capturing it into this already-@Sendable callback doesn't also warn.
         nonisolated(unsafe) let completion = completion

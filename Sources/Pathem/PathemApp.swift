@@ -100,6 +100,7 @@ enum PathemApp {
         let shotRun =
             ProcessInfo.processInfo.environment["PATHEM_VIEW_SHOT"] != nil
             || ProcessInfo.processInfo.environment["PATHEM_MAIN_SHOT"] != nil
+            || ProcessInfo.processInfo.environment["PATHEM_SITE_SHOT"] != nil
         let windowType: NSWindow.Type = shotRun ? AlwaysKeyWindow.self : NSWindow.self
         let window = windowType.init(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
@@ -670,6 +671,52 @@ enum PathemApp {
             }
             app.run()
             return
+        }
+
+        // A staged marketing composition over the demo workspace (PATHEM_SITE_SHOT=<name>, with
+        // PATHEM_DEMO=1). PATHEM_SITE_OUT is the PNG path; PATHEM_SITE_SIZE=<w>x<h> in points;
+        // PATHEM_SITE_CAPTURE=screen takes a composited screencapture of this window (needs a
+        // capture-entitled parent such as Terminal), otherwise the window is rendered in-process
+        // at 2x. PATHEM_SITE_SETTLE=<seconds> is how long thumbnails get before the capture.
+        if let shot = ProcessInfo.processInfo.environment["PATHEM_SITE_SHOT"], let demoLayout {
+            let env = ProcessInfo.processInfo.environment
+            let out = env["PATHEM_SITE_OUT"] ?? capturePath("site-\(shot).png")
+            let parts = (env["PATHEM_SITE_SIZE"] ?? "1280x852").split(separator: "x").compactMap {
+                Double($0)
+            }
+            let size =
+                parts.count == 2
+                ? NSSize(width: parts[0], height: parts[1]) : NSSize(width: 1280, height: 852)
+            window.setFrame(NSRect(origin: NSPoint(x: 80, y: 80), size: size), display: true)
+            let settle = env["PATHEM_SITE_SETTLE"].flatMap(Double.init) ?? 6
+            let number = window.windowNumber
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                browser.debugStageSiteShot(shot, demo: demoLayout) {
+                    // An inactive window is captured with grey traffic lights and dimmed text.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + settle - 0.6) {
+                        NSApp.activate(ignoringOtherApps: true)
+                        window.makeKeyAndOrderFront(nil)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + settle) {
+                        print("SITE SHOT layout: \(browser.debugBrowserHeights())")
+                        // The floating quick-actions bar follows the selection and would sit
+                        // on top of the content a composition is meant to show. The icons
+                        // shot keeps it: there it floats in empty space below the grid.
+                        if shot != "icons" { browser.debugHideQuickBar() }
+                        if env["PATHEM_SITE_CAPTURE"] == "screen" {
+                            let capture = Process()
+                            capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+                            capture.arguments = ["-x", "-o", "-l\(number)", out]
+                            try? capture.run()
+                            capture.waitUntilExit()
+                            print("SITE SHOT (screen): \(out) exit=\(capture.terminationStatus)")
+                        } else {
+                            browser.debugRenderWindowAt2x(to: out)
+                        }
+                        exit(0)
+                    }
+                }
+            }
         }
 
         // Live screenshot of the real main window (PATHEM_MAIN_SHOT=1). Navigation runs on
@@ -2007,7 +2054,7 @@ enum PathemApp {
         for name in [
             "Sunset.png", "Coastline.png", "Forest.png", "Mountains.png", "City.png", "Desert.png",
         ] {
-            if let data = DemoWorkspace.landscapePNG(named: name, side: 256) {
+            if let data = DemoArt.landscapePNG(named: name, side: 256) {
                 try? data.write(to: dir.appendingPathComponent(name))
             }
         }

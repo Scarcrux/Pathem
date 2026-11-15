@@ -10,10 +10,12 @@ extension BrowserViewController {
     /// right, so the gallery + tags are visible straight away).
     func loadDemoWorkspace() {
         let layout = DemoWorkspace.build()
+        FolderSizeSkipSettings.demoRoot = layout.root.path
         view.window?.makeKeyAndOrderFront(nil)
         leftTabs.activePane?.navigate(to: layout.leftStart)
         rightTabs.activePane?.navigate(to: layout.rightStart)
-        activePane?.flashStatus(L("demo.loaded", "Loaded the demo workspace. Your real files are untouched."))
+        activePane?.flashStatus(
+            L("demo.loaded", "Loaded the demo workspace. Your real files are untouched."))
     }
 
     /// Offer the demo once, on first run, but only after Full Disk Access is granted so it never
@@ -28,7 +30,8 @@ extension BrowserViewController {
         alert.messageText = L("demo.offerTitle", "New to Pathem?")
         alert.informativeText = L(
             "demo.offerBody",
-            "Load a demo workspace to explore the dual panes, tags, and views with safe sample files. Nothing touches your real files.")
+            "Load a demo workspace to explore the dual panes, tags, and views with safe sample files. Nothing touches your real files."
+        )
         alert.addButton(withTitle: L("demo.offerLoad", "Load Demo"))
         alert.addButton(withTitle: L("demo.offerSkip", "Not Now"))
         alert.beginSheetModal(for: window) { [weak self] response in

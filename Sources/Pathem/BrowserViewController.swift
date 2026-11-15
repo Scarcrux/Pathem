@@ -297,6 +297,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     init(start: URL, demo: DemoWorkspace.Layout? = nil, persistsSession: Bool = true) {
         demoLayout = demo
+        if let demo { FolderSizeSkipSettings.demoRoot = demo.root.path }
         self.persistsSession = persistsSession
         leftTabs = TabbedPaneController(start: demo?.leftStart ?? start)
         rightTabs = TabbedPaneController(start: demo?.rightStart ?? start)
