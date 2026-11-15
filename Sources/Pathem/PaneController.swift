@@ -91,6 +91,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// the bar as the list scrolls).
     var selectionRectInWindow: NSRect? { content.selectionRectInWindow() }
     var contentClipView: NSClipView { content.scrollView.contentView }
+    #if DEBUG
+    func debugMatrixFirstVisibleName() -> String? {
+        if let list = content as? FileListController { return list.debugMatrixFirstVisibleName() }
+        return nil  // Unit 1 viewport checks are list-only; view switches are exempt.
+    }
+    #endif
     func setHiddenContextItems(_ ids: Set<String>) {
         lastHiddenContextItems = ids
         content.setHiddenContextItems(ids)

@@ -1696,6 +1696,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Unit 1 launch isolation implemented after accepted bd48b24 contract. Lock-held debug build0; bounded caffeinated real site-shot terminal probe0: existing/outside demo roots refused2/2; missing/unsafe matrix config roots refused2/2; requested unique demo used and removed; real capture inspected; full before/after Pathem and com.scarcrux.pathem defaults exports unchanged. Display5120x1440 read only. Earlier instrument failures retained (Swiftly PATH preflight, var/private-var path spelling), then corrected. First isolation-only commit before harness; no install, deploy, full matrix or land."
     at = "2026-11-15T16:17:06Z"
 
+  [[mission.comment]]
+    text = "Layout matrix Unit1 validation PASS, not full53.2 completion. Separate isolationa436a80 verified; final three-cell clean native45/45 exit0,15 predicate controls pass. Genuine old-code injections delivered: terminal native41/48 exit1 at check1 plus7/8; icon43/69 exit1 at checks2/4 (13labels); initial Rename44/45 exit1 at check2,71pt accessory versus74pt. Drivers correctly accept expected RED, never call those native PASS. Both-pane selection/viewport and frame restoration measured; view-switch viewport exempt by design. All final defaults exports unchanged, demo roots removed, no conflict logs; captures inspected. Initial compile/delivery/ambiguity/text-measurement instrument failures retained in docs/LAYOUT_MATRIX.md; allowed truncation discriminated with plain/decorated good/short controls, no tolerance increase. Debug build0, Python compilation and diff check0. No full matrix/fullE2E/package/Release/install/deploy/display change/land. Private commits for review, stop for coordinator acknowledgment before Unit2."
+    at = "2026-11-15T16:32:56Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

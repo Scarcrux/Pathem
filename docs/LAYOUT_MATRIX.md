@@ -145,6 +145,73 @@ instead of Xcode (fixed by selecting Xcode's PATH), and `/var` versus
 Neither is claimed as a product failure. Abrupt termination such as SIGKILL cannot
 run an exit handler; the runner retains its private scratch on failure.
 
+### Unit 1 three-cell validation verdict
+
+Implemented on the private codex-2 branch following isolation commit `a436a80`.
+No full-matrix expansion, application install, site deployment, display change,
+or land is authorized by this receipt. Full E2E scenario admission is Unit 2;
+the matrix configuration-root refusal probes are already wired in Unit 1.
+
+Run the bounded sample with the shared native lock and awake-display assertion:
+
+```
+caffeinate -d -i lockf -k /tmp/commandem-swift-build.lock \
+  python3 test/layout_matrix_sample.py clean
+```
+
+Replace `clean` with each injection name for the regression controls. Each launch
+contains exactly `default-list`, `default-icon`, and `default-list-terminal`, all
+at 1100x700 in dark appearance. The initial Rename sheet is an additional
+regression control, not a fourth browser cell or a full dialog matrix. It uses
+the production Rename factory and compares the suggestion button against the
+accessory's allocated bounds before pumping the next event-loop turn.
+
+| Criterion | Actual final evidence | Verdict |
+|---|---|---|
+| Predicate controls discriminate | All 15 pass in each launch: known-good/restored tree; collapsed region, outside control, overlapping siblings and short label each fail only their named predicate; real under-constrained region fails check 5 then passes with the missing position constraint; positive/negative selection, viewport and reversibility; plain/decorated single-line truncation and too-short counterparts | PASS |
+| Clean three cells | Native exit 0, 45/45; geometry checks 1-5 in each cell; both panes' selection and first visible entry survive the applicable transitions; panel frames restore within 2pt | PASS |
+| Terminal collapse injection | Native exit 1, 41/48; actual skipped adjustSubviews receipt; terminal cell fails check 1 (including 0pt sidebar/terminal), plus check 7 and restored checks 7/8 | PASS, expected native RED |
+| Icon label injection | Native exit 1, 43/69; original point-size allocation receipt; icon cell fails checks 2 and 4 for 13 labels, 32pt labels extend 4pt outside their 92pt cells | PASS, expected native RED |
+| Accessory injection | Native exit 1, 44/45; attached-remeasurement skip receipts; initial Rename fails check 2, accessory 71pt versus clean 74pt | PASS, expected native RED |
+| Constraint log check | No constraint-conflict lines in the merged process streams, including startup/sheet presentation; actual ambiguity control separately discriminates check 5 | PASS |
+| Launch isolation on all four final runs | Complete defaults-domain exports unchanged; unique demo removed even on native exit 1; exactly three browser-cell receipts per run | PASS |
+
+The Python driver's exit 0 for an injection means the expected red result was
+observed, not that the native application passed. Raw native exits and logs are
+retained. View-switch viewport checks are explicitly EXEMPT by contract; no
+other skipped matrix assertion is claimed. No new product layout defect was
+convicted by the final clean three-cell sample.
+
+Final evidence directories under system temporary storage (private, mode 0700):
+`pathem-matrix-clean-79yomixi`, `pathem-matrix-terminal-collapse-a1u0tddo`,
+`pathem-matrix-icon-label-short-h_y6nhy9`,
+`pathem-matrix-accessory-short-ue16lyfg`. Each contains `native.log`, complete
+before/after defaults dumps, and actual window PNGs. Failed checks write named
+captures; the Rename failure also captures its own sheet. Clean terminal, red
+icon and red Rename captures were inspected. These in-process renders are for
+geometry evidence only, not approval of material/pixel fidelity.
+
+Instrument corrections, with original failures retained: first harness build
+failed on an inferred NSClipView-only array, corrected to NSView. Demo tabs are
+opened asynchronously, so startup awaits tab delivery; navigation awaits the
+actual requested entry, not merely a changed URL with the old entry count.
+The ambiguity control now lives in a native window with width/height/leading
+constraints and no vertical position; adding the missing top constraint really
+restores it. An unbounded-height NSTextFieldCell measurement falsely requested
+32pt for single-line truncating attributed table names with wraps=false, even
+on a copied cell set to single-line mode. The contract explicitly permits their
+horizontal truncation: these use attributed one-line font/attachment metrics;
+wrapped icon labels retain width-constrained cell measurement, intersected with
+their parent's allocated vertical area. Four plain/decorated good/short controls
+discriminate that policy; no tolerance was increased or failing product cell
+skipped. Earlier receipts include `pathem-matrix-clean-tziuex8c`,
+`pathem-matrix-clean-5p1ex5lm`, and `pathem-matrix-clean-0u1z42ts`.
+
+Final debug build exited 0 under the shared lock. Python compilation and
+`git diff --check` passed. Full matrix, full product E2E, packaged E2E and Release
+build are NOT RUN for this sample-only unit. Ordinary commit hook results are
+reported separately on the board. Unit 2 waits for coordinator acknowledgment.
+
 The full matrix will probably find real defects. For each: do not loosen the check to get
 to green. Record the receipt, convict the mechanism, fix it in its own commit with the
 cell as its regression test, or record it as an open finding on Mission 53 if the fix is

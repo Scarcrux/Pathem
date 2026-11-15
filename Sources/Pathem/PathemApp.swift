@@ -308,6 +308,13 @@ enum PathemApp {
         if ProcessInfo.processInfo.environment["PATHEM_LAYOUT_UI_TEST"] != nil {
             browser.runLayoutUIAutomation()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_TEST"] != nil {
+            guard let demoLayout else {
+                print("RESULT: FAIL layout matrix requires PATHEM_DEMO=1")
+                exit(64)
+            }
+            browser.runLayoutMatrixAutomation(demo: demoLayout)
+        }
         if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_UI_TEST"] != nil {
             browser.runTransientUIAutomation()
         }

@@ -54,7 +54,15 @@ extension BrowserViewController {
         // space. On macOS 27.2.1 both halves were left at zero height (a blank window), and
         // setPosition cannot recover from that; hiding again did not give the browser its
         // space back either. Ask the split to lay its subviews out again first.
+        #if DEBUG
+        if LayoutMatrixGeometry.injection == "terminal-collapse" {
+            print("LAYOUTMATRIX: INJECT terminal-collapse skipping adjustSubviews")
+        } else {
+            vSplit.adjustSubviews()
+        }
+        #else
         vSplit.adjustSubviews()
+        #endif
         if !PathemApp.isAutomationLaunch {
             UserDefaults.standard.set(show, forKey: "pathem.terminalVisible")
         }

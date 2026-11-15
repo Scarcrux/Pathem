@@ -111,6 +111,18 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         }
         return index
     }
+    #if DEBUG
+    func debugMatrixFirstVisibleName() -> String? {
+        let range = tableView.rows(in: tableView.visibleRect)
+        guard range.location != NSNotFound else { return nil }
+        for row in range.location..<(range.location + range.length) {
+            if let index = entryIndex(forRow: row), entries.indices.contains(index) {
+                return entries[index].name
+            }
+        }
+        return nil
+    }
+    #endif
     /// The table row showing the entry at `index`, or nil if not currently displayed. O(1) via
     /// the reverse index (or the identity, when flat) instead of an O(n) scan of displayRows.
     private func row(forEntryIndex index: Int) -> Int? {

@@ -37,6 +37,12 @@ final class MeasuredAccessoryView: NSView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         guard window != nil else { return }
+        #if DEBUG
+        if LayoutMatrixGeometry.injection == "accessory-short" {
+            print("LAYOUTMATRIX: INJECT accessory-short skipping attached remeasurement")
+            return
+        }
+        #endif
         resizeToFit()
         DispatchQueue.main.async { [weak self] in
             guard let self, self.window != nil else { return }

@@ -365,6 +365,14 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         // Room for two full lines of the name under the icon: 4 pt above the icon, 4 pt between
         // icon and name, and the font's real line height (twice the point size is 2 to 4 pt
         // short, which cut the bottom off the second line).
+        #if DEBUG
+        if LayoutMatrixGeometry.injection == "icon-label-short" {
+            print("LAYOUTMATRIX: INJECT icon-label-short restoring point-size allocation")
+            return gallery
+                ? NSSize(width: side + 54, height: side + max(54, ceil(labelFontSize * 2) + 8))
+                : NSSize(width: side + 40, height: side + max(36, ceil(labelFontSize * 2) + 8))
+        }
+        #endif
         let lineHeight = NSLayoutManager().defaultLineHeight(
             for: .systemFont(ofSize: labelFontSize))
         let labelRoom = 8 + ceil(lineHeight * 2) + 2
