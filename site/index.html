@@ -467,14 +467,7 @@
     </div>
 
     <figure class="window reveal">
-      <div class="titlebar">
-        <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-        <span class="path">1,000,000 rows &middot; only the visible cells are materialized</span>
-      </div>
-      <video id="gate-a-demo" autoplay muted loop playsinline controls preload="auto" aria-label="Pathem smoothly scrolling its real file list through one million synthetic rows">
-        <source src="/assets/gate-a-1M.mp4" type="video/mp4" />
-        <img src="/assets/hero.webp" alt="Pathem dual-pane window: a Projects list on the left, a Photos gallery on the right, and a customizable sidebar" width="1280" height="852" />
-      </video>
+      <img src="/assets/hero.webp?v=2" alt="Pathem dual-pane window: a Projects folder as a list with folder sizes and dates on the left, a photo library in gallery view with a large preview and filmstrip on the right, and a customizable sidebar" width="1440" height="900" loading="eager" fetchpriority="high" />
     </figure>
   </section>
 
@@ -484,6 +477,23 @@
     <div class="stat"><b>0</b><span>electron</span></div>
     <div class="stat"><b>100%</b><span>on-device ai</span></div>
     <div class="stat"><b>MIT</b><span>open source at launch</span></div>
+  </section>
+
+  <section class="sec wrap" id="scale">
+    <div class="sec-head">
+      <span class="eyebrow">~/scale</span>
+      <h2>A million rows, still smooth</h2>
+      <p>This is the real file list scrolling through one million rows. Only the cells on screen are ever built, so a folder with a million items moves like one with ten.</p>
+    </div>
+    <figure class="window reveal">
+      <div class="titlebar">
+        <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+        <span class="path">1,000,000 rows &middot; only the visible cells are materialized</span>
+      </div>
+      <video id="gate-a-demo" autoplay muted loop playsinline controls preload="metadata" aria-label="Pathem smoothly scrolling its real file list through one million synthetic rows">
+        <source src="/assets/gate-a-1M.mp4" type="video/mp4" />
+      </video>
+    </figure>
   </section>
 
   <section class="sec wrap" id="clipboard">
@@ -591,7 +601,7 @@
     <div class="feature-shots">
     <figure class="feature-shot reveal">
       <div class="window">
-      <img src="/assets/view-torrent.webp" width="1100" height="692" loading="lazy" alt="Pathem's built-in torrent client: a transfer drawer below the dual-pane browser lists five torrents (Ubuntu and Blender downloading, Debian and an Internet Archive set seeding, Fedora paused), each with progress, down and up speed, ETA, ratio, peers, and status." />
+      <img src="/assets/view-torrent.webp?v=2" width="1440" height="900" loading="lazy" alt="Pathem's built-in torrent client: a transfer drawer below the dual-pane browser lists five torrents (Ubuntu and Blender downloading, Debian and an Internet Archive set seeding, Fedora paused), each with progress, down and up speed, ETA, ratio, peers, and status." />
       </div>
       <figcaption>
         <h3>BitTorrent, built in</h3>
@@ -600,7 +610,7 @@
     </figure>
     <figure class="feature-shot reveal">
       <div class="window">
-      <img src="/assets/view-remote.webp" width="1100" height="692" loading="lazy" alt="Pathem browsing the network: one pane lists discovered hosts (living-room-nas, media-server, OrbStack, Studio-Mac), the other shows a photo gallery, and the sidebar holds favorites, network locations, iCloud Drive, Dropbox, volumes, and smart folders." />
+      <img src="/assets/view-remote.webp?v=2" width="1440" height="900" loading="lazy" alt="Pathem browsing the network: one pane lists discovered hosts (living-room-nas, media-server, Studio-Mac), the other shows a Documents folder, and the sidebar holds favorites, network locations, iCloud Drive, Dropbox, volumes, and smart folders." />
       </div>
       <figcaption>
         <h3>Remote and network browsing</h3>
@@ -609,7 +619,7 @@
     </figure>
     <figure class="feature-shot reveal">
       <div class="window">
-      <img src="/assets/view-terminal.webp" width="1280" height="872" loading="lazy" alt="Pathem's embedded terminal docked below the dual-pane browser, running sw_vers and swift --version and showing the macOS and Swift versions at a shell prompt that follows the active folder." />
+      <img src="/assets/view-terminal.webp?v=2" width="1440" height="900" loading="lazy" alt="Pathem's embedded terminal docked below the dual-pane browser, showing git status for the project in the active pane (two modified files and one untracked) and the Swift version, at a shell prompt that follows the active folder." />
       </div>
       <figcaption>
         <h3>A terminal that follows your folder</h3>
@@ -622,7 +632,7 @@
         <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
         <span class="path">Project Brief.pdf &middot; Markup</span>
       </div>
-      <img src="/assets/view-markup.webp" width="1020" height="616" loading="lazy" alt="A PDF open in Pathem's markup viewer: a line of the document is highlighted in yellow, a red arrow points to it, and a blue sticky note sits in the margin. Highlight, draw, add shapes and notes, sign, and save, all without leaving the file manager." />
+      <img src="/assets/view-markup.webp?v=2" width="1440" height="900" loading="lazy" alt="A PDF open in Pathem's markup viewer: a line of the document is highlighted in yellow, a red arrow points to it, and a blue sticky note sits in the margin. Highlight, draw, add shapes and notes, sign, and save, all without leaving the file manager." />
       </div>
       <figcaption>
         <h3>PDF markup without leaving Pathem</h3>
@@ -660,19 +670,19 @@
       </div>
       <div class="frames">
         <div class="frame active" role="tabpanel" id="frame-list" aria-labelledby="tab-list">
-          <img src="/assets/view-list.webp" alt="Pathem list view: a Projects list beside a Photos gallery pane" width="1280" height="852" loading="eager" />
+          <img src="/assets/view-list.webp?v=2" alt="Pathem list view: a Projects folder with sizes, dates and a colour tag, beside a photo library in gallery view" width="1440" height="900" loading="eager" />
         </div>
         <div class="frame" role="tabpanel" id="frame-icons" aria-labelledby="tab-icons" aria-hidden="true">
-          <img src="/assets/view-icons.webp" alt="Pathem icon view: a grid of photo thumbnails in the Photos folder" width="1280" height="852" loading="lazy" />
+          <img src="/assets/view-icons.webp?v=2" alt="Pathem icon view: a grid of photo thumbnails with colour tags, beside a Documents folder in list view" width="1440" height="900" loading="lazy" />
         </div>
         <div class="frame" role="tabpanel" id="frame-gallery" aria-labelledby="tab-gallery" aria-hidden="true">
-          <img src="/assets/view-gallery.webp" alt="Pathem gallery view: one large photo preview above a filmstrip of the rest of the folder" width="1280" height="852" loading="lazy" />
+          <img src="/assets/view-gallery.webp?v=2" alt="Pathem gallery view: one large photo preview above a filmstrip of the rest of the folder, beside a project's files" width="1440" height="900" loading="lazy" />
         </div>
         <div class="frame" role="tabpanel" id="frame-columns" aria-labelledby="tab-columns" aria-hidden="true">
-          <img src="/assets/view-columns.webp" alt="Pathem column view: the Photos folder as a column beside a preview column showing a thumbnail and file details" width="1280" height="852" loading="lazy" />
+          <img src="/assets/view-columns.webp?v=2" alt="Pathem column view: a project's Assets folder as a column beside a preview column showing the selected image and its details" width="1440" height="900" loading="lazy" />
         </div>
         <div class="frame" role="tabpanel" id="frame-tree" aria-labelledby="tab-tree" aria-hidden="true">
-          <img src="/assets/view-tree.webp" alt="Pathem tree view: the home folder as an expandable outline with Music, Photos, and Projects expanded in place" width="1280" height="852" loading="lazy" />
+          <img src="/assets/view-tree.webp?v=2" alt="Pathem tree view: a Projects folder as an expandable outline with two projects opened in place, beside a photo grid" width="1440" height="900" loading="lazy" />
         </div>
       </div>
     </figure>
