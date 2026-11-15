@@ -1517,6 +1517,32 @@ extension BrowserViewController {
         check(
             "automation-launch-detected", PathemApp.isAutomationLaunch && !self.persistsSession,
             "isAutomation=\(PathemApp.isAutomationLaunch) primaryPersists=\(self.persistsSession)")
+        // Exercise the production classifier without launching an unsafe process
+        // under a formerly missed flag or writing any owner preferences.
+        for flag in [
+            "PATHEM_E2E", "PATHEM_FILES_E2E", "PATHEM_WEBDAV_E2E",
+            "PATHEM_SMOKE", "PATHEM_TORRENTS_SMOKE", "PATHEM_AI_SMOKE",
+            "PATHEM_TRIM_SMOKE", "PATHEM_MULTIWINDOW_SMOKE", "PATHEM_SLIDESHOW_SMOKE",
+            "PATHEM_L10N_SMOKE", "PATHEM_GATE_A", "PATHEM_GATE_A_DEMO",
+            "PATHEM_LAYOUT_MATRIX_TEST", "PATHEM_SITE_SHOT", "PATHEM_CHROME_RENDER",
+            "PATHEM_CONFLICT_PREVIEW",
+        ] {
+            check(
+                "automation-family-\(flag)", PathemApp.isAutomationLaunch(environment: [flag: "1"]),
+                "injected dictionary; must be isolated")
+        }
+        for flag in [
+            "PATHEM_DEMO", "PATHEM_CONFIG_DIR", "PATHEM_GATE_A_SECONDS",
+            "PATHEM_GATE_A_FRAMES_DIR", "OTHER_APP_SMOKE",
+        ] {
+            check(
+                "interactive-option-\(flag)",
+                !PathemApp.isAutomationLaunch(environment: [flag: "1"]),
+                "interactive option must not imply automation")
+        }
+        check(
+            "interactive-empty-environment", !PathemApp.isAutomationLaunch(environment: [:]),
+            "normal launch")
         // Duplicate Tab (the tab right-click action): a new tab opens at the same folder. Close it
         // again to leave the tab set as it was.
         if let dupURL = leftTabs.activePane?.currentURL {

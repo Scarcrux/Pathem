@@ -300,10 +300,7 @@ extension BrowserViewController {
 
     func updateDownloadSuggestions() {
         // Test launches must never observe the owner's Downloads folder.
-        let testing = ProcessInfo.processInfo.environment.keys.contains {
-            $0.hasPrefix("PATHEM_") && ($0.hasSuffix("_TEST") || $0 == "PATHEM_SMOKE")
-        }
-        if prefs.downloadSuggestionsEnabled, demoLayout == nil, !testing {
+        if prefs.downloadSuggestionsEnabled, demoLayout == nil, !PathemApp.isAutomationLaunch {
             downloadSuggestions.start(feedbackURL: Self.organizeFeedbackURL)
         } else {
             downloadSuggestions.stop()

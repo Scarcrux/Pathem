@@ -124,6 +124,87 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Full-CI isolation follow-up: criteria and call-site audit
+
+First full CI: make exit0 (826 tests/168 suites; debug E2E68 pass/1 skip/0 fail;
+packaged14/14), independent preference wrapper exit1. The browser-flow pixel
+skip says cached pixels were rejected and native appearance is unverified.
+Exactly three keys changed in the unbundled `Pathem` domain: main-window frame
+and table columns v3 instances1/2. The installed-app domain was unchanged.
+The original matcher omits `_E2E`, `_SMOKE` except exact `PATHEM_SMOKE`, and
+GateA/GateADemo. Coordinator authorizes a separate isolation repair, conditional
+three-key restoration, and one CI rerun, retaining both original outcomes.
+
+All production `isAutomationLaunch` uses before widening:
+
+| File and guard | Newly matched launches and effect |
+|---|---|
+| `PathemApp.swift`: demo root | Any newly matched flag combined with demo mode gets its own temporary root; interactive demo alone stays interactive. |
+| `PathemApp.swift`: primary `persistsSession` | UI E2E and AI/torrent/trim/multiwindow/slideshow smoke no longer restore/save the owner's session. Early localization, GateA and engine E2E dispatches return before this path. |
+| `PathemApp.swift`: frame restoration and autosave (two sites) | Those UI launches use deterministic default geometry and never register owner frame autosave. |
+| `PathemApp.swift`: AppRelaunch watcher | Those UI launches no longer watch the installed bundle for relaunch. No harness depends on this watcher. |
+| `DynamicMenus`: terminal restoration | Newly matched UI launches do not restore the owner's terminal drawer. Tests explicitly stage the drawers they exercise. |
+| `PreferencesPanel`: compact tooltip and tooltip preferences (two sites) | Newly matched UI launches leave tooltip defaults alone. |
+| `FileListController`: column autosave | GateA/GateADemo and UI E2E/smoke lists do not read/write owner column layouts. |
+| `CommanderTerminal`: terminal persistence | Newly matched UI launches do not persist terminal visibility. |
+| `RemoteTransfer`: session scratch | Newly matched GUI transfers use the already validated temporary config root when present. Engine E2E providers use their own private fixtures. |
+| `ThumbnailProvider`: generation guard | Newly matched launches use type icons instead of asynchronous thumbnails. None asserts thumbnail pixels: GateA uses synthetic rows; UI E2E captures geometry/pixel sanity; AI/torrent/trim drive their own functions. Existing SITE_SHOT thumbnail exception stays unchanged. |
+| `TrashRetentionController`: scheduling | Newly matched UI launches cannot schedule owner-trash retention. |
+
+Test references in Smoke and ViewOptions assert automation; the UIAutomation
+reference is a comment. A separate Downloads matcher in PreferencesPanel only
+recognizes `_TEST`/exact smoke; reuse the unified matcher so newly matched UI
+launches also avoid observing Downloads. The independent Workspaces rule-watcher
+guard does not use this matcher and is unchanged. Its rules come from the scratch
+configuration in these launches.
+
+Multiwindow smoke's old assertion expects the primary to persist the owner
+session. It must instead require an isolated automation primary and secondary;
+the existing Smoke probe explicitly constructs an interactive primary to test
+normal session ownership. This corrects a harness assumption rather than adding
+an exception that writes owner state. No thumbnail exception is needed by these
+harnesses.
+
+Before widening, run safe Smoke controls against the original matcher with
+injected environment dictionaries. All real families must match; interactive
+demo/config/GateA-duration/frame-directory options, foreign prefixes and empty
+environment must not. This must go RED for omitted families without launching
+an unsafe flag against owner preferences. After widening, the controls and real
+formerly missed launches must pass with both defaults domains unchanged. Restore
+only the three authorized keys, each only while its current value equals the
+captured post-CI value; verify and delete the private snapshots. Run the second
+authorized full CI with the same independent preference check, reporting both
+make and wrapper exits. No Unit2 land is authorized.
+
+The first safe matcher control really fails11 omitted-family checks with native
+exit1 while both defaults domains remain unchanged. The first widened-matcher
+probe passes the ten ordinary launch cases without preference differences; the
+generic driver rejects GateADemo's missing RESULT despite its native exit0.
+GateADemo deliberately emits no completion receipt without frame capture, so
+validate that case separately with a private frames directory, its actual
+`GATE_A_DEMO: PASS frames=N` receipt and exactlyN valid PNG files (N>=2), still
+requiring unchanged defaults. This changes the instrument to deliver and observe
+the existing demo capture contract; it does not waive a product failure.
+
+Repair verification:22/22 safe matcher controls pass, including negative
+interactive controls. Ten ordinary native launches pass: Smoke, UI E2E,
+torrents, AI, trim, multiwindow, slideshow, localization, GateA and file E2E.
+Each independently compares both defaults domains in memory and finds no change.
+GateADemo separately passes with13 actual PNG frames, native exit0 and unchanged
+defaults. The generic driver's earlier missing-receipt failure remains recorded.
+Build0, zero new warnings. Logs: `.build/layout-isolation-fixed-summary.log`,
+`.build/layout-isolation-gate-demo-verified.log`, and individual isolation logs.
+The initial classifier-control compile error (missing detail arguments) is
+retained; corrected build0 precedes the genuine11-failure native red control.
+
+Conditional restoration: all three current values still equalled their captured
+post-CI values. Only those keys in the unbundled domain were restored; an external
+defaults export verified the entire domain equals pre-CI and the installed-app
+domain is unchanged. The exact0600 before/after files and private directory were
+deleted after verification. Key names/outcomes only remain in
+`.build/layout-defaults-restore.log`; no owner values are committed or reported.
+The first CI raw logs and wrapper verdict are retained under `.build/first-*`.
+
 ### F5 Column repair: selection resolved before baseline creation
 
 Column tag delivery now updates only existing visible name cells using the same

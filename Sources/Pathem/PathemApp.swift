@@ -1385,7 +1385,9 @@ enum PathemApp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                 let count = WindowManager.shared.windowCount
                 let bothLaidOut = browser.layoutSettled() && second.layoutSettled()
-                let independent = browser.persistsSession && !second.persistsSession
+                // Automation's primary also leaves the owner's session alone.
+                // PATHEM_SMOKE separately tests explicit interactive ownership.
+                let independent = !browser.persistsSession && !second.persistsSession
                 print("=== MULTIWINDOW SMOKE ===")
                 print(
                     "windows=\(count) bothLaidOut=\(bothLaidOut) independentSession=\(independent)")
@@ -2061,12 +2063,19 @@ enum PathemApp {
     /// real photos in thumbnails) for PATHEM_VIEW_SHOT.
     /// Whether this process is a headless automation launch (the smoke test, a screenshot, or a
     /// render/test harness) rather than a normal interactive run. Such launches drive panes to
-    /// scratch paths and must never persist over the user's real session. Matches PATHEM_SMOKE and
-    /// any PATHEM_*_SHOT / PATHEM_*_TEST / PATHEM_*_RENDER env var, current or future.
+    /// scratch paths and must never persist over the user's real session. Match automation
+    /// families and the two Gate A entry points, leaving configuration options and demo-only
+    /// interactive launches alone.
     static var isAutomationLaunch: Bool {
-        ProcessInfo.processInfo.environment.keys.contains { key in
+        isAutomationLaunch(environment: ProcessInfo.processInfo.environment)
+    }
+
+    static func isAutomationLaunch(environment: [String: String]) -> Bool {
+        environment.keys.contains { key in
             key.hasPrefix("PATHEM_")
-                && (key == "PATHEM_SMOKE" || key.hasSuffix("_SHOT") || key.hasSuffix("_TEST")
+                && (key.hasSuffix("_SMOKE") || key.hasSuffix("_E2E")
+                    || key == "PATHEM_GATE_A" || key == "PATHEM_GATE_A_DEMO"
+                    || key.hasSuffix("_SHOT") || key.hasSuffix("_TEST")
                     || key.hasSuffix("_RENDER") || key.hasSuffix("_PREVIEW"))
         }
     }
