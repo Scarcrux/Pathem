@@ -13,7 +13,8 @@
 # have it; in that case run this script from Terminal (for example
 # `open -a Terminal scripts/site-shots.command`, a two-line wrapper that calls it).
 #
-# Images are captured at the display's own scale: run on a Retina display for 2x output.
+# Images are captured at the display's own scale. On a 1x display, switch to a scaled
+# HiDPI mode first (scripts/display-mode.swift) to get 2x output, and switch back after.
 # A capture taken while the window was not active (grey traffic lights) is retried.
 
 set -u
