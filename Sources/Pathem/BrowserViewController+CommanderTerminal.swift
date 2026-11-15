@@ -13,7 +13,8 @@ extension BrowserViewController {
     /// Bind the Commander F3–F8 buttons to the user's chosen commands (or the defaults).
     func applyCommanderCommands() {
         commanderBar.commandIDs =
-            prefs.commanderCommands.count == 6 ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
+            prefs.commanderCommands.count == 6
+            ? prefs.commanderCommands : CommanderBar.defaultCommandIDs
     }
 
     func toggleCommander() {
@@ -49,9 +50,15 @@ extension BrowserViewController {
     func toggleTerminal() {
         let show = terminal.view.isHidden
         terminal.view.isHidden = !show
+        // Hiding or un-hiding an arranged subview does not make NSSplitView redistribute its
+        // space. On macOS 27.2.1 both halves were left at zero height (a blank window), and
+        // setPosition cannot recover from that; hiding again did not give the browser its
+        // space back either. Ask the split to lay its subviews out again first.
+        vSplit.adjustSubviews()
         UserDefaults.standard.set(show, forKey: "pathem.terminalVisible")
         guard show else { return }
-        terminal.ensureStarted(in: activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser)
+        terminal.ensureStarted(
+            in: activePane?.currentURL ?? FileManager.default.homeDirectoryForCurrentUser)
         sizeTerminalDrawer()
         terminal.focus()
     }
