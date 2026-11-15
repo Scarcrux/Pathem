@@ -36,6 +36,28 @@ a checkbox or text field), whether confirming it is destructive, and its class:
 The gate fails when the scan finds a site that is not in the table, so a new surface cannot
 be added without being classified.
 
+Clarifications (2026-11-15, answering the implementing lane):
+
+- One row per presentation expression, the call that puts the surface on screen. Each row
+  links the place the surface is built (constructor or factory) by file and line, so the
+  table has separate build and present locations and nothing is collapsed. A builder with
+  several presentation sites gets one row per site. A builder that is never presented is
+  listed and flagged, not dropped.
+- Code that exists only for test harnesses (inside `#if DEBUG`, or in the UI-test, smoke,
+  debug-hook and site-shot files) is excluded, by an explicit list with a count in the
+  table's header, never silently.
+- Class A also includes any surface whose confirm path destroys data without the Trash,
+  whatever its content. The Reclaim Space "Delete Now" confirmation is class A by this
+  rule: record it as "A (destructive)". Extracting its alert into a factory that the
+  production path calls unchanged is in scope.
+- Class B: the generic check is structural only (checks 1 to 3), built from the real
+  strings in all six shipped languages at both sizes, with no presentation. Behaviour
+  checks 4 to 8 apply to class B only for sites presented as sheets, once each, in Unit 2.
+  In Unit 1 the ten sampled alerts get the structural check in six languages at both
+  sizes, and three of the ten that are sheets (the lane's choice, named in the report)
+  also get present, cancel and re-present. Class B sites that use `runModal` get the
+  structural check only and are listed as such.
+
 ## Checks
 
 Structure, for A and B, at the surface's first laid-out frame and again after any content
