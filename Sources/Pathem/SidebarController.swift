@@ -1206,6 +1206,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
                 (outlineView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
                 ?? Self.makeHeaderCell(id)
             cell.textField?.stringValue = showsLabels ? node.title : ""
+            cell.textField?.isHidden = !showsLabels
             cell.textField?.isEditable = node.isEditable
             cell.textField?.delegate = self
             cell.toolTip = node.title

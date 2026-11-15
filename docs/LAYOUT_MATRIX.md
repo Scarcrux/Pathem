@@ -124,6 +124,22 @@ refusing the flag without a config directory.
 
 ## Findings
 
+### Review repair F2: compact section-header labels
+
+The accepted F2 mechanism is a section-header NSTextField left unhidden when its
+parent row deliberately shrinks to6pt. The header factory now sets `isHidden`
+from `showsLabels` on every reuse, restoring visibility when expanded. No row
+height or geometry predicate changed. Original receipts in
+`layout-review-red-before-fixes.log` and `layout-review-fresh-before-fixes.log`
+are retained red. After the one-line repair, all14 compact/custom-sidebar
+check2 receipts pass in the134-cell run. This is a focused F2 PASS, not full
+suite acceptance: native exit1 at1115/1169 in76.957sec, with other open findings
+retained. Evidence: `.build/layout-f2-regression.log`, private run
+`pathem-matrix-clean-vy_bn7_l`. Build exited0 under the shared lock; native run
+was caffeinated/locked. The same run records empty Drop Stack area0pt versus
+populated20pt in dark appearance, convicting the missing empty-state allocation
+before an F3 repair. Ordinary commit hook outcomes are reported separately.
+
 ### Unit 2 review revision, criteria before rerunning
 
 Coordinator review rejects the unreachable sidebar-hidden axis and the inherited
