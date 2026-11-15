@@ -1791,6 +1791,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 inventory instrument advanced: 15/15 controls pass on system and Homebrew Python. Red-first controls convict missing CursorConfirm caller rows and unsafe exclusion of DEBUG-or-platform branches; scanner now preserves five caller intents and potentially shipped compound-condition branches. Wrapper provenance and table freshness/new-site controls discriminate. Classification table and native sample remain in progress; not READY."
     at = "2026-11-15T22:56:10Z"
 
+  [[mission.comment]]
+    text = "Task11 classification checkpoint: eleven reviewed inventory rows now persist with explicit incomplete status and thirty harness file exclusions. All five CursorConfirm callers retain individual Return intent, including TS-F3/F4/F5 known red defaults. Cleanup has four physical presentations, matching the independent manual count. Actual inventory gate remains red on unfinished classifications; no accepted table, sample READY or CI integration claimed."
+    at = "2026-11-15T22:57:52Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
