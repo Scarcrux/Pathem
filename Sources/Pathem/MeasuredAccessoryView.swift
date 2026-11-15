@@ -28,6 +28,22 @@ final class MeasuredAccessoryView: NSView {
 
     override var intrinsicContentSize: NSSize { measuredSize }
 
+    /// Controls report different metrics once they are in a window: a text field's fitting
+    /// height is 21 pt detached and 24 pt inside an alert on macOS 27.2. A size measured at
+    /// construction is therefore 3 pt short, which pushed the last control out of the
+    /// reserved area until some later event re-measured. Measure again on attach, so the
+    /// first frame is right, and once more after the current pass in case metrics settle
+    /// only when the window's own layout has finished.
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard window != nil else { return }
+        resizeToFit()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.window != nil else { return }
+            self.resizeToFit()
+        }
+    }
+
     func setWidth(_ width: CGFloat) {
         contentWidth.constant = width
         resizeToFit()
