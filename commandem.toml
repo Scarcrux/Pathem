@@ -1787,6 +1787,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 progress: TS-F1 fixed on private branch after valid native single/multiple Return reds. Explicit Keep Both default preserves button order; Return/Escape and real one/two-clash fixture copies pass, originals intact, DEBUG Replace safety control proven. Existing transient suite 53/53 after four default-intent assertion updates, eight captures and two root refusals pass; preferences unchanged. TS-F3/F4/F5 unchanged pending owner; inventory and sample acceptance still pending."
     at = "2026-11-15T22:52:27Z"
 
+  [[mission.comment]]
+    text = "Task11 inventory instrument advanced: 15/15 controls pass on system and Homebrew Python. Red-first controls convict missing CursorConfirm caller rows and unsafe exclusion of DEBUG-or-platform branches; scanner now preserves five caller intents and potentially shipped compound-condition branches. Wrapper provenance and table freshness/new-site controls discriminate. Classification table and native sample remain in progress; not READY."
+    at = "2026-11-15T22:56:10Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
