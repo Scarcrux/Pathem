@@ -270,9 +270,12 @@ final class TransientSurfaceSample {
         print(
             "TSAMPLE: START language=\(language) preferred=\(Locale.preferredLanguages) cancel=\(L("common.cancel", "missing")) pilot=\(pilot) injection=\(injection)"
         )
+        if full { print("TSAMPLE: DOMAIN " + (Bundle.main.bundleIdentifier ?? "missing")) }
         predicateControls()
         guard results.allSatisfy({ $0 }) else { finish(started) }
-        if environment["PATHEM_TRANSIENT_SURFACES_SET"] != "b", ["de", "ja"].contains(language) {
+        if !["b", "mounts"].contains(environment["PATHEM_TRANSIENT_SURFACES_SET"] ?? ""),
+            ["de", "ja"].contains(language)
+        {
             let appearances: [NSAppearance.Name] = pilot ? [.aqua] : [.aqua, .darkAqua]
             let sizes: [NSSize] =
                 pilot
@@ -295,6 +298,15 @@ final class TransientSurfaceSample {
                     }
                 }
             }
+        }
+        if full, environment["PATHEM_TRANSIENT_SURFACES_SET"] == "mounts" {
+            guard TransientPresentationProbe.install() else {
+                emit("mount-hook", 0, false, "observation hook missing")
+                finish(started)
+            }
+            runFullMounts()
+            TransientPresentationProbe.uninstall()
+            finish(started)
         }
         if injection == "clean" { if full { classBFull() } else { classBSample() } }
         finish(started)

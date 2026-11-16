@@ -33,7 +33,10 @@
     "Sources/Pathem/DeterministicE2E.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
     "Sources/Pathem/TransientSurfaceSample.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage",
     "Sources/Pathem/TransientSurfaceSampleChecks.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage",
-    "Sources/Pathem/TransientSurfaceFullAlerts.swift": "DEBUG-only full B fixture harness; explicitly excluded from production census"
+    "Sources/Pathem/TransientSurfaceFullAlerts.swift": "DEBUG-only full B fixture harness; explicitly excluded from production census",
+    "Sources/Pathem/TransientSurfaceFullMounts.swift": "DEBUG-only full A real-entrypoint mount harness; explicit exclusion",
+    "Sources/Pathem/TransientPresentationProbe.swift": "DEBUG-only presentation witness; original AppKit presentation forwarded unchanged",
+    "Sources/Pathem/TransientReturnBindingProbe.swift": "DEBUG-only native key-equivalent observation and positive/negative controls; callbacks withheld only during probe"
   },
   "ignored_counts": {
     "Sources/Pathem/BrowserViewController+BackgroundMenuUITests.swift": 1,
@@ -54,8 +57,11 @@
     "Sources/Pathem/CleanupController.swift": 1,
     "Sources/Pathem/PathemApp.swift": 8,
     "Sources/Pathem/SidebarController.swift": 1,
-    "Sources/Pathem/TransientSurfaceSample.swift": 9,
-    "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1
+    "Sources/Pathem/TransientPresentationProbe.swift": 2,
+    "Sources/Pathem/TransientReturnBindingProbe.swift": 2,
+    "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1,
+    "Sources/Pathem/TransientSurfaceFullMounts.swift": 2,
+    "Sources/Pathem/TransientSurfaceSample.swift": 9
   },
   "sites": {
     "Sources/Pathem/BrowserViewController+Transfers.swift:82:28:ask": {
@@ -2890,5 +2896,6 @@
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     }
   },
-  "unpresented_builders": {}
+  "unpresented_builders": {},
+  "native_coverage_note": "Unit 1 accepted. Unit 2 has all 47 B recipes and 32 real-entrypoint A adapters; initial 16 A entrypoints exercised, remainder still pending. Classification is not a native coverage claim; see docs/TRANSIENT_SURFACES_UNIT2.md."
 }

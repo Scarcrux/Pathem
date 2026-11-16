@@ -1,0 +1,196 @@
+{
+  "mounts": [
+    {
+      "id": "m01",
+      "site": "Sources/Pathem/BrowserViewController+DynamicMenus.swift:180:30:presentSheet",
+      "filename": false,
+      "group": 1
+    },
+    {
+      "id": "m02",
+      "site": "Sources/Pathem/BrowserViewController+FolderBackground.swift:32:30:presentSheet",
+      "filename": true,
+      "group": 1
+    },
+    {
+      "id": "m03",
+      "site": "Sources/Pathem/BrowserViewController+Permissions.swift:48:30:presentSheet",
+      "filename": false,
+      "group": 1
+    },
+    {
+      "id": "m04",
+      "site": "Sources/Pathem/BrowserViewController+Servers.swift:23:30:presentSheet",
+      "filename": false,
+      "group": 1
+    },
+    {
+      "id": "m05",
+      "site": "Sources/Pathem/BrowserViewController+ViewPresets.swift:47:30:presentSheet",
+      "filename": false,
+      "group": 1
+    },
+    {
+      "id": "m06",
+      "site": "Sources/Pathem/BrowserViewController+SmartFolders.swift:171:9:beginSheetModal",
+      "filename": false,
+      "group": 1
+    },
+    {
+      "id": "m07",
+      "site": "Sources/Pathem/BrowserViewController+ViewOptions.swift:12:34:presentSheet",
+      "filename": true,
+      "group": 1
+    },
+    {
+      "id": "m08",
+      "site": "Sources/Pathem/BrowserViewController+SelectionInspection.swift:250:30:presentSheet",
+      "filename": true,
+      "group": 1
+    },
+    {
+      "id": "m09",
+      "site": "Sources/Pathem/BrowserViewController+MediaTools.swift:158:30:presentSheet",
+      "filename": false,
+      "group": 2
+    },
+    {
+      "id": "m10",
+      "site": "Sources/Pathem/BrowserViewController+MediaTools.swift:369:9:beginSheetModal",
+      "filename": false,
+      "group": 2
+    },
+    {
+      "id": "m11",
+      "site": "Sources/Pathem/BrowserViewController+OpenerRules.swift:87:9:beginSheetModal",
+      "filename": true,
+      "group": 2
+    },
+    {
+      "id": "m12",
+      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:271:9:beginSheetModal",
+      "filename": true,
+      "group": 2
+    },
+    {
+      "id": "m13",
+      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:318:9:beginSheetModal",
+      "filename": true,
+      "group": 2
+    },
+    {
+      "id": "m14",
+      "site": "Sources/Pathem/ACLEditorController.swift:42:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 2
+    },
+    {
+      "id": "m15",
+      "site": "Sources/Pathem/AICommandBar.swift:132:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 2
+    },
+    {
+      "id": "m16",
+      "site": "Sources/Pathem/ArchiveContentsController.swift:31:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 2
+    },
+    {
+      "id": "m17",
+      "site": "Sources/Pathem/BatchCreateController.swift:39:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 3
+    },
+    {
+      "id": "m18",
+      "site": "Sources/Pathem/BatchRenameController.swift:185:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 3
+    },
+    {
+      "id": "m19",
+      "site": "Sources/Pathem/BulkAttributesController.swift:36:9:beginSheet",
+      "filename": false,
+      "group": 3
+    },
+    {
+      "id": "m20",
+      "site": "Sources/Pathem/ClipboardViewerController.swift:37:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 3
+    },
+    {
+      "id": "m21",
+      "site": "Sources/Pathem/CommandPalette.swift:125:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 3
+    },
+    {
+      "id": "m22",
+      "site": "Sources/Pathem/CommitController.swift:36:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 3
+    },
+    {
+      "id": "m23",
+      "site": "Sources/Pathem/ConnectionsController.swift:151:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 3
+    },
+    {
+      "id": "m24",
+      "site": "Sources/Pathem/ExternalCommandsController.swift:33:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 3
+    },
+    {
+      "id": "m25",
+      "site": "Sources/Pathem/FindInFilesController.swift:76:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 4
+    },
+    {
+      "id": "m26",
+      "site": "Sources/Pathem/GlobalSearchController.swift:85:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 4
+    },
+    {
+      "id": "m27",
+      "site": "Sources/Pathem/InfoInspectorController.swift:214:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 4
+    },
+    {
+      "id": "m28",
+      "site": "Sources/Pathem/OrganizeReviewController.swift:59:9:beginSheet",
+      "filename": true,
+      "group": 4
+    },
+    {
+      "id": "m29",
+      "site": "Sources/Pathem/TemplatesController.swift:34:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 4
+    },
+    {
+      "id": "m30",
+      "site": "Sources/Pathem/UndoHistoryController.swift:34:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 4
+    },
+    {
+      "id": "m31",
+      "site": "Sources/Pathem/XattrController.swift:35:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 4
+    },
+    {
+      "id": "m32",
+      "site": "Sources/Pathem/AutomationRulesController.swift:30:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 4
+    }
+  ]
+}
