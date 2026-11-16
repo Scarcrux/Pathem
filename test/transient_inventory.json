@@ -189,6 +189,245 @@
         "Sources/Pathem/CursorConfirm.swift:31:23:NSPopover"
       ],
       "reason": "Custom content factory; individual caller rows carry the Return action and destructive intent."
+    },
+    "Sources/Pathem/BrowserViewController+Rename.swift:96:25:presentSheet": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+Rename.swift:87:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Static localized strings. Cancel the sample; do not rename an owner file.",
+      "sample": {
+        "id": "extension-confirm",
+        "message_key": "rename.extensionTitle",
+        "informative_keys": [
+          "rename.extensionHint"
+        ],
+        "button_keys": [
+          "common.cancel",
+          "rename.changeExtension"
+        ],
+        "behavior_sample": true,
+        "structural_only": false,
+        "runtime_fixture": "Static localized strings. Cancel the sample; do not rename an owner file."
+      }
+    },
+    "Sources/Pathem/BrowserViewController+DemoWorkspace.swift:37:9:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+DemoWorkspace.swift:29:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Static localized strings. Build from catalog; never invoke maybeOfferDemoWorkspace because it writes the offered preference.",
+      "sample": {
+        "id": "demo-offer",
+        "message_key": "demo.offerTitle",
+        "informative_keys": [
+          "demo.offerBody"
+        ],
+        "button_keys": [
+          "demo.offerLoad",
+          "demo.offerSkip"
+        ],
+        "behavior_sample": true,
+        "structural_only": false,
+        "runtime_fixture": "Static localized strings. Build from catalog; never invoke maybeOfferDemoWorkspace because it writes the offered preference."
+      }
+    },
+    "Sources/Pathem/AutomationRulesController.swift:189:9:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/AutomationRulesController.swift:185:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Runtime successful-action count fixture: 999999; do not run automation rules.",
+      "sample": {
+        "id": "automation-result",
+        "message_key": "auto.ranTitle",
+        "informative_keys": [
+          "auto.ranBody"
+        ],
+        "button_keys": [],
+        "behavior_sample": false,
+        "structural_only": false,
+        "runtime_fixture": "Runtime successful-action count fixture: 999999; do not run automation rules."
+      }
+    },
+    "Sources/Pathem/BrowserViewController+FolderCompare.swift:137:39:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+FolderCompare.swift:122:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Runtime count fixtures: 999999 each, including nonempty conflict and failure suffixes. Do not sync files.",
+      "sample": {
+        "id": "sync-result",
+        "message_key": "bvc.syncComplete",
+        "informative_keys": [
+          "bvc.syncCopied",
+          "bvc.syncConflicts",
+          "bvc.mirrorFailedSuffix"
+        ],
+        "button_keys": [
+          "common.ok"
+        ],
+        "behavior_sample": false,
+        "structural_only": false,
+        "runtime_fixture": "Runtime count fixtures: 999999 each, including nonempty conflict and failure suffixes. Do not sync files."
+      }
+    },
+    "Sources/Pathem/BrowserViewController+FolderCompare.swift:168:48:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+FolderCompare.swift:162:25:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Runtime copied/deleted/failure count fixtures: 999999 each. Informational report only; do not mirror files.",
+      "sample": {
+        "id": "mirror-result",
+        "message_key": "bvc.mirrorComplete",
+        "informative_keys": [
+          "bvc.mirrorCopiedDeleted",
+          "bvc.mirrorFailedSuffix"
+        ],
+        "button_keys": [
+          "common.ok"
+        ],
+        "behavior_sample": false,
+        "structural_only": false,
+        "runtime_fixture": "Runtime copied/deleted/failure count fixtures: 999999 each. Informational report only; do not mirror files."
+      }
+    },
+    "Sources/Pathem/InfoInspectorController.swift:53:9:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/InfoInspectorController.swift:49:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Runtime error.localizedDescription fixture: permission error with a 255-character filename. Declared stress fixture, not a universal maximum error length. No file metadata change.",
+      "sample": {
+        "id": "toggle-failure",
+        "message_key": "info.toggleFailedTitle",
+        "informative_keys": [],
+        "button_keys": [],
+        "behavior_sample": false,
+        "structural_only": false,
+        "runtime_fixture": "Runtime error.localizedDescription fixture: permission error with a 255-character filename. Declared stress fixture, not a universal maximum error length. No file metadata change."
+      }
+    },
+    "Sources/Pathem/PaneController.swift:2962:9:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PaneController.swift:2953:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
+      "sample": {
+        "id": "tag-failure",
+        "message_key": "pane.tagFailedTitle",
+        "informative_keys": [
+          "pane.tagFailedBody"
+        ],
+        "button_keys": [
+          "common.ok"
+        ],
+        "behavior_sample": false,
+        "structural_only": false,
+        "runtime_fixture": "Runtime failed-item count fixture: 999999. Do not write tags."
+      }
+    },
+    "Sources/Pathem/PaneController.swift:2979:9:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PaneController.swift:2972:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Runtime input/suggestion fixtures: four 255-character components per path. Declared path stress fixture, not a filesystem maximum. Do not navigate.",
+      "sample": {
+        "id": "path-suggestion",
+        "message_key": "pane.noSuchPathTitle",
+        "informative_keys": [
+          "pane.noSuchPathBody"
+        ],
+        "button_keys": [
+          "pane.goButton",
+          "common.cancel"
+        ],
+        "behavior_sample": false,
+        "structural_only": false,
+        "runtime_fixture": "Runtime input/suggestion fixtures: four 255-character components per path. Declared path stress fixture, not a filesystem maximum. Do not navigate."
+      }
+    },
+    "Sources/Pathem/SettingsWindowController.swift:1030:9:beginSheetModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SettingsWindowController.swift:1022:21:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Static localized strings. Build from catalog; never invoke folderHandlerToggled/applyFolderHandler, which changes the system default.",
+      "sample": {
+        "id": "folder-handler-confirm",
+        "message_key": "prefs.folderHandlerConfirmTitle",
+        "informative_keys": [
+          "prefs.folderHandlerConfirmBody"
+        ],
+        "button_keys": [
+          "prefs.folderHandlerUse",
+          "common.cancel"
+        ],
+        "behavior_sample": true,
+        "structural_only": false,
+        "runtime_fixture": "Static localized strings. Build from catalog; never invoke folderHandlerToggled/applyFolderHandler, which changes the system default."
+      }
+    },
+    "Sources/Pathem/UpdaterController.swift:70:13:runModal": {
+      "class": "B",
+      "kind": "alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/UpdaterController.swift:63:25:NSAlert"
+      ],
+      "reason": "Plain NSAlert text with at most two standard buttons. Static localized strings. Production runModal is structural-only in Unit 1; do not invoke the updater or network.",
+      "sample": {
+        "id": "updater-unconfigured",
+        "message_key": "update.notSetUpTitle",
+        "informative_keys": [
+          "update.notSetUpBody"
+        ],
+        "button_keys": [],
+        "behavior_sample": false,
+        "structural_only": true,
+        "runtime_fixture": "Static localized strings. Production runModal is structural-only in Unit 1; do not invoke the updater or network."
+      }
     }
   },
   "implicit_builders": {},
