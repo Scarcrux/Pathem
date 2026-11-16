@@ -62,7 +62,7 @@
     "Sources/Pathem/TransientReturnBindingProbe.swift": 2,
     "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1,
     "Sources/Pathem/TransientSurfaceFullFactories.swift": 6,
-    "Sources/Pathem/TransientSurfaceFullMounts.swift": 4,
+    "Sources/Pathem/TransientSurfaceFullMounts.swift": 7,
     "Sources/Pathem/TransientSurfaceSample.swift": 9
   },
   "sites": {

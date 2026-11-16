@@ -371,6 +371,45 @@
       "site": "Sources/Pathem/ExternalCommandOutputController.swift:37:9:makeKeyAndOrderFront",
       "filename": true,
       "group": 8
+    },
+    {
+      "id": "m63",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:83:32:ask",
+      "filename": false,
+      "group": 8
+    },
+    {
+      "id": "m64",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:117:32:ask",
+      "filename": false,
+      "group": 8,
+      "caller": "emptyTrash",
+      "caller_sha256": "0ba539e833defc3187f3fe8aeca6c683a0523a6c7af4642208a3da3cd816e016",
+      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider."
+    },
+    {
+      "id": "m65",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:209:36:ask",
+      "filename": true,
+      "group": 9,
+      "caller": "trashSelection",
+      "caller_sha256": "dd077a70d11b6e46d8ee0fa39868621789f7dd47036b82715e2d7d6ef7e17832",
+      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider."
+    },
+    {
+      "id": "m66",
+      "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:239:32:ask",
+      "filename": false,
+      "group": 9,
+      "caller": "trashSelection",
+      "caller_sha256": "dd077a70d11b6e46d8ee0fa39868621789f7dd47036b82715e2d7d6ef7e17832",
+      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider."
+    },
+    {
+      "id": "m67",
+      "site": "Sources/Pathem/BrowserViewController+CommandRegistry.swift:192:13:showWindow",
+      "filename": false,
+      "group": 9
     }
   ]
 }

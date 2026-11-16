@@ -384,3 +384,22 @@ with post-reap bytes unchanged and zero annotations. Receipts:
 .build/transient-unit2-markup-close-guarded-instrument.log and
 .build/transient-unit2-markup-quit-guarded-instrument.log. No production markup
 file changed. The warning gate on the Reset build reports 3 known, 0 new.
+
+## Confirmation adapter expansion
+
+Adapters m63-m67 add local permanent deletion on an owned file, fixture-only
+Empty Trash/remote deletion/recoverable Trash prompts through the real shared
+CursorConfirm construction, and the actual registered Transfers command. The
+three fixture-only caller recipes pin the complete production caller source;
+missing provenance or changed caller code is refused. They do not enumerate the
+real Trash or create any remote provider. Owner-approved Return confirmation
+intent is checked for all four Trash prompts.
+
+The Empty Trash pilot passes native and wrapper 46/46, with actual Return
+observation, Cancel, restored responder, three presentations and no accumulation.
+Preferences unchanged, private domain cleared and demo root removed. Receipt:
+.build/transient-unit2-empty-trash-ui-probe.log. The registry is now 67 mounts
+and 32 factory profiles (one overlapping Reset site); these are adapters, not
+a claim that every variant has run. Remaining new A adapters are Rule Editor,
+Photos, Torrents window, FDA guide, Reclaim panel, repository Reclaim and Trim.
+The latter need their owned-data/provider boundaries before native launch.

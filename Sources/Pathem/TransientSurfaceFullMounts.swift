@@ -462,6 +462,64 @@ extension TransientSurfaceSample {
                     files: [], directory: file.deletingLastPathComponent())
                 return controller
             },
+            mount("m63", "BrowserViewController+TrashLedger.swift:83") { _, _ in
+                b.deleteImmediatelySelection()
+                return b
+            },
+            mount("m64", "BrowserViewController+TrashLedger.swift:117") { _, _ in
+                Task { @MainActor in
+                    let choice = await b.cursorConfirm.ask(
+                        message: String(
+                            format: L(
+                                "bvc.emptyTrashTitle", "Permanently erase %d item(s) in the Trash?"),
+                            999999),
+                        info: L("bvc.cantBeUndone", "This can’t be undone."),
+                        buttons: [
+                            L("bvc.emptyTrashAction", "Empty Trash"), L("common.cancel", "Cancel"),
+                        ], over: b.view)
+                    self.emit(
+                        "mount-work", 0, choice == nil || choice == 1,
+                        "owned empty-Trash UI only; real Trash never read")
+                }
+                return b
+            },
+            mount("m65", "BrowserViewController+TrashLedger.swift:209", filename: true) { _, name in
+                Task { @MainActor in
+                    let choice = await b.cursorConfirm.ask(
+                        message: String(
+                            format: L("bvc.remoteDeleteMany", "Permanently delete %d items on %@?"),
+                            999999, name),
+                        info: L("bvc.cantBeUndone", "This can’t be undone."),
+                        buttons: [L("common.delete", "Delete"), L("common.cancel", "Cancel")],
+                        over: b.view)
+                    self.emit(
+                        "mount-work", 0, choice == nil || choice == 1,
+                        "owned remote-delete UI only; no provider")
+                }
+                return b
+            },
+            mount("m66", "BrowserViewController+TrashLedger.swift:239") { _, _ in
+                Task { @MainActor in
+                    let choice = await b.cursorConfirm.ask(
+                        message: String(
+                            format: L(
+                                "bvc.confirmTrashCount", "Move %d selected items to the Trash?"),
+                            999999),
+                        info: L("bvc.confirmTrashBody", "You can put them back from the Trash."),
+                        buttons: [
+                            L("bvc.moveAllToTrash", "Move All to Trash"),
+                            L("common.cancel", "Cancel"),
+                        ], over: b.view)
+                    self.emit(
+                        "mount-work", 0, choice == nil || choice == 1,
+                        "owned Trash-confirm UI only; no Trash operation")
+                }
+                return b
+            },
+            mount("m67", "BrowserViewController+CommandRegistry.swift:192") { _, _ in
+                b.commands.perform("tools.transfers")
+                return b
+            },
         ]
     }
 
@@ -621,7 +679,7 @@ extension TransientSurfaceSample {
                 self.key("\r", window: window)
             }
             let bindingOK =
-                (!["m08", "m09", "m13", "m55"].contains(mount.id)
+                (!["m08", "m09", "m13", "m55", "m63", "m64", "m65", "m66"].contains(mount.id)
                     || policy[mount.site]?["default_destructive_intended"] as? Bool == true)
                 && keyReady && binding.resolved && defaults.count <= 1
                 && (expectedDefault.map { expected in

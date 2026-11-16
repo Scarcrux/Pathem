@@ -19,6 +19,15 @@ def validate(root=ROOT):
         prefix,long=observed[r['id']]
         if not r['site'].startswith('Sources/Pathem/'+prefix+':') or r['filename']!=long:
             raise ValueError('Mount source or filename treatment changed: '+r['id'])
+        if r['id'] in {'m64','m65','m66'} and not r.get('caller_sha256'):
+            raise ValueError('Confirmation caller provenance missing: '+r['id'])
+        if r.get('caller_sha256'):
+            from transient_factories import function_source
+            import hashlib
+            file=r['site'].split(':')[0]
+            body=function_source((root/file).read_text(),r['caller'])
+            if hashlib.sha256(body.encode()).hexdigest()!=r['caller_sha256']:
+                raise ValueError('Audited confirmation caller changed: '+r['id'])
     return recipes
 
 def receipt_errors(log, language, group, probe_one=False, only=None, root=ROOT):
