@@ -2,8 +2,8 @@
   "alerts": [
     {
       "id": "b01",
-      "site": "Sources/Pathem/CleanupController.swift:1087:9:beginSheetModal",
-      "builder": "Sources/Pathem/CleanupController.swift:1083:21:NSAlert",
+      "site": "Sources/Pathem/CleanupController.swift:1098:9:beginSheetModal",
+      "builder": "Sources/Pathem/CleanupController.swift:1094:21:NSAlert",
       "source_sha256": "fb1f46edf822130fabd72887ada72bce460362627fd928e1fa5f02981042ae48",
       "sheet": true,
       "fixture": "Plain deletion-failure report; first eight runtime error messages.",
@@ -20,8 +20,8 @@
     },
     {
       "id": "b02",
-      "site": "Sources/Pathem/CleanupController.swift:1119:9:beginSheetModal",
-      "builder": "Sources/Pathem/CleanupController.swift:1110:21:NSAlert",
+      "site": "Sources/Pathem/CleanupController.swift:1130:9:beginSheetModal",
+      "builder": "Sources/Pathem/CleanupController.swift:1121:21:NSAlert",
       "source_sha256": "a221747199666cc138fc400ac771bc76fd7ac551e0f7279a9011e728f0685175",
       "sheet": true,
       "fixture": "Plain Trash-failure report; first eight runtime errors plus count; confirmation closes only.",
@@ -101,8 +101,8 @@
     },
     {
       "id": "b05",
-      "site": "Sources/Pathem/AutomationRulesController.swift:189:9:beginSheetModal",
-      "builder": "Sources/Pathem/AutomationRulesController.swift:185:21:NSAlert",
+      "site": "Sources/Pathem/AutomationRulesController.swift:198:9:beginSheetModal",
+      "builder": "Sources/Pathem/AutomationRulesController.swift:194:21:NSAlert",
       "source_sha256": "3fed110c520a3b74e628e9a5c1b6bb114f73c68b8efa020964e552f11cfa6a9c",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Runtime successful-action count fixture: 999999; do not run automation rules.",
@@ -438,8 +438,8 @@
     },
     {
       "id": "b23",
-      "site": "Sources/Pathem/TorrentsWindowController.swift:311:9:runModal",
-      "builder": "Sources/Pathem/TorrentsWindowController.swift:307:21:NSAlert",
+      "site": "Sources/Pathem/TorrentsWindowController.swift:327:9:runModal",
+      "builder": "Sources/Pathem/TorrentsWindowController.swift:323:21:NSAlert",
       "source_sha256": "d0f94bac8c2f73adaae14bc617c5097182f0e5fad92f77d3a9a5d89034bc3205",
       "sheet": false,
       "fixture": "Same plain torrent error report presented with runModal. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
@@ -934,9 +934,9 @@
     },
     {
       "id": "b45",
-      "site": "Sources/Pathem/PhotosBrowserController.swift:323:9:beginSheetModal",
-      "builder": "Sources/Pathem/PhotosBrowserController.swift:316:21:NSAlert",
-      "source_sha256": "0a65b377856e2f6b67701aa0aa67e9b4191294a3ea2db717a6066e9f45aaa356",
+      "site": "Sources/Pathem/PhotosBrowserController.swift:361:9:beginSheetModal",
+      "builder": "Sources/Pathem/PhotosBrowserController.swift:352:21:NSAlert",
+      "source_sha256": "d76d8aabdd1d6a25ab16169e3a15dac6b23a8b9d0b757cdb3a38efac8fd65683",
       "sheet": true,
       "fixture": "Plain Photos GPS-removal confirmation; Photos explicitly retains revertible edit. Runtime six-digit count. No real Photos access/edits authorized.",
       "message": {

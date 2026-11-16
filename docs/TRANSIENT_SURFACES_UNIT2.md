@@ -436,3 +436,45 @@ Receipt: .build/transient-unit2-fullb-strict-stream-de.log and the matching
 transient-sample-clean-de-full-b-g0.json. All 108 Python controls pass. No
 known-findings baseline has been written yet and the other languages remain
 pending. The source-stream and no-default fixes are harness-only.
+
+## Remaining owned-provider adapters
+
+M68-M74 now supply Rule Editor, the real Photos denied UI, fixture-backed
+Torrents list, FDA guide, Reclaim panel under an owned home, real repository
+Reclaim and AVKit Trim. The process viewer also receives fixture process rows.
+DEBUG boundaries avoid PhotoKit authorization/library access, daemon startup,
+TCC reads, live-home cache enumeration and live process names. Trim receives a
+fresh generated four-second silent AAC file and must report real AVKit trim
+readiness; repository Reclaim creates a Git repository under its owned fixture
+with templates/config disabled. Cancel never runs real destructive callbacks.
+These are written adapters, not yet a full-variant coverage claim.
+
+The first provider build used the shell's older Swift instead of the project's
+Xcode-paired toolchain and failed during dependency manifest compilation before
+any native launch. The log explicitly names Swift 6.1.2 and incompatible SDK
+headers. Preserve .build/transient-unit2-provider-build.log; the corrected
+attempt uses make build with native SwiftPM and two jobs, as the repository
+requires. No product failure or successful probe is inferred from that attempt.
+
+The corrected Xcode/native build passes. M68 Rule Editor completes all three
+presentations for both names; check 3 exposes app-owned ambiguous stacks and
+check 2 its 440pt sheet against the 420pt host (65/77). M69 Photos denied-state
+first presentation cancels cleanly, but the cached window does not reappear on
+the second invocation. The strict receipt validator correctly refuses incomplete
+three-cycle coverage. This is not baseline-eligible evidence yet. Photos caches
+a normally released-on-close NSWindow without setting isReleasedWhenClosed=false;
+a narrow lifetime repair needs its own commit and an identical red/green probe.
+No Photos library access is performed. Receipts:
+.build/transient-unit2-provider-m68.log and transient-unit2-provider-m69.log.
+Remaining provider samples stopped before expansion on the M69 incomplete run.
+
+The other five provider pilots finish without missing treatment or isolation
+errors. M70 Torrents: 65/71, check 1 row geometry; M71 FDA: 41/44, check 3
+app-owned stacks; M72 Reclaim: 59/71, checks 1/3; M73 repository Reclaim: 71/71;
+M74 Trim: 71/77, check 1 AVKit geometry. Every presentation, Return interception,
+Cancel, responder restoration and three-cycle accumulation check passes.
+AVKit canBeginTrimming is positively observed on all six short/long cycles.
+All owner defaults are unchanged, private domains cleared and demo roots removed.
+Framework geometry reds (including AVTrimIndicatorView) remain red and are
+reported as geometry observations, not an inferred product mechanism. Receipts:
+.build/transient-unit2-provider-m70.log through m74.log. No full variants yet.

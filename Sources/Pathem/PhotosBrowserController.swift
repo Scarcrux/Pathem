@@ -42,7 +42,8 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private func buildWindow() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 860, height: 560),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
+            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered,
+            defer: true)
         window.title = L("photos.windowTitle", "Photos")
         window.center()
         window.setFrameAutosaveName("com.scarcrux.pathem.photosBrowser")
@@ -87,7 +88,8 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         NSLayoutConstraint.activate([
             placeholder.centerXAnchor.constraint(equalTo: gridScroll.centerXAnchor),
             placeholder.centerYAnchor.constraint(equalTo: gridScroll.centerYAnchor),
-            placeholder.widthAnchor.constraint(lessThanOrEqualTo: gridScroll.widthAnchor, constant: -48),
+            placeholder.widthAnchor.constraint(
+                lessThanOrEqualTo: gridScroll.widthAnchor, constant: -48),
         ])
 
         let split = NSSplitView()
@@ -132,6 +134,12 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     // MARK: - Access + loading
 
     private func loadOrRequestAccess() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            showDenied()  // Real denied UI, without querying the owner's photo library.
+            return
+        }
+        #endif
         let status = PhotoLibrary.authorizationStatus()
         switch status {
         case .authorized, .limited:
@@ -154,9 +162,11 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         grid.reloadData()
         exportButton.isEnabled = false
         removeLocationButton.isEnabled = false
-        showPlaceholder(L(
-            "photos.denied",
-            "Pathem doesn’t have access to your photo library. Grant it in System Settings ▸ Privacy & Security ▸ Photos."))
+        showPlaceholder(
+            L(
+                "photos.denied",
+                "Pathem doesn’t have access to your photo library. Grant it in System Settings ▸ Privacy & Security ▸ Photos."
+            ))
     }
 
     private func loadAlbums() {
@@ -178,7 +188,8 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         var toCache: [PHAsset] = []
         fetched.enumerateObjects { asset, _, _ in toCache.append(asset) }
         imageManager.startCachingImages(
-            for: toCache, targetSize: NSSize(width: 240, height: 240), contentMode: .aspectFill, options: nil)
+            for: toCache, targetSize: NSSize(width: 240, height: 240), contentMode: .aspectFill,
+            options: nil)
         showPlaceholder(nil)
         grid.reloadData()
         grid.scrollToVisible(.zero)
@@ -195,7 +206,8 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let selected = grid.selectionIndexPaths.count
         exportButton.isEnabled = selected > 0
         removeLocationButton.isEnabled = selected > 0
-        statusLabel.stringValue = selected > 0
+        statusLabel.stringValue =
+            selected > 0
             ? String(format: L("photos.statusSelected", "%d of %d selected"), selected, total)
             : String(format: L("photos.statusCount", "%d items"), total)
     }
@@ -209,23 +221,27 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
     func numberOfRows(in tableView: NSTableView) -> Int { albums.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         let id = NSUserInterfaceItemIdentifier("album-cell")
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? {
-            let cell = NSTableCellView()
-            let field = NSTextField(labelWithString: "")
-            field.lineBreakMode = .byTruncatingTail
-            field.translatesAutoresizingMaskIntoConstraints = false
-            cell.addSubview(field)
-            cell.textField = field
-            cell.identifier = id
-            NSLayoutConstraint.activate([
-                field.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
-                field.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
-                field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
-            ])
-            return cell
-        }()
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? {
+                let cell = NSTableCellView()
+                let field = NSTextField(labelWithString: "")
+                field.lineBreakMode = .byTruncatingTail
+                field.translatesAutoresizingMaskIntoConstraints = false
+                cell.addSubview(field)
+                cell.textField = field
+                cell.identifier = id
+                NSLayoutConstraint.activate([
+                    field.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 4),
+                    field.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -4),
+                    field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+                ])
+                return cell
+            }()
         let album = albums[row]
         cell.textField?.stringValue = "\(album.title)  (\(album.count))"
         return cell
@@ -237,34 +253,46 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
     // MARK: - NSCollectionView (thumbnails)
 
-    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int)
+        -> Int
+    {
         assets?.count ?? 0
     }
 
-    func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath)
+    func collectionView(
+        _ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath
+    )
         -> NSCollectionViewItem
     {
-        let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! PhotoGridItem
+        let item =
+            collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! PhotoGridItem
         guard let asset = asset(at: indexPath) else { return item }
         item.represent(asset, manager: imageManager)
         return item
     }
 
-    func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
+    func collectionView(
+        _ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>
+    ) {
         updateStatus()
     }
-    func collectionView(_ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>) {
+    func collectionView(
+        _ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>
+    ) {
         updateStatus()
     }
 
     /// Drag-out: each dragged thumbnail is a file promise that exports the asset's original when it's
     /// dropped into a folder (Pathem, Finder, anywhere that accepts a promise).
-    func collectionView(_ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath)
+    func collectionView(
+        _ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath
+    )
         -> NSPasteboardWriting?
     {
         guard let asset = asset(at: indexPath) else { return nil }
         let resources = PHAssetResource.assetResources(for: asset)
-        let uti = PhotoLibrary.primaryResource(resources)?.uniformTypeIdentifier ?? UTType.item.identifier
+        let uti =
+            PhotoLibrary.primaryResource(resources)?.uniformTypeIdentifier ?? UTType.item.identifier
         let provider = NSFilePromiseProvider(fileType: uti, delegate: self)
         provider.userInfo = asset.localIdentifier
         return provider
@@ -272,12 +300,17 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
     // MARK: - NSFilePromiseProviderDelegate
 
-    nonisolated func filePromiseProvider(_ provider: NSFilePromiseProvider, fileNameForType fileType: String) -> String {
-        guard let id = provider.userInfo as? String, let asset = PhotoLibrary.asset(withID: id) else { return "photo" }
+    nonisolated func filePromiseProvider(
+        _ provider: NSFilePromiseProvider, fileNameForType fileType: String
+    ) -> String {
+        guard let id = provider.userInfo as? String, let asset = PhotoLibrary.asset(withID: id)
+        else { return "photo" }
         return PhotoLibrary.originalFilename(for: asset)
     }
 
-    nonisolated func operationQueue(for filePromiseProvider: NSFilePromiseProvider) -> OperationQueue {
+    nonisolated func operationQueue(for filePromiseProvider: NSFilePromiseProvider)
+        -> OperationQueue
+    {
         OperationQueue()  // a fresh queue per promise; AppKit retains it for the write
     }
 
@@ -296,7 +329,10 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let id = provider.userInfo as? String
         let completion = CompletionBox(call: completionHandler)
         Task {
-            guard let id else { completion.call(PhotoLibrary.ExportError.noResource); return }
+            guard let id else {
+                completion.call(PhotoLibrary.ExportError.noResource)
+                return
+            }
             do {
                 try await PhotoLibrary.writeOriginal(assetID: id, to: url)
                 completion.call(nil)
@@ -314,10 +350,12 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let ids = grid.selectionIndexPaths.sorted().compactMap { asset(at: $0)?.localIdentifier }
         guard !ids.isEmpty, let window else { return }
         let alert = NSAlert()
-        alert.messageText = String(format: L("photos.removeLocationTitle", "Remove location from %d photo(s)?"), ids.count)
+        alert.messageText = String(
+            format: L("photos.removeLocationTitle", "Remove location from %d photo(s)?"), ids.count)
         alert.informativeText = L(
             "photos.removeLocationBody",
-            "This edits the photos in your Photos library to drop their GPS location. Photos keeps the change revertible.")
+            "This edits the photos in your Photos library to drop their GPS location. Photos keeps the change revertible."
+        )
         alert.addButton(withTitle: L("photos.removeLocation", "Remove Location"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -327,10 +365,12 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
                 if let error = result.error {
                     self.statusLabel.stringValue = error
                 } else if result.changed == 0 {
-                    self.statusLabel.stringValue = L("photos.noLocation", "No location found in the selected photos")
+                    self.statusLabel.stringValue = L(
+                        "photos.noLocation", "No location found in the selected photos")
                 } else {
                     self.statusLabel.stringValue = String(
-                        format: L("photos.locationRemoved", "Removed location from %d photo(s)"), result.changed)
+                        format: L("photos.locationRemoved", "Removed location from %d photo(s)"),
+                        result.changed)
                 }
             }
         }
@@ -356,11 +396,16 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         Task { @MainActor in
             var failures = 0
             for id in ids {
-                do { _ = try await PhotoLibrary.exportOriginal(assetID: id, to: directory) } catch { failures += 1 }
+                do { _ = try await PhotoLibrary.exportOriginal(assetID: id, to: directory) } catch {
+                    failures += 1
+                }
             }
-            statusLabel.stringValue = failures == 0
+            statusLabel.stringValue =
+                failures == 0
                 ? String(format: L("photos.exported", "Exported %d"), ids.count)
-                : String(format: L("photos.exportedWithErrors", "Exported %d, %d failed"), ids.count - failures, failures)
+                : String(
+                    format: L("photos.exportedWithErrors", "Exported %d, %d failed"),
+                    ids.count - failures, failures)
             updateStatusAfterDelay()
         }
     }
@@ -406,7 +451,8 @@ final class PhotoGridItem: NSCollectionViewItem {
         options.isNetworkAccessAllowed = true
         let local = asset.localIdentifier
         requestID = manager.requestImage(
-            for: asset, targetSize: NSSize(width: 240, height: 240), contentMode: .aspectFill, options: options
+            for: asset, targetSize: NSSize(width: 240, height: 240), contentMode: .aspectFill,
+            options: options
         ) { [weak self] image, info in
             guard let self, let image else { return }
             // Ignore a late callback for a recycled cell.
@@ -417,8 +463,10 @@ final class PhotoGridItem: NSCollectionViewItem {
     }
 
     override var isSelected: Bool {
-        didSet { view.layer?.borderWidth = isSelected ? 3 : 0
-            view.layer?.borderColor = ThemeManager.shared.accent.cgColor }
+        didSet {
+            view.layer?.borderWidth = isSelected ? 3 : 0
+            view.layer?.borderColor = ThemeManager.shared.accent.cgColor
+        }
     }
 
     override func prepareForReuse() {

@@ -67,7 +67,7 @@
     },
     {
       "id": "f06",
-      "site": "Sources/Pathem/ProcessViewerController.swift:188:15:runModal",
+      "site": "Sources/Pathem/ProcessViewerController.swift:199:15:runModal",
       "file": "Sources/Pathem/ProcessViewerController.swift",
       "caller": "terminate",
       "maker": "makeTerminateConfirmation",
@@ -80,7 +80,7 @@
     },
     {
       "id": "f07",
-      "site": "Sources/Pathem/ProcessViewerController.swift:188:15:runModal",
+      "site": "Sources/Pathem/ProcessViewerController.swift:199:15:runModal",
       "file": "Sources/Pathem/ProcessViewerController.swift",
       "caller": "terminate",
       "maker": "makeTerminateConfirmation",
@@ -119,7 +119,7 @@
     },
     {
       "id": "f10",
-      "site": "Sources/Pathem/TorrentsWindowController.swift:210:15:runModal",
+      "site": "Sources/Pathem/TorrentsWindowController.swift:226:15:runModal",
       "file": "Sources/Pathem/TorrentsWindowController.swift",
       "caller": "addMagnetTapped",
       "maker": "makeMagnetDialog",
@@ -145,7 +145,7 @@
     },
     {
       "id": "f12",
-      "site": "Sources/Pathem/TorrentsWindowController.swift:236:16:runModal",
+      "site": "Sources/Pathem/TorrentsWindowController.swift:252:16:runModal",
       "file": "Sources/Pathem/TorrentsWindowController.swift",
       "caller": "removeTapped",
       "maker": "makeRemoveDialog",
@@ -262,7 +262,7 @@
     },
     {
       "id": "f21",
-      "site": "Sources/Pathem/TorrentsWindowController.swift:270:15:runModal",
+      "site": "Sources/Pathem/TorrentsWindowController.swift:286:15:runModal",
       "file": "Sources/Pathem/TorrentsWindowController.swift",
       "caller": "limitsTapped",
       "maker": "makeLimitsDialog",

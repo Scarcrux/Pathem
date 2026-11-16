@@ -14,12 +14,18 @@ final class TrimController: NSObject {
     private let playerView = AVPlayerView()
     private var player: AVPlayer?
     private var sourceURL: URL?
+    #if DEBUG
+    private(set) var debugTransientTrimming = false
+    #endif
     /// Called on the main thread with the new file after a successful export.
     var onExported: ((URL) -> Void)?
     var onFailed: ((String) -> Void)?
 
     /// Open `url` in a trimming window; the trim UI appears once the asset is ready.
     func trim(_ url: URL) {
+        #if DEBUG
+        debugTransientTrimming = false
+        #endif
         sourceURL = url
         let player = AVPlayer(url: url)
         self.player = player
@@ -38,6 +44,9 @@ final class TrimController: NSObject {
 
     private func beginWhenReady(attempts: Int) {
         if playerView.canBeginTrimming {
+            #if DEBUG
+            debugTransientTrimming = true
+            #endif
             playerView.beginTrimming { [weak self] result in
                 let accepted = result == .okButton
                 Task { @MainActor [weak self] in

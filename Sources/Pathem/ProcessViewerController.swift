@@ -115,6 +115,17 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
     @objc private func reloadTapped() { reload() }
 
     private func reload() {
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            all = [
+                RunningProcess(
+                    pid: 999999, ppid: 0, user: "fixture", cpu: 12.5,
+                    mem: 3.0, rss: 2048, command: "/fixture/Owned process")
+            ]
+            applyFilterAndSort()
+            return  // No live process names are read into transient receipts.
+        }
+        #endif
         guard !loading else { return }
         loading = true
         let keepPID = selectedProcess()?.pid

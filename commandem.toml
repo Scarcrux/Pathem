@@ -1983,6 +1983,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Unit 2 strict German plain-alert receipt run: 2029/2128 native, 49 distinct check-2 oversize pairs, exact site/cycle validation accepted, isolation unchanged. Focused no-default alert 72/72; 108 Python controls pass. Harness stream interleaving and inert-Return instrumentation corrected without product changes. Full custom variants, remaining seven adapters, baseline/injections/CI remain open; no READY or land."
     at = "2026-11-16T15:13:55Z"
 
+  [[mission.comment]]
+    text = "Unit 2 has all seven remaining A adapters written with owned provider boundaries. Rule/FDA/Reclaim/Torrents/Trim pilots retain geometry/ambiguity reds; repository Reclaim 71/71. Photos first Cancel succeeds but cached window does not reappear, so exact validation refuses incomplete cycles; investigate lifetime in its own red/green commit. Full variants, baseline, injections, native E2E gate and final CI are pending."
+    at = "2026-11-16T15:28:17Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

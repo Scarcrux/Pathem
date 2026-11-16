@@ -410,6 +410,48 @@
       "site": "Sources/Pathem/BrowserViewController+CommandRegistry.swift:192:13:showWindow",
       "filename": false,
       "group": 9
+    },
+    {
+      "id": "m68",
+      "site": "Sources/Pathem/AutomationRulesController.swift:260:9:beginSheet",
+      "filename": true,
+      "group": 9
+    },
+    {
+      "id": "m69",
+      "site": "Sources/Pathem/PhotosBrowserController.swift:37:9:makeKeyAndOrderFront",
+      "filename": false,
+      "group": 9
+    },
+    {
+      "id": "m70",
+      "site": "Sources/Pathem/TorrentsWindowController.swift:45:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 9
+    },
+    {
+      "id": "m71",
+      "site": "Sources/Pathem/FullDiskAccessGuide.swift:183:9:beginSheet",
+      "filename": false,
+      "group": 9
+    },
+    {
+      "id": "m72",
+      "site": "Sources/Pathem/CleanupController.swift:199:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 9
+    },
+    {
+      "id": "m73",
+      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:193:13:beginSheetModal",
+      "filename": true,
+      "group": 10
+    },
+    {
+      "id": "m74",
+      "site": "Sources/Pathem/TrimController.swift:38:9:makeKeyAndOrderFront",
+      "filename": true,
+      "group": 10
     }
   ]
 }

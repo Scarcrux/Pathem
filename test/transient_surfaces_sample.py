@@ -29,7 +29,7 @@ def source_digest():
              + sorted((ROOT / 'Sources/Pathem/Resources').rglob('Localizable.strings'))
              + sorted((ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings'))
              + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', ROOT / 'test/transient_mounts.json', ROOT / 'test/transient_factories.json', ROOT / 'test/transient_factories.py',
-                ROOT / 'test/transient_full_alerts.py', ROOT / 'test/transient_inventory.py', ROOT / 'test/transient_known_findings.py', ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_markup_lifecycle.py', ROOT / 'test/transient_mounts.py', pathlib.Path(__file__)])
+                ROOT / 'test/transient_full_alerts.py', ROOT / 'test/transient_inventory.py', ROOT / 'test/transient_known_findings.py', ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_markup_lifecycle.py', ROOT / 'test/transient_mounts.py', ROOT / 'test/transient_media_fixture.py', pathlib.Path(__file__)])
     for path in paths:
         digest.update(str(path.relative_to(ROOT)).encode())
         digest.update(path.read_bytes())
@@ -147,6 +147,9 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         env["PATHEM_TRANSIENT_SURFACES_PROBE_ONE"] = "1"
     else:
         env.pop("PATHEM_TRANSIENT_SURFACES_PROBE_ONE", None)
+    if full and category == 'mounts' and (not only or only == 'm74'):
+        from transient_media_fixture import prepare
+        env['PATHEM_TRANSIENT_MEDIA_FIXTURE'] = str(prepare(scratch))
     if pilot:
         env['PATHEM_TRANSIENT_SURFACES_PILOT'] = '1'
     if case == 'accessory-short':

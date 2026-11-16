@@ -190,6 +190,11 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
 
     func present(for url: URL, over window: NSWindow?) {
         root = url
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            home = url
+        }
+        #endif
         if !panel.isVisible { panel.centerOverMainWindow() }
         panel.makeKeyAndOrderFront(nil)
         updateDiskStats()  // instant: overall capacity/used/free
@@ -205,6 +210,12 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
             )
         quickReport = nil
         lastTrashNote = ""
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            debugLoadPlaces(home: url, minimumBytes: 1)
+            return
+        }
+        #endif
         measurePlaces()
     }
 

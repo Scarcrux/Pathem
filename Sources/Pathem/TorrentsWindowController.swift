@@ -20,6 +20,10 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let filesController = TorrentFilesController()
     private let emptyLabel = NSTextField(labelWithString: "")
 
+    #if DEBUG
+    var debugTransientName = "Owned torrent fixture"
+    var debugTransientFolder = "/fixture"
+    #endif
     private var rows: [TorrentSession.Status] = []
     private let client = TorrentDaemonClient.shared
 
@@ -39,6 +43,18 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     func present() {
         if !window.isVisible { window.centerOverMainWindow() }
         window.makeKeyAndOrderFront(nil)
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            apply([
+                TorrentSession.Status(
+                    infoHash: String(repeating: "0", count: 40),
+                    name: debugTransientName, totalLength: 1_048_576, downloaded: 524288,
+                    fractionComplete: 0.5, downloadRate: 2048, peersConnected: 12,
+                    state: .downloading, savePath: debugTransientFolder, etaSeconds: 256)
+            ])
+            return  // No daemon or network is started by this UI fixture.
+        }
+        #endif
         client.onUpdate = { [weak self] statuses in self?.apply(statuses) }
         client.onError = { [weak self] message in self?.showError(message) }
         client.startIfNeeded()

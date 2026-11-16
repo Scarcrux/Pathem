@@ -142,7 +142,7 @@
       "known_finding": null,
       "reason": "Recoverable FileOperations.trash; owner/coordinator marks Return intended."
     },
-    "Sources/Pathem/CleanupController.swift:194:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/CleanupController.swift:199:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "panel",
       "custom_content": true,
@@ -153,42 +153,42 @@
       ],
       "reason": "Custom Reclaim Space panel with rows, controls and selections."
     },
-    "Sources/Pathem/CleanupController.swift:1028:9:beginSheetModal": {
+    "Sources/Pathem/CleanupController.swift:1039:9:beginSheetModal": {
       "role": "wrapper",
       "class": null,
       "reason": "Pass-through presenter; destructive intent belongs to deleteNowClicked caller.",
       "builders": []
     },
-    "Sources/Pathem/CleanupController.swift:1087:9:beginSheetModal": {
+    "Sources/Pathem/CleanupController.swift:1098:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CleanupController.swift:1083:21:NSAlert"
+        "Sources/Pathem/CleanupController.swift:1094:21:NSAlert"
       ],
       "reason": "Plain deletion-failure report; first eight runtime error messages."
     },
-    "Sources/Pathem/CleanupController.swift:1119:9:beginSheetModal": {
+    "Sources/Pathem/CleanupController.swift:1130:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CleanupController.swift:1110:21:NSAlert"
+        "Sources/Pathem/CleanupController.swift:1121:21:NSAlert"
       ],
       "reason": "Plain Trash-failure report; first eight runtime errors plus count; confirmation closes only."
     },
-    "Sources/Pathem/CleanupController.swift:997:14:presentDeleteNowAlert": {
+    "Sources/Pathem/CleanupController.swift:1008:14:presentDeleteNowAlert": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/CleanupController.swift:1007:21:NSAlert"
+        "Sources/Pathem/CleanupController.swift:1018:21:NSAlert"
       ],
       "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only.",
       "default_action": "Delete Permanently (index 0); Escape Cancel (index 1)",
@@ -248,14 +248,14 @@
         "runtime_fixture": "Static localized strings. Build from catalog; never invoke maybeOfferDemoWorkspace because it writes the offered preference."
       }
     },
-    "Sources/Pathem/AutomationRulesController.swift:189:9:beginSheetModal": {
+    "Sources/Pathem/AutomationRulesController.swift:198:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/AutomationRulesController.swift:185:21:NSAlert"
+        "Sources/Pathem/AutomationRulesController.swift:194:21:NSAlert"
       ],
       "reason": "Plain NSAlert text with at most two standard buttons. Runtime successful-action count fixture: 999999; do not run automation rules.",
       "sample": {
@@ -557,14 +557,14 @@
       "reason": "Localized torrent error title with runtime error body; standard OK only. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:311:9:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:327:9:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:307:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:323:21:NSAlert"
       ],
       "reason": "Same plain torrent error report presented with runModal. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -860,14 +860,14 @@
       ],
       "reason": "Content search, replace fields and result rows. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/FullDiskAccessGuide.swift:171:9:beginSheet": {
+    "Sources/Pathem/FullDiskAccessGuide.swift:183:9:beginSheet": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/FullDiskAccessGuide.swift:40:17:NSPanel"
+        "Sources/Pathem/FullDiskAccessGuide.swift:49:17:NSPanel"
       ],
       "reason": "Permission guidance and settings/dismiss controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1047,14 +1047,14 @@
       ],
       "reason": "Torrent files table and priority controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:41:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/TorrentsWindowController.swift:45:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:27:18:NSWindow"
+        "Sources/Pathem/TorrentsWindowController.swift:31:18:NSWindow"
       ],
       "reason": "Torrent list, actions and status controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1102,14 +1102,14 @@
       ],
       "reason": "Transfer queue and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/TrimController.swift:32:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/TrimController.swift:38:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TrimController.swift:147:22:NSWindow"
+        "Sources/Pathem/TrimController.swift:156:22:NSWindow"
       ],
       "reason": "Media trim preview and interval controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1157,14 +1157,14 @@
       ],
       "reason": "Rules manager panel."
     },
-    "Sources/Pathem/AutomationRulesController.swift:246:9:beginSheet": {
+    "Sources/Pathem/AutomationRulesController.swift:260:9:beginSheet": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/AutomationRulesController.swift:207:25:NSPanel"
+        "Sources/Pathem/AutomationRulesController.swift:216:25:NSPanel"
       ],
       "reason": "RuleEditor custom panel with name, folder, filters, action and enabled controls; passed as beginSheet argument, not receiver window."
     },
@@ -1286,14 +1286,14 @@
       ],
       "reason": "System Quick Look shared preview panel; data source supplies URLs. Class C presentation/dismissal only."
     },
-    "Sources/Pathem/AutomationRulesController.swift:322:9:beginSheetModal": {
+    "Sources/Pathem/AutomationRulesController.swift:343:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/AutomationRulesController.swift:319:22:NSOpenPanel"
+        "Sources/Pathem/AutomationRulesController.swift:340:22:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -1506,14 +1506,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/PhotosBrowserController.swift:348:9:beginSheetModal": {
+    "Sources/Pathem/PhotosBrowserController.swift:388:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PhotosBrowserController.swift:342:21:NSOpenPanel"
+        "Sources/Pathem/PhotosBrowserController.swift:382:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -1550,14 +1550,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:198:15:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:214:15:runModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:187:21:NSOpenPanel"
+        "Sources/Pathem/TorrentsWindowController.swift:203:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -2191,26 +2191,26 @@
         "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
       }
     },
-    "Sources/Pathem/PhotosBrowserController.swift:323:9:beginSheetModal": {
+    "Sources/Pathem/PhotosBrowserController.swift:361:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PhotosBrowserController.swift:316:21:NSAlert"
+        "Sources/Pathem/PhotosBrowserController.swift:352:21:NSAlert"
       ],
       "reason": "Plain Photos GPS-removal confirmation; Photos explicitly retains revertible edit. Runtime six-digit count. No real Photos access/edits authorized.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/ProcessViewerController.swift:188:15:runModal": {
+    "Sources/Pathem/ProcessViewerController.swift:199:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/ProcessViewerController.swift:242:21:NSAlert"
+        "Sources/Pathem/ProcessViewerController.swift:253:21:NSAlert"
       ],
       "reason": "Force Quit can lose unsaved work without recovery; conservative destructive class A for both terminate/force variants. Runtime process name255 and six-digit PID. Cancel only; no process signals. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
@@ -2316,38 +2316,38 @@
       "reason": "Shared speed/network-options accessory with limit fields, superseed/encryption/uTP/VPN controls and status. Cancel only; no torrent network changes.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:210:15:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:226:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:463:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:479:21:NSAlert"
       ],
       "reason": "Magnet URI text field accessory with optional clipboard prefill. Cancel without starting a torrent.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:236:16:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:252:16:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:488:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:504:21:NSAlert"
       ],
       "reason": "Three-button Remove/Keep Files, Remove/Delete Files and Cancel; permanent deletion is secondary action. Runtime torrent name255. Cancel only, no client calls.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:270:15:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:286:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:506:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:522:21:NSAlert"
       ],
       "reason": "Legacy window speed/network-options accessory with limit fields and network toggles/status. Cancel without changing client state.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

@@ -520,6 +520,111 @@ extension TransientSurfaceSample {
                 b.commands.perform("tools.transfers")
                 return b
             },
+            mount("m68", "AutomationRulesController.swift:260", filename: true) { file, name in
+                let rule = AutomationRule(
+                    name: name, enabled: false, folderPath: file.deletingLastPathComponent().path,
+                    nameContains: name, ext: "png",
+                    destinationPath: file.deletingLastPathComponent().path)
+                return AutomationRulesController.debugTransientRule(rule, over: self.host) {
+                    value in
+                    self.emit(
+                        "mount-work", 0, value == nil, "owned rule editor cancelled; no watcher")
+                }
+            },
+            mount("m69", "PhotosBrowserController.swift:37") { file, _ in
+                let controller = owners.get("m69") { PhotosBrowserController() }
+                controller.show(exportDirectory: file.deletingLastPathComponent())
+                return controller
+            },
+            mount("m70", "TorrentsWindowController.swift:45", filename: true) { file, name in
+                let controller = owners.get("m70") { TorrentsWindowController() }
+                controller.debugTransientName = name
+                controller.debugTransientFolder = file.deletingLastPathComponent().path
+                controller.present()
+                return controller
+            },
+            mount("m71", "FullDiskAccessGuide.swift:183") { _, _ in
+                let controller = owners.get("m71") { FullDiskAccessGuide() }
+                controller.present(over: self.host) {}
+                return controller
+            },
+            mount(
+                "m72", "CleanupController.swift:199", filename: true,
+                prepare: { file, _ in
+                    let cache = file.deletingLastPathComponent().appendingPathComponent(
+                        "Library/Caches/OwnedCache", isDirectory: true)
+                    try? FileManager.default.createDirectory(
+                        at: cache, withIntermediateDirectories: true)
+                    try? Data(repeating: 1, count: 4096).write(
+                        to: cache.appendingPathComponent("owned.bin"))
+                }
+            ) { file, _ in
+                let controller = owners.get("m72") { CleanupController() }
+                controller.present(for: file.deletingLastPathComponent(), over: self.host)
+                return controller
+            },
+            mount(
+                "m73", "BrowserViewController+SelectionTransforms.swift:193", filename: true,
+                prepare: { file, _ in
+                    let directory = file.deletingLastPathComponent()
+                    let process = Process()
+                    process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
+                    process.arguments = ["-C", directory.path, "init", "--quiet", "--template="]
+                    var env = ProcessInfo.processInfo.environment
+                    for key in Array(env.keys) where key.hasPrefix("GIT_") {
+                        env.removeValue(forKey: key)
+                    }
+                    env["GIT_CONFIG_NOSYSTEM"] = "1"
+                    env["GIT_CONFIG_GLOBAL"] = "/dev/null"
+                    env["GIT_TERMINAL_PROMPT"] = "0"
+                    process.environment = env
+                    process.standardOutput = FileHandle.nullDevice
+                    process.standardError = FileHandle.nullDevice
+                    do {
+                        try process.run()
+                        process.waitUntilExit()
+                        guard process.terminationStatus == 0 else {
+                            throw CocoaError(.fileWriteUnknown)
+                        }
+                        let cache = directory.appendingPathComponent(
+                            "node_modules", isDirectory: true)
+                        try FileManager.default.createDirectory(
+                            at: cache, withIntermediateDirectories: true)
+                        try Data("Owned regenerable fixture".utf8).write(
+                            to: cache.appendingPathComponent("fixture.txt"))
+                    } catch {
+                        self.emit(
+                            "mount-setup", 0, false, "owned repository fixture preparation failed")
+                    }
+                }
+            ) { _, _ in
+                b.repoReclaim()
+                return b
+            },
+            mount(
+                "m74", "TrimController.swift:38", filename: true,
+                prepare: { file, _ in
+                    guard let path = self.environment["PATHEM_TRANSIENT_MEDIA_FIXTURE"],
+                        path.hasPrefix(self.output.path + "/")
+                    else {
+                        self.emit("mount-setup", 0, false, "owned media fixture missing")
+                        return
+                    }
+                    do { try Data(contentsOf: URL(fileURLWithPath: path)).write(to: file) } catch {
+                        self.emit("mount-setup", 0, false, "owned media fixture copy failed")
+                    }
+                }
+            ) { file, _ in
+                let controller = owners.get("m74") { TrimController() }
+                controller.onExported = { _ in
+                    self.emit("mount-callback", 5, false, "unexpected trim export")
+                }
+                controller.onFailed = { _ in
+                    self.emit("mount-setup", 0, false, "valid fixture failed to enter trimming")
+                }
+                controller.trim(file)
+                return controller
+            },
         ]
     }
 
@@ -564,7 +669,10 @@ extension TransientSurfaceSample {
                 for mount in (one ? Array(mounts.prefix(1)) : mounts) {
                     for long in mount.filename ? [false, true] : [false] {
                         let name =
-                            long ? String(repeating: "n", count: 251) + ".png" : "fixture.png"
+                            long
+                            ? String(repeating: "n", count: 251)
+                                + (mount.id == "m74" ? ".m4a" : ".png")
+                            : (mount.id == "m74" ? "fixture.m4a" : "fixture.png")
                         let cell =
                             "M-\(mount.id)-\(language)-\(appearance == .aqua ? "light" : "dark")-\(Int(size.width))-\(long ? "long255" : "short")"
                         runMount(mount, cell: cell, name: name)
@@ -652,6 +760,14 @@ extension TransientSurfaceSample {
                     $0.cell === window.defaultButtonCell || $0.keyEquivalent == "\r"
                 }
             }
+            if mount.id == "m74" {
+                let delivered = settle {
+                    (owner as? TrimController)?.debugTransientTrimming == true
+                }
+                emit(
+                    "mount-media-delivery", 0, delivered, "actual AVKit canBeginTrimming delivered")
+                guard delivered else { return }
+            }
             content.layoutSubtreeIfNeeded()
             emit(cell, 0, true, "cycle=\(cycle) site=\(mount.site)")
             inspect(
@@ -696,6 +812,7 @@ extension TransientSurfaceSample {
             let cancel = buttons.first {
                 $0.keyEquivalent == "\u{1b}" || $0.title == L("common.cancel", "Cancel")
                     || $0.title == L("common.close", "Close")
+                    || $0.title == L("fda.notNow", "Not Now")
             }
             if let cancel {
                 cancel.performClick(nil)

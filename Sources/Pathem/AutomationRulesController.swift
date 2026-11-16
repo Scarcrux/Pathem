@@ -110,7 +110,9 @@ final class AutomationRulesController: NSObject, NSTableViewDataSource, NSTableV
 
     func numberOfRows(in tableView: NSTableView) -> Int { rules.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < rules.count else { return nil }
         let rule = rules[row]
         if tableColumn.identifier.rawValue == "on" {
@@ -118,7 +120,8 @@ final class AutomationRulesController: NSObject, NSTableViewDataSource, NSTableV
             let checkbox =
                 (tableView.makeView(withIdentifier: id, owner: self) as? NSButton)
                 ?? {
-                    let b = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleEnabled(_:)))
+                    let b = NSButton(
+                        checkboxWithTitle: "", target: self, action: #selector(toggleEnabled(_:)))
                     b.identifier = id
                     return b
                 }()
@@ -166,7 +169,10 @@ final class AutomationRulesController: NSObject, NSTableViewDataSource, NSTableV
 
     @objc private func editSelected() {
         let row = table.selectedRow
-        guard rules.indices.contains(row) else { NSSound.beep(); return }
+        guard rules.indices.contains(row) else {
+            NSSound.beep()
+            return
+        }
         edit(rules[row]) { [weak self] updated in
             self?.rules[row] = updated
             self?.commit()
@@ -175,7 +181,10 @@ final class AutomationRulesController: NSObject, NSTableViewDataSource, NSTableV
 
     @objc private func deleteSelected() {
         let row = table.selectedRow
-        guard rules.indices.contains(row) else { NSSound.beep(); return }
+        guard rules.indices.contains(row) else {
+            NSSound.beep()
+            return
+        }
         rules.remove(at: row)
         commit()
     }
@@ -228,14 +237,19 @@ private final class RuleEditor: NSObject {
         build()
     }
 
-    func present(_ rule: AutomationRule, over window: NSWindow, completion: @escaping (AutomationRule?) -> Void) {
+    func present(
+        _ rule: AutomationRule, over window: NSWindow,
+        completion: @escaping (AutomationRule?) -> Void
+    ) {
         self.rule = rule
         self.completion = completion
         nameField.stringValue = rule.name
         folderField.stringValue = rule.folderPath
         nameContains.stringValue = rule.nameContains ?? ""
         extField.stringValue = rule.ext ?? ""
-        kindPopup.selectItem(at: rule.kind.flatMap { AutomationRule.Kind.allCases.firstIndex(of: $0) }.map { $0 + 1 } ?? 0)
+        kindPopup.selectItem(
+            at: rule.kind.flatMap { AutomationRule.Kind.allCases.firstIndex(of: $0) }.map { $0 + 1 }
+                ?? 0)
         ageField.stringValue = rule.olderThanDays.map(String.init) ?? ""
         hostField.stringValue = rule.fromHostContains ?? ""
         actionPopup.selectItem(at: AutomationRule.Action.allCases.firstIndex(of: rule.action) ?? 0)
@@ -263,10 +277,14 @@ private final class RuleEditor: NSObject {
         for kind in ["Any kind"] + AutomationRule.Kind.allCases.map({ $0.rawValue.capitalized }) {
             kindPopup.addItem(withTitle: kind)
         }
-        for action in AutomationRule.Action.allCases { actionPopup.addItem(withTitle: action.rawValue.capitalized) }
-        let chooseFolder = NSButton(title: L("auto.choose", "Choose…"), target: self, action: #selector(chooseFolder))
+        for action in AutomationRule.Action.allCases {
+            actionPopup.addItem(withTitle: action.rawValue.capitalized)
+        }
+        let chooseFolder = NSButton(
+            title: L("auto.choose", "Choose…"), target: self, action: #selector(chooseFolder))
         chooseFolder.bezelStyle = .rounded
-        let chooseDest = NSButton(title: L("auto.choose", "Choose…"), target: self, action: #selector(chooseDestination))
+        let chooseDest = NSButton(
+            title: L("auto.choose", "Choose…"), target: self, action: #selector(chooseDestination))
         chooseDest.bezelStyle = .rounded
 
         let form = NSStackView(views: [
@@ -289,7 +307,8 @@ private final class RuleEditor: NSObject {
         let save = NSButton(title: L("common.save", "Save"), target: self, action: #selector(save))
         save.bezelStyle = .rounded
         save.keyEquivalent = "\r"
-        let cancel = NSButton(title: L("common.cancel", "Cancel"), target: self, action: #selector(cancel))
+        let cancel = NSButton(
+            title: L("common.cancel", "Cancel"), target: self, action: #selector(cancel))
         cancel.bezelStyle = .rounded
         cancel.keyEquivalent = "\u{1b}"
         let buttons = NSStackView(views: [NSView(), cancel, save])
@@ -313,7 +332,9 @@ private final class RuleEditor: NSObject {
     }
 
     @objc private func chooseFolder() { pickFolder { self.folderField.stringValue = $0.path } }
-    @objc private func chooseDestination() { pickFolder { self.destinationField.stringValue = $0.path } }
+    @objc private func chooseDestination() {
+        pickFolder { self.destinationField.stringValue = $0.path }
+    }
 
     private func pickFolder(_ set: @escaping (URL) -> Void) {
         let picker = NSOpenPanel()
@@ -330,18 +351,25 @@ private final class RuleEditor: NSObject {
     }
 
     @objc private func save() {
-        rule.name = nameField.stringValue.isEmpty ? L("auto.newRule", "New Rule") : nameField.stringValue
+        rule.name =
+            nameField.stringValue.isEmpty ? L("auto.newRule", "New Rule") : nameField.stringValue
         rule.folderPath = folderField.stringValue
         rule.nameContains = optional(nameContains.stringValue)
-        rule.ext = optional(extField.stringValue)?.replacingOccurrences(of: ".", with: "").lowercased()
-        rule.kind = kindPopup.indexOfSelectedItem > 0 ? AutomationRule.Kind.allCases[kindPopup.indexOfSelectedItem - 1] : nil
+        rule.ext = optional(extField.stringValue)?.replacingOccurrences(of: ".", with: "")
+            .lowercased()
+        rule.kind =
+            kindPopup.indexOfSelectedItem > 0
+            ? AutomationRule.Kind.allCases[kindPopup.indexOfSelectedItem - 1] : nil
         rule.olderThanDays = Int(ageField.stringValue.trimmingCharacters(in: .whitespaces))
         rule.fromHostContains = optional(hostField.stringValue)
         rule.action = AutomationRule.Action.allCases[actionPopup.indexOfSelectedItem]
         rule.destinationPath = optional(destinationField.stringValue)
         rule.tag = optional(tagField.stringValue)
         rule.enabled = enabledCheck.state == .on
-        guard !rule.folderPath.isEmpty else { NSSound.beep(); return }
+        guard !rule.folderPath.isEmpty else {
+            NSSound.beep()
+            return
+        }
         panel.sheetParent?.endSheet(panel)
         completion?(rule)
     }
@@ -351,3 +379,16 @@ private final class RuleEditor: NSObject {
         completion?(nil)
     }
 }
+
+#if DEBUG
+extension AutomationRulesController {
+    static func debugTransientRule(
+        _ rule: AutomationRule, over host: NSWindow,
+        completion: @escaping (AutomationRule?) -> Void
+    ) -> AnyObject {
+        let editor = RuleEditor()
+        editor.present(rule, over: host, completion: completion)
+        return editor
+    }
+}
+#endif
