@@ -625,6 +625,938 @@
       ],
       "reason": "Caller title/checksum output and OK only. Fixture: 255-character filename with SHA-512, SHA-256, SHA-1 and MD5 text. No checksum computation required for layout.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
+    },
+    "Sources/Pathem/ACLEditorController.swift:42:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ACLEditorController.swift:27:17:NSPanel"
+      ],
+      "reason": "ACL principals and permissions editor. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/AICommandBar.swift:132:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/AICommandBar.swift:37:17:CommandBarPanel"
+      ],
+      "reason": "AI command field, status and suggested-action controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ArchiveContentsController.swift:31:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ArchiveContentsController.swift:16:17:NSPanel"
+      ],
+      "reason": "Archive contents browser and extraction controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/BatchCreateController.swift:39:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BatchCreateController.swift:20:17:NSPanel"
+      ],
+      "reason": "Batch create input and generated-name preview. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/BatchRenameController.swift:185:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BatchRenameController.swift:38:17:NSPanel"
+      ],
+      "reason": "Batch rename fields, options and preview table. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/BulkAttributesController.swift:36:9:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BulkAttributesController.swift:9:25:NSPanel"
+      ],
+      "reason": "Attribute, owner, group and tag controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ChangelogWindowController.swift:42:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ChangelogWindowController.swift:15:22:NSWindow"
+      ],
+      "reason": "Changelog text browser. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ClipboardViewerController.swift:37:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ClipboardViewerController.swift:19:17:NSPanel"
+      ],
+      "reason": "Clipboard history rows and controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/CommandPalette.swift:125:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/CommandPalette.swift:39:17:NSPanel"
+      ],
+      "reason": "Command search field and results. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/CommitController.swift:36:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/CommitController.swift:18:17:NSPanel"
+      ],
+      "reason": "Git commit message and staged-change controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ConnectionsController.swift:151:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ConnectionsController.swift:71:17:NSPanel"
+      ],
+      "reason": "Connection browser and editor launch controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/CropController.swift:61:13:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/CropController.swift:53:22:NSWindow"
+      ],
+      "reason": "Image crop view and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/CropController.swift:63:13:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/CropController.swift:53:22:NSWindow"
+      ],
+      "reason": "Image crop view and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/DiffViewerController.swift:32:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/DiffViewerController.swift:16:17:NSPanel"
+      ],
+      "reason": "Diff content and navigation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/DuplicatesController.swift:37:27:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/DuplicatesController.swift:89:22:NSWindow"
+      ],
+      "reason": "Duplicate groups, selection and Trash controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/DuplicatesController.swift:37:69:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/DuplicatesController.swift:89:22:NSWindow"
+      ],
+      "reason": "Duplicate groups, selection and Trash controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ExternalCommandOutputController.swift:37:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ExternalCommandOutputController.swift:21:17:NSPanel"
+      ],
+      "reason": "Running command output and termination controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ExternalCommandOutputController.swift:78:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ExternalCommandOutputController.swift:21:17:NSPanel"
+      ],
+      "reason": "Running command output and termination controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ExternalCommandOutputController.swift:102:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ExternalCommandOutputController.swift:21:17:NSPanel"
+      ],
+      "reason": "Running command output and termination controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ExternalCommandsController.swift:33:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ExternalCommandsController.swift:17:17:NSPanel"
+      ],
+      "reason": "External command definitions table and editor controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/FindInFilesController.swift:76:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/FindInFilesController.swift:36:17:NSPanel"
+      ],
+      "reason": "Content search, replace fields and result rows. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/FullDiskAccessGuide.swift:171:9:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/FullDiskAccessGuide.swift:40:17:NSPanel"
+      ],
+      "reason": "Permission guidance and settings/dismiss controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/GlobalSearchController.swift:85:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/GlobalSearchController.swift:27:25:FileSearchPanel"
+      ],
+      "reason": "File search query, scope, filters and results. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/InfoInspectorController.swift:214:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/InfoInspectorController.swift:164:17:NSPanel"
+      ],
+      "reason": "File info, opener and metadata controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/MarkupController.swift:35:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/MarkupController.swift:103:22:NSWindow"
+      ],
+      "reason": "Markup canvas and tools. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/MetadataEditorController.swift:54:27:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/MetadataEditorController.swift:130:22:NSWindow"
+      ],
+      "reason": "Editable metadata fields and apply controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/MetadataEditorController.swift:54:69:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/MetadataEditorController.swift:130:22:NSWindow"
+      ],
+      "reason": "Editable metadata fields and apply controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/OrganizeReviewController.swift:59:9:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/OrganizeReviewController.swift:10:25:NSPanel"
+      ],
+      "reason": "Organization review list and destination controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/PathemApp.swift:259:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init"
+      ],
+      "reason": "Primary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/PhotosBrowserController.swift:37:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PhotosBrowserController.swift:43:22:NSWindow"
+      ],
+      "reason": "Photo browser, details and export controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/ProcessViewerController.swift:35:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ProcessViewerController.swift:23:18:NSWindow"
+      ],
+      "reason": "Processes table and termination controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/SettingsWindowController.swift:196:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SettingsWindowController.swift:90:18:NSWindow"
+      ],
+      "reason": "Settings sidebar, search and preference controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/SettingsWindowController.swift:1823:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SettingsWindowController.swift:90:18:NSWindow"
+      ],
+      "reason": "Settings sidebar, search and preference controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named. Debug hook compiled outside a DEBUG branch; retained explicitly, not silently excluded."
+    },
+    "Sources/Pathem/SizeBrowserController.swift:38:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SizeBrowserController.swift:23:17:NSPanel"
+      ],
+      "reason": "Disk usage visualization and rows. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/SlideshowController.swift:40:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SlideshowController.swift:46:22:SlideshowWindow"
+      ],
+      "reason": "Slideshow image and navigation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TemplatesController.swift:34:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TemplatesController.swift:17:17:NSPanel"
+      ],
+      "reason": "Templates list and editing controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TorrentFilesController.swift:32:13:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TorrentFilesController.swift:16:18:NSWindow"
+      ],
+      "reason": "Torrent files table and priority controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TorrentFilesController.swift:35:13:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TorrentFilesController.swift:16:18:NSWindow"
+      ],
+      "reason": "Torrent files table and priority controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TorrentsWindowController.swift:41:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TorrentsWindowController.swift:27:18:NSWindow"
+      ],
+      "reason": "Torrent list, actions and status controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TransferProgress.swift:119:13:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TransferProgress.swift:66:17:NSPanel"
+      ],
+      "reason": "Transfer progress, pause and cancellation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TransferProgress.swift:121:13:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TransferProgress.swift:66:17:NSPanel"
+      ],
+      "reason": "Transfer progress, pause and cancellation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TransferQueueController.swift:102:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TransferQueueController.swift:73:18:NSWindow"
+      ],
+      "reason": "Transfer queue and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TransferQueueController.swift:109:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TransferQueueController.swift:73:18:NSWindow"
+      ],
+      "reason": "Transfer queue and operation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/TrimController.swift:32:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TrimController.swift:147:22:NSWindow"
+      ],
+      "reason": "Media trim preview and interval controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/UndoHistoryController.swift:34:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/UndoHistoryController.swift:21:17:NSPanel"
+      ],
+      "reason": "Undo history rows and navigation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/WindowManager.swift:84:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Secondary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/XattrController.swift:35:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/XattrController.swift:22:17:NSPanel"
+      ],
+      "reason": "Extended attributes table and editing controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    "Sources/Pathem/AutomationRulesController.swift:30:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/AutomationRulesController.swift:9:25:NSPanel"
+      ],
+      "reason": "Rules manager panel."
+    },
+    "Sources/Pathem/AutomationRulesController.swift:246:9:beginSheet": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/AutomationRulesController.swift:207:25:NSPanel"
+      ],
+      "reason": "RuleEditor custom panel with name, folder, filters, action and enabled controls; passed as beginSheet argument, not receiver window."
+    },
+    "Sources/Pathem/BrowserViewController+DemoWorkspace.swift:14:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/BrowserViewController+ExternalOpen.swift:18:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/BrowserViewController+ExternalOpen.swift:44:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/BrowserViewController+ExternalOpen.swift:73:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/DockMenu.swift:111:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/DockMenu.swift:118:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/DockMenu.swift:128:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    "Sources/Pathem/SidebarController.swift:580:9:makeKeyAndOrderFront": {
+      "class": "A",
+      "kind": "existing browser window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
+        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+      ],
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
+    },
+    "Sources/Pathem/BrowserViewController+CommandRegistry.swift:192:13:showWindow": {
+      "class": "A",
+      "kind": "custom window",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TransferQueueController.swift:73:18:NSWindow"
+      ],
+      "reason": "Registered transfers command invokes TransferQueueController.showWindow; that method has its own physical window row. Both paths retained."
+    },
+    "Sources/Pathem/BrowserViewController+QuickLook.swift:14:13:makeKeyAndOrderFront": {
+      "class": "C",
+      "kind": "system panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+QuickLook.swift:10:27:QLPreviewPanel.shared"
+      ],
+      "reason": "System Quick Look shared preview panel; data source supplies URLs. Class C presentation/dismissal only."
+    },
+    "Sources/Pathem/AutomationRulesController.swift:322:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/AutomationRulesController.swift:319:22:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+Archives.swift:149:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+Archives.swift:142:22:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+CopyMoveTo.swift:55:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+CopyMoveTo.swift:45:22:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+CustomIconAndDesktop.swift:15:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+CustomIconAndDesktop.swift:11:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+FolderBackground.swift:50:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+FolderBackground.swift:46:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+OpenerRules.swift:181:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+OpenerRules.swift:170:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+QuickActions.swift:147:15:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+QuickActions.swift:143:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:29:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:21:25:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:210:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:205:22:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+Shelf.swift:23:13:show": {
+      "class": "C",
+      "kind": "system sharing picker",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+Shelf.swift:22:26:NSSharingServicePicker"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/BrowserViewController+Torrents.swift:69:15:runModal": {
+      "class": "A",
+      "kind": "save panel with accessory",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/BrowserViewController+Torrents.swift:53:20:NSSavePanel"
+      ],
+      "reason": "System Save panel additionally attaches FilenameSuggestionController.view when enabled: custom accessory makes this class A, not plain C. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/ConnectionsController.swift:228:13:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ConnectionsController.swift:217:29:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/ConnectionsController.swift:286:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ConnectionsController.swift:279:25:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/ConnectionsController.swift:297:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ConnectionsController.swift:293:25:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/FileContextMenu.swift:466:15:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/FileContextMenu.swift:462:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/GlobalSearchController.swift:223:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/GlobalSearchController.swift:216:22:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/InfoInspectorController.swift:135:19:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/InfoInspectorController.swift:131:26:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/OrganizeReviewController.swift:288:15:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/OrganizeReviewController.swift:283:22:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/PaneController.swift:2663:9:show": {
+      "class": "C",
+      "kind": "system sharing picker",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PaneController.swift:2662:22:NSSharingServicePicker"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/PaneController.swift:2437:9:begin": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PaneController.swift:2434:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/PhotosBrowserController.swift:348:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/PhotosBrowserController.swift:342:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/SettingsWindowController.swift:672:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SettingsWindowController.swift:667:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/SettingsWindowController.swift:1136:9:beginSheetModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/SettingsWindowController.swift:1132:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/TorrentDrawerController.swift:358:15:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TorrentDrawerController.swift:350:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
+    },
+    "Sources/Pathem/TorrentsWindowController.swift:198:15:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/TorrentsWindowController.swift:187:21:NSOpenPanel"
+      ],
+      "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     }
   },
   "implicit_builders": {},

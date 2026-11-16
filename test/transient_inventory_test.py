@@ -91,6 +91,26 @@ unreachable.runModal()
             self.assertEqual({x['method'] for x in builders.values()}, {'Custom', 'NSSharingServicePicker'})
             self.assertEqual(len(sites), 1)
 
+    def test_system_and_metatype_window_factories_are_builders(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = pathlib.Path(folder)
+            sources = root / 'Sources/Pathem'
+            sources.mkdir(parents=True)
+            (sources/'Example.swift').write_text("let kind: NSWindow.Type = NSWindow.self\nlet window = kind.init(contentRect: rect)\nlet panel = QLPreviewPanel.shared()\nwindow.makeKeyAndOrderFront(nil)\npanel.makeKeyAndOrderFront(nil)\n")
+            builders, sites, _ = scan(root, {})
+            self.assertEqual({x['method'] for x in builders.values()}, {'kind.init', 'QLPreviewPanel.shared'})
+            self.assertEqual(len(sites), 2)
+
+    def test_async_system_panel_begin_counts_without_gesture_false_positive(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = pathlib.Path(folder)
+            sources = root / 'Sources/Pathem'
+            sources.mkdir(parents=True)
+            (sources/'Example.swift').write_text("let chooser = NSOpenPanel()\nchooser.begin { response in }\ngestureTracker.begin(event)\n")
+            _, sites, _ = scan(root, {})
+            self.assertEqual(len(sites), 1)
+            self.assertEqual(next(iter(sites.values()))['method'], 'begin')
+
     def test_new_site_rejected_not_auto_classified(self):
         errors = validate({}, {'new-site': {}}, {'sites': {}})
         self.assertEqual(errors, ['UNCLASSIFIED presentation new-site'])

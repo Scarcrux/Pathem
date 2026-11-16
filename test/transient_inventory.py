@@ -210,7 +210,20 @@ def scan(root, exclusions):
         source = path.read_text()
         code = masked[path]
         debug = debug_lines(source)
-        patterns = [('build', build_pattern), ('present', PRESENT)]
+        # Known system factories and typed metatype initializers also build a
+        # surface. Do not pretend the primary browser or Quick Look is unresolved.
+        aliases = re.findall(r'\b(?:let|var)\s+(\w+)\s*:\s*(?:NSWindow|NSPanel)\.Type\b', code)
+        factories = ['QLPreviewPanel.shared'] + [name + '.init' for name in aliases]
+        local_build_pattern = re.compile('(?:' + build_pattern.pattern + '|\\b(' +
+                                         '|'.join(map(re.escape, factories)) + ')\\s*\\()')
+        patterns = [('build', local_build_pattern), ('present', PRESENT)]
+        async_panel_aliases = re.findall(
+            r'\b(?:let|var)\s+(\w+)\s*(?::\s*(?:NSOpenPanel|NSSavePanel))?\s*=\s*(?:NSOpenPanel|NSSavePanel)\s*\(', code)
+        if async_panel_aliases:
+            async_pattern = re.compile(r'(?P<receiver>(?:self\.)?(?:' +
+                                       '|'.join(map(re.escape, sorted(set(async_panel_aliases)))) +
+                                       r'))\s*\.\s*(?P<method>begin)\s*(?=[({])')
+            patterns.append(('present', async_pattern))
         patterns.append(('factory-caller', re.compile(r'\b(?:self\.)?cursorConfirm\s*\.\s*(ask)\s*\(')))
         if wrappers:
             patterns.append(('caller', re.compile(r'\b(' + '|'.join(map(re.escape, sorted(wrappers))) + r')\s*\(')))
@@ -223,7 +236,7 @@ def scan(root, exclusions):
                 if relative in exclusions or line in debug:
                     ignored[relative] += 1
                     continue
-                method = match[1] if role in ('build', 'caller', 'factory-caller') else match['method'] or match['popmethod']
+                method = next(group for group in match.groups() if group) if role == 'build' else match[1] if role in ('caller', 'factory-caller') else match['method'] or match['popmethod']
                 key = f'{relative}:{line}:{column}:{method}'
                 record = dict(file=relative, line=line, column=column, method=method)
                 if role != 'build':
