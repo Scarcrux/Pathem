@@ -29,7 +29,7 @@ def source_digest():
              + sorted((ROOT / 'Sources/Pathem/Resources').rglob('Localizable.strings'))
              + sorted((ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings'))
              + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', ROOT / 'test/transient_mounts.json', ROOT / 'test/transient_factories.json', ROOT / 'test/transient_factories.py',
-                ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_mounts.py', pathlib.Path(__file__)])
+                ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_markup_lifecycle.py', ROOT / 'test/transient_mounts.py', pathlib.Path(__file__)])
     for path in paths:
         digest.update(str(path.relative_to(ROOT)).encode())
         digest.update(path.read_bytes())
@@ -49,6 +49,8 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     predicates = [(status, cell, check) for status, cell, check in rows if re.fullmatch(r'predicate-[1-8]', cell)]
     if len(predicates) != 8 or any(status != 'PASS' for status, _, _ in predicates):
         errors.append('predicate controls incomplete or failed')
+    if ('PASS', 'predicate-3-system', '3') not in rows:
+        errors.append('system-panel ownership sub-control missing or failed')
     viewport = [(status, check) for status, cell, check in rows if cell == 'predicate-1-viewport']
     if viewport != [('PASS', '1')]:
         errors.append('viewport geometry sub-control missing or failed')
@@ -58,12 +60,12 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     appearance = [(status, check) for status, cell, check in rows if cell == 'predicate-4-appearance']
     if appearance != [('PASS', '4')]:
         errors.append('appearance delivery sub-control missing or failed')
-    if not re.search(r'^TSAMPLE: SUMMARY .*$', log, re.M) or not re.search(r'^RESULT: (PASS|FAIL) \(\d+/\d+\)$', log, re.M):
+    if category != 'lifecycle' and (not re.search(r'^TSAMPLE: SUMMARY .*$', log, re.M) or not re.search(r'^RESULT: (PASS|FAIL) \(\d+/\d+\)$', log, re.M)):
         errors.append('missing native terminal receipt')
     if f'TSAMPLE: START language={language} ' not in log or f'cancel={expected_cancel} ' not in log:
         errors.append('requested localization not delivered')
     a_cells = {cell for _, cell, _ in rows if cell.startswith('A-')}
-    expected_a = (3 if pilot else 16) if language in ['de', 'ja'] and category not in ('b', 'mounts', 'factories') else 0
+    expected_a = (3 if pilot else 16) if language in ['de', 'ja'] and category not in ('b', 'mounts', 'factories', 'lifecycle') else 0
     if len(a_cells) != expected_a or (a_cells and {c.split('-')[1] for c in a_cells} != {'rename', 'reclaim', 'conflict'}):
         errors.append(f'class A set incomplete: {len(a_cells)} expected {expected_a}')
     for cell in a_cells:
@@ -93,7 +95,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     if case == 'clean':
         b = {cell for _, cell, _ in rows if cell.startswith('B-') and cell != 'B-contract' and not cell.endswith('-lifecycle')}
         behavior = {cell for _, cell, _ in rows if cell.startswith('B-') and cell.endswith('-lifecycle')}
-        if category not in ('mounts', 'factories') and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
+        if category not in ('mounts', 'factories', 'lifecycle') and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
             errors.append('class B structural/lifecycle sample incomplete')
         if code != 0 or failures:
             errors.append(f'clean native verdict red: exit {code}, {len(failures)} cell/check pairs')
@@ -201,6 +203,14 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
     if category == 'factories':
         from transient_factories import receipt_errors
         errors += receipt_errors(log, language, group, probe_one, only)
+    lifecycle_proof = None
+    if category == 'lifecycle':
+        from transient_markup_lifecycle import evaluate
+        evidence_errors, evidence_findings, lifecycle_proof = evaluate(log, code, only, scratch)
+        errors += evidence_errors
+        failures |= evidence_findings
+        if evidence_findings:
+            errors.append('lifecycle product verdict red: unsaved markup lost without a prompt')
     built_paths = [p for p in (ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings')
                    if p.parent.name.casefold() == (language + '.lproj').casefold()]
     catalog_match = False
@@ -221,7 +231,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
     receipt = dict(case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
                    source_digest=inputs_before, failures=sorted(failures), errors=errors,
                    reference_native_exit=reference.get('native_exit') if case != 'clean' and reference else None,
-                   preferences_unchanged=private_ok, catalog_matches_source=catalog_match,
+                   preferences_unchanged=private_ok, catalog_matches_source=catalog_match, lifecycle_disk_proof=lifecycle_proof,
                    demo_removed=demo_removed, native_demo_removed=demo_removed_native, seconds=time.monotonic()-started)
     (ROOT / f'.build/transient-sample-{label}.log').write_text(log)
     (ROOT / f'.build/transient-sample-{label}.json').write_text(json.dumps(receipt, indent=2)+'\n')
@@ -243,7 +253,7 @@ def main():
     parser.add_argument('case', choices=CASES)
     parser.add_argument('--pilot', action='store_true')
     parser.add_argument('--full', action='store_true')
-    parser.add_argument('--set', choices=['all', 'b', 'mounts', 'factories'], default='all')
+    parser.add_argument('--set', choices=['all', 'b', 'mounts', 'factories', 'lifecycle'], default='all')
     parser.add_argument('--language', choices=LANGUAGES)
     parser.add_argument('--group', type=int, default=0)
     parser.add_argument('--probe-one', action='store_true')

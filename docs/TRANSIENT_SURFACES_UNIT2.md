@@ -210,3 +210,108 @@ per-inventory coverage report, default-intent enforcement, known-findings
 comparison gate, four corruption runs on the final artifact, E2E native wiring
 and one authorized make ci. No baseline is accepted, no CI has run, and Unit 2
 remains private until review.
+
+## Post-checkpoint controls and native pilots
+
+The requested clean checkpoint is 3e49535. Its normal formatter, full Swift tests,
+source-guide and localization hooks passed. No Unit 2 land followed.
+
+The missing modal step is convicted: makeKeyAndOrderFront before observing Return
+removes every template check-6 failure; the same native pilot retains only checks
+1/3. Source/artifact-bound receipt: .build/transient-unit2-modal-key-probe.log.
+
+The torrent save panel passes 106/106, native and wrapper exit 0, including its
+real app-owned filename-suggestion accessory after success/failure changes, Return
+observation, Cancel, responder restoration and three presentations for short and
+255-character names. Its native framework subtree is INFO for ambiguity only;
+all geometry remains measured. A positive/negative ownership control proves an
+under-constrained supplied accessory still fails. Both owner domains unchanged,
+private UUID domain cleared and unique demo root removed. Receipt:
+.build/transient-unit2-filepicker-probe.log.
+
+TS-U2-F03: unsaved markup has no Cancel. The original-style modal factory is red
+only on check 5 in all six short/long pilot presentations. Save receives Return,
+there is no third button, and Escape has no key-equivalent binding. The runner
+records that fact then aborts only its own modal fixture; abort is not counted as
+Cancel. A direct native Escape-event probe is still pending, so no claim is made
+about a physical Escape key beyond the missing binding. Source audit routes this
+prompt through viewer Done, folder navigation, view-mode changes and opening a
+different document. No call from applicationShouldTerminate or WindowManager's
+window-close path was found; quit/window-close protection remains unverified,
+not claimed covered. No production change is authorized. Raw receipt:
+.build/transient-unit2-markup-no-cancel-probe.log; render is in that receipt's
+retained owned scratch.
+
+## Markup lifecycle pilot criteria, before running
+
+The owner's follow-up asks whether real window close and Quit lose unsaved edits.
+Each runs in a unique private fixture app, with its actual delegate and window
+manager. An owned blank PDF gets a real unsaved highlight; the setup must prove
+edited=true while its on-disk annotation count remains zero. A positive control
+uses the same real PDF writer to save an annotation and change owned bytes.
+
+Close must invoke performClose on an owned secondary browser and prove that the
+window manager removed it. Quit must run the actual NSApplication event loop and
+call terminate with the real delegate; the parent must observe natural exit 0
+and the native will-terminate witness. A timer only observes/aborts an unexpected
+guard on this owned fixture, never chooses Save or Discard. Prompt observation,
+PDF annotations and disk bytes decide the result. Original bytes and zero saved
+annotations after unguarded close/quit mean TS-U2-F04, not PASS. A prompt or saved
+annotations can disprove the hypothesis. Missing treatment, failed save control,
+unknown termination, signals, timeout or changed post-reap evidence break the
+instrument and are never baseline findings. The fixture survives demo cleanup
+under the launcher's own receipt directory so the parent hashes it after reaping.
+
+## TS-U2-F04: real Quit and window close lose unsaved markup
+
+Both preregistered lifecycle pilots confirm this finding on owned PDFs. The
+real writer control passes (changed owned bytes, saved annotation count >0).
+The treatment has a real unsaved highlight and edited=true, with zero saved
+annotations before the operation. Real secondary-browser performClose removes
+that browser from WindowManager without a prompt. Real NSApplication.terminate
+from its running event loop reaches PathemAppDelegate and the will-terminate
+notification, then exits naturally with code 0, again without a prompt.
+
+After reaping each process, the parent independently hashes the surviving owned
+PDF. Both remain byte-identical to their originals, with zero saved annotations.
+Close native is red 17/18 with L-close check5; Quit's native exit 0 is the actual
+application terminating, not a test pass: its parent disk-evidence verdict is red
+on L-quit check5. Both owner defaults domains are unchanged, private UUID domains
+are cleared and demo roots are removed. No timeout, signal, mocked delegate or
+destructive production action supplies this evidence. The source-convicted
+missing guard is now a measured behavior; no production repair is authorized.
+
+Receipts: .build/transient-unit2-markup-close.log and
+.build/transient-unit2-markup-quit.log. Before-close/quit renders:
+.build/TS-U2-F04-close-before.png and .build/TS-U2-F04-quit-before.png.
+
+The direct native Escape-event probe for TS-U2-F03 also leaves the Save/Discard
+modal visible in all six presentations. Escape has no key equivalent, reaches
+no button and does not dismiss via the normal window event path. The fixture
+runner then aborts its own modal, which is never counted as successful Cancel.
+Receipt: .build/transient-unit2-markup-escape-event.log and the matching raw
+TSAMPLE NO-CANCEL-EVENT rows.
+
+## Ownership and remaining isolation items
+
+Pathem-claude owns the markup production files from 3e49535 until its owner-ruled
+F03/F04 repair lands. This lane does not change PDFMarkupView, DocumentPreviewView,
+MarkupController or PaneController markup paths. Lifecycle probes are separate
+DEBUG files and are retained as regression checks.
+
+Four conservative A context-menu rows are now resolved as standard class C by
+reviewer ruling. The table retains all four physical expressions and records
+implicit attachment locations in list, columns, icons and gallery. A new source
+gate detects a provider's custom view assignment, reports effective class A and
+fails until classification and structural coverage are reviewed. Eight controls
+cover positive native menus, multiline/optional custom assignments, comments,
+strings, missing providers, stale attachments and unreviewed C downgrades. The
+current class totals become A=112, B=47, C=33, plus four unclassed wrapper rows;
+the original requested A denominator was 116 before those four were resolved.
+
+Open isolation item: WindowManager's secondary browser under automation still
+uses a live sidebar, including cloud/provider labels, rather than the demo
+sidebar. The lifecycle renders therefore stay private and must never be
+committed or published. The owned edited PDF and post-reap disk proof are not
+owner documents. Reviewer accepted recording this as an open harness item.
+The source audit also found layout-matrix/site-shot discovery starts, as above.

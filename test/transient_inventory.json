@@ -2414,44 +2414,194 @@
       "reason": "App-defined standard NSMenu items tracked by the native menu system, no custom item views. Class C presentation/dismissal only. Cancel without triggering actions."
     },
     "Sources/Pathem/IconCollectionController.swift:61:17:popUpContextMenu": {
-      "class": "A",
-      "kind": "dynamic context menu",
+      "class": "C",
+      "kind": "menu",
       "custom_content": false,
-      "destructive": true,
+      "destructive": false,
       "default_destructive_intended": false,
-      "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
-      "builders": []
+      "reason": "Resolved as standard class C by pathem-claude on 2026-11-16: every app provider returns standard NSMenu items with no custom NSMenuItem.view. Physical popup expression is retained, with implicit attachment provenance. A provider view assignment makes the effective class A and fails the classification gate until reviewed. No structural or native menu coverage is claimed.",
+      "builders": [
+        "Sources/Pathem/FileContextMenu.swift:30:16:NSMenu"
+      ],
+      "implicit_presentation": true,
+      "standard_menu_providers": [
+        "Sources/Pathem/FileContextMenu.swift",
+        "Sources/Pathem/FileListController.swift",
+        "Sources/Pathem/ColumnBrowserController.swift",
+        "Sources/Pathem/IconCollectionController.swift",
+        "Sources/Pathem/GalleryController.swift",
+        "Sources/Pathem/KeyTableView.swift"
+      ],
+      "attachment_locations": [
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 629,
+          "expression": "tableView.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/ColumnBrowserController.swift",
+          "line": 301,
+          "expression": "table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first"
+        },
+        {
+          "file": "Sources/Pathem/IconCollectionController.swift",
+          "line": 688,
+          "expression": "collection.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/GalleryController.swift",
+          "line": 230,
+          "expression": "filmstrip.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 630,
+          "expression": "tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }"
+        }
+      ]
     },
     "Sources/Pathem/IconCollectionController.swift:68:42:popUpContextMenu": {
-      "class": "A",
-      "kind": "dynamic context menu",
+      "class": "C",
+      "kind": "menu",
       "custom_content": false,
-      "destructive": true,
+      "destructive": false,
       "default_destructive_intended": false,
-      "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
-      "builders": []
+      "reason": "Resolved as standard class C by pathem-claude on 2026-11-16: every app provider returns standard NSMenu items with no custom NSMenuItem.view. Physical popup expression is retained, with implicit attachment provenance. A provider view assignment makes the effective class A and fails the classification gate until reviewed. No structural or native menu coverage is claimed.",
+      "builders": [
+        "Sources/Pathem/FileContextMenu.swift:30:16:NSMenu"
+      ],
+      "implicit_presentation": true,
+      "standard_menu_providers": [
+        "Sources/Pathem/FileContextMenu.swift",
+        "Sources/Pathem/FileListController.swift",
+        "Sources/Pathem/ColumnBrowserController.swift",
+        "Sources/Pathem/IconCollectionController.swift",
+        "Sources/Pathem/GalleryController.swift",
+        "Sources/Pathem/KeyTableView.swift"
+      ],
+      "attachment_locations": [
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 629,
+          "expression": "tableView.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/ColumnBrowserController.swift",
+          "line": 301,
+          "expression": "table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first"
+        },
+        {
+          "file": "Sources/Pathem/IconCollectionController.swift",
+          "line": 688,
+          "expression": "collection.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/GalleryController.swift",
+          "line": 230,
+          "expression": "filmstrip.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 630,
+          "expression": "tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }"
+        }
+      ]
     },
     "Sources/Pathem/KeyTableView.swift:80:17:popUpContextMenu": {
-      "class": "A",
-      "kind": "dynamic context menu",
+      "class": "C",
+      "kind": "menu",
       "custom_content": false,
-      "destructive": true,
+      "destructive": false,
       "default_destructive_intended": false,
-      "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
-      "builders": []
+      "reason": "Resolved as standard class C by pathem-claude on 2026-11-16: every app provider returns standard NSMenu items with no custom NSMenuItem.view. Physical popup expression is retained, with implicit attachment provenance. A provider view assignment makes the effective class A and fails the classification gate until reviewed. No structural or native menu coverage is claimed.",
+      "builders": [
+        "Sources/Pathem/FileContextMenu.swift:30:16:NSMenu",
+        "Sources/Pathem/FileListController.swift:688:20:NSMenu"
+      ],
+      "implicit_presentation": true,
+      "standard_menu_providers": [
+        "Sources/Pathem/FileContextMenu.swift",
+        "Sources/Pathem/FileListController.swift",
+        "Sources/Pathem/ColumnBrowserController.swift",
+        "Sources/Pathem/IconCollectionController.swift",
+        "Sources/Pathem/GalleryController.swift",
+        "Sources/Pathem/KeyTableView.swift"
+      ],
+      "attachment_locations": [
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 629,
+          "expression": "tableView.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/ColumnBrowserController.swift",
+          "line": 301,
+          "expression": "table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first"
+        },
+        {
+          "file": "Sources/Pathem/IconCollectionController.swift",
+          "line": 688,
+          "expression": "collection.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/GalleryController.swift",
+          "line": 230,
+          "expression": "filmstrip.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 630,
+          "expression": "tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }"
+        }
+      ]
     },
     "Sources/Pathem/KeyTableView.swift:87:42:popUpContextMenu": {
-      "class": "A",
-      "kind": "dynamic context menu",
+      "class": "C",
+      "kind": "menu",
       "custom_content": false,
-      "destructive": true,
+      "destructive": false,
       "default_destructive_intended": false,
-      "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
-      "builders": []
+      "reason": "Resolved as standard class C by pathem-claude on 2026-11-16: every app provider returns standard NSMenu items with no custom NSMenuItem.view. Physical popup expression is retained, with implicit attachment provenance. A provider view assignment makes the effective class A and fails the classification gate until reviewed. No structural or native menu coverage is claimed.",
+      "builders": [
+        "Sources/Pathem/FileContextMenu.swift:30:16:NSMenu",
+        "Sources/Pathem/FileListController.swift:688:20:NSMenu"
+      ],
+      "implicit_presentation": true,
+      "standard_menu_providers": [
+        "Sources/Pathem/FileContextMenu.swift",
+        "Sources/Pathem/FileListController.swift",
+        "Sources/Pathem/ColumnBrowserController.swift",
+        "Sources/Pathem/IconCollectionController.swift",
+        "Sources/Pathem/GalleryController.swift",
+        "Sources/Pathem/KeyTableView.swift"
+      ],
+      "attachment_locations": [
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 629,
+          "expression": "tableView.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/ColumnBrowserController.swift",
+          "line": 301,
+          "expression": "table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first"
+        },
+        {
+          "file": "Sources/Pathem/IconCollectionController.swift",
+          "line": 688,
+          "expression": "collection.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/GalleryController.swift",
+          "line": 230,
+          "expression": "filmstrip.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/FileListController.swift",
+          "line": 630,
+          "expression": "tableView.onBackgroundMenu = { [weak self] in self?.makeBackgroundMenu() }"
+        }
+      ]
     },
     "Sources/Pathem/OrganizeReviewController.swift:274:9:popUp": {
       "class": "C",
@@ -2600,9 +2750,19 @@
           "expression": "tableView.menu = contextMenu.menu"
         },
         {
+          "file": "Sources/Pathem/ColumnBrowserController.swift",
+          "line": 301,
+          "expression": "table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first"
+        },
+        {
           "file": "Sources/Pathem/IconCollectionController.swift",
           "line": 688,
           "expression": "collection.menu = contextMenu.menu"
+        },
+        {
+          "file": "Sources/Pathem/GalleryController.swift",
+          "line": 230,
+          "expression": "filmstrip.menu = contextMenu.menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."

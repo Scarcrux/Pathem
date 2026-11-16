@@ -359,15 +359,18 @@ def render(builders, sites, ignored, manifest):
         if item.get('owner_decision'):
             decision = item['owner_decision']
             intent = str(intent) + ' (' + decision['date'] + ': ' + decision['quote'] + ')'
+        reason = item.get('reason', '')
+        if item.get('attachment_locations'):
+            reason += ' Implicit presentation attachments: ' + '; '.join(f"{a['file']}:{a['line']} `{a['expression']}`" for a in item['attachment_locations'])
         values = [key, mode, site.get('role', 'physical'), links, item.get('kind', 'pass-through'),
                   item.get('custom_content', ''), item.get('destructive', ''),
-                  intent, item.get('class') or 'unclassed wrapper', item.get('reason', '')]
+                  intent, item.get('class') or 'unclassed wrapper', reason]
         lines.append('| ' + ' | '.join(cell(x) for x in values) + ' |')
-    lines += ['', '## Builders without explicit presentation expressions', '',
+    lines += ['', '## Implicit menu attachments and builders without explicit presentations', '',
               'Implicit menus are listed with attachment locations. They are neither called unused nor claimed covered.', '',
               '| Builder | Status / attachment provenance |', '|---|---|']
     linked = {b for item in manifest['sites'].values() for b in item.get('builders', [])}
-    for key in sorted(builders.keys() - linked):
+    for key in sorted((builders.keys() - linked) | implicit.keys()):
         if key in implicit:
             item = implicit[key]
             attachments = '; '.join(f"{a['file']}:{a['line']} `{a['expression']}`" for a in item['attachments'])
@@ -377,6 +380,34 @@ def render(builders, sites, ignored, manifest):
         lines.append(f'| {cell(key)} | {cell(reason)} |')
     return '\n'.join(lines) + '\n'
 
+
+def validate_standard_menus(root, manifest):
+    """A reviewed native menu becomes custom content as soon as a provider adds a view."""
+    errors=[]
+    for site,item in manifest['sites'].items():
+        if not site.endswith(':popUpContextMenu') or not any('/'+f+':' in site for f in ['KeyTableView.swift','IconCollectionController.swift']):
+            continue
+        if item.get('class')=='A':
+            continue  # A requires structural coverage; never silently downgrade it.
+        if item.get('class')!='C' or not item.get('standard_menu_providers'):
+            errors.append('STANDARD MENU provenance missing '+site)
+            continue
+        for file in item['standard_menu_providers']:
+            path=root/file
+            if not path.is_file():
+                errors.append('STANDARD MENU provider missing '+file)
+                continue
+            source=mask(path.read_text())
+            if re.search(r'\.\s*view\s*=(?!=)',source):
+                errors.append('STANDARD MENU CUSTOM VIEW: effective class A; review classification and native coverage '+site+' provider='+file)
+        locations=item.get('attachment_locations',[])
+        if not locations:errors.append('STANDARD MENU attachment provenance missing '+site)
+        for a in locations:
+            try:line=(root/a['file']).read_text().splitlines()[a['line']-1]
+            except (OSError,IndexError):line=''
+            if a['expression'] not in line:
+                errors.append('STANDARD MENU stale attachment '+site+' '+a['file'])
+    return errors
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -391,7 +422,7 @@ def main():
     if args.scan:
         print(json.dumps(dict(builders=builders, sites=sites, ignored=ignored), indent=2))
         return
-    errors = validate(builders, sites, manifest) + validate_attachments(args.root, builders, manifest)
+    errors = validate(builders, sites, manifest) + validate_attachments(args.root, builders, manifest) + validate_standard_menus(args.root, manifest)
     if ignored != manifest.get('ignored_counts', {}):
         errors.append('STALE exclusion counts; review explicit harness/DEBUG census')
     if not errors:

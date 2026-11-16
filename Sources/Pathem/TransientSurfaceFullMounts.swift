@@ -20,19 +20,21 @@ extension TransientSurfaceSample {
         let filename: Bool
         let show: (URL, String) -> AnyObject?
         let reset: () -> Void
+        let prepare: (URL, String) -> Void
     }
 
     func fullMounts() -> [Mount] {
         let owners = MountOwners()
         func mount(
             _ id: String, _ source: String, filename: Bool = false,
+            prepare: @escaping (URL, String) -> Void = { _, _ in },
             _ show: @escaping (URL, String) -> AnyObject?
         ) -> Mount {
             let matches = policy.keys.filter { $0.hasPrefix("Sources/Pathem/" + source + ":") }
             precondition(matches.count == 1, "explicit presentation site must be unique: " + source)
             return Mount(
                 id: id, site: matches[0], filename: filename, show: show,
-                reset: { owners.values.removeAll() })
+                reset: { owners.values.removeAll() }, prepare: prepare)
         }
         let b = browser
         return [
@@ -388,20 +390,28 @@ extension TransientSurfaceSample {
                 b.resetPathemData()
                 return b
             },
-            mount("m56", "BrowserViewController+Workspaces.swift:37", filename: true) { _, name in
-                if let pane = b.activePane {
-                    b.windowState.saveStyle(WindowStateStore.Style(name: name, format: pane.format))
+            mount(
+                "m56", "BrowserViewController+Workspaces.swift:37", filename: true,
+                prepare: { _, name in
+                    if let pane = b.activePane {
+                        b.windowState.saveStyle(
+                            WindowStateStore.Style(name: name, format: pane.format))
+                    }
                 }
+            ) { _, _ in
                 b.applyStyle()
                 return b
             },
-            mount("m57", "BrowserViewController+Workspaces.swift:86", filename: true) {
-                file, name in
-                let folder = file.deletingLastPathComponent()
-                b.windowState.saveWorkspace(
-                    WindowStateStore.Workspace(
-                        name: name, left: [folder.path], leftActive: 0, right: [folder.path],
-                        rightActive: 0))
+            mount(
+                "m57", "BrowserViewController+Workspaces.swift:86", filename: true,
+                prepare: { file, name in
+                    let folder = file.deletingLastPathComponent().path
+                    b.windowState.saveWorkspace(
+                        WindowStateStore.Workspace(
+                            name: name, left: [folder], leftActive: 0, right: [folder],
+                            rightActive: 0))
+                }
+            ) { _, _ in
                 b.openWorkspace()
                 return b
             },
@@ -549,7 +559,9 @@ extension TransientSurfaceSample {
             host.makeKeyAndOrderFront(nil)
             host.makeFirstResponder(focus)
             let responder = host.firstResponder.map(ObjectIdentifier.init)
+            mount.prepare(file, name)
             let files = snapshot(directory)
+            let config = ConfigStore.directory().map(snapshot) ?? [:]
             let before = windows()
             TransientPresentationProbe.current = nil
             let owner = mount.show(file, name)
@@ -602,7 +614,9 @@ extension TransientSurfaceSample {
                 self.key("\r", window: window)
             }
             let bindingOK =
-                keyReady && binding.resolved && defaults.count <= 1
+                (!["m08", "m09", "m13", "m55"].contains(mount.id)
+                    || policy[mount.site]?["default_destructive_intended"] as? Bool == true)
+                && keyReady && binding.resolved && defaults.count <= 1
                 && (expectedDefault.map { expected in
                     expected.isEnabled
                         ? (binding.accepted && binding.received.count == 1
@@ -634,8 +648,11 @@ extension TransientSurfaceSample {
             }
             let dismissed = settle { !window.isVisible && host.attachedSheet !== window }
             emit(
-                cell, 5, snapshot(directory) == files,
-                "cycle=\(cycle) Cancel preserves owned files", content: content)
+                cell, 5,
+                snapshot(directory) == files
+                    && (ConfigStore.directory().map(snapshot) ?? [:]) == config,
+                "cycle=\(cycle) Cancel preserves owned files and private configuration",
+                content: content)
             emit(
                 cell, 7, dismissed && (host.firstResponder.map(ObjectIdentifier.init) == responder),
                 "cycle=\(cycle) visible=\(window.isVisible) responderRestored=\(host.firstResponder.map(ObjectIdentifier.init) == responder)",

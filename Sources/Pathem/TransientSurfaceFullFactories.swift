@@ -280,7 +280,8 @@ extension TransientSurfaceSample {
         emit(cell, 0, true, "cycle=\(cycle) factory=\(entry.id) site=\(entry.site)")
         inspect(
             content, alert: object.alert, cell: cell, phase: "cycle\(cycle)-factory",
-            sheet: entry.sheet, presented: true)
+            sheet: entry.sheet, presented: true, systemAccessory: object.save?.accessoryView,
+            systemPanel: object.save != nil)
         emit(
             cell, 4,
             (entry.sheet ? window.sheetParent === host : NSApp.modalWindow === window)
@@ -292,16 +293,18 @@ extension TransientSurfaceSample {
         let probe = TransientReturnBindingProbe.observe(window: window, buttons: buttons) {
             self.key("\r", window: window)
         }
+        let destructiveDefault = ["f05", "f06", "f07", "f08"].contains(entry.id)
+        let intended = policy[entry.site]?["default_destructive_intended"] as? Bool ?? false
         emit(
             cell, 6,
-            probe.resolved
+            (!destructiveDefault || intended) && probe.resolved
                 && (expected.map { expected in
                     expected.isEnabled
                         ? (probe.accepted && probe.received.count == 1
                             && probe.received.first === expected)
                         : probe.received.isEmpty
                 } ?? probe.received.isEmpty),
-            "cycle=\(cycle) Return accepted=\(probe.accepted) received=\(probe.received.map(\.title)) production callback withheld",
+            "cycle=\(cycle) Return accepted=\(probe.accepted) received=\(probe.received.map(\.title)) production callback withheld destructiveDefault=\(destructiveDefault) intended=\(intended)",
             content: content)
         if cycle == 0 { capture(content, key: cell + "-initial") }
         if let suggestion = object.retained as? FilenameSuggestionController {
@@ -310,12 +313,14 @@ extension TransientSurfaceSample {
             content.layoutSubtreeIfNeeded()
             inspect(
                 content, alert: object.alert, cell: cell, phase: "cycle\(cycle)-suggestion",
-                sheet: entry.sheet, presented: true)
+                sheet: entry.sheet, presented: true, systemAccessory: object.save?.accessoryView,
+                systemPanel: object.save != nil)
             suggestion.debugFail()
             content.layoutSubtreeIfNeeded()
             inspect(
                 content, alert: object.alert, cell: cell, phase: "cycle\(cycle)-suggestion-failure",
-                sheet: entry.sheet, presented: true)
+                sheet: entry.sheet, presented: true, systemAccessory: object.save?.accessoryView,
+                systemPanel: object.save != nil)
         }
     }
 
@@ -387,8 +392,31 @@ extension TransientSurfaceSample {
                         } else {
                             // Record lack of a non-mutating Cancel, then retire only
                             // this fixture's modal session. Do not call Discard.
-                            _ = self.key("\u{1b}", window: object.window)
-                            NSApp.abortModal()
+                            let observedEscape = TransientReturnBindingProbe.observe(
+                                window: object.window, buttons: object.buttons
+                            ) {
+                                self.key("\u{1b}", window: object.window)
+                            }
+                            let escape = self.key("\u{1b}", window: object.window)
+                            print(
+                                "TSAMPLE: NO-CANCEL cell=\(cell) EscapeAccepted=\(escape) received=\(observedEscape.received.map(\.title)) buttons=\(object.buttons.map(\.title))"
+                            )
+                            if !escape {
+                                if let event = NSEvent.keyEvent(
+                                    with: .keyDown, location: .zero,
+                                    modifierFlags: [], timestamp: 0,
+                                    windowNumber: object.window.windowNumber,
+                                    context: nil, characters: "\u{1b}",
+                                    charactersIgnoringModifiers: "\u{1b}",
+                                    isARepeat: false, keyCode: 53)
+                                {
+                                    object.window.sendEvent(event)
+                                    print(
+                                        "TSAMPLE: NO-CANCEL-EVENT cell=\(cell) visibleAfterEscape=\(object.window.isVisible)"
+                                    )
+                                }
+                                NSApp.abortModal()
+                            }
                         }
                     }
                 }

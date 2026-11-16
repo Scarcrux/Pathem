@@ -12,6 +12,7 @@ def transcript(remove=None, fail=None, marker=None):
     row('predicate-1-viewport', 1)
     row('predicate-8-multiplicity', 8)
     row('predicate-4-appearance', 4)
+    row('predicate-3-system', 3)
     for kind in ['rename', 'reclaim', 'conflict']:
         for n in range(1, 9):
             row('A-' + kind + '-de-light-720-short', n)
@@ -69,6 +70,10 @@ class SampleReceiptControls(unittest.TestCase):
     def test_appearance_delivery_control_is_required(self):
         errors, _ = validate(transcript(remove=('predicate-4-appearance', 4)), 0, 'clean', 'de', True, 'Abbrechen')
         self.assertIn('appearance delivery sub-control missing or failed', errors)
+
+    def test_system_accessory_ownership_control_is_required(self):
+        errors, _ = validate(transcript(remove=('predicate-3-system', 3)), 0, 'clean', 'de', True, 'Abbrechen')
+        self.assertIn('system-panel ownership sub-control missing or failed', errors)
 
     def test_constraint_conflicts_are_never_hidden(self):
         self.assertIn('constraint-conflict log line', validate(transcript() + '\nUnable to simultaneously satisfy constraints', 0, 'clean', 'de', True, 'Abbrechen')[0])

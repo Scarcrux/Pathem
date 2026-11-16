@@ -102,8 +102,13 @@ final class TransientSurfaceSample {
     func delivered(_ name: String, _ detail: String) {
         if injected.insert(name).inserted { print("TSAMPLE: INJECT \(name) \(detail)") }
     }
-    func recordFramework(_ content: NSView, alert: NSAlert?, cell: String) {
-        let nodes = TransientSurfaceChecks.ambiguity(content, alert: alert).framework
+    func recordFramework(
+        _ content: NSView, alert: NSAlert?, cell: String, systemAccessory: NSView? = nil,
+        systemPanel: Bool = false
+    ) {
+        let nodes = TransientSurfaceChecks.ambiguity(
+            content, alert: alert, systemAccessory: systemAccessory, systemPanel: systemPanel
+        ).framework
         let old = frameworkInfo[cell] ?? (0, [])
         frameworkInfo[cell] = (
             max(old.count, nodes.count),
@@ -112,10 +117,13 @@ final class TransientSurfaceSample {
     }
     func inspect(
         _ content: NSView, alert: NSAlert?, cell: String, phase: String, sheet: Bool,
-        presented: Bool
+        presented: Bool, systemAccessory: NSView? = nil, systemPanel: Bool = false
     ) {
-        recordFramework(content, alert: alert, cell: cell)
-        let issues = TransientSurfaceChecks.geometry(content, alert: alert)
+        recordFramework(
+            content, alert: alert, cell: cell, systemAccessory: systemAccessory,
+            systemPanel: systemPanel)
+        let issues = TransientSurfaceChecks.geometry(
+            content, alert: alert, systemAccessory: systemAccessory, systemPanel: systemPanel)
         for number in [1, 3] {
             let failures = issues.filter { $0.number == number }
             emit(
@@ -217,6 +225,14 @@ final class TransientSurfaceSample {
             3, !nativeIssues.contains { $0.number == 3 } && frameworkReported,
             !ambiguousIssues.contains { $0.number == 3 },
             ambiguityDelivered && ambiguousIssues.allSatisfy { $0.number == 3 })
+        let panelGood = TransientSurfaceChecks.geometry(nativeContent, systemPanel: true)
+        let panelBad = TransientSurfaceChecks.geometry(
+            nativeContent, systemAccessory: accessory, systemPanel: true)
+        recordFramework(nativeContent, alert: nil, cell: "predicate-3-system", systemPanel: true)
+        emit(
+            "predicate-3-system", 3,
+            !panelGood.contains { $0.number == 3 } && panelBad.contains { $0.number == 3 },
+            "native panel internals INFO; deliberately ambiguous app accessory stays red")
         control(
             4, TransientSurfaceChecks.ownership(actual: 10, expected: 10),
             TransientSurfaceChecks.ownership(actual: 20, expected: 10))
@@ -292,7 +308,7 @@ final class TransientSurfaceSample {
         checkExternalBoundary("start")
         predicateControls()
         guard results.allSatisfy({ $0 }) else { finish(started) }
-        if !["b", "mounts", "factories"].contains(
+        if !["b", "mounts", "factories", "lifecycle"].contains(
             environment["PATHEM_TRANSIENT_SURFACES_SET"] ?? ""),
             ["de", "ja"].contains(language)
         {
@@ -326,6 +342,10 @@ final class TransientSurfaceSample {
             }
             runFullMounts()
             TransientPresentationProbe.uninstall()
+            finish(started)
+        }
+        if full, environment["PATHEM_TRANSIENT_SURFACES_SET"] == "lifecycle" {
+            runMarkupLifecycle()
             finish(started)
         }
         if full, environment["PATHEM_TRANSIENT_SURFACES_SET"] == "factories" {

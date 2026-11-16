@@ -9,7 +9,10 @@ enum TransientSurfaceChecks {
         let detail: String
     }
     static func walk(_ root: NSView) -> [NSView] { [root] + root.subviews.flatMap(walk) }
-    static func geometry(_ root: NSView, alert: NSAlert? = nil) -> [Issue] {
+    static func geometry(
+        _ root: NSView, alert: NSAlert? = nil, systemAccessory: NSView? = nil,
+        systemPanel: Bool = false
+    ) -> [Issue] {
         var issues: [Issue] = []
         let visible = walk(root).filter { !$0.isHiddenOrHasHiddenAncestor }
         let buttons = visible.compactMap { $0 as? NSButton }
@@ -87,7 +90,9 @@ enum TransientSurfaceChecks {
                 }
             }
         }
-        let ambiguous = ambiguity(root, alert: alert).app
+        let ambiguous = ambiguity(
+            root, alert: alert, systemAccessory: systemAccessory, systemPanel: systemPanel
+        ).app
         if !ambiguous.isEmpty {
             issues.append(
                 .init(
@@ -113,10 +118,12 @@ enum TransientSurfaceChecks {
     }
     /// Layout ownership follows the coordinator's 2026-11-16 clarification.
     /// Private framework classes and the field editor are reported, never waived geometrically.
-    static func ambiguity(_ root: NSView, alert: NSAlert?) -> (app: [NSView], framework: [NSView]) {
+    static func ambiguity(
+        _ root: NSView, alert: NSAlert?, systemAccessory: NSView? = nil, systemPanel: Bool = false
+    ) -> (app: [NSView], framework: [NSView]) {
         let nodes = walk(root).filter { !$0.isHiddenOrHasHiddenAncestor }
         let editors = nodes.compactMap { $0 as? NSTextView }.filter(\.isFieldEditor)
-        let ownedRoot = alert == nil ? root : alert?.accessoryView
+        let ownedRoot = systemPanel ? systemAccessory : (alert == nil ? root : alert?.accessoryView)
         var app: [NSView] = []
         var framework: [NSView] = []
         for node in nodes where node.hasAmbiguousLayout {
