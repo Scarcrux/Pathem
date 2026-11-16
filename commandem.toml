@@ -1268,6 +1268,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     id = "t-1fbb231a"
     title = "TS-U1-F1: Bound the No Such Path suggestion alert display while keeping full paths available and navigation unchanged. Existing 4 x 255-component cells overflow both host sizes; real owned 849-byte path also overflows the small host. Unit 1 receipt: docs/TRANSIENT_SURFACES_UNIT1.md. Authorized Unit 2 separate red-first fix."
 
+  [[mission.task]]
+    id = "t-30527098"
+    title = "TS-U2-F04 (P1, data loss): unsaved markup is discarded with no prompt when the window is closed or the app quits. Proven by pathem-codex-2 on owned PDFs 2026-11-16 (edited=true, zero annotations on disk after close and after quit). Related TS-U2-F03: the unsaved-markup prompt has Save and Discard but no Cancel, and Escape does nothing. Fix owner: pathem-claude, pending the owner's choice of behaviour."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
