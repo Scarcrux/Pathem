@@ -23,7 +23,12 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     NSSearchFieldDelegate, NSWindowDelegate
 {
     typealias Backend = @Sendable (FileSearch.Request) async -> FileSearch.Response
+    /// The panel's three modes, in popup order. Name and contents go to `FileSearch`;
+    /// semantic ranks one folder through the on-device index.
+    enum Mode: Int { case filename, contents, semantic }
     private let search: Backend
+    private let semantic: SemanticSearchController
+    private var folderIsLocal = true
     private let panel = FileSearchPanel(
         contentRect: NSRect(x: 0, y: 0, width: 740, height: 500),
         styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: true)
@@ -49,7 +54,8 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
     private var folderPicker: NSOpenPanel?
     private var committedScopeIndex = 0
 
-    private var mode: FileSearch.Mode { modePopup.indexOfSelectedItem == 0 ? .filename : .contents }
+    private var mode: Mode { Mode(rawValue: modePopup.indexOfSelectedItem) ?? .filename }
+    private var fileSearchMode: FileSearch.Mode { mode == .filename ? .filename : .contents }
     private var scope: FileSearch.Scope {
         if scopePopup.indexOfSelectedItem == 1 { return .mac }
         return .folder(
@@ -58,29 +64,36 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
             recursive: subfolders.state == .on)
     }
 
-    init(search: @escaping Backend = { await FileSearch.search($0) }) {
+    init(
+        search: @escaping Backend = { await FileSearch.search($0) },
+        semantic: SemanticSearchController = SemanticSearchController()
+    ) {
         self.search = search
+        self.semantic = semantic
         super.init()
         build()
     }
 
     func present(
         over window: NSWindow, currentFolder: URL, everywhere: Bool = false,
+        mode: Mode = .filename, folderIsLocal: Bool = true,
         onReveal: @escaping (URL) -> Void, onOpen: @escaping (URL) -> Void
     ) {
         cancelFolderPicker()
         invalidate()
         self.currentFolder = currentFolder
+        self.folderIsLocal = folderIsLocal
         self.onReveal = onReveal
         self.onOpen = onOpen
-        modePopup.selectItem(at: 0)
+        modePopup.selectItem(at: mode.rawValue)
         scopePopup.selectItem(at: everywhere ? 1 : 0)
         committedScopeIndex = scopePopup.indexOfSelectedItem
         subfolders.state = .on
         searchField.stringValue = ""
         setResults([])
         updateLocation()
-        statusLabel.stringValue = L("filesearch.hint", "Type a keyword to search.")
+        statusLabel.stringValue =
+            semanticUnavailableReason() ?? L("filesearch.hint", "Type a keyword to search.")
         panel.centerOverMainWindow()
         panel.makeKeyAndOrderFront(nil)
         panel.makeFirstResponder(searchField)
@@ -113,8 +126,13 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
 
     private func performSearch() {
         invalidate()
-        let request = FileSearch.Request(keyword: searchField.stringValue, mode: mode, scope: scope)
+        let request = FileSearch.Request(
+            keyword: searchField.stringValue, mode: fileSearchMode, scope: scope)
         setResults([])  // old query/scope results must not remain actionable
+        if mode == .semantic, let reason = semanticUnavailableReason() {
+            statusLabel.stringValue = reason
+            return
+        }
         guard !request.keyword.isEmpty else {
             statusLabel.stringValue = L("filesearch.hint", "Type a keyword to search.")
             return
@@ -122,6 +140,10 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         let gen = generation
         isSearching = true
         statusLabel.stringValue = L("filesearch.loading", "Searching…")
+        if mode == .semantic, case .folder(let folder, let recursive) = request.scope {
+            runSemantic(request.keyword, in: folder, recursive: recursive, generation: gen)
+            return
+        }
         let backend = search
         searchTask = Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(200))
@@ -167,8 +189,84 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         }
     }
 
+    /// Why semantic search cannot run with the current scope, or nil when it can. It ranks one
+    /// folder's index, so it has no meaning for the whole Mac, and a remote pane has no local
+    /// folder to index.
+    private func semanticUnavailableReason() -> String? {
+        guard mode == .semantic else { return nil }
+        if scopePopup.indexOfSelectedItem == 1 {
+            return L(
+                "filesearch.semanticNeedsFolder",
+                "Semantic search ranks one folder at a time. Choose This Folder or Other Folder….")
+        }
+        if scopePopup.indexOfSelectedItem == 0, !folderIsLocal {
+            return L(
+                "semantic.refuseRemote", "Semantic search works on local folders, not remote ones.")
+        }
+        return nil
+    }
+
+    /// Semantic mode: index (or reuse the index of) the folder, rank it against the query, and
+    /// list the result, showing the same Indexing, Ranking, failure and cap states as ever.
+    private func runSemantic(_ query: String, in folder: URL, recursive: Bool, generation gen: Int)
+    {
+        let semantic = self.semantic
+        searchTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
+            let outcome = await semantic.rank(
+                query: query, in: folder, recursive: recursive,
+                // The index belongs to the folder, not to this keystroke: keep adopting it
+                // while the panel is open so the newer query, awaiting the same build, finds it.
+                isCurrent: { [weak self] in self?.panel.isVisible == true },
+                phase: { [weak self] phase in
+                    guard let self, gen == self.generation, self.panel.isVisible else { return }
+                    self.statusLabel.stringValue =
+                        phase == .indexing
+                        ? L("semantic.indexing", "Indexing…") : L("semantic.ranking", "Ranking…")
+                })
+            // Every exit path: an answer for an old query, scope or closed panel is dropped here,
+            // and whoever superseded it (performSearch, present, dismiss) owns the status line.
+            guard !Task.isCancelled, let self, gen == self.generation, self.panel.isVisible
+            else { return }
+            self.isSearching = false
+            switch outcome {
+            case .ranked(let ranked, let cap):
+                let urls = ranked.map { entry in
+                    (entry.location.map { URL(fileURLWithPath: $0, isDirectory: true) } ?? folder)
+                        .appendingPathComponent(entry.name)
+                }
+                self.setResults(urls)
+                var status =
+                    urls.isEmpty
+                    ? L("filesearch.noMatches", "No matching files.")
+                    : String(format: L("filesearch.count", "%d matching items."), urls.count)
+                if let cap {
+                    status +=
+                        " "
+                        + String(
+                            format: L("semantic.capped", "Only the first %d items were indexed."),
+                            cap)
+                }
+                self.statusLabel.stringValue = status
+            case .failed(let reason):
+                self.setResults([])
+                self.statusLabel.stringValue = String(
+                    format: L(
+                        "semantic.indexFailed",
+                        "Semantic search could not index this folder: %@"), reason)
+            case .stale:
+                self.setResults([])
+                self.statusLabel.stringValue = L(
+                    "filesearch.hint", "Type a keyword to search.")
+            }
+            self.updateActions()
+        }
+    }
+
     private func updateLocation() {
         subfolders.isEnabled = scopePopup.indexOfSelectedItem != 1
+        modePopup.item(at: Mode.semantic.rawValue)?.isEnabled = scopePopup.indexOfSelectedItem != 1
         chooseButton.isHidden = scopePopup.indexOfSelectedItem != 2
         switch scope {
         case .mac:
@@ -177,17 +275,31 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
                 "Spotlight-indexed files on this Mac; unindexed locations are not included.")
         case .folder(let url, _): locationLabel.stringValue = url.path
         }
-        searchField.placeholderString =
-            mode == .filename
-            ? L("filesearch.namePlaceholder", "Keyword in file name…")
-            : L("filesearch.contentPlaceholder", "Keyword in file contents…")
+        switch mode {
+        case .filename:
+            searchField.placeholderString = L(
+                "filesearch.namePlaceholder", "Keyword in file name…")
+        case .contents:
+            searchField.placeholderString = L(
+                "filesearch.contentPlaceholder", "Keyword in file contents…")
+        case .semantic:
+            searchField.placeholderString = L(
+                "filesearch.semanticKeyword", "Describe what you are looking for…")
+        }
         locationLabel.toolTip = locationLabel.stringValue
-        coverageLabel.stringValue =
-            mode == .contents && scopePopup.indexOfSelectedItem != 1
-            ? L(
+        switch mode {
+        case .contents where scopePopup.indexOfSelectedItem != 1:
+            coverageLabel.stringValue = L(
                 "filesearch.contentHint",
                 "Searches text files directly and other documents through Spotlight. Unindexed document contents may not be found."
-            ) : ""
+            )
+        case .semantic:
+            coverageLabel.stringValue = L(
+                "filesearch.semanticHint",
+                "Ranks file names and text by meaning, using the on-device model. Very large folders are only partly indexed."
+            )
+        default: coverageLabel.stringValue = ""
+        }
         subfolders.toolTip = L(
             "filesearch.folderHint",
             "Folder search excludes hidden items. Contents combines direct UTF-8 text search (up to 32 MiB per file) with Spotlight-indexed documents, without downloading cloud-only files."
@@ -283,7 +395,9 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         searchField.setAccessibilityLabel(L("filesearch.keyword", "Search keyword"))
         modePopup.addItems(withTitles: [
             L("filesearch.filename", "File name"), L("filesearch.contents", "File contents"),
+            L("filesearch.semanticMode", "Meaning (semantic)"),
         ])
+        modePopup.autoenablesItems = false  // the semantic entry is disabled for This Mac
         scopePopup.addItems(withTitles: [
             L("gsearch.scopeFolder", "This Folder"), L("gsearch.scopeMac", "This Mac"),
             L("filesearch.other", "Other Folder…"),
@@ -411,6 +525,24 @@ final class GlobalSearchController: NSObject, NSTableViewDataSource, NSTableView
         scopePopup.selectItem(at: 2)
         optionsChanged()
     }
+    func debugSetMode(_ mode: Mode) {
+        modePopup.selectItem(at: mode.rawValue)
+        optionsChanged()
+    }
+    func debugSetScope(index: Int) {
+        scopePopup.selectItem(at: index)
+        scopeChanged()
+    }
+    func debugSetSubfolders(_ on: Bool) {
+        subfolders.state = on ? .on : .off
+        optionsChanged()
+    }
+    func debugRevealSelected() { revealSelected() }
+    func debugOpenSelected() { openSelected() }
+    var debugSemanticItemEnabled: Bool {
+        modePopup.item(at: Mode.semantic.rawValue)?.isEnabled ?? false
+    }
+    var debugModeTitles: [String] { modePopup.itemTitles }
     func debugSetKeyword(_ text: String) {
         searchField.stringValue = text
         controlTextDidChange(

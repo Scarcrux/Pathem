@@ -860,14 +860,14 @@
       ],
       "reason": "Permission guidance and settings/dismiss controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/GlobalSearchController.swift:85:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/GlobalSearchController.swift:98:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/GlobalSearchController.swift:27:25:FileSearchPanel"
+        "Sources/Pathem/GlobalSearchController.swift:32:25:FileSearchPanel"
       ],
       "reason": "File search query, scope, filters and results. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1440,14 +1440,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/GlobalSearchController.swift:223:9:beginSheetModal": {
+    "Sources/Pathem/GlobalSearchController.swift:335:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/GlobalSearchController.swift:216:22:NSOpenPanel"
+        "Sources/Pathem/GlobalSearchController.swift:328:22:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },

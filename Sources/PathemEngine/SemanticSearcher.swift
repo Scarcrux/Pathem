@@ -34,11 +34,15 @@ public enum SemanticSearcher {
         var vectors: [[Float]] = []
         for (i, entry) in entries.prefix(maxItems).enumerated() {
             var text = entry.name
+            // A flattened (recursive) entry carries the folder it lives in; a plain listing's
+            // entries live directly in `directory`.
+            let parent =
+                entry.location.map { URL(fileURLWithPath: $0, isDirectory: true) } ?? directory
             // Never read a dataless cloud placeholder: indexing its contents would
             // silently trigger a download. Index its name only.
             if !entry.isDirectory, !entry.isDataless,
                 let snippet = ContentExtractor.snippet(
-                    of: directory.appendingPathComponent(entry.name), ocr: ocrImages, pdf: pdf)
+                    of: parent.appendingPathComponent(entry.name), ocr: ocrImages, pdf: pdf)
             {
                 text += "\n" + snippet
             }
@@ -57,7 +61,9 @@ public enum SemanticSearcher {
     ) -> [Int] {
         guard !index.isEmpty else { return [] }
         guard let q = embedder.embed(query) else { return index.ids }
-        let scored = zip(index.ids, index.vectors).map { ($0.0, SemanticIndex<Int>.cosine(q, $0.1)) }
+        let scored = zip(index.ids, index.vectors).map {
+            ($0.0, SemanticIndex<Int>.cosine(q, $0.1))
+        }
         return scored.sorted { $0.1 > $1.1 }.map { $0.0 }
     }
 }

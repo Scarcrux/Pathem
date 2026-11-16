@@ -1859,3 +1859,7 @@
 "semantic.refuseColumn" = "Die semantische Suche ist in der Spaltenansicht nicht verfügbar. Wechseln Sie zur Listen-, Symbol- oder Galerieansicht.";
 "semantic.refuseRemote" = "Die semantische Suche funktioniert in lokalen Ordnern, nicht in Remote-Ordnern.";
 "semantic.refuseSmart" = "Die semantische Suche ist für Suchergebnisse oder intelligente Listen nicht verfügbar. Öffnen Sie zuerst einen Ordner.";
+"filesearch.semanticHint" = "Ordnet Dateinamen und Text nach Bedeutung, mit dem Modell auf dem Gerät. Sehr große Ordner werden nur teilweise indiziert.";
+"filesearch.semanticKeyword" = "Beschreiben Sie, was Sie suchen…";
+"filesearch.semanticMode" = "Bedeutung (semantisch)";
+"filesearch.semanticNeedsFolder" = "Die semantische Suche ordnet jeweils einen Ordner. Wählen Sie Dieser Ordner oder Anderer Ordner….";

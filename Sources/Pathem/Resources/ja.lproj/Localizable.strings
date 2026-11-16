@@ -1859,3 +1859,7 @@
 "semantic.refuseColumn" = "セマンティック検索はカラム表示では利用できません。リスト、アイコン、ギャラリー表示に切り替えてください。";
 "semantic.refuseRemote" = "セマンティック検索はローカルフォルダで利用できます。リモートフォルダでは利用できません。";
 "semantic.refuseSmart" = "セマンティック検索は検索結果やスマートリストでは利用できません。先にフォルダを開いてください。";
+"filesearch.semanticHint" = "オンデバイスのモデルで、ファイル名とテキストを意味で順位付けします。非常に大きなフォルダは一部のみインデックスされます。";
+"filesearch.semanticKeyword" = "探しているものを説明してください…";
+"filesearch.semanticMode" = "意味 (セマンティック)";
+"filesearch.semanticNeedsFolder" = "セマンティック検索は一度に1つのフォルダを対象にします。「このフォルダ」または「別のフォルダ…」を選んでください。";

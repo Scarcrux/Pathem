@@ -1859,3 +1859,7 @@
 "semantic.refuseColumn" = "La búsqueda semántica no está disponible en la vista de columnas. Cambia a la vista de lista, iconos o galería.";
 "semantic.refuseRemote" = "La búsqueda semántica funciona en carpetas locales, no en carpetas remotas.";
 "semantic.refuseSmart" = "La búsqueda semántica no está disponible sobre resultados de búsqueda o listas inteligentes. Abre primero una carpeta.";
+"filesearch.semanticHint" = "Ordena nombres de archivo y texto por significado, con el modelo del dispositivo. Las carpetas muy grandes solo se indexan en parte.";
+"filesearch.semanticKeyword" = "Describe lo que buscas…";
+"filesearch.semanticMode" = "Significado (semántica)";
+"filesearch.semanticNeedsFolder" = "La búsqueda semántica ordena una carpeta cada vez. Elige Esta carpeta u Otra carpeta….";

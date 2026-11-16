@@ -736,7 +736,7 @@ extension BrowserViewController {
             self?.showFileSearch()
         }
         add("search.semantic", L("filesearch.semantic", "Semantic Search This Folder…")) {
-            [weak self] in self?.showPalette(prefill: "")
+            [weak self] in self?.showFileSearch(mode: .semantic)
         }
         add("ai.run", L("bvc.cmd.askPathem", "Ask Pathem (Natural Language)…")) { [weak self] in
             self?.showAICommandBar()

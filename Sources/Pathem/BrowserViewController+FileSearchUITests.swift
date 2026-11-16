@@ -59,6 +59,12 @@ extension BrowserViewController {
         if ProcessInfo.processInfo.environment["PATHEM_SEARCH_SESSION_SAMPLE"] == "1" {
             return checks + fileSearchSessionChecks(over: window, root: root)
         }
+        if let semanticMatrix = ProcessInfo.processInfo.environment[
+            "PATHEM_SEARCH_SEMANTIC_MATRIX_SAMPLE"]
+        {
+            // "1" is the two-cell sample; "full" runs every view from both panes on its own.
+            return checks + semanticPanelMatrix(root: root, sample: semanticMatrix != "full")
+        }
         if ProcessInfo.processInfo.environment["PATHEM_SEARCH_MATRIX_SAMPLE"] == "1"
             || ProcessInfo.processInfo.environment["PATHEM_SEARCH_MATRIX_COLUMN_SAMPLE"] == "1"
         {
@@ -364,6 +370,7 @@ extension BrowserViewController {
         controller.debugPanel.cancelOperation(nil)
         check("search-escape-dismisses", !controller.debugPanel.isVisible)
         checks += fileSearchInteractionMatrix(root: root, sample: false)
+        checks += semanticPanelMatrix(root: root, sample: false)
         return checks
     }
 

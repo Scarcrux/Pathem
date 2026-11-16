@@ -765,6 +765,10 @@
 "filesearch.reveal" = "Reveal in Folder";
 "filesearch.scope" = "Search location";
 "filesearch.semantic" = "Semantic Search This Folder…";
+"filesearch.semanticHint" = "Ranks file names and text by meaning, using the on-device model. Very large folders are only partly indexed.";
+"filesearch.semanticKeyword" = "Describe what you are looking for…";
+"filesearch.semanticMode" = "Meaning (semantic)";
+"filesearch.semanticNeedsFolder" = "Semantic search ranks one folder at a time. Choose This Folder or Other Folder….";
 "filesearch.semanticPlaceholder" = "Semantic search this folder, > for commands, / for paths";
 "filesearch.skipped" = "%d files or folders could not be fully searched.";
 "filesearch.subfolders" = "Include subfolders";

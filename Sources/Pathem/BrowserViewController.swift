@@ -211,7 +211,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     lazy var aclEditor = ACLEditorController()  // used by BrowserViewController+Permissions
     lazy var markupController = MarkupController()
     lazy var undoHistoryController = UndoHistoryController()  // used by showUndoHistory (BrowserViewController+Transfers)
-    lazy var globalSearchController = GlobalSearchController()  // used in +Navigation
+    lazy var globalSearchController = GlobalSearchController(semantic: semanticSearch)  // used in +Navigation
     var externalCommands: [ExternalCommand] = []
     let menuInstaller = BrowserMenuInstaller()
     var externalCommandsMenu: NSMenu { menuInstaller.externalCommandsMenu }

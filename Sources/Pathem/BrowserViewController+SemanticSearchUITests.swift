@@ -7,13 +7,13 @@ import PathemEngine
 /// "the answer arrived after the query changed" is produced deliberately and no timer decides
 /// a verdict. The real on-device model is never loaded.
 extension BrowserViewController {
-    private struct FixtureError: LocalizedError {
+    struct FixtureError: LocalizedError {
         let message: String
         var errorDescription: String? { message }
     }
 
     /// Requests waiting for an answer, matched by label.
-    private final class Gate<Value: Sendable>: @unchecked Sendable {
+    final class Gate<Value: Sendable>: @unchecked Sendable {
         private let lock = NSLock()
         private var waiting: [(label: String, answer: (Result<Value, Error>) -> Void)] = []
         func request(_ label: String) async throws -> Value {
@@ -67,7 +67,7 @@ extension BrowserViewController {
         let rankGate = Gate<[Int]>()
         semanticSearch.invalidate()
         semanticSearch.backend = SemanticSearchController.Backend(
-            entries: { try await entriesGate.request($0.lastPathComponent) },
+            entries: { directory, _ in try await entriesGate.request(directory.lastPathComponent) },
             index: { entries, _, cap, _ in
                 (try? await indexGate.request("\(min(entries.count, cap))"))
                     ?? FolderSemanticIndex(ids: [], vectors: [])

@@ -157,4 +157,33 @@ import Testing
         #expect(index.vectors[0] == [1, 1])  // regular: name "kitten" + content "car"
         #expect(index.vectors[1] == [1, 0])  // dataless: name only, content never read
     }
+
+    /// Records what each embedded text contained, standing in for the on-device model.
+    private final class RecordingEmbedder: TextEmbedder, @unchecked Sendable {
+        let dimension = 1
+        private let lock = NSLock()
+        private(set) var texts: [String] = []
+        func embed(_ text: String) -> [Float]? {
+            lock.withLock { texts.append(text) }
+            return [1]
+        }
+    }
+
+    /// A recursive (flattened) entry lives in its own folder, not in the folder searched: its
+    /// content snippet must be read from there.
+    @Test func indexReadsAFlattenedEntryFromItsOwnFolder() throws {
+        let fm = FileManager.default
+        let root = fm.temporaryDirectory.appendingPathComponent("pathem-sem-\(UUID().uuidString)")
+        let sub = root.appendingPathComponent("sub")
+        try fm.createDirectory(at: sub, withIntermediateDirectories: true)
+        defer { try? fm.removeItem(at: root) }
+        try "deep marker words".write(
+            to: sub.appendingPathComponent("note.txt"), atomically: true, encoding: .utf8)
+        let flat = FlatEnumerator.entries(of: root, includeFolders: false).entries
+        #expect(flat.map(\.name) == ["note.txt"])
+        let embedder = RecordingEmbedder()
+        let index = SemanticSearcher.index(flat, in: root, embedder: embedder)
+        #expect(index.ids == [0])
+        #expect(embedder.texts.first?.contains("deep marker words") == true)
+    }
 }

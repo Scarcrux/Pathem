@@ -11,12 +11,13 @@ extension BrowserViewController {
         showFileSearch(everywhere: true)
     }
 
-    func showFileSearch(everywhere: Bool = false) {
+    func showFileSearch(everywhere: Bool = false, mode: GlobalSearchController.Mode = .filename) {
         guard let window = view.window else { return }
         let folder = activePane.map { !$0.isRemote ? $0.currentURL : nil } ?? nil
         globalSearchController.present(
             over: window, currentFolder: folder ?? FileManager.default.homeDirectoryForCurrentUser,
-            everywhere: everywhere,
+            everywhere: everywhere, mode: mode,
+            folderIsLocal: !(activePane?.isRemote ?? false),
             onReveal: { [weak pane = activePane] url in pane?.reveal(url) },
             onOpen: { [weak self] url in self?.applyOpen(url) })
     }

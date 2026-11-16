@@ -17,7 +17,9 @@ final class SemanticSearchController {
     private var cachedCap: Int?  // the cap the cached index hit, when the folder had more items
     private var buildTask: Task<String?, Never>?  // the in-flight build (its failure), so bursts coalesce
     private var buildingDir: URL?
-    static let defaultMaxItems = 5_000
+    private var cachedRecursive = false
+    private var buildingRecursive = false
+    nonisolated static let defaultMaxItems = 5_000
 
     /// How many items one index covers. A var so a test can use a small cap.
     var maxItems = SemanticSearchController.defaultMaxItems
@@ -25,14 +27,21 @@ final class SemanticSearchController {
     /// The three slow steps, replaceable so a test can answer each on command instead of
     /// running the on-device model. The defaults are the real enumeration, embedding and ranking.
     struct Backend: Sendable {
-        var entries: @Sendable (URL) async throws -> [FileEntry]
+        var entries: @Sendable (URL, _ recursive: Bool) async throws -> [FileEntry]
         var index: @Sendable ([FileEntry], URL, Int, Bool) async -> FolderSemanticIndex
         var rank: @Sendable (String, FolderSemanticIndex) async -> [Int]
 
         static let live = Backend(
-            entries: { directory in
+            entries: { directory, recursive in
                 try await Task.detached {
-                    try BulkEnumerator().entries(of: directory, includingHidden: false)
+                    guard recursive else {
+                        return try BulkEnumerator().entries(of: directory, includingHidden: false)
+                    }
+                    // One past the cap, so a tree larger than the index covers is visible as such.
+                    return FlatEnumerator.entries(
+                        of: directory, includingHidden: false, includeFolders: true,
+                        maxItems: SemanticSearchController.defaultMaxItems + 1
+                    ).entries
                 }.value
             },
             index: { entries, directory, maxItems, ocr in
@@ -70,16 +79,27 @@ final class SemanticSearchController {
     /// Rank `directory`'s entries by semantic similarity to `query`. `phase` is told when the
     /// folder starts being indexed (only if there is no cached index) and when ranking starts.
     func rank(
-        query: String, in directory: URL, isCurrent: @escaping @MainActor () -> Bool,
+        query: String, in directory: URL, recursive: Bool = false,
+        isCurrent: @escaping @MainActor () -> Bool,
         phase: @escaping @MainActor (Phase) -> Void = { _ in }
     ) async -> Outcome {
-        if cachedDir != directory || cachedIndex == nil {
-            phase(.indexing)
-            if let reason = await ensureIndex(for: directory, isCurrent: isCurrent) {
+        func cacheMatches() -> Bool {
+            cachedIndex != nil && cachedDir == directory && cachedRecursive == recursive
+        }
+        // A concurrent build for another key (the panel's subfolder toggle, a different folder)
+        // can overwrite the cache after ours lands, so look again a couple of times while the
+        // caller still wants this result, rather than report a stale miss for a live query.
+        var attempts = 0
+        while !cacheMatches(), attempts < 3, attempts == 0 || isCurrent() {
+            if attempts == 0 { phase(.indexing) }
+            attempts += 1
+            if let reason = await ensureIndex(
+                for: directory, recursive: recursive, isCurrent: isCurrent)
+            {
                 return .failed(reason: reason)
             }
         }
-        guard let index = cachedIndex, let entries = cachedEntries, cachedDir == directory else {
+        guard cacheMatches(), let index = cachedIndex, let entries = cachedEntries else {
             return .stale
         }
         let cap = cachedCap
@@ -105,18 +125,24 @@ final class SemanticSearchController {
     /// folder (e.g. rapid searches) await the one in-flight build instead of each starting their
     /// own embed of up to `maxItems` files. Returns why the build failed, or nil on success (or
     /// when the result was dropped as stale, which the caller sees as no cached index).
-    private func ensureIndex(for directory: URL, isCurrent: @escaping @MainActor () -> Bool) async
+    private func ensureIndex(
+        for directory: URL, recursive: Bool, isCurrent: @escaping @MainActor () -> Bool
+    ) async
         -> String?
     {
-        guard cachedDir != directory || cachedIndex == nil else { return nil }
-        if let task = buildTask, buildingDir == directory { return await task.value }
+        guard cachedDir != directory || cachedRecursive != recursive || cachedIndex == nil else {
+            return nil
+        }
+        if let task = buildTask, buildingDir == directory, buildingRecursive == recursive {
+            return await task.value
+        }
         let maxItems = self.maxItems
         let ocr = includeOCR
         let backend = self.backend
         let task = Task { @MainActor [weak self] () -> String? in
             let dirEntries: [FileEntry]
             do {
-                dirEntries = try await backend.entries(directory)
+                dirEntries = try await backend.entries(directory, recursive)
             } catch {
                 return error.localizedDescription
             }
@@ -130,15 +156,17 @@ final class SemanticSearchController {
                     "semantic.noModel", "the on-device language model is not available yet")
             }
             self.cachedDir = directory
+            self.cachedRecursive = recursive
             self.cachedEntries = dirEntries
             self.cachedIndex = built
             self.cachedCap = dirEntries.count > maxItems ? maxItems : nil
             return nil
         }
         buildingDir = directory
+        buildingRecursive = recursive
         buildTask = task
         let failure = await task.value
-        if buildingDir == directory {
+        if buildingDir == directory, buildingRecursive == recursive {
             buildTask = nil
             buildingDir = nil
         }
