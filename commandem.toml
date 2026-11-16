@@ -1854,6 +1854,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 task 10 unit F1 landed (Sonnet agent in claude-2 under docs/FINDER_PARITY.md; reviewed, rebased, squashed and rerun by pathem-claude): one empty-space menu in all five views with selection-only entries hidden, View Options in it, Eject on ejectable volumes with the sidebar's rule. Background 342/342, Finder 198/198, UI 49/49, sidebar 661/661, smoke and inventory PASS. Not verified: appearance on screen. F2 (iCloud), F3 (Services), F4 (tags) not started; F5 folded into F3 after the investigation."
     at = "2026-11-16T19:30:50Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 Finder unit F2 landed (e78e476): Download Now and Remove Download follow one engine rule (CloudItemActions) in the context menu, File menu and commands, shown only for cloud items that need them. Red: finder-cloud-entries-absent-for-local-file failed in all five views before. Review follow-up: validation samples at most 2000 selected items. Probe of real folders: Google Drive items also report as ubiquitous, so both entries appear there too. Keep Downloaded omitted: no public client API. Real iCloud download and eviction not exercised. Search unit S2 landed (777510d): semantic search shows Indexing and Ranking, a failed index with its reason, the 5000-item cap, and says why it refuses column view, remote panes and smart lists; clearing restores selection and scroll (red proven). Review found and fixed a stuck status when focus moves to the other pane mid-search (red 26/27, green 27/27). Suites on combined source: sidebar-transfer 688/688, file search 465/465, Finder 203/203, background 342/342, smoke pass. Translations of the new strings are unreviewed by native speakers."
+    at = "2026-11-16T19:48:23Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
