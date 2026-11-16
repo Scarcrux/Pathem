@@ -1862,6 +1862,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Live iCloud test (owner offered a real file): Remove Download on an iCloud Drive item is refused with NSFileProviderErrorNonEvictable (-2008) because Optimize Mac Storage is off on this Mac; Pathem showed 'The file couldn't be saved'. a29e9b1 names the cause and remedy; opt-in live test PATHEM_ICLOUD_LIVE_TEST=1. Google Drive round trip (download then remove download) worked and matched CloudItemFacts. Search S3 landed (ef415d8): semantic is a third mode of the Cmd-F panel with scope, subfolders, Open/Reveal and the S2 states; agent's GUI suites green before the owner's 15:30 test pause, only headless checks rerun after rebase. Finder F3 (Services, 5641f7f in claude-2) held: the drawn Services item and the Shortcuts check need a visual look, paused by the owner."
     at = "2026-11-16T22:33:47Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 Live magnet test (owner request), headless, opt-in PATHEM_MAGNET_LIVE=1 (778c22a): Debian 13.7.0 netinst magnet with tracker only resolved metadata from a peer in 50 s and finished 792,723,456 bytes in 93 s, SHA-256 matches Debian's. First choice (Internet Archive public-domain book) had zero BitTorrent seeders; the Archive serves via web seeds only. Findings, not fixed: Magnet.parse ignores ws= web seeds, so web-seed-only magnets never start; a pending magnet shows only 'checking' with 0 peers. App/daemon path on a public magnet not run (GUI paused)."
+    at = "2026-11-16T23:00:15Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
