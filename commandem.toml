@@ -1109,6 +1109,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-40c7e77f"
     title = "Inventory remaining SecureTransport usbmux warnings and validate a replacement with paired-device TLS acceptance; retain only exact documented migration-debt fingerprints"
+    done = true
 
   [[mission.task]]
     id = "t-5831b255"
