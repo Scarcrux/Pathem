@@ -1850,3 +1850,11 @@
 "prefs.folderSizeExclusions" = "Auch überspringen";
 "prefs.folderSizeExclusionsHint" = "Ordnernamen oder Pfade, durch Kommas getrennt, zum Beispiel node_modules, ~/Movies/Raw. Übersprungene Ordner zeigen einen Strich; per Rechtsklick und „Größe berechnen“ lässt sich einer messen.";
 "prefs.autosaveMarkup" = "Markierungen beim Verlassen eines Dokuments automatisch sichern (ohne Nachfrage)";
+"semantic.capped" = "Nur die ersten %d Objekte wurden indiziert.";
+"semantic.indexFailed" = "Die semantische Suche konnte diesen Ordner nicht indizieren: %@";
+"semantic.indexing" = "Indizierung…";
+"semantic.noModel" = "das Sprachmodell auf dem Gerät ist noch nicht verfügbar";
+"semantic.ranking" = "Sortierung…";
+"semantic.refuseColumn" = "Die semantische Suche ist in der Spaltenansicht nicht verfügbar. Wechseln Sie zur Listen-, Symbol- oder Galerieansicht.";
+"semantic.refuseRemote" = "Die semantische Suche funktioniert in lokalen Ordnern, nicht in Remote-Ordnern.";
+"semantic.refuseSmart" = "Die semantische Suche ist für Suchergebnisse oder intelligente Listen nicht verfügbar. Öffnen Sie zuerst einen Ordner.";

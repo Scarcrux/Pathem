@@ -1850,3 +1850,11 @@
 "prefs.folderSizeExclusions" = "同时跳过";
 "prefs.folderSizeExclusionsHint" = "文件夹名称或路径，用逗号分隔，例如 node_modules, ~/Movies/Raw。跳过的文件夹显示短横线；右键点按并选择“计算大小”即可测量。";
 "prefs.autosaveMarkup" = "离开文稿时自动保存标记（不提示）";
+"semantic.capped" = "仅为前 %d 个项目建立了索引。";
+"semantic.indexFailed" = "语义搜索无法为此文件夹建立索引:%@";
+"semantic.indexing" = "正在建立索引…";
+"semantic.noModel" = "设备端语言模型尚不可用";
+"semantic.ranking" = "正在排序…";
+"semantic.refuseColumn" = "语义搜索在分栏视图中不可用。请切换到列表、图标或画廊视图。";
+"semantic.refuseRemote" = "语义搜索适用于本地文件夹,不适用于远程文件夹。";
+"semantic.refuseSmart" = "语义搜索不适用于搜索结果或智能列表。请先打开一个文件夹。";

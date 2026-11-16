@@ -84,6 +84,10 @@ extension BrowserViewController {
             checkFindInFiles(check: check, settle: settle)
             finish()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_SEMANTIC_SEARCH_SAMPLE"] == "1" {
+            checkSemanticSearch(root: root, check: check, settle: settle)
+            finish()
+        }
         if ProcessInfo.processInfo.environment["PATHEM_VIEW_OPTIONS_SAMPLE"] == "1" {
             checkViewOptions(root: root, check: check, settle: settle)
             finish()
@@ -325,6 +329,8 @@ extension BrowserViewController {
             root: root.appendingPathComponent("view-options"), check: check, settle: settle)
         checkDialogLayout(check: check, settle: settle)
         checkFindInFiles(check: check, settle: settle)
+        checkSemanticSearch(
+            root: root.appendingPathComponent("semantic"), check: check, settle: settle)
         checkTerminalDrawer(check: check, settle: settle)
         checkSidebarWidthKept(check: check, settle: settle)
         checkSortGroupDelivery(

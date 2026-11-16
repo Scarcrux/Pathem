@@ -1850,3 +1850,11 @@
 "prefs.folderSizeExclusions" = "追加でスキップ";
 "prefs.folderSizeExclusionsHint" = "フォルダ名またはパスをカンマ区切りで指定します（例：node_modules, ~/Movies/Raw）。スキップしたフォルダにはダッシュが表示され、右クリックして「サイズを計算」を選ぶと計測できます。";
 "prefs.autosaveMarkup" = "書類を離れるときにマークアップを自動保存（確認なし）";
+"semantic.capped" = "最初の %d 項目のみがインデックスされました。";
+"semantic.indexFailed" = "このフォルダをセマンティック検索用にインデックスできませんでした: %@";
+"semantic.indexing" = "インデックス作成中…";
+"semantic.noModel" = "オンデバイスの言語モデルがまだ利用できません";
+"semantic.ranking" = "順位付け中…";
+"semantic.refuseColumn" = "セマンティック検索はカラム表示では利用できません。リスト、アイコン、ギャラリー表示に切り替えてください。";
+"semantic.refuseRemote" = "セマンティック検索はローカルフォルダで利用できます。リモートフォルダでは利用できません。";
+"semantic.refuseSmart" = "セマンティック検索は検索結果やスマートリストでは利用できません。先にフォルダを開いてください。";

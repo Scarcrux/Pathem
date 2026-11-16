@@ -1850,3 +1850,11 @@
 "prefs.folderSizeExclusions" = "Omitir también";
 "prefs.folderSizeExclusionsHint" = "Nombres de carpeta o rutas, separados por comas, por ejemplo node_modules, ~/Movies/Raw. Las carpetas omitidas muestran un guion; haga clic derecho y elija Calcular tamaño para medir una.";
 "prefs.autosaveMarkup" = "Guardar las anotaciones automáticamente al salir de un documento (sin preguntar)";
+"semantic.capped" = "Solo se indexaron los primeros %d elementos.";
+"semantic.indexFailed" = "La búsqueda semántica no pudo indexar esta carpeta: %@";
+"semantic.indexing" = "Indexando…";
+"semantic.noModel" = "el modelo de lenguaje del dispositivo aún no está disponible";
+"semantic.ranking" = "Clasificando…";
+"semantic.refuseColumn" = "La búsqueda semántica no está disponible en la vista de columnas. Cambia a la vista de lista, iconos o galería.";
+"semantic.refuseRemote" = "La búsqueda semántica funciona en carpetas locales, no en carpetas remotas.";
+"semantic.refuseSmart" = "La búsqueda semántica no está disponible sobre resultados de búsqueda o listas inteligentes. Abre primero una carpeta.";

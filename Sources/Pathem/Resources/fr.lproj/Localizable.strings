@@ -1850,3 +1850,11 @@
 "prefs.folderSizeExclusions" = "Ignorer aussi";
 "prefs.folderSizeExclusionsHint" = "Noms de dossiers ou chemins, séparés par des virgules, par exemple node_modules, ~/Movies/Raw. Les dossiers ignorés affichent un tiret ; faites un clic droit et choisissez Calculer la taille pour en mesurer un.";
 "prefs.autosaveMarkup" = "Enregistrer automatiquement les annotations en quittant un document (sans demander)";
+"semantic.capped" = "Seuls les %d premiers éléments ont été indexés.";
+"semantic.indexFailed" = "La recherche sémantique n’a pas pu indexer ce dossier : %@";
+"semantic.indexing" = "Indexation…";
+"semantic.noModel" = "le modèle de langage sur l’appareil n’est pas encore disponible";
+"semantic.ranking" = "Classement…";
+"semantic.refuseColumn" = "La recherche sémantique n’est pas disponible en vue par colonnes. Passez à la vue liste, icônes ou galerie.";
+"semantic.refuseRemote" = "La recherche sémantique fonctionne sur les dossiers locaux, pas sur les dossiers distants.";
+"semantic.refuseSmart" = "La recherche sémantique n’est pas disponible sur des résultats de recherche ou des listes intelligentes. Ouvrez d’abord un dossier.";

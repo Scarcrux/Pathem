@@ -14,9 +14,51 @@ final class SemanticSearchController {
     private var cachedDir: URL?
     private var cachedIndex: FolderSemanticIndex?
     private var cachedEntries: [FileEntry]?
-    private var buildTask: Task<Void, Never>?  // the in-flight build, so bursts coalesce
+    private var cachedCap: Int?  // the cap the cached index hit, when the folder had more items
+    private var buildTask: Task<String?, Never>?  // the in-flight build (its failure), so bursts coalesce
     private var buildingDir: URL?
-    private static let maxItems = 5_000
+    static let defaultMaxItems = 5_000
+
+    /// How many items one index covers. A var so a test can use a small cap.
+    var maxItems = SemanticSearchController.defaultMaxItems
+
+    /// The three slow steps, replaceable so a test can answer each on command instead of
+    /// running the on-device model. The defaults are the real enumeration, embedding and ranking.
+    struct Backend: Sendable {
+        var entries: @Sendable (URL) async throws -> [FileEntry]
+        var index: @Sendable ([FileEntry], URL, Int, Bool) async -> FolderSemanticIndex
+        var rank: @Sendable (String, FolderSemanticIndex) async -> [Int]
+
+        static let live = Backend(
+            entries: { directory in
+                try await Task.detached {
+                    try BulkEnumerator().entries(of: directory, includingHidden: false)
+                }.value
+            },
+            index: { entries, directory, maxItems, ocr in
+                await Task.detached {
+                    SemanticSearcher.index(
+                        entries, in: directory, maxItems: maxItems, ocrImages: ocr,
+                        pdf: PDFTextExtractor())  // app-side, since PDFKit links AppKit
+                }.value
+            },
+            rank: { query, index in
+                await Task.detached { SemanticSearcher.rank(query: query, in: index) }.value
+            })
+    }
+    var backend = Backend.live
+
+    enum Phase: Sendable { case indexing, ranking }
+
+    enum Outcome {
+        /// Entries in ranked order; `indexCap` is set when the folder had more items than the
+        /// index covers, so only the first `indexCap` could be ranked.
+        case ranked([FileEntry], indexCap: Int?)
+        /// The index could not be built; `reason` is short and fit to show.
+        case failed(reason: String)
+        /// The folder or query moved on; show nothing.
+        case stale
+    }
 
     /// Include OCR'd image text when indexing (mirrors the search-OCR preference).
     var includeOCR = false
@@ -25,17 +67,25 @@ final class SemanticSearchController {
     /// pre-index of the same folder).
     var cachedDirectory: URL? { cachedDir }
 
-    /// Rank `directory`'s entries by semantic similarity to `query`, returning the entries in
-    /// ranked order (nil if the index couldn't be built or the folder moved on).
-    func rank(query: String, in directory: URL, isCurrent: @escaping @MainActor () -> Bool) async
-        -> [FileEntry]?
-    {
-        await ensureIndex(for: directory, isCurrent: isCurrent)
-        guard let index = cachedIndex, let entries = cachedEntries, cachedDir == directory else {
-            return nil
+    /// Rank `directory`'s entries by semantic similarity to `query`. `phase` is told when the
+    /// folder starts being indexed (only if there is no cached index) and when ranking starts.
+    func rank(
+        query: String, in directory: URL, isCurrent: @escaping @MainActor () -> Bool,
+        phase: @escaping @MainActor (Phase) -> Void = { _ in }
+    ) async -> Outcome {
+        if cachedDir != directory || cachedIndex == nil {
+            phase(.indexing)
+            if let reason = await ensureIndex(for: directory, isCurrent: isCurrent) {
+                return .failed(reason: reason)
+            }
         }
-        let order = await Task.detached { SemanticSearcher.rank(query: query, in: index) }.value
-        return order.compactMap { $0 < entries.count ? entries[$0] : nil }
+        guard let index = cachedIndex, let entries = cachedEntries, cachedDir == directory else {
+            return .stale
+        }
+        let cap = cachedCap
+        phase(.ranking)
+        let order = await backend.rank(query, index)
+        return .ranked(order.compactMap { $0 < entries.count ? entries[$0] : nil }, indexCap: cap)
     }
 
     /// Drop the cache (e.g. a preference that affects indexing changed, or the folder changed
@@ -47,34 +97,51 @@ final class SemanticSearchController {
         cachedDir = nil
         cachedIndex = nil
         cachedEntries = nil
+        cachedCap = nil
     }
 
     /// Enumerate and embed `directory` off the main thread, adopting the result only if
     /// `isCurrent()` still holds (the user hasn't navigated away). Concurrent calls for the same
     /// folder (e.g. rapid searches) await the one in-flight build instead of each starting their
-    /// own embed of up to 5000 files.
-    private func ensureIndex(for directory: URL, isCurrent: @escaping @MainActor () -> Bool) async {
-        guard cachedDir != directory || cachedIndex == nil else { return }
-        if let task = buildTask, buildingDir == directory { await task.value; return }
-        let maxItems = Self.maxItems
+    /// own embed of up to `maxItems` files. Returns why the build failed, or nil on success (or
+    /// when the result was dropped as stale, which the caller sees as no cached index).
+    private func ensureIndex(for directory: URL, isCurrent: @escaping @MainActor () -> Bool) async
+        -> String?
+    {
+        guard cachedDir != directory || cachedIndex == nil else { return nil }
+        if let task = buildTask, buildingDir == directory { return await task.value }
+        let maxItems = self.maxItems
         let ocr = includeOCR
-        let task = Task { @MainActor [weak self] in
-            let dirEntries = await Task.detached {
-                (try? BulkEnumerator().entries(of: directory, includingHidden: false)) ?? []
-            }.value
-            let built = await Task.detached {
-                SemanticSearcher.index(
-                    dirEntries, in: directory, maxItems: maxItems, ocrImages: ocr,
-                    pdf: PDFTextExtractor())  // app-side, since PDFKit links AppKit
-            }.value
-            guard let self, !Task.isCancelled, isCurrent() else { return }
+        let backend = self.backend
+        let task = Task { @MainActor [weak self] () -> String? in
+            let dirEntries: [FileEntry]
+            do {
+                dirEntries = try await backend.entries(directory)
+            } catch {
+                return error.localizedDescription
+            }
+            let built = await backend.index(dirEntries, directory, maxItems, ocr)
+            guard let self, !Task.isCancelled, isCurrent() else { return nil }
+            // An empty index over a non-empty folder means nothing could be embedded: the
+            // on-device model is not ready. Report it rather than cache an index that matches
+            // nothing, so a later search retries.
+            if built.isEmpty, !dirEntries.isEmpty {
+                return L(
+                    "semantic.noModel", "the on-device language model is not available yet")
+            }
             self.cachedDir = directory
             self.cachedEntries = dirEntries
             self.cachedIndex = built
+            self.cachedCap = dirEntries.count > maxItems ? maxItems : nil
+            return nil
         }
         buildingDir = directory
         buildTask = task
-        await task.value
-        if buildingDir == directory { buildTask = nil; buildingDir = nil }
+        let failure = await task.value
+        if buildingDir == directory {
+            buildTask = nil
+            buildingDir = nil
+        }
+        return failure
     }
 }

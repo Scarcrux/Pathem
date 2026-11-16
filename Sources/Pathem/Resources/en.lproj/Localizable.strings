@@ -1485,6 +1485,14 @@
 "select.replace" = "Replace selection";
 "select.substring" = "Contains text";
 "select.title" = "Select by Pattern";
+"semantic.capped" = "Only the first %d items were indexed.";
+"semantic.indexFailed" = "Semantic search could not index this folder: %@";
+"semantic.indexing" = "Indexing…";
+"semantic.noModel" = "the on-device language model is not available yet";
+"semantic.ranking" = "Ranking…";
+"semantic.refuseColumn" = "Semantic search is not available in column view. Switch to list, icon or gallery view.";
+"semantic.refuseRemote" = "Semantic search works on local folders, not remote ones.";
+"semantic.refuseSmart" = "Semantic search is not available over search results or smart lists. Open a folder first.";
 "settings.appearance" = "Appearance";
 "settings.general" = "General";
 "settings.gestures" = "Gestures";

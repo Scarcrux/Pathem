@@ -678,8 +678,65 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         filterField.isHidden = true
     }
 
-    /// Replace the listing with an explicit set (e.g. ranked search results).
-    func showResults(_ entries: [FileEntry]) {
+    /// A running semantic search's state ("Indexing…", "Ranking…"), shown in the status line in
+    /// place of the item count until results (or a failure) replace it.
+    private(set) var searchPhase: String?
+    /// A note shown after the item count while results are on screen (e.g. the index cap).
+    private(set) var searchNote: String?
+    /// Why the last semantic search could not run its index, shown as the listing's placeholder.
+    private(set) var searchFailure: String?
+    /// The folder listing's selection and scroll position as they were when search results
+    /// first replaced it, so clearing the search can put them back.
+    private var listingBeforeSearch: (names: Set<String>, scroll: NSPoint)?
+
+    func setSearchPhase(_ text: String?) {
+        searchPhase = text
+        updateStatus()
+    }
+
+    /// The search ended (cleared, or its query is empty): leave the status line alone, and if
+    /// results replaced the listing, restore the listing with its prior selection and scroll.
+    func endSemanticSearch() {
+        searchPhase = nil
+        guard showingSearchResults else {
+            updateStatus()
+            return
+        }
+        let saved = listingBeforeSearch
+        listingBeforeSearch = nil
+        if let saved {
+            // reload() lists off the main thread; these land once the rows exist.
+            pendingSelection = saved.names
+            pendingListingDirectory = currentURL.standardizedFileURL.path
+            pendingAfterListing = { [weak self] in
+                guard let clip = self?.content.scrollView.contentView else { return }
+                clip.scroll(to: saved.scroll)
+                self?.content.scrollView.reflectScrolledClipView(clip)
+            }
+        }
+        reload(preserveState: false)
+    }
+
+    /// Show that semantic search could not index this folder, in place of the listing.
+    func showSemanticFailure(_ message: String) {
+        showResults([])
+        searchFailure = message
+        content.showPlaceholder(message)
+        updateStatus()
+    }
+
+    /// Replace the listing with an explicit set (e.g. ranked search results). `note` is shown
+    /// after the item count.
+    func showResults(_ entries: [FileEntry], note: String? = nil) {
+        if !showingSearchResults {
+            listingBeforeSearch = (
+                Set(content.selectedEntries.map(\.name)),
+                content.scrollView.contentView.bounds.origin
+            )
+        }
+        searchPhase = nil
+        searchFailure = nil
+        searchNote = note
         pendingSelection = nil
         pendingAfterListing = nil
         pendingListingDirectory = nil
@@ -824,6 +881,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             endArchiveSession()  // offer to write changes back
         }
         showingSearchResults = false
+        searchPhase = nil
+        searchNote = nil
+        searchFailure = nil
+        listingBeforeSearch = nil
         remoteLabel.isHidden = true
         breadcrumb.isHidden = false
         if let resolveFormat {
@@ -2100,6 +2161,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     }
 
     private func updateStatus() {
+        if let searchPhase {
+            statusLabel.stringValue = searchPhase
+            return
+        }
         let all = content.entries
         let selected = content.selectedEntries
         var parts: [String] = []
@@ -2142,6 +2207,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             text += (text.isEmpty ? "" : "   ") + L("pane.hiddenShown", "Hidden files shown")
         }
         if let gitSummary, remote == nil, !smartActive { text += "   \(gitSummary)" }
+        if let searchNote, showingSearchResults {
+            text += (text.isEmpty ? "" : "   ") + searchNote
+        }
         statusLabel.stringValue = text
         updateHiddenToggleIcon()  // keep the eye in sync with the current folder's hidden state
     }
