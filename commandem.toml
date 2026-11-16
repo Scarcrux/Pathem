@@ -1815,6 +1815,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 inventory now121 reviewed rows of195,74 remaining. Source review links59 additional custom-window/existing-browser sites and25 system-panel/sharing sites; Save with filename accessory is A. Red-first scanner controls expose and fix missing primary metatype/QuickLook builders and async OpenPanel.begin;17/17 pass, census196 builders/195 rows. Partial data committed for handoff, no native sample or accepted table yet; strict gate remains red."
     at = "2026-11-16T07:07:06Z"
 
+  [[mission.comment]]
+    text = "Task11 Unit0 implementation complete privately: source inventory196 rows/builders, A116/B47/C29 plus4 unclassed wrappers;171 physical+20 wrapper callers+5 factory callers. All38 implicit menus have pinned attachment provenance;4 dynamic runtime context-menu rows conservatively A/unresolved per contract. Actual table/new-site gate passes,19 controls pass on both Pythons, stale attachment/new-site/table negative controls discriminate. Standalone inventory E2E scenario wired, shell syntax passes; no full E2E/CI. Cleanup manual4 physical/4 builders matches independent count. Complete Unit1 sample still pending; not READY, no land."
+    at = "2026-11-16T07:55:25Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

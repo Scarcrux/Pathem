@@ -132,6 +132,17 @@ forward(concrete)
             self.assertEqual(caller['receiver'], 'concrete')
             self.assertEqual(len(caller['wrapper_path']), 2)
 
+    def test_menu_pass_through_wrapper_keeps_class_on_caller(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = pathlib.Path(folder)
+            sources = root / 'Sources/Pathem'
+            sources.mkdir(parents=True)
+            (sources/'Example.swift').write_text("func popup(_ menu: NSMenu) { menu.popUp(positioning: nil, at: point, in: view) }\nlet built = NSMenu()\npopup(built)\n")
+            builders, sites, _ = scan(root, {})
+            self.assertEqual(len(sites), 2)
+            self.assertEqual({x['role'] for x in sites.values()}, {'wrapper', 'caller'})
+            self.assertEqual(len(builders), 1)
+
     def test_wrapper_class_is_rejected(self):
         sites={'site':{'role':'wrapper'}}
         self.assertEqual(validate({},sites,{'sites':{'site':{'role':'wrapper','class':'A'}}}),
@@ -182,6 +193,31 @@ forward(factory.makeAlert(value: other()), for: host)
                         default_destructive_intended=False)
         metadata['class'] = metadata.pop('classification')
         self.assertEqual(validate({'builder': {}}, {'site': {}}, {'sites': {'site': metadata}}), [])
+
+    def test_real_cli_rejects_stale_implicit_attachment(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = pathlib.Path(folder)
+            sources = root / 'Sources/Pathem'
+            sources.mkdir(parents=True)
+            source = sources / 'Example.swift'
+            source.write_text('let menu = NSMenu()\nhost.menu = menu\n')
+            builders, sites, ignored = scan(root, {})
+            key = next(iter(builders))
+            metadata = {'sites': {}, 'ignored_counts': ignored, 'implicit_builders': {
+                key: {'status': 'implicit presentation', 'reason': 'Fixture native menu',
+                      'attachments': [{'file': 'Sources/Pathem/Example.swift', 'line': 2,
+                                       'expression': 'host.menu = menu'}]}}}
+            manifest = root / 'inventory.json'
+            table = root / 'inventory.md'
+            manifest.write_text(json.dumps(metadata))
+            command = [sys.executable, str(pathlib.Path(__file__).with_name('transient_inventory.py')),
+                       '--root', str(root), '--manifest', str(manifest), '--table', str(table)]
+            valid = subprocess.run(command + ['--write-table'], capture_output=True, text=True)
+            self.assertEqual(valid.returncode, 0, valid.stdout + valid.stderr)
+            source.write_text('let menu = NSMenu()\nhost.menu = nil\n')
+            invalid = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(invalid.returncode, 0)
+            self.assertIn('STALE implicit attachment', invalid.stdout)
 
     def test_real_cli_new_site_and_stale_table_controls(self):
         with tempfile.TemporaryDirectory() as folder:

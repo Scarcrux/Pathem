@@ -309,6 +309,7 @@ scenario "settings defaults + startup stores" 'RESULT: PASS' env PATHEM_CONFIG_D
 scenario "Always Open With application picker" 'RESULT: PASS' env PATHEM_CONFIG_DIR="$E2E_SCRATCH/opener-config" PATHEM_OPENER_UI_TEST=1 "$BIN"
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 PATHEM_SCENARIO_TIMEOUT=245 scenario "layout transition known-findings gate" 'RESULT: PASS' caffeinate -d -i python3 "$ROOT/test/layout_matrix_sample.py" clean --full --known-findings "$ROOT/test/layout_matrix_known_findings.json"
+scenario "transient presentation inventory" 'RESULT: PASS' python3 "$ROOT/test/transient_inventory.py"
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
 scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"
 scenario "media trim export + rejection" 'RESULT: PASS' env PATHEM_TRIM_SMOKE=1 "$BIN"
