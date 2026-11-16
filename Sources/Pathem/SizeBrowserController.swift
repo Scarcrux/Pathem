@@ -113,14 +113,18 @@ final class SizeBrowserController: NSObject {
     private func render(_ items: [(name: String, size: Int64, isDir: Bool)]) {
         let maxSize = max(1, items.first?.size ?? 1)
         for item in items.prefix(500) {
-            rows.addArrangedSubview(makeRow(item, maxSize: maxSize))
+            let row = makeRow(item, maxSize: maxSize)
+            rows.addArrangedSubview(row)
+            row.widthAnchor.constraint(equalTo: rows.widthAnchor).isActive = true
         }
         if items.isEmpty {
-            rows.addArrangedSubview(NSTextField(labelWithString: L("pane.folderEmpty", "This folder is empty")))
+            rows.addArrangedSubview(
+                NSTextField(labelWithString: L("pane.folderEmpty", "This folder is empty")))
         }
     }
 
-    private func makeRow(_ item: (name: String, size: Int64, isDir: Bool), maxSize: Int64) -> NSView {
+    private func makeRow(_ item: (name: String, size: Int64, isDir: Bool), maxSize: Int64) -> NSView
+    {
         let icon = NSImageView()
         icon.image = NSWorkspace.shared.icon(for: item.isDir ? .folder : .data)
         icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
@@ -161,7 +165,6 @@ final class SizeBrowserController: NSObject {
         row.spacing = 8
         row.translatesAutoresizingMaskIntoConstraints = false
         track.setContentHuggingPriority(.init(1), for: .horizontal)
-        row.widthAnchor.constraint(equalTo: rows.widthAnchor).isActive = true
         if item.isDir {
             let click = NSClickGestureRecognizer(target: self, action: #selector(rowClicked(_:)))
             click.numberOfClicksRequired = 2

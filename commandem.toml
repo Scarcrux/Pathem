@@ -1275,6 +1275,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
     title = "TS-F2 closed as intended, not a defect (owner ruling 2026-11-15: 'Go back to the original: Return deletes'; destructive actions the user invoked that already confirm get no extra friction). Reclaim Space Delete Now keeps Delete Permanently as the Return default."
     done = true
 
+  [[mission.task]]
+    id = "t-8df68b94"
+    title = "TS-U2-Fsize: Size Browser crashes on nonempty folder because row-to-container width constraint activates before attachment. Real full g6 crash convicted; attach then constrain; M43 full German regression completes, geometry findings retained. See docs/SIZE_BROWSER_CRASH.md."
+    done = true
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -1998,6 +2003,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Parallel headless integration now passes 201 tests plus inventory/shell checks. Exact core/predicate/phase validation, tooltip and all-family single-window checks, private-config Cancel snapshots, real-plan baseline preflight and owned-child deadline/cancellation handling are implemented. Headless debug build passed before final check4 extension; normal checkpoint hooks will compile/test final Swift. Native/CI qualification and real baseline are still pending the owner coordinated GUI timing choice. No visible tests, install, land or deploy resumed."
     at = "2026-11-16T18:51:41Z"
+
+  [[mission.comment]]
+    text = "TS-U2-Fsize fixed: raw g6 native-6 directly convicts row.width-to-rows.width activation before attachment. Same width constraint now activates after addArrangedSubview. Real M43 German full variant regression completes all8 cells/3cycles/loaded content with no crash, missing treatment or isolation error; native256/332 retains20 geometry/ambiguity pairs. Full old-build partial receipts remain diagnostic only; changed binary needs full rerun."
+    at = "2026-11-16T19:30:22Z"
 
 [[mission]]
   id = "m-e1443252"
