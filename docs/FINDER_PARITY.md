@@ -72,14 +72,56 @@ Acceptance: a rule-level test for which of the three entries shows for each of: 
 local file, a dataless iCloud item, a downloaded iCloud item, a mixed selection. Real
 iCloud behaviour is environmental and is not claimed by this unit.
 
-## F3. Services, and F5. Quick Actions (investigate first)
+## F3. Services in the file menus and the application menu
 
-Hypothesis to test before writing code: AppKit adds Services and Quick Actions to a context
-menu by itself when the menu allows context-menu plug-ins and the responder that owns the
-selection implements `validRequestor(forSendType:returnType:)` and
-`writeSelection(to:types:)` for file URLs. If that holds, F3 and F5 are one small change in
-the file views, not two features. A read-only investigation reports first; this section is
-rewritten from its findings.
+Investigated read-only on 2026-11-16 (SDK headers plus a throwaway experiment). Findings:
+
+- AppKit offers Services for a context menu when the view that owns the selection answers
+  `validRequestor(forSendType:returnType:)` and `writeSelection(to:types:)`, and the app has
+  registered the send types with `NSApp.registerServicesMenuSendTypes(_:returnTypes:)`. In
+  the experiment, with the types registered AppKit probed the view for `public.file-url`
+  and `NSFilenamesPboardType` and called `writeSelection`; without registration it never
+  asked for file types.
+- `NSMenu.allowsContextMenuPlugIns` already defaults to true, so nothing needs setting; it
+  is only a veto.
+- Nothing is needed in Info.plist to consume services (`NSServices` is for providing them,
+  which Pathem already does).
+- Not proven: that the Services item is actually drawn. AppKit adds it outside the menu
+  object the app can inspect, so in-process checks cannot see it.
+
+Change:
+- The file views that become first responder on a right click (the list and column table
+  view, the icon collection view, and whatever the gallery filmstrip and tree outline use)
+  implement the two requestor methods for file URLs and the legacy filenames type, returning
+  themselves only when there is a selection and no return type is asked for, and deferring
+  to `super` otherwise.
+- One `registerServicesMenuSendTypes` call at launch, and an empty "Services" submenu in
+  the application menu assigned to `NSApp.servicesMenu`.
+- Services is one entry as far as Pathem's customizable context menu is concerned: it can be
+  hidden like any other.
+
+Acceptance:
+- In-process: with a selection, each view returns itself for the two file types and writes
+  the selected URLs to the pasteboard it is handed; with no selection, or when a return type
+  is requested, it does not. `NSApp.servicesMenu` is set.
+- By eye, because it cannot be asserted in-process: a composited screenshot of the open
+  context menu in at least list and icon view showing a Services entry, taken through the
+  Terminal capture route. If the entry does not appear, the unit is not done.
+- Menus shown with `popUp(positioning:at:in:)` may not get Services; list every place the
+  file menu is shown and say which path each uses.
+
+Known costs: a right click now triggers a burst of `validRequestor` calls on the main
+thread, so the selection lookup must stay cheap; a service runs outside Pathem and can
+change the selected files without Pathem's undo covering it.
+
+## F5. Quick Actions: what is and is not possible
+
+Automator Quick Actions are Services (they live in `~/Library/Services`), so they arrive
+with F3, under Services. Finder's own separate "Quick Actions" submenu, Finder Sync
+extensions and Action extensions are hosted by Finder; no public way for another app to
+list or run them was found, so they are out of scope. Whether Shortcuts marked "Use as
+Quick Action" appear under Services was not verified: check it during F3 with a throwaway
+shortcut and record the answer. No separate F5 implementation unit is planned.
 
 ## F4. Tags: create, rename, recolour, delete
 
