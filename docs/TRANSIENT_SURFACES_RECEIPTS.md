@@ -252,7 +252,7 @@ its predicate red. This changes capture instrumentation only, not layout checks.
 
 Bounded-path verification: final six-locale driver exits 0; all native exits 0,
 no failed cell/check pairs, unchanged defaults and removed demo roots. German
-passes 756/756, Japanese 625/625, other four locales each 74/74 (1677 total).
+passes 756/756, Japanese 626/626, other four locales each 74/74 (1678 total).
 Both unchanged stress sizes and the real owned path now fit. Full-text witnesses
 pass. The separate first driver failure remains above. Inventory gate and its
 19 controls pass; wrapper controls 9/9 pass. Evidence:
@@ -261,3 +261,14 @@ pass. The separate first driver failure remains above. Inventory gate and its
 The unmodified navigation closure still calls `goToResolved(suggestion)`, never
 the shortened string. No generic full Unit 2 coverage claim follows from this
 individual fix.
+
+Opaque-render repair validation: the clean pilot passes 203/203 with native and
+wrapper exit 0. The leaked-window injection remains red at Rename check 8
+(103/104, native exit 1), while its validation driver exits 0. Both preserve
+preferences and remove their demo roots. All ten saved clean/injected PNGs
+have alpha extrema exactly 255..255, including the actual stray-window render;
+previous backing had 0..255. The German path and Rename images were inspected
+and their Dark Mode text is readable. This qualifies the backing repair, not
+material/pixel baseline fidelity. Build and inventory gate pass. Logs:
+`.build/transient-unit2-render-{build,clean,leak}.log`.
+Corrected a receipt arithmetic typo above: Japanese was 626/626, total 1678.

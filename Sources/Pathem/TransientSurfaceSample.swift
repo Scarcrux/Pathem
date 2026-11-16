@@ -63,6 +63,14 @@ final class TransientSurfaceSample {
         guard captured.insert(key).inserted,
             let bitmap = content.bitmapImageRepForCachingDisplay(in: content.bounds)
         else { return }
+        guard let context = NSGraphicsContext(bitmapImageRep: bitmap) else { return }
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        content.effectiveAppearance.performAsCurrentDrawingAppearance {
+            NSColor.windowBackgroundColor.setFill()
+            NSBezierPath(rect: content.bounds).fill()
+        }
+        NSGraphicsContext.restoreGraphicsState()
         content.cacheDisplay(in: content.bounds, to: bitmap)
         if let data = bitmap.representation(using: .png, properties: [:]) {
             do { try data.write(to: output.appendingPathComponent(key + ".png")) } catch {
