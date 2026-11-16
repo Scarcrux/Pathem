@@ -1027,7 +1027,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-6f8b3fa7"
     title = "Reconcile release documentation and goals: remove stale CI-on-push and screenshot TODO claims, update DESIGN status, complete branding/domain clearance, and keep the launch checklist aligned with the real pipeline"
-    state = "ask"
+    state = "skip"
 
   [[mission.task]]
     id = "t-b6a3dacd"
@@ -1840,6 +1840,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Task 11 Units 0/1 independently accepted on d0a9ef6. Inventory 196/196, 53 exclusions and 19 controls; reviewer independently injected an unclassified sheet and observed refusal. Native sample has only TS-U1-F1 path-height failures, controls discriminate, defaults unchanged. Conflict Keep Both default TS-F1 task 57 completed. Rebase onto 8568553 changes roadmap comments and check3 contract only; runtime inputs unchanged. Landing accepted units with roadmap in same push. Unit2 remains open: bounded path fix, opaque failure renders, all A/B coverage and strict known-findings gate. No native sample CI wiring, install or deployment in this land."
     at = "2026-11-16T10:00:42Z"
+
+  [[mission.comment]]
+    text = "2026-11-16 owner decisions. (1) Trademark: 'Proceed without a search'; task 9's clearance item closed on that basis, not because a search was done. (2) Release channel: GitHub Releases, once the repo is public. (3) History: owner chose to rewrite this repo's history to remove the matches. Findings before acting (NOT yet rewritten): the 59 history matches are test placeholders (/Users/someone, me, x, tester; three GoogleDrive-<placeholder>@gmail.com fixture names), two /Users/<public GitHub handle>/ paths in old .claude/settings.json and polaris.toml, and one public FTP demo credential literal. Targeted searches for the owner's real name, surname and the old personal bundle ID find 0 commits, 0 messages, 0 files; authorship is all noreply. The candidate tree had regressed to 18 findings from my own 2026-11-13 test fixture; fixed, back to 0. Put back to the owner with this evidence before any rewrite."
+    at = "2026-11-16T18:26:54Z"
 
 [[mission]]
   id = "m-e1443252"
