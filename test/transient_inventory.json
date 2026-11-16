@@ -70,39 +70,51 @@
       "kind": "popover",
       "custom_content": true,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/CursorConfirm.swift:31:23:NSPopover"
       ],
       "default_action": "Delete (index 0)",
-      "known_finding": "TS-F3",
-      "reason": "TS-F3: Local removeItem permanently deletes without Trash. Unchanged pending owner ruling; check 6 red, not intended."
+      "reason": "Local removeItem permanently deletes without Trash. Return confirmation is intended by owner ruling dated 2026-11-15; check 6 accepts this explicit intent.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms the explicit irreversible action; no production change."
+      }
     },
     "Sources/Pathem/BrowserViewController+TrashLedger.swift:117:32:ask": {
       "class": "A",
       "kind": "popover",
       "custom_content": true,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/CursorConfirm.swift:31:23:NSPopover"
       ],
       "default_action": "Empty Trash (index 0)",
-      "known_finding": "TS-F4",
-      "reason": "TS-F4: Removes all home Trash contents using removeItem. Unchanged pending owner ruling; check 6 red, not intended."
+      "reason": "Removes all home Trash contents using removeItem. Return confirmation is intended by owner ruling dated 2026-11-15; check 6 accepts this explicit intent.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms the explicit irreversible action; no production change."
+      }
     },
     "Sources/Pathem/BrowserViewController+TrashLedger.swift:209:36:ask": {
       "class": "A",
       "kind": "popover",
       "custom_content": true,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/CursorConfirm.swift:31:23:NSPopover"
       ],
       "default_action": "Delete (index 0)",
-      "known_finding": "TS-F5",
-      "reason": "TS-F5: Remote provider.remove has no Trash or undo. Unchanged pending owner ruling; check 6 red, not intended."
+      "reason": "Remote provider.remove has no Trash or undo. Return confirmation is intended by owner ruling dated 2026-11-15; check 6 accepts this explicit intent.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms the explicit irreversible action; no production change."
+      }
     },
     "Sources/Pathem/BrowserViewController+TrashLedger.swift:239:32:ask": {
       "class": "A",
@@ -164,7 +176,8 @@
       "builders": [
         "Sources/Pathem/CleanupController.swift:1008:21:NSAlert"
       ],
-      "reason": "Permanent deletion skips Trash. Cancel owns Return; Delete click-only. Native Return/Escape preserve owned fixture, b237eb9."
+      "reason": "Permanent deletion skips Trash. Cancel owns Return; Delete click-only. Native Return/Escape preserve owned fixture, b237eb9. Prior coordinator default ruling is not owner acceptance. Factory extraction remains in scope if default is reverted.",
+      "decision_status": "HOLD: owner decision pending for TS-F2; do not land b237eb9 or build further on its default."
     },
     "Sources/Pathem/CursorConfirm.swift:38:13:show": {
       "class": "A",

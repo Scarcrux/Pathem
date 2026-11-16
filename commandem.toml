@@ -1795,6 +1795,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 classification checkpoint: eleven reviewed inventory rows now persist with explicit incomplete status and thirty harness file exclusions. All five CursorConfirm callers retain individual Return intent, including TS-F3/F4/F5 known red defaults. Cleanup has four physical presentations, matching the independent manual count. Actual inventory gate remains red on unfinished classifications; no accepted table, sample READY or CI integration claimed."
     at = "2026-11-15T22:57:52Z"
 
+  [[mission.comment]]
+    text = "Owner ruling 2026-11-15: Return confirms local permanent Delete, Empty Trash and remote permanent Delete intentionally; inventory stores exact quote/date, removes their finding IDs, and check6 must accept that explicit intent. No production changes. Reclaim TS-F2 default in b237eb9 is now ON HOLD pending owner decision: private, no land or further work based on that default; extraction stays if policy is reverted. TS-F1 remains owner-approved. Independent inventory/sample preparation continues."
+    at = "2026-11-16T00:10:22Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
