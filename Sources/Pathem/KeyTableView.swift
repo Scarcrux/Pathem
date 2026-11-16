@@ -13,6 +13,26 @@ final class KeyTableView: NSTableView {
     var onMouseGesture: ((String) -> Bool)?
     var onBecomeActive: (() -> Void)?
 
+    /// The selected files for a Service (set by the owning controller; location-aware).
+    var servicesURLs: (() -> [URL])?
+    // Services: answer for file types only with a selection and no return type, else defer.
+    override func validRequestor(
+        forSendType sendType: NSPasteboard.PasteboardType?,
+        returnType: NSPasteboard.PasteboardType?
+    ) -> Any? {
+        if FileServices.accepts(
+            sendType: sendType, returnType: returnType, hasSelection: !selectedRowIndexes.isEmpty)
+        {
+            return self
+        }
+        return super.validRequestor(forSendType: sendType, returnType: returnType)
+    }
+    @objc func writeSelection(
+        to pboard: NSPasteboard, types: [NSPasteboard.PasteboardType]
+    ) -> Bool {
+        FileServices.write(servicesURLs?() ?? [], to: pboard, types: types)
+    }
+
     /// Alternating row stripes stop at the last real row. With the inset table style AppKit
     /// keeps drawing rounded stripes down the empty part of the list (macOS 26 and 27), which
     /// read as loading placeholders for rows that will never arrive.

@@ -126,6 +126,12 @@ extension BrowserViewController {
                 ($0.representedObject as? String) == "files.showPackageContents"
             } == true)
         navigateRoot()
+        check(
+            "finder-services-menu-installed",
+            NSApp.servicesMenu != nil
+                && NSApp.mainMenu?.items.first?.submenu?.items.contains {
+                    $0.submenu === NSApp.servicesMenu
+                } == true)
         for mode in ViewFormat.ViewMode.allCases {
             pane.debugClickViewSwitcher(mode)
             check(
@@ -184,6 +190,61 @@ extension BrowserViewController {
                 !visible("files.download", in: menu) && !visible("files.offload", in: menu),
                 "download=\(visible("files.download", in: menu)) offload=\(visible("files.offload", in: menu))"
             )
+            // Services: the view that owns the selection must answer the requestor query for the
+            // two file types, write the selected URLs, and decline with no selection or when a
+            // return type is wanted. (Whether AppKit then draws the Services item is not visible
+            // in-process.)
+            do {
+                let responder = pane.keyView
+                let filenames = NSPasteboard.PasteboardType("NSFilenamesPboardType")
+                func answers(
+                    _ send: NSPasteboard.PasteboardType?, _ ret: NSPasteboard.PasteboardType?
+                )
+                    -> Bool
+                {
+                    (responder.validRequestor(forSendType: send, returnType: ret) as AnyObject?)
+                        === responder
+                }
+                check(
+                    "finder-services-requestor-with-selection-\(mode.rawValue)",
+                    answers(.fileURL, nil) && answers(filenames, nil),
+                    "fileURL=\(answers(.fileURL, nil)) filenames=\(answers(filenames, nil))")
+                check(
+                    "finder-services-declines-return-and-text-\(mode.rawValue)",
+                    !answers(.fileURL, .string) && !answers(.string, nil))
+                // A service asks for one type at a time; check each on its own pasteboard.
+                func written(_ types: [NSPasteboard.PasteboardType]) -> (Bool, [String], [String]) {
+                    let board = NSPasteboard(name: NSPasteboard.Name("pathem-services-\(UUID())"))
+                    defer { board.releaseGlobally() }
+                    let ok =
+                        (responder as? FileServicesWriter)?.writeSelection(to: board, types: types)
+                        ?? false
+                    let urls = (board.pasteboardItems ?? []).compactMap {
+                        $0.string(forType: .fileURL).flatMap(URL.init(string:))?.lastPathComponent
+                    }
+                    let names = (board.propertyList(forType: filenames) as? [String] ?? [])
+                        .map { ($0 as NSString).lastPathComponent }
+                    return (ok, urls, names)
+                }
+                let asURL = written([.fileURL])
+                let asNames = written([filenames])
+                check(
+                    "finder-services-writes-selected-urls-\(mode.rawValue)",
+                    asURL.0 && asURL.1 == ["source.txt"] && asNames.0
+                        && asNames.2 == ["source.txt"],
+                    "fileURL=\(asURL) filenames=\(asNames)")
+                pane.setHiddenContextItems(["@services"])
+                let hiddenAnswer = answers(.fileURL, nil)
+                pane.setHiddenContextItems([])
+                check(
+                    "finder-services-hidden-entry-declines-\(mode.rawValue)",
+                    !hiddenAnswer && answers(.fileURL, nil))
+                pane.debugSelectNames([])
+                check(
+                    "finder-services-declines-without-selection-\(mode.rawValue)",
+                    !answers(.fileURL, nil) && !answers(filenames, nil))
+                pane.debugSelectNames(["source.txt"])
+            }
             let tagsMenu = menu.items.compactMap(\.submenu).first {
                 $0.items.contains { ($0.representedObject as? String) == "tags.clear" }
             }

@@ -12,7 +12,12 @@ import UniformTypeIdentifiers
 final class FileContextMenuController: NSObject, NSMenuDelegate {
     /// Command ids the user hid in Settings; rebuilds the menu when it changes.
     var hiddenItems: Set<String> = [] {
-        didSet { if oldValue != hiddenItems { rebuild() } }
+        didSet {
+            // AppKit draws Services itself, outside this menu, whenever a view answers its
+            // requestor query; hiding the "Services" entry makes the views stop answering.
+            FileServices.enabledInContextMenus = !hiddenItems.contains("@services")
+            if oldValue != hiddenItems { rebuild() }
+        }
     }
     /// The user's saved entry order (command ids + submenu tokens); empty = default.
     var menuOrder: [String] = [] {
@@ -53,6 +58,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.extract", "files.extractHere", "files.extractTo",
         "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
         "@view", "@arrange", "@sort", "view.options",
+        "@services",
     ]
 
     private static let viewCommands: [(id: String, title: String)] = [
@@ -91,7 +97,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash":
             return 5  // set apart, like Finder
         case "@tags": return 1
-        case "@view", "@arrange", "@sort", "view.options": return 7
+        case "@view", "@arrange", "@sort", "view.options", "@services": return 7
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.duplicate", "files.makeAlias", "files.copy", "files.copyPath", "files.copyName",
             "files.cut", "files.paste":
@@ -112,6 +118,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "@view": return L("menu.view", "View")
         case "@arrange": return L("viewchoice.groupBy", "Group By")
         case "@sort": return L("viewchoice.sortBy", "Sort By")
+        case "@services": return L("menu.services", "Services")
         default:
             return Dictionary(uniqueKeysWithValues: hideableCommands.map { ($0.id, $0.title) })[
                 token]
@@ -216,6 +223,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             uniqueKeysWithValues: Self.hideableCommands.map { ($0.id, $0.title) })
         var lastGroup: Int?
         for token in ContextMenuLayout.ordered(default: Self.defaultEntries, user: menuOrder) {
+            if token == "@services" { continue }  // drawn by AppKit, not by this menu (see below)
             if hiddenItems.contains(token) { continue }  // user hid this entry
             let g = Self.group(token)
             if let lastGroup, lastGroup != g { menu.addItem(.separator()) }  // divide groups

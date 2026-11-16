@@ -12,6 +12,26 @@ final class KeyOutlineView: NSOutlineView {
     var onKeyChord: ((KeyChord) -> Bool)?
     var onBecomeActive: (() -> Void)?
 
+    /// The selected files for a Service (set by the owning controller; location-aware).
+    var servicesURLs: (() -> [URL])?
+    // Services: answer for file types only with a selection and no return type, else defer.
+    override func validRequestor(
+        forSendType sendType: NSPasteboard.PasteboardType?,
+        returnType: NSPasteboard.PasteboardType?
+    ) -> Any? {
+        if FileServices.accepts(
+            sendType: sendType, returnType: returnType, hasSelection: !selectedRowIndexes.isEmpty)
+        {
+            return self
+        }
+        return super.validRequestor(forSendType: sendType, returnType: returnType)
+    }
+    @objc func writeSelection(
+        to pboard: NSPasteboard, types: [NSPasteboard.PasteboardType]
+    ) -> Bool {
+        FileServices.write(servicesURLs?() ?? [], to: pboard, types: types)
+    }
+
     override func becomeFirstResponder() -> Bool {
         let ok = super.becomeFirstResponder()
         if ok { onBecomeActive?() }
@@ -799,6 +819,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
                 entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
             }
         }
+        outline.servicesURLs = contextMenu.selectedURLs
 
         scrollView.documentView = outline
         scrollView.hasVerticalScroller = true

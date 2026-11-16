@@ -1529,6 +1529,15 @@ enum PathemApp {
         appMenu.addItem(.separator())
         appMenu.addItem(commandItem("Reset Pathem Data…", "app.resetData"))
         appMenu.addItem(.separator())
+        // The system fills this in with the Services that accept the current selection; the same
+        // registration is what makes AppKit offer Services in the file views' context menus.
+        let servicesItem = NSMenuItem(
+            title: L("menu.services", "Services"), action: nil, keyEquivalent: "")
+        let servicesMenu = NSMenu(title: L("menu.services", "Services"))
+        servicesItem.submenu = servicesMenu
+        appMenu.addItem(servicesItem)
+        FileServices.register(servicesMenu: servicesMenu)
+        appMenu.addItem(.separator())
         appMenu.addItem(
             withTitle: L("menu.quit", "Quit Pathem"),
             action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")

@@ -21,6 +21,26 @@ final class KeyCollectionView: NSCollectionView {
     }
     var onBecomeActive: (() -> Void)?
 
+    /// The selected files for a Service (set by the owning controller; location-aware).
+    var servicesURLs: (() -> [URL])?
+    // Services: answer for file types only with a selection and no return type, else defer.
+    override func validRequestor(
+        forSendType sendType: NSPasteboard.PasteboardType?,
+        returnType: NSPasteboard.PasteboardType?
+    ) -> Any? {
+        if FileServices.accepts(
+            sendType: sendType, returnType: returnType, hasSelection: !selectionIndexPaths.isEmpty)
+        {
+            return self
+        }
+        return super.validRequestor(forSendType: sendType, returnType: returnType)
+    }
+    @objc func writeSelection(
+        to pboard: NSPasteboard, types: [NSPasteboard.PasteboardType]
+    ) -> Bool {
+        FileServices.write(servicesURLs?() ?? [], to: pboard, types: types)
+    }
+
     private let gestureTracker = MouseGestureTracker()
     /// A right-drag that started on an item: the super-drag flick + its swipe trail. Kept on the
     /// right button so it never collides with a left-drag (normal drag-and-drop), matching the list.
@@ -681,6 +701,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         }
         collection.onSelectionMutated = { [weak self] in self?.onSelectionChanged?() }
         contextMenu.selectedURLs = { [weak self] in self?.contextSelectionURLs() ?? [] }
+        collection.servicesURLs = contextMenu.selectedURLs
         contextMenu.currentFolder = { [weak self] in
             guard let self, self.allowsLocalMetadata else { return nil }
             return self.directoryURL

@@ -1056,6 +1056,7 @@
 "menu.redo" = "Redo";
 "menu.redoNamed" = "Redo %@";
 "menu.selectAll" = "Select All";
+"menu.services" = "Services";
 "menu.storage" = "Storage";
 "menu.terminalTheme" = "Terminal Theme";
 "menu.tools" = "Tools";

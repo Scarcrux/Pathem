@@ -1094,6 +1094,7 @@
 "menu.redoNamed" = "重做%@";
 "menu.remote.download" = "从服务器下载…";
 "menu.selectAll" = "全选";
+"menu.services" = "服务";
 "menu.shelf.add" = "添加到 Drop Stack";
 "menu.shelf.toggle" = "显示 Drop Stack";
 "menu.storage" = "存储";

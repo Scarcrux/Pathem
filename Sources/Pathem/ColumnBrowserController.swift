@@ -299,6 +299,16 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)  // drag to the other pane
         table.setDraggingSourceOperationMask(.every, forLocal: false)  // and to Finder / other apps
         table.menu = contextMenu.menu  // right-click; KeyTableView selects the clicked row first
+        table.servicesURLs = { [weak self, weak table] in
+            guard let self, let table, let i = self.columnIndex(of: table),
+                self.columns.indices.contains(i)
+            else { return [] }
+            let col = self.columns[i]
+            return table.selectedRowIndexes.compactMap {
+                $0 < col.entries.count
+                    ? col.folder.appendingPathComponent(col.entries[$0].name) : nil
+            }
+        }
 
         let scroll = NSScrollView()
         scroll.documentView = table

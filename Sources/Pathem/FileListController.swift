@@ -622,6 +622,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             name: FolderSizeSkipSettings.changed, object: nil)
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
+        tableView.servicesURLs = contextMenu.selectedURLs
         contextMenu.currentFolder = { [weak self] in self?.directoryURL }
         contextMenu.canCalculateSize = { [weak self] in
             self?.canCalculateSelectedFolderSizes == true

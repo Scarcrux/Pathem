@@ -123,6 +123,18 @@ Known costs: a right click now triggers a burst of `validRequestor` calls on the
 thread, so the selection lookup must stay cheap; a service runs outside Pathem and can
 change the selected files without Pathem's undo covering it.
 
+Result (F3 implemented, picture outstanding): `FileServices` registers the send types and the
+application menu's Services submenu; the list, column and tree table/outline views and the
+icon and gallery collection views answer `validRequestor` for `public.file-url` and
+`NSFilenamesPboardType` only with a selection and no return type, and write the selected URLs.
+Hiding the "Services" entry in the right-click menu settings makes the views decline. Where
+the file menu is shown: right clicks in the list, column, icon and gallery views go through
+`NSMenu.popUpContextMenu(_:with:for:)` with the view as owner, and the tree uses the plain
+`menu` property, so those are Services-eligible. The `popUp(positioning:at:in:)` menus (drop
+menu, quick actions bar, organize review) are not file menus of a selection and get no Services.
+The by-eye screenshot of the open menu was not taken (no capture route from the agent session)
+and the Shortcuts-as-Quick-Action question was not checked, so the acceptance is not fully met.
+
 ## F5. Quick Actions: what is and is not possible
 
 Automator Quick Actions are Services (they live in `~/Library/Services`), so they arrive

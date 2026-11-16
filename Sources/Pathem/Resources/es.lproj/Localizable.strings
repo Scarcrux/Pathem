@@ -1094,6 +1094,7 @@
 "menu.redoNamed" = "Rehacer %@";
 "menu.remote.download" = "Descargar del servidor…";
 "menu.selectAll" = "Seleccionar todo";
+"menu.services" = "Servicios";
 "menu.shelf.add" = "Añadir al Drop Stack";
 "menu.shelf.toggle" = "Mostrar Drop Stack";
 "menu.storage" = "Almacenamiento";

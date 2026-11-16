@@ -1094,6 +1094,7 @@
 "menu.redoNamed" = "%@をやり直す";
 "menu.remote.download" = "サーバからダウンロード…";
 "menu.selectAll" = "すべてを選択";
+"menu.services" = "サービス";
 "menu.shelf.add" = "Drop Stack に追加";
 "menu.shelf.toggle" = "Drop Stack を表示";
 "menu.storage" = "ストレージ";
