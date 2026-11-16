@@ -315,3 +315,52 @@ sidebar. The lifecycle renders therefore stay private and must never be
 committed or published. The owned edited PDF and post-reap disk proof are not
 owner documents. Reviewer accepted recording this as an open harness item.
 The source audit also found layout-matrix/site-shot discovery starts, as above.
+
+## Remaining editor construction
+
+Five more pure factories now cover the Shortcut selector, archive save-back,
+sidebar symbol input, color-rule editor and full connection editor. Production
+presentation and confirmation guards stay in their original callers. Instance
+factories retain their real controller so protocol/field change targets remain
+valid; provenance checks reject substituting another controller type. Profiles
+now total 31 for 25 A sites, including new/SFTP/FTP/S3/Azure connection forms
+and the existing Commander-key factory. The class B source fragments remain
+byte-identical after rebinding their moved locations.
+
+Initial color-rule and connection editor probes retain geometry/ambiguity reds.
+Their Return reds are not findings yet: the sheet branch lacked the same
+makeKeyAndOrderFront preparation already convicted in the modal branch. Apply
+that instrument step, then repeat the two samples before expanding. Receipt:
+.build/transient-unit2-color-editor-probe.log and
+.build/transient-unit2-connection-editor-probe.log.
+
+The incremental build also exposed two new DEBUG lifecycle capture warnings:
+its local persist function had no Sendable type while timers capture it. Give
+that actor-isolated closure an explicit @Sendable type; do not waive new warnings
+in the baseline. The original warning-bearing build is retained at
+.build/transient-unit2-editor-factories-build.log.
+
+The corrected editor pilots remove all check-6 failures. Color rule is red only
+on checks 1/3 (58/70); Connection is red only on checks 1/2/3 (52/70), with its
+486pt sheet against the 420pt host. Both cover short/255 strings and three
+presentations, with unchanged defaults, cleared private domains and removed demo
+roots. TS-U2-F05 records color form geometry/ambiguity; TS-U2-F06 records connection
+form geometry/ambiguity/oversize. No product fix is inferred for the framework
+empty-label geometry that appears alongside those app-owned ambiguities.
+Receipts: .build/transient-unit2-color-editor-key.log and
+.build/transient-unit2-connection-editor-key.log. Renders:
+.build/TS-U2-F05-color-editor.png and .build/TS-U2-F06-connection-editor.png.
+
+The explicit Sendable closure initially failed compilation because its catch
+needed explicit self.emit. That instrument-only compiler failure launched no
+native process. The corrected incremental build has no new source warnings;
+only SwiftPM's existing build-system deprecation remains. Both failed/corrected
+logs are retained (.build/transient-unit2-editor-key-build.log, build2.log).
+
+Exact full-B receipt validation now checks every expected cell, per-cycle check
+counts, builder identity, site coverage and setup success. Eight controls reject
+unknown replacements, missing cycles, duplicated claims, wrong builders and
+missing inventory control. Known-findings comparison has eleven controls for
+new/stale pairs, missing runs, changed source, unsafe setup/timeout/constraint
+errors, malformed pairs and the separate Quit parent verdict. No baseline is
+created or accepted yet; these validators do not make native reds green.

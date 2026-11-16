@@ -214,6 +214,92 @@ extension TransientSurfaceSample {
                             "No VPN detected. Torrents paused to prevent leaks."), vpnMissing: true
                     ).0)
             },
+            factory(
+                "f22", "BrowserViewController+ItemCreation.swift", function: "showShortcutPicker",
+                sheet: true
+            ) { _, name in
+                FactoryObject(
+                    BrowserViewController.makeShortcutDialog(names: [
+                        name, L("shortcut.run", "Run"),
+                    ]).0)
+            },
+            factory(
+                "f23", "BrowserViewController+Archives.swift",
+                function: "writeBackArchiveIfChanged", sheet: true
+            ) { file, _ in
+                FactoryObject(
+                    BrowserViewController.makeArchiveSaveDialog(archive: file), cancel: nil)
+            },
+            factory(
+                "f24", "SidebarController.swift", function: "customIcon", sheet: true,
+                filename: false
+            ) { _, _ in
+                FactoryObject(SidebarController.makeSymbolDialog().0)
+            },
+            factory("f25", "ColorRulesEditor.swift", function: "presentEditor", sheet: true) {
+                _, name in
+                let controller = ColorRulesEditorController(rules: [])
+                let rule = ColorRule(
+                    name: name, field: .name, op: .contains, value: name, colorHex: "#E76F51",
+                    bold: true, italic: true)
+                return FactoryObject(
+                    controller.makeRuleEditorDialog(rule: rule).0, retained: controller)
+            },
+            factory(
+                "f26", "ConnectionsController.swift", function: "editConnection", sheet: true,
+                filename: false
+            ) { _, _ in
+                let controller = ConnectionsController()
+                return FactoryObject(
+                    controller.makeConnectionEditorDialog(existing: nil).0, retained: controller)
+            },
+            factory("f27", "ConnectionsController.swift", function: "editConnection", sheet: true) {
+                file, name in
+                let controller = ConnectionsController()
+                let connection = RemoteConnection(
+                    name: name, proto: .sftp, host: name, user: "fixture", path: "/" + name,
+                    keyFile: file.path, group: name)
+                return FactoryObject(
+                    controller.makeConnectionEditorDialog(existing: connection).0,
+                    retained: controller)
+            },
+            factory("f28", "ConnectionsController.swift", function: "editConnection", sheet: true) {
+                _, name in
+                let controller = ConnectionsController()
+                let connection = RemoteConnection(
+                    name: name, proto: .ftp, host: name, user: "fixture", path: "/" + name)
+                return FactoryObject(
+                    controller.makeConnectionEditorDialog(existing: connection).0,
+                    retained: controller)
+            },
+            factory("f29", "ConnectionsController.swift", function: "editConnection", sheet: true) {
+                _, name in
+                let controller = ConnectionsController()
+                let connection = RemoteConnection(
+                    name: name, proto: .s3, host: "", user: "fixture", path: "/" + name,
+                    region: "us-east-1")
+                return FactoryObject(
+                    controller.makeConnectionEditorDialog(existing: connection).0,
+                    retained: controller)
+            },
+            factory("f30", "ConnectionsController.swift", function: "editConnection", sheet: true) {
+                _, name in
+                let controller = ConnectionsController()
+                let connection = RemoteConnection(
+                    name: name, proto: .azure, host: "", user: "fixture", path: "/" + name)
+                return FactoryObject(
+                    controller.makeConnectionEditorDialog(existing: connection).0,
+                    retained: controller)
+            },
+            factory(
+                "f31", "SettingsWindowController.swift", function: "editCommanderKeys", sheet: true
+            ) { _, name in
+                FactoryObject(
+                    SettingsWindowController.makeCommanderKeysDialog(
+                        commands: [(id: "files.open", title: name)],
+                        current: Array(repeating: "files.open", count: 6)
+                    ).alert)
+            },
         ]
     }
 
@@ -348,6 +434,13 @@ extension TransientSurfaceSample {
             if entry.sheet {
                 object.alert!.beginSheetModal(for: host) { state.response = $0 }
                 if settle({ object.window.isVisible && object.window.sheetParent === self.host }) {
+                    object.window.makeKeyAndOrderFront(nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                    _ = settle {
+                        object.buttons.contains {
+                            $0.cell === object.window.defaultButtonCell || $0.keyEquivalent == "\r"
+                        }
+                    }
                     inspectFactory(entry, object: object, cell: cell, cycle: cycle)
                     if let index = object.cancelIndex, object.buttons.indices.contains(index) {
                         object.buttons[index].performClick(nil)

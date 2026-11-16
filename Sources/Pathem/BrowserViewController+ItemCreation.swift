@@ -225,15 +225,7 @@ extension BrowserViewController {
                     ))
                 return
             }
-            let alert = NSAlert()
-            alert.messageText = L("shortcut.pickTitle", "Run Shortcut on Selection")
-            alert.informativeText = L(
-                "shortcut.pickBody", "The chosen shortcut runs once per selected file.")
-            let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 280, height: 26))
-            popup.addItems(withTitles: names)
-            alert.accessoryView = popup
-            alert.addButton(withTitle: L("shortcut.run", "Run"))
-            alert.addButton(withTitle: L("common.cancel", "Cancel"))
+            let (alert, popup) = Self.makeShortcutDialog(names: names)
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
             self.runShortcut(names[popup.indexOfSelectedItem])
         }
@@ -358,5 +350,22 @@ extension BrowserViewController {
 
     private func registerNewItemUndo(name: String, in directory: URL, actionName: String) {
         registerCreatedUndo(names: [name], in: directory, actionName: actionName)
+    }
+}
+
+@MainActor
+extension BrowserViewController {
+    /// Production construction shared with isolated transient checks.
+    static func makeShortcutDialog(names: [String]) -> (NSAlert, NSPopUpButton) {
+        let alert = NSAlert()
+        alert.messageText = L("shortcut.pickTitle", "Run Shortcut on Selection")
+        alert.informativeText = L(
+            "shortcut.pickBody", "The chosen shortcut runs once per selected file.")
+        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 280, height: 26))
+        popup.addItems(withTitles: names)
+        alert.accessoryView = popup
+        alert.addButton(withTitle: L("shortcut.run", "Run"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return (alert, popup)
     }
 }

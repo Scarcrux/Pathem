@@ -301,104 +301,10 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     private func editConnection(_ existing: RemoteConnection?) {
-        let alert = NSAlert()
-        alert.messageText =
-            existing == nil
-            ? L("conn.newConnectionTitle", "New Connection")
-            : L("conn.editConnectionTitle", "Edit Connection")
-
-        let proto = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
-        proto.addItems(withTitles: RemoteConnection.Proto.allCases.map(\.label))
-        // Default new connections to SFTP (encrypted), not plain FTP: FTP/WebDAV send Basic-auth
-        // credentials in the clear.
-        proto.selectItem(
-            at: RemoteConnection.Proto.allCases.firstIndex(of: existing?.proto ?? .sftp) ?? 0)
-        proto.target = self
-        proto.action = #selector(protoChanged)
-        let plaintextWarning = NSTextField(labelWithString: "")
-        plaintextWarning.font = .systemFont(ofSize: 11)
-        plaintextWarning.textColor = .systemOrange
-        plaintextWarning.lineBreakMode = .byWordWrapping
-        plaintextWarning.maximumNumberOfLines = 2
-        plaintextWarning.preferredMaxLayoutWidth = 340
-        editingProtoPopup = proto
-        editingPlaintextWarning = plaintextWarning
-
-        func field(_ placeholder: String, _ value: String) -> NSTextField {
-            let f = NSTextField()
-            f.placeholderString = placeholder
-            f.stringValue = value
-            return f
-        }
-        let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
-        let host = field(
-            L("conn.hostPlaceholder", "Host (S3/Azure endpoint; blank = default)"),
-            existing?.host ?? "")
-        editingHostField = host
-        let s3Endpoint = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
-        s3Endpoint.addItems(
-            withTitles: Self.s3Endpoints.map(\.name) + [L("conn.s3Other", "Other…")])
-        s3Endpoint.target = self
-        s3Endpoint.action = #selector(s3EndpointChanged(_:))
-        let port = field(
-            L("conn.portPlaceholder", "Port (blank = default)"),
-            existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
-        let user = field(
-            L("conn.userPlaceholder", "User (S3 access key / Azure account)"), existing?.user ?? "")
-        let path = field(
-            L("conn.pathPlaceholder", "Path (S3 /bucket, Azure /container)"), existing?.path ?? "/")
-        let region = field(
-            L("conn.regionPlaceholder", "Region (S3, e.g. us-east-1)"), existing?.region ?? "")
-        let keyFile = field(
-            L("conn.keyFilePlaceholder", "SFTP private key (e.g. ~/.ssh/id_ed25519)"),
-            existing?.keyFile ?? "")
-        editingKeyFileField = keyFile
-        let chooseKey = NSButton(
-            title: L("conn.chooseKey", "Choose…"), target: self, action: #selector(chooseKeyFile))
-        chooseKey.bezelStyle = .rounded
-        let keyRow = Self.pathChooserRow(field: keyFile, button: chooseKey)
-
-        // Per-site color label (a sidebar dot) and default local directory.
-        let colorPopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
-        let colorNames = [""] + FileTag.Color.displayOrder.map(\.nameKey)
-        colorPopup.addItems(
-            withTitles: [L("conn.colorNone", "None")] + FileTag.Color.displayOrder.map(\.label))
-        colorPopup.selectItem(
-            at: max(0, colorNames.firstIndex(of: existing?.colorLabel ?? "") ?? 0))
-        let group = field(
-            L("conn.groupPlaceholder", "Group (organizes sites in the sidebar; optional)"),
-            existing?.group ?? "")
-        let localPath = field(
-            L("conn.localPathPlaceholder", "Local folder to open on connect (optional)"),
-            existing?.localPath ?? "")
-        let chooseLocal = NSButton(
-            title: L("conn.chooseLocal", "Choose…"), target: self,
-            action: #selector(chooseLocalPath))
-        chooseLocal.bezelStyle = .rounded
-        editingLocalPathField = localPath
-        let localRow = Self.pathChooserRow(field: localPath, button: chooseLocal)
-
-        let rows = NSStackView(views: [
-            labeled(L("conn.protocolLabel", "Protocol"), proto), plaintextWarning,
-            labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
-            labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user),
-            labeled(L("conn.pathLabel", "Path"), path),
-            labeled(L("conn.regionLabel", "Region"), region),
-            labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
-            labeled(L("conn.keyFileLabel", "Key File"), keyRow),
-            labeled(L("conn.colorLabel2", "Color"), colorPopup),
-            labeled(L("conn.groupLabel", "Group"), group),
-            labeled(L("conn.localLabel", "Local dir"), localRow),
-        ])
-        rows.orientation = .vertical
-        rows.alignment = .leading
-        rows.spacing = 6
-        rows.frame = NSRect(x: 0, y: 0, width: 360, height: 356)
-        alert.accessoryView = rows
-        protoChanged()  // reflect the initial protocol (warn if editing a plaintext connection)
-        alert.addButton(withTitle: L("common.save", "Save"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-
+        let (
+            alert, proto, name, host, port, user, path, region, keyFile, colorNames, colorPopup,
+            group, localPath
+        ) = makeConnectionEditorDialog(existing: existing)
         guard let window = panel.isVisible ? panel : nil else { return }
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
@@ -513,5 +419,116 @@ final class ConnectionsController: NSObject, NSTableViewDataSource, NSTableViewD
             field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
         ])
         return cell
+    }
+}
+
+@MainActor
+extension ConnectionsController {
+    /// Production construction shared with isolated transient checks.
+    func makeConnectionEditorDialog(existing: RemoteConnection?) -> (
+        NSAlert, NSPopUpButton, NSTextField, NSTextField, NSTextField, NSTextField, NSTextField,
+        NSTextField, NSTextField, [String], NSPopUpButton, NSTextField, NSTextField
+    ) {
+        let alert = NSAlert()
+        alert.messageText =
+            existing == nil
+            ? L("conn.newConnectionTitle", "New Connection")
+            : L("conn.editConnectionTitle", "Edit Connection")
+
+        let proto = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
+        proto.addItems(withTitles: RemoteConnection.Proto.allCases.map(\.label))
+        // Default new connections to SFTP (encrypted), not plain FTP: FTP/WebDAV send Basic-auth
+        // credentials in the clear.
+        proto.selectItem(
+            at: RemoteConnection.Proto.allCases.firstIndex(of: existing?.proto ?? .sftp) ?? 0)
+        proto.target = self
+        proto.action = #selector(protoChanged)
+        let plaintextWarning = NSTextField(labelWithString: "")
+        plaintextWarning.font = .systemFont(ofSize: 11)
+        plaintextWarning.textColor = .systemOrange
+        plaintextWarning.lineBreakMode = .byWordWrapping
+        plaintextWarning.maximumNumberOfLines = 2
+        plaintextWarning.preferredMaxLayoutWidth = 340
+        editingProtoPopup = proto
+        editingPlaintextWarning = plaintextWarning
+
+        func field(_ placeholder: String, _ value: String) -> NSTextField {
+            let f = NSTextField()
+            f.placeholderString = placeholder
+            f.stringValue = value
+            return f
+        }
+        let name = field(L("conn.namePlaceholder", "Name"), existing?.name ?? "")
+        let host = field(
+            L("conn.hostPlaceholder", "Host (S3/Azure endpoint; blank = default)"),
+            existing?.host ?? "")
+        editingHostField = host
+        let s3Endpoint = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        s3Endpoint.addItems(
+            withTitles: Self.s3Endpoints.map(\.name) + [L("conn.s3Other", "Other…")])
+        s3Endpoint.target = self
+        s3Endpoint.action = #selector(s3EndpointChanged(_:))
+        let port = field(
+            L("conn.portPlaceholder", "Port (blank = default)"),
+            existing.map { $0.port == 0 ? "" : "\($0.port)" } ?? "")
+        let user = field(
+            L("conn.userPlaceholder", "User (S3 access key / Azure account)"), existing?.user ?? "")
+        let path = field(
+            L("conn.pathPlaceholder", "Path (S3 /bucket, Azure /container)"), existing?.path ?? "/")
+        let region = field(
+            L("conn.regionPlaceholder", "Region (S3, e.g. us-east-1)"), existing?.region ?? "")
+        let keyFile = field(
+            L("conn.keyFilePlaceholder", "SFTP private key (e.g. ~/.ssh/id_ed25519)"),
+            existing?.keyFile ?? "")
+        editingKeyFileField = keyFile
+        let chooseKey = NSButton(
+            title: L("conn.chooseKey", "Choose…"), target: self, action: #selector(chooseKeyFile))
+        chooseKey.bezelStyle = .rounded
+        let keyRow = Self.pathChooserRow(field: keyFile, button: chooseKey)
+
+        // Per-site color label (a sidebar dot) and default local directory.
+        let colorPopup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 120, height: 24))
+        let colorNames = [""] + FileTag.Color.displayOrder.map(\.nameKey)
+        colorPopup.addItems(
+            withTitles: [L("conn.colorNone", "None")] + FileTag.Color.displayOrder.map(\.label))
+        colorPopup.selectItem(
+            at: max(0, colorNames.firstIndex(of: existing?.colorLabel ?? "") ?? 0))
+        let group = field(
+            L("conn.groupPlaceholder", "Group (organizes sites in the sidebar; optional)"),
+            existing?.group ?? "")
+        let localPath = field(
+            L("conn.localPathPlaceholder", "Local folder to open on connect (optional)"),
+            existing?.localPath ?? "")
+        let chooseLocal = NSButton(
+            title: L("conn.chooseLocal", "Choose…"), target: self,
+            action: #selector(chooseLocalPath))
+        chooseLocal.bezelStyle = .rounded
+        editingLocalPathField = localPath
+        let localRow = Self.pathChooserRow(field: localPath, button: chooseLocal)
+
+        let rows = NSStackView(views: [
+            labeled(L("conn.protocolLabel", "Protocol"), proto), plaintextWarning,
+            labeled(L("conn.nameLabel", "Name"), name), labeled(L("conn.hostLabel", "Host"), host),
+            labeled(L("conn.portLabel", "Port"), port), labeled(L("conn.userLabel", "User"), user),
+            labeled(L("conn.pathLabel", "Path"), path),
+            labeled(L("conn.regionLabel", "Region"), region),
+            labeled(L("conn.s3EndpointLabel", "S3 endpoint"), s3Endpoint),
+            labeled(L("conn.keyFileLabel", "Key File"), keyRow),
+            labeled(L("conn.colorLabel2", "Color"), colorPopup),
+            labeled(L("conn.groupLabel", "Group"), group),
+            labeled(L("conn.localLabel", "Local dir"), localRow),
+        ])
+        rows.orientation = .vertical
+        rows.alignment = .leading
+        rows.spacing = 6
+        rows.frame = NSRect(x: 0, y: 0, width: 360, height: 356)
+        alert.accessoryView = rows
+        protoChanged()  // reflect the initial protocol (warn if editing a plaintext connection)
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return (
+            alert, proto, name, host, port, user, path, region, keyFile, colorNames, colorPopup,
+            group, localPath
+        )
     }
 }

@@ -122,74 +122,8 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
     }
 
     private func presentEditor(for rule: ColorRule, completion: @escaping (ColorRule) -> Void) {
-        let alert = NSAlert()
-        alert.messageText = L("prefs.labelEditTitle", "Color Rule")
-        alert.addButton(withTitle: L("common.save", "Save"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-
-        let field = NSPopUpButton()
-        field.addItems(withTitles: [
-            L("prefs.labelFieldExt", "Extension"), L("prefs.labelFieldName", "Name"),
-            L("prefs.labelFieldSize", "Size"), L("prefs.labelFieldKind", "Kind"),
-        ])
-        field.selectItem(at: ColorRule.Field.allCases.firstIndex(of: rule.field) ?? 0)
-        field.target = self
-        field.action = #selector(editFieldChanged)
-        editFieldPopup = field
-
-        let opPopup = NSPopUpButton()
-        editOpPopup = opPopup
-
-        let value = NSTextField(string: rule.value)
-        value.placeholderString = Self.valueHint(for: rule.field)
-        editValueField = value
-        repopulateOps(selecting: rule.op)  // fill the op popup for the current field
-
-        let name = NSTextField(string: rule.name)
-        name.placeholderString = L("prefs.labelRuleName", "Rule name (optional)")
-
-        let colorWell = NSColorWell()
-        colorWell.color = ThemeManager.color(fromHex: rule.colorHex) ?? .systemGray
-        let noColor = NSButton(
-            checkboxWithTitle: L("prefs.labelNoColor", "No color"), target: nil, action: nil)
-        noColor.state = rule.colorHex.isEmpty ? .on : .off
-        let bold = NSButton(
-            checkboxWithTitle: L("prefs.labelBold", "Bold"), target: nil, action: nil)
-        bold.state = rule.bold ? .on : .off
-        let italic = NSButton(
-            checkboxWithTitle: L("prefs.labelItalic", "Italic"), target: nil, action: nil)
-        italic.state = rule.italic ? .on : .off
-
-        func labeled(_ title: String, _ control: NSView) -> NSView {
-            let label = NSTextField(labelWithString: title)
-            label.alignment = .right
-            label.translatesAutoresizingMaskIntoConstraints = false
-            label.widthAnchor.constraint(equalToConstant: 70).isActive = true
-            control.translatesAutoresizingMaskIntoConstraints = false
-            let row = NSStackView(views: [label, control])
-            row.orientation = .horizontal
-            row.spacing = 8
-            control.widthAnchor.constraint(equalToConstant: 220).isActive = true
-            return row
-        }
-        let styleRow = NSStackView(views: [colorWell, noColor, bold, italic])
-        styleRow.orientation = .horizontal
-        styleRow.spacing = 8
-        let form = NSStackView(views: [
-            labeled(L("prefs.labelRuleNameShort", "Name"), name),
-            labeled(L("prefs.labelFieldLabel", "If"), field),
-            labeled(L("prefs.labelOpLabel", "Test"), opPopup),
-            labeled(L("prefs.labelValueLabel", "Value"), value),
-            labeled(L("prefs.labelStyleLabel", "Style"), styleRow),
-        ])
-        form.orientation = .vertical
-        form.alignment = .leading
-        form.spacing = 8
-        form.translatesAutoresizingMaskIntoConstraints = false
-        form.setFrameSize(NSSize(width: 320, height: 180))
-        form.widthAnchor.constraint(equalToConstant: 320).isActive = true
-        alert.accessoryView = form
-
+        let (alert, name, field, opPopup, value, colorWell, noColor, bold, italic) =
+            makeRuleEditorDialog(rule: rule)
         guard let host = view.window else { return }
         alert.beginSheetModal(for: host) { response in
             guard response == .alertFirstButtonReturn else { return }
@@ -378,5 +312,83 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
             NSColor.separatorColor.setStroke()
             path.stroke()
         }
+    }
+}
+
+@MainActor
+extension ColorRulesEditorController {
+    /// Production construction shared with isolated transient checks.
+    func makeRuleEditorDialog(rule: ColorRule) -> (
+        NSAlert, NSTextField, NSPopUpButton, NSPopUpButton, NSTextField, NSColorWell, NSButton,
+        NSButton, NSButton
+    ) {
+        let alert = NSAlert()
+        alert.messageText = L("prefs.labelEditTitle", "Color Rule")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        let field = NSPopUpButton()
+        field.addItems(withTitles: [
+            L("prefs.labelFieldExt", "Extension"), L("prefs.labelFieldName", "Name"),
+            L("prefs.labelFieldSize", "Size"), L("prefs.labelFieldKind", "Kind"),
+        ])
+        field.selectItem(at: ColorRule.Field.allCases.firstIndex(of: rule.field) ?? 0)
+        field.target = self
+        field.action = #selector(editFieldChanged)
+        editFieldPopup = field
+
+        let opPopup = NSPopUpButton()
+        editOpPopup = opPopup
+
+        let value = NSTextField(string: rule.value)
+        value.placeholderString = Self.valueHint(for: rule.field)
+        editValueField = value
+        repopulateOps(selecting: rule.op)  // fill the op popup for the current field
+
+        let name = NSTextField(string: rule.name)
+        name.placeholderString = L("prefs.labelRuleName", "Rule name (optional)")
+
+        let colorWell = NSColorWell()
+        colorWell.color = ThemeManager.color(fromHex: rule.colorHex) ?? .systemGray
+        let noColor = NSButton(
+            checkboxWithTitle: L("prefs.labelNoColor", "No color"), target: nil, action: nil)
+        noColor.state = rule.colorHex.isEmpty ? .on : .off
+        let bold = NSButton(
+            checkboxWithTitle: L("prefs.labelBold", "Bold"), target: nil, action: nil)
+        bold.state = rule.bold ? .on : .off
+        let italic = NSButton(
+            checkboxWithTitle: L("prefs.labelItalic", "Italic"), target: nil, action: nil)
+        italic.state = rule.italic ? .on : .off
+
+        func labeled(_ title: String, _ control: NSView) -> NSView {
+            let label = NSTextField(labelWithString: title)
+            label.alignment = .right
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.widthAnchor.constraint(equalToConstant: 70).isActive = true
+            control.translatesAutoresizingMaskIntoConstraints = false
+            let row = NSStackView(views: [label, control])
+            row.orientation = .horizontal
+            row.spacing = 8
+            control.widthAnchor.constraint(equalToConstant: 220).isActive = true
+            return row
+        }
+        let styleRow = NSStackView(views: [colorWell, noColor, bold, italic])
+        styleRow.orientation = .horizontal
+        styleRow.spacing = 8
+        let form = NSStackView(views: [
+            labeled(L("prefs.labelRuleNameShort", "Name"), name),
+            labeled(L("prefs.labelFieldLabel", "If"), field),
+            labeled(L("prefs.labelOpLabel", "Test"), opPopup),
+            labeled(L("prefs.labelValueLabel", "Value"), value),
+            labeled(L("prefs.labelStyleLabel", "Style"), styleRow),
+        ])
+        form.orientation = .vertical
+        form.alignment = .leading
+        form.spacing = 8
+        form.translatesAutoresizingMaskIntoConstraints = false
+        form.setFrameSize(NSSize(width: 320, height: 180))
+        form.widthAnchor.constraint(equalToConstant: 320).isActive = true
+        alert.accessoryView = form
+        return (alert, name, field, opPopup, value, colorWell, noColor, bold, italic)
     }
 }

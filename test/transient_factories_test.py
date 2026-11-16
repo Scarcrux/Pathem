@@ -17,7 +17,7 @@ class FactoryProvenanceTests(unittest.TestCase):
         return root,records
 
     def test_reviewed_factories_match_production_and_adapters(self):
-        rows=validate();self.assertEqual(len(rows),21);self.assertEqual(len({r['site'] for r in rows}),19)
+        rows=validate();self.assertEqual(len(rows),31);self.assertEqual(len({r['site'] for r in rows}),25)
 
     def test_missing_profile_is_rejected(self):
         root,r=self.fixture();r['factories'].pop();(root/'test/transient_factories.json').write_text(json.dumps(r))
@@ -38,3 +38,11 @@ class FactoryProvenanceTests(unittest.TestCase):
     def test_unclassified_site_is_rejected(self):
         root,r=self.fixture();r['factories'][0]['site']='Sources/Pathem/Missing.swift:1:1:runModal';(root/'test/transient_factories.json').write_text(json.dumps(r))
         with self.assertRaisesRegex(ValueError,'Unclassified'):validate(root)
+
+    def test_wrong_instance_receiver_is_rejected(self):
+        root,_=self.fixture();p=root/'Sources/Pathem/TransientSurfaceFullFactories.swift';p.write_text(p.read_text().replace('let controller = ConnectionsController()', 'let controller = OtherController()'))
+        with self.assertRaisesRegex(ValueError,'typed production instance'):validate(root)
+
+    def test_wrong_presentation_profile_is_rejected(self):
+        root,r=self.fixture();r['factories'][0]['sheet']=True;(root/'test/transient_factories.json').write_text(json.dumps(r))
+        with self.assertRaisesRegex(ValueError,'presentation/string treatment'):validate(root)

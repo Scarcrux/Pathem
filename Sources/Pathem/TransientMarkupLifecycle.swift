@@ -81,7 +81,7 @@ extension TransientSurfaceSample {
             "real PDF edited=true on-disk annotations=0 delegate=PathemAppDelegate")
         if let content = window.contentView { capture(content, key: "L-\(mode)-before") }
         let observation = MarkupLifecycleObservation()
-        func persist(_ stage: String) {
+        let persist: @MainActor @Sendable (String) -> Void = { stage in
             let bytes = (try? Data(contentsOf: file)) ?? Data()
             let object: [String: Any] = [
                 "mode": mode, "stage": stage, "fixture": file.lastPathComponent,
@@ -101,7 +101,7 @@ extension TransientSurfaceSample {
                     withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
                 try data.write(
                     to: directory.appendingPathComponent("witness.json"), options: .atomic)
-            } catch { emit("lifecycle-setup", 0, false, "cannot write witness") }
+            } catch { self.emit("lifecycle-setup", 0, false, "cannot write witness") }
         }
         persist("edited")
         // If a guard exists, observe it and abort only this owned fixture's modal.

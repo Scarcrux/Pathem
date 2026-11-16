@@ -29,7 +29,7 @@ def source_digest():
              + sorted((ROOT / 'Sources/Pathem/Resources').rglob('Localizable.strings'))
              + sorted((ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings'))
              + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', ROOT / 'test/transient_mounts.json', ROOT / 'test/transient_factories.json', ROOT / 'test/transient_factories.py',
-                ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_markup_lifecycle.py', ROOT / 'test/transient_mounts.py', pathlib.Path(__file__)])
+                ROOT / 'test/transient_full_alerts.py', ROOT / 'test/transient_inventory.py', ROOT / 'test/transient_known_findings.py', ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_markup_lifecycle.py', ROOT / 'test/transient_mounts.py', pathlib.Path(__file__)])
     for path in paths:
         digest.update(str(path.relative_to(ROOT)).encode())
         digest.update(path.read_bytes())
@@ -200,6 +200,9 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
     if category == 'mounts':
         from transient_mounts import receipt_errors
         errors += receipt_errors(log, language, group, probe_one, only)
+    if full and category in ('all', 'b'):
+        from transient_full_alerts import receipt_errors
+        errors += receipt_errors(log, language)
     if category == 'factories':
         from transient_factories import receipt_errors
         errors += receipt_errors(log, language, group, probe_one, only)
@@ -228,7 +231,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         errors.append('preference/demo isolation failed')
     if source_digest() != inputs_before:
         errors.append('source or native artifact changed during launch')
-    receipt = dict(case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
+    receipt = dict(label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
                    source_digest=inputs_before, failures=sorted(failures), errors=errors,
                    reference_native_exit=reference.get('native_exit') if case != 'clean' and reference else None,
                    preferences_unchanged=private_ok, catalog_matches_source=catalog_match, lifecycle_disk_proof=lifecycle_proof,

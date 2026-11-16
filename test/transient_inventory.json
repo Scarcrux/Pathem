@@ -61,7 +61,7 @@
     "Sources/Pathem/TransientPresentationProbe.swift": 2,
     "Sources/Pathem/TransientReturnBindingProbe.swift": 2,
     "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1,
-    "Sources/Pathem/TransientSurfaceFullFactories.swift": 5,
+    "Sources/Pathem/TransientSurfaceFullFactories.swift": 6,
     "Sources/Pathem/TransientSurfaceFullMounts.swift": 3,
     "Sources/Pathem/TransientSurfaceSample.swift": 9
   },
@@ -521,14 +521,14 @@
       "reason": "Localized default magnet-app failure report. Fixture: permission error with 255-character component. Do not change magnet or torrent handler.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+Archives.swift:245:13:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+Archives.swift:237:13:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Archives.swift:240:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+Archives.swift:232:21:NSAlert"
       ],
       "reason": "Caller title and optional error description, standard OK only. Fixture: archive path with 255-character filename and permission error. No archive operation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -1609,14 +1609,14 @@
       "reason": "Plain rename-result report. Runtime fixture: two six-digit counts plus eight failure descriptions with 255-character names.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+Archives.swift:209:13:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+Archives.swift:201:13:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Archives.swift:200:25:NSAlert"
+        "Sources/Pathem/BrowserViewController+Archives.swift:248:21:NSAlert"
       ],
       "reason": "Conservative destructive class: Save repacks the original archive; no Trash recovery established here. Filename fixture 255 characters. Do not discard or repack owner data; default intent not ruled.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -1705,14 +1705,14 @@
       "reason": "Plain app-plus-leftovers confirmation; FileOperations.trash and registered undo. Runtime fixture: 255-character app name plus twelve 255-character leftover names/count/size.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+ItemCreation.swift:237:30:presentSheet": {
+    "Sources/Pathem/BrowserViewController+ItemCreation.swift:229:30:presentSheet": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+ItemCreation.swift:228:25:NSAlert"
+        "Sources/Pathem/BrowserViewController+ItemCreation.swift:360:21:NSAlert"
       ],
       "reason": "Shortcut-selection popup accessory. Shortcut actions are external and arbitrary; cancel only, no real shortcut execution.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2049,14 +2049,14 @@
       "reason": "ViewOptionsController factory owns the scrollable custom inspector and three buttons. Apply/default/subfolder writes are not executed by structural checks.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/ColorRulesEditor.swift:194:9:beginSheetModal": {
+    "Sources/Pathem/ColorRulesEditor.swift:128:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/ColorRulesEditor.swift:125:21:NSAlert"
+        "Sources/Pathem/ColorRulesEditor.swift:325:21:NSAlert"
       ],
       "reason": "Custom name/value fields, field/operator popups, color well and style checkboxes accessory. Cancel without committing color rules.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2073,14 +2073,14 @@
       "reason": "Plain information report. Runtime fixture: localized import status/error body with twelve 255-character site names; no import/network required.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/ConnectionsController.swift:403:9:beginSheetModal": {
+    "Sources/Pathem/ConnectionsController.swift:309:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/ConnectionsController.swift:304:21:NSAlert"
+        "Sources/Pathem/ConnectionsController.swift:432:21:NSAlert"
       ],
       "reason": "Full connection editor accessory: protocol, host, path, endpoint, key/local-path choosers, color and grouping. Cancel only, no provider or credentials.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2244,14 +2244,14 @@
       "reason": "makeCommanderKeysDialog factory supplies measured six-popup F-key accessory. Cancel without modifying preferences.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/SidebarController.swift:1729:13:beginSheetModal": {
+    "Sources/Pathem/SidebarController.swift:1721:13:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SidebarController.swift:1719:21:NSAlert"
+        "Sources/Pathem/SidebarController.swift:1897:21:NSAlert"
       ],
       "reason": "SF Symbol name text field accessory; Set edits sidebar config. Cancel without committing.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

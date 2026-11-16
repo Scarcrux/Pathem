@@ -1765,15 +1765,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     @objc private func customIcon() {
         guard let node = menuTargetNode, case .userItem(let id) = node.kind else { return }
-        let alert = NSAlert()
-        alert.messageText = L("sidebar.sfSymbolNameTitle", "SF Symbol name")
-        alert.informativeText = L(
-            "sidebar.sfSymbolNameBody",
-            "Enter any SF Symbol name (for example, \"flame\" or \"folder.badge.gearshape\").")
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
-        alert.accessoryView = field
-        alert.addButton(withTitle: L("sidebar.setButton", "Set"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let (alert, field) = Self.makeSymbolDialog()
         if let window = containerView.window {
             alert.beginSheetModal(for: window) { [weak self] response in
                 guard response == .alertFirstButtonReturn else { return }
@@ -1944,5 +1936,22 @@ final class PlaceCellView: NSTableCellView {
         let size = compact ? Self.compactIconSize : Self.expandedIconSize
         iconWidth.constant = size
         iconHeight.constant = size
+    }
+}
+
+@MainActor
+extension SidebarController {
+    /// Production construction shared with isolated transient checks.
+    static func makeSymbolDialog() -> (NSAlert, NSTextField) {
+        let alert = NSAlert()
+        alert.messageText = L("sidebar.sfSymbolNameTitle", "SF Symbol name")
+        alert.informativeText = L(
+            "sidebar.sfSymbolNameBody",
+            "Enter any SF Symbol name (for example, \"flame\" or \"folder.badge.gearshape\").")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        alert.accessoryView = field
+        alert.addButton(withTitle: L("sidebar.setButton", "Set"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return (alert, field)
     }
 }

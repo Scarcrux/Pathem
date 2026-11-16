@@ -37,9 +37,19 @@ def validate(root=ROOT):
         caller=function_source(source,r['caller'])
         if hashlib.sha256(caller.encode()).hexdigest()!=r['caller_sha256']:
             raise ValueError('Production caller/Cancel guard changed; review recipe '+r['id'])
-        class_name=Path(r['file']).stem.split('+')[0]
-        if not re.search(re.escape(class_name)+r'\s*\.\s*'+re.escape(r['maker'])+r'\s*\(',adapter_blocks[r['id']]):
+        class_name=r.get('owner_type',Path(r['file']).stem.split('+')[0])
+        block=adapter_blocks[r['id']]
+        if r.get('instance'):
+            typed=re.search(r'let\s+controller\s*=\s*'+re.escape(class_name)+r'\s*\(',block)
+            call=re.search(r'controller\s*\.\s*'+re.escape(r['maker'])+r'\s*\(',block)
+            if not typed or not call:raise ValueError('Adapter does not call typed production instance factory '+r['id'])
+        elif not re.search(re.escape(class_name)+r'\s*\.\s*'+re.escape(r['maker'])+r'\s*\(',block):
             raise ValueError('Adapter does not call declared production factory '+r['id'])
+        header=block[:block.index('{')]
+        if r['filename'] != ('filename: false' not in header) or r['sheet'] != ('sheet: true' in header):
+            raise ValueError('Factory presentation/string treatment differs '+r['id'])
+        if r['group'] != ids.index(r['id'])//6+1:
+            raise ValueError('Factory group differs '+r['id'])
         if not re.search(re.escape(r['maker'])+r'\s*\(',caller):
             raise ValueError('Production caller no longer uses tested factory '+r['id'])
         if not re.search(r'\b'+r['constructor']+r'\s*\(',body):
