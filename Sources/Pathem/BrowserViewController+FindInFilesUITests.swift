@@ -36,9 +36,13 @@ extension BrowserViewController {
             let next = lock.withLock { searches.isEmpty ? nil : searches.removeFirst() }
             next?.answer(outcome)
         }
-        func answerReplace() {
+        func answerReplace(failure: String? = nil) {
             let next = lock.withLock { replaces.isEmpty ? nil : replaces.removeFirst() }
-            next?(ContentSearch.ReplaceResult(filesChanged: 1, replacements: 3))
+            next?(
+                failure == nil
+                    ? ContentSearch.ReplaceResult(filesChanged: 1, replacements: 3)
+                    : ContentSearch.ReplaceResult(
+                        filesChanged: 0, replacements: 0, failure: failure))
         }
     }
 
@@ -166,7 +170,7 @@ extension BrowserViewController {
         check(
             "find-capped-status-says-results-limited",
             settle { !find.debugBusy }
-                && find.debugStatus == "1 matches Results limited to 2000; narrow your search."
+                && find.debugStatus == "1 matches. Results limited to 2000; narrow your search."
                 && find.debugRowCount == 1)
 
         // A normal answer carries neither note (the control for both checks above).
@@ -194,6 +198,46 @@ extension BrowserViewController {
             settle { !find.debugBusy }
                 && find.debugStatus.hasPrefix("Replaced 3 in 1 files.")
                 && find.debugStatus.contains("limited to 2000"))
+
+        // Both caps: three sentences, in order.
+        find.debugSearch("needle")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch(
+            ContentSearch.Outcome(
+                matches: [match("/F/one.txt")], truncated: true, limit: 2000, perFileCapped: true,
+                perFileLimit: 100))
+        check(
+            "find-both-caps-status-has-three-sentences",
+            settle { !find.debugBusy }
+                && find.debugStatus
+                    == "1 matches. Results limited to 2000; narrow your search. Some files have more than 100 matches; only the first 100 per file are listed."
+        )
+        // Per-file cap alone.
+        find.debugSearch("needle")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch(
+            ContentSearch.Outcome(matches: [match("/F/one.txt")], perFileCapped: true))
+        check(
+            "find-per-file-cap-alone-status",
+            settle { !find.debugBusy }
+                && find.debugStatus
+                    == "1 matches. Some files have more than 100 matches; only the first 100 per file are listed."
+        )
+
+        // A failed Replace All says so instead of "Replaced 0 in 0 files", and does not search.
+        find.debugSearch("needle")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch([match("/F/one.txt")])
+        _ = settle { !find.debugBusy }
+        find.debugReplaceAllConfirmed(with: "thread")
+        _ = settle { backend.pendingReplaces == 1 }
+        let searchesBeforeFailure = backend.requested.count
+        backend.answerReplace(failure: "regex parse error")
+        let failureShown = settle { find.debugStatus == "Replace failed: regex parse error" }
+        pump()
+        check(
+            "find-replace-failure-is-reported-not-zeroes",
+            failureShown && !find.debugBusy && backend.requested.count == searchesBeforeFailure)
         find.debugClose()
     }
 }

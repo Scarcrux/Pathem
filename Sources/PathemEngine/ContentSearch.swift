@@ -22,11 +22,19 @@ public enum ContentSearch {
         public let matches: [Match]
         public let truncated: Bool
         public let limit: Int
+        /// ripgrep stopped reading at least one file at the per-file maximum, so that file may
+        /// have more matching lines than are listed. Always false on the grep fallback, which
+        /// has no per-file cap.
+        public let perFileCapped: Bool
+        public let perFileLimit: Int
         public let failure: String?
         public init(
             matches: [Match] = [], truncated: Bool = false, limit: Int = ContentSearch.defaultLimit,
+            perFileCapped: Bool = false, perFileLimit: Int = ContentSearch.defaultPerFileLimit,
             failure: String? = nil
         ) {
+            self.perFileCapped = perFileCapped
+            self.perFileLimit = perFileLimit
             self.matches = matches
             self.truncated = truncated
             self.limit = limit
@@ -35,6 +43,8 @@ public enum ContentSearch {
     }
 
     public static let defaultLimit = 2000
+    /// Matching lines ripgrep reports per file (`--max-count`).
+    public static let defaultPerFileLimit = 100
 
     static var ripgrep: String? {
         ["/opt/homebrew/bin/rg", "/usr/local/bin/rg", "/usr/bin/rg"]
@@ -54,22 +64,26 @@ public enum ContentSearch {
 
     public static func searchOutcome(
         _ query: String, in folder: URL, regex: Bool = false, caseSensitive: Bool = false,
-        maxResults: Int = ContentSearch.defaultLimit
+        maxResults: Int = ContentSearch.defaultLimit,
+        perFileLimit: Int = ContentSearch.defaultPerFileLimit
     ) async -> Outcome {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return Outcome(limit: maxResults) }
         let output: String
         let status: Int32
         let stderr: String
+        var usedRipgrep = false
         if let rg = ripgrep {
             // --null ends each path with NUL, so a path containing ":<digits>:" or a newline
             // cannot be mistaken for the path/line boundary.
             var args = [
-                "--null", "--line-number", "--no-heading", "--color", "never", "--max-count", "100",
+                "--null", "--line-number", "--no-heading", "--color", "never", "--max-count",
+                String(perFileLimit),
             ]
             if !regex { args.append("--fixed-strings") }
             if !caseSensitive { args.append("--ignore-case") }
             args += ["--", query, folder.path]  // -- so a query starting with "-" isn't a flag
+            usedRipgrep = true
             do {
                 let result = try await RemoteRunner.run(rg, args)
                 output = String(decoding: result.0, as: UTF8.self)
@@ -102,15 +116,24 @@ public enum ContentSearch {
             return Outcome(
                 limit: maxResults, failure: message ?? "search tool exited with status \(status)")
         }
-        return Outcome(matches: matches, truncated: truncated, limit: maxResults)
+        // A file that contributed exactly the per-file maximum was probably cut off there.
+        var perFile: [String: Int] = [:]
+        for match in matches { perFile[match.path, default: 0] += 1 }
+        let perFileCapped = usedRipgrep && perFile.values.contains { $0 >= perFileLimit }
+        return Outcome(
+            matches: matches, truncated: truncated, limit: maxResults,
+            perFileCapped: perFileCapped, perFileLimit: perFileLimit)
     }
 
     public struct ReplaceResult: Sendable, Equatable {
         public let filesChanged: Int
         public let replacements: Int
-        public init(filesChanged: Int, replacements: Int) {
+        /// The search that finds the files to rewrite failed, so nothing was changed.
+        public let failure: String?
+        public init(filesChanged: Int, replacements: Int, failure: String? = nil) {
             self.filesChanged = filesChanged
             self.replacements = replacements
+            self.failure = failure
         }
     }
 
@@ -122,8 +145,12 @@ public enum ContentSearch {
         _ query: String, with replacement: String, in folder: URL, regex: Bool = false,
         caseSensitive: Bool = false
     ) async -> ReplaceResult {
-        let matches = await search(
+        let outcome = await searchOutcome(
             query, in: folder, regex: regex, caseSensitive: caseSensitive, maxResults: 1_000_000)
+        if let failure = outcome.failure {
+            return ReplaceResult(filesChanged: 0, replacements: 0, failure: failure)
+        }
+        let matches = outcome.matches
         // Independent write-scope check: only files strictly inside `folder` are rewritten,
         // whatever the search tool printed.
         let files = Set(matches.map(\.path)).filter { isInside($0, folder) }

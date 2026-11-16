@@ -800,6 +800,10 @@
 "find.capped" = "Ergebnisse auf %d begrenzt; Suche eingrenzen.";
 "find.failed" = "Suche fehlgeschlagen: %@";
 "find.replaceCapped" = "Die vorherige Suche war auf %d Ergebnisse begrenzt; Alle ersetzen hat jede passende Datei erfasst.";
+"find.noteSep" = " ";
+"find.perFileCapped" = "Einige Dateien haben mehr als %d Treffer; nur die ersten %d pro Datei werden aufgelistet.";
+"find.replaceFailed" = "Ersetzen fehlgeschlagen: %@";
+"find.resultsThen" = "%d Treffer. ";
 "find.replacedResult" = "%d ersetzt in %d Dateien";
 "find.replacing" = "Ersetze…";
 "find.results" = "%d Treffer";

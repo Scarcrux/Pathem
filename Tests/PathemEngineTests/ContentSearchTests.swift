@@ -176,4 +176,39 @@ import Testing
         #expect(ContentSearch.parseDetailed(out, limit: 2).truncated == false)
         #expect(ContentSearch.parseDetailed(out, limit: 1).truncated == true)
     }
+
+    @Test func replaceAllReportsAFailedSearchInsteadOfZeroes() async throws {
+        let dir = try tempTree(["a.txt": "needle (\n"])
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let result = await ContentSearch.replaceAll("(", with: "x", in: dir, regex: true)
+        #expect(result.filesChanged == 0 && result.replacements == 0)
+        #expect(try #require(result.failure).isEmpty == false)
+        #expect(
+            try String(contentsOf: dir.appendingPathComponent("a.txt"), encoding: .utf8)
+                == "needle (\n")
+        // A normal replace carries no failure, and the two-argument initialiser still works.
+        let ok = await ContentSearch.replaceAll("needle", with: "n", in: dir)
+        #expect(ok == .init(filesChanged: 1, replacements: 1))
+        #expect(ok.failure == nil)
+    }
+
+    @Test func perFileCapIsReportedOnlyWhereRipgrepApplies() async throws {
+        let dir = try tempTree([
+            "long.txt": String(repeating: "needle\n", count: 6), "short.txt": "needle\n",
+        ])
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let capped = await ContentSearch.searchOutcome("needle", in: dir, perFileLimit: 3)
+        #expect(capped.failure == nil && !capped.truncated)
+        if ContentSearch.ripgrep != nil {
+            #expect(capped.perFileCapped)
+            #expect(capped.perFileLimit == 3)
+            #expect(capped.matches.filter { $0.path.hasSuffix("long.txt") }.count == 3)
+        } else {
+            // grep has no per-file cap, so there is nothing to report.
+            #expect(!capped.perFileCapped)
+        }
+        // Control: no file reaches the maximum, so nothing is reported.
+        let plain = await ContentSearch.searchOutcome("needle", in: dir, perFileLimit: 50)
+        #expect(!plain.perFileCapped)
+    }
 }

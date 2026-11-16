@@ -800,6 +800,10 @@
 "find.capped" = "Resultados limitados a %d; acota la búsqueda.";
 "find.failed" = "Falló la búsqueda: %@";
 "find.replaceCapped" = "La búsqueda anterior se limitó a %d resultados; Reemplazar todo cubrió todos los archivos coincidentes.";
+"find.noteSep" = " ";
+"find.perFileCapped" = "Algunos archivos tienen más de %d coincidencias; solo se muestran las primeras %d por archivo.";
+"find.replaceFailed" = "Falló el reemplazo: %@";
+"find.resultsThen" = "%d coincidencias. ";
 "find.replacedResult" = "%d reemplazados en %d archivos";
 "find.replacing" = "Reemplazando…";
 "find.results" = "%d coincidencias";

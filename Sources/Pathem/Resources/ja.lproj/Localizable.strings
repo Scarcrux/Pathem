@@ -800,6 +800,10 @@
 "find.capped" = "結果は %d 件に制限されました。検索条件を絞ってください。";
 "find.failed" = "検索に失敗しました: %@";
 "find.replaceCapped" = "直前の検索は %d 件に制限されていましたが、すべて置換は一致したすべてのファイルを対象にしました。";
+"find.noteSep" = "";
+"find.perFileCapped" = "一部のファイルには %d 件を超える一致があります。ファイルごとに最初の %d 件のみ表示しています。";
+"find.replaceFailed" = "置換に失敗しました: %@";
+"find.resultsThen" = "%d 件の一致。";
 "find.replacedResult" = "%d 件のファイルで %d 個を置換";
 "find.replacing" = "置換中…";
 "find.results" = "%d 件の一致";

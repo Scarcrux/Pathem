@@ -800,6 +800,10 @@
 "find.capped" = "结果已限制为 %d 个;请缩小搜索范围。";
 "find.failed" = "搜索失败:%@";
 "find.replaceCapped" = "之前的搜索限制为 %d 个结果;全部替换已涵盖所有匹配的文件。";
+"find.noteSep" = "";
+"find.perFileCapped" = "部分文件的匹配超过 %d 个;每个文件仅列出前 %d 个。";
+"find.replaceFailed" = "替换失败:%@";
+"find.resultsThen" = "%d 个匹配。";
 "find.replacedResult" = "已在 %d 个文件中替换 %d 处";
 "find.replacing" = "替换中…";
 "find.results" = "%d 个匹配";

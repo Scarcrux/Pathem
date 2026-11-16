@@ -838,14 +838,14 @@
       ],
       "reason": "External command definitions table and editor controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/FindInFilesController.swift:76:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/FindInFilesController.swift:85:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/FindInFilesController.swift:36:17:NSPanel"
+        "Sources/Pathem/FindInFilesController.swift:42:17:NSPanel"
       ],
       "reason": "Content search, replace fields and result rows. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1610,14 +1610,14 @@
       "reason": "Conservative destructive class: Save repacks the original archive; no Trash recovery established here. Filename fixture 255 characters. Do not discard or repack owner data; default intent not ruled.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+ContentSearch.swift:101:30:presentSheet": {
+    "Sources/Pathem/BrowserViewController+ContentSearch.swift:140:30:presentSheet": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+ContentSearch.swift:93:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+ContentSearch.swift:129:21:NSAlert"
       ],
       "reason": "Plain near-duplicate confirmation moves extras to recoverable Trash via performLocalTrash. Fixture: six-digit group/photo counts. No permanent deletion path in this alert.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2112,14 +2112,14 @@
       "reason": "External command name/template editor accessory. Cancel only; no command execution or owner config writes.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/FindInFilesController.swift:204:15:runModal": {
+    "Sources/Pathem/FindInFilesController.swift:248:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/FindInFilesController.swift:195:21:NSAlert"
+        "Sources/Pathem/FindInFilesController.swift:239:21:NSAlert"
       ],
       "reason": "Replace All permanently edits matched originals without undo, class A despite plain text/buttons. Runtime 255-character query. Cancel only; default intent not ruled for this caller.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

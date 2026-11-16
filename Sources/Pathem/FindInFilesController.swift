@@ -196,13 +196,29 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
             if let failure = outcome.failure {
                 status = String(format: L("find.failed", "Search failed: %@"), failure)
             } else {
-                status = String(format: L("find.results", "%d matches"), outcome.matches.count)
+                var notes: [String] = []
                 if outcome.truncated {
-                    status +=
-                        " "
-                        + String(
+                    notes.append(
+                        String(
                             format: L("find.capped", "Results limited to %d; narrow your search."),
-                            outcome.limit)
+                            outcome.limit))
+                }
+                if outcome.perFileCapped {
+                    notes.append(
+                        String(
+                            format: L(
+                                "find.perFileCapped",
+                                "Some files have more than %d matches; only the first %d per file are listed."
+                            ), outcome.perFileLimit, outcome.perFileLimit))
+                }
+                if notes.isEmpty {
+                    status = String(format: L("find.results", "%d matches"), outcome.matches.count)
+                } else {
+                    // Each note is its own sentence after the count.
+                    status =
+                        String(
+                            format: L("find.resultsThen", "%d matches. "), outcome.matches.count)
+                        + notes.joined(separator: L("find.noteSep", " "))
                 }
             }
             if let note = self.replaceNote {
@@ -250,6 +266,12 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
                 ?? ContentSearch.ReplaceResult(filesChanged: 0, replacements: 0)
             guard self.gen.isCurrent(generation) else { return }
             self.busy = false
+            if let failure = result.failure {
+                // Nothing was replaced; a refresh search would overwrite this and hide it.
+                self.statusLabel.stringValue = String(
+                    format: L("find.replaceFailed", "Replace failed: %@"), failure)
+                return
+            }
             let report = String(
                 format: L("find.replacedResult", "Replaced %d in %d files"), result.replacements,
                 result.filesChanged)
