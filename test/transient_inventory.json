@@ -1506,14 +1506,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/PhotosBrowserController.swift:388:9:beginSheetModal": {
+    "Sources/Pathem/PhotosBrowserController.swift:389:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PhotosBrowserController.swift:382:21:NSOpenPanel"
+        "Sources/Pathem/PhotosBrowserController.swift:383:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -2191,14 +2191,14 @@
         "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
       }
     },
-    "Sources/Pathem/PhotosBrowserController.swift:361:9:beginSheetModal": {
+    "Sources/Pathem/PhotosBrowserController.swift:362:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PhotosBrowserController.swift:352:21:NSAlert"
+        "Sources/Pathem/PhotosBrowserController.swift:353:21:NSAlert"
       ],
       "reason": "Plain Photos GPS-removal confirmation; Photos explicitly retains revertible edit. Runtime six-digit count. No real Photos access/edits authorized.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

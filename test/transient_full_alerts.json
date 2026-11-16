@@ -934,8 +934,8 @@
     },
     {
       "id": "b45",
-      "site": "Sources/Pathem/PhotosBrowserController.swift:361:9:beginSheetModal",
-      "builder": "Sources/Pathem/PhotosBrowserController.swift:352:21:NSAlert",
+      "site": "Sources/Pathem/PhotosBrowserController.swift:362:9:beginSheetModal",
+      "builder": "Sources/Pathem/PhotosBrowserController.swift:353:21:NSAlert",
       "source_sha256": "d76d8aabdd1d6a25ab16169e3a15dac6b23a8b9d0b757cdb3a38efac8fd65683",
       "sheet": true,
       "fixture": "Plain Photos GPS-removal confirmation; Photos explicitly retains revertible edit. Runtime six-digit count. No real Photos access/edits authorized.",

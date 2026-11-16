@@ -44,6 +44,7 @@ final class PhotosBrowserController: NSObject, NSTableViewDataSource, NSTableVie
             contentRect: NSRect(x: 0, y: 0, width: 860, height: 560),
             styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered,
             defer: true)
+        window.isReleasedWhenClosed = false  // Cached for re-presentation after Close.
         window.title = L("photos.windowTitle", "Photos")
         window.center()
         window.setFrameAutosaveName("com.scarcrux.pathem.photosBrowser")

@@ -478,3 +478,18 @@ All owner defaults are unchanged, private domains cleared and demo roots removed
 Framework geometry reds (including AVTrimIndicatorView) remain red and are
 reported as geometry observations, not an inferred product mechanism. Receipts:
 .build/transient-unit2-provider-m70.log through m74.log. No full variants yet.
+
+## Photos cached-window lifetime repair (separate production unit)
+
+Red first: .build/transient-unit2-provider-m69.log and its retained private raw
+native log show the first Cancel succeeds, then check 4 fails on the second
+invocation and coverage is incomplete. PhotosBrowserController owns a cached
+NSWindow but left AppKit's release-on-close behaviour enabled. Setting
+isReleasedWhenClosed=false keeps that exact window valid for re-presentation,
+matching the other reusable controllers. The identical corrected pilot now
+completes all three presentations, Return observation, Cancel, responder and
+no-accumulation checks. It is native 41/44 only because the existing check-1
+empty label geometry remains red. Exact receipts accept the complete run;
+owner defaults unchanged, private domain cleared, demo removed. Receipt:
+.build/transient-unit2-photo-lifetime-probe.log. This proves the reopen repair
+for the denied-access fixture, not populated Photos authorization or export.
