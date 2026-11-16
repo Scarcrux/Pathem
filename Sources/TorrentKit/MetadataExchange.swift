@@ -64,7 +64,7 @@ public enum MetadataExchange {
     /// the parsed TorrentFile and the .torrent bytes (so a resolved magnet can be persisted).
     /// Returns nil on hash mismatch or parse failure.
     public static func buildTorrent(
-        fromMetadata metadata: Data, infoHash: Data, trackers: [String]
+        fromMetadata metadata: Data, infoHash: Data, trackers: [String], webSeeds: [String] = []
     ) -> ResolvedTorrent? {
         guard Data(Insecure.SHA1.hash(data: metadata)) == infoHash else { return nil }
 
@@ -86,6 +86,14 @@ public enum MetadataExchange {
         }
         bytes.append(Data("4:info".utf8))
         bytes.append(metadata)
+        // url-list sorts after info. A magnet's ws= sources live outside the info dict, so they
+        // must be written here or the download (and the persisted .torrent) would lose them.
+        if !webSeeds.isEmpty {
+            bytes.append(Data("8:url-list".utf8))
+            bytes.append(Data("l".utf8))
+            for seed in webSeeds { bytes.append(Data("\(seed.utf8.count):\(seed)".utf8)) }
+            bytes.append(Data("e".utf8))
+        }
         bytes.append(Data("e".utf8))
 
         guard let torrent = try? TorrentFile.parse(bytes) else { return nil }

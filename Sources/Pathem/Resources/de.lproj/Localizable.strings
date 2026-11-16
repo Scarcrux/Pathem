@@ -1741,6 +1741,12 @@
 "torrents.remove.keep" = "Entfernen, Dateien behalten";
 "torrents.resume" = "Fortsetzen";
 "torrents.state.checking" = "Wird geprüft";
+"torrents.meta.source" = "Torrent-Datei wird von ihrer Quelle geladen …";
+"torrents.meta.finding" = "Suche nach Peers (Versuch %d von %d) …";
+"torrents.meta.asking" = "%d Peers werden nach der Dateiliste gefragt …";
+"torrents.meta.retryNone" = "Noch keine Peers gefunden (Versuch %d von %d). Neuer Versuch …";
+"torrents.meta.retrySome" = "%d Peers gefunden, keiner hat die Dateiliste gesendet (Versuch %d von %d). Neuer Versuch …";
+"torrents.meta.gaveUp" = "Nach %d Versuchen hat kein Peer die Dateiliste gesendet. Fortsetzen, um es erneut zu versuchen.";
 "torrents.state.downloading" = "Wird geladen";
 "torrents.state.error" = "Fehler";
 "torrents.state.fetchingMeta" = "Details werden abgerufen…";

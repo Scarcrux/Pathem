@@ -1741,6 +1741,12 @@
 "torrents.remove.keep" = "Retirer, conserver les fichiers";
 "torrents.resume" = "Reprendre";
 "torrents.state.checking" = "Vérification";
+"torrents.meta.source" = "Téléchargement du fichier torrent depuis sa source…";
+"torrents.meta.finding" = "Recherche de pairs (essai %d sur %d)…";
+"torrents.meta.asking" = "Demande de la liste des fichiers à %d pairs…";
+"torrents.meta.retryNone" = "Aucun pair trouvé pour l’instant (essai %d sur %d). Nouvel essai…";
+"torrents.meta.retrySome" = "%d pairs trouvés, aucun n’a envoyé la liste des fichiers (essai %d sur %d). Nouvel essai…";
+"torrents.meta.gaveUp" = "Aucun pair n’a envoyé la liste des fichiers après %d essais. Reprenez pour réessayer.";
 "torrents.state.downloading" = "Téléchargement";
 "torrents.state.error" = "Erreur";
 "torrents.state.fetchingMeta" = "Récupération des détails…";

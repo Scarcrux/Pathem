@@ -21,6 +21,24 @@ public actor TorrentEngine {
         var name: String
         var savePath: String
         var trackers: [String]
+        var webSeeds: [String] = []
+        var exactSources: [String] = []
+        var search = TorrentSession.MetadataSearch(
+            phase: .findingPeers, round: 1, rounds: 1, peersFound: 0)
+    }
+
+    /// How many rounds a magnet's metadata search runs before it gives up, and the pause before
+    /// round `n` (0-based) is retried. Internal so a test can make the search short.
+    var metadataRounds = 8
+    var metadataRetryDelay: @Sendable (Int) -> Duration = { .seconds(10 + $0 * 5) }
+    /// Whether a round with no tracker peers falls back to the public DHT. Off only in tests.
+    var searchesDHTForMagnets = true
+
+    /// Tests: a short search with no public-network DHT fallback.
+    func configureSearchForTests(rounds: Int, delay: Duration) {
+        metadataRounds = rounds
+        metadataRetryDelay = { _ in delay }
+        searchesDHTForMagnets = false
     }
 
     private let stateDir: URL
@@ -321,10 +339,26 @@ public actor TorrentEngine {
         }
         let entry = PendingMagnet(
             infoHashHex: hash, infoHash: magnet.infoHash, name: magnet.displayName ?? hash,
-            savePath: savePath, trackers: magnet.trackers)
+            savePath: savePath, trackers: magnet.trackers, webSeeds: magnet.webSeeds,
+            exactSources: magnet.exactSources,
+            search: .init(
+                phase: magnet.exactSources.isEmpty ? .findingPeers : .fetchingSource, round: 1,
+                rounds: metadataRounds, peersFound: 0))
         pending[hash] = entry
         resolverTasks[hash] = Task { [weak self] in await self?.resolveMagnet(hash) }
         return pendingStatus(entry)
+    }
+
+    private func setSearch(
+        _ hash: String, _ phase: TorrentSession.MetadataSearch.Phase, round: Int,
+        peersFound: Int? = nil
+    ) {
+        guard var entry = pending[hash] else { return }
+        entry.search.phase = phase
+        entry.search.round = round + 1
+        entry.search.rounds = metadataRounds
+        if let peersFound { entry.search.peersFound = peersFound }
+        pending[hash] = entry
     }
 
     public func remove(infoHash: String, deleteData: Bool) async {
@@ -359,6 +393,14 @@ public actor TorrentEngine {
     }
 
     public func resume(infoHash: String) async {
+        // A magnet whose search gave up: Resume starts a fresh search.
+        if let entry = pending[infoHash], entry.search.phase == .gaveUp {
+            setSearch(
+                infoHash, entry.exactSources.isEmpty ? .findingPeers : .fetchingSource, round: 0,
+                peersFound: 0)
+            resolverTasks[infoHash] = Task { [weak self] in await self?.resolveMagnet(infoHash) }
+            return
+        }
         guard let session = sessions[infoHash] else { return }
         meta[infoHash]?.paused = false
         // While the kill-switch is engaged, honor the user's intent but keep it paused; it starts
@@ -382,20 +424,37 @@ public actor TorrentEngine {
     private func pendingStatus(_ entry: PendingMagnet) -> TorrentSession.Status {
         TorrentSession.Status(
             infoHash: entry.infoHashHex, name: entry.name, totalLength: 0, downloaded: 0,
-            fractionComplete: 0, downloadRate: 0, peersConnected: 0, state: .checking,
-            savePath: entry.savePath)
+            fractionComplete: 0, downloadRate: 0, peersConnected: 0,
+            state: entry.search.phase == .gaveUp ? .error : .checking,
+            savePath: entry.savePath, metadataSearch: entry.search)
     }
 
     // MARK: magnet resolution
 
-    /// Fetch a magnet's metadata from peers over several rounds (trackers and peers can be slow or
-    /// lack extension support), then promote it to a real session. Gives up quietly after a few
-    /// rounds, leaving the torrent shown as "checking" so the user can remove it.
+    /// Fetch a magnet's metadata over several rounds, then promote it to a real session. Each
+    /// round first tries the magnet's xs= sources (a .torrent over HTTP, accepted only if its info
+    /// hash matches), then peers from trackers and the DHT (trackers and peers can be slow or lack
+    /// extension support). Every step is published in the status's `metadataSearch`. After the
+    /// last round the torrent shows as an error saying no peer sent the metadata; Resume retries.
     private func resolveMagnet(_ hash: String) async {
-        for round in 0..<8 {
+        let rounds = metadataRounds
+        for round in 0..<rounds {
             if Task.isCancelled { return }
             guard let entry = pending[hash] else { return }
+            if !entry.exactSources.isEmpty {
+                setSearch(hash, .fetchingSource, round: round)
+                if let resolved = await fetchExactSource(entry) {
+                    await promote(
+                        hash: hash, resolved: resolved, savePath: entry.savePath,
+                        discoveredPeers: [])
+                    return
+                }
+                if Task.isCancelled || pending[hash] == nil { return }
+            }
+            setSearch(hash, .findingPeers, round: round)
             let peers = await gatherPeers(entry)
+            if Task.isCancelled || pending[hash] == nil { return }
+            setSearch(hash, .askingPeers, round: round, peersFound: peers.count)
             if let resolved = await fetchMetadata(entry, from: peers) {
                 await promote(
                     hash: hash, resolved: resolved, savePath: entry.savePath,
@@ -403,9 +462,34 @@ public actor TorrentEngine {
                 return
             }
             if Task.isCancelled || pending[hash] == nil { return }
+            guard round + 1 < rounds else { break }
             // Back off before re-announcing; a little longer each round.
-            try? await Task.sleep(nanoseconds: UInt64(10 + round * 5) * 1_000_000_000)
+            setSearch(hash, .waitingToRetry, round: round)
+            try? await Task.sleep(for: metadataRetryDelay(round))
         }
+        if Task.isCancelled || pending[hash] == nil { return }
+        setSearch(hash, .gaveUp, round: rounds - 1)
+        resolverTasks[hash] = nil
+    }
+
+    /// Try each xs= source for the .torrent. Only a file whose info hash is the magnet's is used,
+    /// so a wrong or hostile source cannot substitute other content.
+    private func fetchExactSource(_ entry: PendingMagnet) async
+        -> MetadataExchange.ResolvedTorrent?
+    {
+        for source in entry.exactSources {
+            guard let url = URL(string: source) else { continue }
+            var request = URLRequest(url: url, timeoutInterval: 30)
+            request.setValue("application/x-bittorrent", forHTTPHeaderField: "Accept")
+            guard let (data, response) = try? await URLSession.shared.data(for: request),
+                (response as? HTTPURLResponse)?.statusCode == 200,
+                data.count <= 16 << 20,  // a .torrent, not a payload
+                let torrent = try? TorrentFile.parse(data),
+                torrent.infoHash == entry.infoHash
+            else { continue }
+            return MetadataExchange.ResolvedTorrent(torrent: torrent, torrentBytes: data)
+        }
+        return nil
     }
 
     /// Gather peers to fetch a magnet's metadata from: its HTTP trackers plus the DHT, so a
@@ -422,7 +506,9 @@ public actor TorrentEngine {
         }
         // The DHT is what makes a trackerless magnet work. A responsive tracker already gave us
         // candidates, so do not delay metadata fetch on a public-network lookup we do not need.
-        if peers.isEmpty { peers.append(contentsOf: await dht.findPeers(infoHash: entry.infoHash)) }
+        if peers.isEmpty, searchesDHTForMagnets {
+            peers.append(contentsOf: await dht.findPeers(infoHash: entry.infoHash))
+        }
         var seen = Set<Tracker.Peer>()
         return peers.filter { seen.insert($0).inserted }
     }
@@ -451,6 +537,22 @@ public actor TorrentEngine {
         }
     }
 
+    /// The resolved torrent with the magnet's ws= web seeds added to its url-list, so they serve
+    /// pieces alongside peers and survive a restart in the stored .torrent.
+    private func withWebSeeds(
+        _ resolved: MetadataExchange.ResolvedTorrent, adding seeds: [String]
+    ) -> MetadataExchange.ResolvedTorrent {
+        let existing = resolved.torrent.webSeeds
+        let extra = seeds.filter { !existing.contains($0) }
+        guard !extra.isEmpty,
+            let (_, info) = try? BencodeDecoder.decodeTorrent(resolved.torrentBytes),
+            let rebuilt = MetadataExchange.buildTorrent(
+                fromMetadata: info, infoHash: resolved.torrent.infoHash,
+                trackers: resolved.torrent.trackers, webSeeds: existing + extra)
+        else { return resolved }
+        return rebuilt
+    }
+
     /// Turn a resolved magnet into a persisted, running download.
     private func promote(
         hash: String, resolved: MetadataExchange.ResolvedTorrent, savePath: String,
@@ -460,9 +562,10 @@ public actor TorrentEngine {
         // atomic on the actor. Otherwise a remove() during the ensureListener await could clear
         // `pending[hash]` and this would resurrect the removed magnet.
         await ensureListener()
-        guard pending[hash] != nil, sessions[hash] == nil else { return }
+        guard let entry = pending[hash], sessions[hash] == nil else { return }
         pending[hash] = nil
         resolverTasks[hash] = nil
+        let resolved = withWebSeeds(resolved, adding: entry.webSeeds)
         let storedName = "\(hash).torrent"
         try? resolved.torrentBytes.write(to: torrentsDir.appendingPathComponent(storedName))
         guard

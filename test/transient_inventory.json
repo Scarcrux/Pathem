@@ -534,14 +534,14 @@
       "reason": "Runtime verb/count and first eight filename/error pairs, plain report. Fixture: eight 255-character names with permission errors. No provider access.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:430:9:beginSheetModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:435:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:426:21:NSAlert"
+        "Sources/Pathem/TorrentDrawerController.swift:431:21:NSAlert"
       ],
       "reason": "Localized torrent error title with runtime error body; standard OK only. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -1528,14 +1528,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:358:15:runModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:359:15:runModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:350:21:NSOpenPanel"
+        "Sources/Pathem/TorrentDrawerController.swift:351:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -2220,26 +2220,26 @@
       "reason": "Template name and multiline entry-list accessory. Cancel without saving config.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:380:15:runModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:381:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:365:21:NSAlert"
+        "Sources/Pathem/TorrentDrawerController.swift:366:21:NSAlert"
       ],
       "reason": "Magnet URI text field accessory, optional clipboard prefill. Cancel only; no clipboard mutation, DHT, peer contact or torrent start.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:406:9:beginSheetModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:411:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:399:21:NSAlert"
+        "Sources/Pathem/TorrentDrawerController.swift:404:21:NSAlert"
       ],
       "reason": "Three buttons plus permanent Delete Files branch; safe first action keeps files. Runtime torrent name255. Cancel only, no client calls.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

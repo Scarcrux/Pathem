@@ -16,20 +16,24 @@ public actor TorrentSession {
         public var totalLength: Int64
         public var downloaded: Int64
         public var fractionComplete: Double
-        public var downloadRate: Double   // bytes/sec, smoothed
-        public var uploadRate: Double      // bytes/sec, smoothed
-        public var uploaded: Int64         // total bytes served to peers this session
+        public var downloadRate: Double  // bytes/sec, smoothed
+        public var uploadRate: Double  // bytes/sec, smoothed
+        public var uploaded: Int64  // total bytes served to peers this session
         public var peersConnected: Int
         public var state: State
         public var savePath: String
-        public var etaSeconds: Int         // estimated time to finish; -1 = unknown/infinite
-        public var ratio: Double           // share ratio: uploaded / downloaded
+        public var etaSeconds: Int  // estimated time to finish; -1 = unknown/infinite
+        public var ratio: Double  // share ratio: uploaded / downloaded
+        /// For a magnet still without its metadata: what the search is doing, so the UI can say
+        /// more than "checking". Nil for every torrent that has its metadata. Optional, so an
+        /// older app or daemon on the other side of the wire decodes it as absent.
+        public var metadataSearch: MetadataSearch?
 
         public init(
             infoHash: String, name: String, totalLength: Int64, downloaded: Int64,
             fractionComplete: Double, downloadRate: Double, uploadRate: Double = 0,
             uploaded: Int64 = 0, peersConnected: Int, state: State, savePath: String,
-            etaSeconds: Int = -1, ratio: Double = 0
+            etaSeconds: Int = -1, ratio: Double = 0, metadataSearch: MetadataSearch? = nil
         ) {
             self.infoHash = infoHash
             self.name = name
@@ -44,6 +48,36 @@ public actor TorrentSession {
             self.savePath = savePath
             self.etaSeconds = etaSeconds
             self.ratio = ratio
+            self.metadataSearch = metadataSearch
+        }
+    }
+
+    /// Where a magnet's metadata search stands.
+    public struct MetadataSearch: Sendable, Codable, Equatable {
+        public enum Phase: String, Sendable, Codable {
+            /// Fetching the .torrent from the magnet's xs= source.
+            case fetchingSource
+            /// Announcing to trackers or searching the DHT.
+            case findingPeers
+            /// Asking `peersFound` peers for the metadata.
+            case askingPeers
+            /// This round found no peer that sent it; waiting before the next round.
+            case waitingToRetry
+            /// Every round failed; nothing runs until the user resumes it.
+            case gaveUp
+        }
+        public var phase: Phase
+        /// 1-based round, and how many rounds there are before giving up.
+        public var round: Int
+        public var rounds: Int
+        /// Peers found in the current or last round.
+        public var peersFound: Int
+
+        public init(phase: Phase, round: Int, rounds: Int, peersFound: Int) {
+            self.phase = phase
+            self.round = round
+            self.rounds = rounds
+            self.peersFound = peersFound
         }
     }
 
@@ -57,13 +91,15 @@ public actor TorrentSession {
 
     /// A connected peer, for the detail view's Peers tab.
     public struct PeerInfo: Sendable, Codable, Equatable {
-        public var address: String   // host:port
-        public var client: String    // decoded from the peer id (e.g. "qBittorrent 4.5.2")
+        public var address: String  // host:port
+        public var client: String  // decoded from the peer id (e.g. "qBittorrent 4.5.2")
         public var progress: Double  // how much of the torrent they have (0...1)
-        public var choked: Bool      // are they choking us
+        public var choked: Bool  // are they choking us
         public var encrypted: Bool
 
-        public init(address: String, client: String, progress: Double, choked: Bool, encrypted: Bool) {
+        public init(
+            address: String, client: String, progress: Double, choked: Bool, encrypted: Bool
+        ) {
             self.address = address
             self.client = client
             self.progress = progress
@@ -83,12 +119,16 @@ public actor TorrentSession {
                     "LT": "libtorrent", "AZ": "Vuze", "BT": "BitTorrent", "PM": "Pathem",
                 ]
                 let v = bytes[3..<7].map { String(Character(UnicodeScalar($0))) }
-                let version = v.joined().trimmingCharacters(in: CharacterSet(charactersIn: "0")).isEmpty
-                    ? v.joined() : "\(v[0]).\(v[1]).\(v[2])\(v[3])".replacingOccurrences(of: ".0", with: "")
+                let version =
+                    v.joined().trimmingCharacters(in: CharacterSet(charactersIn: "0")).isEmpty
+                    ? v.joined()
+                    : "\(v[0]).\(v[1]).\(v[2])\(v[3])".replacingOccurrences(of: ".0", with: "")
                 if let name = names[code] { return "\(name) \(version)" }
                 return code
             }
-            let printable = bytes.prefix(8).map { (32...126).contains($0) ? Character(UnicodeScalar($0)) : "·" }
+            let printable = bytes.prefix(8).map {
+                (32...126).contains($0) ? Character(UnicodeScalar($0)) : "·"
+            }
             return String(printable)
         }
     }
@@ -157,7 +197,9 @@ public actor TorrentSession {
         self.pieces = PieceManager(torrent: torrent)
         self.layout = FileLayout(torrent: torrent)
         // Multi-file torrents nest their files under the torrent name; single-file already has it.
-        let root = torrent.files.count > 1 ? downloadRoot.appendingPathComponent(torrent.name) : downloadRoot
+        let root =
+            torrent.files.count > 1
+            ? downloadRoot.appendingPathComponent(torrent.name) : downloadRoot
         self.storage = try TorrentStorage(root: root, layout: layout)
     }
 
@@ -195,7 +237,8 @@ public actor TorrentSession {
             }
             webSeedInFlight.insert(index)
             let size = pieces.pieceSize(index)
-            let data = await WebSeed.fetchPiece(base: base, torrent: torrent, layout: layout, index: index, pieceSize: size)
+            let data = await WebSeed.fetchPiece(
+                base: base, torrent: torrent, layout: layout, index: index, pieceSize: size)
             webSeedInFlight.remove(index)
             if let data, data.count == size {
                 ingestWholePiece(index: index, data: data)
@@ -211,7 +254,8 @@ public actor TorrentSession {
         var begin = 0
         while begin < data.count {
             let length = min(PieceManager.blockSize, data.count - begin)
-            let result = pieces.receiveBlock(index: index, begin: begin, block: data.subdata(in: begin..<(begin + length)))
+            let result = pieces.receiveBlock(
+                index: index, begin: begin, block: data.subdata(in: begin..<(begin + length)))
             if case .pieceComplete(let pieceIndex, let bytes) = result {
                 guard state == .downloading else { break }  // paused/stopped mid-fetch: don't ingest
                 try? storage.write(
@@ -245,7 +289,8 @@ public actor TorrentSession {
             let added = current.subtracting(lastSent)
             let dropped = lastSent.subtracting(current)
             guard !added.isEmpty || !dropped.isEmpty else { continue }
-            let payload = PEX.message(added: Array(added.prefix(50)), dropped: Array(dropped.prefix(50)))
+            let payload = PEX.message(
+                added: Array(added.prefix(50)), dropped: Array(dropped.prefix(50)))
             try? await peer.send(.extended(id: pexID, payload: payload))
             await peer.setLastPexSent(current)
         }
@@ -327,7 +372,8 @@ public actor TorrentSession {
     /// The torrent's files and whether each is currently selected for download.
     public func files() -> [FileInfo] {
         torrent.files.enumerated().map { index, entry in
-            FileInfo(index: index, path: entry.path, length: entry.length,
+            FileInfo(
+                index: index, path: entry.path, length: entry.length,
                 wanted: wantedFiles?.contains(index) ?? true)
         }
     }
@@ -351,13 +397,17 @@ public actor TorrentSession {
         wantedFiles = indices
         if let indices {
             let wantedPieces = layout.pieces(
-                forFiles: indices, pieceLength: Int(torrent.pieceLength), pieceCount: pieces.pieceCount)
+                forFiles: indices, pieceLength: Int(torrent.pieceLength),
+                pieceCount: pieces.pieceCount)
             pieces.setWanted(wantedPieces)
         } else {
             pieces.clearWanted()
         }
-        if pieces.isComplete, state == .downloading { state = .seeding }
-        else if !pieces.isComplete, state == .seeding { state = .downloading }
+        if pieces.isComplete, state == .downloading {
+            state = .seeding
+        } else if !pieces.isComplete, state == .seeding {
+            state = .downloading
+        }
     }
 
     // MARK: trackers
@@ -446,7 +496,8 @@ public actor TorrentSession {
                 do {
                     // Short µTP dial timeout so we fall back to TCP quickly when a peer is TCP-only.
                     try await peer.connect(
-                        timeout: transport == .utp ? 6 : 15, encrypted: encrypted, transport: transport)
+                        timeout: transport == .utp ? 6 : 15, encrypted: encrypted,
+                        transport: transport)
                 } catch {
                     await peer.close()
                     continue  // this transport/mode failed: try the next
@@ -489,7 +540,9 @@ public actor TorrentSession {
 
         // Super-seeding withholds the full bitfield and offers pieces one at a time (below).
         let superSeed = superSeeding && pieces.isComplete
-        if !superSeed, pieces.completedCount > 0 { try await peer.send(.bitfield(pieces.bitfield())) }
+        if !superSeed, pieces.completedCount > 0 {
+            try await peer.send(.bitfield(pieces.bitfield()))
+        }
         try await peer.send(.interested)
         // Advertise peer exchange so the peer sends us the peers it knows (BEP 11).
         if await peer.peerSupportsExtensions {
@@ -514,10 +567,14 @@ public actor TorrentSession {
                 choked = false
             case .bitfield(let data):
                 peerBits = pieces.decodeBitfield(data)
-                if superSeed { offerSuperSeedPiece(peerBits: peerBits, offered: &offeredPieces, to: peer) }
+                if superSeed {
+                    offerSuperSeedPiece(peerBits: peerBits, offered: &offeredPieces, to: peer)
+                }
             case .have(let index):
                 let i = Int(index)
-                if i >= peerBits.count { peerBits += Array(repeating: false, count: i - peerBits.count + 1) }
+                if i >= peerBits.count {
+                    peerBits += Array(repeating: false, count: i - peerBits.count + 1)
+                }
                 if i >= 0 && i < peerBits.count { peerBits[i] = true }
                 // Super-seed: once the peer announces the piece we gave it, offer another.
                 if superSeed, offeredPieces.contains(i) {
@@ -553,10 +610,13 @@ public actor TorrentSession {
     /// sends a `piece` message, counting the bytes toward our upload total. This is how we
     /// reciprocate (upload while downloading) and seed to still-connected peers after completion.
     private func serveBlock(index: Int, begin: Int, length: Int, to peer: PeerConnection) {
-        guard pieces.hasPiece(index), length > 0, length <= maxServedBlock, begin >= 0 else { return }
+        guard pieces.hasPiece(index), length > 0, length <= maxServedBlock, begin >= 0 else {
+            return
+        }
         guard begin + length <= pieces.pieceSize(index) else { return }
         let offset = Int64(index) * Int64(pieces.pieceLength) + Int64(begin)
-        guard let block = try? storage.read(at: offset, length: length), block.count == length else { return }
+        guard let block = try? storage.read(at: offset, length: length), block.count == length
+        else { return }
         uploadedBytes += Int64(length)
         let message = PeerMessage.piece(index: UInt32(index), begin: UInt32(begin), block: block)
         Task { [uploadLimiter] in
@@ -566,10 +626,13 @@ public actor TorrentSession {
     }
 
     /// Super-seed: choose a piece this peer lacks (least-distributed first) and advertise just it.
-    private func offerSuperSeedPiece(peerBits: [Bool], offered: inout Set<Int>, to peer: PeerConnection) {
-        guard let piece = SuperSeed.pick(
-            complete: (0..<pieces.pieceCount).map { pieces.hasPiece($0) },
-            peerHas: peerBits, offered: offered, givenCount: piecesGivenCount)
+    private func offerSuperSeedPiece(
+        peerBits: [Bool], offered: inout Set<Int>, to peer: PeerConnection
+    ) {
+        guard
+            let piece = SuperSeed.pick(
+                complete: (0..<pieces.pieceCount).map { pieces.hasPiece($0) },
+                peerHas: peerBits, offered: offered, givenCount: piecesGivenCount)
         else { return }
         offered.insert(piece)
         Task { try? await peer.send(.have(pieceIndex: UInt32(piece))) }
@@ -583,11 +646,14 @@ public actor TorrentSession {
 
     /// Keep this peer's request pipeline full while it isn't choking us.
     private func topUp(
-        choked: Bool, peerBits: [Bool], mine: inout Set<PieceManager.BlockRequest>, peer: PeerConnection
+        choked: Bool, peerBits: [Bool], mine: inout Set<PieceManager.BlockRequest>,
+        peer: PeerConnection
     ) {
         guard !choked, !peerBits.isEmpty, !pieces.isComplete else { return }
         while mine.count < maxInFlightPerPeer {
-            guard let req = pieces.nextRequest(peerHas: peerBits, inFlight: globalInFlight) else { break }
+            guard let req = pieces.nextRequest(peerHas: peerBits, inFlight: globalInFlight) else {
+                break
+            }
             mine.insert(req)
             globalInFlight.insert(req)
             let request = PeerMessage.request(
@@ -600,7 +666,9 @@ public actor TorrentSession {
         }
     }
 
-    private func handlePiece(index: Int, begin: Int, block: Data, mine: inout Set<PieceManager.BlockRequest>) {
+    private func handlePiece(
+        index: Int, begin: Int, block: Data, mine: inout Set<PieceManager.BlockRequest>
+    ) {
         let key = PieceManager.BlockRequest(index: index, begin: begin, length: block.count)
         mine.remove(key)
         globalInFlight.remove(key)
@@ -615,7 +683,7 @@ public actor TorrentSession {
                 pieceSize: pieces.pieceSize(pieceIndex), data: data)
             broadcastHave(pieceIndex)  // let connected peers know they can request this from us
             if pieces.isComplete { state = .seeding }
-            // Storage stays open so we can serve pieces to peers; it closes on stop().
+        // Storage stays open so we can serve pieces to peers; it closes on stop().
         case .hashMismatch:
             break  // the piece was reset; its blocks become requestable again
         default:

@@ -1741,6 +1741,12 @@
 "torrents.remove.keep" = "移除，保留文件";
 "torrents.resume" = "继续";
 "torrents.state.checking" = "校验中";
+"torrents.meta.source" = "正在从来源下载种子文件…";
+"torrents.meta.finding" = "正在查找对等端（第 %d 次，共 %d 次）…";
+"torrents.meta.asking" = "正在向 %d 个对等端请求文件列表…";
+"torrents.meta.retryNone" = "尚未找到对等端（第 %d 次，共 %d 次）。正在重试…";
+"torrents.meta.retrySome" = "找到 %d 个对等端，但没有发送文件列表（第 %d 次，共 %d 次）。正在重试…";
+"torrents.meta.gaveUp" = "尝试 %d 次后仍没有对等端发送文件列表。继续即可重试。";
 "torrents.state.downloading" = "下载中";
 "torrents.state.error" = "错误";
 "torrents.state.fetchingMeta" = "正在获取详情…";

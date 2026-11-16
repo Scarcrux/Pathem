@@ -1741,6 +1741,12 @@
 "torrents.remove.keep" = "削除（ファイルは残す）";
 "torrents.resume" = "再開";
 "torrents.state.checking" = "確認中";
+"torrents.meta.source" = "ソースからTorrentファイルをダウンロード中…";
+"torrents.meta.finding" = "ピアを検索中（%d/%d回目）…";
+"torrents.meta.asking" = "%d個のピアにファイルリストを要求中…";
+"torrents.meta.retryNone" = "まだピアが見つかりません（%d/%d回目）。再試行中…";
+"torrents.meta.retrySome" = "%d個のピアが見つかりましたが、ファイルリストを送信したピアはありません（%d/%d回目）。再試行中…";
+"torrents.meta.gaveUp" = "%d回試してもファイルリストを送信したピアはありませんでした。再開すると再試行します。";
 "torrents.state.downloading" = "ダウンロード中";
 "torrents.state.error" = "エラー";
 "torrents.state.fetchingMeta" = "詳細を取得中…";

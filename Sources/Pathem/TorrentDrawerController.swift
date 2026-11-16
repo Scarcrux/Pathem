@@ -232,7 +232,7 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         let sel = selected()
         pauseButton.isEnabled = sel != nil
         removeButton.isEnabled = sel != nil
-        let paused = sel?.state == .paused
+        let paused = sel.map(TorrentStatusText.resumes) ?? false
         pauseButton.image = NSImage(
             systemSymbolName: paused ? "play.fill" : "pause.fill",
             accessibilityDescription: paused
@@ -328,6 +328,7 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     private func stateLabel(_ status: TorrentSession.Status) -> String {
+        if let search = TorrentStatusText.metadataSearch(status) { return search }
         if isFetchingMetadata(status) {
             return L("torrents.state.fetchingMeta", "Fetching details…")
         }
@@ -391,7 +392,11 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
 
     @objc private func pauseResumeTapped() {
         guard let sel = selected() else { return }
-        if sel.state == .paused { client.resume(sel.infoHash) } else { client.pause(sel.infoHash) }
+        if TorrentStatusText.resumes(sel) {
+            client.resume(sel.infoHash)
+        } else {
+            client.pause(sel.infoHash)
+        }
     }
 
     @objc private func removeTapped() {

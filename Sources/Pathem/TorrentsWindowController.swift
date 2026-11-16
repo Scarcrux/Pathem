@@ -173,8 +173,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         let sel = selected()
         pauseButton.isEnabled = sel != nil
         removeButton.isEnabled = sel != nil
-        filesButton.isEnabled = sel != nil && sel?.state != .checking
-        if let sel, sel.state == .paused {
+        filesButton.isEnabled = sel != nil && sel?.state != .checking && sel?.metadataSearch == nil
+        if let sel, TorrentStatusText.resumes(sel) {
             pauseButton.title = L("torrents.resume", "Resume")
         } else {
             pauseButton.title = L("torrents.pause", "Pause")
@@ -239,7 +239,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     @objc private func pauseResumeTapped() {
         guard let sel = selected() else { return }
-        if sel.state == .paused {
+        if TorrentStatusText.resumes(sel) {
             client.resume(sel.infoHash)
         } else {
             client.pause(sel.infoHash)
@@ -464,6 +464,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     private func stateLabel(_ status: TorrentSession.Status) -> String {
+        if let search = TorrentStatusText.metadataSearch(status) { return search }
         switch status.state {
         case .downloading:
             // Distinguish "connected and pulling bytes" from "still looking" so a stalled row
