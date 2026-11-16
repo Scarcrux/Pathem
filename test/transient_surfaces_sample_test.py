@@ -10,6 +10,8 @@ def transcript(remove=None, fail=None, marker=None):
     for n in range(1, 9):
         row('predicate-' + str(n), n)
     row('predicate-1-viewport', 1)
+    row('predicate-1-tooltip', 1)
+    row('predicate-4-presentation', 4)
     row('predicate-8-multiplicity', 8)
     row('predicate-4-appearance', 4)
     row('predicate-3-system', 3)

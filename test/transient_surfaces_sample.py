@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Unit 1 only. Preserve native verdicts; validate delivered controls against a clean pilot."""
 import argparse
+from collections import Counter
 import hashlib
 import json
 import os
@@ -12,6 +13,8 @@ import shutil
 import subprocess
 import tempfile
 import time
+from transient_deadline import bounded_native_timeout, validate_native_timeout
+from transient_process import run_owned_native
 from layout_matrix_support import defaults_snapshot, verify_defaults
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -33,7 +36,8 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     rows = CHECK.findall(log)
     failures = {(cell, int(check)) for status, cell, check in rows if status == 'FAIL'}
     predicates = [(status, cell, check) for status, cell, check in rows if re.fullmatch(r'predicate-[1-8]', cell)]
-    if len(predicates) != 8 or any(status != 'PASS' for status, _, _ in predicates):
+    expected_predicates = Counter({(f'predicate-{n}', str(n)): 1 for n in range(1, 9)})
+    if Counter((cell, check) for _, cell, check in predicates) != expected_predicates or any(status != 'PASS' for status, _, _ in predicates):
         errors.append('predicate controls incomplete or failed')
     if ('PASS', 'predicate-file-opening', '0') not in rows:
         errors.append('file-opening interception control missing or failed')
@@ -78,6 +82,12 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
         for cell in mount_cells:
             if not set(range(9)) <= {int(check) for _, found, check in rows if found == cell}:
                 errors.append('custom mount check coverage incomplete: ' + cell)
+    if full and category in ('all', 'core'):
+        from transient_core_receipts import receipt_errors
+        errors += receipt_errors(log, language, pilot)
+    for cell, check in [('predicate-1-tooltip', 1), ('predicate-4-presentation', 4)]:
+        matches = [(status, int(number)) for status, found, number in rows if found == cell]
+        if matches != [('PASS', check)]: errors.append('required subcontrol missing or failed: '+cell)
     if CONFLICT.search(log):
         errors.append('constraint-conflict log line')
     if case == 'clean':
@@ -109,7 +119,8 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     return errors, failures
 
 
-def run_case(case, language, pilot, full=False, category="all", group=0, probe_one=False, only=None, launch_id=None):
+def run_case(case, language, pilot, full=False, category="all", group=0, probe_one=False, only=None, launch_id=None, native_timeout=180, deadline=None):
+    native_timeout = validate_native_timeout(native_timeout)
     launch_id = launch_id or uuid.uuid4().hex
     temp = pathlib.Path(subprocess.check_output(['getconf', 'DARWIN_USER_TEMP_DIR'], text=True).strip())
     scratch = pathlib.Path(tempfile.mkdtemp(prefix='pathem-transient-sample-', dir=temp))
@@ -158,13 +169,23 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         dependencies = dependency_paths(subprocess.check_output(['otool', '-L', str(executable)], text=True))
         executable = prepare_bundle(scratch, executable, private_domain, dependencies)
         env['PATHEM_TRANSIENT_PRIVATE_DOMAIN'] = private_domain
+    native_started = False
+    allowed_timeout = None
+    native_instrument_error = None
     try:
         launch = [str(executable), '-AppleLanguages', '(' + language + ')']
         if full:
             launch += ['-pathem.demoOffered', 'YES', '-pathem.fdaGuideDismissed', 'YES']
-        run = subprocess.run(launch, env=env,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180)
-        log, code = run.stdout.decode(errors='replace'), run.returncode
+        # Packaging and input hashing consumed wall time. Recompute here,
+        # immediately before launch, and leave the same reserve for cleanup.
+        allowed_timeout = bounded_native_timeout(native_timeout, deadline=deadline)
+        if allowed_timeout is None:
+            log, code = 'TRANSIENT DEADLINE: no native process started; cleanup reserve reached\n', 124
+        else:
+            native_started = True
+            run = run_owned_native(launch, env, allowed_timeout)
+            log, code = run.stdout.decode(errors='replace'), run.returncode
+            native_instrument_error = run.instrument_error
     except subprocess.TimeoutExpired as error:
         log, code = (error.stdout or b'').decode(errors='replace'), 124
     private_domain_removed = True
@@ -185,6 +206,10 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
     reference_path = ROOT / ('.build/transient-sample-clean-de-full-core-g0-pilot.json' if full else '.build/transient-sample-clean-de-pilot.json')
     reference = json.loads(reference_path.read_text()) if reference_path.exists() else None
     errors, failures = validate(log, code, case, language, pilot, expected_catalog['common.cancel'], reference, full, category)
+    if native_instrument_error:
+        errors.append(native_instrument_error)
+    if not native_started:
+        errors.append('whole-run budget exhausted before native launch; no process started')
     if private_domain and 'TSAMPLE: DOMAIN ' + private_domain not in log:
         errors.append('private application preference domain was not delivered')
     if not private_domain_removed:
@@ -223,7 +248,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         errors.append('preference/demo isolation failed')
     if source_digest() != inputs_before:
         errors.append('source or native artifact changed during launch')
-    receipt = dict(launch_id=launch_id, label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
+    receipt = dict(native_instrument_error=native_instrument_error, native_started=native_started, native_timeout=allowed_timeout, launch_id=launch_id, label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
                    source_digest=inputs_before, failures=sorted(failures), errors=errors,
                    reference_native_exit=reference.get('native_exit') if case != 'clean' and reference else None,
                    preferences_unchanged=private_ok, catalog_matches_source=catalog_match, lifecycle_disk_proof=lifecycle_proof,

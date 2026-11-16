@@ -85,9 +85,9 @@ extension TransientSurfaceSample {
                     PDFMarkupView.makeTextPrompt(title: L("markup.noteText", "Note"), initial: name)
                         .0)
             },
-            factory("f04", "DocumentPreviewView.swift", function: "offerToSaveIfEdited") {
+            factory("f04", "DocumentPreviewView.swift", function: "askToSave") {
                 _, name in
-                FactoryObject(DocumentPreviewView.makeSaveChangesDialog(name: name), cancel: nil)
+                FactoryObject(DocumentPreviewView.saveMarkupAlert(fileName: name), cancel: 1)
             },
             factory("f05", "FindInFilesController.swift", function: "replaceAll") { _, name in
                 FactoryObject(FindInFilesController.makeReplaceConfirmation(query: name))
@@ -362,7 +362,9 @@ extension TransientSurfaceSample {
         NSApp.appearance = nil
     }
 
-    func inspectFactory(_ entry: Factory, object: FactoryObject, cell: String, cycle: Int) {
+    func inspectFactory(
+        _ entry: Factory, object: FactoryObject, cell: String, cycle: Int, before: [Int]
+    ) {
         let window = object.window
         guard let content = window.contentView else {
             emit(cell, 0, false, "native content missing")
@@ -376,10 +378,15 @@ extension TransientSurfaceSample {
             systemPanel: object.save != nil)
         emit(
             cell, 4,
-            (entry.sheet ? window.sheetParent === host : NSApp.modalWindow === window)
+            TransientSurfaceChecks.singlePresentation(
+                before: before, after: windows(), expected: window.windowNumber)
+                && (entry.sheet ? window.sheetParent === host : NSApp.modalWindow === window)
                 && TransientSurfaceChecks.appearance(content, expected: requestedAppearance),
             "cycle=\(cycle) production factory; original presentation style", content: content)
         let buttons = object.buttons
+        let defaults = buttons.filter {
+            $0.cell === window.defaultButtonCell || $0.keyEquivalent == "\r"
+        }
         let expected =
             object.alert?.buttons.first ?? buttons.first { $0.cell === window.defaultButtonCell }
         let probe = TransientReturnBindingProbe.observe(window: window, buttons: buttons) {
@@ -389,7 +396,7 @@ extension TransientSurfaceSample {
         let intended = policy[entry.site]?["default_destructive_intended"] as? Bool ?? false
         emit(
             cell, 6,
-            (!destructiveDefault || intended) && probe.resolved
+            (!destructiveDefault || intended) && probe.resolved && defaults.count <= 1
                 && (expected.map { expected in
                     expected.isEnabled
                         ? (probe.accepted && probe.received.count == 1
@@ -433,6 +440,7 @@ extension TransientSurfaceSample {
             let responder = host.firstResponder.map(ObjectIdentifier.init)
             let before = windows()
             let files = snapshot(directory)
+            let config = ConfigStore.directory().map(snapshot) ?? [:]
             let object = entry.make(file, name)
             object.window.appearance = host.appearance
             object.alert?.layout()
@@ -447,7 +455,7 @@ extension TransientSurfaceSample {
                             $0.cell === object.window.defaultButtonCell || $0.keyEquivalent == "\r"
                         }
                     }
-                    inspectFactory(entry, object: object, cell: cell, cycle: cycle)
+                    inspectFactory(entry, object: object, cell: cell, cycle: cycle, before: before)
                     if let index = object.cancelIndex, object.buttons.indices.contains(index) {
                         object.buttons[index].performClick(nil)
                         state.nativeCancel = true
@@ -479,7 +487,8 @@ extension TransientSurfaceSample {
                             "TSAMPLE: MODAL-READY cell=\(cell) key=\(object.window.isKeyWindow) default=\(object.window.defaultButtonCell != nil) modal=\(NSApp.modalWindow === object.window)"
                         )
                         state.inspected = true
-                        self.inspectFactory(entry, object: object, cell: cell, cycle: cycle)
+                        self.inspectFactory(
+                            entry, object: object, cell: cell, cycle: cycle, before: before)
                         if let save = object.save {
                             save.cancel(nil)
                             state.nativeCancel = true
@@ -528,14 +537,16 @@ extension TransientSurfaceSample {
                 object.save != nil
                 ? NSApplication.ModalResponse.cancel
                 : object.cancelIndex.map { NSApplication.ModalResponse(rawValue: 1000 + $0) }
-            emit(
-                cell, 5,
-                state.nativeCancel && state.response == expected && snapshot(directory) == files,
-                "cycle=\(cycle) Cancel exists=\(object.save != nil || object.cancelIndex != nil) response=\(String(describing: state.response?.rawValue)) owned files unchanged=\(snapshot(directory) == files)",
-                content: object.window.contentView)
             let dismissed = settle {
                 !object.window.isVisible && self.host.attachedSheet !== object.window
             }
+            let configUnchanged = (ConfigStore.directory().map(snapshot) ?? [:]) == config
+            emit(
+                cell, 5,
+                state.nativeCancel && state.response == expected && snapshot(directory) == files
+                    && configUnchanged,
+                "cycle=\(cycle) Cancel exists=\(object.save != nil || object.cancelIndex != nil) response=\(String(describing: state.response?.rawValue)) owned files unchanged=\(snapshot(directory) == files) configUnchanged=\(configUnchanged)",
+                content: object.window.contentView)
             emit(
                 cell, 7,
                 !state.timedOut && dismissed

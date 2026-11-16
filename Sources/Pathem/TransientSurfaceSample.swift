@@ -219,6 +219,23 @@ final class TransientSurfaceSample {
             "predicate-1-viewport", 1,
             validScroll.isEmpty && invalidScroll.contains { $0.number == 1 },
             "scrolling content clipped; viewport itself must still fit")
+        let tooltipRoot = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 100))
+        let icon = NSButton(frame: NSRect(x: 10, y: 10, width: 48, height: 48))
+        icon.title = ""
+        icon.image = NSImage(size: NSSize(width: 16, height: 16))
+        icon.imagePosition = .imageOnly
+        icon.toolTip = "Owned action"
+        tooltipRoot.addSubview(icon)
+        let tooltipGood = TransientSurfaceChecks.geometry(tooltipRoot)
+        icon.toolTip = nil
+        let tooltipBad = TransientSurfaceChecks.geometry(tooltipRoot)
+        emit(
+            "predicate-1-tooltip", 1,
+            tooltipGood.isEmpty
+                && tooltipBad.contains { $0.detail.hasPrefix("icon-only control has no tooltip") }
+                && tooltipBad.allSatisfy { $0.number == 1 },
+            "app-supplied icon-only control: tooltip present passes; missing tooltip fails geometry"
+        )
         let screen = NSRect(x: 0, y: 0, width: 1000, height: 800)
         control(
             2,
@@ -272,6 +289,24 @@ final class TransientSurfaceSample {
         control(
             4, TransientSurfaceChecks.ownership(actual: 10, expected: 10),
             TransientSurfaceChecks.ownership(actual: 20, expected: 10))
+        emit(
+            "predicate-4-presentation", 4,
+            TransientSurfaceChecks.presentation(.sheet, parent: 10, host: 10, popoverAnchor: nil)
+                && !TransientSurfaceChecks.presentation(
+                    .sheet, parent: nil, host: 10, popoverAnchor: nil)
+                && !TransientSurfaceChecks.presentation(
+                    .window, parent: 10, host: 10, popoverAnchor: nil)
+                && TransientSurfaceChecks.presentation(
+                    .popover, parent: nil, host: 10, popoverAnchor: 10)
+                && !TransientSurfaceChecks.presentation(
+                    .popover, parent: nil, host: 10, popoverAnchor: 20)
+                && TransientSurfaceChecks.singlePresentation(
+                    before: [10], after: [10, 20], expected: 20)
+                && !TransientSurfaceChecks.singlePresentation(
+                    before: [10], after: [10, 20, 30], expected: 20)
+                && !TransientSurfaceChecks.singlePresentation(
+                    before: [10], after: [20], expected: 20),
+            "sheet, standalone window and popover ownership discriminate")
         view.appearance = NSAppearance(named: .aqua)
         let correctAppearance = TransientSurfaceChecks.appearance(view, expected: .aqua)
         view.appearance = NSAppearance(named: .darkAqua)
@@ -540,6 +575,29 @@ final class TransientSurfaceSample {
                 _ = settle { completed }
                 return
             }
+            if kind != "plain" {
+                let coreRules: [String: [(String, String)]] = [
+                    "rename": [("BrowserViewController+Rename.swift", "presentSheet")],
+                    "reclaim": [("CleanupController.swift", "presentDeleteNowAlert")],
+                    "conflict": [
+                        ("BrowserViewController+Transfers.swift", "ask"),
+                        ("CursorConfirm.swift", "show"),
+                    ],
+                ]
+                let rules = coreRules[kind] ?? []
+                let sites = policy.keys.filter { key in
+                    rules.contains { file, method in
+                        key.hasPrefix("Sources/Pathem/" + file + ":") && key.hasSuffix(":" + method)
+                    }
+                }
+                guard sites.count == rules.count && !rules.isEmpty else {
+                    emit("core-contract", 0, false, "reviewed core production sites missing")
+                    return
+                }
+                for site in sites.sorted() {
+                    trace("TSAMPLE: CORE-SITE cell=\(cell) cycle=\(cycle) site=\(site)")
+                }
+            }
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             let nativeReady = settle {
@@ -564,7 +622,10 @@ final class TransientSurfaceSample {
                 ? browser.cursorConfirm.debugAnchorWindowNumber : window.sheetParent?.windowNumber
             emit(
                 cell, 4,
-                TransientSurfaceChecks.ownership(actual: ownership, expected: host.windowNumber)
+                TransientSurfaceChecks.singlePresentation(
+                    before: beforeWindows, after: windows(), expected: window.windowNumber)
+                    && TransientSurfaceChecks.ownership(
+                        actual: ownership, expected: host.windowNumber)
                     && TransientSurfaceChecks.appearance(content, expected: requestedAppearance),
                 "cycle=\(cycle) actualHost=\(String(describing: ownership)) expected=\(host.windowNumber) appearance=\(String(describing: content.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]))) requestedAppearance=\(String(describing: requestedAppearance))",
                 content: content)

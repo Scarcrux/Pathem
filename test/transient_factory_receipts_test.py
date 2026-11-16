@@ -10,7 +10,8 @@ def sample(profile='f01'):
         for cycle in range(3):
             for check in range(9):
                 repeat=3 if r['constructor']=='NSSavePanel' and check in (1,2,3) else 1
-                lines += [f'TSAMPLE: PASS cell={cell} check={check} cycle={cycle}']*repeat
+                detail=' configUnchanged=true' if check==5 else ''
+                lines += [f'TSAMPLE: PASS cell={cell} check={check} cycle={cycle}'+detail]*repeat
         lines.append(f'TSAMPLE: COVERED class=A site={r["site"]} cell={cell}')
     return '\n'.join(lines)
 
@@ -37,3 +38,14 @@ class FactoryReceiptControls(unittest.TestCase):
         self.assertTrue(any('timed out' in e for e in receipt_errors(sample()+'\ntimedOut=true','de',0,True,'f01')))
     def test_wrong_treatment_refused(self):
         self.assertTrue(receipt_errors(sample(),'ja',0,True,'f01'))
+
+    def test_cancel_configuration_observation_required(self):
+        text=sample().replace(' configUnchanged=true','',1)
+        self.assertTrue(any('configuration proof incomplete' in e for e in receipt_errors(text,'de',0,True,'f01')))
+    def test_changed_configuration_cannot_claim_cancel_pass(self):
+        text=sample().replace('configUnchanged=true','configUnchanged=false',1)
+        self.assertTrue(any('contradicts changed configuration' in e for e in receipt_errors(text,'de',0,True,'f01')))
+    def test_changed_configuration_remains_a_product_red(self):
+        text=sample().replace('PASS cell=F-f01-de-light-720-short check=5 cycle=0 configUnchanged=true',
+            'FAIL cell=F-f01-de-light-720-short check=5 cycle=0 configUnchanged=false')
+        self.assertEqual(receipt_errors(text,'de',0,True,'f01'),[])

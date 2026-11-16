@@ -25,6 +25,10 @@ extension TransientSurfaceSample {
             emit("lifecycle-setup", 0, false, "real delegate/browser or mode missing")
             return
         }
+        guard !MarkupLeaveSettings.savesAutomatically else {
+            emit("lifecycle-setup", 0, false, "prompt-on-leave default was not delivered")
+            return
+        }
         let directory = output.appendingPathComponent("markup-lifecycle", isDirectory: true)
         let file = directory.appendingPathComponent("owned-unsaved.pdf")
         let control = directory.appendingPathComponent("owned-saved-control.pdf")
@@ -95,6 +99,7 @@ extension TransientSurfaceSample {
                 "disk_annotations": PDFDocument(url: file)?.page(at: 0)?.annotations.count ?? -1,
                 "edited_before": true, "save_control": controlOK, "prompt_seen": observation.prompt,
                 "window_closed": observation.windowClosed,
+                "window_visible_after": window.isVisible,
                 "close_requested": observation.closeRequested,
                 "edited_after": viewer.debugIsEdited,
                 "prompt_cancelled": observation.promptCancelled,
@@ -152,7 +157,9 @@ extension TransientSurfaceSample {
                 !window.isVisible && WindowManager.shared.windowCount == countBefore
             RunLoop.main.run(until: Date().addingTimeInterval(0.1))
             let guarded =
-                observation.prompt && window.isVisible && viewer.debugIsEdited
+                observation.prompt && observation.promptCancelled
+                && window.isVisible && viewer.debugIsEdited
+                && (try? Data(contentsOf: file)) == before
                 && WindowManager.shared.windowCount == countBefore + 1
             persist(observation.windowClosed ? "closed" : "close-refused")
             emit(
@@ -161,7 +168,7 @@ extension TransientSurfaceSample {
             )
             let saved = (PDFDocument(url: file)?.page(at: 0)?.annotations.count ?? 0) > 0
             emit(
-                "L-close", 5, observation.prompt || saved,
+                "L-close", 5, guarded || saved,
                 "editedBefore=true prompt=\(observation.prompt) saved=\(saved) diskBytesUnchanged=\((try? Data(contentsOf: file)) == before)"
             )
             return
@@ -194,7 +201,10 @@ extension TransientSurfaceSample {
         quit.invalidate()
         persist("quit-refused")
         emit(
-            "L-quit", 5, observation.prompt && viewer.debugIsEdited,
+            "L-quit", 5,
+            observation.prompt && observation.promptCancelled
+                && viewer.debugIsEdited && window.isVisible
+                && (try? Data(contentsOf: file)) == before,
             "real Quit refused; prompt=\(observation.prompt) editedAfter=\(viewer.debugIsEdited)")
     }
 }

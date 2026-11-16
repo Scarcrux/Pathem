@@ -47,6 +47,8 @@ def coverage(root=ROOT):
     if ignored != manifest.get('ignored_counts', {}): errors.append('stale explicit DEBUG exclusion counts')
     if (root/'docs/TRANSIENT_INVENTORY.md').read_text() != render(builders, sites, ignored, manifest): errors.append('stale inventory table')
     if errors: raise ValueError('inventory gate: '+repr(errors))
+    from transient_core_receipts import core_sites
+    core_sites(root)  # Refuse stale delegation or disconnected core adapters before any launch.
     special = json.loads((root/'test/transient_full_special_sites.json').read_text())['sites']
     return classify_coverage(manifest['sites'], validate_mounts(root), validate_factories(root), special)
 

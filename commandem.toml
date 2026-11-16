@@ -1991,6 +1991,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Owner objects to repeated visible desktop tests. All owned GUI phases are terminal; further visible launches paused pending coordination. Headless checkpoint: richer no-follow Cancel snapshots, 12 async-content adapters, exact 42-job plan and input manifest. Core clean pilot passes; four injections discriminate; three-family native composition sample 3/3 zero exits, zero failures, 42.30s. Full variants, final baseline/E2E wiring and CI remain pending. Unit 2 is not READY."
     at = "2026-11-16T15:48:04Z"
 
+  [[mission.comment]]
+    text = "Maximum parallel review: three reviewers found and fixed core receipt/predicate identity holes, missing isolation-helper hash, tooltip/presentation/config checks and baseline-before-GUI validation. Rebased private Unit 2 onto main df6d315 preserving markup Save/Cancel/Discard, rebound f04/provenance and strengthened close/Quit Cancel witnesses. Headless186 tests and debug build pass. Owned-child cancellation supervision in progress; no visible tests resumed. Final full variants, real baseline/injections and CI await one coordinated idle GUI window. Unit 2 not READY; no land/install/deploy."
+    at = "2026-11-16T18:47:58Z"
+
+  [[mission.comment]]
+    text = "Parallel headless integration now passes 201 tests plus inventory/shell checks. Exact core/predicate/phase validation, tooltip and all-family single-window checks, private-config Cancel snapshots, real-plan baseline preflight and owned-child deadline/cancellation handling are implemented. Headless debug build passed before final check4 extension; normal checkpoint hooks will compile/test final Swift. Native/CI qualification and real baseline are still pending the owner coordinated GUI timing choice. No visible tests, install, land or deploy resumed."
+    at = "2026-11-16T18:51:41Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

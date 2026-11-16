@@ -83,6 +83,11 @@ def receipt_errors(log, language, group=0, probe_one=False, only=None, root=ROOT
                 errors.append(f'factory three-cycle check set incomplete: {cell} check{check} count={counts[cell,check]} expected={wanted}')
         if ('FAIL',cell,'0') in rows:
             errors.append('factory setup failed: '+cell)
+        config_rows=re.findall(r'^TSAMPLE: (PASS|FAIL) cell='+re.escape(cell)+r' check=5 cycle=(\d+) [^\n]*\bconfigUnchanged=(true|false)(?:\s|$)',log,re.M)
+        if Counter(cycle for _,cycle,_ in config_rows)!=Counter({'0':1,'1':1,'2':1}):
+            errors.append('factory Cancel configuration proof incomplete: '+cell)
+        if any(status=='PASS' and unchanged=='false' for status,_,unchanged in config_rows):
+            errors.append('factory Cancel verdict contradicts changed configuration: '+cell)
     covered=Counter(re.findall(r'^TSAMPLE: COVERED class=A site=(\S+) cell=F-',log,re.M))
     wanted=Counter()
     for r in recipes:wanted[r['site']]+=(1 if probe_one else 4)*(2 if r['filename'] else 1)

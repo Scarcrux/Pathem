@@ -313,6 +313,12 @@ scenario "Always Open With application picker" 'RESULT: PASS' env PATHEM_CONFIG_
 scenario "layout + listing boundaries" 'RESULT: PASS' env PATHEM_LAYOUT_UI_TEST=1 "$BIN"
 PATHEM_SCENARIO_TIMEOUT=245 scenario "layout transition known-findings gate" 'RESULT: PASS' caffeinate -d -i python3 "$ROOT/test/layout_matrix_sample.py" clean --full --known-findings "$ROOT/test/layout_matrix_known_findings.json"
 scenario "transient presentation inventory" 'RESULT: PASS' python3 "$ROOT/test/transient_inventory.py"
+# Complete native transient variants, exact known failures, and no stale baseline.
+# The runner preflights the real baseline before any AppKit launch, retains each
+# raw native verdict, and returns comparison success only for an exact match.
+# 40 minutes bounds the composed 42-process plan; each child also has its own
+# 180-second deadline. Confirm this outer bound against the measured full run.
+PATHEM_SCENARIO_TIMEOUT=2400 scenario "transient surface known-findings gate" 'RESULT: PASS transient known-findings comparison' python3 "$ROOT/test/transient_surfaces_full.py" --known-findings "$ROOT/test/transient_known_findings.json"
 scenario "transient controls + cancel" 'RESULT: PASS' env PATHEM_TRANSIENT_UI_TEST=1 "$BIN"
 scenario "compiler-sensitive Arrange menu" 'RESULT: PASS' env PATHEM_COMPILER_UI_TEST=1 "$BIN"
 scenario "media trim export + rejection" 'RESULT: PASS' env PATHEM_TRIM_SMOKE=1 "$BIN"

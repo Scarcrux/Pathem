@@ -579,3 +579,76 @@ not claim fresh native GUI qualification. Receipts:
 .build/transient-unit2-focused-freshness-controls.log. An earlier dotted unittest
 invocation failed in discovery before that control; the explicit fixture call
 retains the actual failing assertion independently of traceback formatting.
+
+## Parallel review and main integration
+
+Owner requested maximum parallel agents. Three independent reviewers examined
+core/gate exactness, coverage/default/tooltip checks and main's markup repair.
+The headless checkpoint was committed as 8c5d739, then rebased onto main df6d315
+(rebased checkpoint 4d3d507). Roadmap conflicts preserve the owner's release
+choices and completed F03/F04 finding; the markup code keeps main's three-way
+LeaveChoice. The obsolete private two-button factory is removed. F04 now uses
+saveMarkupAlert(fileName:) from the real askToSave caller, Cancel index 1.
+All affected production sites and factory hashes are conservatively rebound.
+
+Review convicted three potential false accepts using headless counterexamples:
+core receipts could substitute wrong variant/cycle records, repeated predicate1
+could replace missing predicates, and the input digest omitted the defaults
+comparison helper. Exact cells, cycles, geometry phases, core site claims,
+predicate identities and helper hashing now close those gaps. An independent
+reviewer confirmed 12 exact-core/predicate controls and the Japanese transcript.
+CORE-SITE records shared UI construction, not whole business-entrypoint execution.
+
+The tooltip and presentation checks now test app-supplied icon-only controls,
+sheet/window/popover placement, anchor/host identity and exactly one additional
+visible window. Factory check5 also snapshots private configuration before
+construction and after dismissal. It still does not prove every in-memory
+pane/tab/session value unchanged. Factory duplicate Return bindings fail check6.
+A proposed blanket inert-Return allowance was rejected: a default might not yet
+be installed. Preserve current default-ready behavior unless an individual
+no-default recipe is independently convicted and reviewed.
+
+The new E2E scenario invokes the complete exact known-findings comparison, with
+no placeholder baseline. Missing, malformed and schema-valid impossible baseline
+cells/checks are rejected before any app launch. The baseline bytes/SHA are frozen
+for the run. The complete plan has 13,663 possible product cell/check pairs.
+The initial patch application against pre-deadline context failed; the reviewer
+regenerated it against the current tree, with 26 copied-tree controls passing.
+The integration currently passes 186 Python tests and bash syntax checks. The
+Xcode/native debug build passes in 20.97 seconds, with no GUI launch. Existing
+private native samples predate these changes and are not final qualification.
+
+Internal admission budget is 2250 seconds with 60 seconds reserved for cleanup;
+per-native waits remain at most 180 seconds and are recalculated after packaging.
+The 2400-second E2E outer alarm is not by itself proof of descendant cleanup.
+An owned-child cancellation supervisor is being reviewed before final checkpoint.
+No further visible test has run since the owner-desktop hold. Full variants,
+a real baseline, final injections, close/Quit reprobes and one authorized CI run
+remain pending the coordinated visible test window. Unit 2 is not READY.
+
+## Final headless integration checkpoint
+
+Parallel review also caught two composition hazards: an empty plan could yield a
+zero-launch match, and a schema-valid baseline could name impossible cells and
+waste the visible batch before failing stale. Plans now require nonempty,
+canonical, unique jobs, and baseline pairs must belong to that exact plan before
+output creation or process admission. These have independent negative controls.
+The final integrated suite passes 201 headless checks; shell syntax and inventory
+gates pass. Core and factory check4 now share the mount suite's exactly-one-new-
+window assertion, closing the case of a second window disappearing on dismissal.
+
+The owned-native supervisor creates a private child session, preserves the raw
+native status and retires only that captured child/session on timeout or ordinary
+TERM/INT/HUP/ALRM interruption, with bounded TERM/KILL/reap. Driver cleanup then
+checks the unique domain, owner defaults and demo root. The E2E alarm targets the
+Python runner directly; its awake assertion is scoped after preflight. Seven
+harmless Python-process controls passed; no AppKit or real caffeinate was launched
+by those controls. Parent SIGKILL and unverified leftover pipe holders remain
+explicitly unattested, never a quiet/PASS claim. A failed initial universe-patch
+context check was retained; the regenerated post-deadline patch passed review.
+
+No final visual qualification is claimed. The previous native sample receipts
+were collected before this rebase and reviewer changes. A real checked-in
+known-findings baseline has deliberately not been fabricated. The coordinated
+visible batch, fresh injection/markup probes and final CI remain necessary before
+READY. Owner-desktop timing choice is still pending; visible tests remain paused.

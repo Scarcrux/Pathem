@@ -341,14 +341,14 @@
         "runtime_fixture": "Runtime error.localizedDescription fixture: permission error with a 255-character filename. Declared stress fixture, not a universal maximum error length. No file metadata change."
       }
     },
-    "Sources/Pathem/PaneController.swift:2962:9:beginSheetModal": {
+    "Sources/Pathem/PaneController.swift:2967:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:2953:21:NSAlert"
+        "Sources/Pathem/PaneController.swift:2958:21:NSAlert"
       ],
       "reason": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
       "sample": {
@@ -365,14 +365,14 @@
         "runtime_fixture": "Runtime failed-item count fixture: 999999. Do not write tags."
       }
     },
-    "Sources/Pathem/PaneController.swift:2976:9:beginSheetModal": {
+    "Sources/Pathem/PaneController.swift:2981:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:2972:21:NSAlert"
+        "Sources/Pathem/PaneController.swift:2977:21:NSAlert"
       ],
       "reason": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",
       "sample": {
@@ -390,14 +390,14 @@
         "runtime_fixture": "Runtime input/suggestion fixtures: four 255-character components per path. Declared path stress fixture, not a filesystem maximum. Do not navigate."
       }
     },
-    "Sources/Pathem/SettingsWindowController.swift:1030:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1035:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1022:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1027:21:NSAlert"
       ],
       "reason": "Plain NSAlert text with at most two standard buttons. Static localized strings. Build from catalog; never invoke folderHandlerToggled/applyFolderHandler, which changes the system default.",
       "sample": {
@@ -449,74 +449,74 @@
       "reason": "Localized caller title and error body; standard dismiss-only alert. Fixture: 255-character filename in a permission error.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:570:13:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:575:13:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:565:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:570:21:NSAlert"
       ],
       "reason": "Plain caller-supplied title/body, including integration file previews. Fixture: two 255-character paths and two 80-line file previews; finite stress fixture, not a universal bound.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:572:13:runModal": {
+    "Sources/Pathem/SettingsWindowController.swift:577:13:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:565:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:570:21:NSAlert"
       ],
       "reason": "Plain caller-supplied title/body, including integration file previews. Fixture: two 255-character paths and two 80-line file previews; finite stress fixture, not a universal bound.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:606:17:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:611:17:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:601:25:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:606:25:NSAlert"
       ],
       "reason": "Install/remove failure report only. Fixture: permission error with a 255-character component. Do not invoke installation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:608:17:runModal": {
+    "Sources/Pathem/SettingsWindowController.swift:613:17:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:601:25:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:606:25:NSAlert"
       ],
       "reason": "Install/remove failure report only. Fixture: permission error with a 255-character component. Do not invoke installation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1054:17:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1059:17:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1043:29:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1048:29:NSAlert"
       ],
       "reason": "Localized folder-handler failure report plus error detail. Fixture: permission error with 255-character component. Do not change system handler.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1097:17:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1102:17:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1093:29:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1098:29:NSAlert"
       ],
       "reason": "Localized default magnet-app failure report. Fixture: permission error with 255-character component. Do not change magnet or torrent handler.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -981,7 +981,7 @@
       ],
       "reason": "Settings sidebar, search and preference controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1823:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/SettingsWindowController.swift:1828:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
@@ -1124,14 +1124,14 @@
       ],
       "reason": "Undo history rows and navigation controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/WindowManager.swift:84:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/WindowManager.swift:95:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Secondary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1176,7 +1176,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1188,7 +1188,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1200,7 +1200,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1212,7 +1212,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1224,7 +1224,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1236,7 +1236,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1248,7 +1248,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
@@ -1260,7 +1260,7 @@
       "default_destructive_intended": false,
       "builders": [
         "Sources/Pathem/PathemApp.swift:134:22:windowType.init",
-        "Sources/Pathem/WindowManager.swift:69:22:NSWindow"
+        "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
     },
@@ -1517,25 +1517,25 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/SettingsWindowController.swift:672:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:677:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:667:21:NSOpenPanel"
+        "Sources/Pathem/SettingsWindowController.swift:672:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1136:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1141:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1132:21:NSOpenPanel"
+        "Sources/Pathem/SettingsWindowController.swift:1137:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -2109,16 +2109,16 @@
       "reason": "Plain PDF-save failure report; runtime path fixture with four 255-character components. Do not save owner markup.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/DocumentPreviewView.swift:463:12:runModal": {
+    "Sources/Pathem/DocumentPreviewView.swift:486:16:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/DocumentPreviewView.swift:644:21:NSAlert"
+        "Sources/Pathem/DocumentPreviewView.swift:494:21:NSAlert"
       ],
-      "reason": "Save/Discard unsaved markup may permanently drop edits, so conservative destructive class A despite plain alert. Filename fixture255; cancel/save/discard only on owned documents in future coverage.",
+      "reason": "Main 64753ba repairs TS-U2-F03/F04: Save is Return, Cancel is Escape, Discard is click-only. askToSave presents the production saveMarkupAlert factory; isolated f04 checks real construction and cancel binding.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
     "Sources/Pathem/DuplicatesController.swift:215:9:beginSheetModal": {
@@ -2174,14 +2174,14 @@
       "reason": "PDF annotation text field accessory. Runtime title80/name255; cancel without changing document.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/PathemApp.swift:2240:16:runModal": {
+    "Sources/Pathem/PathemApp.swift:2245:16:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:2248:21:NSAlert"
+        "Sources/Pathem/PathemApp.swift:2253:21:NSAlert"
       ],
       "reason": "Quit Anyway during in-flight transfer can leave incomplete data; conservative destructive class A. Static localized strings. Never terminate the owner app. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
@@ -2232,14 +2232,14 @@
       "reason": "Pattern, match type, kind and selection-mode custom accessory. Cancel without changing pane selection.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1156:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1161:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1207:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1212:21:NSAlert"
       ],
       "reason": "makeCommanderKeysDialog factory supplies measured six-popup F-key accessory. Cancel without modifying preferences.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -3078,12 +3078,12 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/TabbedPaneController.swift:465:20:NSMenu": {
+    "Sources/Pathem/TabbedPaneController.swift:466:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/TabbedPaneController.swift",
-          "line": 410,
+          "line": 411,
           "expression": "chip.menu = makeTabMenu(index: index, closable: closable)"
         }
       ],

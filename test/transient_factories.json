@@ -41,16 +41,16 @@
     },
     {
       "id": "f04",
-      "site": "Sources/Pathem/DocumentPreviewView.swift:463:12:runModal",
+      "site": "Sources/Pathem/DocumentPreviewView.swift:486:16:runModal",
       "file": "Sources/Pathem/DocumentPreviewView.swift",
-      "caller": "offerToSaveIfEdited",
-      "maker": "makeSaveChangesDialog",
+      "caller": "askToSave",
+      "maker": "saveMarkupAlert",
       "constructor": "NSAlert",
       "filename": true,
       "sheet": false,
       "group": 1,
-      "maker_sha256": "fea44206c2378b4aa23a11a36d647d9f042c353599c673c95783ffa95e8df237",
-      "caller_sha256": "eebd5080cebf3eff427d07e4597df8d9f0a534a9090962ab1f0407494ee613bf"
+      "maker_sha256": "8e2651d843509f411ed07fde72a0bb05b8d4b0f8f55d1f6933ed25e3c59dc12b",
+      "caller_sha256": "6ffe01372d76f0855800865ec0dd8ac466f8b8a8c0210dac5fcdbd79288f50b7"
     },
     {
       "id": "f05",
@@ -93,7 +93,7 @@
     },
     {
       "id": "f08",
-      "site": "Sources/Pathem/PathemApp.swift:2240:16:runModal",
+      "site": "Sources/Pathem/PathemApp.swift:2245:16:runModal",
       "file": "Sources/Pathem/PathemApp.swift",
       "caller": "applicationShouldTerminate",
       "maker": "makeTransferQuitConfirmation",
@@ -102,7 +102,7 @@
       "sheet": false,
       "group": 2,
       "maker_sha256": "6a8ed7fee162f29e23fc63665fe9e8b04336ac06d4b492073a55512a39f8f018",
-      "caller_sha256": "34a263f5fc70f5ddec2b72429699aa4effbb5fcd88aec4754a9c7a2bba1bd15b"
+      "caller_sha256": "42c15284b1927d440cce5bbe3f7251f3bc203426100300309133a7fc0fdd8c49"
     },
     {
       "id": "f09",
@@ -411,7 +411,7 @@
     {
       "id": "f31",
       "file": "Sources/Pathem/SettingsWindowController.swift",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1156:9:beginSheetModal",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1161:9:beginSheetModal",
       "caller": "editCommanderKeys",
       "maker": "makeCommanderKeysDialog",
       "owner_type": "SettingsWindowController",

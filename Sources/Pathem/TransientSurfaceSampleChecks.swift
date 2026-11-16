@@ -90,6 +90,12 @@ enum TransientSurfaceChecks {
                 }
             }
         }
+        for button in missingIconTooltips(
+            root, alert: alert, systemAccessory: systemAccessory, systemPanel: systemPanel)
+        {
+            issues.append(
+                .init(number: 1, detail: "icon-only control has no tooltip: \(type(of: button))"))
+        }
         let ambiguous = ambiguity(
             root, alert: alert, systemAccessory: systemAccessory, systemPanel: systemPanel
         ).app
@@ -138,6 +144,32 @@ enum TransientSurfaceChecks {
     static func fits(frame: NSRect, screen: NSRect, sheet: Bool, host: NSSize) -> Bool {
         screen.insetBy(dx: -1, dy: -1).contains(frame)
             && (!sheet || (frame.width <= host.width + 1 && frame.height <= host.height + 1))
+    }
+    static func missingIconTooltips(
+        _ root: NSView, alert: NSAlert? = nil,
+        systemAccessory: NSView? = nil, systemPanel: Bool = false
+    ) -> [NSButton] {
+        let ownedRoot = systemPanel ? systemAccessory : (alert == nil ? root : alert?.accessoryView)
+        guard let ownedRoot else { return [] }
+        return walk(ownedRoot).compactMap { $0 as? NSButton }.filter { button in
+            !button.isHiddenOrHasHiddenAncestor && button.image != nil
+                && (button.imagePosition == .imageOnly
+                    || button.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                && (button.toolTip?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+        }
+    }
+    enum Presentation { case sheet, window, popover }
+    static func presentation(_ expected: Presentation, parent: Int?, host: Int, popoverAnchor: Int?)
+        -> Bool
+    {
+        switch expected {
+        case .sheet: return parent == host
+        case .window: return parent == nil
+        case .popover: return parent == nil && popoverAnchor == host
+        }
+    }
+    static func singlePresentation(before: [Int], after: [Int], expected: Int) -> Bool {
+        Set(after).subtracting(before) == Set([expected]) && Set(before).isSubset(of: Set(after))
     }
     static func ownership(actual: Int?, expected: Int) -> Bool { actual == expected }
     static func appearance(_ view: NSView, expected: NSAppearance.Name?) -> Bool {

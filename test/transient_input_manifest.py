@@ -12,6 +12,8 @@ def paths(root):
         selected.update(p for p in (root/name).rglob('*') if p.is_file())
     selected.update(p for p in [root/'Package.swift', root/'Package.resolved'] if p.is_file())
     selected.update(p for p in (root/'test').glob('transient*.py') if p.is_file())
+    isolation_helper=root/'test/layout_matrix_support.py'
+    if isolation_helper.is_file(): selected.add(isolation_helper)
     selected.update(p for p in (root/'test').glob('transient*.json') if p.name != 'transient_known_findings.json')
     binary = root/'.build/debug/Pathem'
     selected.add(binary)

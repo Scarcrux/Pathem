@@ -45,3 +45,10 @@ class RuntimeInputControls(unittest.TestCase):
     def test_framework_directory_without_linked_binary_refused(self):
         (self.root/'.build/debug/Sparkle.framework/Versions/B/Sparkle').unlink()
         with self.assertRaisesRegex(ValueError,'Missing linked'):paths(self.root)
+
+    def test_runtime_isolation_helper_is_bound(self):
+        helper=self.root/'test/layout_matrix_support.py'
+        helper.write_text('def verify_defaults(): return True')
+        before=digest(self.root)
+        helper.write_text('def verify_defaults(): return False')
+        self.assertNotEqual(before,digest(self.root))

@@ -17,8 +17,12 @@ class MarkupLifecycleEvidenceControls(unittest.TestCase):
         self.assertEqual(errors,[]);self.assertEqual(findings,{('L-quit',5)})
     def test_real_autosave_would_disprove_loss(self):
         root,_,_,log=self.fixture(saved=True);self.assertEqual(evaluate(log,0,'quit',root)[:2],([],set()))
-    def test_prompt_would_disprove_no_guard(self):
-        root,_,_,log=self.fixture(prompt=True);self.assertEqual(evaluate(log,0,'quit',root)[:2],([],set()))
+    def test_real_cancel_guard_keeps_quit_document_edited(self):
+        root,d,w,log=self.fixture(prompt=True)
+        w.update(stage='quit-refused',will_terminate=False,prompt_cancelled=True,
+                 edited_after=True,window_visible_after=True)
+        (d/'witness.json').write_text(json.dumps(w))
+        self.assertEqual(evaluate(log,0,'quit',root)[:2],([],set()))
     def test_close_is_separate_evidence(self):
         root,_,_,log=self.fixture('close');self.assertEqual(evaluate(log,1,'close',root)[:2],([],{('L-close',5)}))
     def test_changed_post_reap_bytes_are_refused(self):
@@ -35,6 +39,20 @@ class MarkupLifecycleEvidenceControls(unittest.TestCase):
 
     def test_cancel_guard_can_keep_close_open_without_false_failure(self):
         root,d,w,log=self.fixture('close',prompt=True)
-        w.update(close_requested=True,window_closed=False,stage='close-refused',edited_after=True,prompt_cancelled=True)
+        w.update(close_requested=True,window_closed=False,stage='close-refused',edited_after=True,prompt_cancelled=True,window_visible_after=True)
         (d/'witness.json').write_text(json.dumps(w))
         self.assertEqual(evaluate(log,0,'close',root)[:2],([],set()))
+
+    def test_prompt_that_loses_edited_state_after_cancel_is_red(self):
+        root,d,w,log=self.fixture(prompt=True)
+        w.update(stage='quit-refused',will_terminate=False,prompt_cancelled=True,
+                 edited_after=False,window_visible_after=True)
+        (d/'witness.json').write_text(json.dumps(w))
+        self.assertEqual(evaluate(log,1,'quit',root)[:2],([],{('L-quit',5)}))
+
+    def test_prompt_without_real_cancel_is_not_accepted_as_guard(self):
+        root,d,w,log=self.fixture(prompt=True)
+        w.update(stage='quit-refused',will_terminate=False,prompt_cancelled=False,
+                 edited_after=True,window_visible_after=True)
+        (d/'witness.json').write_text(json.dumps(w))
+        self.assertEqual(evaluate(log,1,'quit',root)[:2],([],{('L-quit',5)}))

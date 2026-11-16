@@ -40,6 +40,16 @@ def evaluate(log, code, mode, scratch):
             raise ValueError('changed PDF without saved annotations needs review')
         lost=proof['prompt_seen'] is False and proof['disk_annotations']==0 and actual==proof['before_sha256']
         if lost:findings.add(('L-'+mode,5))
+        # These real lifecycle probes always choose Cancel when a prompt appears.
+        # A prompt alone is not proof of preserving the document or its edits.
+        if proof['prompt_seen']:
+            cancel_preserved=(proof.get('prompt_cancelled') is True
+                              and proof.get('edited_after') is True
+                              and proof.get('window_visible_after') is True
+                              and proof['disk_annotations']==0
+                              and actual==proof['before_sha256'])
+            if not cancel_preserved:findings.add(('L-'+mode,5))
+            proof['cancel_preserved']=cancel_preserved
         proof['post_reap_sha256']=actual
         proof['lost_without_prompt']=lost
     except (KeyError,ValueError,OSError,TypeError) as error:

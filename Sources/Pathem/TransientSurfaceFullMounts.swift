@@ -18,6 +18,7 @@ extension TransientSurfaceSample {
         let id: String
         let site: String
         let filename: Bool
+        let presentation: TransientSurfaceChecks.Presentation
         let show: (URL, String) -> AnyObject?
         let reset: () -> Void
         let prepare: (URL, String) -> Void
@@ -32,8 +33,18 @@ extension TransientSurfaceSample {
         ) -> Mount {
             let matches = policy.keys.filter { $0.hasPrefix("Sources/Pathem/" + source + ":") }
             precondition(matches.count == 1, "explicit presentation site must be unique: " + source)
+            let method = matches[0].split(separator: ":").last.map(String.init) ?? ""
+            precondition(
+                [
+                    "beginSheet", "beginSheetModal", "presentSheet", "ask", "makeKeyAndOrderFront",
+                    "showWindow",
+                ].contains(method), "unreviewed mount presentation method")
+            let presentation: TransientSurfaceChecks.Presentation =
+                ["beginSheet", "beginSheetModal", "presentSheet"].contains(method)
+                ? .sheet : (method == "ask" ? .popover : .window)
             return Mount(
-                id: id, site: matches[0], filename: filename, show: show,
+                id: id, site: matches[0], filename: filename, presentation: presentation,
+                show: show,
                 reset: { owners.values.removeAll() }, prepare: prepare)
         }
         let b = browser
@@ -367,7 +378,7 @@ extension TransientSurfaceSample {
                     })
                 return controller
             },
-            mount("m52", "SettingsWindowController.swift:1823") { _, _ in
+            mount("m52", "SettingsWindowController.swift:1828") { _, _ in
                 let controller = owners.get("m52") { SettingsWindowController() }
                 _ = controller.debugPresentLive()
                 return controller
@@ -422,7 +433,7 @@ extension TransientSurfaceSample {
                 b.openWorkspace()
                 return b
             },
-            mount("m58", "WindowManager.swift:84") { file, _ in
+            mount("m58", "WindowManager.swift:95") { file, _ in
                 WindowManager.shared.openWindow(start: file.deletingLastPathComponent())
             },
             mount("m59", "SlideshowController.swift:40", filename: true) { file, _ in
@@ -893,7 +904,12 @@ extension TransientSurfaceSample {
             }
             emit(
                 cell, 4,
-                (window.sheetParent == nil || window.sheetParent === host)
+                TransientSurfaceChecks.singlePresentation(
+                    before: before, after: windows(), expected: window.windowNumber)
+                    && TransientSurfaceChecks.presentation(
+                        mount.presentation,
+                        parent: window.sheetParent?.windowNumber, host: host.windowNumber,
+                        popoverAnchor: browser.cursorConfirm.debugAnchorWindowNumber)
                     && TransientSurfaceChecks.appearance(content, expected: requestedAppearance),
                 "cycle=\(cycle) actual window=\(window.windowNumber) sheet=\(window.sheetParent != nil)",
                 content: content)

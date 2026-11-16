@@ -24,7 +24,7 @@ class FullRunnerControls(unittest.TestCase):
         return not self.errors
     def execute(self,digests=None):
         self.baseline.write_text(json.dumps(dict(findings=self.rows)))
-        with patch.object(full,'ROOT',self.root),patch.object(full,'coverage',return_value=dict(A_total=1,A_native=1,A_delegated=0,B_total=0)),patch.object(full,'source_digest',side_effect=digests or ['digest','digest']),patch.object(full,'run_case',side_effect=self.native_run),redirect_stdout(io.StringIO()):
+        with patch.object(full,'ROOT',self.root),patch.object(full,'coverage',return_value=dict(A_total=1,A_native=1,A_delegated=0,B_total=0)),patch.object(full,'source_digest',side_effect=digests or ['digest','digest']),patch.object(full,'run_case',side_effect=self.native_run),patch.object(full,'planned_pairs',return_value={('M-fixture',1)}),redirect_stdout(io.StringIO()):
             return full.run(self.root/'output',self.baseline,self.jobs)
     def finding(self):
         return dict(cell='M-fixture',check=1,id='fixture',mechanism='owned counterexample',source='fixture.swift',receipt='owned.log',render='owned.png')
@@ -58,3 +58,90 @@ class FullRunnerControls(unittest.TestCase):
         self.calls.clear()
         self.cached=True
         self.assertFalse(self.execute())
+
+    def test_baseline_missing_refused_before_any_native_launch(self):
+        with patch.object(full,'run_case',side_effect=AssertionError('native forbidden')) as native:
+            with self.assertRaises(OSError):full.run(self.root/'output',self.root/'missing.json',self.jobs)
+        native.assert_not_called();self.assertFalse((self.root/'output').exists())
+    def test_malformed_baselines_refused_before_any_native_launch(self):
+        candidates=['{', '{}', '{"findings":{}}', '{"findings":[{"cell":"M-x","check":true}]}',
+                    '{"findings":[{"cell":"M-x","check":1}]}']
+        for text in candidates:
+            self.baseline.write_text(text)
+            with patch.object(full,'run_case',side_effect=AssertionError('native forbidden')) as native:
+                with self.assertRaises((ValueError,TypeError,KeyError)):
+                    full.run(self.root/'output',self.baseline,self.jobs)
+            native.assert_not_called();self.assertFalse((self.root/'output').exists())
+    def test_baseline_bytes_are_pinned_in_plan_and_summary(self):
+        import hashlib
+        self.assertTrue(self.execute())
+        expected=hashlib.sha256(self.baseline.read_bytes()).hexdigest()
+        for name in ['plan.json','summary.json']:
+            self.assertEqual(json.loads((self.root/'output'/name).read_text())['baseline_sha256'],expected)
+    def test_baseline_is_not_reread_after_native_work(self):
+        original=self.native_run
+        def mutate(*args,**kwargs):
+            value=original(*args,**kwargs)
+            self.baseline.write_text('{')
+            return value
+        self.native_run=mutate
+        self.assertTrue(self.execute())
+
+    def test_whole_budget_refuses_job_before_native_admission(self):
+        with patch.object(full,'RUN_BUDGET_SECONDS',1):
+            self.assertFalse(self.execute())
+        self.assertEqual(self.calls,[])
+        summary=json.loads((self.root/'output'/'summary.json').read_text())
+        self.assertTrue(any('budget exhausted before job admission' in e for e in summary['errors']))
+    def test_remaining_budget_is_passed_as_bounded_native_timeout(self):
+        original=self.native_run;observed=[]
+        def capture(*args,**kwargs):
+            observed.append(kwargs)
+            return original(*args,**kwargs)
+        self.native_run=capture
+        with patch.object(full,'RUN_BUDGET_SECONDS',90),patch.object(full.time,'monotonic',return_value=100):
+            self.assertTrue(self.execute())
+        self.assertEqual(observed[0]['native_timeout'],30)
+        self.assertEqual(observed[0]['deadline'],190)
+    def test_elapsed_job_stops_following_native_admission(self):
+        self.jobs.append(dict(category='b',language='de',group=0,only='b03',label='clean-de-full-b-g0-b03'))
+        clock=[100.0];original=self.native_run
+        def advance(*args,**kwargs):
+            value=original(*args,**kwargs);clock[0]+=21
+            return value
+        self.native_run=advance
+        with patch.object(full,'RUN_BUDGET_SECONDS',80),patch.object(full.time,'monotonic',side_effect=lambda:clock[0]):
+            self.assertFalse(self.execute())
+        self.assertEqual(len(self.calls),1)
+
+    def test_impossible_baseline_cell_or_check_refused_before_launch(self):
+        for cell,check in [('M-m999-de-light-720-short',1),('B-b03-de-720',8)]:
+            self.baseline.write_text(json.dumps({'findings':[{**self.finding(),'cell':cell,'check':check}]}))
+            with patch.object(full,'planned_pairs',return_value={('B-b03-de-720',1)}),patch.object(full,'run_case',side_effect=AssertionError('native forbidden')) as native:
+                with self.assertRaisesRegex(ValueError,'outside selected plan'):
+                    full.run(self.root/'output',self.baseline,self.jobs)
+            native.assert_not_called()
+            self.assertFalse((self.root/'output').exists())
+
+    def test_bad_baseline_starts_neither_awake_nor_native_child(self):
+        self.baseline.write_text('{')
+        with patch.object(full,'awake_hold',side_effect=AssertionError('awake child forbidden')) as awake,patch.object(full,'run_case',side_effect=AssertionError('native forbidden')) as native:
+            with self.assertRaises(ValueError):full.run(self.root/'output',self.baseline,self.jobs,awake=True)
+        awake.assert_not_called();native.assert_not_called()
+
+
+    def test_empty_duplicate_or_noncanonical_plan_refused_before_side_effects(self):
+        job=self.jobs[0]
+        cases=[[],[job,job],[{**job,'label':'cached-name'}],[{**job,'group':True}]]
+        for jobs in cases:
+            with patch.object(full,'awake_hold',side_effect=AssertionError('awake forbidden')) as awake,patch.object(full,'run_case',side_effect=AssertionError('native forbidden')) as native:
+                with self.assertRaises(ValueError):full.run(self.root/'output',self.baseline,jobs,awake=True)
+            awake.assert_not_called();native.assert_not_called()
+            self.assertFalse((self.root/'output').exists())
+    def test_empty_baseline_still_validates_selected_surfaces_before_side_effects(self):
+        self.baseline.write_text('{"findings":[]}')
+        with patch.object(full,'planned_pairs',side_effect=ValueError('unknown planned surface')),patch.object(full,'awake_hold',side_effect=AssertionError('awake forbidden')) as awake,patch.object(full,'run_case',side_effect=AssertionError('native forbidden')) as native:
+            with self.assertRaisesRegex(ValueError,'unknown planned surface'):
+                full.run(self.root/'output',self.baseline,self.jobs,awake=True)
+        awake.assert_not_called();native.assert_not_called()
+        self.assertFalse((self.root/'output').exists())
