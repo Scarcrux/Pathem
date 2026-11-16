@@ -218,3 +218,46 @@ Pilot receipt: `.build/transient-unit1-viewport-driver.log`, with unchanged pref
 The final receipt is `TRANSIENT_SURFACES_UNIT1.md`, with a verdict per check, all four treatment receipts, exact native exits and the retained TS-U1-F1 renders. Explicit appearance/host-size delivery, actual informative-label delivery, post-edit measurement and literal window multiplicity are verified on the final artifact. The multiplicity sub-control demonstrates why duplicate numeric identifiers must not be collapsed. One mechanical signature edit left Set versus Array inconsistent; the compiler rejected it before launch (`.build/transient-unit1-count-edit-build.log`), and the corrected build passes.
 
 Final six-language run: 1652/1665 assertions pass; six native exits and the clean driver remain 1. Exactly 12 B path-suggestion check2 pairs are red; the real-path witness is the thirteenth failed assertion. All32 A variant cells pass. Four injections validate with native exit1 retained, positive/reference target previously green. Preferences and demo cleanup pass throughout; built/source catalogs match. Existing transient53/53 and real focused Reclaim Escape1/1 pass. Scope and limitations, including Cancel-button use in the browser-hosted repetitions and no physical-keyboard claim, are explicit in the review receipt. No known-findings waiver, full CI, land, install, deployment, display change, Unit2 or Task1 work. Stop at READY for coordinator review.
+
+## Unit 2: bounded path display, criteria before verification
+
+The independently accepted Unit 1 sample convicts the suggestion alert's
+unbounded informative text: German stress input measures 952 pt against both
+420 pt and 700 pt hosts, and a real owned 849-byte path measures 776 pt. Keep
+those inputs unchanged. Share the production display configuration with the
+sample, bound each displayed path to 96 characters with middle truncation, and
+retain the original URL in the existing navigation closure. Full input and
+proposed path must remain in the tooltip and accessibility help. Both sizes in
+all six locales must pass check 2, and the full-text witness must pass check 5.
+No inventory classifications or geometry predicates may be relaxed.
+
+Acceptance of the earlier sample authorized this individual product fix, not
+completion of the full Unit 2 inventory coverage. Its three-surface scope and
+remaining A/B sites stay open. The accepted commits were rebased onto 8568553,
+with runtime source/test inputs byte-identical, and landed/pushed at 7d3d7fc.
+
+First post-fix native runs passed with no failed assertions in all six locales,
+but the Python wrapper correctly refused a new B-prefixed witness as an extra
+incomplete structural cell. This was a receipt naming defect, not a product
+failure or a passing driver. Rename the ancillary witness outside the reserved
+B-cell namespace and rerun the unchanged full sample. Raw driver:
+`.build/transient-unit2-path-full.log` (exit 1).
+
+Opaque-render criteria: the existing owned-path render has alpha extrema 0..255,
+confirming the transparent backing report. Fill the complete content bounds
+using the surface's effective appearance and native window background before
+cacheDisplay. Captured pixels must then all have alpha 255, including corners;
+inspect the German owned-path and Rename render. A corruption must still turn
+its predicate red. This changes capture instrumentation only, not layout checks.
+
+Bounded-path verification: final six-locale driver exits 0; all native exits 0,
+no failed cell/check pairs, unchanged defaults and removed demo roots. German
+passes 756/756, Japanese 625/625, other four locales each 74/74 (1677 total).
+Both unchanged stress sizes and the real owned path now fit. Full-text witnesses
+pass. The separate first driver failure remains above. Inventory gate and its
+19 controls pass; wrapper controls 9/9 pass. Evidence:
+`.build/transient-unit2-path-full2.log`, input digest
+`627108530610f75596634a06f279045f2b9b29a1f498cd9072bca027ea507fb0`.
+The unmodified navigation closure still calls `goToResolved(suggestion)`, never
+the shortened string. No generic full Unit 2 coverage claim follows from this
+individual fix.

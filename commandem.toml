@@ -1263,6 +1263,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-1fbb231a"
     title = "TS-U1-F1: Bound the No Such Path suggestion alert display while keeping full paths available and navigation unchanged. Existing 4 x 255-component cells overflow both host sizes; real owned 849-byte path also overflows the small host. Unit 1 receipt: docs/TRANSIENT_SURFACES_UNIT1.md. Authorized Unit 2 separate red-first fix."
+    done = true
 
   [[mission.task]]
     id = "t-30527098"

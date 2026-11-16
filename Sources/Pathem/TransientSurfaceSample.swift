@@ -629,7 +629,12 @@ final class TransientSurfaceSample {
                 "/"
                 + Array(repeating: String(repeating: "p", count: 255), count: 4).joined(
                     separator: "/")
-            alert.informativeText = String(format: text(0), path, String(path.dropLast()) + "s")
+            let suggestion = URL(fileURLWithPath: String(path.dropLast()) + "s")
+            PaneController.configurePathSuggestion(alert, raw: path, suggestion: suggestion)
+            emit(
+                "path-full-text", 5,
+                alert.window.contentView?.toolTip == String(format: text(0), path, suggestion.path),
+                "full stress input remains reachable; navigation URL is unmodified")
         default: alert.informativeText = info.isEmpty ? "" : text(0)
         }
         for key in sample["button_keys"] as! [String] {
@@ -657,8 +662,7 @@ final class TransientSurfaceSample {
             }
             let raw = String(candidate.path.dropLast()) + "x"
             let alert = plainAlert(sample)
-            let keys = sample["informative_keys"] as! [String]
-            alert.informativeText = String(format: L(keys[0], "missing"), raw, candidate.path)
+            PaneController.configurePathSuggestion(alert, raw: raw, suggestion: candidate)
             alert.layout()
             guard let content = alert.window.contentView else {
                 emit(cell, 1, false, "owned-path native content missing")

@@ -3080,10 +3080,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             return
         }
         let alert = NSAlert()
-        alert.messageText = L("pane.noSuchPathTitle", "No such path")
-        alert.informativeText = String(
-            format: L("pane.noSuchPathBody", "“%@” doesn't exist.\n\nDid you mean:\n%@"), raw,
-            suggestion.path)
+        Self.configurePathSuggestion(alert, raw: raw, suggestion: suggestion)
         alert.addButton(withTitle: L("pane.goButton", "Go"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.beginSheetModal(for: window) { [weak self] response in
@@ -3093,6 +3090,25 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             else { return }
             self.goToResolved(suggestion)
         }
+    }
+
+    /// Keep incidental correction sheets bounded even for deeply nested paths. Only the
+    /// display is shortened; callers retain the original URL for navigation.
+    static func configurePathSuggestion(_ alert: NSAlert, raw: String, suggestion: URL) {
+        func displayPath(_ path: String) -> String {
+            guard path.count > 96 else { return path }
+            return String(path.prefix(47)) + "…" + String(path.suffix(48))
+        }
+        let format = L("pane.noSuchPathBody", "“%@” doesn't exist.\n\nDid you mean:\n%@")
+        alert.messageText = L("pane.noSuchPathTitle", "No such path")
+        alert.informativeText = String(
+            format: format, displayPath(raw), displayPath(suggestion.path))
+        alert.layout()
+        // The full, unmodified input and proposed path remain available on hover and
+        // to accessibility clients, without making the sheet grow beyond its host.
+        let fullText = String(format: format, raw, suggestion.path)
+        alert.window.contentView?.toolTip = fullText
+        alert.window.contentView?.setAccessibilityHelp(fullText)
     }
 
     func controlTextDidChange(_ obj: Notification) {
