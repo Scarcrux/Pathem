@@ -9,11 +9,11 @@ import PathemEngine
 extension BrowserViewController {
     private final class FindBackend: @unchecked Sendable {
         private let lock = NSLock()
-        private var searches: [(label: String, answer: ([ContentSearch.Match]) -> Void)] = []
+        private var searches: [(label: String, answer: (ContentSearch.Outcome) -> Void)] = []
         private var replaces: [(ContentSearch.ReplaceResult) -> Void] = []
         private var searchLabels: [String] = []
 
-        func search(_ label: String) async -> [ContentSearch.Match] {
+        func search(_ label: String) async -> ContentSearch.Outcome {
             await withCheckedContinuation { continuation in
                 lock.withLock {
                     searchLabels.append(label)
@@ -30,8 +30,11 @@ extension BrowserViewController {
         var pendingReplaces: Int { lock.withLock { replaces.count } }
         var requested: [String] { lock.withLock { searchLabels } }
         func answerSearch(_ matches: [ContentSearch.Match]) {
+            answerSearch(ContentSearch.Outcome(matches: matches))
+        }
+        func answerSearch(_ outcome: ContentSearch.Outcome) {
             let next = lock.withLock { searches.isEmpty ? nil : searches.removeFirst() }
-            next?.answer(matches)
+            next?.answer(outcome)
         }
         func answerReplace() {
             let next = lock.withLock { replaces.isEmpty ? nil : replaces.removeFirst() }
@@ -142,6 +145,55 @@ extension BrowserViewController {
                 && backend.requested.last == "folder-B:needle")
         backend.answerSearch([])
         _ = settle { !find.debugBusy }
+        find.debugClose()
+
+        // A failed search says so, in the tool's words, and shows no rows.
+        present("folder-F")
+        find.debugSearch("(")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch(ContentSearch.Outcome(failure: "regex parse error"))
+        check(
+            "find-failure-status-names-the-failure",
+            settle { !find.debugBusy }
+                && find.debugStatus == "Search failed: regex parse error"
+                && find.debugRowCount == 0)
+
+        // A capped search keeps its rows and says the list was cut off.
+        find.debugSearch("needle")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch(
+            ContentSearch.Outcome(matches: [match("/F/one.txt")], truncated: true, limit: 2000))
+        check(
+            "find-capped-status-says-results-limited",
+            settle { !find.debugBusy }
+                && find.debugStatus == "1 matches Results limited to 2000; narrow your search."
+                && find.debugRowCount == 1)
+
+        // A normal answer carries neither note (the control for both checks above).
+        find.debugSearch("needle")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch([match("/F/one.txt")])
+        check(
+            "find-control-plain-status-has-no-note",
+            settle { !find.debugBusy } && find.debugStatus == "1 matches")
+
+        // Replace All after a capped search says the search was limited, and the note
+        // survives the refresh search that follows.
+        find.debugSearch("needle")
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch(
+            ContentSearch.Outcome(matches: [match("/F/one.txt")], truncated: true, limit: 2000))
+        _ = settle { !find.debugBusy }
+        find.debugReplaceAllConfirmed(with: "thread")
+        _ = settle { backend.pendingReplaces == 1 }
+        backend.answerReplace()
+        _ = settle { backend.pendingSearches == 1 }
+        backend.answerSearch([match("/F/one.txt")])
+        check(
+            "find-replace-after-capped-search-says-so",
+            settle { !find.debugBusy }
+                && find.debugStatus.hasPrefix("Replaced 3 in 1 files.")
+                && find.debugStatus.contains("limited to 2000"))
         find.debugClose()
     }
 }

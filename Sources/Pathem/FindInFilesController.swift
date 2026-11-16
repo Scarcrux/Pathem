@@ -18,13 +18,19 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     private let replaceButton = NSButton(title: "", target: nil, action: nil)
     private var matches: [ContentSearch.Match] = []
     private let gen = GenerationBox()
+    /// The cap of the search whose rows are showing, when it left matches out. Replace All
+    /// reads it to say its preceding search was limited.
+    private var cappedAt: Int?
+    /// Replace All's report, shown ahead of the refreshed search status when the search it
+    /// followed was capped (the refresh would otherwise overwrite it).
+    private var replaceNote: String?
     /// Whether the spinner is running (NSProgressIndicator has no getter for it).
     private var busy = false {
         didSet { busy ? spinner.startAnimation(nil) : spinner.stopAnimation(nil) }
     }
 
     private var onSearch:
-        ((_ query: String, _ regex: Bool, _ caseSensitive: Bool) async -> [ContentSearch.Match])?
+        ((_ query: String, _ regex: Bool, _ caseSensitive: Bool) async -> ContentSearch.Outcome)?
     private var onOpen: ((ContentSearch.Match) -> Void)?
     private var onReplace:
         (
@@ -46,19 +52,21 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
     private func invalidatePendingWork() {
         _ = gen.bump()
         busy = false
+        replaceNote = nil
     }
 
     /// Closing the panel abandons a running search instead of filling an unseen list.
     func windowWillClose(_ notification: Notification) {
         invalidatePendingWork()
         matches = []
+        cappedAt = nil
         statusLabel.stringValue = ""
         table.reloadData()
     }
 
     func present(
         over window: NSWindow, folderName: String,
-        search: @escaping (String, Bool, Bool) async -> [ContentSearch.Match],
+        search: @escaping (String, Bool, Bool) async -> ContentSearch.Outcome,
         open: @escaping (ContentSearch.Match) -> Void,
         replace: @escaping (String, String, Bool, Bool) async -> ContentSearch.ReplaceResult
     ) {
@@ -70,6 +78,7 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         onReplace = replace
         panel.title = String(format: L("find.inFilesTitle", "Find in %@"), folderName)
         matches = []
+        cappedAt = nil
         statusLabel.stringValue = ""
         table.reloadData()
         panel.centerOverMainWindow()
@@ -164,6 +173,8 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
             invalidatePendingWork()  // or the running request refills the cleared list
             matches = []
+            cappedAt = nil
+            replaceNote = nil
             table.reloadData()
             statusLabel.stringValue = ""
             return
@@ -175,13 +186,30 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         let regex = regexCheck.state == .on
         let caseSensitive = caseCheck.state == .on
         Task { @MainActor in
-            let results = await search?(query, regex, caseSensitive) ?? []
+            let outcome = await search?(query, regex, caseSensitive) ?? ContentSearch.Outcome()
             guard self.gen.isCurrent(generation) else { return }
             self.busy = false
-            self.matches = results
+            self.matches = outcome.matches
+            self.cappedAt = outcome.truncated ? outcome.limit : nil
             self.table.reloadData()
-            self.statusLabel.stringValue = String(
-                format: L("find.results", "%d matches"), results.count)
+            var status: String
+            if let failure = outcome.failure {
+                status = String(format: L("find.failed", "Search failed: %@"), failure)
+            } else {
+                status = String(format: L("find.results", "%d matches"), outcome.matches.count)
+                if outcome.truncated {
+                    status +=
+                        " "
+                        + String(
+                            format: L("find.capped", "Results limited to %d; narrow your search."),
+                            outcome.limit)
+                }
+            }
+            if let note = self.replaceNote {
+                status = note + " " + status
+                self.replaceNote = nil
+            }
+            self.statusLabel.stringValue = status
         }
     }
 
@@ -212,6 +240,8 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
         // the follow-up search belong only to the session that asked for it.
         let generation = gen.bump()
         let replace = onReplace
+        let cappedBefore = cappedAt
+        replaceNote = nil
         busy = true
         statusLabel.stringValue = L("find.replacing", "Replacing…")
         Task { @MainActor in
@@ -220,9 +250,21 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
                 ?? ContentSearch.ReplaceResult(filesChanged: 0, replacements: 0)
             guard self.gen.isCurrent(generation) else { return }
             self.busy = false
-            self.statusLabel.stringValue = String(
+            let report = String(
                 format: L("find.replacedResult", "Replaced %d in %d files"), result.replacements,
                 result.filesChanged)
+            if let cappedBefore {
+                self.replaceNote =
+                    report + ". "
+                    + String(
+                        format: L(
+                            "find.replaceCapped",
+                            "The search before it was limited to %d results; Replace All covered every matching file."
+                        ), cappedBefore)
+                self.statusLabel.stringValue = self.replaceNote ?? report
+            } else {
+                self.statusLabel.stringValue = report
+            }
             self.runSearch()  // refresh the match list against the edited files
         }
     }

@@ -120,4 +120,60 @@ import Testing
         #expect(!ContentSearch.isInside("/tmp/scope dir2/b.txt", folder))
         #expect(!ContentSearch.isInside("/tmp/scope dir/../other.txt", folder))
     }
+
+    private func tempTree(_ files: [String: String]) throws -> URL {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-cs-outcome-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for (name, body) in files {
+            try body.write(to: dir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        return dir
+    }
+
+    @Test func normalSearchIsNotTruncatedOrFailed() async throws {
+        let dir = try tempTree(["a.txt": "needle\nother\nneedle\n"])
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let outcome = await ContentSearch.searchOutcome("needle", in: dir)
+        #expect(outcome.matches.map(\.line) == [1, 3])
+        #expect(!outcome.truncated)
+        #expect(outcome.failure == nil)
+    }
+
+    @Test func noMatchesIsNotAFailure() async throws {
+        let dir = try tempTree(["a.txt": "nothing\n"])
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let outcome = await ContentSearch.searchOutcome("needle", in: dir)
+        #expect(outcome.matches.isEmpty && !outcome.truncated && outcome.failure == nil)
+    }
+
+    @Test func overCapSearchReportsTruncation() async throws {
+        let dir = try tempTree(["a.txt": String(repeating: "needle\n", count: 10)])
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let capped = await ContentSearch.searchOutcome("needle", in: dir, maxResults: 4)
+        #expect(capped.matches.count == 4)
+        #expect(capped.truncated)
+        #expect(capped.limit == 4)
+        #expect(capped.failure == nil)
+        // Exactly at the cap is not truncated: nothing was left out.
+        let exact = await ContentSearch.searchOutcome("needle", in: dir, maxResults: 10)
+        #expect(exact.matches.count == 10 && !exact.truncated)
+    }
+
+    @Test func failingToolInvocationReportsFailure() async throws {
+        let dir = try tempTree(["a.txt": "needle\n"])
+        defer { try? FileManager.default.removeItem(at: dir) }
+        // An unbalanced group is rejected by both ripgrep and grep -E.
+        let outcome = await ContentSearch.searchOutcome("(", in: dir, regex: true)
+        #expect(outcome.matches.isEmpty)
+        let message = try #require(outcome.failure)
+        #expect(!message.isEmpty)
+        #expect(await ContentSearch.search("(", in: dir, regex: true).isEmpty)
+    }
+
+    @Test func parseDetailedFlagsOnlyRealExtraRecords() {
+        let out = "/a\u{0}1:x\n/a\u{0}2:y\ngarbage-without-nul\n"
+        #expect(ContentSearch.parseDetailed(out, limit: 2).truncated == false)
+        #expect(ContentSearch.parseDetailed(out, limit: 1).truncated == true)
+    }
 }

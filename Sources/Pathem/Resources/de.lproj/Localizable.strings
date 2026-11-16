@@ -797,6 +797,9 @@
 "find.regex" = "Regex";
 "find.replaceAll" = "Alle ersetzen";
 "find.replacePlaceholder" = "Ersetzen durch…";
+"find.capped" = "Ergebnisse auf %d begrenzt; Suche eingrenzen.";
+"find.failed" = "Suche fehlgeschlagen: %@";
+"find.replaceCapped" = "Die vorherige Suche war auf %d Ergebnisse begrenzt; Alle ersetzen hat jede passende Datei erfasst.";
 "find.replacedResult" = "%d ersetzt in %d Dateien";
 "find.replacing" = "Ersetze…";
 "find.results" = "%d Treffer";

@@ -771,6 +771,7 @@
 "filesearch.textOnly" = "Document index unavailable; showing text-file matches only.";
 "filesearch.title" = "Search Files";
 "filesearch.toolbarTip" = "Search file names or contents (⌘F)";
+"find.capped" = "Results limited to %d; narrow your search.";
 "find.caseSensitive" = "Case sensitive";
 "find.confirmReplaceBody" = "Replace every match of \"%@\" in the matched files. This cannot be undone.";
 "find.confirmReplaceTitle" = "Replace in files?";
@@ -780,6 +781,7 @@
 "find.daysPh" = "days";
 "find.extLabel" = "Extension";
 "find.extPh" = "e.g. pdf";
+"find.failed" = "Search failed: %@";
 "find.inFilesTitle" = "Find in %@";
 "find.info" = "Find files across your Mac by any combination of criteria (Spotlight).";
 "find.kindAny" = "Any";
@@ -797,6 +799,7 @@
 "find.placeholder" = "Search file contents…";
 "find.regex" = "Regex";
 "find.replaceAll" = "Replace All";
+"find.replaceCapped" = "The search before it was limited to %d results; Replace All covered every matching file.";
 "find.replacePlaceholder" = "Replace with…";
 "find.replacedResult" = "Replaced %d in %d files";
 "find.replacing" = "Replacing…";

@@ -15,18 +15,52 @@ public enum ContentSearch {
         }
     }
 
+    /// What a search produced: the matches (at most `limit`), whether more existed than the
+    /// cap allowed, and, when the tool could not run or rejected the query, its message. An
+    /// empty `matches` with a `failure` is a failed search, not "no matches".
+    public struct Outcome: Sendable, Equatable {
+        public let matches: [Match]
+        public let truncated: Bool
+        public let limit: Int
+        public let failure: String?
+        public init(
+            matches: [Match] = [], truncated: Bool = false, limit: Int = ContentSearch.defaultLimit,
+            failure: String? = nil
+        ) {
+            self.matches = matches
+            self.truncated = truncated
+            self.limit = limit
+            self.failure = failure
+        }
+    }
+
+    public static let defaultLimit = 2000
+
     static var ripgrep: String? {
         ["/opt/homebrew/bin/rg", "/usr/local/bin/rg", "/usr/bin/rg"]
             .first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
+    /// The matches only. Callers that must tell "no matches" from "failed" or "capped" use
+    /// `searchOutcome`.
     public static func search(
         _ query: String, in folder: URL, regex: Bool = false, caseSensitive: Bool = false,
-        maxResults: Int = 2000
+        maxResults: Int = ContentSearch.defaultLimit
     ) async -> [Match] {
+        await searchOutcome(
+            query, in: folder, regex: regex, caseSensitive: caseSensitive, maxResults: maxResults
+        ).matches
+    }
+
+    public static func searchOutcome(
+        _ query: String, in folder: URL, regex: Bool = false, caseSensitive: Bool = false,
+        maxResults: Int = ContentSearch.defaultLimit
+    ) async -> Outcome {
         let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return [] }
+        guard !query.isEmpty else { return Outcome(limit: maxResults) }
         let output: String
+        let status: Int32
+        let stderr: String
         if let rg = ripgrep {
             // --null ends each path with NUL, so a path containing ":<digits>:" or a newline
             // cannot be mistaken for the path/line boundary.
@@ -36,8 +70,13 @@ public enum ContentSearch {
             if !regex { args.append("--fixed-strings") }
             if !caseSensitive { args.append("--ignore-case") }
             args += ["--", query, folder.path]  // -- so a query starting with "-" isn't a flag
-            guard let result = try? await RemoteRunner.run(rg, args) else { return [] }
-            output = String(decoding: result.0, as: UTF8.self)
+            do {
+                let result = try await RemoteRunner.run(rg, args)
+                output = String(decoding: result.0, as: UTF8.self)
+                (status, stderr) = (result.1, result.2)
+            } catch {
+                return Outcome(limit: maxResults, failure: error.localizedDescription)
+            }
         } else {
             var args = ["-rnI", "--null"]  // recursive, line numbers, skip binaries, NUL after path
             if !caseSensitive { args.append("-i") }
@@ -45,10 +84,25 @@ public enum ContentSearch {
             // to basic regex, where those are literals, so explicitly select ERE when rg is absent.
             args.append(regex ? "-E" : "-F")
             args += ["-e", query, folder.path]
-            guard let result = try? await RemoteRunner.run("/usr/bin/grep", args) else { return [] }
-            output = String(decoding: result.0, as: UTF8.self)
+            do {
+                let result = try await RemoteRunner.run("/usr/bin/grep", args)
+                output = String(decoding: result.0, as: UTF8.self)
+                (status, stderr) = (result.1, result.2)
+            } catch {
+                return Outcome(limit: maxResults, failure: error.localizedDescription)
+            }
         }
-        return parse(output, limit: maxResults)
+        let (matches, truncated) = parseDetailed(output, limit: maxResults)
+        // rg and grep exit 0 (matches), 1 (none) or 2+ (error). Exit 2 with output is a partial
+        // success (an unreadable file among readable ones), so only an error that produced no
+        // matches is reported as a failure.
+        if status >= 2, matches.isEmpty {
+            let message = stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+                .split(whereSeparator: \.isNewline).first.map(String.init)
+            return Outcome(
+                limit: maxResults, failure: message ?? "search tool exited with status \(status)")
+        }
+        return Outcome(matches: matches, truncated: truncated, limit: maxResults)
     }
 
     public struct ReplaceResult: Sendable, Equatable {
@@ -132,9 +186,14 @@ public enum ContentSearch {
     /// the NUL, so it may contain colons, digits or newlines; the text ends at the newline.
     /// Records without a NUL are refused rather than guessed at.
     static func parse(_ output: String, limit: Int) -> [Match] {
+        parseDetailed(output, limit: limit).matches
+    }
+
+    /// Like `parse`, and also reports whether a further valid record existed past `limit`.
+    static func parseDetailed(_ output: String, limit: Int) -> (matches: [Match], truncated: Bool) {
         var matches: [Match] = []
         var rest = Substring(output)
-        while matches.count < limit, let nul = rest.firstIndex(of: "\u{0}") {
+        while let nul = rest.firstIndex(of: "\u{0}") {
             let path = String(rest[rest.startIndex..<nul])
             let afterNul = rest[rest.index(after: nul)...]
             let lineEnd = afterNul.firstIndex(where: \.isNewline) ?? afterNul.endIndex
@@ -143,10 +202,11 @@ public enum ContentSearch {
             guard let colon = record.firstIndex(of: ":"),
                 let number = Int(record[record.startIndex..<colon]), !path.isEmpty
             else { continue }
+            if matches.count >= limit { return (matches, true) }
             matches.append(
                 Match(path: path, line: number, text: String(record[record.index(after: colon)...]))
             )
         }
-        return matches
+        return (matches, false)
     }
 }
