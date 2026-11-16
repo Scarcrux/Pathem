@@ -1866,6 +1866,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Live magnet test (owner request), headless, opt-in PATHEM_MAGNET_LIVE=1 (778c22a): Debian 13.7.0 netinst magnet with tracker only resolved metadata from a peer in 50 s and finished 792,723,456 bytes in 93 s, SHA-256 matches Debian's. First choice (Internet Archive public-domain book) had zero BitTorrent seeders; the Archive serves via web seeds only. Findings, not fixed: Magnet.parse ignores ws= web seeds, so web-seed-only magnets never start; a pending magnet shows only 'checking' with 0 peers. App/daemon path on a public magnet not run (GUI paused)."
     at = "2026-11-16T23:00:15Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 Torrent follow-ups from the live magnet test landed (c6353d7), headless only: magnets parse ws= and xs= (http/https); xs= .torrent accepted only when its info hash matches; ws= seeds merged into the resolved torrent's url-list and persisted. Pending magnets publish metadataSearch (fetching source, finding peers, asking N peers, waiting to retry, gave up); after the last round they show an error and Resume restarts the search; drawer and window share TorrentStatusText. Hermetic MagnetSourcesTests 5/5 with four mutation reds; torrent suites 148 pass; live Debian magnet still passes (metadata 138 s vs 50 s earlier, cause unknown). On-screen text not checked: GUI tests paused."
+    at = "2026-11-16T23:53:48Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
