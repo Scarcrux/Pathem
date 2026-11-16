@@ -259,12 +259,8 @@ extension BrowserViewController {
             [weak self] in self?.encryptToDiskImage()
         }
         add(
-            "files.offload", L("bvc.cmd.offload", "Offload to iCloud"),
-            enabled: { [weak self] in
-                guard let pane = self?.activePane, !pane.isRemote, !pane.isShowingSmartResults
-                else { return false }
-                return pane.selectedLocalURLs().contains { Backup.isOffloadable($0) }
-            }
+            "files.offload", L("bvc.cmd.offload", "Remove Download"),
+            enabled: { [weak self] in self?.cloudActions().showsRemoveDownload ?? false }
         ) { [weak self] in self?.offloadSelection() }
         add("files.backupTo", L("bvc.cmd.backupTo", "Back Up To…"), enabled: hasLocalSelection) {
             [weak self] in self?.backupSelection()
@@ -624,10 +620,8 @@ extension BrowserViewController {
             [weak self] in self?.showInfo()
         }
         add(
-            "files.download", L("bvc.cmd.download", "Download"),
-            enabled: { [weak self] in
-                self?.activePane?.selectedEntries.contains(where: \.isDataless) ?? false
-            }
+            "files.download", L("bvc.cmd.download", "Download Now"),
+            enabled: { [weak self] in self?.cloudActions().showsDownloadNow ?? false }
         ) { [weak self] in self?.downloadSelection() }
         add("view.preferences", L("bvc.cmd.preferences", "Preferences…")) { [weak self] in
             self?.showPreferences()

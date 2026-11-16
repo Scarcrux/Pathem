@@ -41,7 +41,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "@openWith",
         "files.showPackageContents", "view.quickLook", "files.showOriginal",
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
-        "files.getInfo", "files.calculateSize", "files.share", "files.download", "files.reveal",
+        "files.getInfo", "files.calculateSize", "files.share", "files.download", "files.offload",
+        "files.reveal",
         "files.revealInPathem", "files.ejectVolume",
         "files.setDesktopPicture", "files.rename",
         "@tags",
@@ -75,7 +76,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.open", "files.openInNewTab", "files.openInThisPane", "files.openInOtherPane",
         "@openWith", "files.showPackageContents", "view.quickLook", "files.showOriginal",
         "files.trash", "files.putBack", "files.deleteImmediately",
-        "files.share", "files.download", "files.revealInPathem", "files.setDesktopPicture",
+        "files.share", "files.revealInPathem", "files.setDesktopPicture",
         "files.rename", "@tags", "files.newFolderWithSelection", "files.duplicate",
         "files.makeAlias", "files.copy", "files.cut", "files.compress", "files.compress7z",
         "files.extract", "files.extractHere", "files.extractTo", "files.createTorrent",
@@ -169,7 +170,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.openInOtherPane", L("bvc.cmd.openInOtherPane", "Open in Other Pane")),
         ("files.getInfo", L("list.getInfo", "Get Info")),
         ("files.calculateSize", L("bvc.cmd.calculateSize", "Calculate Size")),
-        ("files.download", L("list.download", "Download")),
+        ("files.download", L("list.download", "Download Now")),
+        ("files.offload", L("bvc.cmd.offload", "Remove Download")),
         ("files.share", L("list.share", "Share…")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
         ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
@@ -334,6 +336,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
             let showArchive = sample.contains { Archiver.canExtract($0) }
             let singleFolder = count == 1 && Self.isDirectory(urls[0])
             let inTrash = !urls.isEmpty && sample.allSatisfy { Self.isInTrash($0) }
+            let cloud = CloudItemActions(urls: Array(sample))
             let allTorrents =
                 !urls.isEmpty && sample.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
             for item in menu.items {
@@ -360,6 +363,11 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                             !(count == 1
                             && SidebarController.ejectableVolume(rootedAt: urls[0]) != nil)
                     }
+                case "files.download", "files.offload":
+                    // iCloud items only, by the one rule the commands' enabled state also uses.
+                    item.isHidden =
+                        id == "files.download"
+                        ? !cloud.showsDownloadNow : !cloud.showsRemoveDownload
                 case "files.showPackageContents":
                     item.isHidden = !(count == 1 && Self.isPackage(urls[0]))
                 case "files.showOriginal":

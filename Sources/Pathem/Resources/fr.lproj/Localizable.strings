@@ -179,7 +179,7 @@
 "bvc.cmd.demoMode" = "Mode démo (données fictives pour captures)";
 "bvc.cmd.demoWorkspace" = "Charger l’espace de démonstration";
 "bvc.cmd.diff" = "Comparer les fichiers";
-"bvc.cmd.download" = "Télécharger";
+"bvc.cmd.download" = "Télécharger maintenant";
 "bvc.cmd.downloadFromServer" = "Télécharger depuis le serveur…";
 "bvc.cmd.duplicate" = "Dupliquer";
 "bvc.cmd.editACL" = "Autorisations…";
@@ -223,7 +223,7 @@
 "bvc.cmd.newTab" = "Nouvel onglet";
 "bvc.cmd.newWindow" = "Nouvelle fenêtre";
 "bvc.cmd.nextTab" = "Onglet suivant";
-"bvc.cmd.offload" = "Décharger vers iCloud";
+"bvc.cmd.offload" = "Supprimer le téléchargement";
 "bvc.cmd.open" = "Ouvrir";
 "bvc.cmd.openConnectionsInNewTab" = "Ouvrir les connexions dans un nouvel onglet";
 "bvc.cmd.openInNewTab" = "Ouvrir dans un nouvel onglet";
@@ -975,7 +975,7 @@
 "list.columnWhereFrom" = "Provenance";
 "list.copy" = "Copier";
 "list.cut" = "Couper";
-"list.download" = "Télécharger";
+"list.download" = "Télécharger maintenant";
 "list.getInfo" = "Lire les informations";
 "list.kindDocument" = "Document";
 "list.kindExtFile" = "fichier %@";
@@ -1049,6 +1049,8 @@
 "menu.files.findDuplicates" = "Rechercher les doublons";
 "menu.files.findInFiles" = "Rechercher dans les fichiers…";
 "menu.files.getInfo" = "Lire les informations";
+"menu.files.download" = "Télécharger maintenant";
+"menu.files.offload" = "Supprimer le téléchargement";
 "menu.files.newFile" = "Nouveau fichier";
 "menu.files.newFolder" = "Nouveau dossier";
 "menu.files.open" = "Ouvrir";

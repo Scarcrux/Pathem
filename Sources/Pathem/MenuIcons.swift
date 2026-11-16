@@ -24,6 +24,7 @@ enum MenuIcons {
         case "files.getInfo": return "info.circle"
         case "files.calculateSize": return "sum"
         case "files.download": return "arrow.down.circle"
+        case "files.offload": return "icloud.slash"
         case "files.reveal": return "arrow.up.forward.square"
         case "files.revealInPathem": return "dot.viewfinder"
         case "files.rename": return "pencil"

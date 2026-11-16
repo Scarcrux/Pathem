@@ -177,6 +177,13 @@ extension BrowserViewController {
                 view.layoutSubtreeIfNeeded()
             }
             select(["source.txt"], menu: menu)
+            // An ordinary local file is not an iCloud item: neither cloud entry is offered. (Real
+            // iCloud items are environmental and not created here.)
+            check(
+                "finder-cloud-entries-absent-for-local-file-\(mode.rawValue)",
+                !visible("files.download", in: menu) && !visible("files.offload", in: menu),
+                "download=\(visible("files.download", in: menu)) offload=\(visible("files.offload", in: menu))"
+            )
             let tagsMenu = menu.items.compactMap(\.submenu).first {
                 $0.items.contains { ($0.representedObject as? String) == "tags.clear" }
             }

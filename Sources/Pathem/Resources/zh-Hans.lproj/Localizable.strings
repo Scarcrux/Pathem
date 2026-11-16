@@ -179,7 +179,7 @@
 "bvc.cmd.demoMode" = "演示模式（用于截图的虚构数据）";
 "bvc.cmd.demoWorkspace" = "加载演示工作区";
 "bvc.cmd.diff" = "比较文件";
-"bvc.cmd.download" = "下载";
+"bvc.cmd.download" = "立即下载";
 "bvc.cmd.downloadFromServer" = "从服务器下载…";
 "bvc.cmd.duplicate" = "复制副本";
 "bvc.cmd.editACL" = "权限…";
@@ -223,7 +223,7 @@
 "bvc.cmd.newTab" = "新建标签页";
 "bvc.cmd.newWindow" = "新建窗口";
 "bvc.cmd.nextTab" = "下一个标签页";
-"bvc.cmd.offload" = "卸载到 iCloud";
+"bvc.cmd.offload" = "移除下载";
 "bvc.cmd.open" = "打开";
 "bvc.cmd.openConnectionsInNewTab" = "在新标签页中打开连接";
 "bvc.cmd.openInNewTab" = "在新标签页中打开";
@@ -975,7 +975,7 @@
 "list.columnWhereFrom" = "来源";
 "list.copy" = "拷贝";
 "list.cut" = "剪切";
-"list.download" = "下载";
+"list.download" = "立即下载";
 "list.getInfo" = "显示简介";
 "list.kindDocument" = "文稿";
 "list.kindExtFile" = "%@ 文件";
@@ -1049,6 +1049,8 @@
 "menu.files.findDuplicates" = "查找重复项";
 "menu.files.findInFiles" = "在文件中查找…";
 "menu.files.getInfo" = "显示简介";
+"menu.files.download" = "立即下载";
+"menu.files.offload" = "移除下载";
 "menu.files.newFile" = "新建文件";
 "menu.files.newFolder" = "新建文件夹";
 "menu.files.open" = "打开";

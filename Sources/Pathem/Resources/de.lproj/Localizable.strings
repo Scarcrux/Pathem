@@ -179,7 +179,7 @@
 "bvc.cmd.demoMode" = "Demomodus (Testdaten für Screenshots)";
 "bvc.cmd.demoWorkspace" = "Demo-Arbeitsbereich laden";
 "bvc.cmd.diff" = "Dateien vergleichen";
-"bvc.cmd.download" = "Laden";
+"bvc.cmd.download" = "Jetzt laden";
 "bvc.cmd.downloadFromServer" = "Vom Server laden…";
 "bvc.cmd.duplicate" = "Duplizieren";
 "bvc.cmd.editACL" = "Zugriffsrechte…";
@@ -223,7 +223,7 @@
 "bvc.cmd.newTab" = "Neuer Tab";
 "bvc.cmd.newWindow" = "Neues Fenster";
 "bvc.cmd.nextTab" = "Nächster Tab";
-"bvc.cmd.offload" = "In iCloud auslagern";
+"bvc.cmd.offload" = "Download entfernen";
 "bvc.cmd.open" = "Öffnen";
 "bvc.cmd.openConnectionsInNewTab" = "Verbindungen in neuem Tab öffnen";
 "bvc.cmd.openInNewTab" = "In neuem Tab öffnen";
@@ -975,7 +975,7 @@
 "list.columnWhereFrom" = "Geladen von";
 "list.copy" = "Kopieren";
 "list.cut" = "Ausschneiden";
-"list.download" = "Laden";
+"list.download" = "Jetzt laden";
 "list.getInfo" = "Informationen";
 "list.kindDocument" = "Dokument";
 "list.kindExtFile" = "%@-Datei";
@@ -1049,6 +1049,8 @@
 "menu.files.findDuplicates" = "Duplikate finden";
 "menu.files.findInFiles" = "In Dateien suchen…";
 "menu.files.getInfo" = "Informationen";
+"menu.files.download" = "Jetzt laden";
+"menu.files.offload" = "Download entfernen";
 "menu.files.newFile" = "Neue Datei";
 "menu.files.newFolder" = "Neuer Ordner";
 "menu.files.open" = "Öffnen";

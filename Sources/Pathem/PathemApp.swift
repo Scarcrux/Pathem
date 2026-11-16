@@ -1570,6 +1570,8 @@ enum PathemApp {
         fileMenu.addItem(commandItem("Remove Custom Icon", "files.removeCustomIcon"))
         fileMenu.addItem(commandItem("Reveal in Finder", "files.reveal"))
         fileMenu.addItem(commandItem("Reveal in Pathem", "files.revealInPathem"))
+        fileMenu.addItem(commandItem("Download Now", "files.download"))
+        fileMenu.addItem(commandItem("Remove Download", "files.offload"))
         // Organize
         fileMenu.addItem(.separator())
         fileMenu.addItem(commandItem("Rename…", "files.rename"))
@@ -1636,8 +1638,7 @@ enum PathemApp {
             submenu(
                 L("menu.storage", "Storage"),
                 [
-                    commandItem("Offload to iCloud", "files.offload"),
-                    commandItem("Back Up To…", "files.backupTo"),
+                    commandItem("Back Up To…", "files.backupTo")
                 ]))
         // Delete
         fileMenu.addItem(.separator())

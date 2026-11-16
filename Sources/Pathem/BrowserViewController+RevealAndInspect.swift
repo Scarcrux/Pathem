@@ -98,12 +98,20 @@ extension BrowserViewController {
     /// them; the watcher refreshes the badge as they land.
     func downloadSelection() {
         if blockedByRemote() { return }
-        guard let pane = activePane else { return }
-        for entry in pane.selectedEntries where entry.isDataless {
-            let url =
-                entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }
-                ?? pane.currentURL.appendingPathComponent(entry.name)  // location-aware
+        guard let pane = activePane, !pane.isRemote else { return }
+        for url in pane.selectedLocalURLs()  // location-aware
+        where CloudItemActions(urls: [url]).showsDownloadNow {
             try? FileManager.default.startDownloadingUbiquitousItem(at: url)
         }
+    }
+
+    /// Which iCloud entries apply to the active pane's selection (nothing for a remote or smart
+    /// listing). The one source for both commands' enabled rules.
+    func cloudActions() -> CloudItemActions {
+        guard let pane = activePane, !pane.isRemote else { return CloudItemActions(for: []) }
+        // Menu validation calls this on the main thread, and each item costs two metadata
+        // reads, so a very large selection is judged by a bounded sample, as the context menu's
+        // own per-item rules are.
+        return CloudItemActions(urls: Array(pane.selectedLocalURLs().prefix(2000)))
     }
 }

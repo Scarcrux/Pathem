@@ -179,7 +179,7 @@
 "bvc.cmd.demoMode" = "デモモード（スクショ用のダミーデータ）";
 "bvc.cmd.demoWorkspace" = "デモワークスペースを読み込む";
 "bvc.cmd.diff" = "ファイルを比較";
-"bvc.cmd.download" = "ダウンロード";
+"bvc.cmd.download" = "今すぐダウンロード";
 "bvc.cmd.downloadFromServer" = "サーバからダウンロード…";
 "bvc.cmd.duplicate" = "複製";
 "bvc.cmd.editACL" = "アクセス権…";
@@ -223,7 +223,7 @@
 "bvc.cmd.newTab" = "新規タブ";
 "bvc.cmd.newWindow" = "新規ウインドウ";
 "bvc.cmd.nextTab" = "次のタブ";
-"bvc.cmd.offload" = "iCloudにオフロード";
+"bvc.cmd.offload" = "ダウンロードを削除";
 "bvc.cmd.open" = "開く";
 "bvc.cmd.openConnectionsInNewTab" = "接続を新規タブで開く";
 "bvc.cmd.openInNewTab" = "新規タブで開く";
@@ -975,7 +975,7 @@
 "list.columnWhereFrom" = "入手先";
 "list.copy" = "コピー";
 "list.cut" = "カット";
-"list.download" = "ダウンロード";
+"list.download" = "今すぐダウンロード";
 "list.getInfo" = "情報を見る";
 "list.kindDocument" = "書類";
 "list.kindExtFile" = "%@ファイル";
@@ -1049,6 +1049,8 @@
 "menu.files.findDuplicates" = "重複を検出";
 "menu.files.findInFiles" = "ファイル内を検索…";
 "menu.files.getInfo" = "情報を見る";
+"menu.files.download" = "今すぐダウンロード";
+"menu.files.offload" = "ダウンロードを削除";
 "menu.files.newFile" = "新規ファイル";
 "menu.files.newFolder" = "新規フォルダ";
 "menu.files.open" = "開く";

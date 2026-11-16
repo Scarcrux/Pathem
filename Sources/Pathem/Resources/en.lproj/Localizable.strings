@@ -180,7 +180,7 @@
 "bvc.cmd.demoMode" = "Demo Mode (fake data for screenshots)";
 "bvc.cmd.demoWorkspace" = "Load Demo Workspace";
 "bvc.cmd.diff" = "Compare Files";
-"bvc.cmd.download" = "Download";
+"bvc.cmd.download" = "Download Now";
 "bvc.cmd.downloadFromServer" = "Download from Server…";
 "bvc.cmd.duplicate" = "Duplicate";
 "bvc.cmd.editACL" = "Permissions…";
@@ -224,7 +224,7 @@
 "bvc.cmd.newTab" = "New Tab";
 "bvc.cmd.newWindow" = "New Window";
 "bvc.cmd.nextTab" = "Next Tab";
-"bvc.cmd.offload" = "Offload to iCloud";
+"bvc.cmd.offload" = "Remove Download";
 "bvc.cmd.open" = "Open";
 "bvc.cmd.openConnectionsInNewTab" = "Open Connections in a New Tab";
 "bvc.cmd.openInNewTab" = "Open in New Tab";
@@ -976,7 +976,7 @@
 "list.columnWhereFrom" = "Where From";
 "list.copy" = "Copy";
 "list.cut" = "Cut";
-"list.download" = "Download";
+"list.download" = "Download Now";
 "list.getInfo" = "Get Info";
 "list.kindDocument" = "Document";
 "list.kindExtFile" = "%@ file";

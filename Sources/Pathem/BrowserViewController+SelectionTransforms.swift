@@ -89,7 +89,7 @@ extension BrowserViewController {
     /// Offload the selected downloaded iCloud files (evict the local copy; the cloud copy
     /// stays and the file becomes online-only).
     func offloadSelection() {
-        guard let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults else {
+        guard let pane = activePane, !pane.isRemote else {
             NSSound.beep()
             return
         }

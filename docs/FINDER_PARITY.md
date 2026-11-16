@@ -72,6 +72,15 @@ Acceptance: a rule-level test for which of the three entries shows for each of: 
 local file, a dataless iCloud item, a downloaded iCloud item, a mixed selection. Real
 iCloud behaviour is environmental and is not claimed by this unit.
 
+Result (F2 implemented): the rule lives in `CloudItemActions` (PathemEngine) and drives the
+context menu, the File menu and both commands. Keep Downloaded is left out: the macOS SDK
+exposes no client API to pin an iCloud Drive item. The only "keep downloaded" surface is
+`NSFileProviderContentPolicyDownloadEagerlyAndKeepDownloaded`, a read-only
+`NSFileProviderItem.contentPolicy` that a file provider extension declares for its own items;
+`NSFileProviderManager` has only `evictItem` and no setter. `NSURL` ubiquitous keys
+(Foundation) cover download state, sync pause and exclude-from-sync, none of which pins. No
+private API, `brctl` or xattr was used.
+
 ## F3. Services in the file menus and the application menu
 
 Investigated read-only on 2026-11-16 (SDK headers plus a throwaway experiment). Findings:
