@@ -85,7 +85,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     if full and category in ('all', 'core'):
         from transient_core_receipts import receipt_errors
         errors += receipt_errors(log, language, pilot)
-    for cell, check in [('predicate-1-tooltip', 1), ('predicate-4-presentation', 4)]:
+    for cell, check in [('predicate-1-tooltip', 1), ('predicate-1-popup', 1), ('predicate-1-empty-alert', 1), ('predicate-4-presentation', 4)]:
         matches = [(status, int(number)) for status, found, number in rows if found == cell]
         if matches != [('PASS', check)]: errors.append('required subcontrol missing or failed: '+cell)
     if CONFLICT.search(log):

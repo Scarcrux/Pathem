@@ -1,5 +1,5 @@
 {
-  "review_status": "Source classification complete: every discovered site classified; four reusable dynamic context-menu callers conservatively A with unresolved builder provenance explicitly retained. Implicit menu attachments are listed separately. Native Unit 1 acceptance pending.",
+  "review_status": "Source classification complete with no unresolved builders. Unit 1 accepted. Four reviewed standard NSMenu providers are class C implicit presentations; a custom NSMenuItem.view assignment requires re-review. Native Unit 2 coverage and qualification are reported separately in docs/TRANSIENT_SURFACES_UNIT2.md.",
   "exclude_files": {
     "Sources/Pathem/BrowserViewController+TransientSurfaceTests.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
     "Sources/Pathem/BrowserViewController+ContentConfigurationUITests.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
@@ -63,7 +63,7 @@
     "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1,
     "Sources/Pathem/TransientSurfaceFullFactories.swift": 6,
     "Sources/Pathem/TransientSurfaceFullMounts.swift": 7,
-    "Sources/Pathem/TransientSurfaceSample.swift": 9
+    "Sources/Pathem/TransientSurfaceSample.swift": 10
   },
   "sites": {
     "Sources/Pathem/BrowserViewController+Transfers.swift:82:28:ask": {
@@ -3102,5 +3102,5 @@
     }
   },
   "unpresented_builders": {},
-  "native_coverage_note": "Unit 1 accepted. Unit 2 has all 47 B recipes and 32 real-entrypoint A adapters; initial 16 A entrypoints exercised, remainder still pending. Classification is not a native coverage claim; see docs/TRANSIENT_SURFACES_UNIT2.md."
+  "native_coverage_note": "Unit 1 accepted. Unit 2 has recipes for all 47 B alerts and native adapters for 103 A sites, with nine main-browser sites delegated to accepted task 2. Recipe counts are not a claim of completed native qualification; current evidence and explicit limitations are in docs/TRANSIENT_SURFACES_UNIT2.md."
 }

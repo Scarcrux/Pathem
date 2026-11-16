@@ -4,9 +4,33 @@ The accepted contract is docs/TRANSIENT_SURFACES.md. This receipt is not READY.
 Unit 1 landed at 7d3d7fc; Unit 2 starts with 861884b (bounded path display) and
 d870e40 (opaque failure renders), both private pending final review.
 
+## Current checkpoint
+
+The inventory has 112 A sites after four reviewed standard menu providers moved
+from conservative A to C. Of those, 103 have native adapters and nine browser
+window presentations delegate to accepted task 2. All 47 B alerts have recipes;
+36 sheet branches have behavior coverage and 11 modal branches are structural
+only by contract. These are planned coverage counts until a complete run closes.
+
+The owner authorized the coordinated serial GUI batch. V5 passed the clean core,
+M42/M23, markup confirmation and real close/Quit probes, with all four injections
+still discriminating. All 209 headless tests passed. Full v2 was deliberately
+interrupted at six receipts after review found scroll geometry lost alignment
+insets. It is incomplete and ineligible for a baseline. Its interrupted child
+was terminated and reaped by the owned supervisor; preferences were unchanged
+and the exact demo root was removed. The initial new inset-control setup then
+failed before any product surface was shown; its diagnostics and corrected
+frame-for-alignment construction are pending validation. Popup menu-universe
+sizing is also being replaced with current-title measurement. No native raw
+failure has been reclassified as PASS and no final baseline exists.
+
+The later sections retain chronological negative results. Their earlier paused,
+pending and source-count statements describe those checkpoints, not current
+readiness. No final CI, land, install or deployment has occurred for Unit 2.
+
 ## Criteria before expansion
 
-All 116 A sites and 47 B sites are accounted for individually against the
+All 112 A sites and 47 B sites are accounted for individually against the
 classified inventory. A uses the actual app-owned construction; no substitute
 widgets are counted as coverage. B uses the real shipped localized strings and
 audited runtime fixtures. Each B recipe pins its source builder and presentation
@@ -652,3 +676,71 @@ were collected before this rebase and reviewer changes. A real checked-in
 known-findings baseline has deliberately not been fabricated. The coordinated
 visible batch, fresh injection/markup probes and final CI remain necessary before
 READY. Owner-desktop timing choice is still pending; visible tests remain paused.
+
+## Final native control caught a site-lookup instrument defect
+
+The first post-review native clean pilot stopped before expansion. Swift's new
+core Rename lookup counted both class A Rename and class B extension confirmation
+in the same file; the Python validator correctly filters A. The guard failed
+after presenting Rename, leaving its sheet attached and causing subsequent
+Reclaim presentation/conflict dismissal failures. No product finding is claimed
+from that cascade. Filter the Swift lookup to A and validate sites before any
+presentation, then repeat the control. Original raw/JSON evidence is preserved
+under .build/transient-final-controls; no later control or full run launched.
+
+## Painted-bound geometry correction
+
+The M42 diagnostic disproves deferred layout: before/after painting both report
+13 issues, while a representative field's real frame is (2,3,60,14) within a
+64x20 cell. Its visibleRect is (-8,-3,635,20), extending beyond its own bounds.
+The scrolling branch incorrectly treated that exposed region as painted extent.
+Measure visibleRect intersected with bounds before conversion, use the same
+rule for overlaps, and retain the original alignment rectangle outside scrolling
+content. Meaningful collapsed controls/containers still fail; ordinary offscreen
+scroll children do not. Exact nondrawing leaf spacers and empty readonly,
+unbordered/nonselectable labels do not become fake clipped UI. Predicate controls
+exercise all of those distinctions; real displaced viewport and label overflow
+checks remain red. Native validation pending. M42 diagnostic and full-v1 renders
+are retained, never baselined as product spill.
+
+## Resumed window: final instrument sample v9
+
+All 13 sample launches completed on source/artifact digest
+744bc5ca8532a05bd8e51db7c7474d2a08ba17d01580c3bc2d643af6bd16c746.
+Clean core, M02, M42, M23, markup confirmation and actual close/Quit probes have
+native exit 0. All four injected corruptions retain exit 1 and discriminate on
+their intended checks. M07 retains four size/ambiguity pairs; archive saveback
+F23 retains six dependent Cancel/dismissal/accumulation pairs. Those are sample
+observations, not a final known-findings baseline. The independent audit reparsed
+all raw logs, exact repeat phases, native byte hashes and retained PNGs. All
+preference/domain/demo isolation witnesses passed. Headless suite: 229/229 PASS.
+
+M02's remaining geometry reports were the empty framework informative label and
+its sole NSTextFieldSimpleLabel helper. A/A/hide/restore pixel comparisons matched
+with unchanged frames and first responder in all six catalogs. The final German
+short/255-character probes also detected the separate visible-ink control.
+The geometry exception uses only the two identities from that actual alert, with
+empty readonly text, no placeholders, no active editor or accessory ownership,
+exact helper shape and no decorations. AppKit's measured backing-layer cache is
+allowed only as NSViewBackingLayer/NSViewBackingLayerContents and the exact helper
+layer. Text, placeholders, unknown children and collapsed app input still fail.
+The native predicate proves each distinction. No framework class is waived globally.
+
+Negative results remain private: the initial inset control placed its negative
+case fully outside the viewport, so it was correctly invisible; the corrected
+partially visible case discriminates. The initial blank-label guard incorrectly
+assumed no backing contents after drawing; diagnostics convicted the native cache
+wrapper and the pixel experiment separated cached contents from visible ink. A
+new owned-input predicate initially passed an unrelated alert; that masked failure
+was corrected before v9 by measuring the owned root without that alert. Earlier
+v6/v8 refusals are instrument failures, never product findings or baseline input.
+
+The receipt gate now demands exact per-check cycles and geometry phases for
+mounts, factories and class B sheets. Count-preserving duplicate-cycle controls
+fail. Current failure PNGs are decoded, fingerprinted and launch-bound; missing,
+corrupt or changed images are instrument errors. Historical baseline paths are
+never used as current capture evidence. The completed v9 is eligible to validate
+the design for full expansion; the previous interrupted full v2 is not.
+
+No final full qualification, baseline, CI, land or install is claimed here.
+Evidence: .build/transient-final-controls-v9 and .build/transient-headless-v9.log.

@@ -12,6 +12,10 @@ class CoreReceiptControls(unittest.TestCase):
         for (file,method),kind in IDENTITIES.items():
             site=f'Sources/Pathem/{file}:1:1:{method}'
             inventory[site]={'class':'A'};special.append(dict(site=site,coverage='core',reason='fixture'))
+        # A normal extension-confirm sheet shares Rename's file and wrapper.
+        # Native core matching must select the A caller, never every presentSheet.
+        self.b_rename_site='Sources/Pathem/BrowserViewController+Rename.swift:96:25:presentSheet'
+        inventory[self.b_rename_site]={'class':'B'}
         (self.root/'test/transient_inventory.json').write_text(json.dumps(dict(sites=inventory)))
         (self.root/'test/transient_full_special_sites.json').write_text(json.dumps(dict(sites=special)))
         (self.root/'Sources/Pathem/TransientSurfaceSample.swift').write_text('''func runSurface() {
@@ -57,10 +61,28 @@ class CoreReceiptControls(unittest.TestCase):
         p=self.root/'Sources/Pathem/TransientSurfaceSample.swift';p.write_text(p.read_text().replace('browser.askConflictResolution()','/* browser.askConflictResolution() */'))
         self.assertTrue(any('source contract' in e for e in self.errors('')))
 
+    def test_B_caller_beside_A_keeps_one_core_rename_site(self):
+        mapping=core_sites(self.root)
+        self.assertEqual(mapping['rename'],['Sources/Pathem/BrowserViewController+Rename.swift:1:1:presentSheet'])
+        self.assertNotIn(self.b_rename_site,mapping['rename'])
+        self.assertEqual(self.errors(self.transcript()),[])
+    def test_B_caller_cannot_replace_the_presented_A_site(self):
+        old='site=Sources/Pathem/BrowserViewController+Rename.swift:1:1:presentSheet'
+        changed=self.transcript().replace(old,'site='+self.b_rename_site)
+        self.assertTrue(any('production-site' in e for e in self.errors(changed)))
+    def test_naive_file_method_match_including_B_cannot_count_as_core(self):
+        inventory=json.loads((self.root/'test/transient_inventory.json').read_text())['sites']
+        naive=[site for site in inventory if site.startswith('Sources/Pathem/BrowserViewController+Rename.swift:') and site.endswith(':presentSheet')]
+        self.assertEqual(len(naive),2)  # Reproduces the failed native matcher.
+        log=self.transcript()
+        extra=[line.replace('site=Sources/Pathem/BrowserViewController+Rename.swift:1:1:presentSheet','site='+self.b_rename_site)
+               for line in log.splitlines() if line.startswith('TSAMPLE: CORE-SITE cell=A-rename-')]
+        self.assertTrue(any('production-site' in e for e in self.errors(log+'\n'+'\n'.join(extra))))
+
 class PredicateIdentityControls(unittest.TestCase):
     def transcript(self):
         lines=[f'TSAMPLE: PASS cell=predicate-{n} check={n} control' for n in range(1,9)]
-        for cell,number in [('predicate-file-opening',0),('predicate-3-system',3),('predicate-1-viewport',1),('predicate-8-multiplicity',8),('predicate-4-appearance',4),('predicate-1-tooltip',1),('predicate-4-presentation',4)]:
+        for cell,number in [('predicate-file-opening',0),('predicate-3-system',3),('predicate-1-viewport',1),('predicate-8-multiplicity',8),('predicate-4-appearance',4),('predicate-1-tooltip',1),('predicate-1-popup',1),('predicate-1-empty-alert',1),('predicate-4-presentation',4)]:
             lines.append(f'TSAMPLE: PASS cell={cell} check={number} control')
         lines += ['TSAMPLE: START language=de cancel=Cancel ','TSAMPLE: SUMMARY fixture','RESULT: PASS (1/1)']
         return '\n'.join(lines)
@@ -68,6 +90,18 @@ class PredicateIdentityControls(unittest.TestCase):
         from transient_surfaces_sample import validate
         return validate(text,0,'clean','de',False,'Cancel',full=False,category='factories')[0]
     def test_all_distinct_predicates(self):self.assertEqual(self.errors(self.transcript()),[])
+    def test_empty_alert_control_must_be_delivered_and_pass(self):
+        row='TSAMPLE: PASS cell=predicate-1-empty-alert check=1 control'
+        for changed in ['',row.replace('PASS','FAIL')]:
+            with self.subTest(changed=changed):
+                self.assertTrue(any('predicate-1-empty-alert' in error
+                    for error in self.errors(self.transcript().replace(row,changed))))
+    def test_popup_measurement_control_must_be_delivered_and_pass(self):
+        row='TSAMPLE: PASS cell=predicate-1-popup check=1 control'
+        for changed in ['',row.replace('PASS','FAIL')]:
+            with self.subTest(changed=changed):
+                self.assertTrue(any('predicate-1-popup' in error
+                    for error in self.errors(self.transcript().replace(row,changed))))
     def test_duplicate_predicate_cannot_replace_missing_one(self):
         self.assertTrue(any('predicate controls' in e for e in self.errors(self.transcript().replace('cell=predicate-2 check=2','cell=predicate-1 check=1'))))
     def test_wrong_check_number_refused(self):

@@ -11,6 +11,8 @@ def transcript(remove=None, fail=None, marker=None):
         row('predicate-' + str(n), n)
     row('predicate-1-viewport', 1)
     row('predicate-1-tooltip', 1)
+    row('predicate-1-popup', 1)
+    row('predicate-1-empty-alert', 1)
     row('predicate-4-presentation', 4)
     row('predicate-8-multiplicity', 8)
     row('predicate-4-appearance', 4)

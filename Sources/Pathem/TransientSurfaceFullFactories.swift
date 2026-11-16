@@ -51,6 +51,8 @@ extension TransientSurfaceSample {
         var inspected = false
         var timedOut = false
         var nativeCancel = false
+        var sheetWithoutCancel = false
+        var restoreEscapeTargets: (() -> Void)?
         var response: NSApplication.ModalResponse?
         let deadline = Date().addingTimeInterval(5)
     }
@@ -378,8 +380,7 @@ extension TransientSurfaceSample {
             systemPanel: object.save != nil)
         emit(
             cell, 4,
-            TransientSurfaceChecks.singlePresentation(
-                before: before, after: windows(), expected: window.windowNumber)
+            singleSurfacePresentation(before: before, expected: window, alert: object.alert)
                 && (entry.sheet ? window.sheetParent === host : NSApp.modalWindow === window)
                 && TransientSurfaceChecks.appearance(content, expected: requestedAppearance),
             "cycle=\(cycle) production factory; original presentation style", content: content)
@@ -423,6 +424,63 @@ extension TransientSurfaceSample {
         }
     }
 
+    /// There is no configured Cancel. Observe both native Escape paths while
+    /// button actions are trapped; do not execute Save or Discard as a fallback.
+    /// Keep traps alive until this exact fixture is retired after raw verdicts.
+    func observeSheetWithoutCancel(
+        _ object: FactoryObject, state: FactoryObservation,
+        cell: String, cycle: Int
+    ) {
+        state.sheetWithoutCancel = true
+        let observer = TransientReturnBindingProbe()
+        let buttons = object.buttons
+        let originals = buttons.map { ($0, $0.target, $0.action) }
+        for button in buttons {
+            button.target = observer
+            button.action = #selector(TransientReturnBindingProbe.receive(_:))
+        }
+        state.restoreEscapeTargets = {
+            for (button, target, action) in originals {
+                button.target = target
+                button.action = action
+            }
+            withExtendedLifetime(observer) {}
+        }
+        let equivalent = key("\u{1b}", window: object.window)
+        let needsKeyDown = object.window.isVisible
+        var keyDownSent = false
+        if needsKeyDown,
+            let event = NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                windowNumber: object.window.windowNumber, context: nil,
+                characters: "\u{1b}", charactersIgnoringModifiers: "\u{1b}",
+                isARepeat: false, keyCode: 53)
+        {
+            object.window.sendEvent(event)
+            keyDownSent = true
+        }
+        // Drain a bounded click-animation/event interval, not a three-second
+        // wait for a response that cannot be required without a Cancel action.
+        let until = Date().addingTimeInterval(1.0)
+        while Date() < until {
+            RunLoop.main.run(until: min(until, Date().addingTimeInterval(0.01)))
+        }
+        if equivalent && observer.received.isEmpty && state.response == nil
+            && object.window.isVisible
+        {
+            emit(
+                "factory-setup", 0, false,
+                "accepted missing-Cancel Escape has no observed action or response")
+        }
+        let complete = !needsKeyDown || keyDownSent
+        trace(
+            "TSAMPLE: SHEET-NO-CANCEL cell=\(cell) cycle=\(cycle) complete=\(complete) equivalent=\(equivalent) keyDownSent=\(keyDownSent) received=\(observer.received.compactMap { received in buttons.firstIndex { $0 === received } }) response=\(String(describing: state.response?.rawValue)) visible=\(object.window.isVisible) buttonCallbacksWithheld=true"
+        )
+        if !complete {
+            emit("factory-setup", 0, false, "missing-Cancel Escape event not delivered")
+        }
+    }
+
     func runFactory(_ entry: Factory, cell: String, name: String) {
         for cycle in 0..<3 {
             let directory = root.appendingPathComponent(cell + "-\(cycle)", isDirectory: true)
@@ -459,8 +517,12 @@ extension TransientSurfaceSample {
                     if let index = object.cancelIndex, object.buttons.indices.contains(index) {
                         object.buttons[index].performClick(nil)
                         state.nativeCancel = true
+                        _ = settle { state.response != nil }
+                    } else if object.cancelIndex == nil {
+                        observeSheetWithoutCancel(object, state: state, cell: cell, cycle: cycle)
+                    } else {
+                        emit("factory-setup", 0, false, "configured Cancel index unavailable")
                     }
-                    _ = settle { state.response != nil }
                 } else {
                     emit(cell, 0, false, "native sheet not delivered")
                 }
@@ -537,9 +599,8 @@ extension TransientSurfaceSample {
                 object.save != nil
                 ? NSApplication.ModalResponse.cancel
                 : object.cancelIndex.map { NSApplication.ModalResponse(rawValue: 1000 + $0) }
-            let dismissed = settle {
-                !object.window.isVisible && self.host.attachedSheet !== object.window
-            }
+            let gone = { !object.window.isVisible && self.host.attachedSheet !== object.window }
+            let dismissed = state.sheetWithoutCancel ? gone() : settle(gone)
             let configUnchanged = (ConfigStore.directory().map(snapshot) ?? [:]) == config
             emit(
                 cell, 5,
@@ -561,6 +622,8 @@ extension TransientSurfaceSample {
                 if object.window.sheetParent === host { host.endSheet(object.window) }
                 object.window.orderOut(nil)
             }
+            state.restoreEscapeTargets?()
+            state.restoreEscapeTargets = nil
             (object.retained as? FilenameSuggestionController)?.cancel()
         }
         self.trace("TSAMPLE: COVERED class=A site=\(entry.site) cell=\(cell)")

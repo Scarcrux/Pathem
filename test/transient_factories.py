@@ -1,4 +1,5 @@
 """Bind each modal/sensitive-surface test to the factory production actually calls."""
+from transient_cycle_receipts import cycle_errors
 import hashlib
 import json
 from pathlib import Path
@@ -45,6 +46,8 @@ def validate(root=ROOT):
             if not typed or not call:raise ValueError('Adapter does not call typed production instance factory '+r['id'])
         elif not re.search(re.escape(class_name)+r'\s*\.\s*'+re.escape(r['maker'])+r'\s*\(',block):
             raise ValueError('Adapter does not call declared production factory '+r['id'])
+        if bool(r.get('cancel_absent')) != bool(re.search(r'\bcancel\s*:\s*nil\b',mask(block))):
+            raise ValueError('Factory Cancel recipe differs '+r['id'])
         header=block[:block.index('{')]
         if r['filename'] != ('filename: false' not in header) or r['sheet'] != ('sheet: true' in header):
             raise ValueError('Factory presentation/string treatment differs '+r['id'])
@@ -77,12 +80,19 @@ def receipt_errors(log, language, group=0, probe_one=False, only=None, root=ROOT
     counts=Counter((cell,int(check)) for _,cell,check in rows)
     for cell in actual & expected.keys():
         recipe=expected[cell]
+        errors += cycle_errors(log,cell,['factory']+(['suggestion','suggestion-failure'] if recipe['constructor']=='NSSavePanel' else []),[0,4,5,6,7,8],'factory')
         for check in range(9):
             wanted=9 if recipe['constructor']=='NSSavePanel' and check in (1,2,3) else 3
             if counts[cell,check]!=wanted:
                 errors.append(f'factory three-cycle check set incomplete: {cell} check{check} count={counts[cell,check]} expected={wanted}')
         if ('FAIL',cell,'0') in rows:
             errors.append('factory setup failed: '+cell)
+        if recipe['sheet'] and recipe.get('cancel_absent'):
+            observations=re.findall(r'^TSAMPLE: SHEET-NO-CANCEL cell='+re.escape(cell)+r' cycle=(\d+) complete=true [^\n]*\bbuttonCallbacksWithheld=true$',log,re.M)
+            if Counter(observations)!=Counter({'0':1,'1':1,'2':1}):
+                errors.append('missing-Cancel sheet Escape observation incomplete: '+cell)
+            if ('PASS',cell,'5') in rows:
+                errors.append('missing-Cancel sheet cannot claim native Cancel: '+cell)
         config_rows=re.findall(r'^TSAMPLE: (PASS|FAIL) cell='+re.escape(cell)+r' check=5 cycle=(\d+) [^\n]*\bconfigUnchanged=(true|false)(?:\s|$)',log,re.M)
         if Counter(cycle for _,cycle,_ in config_rows)!=Counter({'0':1,'1':1,'2':1}):
             errors.append('factory Cancel configuration proof incomplete: '+cell)

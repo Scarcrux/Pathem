@@ -301,7 +301,8 @@
       "sheet": true,
       "group": 4,
       "maker_sha256": "42d0d1062ba38d4089422d811999f2359b2a98708c0e012ffdb8549e898eff0b",
-      "caller_sha256": "bed6ad383d7a59f793350301b9857920615c2f50494bf34f0c7d1c435a72d8d3"
+      "caller_sha256": "bed6ad383d7a59f793350301b9857920615c2f50494bf34f0c7d1c435a72d8d3",
+      "cancel_absent": true
     },
     {
       "id": "f24",

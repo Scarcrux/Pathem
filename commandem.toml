@@ -2008,6 +2008,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "TS-U2-Fsize fixed: raw g6 native-6 directly convicts row.width-to-rows.width activation before attachment. Same width constraint now activates after addArrangedSubview. Real M43 German full variant regression completes all8 cells/3cycles/loaded content with no crash, missing treatment or isolation error; native256/332 retains20 geometry/ambiguity pairs. Full old-build partial receipts remain diagnostic only; changed binary needs full rerun."
     at = "2026-11-16T19:30:22Z"
 
+  [[mission.comment]]
+    text = "Task 11 Unit 2 resumed by owner after stop-window closure. v7 controls: clean core, M42/M23, markup confirmation and close/Quit pass; four injections discriminate; 222 headless checks pass. Full v2 was deliberately interrupted on measurement review and is baseline-ineligible. Scroll alignment and popup displayed-title metrics repaired; current-run PNG evidence is enforced. Empty native alert label diagnostics and exact repeat-cycle receipt hardening remain in flight. No final baseline, CI, land or install claimed."
+    at = "2026-11-16T22:09:18Z"
+
+  [[mission.comment]]
+    text = "Task 11 v9 design sample validated: 13 native launches audited on one source/artifact digest; clean core/M02/M42/M23/markup/close/Quit pass, all four injections discriminate, 229 headless checks pass. Empty framework-label geometry is resolved by exact identity plus independent no-ink/visible-ink controls. Exact repeat phases and current PNG evidence are enforced. M07 and F23 remain sample product reds; full 42-job qualification and real baseline/CI remain pending. No land or install."
+    at = "2026-11-16T22:20:01Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

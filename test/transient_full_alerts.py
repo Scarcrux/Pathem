@@ -1,4 +1,5 @@
 """Audited Class B fixture provenance. Missing/stale sites or sources fail closed."""
+from transient_cycle_receipts import cycle_errors
 import hashlib
 import json
 from pathlib import Path
@@ -42,6 +43,8 @@ def receipt_errors(log, language, root=ROOT, only=None):
     if actual!=all_cells:errors.append(f'full B cells differ: missing={sorted(all_cells-actual)} extra={sorted(actual-all_cells)}')
     counts=Counter((cell,int(check)) for _,cell,check in rows)
     for cell in actual&all_cells:
+        if cell in lifecycle:
+            errors += cycle_errors(log,cell,['initial'],[4,5,6,7,8],'full B lifecycle')
         expected_counts={n:3 for n in range(1,9)} if cell in lifecycle else {n:1 for n in range(4)}
         observed={n:c for (found,n),c in counts.items() if found==cell}
         if observed!=expected_counts:errors.append('full B structural/lifecycle counts incomplete: '+cell)

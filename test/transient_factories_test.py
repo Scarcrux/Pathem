@@ -46,3 +46,8 @@ class FactoryProvenanceTests(unittest.TestCase):
     def test_wrong_presentation_profile_is_rejected(self):
         root,r=self.fixture();r['factories'][0]['sheet']=True;(root/'test/transient_factories.json').write_text(json.dumps(r))
         with self.assertRaisesRegex(ValueError,'presentation/string treatment'):validate(root)
+
+    def test_absent_cancel_recipe_is_bound_to_adapter(self):
+        root,r=self.fixture();profile=next(row for row in r['factories'] if row['id']=='f23');profile.pop('cancel_absent')
+        (root/'test/transient_factories.json').write_text(json.dumps(r))
+        with self.assertRaisesRegex(ValueError,'Cancel recipe differs'):validate(root)

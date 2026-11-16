@@ -7,7 +7,7 @@ def sample():
     cell='M-m15-de-light-720-short'
     lines=['TSAMPLE: PASS cell=predicate-startup check=0 sheets=0 argumentOnlyFirstRunState=true']
     lines.append('TSAMPLE: PASS cell=mount-metadata-control check=0 xattr empty-directory symlink discriminate')
-    lines += [f'TSAMPLE: PASS cell={cell} check={n} cycle={cycle}' for cycle in range(3) for n in range(9)]
+    lines += [f'TSAMPLE: PASS cell={cell} check={n} '+(f'phase=cycle{cycle}-mounted' if n in (1,2,3) else f'cycle={cycle}') for cycle in range(3) for n in range(9)]
     lines += [f'TSAMPLE: COVERED class=A site={r["site"]} cell={cell}']
     return '\n'.join(lines)
 
@@ -46,13 +46,13 @@ class MountTreatmentControls(unittest.TestCase):
         for name in ['short','long255']:
             cell=f'M-m39-de-light-720-{name}'
             for cycle in range(3):
-                lines += [f'TSAMPLE: PASS cell={cell} check={n} cycle={cycle}' for n in range(9)]
-                lines += [f'TSAMPLE: PASS cell={cell} check={n} phase=content-changed' for n in [1,2,3]]
+                lines += [f'TSAMPLE: PASS cell={cell} check={n} '+(f'phase=cycle{cycle}-mounted' if n in (1,2,3) else f'cycle={cycle}') for n in range(9)]
+                lines += [f'TSAMPLE: PASS cell={cell} check={n} phase=cycle{cycle}-content-changed' for n in [1,2,3]]
                 lines.append(f'TSAMPLE: PASS cell=mount-content check=0 cell={cell} cycle={cycle} changed-content delivered=true')
             lines.append(f'TSAMPLE: COVERED class=A site={recipe["site"]} cell={cell}')
         text='\n'.join(lines)
         self.assertEqual(receipt_errors(text,'de',0,True,'m39'),[])
         omitted='\n'.join(x for x in lines if not ('cell=mount-content' in x and 'cycle=2' in x))
         self.assertTrue(any('changed content delivery incomplete' in e for e in receipt_errors(omitted,'de',0,True,'m39')))
-        omitted='\n'.join(x for x in lines if not ('phase=content-changed' in x and 'check=2' in x))
+        omitted='\n'.join(x for x in lines if not ('-content-changed' in x and 'check=2' in x))
         self.assertTrue(any('three-cycle' in e for e in receipt_errors(omitted,'de',0,True,'m39')))

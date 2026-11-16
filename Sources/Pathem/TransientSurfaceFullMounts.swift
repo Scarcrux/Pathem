@@ -904,8 +904,11 @@ extension TransientSurfaceSample {
             }
             emit(
                 cell, 4,
-                TransientSurfaceChecks.singlePresentation(
-                    before: before, after: windows(), expected: window.windowNumber)
+                singleSurfacePresentation(
+                    before: before, expected: window,
+                    alert: TransientPresentationProbe.current.flatMap {
+                        $0.window === window ? $0 : nil
+                    })
                     && TransientSurfaceChecks.presentation(
                         mount.presentation,
                         parent: window.sheetParent?.windowNumber, host: host.windowNumber,

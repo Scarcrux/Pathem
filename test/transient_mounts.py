@@ -1,5 +1,6 @@
 """Expected custom-surface treatment, independently bound to the source inventory."""
 from collections import Counter
+from transient_cycle_receipts import cycle_errors
 import json
 from pathlib import Path
 import re
@@ -45,6 +46,7 @@ def receipt_errors(log, language, group, probe_one=False, only=None, root=ROOT):
     counts=Counter((cell,int(check)) for _,cell,check in rows)
     for cell in expected & actual:
         recipe=next(r for r in recipes if cell.startswith('M-'+r['id']+'-'))
+        errors += cycle_errors(log,cell,['mounted']+(['content-changed'] if recipe.get('content_change') else []),[0,4,5,6,7,8],'custom mount')
         if any(counts[cell,check]!=(6 if recipe.get('content_change') and check in (1,2,3) else 3) for check in range(9)):
             errors.append('custom mount three-cycle check set incomplete: '+cell)
     covered=Counter(re.findall(r'^TSAMPLE: COVERED class=A site=(\S+) cell=M-',log,re.M))
