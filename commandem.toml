@@ -1858,6 +1858,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Finder unit F2 landed (e78e476): Download Now and Remove Download follow one engine rule (CloudItemActions) in the context menu, File menu and commands, shown only for cloud items that need them. Red: finder-cloud-entries-absent-for-local-file failed in all five views before. Review follow-up: validation samples at most 2000 selected items. Probe of real folders: Google Drive items also report as ubiquitous, so both entries appear there too. Keep Downloaded omitted: no public client API. Real iCloud download and eviction not exercised. Search unit S2 landed (777510d): semantic search shows Indexing and Ranking, a failed index with its reason, the 5000-item cap, and says why it refuses column view, remote panes and smart lists; clearing restores selection and scroll (red proven). Review found and fixed a stuck status when focus moves to the other pane mid-search (red 26/27, green 27/27). Suites on combined source: sidebar-transfer 688/688, file search 465/465, Finder 203/203, background 342/342, smoke pass. Translations of the new strings are unreviewed by native speakers."
     at = "2026-11-16T19:48:23Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 Live iCloud test (owner offered a real file): Remove Download on an iCloud Drive item is refused with NSFileProviderErrorNonEvictable (-2008) because Optimize Mac Storage is off on this Mac; Pathem showed 'The file couldn't be saved'. a29e9b1 names the cause and remedy; opt-in live test PATHEM_ICLOUD_LIVE_TEST=1. Google Drive round trip (download then remove download) worked and matched CloudItemFacts. Search S3 landed (ef415d8): semantic is a third mode of the Cmd-F panel with scope, subfolders, Open/Reveal and the S2 states; agent's GUI suites green before the owner's 15:30 test pause, only headless checks rerun after rebase. Finder F3 (Services, 5641f7f in claude-2) held: the drawn Services item and the Shortcuts check need a visual look, paused by the owner."
+    at = "2026-11-16T22:33:47Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
