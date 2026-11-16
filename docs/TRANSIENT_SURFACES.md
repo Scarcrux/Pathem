@@ -90,6 +90,17 @@ alert's message and informative text from its real localized strings in every sh
 language and applies checks 1 and 2 to a standard alert of that content. Sites whose text
 is assembled at run time are listed in the table with the longest plausible value used.
 
+Scope of check 3 (2026-11-16, answering the implementing lane). Ambiguity is checked on
+app-owned layout only: every view in a subtree the app supplied (an alert's accessory view,
+or a custom surface's content view, and their descendants). AppKit's own structure is out
+of scope for this one check: an alert's framework-managed image, text and button nodes, the
+window's field editor and its helpers while a field is edited, and any descendant whose
+class is a private framework class. Those are printed as one INFO line per surface with a
+count and class names, and never fail. The geometry checks and the constraint-conflict log
+check still apply to everything, framework nodes included. Two controls keep the scoping
+honest: an app-supplied accessory with a deliberately under-constrained view fails check 3,
+and the same alert without it passes with the INFO line present.
+
 ## Modal sites
 
 34 sites call `runModal()`, which blocks the harness. Do not rewrite production
