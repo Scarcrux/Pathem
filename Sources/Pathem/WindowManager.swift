@@ -23,12 +23,22 @@ final class WindowManager {
             super.init()
             window.delegate = self
         }
+        /// Closing a window used to drop unsaved PDF markup in any of its tabs without asking.
+        func windowShouldClose(_ sender: NSWindow) -> Bool {
+            browser.prepareDocumentsToClose()
+        }
         func windowWillClose(_ notification: Notification) {
             WindowManager.shared.handleClose(self)
         }
     }
 
     private var hosts: [Host] = []
+    #if DEBUG
+    /// What the close button asks of this window's delegate, for the smoke check.
+    func debugWindowShouldClose(_ window: NSWindow) -> Bool? {
+        hosts.first { $0.window === window }.map { $0.windowShouldClose(window) }
+    }
+    #endif
     /// Kept alive for the app's lifetime and shared with every window (Settings ▸ Updates).
     var updater: UpdaterController?
 
@@ -68,7 +78,8 @@ final class WindowManager {
         browser.updater = updater
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1100, height: 700),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
+            styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered,
+            defer: false)
         window.isReleasedWhenClosed = false  // Host owns the lifetime; the default extra release UAFs on Cmd-W
         window.title = "Pathem"
         window.tabbingIdentifier = Self.tabbingIdentifier

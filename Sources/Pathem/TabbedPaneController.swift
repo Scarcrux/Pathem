@@ -328,6 +328,7 @@ final class TabbedPaneController: NSObject {
 
     private func closeTab(at index: Int) {
         guard tabs.count > 1, tabs.indices.contains(index) else { return }
+        guard tabs[index].prepareViewerToClose() else { return }  // unsaved markup: cancelled
         // Only pull focus to this side if it already had it (or we're closing the
         // active tab), so clicking the X on a background side's tab doesn't steal it.
         let hadFocus = activePane.map { $0.keyView.window?.firstResponder === $0.keyView } ?? false
@@ -509,6 +510,10 @@ final class TabbedPaneController: NSObject {
         // Remove every tab except the target, keeping it as the sole, active tab.
         guard tabs.indices.contains(sender.tag) else { return }
         let keep = tabs[sender.tag]
+        // Ask about unsaved markup in every tab that is about to go, before closing any.
+        for tab in tabs where tab !== keep {
+            guard tab.prepareViewerToClose() else { return }
+        }
         for tab in tabs where tab !== keep { tab.teardown() }
         tabs = [keep]
         activeIndex = 0

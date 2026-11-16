@@ -1840,3 +1840,4 @@
 "prefs.skipCacheFolderSizes" = "计算大小时跳过缓存、临时和构建文件夹";
 "prefs.folderSizeExclusions" = "同时跳过";
 "prefs.folderSizeExclusionsHint" = "文件夹名称或路径，用逗号分隔，例如 node_modules, ~/Movies/Raw。跳过的文件夹显示短横线；右键点按并选择“计算大小”即可测量。";
+"prefs.autosaveMarkup" = "离开文稿时自动保存标记（不提示）";

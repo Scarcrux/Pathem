@@ -1840,3 +1840,4 @@
 "prefs.skipCacheFolderSizes" = "サイズ計算でキャッシュ、一時、ビルドのフォルダをスキップ";
 "prefs.folderSizeExclusions" = "追加でスキップ";
 "prefs.folderSizeExclusionsHint" = "フォルダ名またはパスをカンマ区切りで指定します（例：node_modules, ~/Movies/Raw）。スキップしたフォルダにはダッシュが表示され、右クリックして「サイズを計算」を選ぶと計測できます。";
+"prefs.autosaveMarkup" = "書類を離れるときにマークアップを自動保存（確認なし）";

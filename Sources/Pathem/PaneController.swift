@@ -2831,6 +2831,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         return true
     }
 
+    /// Settle unsaved markup without closing the viewer, for teardowns that are not this
+    /// pane's own doing: its tab, its window, or the app going away. False means the user
+    /// cancelled or the save failed, and the caller must call the teardown off.
+    func prepareViewerToClose() -> Bool { paneViewer?.prepareToClose() ?? true }
+
     var debugDocumentViewer: DocumentPreviewView? { paneViewer?.debugViewer }
 
     /// Whether the document viewer overlay is currently showing (for the smoke check).

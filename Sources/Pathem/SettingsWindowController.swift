@@ -293,6 +293,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                     L("prefs.confirmBeforeDelete", "Confirm before moving items to the Trash"),
                     \.confirmBeforeDelete),
                 check(
+                    L(
+                        "prefs.autosaveMarkup",
+                        "Save markup automatically when leaving a document (no prompt)"),
+                    \.autosaveMarkup),
+                check(
                     L("prefs.downloadSuggestions", "Offer filing suggestions for new downloads"),
                     \.downloadSuggestionsEnabled),
                 labeled(

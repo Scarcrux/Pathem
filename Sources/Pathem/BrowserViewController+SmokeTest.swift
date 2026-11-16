@@ -2030,6 +2030,73 @@ extension BrowserViewController {
                 "markup-discard-allows-navigation",
                 !pane.isShowingViewer && ((try? Data(contentsOf: openPDF)) ?? Data()) == saved,
                 "showing=\(pane.isShowingViewer)")
+
+            // Unsaved markup and the ways a document can go away that are not the pane's own
+            // doing: closing the window, quitting, closing the tab. These used to drop the
+            // markup without asking (TS-U2-F04), and the prompt had no Cancel (TS-U2-F03).
+            func bytes() -> Data { (try? Data(contentsOf: openPDF)) ?? Data() }
+            let delegate = NSApp.delegate as? PathemAppDelegate
+            let window = view.window
+            pane.navigate(to: openDir)
+            pane.presentViewer(openPDF)
+            pane.debugDocumentViewer?.debugAddUnsavedHighlight()
+            let unsaved = bytes()
+            pane.debugDocumentViewer?.debugLeaveChoice = .cancel
+            pane.navigate(to: elsewhere)
+            let stayed =
+                pane.isShowingViewer && pane.debugDocumentViewer?.debugIsEdited == true
+                && pane.currentURL.standardizedFileURL == openDir.standardizedFileURL
+            let closeCancelled = window.flatMap { WindowManager.shared.debugWindowShouldClose($0) }
+            let quitCancelled = delegate?.applicationShouldTerminate(NSApp)
+            let tabCancelled = pane.prepareViewerToClose()
+            check(
+                "markup-cancel-keeps-document-on-leave-close-quit-and-tab",
+                stayed && closeCancelled == false && quitCancelled == .terminateCancel
+                    && !tabCancelled && pane.debugDocumentViewer?.debugIsEdited == true
+                    && bytes() == unsaved,
+                "stayed=\(stayed) close=\(String(describing: closeCancelled)) quit=\(String(describing: quitCancelled?.rawValue)) tab=\(tabCancelled) fileUntouched=\(bytes() == unsaved)"
+            )
+            // Quit with Discard goes ahead and leaves the file alone.
+            pane.debugDocumentViewer?.debugLeaveChoice = .discard
+            let quitDiscard = delegate?.applicationShouldTerminate(NSApp)
+            check(
+                "markup-quit-discard-proceeds-file-untouched",
+                quitDiscard == .terminateNow && bytes() == unsaved
+                    && pane.debugDocumentViewer?.debugIsEdited == false,
+                "quit=\(String(describing: quitDiscard?.rawValue)) fileUntouched=\(bytes() == unsaved)"
+            )
+            // Closing the window with Save writes the markup and lets the close through.
+            pane.debugDocumentViewer?.debugAddUnsavedHighlight()
+            pane.debugDocumentViewer?.debugLeaveChoice = .save
+            let closeSaved = window.flatMap { WindowManager.shared.debugWindowShouldClose($0) }
+            let afterClose = bytes()
+            check(
+                "markup-window-close-save-writes-the-file",
+                closeSaved == true && afterClose != unsaved
+                    && pane.debugDocumentViewer?.debugIsEdited == false,
+                "close=\(String(describing: closeSaved)) fileChanged=\(afterClose != unsaved)")
+            // The setting: leaving saves with no prompt (no answer is supplied here at all).
+            pane.debugDocumentViewer?.debugAddUnsavedHighlight()
+            pane.debugDocumentViewer?.debugLeaveChoice = nil
+            MarkupLeaveSettings.debugSet(savesAutomatically: true)
+            let autoQuit = delegate?.applicationShouldTerminate(NSApp)
+            MarkupLeaveSettings.debugSet(savesAutomatically: false)
+            check(
+                "markup-autosave-setting-saves-without-asking",
+                autoQuit == .terminateNow && bytes() != afterClose
+                    && pane.debugDocumentViewer?.debugIsEdited == false,
+                "quit=\(String(describing: autoQuit?.rawValue)) fileChanged=\(bytes() != afterClose)"
+            )
+            // The prompt itself: Save on Return, Cancel on Escape, Discard by click.
+            let prompt = DocumentPreviewView.saveMarkupAlert(fileName: "opened.pdf")
+            let keys = prompt.buttons.map(\.keyEquivalent)
+            check(
+                "markup-prompt-has-save-cancel-discard",
+                prompt.buttons.count == 3 && keys == ["\r", "\u{1b}", ""],
+                "buttons=\(prompt.buttons.map(\.title)) keys=\(keys.map { $0.unicodeScalars.map { String($0.value) }.joined() })"
+            )
+            pane.dismissViewer()
+            pane.navigate(to: elsewhere)
         }
         try? FileManager.default.removeItem(at: openDir)
         // Regression (LAST -- it swaps the active pane's view mode): a view-mode swap builds a fresh

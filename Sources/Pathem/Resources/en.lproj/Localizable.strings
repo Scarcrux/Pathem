@@ -1207,6 +1207,7 @@
 "prefs.appearanceLabel" = "Appearance";
 "prefs.appearanceLight" = "Light";
 "prefs.appearanceSystem" = "System";
+"prefs.autosaveMarkup" = "Save markup automatically when leaving a document (no prompt)";
 "prefs.bandwidthHint" = "Caps remote download and upload speed. 0 means unlimited.";
 "prefs.bandwidthLabel" = "Limit transfer speed (KB/s)";
 "prefs.bandwidthPlaceholder" = "0 = unlimited";

@@ -1840,3 +1840,4 @@
 "prefs.skipCacheFolderSizes" = "Omitir carpetas de caché, temporales y de compilación al calcular tamaños";
 "prefs.folderSizeExclusions" = "Omitir también";
 "prefs.folderSizeExclusionsHint" = "Nombres de carpeta o rutas, separados por comas, por ejemplo node_modules, ~/Movies/Raw. Las carpetas omitidas muestran un guion; haga clic derecho y elija Calcular tamaño para medir una.";
+"prefs.autosaveMarkup" = "Guardar las anotaciones automáticamente al salir de un documento (sin preguntar)";

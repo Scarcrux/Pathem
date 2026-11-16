@@ -454,28 +454,62 @@ final class DocumentPreviewView: NSView {
     @discardableResult
     func offerToSaveIfEdited() -> Bool {
         guard isEdited, currentURL != nil else { return true }
-        if let debugSaveChoice {
-            if debugSaveChoice { guard saveMarkup() else { return false } }
-            isEdited = false
-            return true
+        let choice: LeaveChoice
+        if let debugLeaveChoice {
+            choice = debugLeaveChoice
+        } else if MarkupLeaveSettings.savesAutomatically {
+            choice = .save  // the owner opted out of the prompt: leaving saves
+        } else {
+            choice = Self.askToSave(fileName: currentURL?.lastPathComponent ?? "")
         }
-        let alert = NSAlert()
-        alert.messageText = L("markup.saveChanges", "Save your markup?")
-        alert.informativeText = currentURL?.lastPathComponent ?? ""
-        alert.addButton(withTitle: L("preview.save", "Save"))
-        alert.addButton(withTitle: L("markup.discard", "Discard"))
-        if alert.runModal() == .alertFirstButtonReturn {
+        switch choice {
+        case .save:
             guard saveMarkup() else { return false }  // save failed: don't discard the markup
+        case .discard:
+            break
+        case .cancel:
+            return false  // stay in the document; whatever was leaving it is called off
         }
         isEdited = false
         return true
+    }
+
+    /// What to do with unsaved markup when the document is about to go away.
+    enum LeaveChoice { case save, discard, cancel }
+
+    /// The "Save your markup?" prompt. Save is the default (Return); Cancel answers Escape and
+    /// goes back to editing; Discard drops the markup. Used for every way of leaving a
+    /// document, including closing its window and quitting, which used to drop the markup
+    /// without asking.
+    static func askToSave(fileName: String) -> LeaveChoice {
+        let alert = saveMarkupAlert(fileName: fileName)
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: return .save
+        case .alertThirdButtonReturn: return .discard
+        default: return .cancel
+        }
+    }
+
+    static func saveMarkupAlert(fileName: String) -> NSAlert {
+        let alert = NSAlert()
+        alert.messageText = L("markup.saveChanges", "Save your markup?")
+        alert.informativeText = fileName
+        alert.addButton(withTitle: L("preview.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))  // NSAlert binds Escape to it
+        alert.addButton(withTitle: L("markup.discard", "Discard"))
+        return alert
     }
 
     // MARK: Test hooks
 
     /// Answers the "Save your markup?" prompt without a modal (true = Save, false = Discard) and
     /// silences the save-failed alert, so the unsaved-markup paths can run in the smoke harness.
-    var debugSaveChoice: Bool?
+    var debugSaveChoice: Bool? {
+        get { debugLeaveChoice.map { $0 == .save } }
+        set { debugLeaveChoice = newValue.map { $0 ? .save : .discard } }
+    }
+    /// Answers the prompt without a modal, including Cancel.
+    var debugLeaveChoice: LeaveChoice?
     var debugIsEdited: Bool { isEdited }
     @discardableResult
     func debugAddUnsavedHighlight() -> Bool {

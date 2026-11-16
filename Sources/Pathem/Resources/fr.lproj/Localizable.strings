@@ -1840,3 +1840,4 @@
 "prefs.skipCacheFolderSizes" = "Ignorer les dossiers de cache, temporaires et de build lors du calcul des tailles";
 "prefs.folderSizeExclusions" = "Ignorer aussi";
 "prefs.folderSizeExclusionsHint" = "Noms de dossiers ou chemins, séparés par des virgules, par exemple node_modules, ~/Movies/Raw. Les dossiers ignorés affichent un tiret ; faites un clic droit et choisissez Calculer la taille pour en mesurer un.";
+"prefs.autosaveMarkup" = "Enregistrer automatiquement les annotations en quittant un document (sans demander)";

@@ -2235,6 +2235,11 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Quitting used to drop unsaved PDF markup without asking. Settle it in every window
+        // first; Cancel, or a save that fails, calls the quit off.
+        for open in WindowManager.shared.browsers {
+            guard open.prepareDocumentsToClose() else { return .terminateCancel }
+        }
         guard browser?.isTransferring == true else { return .terminateNow }
         let alert = NSAlert()
         alert.alertStyle = .warning

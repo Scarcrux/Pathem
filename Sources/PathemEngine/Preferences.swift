@@ -108,6 +108,9 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var skipCacheFolderSizes: Bool
     /// More folders to leave out: paths or folder names, separated by commas.
     public var folderSizeExclusions: String
+    /// Save PDF and image markup without asking when the document is left, closed or the app
+    /// quits. Off asks with Save, Cancel and Discard.
+    public var autosaveMarkup: Bool
     /// Hide sidebar row labels (icons only) and narrow it, for a compact sidebar.
     public var compactSidebar: Bool
     /// Render sidebar place icons as monochrome templates that tint with the sidebar (a clean,
@@ -197,6 +200,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         showFullPathInTitle: Bool = false, pathBarAtBottom: Bool = true,
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         skipCacheFolderSizes: Bool = true, folderSizeExclusions: String = "",
+        autosaveMarkup: Bool = false,
         compactSidebar: Bool = false, monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
@@ -276,6 +280,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.calculateFolderSizes = calculateFolderSizes
         self.skipCacheFolderSizes = skipCacheFolderSizes
         self.folderSizeExclusions = folderSizeExclusions
+        self.autosaveMarkup = autosaveMarkup
         self.compactSidebar = compactSidebar
         self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
@@ -324,6 +329,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         folderSizeExclusions =
             try c.decodeIfPresent(String.self, forKey: .folderSizeExclusions)
             ?? d.folderSizeExclusions
+        autosaveMarkup =
+            try c.decodeIfPresent(Bool.self, forKey: .autosaveMarkup) ?? d.autosaveMarkup
         compactSidebar =
             try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
         monochromeSidebarIcons =

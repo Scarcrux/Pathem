@@ -1840,3 +1840,4 @@
 "prefs.skipCacheFolderSizes" = "Cache-, temporäre und Build-Ordner bei der Größenberechnung überspringen";
 "prefs.folderSizeExclusions" = "Auch überspringen";
 "prefs.folderSizeExclusionsHint" = "Ordnernamen oder Pfade, durch Kommas getrennt, zum Beispiel node_modules, ~/Movies/Raw. Übersprungene Ordner zeigen einen Strich; per Rechtsklick und „Größe berechnen“ lässt sich einer messen.";
+"prefs.autosaveMarkup" = "Markierungen beim Verlassen eines Dokuments automatisch sichern (ohne Nachfrage)";
