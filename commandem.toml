@@ -1850,6 +1850,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 task 13 unit S1 landed (c25c007, 43f9473; Sonnet agent in claude-3 under docs/SEARCH_SURFACES.md, reviewed and rerun by pathem-claude): Find in Files now reports a failed search, the 2000-result cap, the 100-per-file ripgrep cap, and a failed Replace All, each in the status line. Evidence rerun independently: 16 engine tests, Find in Files sample 15/15, inventory gate PASS; agent reported the full sidebar suite 661/661. Limits: the UI checks had only a compile-level red; ja and zh sentence separators untested; translations are machine-written. Also today: device TLS moved to Network.framework and verified on a paired phone (e66a463); unsaved-markup prompt on close and quit (2313892); inventory pins repaired after my own line shifts (d89abb0). Units F1 (Finder empty-space menu) in review; S2 to S4 and F2 to F4 not started."
     at = "2026-11-16T19:23:15Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 task 10 unit F1 landed (Sonnet agent in claude-2 under docs/FINDER_PARITY.md; reviewed, rebased, squashed and rerun by pathem-claude): one empty-space menu in all five views with selection-only entries hidden, View Options in it, Eject on ejectable volumes with the sidebar's rule. Background 342/342, Finder 198/198, UI 49/49, sidebar 661/661, smoke and inventory PASS. Not verified: appearance on screen. F2 (iCloud), F3 (Services), F4 (tags) not started; F5 folded into F3 after the investigation."
+    at = "2026-11-16T19:30:50Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
