@@ -1261,6 +1261,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-aa5f4a9a"
     title = "TS-F2: Reclaim Space Delete Now makes Delete Permanently the Return default. Defect (irreversible, skips the Trash): Cancel becomes the default. Assigned to @pathem-codex-2 with task 11."
+    state = "skip"
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -1769,6 +1770,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "2026-11-15: task 54 (LM2-F1b) fixed. Root cause was wider than the finding: applyCompactSidebar ran on every preference change and reset a resized sidebar to 200 pt. Now only moves the divider when compact mode changes and restores the prior width. Baseline is F4 + F6 only. Designs for task 11 (docs/TRANSIENT_SURFACES.md) and task 1 (docs/VISUAL_BASELINES.md) written and handed to @pathem-codex-2, task 11 Unit 0/1 first."
     at = "2026-11-15T20:49:00Z"
+
+  [[mission.comment]]
+    text = "2026-11-15/16 owner rulings on destructive Return defaults. (a) Delete Immediately, Empty Trash and remote Delete: intended as they are, Return confirms. Owner: 'we already have confirmations for those and this isn't a file manager meant for newbs.' (b) Reclaim Space Delete Now (TS-F2): owner chose 'Go back to the original: Return deletes'. My earlier ruling that Cancel should be the default was wrong for this product and is withdrawn; task 58 closed as not-a-defect. (c) Conflict popover (TS-F1): Keep Both on Return stands, chosen explicitly by the owner."
+    at = "2026-11-16T00:14:14Z"
 
 [[mission]]
   id = "m-e1443252"
