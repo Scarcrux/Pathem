@@ -32,7 +32,8 @@
     "Sources/Pathem/BrowserViewController+CompilerUITests.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
     "Sources/Pathem/DeterministicE2E.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
     "Sources/Pathem/TransientSurfaceSample.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage",
-    "Sources/Pathem/TransientSurfaceSampleChecks.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage"
+    "Sources/Pathem/TransientSurfaceSampleChecks.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage",
+    "Sources/Pathem/TransientSurfaceFullAlerts.swift": "DEBUG-only full B fixture harness; explicitly excluded from production census"
   },
   "ignored_counts": {
     "Sources/Pathem/BrowserViewController+BackgroundMenuUITests.swift": 1,
@@ -53,7 +54,8 @@
     "Sources/Pathem/CleanupController.swift": 1,
     "Sources/Pathem/PathemApp.swift": 8,
     "Sources/Pathem/SidebarController.swift": 1,
-    "Sources/Pathem/TransientSurfaceSample.swift": 9
+    "Sources/Pathem/TransientSurfaceSample.swift": 9,
+    "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1
   },
   "sites": {
     "Sources/Pathem/BrowserViewController+Transfers.swift:82:28:ask": {

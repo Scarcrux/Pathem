@@ -26,7 +26,7 @@ def source_digest():
     paths = (sorted((ROOT / 'Sources/Pathem').rglob('*.swift'))
              + sorted((ROOT / 'Sources/Pathem/Resources').rglob('Localizable.strings'))
              + sorted((ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings'))
-             + [ROOT / 'test/transient_inventory.json', pathlib.Path(__file__)])
+             + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', pathlib.Path(__file__)])
     for path in paths:
         digest.update(str(path.relative_to(ROOT)).encode())
         digest.update(path.read_bytes())
@@ -39,7 +39,7 @@ def source_digest():
     return digest.hexdigest()
 
 
-def validate(log, code, case, language, pilot, expected_cancel, reference=None):
+def validate(log, code, case, language, pilot, expected_cancel, reference=None, full=False, category="all"):
     errors = []
     rows = CHECK.findall(log)
     failures = {(cell, int(check)) for status, cell, check in rows if status == 'FAIL'}
@@ -60,7 +60,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None):
     if f'TSAMPLE: START language={language} ' not in log or f'cancel={expected_cancel} ' not in log:
         errors.append('requested localization not delivered')
     a_cells = {cell for _, cell, _ in rows if cell.startswith('A-')}
-    expected_a = (3 if pilot else 16) if language in ['de', 'ja'] else 0
+    expected_a = (3 if pilot else 16) if language in ['de', 'ja'] and category != "b" else 0
     if len(a_cells) != expected_a or (a_cells and {c.split('-')[1] for c in a_cells} != {'rename', 'reclaim', 'conflict'}):
         errors.append(f'class A set incomplete: {len(a_cells)} expected {expected_a}')
     for cell in a_cells:
@@ -77,7 +77,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None):
     if case == 'clean':
         b = {cell for _, cell, _ in rows if cell.startswith('B-') and cell != 'B-contract' and not cell.endswith('-lifecycle')}
         behavior = {cell for _, cell, _ in rows if cell.startswith('B-') and cell.endswith('-lifecycle')}
-        if len(b) != (10 if pilot else 20) or len(behavior) != ((3 if pilot else 6) if language == 'de' else 0):
+        if len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0):
             errors.append('class B structural/lifecycle sample incomplete')
         if code != 0 or failures:
             errors.append(f'clean native verdict red: exit {code}, {len(failures)} cell/check pairs')
@@ -103,7 +103,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None):
     return errors, failures
 
 
-def run_case(case, language, pilot):
+def run_case(case, language, pilot, full=False, category="all"):
     temp = pathlib.Path(subprocess.check_output(['getconf', 'DARWIN_USER_TEMP_DIR'], text=True).strip())
     scratch = pathlib.Path(tempfile.mkdtemp(prefix='pathem-transient-sample-', dir=temp))
     before = defaults_snapshot()
@@ -112,6 +112,10 @@ def run_case(case, language, pilot):
                PATHEM_TRANSIENT_SURFACES_OUT=str(scratch), PATHEM_TRANSIENT_SURFACES_LANGUAGE=language,
                PATHEM_TRANSIENT_SURFACES_INVENTORY=str(ROOT / 'test/transient_inventory.json'),
                PATHEM_TRANSIENT_SURFACES_INJECT=case)
+    if full:
+        env.update(PATHEM_TRANSIENT_SURFACES_SET=category, PATHEM_TRANSIENT_SURFACES_FULL="1", PATHEM_TRANSIENT_FULL_ALERTS=str(ROOT / "test/transient_full_alerts.json"))
+    else:
+        env.pop("PATHEM_TRANSIENT_SURFACES_FULL", None)
     for name in ['PATHEM_TRANSIENT_SURFACES_FOCUS', 'PATHEM_LAYOUT_MATRIX_TEST', 'PATHEM_LAYOUT_MATRIX_INJECT', 'PATHEM_TRANSIENT_INJECT_DISMISS_FAILURE', 'PATHEM_TRANSIENT_SURFACES_PILOT']:
         env.pop(name, None)
     if pilot:
@@ -143,7 +147,7 @@ def run_case(case, language, pilot):
     expected_catalog = json.loads(subprocess.check_output(['plutil', '-convert', 'json', '-o', '-', str(ROOT / f'Sources/Pathem/Resources/{language}.lproj/Localizable.strings')]))
     reference_path = ROOT / '.build/transient-sample-clean-de-pilot.json'
     reference = json.loads(reference_path.read_text()) if reference_path.exists() else None
-    errors, failures = validate(log, code, case, language, pilot, expected_catalog['common.cancel'], reference)
+    errors, failures = validate(log, code, case, language, pilot, expected_catalog['common.cancel'], reference, full, category)
     built_paths = [p for p in (ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings')
                    if p.parent.name.casefold() == (language + '.lproj').casefold()]
     catalog_match = False
@@ -185,15 +189,21 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('case', choices=CASES)
     parser.add_argument('--pilot', action='store_true')
+    parser.add_argument('--full', action='store_true')
+    parser.add_argument('--set', choices=['all', 'b'], default='all')
     parser.add_argument('--language', choices=LANGUAGES)
     args = parser.parse_args()
     os.umask(0o077)
+    if args.full:
+        __import__("transient_full_alerts").validate()
+        if args.pilot:
+            parser.error("full and pilot are mutually exclusive")
     if args.case != 'clean' and not args.pilot:
         parser.error('injections are bounded pilot controls')
     languages = [args.language] if args.language else (['de'] if args.pilot else LANGUAGES)
     if args.case != 'clean' and languages != ['de']:
         parser.error('injections use the contracted German pilot')
-    results = [run_case(args.case, language, args.pilot) for language in languages]
+    results = [run_case(args.case, language, args.pilot, args.full, args.set) for language in languages]
     print('RESULT: '+('PASS' if all(results) else 'FAIL')+' sample validation')
     raise SystemExit(not all(results))
 

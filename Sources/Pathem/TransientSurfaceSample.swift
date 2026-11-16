@@ -5,24 +5,25 @@ import PathemEngine
 /// Unit 1 only. Each destructive action is restricted to a file created by this runner.
 @MainActor
 final class TransientSurfaceSample {
-    private let browser: BrowserViewController
-    private let root: URL
-    private let host: NSWindow
-    private let output: URL
-    private let policy: [String: [String: Any]]
-    private let focus = NSTextView(frame: NSRect(x: 10, y: 10, width: 120, height: 24))
-    private let environment = ProcessInfo.processInfo.environment
-    private var results: [Bool] = []
-    private var captured = Set<String>()
-    private var injected = Set<String>()
-    private var cells = Set<String>()
-    private var predicateCount = 0
-    private var requestedSize = NSSize.zero
-    private var requestedAppearance: NSAppearance.Name?
-    private var frameworkInfo: [String: (count: Int, names: Set<String>)] = [:]
-    private var language: String { environment["PATHEM_TRANSIENT_SURFACES_LANGUAGE"] ?? "missing" }
-    private var pilot: Bool { environment["PATHEM_TRANSIENT_SURFACES_PILOT"] == "1" }
-    private var injection: String { environment["PATHEM_TRANSIENT_SURFACES_INJECT"] ?? "clean" }
+    let browser: BrowserViewController
+    let root: URL
+    let host: NSWindow
+    let output: URL
+    let policy: [String: [String: Any]]
+    let focus = NSTextView(frame: NSRect(x: 10, y: 10, width: 120, height: 24))
+    let environment = ProcessInfo.processInfo.environment
+    var results: [Bool] = []
+    var captured = Set<String>()
+    var injected = Set<String>()
+    var cells = Set<String>()
+    var predicateCount = 0
+    var requestedSize = NSSize.zero
+    var requestedAppearance: NSAppearance.Name?
+    var frameworkInfo: [String: (count: Int, names: Set<String>)] = [:]
+    var language: String { environment["PATHEM_TRANSIENT_SURFACES_LANGUAGE"] ?? "missing" }
+    var full: Bool { environment["PATHEM_TRANSIENT_SURFACES_FULL"] == "1" }
+    var pilot: Bool { environment["PATHEM_TRANSIENT_SURFACES_PILOT"] == "1" }
+    var injection: String { environment["PATHEM_TRANSIENT_SURFACES_INJECT"] ?? "clean" }
 
     init?(browser: BrowserViewController, demo: DemoWorkspace.Layout) {
         guard let host = browser.view.window,
@@ -40,7 +41,7 @@ final class TransientSurfaceSample {
         self.policy = policy
     }
 
-    private func settle(_ condition: () -> Bool) -> Bool {
+    func settle(_ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(3)
         repeat {
             if condition() { return true }
@@ -48,7 +49,7 @@ final class TransientSurfaceSample {
         } while Date() < deadline
         return condition()
     }
-    private func emit(
+    func emit(
         _ cell: String, _ number: Int, _ passed: Bool, _ detail: String = "", content: NSView? = nil
     ) {
         results.append(passed)
@@ -59,7 +60,7 @@ final class TransientSurfaceSample {
             ))
         if !passed, let content { capture(content, key: cell + "-check\(number)") }
     }
-    private func capture(_ content: NSView, key: String) {
+    func capture(_ content: NSView, key: String) {
         guard captured.insert(key).inserted,
             let bitmap = content.bitmapImageRepForCachingDisplay(in: content.bounds)
         else { return }
@@ -78,10 +79,10 @@ final class TransientSurfaceSample {
             }
         }
     }
-    private func windows() -> [Int] {
+    func windows() -> [Int] {
         NSApp.windows.filter(\.isVisible).map(\.windowNumber).sorted()
     }
-    private func snapshot(_ directory: URL) -> [String: Data] {
+    func snapshot(_ directory: URL) -> [String: Data] {
         let fm = FileManager.default
         guard
             let entries = fm.enumerator(
@@ -98,10 +99,10 @@ final class TransientSurfaceSample {
         }
         return files
     }
-    private func delivered(_ name: String, _ detail: String) {
+    func delivered(_ name: String, _ detail: String) {
         if injected.insert(name).inserted { print("TSAMPLE: INJECT \(name) \(detail)") }
     }
-    private func recordFramework(_ content: NSView, alert: NSAlert?, cell: String) {
+    func recordFramework(_ content: NSView, alert: NSAlert?, cell: String) {
         let nodes = TransientSurfaceChecks.ambiguity(content, alert: alert).framework
         let old = frameworkInfo[cell] ?? (0, [])
         frameworkInfo[cell] = (
@@ -109,7 +110,7 @@ final class TransientSurfaceSample {
             old.names.union(nodes.map { String(describing: type(of: $0)) })
         )
     }
-    private func inspect(
+    func inspect(
         _ content: NSView, alert: NSAlert?, cell: String, phase: String, sheet: Bool,
         presented: Bool
     ) {
@@ -134,7 +135,7 @@ final class TransientSurfaceSample {
             "phase=\(phase) frame=\(frame) host=\(host.contentLayoutRect.size) screen=\(screen) presented=\(presented) requestedHost=\(requestedSize)",
             content: content)
     }
-    private func key(_ character: String, window: NSWindow) -> Bool {
+    func key(_ character: String, window: NSWindow) -> Bool {
         guard
             let event = NSEvent.keyEvent(
                 with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
@@ -144,7 +145,7 @@ final class TransientSurfaceSample {
         else { return false }
         return window.performKeyEquivalent(with: event)
     }
-    private func predicateControls() {
+    func predicateControls() {
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 100))
         let field = NSTextField(frame: NSRect(x: 10, y: 10, width: 100, height: 24))
         view.addSubview(field)
@@ -271,7 +272,7 @@ final class TransientSurfaceSample {
         )
         predicateControls()
         guard results.allSatisfy({ $0 }) else { finish(started) }
-        if ["de", "ja"].contains(language) {
+        if environment["PATHEM_TRANSIENT_SURFACES_SET"] != "b", ["de", "ja"].contains(language) {
             let appearances: [NSAppearance.Name] = pilot ? [.aqua] : [.aqua, .darkAqua]
             let sizes: [NSSize] =
                 pilot
@@ -295,10 +296,10 @@ final class TransientSurfaceSample {
                 }
             }
         }
-        if injection == "clean" { classBSample() }
+        if injection == "clean" { if full { classBFull() } else { classBSample() } }
         finish(started)
     }
-    private func finish(_ started: Date) -> Never {
+    func finish(_ started: Date) -> Never {
         focus.removeFromSuperview()
         for (cell, info) in frameworkInfo.sorted(by: { $0.key < $1.key }) {
             print(
@@ -314,8 +315,9 @@ final class TransientSurfaceSample {
         exit(results.allSatisfy { $0 } ? 0 : 1)
     }
 
-    private func runSurface(
-        _ kind: String, cell: String, name: String, plain: (() -> NSAlert)? = nil
+    func runSurface(
+        _ kind: String, cell: String, name: String, plain: (() -> NSAlert)? = nil,
+        cancelAt: Int? = nil, responseBase: Int = 1000
     ) {
         for cycle in 0..<3 {
             let fm = FileManager.default
@@ -336,7 +338,7 @@ final class TransientSurfaceSample {
             host.makeFirstResponder(focus)
             let responder = host.firstResponder.map(ObjectIdentifier.init)
             let beforeWindows = windows()
-            let returnAction = kind != "plain" && cycle == 1
+            let returnAction = (kind != "plain" || full) && cycle == 1
             let escape = kind == "conflict" && cycle == 2
             var completed = false
             var response: NSApplication.ModalResponse?
@@ -511,14 +513,16 @@ final class TransientSurfaceSample {
                     escape ? "\u{1b}" : "\r", window: window)
             } else {
                 let cancelIndex =
-                    kind == "plain" && cell.contains("extension-confirm") ? 0 : buttons.count - 1
+                    cancelAt
+                    ?? (kind == "plain" && cell.contains("extension-confirm")
+                        ? 0 : buttons.count - 1)
                 if buttons.indices.contains(cancelIndex) { buttons[cancelIndex].performClick(nil) }
             }
             let ended = settle { completed }
             var actualResponseIndex: Int?
             if let response {
                 actualResponseIndex =
-                    response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+                    response.rawValue - responseBase
             }
             if kind == "conflict", returnAction {
                 if case .keepBoth = conflictAnswer {
@@ -527,7 +531,7 @@ final class TransientSurfaceSample {
                     actualResponseIndex = -1
                 }
             }
-            if kind != "plain" {
+            if kind != "plain" || full {
                 emit(
                     cell, 6,
                     defaultOK
@@ -540,7 +544,8 @@ final class TransientSurfaceSample {
             let afterFiles = snapshot(directory)
             let expectedMutation = returnAction && ["rename", "reclaim"].contains(kind)
             let cancelIndex =
-                kind == "plain" && cell.contains("extension-confirm") ? 0 : buttons.count - 1
+                cancelAt
+                ?? (kind == "plain" && cell.contains("extension-confirm") ? 0 : buttons.count - 1)
             let cancelConfirmed =
                 kind == "conflict" ? conflictAnswer == nil : actualResponseIndex == cancelIndex
             let stateOK =
@@ -605,7 +610,7 @@ final class TransientSurfaceSample {
         }
     }
 
-    private func plainAlert(_ sample: [String: Any]) -> NSAlert {
+    func plainAlert(_ sample: [String: Any]) -> NSAlert {
         let alert = NSAlert()
         let id = sample["id"] as! String
         let key = sample["message_key"] as! String
@@ -650,7 +655,7 @@ final class TransientSurfaceSample {
         }
         return alert
     }
-    private func ownedPathProof(_ sample: [String: Any], cell: String) {
+    func ownedPathProof(_ sample: [String: Any], cell: String) {
         let fm = FileManager.default
         var directory = root.appendingPathComponent("OwnedPathProof", isDirectory: true)
         for index in 0..<3 {
@@ -685,7 +690,7 @@ final class TransientSurfaceSample {
             capture(content, key: "owned-path-proof-" + language)
         } catch { emit(cell, 5, false, "owned-path fixture cannot be created") }
     }
-    private func classBSample() {
+    func classBSample() {
         requestedAppearance = nil
         let samples = policy.values.compactMap { $0["sample"] as? [String: Any] }.sorted {
             ($0["id"] as! String) < ($1["id"] as! String)
