@@ -1,0 +1,691 @@
+#if DEBUG
+import AppKit
+import PathemEngine
+
+/// Unit 1 only. Each destructive action is restricted to a file created by this runner.
+@MainActor
+final class TransientSurfaceSample {
+    private let browser: BrowserViewController
+    private let root: URL
+    private let host: NSWindow
+    private let output: URL
+    private let policy: [String: [String: Any]]
+    private let focus = NSTextView(frame: NSRect(x: 10, y: 10, width: 120, height: 24))
+    private let environment = ProcessInfo.processInfo.environment
+    private var results: [Bool] = []
+    private var captured = Set<String>()
+    private var injected = Set<String>()
+    private var cells = Set<String>()
+    private var predicateCount = 0
+    private var frameworkInfo: [String: (count: Int, names: Set<String>)] = [:]
+    private var language: String { environment["PATHEM_TRANSIENT_SURFACES_LANGUAGE"] ?? "missing" }
+    private var pilot: Bool { environment["PATHEM_TRANSIENT_SURFACES_PILOT"] == "1" }
+    private var injection: String { environment["PATHEM_TRANSIENT_SURFACES_INJECT"] ?? "clean" }
+
+    init?(browser: BrowserViewController, demo: DemoWorkspace.Layout) {
+        guard let host = browser.view.window,
+            let path = ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_OUT"],
+            let inventory = ProcessInfo.processInfo.environment[
+                "PATHEM_TRANSIENT_SURFACES_INVENTORY"],
+            let data = try? Data(contentsOf: URL(fileURLWithPath: inventory)),
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let policy = json["sites"] as? [String: [String: Any]]
+        else { return nil }
+        self.browser = browser
+        self.host = host
+        self.root = demo.root.appendingPathComponent("TransientSampleFixtures", isDirectory: true)
+        self.output = URL(fileURLWithPath: path, isDirectory: true)
+        self.policy = policy
+    }
+
+    private func settle(_ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(3)
+        repeat {
+            if condition() { return true }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+        } while Date() < deadline
+        return condition()
+    }
+    private func emit(
+        _ cell: String, _ number: Int, _ passed: Bool, _ detail: String = "", content: NSView? = nil
+    ) {
+        results.append(passed)
+        cells.insert(cell)
+        FileHandle.standardOutput.write(
+            Data(
+                "TSAMPLE: \(passed ? "PASS" : "FAIL") cell=\(cell) check=\(number) \(detail)\n".utf8
+            ))
+        if !passed, let content { capture(content, key: cell + "-check\(number)") }
+    }
+    private func capture(_ content: NSView, key: String) {
+        guard captured.insert(key).inserted,
+            let bitmap = content.bitmapImageRepForCachingDisplay(in: content.bounds)
+        else { return }
+        content.cacheDisplay(in: content.bounds, to: bitmap)
+        if let data = bitmap.representation(using: .png, properties: [:]) {
+            do { try data.write(to: output.appendingPathComponent(key + ".png")) } catch {
+                emit(key, 1, false, "render write failed")
+            }
+        }
+    }
+    private func windows() -> Set<Int> {
+        Set(NSApp.windows.filter(\.isVisible).map(\.windowNumber))
+    }
+    private func snapshot(_ directory: URL) -> [String: Data] {
+        let fm = FileManager.default
+        guard
+            let entries = fm.enumerator(
+                at: directory, includingPropertiesForKeys: [.isRegularFileKey])
+        else { return [:] }
+        var files: [String: Data] = [:]
+        let base = directory.resolvingSymlinksInPath().standardizedFileURL.path
+        for case let url as URL in entries {
+            if (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
+                let path = url.resolvingSymlinksInPath().standardizedFileURL.path
+                guard path.hasPrefix(base + "/") else { continue }
+                files[String(path.dropFirst(base.count))] = try? Data(contentsOf: url)
+            }
+        }
+        return files
+    }
+    private func delivered(_ name: String, _ detail: String) {
+        if injected.insert(name).inserted { print("TSAMPLE: INJECT \(name) \(detail)") }
+    }
+    private func recordFramework(_ content: NSView, alert: NSAlert?, cell: String) {
+        let nodes = TransientSurfaceChecks.ambiguity(content, alert: alert).framework
+        let old = frameworkInfo[cell] ?? (0, [])
+        frameworkInfo[cell] = (
+            max(old.count, nodes.count),
+            old.names.union(nodes.map { String(describing: type(of: $0)) })
+        )
+    }
+    private func inspect(
+        _ content: NSView, alert: NSAlert?, cell: String, phase: String, sheet: Bool,
+        presented: Bool
+    ) {
+        recordFramework(content, alert: alert, cell: cell)
+        let issues = TransientSurfaceChecks.geometry(content, alert: alert)
+        for number in [1, 3] {
+            let failures = issues.filter { $0.number == number }
+            emit(
+                cell, number, failures.isEmpty,
+                "phase=\(phase) count=\(failures.count) first=\(failures.first?.detail ?? "none")",
+                content: content)
+        }
+        let screen = host.screen?.visibleFrame ?? NSScreen.main!.visibleFrame
+        let size = content.window?.frame.size ?? content.bounds.size
+        // Structural-only B cells check measured extents, not an unpresented window origin.
+        let frame = presented ? content.window!.frame : NSRect(origin: screen.origin, size: size)
+        emit(
+            cell, 2,
+            TransientSurfaceChecks.fits(
+                frame: frame, screen: screen, sheet: sheet, host: host.contentLayoutRect.size),
+            "phase=\(phase) frame=\(frame) host=\(host.contentLayoutRect.size) screen=\(screen) presented=\(presented)",
+            content: content)
+    }
+    private func key(_ character: String, window: NSWindow) -> Bool {
+        guard
+            let event = NSEvent.keyEvent(
+                with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                windowNumber: window.windowNumber, context: nil, characters: character,
+                charactersIgnoringModifiers: character, isARepeat: false,
+                keyCode: character == "\r" ? 36 : 53)
+        else { return false }
+        return window.performKeyEquivalent(with: event)
+    }
+    private func predicateControls() {
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 100))
+        let field = NSTextField(frame: NSRect(x: 10, y: 10, width: 100, height: 24))
+        view.addSubview(field)
+        func control(_ number: Int, _ good: Bool, _ bad: Bool, _ isolated: Bool = true) {
+            let passed = good && !bad && isolated
+            predicateCount += 1
+            emit(
+                "predicate-\(number)", number, passed,
+                "positive=\(good) negative=\(bad) isolated=\(isolated)")
+        }
+        let before = TransientSurfaceChecks.geometry(view)
+        field.frame.origin.x = 180
+        let clipped = TransientSurfaceChecks.geometry(view)
+        control(
+            1, before.isEmpty, !clipped.contains { $0.number == 1 },
+            clipped.allSatisfy { $0.number == 1 })
+        field.frame.origin.x = 10
+        let scrollRoot = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 100))
+        let clip = NSClipView(frame: NSRect(x: 10, y: 10, width: 100, height: 50))
+        let document = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: 200))
+        clip.documentView = document
+        scrollRoot.addSubview(clip)
+        let validScroll = TransientSurfaceChecks.geometry(scrollRoot)
+        clip.frame.origin.x = 180
+        let invalidScroll = TransientSurfaceChecks.geometry(scrollRoot)
+        emit(
+            "predicate-1-viewport", 1,
+            validScroll.isEmpty && invalidScroll.contains { $0.number == 1 },
+            "scrolling content clipped; viewport itself must still fit")
+        let screen = NSRect(x: 0, y: 0, width: 1000, height: 800)
+        control(
+            2,
+            TransientSurfaceChecks.fits(
+                frame: NSRect(x: 10, y: 10, width: 200, height: 100), screen: screen, sheet: true,
+                host: NSSize(width: 720, height: 420)),
+            TransientSurfaceChecks.fits(
+                frame: NSRect(x: 10, y: 10, width: 800, height: 100), screen: screen, sheet: true,
+                host: NSSize(width: 720, height: 420)))
+        let native = NSAlert()
+        native.messageText = "Native ambiguity control"
+        native.informativeText = "Native layout control body"
+        native.addButton(withTitle: "OK")
+        native.layout()
+        let nativeContent = native.window.contentView!
+        let nativeIssues = TransientSurfaceChecks.geometry(nativeContent, alert: native)
+        recordFramework(nativeContent, alert: native, cell: "predicate-3-native")
+        let frameworkReported = !TransientSurfaceChecks.ambiguity(nativeContent, alert: native)
+            .framework.isEmpty
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 200, height: 70))
+        let ambiguous = NSView(frame: NSRect(x: 0, y: 0, width: 50, height: 30))
+        ambiguous.translatesAutoresizingMaskIntoConstraints = false
+        accessory.addSubview(ambiguous)
+        NSLayoutConstraint.activate([
+            ambiguous.widthAnchor.constraint(equalToConstant: 50),
+            ambiguous.heightAnchor.constraint(equalToConstant: 30),
+        ])
+        native.accessoryView = accessory
+        native.layout()
+        nativeContent.layoutSubtreeIfNeeded()
+        // Leave x/y under-constrained, but choose a visible valid solution so
+        // this control changes only ambiguity rather than also clipping a view.
+        ambiguous.setFrameOrigin(NSPoint(x: 10, y: 10))
+        let ambiguityDelivered = ambiguous.hasAmbiguousLayout
+        let ambiguousIssues = TransientSurfaceChecks.geometry(nativeContent, alert: native)
+        print(
+            "TSAMPLE: CONTROL3 appAmbiguous=\(ambiguityDelivered) before=\(nativeIssues.map { ($0.number, $0.detail) }) after=\(ambiguousIssues.map { ($0.number, $0.detail) })"
+        )
+        control(
+            3, !nativeIssues.contains { $0.number == 3 } && frameworkReported,
+            !ambiguousIssues.contains { $0.number == 3 },
+            ambiguityDelivered && ambiguousIssues.allSatisfy { $0.number == 3 })
+        control(
+            4, TransientSurfaceChecks.ownership(actual: 10, expected: 10),
+            TransientSurfaceChecks.ownership(actual: 20, expected: 10))
+        let data = ["fixture": Data("original".utf8)]
+        control(
+            5, TransientSurfaceChecks.unchanged(data, data),
+            TransientSurfaceChecks.unchanged(data, ["fixture": Data("changed".utf8)]))
+        control(
+            6,
+            TransientSurfaceChecks.defaultAction(
+                actual: 1, expected: 1, destructive: false, intended: false, delivered: 1),
+            TransientSurfaceChecks.defaultAction(
+                actual: 0, expected: 1, destructive: true, intended: false, delivered: 0))
+        let identity = ObjectIdentifier(focus)
+        control(
+            7,
+            TransientSurfaceChecks.dismissed(
+                pending: false, visible: false, responderBefore: identity, responderAfter: identity),
+            TransientSurfaceChecks.dismissed(
+                pending: true, visible: true, responderBefore: identity, responderAfter: identity))
+        control(
+            8, TransientSurfaceChecks.noAccumulation(before: [1], after: [1]),
+            TransientSurfaceChecks.noAccumulation(before: [1], after: [1, 2]))
+    }
+
+    func run() -> Never {
+        let started = Date()
+        do {
+            try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        } catch {
+            print("RESULT: FAIL cannot create owned sample root")
+            exit(1)
+        }
+        host.contentView!.addSubview(focus)
+        host.makeKeyAndOrderFront(nil)
+        host.makeFirstResponder(focus)
+        print(
+            "TSAMPLE: START language=\(language) preferred=\(Locale.preferredLanguages) cancel=\(L("common.cancel", "missing")) pilot=\(pilot) injection=\(injection)"
+        )
+        predicateControls()
+        guard results.allSatisfy({ $0 }) else { finish(started) }
+        if ["de", "ja"].contains(language) {
+            let appearances: [NSAppearance.Name] = pilot ? [.aqua] : [.aqua, .darkAqua]
+            let sizes: [NSSize] =
+                pilot
+                ? [NSSize(width: 720, height: 420)]
+                : [NSSize(width: 720, height: 420), NSSize(width: 1100, height: 700)]
+            for appearance in appearances {
+                host.appearance = NSAppearance(named: appearance)
+                for size in sizes {
+                    host.setContentSize(size)
+                    for kind in ["rename", "reclaim", "conflict"] {
+                        for long in (kind == "rename" && !pilot ? [false, true] : [false]) {
+                            let name =
+                                long ? String(repeating: "n", count: 251) + ".txt" : "fixture.txt"
+                            let cell =
+                                "A-\(kind)-\(language)-\(appearance == .aqua ? "light" : "dark")-\(Int(size.width))-\(long ? "long255" : "short")"
+                            runSurface(kind, cell: cell, name: name)
+                        }
+                    }
+                }
+            }
+        }
+        if injection == "clean" { classBSample() }
+        finish(started)
+    }
+    private func finish(_ started: Date) -> Never {
+        focus.removeFromSuperview()
+        for (cell, info) in frameworkInfo.sorted(by: { $0.key < $1.key }) {
+            print(
+                "TSAMPLE: INFO cell=\(cell) frameworkAmbiguousMax=\(info.count) classes=\(info.names.sorted())"
+            )
+        }
+        print(
+            "TSAMPLE: SUMMARY cells=\(cells.filter { !$0.hasPrefix("predicate-") }.count) predicates=\(predicateCount) checks=\(results.count) failures=\(results.filter { !$0 }.count) seconds=\(Date().timeIntervalSince(started))"
+        )
+        print(
+            "RESULT: \(results.allSatisfy { $0 } ? "PASS" : "FAIL") (\(results.filter { $0 }.count)/\(results.count))"
+        )
+        exit(results.allSatisfy { $0 } ? 0 : 1)
+    }
+
+    private func runSurface(
+        _ kind: String, cell: String, name: String, plain: (() -> NSAlert)? = nil
+    ) {
+        for cycle in 0..<3 {
+            let fm = FileManager.default
+            let directory = root.appendingPathComponent(cell + "-\(cycle)", isDirectory: true)
+            let file = directory.appendingPathComponent(name)
+            do {
+                try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+                try Data("owned sample bytes".utf8).write(to: file)
+            } catch {
+                emit(cell, 5, false, "cannot create fixture")
+                return
+            }
+            let beforeFiles = snapshot(directory)
+            guard let originalBytes = beforeFiles["/" + name], beforeFiles.count == 1 else {
+                emit(cell, 5, false, "fixture snapshot not delivered: \(beforeFiles.keys.sorted())")
+                return
+            }
+            host.makeFirstResponder(focus)
+            let responder = host.firstResponder.map(ObjectIdentifier.init)
+            let beforeWindows = windows()
+            let returnAction = kind != "plain" && cycle == 1
+            let escape = kind == "conflict" && cycle == 2
+            var completed = false
+            var response: NSApplication.ModalResponse?
+            var conflictAnswer: FileOperations.ConflictResolution?
+            var dialog: RenameDialogController?
+            var alert: NSAlert?
+            var popover: NSPopover?
+            if kind == "conflict" {
+                Task { @MainActor in
+                    conflictAnswer = await browser.askConflictResolution(
+                        conflictCount: 2, move: false)
+                    completed = true
+                }
+                _ = settle { self.browser.cursorConfirm.debugPopover?.isShown == true }
+                popover = browser.cursorConfirm.debugPopover
+            } else {
+                if kind == "rename" {
+                    dialog = RenameDialogController(
+                        name: name, url: file, dataless: false, offerSuggestions: true,
+                        generateAutomatically: false)
+                    alert = dialog!.alert
+                } else if kind == "reclaim" {
+                    let sizeText = ByteCountFormatter.string(fromByteCount: 24, countStyle: .file)
+                    let place =
+                        ReclaimCatalog.places.first { $0.id == "go-build" }?.name
+                        ?? "Go build cache"
+                    alert = CleanupController.deleteNowAlert(
+                        totalDescription: sizeText, itemList: "• " + place + " (" + sizeText + ")")
+                } else {
+                    alert = plain?()
+                }
+                guard let alert else {
+                    emit(cell, 4, false, "missing factory")
+                    return
+                }
+                alert.window.appearance = host.appearance
+                let completion: (NSApplication.ModalResponse) -> Void = { value in
+                    response = value
+                    if kind == "reclaim" && value == .alertFirstButtonReturn {
+                        try? fm.removeItem(at: file)
+                    }
+                    if kind == "rename" && value == .alertFirstButtonReturn,
+                        let edited = dialog?.field.stringValue
+                    {
+                        try? fm.moveItem(at: file, to: directory.appendingPathComponent(edited))
+                    }
+                    if kind == "rename" && value == .alertSecondButtonReturn
+                        && self.injection == "cancel-commits-edit" && cycle == 0
+                        && !self.injected.contains("cancel-commits-edit")
+                    {
+                        do {
+                            try fm.moveItem(
+                                at: file,
+                                to: directory.appendingPathComponent("cancel-committed.txt"))
+                            self.delivered(
+                                "cancel-commits-edit",
+                                "real Cancel completion renamed owned fixture")
+                        } catch { self.emit(cell, 5, false, "cancel injection mutation failed") }
+                    }
+                    completed = true
+                }
+                if kind == "reclaim" {
+                    CleanupController.presentDeleteNowAlert(
+                        alert, for: host, completion: completion)
+                } else if kind == "rename" || cell.contains("extension-confirm") {
+                    Task { @MainActor in completion(await self.browser.presentSheet(alert)) }
+                } else {
+                    alert.beginSheetModal(for: host, completionHandler: completion)
+                }
+            }
+            let presented = settle {
+                if let alert {
+                    return alert.window.isVisible && alert.window.sheetParent === self.host
+                }
+                return popover?.isShown == true
+                    && popover?.contentViewController?.view.window != nil
+            }
+            guard presented,
+                let content = alert?.window.contentView ?? popover?.contentViewController?.view,
+                let window = content.window
+            else {
+                print(
+                    "TSAMPLE: PRESENT-DIAGNOSTIC cell=\(cell) hostVisible=\(host.isVisible) attached=\(host.attachedSheet?.title ?? "none") alertVisible=\(alert?.window.isVisible ?? false) alertSheet=\(alert?.window.sheetParent === host) popShown=\(popover?.isShown ?? false) popWindow=\(popover?.contentViewController?.view.window != nil) completed=\(completed) keys=\(alert?.buttons.map { ($0.title, $0.keyEquivalent.unicodeScalars.map(\.value), $0.bounds) } ?? [])"
+                )
+                emit(cell, 4, false, "native presentation not delivered")
+                if let alert, host.attachedSheet === alert.window {
+                    host.endSheet(alert.window, returnCode: .alertSecondButtonReturn)
+                    alert.window.orderOut(nil)
+                }
+                popover?.performClose(nil)
+                _ = settle { completed }
+                return
+            }
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            let nativeReady = settle {
+                let actions =
+                    alert?.buttons
+                    ?? TransientSurfaceChecks.walk(content).compactMap { $0 as? NSButton }
+                return actions.contains {
+                    $0.bounds.width > 0
+                        && ($0.keyEquivalent == "\r" || $0.cell === window.defaultButtonCell)
+                }
+            }
+            let buttons =
+                alert?.buttons
+                ?? TransientSurfaceChecks.walk(content).compactMap { $0 as? NSButton }.sorted {
+                    $0.tag < $1.tag
+                }
+            let ownership =
+                kind == "conflict"
+                ? browser.cursorConfirm.debugAnchorWindowNumber : window.sheetParent?.windowNumber
+            emit(
+                cell, 4,
+                TransientSurfaceChecks.ownership(actual: ownership, expected: host.windowNumber),
+                "cycle=\(cycle) actualHost=\(String(describing: ownership)) expected=\(host.windowNumber)",
+                content: content)
+            inspect(
+                content, alert: alert, cell: cell, phase: "cycle\(cycle)-initial",
+                sheet: kind != "conflict", presented: true)
+            if cycle == 0 { capture(content, key: "surface-" + kind + "-" + language) }
+            if let suggestion = dialog?.suggestion {
+                suggestion.debugDeliver(
+                    String(repeating: "long suggested name ", count: 8), ext: "txt")
+                content.layoutSubtreeIfNeeded()
+                inspect(
+                    content, alert: alert, cell: cell, phase: "cycle\(cycle)-suggestion",
+                    sheet: true, presented: true)
+                suggestion.debugFail()
+                inspect(
+                    content, alert: alert, cell: cell, phase: "cycle\(cycle)-failure", sheet: true,
+                    presented: true)
+            }
+            if returnAction, let dialog {
+                dialog.field.stringValue = "confirmed.txt"
+                (dialog.field.currentEditor() as? NSTextView)?.string = "confirmed.txt"
+            }
+            let actualDefault: Int? =
+                kind == "conflict"
+                ? buttons.first { $0.keyEquivalent == "\r" }?.tag
+                : buttons.firstIndex {
+                    $0.cell === window.defaultButtonCell || $0.keyEquivalent == "\r"
+                }
+            let expectedDefault = kind == "conflict" ? 1 : 0
+            let intended =
+                kind == "reclaim"
+                && policy.contains {
+                    $0.key.contains("presentDeleteNowAlert")
+                        && $0.value["default_destructive_intended"] as? Bool == true
+                        && ($0.value["owner_decision"] as? [String: Any])?["quote"] as? String
+                            == "Go back to the original: Return deletes."
+                }
+            let defaultOK =
+                nativeReady
+                && TransientSurfaceChecks.defaultAction(
+                    actual: actualDefault, expected: expectedDefault,
+                    destructive: kind == "reclaim", intended: intended)
+            let suppress =
+                kind == "conflict" && cycle == 0
+                && environment["PATHEM_TRANSIENT_INJECT_DISMISS_FAILURE"] != nil
+                && !injected.contains("dismiss-failure")
+            var keyAccepted: Bool?
+            if suppress {
+                delivered("dismiss-failure", "real popover dismiss request withheld")
+            } else if returnAction || escape {
+                keyAccepted = key(
+                    escape ? "\u{1b}" : "\r", window: window)
+            } else {
+                let cancelIndex =
+                    kind == "plain" && cell.contains("extension-confirm") ? 0 : buttons.count - 1
+                if buttons.indices.contains(cancelIndex) { buttons[cancelIndex].performClick(nil) }
+            }
+            let ended = settle { completed }
+            var actualResponseIndex: Int?
+            if let response {
+                actualResponseIndex =
+                    response.rawValue - NSApplication.ModalResponse.alertFirstButtonReturn.rawValue
+            }
+            if kind == "conflict", returnAction {
+                if case .keepBoth = conflictAnswer {
+                    actualResponseIndex = 1
+                } else {
+                    actualResponseIndex = -1
+                }
+            }
+            if kind != "plain" {
+                emit(
+                    cell, 6,
+                    defaultOK
+                        && (!returnAction
+                            || keyAccepted == true && ended
+                                && actualResponseIndex == expectedDefault),
+                    "cycle=\(cycle) default=\(String(describing: actualDefault)) intended=\(intended) actualReturn=\(String(describing: actualResponseIndex)) keyAccepted=\(String(describing: keyAccepted)) completed=\(ended)",
+                    content: content)
+            }
+            let afterFiles = snapshot(directory)
+            let expectedMutation = returnAction && ["rename", "reclaim"].contains(kind)
+            let cancelIndex =
+                kind == "plain" && cell.contains("extension-confirm") ? 0 : buttons.count - 1
+            let cancelConfirmed =
+                kind == "conflict" ? conflictAnswer == nil : actualResponseIndex == cancelIndex
+            let stateOK =
+                expectedMutation
+                ? (kind == "reclaim"
+                    ? afterFiles.isEmpty : afterFiles == ["/confirmed.txt": originalBytes])
+                : TransientSurfaceChecks.unchanged(beforeFiles, afterFiles)
+            let fileOK = ended && (returnAction || cancelConfirmed) && stateOK
+            emit(
+                cell, 5, fileOK,
+                "cycle=\(cycle) cancelled=\(!returnAction) fixtureBefore=\(beforeFiles.keys.sorted()) fixtureAfter=\(afterFiles.keys.sorted())",
+                content: content)
+            _ = settle { self.host.attachedSheet == nil && !(popover?.isShown ?? false) }
+            let afterResponder = host.firstResponder.map(ObjectIdentifier.init)
+            let dismissalOK = TransientSurfaceChecks.dismissed(
+                pending: !completed || host.attachedSheet != nil
+                    || (kind == "conflict" && browser.cursorConfirm.debugHasPendingContinuation),
+                visible: window.isVisible || (popover?.isShown ?? false),
+                responderBefore: responder, responderAfter: afterResponder)
+            emit(
+                cell, 7, dismissalOK,
+                "cycle=\(cycle) completed=\(completed) visible=\(window.isVisible) attached=\(host.attachedSheet != nil) responderRestored=\(responder == afterResponder)",
+                content: content)
+            // Restore deliberately suppressed dismissal only after check 7 records the red.
+            if suppress {
+                popover?.performClose(nil)
+                _ = settle { completed && self.browser.cursorConfirm.debugPopover == nil }
+            }
+            dialog?.cancel()
+            var leak: NSWindow?
+            if injection == "leaked-window" && cycle == 0 && kind == "rename"
+                && !injected.contains("leaked-window")
+            {
+                let stray = NSWindow(
+                    contentRect: NSRect(
+                        x: host.frame.minX + 20, y: host.frame.minY + 20, width: 180, height: 80),
+                    styleMask: [.titled], backing: .buffered, defer: false)
+                stray.isReleasedWhenClosed = false
+                stray.appearance = host.appearance
+                let label = NSTextField(labelWithString: "Injected stray window")
+                label.frame = NSRect(x: 8, y: 24, width: 164, height: 20)
+                stray.contentView?.addSubview(label)
+                stray.orderFront(nil)
+                if let content = stray.contentView {
+                    capture(content, key: cell + "-actual-stray-window")
+                }
+                leak = stray
+                delivered("leaked-window", "actual extra visible window=\(stray.windowNumber)")
+            }
+            let afterWindows = windows()
+            emit(
+                cell, 8,
+                TransientSurfaceChecks.noAccumulation(before: beforeWindows, after: afterWindows),
+                "cycle=\(cycle) visibleBefore=\(beforeWindows.sorted()) visibleAfter=\(afterWindows.sorted())",
+                content: content)
+            leak?.orderOut(nil)
+            if !completed {
+                host.endSheet(window, returnCode: .alertSecondButtonReturn)
+                window.orderOut(nil)
+                popover?.performClose(nil)
+            }
+        }
+    }
+
+    private func plainAlert(_ sample: [String: Any]) -> NSAlert {
+        let alert = NSAlert()
+        let id = sample["id"] as! String
+        let key = sample["message_key"] as! String
+        alert.messageText = L(key, "MISSING:" + key)
+        let info = sample["informative_keys"] as! [String]
+        func text(_ index: Int) -> String { L(info[index], "MISSING:" + info[index]) }
+        switch id {
+        case "automation-result", "tag-failure":
+            alert.informativeText = String(format: text(0), 999999)
+        case "sync-result":
+            alert.informativeText =
+                String(format: text(0), 999999, 999999) + String(format: text(1), 999999)
+                + String(format: text(2), 999999)
+        case "mirror-result":
+            alert.informativeText =
+                String(format: text(0), 999999, 999999) + String(format: text(1), 999999)
+        case "toggle-failure":
+            alert.informativeText =
+                NSError(
+                    domain: NSCocoaErrorDomain, code: NSFileWriteNoPermissionError,
+                    userInfo: [
+                        NSFilePathErrorKey: "/fixture/" + String(repeating: "n", count: 251)
+                            + ".txt"
+                    ]
+                ).localizedDescription
+            alert.alertStyle = .warning
+        case "path-suggestion":
+            let path =
+                "/"
+                + Array(repeating: String(repeating: "p", count: 255), count: 4).joined(
+                    separator: "/")
+            alert.informativeText = String(format: text(0), path, String(path.dropLast()) + "s")
+        default: alert.informativeText = info.isEmpty ? "" : text(0)
+        }
+        for key in sample["button_keys"] as! [String] {
+            alert.addButton(withTitle: L(key, "MISSING:" + key))
+        }
+        return alert
+    }
+    private func ownedPathProof(_ sample: [String: Any], cell: String) {
+        let fm = FileManager.default
+        var directory = root.appendingPathComponent("OwnedPathProof", isDirectory: true)
+        for index in 0..<3 {
+            directory.appendPathComponent(
+                String(index) + String(repeating: "d", count: 179), isDirectory: true)
+        }
+        let candidate = directory.appendingPathComponent(
+            String(repeating: "n", count: 176) + ".txt")
+        let bytes = Data("owned path proof".utf8)
+        do {
+            try fm.createDirectory(at: directory, withIntermediateDirectories: true)
+            try bytes.write(to: candidate)
+            let actual = try Data(contentsOf: candidate)
+            guard actual == bytes else {
+                emit(cell, 5, false, "owned path proof not delivered")
+                return
+            }
+            let raw = String(candidate.path.dropLast()) + "x"
+            let alert = plainAlert(sample)
+            let keys = sample["informative_keys"] as! [String]
+            alert.informativeText = String(format: L(keys[0], "missing"), raw, candidate.path)
+            alert.layout()
+            guard let content = alert.window.contentView else {
+                emit(cell, 1, false, "owned-path native content missing")
+                return
+            }
+            print(
+                "TSAMPLE: OWNED-PATH bytes=\(candidate.path.utf8.count) componentMax=180 candidateExists=\(fm.fileExists(atPath: candidate.path))"
+            )
+            inspect(
+                content, alert: alert, cell: cell, phase: "existing-owned-path", sheet: true,
+                presented: false)
+            capture(content, key: "owned-path-proof-" + language)
+        } catch { emit(cell, 5, false, "owned-path fixture cannot be created") }
+    }
+    private func classBSample() {
+        let samples = policy.values.compactMap { $0["sample"] as? [String: Any] }.sorted {
+            ($0["id"] as! String) < ($1["id"] as! String)
+        }
+        emit(
+            "B-contract", 4,
+            samples.count == 10
+                && samples.filter { $0["behavior_sample"] as? Bool == true }.count == 3,
+            "ten alerts; three lifecycle candidates")
+        for size
+            in (pilot
+            ? [NSSize(width: 720, height: 420)]
+            : [NSSize(width: 720, height: 420), NSSize(width: 1100, height: 700)])
+        {
+            host.setContentSize(size)
+            for sample in samples {
+                let id = sample["id"] as! String
+                let alert = plainAlert(sample)
+                alert.layout()
+                guard let content = alert.window.contentView else {
+                    emit("B-" + id, 1, false, "missing native content")
+                    continue
+                }
+                let cell = "B-\(id)-\(language)-\(Int(size.width))"
+                inspect(
+                    content, alert: alert, cell: cell, phase: "structural-only", sheet: true,
+                    presented: false)
+                if id == "path-suggestion", language == "de", size.width == 720 {
+                    ownedPathProof(sample, cell: cell)
+                }
+                if language == "de", sample["behavior_sample"] as? Bool == true {
+                    runSurface(
+                        "plain", cell: cell + "-lifecycle", name: "fixture.txt",
+                        plain: { self.plainAlert(sample) })
+                }
+            }
+        }
+    }
+}
+#endif

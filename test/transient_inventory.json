@@ -30,7 +30,9 @@
     "Sources/Pathem/BrowserViewController+UIAutomation.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
     "Sources/Pathem/BrowserViewController+BackgroundMenuUITests.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
     "Sources/Pathem/BrowserViewController+CompilerUITests.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
-    "Sources/Pathem/DeterministicE2E.swift": "Harness/debug-only source; excluded explicitly, not claimed covered"
+    "Sources/Pathem/DeterministicE2E.swift": "Harness/debug-only source; excluded explicitly, not claimed covered",
+    "Sources/Pathem/TransientSurfaceSample.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage",
+    "Sources/Pathem/TransientSurfaceSampleChecks.swift": "DEBUG-only transient Unit 1 sample/control harness; explicitly excluded, not production surface coverage"
   },
   "ignored_counts": {
     "Sources/Pathem/BrowserViewController+BackgroundMenuUITests.swift": 1,
@@ -50,7 +52,8 @@
     "Sources/Pathem/BrowserViewController+ViewOptionsUITests.swift": 4,
     "Sources/Pathem/CleanupController.swift": 1,
     "Sources/Pathem/PathemApp.swift": 8,
-    "Sources/Pathem/SidebarController.swift": 1
+    "Sources/Pathem/SidebarController.swift": 1,
+    "Sources/Pathem/TransientSurfaceSample.swift": 9
   },
   "sites": {
     "Sources/Pathem/BrowserViewController+Transfers.swift:82:28:ask": {
@@ -183,17 +186,6 @@
         "quote": "Go back to the original: Return deletes.",
         "scope": "Reclaim Delete Now: Return confirms intended permanent deletion; factory extraction retained."
       }
-    },
-    "Sources/Pathem/CursorConfirm.swift:38:13:show": {
-      "class": "A",
-      "kind": "popover",
-      "custom_content": true,
-      "destructive": true,
-      "default_destructive_intended": false,
-      "builders": [
-        "Sources/Pathem/CursorConfirm.swift:31:23:NSPopover"
-      ],
-      "reason": "Custom content factory; individual caller rows carry the Return action and destructive intent."
     },
     "Sources/Pathem/BrowserViewController+Rename.swift:96:25:presentSheet": {
       "class": "B",
@@ -2418,6 +2410,17 @@
         "Sources/Pathem/OrganizeReviewController.swift:252:20:NSMenu"
       ],
       "reason": "App-defined standard NSMenu items tracked by the native menu system, no custom item views. Class C presentation/dismissal only. Cancel without triggering actions."
+    },
+    "Sources/Pathem/CursorConfirm.swift:41:13:show": {
+      "class": "A",
+      "kind": "popover",
+      "custom_content": true,
+      "destructive": true,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/CursorConfirm.swift:31:23:NSPopover"
+      ],
+      "reason": "Custom content factory; individual caller rows carry the Return action and destructive intent."
     }
   },
   "implicit_builders": {

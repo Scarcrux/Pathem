@@ -20,6 +20,13 @@ extension BrowserViewController {
             return condition()
         }
         let focus = ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_FOCUS"] ?? ""
+        if focus.isEmpty {
+            guard let sample = TransientSurfaceSample(browser: self, demo: demo) else {
+                print("RESULT: FAIL missing isolated native sample inputs")
+                exit(64)
+            }
+            sample.run()
+        }
         guard ["reclaim-return", "reclaim-escape", "reclaim-click"].contains(focus)
         else {
             print("RESULT: FAIL full sample not implemented; focused control required")

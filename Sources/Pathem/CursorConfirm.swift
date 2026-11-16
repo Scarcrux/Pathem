@@ -35,6 +35,9 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
             pop.behavior = .transient  // click outside / Esc dismisses (treated as Cancel)
             pop.delegate = self
             self.popover = pop
+            #if DEBUG
+            debugAnchorWindowNumber = anchor.window?.windowNumber
+            #endif
             pop.show(relativeTo: anchorRect(in: anchor), of: anchor, preferredEdge: .maxY)
         }
     }
@@ -164,6 +167,7 @@ final class CursorConfirm: NSObject, NSPopoverDelegate {
     /// whether a prompt was pending when it arrived, and whether this close resolved it.
     /// See docs/CURSOR_CONFIRM_LIFECYCLE.md.
     var debugCloseEvents: [(current: Bool, pending: Bool, resolved: Bool)] = []
+    private(set) var debugAnchorWindowNumber: Int?
     var debugPopover: NSPopover? { popover }
     var debugHasPendingContinuation: Bool { continuation != nil }
     func debugController(

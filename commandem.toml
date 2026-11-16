@@ -1819,6 +1819,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 Unit0 implementation complete privately: source inventory196 rows/builders, A116/B47/C29 plus4 unclassed wrappers;171 physical+20 wrapper callers+5 factory callers. All38 implicit menus have pinned attachment provenance;4 dynamic runtime context-menu rows conservatively A/unresolved per contract. Actual table/new-site gate passes,19 controls pass on both Pythons, stale attachment/new-site/table negative controls discriminate. Standalone inventory E2E scenario wired, shell syntax passes; no full E2E/CI. Cleanup manual4 physical/4 builders matches independent count. Complete Unit1 sample still pending; not READY, no land."
     at = "2026-11-16T07:55:25Z"
 
+  [[mission.comment]]
+    text = "Task11 native pilot now completes: three A kinds each three cycles pass checks1-8, ten B structural alerts plus three sheet lifecycle candidates exercised. Scoped app-layout ambiguity control and native framework INFO approved by coordinator; eight primary predicates plus viewport sub-control pass. Native194/196 exit1 retained: TS-U1-F1 No Such Path informative label makes sheet952pt high vs420pt host; actual owned849-byte path also produces776pt sheet. Both renders/receipts retained, input not shortened, no waiver/fix. Prefs unchanged/demo removed;13.4s. Corrected build, l10n,19 inventory and7 wrapper controls pass. Earlier instrument failures/crash and code-only compile error preserved. Bad injections/full sample variants next; not READY."
+    at = "2026-11-16T08:59:02Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

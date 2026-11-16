@@ -58,7 +58,10 @@ enum LayoutMatrixGeometry {
     }
 
     static var injection: String? {
-        guard ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_TEST"] != nil else {
+        guard
+            ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
+                || ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil
+        else {
             return nil
         }
         return ProcessInfo.processInfo.environment["PATHEM_LAYOUT_MATRIX_INJECT"]
