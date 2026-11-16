@@ -1280,6 +1280,15 @@ missions = ["m-1331afb7", "m-b2532fac"]
     title = "TS-U2-Fsize: Size Browser crashes on nonempty folder because row-to-container width constraint activates before attachment. Real full g6 crash convicted; attach then constrain; M43 full German regression completes, geometry findings retained. See docs/SIZE_BROWSER_CRASH.md."
     done = true
 
+  [[mission.task]]
+    id = "t-13706fcc"
+    title = "Repair encrypted disk image Name and Password fields collapsing to zero width (TS-U2-M12); validate only the focused m12 regression."
+    done = true
+
+  [[mission.task]]
+    id = "t-dd8d2ed3"
+    title = "Resolve the encrypted-image accessory stack ambiguity (TS-U2-M12-AMBIG). Input widths are repaired; targeted profile remains70/76/native1 from six check3 warnings. The accessory340pt-width experiment was refuted and removed. Use focused validation only."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -2015,6 +2024,18 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Task 11 v9 design sample validated: 13 native launches audited on one source/artifact digest; clean core/M02/M42/M23/markup/close/Quit pass, all four injections discriminate, 229 headless checks pass. Empty framework-label geometry is resolved by exact identity plus independent no-ink/visible-ink controls. Exact repeat phases and current PNG evidence are enforced. M07 and F23 remain sample product reds; full 42-job qualification and real baseline/CI remain pending. No land or install."
     at = "2026-11-16T22:20:01Z"
+
+  [[mission.comment]]
+    text = "Owner stopped disruptive visual testing again. No further GUI launches or CI replay without a separately agreed visual-test window. Full v3 is incomplete: last log at mounts group7, no current matching runner or fixture observed, no final terminal/cleanup claim. Private checkpoints c1f5a75 and716f2f4 preserve reviewed instrument work; task11 remains pending. Further validation should prioritize headless checks and reduce foreground launch requirements before any visual batch resumes."
+    at = "2026-11-16T22:29:24Z"
+
+  [[mission.comment]]
+    text = "Owner resumed targeted fixes only. Current concrete change supplies the missing240pt width constraint to encrypted-image controls; existing red receipt shows both editable fields at0pt. One m12 German/minimum-host short+255-name probe is queued, cancel only. No matrix or full GUI CI replay scheduled. Newer main shifts this source file by5lines and must be reconciled at a separately authorized integration."
+    at = "2026-11-16T22:38:45Z"
+
+  [[mission.comment]]
+    text = "TS-U2-M12 input fix verified by the existing focused regression: check1 now6/6 PASS (was zero-width fields); size/ownership/cancel/default/dismiss/reopen also6/6 each, isolation intact, before/after render inspected. Full targeted profile honestly remains70/76/native1 from existing stack ambiguity, recorded separately. Reverted ineffective accessory-width experiment; final production diff is one input-width constraint. Only two focused M12 launches, no matrix or GUI CI replay; no land/install."
+    at = "2026-11-16T22:44:18Z"
 
 [[mission]]
   id = "m-e1443252"

@@ -95,12 +95,12 @@ extension TransientSurfaceSample {
                 b.setDefaultOpener(nil)
                 return b
             },
-            mount("m12", "BrowserViewController+SelectionTransforms.swift:271", filename: true) {
+            mount("m12", "BrowserViewController+SelectionTransforms.swift:272", filename: true) {
                 _, _ in
                 b.encryptToDiskImage()
                 return b
             },
-            mount("m13", "BrowserViewController+SelectionTransforms.swift:318", filename: true) {
+            mount("m13", "BrowserViewController+SelectionTransforms.swift:319", filename: true) {
                 _, _ in
                 b.secureDeleteSelection()
                 return b

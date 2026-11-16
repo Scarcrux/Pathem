@@ -744,3 +744,34 @@ the design for full expansion; the previous interrupted full v2 is not.
 
 No final full qualification, baseline, CI, land or install is claimed here.
 Evidence: .build/transient-final-controls-v9 and .build/transient-headless-v9.log.
+
+## Targeted product fix: encrypted disk image inputs
+
+Owner direction changed validation to targeted regressions and stopped broad GUI
+replays. The confirmed M12 defect was actual zero-width Name/Password fields in
+the encrypted disk image sheet. NSStackView uses Auto Layout; each control's
+initial 240 pt frame did not provide a width constraint. Give both controls their
+intended 240 pt width through the existing row builder. Production change: one
+constraint; presentation/callback behavior is unchanged. Rebind only shifted
+inventory/mount source locations.
+
+The existing red M12 geometry regression is the regression test. Only that dialog
+was launched, using German at a 720x420 host, short and 255-character filenames,
+three cancel/reopen cycles each. Before: both editable inputs had zero width and
+check 1 failed. After the one-line fix: all six check-1 observations pass, as do
+size, ownership, cancel, Return mapping, dismissal and repeat observations (six
+passes each). The retained before/after renders confirm usable fields. All owner
+preference/domain/demo/catalog witnesses pass; no disk image is created.
+
+The whole targeted profile remains native exit 1, 70/76, because six check-3
+observations report a separate ambiguous stack. Do not report that profile as
+PASS. A follow-up experiment constraining the accessory to its initial 340 pt
+width left the warning and increased the ambiguous-node count, so it was removed.
+The final change is exactly the already-measured input-width constraint; there
+was no visual replay after removing the failed experiment. Stack ambiguity remains
+an open follow-up, and Unit 2 full qualification remains incomplete.
+
+Private receipts: .build/dmg-input-width-only-negative.json,
+.build/dmg-input-width-only-native.log and the dmg-input-fixed diagnostic PNGs.
+Refuted accessory-width experiment: .build/dmg-accessory-width-regression.log.
+No full matrix or GUI CI replay ran for this fix. No installation or land.
