@@ -8,6 +8,9 @@ extension TransientSurfaceSample {
     final class MarkupLifecycleObservation {
         var prompt = false
         var windowClosed = false
+        var closeRequested = false
+        var promptCancelled = false
+        var handledPrompts = Set<Int>()
         var quitRequested = false
         var terminating = false
     }
@@ -92,6 +95,9 @@ extension TransientSurfaceSample {
                 "disk_annotations": PDFDocument(url: file)?.page(at: 0)?.annotations.count ?? -1,
                 "edited_before": true, "save_control": controlOK, "prompt_seen": observation.prompt,
                 "window_closed": observation.windowClosed,
+                "close_requested": observation.closeRequested,
+                "edited_after": viewer.debugIsEdited,
+                "prompt_cancelled": observation.promptCancelled,
                 "quit_requested": observation.quitRequested,
                 "will_terminate": observation.terminating,
                 "delegate": String(describing: type(of: delegate)),
@@ -104,39 +110,55 @@ extension TransientSurfaceSample {
             } catch { self.emit("lifecycle-setup", 0, false, "cannot write witness") }
         }
         persist("edited")
-        // If a guard exists, observe it and abort only this owned fixture's modal.
-        // Never select Save/Discard and never allow the probe to wait for user input.
+        // A real guard is the counterexample. Press its actual Cancel once;
+        // if no Cancel exists, abort only this owned fixture and record that fact.
+        let cancelGuard: @MainActor @Sendable (NSWindow) -> Void = { surface in
+            guard observation.handledPrompts.insert(surface.windowNumber).inserted else { return }
+            observation.prompt = true
+            if let content = surface.contentView {
+                self.capture(content, key: "L-\(mode)-prompt")
+                let cancel = TransientSurfaceChecks.walk(content).compactMap { $0 as? NSButton }
+                    .first {
+                        !$0.isHiddenOrHasHiddenAncestor
+                            && ($0.keyEquivalent == "\u{1b}"
+                                || $0.title == L("common.cancel", "Cancel"))
+                    }
+                if let cancel {
+                    observation.promptCancelled = true
+                    cancel.performClick(nil)
+                    return
+                }
+            }
+            if let parent = surface.sheetParent {
+                parent.endSheet(surface, returnCode: .cancel)
+                surface.orderOut(nil)
+            } else {
+                NSApp.abortModal()
+            }
+        }
         let timer = Timer(timeInterval: 0.02, repeats: true) { _ in
             MainActor.assumeIsolated {
-                if let modal = NSApp.modalWindow, modal !== window {
-                    observation.prompt = true
-                    if let content = modal.contentView {
-                        self.capture(content, key: "L-\(mode)-prompt")
-                    }
-                    NSApp.abortModal()
-                }
-                for sheet in window.sheets {
-                    observation.prompt = true
-                    if let content = sheet.contentView {
-                        self.capture(content, key: "L-\(mode)-prompt")
-                    }
-                    window.endSheet(sheet, returnCode: .cancel)
-                    sheet.orderOut(nil)
-                }
+                if let modal = NSApp.modalWindow, modal !== window { cancelGuard(modal) }
+                for sheet in window.sheets { cancelGuard(sheet) }
             }
         }
         RunLoop.main.add(timer, forMode: .default)
         RunLoop.main.add(timer, forMode: .modalPanel)
         defer { timer.invalidate() }
         if mode == "close" {
+            observation.closeRequested = true
             window.performClose(nil)
             observation.windowClosed =
                 !window.isVisible && WindowManager.shared.windowCount == countBefore
             RunLoop.main.run(until: Date().addingTimeInterval(0.1))
-            persist("closed")
+            let guarded =
+                observation.prompt && window.isVisible && viewer.debugIsEdited
+                && WindowManager.shared.windowCount == countBefore + 1
+            persist(observation.windowClosed ? "closed" : "close-refused")
             emit(
-                "L-close", 4, observation.windowClosed,
-                "real performClose removed owned browser window")
+                "L-close", 4, observation.windowClosed || guarded,
+                "real performClose closed=\(observation.windowClosed) guardPreservesEditedWindow=\(guarded)"
+            )
             let saved = (PDFDocument(url: file)?.page(at: 0)?.annotations.count ?? 0) > 0
             emit(
                 "L-close", 5, observation.prompt || saved,

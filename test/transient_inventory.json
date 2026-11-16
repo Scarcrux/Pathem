@@ -62,7 +62,7 @@
     "Sources/Pathem/TransientReturnBindingProbe.swift": 2,
     "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1,
     "Sources/Pathem/TransientSurfaceFullFactories.swift": 6,
-    "Sources/Pathem/TransientSurfaceFullMounts.swift": 3,
+    "Sources/Pathem/TransientSurfaceFullMounts.swift": 4,
     "Sources/Pathem/TransientSurfaceSample.swift": 9
   },
   "sites": {
@@ -1996,14 +1996,14 @@
       "reason": "Workspace-selection popup accessory; Open restores tabs. Cancel without changing the browser.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController.swift:931:30:presentSheet": {
+    "Sources/Pathem/BrowserViewController.swift:915:30:presentSheet": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/BrowserViewController.swift:913:21:NSAlert"
+        "Sources/Pathem/BrowserViewController.swift:1060:21:NSAlert"
       ],
       "reason": "Keep-data checkbox accessory; default Continue and Quit can remove config/Keychain entries and restore folder handler. Permanent destructive class. Cancel only; never invoke reset in this harness. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
@@ -2013,14 +2013,14 @@
         "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
       }
     },
-    "Sources/Pathem/BrowserViewController.swift:967:28:presentSheet": {
+    "Sources/Pathem/BrowserViewController.swift:951:28:presentSheet": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController.swift:955:24:NSAlert"
+        "Sources/Pathem/BrowserViewController.swift:939:24:NSAlert"
       ],
       "reason": "Plain reset-result report and Quit. Runtime fixture: both removal summary and Finder-restored suffix. Build text only; never run reset or terminate the owner app.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

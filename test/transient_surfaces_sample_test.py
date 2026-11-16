@@ -13,6 +13,7 @@ def transcript(remove=None, fail=None, marker=None):
     row('predicate-8-multiplicity', 8)
     row('predicate-4-appearance', 4)
     row('predicate-3-system', 3)
+    row('predicate-file-opening', 0)
     for kind in ['rename', 'reclaim', 'conflict']:
         for n in range(1, 9):
             row('A-' + kind + '-de-light-720-short', n)
@@ -81,6 +82,11 @@ class SampleReceiptControls(unittest.TestCase):
     def test_wrong_localization_or_native_exit_is_rejected(self):
         self.assertTrue(validate(transcript(), 0, 'clean', 'de', True, 'Cancel')[0])
         self.assertTrue(validate(transcript(), 1, 'clean', 'de', True, 'Abbrechen')[0])
+
+
+    def test_file_opening_interception_required(self):
+        errors, _ = validate(transcript(remove=('predicate-file-opening', 0)), 0, 'clean', 'de', True, 'Abbrechen')
+        self.assertIn('file-opening interception control missing or failed', errors)
 
 
 if __name__ == '__main__':

@@ -300,6 +300,12 @@ extension TransientSurfaceSample {
                         current: Array(repeating: "files.open", count: 6)
                     ).alert)
             },
+            factory(
+                "f32", "BrowserViewController.swift", function: "resetPathemData", sheet: true,
+                filename: false
+            ) { _, _ in
+                FactoryObject(BrowserViewController.makeResetDialog().0)
+            },
         ]
     }
 
@@ -379,7 +385,7 @@ extension TransientSurfaceSample {
         let probe = TransientReturnBindingProbe.observe(window: window, buttons: buttons) {
             self.key("\r", window: window)
         }
-        let destructiveDefault = ["f05", "f06", "f07", "f08"].contains(entry.id)
+        let destructiveDefault = ["f05", "f06", "f07", "f08", "f32"].contains(entry.id)
         let intended = policy[entry.site]?["default_destructive_intended"] as? Bool ?? false
         emit(
             cell, 6,

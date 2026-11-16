@@ -364,3 +364,23 @@ missing inventory control. Known-findings comparison has eleven controls for
 new/stale pairs, missing runs, changed source, unsafe setup/timeout/constraint
 errors, malformed pairs and the separate Quit parent verdict. No baseline is
 created or accepted yet; these validators do not make native reds green.
+
+## Reset isolation and guard counterexample checkpoint
+
+The Reset UI now comes from the exact factory the production caller uses. The
+mount never constructs the callback that deletes Keychain entries or changes
+the folder handler. Before this change the Reset adapter was draft only and
+had never run. Both owned UI probes pass: mount 47/47 and factory 44/44, with
+unchanged owner preferences and complete cleanup. The existing FileOpening
+interception is enabled and positively controlled for every transient run;
+unexpected opens or system-default requests fail the external-boundary check.
+
+The close probe now recognizes a real Cancel guard that preserves its window
+and edited state, instead of treating a refused close as an instrument failure.
+Its synthetic guard control was red before correction and green after. Guard
+prompts receive actual Cancel once per window, or a fixture-only abort if no
+Cancel exists. Original close and Quit data-loss cases remain red on check 5
+with post-reap bytes unchanged and zero annotations. Receipts:
+.build/transient-unit2-markup-close-guarded-instrument.log and
+.build/transient-unit2-markup-quit-guarded-instrument.log. No production markup
+file changed. The warning gate on the Reset build reports 3 known, 0 new.

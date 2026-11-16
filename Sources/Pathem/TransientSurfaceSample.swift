@@ -284,9 +284,10 @@ final class TransientSurfaceSample {
             "predicate-external-" + phase, 0,
             noCalls && SharedDiscovery.debugTransientSkips > 0
                 && DeviceWatcher.debugTransientSkips > 0
+                && FileOpening.debugRequests?.isEmpty == true
                 && !Self.externalBoundaryAllowed(network: 1, devices: 0)
                 && !Self.externalBoundaryAllowed(network: 0, devices: 1),
-            "networkStarts=\(SharedDiscovery.debugTransientStarts) deviceStarts=\(DeviceWatcher.debugTransientStarts) networkSkips=\(SharedDiscovery.debugTransientSkips) deviceSkips=\(DeviceWatcher.debugTransientSkips)"
+            "networkStarts=\(SharedDiscovery.debugTransientStarts) deviceStarts=\(DeviceWatcher.debugTransientStarts) networkSkips=\(SharedDiscovery.debugTransientSkips) deviceSkips=\(DeviceWatcher.debugTransientSkips) openerRequests=\(FileOpening.debugRequests?.count ?? -1)"
         )
     }
 
@@ -298,6 +299,15 @@ final class TransientSurfaceSample {
             print("RESULT: FAIL cannot create owned sample root")
             exit(1)
         }
+        // The documented opener-suite interception also protects a Cancel
+        // regression from opening another app or changing LaunchServices.
+        FileOpening.debugRequests = []
+        FileOpening.open(root.appendingPathComponent("owned-open-control"), with: nil)
+        let openerControl = FileOpening.debugRequests?.count == 1
+        FileOpening.debugRequests = []
+        emit(
+            "predicate-file-opening", 0, openerControl,
+            "documented opener interception delivered; unexpected requests remain red")
         host.contentView!.addSubview(focus)
         host.makeKeyAndOrderFront(nil)
         host.makeFirstResponder(focus)

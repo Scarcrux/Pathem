@@ -49,6 +49,8 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     predicates = [(status, cell, check) for status, cell, check in rows if re.fullmatch(r'predicate-[1-8]', cell)]
     if len(predicates) != 8 or any(status != 'PASS' for status, _, _ in predicates):
         errors.append('predicate controls incomplete or failed')
+    if ('PASS', 'predicate-file-opening', '0') not in rows:
+        errors.append('file-opening interception control missing or failed')
     if ('PASS', 'predicate-3-system', '3') not in rows:
         errors.append('system-panel ownership sub-control missing or failed')
     viewport = [(status, check) for status, cell, check in rows if cell == 'predicate-1-viewport']

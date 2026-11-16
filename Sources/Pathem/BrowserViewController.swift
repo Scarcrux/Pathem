@@ -915,23 +915,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// Trash leaves nothing behind. Files are never touched.
     func resetPathemData() {
         guard let window = view.window else { return }
-        let alert = NSAlert()
-        alert.messageText = L("bvc.resetDataTitle", "Reset Pathem Data?")
-        alert.informativeText = L(
-            "bvc.resetDataBody",
-            "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall."
-        )
-        alert.alertStyle = .warning
-        // Off by default = a full clean uninstall. Checked keeps the config/passwords in place
-        // so a reinstall picks up where you left off; only the folder default is restored.
-        let keepData = NSButton(
-            checkboxWithTitle: L(
-                "bvc.resetKeepData", "Keep my Pathem settings and data (for a future reinstall)"),
-            target: nil, action: nil)
-        keepData.state = .off
-        alert.accessoryView = keepData
-        alert.addButton(withTitle: L("bvc.resetDataConfirm", "Continue and Quit"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let (alert, keepData) = Self.makeResetDialog()
         Task { @MainActor in
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
             let keep = keepData.state == .on
@@ -1078,4 +1062,29 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     var terminalFollowsFolder: Bool { terminalFollows }
 
     // External-open / reveal / Photos-browser methods live in BrowserViewController+ExternalOpen.
+}
+
+@MainActor
+extension BrowserViewController {
+    /// Production construction shared with isolated transient checks.
+    static func makeResetDialog() -> (NSAlert, NSButton) {
+        let alert = NSAlert()
+        alert.messageText = L("bvc.resetDataTitle", "Reset Pathem Data?")
+        alert.informativeText = L(
+            "bvc.resetDataBody",
+            "This removes all Pathem settings, saved connections and their Keychain passwords, sidebar and menu customization, color rules, and layouts, and restores Finder as the default folder app. Your files are not touched. Pathem then quits, so you can drag it to the Trash for a clean uninstall."
+        )
+        alert.alertStyle = .warning
+        // Off by default = a full clean uninstall. Checked keeps the config/passwords in place
+        // so a reinstall picks up where you left off; only the folder default is restored.
+        let keepData = NSButton(
+            checkboxWithTitle: L(
+                "bvc.resetKeepData", "Keep my Pathem settings and data (for a future reinstall)"),
+            target: nil, action: nil)
+        keepData.state = .off
+        alert.accessoryView = keepData
+        alert.addButton(withTitle: L("bvc.resetDataConfirm", "Continue and Quit"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return (alert, keepData)
+    }
 }

@@ -422,6 +422,19 @@
       "group": 6,
       "maker_sha256": "dc310342bf95cce5a494021cecfb504b302f847566ff5442caaf3210970e36b9",
       "caller_sha256": "1bb34b8e59be723f80128bd21f2cacf6b04e6c9f9988f8545e394e255993ce31"
+    },
+    {
+      "id": "f32",
+      "site": "Sources/Pathem/BrowserViewController.swift:915:30:presentSheet",
+      "file": "Sources/Pathem/BrowserViewController.swift",
+      "caller": "resetPathemData",
+      "maker": "makeResetDialog",
+      "constructor": "NSAlert",
+      "filename": false,
+      "sheet": true,
+      "group": 6,
+      "maker_sha256": "b87e16cfff8e4ff32b3ce36faa117f320c3fae1b0cb44f95c381503b3b835149",
+      "caller_sha256": "d2a584a5253f3a4fe8f026e042f3cac0d9cea7a495a0b674fdef3b881f28fbc6"
     }
   ]
 }

@@ -17,7 +17,7 @@ class FactoryProvenanceTests(unittest.TestCase):
         return root,records
 
     def test_reviewed_factories_match_production_and_adapters(self):
-        rows=validate();self.assertEqual(len(rows),31);self.assertEqual(len({r['site'] for r in rows}),25)
+        rows=validate();self.assertEqual(len(rows),32);self.assertEqual(len({r['site'] for r in rows}),26)
 
     def test_missing_profile_is_rejected(self):
         root,r=self.fixture();r['factories'].pop();(root/'test/transient_factories.json').write_text(json.dumps(r))

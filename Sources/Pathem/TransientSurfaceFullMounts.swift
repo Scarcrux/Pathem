@@ -385,10 +385,17 @@ extension TransientSurfaceSample {
                 b.presentCompare([], leftURL: file.deletingLastPathComponent(), rightURL: file)
                 return b
             },
-            mount("m55", "BrowserViewController.swift:931") { _, _ in
+            mount("m55", "BrowserViewController.swift:915") { _, _ in
                 // Return target/action is intercepted; only the real Cancel executes.
-                b.resetPathemData()
-                return b
+                // Exercise the exact production UI without constructing a callback
+                // that can touch Keychain or the owner's folder-handler default.
+                let (alert, _) = BrowserViewController.makeResetDialog()
+                alert.beginSheetModal(for: self.host) { response in
+                    self.emit(
+                        "mount-work", 0, response == .alertSecondButtonReturn,
+                        "Reset UI cancelled; production reset callback is absent")
+                }
+                return alert
             },
             mount(
                 "m56", "BrowserViewController+Workspaces.swift:37", filename: true,

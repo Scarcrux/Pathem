@@ -32,3 +32,9 @@ class MarkupLifecycleEvidenceControls(unittest.TestCase):
         for key in ['edited_before','save_control']:
             root,d,w,log=self.fixture();w[key]=False;(d/'witness.json').write_text(json.dumps(w))
             self.assertTrue(evaluate(log,0,'quit',root)[0])
+
+    def test_cancel_guard_can_keep_close_open_without_false_failure(self):
+        root,d,w,log=self.fixture('close',prompt=True)
+        w.update(close_requested=True,window_closed=False,stage='close-refused',edited_after=True,prompt_cancelled=True)
+        (d/'witness.json').write_text(json.dumps(w))
+        self.assertEqual(evaluate(log,0,'close',root)[:2],([],set()))

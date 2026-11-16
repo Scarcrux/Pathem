@@ -27,8 +27,12 @@ def evaluate(log, code, mode, scratch):
             elif proof['stage']!='quit-refused' or not proof['prompt_seen']:
                 raise ValueError('termination missing without a witnessed product guard')
         elif mode=='close':
-            if proof['stage']!='closed' or proof['window_closed'] is not True:
-                raise ValueError('real owned window did not close')
+            closed=proof['stage']=='closed' and proof['window_closed'] is True
+            guarded=(proof['stage']=='close-refused' and proof['window_closed'] is False
+                     and proof['prompt_seen'] is True and proof.get('edited_after') is True
+                     and proof.get('close_requested') is True)
+            if not (closed or guarded):
+                raise ValueError('real owned window neither closed nor preserved by a witnessed guard')
         else:raise ValueError('unknown lifecycle mode')
         if proof['prompt_seen'] is not False and proof['prompt_seen'] is not True:
             raise ValueError('prompt observation missing')

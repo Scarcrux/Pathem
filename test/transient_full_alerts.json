@@ -833,8 +833,8 @@
     },
     {
       "id": "b40",
-      "site": "Sources/Pathem/BrowserViewController.swift:967:28:presentSheet",
-      "builder": "Sources/Pathem/BrowserViewController.swift:955:24:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController.swift:951:28:presentSheet",
+      "builder": "Sources/Pathem/BrowserViewController.swift:939:24:NSAlert",
       "source_sha256": "7ec3d65cd102cab00155efc5d3c07076e2e7623880164200fde6b9d766321b06",
       "sheet": true,
       "fixture": "Plain reset-result report and Quit. Runtime fixture: both removal summary and Finder-restored suffix. Build text only; never run reset or terminate the owner app.",
