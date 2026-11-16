@@ -4,379 +4,442 @@
       "id": "m01",
       "site": "Sources/Pathem/BrowserViewController+DynamicMenus.swift:180:30:presentSheet",
       "filename": false,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m02",
       "site": "Sources/Pathem/BrowserViewController+FolderBackground.swift:32:30:presentSheet",
       "filename": true,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m03",
       "site": "Sources/Pathem/BrowserViewController+Permissions.swift:48:30:presentSheet",
       "filename": false,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m04",
       "site": "Sources/Pathem/BrowserViewController+Servers.swift:23:30:presentSheet",
       "filename": false,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m05",
       "site": "Sources/Pathem/BrowserViewController+ViewPresets.swift:47:30:presentSheet",
       "filename": false,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m06",
       "site": "Sources/Pathem/BrowserViewController+SmartFolders.swift:171:9:beginSheetModal",
       "filename": false,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m07",
       "site": "Sources/Pathem/BrowserViewController+ViewOptions.swift:12:34:presentSheet",
       "filename": true,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m08",
       "site": "Sources/Pathem/BrowserViewController+SelectionInspection.swift:250:30:presentSheet",
       "filename": true,
-      "group": 1
+      "group": 1,
+      "content_change": false
     },
     {
       "id": "m09",
       "site": "Sources/Pathem/BrowserViewController+MediaTools.swift:158:30:presentSheet",
       "filename": false,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m10",
       "site": "Sources/Pathem/BrowserViewController+MediaTools.swift:369:9:beginSheetModal",
       "filename": false,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m11",
       "site": "Sources/Pathem/BrowserViewController+OpenerRules.swift:87:9:beginSheetModal",
       "filename": true,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m12",
       "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:271:9:beginSheetModal",
       "filename": true,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m13",
       "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:318:9:beginSheetModal",
       "filename": true,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m14",
       "site": "Sources/Pathem/ACLEditorController.swift:42:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m15",
       "site": "Sources/Pathem/AICommandBar.swift:132:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m16",
       "site": "Sources/Pathem/ArchiveContentsController.swift:31:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 2
+      "group": 2,
+      "content_change": false
     },
     {
       "id": "m17",
       "site": "Sources/Pathem/BatchCreateController.swift:39:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m18",
       "site": "Sources/Pathem/BatchRenameController.swift:198:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m19",
       "site": "Sources/Pathem/BulkAttributesController.swift:36:9:beginSheet",
       "filename": false,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m20",
       "site": "Sources/Pathem/ClipboardViewerController.swift:37:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m21",
       "site": "Sources/Pathem/CommandPalette.swift:125:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m22",
       "site": "Sources/Pathem/CommitController.swift:36:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m23",
       "site": "Sources/Pathem/ConnectionsController.swift:151:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m24",
       "site": "Sources/Pathem/ExternalCommandsController.swift:33:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 3
+      "group": 3,
+      "content_change": false
     },
     {
       "id": "m25",
       "site": "Sources/Pathem/FindInFilesController.swift:76:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m26",
       "site": "Sources/Pathem/GlobalSearchController.swift:85:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m27",
       "site": "Sources/Pathem/InfoInspectorController.swift:214:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 4
+      "group": 4,
+      "content_change": true
     },
     {
       "id": "m28",
       "site": "Sources/Pathem/OrganizeReviewController.swift:59:9:beginSheet",
       "filename": true,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m29",
       "site": "Sources/Pathem/TemplatesController.swift:34:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m30",
       "site": "Sources/Pathem/UndoHistoryController.swift:34:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m31",
       "site": "Sources/Pathem/XattrController.swift:35:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m32",
       "site": "Sources/Pathem/AutomationRulesController.swift:30:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 4
+      "group": 4,
+      "content_change": false
     },
     {
       "id": "m33",
       "site": "Sources/Pathem/ChangelogWindowController.swift:42:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 5
+      "group": 5,
+      "content_change": false
     },
     {
       "id": "m34",
       "site": "Sources/Pathem/CropController.swift:61:13:beginSheet",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": false
     },
     {
       "id": "m35",
       "site": "Sources/Pathem/CropController.swift:63:13:makeKeyAndOrderFront",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": false
     },
     {
       "id": "m36",
       "site": "Sources/Pathem/DiffViewerController.swift:32:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": true
     },
     {
       "id": "m37",
       "site": "Sources/Pathem/DuplicatesController.swift:37:27:beginSheet",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": true
     },
     {
       "id": "m38",
       "site": "Sources/Pathem/DuplicatesController.swift:37:69:makeKeyAndOrderFront",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": true
     },
     {
       "id": "m39",
       "site": "Sources/Pathem/MetadataEditorController.swift:54:27:beginSheet",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": true
     },
     {
       "id": "m40",
       "site": "Sources/Pathem/MetadataEditorController.swift:54:69:makeKeyAndOrderFront",
       "filename": true,
-      "group": 5
+      "group": 5,
+      "content_change": true
     },
     {
       "id": "m41",
       "site": "Sources/Pathem/MarkupController.swift:35:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 6
+      "group": 6,
+      "content_change": false
     },
     {
       "id": "m42",
       "site": "Sources/Pathem/ProcessViewerController.swift:36:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 6
+      "group": 6,
+      "content_change": false
     },
     {
       "id": "m43",
       "site": "Sources/Pathem/SizeBrowserController.swift:38:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 6
+      "group": 6,
+      "content_change": true
     },
     {
       "id": "m44",
       "site": "Sources/Pathem/SelectByPatternSheet.swift:66:9:beginSheetModal",
       "filename": false,
-      "group": 6
+      "group": 6,
+      "content_change": false
     },
     {
       "id": "m45",
       "site": "Sources/Pathem/TransferProgress.swift:119:13:beginSheet",
       "filename": true,
-      "group": 6
+      "group": 6,
+      "content_change": false
     },
     {
       "id": "m46",
       "site": "Sources/Pathem/TransferProgress.swift:121:13:makeKeyAndOrderFront",
       "filename": true,
-      "group": 6
+      "group": 6,
+      "content_change": false
     },
     {
       "id": "m47",
       "site": "Sources/Pathem/ExternalCommandOutputController.swift:78:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 6
+      "group": 6,
+      "content_change": true
     },
     {
       "id": "m48",
       "site": "Sources/Pathem/ExternalCommandOutputController.swift:102:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 6
+      "group": 6,
+      "content_change": true
     },
     {
       "id": "m49",
       "site": "Sources/Pathem/TransferQueueController.swift:102:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 7
+      "group": 7,
+      "content_change": true
     },
     {
       "id": "m50",
       "site": "Sources/Pathem/TransferQueueController.swift:109:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m51",
       "site": "Sources/Pathem/SettingsWindowController.swift:196:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m52",
       "site": "Sources/Pathem/SettingsWindowController.swift:1823:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m53",
       "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:29:21:presentSheet",
       "filename": true,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m54",
       "site": "Sources/Pathem/BrowserViewController+FolderCompare.swift:39:9:beginSheetModal",
       "filename": true,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m55",
       "site": "Sources/Pathem/BrowserViewController.swift:915:30:presentSheet",
       "filename": false,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m56",
       "site": "Sources/Pathem/BrowserViewController+Workspaces.swift:37:9:beginSheetModal",
       "filename": true,
-      "group": 7
+      "group": 7,
+      "content_change": false
     },
     {
       "id": "m57",
       "site": "Sources/Pathem/BrowserViewController+Workspaces.swift:86:9:beginSheetModal",
       "filename": true,
-      "group": 8
+      "group": 8,
+      "content_change": false
     },
     {
       "id": "m58",
       "site": "Sources/Pathem/WindowManager.swift:84:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 8
+      "group": 8,
+      "content_change": false
     },
     {
       "id": "m59",
       "site": "Sources/Pathem/SlideshowController.swift:40:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 8
+      "group": 8,
+      "content_change": false
     },
     {
       "id": "m60",
       "site": "Sources/Pathem/TorrentFilesController.swift:32:13:beginSheet",
       "filename": true,
-      "group": 8
+      "group": 8,
+      "content_change": false
     },
     {
       "id": "m61",
       "site": "Sources/Pathem/TorrentFilesController.swift:35:13:makeKeyAndOrderFront",
       "filename": true,
-      "group": 8
+      "group": 8,
+      "content_change": false
     },
     {
       "id": "m62",
       "site": "Sources/Pathem/ExternalCommandOutputController.swift:37:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 8
+      "group": 8,
+      "content_change": true
     },
     {
       "id": "m63",
       "site": "Sources/Pathem/BrowserViewController+TrashLedger.swift:83:32:ask",
       "filename": false,
-      "group": 8
+      "group": 8,
+      "content_change": false
     },
     {
       "id": "m64",
@@ -385,7 +448,8 @@
       "group": 8,
       "caller": "emptyTrash",
       "caller_sha256": "0ba539e833defc3187f3fe8aeca6c683a0523a6c7af4642208a3da3cd816e016",
-      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider."
+      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider.",
+      "content_change": false
     },
     {
       "id": "m65",
@@ -394,7 +458,8 @@
       "group": 9,
       "caller": "trashSelection",
       "caller_sha256": "dd077a70d11b6e46d8ee0fa39868621789f7dd47036b82715e2d7d6ef7e17832",
-      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider."
+      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider.",
+      "content_change": false
     },
     {
       "id": "m66",
@@ -403,55 +468,64 @@
       "group": 9,
       "caller": "trashSelection",
       "caller_sha256": "dd077a70d11b6e46d8ee0fa39868621789f7dd47036b82715e2d7d6ef7e17832",
-      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider."
+      "construction": "Real CursorConfirm factory with audited production strings; fixture counts/host; no Trash read or remote provider.",
+      "content_change": false
     },
     {
       "id": "m67",
       "site": "Sources/Pathem/BrowserViewController+CommandRegistry.swift:192:13:showWindow",
       "filename": false,
-      "group": 9
+      "group": 9,
+      "content_change": false
     },
     {
       "id": "m68",
       "site": "Sources/Pathem/AutomationRulesController.swift:260:9:beginSheet",
       "filename": true,
-      "group": 9
+      "group": 9,
+      "content_change": false
     },
     {
       "id": "m69",
       "site": "Sources/Pathem/PhotosBrowserController.swift:37:9:makeKeyAndOrderFront",
       "filename": false,
-      "group": 9
+      "group": 9,
+      "content_change": false
     },
     {
       "id": "m70",
       "site": "Sources/Pathem/TorrentsWindowController.swift:45:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 9
+      "group": 9,
+      "content_change": false
     },
     {
       "id": "m71",
       "site": "Sources/Pathem/FullDiskAccessGuide.swift:183:9:beginSheet",
       "filename": false,
-      "group": 9
+      "group": 9,
+      "content_change": false
     },
     {
       "id": "m72",
       "site": "Sources/Pathem/CleanupController.swift:199:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 9
+      "group": 9,
+      "content_change": false
     },
     {
       "id": "m73",
       "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:193:13:beginSheetModal",
       "filename": true,
-      "group": 10
+      "group": 10,
+      "content_change": false
     },
     {
       "id": "m74",
       "site": "Sources/Pathem/TrimController.swift:38:9:makeKeyAndOrderFront",
       "filename": true,
-      "group": 10
+      "group": 10,
+      "content_change": true
     }
   ]
 }

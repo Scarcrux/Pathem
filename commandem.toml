@@ -1987,6 +1987,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Unit 2 has all seven remaining A adapters written with owned provider boundaries. Rule/FDA/Reclaim/Torrents/Trim pilots retain geometry/ambiguity reds; repository Reclaim 71/71. Photos first Cancel succeeds but cached window does not reappear, so exact validation refuses incomplete cycles; investigate lifetime in its own red/green commit. Full variants, baseline, injections, native E2E gate and final CI are pending."
     at = "2026-11-16T15:28:17Z"
 
+  [[mission.comment]]
+    text = "Owner objects to repeated visible desktop tests. All owned GUI phases are terminal; further visible launches paused pending coordination. Headless checkpoint: richer no-follow Cancel snapshots, 12 async-content adapters, exact 42-job plan and input manifest. Core clean pilot passes; four injections discriminate; three-family native composition sample 3/3 zero exits, zero failures, 42.30s. Full variants, final baseline/E2E wiring and CI remain pending. Unit 2 is not READY."
+    at = "2026-11-16T15:48:04Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

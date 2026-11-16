@@ -493,3 +493,89 @@ empty label geometry remains red. Exact receipts accept the complete run;
 owner defaults unchanged, private domain cleared, demo removed. Receipt:
 .build/transient-unit2-photo-lifetime-probe.log. This proves the reopen repair
 for the denied-access fixture, not populated Photos authorization or export.
+
+## Content-change and Cancel metadata control, before full expansion
+
+Twelve asynchronous mounts now require delivered post-load content and repeat
+checks 1-3 on that frame, as well as first display. Fixtures include real text
+differences, a duplicate pair and a Finder comment so a loading placeholder
+cannot masquerade as completion. Exact receipts require all three post-load
+observations. Cancel snapshots now include empty directories, file modes,
+xattrs and symlink identities, as well as bytes, without reading link targets.
+
+Its first native negative control failed before any mount. Diagnostic evidence
+isolates the symlink stage: eight unchanged snapshot entries after a deliberately
+dangling link was successfully created. Foundation DirectoryEnumerator omitted
+that entry. Explicit name enumeration followed by attributes/lstat retains links
+without following them. This is a harness defect, not a product finding. Original
+receipts: .build/transient-unit2-readiness-m36.log and
+.build/transient-unit2-metadata-diagnostic.log; raw diagnostic line is in the
+matching transient-sample log. Revalidation is pending, not called PASS yet.
+
+The full plan accounts for 103 native A sites, 9 task-2 delegated browser sites,
+and 47 B sites, across 42 launches. The input digest now includes engine/vendor
+source, all shipped/built resources and linked framework content, with negative
+controls for changed non-catalog resources and dependencies. The full comparison
+runner is written but has not run or accepted a baseline. 123 Python controls
+pass before native revalidation; no CI or Unit 2 land.
+
+The corrected metadata counterexample passes in all five changed-content
+samples: Diff, Duplicates, Metadata, Inspector and Trim. Their exact initial and
+post-load receipts are complete; only geometry/ambiguity reds remain. The next
+core pilot stopped before presentation because the older core fixture guard
+still expected the former bytes-only snapshot shape. That is our representation
+regression, not a product failure. Update its setup check and its intentional
+Rename/Delete expected transitions to the richer snapshot, preserving root
+metadata and each moved file's metadata; then rerun the core and all four
+injections. The failed core receipt stays in
+.build/transient-unit2-core-private-pilot.log. No full plan has run.
+
+## Validated composition and owner-desktop hold
+
+The corrected private core pilot passes natively with zero failures. Each of
+the four injections is delivered and turns its named check red, and each
+validation wrapper passes. Receipt:
+.build/transient-unit2-core-snapshot-pilots.log. The three-family composition
+sample then completes all three jobs naturally: full owned repository Reclaim,
+full Reset factory and the two-host b03 plain alert. Every native exit is zero,
+no failure pairs, all isolation checks pass; the exact empty-baseline comparison
+passes in 42.30 seconds. This is a three-job sample, not full coverage. Receipt:
+.build/transient-unit2-orchestrator-sample.log; immutable plan, native receipts
+and summary under .build/transient-orchestrator-sample-v1.
+
+Seven independent runner controls cover complete success, exact known native
+red without rewriting it, new/stale failures, source/preferences changes and
+stopping after an instrument error. The first staged control fixture omitted
+its required seconds field and failed; correcting that fixture yields 7/7.
+Both staged logs remain; no product failure is inferred from the test fixture.
+
+On 2026-11-16 the owner objected to the repeated visible screen tests. The lane
+has no active or queued native GUI phase and will not launch further visible
+tests until a less disruptive window is coordinated. Source work and headless
+checks can continue. The full 42-job run, remaining full variants, final finding
+baseline, native E2E wiring and make ci are pending. Do not mark Unit 2 READY.
+Future execution should use focused headless development and one coordinated
+visible batch, rather than repeated desktop interruptions.
+
+## Desktop-friendly planning and headless hardening
+
+Plan-only mode does not launch AppKit or create run artifacts:
+`python3 test/transient_surfaces_full.py --plan`.
+For a targeted development preview, add `--surface m39` (repeatable). An A
+selection preserves de/ja, sizes, appearances and filename variants but reduces
+the launch set to the selected surfaces. B keeps all six catalogs. Focused
+runs can only record observations; they cannot qualify the full known-findings
+baseline. The full 42-job release plan remains unchanged. Further visible runs
+remain on hold; these commands are preview examples, not authorization to run.
+
+A headless replay counterexample proved the new orchestrator could reuse an
+old matching receipt if its launch adapter returned without writing a new one.
+The control was red (True is not false); fresh per-invocation identities now
+bind each collected receipt to the current call. Old logs are preserved rather
+than deleted. A missing framework binary inside an existing framework directory
+is also rejected during input enumeration. These Python-only corrections do
+not claim fresh native GUI qualification. Receipts:
+.build/transient-unit2-stale-receipt-red-control.log and
+.build/transient-unit2-focused-freshness-controls.log. An earlier dotted unittest
+invocation failed in discovery before that control; the explicit fixture call
+retains the actual failing assertion independently of traceback formatting.

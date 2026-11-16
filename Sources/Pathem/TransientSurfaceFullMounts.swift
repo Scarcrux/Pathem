@@ -628,6 +628,91 @@ extension TransientSurfaceSample {
         ]
     }
 
+    static let contentMounts: Set<String> = [
+        "m27", "m36", "m37", "m38", "m39", "m40", "m43", "m47", "m48", "m49", "m62", "m74",
+    ]
+
+    func mountContentReady(_ id: String, owner: AnyObject?, content: NSView, name: String) -> Bool {
+        let nodes = TransientSurfaceChecks.walk(content)
+        let strings = nodes.compactMap { ($0 as? NSTextField)?.stringValue }
+        switch id {
+        case "m27":
+            return !strings.contains(L("info.reading", "Reading…"))
+                && !strings.contains(L("info.calculating", "Calculating…"))
+                && strings.contains { $0.count == 64 && $0.allSatisfy { $0.isHexDigit } }
+        case "m36", "m37", "m38":
+            return nodes.compactMap { $0 as? NSTableView }.contains { $0.numberOfRows > 0 }
+        case "m39", "m40":
+            return strings.contains("Owned metadata fixture")
+        case "m43":
+            return strings.contains(name)
+        case "m47", "m48":
+            return nodes.compactMap { $0 as? NSTextView }.contains {
+                $0.string == "Owned completed output"
+            }
+                && strings.contains(L("extcmd.finished", "Finished"))
+        case "m49":
+            return strings.contains(L("queue.idle", "No active transfers"))
+        case "m62":
+            return nodes.compactMap { $0 as? NSTextView }.contains { $0.string == "owned-fixture" }
+                && strings.contains(L("extcmd.finished", "Finished"))
+        case "m74":
+            return (owner as? TrimController)?.debugTransientTrimming == true
+        default:
+            return false
+        }
+    }
+
+    func mountMetadataControl() -> Bool {
+        let directory = root.appendingPathComponent("metadata-control", isDirectory: true)
+        let file = directory.appendingPathComponent("owned.txt")
+        do {
+            try FileManager.default.createDirectory(
+                at: directory, withIntermediateDirectories: true)
+            try Data("Owned metadata control".utf8).write(to: file)
+            let before = snapshot(directory)
+            guard before == snapshot(directory) else {
+                trace(
+                    "TSAMPLE: METADATA-CONTROL failedStage=unchanged count=\(snapshot(directory).count) base=\(directory.standardizedFileURL.path == directory.resolvingSymlinksInPath().standardizedFileURL.path) keys=\(snapshot(directory).keys.sorted())"
+                )
+                return false
+            }
+            try FileMetadata.setFinderComment("Changed owned metadata", on: file)
+            guard snapshot(directory) != before else {
+                trace(
+                    "TSAMPLE: METADATA-CONTROL failedStage=xattr count=\(snapshot(directory).count) base=\(directory.standardizedFileURL.path == directory.resolvingSymlinksInPath().standardizedFileURL.path) keys=\(snapshot(directory).keys.sorted())"
+                )
+                return false
+            }
+            let metadata = snapshot(directory)
+            let empty = directory.appendingPathComponent("empty", isDirectory: true)
+            try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: true)
+            guard snapshot(directory) != metadata else {
+                trace(
+                    "TSAMPLE: METADATA-CONTROL failedStage=empty-directory count=\(snapshot(directory).count) base=\(directory.standardizedFileURL.path == directory.resolvingSymlinksInPath().standardizedFileURL.path) keys=\(snapshot(directory).keys.sorted())"
+                )
+                return false
+            }
+            let emptyAdded = snapshot(directory)
+            try FileManager.default.createSymbolicLink(
+                atPath: directory.appendingPathComponent("owned-link").path,
+                withDestinationPath: "/fixture/absent-owned-target")
+            guard snapshot(directory) != emptyAdded else {
+                trace(
+                    "TSAMPLE: METADATA-CONTROL failedStage=symlink count=\(snapshot(directory).count) base=\(directory.standardizedFileURL.path == directory.resolvingSymlinksInPath().standardizedFileURL.path) keys=\(snapshot(directory).keys.sorted())"
+                )
+                return false
+            }
+            try FileManager.default.removeItem(at: directory)
+            return true
+        } catch {
+            trace(
+                "TSAMPLE: METADATA-CONTROL error=\((error as NSError).domain):\((error as NSError).code)"
+            )
+            return false
+        }
+    }
+
     func runFullMounts() {
         guard
             settle({
@@ -646,6 +731,12 @@ extension TransientSurfaceSample {
             "sheets=\(host.sheets.count) argumentOnlyFirstRunState=true")
         guard startupOK else { return }
         guard returnBindingControl() else { return }
+        let metadataOK = mountMetadataControl()
+        emit(
+            "mount-metadata-control", 0, metadataOK,
+            "unchanged passes; xattr, empty directory and symlink mutations discriminate")
+        guard metadataOK else { return }
+
         let group = Int(environment["PATHEM_TRANSIENT_SURFACES_GROUP"] ?? "0") ?? 0
         let groupedMounts = fullMounts().enumerated().filter {
             group == 0 || $0.offset / 8 + 1 == group
@@ -732,6 +823,21 @@ extension TransientSurfaceSample {
             host.makeKeyAndOrderFront(nil)
             host.makeFirstResponder(focus)
             let responder = host.firstResponder.map(ObjectIdentifier.init)
+            do {
+                if mount.id == "m36" {
+                    try Data("Owned left text\nChanged line".utf8).write(to: file)
+                }
+                if ["m37", "m38"].contains(mount.id) {
+                    try Data(contentsOf: file).write(
+                        to: directory.appendingPathComponent("duplicate.png"))
+                }
+                if ["m39", "m40"].contains(mount.id) {
+                    try FileMetadata.setFinderComment("Owned metadata fixture", on: file)
+                }
+            } catch {
+                emit("mount-setup", 0, false, "owned async-content fixture preparation failed")
+                return
+            }
             mount.prepare(file, name)
             let files = snapshot(directory)
             let config = ConfigStore.directory().map(snapshot) ?? [:]
@@ -760,14 +866,6 @@ extension TransientSurfaceSample {
                     $0.cell === window.defaultButtonCell || $0.keyEquivalent == "\r"
                 }
             }
-            if mount.id == "m74" {
-                let delivered = settle {
-                    (owner as? TrimController)?.debugTransientTrimming == true
-                }
-                emit(
-                    "mount-media-delivery", 0, delivered, "actual AVKit canBeginTrimming delivered")
-                guard delivered else { return }
-            }
             content.layoutSubtreeIfNeeded()
             emit(cell, 0, true, "cycle=\(cycle) site=\(mount.site)")
             inspect(
@@ -776,6 +874,23 @@ extension TransientSurfaceSample {
                     $0.window === window ? $0 : nil
                 }, cell: cell, phase: "cycle\(cycle)-mounted", sheet: window.sheetParent != nil,
                 presented: true)
+            if Self.contentMounts.contains(mount.id) {
+                let ready = settle {
+                    self.mountContentReady(mount.id, owner: owner, content: content, name: name)
+                }
+                emit(
+                    "mount-content", 0, ready,
+                    "cell=\(cell) cycle=\(cycle) changed-content delivered=\(ready)")
+                guard ready else { return }
+                content.layoutSubtreeIfNeeded()
+                inspect(
+                    content,
+                    alert: TransientPresentationProbe.current.flatMap {
+                        $0.window === window ? $0 : nil
+                    },
+                    cell: cell, phase: "cycle\(cycle)-content-changed",
+                    sheet: window.sheetParent != nil, presented: true)
+            }
             emit(
                 cell, 4,
                 (window.sheetParent == nil || window.sheetParent === host)

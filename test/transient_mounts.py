@@ -44,11 +44,21 @@ def receipt_errors(log, language, group, probe_one=False, only=None, root=ROOT):
     if actual!=expected:errors.append(f'custom mount cells differ: missing={sorted(expected-actual)} extra={sorted(actual-expected)}')
     counts=Counter((cell,int(check)) for _,cell,check in rows)
     for cell in expected & actual:
-        if any(counts[cell,check]!=3 for check in range(9)):
+        recipe=next(r for r in recipes if cell.startswith('M-'+r['id']+'-'))
+        if any(counts[cell,check]!=(6 if recipe.get('content_change') and check in (1,2,3) else 3) for check in range(9)):
             errors.append('custom mount three-cycle check set incomplete: '+cell)
     covered=Counter(re.findall(r'^TSAMPLE: COVERED class=A site=(\S+) cell=M-',log,re.M))
     wanted=Counter({r['site']:(1 if probe_one else 4)*(2 if r['filename'] else 1) for r in recipes})
     if covered!=wanted:errors.append('custom mount site coverage differs from requested treatment')
+    for cell in expected:
+        recipe=next(r for r in recipes if cell.startswith('M-'+r['id']+'-'))
+        if recipe.get('content_change'):
+            delivered=re.findall(r'^TSAMPLE: PASS cell=mount-content check=0 cell='+re.escape(cell)+r' cycle=(\d+) changed-content delivered=true$',log,re.M)
+            if sorted(delivered)!=['0','1','2']:errors.append('changed content delivery incomplete: '+cell)
+    if re.search(r'^TSAMPLE: FAIL cell=mount-(?:setup|content|callback|work|media-delivery)',log,re.M):
+        errors.append('mount fixture or changed content failed')
+    if 'TSAMPLE: PASS cell=mount-metadata-control check=0 ' not in log:
+        errors.append('cancel metadata control missing or failed')
     if not re.search(r'^TSAMPLE: PASS cell=predicate-startup check=0 sheets=0 ',log,re.M):
         errors.append('isolated startup state missing or failed')
     return errors

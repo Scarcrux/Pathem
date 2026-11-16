@@ -24,22 +24,8 @@ CONFLICT = re.compile(r'Unable to simultaneously satisfy|Unsatisfiable constrain
 
 
 def source_digest():
-    digest = hashlib.sha256()
-    paths = (sorted((ROOT / 'Sources/Pathem').rglob('*.swift'))
-             + sorted((ROOT / 'Sources/Pathem/Resources').rglob('Localizable.strings'))
-             + sorted((ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings'))
-             + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', ROOT / 'test/transient_mounts.json', ROOT / 'test/transient_factories.json', ROOT / 'test/transient_factories.py',
-                ROOT / 'test/transient_full_alerts.py', ROOT / 'test/transient_inventory.py', ROOT / 'test/transient_known_findings.py', ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_markup_lifecycle.py', ROOT / 'test/transient_mounts.py', ROOT / 'test/transient_media_fixture.py', pathlib.Path(__file__)])
-    for path in paths:
-        digest.update(str(path.relative_to(ROOT)).encode())
-        digest.update(path.read_bytes())
-    binary = ROOT / '.build/debug/Pathem'
-    if binary.is_file():
-        digest.update(b'native-debug-artifact')
-        with binary.open('rb') as stream:
-            for chunk in iter(lambda: stream.read(1024 * 1024), b''):
-                digest.update(chunk)
-    return digest.hexdigest()
+    from transient_input_manifest import digest
+    return digest(ROOT)
 
 
 def validate(log, code, case, language, pilot, expected_cancel, reference=None, full=False, category="all"):
@@ -97,7 +83,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     if case == 'clean':
         b = {cell for _, cell, _ in rows if cell.startswith('B-') and cell != 'B-contract' and not cell.endswith('-lifecycle')}
         behavior = {cell for _, cell, _ in rows if cell.startswith('B-') and cell.endswith('-lifecycle')}
-        if category not in ('mounts', 'factories', 'lifecycle') and not (full and 'TSAMPLE: B-SUBSET' in log) and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
+        if category not in ('core', 'mounts', 'factories', 'lifecycle') and not (full and 'TSAMPLE: B-SUBSET' in log) and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
             errors.append('class B structural/lifecycle sample incomplete')
         if code != 0 or failures:
             errors.append(f'clean native verdict red: exit {code}, {len(failures)} cell/check pairs')
@@ -123,7 +109,8 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     return errors, failures
 
 
-def run_case(case, language, pilot, full=False, category="all", group=0, probe_one=False, only=None):
+def run_case(case, language, pilot, full=False, category="all", group=0, probe_one=False, only=None, launch_id=None):
+    launch_id = launch_id or uuid.uuid4().hex
     temp = pathlib.Path(subprocess.check_output(['getconf', 'DARWIN_USER_TEMP_DIR'], text=True).strip())
     scratch = pathlib.Path(tempfile.mkdtemp(prefix='pathem-transient-sample-', dir=temp))
     before = defaults_snapshot()
@@ -156,7 +143,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         env['PATHEM_LAYOUT_MATRIX_INJECT'] = case
     if case == 'dismiss-failure':
         env['PATHEM_TRANSIENT_INJECT_DISMISS_FAILURE'] = '1'
-    label = f'{case}-{language}' + (f'-full-{category}-g{group}' + ('-' + only if only else '') + ('-probe' if probe_one else '') if full else '-pilot' if pilot else '')
+    label = f'{case}-{language}' + (f'-full-{category}-g{group}' + ('-pilot' if pilot else '') + ('-' + only if only else '') + ('-probe' if probe_one else '') if full else '-pilot' if pilot else '')
     print('SAMPLE receipts', scratch, 'case', label, flush=True)
     started = time.monotonic()
     inputs_before = source_digest()
@@ -195,7 +182,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
             shutil.rmtree(demo)
     demo_removed = not (scratch / 'demo').exists()
     expected_catalog = json.loads(subprocess.check_output(['plutil', '-convert', 'json', '-o', '-', str(ROOT / f'Sources/Pathem/Resources/{language}.lproj/Localizable.strings')]))
-    reference_path = ROOT / '.build/transient-sample-clean-de-pilot.json'
+    reference_path = ROOT / ('.build/transient-sample-clean-de-full-core-g0-pilot.json' if full else '.build/transient-sample-clean-de-pilot.json')
     reference = json.loads(reference_path.read_text()) if reference_path.exists() else None
     errors, failures = validate(log, code, case, language, pilot, expected_catalog['common.cancel'], reference, full, category)
     if private_domain and 'TSAMPLE: DOMAIN ' + private_domain not in log:
@@ -236,7 +223,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         errors.append('preference/demo isolation failed')
     if source_digest() != inputs_before:
         errors.append('source or native artifact changed during launch')
-    receipt = dict(label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
+    receipt = dict(launch_id=launch_id, label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
                    source_digest=inputs_before, failures=sorted(failures), errors=errors,
                    reference_native_exit=reference.get('native_exit') if case != 'clean' and reference else None,
                    preferences_unchanged=private_ok, catalog_matches_source=catalog_match, lifecycle_disk_proof=lifecycle_proof,
@@ -261,7 +248,7 @@ def main():
     parser.add_argument('case', choices=CASES)
     parser.add_argument('--pilot', action='store_true')
     parser.add_argument('--full', action='store_true')
-    parser.add_argument('--set', choices=['all', 'b', 'mounts', 'factories', 'lifecycle'], default='all')
+    parser.add_argument('--set', choices=['all', 'core', 'b', 'mounts', 'factories', 'lifecycle'], default='all')
     parser.add_argument('--language', choices=LANGUAGES)
     parser.add_argument('--group', type=int, default=0)
     parser.add_argument('--probe-one', action='store_true')
@@ -271,8 +258,8 @@ def main():
     if args.full:
         __import__("transient_full_alerts").validate()
         __import__("transient_factories").validate()
-        if args.pilot:
-            parser.error("full and pilot are mutually exclusive")
+        if args.pilot and args.set != 'core':
+            parser.error("a full pilot is allowed only for the bounded core controls")
     if args.case != 'clean' and not args.pilot:
         parser.error('injections are bounded pilot controls')
     languages = [args.language] if args.language else (['de'] if args.pilot else LANGUAGES)

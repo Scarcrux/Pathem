@@ -87,17 +87,50 @@ final class TransientSurfaceSample {
     }
     func snapshot(_ directory: URL) -> [String: Data] {
         let fm = FileManager.default
-        guard
-            let entries = fm.enumerator(
-                at: directory, includingPropertiesForKeys: [.isRegularFileKey])
-        else { return [:] }
+        guard fm.fileExists(atPath: directory.path) else { return [:] }
         var files: [String: Data] = [:]
-        let base = directory.resolvingSymlinksInPath().standardizedFileURL.path
-        for case let url as URL in entries {
-            if (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
-                let path = url.resolvingSymlinksInPath().standardizedFileURL.path
-                guard path.hasPrefix(base + "/") else { continue }
-                files[String(path.dropFirst(base.count))] = try? Data(contentsOf: url)
+        let base = directory.standardizedFileURL.path
+        // DirectoryEnumerator omitted the deliberately dangling link in the
+        // native counterexample. Enumerate names, then lstat each entry, so
+        // adding a symlink is observable without ever following its target.
+        var urls = [directory]
+        var index = 0
+        while index < urls.count {
+            let url = urls[index]
+            index += 1
+            let path = url.standardizedFileURL.path
+            guard path == base || path.hasPrefix(base + "/") else { continue }
+            let key = Data(String(path.dropFirst(base.count)).utf8).base64EncodedString()
+            guard let attributes = try? fm.attributesOfItem(atPath: path) else {
+                files[key + ":unreadable"] = Data()
+                continue
+            }
+            let type = attributes[.type] as? FileAttributeType
+            files[key + ":type"] = Data((type?.rawValue ?? "unknown").utf8)
+            files[key + ":permissions"] = Data(
+                String(describing: attributes[.posixPermissions]).utf8)
+            if type == .typeSymbolicLink {
+                files[key + ":link"] = (try? fm.destinationOfSymbolicLink(atPath: path)).map {
+                    Data($0.utf8)
+                }
+                continue  // Never read a symlink target outside our fixture.
+            }
+            guard
+                url.resolvingSymlinksInPath().standardizedFileURL.path
+                    == directory.resolvingSymlinksInPath().standardizedFileURL.path
+                    || url.resolvingSymlinksInPath().standardizedFileURL.path.hasPrefix(
+                        directory.resolvingSymlinksInPath().standardizedFileURL.path + "/")
+            else { continue }
+            if type == .typeDirectory {
+                if let names = try? fm.contentsOfDirectory(atPath: path) {
+                    urls += names.map { url.appendingPathComponent($0) }
+                } else {
+                    files[key + ":unreadable-directory"] = Data()
+                }
+            }
+            if type == .typeRegular { files[key + ":bytes"] = try? Data(contentsOf: url) }
+            for name in ExtendedAttributes.names(of: url) {
+                files[key + ":xattr:" + name] = ExtendedAttributes.value(name, of: url)
             }
         }
         return files
@@ -365,7 +398,9 @@ final class TransientSurfaceSample {
             runFullFactories()
             finish(started)
         }
-        if injection == "clean" { if full { classBFull() } else { classBSample() } }
+        if injection == "clean", environment["PATHEM_TRANSIENT_SURFACES_SET"] != "core" {
+            if full { classBFull() } else { classBSample() }
+        }
         finish(started)
     }
     func finish(_ started: Date) -> Never {
@@ -401,7 +436,10 @@ final class TransientSurfaceSample {
                 return
             }
             let beforeFiles = snapshot(directory)
-            guard let originalBytes = beforeFiles["/" + name], beforeFiles.count == 1 else {
+            let sourceKey = Data(("/" + name).utf8).base64EncodedString()
+            guard beforeFiles[sourceKey + ":bytes"] == Data("owned sample bytes".utf8),
+                beforeFiles.keys.filter({ $0.hasSuffix(":type") }).count == 2
+            else {
                 emit(cell, 5, false, "fixture snapshot not delivered: \(beforeFiles.keys.sorted())")
                 return
             }
@@ -632,11 +670,17 @@ final class TransientSurfaceSample {
                 ?? (kind == "plain" && cell.contains("extension-confirm") ? 0 : buttons.count - 1)
             let cancelConfirmed =
                 kind == "conflict" ? conflictAnswer == nil : actualResponseIndex == cancelIndex
-            let stateOK =
-                expectedMutation
-                ? (kind == "reclaim"
-                    ? afterFiles.isEmpty : afterFiles == ["/confirmed.txt": originalBytes])
-                : TransientSurfaceChecks.unchanged(beforeFiles, afterFiles)
+            var expectedFiles = beforeFiles
+            if expectedMutation {
+                expectedFiles = beforeFiles.filter { !$0.key.hasPrefix(sourceKey + ":") }
+                if kind == "rename" {
+                    let destinationKey = Data("/confirmed.txt".utf8).base64EncodedString()
+                    for (key, value) in beforeFiles where key.hasPrefix(sourceKey + ":") {
+                        expectedFiles[destinationKey + key.dropFirst(sourceKey.count)] = value
+                    }
+                }
+            }
+            let stateOK = TransientSurfaceChecks.unchanged(expectedFiles, afterFiles)
             let fileOK = ended && (returnAction || cancelConfirmed) && stateOK
             emit(
                 cell, 5, fileOK,

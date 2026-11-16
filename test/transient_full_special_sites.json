@@ -1,0 +1,69 @@
+{
+  "sites": [
+    {
+      "site": "Sources/Pathem/BrowserViewController+Transfers.swift:82:28:ask",
+      "coverage": "core",
+      "reason": "TS-F1 repaired in 3e1c19a: Keep Both for All is Return default; Replace All remains click-only. Original bytes preserved by one/two-clash native fixture tests."
+    },
+    {
+      "site": "Sources/Pathem/CleanupController.swift:1008:14:presentDeleteNowAlert",
+      "coverage": "core",
+      "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only."
+    },
+    {
+      "site": "Sources/Pathem/PathemApp.swift:259:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Primary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
+    },
+    {
+      "site": "Sources/Pathem/BrowserViewController+DemoWorkspace.swift:14:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/BrowserViewController+ExternalOpen.swift:18:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/BrowserViewController+ExternalOpen.swift:44:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/BrowserViewController+ExternalOpen.swift:73:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/DockMenu.swift:111:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/DockMenu.swift:118:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/DockMenu.swift:128:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
+    },
+    {
+      "site": "Sources/Pathem/SidebarController.swift:580:9:makeKeyAndOrderFront",
+      "coverage": "task2",
+      "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
+    },
+    {
+      "site": "Sources/Pathem/BrowserViewController+Rename.swift:27:30:presentSheet",
+      "coverage": "core",
+      "reason": "RenameDialogController factory owns the name field and optional suggestion accessory; presentSheet caller retains provenance. One of the three Unit 1 sample kinds."
+    },
+    {
+      "site": "Sources/Pathem/CursorConfirm.swift:41:13:show",
+      "coverage": "core",
+      "reason": "Custom content factory; individual caller rows carry the Return action and destructive intent."
+    }
+  ]
+}
