@@ -101,6 +101,13 @@ enum TransientSurfaceChecks {
             if !delivered {
                 issues.append(.init(number: 1, detail: "native message not delivered"))
             }
+            if !alert.informativeText.isEmpty
+                && !controls.compactMap({ $0 as? NSTextField }).contains(where: {
+                    $0.stringValue == alert.informativeText
+                })
+            {
+                issues.append(.init(number: 1, detail: "native informative text not delivered"))
+            }
         }
         return issues
     }
@@ -126,6 +133,9 @@ enum TransientSurfaceChecks {
             && (!sheet || (frame.width <= host.width + 1 && frame.height <= host.height + 1))
     }
     static func ownership(actual: Int?, expected: Int) -> Bool { actual == expected }
+    static func appearance(_ view: NSView, expected: NSAppearance.Name?) -> Bool {
+        expected.map { view.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == $0 } ?? true
+    }
     static func unchanged(_ before: [String: Data], _ after: [String: Data]) -> Bool {
         before == after
     }
@@ -141,6 +151,8 @@ enum TransientSurfaceChecks {
     ) -> Bool {
         !pending && !visible && responderBefore != nil && responderBefore == responderAfter
     }
-    static func noAccumulation(before: Set<Int>, after: Set<Int>) -> Bool { before == after }
+    static func noAccumulation(before: [Int], after: [Int]) -> Bool {
+        before.sorted() == after.sorted()
+    }
 }
 #endif

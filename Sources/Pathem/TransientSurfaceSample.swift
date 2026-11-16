@@ -17,6 +17,8 @@ final class TransientSurfaceSample {
     private var injected = Set<String>()
     private var cells = Set<String>()
     private var predicateCount = 0
+    private var requestedSize = NSSize.zero
+    private var requestedAppearance: NSAppearance.Name?
     private var frameworkInfo: [String: (count: Int, names: Set<String>)] = [:]
     private var language: String { environment["PATHEM_TRANSIENT_SURFACES_LANGUAGE"] ?? "missing" }
     private var pilot: Bool { environment["PATHEM_TRANSIENT_SURFACES_PILOT"] == "1" }
@@ -68,8 +70,8 @@ final class TransientSurfaceSample {
             }
         }
     }
-    private func windows() -> Set<Int> {
-        Set(NSApp.windows.filter(\.isVisible).map(\.windowNumber))
+    private func windows() -> [Int] {
+        NSApp.windows.filter(\.isVisible).map(\.windowNumber).sorted()
     }
     private func snapshot(_ directory: URL) -> [String: Data] {
         let fm = FileManager.default
@@ -119,8 +121,9 @@ final class TransientSurfaceSample {
         emit(
             cell, 2,
             TransientSurfaceChecks.fits(
-                frame: frame, screen: screen, sheet: sheet, host: host.contentLayoutRect.size),
-            "phase=\(phase) frame=\(frame) host=\(host.contentLayoutRect.size) screen=\(screen) presented=\(presented)",
+                frame: frame, screen: screen, sheet: sheet, host: host.contentLayoutRect.size)
+                && host.contentLayoutRect.size == requestedSize,
+            "phase=\(phase) frame=\(frame) host=\(host.contentLayoutRect.size) screen=\(screen) presented=\(presented) requestedHost=\(requestedSize)",
             content: content)
     }
     private func key(_ character: String, window: NSWindow) -> Bool {
@@ -208,6 +211,13 @@ final class TransientSurfaceSample {
         control(
             4, TransientSurfaceChecks.ownership(actual: 10, expected: 10),
             TransientSurfaceChecks.ownership(actual: 20, expected: 10))
+        view.appearance = NSAppearance(named: .aqua)
+        let correctAppearance = TransientSurfaceChecks.appearance(view, expected: .aqua)
+        view.appearance = NSAppearance(named: .darkAqua)
+        emit(
+            "predicate-4-appearance", 4,
+            correctAppearance && !TransientSurfaceChecks.appearance(view, expected: .aqua),
+            "effective appearance must match the requested treatment")
         let data = ["fixture": Data("original".utf8)]
         control(
             5, TransientSurfaceChecks.unchanged(data, data),
@@ -228,6 +238,13 @@ final class TransientSurfaceSample {
         control(
             8, TransientSurfaceChecks.noAccumulation(before: [1], after: [1]),
             TransientSurfaceChecks.noAccumulation(before: [1], after: [1, 2]))
+        let aliasBefore = [1]
+        let aliasAfter = [1, 1]
+        emit(
+            "predicate-8-multiplicity", 8,
+            Set(aliasBefore) == Set(aliasAfter)
+                && !TransientSurfaceChecks.noAccumulation(before: aliasBefore, after: aliasAfter),
+            "literal window count must not collapse repeated numeric identifiers")
     }
 
     func run() -> Never {
@@ -253,8 +270,10 @@ final class TransientSurfaceSample {
                 ? [NSSize(width: 720, height: 420)]
                 : [NSSize(width: 720, height: 420), NSSize(width: 1100, height: 700)]
             for appearance in appearances {
+                requestedAppearance = appearance
                 host.appearance = NSAppearance(named: appearance)
                 for size in sizes {
+                    requestedSize = size
                     host.setContentSize(size)
                     for kind in ["rename", "reclaim", "conflict"] {
                         for long in (kind == "rename" && !pilot ? [false, true] : [false]) {
@@ -424,8 +443,9 @@ final class TransientSurfaceSample {
                 ? browser.cursorConfirm.debugAnchorWindowNumber : window.sheetParent?.windowNumber
             emit(
                 cell, 4,
-                TransientSurfaceChecks.ownership(actual: ownership, expected: host.windowNumber),
-                "cycle=\(cycle) actualHost=\(String(describing: ownership)) expected=\(host.windowNumber)",
+                TransientSurfaceChecks.ownership(actual: ownership, expected: host.windowNumber)
+                    && TransientSurfaceChecks.appearance(content, expected: requestedAppearance),
+                "cycle=\(cycle) actualHost=\(String(describing: ownership)) expected=\(host.windowNumber) appearance=\(String(describing: content.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]))) requestedAppearance=\(String(describing: requestedAppearance))",
                 content: content)
             inspect(
                 content, alert: alert, cell: cell, phase: "cycle\(cycle)-initial",
@@ -446,6 +466,10 @@ final class TransientSurfaceSample {
             if returnAction, let dialog {
                 dialog.field.stringValue = "confirmed.txt"
                 (dialog.field.currentEditor() as? NSTextView)?.string = "confirmed.txt"
+                content.layoutSubtreeIfNeeded()
+                inspect(
+                    content, alert: alert, cell: cell, phase: "cycle\(cycle)-typed", sheet: true,
+                    presented: true)
             }
             let actualDefault: Int? =
                 kind == "conflict"
@@ -650,6 +674,7 @@ final class TransientSurfaceSample {
         } catch { emit(cell, 5, false, "owned-path fixture cannot be created") }
     }
     private func classBSample() {
+        requestedAppearance = nil
         let samples = policy.values.compactMap { $0["sample"] as? [String: Any] }.sorted {
             ($0["id"] as! String) < ($1["id"] as! String)
         }
@@ -663,6 +688,7 @@ final class TransientSurfaceSample {
             ? [NSSize(width: 720, height: 420)]
             : [NSSize(width: 720, height: 420), NSSize(width: 1100, height: 700)])
         {
+            requestedSize = size
             host.setContentSize(size)
             for sample in samples {
                 let id = sample["id"] as! String
@@ -673,6 +699,9 @@ final class TransientSurfaceSample {
                     continue
                 }
                 let cell = "B-\(id)-\(language)-\(Int(size.width))"
+                print(
+                    "TSAMPLE: CONTENT cell=\(cell) messageKey=\(sample["message_key"] ?? "missing") messageChars=\(alert.messageText.count) informativeChars=\(alert.informativeText.count)"
+                )
                 inspect(
                     content, alert: alert, cell: cell, phase: "structural-only", sheet: true,
                     presented: false)

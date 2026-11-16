@@ -49,6 +49,12 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None):
     viewport = [(status, check) for status, cell, check in rows if cell == 'predicate-1-viewport']
     if viewport != [('PASS', '1')]:
         errors.append('viewport geometry sub-control missing or failed')
+    multiplicity = [(status, check) for status, cell, check in rows if cell == 'predicate-8-multiplicity']
+    if multiplicity != [('PASS', '8')]:
+        errors.append('window count sub-control missing or failed')
+    appearance = [(status, check) for status, cell, check in rows if cell == 'predicate-4-appearance']
+    if appearance != [('PASS', '4')]:
+        errors.append('appearance delivery sub-control missing or failed')
     if not re.search(r'^TSAMPLE: SUMMARY .*$', log, re.M) or not re.search(r'^RESULT: (PASS|FAIL) \(\d+/\d+\)$', log, re.M):
         errors.append('missing native terminal receipt')
     if f'TSAMPLE: START language={language} ' not in log or f'cancel={expected_cancel} ' not in log:
@@ -138,6 +144,19 @@ def run_case(case, language, pilot):
     reference_path = ROOT / '.build/transient-sample-clean-de-pilot.json'
     reference = json.loads(reference_path.read_text()) if reference_path.exists() else None
     errors, failures = validate(log, code, case, language, pilot, expected_catalog['common.cancel'], reference)
+    built_paths = [p for p in (ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings')
+                   if p.parent.name.casefold() == (language + '.lproj').casefold()]
+    catalog_match = False
+    if len(built_paths) == 1:
+        built_catalog = json.loads(subprocess.check_output(['plutil', '-convert', 'json', '-o', '-', str(built_paths[0])]))
+        catalog_match = built_catalog == expected_catalog
+    if not catalog_match:
+        errors.append('built localization catalog differs from reviewed source')
+    inventory = json.loads((ROOT / 'test/transient_inventory.json').read_text())
+    sample_keys = {key for row in inventory['sites'].values() for sample in [row.get('sample')]
+                   if sample for key in [sample['message_key']] + sample['informative_keys'] + sample['button_keys']}
+    if not sample_keys <= expected_catalog.keys():
+        errors.append('sample localization keys missing from shipped catalog')
     if not private_ok or not demo_removed:
         errors.append('preference/demo isolation failed')
     if source_digest() != inputs_before:
@@ -145,7 +164,8 @@ def run_case(case, language, pilot):
     receipt = dict(case=case, language=language, pilot=pilot, native_exit=code,
                    source_digest=inputs_before, failures=sorted(failures), errors=errors,
                    reference_native_exit=reference.get('native_exit') if case != 'clean' and reference else None,
-                   preferences_unchanged=private_ok, demo_removed=demo_removed, native_demo_removed=demo_removed_native, seconds=time.monotonic()-started)
+                   preferences_unchanged=private_ok, catalog_matches_source=catalog_match,
+                   demo_removed=demo_removed, native_demo_removed=demo_removed_native, seconds=time.monotonic()-started)
     (ROOT / f'.build/transient-sample-{label}.log').write_text(log)
     (ROOT / f'.build/transient-sample-{label}.json').write_text(json.dumps(receipt, indent=2)+'\n')
     print('SAMPLE receipt', json.dumps(receipt), flush=True)

@@ -1823,6 +1823,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Task11 native pilot now completes: three A kinds each three cycles pass checks1-8, ten B structural alerts plus three sheet lifecycle candidates exercised. Scoped app-layout ambiguity control and native framework INFO approved by coordinator; eight primary predicates plus viewport sub-control pass. Native194/196 exit1 retained: TS-U1-F1 No Such Path informative label makes sheet952pt high vs420pt host; actual owned849-byte path also produces776pt sheet. Both renders/receipts retained, input not shortened, no waiver/fix. Prefs unchanged/demo removed;13.4s. Corrected build, l10n,19 inventory and7 wrapper controls pass. Earlier instrument failures/crash and code-only compile error preserved. Bad injections/full sample variants next; not READY."
     at = "2026-11-16T08:59:02Z"
 
+  [[mission.comment]]
+    text = "Task11 Units0/1 READY for review, not approval to land. Final32 A variants (96 presentations),120 B structural cells across6 locales,3 B sheets/2sizes/3cycles (18 presentations). Native1652/1665; all13 failures are retained TS-U1-F1 path informative label,12 locale/size pairs plus verified real-path witness. AllA and checks1,3-8 pass;2 red only for finding. Four corruptions validate with native1 preserved,8 primary+3 subcontrols pass; source/built catalogs and appearance/size delivery verified. InventoryPASS,19 scanner/9 wrapper controls, transient53/53, realReclaimEscape1/1, prefs/demo isolation pass. Per-criterion report docs/TRANSIENT_SURFACES_UNIT1.md and renders .build/transient-unit1-findings. No waiver/fullCI/land/install/deploy/displaychange/Unit2/Task1; broad task11 remains pending for full expansion."
+    at = "2026-11-16T09:52:39Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

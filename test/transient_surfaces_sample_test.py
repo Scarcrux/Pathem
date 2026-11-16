@@ -10,6 +10,8 @@ def transcript(remove=None, fail=None, marker=None):
     for n in range(1, 9):
         row('predicate-' + str(n), n)
     row('predicate-1-viewport', 1)
+    row('predicate-8-multiplicity', 8)
+    row('predicate-4-appearance', 4)
     for kind in ['rename', 'reclaim', 'conflict']:
         for n in range(1, 9):
             row('A-' + kind + '-de-light-720-short', n)
@@ -59,6 +61,14 @@ class SampleReceiptControls(unittest.TestCase):
         self.assertEqual(reference['native_exit'], 1)
         reference['errors'].append('predicate controls incomplete or failed')
         self.assertTrue(validate(log, 1, 'accessory-short', 'de', True, 'Abbrechen', reference)[0])
+
+    def test_literal_window_count_control_is_required(self):
+        errors, _ = validate(transcript(remove=('predicate-8-multiplicity', 8)), 0, 'clean', 'de', True, 'Abbrechen')
+        self.assertIn('window count sub-control missing or failed', errors)
+
+    def test_appearance_delivery_control_is_required(self):
+        errors, _ = validate(transcript(remove=('predicate-4-appearance', 4)), 0, 'clean', 'de', True, 'Abbrechen')
+        self.assertIn('appearance delivery sub-control missing or failed', errors)
 
     def test_constraint_conflicts_are_never_hidden(self):
         self.assertIn('constraint-conflict log line', validate(transcript() + '\nUnable to simultaneously satisfy constraints', 0, 'clean', 'de', True, 'Abbrechen')[0])
