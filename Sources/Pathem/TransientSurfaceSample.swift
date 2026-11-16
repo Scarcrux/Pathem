@@ -49,6 +49,9 @@ final class TransientSurfaceSample {
         } while Date() < deadline
         return condition()
     }
+    func trace(_ message: String) {
+        FileHandle.standardOutput.write(Data((message + "\n").utf8))
+    }
     func emit(
         _ cell: String, _ number: Int, _ passed: Bool, _ detail: String = "", content: NSView? = nil
     ) {
@@ -100,7 +103,7 @@ final class TransientSurfaceSample {
         return files
     }
     func delivered(_ name: String, _ detail: String) {
-        if injected.insert(name).inserted { print("TSAMPLE: INJECT \(name) \(detail)") }
+        if injected.insert(name).inserted { trace("TSAMPLE: INJECT \(name) \(detail)") }
     }
     func recordFramework(
         _ content: NSView, alert: NSAlert?, cell: String, systemAccessory: NSView? = nil,
@@ -218,7 +221,7 @@ final class TransientSurfaceSample {
         ambiguous.setFrameOrigin(NSPoint(x: 10, y: 10))
         let ambiguityDelivered = ambiguous.hasAmbiguousLayout
         let ambiguousIssues = TransientSurfaceChecks.geometry(nativeContent, alert: native)
-        print(
+        trace(
             "TSAMPLE: CONTROL3 appAmbiguous=\(ambiguityDelivered) before=\(nativeIssues.map { ($0.number, $0.detail) }) after=\(ambiguousIssues.map { ($0.number, $0.detail) })"
         )
         control(
@@ -296,7 +299,7 @@ final class TransientSurfaceSample {
         do {
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         } catch {
-            print("RESULT: FAIL cannot create owned sample root")
+            trace("RESULT: FAIL cannot create owned sample root")
             exit(1)
         }
         // The documented opener-suite interception also protects a Cancel
@@ -311,10 +314,10 @@ final class TransientSurfaceSample {
         host.contentView!.addSubview(focus)
         host.makeKeyAndOrderFront(nil)
         host.makeFirstResponder(focus)
-        print(
+        trace(
             "TSAMPLE: START language=\(language) preferred=\(Locale.preferredLanguages) cancel=\(L("common.cancel", "missing")) pilot=\(pilot) injection=\(injection)"
         )
-        if full { print("TSAMPLE: DOMAIN " + (Bundle.main.bundleIdentifier ?? "missing")) }
+        if full { trace("TSAMPLE: DOMAIN " + (Bundle.main.bundleIdentifier ?? "missing")) }
         checkExternalBoundary("start")
         predicateControls()
         guard results.allSatisfy({ $0 }) else { finish(started) }
@@ -369,14 +372,14 @@ final class TransientSurfaceSample {
         checkExternalBoundary("end")
         focus.removeFromSuperview()
         for (cell, info) in frameworkInfo.sorted(by: { $0.key < $1.key }) {
-            print(
+            trace(
                 "TSAMPLE: INFO cell=\(cell) frameworkAmbiguousMax=\(info.count) classes=\(info.names.sorted())"
             )
         }
-        print(
+        trace(
             "TSAMPLE: SUMMARY cells=\(cells.filter { !$0.hasPrefix("predicate-") }.count) predicates=\(predicateCount) checks=\(results.count) failures=\(results.filter { !$0 }.count) seconds=\(Date().timeIntervalSince(started))"
         )
-        print(
+        trace(
             "RESULT: \(results.allSatisfy { $0 } ? "PASS" : "FAIL") (\(results.filter { $0 }.count)/\(results.count))"
         )
         exit(results.allSatisfy { $0 } ? 0 : 1)
@@ -405,7 +408,7 @@ final class TransientSurfaceSample {
             host.makeFirstResponder(focus)
             let responder = host.firstResponder.map(ObjectIdentifier.init)
             let beforeWindows = windows()
-            let returnAction = (kind != "plain" || full) && cycle == 1
+            var returnAction = (kind != "plain" || full) && cycle == 1
             let escape = kind == "conflict" && cycle == 2
             var completed = false
             var response: NSApplication.ModalResponse?
@@ -487,7 +490,7 @@ final class TransientSurfaceSample {
                 let content = alert?.window.contentView ?? popover?.contentViewController?.view,
                 let window = content.window
             else {
-                print(
+                trace(
                     "TSAMPLE: PRESENT-DIAGNOSTIC cell=\(cell) hostVisible=\(host.isVisible) attached=\(host.attachedSheet?.title ?? "none") alertVisible=\(alert?.window.isVisible ?? false) alertSheet=\(alert?.window.sheetParent === host) popShown=\(popover?.isShown ?? false) popWindow=\(popover?.contentViewController?.view.window != nil) completed=\(completed) keys=\(alert?.buttons.map { ($0.title, $0.keyEquivalent.unicodeScalars.map(\.value), $0.bounds) } ?? [])"
                 )
                 emit(cell, 4, false, "native presentation not delivered")
@@ -505,10 +508,13 @@ final class TransientSurfaceSample {
                 let actions =
                     alert?.buttons
                     ?? TransientSurfaceChecks.walk(content).compactMap { $0 as? NSButton }
-                return actions.contains {
-                    $0.bounds.width > 0
-                        && ($0.keyEquivalent == "\r" || $0.cell === window.defaultButtonCell)
-                }
+                return
+                    (kind == "plain" && !actions.isEmpty
+                    && actions.allSatisfy { $0.bounds.width > 0 })
+                    || actions.contains {
+                        $0.bounds.width > 0
+                            && ($0.keyEquivalent == "\r" || $0.cell === window.defaultButtonCell)
+                    }
             }
             let buttons =
                 alert?.buttons
@@ -563,11 +569,22 @@ final class TransientSurfaceSample {
                         && ($0.value["owner_decision"] as? [String: Any])?["quote"] as? String
                             == "Go back to the original: Return deletes."
                 }
-            let defaultOK =
+            var defaultOK =
                 nativeReady
                 && TransientSurfaceChecks.defaultAction(
                     actual: actualDefault, expected: expectedDefault,
                     destructive: kind == "reclaim", intended: intended)
+            if kind == "plain", actualDefault == nil {
+                // A Cancel-first native alert can deliberately have no default.
+                // Prove Return is inert, then use its real Cancel instead of
+                // manufacturing an expected default and cascading timeout reds.
+                defaultOK = nativeReady
+                if returnAction {
+                    defaultOK =
+                        defaultOK && !key("\r", window: window) && !completed && window.isVisible
+                    returnAction = false
+                }
+            }
             let suppress =
                 kind == "conflict" && cycle == 0
                 && environment["PATHEM_TRANSIENT_INJECT_DISMISS_FAILURE"] != nil
@@ -748,7 +765,7 @@ final class TransientSurfaceSample {
                 emit(cell, 1, false, "owned-path native content missing")
                 return
             }
-            print(
+            trace(
                 "TSAMPLE: OWNED-PATH bytes=\(candidate.path.utf8.count) componentMax=180 candidateExists=\(fm.fileExists(atPath: candidate.path))"
             )
             inspect(
@@ -783,7 +800,7 @@ final class TransientSurfaceSample {
                     continue
                 }
                 let cell = "B-\(id)-\(language)-\(Int(size.width))"
-                print(
+                trace(
                     "TSAMPLE: CONTENT cell=\(cell) messageKey=\(sample["message_key"] ?? "missing") messageChars=\(alert.messageText.count) informativeChars=\(alert.informativeText.count)"
                 )
                 inspect(

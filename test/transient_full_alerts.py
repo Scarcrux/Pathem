@@ -29,10 +29,11 @@ if __name__ == '__main__':
     rows=validate()
     print(f'FULL B PROVENANCE: PASS {len(rows)} sites, {sum(r["sheet"] for r in rows)} sheet sites')
 
-def receipt_errors(log, language, root=ROOT):
+def receipt_errors(log, language, root=ROOT, only=None):
     from collections import Counter
     import re
-    recipes=validate(root)
+    recipes=[r for r in validate(root) if only is None or r['id']==only]
+    if not recipes:return ['requested full B set is empty']
     expected={f'B-{r["id"]}-{language}-{size}':r for r in recipes for size in [720,1100]}
     lifecycle={cell+'-lifecycle':r for cell,r in expected.items() if language=='de' and r['sheet']}
     all_cells=expected.keys()|lifecycle.keys()

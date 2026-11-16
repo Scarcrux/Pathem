@@ -1979,6 +1979,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Unit 2 next checkpoint: 31 real factory profiles cover 25 A sites by source provenance; 62 custom mounts cover 62 other A sites in draft, so 87/112 classified A have adapters (four prior conservative menu rows reviewed to C). Corrected color/connection native pilots have only layout/ambiguity/host-fit reds; Return, Cancel, responder and repeat pass. New Sendable warnings fixed. 103 Python controls cover provenance, exact B receipts, packaging, isolation and new/stale baseline refusal. Baseline/native final groups/remaining 12 controllers plus delegated primary/core rows, four injections, E2E wiring and CI remain incomplete. F03/F04 markup production fixes belong to pathem-claude; do not touch reserved markup files."
     at = "2026-11-16T13:35:48Z"
 
+  [[mission.comment]]
+    text = "Unit 2 strict German plain-alert receipt run: 2029/2128 native, 49 distinct check-2 oversize pairs, exact site/cycle validation accepted, isolation unchanged. Focused no-default alert 72/72; 108 Python controls pass. Harness stream interleaving and inert-Return instrumentation corrected without product changes. Full custom variants, remaining seven adapters, baseline/injections/CI remain open; no READY or land."
+    at = "2026-11-16T15:13:55Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

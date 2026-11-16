@@ -52,10 +52,16 @@ extension TransientSurfaceSample {
             "full-B-contract", 0,
             Set(recipes.compactMap { $0["site"] as? String }) == expected
                 && recipes.count == expected.count, "all \(expected.count) classified B sites")
+        if let only = environment["PATHEM_TRANSIENT_SURFACES_ONLY"] {
+            trace("TSAMPLE: B-SUBSET requested=\(only)")
+        }
         for size in [NSSize(width: 720, height: 420), NSSize(width: 1100, height: 700)] {
             requestedSize = size
             host.setContentSize(size)
-            for recipe in recipes {
+            for recipe in recipes
+            where environment["PATHEM_TRANSIENT_SURFACES_ONLY"].map({
+                $0 == recipe["id"] as? String
+            }) ?? true {
                 let id = recipe["id"] as! String
                 let cell = "B-\(id)-\(language)-\(Int(size.width))"
                 let alert = fullAlert(recipe)
@@ -64,7 +70,7 @@ extension TransientSurfaceSample {
                     emit(cell, 0, false, "missing content")
                     continue
                 }
-                print(
+                trace(
                     "TSAMPLE: SITE cell=\(cell) site=\(recipe["site"]!) builder=\(recipe["builder"]!)"
                 )
                 emit(
@@ -88,7 +94,7 @@ extension TransientSurfaceSample {
                         responseBase: ((sample?["button_keys"] as? [String] ?? recipe["buttons"]
                             as? [String] ?? []).isEmpty ? 0 : 1000))
                 }
-                print(
+                trace(
                     "TSAMPLE: COVERED class=B site=\(recipe["site"]!) mode=\(recipe["sheet"] as? Bool == true ? "structural+sheet" : "structural-only-runModal")"
                 )
             }

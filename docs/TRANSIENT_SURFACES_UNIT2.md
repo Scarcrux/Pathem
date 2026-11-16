@@ -403,3 +403,36 @@ and 32 factory profiles (one overlapping Reset site); these are adapters, not
 a claim that every variant has run. Remaining new A adapters are Rule Editor,
 Photos, Torrents window, FDA guide, Reclaim panel, repository Reclaim and Trim.
 The latter need their owned-data/provider boundaries before native launch.
+
+## Exact-receipt validation exposed two instrument defects
+
+The first strict German B run completed naturally: 2017/2128, native red. The
+new validator refused its b08 structural count and site-coverage receipts. Raw
+evidence shows a truncated/interleaved record, not a duplicated product surface:
+`COVERED ... site=Sources/TSAMPLE: PASS cell=B-b08...`. Buffered Swift print and
+unbuffered FileHandle writes shared stdout. Every transient receipt now uses
+one unbuffered trace writer; a regression control rejects reintroducing print.
+
+The other eight non-geometry pairs were correlated b03 instrument failures.
+The real Cancel-first extension alert has no native default. The runner wrongly
+required index 0 and waited for an inert Return to dismiss it, manufacturing
+Cancel/dismiss/accumulation failures. No production default changed: the runner
+now verifies Return is unhandled and leaves the alert intact when no default
+exists, then presses the real Cancel. The focused two-host, three-cycle sample
+passes 72/72, including exact subset receipts and complete preference cleanup.
+
+Receipt: .build/transient-unit2-extension-default-probe.log. The original failed
+full run stays at .build/transient-unit2-fullb-strict-de.log. A compile-only
+implicit-self error while introducing the trace method was corrected before
+any further launch; both build logs are retained. The complete family rerun is
+pending and has not been called PASS or accepted as a baseline.
+
+The strict German B rerun completes with exact receipts accepted: 2029/2128
+native checks, 127.44 seconds, 49 distinct failing cell/check pairs, all check 2
+(oversize stress-string alerts). There are no setup, missing-cycle, default,
+dismissal or receipt errors. Both owner defaults domains are unchanged; the
+private domain and demo root are removed. This is a native red, not a gate PASS.
+Receipt: .build/transient-unit2-fullb-strict-stream-de.log and the matching
+transient-sample-clean-de-full-b-g0.json. All 108 Python controls pass. No
+known-findings baseline has been written yet and the other languages remain
+pending. The source-stream and no-default fixes are harness-only.

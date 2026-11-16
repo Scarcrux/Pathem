@@ -47,7 +47,7 @@ extension TransientSurfaceSample {
         var response: NSApplication.ModalResponse?
         alert.beginSheetModal(for: host) { response = $0 }
         guard settle({ alert.window.isVisible && alert.window.sheetParent === host }) else {
-            print(
+            trace(
                 "TSAMPLE: BLOCKING-SHEETS "
                     + host.sheets.map { sheet in
                         (sheet.contentView.map {
@@ -80,7 +80,7 @@ extension TransientSurfaceSample {
         let bad = TransientReturnBindingProbe.observe(window: alert.window, buttons: buttons) {
             self.key("\r", window: alert.window)
         }
-        print(
+        trace(
             "TSAMPLE: BINDING-CONTROL ready=\(ready) goodAccepted=\(good.accepted) goodResolved=\(good.resolved) goodIndices=\(good.received.compactMap { received in buttons.firstIndex { $0 === received } }) badAccepted=\(bad.accepted) badIndices=\(bad.received.compactMap { received in buttons.firstIndex { $0 === received } })"
         )
         let discriminates =

@@ -97,7 +97,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     if case == 'clean':
         b = {cell for _, cell, _ in rows if cell.startswith('B-') and cell != 'B-contract' and not cell.endswith('-lifecycle')}
         behavior = {cell for _, cell, _ in rows if cell.startswith('B-') and cell.endswith('-lifecycle')}
-        if category not in ('mounts', 'factories', 'lifecycle') and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
+        if category not in ('mounts', 'factories', 'lifecycle') and not (full and 'TSAMPLE: B-SUBSET' in log) and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
             errors.append('class B structural/lifecycle sample incomplete')
         if code != 0 or failures:
             errors.append(f'clean native verdict red: exit {code}, {len(failures)} cell/check pairs')
@@ -204,7 +204,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         errors += receipt_errors(log, language, group, probe_one, only)
     if full and category in ('all', 'b'):
         from transient_full_alerts import receipt_errors
-        errors += receipt_errors(log, language)
+        errors += receipt_errors(log, language, only=only)
     if category == 'factories':
         from transient_factories import receipt_errors
         errors += receipt_errors(log, language, group, probe_one, only)

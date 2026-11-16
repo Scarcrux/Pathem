@@ -475,7 +475,7 @@ extension TransientSurfaceSample {
                         }
                         object.window.makeKeyAndOrderFront(nil)
                         NSApp.activate(ignoringOtherApps: true)
-                        print(
+                        self.trace(
                             "TSAMPLE: MODAL-READY cell=\(cell) key=\(object.window.isKeyWindow) default=\(object.window.defaultButtonCell != nil) modal=\(NSApp.modalWindow === object.window)"
                         )
                         state.inspected = true
@@ -497,7 +497,7 @@ extension TransientSurfaceSample {
                                 self.key("\u{1b}", window: object.window)
                             }
                             let escape = self.key("\u{1b}", window: object.window)
-                            print(
+                            self.trace(
                                 "TSAMPLE: NO-CANCEL cell=\(cell) EscapeAccepted=\(escape) received=\(observedEscape.received.map(\.title)) buttons=\(object.buttons.map(\.title))"
                             )
                             if !escape {
@@ -510,7 +510,7 @@ extension TransientSurfaceSample {
                                     isARepeat: false, keyCode: 53)
                                 {
                                     object.window.sendEvent(event)
-                                    print(
+                                    self.trace(
                                         "TSAMPLE: NO-CANCEL-EVENT cell=\(cell) visibleAfterEscape=\(object.window.isVisible)"
                                     )
                                 }
@@ -552,7 +552,7 @@ extension TransientSurfaceSample {
             }
             (object.retained as? FilenameSuggestionController)?.cancel()
         }
-        print("TSAMPLE: COVERED class=A site=\(entry.site) cell=\(cell)")
+        self.trace("TSAMPLE: COVERED class=A site=\(entry.site) cell=\(cell)")
     }
 }
 #endif

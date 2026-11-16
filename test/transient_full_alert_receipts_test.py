@@ -34,3 +34,14 @@ class FullBReceiptControls(unittest.TestCase):
         self.assertTrue(any('setup failed' in e for e in receipt_errors(log,'de')))
     def test_inventory_control_required(self):
         self.assertTrue(any('inventory control' in e for e in receipt_errors('\n'.join(transcript().splitlines()[1:]),'de')))
+
+    def test_bounded_subset_has_exact_requested_treatment(self):
+        recipe=next(r for r in validate() if r['id']=='b03')
+        lines=[line for line in transcript().splitlines()
+               if ('cell=B-' not in line or 'cell=B-b03-' in line)
+               and ('COVERED class=B' not in line or 'site='+recipe['site']+' ' in line)]
+        self.assertEqual(receipt_errors('\n'.join(lines),'de',only='b03'),[])
+        self.assertTrue(receipt_errors('\n'.join(lines),'de',only='b08'))
+
+    def test_unknown_subset_is_refused(self):
+        self.assertEqual(receipt_errors('','de',only='missing'),['requested full B set is empty'])

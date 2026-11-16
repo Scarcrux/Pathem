@@ -733,7 +733,7 @@ extension TransientSurfaceSample {
             }
             withExtendedLifetime(owner) {}
         }
-        print("TSAMPLE: COVERED class=A site=\(mount.site) cell=\(cell)")
+        trace("TSAMPLE: COVERED class=A site=\(mount.site) cell=\(cell)")
     }
 }
 #endif
