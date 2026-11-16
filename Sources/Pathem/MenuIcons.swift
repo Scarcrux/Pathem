@@ -43,6 +43,8 @@ enum MenuIcons {
         case "files.createTorrent": return "square.and.arrow.up.on.square"
         case "files.addToTorrents": return "arrow.down.circle"
         case "files.copyMagnetLink": return "link.badge.plus"
+        case "files.ejectVolume": return "eject"
+        case "view.options": return "slider.horizontal.3"
         default: return nil
         }
     }

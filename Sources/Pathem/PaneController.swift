@@ -1040,6 +1040,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         (content as? FileListController)?.debugFirstEntryNameAXMatches()
     }
 
+    /// The real empty-space menu the active view installs: for the list, the one its empty-area
+    /// right click returns; for every other view, its installed menu.
+    func debugEmptySpaceMenu() -> NSMenu? {
+        (content as? FileListController)?.debugEmptySpaceMenu()
+    }
+
     /// Whether the background menu for `dir` offers Empty Trash (only in the Trash), for the guard.
     func debugBackgroundMenuHasEmptyTrash(forDir dir: URL) -> Bool {
         (content as? FileListController)?.debugBackgroundMenuHasEmptyTrash(forDir: dir) ?? false

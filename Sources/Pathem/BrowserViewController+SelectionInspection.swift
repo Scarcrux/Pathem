@@ -17,7 +17,9 @@ extension BrowserViewController {
         if pane.isRemote {
             lines = pane.selectedPathStrings()  // server-side paths; a file:// URL doesn't apply
         } else {
-            lines = pane.selectedLocalURLs().map { asURL ? $0.absoluteString : $0.path }
+            var urls = pane.selectedLocalURLs()
+            if urls.isEmpty, !pane.isShowingSmartResults { urls = [pane.currentURL] }  // the folder
+            lines = urls.map { asURL ? $0.absoluteString : $0.path }
         }
         guard !lines.isEmpty else {
             NSSound.beep()
@@ -295,7 +297,10 @@ extension BrowserViewController {
     /// Copy the selection's file names to the clipboard, one per line. Uses the entries' own
     /// names so it works everywhere — local, remote, and smart results.
     func copyNames() {
-        let names = activePane?.selectedEntries.map(\.name) ?? []
+        var names = activePane?.selectedEntries.map(\.name) ?? []
+        if names.isEmpty, let pane = activePane, !pane.isRemote, !pane.isShowingSmartResults {
+            names = [pane.currentURL.lastPathComponent]  // nothing selected: the folder shown
+        }
         guard !names.isEmpty else {
             NSSound.beep()
             return

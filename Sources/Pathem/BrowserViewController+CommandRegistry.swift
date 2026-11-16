@@ -199,11 +199,7 @@ extension BrowserViewController {
         }
         add(
             "files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume"),
-            enabled: { [weak self] in
-                guard let pane = self?.activePane, !pane.isRemote else { return false }
-                let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
-                return volume != nil && volume?.path != "/"
-            }
+            enabled: { [weak self] in self?.volumeToEject() != nil }
         ) { [weak self] in self?.ejectActiveVolume() }
         add(
             "files.duplicate", L("bvc.cmd.duplicate", "Duplicate"),
@@ -559,14 +555,24 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.activePane?.airDropSelection()
         }
-        add("files.copyPath", L("bvc.cmd.copyPath", "Copy Path"), enabled: hasSelection) {
+        // With nothing selected these act on the folder shown (the empty-space menu's Copy Path and
+        // Copy Name), so they are enabled for any local folder too.
+        let hasSelectionOrLocalFolder: () -> Bool = { [weak self] in
+            guard let pane = self?.activePane else { return false }
+            return !pane.selectedEntries.isEmpty || (!pane.isRemote && !pane.isShowingSmartResults)
+        }
+        add(
+            "files.copyPath", L("bvc.cmd.copyPath", "Copy Path"), enabled: hasSelectionOrLocalFolder
+        ) {
             [weak self] in self?.copyPaths(asURL: false)
         }
         add("files.copyURL", L("bvc.cmd.copyAsFileURL", "Copy as File URL"), enabled: hasSelection)
         {
             [weak self] in self?.copyPaths(asURL: true)
         }
-        add("files.copyName", L("bvc.cmd.copyName", "Copy Name"), enabled: hasSelection) {
+        add(
+            "files.copyName", L("bvc.cmd.copyName", "Copy Name"), enabled: hasSelectionOrLocalFolder
+        ) {
             [weak self] in self?.copyNames()
         }
         add(

@@ -680,55 +680,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     func setHiddenContextItems(_ ids: Set<String>) { contextMenu.hiddenItems = ids }
     func setContextMenuOrder(_ order: [String]) { contextMenu.menuOrder = order }
 
-    /// The right-click menu for empty space: folder-level actions on the current directory
-    /// (copy its path/name, plus New Folder / New File / Paste). nil for a remote or smart
-    /// listing, so the normal item menu shows instead.
+    /// The right-click menu for empty space: the same shared menu every other view shows with
+    /// nothing selected (its hide rules show the folder-level entries: New Folder, New File,
+    /// Paste, Copy Path / Name of the folder, Get Info, View / Group By / Sort By, View Options,
+    /// Eject on an ejectable volume, Empty Trash in the Trash). nil for a remote or smart listing,
+    /// so the normal item menu shows instead.
     private func makeBackgroundMenu() -> NSMenu? {
-        guard let dir = directoryURL else { return nil }
-        let menu = NSMenu()
-        let copyPath = menu.addItem(
-            withTitle: L("bvc.cmd.copyPath", "Copy Path"), action: #selector(copyFolderPath),
-            keyEquivalent: "")
-        copyPath.target = self
-        copyPath.image = MenuIcons.image(forCommand: "files.copyPath")
-        let copyName = menu.addItem(
-            withTitle: L("bvc.cmd.copyName", "Copy Name"), action: #selector(copyFolderName),
-            keyEquivalent: "")
-        copyName.target = self
-        copyName.image = MenuIcons.image(forCommand: "files.copyName")
-        menu.addItem(.separator())
-        for (id, title) in [
-            ("files.newFolder", L("list.newFolder", "New Folder")),
-            ("files.newFile", L("bvc.cmd.newFile", "New File")),
-            ("files.paste", L("list.paste", "Paste")),
-        ] {
-            let item = menu.addItem(
-                withTitle: title, action: #selector(BrowserViewController.performMenuCommand(_:)),
-                keyEquivalent: "")
-            item.representedObject = id
-            item.image = MenuIcons.image(forCommand: id)
-        }
-        // In the Trash, offer Empty Trash right on the background, the way Finder does -- otherwise
-        // there's no way to empty it without first selecting an item.
-        if FileContextMenuController.isTrashFolder(dir) {
-            menu.addItem(.separator())
-            let empty = menu.addItem(
-                withTitle: L("bvc.cmd.emptyTrash", "Empty Trash"),
-                action: #selector(BrowserViewController.performMenuCommand(_:)), keyEquivalent: "")
-            empty.representedObject = "files.emptyTrash"
-            empty.image = MenuIcons.image(forCommand: "files.emptyTrash")
-        }
-        return menu
-    }
-    @objc private func copyFolderPath() {
-        guard let dir = directoryURL else { return }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(dir.path, forType: .string)
-    }
-    @objc private func copyFolderName() {
-        guard let dir = directoryURL else { return }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(dir.lastPathComponent, forType: .string)
+        guard directoryURL != nil else { return nil }
+        return contextMenu.menu
     }
 
     private var colorRules = ColorRules()
@@ -1391,6 +1350,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         return cell.textField?.accessibilityLabel()?.hasPrefix(entries[index].name) ?? false
     }
 
+    /// The menu an empty-area right click returns (what `KeyTableView.menu(for:)` uses).
+    func debugEmptySpaceMenu() -> NSMenu? { makeBackgroundMenu() ?? contextMenu.menu }
+
     /// Whether the empty-space (background) right-click menu for `dir` offers Empty Trash -- true
     /// only in the Trash. Guards the "Empty Trash on the Trash background, not just via a selection"
     /// behavior against regression.
@@ -1398,8 +1360,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let saved = directoryURL
         directoryURL = dir
         defer { directoryURL = saved }
-        let title = L("bvc.cmd.emptyTrash", "Empty Trash")
-        return makeBackgroundMenu()?.items.contains { $0.title == title } ?? false
+        guard let menu = makeBackgroundMenu() else { return false }
+        contextMenu.menuNeedsUpdate(menu)  // apply the hide rules, as AppKit does on open
+        return menu.items.contains {
+            $0.representedObject as? String == "files.emptyTrash" && !$0.isHidden
+        }
     }
 
     /// AX check on the first *entry* row, skipping any group-header rows (a grouped view puts a

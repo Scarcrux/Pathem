@@ -788,6 +788,12 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         outline.autoresizesOutlineColumn = true
         outline.indentationPerLevel = 14
         outline.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
+        // The tree root, so folder-scoped entries (Eject, Empty Trash) can show with nothing
+        // selected, as in the other views.
+        contextMenu.currentFolder = { [weak self] in
+            guard let self, self.allowsLocalMetadata else { return nil }
+            return self.directoryURL
+        }
         contextMenu.selectedURLs = { [weak self] in
             (self?.selectedEntries ?? []).compactMap { entry in
                 entry.location.map { URL(fileURLWithPath: $0).appendingPathComponent(entry.name) }

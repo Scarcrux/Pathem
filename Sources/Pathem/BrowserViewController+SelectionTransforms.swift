@@ -371,11 +371,23 @@ extension BrowserViewController {
         }
     }
 
-    /// Eject the volume that contains the active folder (disk image, USB, network share).
+    /// The volume Eject acts on: the selected item when it is an ejectable volume's root, else the
+    /// ejectable volume that contains the active folder. nil when neither is ejectable (the boot
+    /// volume, a system volume, a fixed internal disk), the same test as the sidebar's Eject.
+    func volumeToEject() -> URL? {
+        guard let pane = activePane, !pane.isRemote else { return nil }
+        let selected = pane.selectedLocalURLs()
+        if selected.count == 1, let root = SidebarController.ejectableVolume(rootedAt: selected[0])
+        {
+            return root
+        }
+        return SidebarController.ejectableVolume(containing: pane.currentURL)
+    }
+
+    /// Eject the selected volume, or the volume that contains the active folder (disk image, USB,
+    /// network share).
     func ejectActiveVolume() {
-        guard let pane = activePane, !pane.isRemote,
-            let volume = (try? pane.currentURL.resourceValues(forKeys: [.volumeURLKey]))?.volume
-        else {
+        guard let volume = volumeToEject() else {
             NSSound.beep()
             return
         }

@@ -42,7 +42,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.showPackageContents", "view.quickLook", "files.showOriginal",
         "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash",  // near the top, set apart, like Finder
         "files.getInfo", "files.calculateSize", "files.share", "files.download", "files.reveal",
-        "files.revealInPathem",
+        "files.revealInPathem", "files.ejectVolume",
         "files.setDesktopPicture", "files.rename",
         "@tags",
         "files.newFolder", "files.newFolderWithSelection", "files.newFile",
@@ -51,7 +51,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         "files.compress", "files.compress7z",
         "files.extract", "files.extractHere", "files.extractTo",
         "files.createTorrent", "files.addToTorrents", "files.copyMagnetLink",
-        "@view", "@arrange", "@sort",
+        "@view", "@arrange", "@sort", "view.options",
     ]
 
     private static let viewCommands: [(id: String, title: String)] = [
@@ -66,6 +66,22 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
     private static let sortCommands: [(id: String, title: String)] =
         ViewFormat.SortKey.allCases.map { ($0.commandID, $0.localizedTitle) }
 
+    /// Entries whose commands act only on selected items. With nothing selected (the empty-space
+    /// menu) they are hidden, not greyed out; the folder-level entries (Get Info and Reveal in
+    /// Finder fall back to the folder shown, New Folder, New File, Paste, Copy Path / Name, View,
+    /// Group By, Sort By, View Options, Eject, Empty Trash) stay. Calculate Size is not listed: its
+    /// own rule (a selected folder the size walk skipped) already implies a selection.
+    private static let selectionOnlyEntries: Set<String> = [
+        "files.open", "files.openInNewTab", "files.openInThisPane", "files.openInOtherPane",
+        "@openWith", "files.showPackageContents", "view.quickLook", "files.showOriginal",
+        "files.trash", "files.putBack", "files.deleteImmediately",
+        "files.share", "files.download", "files.revealInPathem", "files.setDesktopPicture",
+        "files.rename", "@tags", "files.newFolderWithSelection", "files.duplicate",
+        "files.makeAlias", "files.copy", "files.cut", "files.compress", "files.compress7z",
+        "files.extract", "files.extractHere", "files.extractTo", "files.createTorrent",
+        "files.addToTorrents", "files.copyMagnetLink",
+    ]
+
     /// The group an entry belongs to. A separator is auto-inserted wherever the group changes
     /// between two visible entries, so reordering keeps sensible dividers with no manual
     /// separator management.
@@ -74,7 +90,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         case "files.trash", "files.putBack", "files.deleteImmediately", "files.emptyTrash":
             return 5  // set apart, like Finder
         case "@tags": return 1
-        case "@view", "@arrange", "@sort": return 7
+        case "@view", "@arrange", "@sort", "view.options": return 7
         case "files.newFolder", "files.newFolderWithSelection", "files.newFile": return 2
         case "files.duplicate", "files.makeAlias", "files.copy", "files.copyPath", "files.copyName",
             "files.cut", "files.paste":
@@ -157,6 +173,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.share", L("list.share", "Share…")),
         ("files.reveal", L("list.revealInFinder", "Reveal in Finder")),
         ("files.revealInPathem", L("list.revealInPathem", "Reveal in Pathem")),
+        ("files.ejectVolume", L("bvc.cmd.ejectVolume", "Eject Volume")),
         ("files.setDesktopPicture", L("bvc.cmd.setDesktopPicture", "Set Desktop Picture")),
         ("files.rename", L("list.rename", "Rename…")),
         ("files.trash", L("list.moveToTrash", "Move to Trash")),
@@ -181,6 +198,7 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         ("files.createTorrent", L("bvc.cmd.createTorrent", "Create Torrent…")),
         ("files.addToTorrents", L("bvc.cmd.addToTorrents", "Add to Torrents")),
         ("files.copyMagnetLink", L("bvc.cmd.copyMagnetLink", "Copy Magnet Link")),
+        ("view.options", L("viewopts.title", "View Options") + "…"),
     ]
 
     override init() {
@@ -204,11 +222,14 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                 // A submenu populated live in menuNeedsUpdate with the apps for the selection.
                 let openWith = NSMenuItem(
                     title: L("list.openWith", "Open With"), action: nil, keyEquivalent: "")
+                openWith.representedObject = token
                 openWith.image = MenuIcons.image("app.dashed")
                 openWith.submenu = openWithMenu
                 menu.addItem(openWith)
             case "@tags":
-                menu.addItem(makeTagsItem())
+                let tags = makeTagsItem()
+                tags.representedObject = token
+                menu.addItem(tags)
             case "@view", "@arrange", "@sort":
                 let parent = NSMenuItem(
                     title: Self.title(for: token), action: nil, keyEquivalent: "")
@@ -317,9 +338,28 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
                 !urls.isEmpty && sample.allSatisfy { $0.pathExtension.lowercased() == "torrent" }
             for item in menu.items {
                 guard let id = item.representedObject as? String else { continue }
+                if Self.selectionOnlyEntries.contains(id) {
+                    item.isHidden = urls.isEmpty  // nothing to act on: hide rather than grey out
+                    if urls.isEmpty { continue }  // with a selection the rules below refine this
+                }
                 switch id {
                 case "@view", "@arrange", "@sort":
                     item.isHidden = !urls.isEmpty  // directory controls belong to the background
+                case "view.options":
+                    item.isHidden = !urls.isEmpty  // a folder-level action, like View and Sort By
+                case "files.ejectVolume":
+                    // The folder shown (nothing selected) or the selected volume's root; the same
+                    // test as the sidebar's Eject (SidebarController.volumeIsEjectable).
+                    if count == 0 {
+                        item.isHidden =
+                            self.currentFolder().flatMap {
+                                SidebarController.ejectableVolume(containing: $0)
+                            } == nil
+                    } else {
+                        item.isHidden =
+                            !(count == 1
+                            && SidebarController.ejectableVolume(rootedAt: urls[0]) != nil)
+                    }
                 case "files.showPackageContents":
                     item.isHidden = !(count == 1 && Self.isPackage(urls[0]))
                 case "files.showOriginal":

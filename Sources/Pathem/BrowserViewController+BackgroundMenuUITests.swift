@@ -74,6 +74,11 @@ extension BrowserViewController {
         let groups: [(ViewFormat.GroupKey, String)] = ViewFormat.GroupKey.allCases.map {
             ($0, $0.commandID)
         }
+        // What every view's empty-space menu shows for a local folder on the boot volume.
+        let expectedEmptySpaceIDs = [
+            "files.getInfo", "files.reveal", "files.newFolder", "files.newFile", "files.copyPath",
+            "files.copyName", "files.paste", "@view", "@arrange", "@sort", "view.options",
+        ]
         let sampleOnly = ProcessInfo.processInfo.environment["PATHEM_BACKGROUND_SAMPLE_ONLY"] == "1"
         func actionEnabled(_ entry: NSMenuItem) -> Bool {
             guard let action = entry.action else { return false }
@@ -156,6 +161,16 @@ extension BrowserViewController {
             menu.delegate?.menuNeedsUpdate?(menu)
             check("background-view-\(mode.rawValue)", item("@view", in: menu)?.submenu != nil)
             check("background-arrange-\(mode.rawValue)", item("@arrange", in: menu)?.submenu != nil)
+            // The real empty-space menu of this view (for the list, the one its empty-area right
+            // click returns), against the one shared expected list.
+            let emptyMenu = (mode == .list ? pane.debugEmptySpaceMenu() : nil) ?? menu
+            emptyMenu.delegate?.menuNeedsUpdate?(emptyMenu)
+            let emptyIDs = emptyMenu.items.filter { !$0.isHidden && !$0.isSeparatorItem }
+                .compactMap { $0.representedObject as? String }
+            check(
+                "empty-space-entries-\(mode.rawValue)", emptyIDs == expectedEmptySpaceIDs,
+                "got=\(emptyIDs)")
+            check("empty-space-separators-\(mode.rawValue)", validSeparators(emptyMenu))
             if mode != .list && mode != .icon {
                 pane.setGroupKey(ViewFormat.GroupKey.none)
                 let accepted = commands.perform("view.arrangeKind")
@@ -230,6 +245,15 @@ extension BrowserViewController {
                 inactive.viewMode == otherMode && inactive.groupKey == otherGroup)
             pane.debugSelectNames(["alpha.txt"])
             _ = validatedMenu(for: pane)
+            emptyMenu.delegate?.menuNeedsUpdate?(emptyMenu)
+            let selectedIDs = Set(
+                emptyMenu.items.filter { !$0.isHidden }.compactMap {
+                    $0.representedObject as? String
+                })
+            check(
+                "selected-menu-keeps-item-entries-\(mode.rawValue)",
+                ["files.open", "files.trash", "files.rename"].allSatisfy(selectedIDs.contains),
+                "got=\(selectedIDs.sorted())")
             check(
                 "selected-context-hides-background-\(mode.rawValue)",
                 pane.selectedEntries.map(\.name) == ["alpha.txt"] && viewParent.isHidden
@@ -298,6 +322,118 @@ extension BrowserViewController {
                     "mode-other-pane-unchanged-\(mode.rawValue)-\(destination.rawValue)",
                     inactive.viewMode == otherMode && inactive.groupKey == otherGroup)
             }
+        }
+        // Eject on a real mounted volume: a disk image this check creates and detaches itself
+        // (never a real external disk). Attached browsable, so the sidebar's own rule applies.
+        func runHdiutil(_ args: [String]) -> (Int32, Data) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+            process.arguments = args
+            let out = Pipe()
+            process.standardOutput = out
+            process.standardError = FileHandle.nullDevice
+            do { try process.run() } catch { return (-1, Data()) }
+            let data = out.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            return (process.terminationStatus, data)
+        }
+        let volumeName = "PathemF1-\(UUID().uuidString.prefix(8))"
+        let image = root.appendingPathComponent("f1.dmg")
+        var devEntry: String?
+        var mountPoint: URL?
+        if runHdiutil(["create", "-size", "4m", "-fs", "HFS+", "-volname", volumeName, image.path])
+            .0 == 0
+        {
+            let (status, data) = runHdiutil(["attach", "-plist", image.path])
+            if status == 0,
+                let plist = try? PropertyListSerialization.propertyList(from: data, format: nil)
+                    as? [String: Any],
+                let entities = plist["system-entities"] as? [[String: Any]]
+            {
+                for entity in entities {
+                    if let mount = entity["mount-point"] as? String {
+                        mountPoint = URL(fileURLWithPath: mount)
+                        devEntry = entity["dev-entry"] as? String
+                    }
+                }
+                if devEntry == nil {
+                    devEntry = entities.compactMap { $0["dev-entry"] as? String }.first
+                }
+            }
+        }
+        check("eject-fixture-mounted", mountPoint != nil, "mount=\(mountPoint?.path ?? "nil")")
+        if let mountPoint {
+            try? "x".write(
+                to: mountPoint.appendingPathComponent("inside.txt"), atomically: true,
+                encoding: .utf8)
+            check(
+                "eject-rule-volume-root",
+                SidebarController.ejectableVolume(rootedAt: mountPoint) != nil
+                    && SidebarController.ejectableVolume(
+                        rootedAt: mountPoint.appendingPathComponent("inside.txt")) == nil
+            )
+            check(
+                "eject-rule-boot-volume-refused",
+                SidebarController.ejectableVolume(containing: root) == nil
+                    && SidebarController.ejectableVolume(
+                        containing: URL(fileURLWithPath: "/")) == nil
+            )
+            func ejectEntry(_ menu: NSMenu?) -> NSMenuItem? {
+                guard let menu else { return nil }
+                menu.delegate?.menuNeedsUpdate?(menu)
+                return item("files.ejectVolume", in: menu)
+            }
+            setActiveSide(leftTabs, pane: pane)
+            for mode in ViewFormat.ViewMode.allCases {
+                pane.debugClickViewSwitcher(mode)
+                pane.navigate(to: mountPoint)
+                check(
+                    "eject-delivered-\(mode.rawValue)",
+                    settle {
+                        pane.viewMode == mode && pane.currentURL.path == mountPoint.path
+                            && pane.debugEntryCount == 1
+                    })
+                pane.debugSelectNames([])
+                let menu =
+                    mode == .list ? pane.debugEmptySpaceMenu() : fileMenu(in: pane.containerView)
+                check(
+                    "eject-empty-space-shown-\(mode.rawValue)",
+                    ejectEntry(menu).map { !$0.isHidden } ?? false)
+                if mode == .list {
+                    window.makeFirstResponder(pane.keyView)
+                    check(
+                        "eject-command-enabled-on-volume",
+                        commands.command("files.ejectVolume")?.isEnabled() ?? false)
+                    pane.debugSelectNames(["inside.txt"])
+                    check(
+                        "eject-hidden-for-file-selection",
+                        ejectEntry(pane.debugEmptySpaceMenu()).map { $0.isHidden } ?? false)
+                    pane.debugSelectNames([])
+                }
+            }
+            // The volume's root selected from its parent: Eject shows in the file menu.
+            pane.debugClickViewSwitcher(.list)
+            pane.navigate(to: mountPoint.deletingLastPathComponent())
+            check(
+                "eject-parent-delivered",
+                settle {
+                    pane.currentURL.path == mountPoint.deletingLastPathComponent().path
+                        && pane.debugEntryCount > 0
+                })
+            pane.debugSelectNames([mountPoint.lastPathComponent])
+            check(
+                "eject-shown-for-volume-root-selection",
+                pane.selectedEntries.map(\.name) == [mountPoint.lastPathComponent]
+                    && (ejectEntry(pane.debugEmptySpaceMenu()).map { !$0.isHidden } ?? false))
+            pane.debugSelectNames([])
+            pane.navigate(to: root)
+            check("eject-restored-root", settle { pane.currentURL.path == root.path })
+            if let devEntry {
+                let detached = runHdiutil(["detach", "-force", devEntry]).0 == 0
+                check("eject-fixture-detached", detached)
+            }
+        } else if let devEntry {
+            _ = runHdiutil(["detach", "-force", devEntry])
         }
         if sampleOnly {
             try? fm.removeItem(at: root)

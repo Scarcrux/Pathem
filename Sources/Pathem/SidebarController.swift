@@ -1074,6 +1074,32 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         return false
     }
 
+    /// The ejectable volume that contains `url`, by the same test the sidebar uses, or nil for the
+    /// boot volume, a hidden or system volume, a non-volume path, or a fixed internal disk.
+    static func ejectableVolume(containing url: URL) -> URL? {
+        let keys: Set<URLResourceKey> = [
+            .volumeURLKey, .volumeIsBrowsableKey, .volumeIsLocalKey, .volumeIsRootFileSystemKey,
+            .volumeIsRemovableKey, .volumeIsEjectableKey, .volumeIsInternalKey,
+        ]
+        guard let values = try? url.resourceValues(forKeys: keys), let volume = values.volume,
+            volumeIsEjectable(
+                isBrowsable: values.volumeIsBrowsable, isEjectable: values.volumeIsEjectable,
+                isRemovable: values.volumeIsRemovable, isLocal: values.volumeIsLocal,
+                isInternal: values.volumeIsInternal,
+                isRootFileSystem: values.volumeIsRootFileSystem)
+        else { return nil }
+        return volume
+    }
+
+    /// `url` itself when it is the root of an ejectable volume (what Finder offers Eject for when
+    /// that volume is selected), else nil.
+    static func ejectableVolume(rootedAt url: URL) -> URL? {
+        guard let volume = ejectableVolume(containing: url),
+            volume.standardizedFileURL.path == url.standardizedFileURL.path
+        else { return nil }
+        return volume
+    }
+
     // MARK: Mutation
 
     /// The tint for a place row's icon: an explicit brand/tag color if the node carries one,
