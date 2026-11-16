@@ -1157,6 +1157,7 @@
 "names.use" = "使用建议名称";
 "network.title" = "网络";
 "offload.failed" = "无法卸载";
+"offload.nonEvictable" = "此项目已设为保持下载。请在 iCloud 设置中打开“优化 Mac 储存空间”，或为它关闭“保持下载”。";
 "offload.none" = "没有可卸载的项目";
 "offload.noneBody" = "选择已下载的 iCloud 文件以释放其本地空间。";
 "opener.genericBody" = "macOS 将“%@”视为通用文件，因此系统默认应用会作用于所有无法识别的文件。请改为在“始终以此打开”中选择“所有名为…的文件”。";

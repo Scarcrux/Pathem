@@ -1157,6 +1157,7 @@
 "names.use" = "Vorgeschlagenen Namen verwenden";
 "network.title" = "Netzwerk";
 "offload.failed" = "Auslagern nicht möglich";
+"offload.nonEvictable" = "Dieses Objekt bleibt laut Einstellung geladen. Aktiviere „Mac-Speicher optimieren“ in den iCloud-Einstellungen oder deaktiviere „Geladen behalten“ für dieses Objekt.";
 "offload.none" = "Nichts zum Auslagern";
 "offload.noneBody" = "Wähle heruntergeladene iCloud-Dateien aus, um ihren lokalen Speicherplatz freizugeben.";
 "opener.genericBody" = "macOS behandelt „%@“ als allgemeine Datei, daher würde ein systemweiter Standard für jede Datei gelten, die es nicht erkennt. Wähle stattdessen unter „Immer öffnen mit“ die Option „Alle Dateien namens …“.";

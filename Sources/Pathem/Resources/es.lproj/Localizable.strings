@@ -1157,6 +1157,7 @@
 "names.use" = "Usar nombre sugerido";
 "network.title" = "Red";
 "offload.failed" = "No se pudo liberar espacio";
+"offload.nonEvictable" = "Este ítem está configurado para permanecer descargado. Activa Optimizar almacenamiento del Mac en los ajustes de iCloud o desactiva Mantener descargado para él.";
 "offload.none" = "Nada que liberar";
 "offload.noneBody" = "Selecciona archivos de iCloud descargados para liberar su espacio local.";
 "opener.genericBody" = "macOS trata «%@» como un archivo genérico, así que una aplicación predeterminada del sistema se aplicaría a todos los archivos que no puede identificar. En «Abrir siempre con», elige «Todos los archivos llamados…».";

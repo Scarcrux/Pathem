@@ -70,3 +70,26 @@ import Testing
         #expect(CloudItemActions(for: [facts]) == CloudItemActions(for: []))
     }
 }
+
+@Suite struct OffloadRefusalTests {
+    @Test func nonEvictableIsRecognisedDirectlyAndWhenWrapped() {
+        let refusal = NSError(domain: "NSFileProviderErrorDomain", code: -2008)
+        let wrapped = NSError(
+            domain: NSCocoaErrorDomain, code: 512, userInfo: [NSUnderlyingErrorKey: refusal])
+        #expect(Backup.isNonEvictable(refusal))
+        #expect(Backup.isNonEvictable(wrapped))
+    }
+
+    @Test func otherErrorsKeepTheirOwnReason() {
+        #expect(!Backup.isNonEvictable(NSError(domain: NSCocoaErrorDomain, code: 512)))
+        #expect(!Backup.isNonEvictable(NSError(domain: "NSFileProviderErrorDomain", code: -1005)))
+        // A plain local file is not an iCloud item: the refusal is Foundation's own, unchanged.
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-offload-\(UUID().uuidString)")
+        try? Data([1]).write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let result = Backup.offload([file])
+        #expect(result.failures.count == 1)
+        #expect(result.failures.first?.reason != Backup.nonEvictableReason)
+    }
+}

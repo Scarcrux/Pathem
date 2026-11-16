@@ -1363,14 +1363,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:210:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:215:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:205:22:NSOpenPanel"
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:210:22:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -1814,38 +1814,38 @@
       "reason": "Finder comment text field accessory; Apply changes/removes original metadata without Trash. Cancel without committing owner comments. Default intent not ruled here.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:193:13:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:198:13:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:157:25:NSAlert"
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:162:25:NSAlert"
       ],
       "reason": "Conditional Clean Regenerable/Back Up/Close actions can exceed two buttons. Clean uses recoverable Trash. Runtime fixture: 255-character folder and six-digit counts/size strings.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:271:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:276:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:265:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:270:21:NSAlert"
       ],
       "reason": "Disk image name/password accessory; Create writes an encrypted image. Cancel only, no password or image creation.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:318:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:323:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:308:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:313:21:NSAlert"
       ],
       "reason": "Plain secure erase confirmation is class A because random overwrite/deletion skips Trash and cannot be undone. Runtime six-digit count. Owner intent not ruled for this separate caller; cancel only.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

@@ -1084,6 +1084,7 @@
 "names.use" = "Use Suggested Name";
 "network.title" = "Network";
 "offload.failed" = "Couldn’t offload";
+"offload.nonEvictable" = "This item is set to stay downloaded. Turn on Optimize Mac Storage in iCloud settings, or turn off Keep Downloaded for it.";
 "offload.none" = "Nothing to offload";
 "offload.noneBody" = "Select downloaded iCloud files to free their local space.";
 "opener.genericBody" = "macOS treats “%@” as a generic file, so a system default would apply to every file it can’t identify. In Always Open With, choose “All files named …” instead.";

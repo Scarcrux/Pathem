@@ -100,7 +100,12 @@ extension BrowserViewController {
                 L("offload.noneBody", "Select downloaded iCloud files to free their local space."))
             return
         }
-        let result = Backup.offload(urls)
+        let result = Backup.offload(
+            urls,
+            nonEvictableReason: L(
+                "offload.nonEvictable",
+                "This item is set to stay downloaded. Turn on Optimize Mac Storage in iCloud settings, or turn off Keep Downloaded for it."
+            ))
         pane.reloadIfShowingListing()
         if !result.failures.isEmpty {
             presentFailures(result.failures, title: L("offload.failed", "Couldn’t offload"))

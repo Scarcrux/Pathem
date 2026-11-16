@@ -26,17 +26,41 @@ public enum Backup {
 
     /// Evict the local copy of each iCloud item. The file stays in iCloud and becomes an
     /// online-only placeholder; opening it later re-downloads it.
-    public static func offload(_ urls: [URL]) -> Result {
+    ///
+    /// The provider refuses an item the user keeps downloaded (iCloud Drive with "Optimize Mac
+    /// Storage" off, or a pinned item). Foundation reports that as "The file couldn't be saved",
+    /// which says nothing, so that case gets `nonEvictableReason` instead.
+    public static func offload(
+        _ urls: [URL], nonEvictableReason: String = Backup.nonEvictableReason
+    ) -> Result {
         var result = Result()
         for url in urls {
             do {
                 try FileManager.default.evictUbiquitousItem(at: url)
                 result.succeeded.append(url.lastPathComponent)
             } catch {
-                result.failures.append(.init(name: url.lastPathComponent, reason: error.localizedDescription))
+                result.failures.append(
+                    .init(
+                        name: url.lastPathComponent,
+                        reason: isNonEvictable(error)
+                            ? nonEvictableReason : error.localizedDescription))
             }
         }
         return result
+    }
+
+    public static let nonEvictableReason =
+        "This item is set to stay downloaded. Turn on Optimize Mac Storage in iCloud settings, or turn off Keep Downloaded for it."
+
+    /// Whether an eviction error is the provider's "non-evictable" refusal
+    /// (`NSFileProviderErrorNonEvictable`, -2008), directly or as the underlying error.
+    public static func isNonEvictable(_ error: Error) -> Bool {
+        var current: NSError? = error as NSError
+        while let e = current {
+            if e.domain == "NSFileProviderErrorDomain", e.code == -2008 { return true }
+            current = e.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return false
     }
 
     /// Copy each item into `destination`, keeping both (a backup copy, never a move).

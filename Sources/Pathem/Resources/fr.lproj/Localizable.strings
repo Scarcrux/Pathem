@@ -1157,6 +1157,7 @@
 "names.use" = "Utiliser le nom suggéré";
 "network.title" = "Réseau";
 "offload.failed" = "Impossible de décharger";
+"offload.nonEvictable" = "Cet élément est réglé pour rester téléchargé. Activez Optimiser le stockage du Mac dans les réglages iCloud ou désactivez Conserver le téléchargement pour cet élément.";
 "offload.none" = "Rien à décharger";
 "offload.noneBody" = "Sélectionnez des fichiers iCloud téléchargés pour libérer leur espace local.";
 "opener.genericBody" = "macOS traite « %@ » comme un fichier générique : une application par défaut pour tout le système s’appliquerait à tous les fichiers qu’il ne sait pas identifier. Dans « Toujours ouvrir avec », choisissez plutôt « Tous les fichiers nommés … ».";
