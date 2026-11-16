@@ -28,7 +28,7 @@ def source_digest():
     paths = (sorted((ROOT / 'Sources/Pathem').rglob('*.swift'))
              + sorted((ROOT / 'Sources/Pathem/Resources').rglob('Localizable.strings'))
              + sorted((ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings'))
-             + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', ROOT / 'test/transient_mounts.json',
+             + [ROOT / 'test/transient_inventory.json', ROOT / 'test/transient_full_alerts.json', ROOT / 'test/transient_mounts.json', ROOT / 'test/transient_factories.json', ROOT / 'test/transient_factories.py',
                 ROOT / 'test/transient_app_bundle.py', ROOT / 'test/transient_mounts.py', pathlib.Path(__file__)])
     for path in paths:
         digest.update(str(path.relative_to(ROOT)).encode())
@@ -63,7 +63,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     if f'TSAMPLE: START language={language} ' not in log or f'cancel={expected_cancel} ' not in log:
         errors.append('requested localization not delivered')
     a_cells = {cell for _, cell, _ in rows if cell.startswith('A-')}
-    expected_a = (3 if pilot else 16) if language in ['de', 'ja'] and category not in ('b', 'mounts') else 0
+    expected_a = (3 if pilot else 16) if language in ['de', 'ja'] and category not in ('b', 'mounts', 'factories') else 0
     if len(a_cells) != expected_a or (a_cells and {c.split('-')[1] for c in a_cells} != {'rename', 'reclaim', 'conflict'}):
         errors.append(f'class A set incomplete: {len(a_cells)} expected {expected_a}')
     for cell in a_cells:
@@ -75,6 +75,10 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
         observed = {int(check) for _, found, check in rows if found == cell}
         if not required <= observed:
             errors.append('class B check coverage incomplete: ' + cell)
+    if full:
+        for phase in ['start', 'end']:
+            if ('PASS', 'predicate-external-' + phase, '0') not in rows:
+                errors.append('external provider isolation missing or failed: ' + phase)
     if category == 'mounts':
         if ('PASS', 'predicate-6-binding', '6') not in rows:
             errors.append('native default-binding positive/negative control missing or failed')
@@ -89,7 +93,7 @@ def validate(log, code, case, language, pilot, expected_cancel, reference=None, 
     if case == 'clean':
         b = {cell for _, cell, _ in rows if cell.startswith('B-') and cell != 'B-contract' and not cell.endswith('-lifecycle')}
         behavior = {cell for _, cell, _ in rows if cell.startswith('B-') and cell.endswith('-lifecycle')}
-        if category != 'mounts' and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
+        if category not in ('mounts', 'factories') and (len(b) != (94 if full else 10 if pilot else 20) or len(behavior) != ((2 * sum(r['sheet'] for r in __import__('transient_full_alerts').validate()) if full else 3 if pilot else 6) if language == 'de' else 0)):
             errors.append('class B structural/lifecycle sample incomplete')
         if code != 0 or failures:
             errors.append(f'clean native verdict red: exit {code}, {len(failures)} cell/check pairs')
@@ -126,6 +130,7 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
                PATHEM_TRANSIENT_SURFACES_INJECT=case)
     if full:
         env.update(PATHEM_TRANSIENT_SURFACES_GROUP=str(group), PATHEM_TRANSIENT_SURFACES_SET=category, PATHEM_TRANSIENT_SURFACES_FULL="1", PATHEM_TRANSIENT_FULL_ALERTS=str(ROOT / "test/transient_full_alerts.json"))
+        env["PATHEM_TRANSIENT_FACTORIES"] = str(ROOT / "test/transient_factories.json")
     else:
         env.pop("PATHEM_TRANSIENT_SURFACES_FULL", None)
     for name in ['PATHEM_TRANSIENT_SURFACES_FOCUS', 'PATHEM_LAYOUT_MATRIX_TEST', 'PATHEM_LAYOUT_MATRIX_INJECT', 'PATHEM_TRANSIENT_INJECT_DISMISS_FAILURE', 'PATHEM_TRANSIENT_SURFACES_PILOT']:
@@ -193,6 +198,9 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
     if category == 'mounts':
         from transient_mounts import receipt_errors
         errors += receipt_errors(log, language, group, probe_one, only)
+    if category == 'factories':
+        from transient_factories import receipt_errors
+        errors += receipt_errors(log, language, group, probe_one, only)
     built_paths = [p for p in (ROOT / '.build/debug/Pathem_Pathem.bundle').rglob('Localizable.strings')
                    if p.parent.name.casefold() == (language + '.lproj').casefold()]
     catalog_match = False
@@ -235,7 +243,7 @@ def main():
     parser.add_argument('case', choices=CASES)
     parser.add_argument('--pilot', action='store_true')
     parser.add_argument('--full', action='store_true')
-    parser.add_argument('--set', choices=['all', 'b', 'mounts'], default='all')
+    parser.add_argument('--set', choices=['all', 'b', 'mounts', 'factories'], default='all')
     parser.add_argument('--language', choices=LANGUAGES)
     parser.add_argument('--group', type=int, default=0)
     parser.add_argument('--probe-one', action='store_true')
@@ -244,6 +252,7 @@ def main():
     os.umask(0o077)
     if args.full:
         __import__("transient_full_alerts").validate()
+        __import__("transient_factories").validate()
         if args.pilot:
             parser.error("full and pilot are mutually exclusive")
     if args.case != 'clean' and not args.pilot:

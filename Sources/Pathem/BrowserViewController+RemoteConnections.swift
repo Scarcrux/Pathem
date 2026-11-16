@@ -17,7 +17,9 @@ extension BrowserViewController {
             self?.saveConfig(conns, to: Self.connectionsURL)
             self?.sidebar.setConnections(conns)  // keep the sidebar Connections section in sync
         }
-        connectionsController.onConnect = { [weak self] connection in self?.connectToRemote(connection) }
+        connectionsController.onConnect = { [weak self] connection in
+            self?.connectToRemote(connection)
+        }
     }
 
     /// Prompt for a password and open the server in the active pane.
@@ -26,7 +28,9 @@ extension BrowserViewController {
     private func openLocalPairing(_ connection: RemoteConnection) {
         guard !connection.localPath.isEmpty else { return }
         var isDir: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: connection.localPath, isDirectory: &isDir), isDir.boolValue else { return }
+        guard FileManager.default.fileExists(atPath: connection.localPath, isDirectory: &isDir),
+            isDir.boolValue
+        else { return }
         let otherSide = (activeSide === leftTabs) ? rightTabs : leftTabs
         otherSide.activePane?.navigate(to: URL(fileURLWithPath: connection.localPath))
     }
@@ -51,22 +55,27 @@ extension BrowserViewController {
     /// SFTP connection. Returns true to proceed. If the key can't be scanned (host unreachable), we
     /// proceed anyway: ssh's own accept-new still pins it on the real connection.
     private func confirmNewHostKey(_ connection: RemoteConnection) async -> Bool {
-        guard let fingerprint = await HostKeyCheck.fingerprint(
-            host: connection.host, port: connection.effectivePort), view.window != nil
+        guard
+            let fingerprint = await HostKeyCheck.fingerprint(
+                host: connection.host, port: connection.effectivePort), view.window != nil
         else { return true }
         let alert = NSAlert()
-        alert.messageText = String(format: L("hostkey.title", "First connection to “%@”"), connection.host)
+        alert.messageText = String(
+            format: L("hostkey.title", "First connection to “%@”"), connection.host)
         alert.informativeText = String(
             format: L(
                 "hostkey.body",
-                "The server presented this host-key fingerprint:\n\n%@\n\nAccept it only if it matches what you expect. It is pinned for future connections."),
+                "The server presented this host-key fingerprint:\n\n%@\n\nAccept it only if it matches what you expect. It is pinned for future connections."
+            ),
             fingerprint)
         alert.addButton(withTitle: L("hostkey.accept", "Accept and Connect"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         return await presentSheet(alert) == .alertFirstButtonReturn
     }
 
-    private func beginConnect(_ connection: RemoteConnection, forceNewTab: Bool, pane: PaneController) {
+    private func beginConnect(
+        _ connection: RemoteConnection, forceNewTab: Bool, pane: PaneController
+    ) {
         openLocalPairing(connection)  // point the other pane at the site's default local dir
         // USB devices (adb / iOS) have no password; connect straight through.
         if connection.proto.isDevice {
@@ -75,32 +84,12 @@ extension BrowserViewController {
         }
         // A remembered password connects straight away, no prompt.
         if let saved = KeychainStore.password(for: connection.id) {
-            openRemoteConnection(connection, password: saved, forceNewTab: forceNewTab, fallback: pane)
+            openRemoteConnection(
+                connection, password: saved, forceNewTab: forceNewTab, fallback: pane)
             return
         }
         guard let window = view.window else { return }
-        let who = connection.user.isEmpty ? L("bvc.anonymous", "anonymous") : connection.user
-        let usingKey = connection.proto == .sftp && !connection.keyFile.isEmpty
-        let alert = NSAlert()
-        alert.messageText = String(format: L("bvc.connectTo", "Connect to %@"), connection.host)
-        alert.informativeText =
-            usingKey
-            ? L("bvc.enterPassphrase", "Enter the private key’s passphrase (leave blank if it has none).")
-            : String(format: L("bvc.enterPasswordFor", "Enter the password for %@@%@."), who, connection.host)
-        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        let remember = NSButton(
-            checkboxWithTitle: usingKey
-                ? L("bvc.rememberPassphraseInKeychain", "Remember passphrase in Keychain")
-                : L("bvc.rememberPasswordInKeychain", "Remember password in Keychain"),
-            target: nil, action: nil)
-        let accessory = NSStackView(views: [field, remember])
-        accessory.orientation = .vertical
-        accessory.alignment = .leading
-        accessory.frame = NSRect(x: 0, y: 0, width: 260, height: 52)
-        field.widthAnchor.constraint(equalToConstant: 260).isActive = true
-        alert.accessoryView = accessory
-        alert.addButton(withTitle: L("bvc.connect", "Connect"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let (alert, field, remember) = Self.makePasswordDialog(connection: connection)
         alert.beginSheetModal(for: window) { [weak self] response in
             guard response == .alertFirstButtonReturn, let self else { return }
             if remember.state == .on {
@@ -112,10 +101,11 @@ extension BrowserViewController {
     }
 
     private func openRemoteConnection(
-        _ connection: RemoteConnection, password: String, forceNewTab: Bool, fallback: PaneController
+        _ connection: RemoteConnection, password: String, forceNewTab: Bool,
+        fallback: PaneController
     ) {
         var target = fallback
-        if (forceNewTab || prefs.openConnectionsInNewTab), let side = activeSide {
+        if forceNewTab || prefs.openConnectionsInNewTab, let side = activeSide {
             side.newTab(duplicatingCurrent: true)  // the new tab becomes active
             target = activePane ?? fallback
         }
@@ -131,7 +121,9 @@ extension BrowserViewController {
                 self?.presentInfo(
                     L("smb.unreachableTitle", "Can’t reach that computer"),
                     String(
-                        format: L("smb.unreachableBody", "Couldn’t resolve “%@” on the network. It may have gone offline."),
+                        format: L(
+                            "smb.unreachableBody",
+                            "Couldn’t resolve “%@” on the network. It may have gone offline."),
                         name))
                 return
             }
@@ -148,18 +140,8 @@ extension BrowserViewController {
             NSSound.beep()
             return
         }
-        let alert = NSAlert()
-        alert.messageText = L("bookmark.title", "Bookmark This Folder")
-        alert.informativeText = String(
-            format: L("bookmark.hint", "Save “%@” on %@ so you can jump back to it later."),
-            ctx.path, ctx.connection.name)
-        alert.addButton(withTitle: L("common.save", "Save"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        let leaf = (ctx.path as NSString).lastPathComponent
-        field.stringValue = leaf.isEmpty || leaf == "/" ? ctx.connection.name : leaf
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
+        let (alert, field) = Self.makeBookmarkDialog(
+            path: ctx.path, connectionName: ctx.connection.name)
         Task { @MainActor in
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
             let name = field.stringValue.trimmingCharacters(in: .whitespaces)
@@ -189,5 +171,61 @@ extension BrowserViewController {
         var target = ctx.connection
         target.path = bookmark.remotePath
         openRemoteConnection(target, password: ctx.password, forceNewTab: false, fallback: pane)
+    }
+}
+
+@MainActor
+extension BrowserViewController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makePasswordDialog(connection: RemoteConnection) -> (
+        NSAlert, NSSecureTextField, NSButton
+    ) {
+        let who = connection.user.isEmpty ? L("bvc.anonymous", "anonymous") : connection.user
+        let usingKey = connection.proto == .sftp && !connection.keyFile.isEmpty
+        let alert = NSAlert()
+        alert.messageText = String(format: L("bvc.connectTo", "Connect to %@"), connection.host)
+        alert.informativeText =
+            usingKey
+            ? L(
+                "bvc.enterPassphrase",
+                "Enter the private key’s passphrase (leave blank if it has none).")
+            : String(
+                format: L("bvc.enterPasswordFor", "Enter the password for %@@%@."), who,
+                connection.host)
+        let field = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        let remember = NSButton(
+            checkboxWithTitle: usingKey
+                ? L("bvc.rememberPassphraseInKeychain", "Remember passphrase in Keychain")
+                : L("bvc.rememberPasswordInKeychain", "Remember password in Keychain"),
+            target: nil, action: nil)
+        let accessory = NSStackView(views: [field, remember])
+        accessory.orientation = .vertical
+        accessory.alignment = .leading
+        accessory.frame = NSRect(x: 0, y: 0, width: 260, height: 52)
+        field.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        alert.accessoryView = accessory
+        alert.addButton(withTitle: L("bvc.connect", "Connect"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return (alert, field, remember)
+    }
+}
+
+@MainActor
+extension BrowserViewController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeBookmarkDialog(path: String, connectionName: String) -> (NSAlert, NSTextField) {
+        let alert = NSAlert()
+        alert.messageText = L("bookmark.title", "Bookmark This Folder")
+        alert.informativeText = String(
+            format: L("bookmark.hint", "Save “%@” on %@ so you can jump back to it later."),
+            path, connectionName)
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
+        let leaf = (path as NSString).lastPathComponent
+        field.stringValue = leaf.isEmpty || leaf == "/" ? connectionName : leaf
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        return (alert, field)
     }
 }

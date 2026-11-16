@@ -420,8 +420,8 @@
     },
     {
       "id": "b22",
-      "site": "Sources/Pathem/TorrentDrawerController.swift:430:9:beginSheetModal",
-      "builder": "Sources/Pathem/TorrentDrawerController.swift:426:21:NSAlert",
+      "site": "Sources/Pathem/TorrentDrawerController.swift:411:9:beginSheetModal",
+      "builder": "Sources/Pathem/TorrentDrawerController.swift:407:21:NSAlert",
       "source_sha256": "46bf5b53611030c44e3bdc1c54d39ed75c7f90ca5e67b1504710fc4623aeb07a",
       "sheet": true,
       "fixture": "Localized torrent error title with runtime error body; standard OK only. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
@@ -438,8 +438,8 @@
     },
     {
       "id": "b23",
-      "site": "Sources/Pathem/TorrentsWindowController.swift:384:9:runModal",
-      "builder": "Sources/Pathem/TorrentsWindowController.swift:380:21:NSAlert",
+      "site": "Sources/Pathem/TorrentsWindowController.swift:311:9:runModal",
+      "builder": "Sources/Pathem/TorrentsWindowController.swift:307:21:NSAlert",
       "source_sha256": "d0f94bac8c2f73adaae14bc617c5097182f0e5fad92f77d3a9a5d89034bc3205",
       "sheet": false,
       "fixture": "Same plain torrent error report presented with runModal. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
@@ -583,8 +583,8 @@
     },
     {
       "id": "b31",
-      "site": "Sources/Pathem/BatchRenameController.swift:309:13:runModal",
-      "builder": "Sources/Pathem/BatchRenameController.swift:303:25:NSAlert",
+      "site": "Sources/Pathem/BatchRenameController.swift:323:13:runModal",
+      "builder": "Sources/Pathem/BatchRenameController.swift:317:25:NSAlert",
       "source_sha256": "c476f7f21391cddb8d9f4f0ecb687ecb91dff82002680d9bea3c0dc45e09fd91",
       "sheet": false,
       "fixture": "Plain rename-result report. Runtime fixture: two six-digit counts plus eight failure descriptions with 255-character names.",
@@ -771,9 +771,9 @@
     },
     {
       "id": "b37",
-      "site": "Sources/Pathem/BrowserViewController+RemoteConnections.swift:66:22:presentSheet",
-      "builder": "Sources/Pathem/BrowserViewController+RemoteConnections.swift:57:21:NSAlert",
-      "source_sha256": "607a27539b63b1df59a88a5ccc712a51bf32de942286c7f4c693cf2e58135f0b",
+      "site": "Sources/Pathem/BrowserViewController+RemoteConnections.swift:73:22:presentSheet",
+      "builder": "Sources/Pathem/BrowserViewController+RemoteConnections.swift:62:21:NSAlert",
+      "source_sha256": "a2f75908a86c9f57a43b233d0638907c9727a8638fc7396556b47f4366650946",
       "sheet": true,
       "fixture": "Plain host-key trust confirmation. Runtime fixture: 255-character host and SHA256 fingerprint. No network, key pinning or acceptance during layout checks.",
       "message": {
@@ -795,8 +795,8 @@
     },
     {
       "id": "b38",
-      "site": "Sources/Pathem/BrowserViewController+Torrents.swift:82:21:runModal",
-      "builder": "Sources/Pathem/BrowserViewController+Torrents.swift:79:32:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController+Torrents.swift:51:21:runModal",
+      "builder": "Sources/Pathem/BrowserViewController+Torrents.swift:48:32:NSAlert",
       "source_sha256": "3cc1b6a0d62c59783fec03dae5d72b1c02079976a2c60b0e9aa3736318c4cb4b",
       "sheet": false,
       "fixture": "Plain torrent-creation failure alert. Runtime error fixture with 255-character source filename; no torrent client/network.",
@@ -811,8 +811,8 @@
     },
     {
       "id": "b39",
-      "site": "Sources/Pathem/BrowserViewController+Torrents.swift:143:27:presentSheet",
-      "builder": "Sources/Pathem/BrowserViewController+Torrents.swift:133:21:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController+Torrents.swift:112:27:presentSheet",
+      "builder": "Sources/Pathem/BrowserViewController+Torrents.swift:102:21:NSAlert",
       "source_sha256": "08375f8d105291958470ac11ae23d995e72dd5398bf54611cc21d70df652a1e0",
       "sheet": true,
       "fixture": "Plain inbound-download confirmation. Runtime fixture: display name or truncated magnet label (up to 255 characters for stress). Cancel without starting client or accepting download.",

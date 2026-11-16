@@ -5,48 +5,16 @@ import AppKit
 @MainActor
 enum TorrentLimitsSheet {
     static func present(over window: NSWindow?, client: TorrentDaemonClient) {
-        let alert = NSAlert()
-        alert.messageText = L("torrents.limits.title", "Speed Limits")
-        alert.informativeText = L("torrents.limits.message", "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
-        alert.addButton(withTitle: L("torrents.limits.apply", "Apply"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-
-        func field(_ bytesPerSecond: Int) -> NSTextField {
-            let f = NSTextField(frame: NSRect(x: 70, y: 0, width: 90, height: 22))
-            f.integerValue = bytesPerSecond / 1024
-            f.alignment = .right
-            return f
-        }
-        let downField = field(client.downLimit)
-        let upField = field(client.upLimit)
-        let superSeed = NSButton(checkboxWithTitle: L("torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil, action: nil)
-        superSeed.state = client.superSeed ? .on : .off
-        let encrypt = NSButton(checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"), target: nil, action: nil)
-        encrypt.state = client.encryptOutgoing ? .on : .off
-        let utp = NSButton(checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"), target: nil, action: nil)
-        utp.state = client.preferUTP ? .on : .off
-        let vpn = NSButton(checkboxWithTitle: L("torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"), target: nil, action: nil)
-        vpn.state = client.bindToVPN ? .on : .off
-        let vpnStatus = NSTextField(labelWithString: vpnStatusLine(client))
-        vpnStatus.font = .systemFont(ofSize: 11)
-        vpnStatus.textColor = client.bindToVPN && client.vpnInterface == nil ? .systemRed : .secondaryLabelColor
-
-        let container = NSStackView(views: [
-            labeledRow(L("torrents.limits.down", "Download"), downField),
-            labeledRow(L("torrents.limits.up", "Upload"), upField),
-            superSeed, encrypt, utp, vpn, vpnStatus,
-        ])
-        container.orientation = .vertical
-        container.spacing = 8
-        container.alignment = .leading
-        container.frame = NSRect(x: 0, y: 0, width: 340, height: 168)
-        alert.accessoryView = container
-        alert.window.initialFirstResponder = downField
-
+        let (alert, downField, upField, superSeed, encrypt, utp, vpn) = Self.makeDialog(
+            downLimit: client.downLimit, upLimit: client.upLimit,
+            superSeedEnabled: client.superSeed, encryptOutgoing: client.encryptOutgoing,
+            preferUTP: client.preferUTP, bindToVPN: client.bindToVPN,
+            vpnLine: Self.vpnStatusLine(client), vpnMissing: client.vpnInterface == nil)
         let apply: (NSApplication.ModalResponse) -> Void = { response in
             guard response == .alertFirstButtonReturn else { return }
             client.setLimits(
-                down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024,
+                down: max(0, downField.integerValue) * 1024,
+                up: max(0, upField.integerValue) * 1024,
                 superSeed: superSeed.state == .on, encryptOutgoing: encrypt.state == .on,
                 preferUTP: utp.state == .on, bindToVPN: vpn.state == .on)
         }
@@ -72,8 +40,70 @@ enum TorrentLimitsSheet {
             return L("torrents.vpn.off", "Not bound. Torrents use your normal connection.")
         }
         if let iface = client.vpnInterface {
-            return String(format: L("torrents.vpn.bound", "Bound to %@. Traffic only leaves over the VPN."), iface)
+            return String(
+                format: L("torrents.vpn.bound", "Bound to %@. Traffic only leaves over the VPN."),
+                iface)
         }
         return L("torrents.vpn.killed", "No VPN detected. Torrents paused to prevent leaks.")
+    }
+}
+
+@MainActor
+extension TorrentLimitsSheet {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeDialog(
+        downLimit: Int, upLimit: Int, superSeedEnabled: Bool, encryptOutgoing: Bool,
+        preferUTP: Bool, bindToVPN: Bool, vpnLine: String, vpnMissing: Bool
+    ) -> (NSAlert, NSTextField, NSTextField, NSButton, NSButton, NSButton, NSButton) {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.limits.title", "Speed Limits")
+        alert.informativeText = L(
+            "torrents.limits.message",
+            "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
+        alert.addButton(withTitle: L("torrents.limits.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        func field(_ bytesPerSecond: Int) -> NSTextField {
+            let f = NSTextField(frame: NSRect(x: 70, y: 0, width: 90, height: 22))
+            f.integerValue = bytesPerSecond / 1024
+            f.alignment = .right
+            return f
+        }
+        let downField = field(downLimit)
+        let upField = field(upLimit)
+        let superSeed = NSButton(
+            checkboxWithTitle: L(
+                "torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil,
+            action: nil)
+        superSeed.state = superSeedEnabled ? .on : .off
+        let encrypt = NSButton(
+            checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"),
+            target: nil, action: nil)
+        encrypt.state = encryptOutgoing ? .on : .off
+        let utp = NSButton(
+            checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"),
+            target: nil, action: nil)
+        utp.state = preferUTP ? .on : .off
+        let vpn = NSButton(
+            checkboxWithTitle: L(
+                "torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"),
+            target: nil, action: nil)
+        vpn.state = bindToVPN ? .on : .off
+        let vpnStatus = NSTextField(labelWithString: vpnLine)
+        vpnStatus.font = .systemFont(ofSize: 11)
+        vpnStatus.textColor = bindToVPN && vpnMissing ? .systemRed : .secondaryLabelColor
+
+        let container = NSStackView(views: [
+            labeledRow(L("torrents.limits.down", "Download"), downField),
+            labeledRow(L("torrents.limits.up", "Upload"), upField),
+            superSeed, encrypt, utp, vpn, vpnStatus,
+        ])
+        container.orientation = .vertical
+        container.spacing = 8
+        container.alignment = .leading
+        container.frame = NSRect(x: 0, y: 0, width: 340, height: 168)
+        alert.accessoryView = container
+        alert.window.initialFirstResponder = downField
+        return (alert, downField, upField, superSeed, encrypt, utp, vpn)
     }
 }

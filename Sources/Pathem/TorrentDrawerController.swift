@@ -389,21 +389,8 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     }
 
     @objc private func addMagnetTapped() {
-        let alert = NSAlert()
-        alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
-        alert.informativeText = L(
-            "torrents.addMagnet.message",
-            "Paste a magnet link. Pathem fetches its details from peers, then downloads it to your torrent download folder."
-        )
-        alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
-        field.placeholderString = "magnet:?xt=urn:btih:…"
-        if let clip = NSPasteboard.general.string(forType: .string), clip.hasPrefix("magnet:") {
-            field.stringValue = clip
-        }
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
+        let (alert, field) = Self.makeMagnetDialog(
+            prefill: NSPasteboard.general.string(forType: .string))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let uri = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard uri.hasPrefix("magnet:") else {
@@ -427,13 +414,7 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
 
     @objc private func removeTapped() {
         guard let sel = selected(), let window = hostWindow ?? view.window else { return }
-        let alert = NSAlert()
-        alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), sel.name)
-        alert.informativeText = L(
-            "torrents.remove.info", "You can keep the downloaded files or delete them.")
-        alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
-        alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let alert = Self.makeRemoveDialog(name: sel.name)
         alert.beginSheetModal(for: window) { [weak self] response in
             switch response {
             case .alertFirstButtonReturn: self?.client.remove(sel.infoHash, deleteData: false)
@@ -466,4 +447,42 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
         f.countStyle = .file
         return f
     }()
+}
+
+@MainActor
+extension TorrentDrawerController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeMagnetDialog(prefill: String?) -> (NSAlert, NSTextField) {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
+        alert.informativeText = L(
+            "torrents.addMagnet.message",
+            "Paste a magnet link. Pathem fetches its details from peers, then downloads it to your torrent download folder."
+        )
+        alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        field.placeholderString = "magnet:?xt=urn:btih:…"
+        if let clip = prefill, clip.hasPrefix("magnet:") {
+            field.stringValue = clip
+        }
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        return (alert, field)
+    }
+}
+
+@MainActor
+extension TorrentDrawerController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeRemoveDialog(name: String) -> NSAlert {
+        let alert = NSAlert()
+        alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), name)
+        alert.informativeText = L(
+            "torrents.remove.info", "You can keep the downloaded files or delete them.")
+        alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
+        alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return alert
+    }
 }

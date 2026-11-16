@@ -674,3 +674,16 @@ final class PaneDocumentViewer: NSView {
         if event.keyCode == 53 { dismiss() } else { super.keyDown(with: event) }  // 53 = Escape
     }
 }
+
+@MainActor
+extension DocumentPreviewView {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeSaveChangesDialog(name: String) -> NSAlert {
+        let alert = NSAlert()
+        alert.messageText = L("markup.saveChanges", "Save your markup?")
+        alert.informativeText = name
+        alert.addButton(withTitle: L("preview.save", "Save"))
+        alert.addButton(withTitle: L("markup.discard", "Discard"))
+        return alert
+    }
+}

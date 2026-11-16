@@ -13,7 +13,21 @@ final class DeviceWatcher {
     var onDevices: (([RemoteConnection]) -> Void)?
 
     /// Begin polling (every 4s) and report once immediately.
+    #if DEBUG
+    private(set) static var debugTransientStarts = 0
+    private(set) static var debugTransientSkips = 0
+    #endif
+
     func start() {
+        #if DEBUG
+        // The transient surface harness owns UI fixtures only. In particular,
+        // constructing a browser must not start LAN or paired-device discovery.
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            Self.debugTransientSkips += 1
+            return
+        }
+        Self.debugTransientStarts += 1
+        #endif
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }  // the timer fires on the main run loop

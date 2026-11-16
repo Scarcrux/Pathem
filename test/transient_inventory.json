@@ -36,7 +36,8 @@
     "Sources/Pathem/TransientSurfaceFullAlerts.swift": "DEBUG-only full B fixture harness; explicitly excluded from production census",
     "Sources/Pathem/TransientSurfaceFullMounts.swift": "DEBUG-only full A real-entrypoint mount harness; explicit exclusion",
     "Sources/Pathem/TransientPresentationProbe.swift": "DEBUG-only presentation witness; original AppKit presentation forwarded unchanged",
-    "Sources/Pathem/TransientReturnBindingProbe.swift": "DEBUG-only native key-equivalent observation and positive/negative controls; callbacks withheld only during probe"
+    "Sources/Pathem/TransientReturnBindingProbe.swift": "DEBUG-only native key-equivalent observation and positive/negative controls; callbacks withheld only during probe",
+    "Sources/Pathem/TransientSurfaceFullFactories.swift": "DEBUG-only production-factory UI harness. Original modal/sheet presentation styles and callbacks observed over owned fixtures."
   },
   "ignored_counts": {
     "Sources/Pathem/BrowserViewController+BackgroundMenuUITests.swift": 1,
@@ -60,7 +61,8 @@
     "Sources/Pathem/TransientPresentationProbe.swift": 2,
     "Sources/Pathem/TransientReturnBindingProbe.swift": 2,
     "Sources/Pathem/TransientSurfaceFullAlerts.swift": 1,
-    "Sources/Pathem/TransientSurfaceFullMounts.swift": 2,
+    "Sources/Pathem/TransientSurfaceFullFactories.swift": 5,
+    "Sources/Pathem/TransientSurfaceFullMounts.swift": 3,
     "Sources/Pathem/TransientSurfaceSample.swift": 9
   },
   "sites": {
@@ -154,7 +156,8 @@
     "Sources/Pathem/CleanupController.swift:1028:9:beginSheetModal": {
       "role": "wrapper",
       "class": null,
-      "reason": "Pass-through presenter; destructive intent belongs to deleteNowClicked caller."
+      "reason": "Pass-through presenter; destructive intent belongs to deleteNowClicked caller.",
+      "builders": []
     },
     "Sources/Pathem/CleanupController.swift:1087:9:beginSheetModal": {
       "class": "B",
@@ -542,26 +545,26 @@
       "reason": "Runtime verb/count and first eight filename/error pairs, plain report. Fixture: eight 255-character names with permission errors. No provider access.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:430:9:beginSheetModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:411:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:426:21:NSAlert"
+        "Sources/Pathem/TorrentDrawerController.swift:407:21:NSAlert"
       ],
       "reason": "Localized torrent error title with runtime error body; standard OK only. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:384:9:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:311:9:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:380:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:307:21:NSAlert"
       ],
       "reason": "Same plain torrent error report presented with runModal. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -670,14 +673,14 @@
       ],
       "reason": "Batch create input and generated-name preview. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/BatchRenameController.swift:185:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/BatchRenameController.swift:198:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BatchRenameController.swift:38:17:NSPanel"
+        "Sources/Pathem/BatchRenameController.swift:44:17:NSPanel"
       ],
       "reason": "Batch rename fields, options and preview table. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -956,7 +959,7 @@
       ],
       "reason": "Photo browser, details and export controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/ProcessViewerController.swift:35:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/ProcessViewerController.swift:36:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
@@ -1393,14 +1396,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/BrowserViewController+Torrents.swift:69:15:runModal": {
+    "Sources/Pathem/BrowserViewController+Torrents.swift:38:15:runModal": {
       "class": "A",
       "kind": "save panel with accessory",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Torrents.swift:53:20:NSSavePanel"
+        "Sources/Pathem/BrowserViewController+Torrents.swift:201:20:NSSavePanel"
       ],
       "reason": "System Save panel additionally attaches FilenameSuggestionController.view when enabled: custom accessory makes this class A, not plain C. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -1582,26 +1585,26 @@
       "reason": "Plain feature/reason alert, Learn More and OK. Runtime fixture: localized availability explanation with 80-character feature name; do not open external URLs.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BatchRenameController.swift:273:15:runModal": {
+    "Sources/Pathem/BatchRenameController.swift:284:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BatchRenameController.swift:262:21:NSAlert"
+        "Sources/Pathem/BatchRenameController.swift:373:21:NSAlert"
       ],
       "reason": "Preset-name text field accessory; Save may update a same-named preset. Own temporary config only.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BatchRenameController.swift:309:13:runModal": {
+    "Sources/Pathem/BatchRenameController.swift:323:13:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BatchRenameController.swift:303:25:NSAlert"
+        "Sources/Pathem/BatchRenameController.swift:317:25:NSAlert"
       ],
       "reason": "Plain rename-result report. Runtime fixture: two six-digit counts plus eight failure descriptions with 255-character names.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -1731,12 +1734,17 @@
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/BrowserViewController+MediaTools.swift:148:21:NSAlert"
       ],
-      "reason": "Remove GPS metadata from originals without Trash, so class A despite plain text/two buttons. Runtime six-digit count. Default intent not ruled; no owner metadata writes.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Remove GPS metadata from originals without Trash, so class A despite plain text/two buttons. Runtime six-digit count.  Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
     "Sources/Pathem/BrowserViewController+OpenerRules.swift:87:9:beginSheetModal": {
       "class": "A",
@@ -1774,38 +1782,38 @@
       "reason": "Owner/group text fields and recursive checkbox accessory. Prepare types a sudo command without executing it. Cancel only; no terminal/admin mutation.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+RemoteConnections.swift:104:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+RemoteConnections.swift:93:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+RemoteConnections.swift:84:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+RemoteConnections.swift:185:21:NSAlert"
       ],
       "reason": "Secure password field and Keychain checkbox accessory. Cancel only; no credentials, Keychain or connection access.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+RemoteConnections.swift:66:22:presentSheet": {
+    "Sources/Pathem/BrowserViewController+RemoteConnections.swift:73:22:presentSheet": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+RemoteConnections.swift:57:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+RemoteConnections.swift:62:21:NSAlert"
       ],
       "reason": "Plain host-key trust confirmation. Runtime fixture: 255-character host and SHA256 fingerprint. No network, key pinning or acceptance during layout checks.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+RemoteConnections.swift:164:30:presentSheet": {
+    "Sources/Pathem/BrowserViewController+RemoteConnections.swift:146:30:presentSheet": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+RemoteConnections.swift:151:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+RemoteConnections.swift:217:21:NSAlert"
       ],
       "reason": "Bookmark name text field accessory, commits saved connection config. Cancel only.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -1815,12 +1823,17 @@
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/BrowserViewController+SelectionInspection.swift:236:21:NSAlert"
       ],
-      "reason": "Finder comment text field accessory; Apply changes/removes original metadata without Trash. Cancel without committing owner comments. Default intent not ruled here.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Finder comment text field accessory; Apply changes/removes original metadata without Trash. Cancel without committing owner comments.  Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
     "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:193:13:beginSheetModal": {
       "class": "A",
@@ -1851,12 +1864,17 @@
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:308:21:NSAlert"
       ],
-      "reason": "Plain secure erase confirmation is class A because random overwrite/deletion skips Trash and cannot be undone. Runtime six-digit count. Owner intent not ruled for this separate caller; cancel only.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Plain secure erase confirmation is class A because random overwrite/deletion skips Trash and cannot be undone. Runtime six-digit count.  Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
     "Sources/Pathem/BrowserViewController+Servers.swift:23:30:presentSheet": {
       "class": "A",
@@ -1885,12 +1903,14 @@
     "Sources/Pathem/BrowserViewController+SheetHelpers.swift:15:72:runModal": {
       "role": "wrapper",
       "class": null,
-      "reason": "Pass-through presentSheet alert presenter; caller rows retain independent builders/classes and the full sheet/modal path."
+      "reason": "Pass-through presentSheet alert presenter; caller rows retain independent builders/classes and the full sheet/modal path.",
+      "builders": []
     },
     "Sources/Pathem/BrowserViewController+SheetHelpers.swift:17:13:beginSheetModal": {
       "role": "wrapper",
       "class": null,
-      "reason": "Pass-through presentSheet alert presenter; caller rows retain independent builders/classes and the full sheet/modal path."
+      "reason": "Pass-through presentSheet alert presenter; caller rows retain independent builders/classes and the full sheet/modal path.",
+      "builders": []
     },
     "Sources/Pathem/BrowserViewController+SmartFolders.swift:171:9:beginSheetModal": {
       "class": "A",
@@ -1904,38 +1924,38 @@
       "reason": "Advanced criteria rows accessory and three buttons; Search/Save can start Spotlight or write a Smart Folder. Cancel only.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+Torrents.swift:45:15:runModal": {
+    "Sources/Pathem/BrowserViewController+Torrents.swift:27:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Torrents.swift:26:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+Torrents.swift:172:21:NSAlert"
       ],
       "reason": "Tracker URL field and private-torrent checkbox accessory. Cancel only; no hashing, tracker contact or torrent creation.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+Torrents.swift:82:21:runModal": {
+    "Sources/Pathem/BrowserViewController+Torrents.swift:51:21:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Torrents.swift:79:32:NSAlert"
+        "Sources/Pathem/BrowserViewController+Torrents.swift:48:32:NSAlert"
       ],
       "reason": "Plain torrent-creation failure alert. Runtime error fixture with 255-character source filename; no torrent client/network.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+Torrents.swift:143:27:presentSheet": {
+    "Sources/Pathem/BrowserViewController+Torrents.swift:112:27:presentSheet": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Torrents.swift:133:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+Torrents.swift:102:21:NSAlert"
       ],
       "reason": "Plain inbound-download confirmation. Runtime fixture: display name or truncated magnet label (up to 255 characters for stress). Cancel without starting client or accepting download.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -1981,12 +2001,17 @@
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
         "Sources/Pathem/BrowserViewController.swift:913:21:NSAlert"
       ],
-      "reason": "Keep-data checkbox accessory; default Continue and Quit can remove config/Keychain entries and restore folder handler. Permanent destructive class. Cancel only; never invoke reset in this harness.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Keep-data checkbox accessory; default Continue and Quit can remove config/Keychain entries and restore folder handler. Permanent destructive class. Cancel only; never invoke reset in this harness. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
     "Sources/Pathem/BrowserViewController.swift:967:28:presentSheet": {
       "class": "B",
@@ -2084,14 +2109,14 @@
       "reason": "Plain PDF-save failure report; runtime path fixture with four 255-character components. Do not save owner markup.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/DocumentPreviewView.swift:467:12:runModal": {
+    "Sources/Pathem/DocumentPreviewView.swift:463:12:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/DocumentPreviewView.swift:462:21:NSAlert"
+        "Sources/Pathem/DocumentPreviewView.swift:644:21:NSAlert"
       ],
       "reason": "Save/Discard unsaved markup may permanently drop edits, so conservative destructive class A despite plain alert. Filename fixture255; cancel/save/discard only on owned documents in future coverage.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2108,53 +2133,63 @@
       "reason": "Plain duplicate-to-Trash confirmation; recovery explicitly Put Back/undo. Runtime six-digit item count. No permanent deletion in this alert.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/ExternalCommandsController.swift:149:15:runModal": {
+    "Sources/Pathem/ExternalCommandsController.swift:125:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/ExternalCommandsController.swift:143:21:NSAlert"
+        "Sources/Pathem/ExternalCommandsController.swift:192:21:NSAlert"
       ],
       "reason": "External command name/template editor accessory. Cancel only; no command execution or owner config writes.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/FindInFilesController.swift:204:15:runModal": {
+    "Sources/Pathem/FindInFilesController.swift:196:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/FindInFilesController.swift:195:21:NSAlert"
+        "Sources/Pathem/FindInFilesController.swift:292:21:NSAlert"
       ],
-      "reason": "Replace All permanently edits matched originals without undo, class A despite plain text/buttons. Runtime 255-character query. Cancel only; default intent not ruled for this caller.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Replace All permanently edits matched originals without undo, class A despite plain text/buttons. Runtime 255-character query. Cancel only; default intent not ruled for this caller. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
-    "Sources/Pathem/PDFMarkupView.swift:370:15:runModal": {
+    "Sources/Pathem/PDFMarkupView.swift:369:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PDFMarkupView.swift:362:21:NSAlert"
+        "Sources/Pathem/PDFMarkupView.swift:446:21:NSAlert"
       ],
       "reason": "PDF annotation text field accessory. Runtime title80/name255; cancel without changing document.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/PathemApp.swift:2246:16:runModal": {
+    "Sources/Pathem/PathemApp.swift:2240:16:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:2239:21:NSAlert"
+        "Sources/Pathem/PathemApp.swift:2248:21:NSAlert"
       ],
-      "reason": "Quit Anyway during in-flight transfer can leave incomplete data; conservative destructive class A. Static localized strings. Never terminate the owner app.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Quit Anyway during in-flight transfer can leave incomplete data; conservative destructive class A. Static localized strings. Never terminate the owner app. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
     "Sources/Pathem/PhotosBrowserController.swift:323:9:beginSheetModal": {
       "class": "B",
@@ -2168,17 +2203,22 @@
       "reason": "Plain Photos GPS-removal confirmation; Photos explicitly retains revertible edit. Runtime six-digit count. No real Photos access/edits authorized.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/ProcessViewerController.swift:189:15:runModal": {
+    "Sources/Pathem/ProcessViewerController.swift:188:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
-      "default_destructive_intended": false,
+      "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/ProcessViewerController.swift:179:21:NSAlert"
+        "Sources/Pathem/ProcessViewerController.swift:242:21:NSAlert"
       ],
-      "reason": "Force Quit can lose unsaved work without recovery; conservative destructive class A for both terminate/force variants. Runtime process name255 and six-digit PID. Cancel only; no process signals.",
-      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
+      "reason": "Force Quit can lose unsaved work without recovery; conservative destructive class A for both terminate/force variants. Runtime process name255 and six-digit PID. Cancel only; no process signals. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
+      "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
+      "owner_decision": {
+        "date": "2026-11-15",
+        "quote": "we already have confirmations for those and this isn't a file manager meant for newbs.",
+        "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
+      }
     },
     "Sources/Pathem/SelectByPatternSheet.swift:66:9:beginSheetModal": {
       "class": "A",
@@ -2216,98 +2256,98 @@
       "reason": "SF Symbol name text field accessory; Set edits sidebar config. Cancel without committing.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TemplatesController.swift:163:15:runModal": {
+    "Sources/Pathem/TemplatesController.swift:138:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TemplatesController.swift:156:21:NSAlert"
+        "Sources/Pathem/TemplatesController.swift:206:21:NSAlert"
       ],
       "reason": "Template name and multiline entry-list accessory. Cancel without saving config.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:380:15:runModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:367:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:365:21:NSAlert"
+        "Sources/Pathem/TorrentDrawerController.swift:425:21:NSAlert"
       ],
       "reason": "Magnet URI text field accessory, optional clipboard prefill. Cancel only; no clipboard mutation, DHT, peer contact or torrent start.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentDrawerController.swift:406:9:beginSheetModal": {
+    "Sources/Pathem/TorrentDrawerController.swift:387:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentDrawerController.swift:399:21:NSAlert"
+        "Sources/Pathem/TorrentDrawerController.swift:448:21:NSAlert"
       ],
       "reason": "Three buttons plus permanent Delete Files branch; safe first action keeps files. Runtime torrent name255. Cancel only, no client calls.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentLimitsSheet.swift:54:13:beginSheetModal": {
+    "Sources/Pathem/TorrentLimitsSheet.swift:22:13:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentLimitsSheet.swift:8:21:NSAlert"
+        "Sources/Pathem/TorrentLimitsSheet.swift:58:21:NSAlert"
       ],
       "reason": "Shared speed/network-options accessory with limit fields, superseed/encryption/uTP/VPN controls and status. Cancel only; no torrent network changes.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentLimitsSheet.swift:56:19:runModal": {
+    "Sources/Pathem/TorrentLimitsSheet.swift:24:19:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentLimitsSheet.swift:8:21:NSAlert"
+        "Sources/Pathem/TorrentLimitsSheet.swift:58:21:NSAlert"
       ],
       "reason": "Shared speed/network-options accessory with limit fields, superseed/encryption/uTP/VPN controls and status. Cancel only; no torrent network changes.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:226:15:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:210:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:208:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:463:21:NSAlert"
       ],
       "reason": "Magnet URI text field accessory with optional clipboard prefill. Cancel without starting a torrent.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:258:16:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:236:16:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:251:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:488:21:NSAlert"
       ],
       "reason": "Three-button Remove/Keep Files, Remove/Delete Files and Cancel; permanent deletion is secondary action. Runtime torrent name255. Cancel only, no client calls.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/TorrentsWindowController.swift:343:15:runModal": {
+    "Sources/Pathem/TorrentsWindowController.swift:270:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:287:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:506:21:NSAlert"
       ],
       "reason": "Legacy window speed/network-options accessory with limit fields and network toggles/status. Cancel without changing client state.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2337,7 +2377,8 @@
     "Sources/Pathem/BrowserViewController+DropMenu.swift:46:9:popUp": {
       "role": "wrapper",
       "class": null,
-      "reason": "NSMenu pass-through popUpAtPointer. Keep the builder and native-menu classification on its caller; physical tracking expression stays separate."
+      "reason": "NSMenu pass-through popUpAtPointer. Keep the builder and native-menu classification on its caller; physical tracking expression stays separate.",
+      "builders": []
     },
     "Sources/Pathem/BrowserViewController+DropMenu.swift:10:66:popUpAtPointer": {
       "class": "C",
@@ -2379,7 +2420,8 @@
       "destructive": true,
       "default_destructive_intended": false,
       "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
+      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
+      "builders": []
     },
     "Sources/Pathem/IconCollectionController.swift:68:42:popUpContextMenu": {
       "class": "A",
@@ -2388,7 +2430,8 @@
       "destructive": true,
       "default_destructive_intended": false,
       "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
+      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
+      "builders": []
     },
     "Sources/Pathem/KeyTableView.swift:80:17:popUpContextMenu": {
       "class": "A",
@@ -2397,7 +2440,8 @@
       "destructive": true,
       "default_destructive_intended": false,
       "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
+      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
+      "builders": []
     },
     "Sources/Pathem/KeyTableView.swift:87:42:popUpContextMenu": {
       "class": "A",
@@ -2406,7 +2450,8 @@
       "destructive": true,
       "default_destructive_intended": false,
       "builder_status": "unresolved",
-      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
+      "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered.",
+      "builders": []
     },
     "Sources/Pathem/OrganizeReviewController.swift:274:9:popUp": {
       "class": "C",

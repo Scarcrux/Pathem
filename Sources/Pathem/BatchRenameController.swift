@@ -11,19 +11,25 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     private let panel: NSPanel
     private let findField = NSTextField()
     private let replaceField = NSTextField()
-    private let regexCheck = NSButton(checkboxWithTitle: L("rename.regex", "Regex"), target: nil, action: nil)
+    private let regexCheck = NSButton(
+        checkboxWithTitle: L("rename.regex", "Regex"), target: nil, action: nil)
     private let prefixField = NSTextField()
     private let suffixField = NSTextField()
     private let casePopup = NSPopUpButton()
-    private let extCheck = NSButton(checkboxWithTitle: L("rename.includeExtension", "Include extension"), target: nil, action: nil)
-    private let numberCheck = NSButton(checkboxWithTitle: L("rename.number", "Number (# in a field, else appended)"), target: nil, action: nil)
+    private let extCheck = NSButton(
+        checkboxWithTitle: L("rename.includeExtension", "Include extension"), target: nil,
+        action: nil)
+    private let numberCheck = NSButton(
+        checkboxWithTitle: L("rename.number", "Number (# in a field, else appended)"), target: nil,
+        action: nil)
     private let startField = NSTextField()
     private let padField = NSTextField()
     private let presetPopup = NSPopUpButton()
     private var presets: [RenamePreset] = []
     private let table = NSTableView()
     private let warnLabel = NSTextField(labelWithString: "")
-    private let applyButton = NSButton(title: L("rename.renameButton", "Rename"), target: nil, action: nil)
+    private let applyButton = NSButton(
+        title: L("rename.renameButton", "Rename"), target: nil, action: nil)
 
     private var names: [String] = []
     /// Per-file token values ({date}, {parent}, {exif.taken}), built once when the selection loads
@@ -97,7 +103,8 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         warnLabel.textColor = .systemRed
         warnLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let cancel = NSButton(title: L("common.cancel", "Cancel"), target: self, action: #selector(cancel))
+        let cancel = NSButton(
+            title: L("common.cancel", "Cancel"), target: self, action: #selector(cancel))
         cancel.keyEquivalent = "\u{1b}"  // Esc
         applyButton.target = self
         applyButton.action = #selector(apply)
@@ -105,9 +112,13 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
         presetPopup.target = self
         presetPopup.action = #selector(presetSelected)
-        let savePreset = NSButton(title: L("rename.savePreset", "Save…"), target: self, action: #selector(saveCurrentAsPreset))
+        let savePreset = NSButton(
+            title: L("rename.savePreset", "Save…"), target: self,
+            action: #selector(saveCurrentAsPreset))
         savePreset.bezelStyle = .rounded
-        let deletePreset = NSButton(title: L("rename.deletePreset", "Delete"), target: self, action: #selector(deleteSelectedPreset))
+        let deletePreset = NSButton(
+            title: L("rename.deletePreset", "Delete"), target: self,
+            action: #selector(deleteSelectedPreset))
         deletePreset.bezelStyle = .rounded
 
         let form = NSStackView(views: [
@@ -118,7 +129,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
             row(L("rename.rowSuffix", "Suffix"), suffixField),
             row(L("rename.rowCase", "Case"), casePopup, extCheck),
             row(L("rename.rowNumbering", "Numbering"), numberCheck),
-            row(L("rename.rowStart", "Start"), startField, label(L("rename.labelPad", "Pad")), padField),
+            row(
+                L("rename.rowStart", "Start"), startField, label(L("rename.labelPad", "Pad")),
+                padField),
         ])
         form.orientation = .vertical
         form.alignment = .leading
@@ -209,8 +222,11 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         let parent = directory.lastPathComponent
         contexts = names.map { name in
             let url = directory.appendingPathComponent(name)
-            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .creationDateKey])
-            let exif = BrowserViewController.isImageName(name) ? ImageMetadata.read(url).dateTaken : nil
+            let values = try? url.resourceValues(forKeys: [
+                .contentModificationDateKey, .creationDateKey,
+            ])
+            let exif =
+                BrowserViewController.isImageName(name) ? ImageMetadata.read(url).dateTaken : nil
             return RenameContext(
                 modified: values?.contentModificationDate, created: values?.creationDate,
                 exifTaken: exif, parent: parent)
@@ -223,7 +239,8 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         let changes = plan.pairs.contains { $0.original != $0.renamed }
         applyButton.isEnabled = changes && !plan.hasCollisions
         warnLabel.stringValue =
-            plan.hasCollisions ? L("rename.conflicts", "Name conflicts: adjust the rule before renaming.") : ""
+            plan.hasCollisions
+            ? L("rename.conflicts", "Name conflicts: adjust the rule before renaming.") : ""
     }
 
     func controlTextDidChange(_ obj: Notification) { recompute() }
@@ -244,7 +261,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         regexCheck.state = rule.useRegex ? .on : .off
         prefixField.stringValue = rule.prefix
         suffixField.stringValue = rule.suffix
-        casePopup.selectItem(at: [RenameRule.CaseMode.none, .lower, .upper, .title].firstIndex(of: rule.caseMode) ?? 0)
+        casePopup.selectItem(
+            at: [RenameRule.CaseMode.none, .lower, .upper, .title].firstIndex(of: rule.caseMode)
+                ?? 0)
         extCheck.state = rule.includeExtension ? .on : .off
         numberCheck.state = rule.counterStart != nil ? .on : .off
         if let start = rule.counterStart { startField.stringValue = "\(start)" }
@@ -259,17 +278,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     @objc private func saveCurrentAsPreset() {
-        let alert = NSAlert()
-        alert.messageText = L("rename.savePresetTitle", "Save rename preset")
-        alert.informativeText = L("rename.savePresetBody", "Name this rule so you can reuse it.")
-        alert.addButton(withTitle: L("common.save", "Save"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
-        // Prefill a selected preset's name so Save updates it in place.
-        let selected = presetPopup.indexOfSelectedItem - 1
-        if selected >= 0, selected < presets.count { field.stringValue = presets[selected].name }
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
+        let (alert, field) = Self.makePresetDialog(
+            prefill: presets.indices.contains(presetPopup.indexOfSelectedItem - 1)
+                ? presets[presetPopup.indexOfSelectedItem - 1].name : "")
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
@@ -286,7 +297,10 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
     @objc private func deleteSelectedPreset() {
         let index = presetPopup.indexOfSelectedItem - 1
-        guard index >= 0, index < presets.count else { NSSound.beep(); return }
+        guard index >= 0, index < presets.count else {
+            NSSound.beep()
+            return
+        }
         presets.remove(at: index)
         RenamePresetStore.save(presets)
         reloadPresetPopup()
@@ -314,17 +328,22 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
     func numberOfRows(in tableView: NSTableView) -> Int { plan.pairs.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < plan.pairs.count else { return nil }
         let pair = plan.pairs[row]
         let id = tableColumn.identifier
-        let cell = (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView) ?? Self.makeCell(id)
+        let cell =
+            (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
+            ?? Self.makeCell(id)
         if id.rawValue == "current" {
             cell.textField?.stringValue = pair.original
             cell.textField?.textColor = .secondaryLabelColor
         } else {
             cell.textField?.stringValue = pair.renamed
-            cell.textField?.textColor = plan.collisions.contains(pair.renamed) ? .systemRed : .labelColor
+            cell.textField?.textColor =
+                plan.collisions.contains(pair.renamed) ? .systemRed : .labelColor
         }
         return cell
     }
@@ -344,5 +363,22 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
             field.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
         ])
         return cell
+    }
+}
+
+@MainActor
+extension BatchRenameController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makePresetDialog(prefill: String) -> (NSAlert, NSTextField) {
+        let alert = NSAlert()
+        alert.messageText = L("rename.savePresetTitle", "Save rename preset")
+        alert.informativeText = L("rename.savePresetBody", "Name this rule so you can reuse it.")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.stringValue = prefill
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        return (alert, field)
     }
 }

@@ -23,25 +23,7 @@ extension BrowserViewController {
             return
         }
 
-        let alert = NSAlert()
-        alert.messageText = String(
-            format: L("torrents.create.title", "Create Torrent from “%@”"), source.lastPathComponent
-        )
-        alert.informativeText = L(
-            "torrents.create.message",
-            "Optionally add a tracker. A private torrent won't use DHT or peer exchange.")
-        alert.addButton(withTitle: L("torrents.create.next", "Choose Location…"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        let tracker = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 22))
-        tracker.placeholderString = L("torrents.create.tracker", "Tracker URL (optional)")
-        let privateCheck = NSButton(
-            checkboxWithTitle: L("torrents.create.private", "Private torrent"), target: nil,
-            action: nil)
-        let accessory = NSStackView(views: [tracker, privateCheck])
-        accessory.orientation = .vertical
-        accessory.spacing = 8
-        accessory.frame = NSRect(x: 0, y: 0, width: 340, height: 54)
-        alert.accessoryView = accessory
+        let (alert, tracker, privateCheck) = Self.makeCreateTorrentDialog(source: source)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
 
         let trackerText = tracker.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -50,21 +32,8 @@ extension BrowserViewController {
             isPrivate: privateCheck.state == .on,
             creationDate: Date())
 
-        let save = NSSavePanel()
-        save.nameFieldStringValue = source.lastPathComponent + ".torrent"
-        save.allowedContentTypes = [
-            UTType(filenameExtension: "torrent")
-                ?? UTType(importedAs: "org.bittorrent.torrent", conformingTo: .data)
-        ]
-        // Save suggestions share the same explicit-accept rule as rename; model latency
-        // must never overwrite a filename the user is currently typing.
-        let nameField = NSTextField(string: save.nameFieldStringValue)
-        let suggestion =
-            prefs.suggestFilenames && AIAssistant.isAvailable
-            ? FilenameSuggestionController(
-                field: nameField, url: source, dataless: false, extensionOverride: "torrent") : nil
-        suggestion?.onApply = { [weak save] name in save?.nameFieldStringValue = name }
-        save.accessoryView = suggestion?.view
+        let (save, suggestion) = Self.makeTorrentSaveDialog(
+            source: source, offerSuggestions: prefs.suggestFilenames && AIAssistant.isAvailable)
         defer { suggestion?.cancel() }
         guard save.runModal() == .OK, let dest = save.url else { return }
 
@@ -193,5 +162,58 @@ extension BrowserViewController {
     func hideTorrentDetail() {
         torrentDetail.hide()
         torrentDetail.isHidden = true
+    }
+}
+
+@MainActor
+extension BrowserViewController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeCreateTorrentDialog(source: URL) -> (NSAlert, NSTextField, NSButton) {
+        let alert = NSAlert()
+        alert.messageText = String(
+            format: L("torrents.create.title", "Create Torrent from “%@”"), source.lastPathComponent
+        )
+        alert.informativeText = L(
+            "torrents.create.message",
+            "Optionally add a tracker. A private torrent won't use DHT or peer exchange.")
+        alert.addButton(withTitle: L("torrents.create.next", "Choose Location…"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let tracker = NSTextField(frame: NSRect(x: 0, y: 0, width: 340, height: 22))
+        tracker.placeholderString = L("torrents.create.tracker", "Tracker URL (optional)")
+        let privateCheck = NSButton(
+            checkboxWithTitle: L("torrents.create.private", "Private torrent"), target: nil,
+            action: nil)
+        let accessory = NSStackView(views: [tracker, privateCheck])
+        accessory.orientation = .vertical
+        accessory.spacing = 8
+        accessory.frame = NSRect(x: 0, y: 0, width: 340, height: 54)
+        alert.accessoryView = accessory
+        return (alert, tracker, privateCheck)
+    }
+}
+
+@MainActor
+extension BrowserViewController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeTorrentSaveDialog(
+        source: URL, offerSuggestions: Bool, generateAutomatically: Bool = true
+    ) -> (NSSavePanel, FilenameSuggestionController?) {
+        let save = NSSavePanel()
+        save.nameFieldStringValue = source.lastPathComponent + ".torrent"
+        save.allowedContentTypes = [
+            UTType(filenameExtension: "torrent")
+                ?? UTType(importedAs: "org.bittorrent.torrent", conformingTo: .data)
+        ]
+        // Save suggestions share the same explicit-accept rule as rename; model latency
+        // must never overwrite a filename the user is currently typing.
+        let nameField = NSTextField(string: save.nameFieldStringValue)
+        let suggestion =
+            offerSuggestions
+            ? FilenameSuggestionController(
+                field: nameField, url: source, dataless: false, extensionOverride: "torrent",
+                generateAutomatically: generateAutomatically) : nil
+        suggestion?.onApply = { [weak save] name in save?.nameFieldStringValue = name }
+        save.accessoryView = suggestion?.view
+        return (save, suggestion)
     }
 }

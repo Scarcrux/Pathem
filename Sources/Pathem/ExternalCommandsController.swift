@@ -87,7 +87,9 @@ final class ExternalCommandsController: NSObject, NSTableViewDataSource, NSTable
     }
 
     @objc private func newTapped() {
-        guard let edited = editorSheet(ExternalCommand(id: UUID().uuidString, name: "", command: "")) else { return }
+        guard
+            let edited = editorSheet(ExternalCommand(id: UUID().uuidString, name: "", command: ""))
+        else { return }
         commands.append(edited)
         commit()
     }
@@ -97,12 +99,18 @@ final class ExternalCommandsController: NSObject, NSTableViewDataSource, NSTable
         commit()
     }
     @objc private func deleteTapped() {
-        guard let index = selected else { NSSound.beep(); return }
+        guard let index = selected else {
+            NSSound.beep()
+            return
+        }
         commands.remove(at: index)
         commit()
     }
     @objc private func runTapped() {
-        guard let index = selected else { NSSound.beep(); return }
+        guard let index = selected else {
+            NSSound.beep()
+            return
+        }
         onRun?(commands[index])
     }
     private func commit() {
@@ -113,39 +121,7 @@ final class ExternalCommandsController: NSObject, NSTableViewDataSource, NSTable
     /// A modal editor for one command (name + shell template). Returns the edited command, or nil
     /// if cancelled or the name/command is empty.
     private func editorSheet(_ command: ExternalCommand) -> ExternalCommand? {
-        let nameField = NSTextField(string: command.name)
-        nameField.placeholderString = L("extcmd.namePlaceholder", "Command name")
-        let commandView = NSTextView(frame: NSRect(x: 0, y: 0, width: 400, height: 90))
-        commandView.string = command.command
-        commandView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        commandView.isRichText = false
-        commandView.isAutomaticQuoteSubstitutionEnabled = false
-        let commandScroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 400, height: 90))
-        commandScroll.documentView = commandView
-        commandScroll.hasVerticalScroller = true
-        commandScroll.borderType = .bezelBorder
-
-        let hint = NSTextField(
-            wrappingLabelWithString:
-                L("extcmd.hint",
-                    "A shell command. Placeholders: %F selected paths, %N names, %D this folder, %P the parent. Example: open -a Preview %F"))
-        hint.font = .systemFont(ofSize: 11)
-        hint.textColor = .secondaryLabelColor
-        let stack = NSStackView(views: [nameField, hint, commandScroll])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.frame = NSRect(x: 0, y: 0, width: 400, height: 160)
-        nameField.widthAnchor.constraint(equalToConstant: 400).isActive = true
-        commandScroll.widthAnchor.constraint(equalToConstant: 400).isActive = true
-        commandScroll.heightAnchor.constraint(equalToConstant: 90).isActive = true
-
-        let alert = NSAlert()
-        alert.messageText =
-            command.name.isEmpty ? L("extcmd.newTitle", "New Command") : L("extcmd.editTitle", "Edit Command")
-        alert.addButton(withTitle: L("common.save", "Save"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        alert.accessoryView = stack
+        let (alert, nameField, commandView) = Self.makeEditorDialog(command)
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         let name = nameField.stringValue.trimmingCharacters(in: .whitespaces)
         let template = commandView.string.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -155,7 +131,9 @@ final class ExternalCommandsController: NSObject, NSTableViewDataSource, NSTable
 
     // MARK: Table
     func numberOfRows(in tableView: NSTableView) -> Int { commands.count }
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell =
             (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
@@ -175,5 +153,49 @@ final class ExternalCommandsController: NSObject, NSTableViewDataSource, NSTable
             }()
         if row < commands.count { cell.textField?.stringValue = commands[row].name }
         return cell
+    }
+}
+
+@MainActor
+extension ExternalCommandsController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeEditorDialog(_ command: ExternalCommand) -> (NSAlert, NSTextField, NSTextView) {
+        let nameField = NSTextField(string: command.name)
+        nameField.placeholderString = L("extcmd.namePlaceholder", "Command name")
+        let commandView = NSTextView(frame: NSRect(x: 0, y: 0, width: 400, height: 90))
+        commandView.string = command.command
+        commandView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        commandView.isRichText = false
+        commandView.isAutomaticQuoteSubstitutionEnabled = false
+        let commandScroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 400, height: 90))
+        commandScroll.documentView = commandView
+        commandScroll.hasVerticalScroller = true
+        commandScroll.borderType = .bezelBorder
+
+        let hint = NSTextField(
+            wrappingLabelWithString:
+                L(
+                    "extcmd.hint",
+                    "A shell command. Placeholders: %F selected paths, %N names, %D this folder, %P the parent. Example: open -a Preview %F"
+                ))
+        hint.font = .systemFont(ofSize: 11)
+        hint.textColor = .secondaryLabelColor
+        let stack = NSStackView(views: [nameField, hint, commandScroll])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.frame = NSRect(x: 0, y: 0, width: 400, height: 160)
+        nameField.widthAnchor.constraint(equalToConstant: 400).isActive = true
+        commandScroll.widthAnchor.constraint(equalToConstant: 400).isActive = true
+        commandScroll.heightAnchor.constraint(equalToConstant: 90).isActive = true
+
+        let alert = NSAlert()
+        alert.messageText =
+            command.name.isEmpty
+            ? L("extcmd.newTitle", "New Command") : L("extcmd.editTitle", "Edit Command")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.accessoryView = stack
+        return (alert, nameField, commandView)
     }
 }

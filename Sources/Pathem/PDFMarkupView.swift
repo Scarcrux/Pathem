@@ -50,13 +50,17 @@ final class PDFMarkupView: PDFView {
     /// beeps) when there is no usable selection.
     @discardableResult
     func markUpSelection(_ subtype: PDFAnnotationSubtype) -> Bool {
-        guard let selection = currentSelection else { NSSound.beep(); return false }
+        guard let selection = currentSelection else {
+            NSSound.beep()
+            return false
+        }
         var added = false
         for line in selection.selectionsByLine() {
             for page in line.pages {
                 let bounds = line.bounds(for: page)
                 guard bounds.width > 1, bounds.height > 1 else { continue }
-                let annotation = PDFAnnotation(bounds: bounds, forType: subtype, withProperties: nil)
+                let annotation = PDFAnnotation(
+                    bounds: bounds, forType: subtype, withProperties: nil)
                 annotation.color = markupColor
                 page.addAnnotation(annotation)
                 registerAddUndo(annotation, page)
@@ -235,7 +239,8 @@ final class PDFMarkupView: PDFView {
 
     private func makeLiveAnnotation(currentPoint: CGPoint) -> PDFAnnotation? {
         switch activeTool {
-        case .draw: return inkAnnotation(points: freehandPoints, color: markupColor, width: lineWidth)
+        case .draw:
+            return inkAnnotation(points: freehandPoints, color: markupColor, width: lineWidth)
         case .signature:
             return inkAnnotation(points: freehandPoints, color: .black, width: max(lineWidth, 2.5))
         case .rectangle: return shapeAnnotation(.square, from: dragStartPoint, to: currentPoint)
@@ -248,7 +253,8 @@ final class PDFMarkupView: PDFView {
 
     // MARK: Annotation builders
 
-    private func inkAnnotation(points: [CGPoint], color: NSColor, width: CGFloat) -> PDFAnnotation? {
+    private func inkAnnotation(points: [CGPoint], color: NSColor, width: CGFloat) -> PDFAnnotation?
+    {
         guard points.count > 1 else { return nil }
         var box = CGRect(origin: points[0], size: .zero)
         for point in points { box = box.union(CGRect(origin: point, size: .zero)) }
@@ -359,14 +365,7 @@ final class PDFMarkupView: PDFView {
 
     /// A modal prompt for a note / text-box string. Returns nil on Cancel.
     private func promptForText(_ title: String, initial: String) -> String? {
-        let alert = NSAlert()
-        alert.messageText = title
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
-        field.stringValue = initial
-        alert.accessoryView = field
-        alert.addButton(withTitle: L("common.ok", "OK"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        alert.window.initialFirstResponder = field
+        let (alert, field) = Self.makeTextPrompt(title: title, initial: initial)
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         return field.stringValue
     }
@@ -420,7 +419,9 @@ final class PDFMarkupView: PDFView {
     @discardableResult
     func debugAddText(_ text: String, at point: CGPoint, note: Bool, pageIndex: Int = 0) -> Bool {
         guard let page = document?.page(at: pageIndex) else { return false }
-        place(note ? noteAnnotation(text: text, at: point) : textBoxAnnotation(text: text, at: point), on: page)
+        place(
+            note ? noteAnnotation(text: text, at: point) : textBoxAnnotation(text: text, at: point),
+            on: page)
         return true
     }
 
@@ -435,5 +436,21 @@ final class PDFMarkupView: PDFView {
         registerAddUndo(annotation, page)
         markEdited()
         return true
+    }
+}
+
+@MainActor
+extension PDFMarkupView {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeTextPrompt(title: String, initial: String) -> (NSAlert, NSTextField) {
+        let alert = NSAlert()
+        alert.messageText = title
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = initial
+        alert.accessoryView = field
+        alert.addButton(withTitle: L("common.ok", "OK"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.window.initialFirstResponder = field
+        return (alert, field)
     }
 }

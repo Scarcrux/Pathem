@@ -95,7 +95,8 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
     }
 
     @objc private func newTapped() {
-        guard let edited = editorSheet(CreateTemplate(id: UUID().uuidString, name: "", entries: [])) else {
+        guard let edited = editorSheet(CreateTemplate(id: UUID().uuidString, name: "", entries: []))
+        else {
             return
         }
         templates.append(edited)
@@ -109,13 +110,19 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
     }
 
     @objc private func deleteTapped() {
-        guard let index = selected else { NSSound.beep(); return }
+        guard let index = selected else {
+            NSSound.beep()
+            return
+        }
         templates.remove(at: index)
         commit()
     }
 
     @objc private func runTapped() {
-        guard let index = selected else { NSSound.beep(); return }
+        guard let index = selected else {
+            NSSound.beep()
+            return
+        }
         onRun?(templates[index])
     }
 
@@ -127,39 +134,7 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
     /// A modal editor for one template (name + entries). Returns the edited template,
     /// or nil if cancelled or the name is empty.
     private func editorSheet(_ template: CreateTemplate) -> CreateTemplate? {
-        let nameField = NSTextField(string: template.name)
-        nameField.placeholderString = L("templates.namePlaceholder", "Template name")
-        let entriesView = NSTextView(frame: NSRect(x: 0, y: 0, width: 360, height: 150))
-        entriesView.string = template.entries.joined(separator: "\n")
-        entriesView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
-        entriesView.isRichText = false
-        entriesView.isAutomaticQuoteSubstitutionEnabled = false
-        let entriesScroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 360, height: 150))
-        entriesScroll.documentView = entriesView
-        entriesScroll.hasVerticalScroller = true
-        entriesScroll.borderType = .bezelBorder
-
-        let hint = NSTextField(
-            wrappingLabelWithString:
-                L("templates.entriesHint", "One entry per line. End with “/” for a folder; nest with “/” (e.g. src/main.swift)."))
-        hint.font = .systemFont(ofSize: 11)
-        hint.textColor = .secondaryLabelColor
-        let stack = NSStackView(views: [nameField, hint, entriesScroll])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.frame = NSRect(x: 0, y: 0, width: 360, height: 210)
-        nameField.widthAnchor.constraint(equalToConstant: 360).isActive = true
-        entriesScroll.widthAnchor.constraint(equalToConstant: 360).isActive = true
-        entriesScroll.heightAnchor.constraint(equalToConstant: 150).isActive = true
-
-        let alert = NSAlert()
-        alert.messageText =
-            template.name.isEmpty
-            ? L("templates.newTitle", "New Template") : L("templates.editTitle", "Edit Template")
-        alert.addButton(withTitle: L("common.save", "Save"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        alert.accessoryView = stack
+        let (alert, nameField, entriesView) = Self.makeEditorDialog(template)
         guard alert.runModal() == .alertFirstButtonReturn else { return nil }
         let name = nameField.stringValue.trimmingCharacters(in: .whitespaces)
         guard !name.isEmpty else { return nil }
@@ -170,7 +145,9 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
 
     // MARK: Table
     func numberOfRows(in tableView: NSTableView) -> Int { templates.count }
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell =
             (tableView.makeView(withIdentifier: id, owner: self) as? NSTableCellView)
@@ -190,5 +167,49 @@ final class TemplatesController: NSObject, NSTableViewDataSource, NSTableViewDel
             }()
         if row < templates.count { cell.textField?.stringValue = templates[row].name }
         return cell
+    }
+}
+
+@MainActor
+extension TemplatesController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeEditorDialog(_ template: CreateTemplate) -> (NSAlert, NSTextField, NSTextView) {
+        let nameField = NSTextField(string: template.name)
+        nameField.placeholderString = L("templates.namePlaceholder", "Template name")
+        let entriesView = NSTextView(frame: NSRect(x: 0, y: 0, width: 360, height: 150))
+        entriesView.string = template.entries.joined(separator: "\n")
+        entriesView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        entriesView.isRichText = false
+        entriesView.isAutomaticQuoteSubstitutionEnabled = false
+        let entriesScroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 360, height: 150))
+        entriesScroll.documentView = entriesView
+        entriesScroll.hasVerticalScroller = true
+        entriesScroll.borderType = .bezelBorder
+
+        let hint = NSTextField(
+            wrappingLabelWithString:
+                L(
+                    "templates.entriesHint",
+                    "One entry per line. End with “/” for a folder; nest with “/” (e.g. src/main.swift)."
+                ))
+        hint.font = .systemFont(ofSize: 11)
+        hint.textColor = .secondaryLabelColor
+        let stack = NSStackView(views: [nameField, hint, entriesScroll])
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 8
+        stack.frame = NSRect(x: 0, y: 0, width: 360, height: 210)
+        nameField.widthAnchor.constraint(equalToConstant: 360).isActive = true
+        entriesScroll.widthAnchor.constraint(equalToConstant: 360).isActive = true
+        entriesScroll.heightAnchor.constraint(equalToConstant: 150).isActive = true
+
+        let alert = NSAlert()
+        alert.messageText =
+            template.name.isEmpty
+            ? L("templates.newTitle", "New Template") : L("templates.editTitle", "Edit Template")
+        alert.addButton(withTitle: L("common.save", "Save"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        alert.accessoryView = stack
+        return (alert, nameField, entriesView)
     }
 }

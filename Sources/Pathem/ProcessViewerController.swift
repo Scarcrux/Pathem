@@ -22,7 +22,8 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
     override init() {
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 680, height: 460),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: true)
+            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered,
+            defer: true)
         super.init()
         window.title = L("proc.title", "Process Viewer")
         window.delegate = self
@@ -76,7 +77,8 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
             let column = NSTableColumn(identifier: .init(id))
             column.title = title
             column.width = width
-            column.sortDescriptorPrototype = NSSortDescriptor(key: id, ascending: id == "name" || id == "pid")
+            column.sortDescriptorPrototype = NSSortDescriptor(
+                key: id, ascending: id == "name" || id == "pid")
             table.addTableColumn(column)
         }
         table.dataSource = self
@@ -129,7 +131,9 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
 
     func controlTextDidChange(_ obj: Notification) { applyFilterAndSort() }
 
-    func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
+    func tableView(
+        _ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]
+    ) {
         if let first = tableView.sortDescriptors.first { sort = first }
         applyFilterAndSort()
     }
@@ -138,14 +142,17 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
         let query = searchField.stringValue.trimmingCharacters(in: .whitespaces).lowercased()
         var list = all
         if !query.isEmpty {
-            list = list.filter { $0.name.lowercased().contains(query) || "\($0.pid)".contains(query) }
+            list = list.filter {
+                $0.name.lowercased().contains(query) || "\($0.pid)".contains(query)
+            }
         }
         let ascending = sort.ascending
         list.sort { a, b in
             let result: Bool
             switch sort.key {
             case "pid": result = a.pid < b.pid
-            case "name": result = a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
+            case "name":
+                result = a.name.localizedCaseInsensitiveCompare(b.name) == .orderedAscending
             case "user": result = a.user < b.user
             case "mem": result = a.mem < b.mem
             case "rss": result = a.rss < b.rss
@@ -176,16 +183,8 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
 
     private func terminate(force: Bool) {
         guard let process = selectedProcess() else { return }
-        let alert = NSAlert()
-        alert.messageText = String(
-            format: force
-                ? L("proc.confirmForce", "Force quit %@ (%d)?")
-                : L("proc.confirmQuit", "Quit %@ (%d)?"), process.name, Int(process.pid))
-        alert.informativeText = force
-            ? L("proc.forceWarning", "Force quitting may lose unsaved work.")
-            : L("proc.quitInfo", "Sends a terminate signal to the process.")
-        alert.addButton(withTitle: force ? L("proc.forceQuit", "Force Quit") : L("proc.quit", "Quit"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let alert = Self.makeTerminateConfirmation(
+            name: process.name, pid: Int(process.pid), force: force)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         Task { @MainActor in
             let ok = await ProcessList.terminate(process.pid, force: force)
@@ -196,7 +195,9 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
 
     func numberOfRows(in tableView: NSTableView) -> Int { shown.count }
 
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
         guard let tableColumn, row < shown.count else { return nil }
         let process = shown[row]
         let id = NSUserInterfaceItemIdentifier("cell")
@@ -228,7 +229,28 @@ final class ProcessViewerController: NSObject, NSTableViewDataSource, NSTableVie
         }
         cell.textField?.stringValue = value
         cell.textField?.font =
-            tableColumn.identifier.rawValue == "name" ? .systemFont(ofSize: 12) : .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+            tableColumn.identifier.rawValue == "name"
+            ? .systemFont(ofSize: 12) : .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
         return cell
+    }
+}
+
+@MainActor
+extension ProcessViewerController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeTerminateConfirmation(name: String, pid: Int, force: Bool) -> NSAlert {
+        let alert = NSAlert()
+        alert.messageText = String(
+            format: force
+                ? L("proc.confirmForce", "Force quit %@ (%d)?")
+                : L("proc.confirmQuit", "Quit %@ (%d)?"), name, pid)
+        alert.informativeText =
+            force
+            ? L("proc.forceWarning", "Force quitting may lose unsaved work.")
+            : L("proc.quitInfo", "Sends a terminate signal to the process.")
+        alert.addButton(
+            withTitle: force ? L("proc.forceQuit", "Force Quit") : L("proc.quit", "Quit"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return alert
     }
 }

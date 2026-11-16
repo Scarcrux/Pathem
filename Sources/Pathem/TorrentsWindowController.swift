@@ -205,24 +205,8 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     @objc private func addMagnetTapped() {
-        let alert = NSAlert()
-        alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
-        alert.informativeText = L(
-            "torrents.addMagnet.message",
-            "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder."
-        )
-        alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
-        field.placeholderString = "magnet:?xt=urn:btih:…"
-        // Pre-fill from the clipboard when it already holds a magnet link.
-        if let clip = NSPasteboard.general.string(forType: .string), clip.hasPrefix("magnet:") {
-            field.stringValue = clip
-        }
-        alert.accessoryView = field
-        alert.window.initialFirstResponder = field
-
+        let (alert, field) = Self.makeMagnetDialog(
+            prefill: NSPasteboard.general.string(forType: .string))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let uri = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard uri.hasPrefix("magnet:") else {
@@ -248,13 +232,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     @objc private func removeTapped() {
         guard let sel = selected() else { return }
-        let alert = NSAlert()
-        alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), sel.name)
-        alert.informativeText = L(
-            "torrents.remove.info", "You can keep the downloaded files or delete them.")
-        alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
-        alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let alert = Self.makeRemoveDialog(name: sel.name)
         switch alert.runModal() {
         case .alertFirstButtonReturn: client.remove(sel.infoHash, deleteData: false)
         case .alertSecondButtonReturn: client.remove(sel.infoHash, deleteData: true)
@@ -284,62 +262,11 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     @objc private func limitsTapped() {
-        let alert = NSAlert()
-        alert.messageText = L("torrents.limits.title", "Speed Limits")
-        alert.informativeText = L(
-            "torrents.limits.message",
-            "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
-        alert.addButton(withTitle: L("torrents.limits.apply", "Apply"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
-
-        // Two labeled KB/s fields, pre-filled from the current caps.
-        func field(_ bytesPerSecond: Int) -> NSTextField {
-            let f = NSTextField(frame: NSRect(x: 70, y: 0, width: 90, height: 22))
-            f.integerValue = bytesPerSecond / 1024
-            f.alignment = .right
-            return f
-        }
-        let downField = field(client.downLimit)
-        let upField = field(client.upLimit)
-        let superSeed = NSButton(
-            checkboxWithTitle: L(
-                "torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil,
-            action: nil)
-        superSeed.state = client.superSeed ? .on : .off
-        let encrypt = NSButton(
-            checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"),
-            target: nil, action: nil)
-        encrypt.state = client.encryptOutgoing ? .on : .off
-        let utp = NSButton(
-            checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"),
-            target: nil, action: nil)
-        utp.state = client.preferUTP ? .on : .off
-        let vpn = NSButton(
-            checkboxWithTitle: L(
-                "torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"),
-            target: nil, action: nil)
-        vpn.state = client.bindToVPN ? .on : .off
-        // Live status: which tunnel is bound, or a warning when the kill-switch has paused traffic.
-        let vpnStatus = NSTextField(labelWithString: vpnStatusLine())
-        vpnStatus.font = .systemFont(ofSize: 11)
-        vpnStatus.textColor =
-            client.bindToVPN && client.vpnInterface == nil ? .systemRed : .secondaryLabelColor
-        let container = NSStackView(views: [
-            labeledRow(L("torrents.limits.down", "Download"), downField),
-            labeledRow(L("torrents.limits.up", "Upload"), upField),
-            superSeed,
-            encrypt,
-            utp,
-            vpn,
-            vpnStatus,
-        ])
-        container.orientation = .vertical
-        container.spacing = 8
-        container.alignment = .leading
-        container.frame = NSRect(x: 0, y: 0, width: 340, height: 168)
-        alert.accessoryView = container
-        alert.window.initialFirstResponder = downField
-
+        let (alert, downField, upField, superSeed, encrypt, utp, vpn) = Self.makeLimitsDialog(
+            downLimit: client.downLimit, upLimit: client.upLimit,
+            superSeedEnabled: client.superSeed, encryptOutgoing: client.encryptOutgoing,
+            preferUTP: client.preferUTP, bindToVPN: client.bindToVPN, vpnLine: vpnStatusLine(),
+            vpnMissing: client.vpnInterface == nil)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         client.setLimits(
             down: max(0, downField.integerValue) * 1024, up: max(0, upField.integerValue) * 1024,
@@ -360,7 +287,7 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         return L("torrents.vpn.killed", "No VPN detected. Torrents paused to prevent leaks.")
     }
 
-    private func labeledRow(_ title: String, _ field: NSTextField) -> NSView {
+    private static func labeledRow(_ title: String, _ field: NSTextField) -> NSView {
         let label = NSTextField(labelWithString: title)
         label.frame = NSRect(x: 0, y: 0, width: 80, height: 22)
         let unit = NSTextField(labelWithString: L("torrents.limits.unit", "KB/s"))
@@ -532,5 +459,111 @@ final class TorrentProgressBar: NSView {
         let point = NSPoint(
             x: bounds.midX - textSize.width / 2, y: bounds.midY - textSize.height / 2)
         percent.draw(at: point, withAttributes: attrs)
+    }
+}
+
+@MainActor
+extension TorrentsWindowController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeMagnetDialog(prefill: String?) -> (NSAlert, NSTextField) {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.addMagnet.title", "Add Magnet Link")
+        alert.informativeText = L(
+            "torrents.addMagnet.message",
+            "Paste a magnet link. Pathem fetches its details from peers, then downloads to your Downloads folder."
+        )
+        alert.addButton(withTitle: L("torrents.add.prompt", "Add"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 360, height: 24))
+        field.placeholderString = "magnet:?xt=urn:btih:…"
+        // Pre-fill from the clipboard when it already holds a magnet link.
+        if let clip = prefill, clip.hasPrefix("magnet:") {
+            field.stringValue = clip
+        }
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        return (alert, field)
+    }
+}
+
+@MainActor
+extension TorrentsWindowController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeRemoveDialog(name: String) -> NSAlert {
+        let alert = NSAlert()
+        alert.messageText = String(format: L("torrents.remove.confirm", "Remove “%@”?"), name)
+        alert.informativeText = L(
+            "torrents.remove.info", "You can keep the downloaded files or delete them.")
+        alert.addButton(withTitle: L("torrents.remove.keep", "Remove, Keep Files"))
+        alert.addButton(withTitle: L("torrents.remove.delete", "Remove and Delete Files"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return alert
+    }
+}
+
+@MainActor
+extension TorrentsWindowController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeLimitsDialog(
+        downLimit: Int, upLimit: Int, superSeedEnabled: Bool, encryptOutgoing: Bool,
+        preferUTP: Bool, bindToVPN: Bool, vpnLine: String, vpnMissing: Bool
+    ) -> (NSAlert, NSTextField, NSTextField, NSButton, NSButton, NSButton, NSButton) {
+        let alert = NSAlert()
+        alert.messageText = L("torrents.limits.title", "Speed Limits")
+        alert.informativeText = L(
+            "torrents.limits.message",
+            "Maximum download and upload speed in KB/s. Leave 0 for unlimited.")
+        alert.addButton(withTitle: L("torrents.limits.apply", "Apply"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+
+        // Two labeled KB/s fields, pre-filled from the current caps.
+        func field(_ bytesPerSecond: Int) -> NSTextField {
+            let f = NSTextField(frame: NSRect(x: 70, y: 0, width: 90, height: 22))
+            f.integerValue = bytesPerSecond / 1024
+            f.alignment = .right
+            return f
+        }
+        let downField = field(downLimit)
+        let upField = field(upLimit)
+        let superSeed = NSButton(
+            checkboxWithTitle: L(
+                "torrents.limits.superSeed", "Super-seed (efficient initial seeding)"), target: nil,
+            action: nil)
+        superSeed.state = superSeedEnabled ? .on : .off
+        let encrypt = NSButton(
+            checkboxWithTitle: L("torrents.limits.encrypt", "Encrypt outgoing connections (MSE)"),
+            target: nil, action: nil)
+        encrypt.state = encryptOutgoing ? .on : .off
+        let utp = NSButton(
+            checkboxWithTitle: L("torrents.limits.utp", "Prefer µTP (BEP 29), fall back to TCP"),
+            target: nil, action: nil)
+        utp.state = preferUTP ? .on : .off
+        let vpn = NSButton(
+            checkboxWithTitle: L(
+                "torrents.limits.vpn", "Bind torrents to a VPN (kill-switch when it drops)"),
+            target: nil, action: nil)
+        vpn.state = bindToVPN ? .on : .off
+        // Live status: which tunnel is bound, or a warning when the kill-switch has paused traffic.
+        let vpnStatus = NSTextField(labelWithString: vpnLine)
+        vpnStatus.font = .systemFont(ofSize: 11)
+        vpnStatus.textColor =
+            bindToVPN && vpnMissing ? .systemRed : .secondaryLabelColor
+        let container = NSStackView(views: [
+            labeledRow(L("torrents.limits.down", "Download"), downField),
+            labeledRow(L("torrents.limits.up", "Upload"), upField),
+            superSeed,
+            encrypt,
+            utp,
+            vpn,
+            vpnStatus,
+        ])
+        container.orientation = .vertical
+        container.spacing = 8
+        container.alignment = .leading
+        container.frame = NSRect(x: 0, y: 0, width: 340, height: 168)
+        alert.accessoryView = container
+        alert.window.initialFirstResponder = downField
+        return (alert, downField, upField, superSeed, encrypt, utp, vpn)
     }
 }

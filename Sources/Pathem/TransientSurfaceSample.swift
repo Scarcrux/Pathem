@@ -256,6 +256,24 @@ final class TransientSurfaceSample {
             "literal window count must not collapse repeated numeric identifiers")
     }
 
+    static func externalBoundaryAllowed(network: Int, devices: Int) -> Bool {
+        network == 0 && devices == 0
+    }
+
+    func checkExternalBoundary(_ phase: String) {
+        let noCalls = Self.externalBoundaryAllowed(
+            network: SharedDiscovery.debugTransientStarts,
+            devices: DeviceWatcher.debugTransientStarts)
+        emit(
+            "predicate-external-" + phase, 0,
+            noCalls && SharedDiscovery.debugTransientSkips > 0
+                && DeviceWatcher.debugTransientSkips > 0
+                && !Self.externalBoundaryAllowed(network: 1, devices: 0)
+                && !Self.externalBoundaryAllowed(network: 0, devices: 1),
+            "networkStarts=\(SharedDiscovery.debugTransientStarts) deviceStarts=\(DeviceWatcher.debugTransientStarts) networkSkips=\(SharedDiscovery.debugTransientSkips) deviceSkips=\(DeviceWatcher.debugTransientSkips)"
+        )
+    }
+
     func run() -> Never {
         let started = Date()
         do {
@@ -271,9 +289,11 @@ final class TransientSurfaceSample {
             "TSAMPLE: START language=\(language) preferred=\(Locale.preferredLanguages) cancel=\(L("common.cancel", "missing")) pilot=\(pilot) injection=\(injection)"
         )
         if full { print("TSAMPLE: DOMAIN " + (Bundle.main.bundleIdentifier ?? "missing")) }
+        checkExternalBoundary("start")
         predicateControls()
         guard results.allSatisfy({ $0 }) else { finish(started) }
-        if !["b", "mounts"].contains(environment["PATHEM_TRANSIENT_SURFACES_SET"] ?? ""),
+        if !["b", "mounts", "factories"].contains(
+            environment["PATHEM_TRANSIENT_SURFACES_SET"] ?? ""),
             ["de", "ja"].contains(language)
         {
             let appearances: [NSAppearance.Name] = pilot ? [.aqua] : [.aqua, .darkAqua]
@@ -308,10 +328,15 @@ final class TransientSurfaceSample {
             TransientPresentationProbe.uninstall()
             finish(started)
         }
+        if full, environment["PATHEM_TRANSIENT_SURFACES_SET"] == "factories" {
+            runFullFactories()
+            finish(started)
+        }
         if injection == "clean" { if full { classBFull() } else { classBSample() } }
         finish(started)
     }
     func finish(_ started: Date) -> Never {
+        checkExternalBoundary("end")
         focus.removeFromSuperview()
         for (cell, info) in frameworkInfo.sorted(by: { $0.key < $1.key }) {
             print(

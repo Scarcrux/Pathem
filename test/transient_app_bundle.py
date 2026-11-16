@@ -15,7 +15,7 @@ def prepare_bundle(scratch, source, domain, dependencies):
     contents = app/'Contents'
     destination = contents/'MacOS'
     destination.mkdir(parents=True)
-    executable = destination/'Pathem'
+    executable = destination/'PathemTransientFixture'
     shutil.copy2(source, executable)
     for path in dependencies:
         if path.startswith(('/usr/lib/', '/System/Library/')):
@@ -45,7 +45,7 @@ def prepare_bundle(scratch, source, domain, dependencies):
     resource_directory.mkdir()
     shutil.copytree(resources, resource_directory/'Pathem_Pathem.bundle', symlinks=True)
     with (contents/'Info.plist').open('wb') as stream:
-        plistlib.dump(dict(CFBundleIdentifier=domain, CFBundleExecutable='Pathem',
+        plistlib.dump(dict(CFBundleIdentifier=domain, CFBundleExecutable='PathemTransientFixture',
             CFBundleName='TransientFixture', CFBundlePackageType='APPL',
             NSHighResolutionCapable=True, CFBundleDevelopmentRegion='en',
             CFBundleLocalizations=['en','de','ja','fr','es','zh-Hans']),stream)

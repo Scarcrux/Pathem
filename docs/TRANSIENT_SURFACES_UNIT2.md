@@ -142,3 +142,71 @@ exports confirmed there were no keys. Cleanup now requires empty plist exports
 for both the exact UUID AnyHost and CurrentHost domain, with regression controls
 for surviving keys, malformed exports and refusal of an owner domain. The old
 wrapper failure remains recorded; it was not a preference leak.
+
+## Modal and sensitive-surface factory extraction
+
+Eighteen pure factories are extracted from thirteen production files. Production
+still calls the same runModal/beginSheet path with the same buttons, fields,
+response indices and post-confirmation guards. Tests can supply a fixture instead
+of reading the clipboard, querying Keychain, connecting a daemon, or executing an
+operation. Every factory and production caller (including its Cancel guard) has
+a reviewed source fingerprint; mutation controls reject changed construction,
+removed Cancel guards, wrong adapters, missing profiles and unclassified sites.
+The constructor/presentation identity map retains all 196 census sites. All B
+content fingerprints are unchanged except one manually reviewed whitespace-only
+host-key formatting change. Initial build of production extractions passed.
+The new original-style modal runner is still awaiting its sample, not qualified.
+
+A source audit found a startup isolation gap: BrowserViewController.viewDidLoad
+unconditionally starts SharedDiscovery and DeviceWatcher. Their start methods
+invoke Bonjour browsing and USB/adb discovery even under the transient flag.
+Earlier receipts prove test actions did not invoke transfers, but cannot support
+a claim that startup discovery was isolated. Do not launch more native samples
+until the transient family suppresses these two providers before their I/O calls.
+Use DEBUG counters to prove the real start attempts took the skip path; an
+actual-start count is never an accepted known finding. Other automation and
+interactive launches retain their existing behavior.
+
+## Checkpoint 2026-11-16
+
+This is a resumable private checkpoint, not Unit 2 READY. The 21 pure-factory
+profiles and 62 real-entrypoint adapters are implemented and source-bound. Native
+coverage remains partial: corrected B German behaviour, initial custom groups 1
+and 2, and isolated Save Layout, AI bar, Crop and template-modal pilots. The last
+expanded 62-adapter tree still needs its compiling hook and native qualification.
+
+The crop sheet has a confirmed check-2 finding: 720x600 against a 720x420 host in
+all three presentations, for short and 255-character filenames. Cancel, Return
+observation, responder restoration and no accumulation pass. Receipt and render:
+.build/transient-unit2-crop-probe.log; retained owned scratch is named by that
+receipt. This remains red. The template editor has an app-owned ambiguous stack
+and an unbounded hint clipped horizontally in German. Its geometry reds remain,
+but its modal Return proof is not yet qualified: waiting for default-button
+assignment alone did not fix dispatch. The established sheet control also calls
+makeKeyAndOrderFront; the next modal probe tests that exact missing step. The
+queued probe was cancelled before admission to make this checkpoint; no native
+result is claimed for it. Earlier failed probes are retained.
+
+Strict factory receipt controls reject missing cells, missing cycles, omitted
+suggestion-state measurements, duplicate site claims, failed setup, missing
+startup controls and modal timeouts. Together with packaging, inventory and
+provenance controls, 65 focused Python checks passed before checkpoint formatting.
+
+The coordinator applied the owner's explicit-confirmation rule to Find in Files
+Replace All, Process Viewer Quit/Force Quit and Reset Data, and to the same kind
+of explicitly invoked confirmation elsewhere. The inventory records the exact
+2026-11-15 quote and its application by pathem-claude on 2026-11-16, owner informed.
+No production default changed. Unsaved markup's Save/Discard prompt has no Cancel
+in source; its native confirmation, Escape behavior and trigger audit are pending,
+and no production repair has been authorized.
+
+Startup discovery is also unconditional for layout-matrix and site-shot launches:
+viewDidLoad calls both providers and neither provider previously checked an
+automation flag. Current guards intentionally cover transient tests only. This
+checkpoint does not claim those other launch families have isolated discovery.
+
+Untouched final work: remaining A sites, complete native variant runs and
+per-inventory coverage report, default-intent enforcement, known-findings
+comparison gate, four corruption runs on the final artifact, E2E native wiring
+and one authorized make ci. No baseline is accepted, no CI has run, and Unit 2
+remains private until review.

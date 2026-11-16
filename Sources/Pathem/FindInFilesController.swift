@@ -236,15 +236,7 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
             return
         }
         let replacement = replaceField.stringValue
-        let alert = NSAlert()
-        alert.messageText = L("find.confirmReplaceTitle", "Replace in files?")
-        alert.informativeText = String(
-            format: L(
-                "find.confirmReplaceBody",
-                "Replace every match of \"%@\" in the matched files. This cannot be undone."),
-            query)
-        alert.addButton(withTitle: L("find.replaceAll", "Replace All"))
-        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        let alert = Self.makeReplaceConfirmation(query: query)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         performReplaceAll(query: query, replacement: replacement)
     }
@@ -354,5 +346,22 @@ final class FindInFilesController: NSObject, NSTableViewDataSource, NSTableViewD
             cell.textField?.textColor = .secondaryLabelColor
         }
         return cell
+    }
+}
+
+@MainActor
+extension FindInFilesController {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeReplaceConfirmation(query: String) -> NSAlert {
+        let alert = NSAlert()
+        alert.messageText = L("find.confirmReplaceTitle", "Replace in files?")
+        alert.informativeText = String(
+            format: L(
+                "find.confirmReplaceBody",
+                "Replace every match of \"%@\" in the matched files. This cannot be undone."),
+            query)
+        alert.addButton(withTitle: L("find.replaceAll", "Replace All"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        return alert
     }
 }

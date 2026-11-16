@@ -2326,6 +2326,15 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
             guard open.prepareDocumentsToClose() else { return .terminateCancel }
         }
         guard browser?.isTransferring == true else { return .terminateNow }
+        let alert = PathemApp.makeTransferQuitConfirmation()
+        return alert.runModal() == .alertFirstButtonReturn ? .terminateNow : .terminateCancel
+    }
+}
+
+@MainActor
+extension PathemApp {
+    /// Production construction shared with isolated geometry/lifecycle checks.
+    static func makeTransferQuitConfirmation() -> NSAlert {
         let alert = NSAlert()
         alert.alertStyle = .warning
         alert.messageText = L("quit.transferTitle", "A file transfer is still in progress")
@@ -2333,6 +2342,6 @@ final class PathemAppDelegate: NSObject, NSApplicationDelegate {
             "quit.transferBody", "Quitting now may leave it incomplete. Quit anyway?")
         alert.addButton(withTitle: L("quit.quitAnyway", "Quit Anyway"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        return alert.runModal() == .alertFirstButtonReturn ? .terminateNow : .terminateCancel
+        return alert
     }
 }

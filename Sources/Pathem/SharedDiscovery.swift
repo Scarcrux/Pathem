@@ -14,7 +14,21 @@ final class SharedDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate
     /// Called with the sorted display names whenever the set changes.
     var onChange: (([String]) -> Void)?
 
+    #if DEBUG
+    private(set) static var debugTransientStarts = 0
+    private(set) static var debugTransientSkips = 0
+    #endif
+
     func start() {
+        #if DEBUG
+        // The transient surface harness owns UI fixtures only. In particular,
+        // constructing a browser must not start LAN or paired-device discovery.
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil {
+            Self.debugTransientSkips += 1
+            return
+        }
+        Self.debugTransientStarts += 1
+        #endif
         browser.delegate = self
         browser.searchForServices(ofType: "_smb._tcp.", inDomain: "")
     }
@@ -49,12 +63,16 @@ final class SharedDiscovery: NSObject, @preconcurrency NetServiceBrowserDelegate
 
     // MARK: NetServiceBrowserDelegate
 
-    func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
+    func netServiceBrowser(
+        _ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool
+    ) {
         if !services.contains(service) { services.append(service) }
         if !moreComing { notify() }
     }
 
-    func netServiceBrowser(_ browser: NetServiceBrowser, didRemove service: NetService, moreComing: Bool) {
+    func netServiceBrowser(
+        _ browser: NetServiceBrowser, didRemove service: NetService, moreComing: Bool
+    ) {
         services.removeAll { $0 == service }
         if !moreComing { notify() }
     }
