@@ -1027,7 +1027,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-6f8b3fa7"
     title = "Reconcile release documentation and goals: remove stale CI-on-push and screenshot TODO claims, update DESIGN status, complete branding/domain clearance, and keep the launch checklist aligned with the real pipeline"
-    state = "skip"
+    done = true
 
   [[mission.task]]
     id = "t-b6a3dacd"
