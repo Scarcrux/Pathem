@@ -66,7 +66,7 @@ extension BrowserViewController {
         let defaultButton =
             buttons.first { $0.cell === sheet.defaultButtonCell }
             ?? buttons.first { $0.keyEquivalent == "\r" }
-        let expectedCancel = L("common.cancel", "Cancel")
+        let expectedDelete = L("reclaim.deleteNowConfirm", "Delete Permanently")
         let namedDefault = defaultButton?.title ?? "missing"
         if let output = ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_OUT"],
             let bitmap = content.bitmapImageRepForCachingDisplay(in: content.bounds)
@@ -91,16 +91,15 @@ extension BrowserViewController {
                 && !cleanup.debugTransientDeletePending
         }
         let kept = (try? Data(contentsOf: file)) == expected
-        let click = focus == "reclaim-click"
+        let confirms = focus != "reclaim-escape"
         let expectedResponse: NSApplication.ModalResponse =
-            click ? .alertFirstButtonReturn : .alertSecondButtonReturn
+            confirms ? .alertFirstButtonReturn : .alertSecondButtonReturn
         let passed =
-            delivered && closed && bindingReady && namedDefault == expectedCancel
-            && buttons[0].hasDestructiveAction && buttons[0].keyEquivalent.isEmpty
-            && cleanup.debugTransientLastResponse == expectedResponse && kept == !click
-            && CleanupController.debugTransientEscapeMonitors == 0
+            delivered && closed && bindingReady && namedDefault == expectedDelete
+            && buttons[0].keyEquivalent == "\r"
+            && cleanup.debugTransientLastResponse == expectedResponse && kept == !confirms
         print(
-            "TRANSIENTSURFACES: \(passed ? "PASS" : "FAIL") \(focus) check6 default=\(namedDefault) inputDelivered=\(delivered) response=\(String(describing: cleanup.debugTransientLastResponse?.rawValue)) closed=\(closed) ownedFixturePreserved=\(kept) deleteMarked=\(buttons[0].hasDestructiveAction) activeMonitors=\(CleanupController.debugTransientEscapeMonitors)"
+            "TRANSIENTSURFACES: \(passed ? "PASS" : "FAIL") \(focus) check6 default=\(namedDefault) inputDelivered=\(delivered) response=\(String(describing: cleanup.debugTransientLastResponse?.rawValue)) closed=\(closed) ownedFixturePreserved=\(kept) deleteMarked=\(buttons[0].hasDestructiveAction)"
         )
         host.orderOut(nil)
         print("RESULT: \(passed ? "PASS" : "FAIL") (\(passed ? 1 : 0)/1)")

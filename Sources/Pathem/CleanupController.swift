@@ -135,7 +135,6 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
     }
     var debugDeleteNowEnabled: Bool { deleteNowButton.isEnabled }
     #if DEBUG
-    private(set) static var debugTransientEscapeMonitors = 0
     var debugTransientWindow: NSWindow { panel }
     var debugTransientDeletePending: Bool { deletingNames != nil }
     private(set) var debugTransientLastResponse: NSApplication.ModalResponse?
@@ -1015,40 +1014,18 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 "reclaim.deleteNowBody",
                 "These are recreated automatically the next time each tool runs. This skips the Trash and can’t be undone. Other checked items are not affected."
             )
-        let delete = alert.addButton(withTitle: L("reclaim.deleteNowConfirm", "Delete Permanently"))
-        delete.hasDestructiveAction = true
-        delete.keyEquivalent = ""
-        let cancel = alert.addButton(withTitle: L("common.cancel", "Cancel"))
-        cancel.keyEquivalent = "\r"
-        alert.window.defaultButtonCell = cancel.cell as? NSButtonCell
+        alert.addButton(withTitle: L("reclaim.deleteNowConfirm", "Delete Permanently"))
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         return alert
     }
 
-    /// NSButton exposes one key equivalent. Keep Return on the safe default and
-    /// route Escape only for this sheet, removing the monitor at native dismissal.
+    /// Keep native NSAlert Return/Delete and Escape/Cancel behaviour. Production
+    /// and owned-fixture tests share the same presenter without a key monitor.
     static func presentDeleteNowAlert(
         _ alert: NSAlert, for host: NSWindow,
         completion: @escaping (NSApplication.ModalResponse) -> Void
     ) {
-        let monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak alert] event in
-            guard event.keyCode == 53, let alert,
-                event.window === alert.window, alert.window.sheetParent === host
-            else { return event }
-            alert.buttons[1].performClick(nil)
-            return nil
-        }
-        #if DEBUG
-        if monitor != nil { debugTransientEscapeMonitors += 1 }
-        #endif
-        alert.beginSheetModal(for: host) { response in
-            if let monitor {
-                NSEvent.removeMonitor(monitor)
-                #if DEBUG
-                debugTransientEscapeMonitors -= 1
-                #endif
-            }
-            completion(response)
-        }
+        alert.beginSheetModal(for: host, completionHandler: completion)
     }
 
     private func deleteCheckedNow() {
