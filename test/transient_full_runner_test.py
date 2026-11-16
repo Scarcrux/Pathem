@@ -20,7 +20,18 @@ class FullRunnerControls(unittest.TestCase):
         r=dict(launch_id=kwargs.get('launch_id'),label=job['label'],source_digest='digest',preferences_unchanged=self.isolated,
             demo_removed=True,private_domain_removed=True,catalog_matches_source=True,
             native_exit=self.native,failures=self.failures,errors=self.errors,seconds=0.1)
-        p=self.root/'.build'/('transient-sample-'+job['label']+'.json');p.write_text(json.dumps(r));p.with_suffix('.log').write_text('raw native '+str(self.native))
+        from transient_render_evidence import gather_failure_renders
+        from transient_render_evidence_test import png_bytes
+        import hashlib
+        launch_id=kwargs.get('launch_id') or '0'*32
+        scratch=self.root/'fake-native'/launch_id;scratch.mkdir(parents=True,exist_ok=True)
+        for cell,number in self.failures:
+            (scratch/f'{cell}-check{number}.png').write_bytes(png_bytes())
+        render_errors,r['failure_renders']=gather_failure_renders(scratch,self.failures,'mounts',None,self.root/'artifacts'/launch_id,launch_id,'digest')
+        assert not render_errors
+        native_log='raw native '+str(self.native)
+        r['native_log_sha256']=hashlib.sha256(native_log.encode()).hexdigest()
+        p=self.root/'.build'/('transient-sample-'+job['label']+'.json');p.write_text(json.dumps(r));p.with_suffix('.log').write_text(native_log)
         return not self.errors
     def execute(self,digests=None):
         self.baseline.write_text(json.dumps(dict(findings=self.rows)))

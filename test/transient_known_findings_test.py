@@ -5,7 +5,26 @@ class KnownFindingsControls(unittest.TestCase):
     def finding(self,cell='M-m34-de-light-720-short',check=2):
         return dict(id='oversized-crop',cell=cell,check=check,mechanism='600pt sheet exceeds 420pt host',source='CropController.present',receipt='.build/crop.log',render='.build/crop.png')
     def receipt(self):
-        return dict(label='clean-de-full-mounts-g5',category='mounts',source_digest='same',preferences_unchanged=True,demo_removed=True,private_domain_removed=True,catalog_matches_source=True,native_exit=1,failures=[['M-m34-de-light-720-short',2]],errors=['clean native verdict red: exit 1, 1 cell/check pairs'])
+        result=dict(label='clean-de-full-mounts-g5',category='mounts',source_digest='same',preferences_unchanged=True,demo_removed=True,private_domain_removed=True,catalog_matches_source=True,native_exit=1,failures=[['M-m34-de-light-720-short',2]],errors=['clean native verdict red: exit 1, 1 cell/check pairs'])
+        self.attach_render_evidence(result)
+        return result
+    def attach_render_evidence(self,receipt):
+        import hashlib,uuid
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from transient_render_evidence import gather_failure_renders
+        from transient_render_evidence_test import png_bytes
+        temp=TemporaryDirectory();self.addCleanup(temp.cleanup);root=Path(temp.name)
+        launch=uuid.uuid4().hex;scratch=root/'native';scratch.mkdir()
+        for cell,number in receipt['failures']:
+            name=f'{cell}-check{number}.png'
+            if cell.startswith('L-'):
+                name=f"{cell}-{'prompt' if (receipt.get('lifecycle_disk_proof') or {}).get('prompt_seen') else 'before'}.png"
+            (scratch/name).write_bytes(png_bytes())
+        errors,receipt['failure_renders']=gather_failure_renders(scratch,receipt['failures'],receipt['category'],receipt.get('lifecycle_disk_proof'),root/'evidence'/launch,launch,receipt['source_digest'])
+        assert not errors
+        receipt['launch_id']=launch
+        receipt['native_log_sha256']=hashlib.sha256(b'owned native receipt').hexdigest()
     def test_exact_baseline_matches(self):
         row=self.finding();self.assertEqual(compare({(row['cell'],row['check'])},[row]),[])
     def test_new_failure_is_red(self):
@@ -27,6 +46,7 @@ class KnownFindingsControls(unittest.TestCase):
             r={**self.receipt(),**change};self.assertTrue(collect([r],[r['label']],'same')[0])
     def test_real_quit_exit_is_separate_from_parent_verdict(self):
         r=self.receipt();r.update(category='lifecycle',native_exit=0,failures=[['L-quit',5]],lifecycle_disk_proof=dict(mode='quit',will_terminate=True,quit_requested=True,edited_before=True,save_control=True,lost_without_prompt=True,disk_annotations=0,prompt_seen=False,before_sha256='actual-hash',post_reap_sha256='actual-hash'),errors=['lifecycle product verdict red: lost unsaved markup'])
+        self.attach_render_evidence(r)
         self.assertEqual(collect([r],[r['label']],'same')[0],[])
 
     def test_malformed_pair_and_incomplete_quit_proof_refused(self):

@@ -248,7 +248,16 @@ def run_case(case, language, pilot, full=False, category="all", group=0, probe_o
         errors.append('preference/demo isolation failed')
     if source_digest() != inputs_before:
         errors.append('source or native artifact changed during launch')
-    receipt = dict(native_instrument_error=native_instrument_error, native_started=native_started, native_timeout=allowed_timeout, launch_id=launch_id, label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
+    from transient_render_evidence import gather_failure_renders
+    failure_renders = []
+    try:
+        render_errors, failure_renders = gather_failure_renders(
+            scratch, failures, category, lifecycle_proof,
+            ROOT / '.build/transient-render-evidence' / launch_id, launch_id, inputs_before)
+        errors += render_errors
+    except (OSError, ValueError) as error:
+        errors.append('failure render evidence: retention failed: ' + str(error))
+    receipt = dict(failure_renders=failure_renders, native_log_sha256=hashlib.sha256(log.encode()).hexdigest(), native_instrument_error=native_instrument_error, native_started=native_started, native_timeout=allowed_timeout, launch_id=launch_id, label=label, only=only, case=case, language=language, pilot=pilot, full=full, category=category, group=group, probe_one=probe_one, private_domain_removed=private_domain_removed, native_exit=code,
                    source_digest=inputs_before, failures=sorted(failures), errors=errors,
                    reference_native_exit=reference.get('native_exit') if case != 'clean' and reference else None,
                    preferences_unchanged=private_ok, catalog_matches_source=catalog_match, lifecycle_disk_proof=lifecycle_proof,

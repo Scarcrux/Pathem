@@ -1,5 +1,6 @@
 """Exact known-findings comparison. Incomplete or unsafe receipts are never baselines."""
 from collections import Counter
+from transient_render_evidence import verify_failure_renders
 
 PRODUCT_ERRORS=('clean native verdict red:', 'lifecycle product verdict red:')
 
@@ -54,5 +55,6 @@ def collect(receipts, expected_labels, digest):
         if r.get('native_exit')==0 and pairs and not parent_quit:
             errors.append('native zero contradicts failure assertions: '+label)
         if r.get('native_exit')==1 and not pairs:errors.append('native red has no named failure: '+label)
+        errors += verify_failure_renders(r)
         failures |= pairs
     return errors,failures

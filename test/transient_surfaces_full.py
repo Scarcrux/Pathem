@@ -13,6 +13,7 @@ import time
 import uuid
 from transient_full_plan import coverage, plan, focused_plan, ROOT
 from transient_known_findings import collect, compare
+from transient_render_evidence import verify_failure_renders
 from transient_pair_universe import planned_pairs, validate_jobs
 from transient_surfaces_sample import run_case, source_digest
 from transient_process import awake_hold
@@ -73,7 +74,7 @@ def run(output, baseline=None, jobs=None, awake=False):
             receipts.append(data)
             shutil.copy2(receipt,output/(label+'.json'))
             shutil.copy2(receipt.with_suffix('.log'),output/(label+'.native.log'))
-            refused = [e for e in data['errors'] if not e.startswith(('clean native verdict red:', 'lifecycle product verdict red:'))]
+            refused = verify_failure_renders(data, receipt.with_suffix('.log').read_bytes()) + [e for e in data['errors'] if not e.startswith(('clean native verdict red:', 'lifecycle product verdict red:'))]
             print(f'TRANSIENT FULL: native={data["native_exit"]} pairs={len(data["failures"])} seconds={data["seconds"]:.2f} '+label,flush=True)
             if refused:
                 errors += [label+': '+e for e in refused]
