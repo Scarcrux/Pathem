@@ -74,7 +74,7 @@ extension TransientSurfaceSample {
                 b.showAdvancedFind()
                 return b
             },
-            mount("m07", "BrowserViewController+ViewOptions.swift:12", filename: true) { _, _ in
+            mount("m07", "BrowserViewController+ViewOptions.swift:13", filename: true) { _, _ in
                 b.showViewOptions()
                 return b
             },

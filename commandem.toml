@@ -1294,6 +1294,15 @@ missions = ["m-1331afb7", "m-b2532fac"]
     title = "Repair Undo History hint/button overlap and collapsed bottom toolbar (TS-U2-M30); validate only its focused panel regression."
     done = true
 
+  [[mission.task]]
+    id = "t-a57a9a12"
+    title = "Bound View Options to small host windows by shrinking its scrolling viewport (TS-U2-M07); validate only the focused size regression."
+    done = true
+
+  [[mission.task]]
+    id = "t-ac6d5668"
+    title = "Resolve View Options app-owned stack ambiguity (TS-U2-M07-AMBIG). Height is bounded; focused profile remains70/76/native1 solely on six check3 observations of seven stacks. Keep validation targeted."
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -2049,6 +2058,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "TS-U2-M30 repaired: Undo History hint translated an autoresizing mask while pinned by Auto Layout, producing a0pt toolbar and hint/button overlap. Disable that translation. After Claude actual GUI handoff, one targeted m30 launch passed49/49, native0/wrapper0,4.01s; three close/reopen cycles, empty owned history, no history operations. Before/after renders inspected, isolation intact. GUI window released, no broad matrix/GUI CI, install or land. Unit2 qualification remains incomplete."
     at = "2026-11-17T03:44:47Z"
+
+  [[mission.comment]]
+    text = "Targeted View Options size repair in progress: unchanged source from red receipt uses a450pt accessory, yielding672/752pt sheets against420/700pt hosts. Measure actual alert and host height before presentation and reduce only the scroll viewport by overflow. One scoped m07 German/minimum-host short+long-name probe planned, cancel only; no full matrix/GUI CI, install or land."
+    at = "2026-11-17T15:43:32Z"
+
+  [[mission.comment]]
+    text = "TS-U2-M07 size fix validated in one focused launch: all6 mounted size observations pass,512x340(short)/512x346(long) within720x420host; all geometry/cancel/default/dismiss/reopen checks pass and renders inspected. Full profile honestly70/76/native1 on existing stack ambiguity, recorded separately. Intermediate standalone-layout receipts752->420/832->426 differ from mounted frames; fit is conservative and floor44binds long fixture, no arbitrary-size/maximal-use promise. Isolation intact, build0, no settings applied. GUI window released; no further visual launches, fullmatrix/GUI CI, land or install."
+    at = "2026-11-17T15:50:51Z"
 
 [[mission]]
   id = "m-e1443252"

@@ -817,3 +817,36 @@ localization matches source. No matrix or GUI CI replay, install or land.
 Private evidence: .build/undo-hint-targeted-regression.log,
 .build/transient-sample-clean-de-full-mounts-g0-m30-probe.json and its raw log,
 plus the scoped diagnostic render. GUI window was released after actual closure.
+
+## Targeted product fix: View Options sheet height
+
+The recorded M07 red source is byte-identical to current main for the controller
+and caller: a fixed 450 pt scrolling accessory made mounted sheets 672/752 pt
+high against 420/700 pt hosts. Immediately before presentation, measure the alert
+and host, and subtract any overflow from the scroll viewport. Controls and format
+reading remain intact; buttons stay outside the viewport. No response/default or
+settings-persistence path changes. Fitting is presentation-time only, not live
+resize/re-expansion, and a 44 pt minimum viewport does not promise arbitrary tiny
+hosts can accommodate unlimited non-scroll content.
+
+One targeted German launch at a 720x420 host exercised short and 255-character
+names, three cancel/reopen cycles each. All six size checks now pass. Actual
+mounted frames are 512x340 (short) and 512x346 (long), safely within the host and
+screen; before/after renders confirm usable scrolling controls and visible buttons.
+The debug pre-presentation measurements differ from mounted sheet layout:
+752->420 with viewport118 (short), 832->426 with viewport44 (long). Do not conflate
+these intermediate measurements with mounted frames or claim maximal viewport
+utilization; AppKit relayouts on sheet attachment. The minimum binds in the long
+fixture. The initial board relay used the older672/752 values for the intermediate
+receipt and was promptly corrected; raw measurements are retained.
+
+The full targeted profile remains native/wrapper exit 1, 70/76: only six check-3
+observations report the seven already-ambiguous app-owned stacks. Size, geometry,
+presentation, cancel, default, dismissal and repeat checks all pass six times.
+Do not report the complete profile as green. All owner-preference, demo/private
+application-domain cleanup and catalog witnesses pass. No settings were applied.
+
+Evidence: .build/view-options-fit-targeted.log and
+.build/transient-sample-clean-de-full-mounts-g0-m07-probe.json/raw log; private
+render paths are retained with those receipts. Build passed. No broad matrix,
+GUI CI, install or land; the native process ended and the GUI window was released.
