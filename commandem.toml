@@ -1922,6 +1922,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Release and website audit fixes (owner request): Photos entitlement, convicted by a signed hardened-runtime probe, plus SwiftTerm and Sparkle notices with verify-release A10 and A11 (2a8d139); release preflight P8 build-number check, Sparkle pinned 2.9.3, release.yml manual-only, stale docs corrected (9b46f0a); privacy page at /privacy/, security headers with a hash-only CSP, truthful copy and captions (e234049, 3bd44ac); Codex View Options fit fix (ed99fed); DiskImageTests now reports hdiutil exit and stderr."
     at = "2026-11-17T17:52:46Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Reshoot (owner request) exposed and fixed two app bugs (3a83159): torrent progress bars never drew on screen (wantsUpdateLayer true with only draw(_:)), and the Network view kept the previous folder's tab title, window title and sidebar highlight; demo mode also listed a real network mount. Screenshots hero, list, torrent, remote and the social card redone at 2x (b5546ff). Six GUI suites pass. Notarization now fails with HTTP 401 (notarytool history too): the saved pathem-notary credentials are rejected; owner must re-store them before the next install."
+    at = "2026-11-17T18:15:20Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
