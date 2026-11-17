@@ -1,8 +1,10 @@
 # Translations
 
-Pathem ships in English, French, German, Spanish, Japanese, and Simplified
-Chinese. The non-English strings are machine-translated and provisional, so a
-native speaker's review is genuinely welcome. There are two ways to help.
+Pathem ships in twelve languages: English, French, German, Spanish, Italian,
+Portuguese (Brazil), Dutch, Russian, Japanese, Korean, and Simplified and
+Traditional Chinese. The eleven non-English catalogs are machine-drafted and
+provisional, and none has had a native speaker's review yet, so corrections are
+genuinely welcome. There are two ways to help.
 
 ## Just report it (no code)
 
@@ -17,7 +19,7 @@ Each language is one file:
 Sources/Pathem/Resources/<lang>.lproj/Localizable.strings
 ```
 
-where `<lang>` is `fr`, `de`, `es`, `ja`, or `zh-hans`. Each line is
+where `<lang>` is `fr`, `de`, `es`, `it`, `pt-BR`, `nl`, `ru`, `ja`, `ko`, `zh-Hans`, or `zh-Hant`. Each line is
 `"key" = "value";`. **Edit only the value.** Two rules keep the app working:
 
 - **Never change the key** (the part left of `=`). It ties the string to the code.

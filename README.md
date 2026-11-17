@@ -118,9 +118,11 @@ Nearly every surface is customizable, in the spirit of Directory Opus:
   binary file sizes, relative or absolute dates, where new tabs open, and default
   names for New File and New Folder.
 - Every command is rebindable and reachable from the command palette, and the UI is
-  localized into English, Japanese, German, Spanish, Chinese, and French. The
-  non-English translations are provisional, so if one reads wrong in your language,
-  a quick note helps: see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md).
+  localized into twelve languages: English, French, German, Spanish, Italian,
+  Portuguese (Brazil), Dutch, Russian, Japanese, Korean, and Simplified and
+  Traditional Chinese. The eleven non-English translations are machine-drafted and
+  provisional, so if one reads wrong in your language, a quick note helps: see
+  [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md).
 
 You can also make Pathem the default app for opening folders (fully reversible), and
 a Reset Pathem Data command restores Finder and clears Pathem's data for a clean
