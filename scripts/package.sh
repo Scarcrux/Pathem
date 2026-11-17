@@ -108,6 +108,14 @@ install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/Mac
 resourceBundle="$frameworkBinDir/${APP_NAME}_${APP_NAME}.bundle"
 [[ -d "$resourceBundle" ]] && cp -R "$resourceBundle" "$APP/Contents/Resources/"
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
+# Record the source commit so two local builds with the same CFBundleVersion can be told apart
+# (About shows it). CFBundleVersion itself is left alone: Sparkle orders releases by it, and
+# scripts/release.sh bumps it in Packaging/Info.plist before each release.
+commit="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+if [[ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
+	commit="$commit-dirty"
+fi
+/usr/libexec/PlistBuddy -c "Add :PathemSourceCommit string $commit" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 # Release gate: a distribution build (DEVELOPER_ID set) must not ship the placeholder Sparkle

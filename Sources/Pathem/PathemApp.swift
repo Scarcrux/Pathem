@@ -561,6 +561,20 @@ enum PathemApp {
                 }
             }
         }
+        // Show the views in pairs (left, right) for an outside capture, one pair every five
+        // seconds: PATHEM_PANE_MODES="tree:icon,gallery:column".
+        if let spec = ProcessInfo.processInfo.environment["PATHEM_PANE_MODES"] {
+            let pairs = spec.split(separator: ",").map { $0.split(separator: ":").map(String.init) }
+            for (step, pair) in pairs.enumerated() where pair.count == 2 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3 + Double(step) * 5) {
+                    for (side, name) in zip([browser.leftTabs, browser.rightTabs], pair) {
+                        if let mode = ViewFormat.ViewMode(rawValue: name) {
+                            side.activePane?.setViewMode(mode)
+                        }
+                    }
+                }
+            }
+        }
         if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 browser.debugRenderThemes(toDir: dir) { exit(0) }
@@ -1562,7 +1576,7 @@ enum PathemApp {
         appItem.submenu = appMenu
         appMenu.addItem(
             withTitle: L("menu.about", "About Pathem"),
-            action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+            action: #selector(PathemAppDelegate.showAboutPanel(_:)), keyEquivalent: "")
         appMenu.addItem(.separator())
         let checkUpdates = NSMenuItem(
             title: L("menu.checkUpdates", "Check for Updates…"),
@@ -2188,6 +2202,19 @@ final class AlwaysKeyWindow: NSWindow {
 /// transfer half-finished without the user's say-so.
 @MainActor
 final class PathemAppDelegate: NSObject, NSApplicationDelegate {
+    /// The standard About panel, with the source commit next to the build number when the
+    /// packaged app records one (scripts/package.sh), since local builds share a build number.
+    @objc func showAboutPanel(_ sender: Any?) {
+        let info = Bundle.main.infoDictionary ?? [:]
+        var options: [NSApplication.AboutPanelOptionKey: Any] = [:]
+        if let build = info["CFBundleVersion"] as? String,
+            let commit = info["PathemSourceCommit"] as? String
+        {
+            options[.applicationVersion] = "\(build), \(commit)"
+        }
+        NSApp.orderFrontStandardAboutPanel(options: options)
+    }
+
     weak var browser: BrowserViewController?
     var updater: UpdaterController?
     var vpnStatusItem: VPNStatusItem?  // menu-bar VPN kill-switch indicator (self-hides when off)

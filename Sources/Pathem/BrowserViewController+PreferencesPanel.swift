@@ -52,6 +52,7 @@ extension BrowserViewController {
                     else { return }
                     self.terminal.theme = preset
                     self.saveConfig(preset, to: Self.terminalThemeURL)
+                    self.applyTerminalFollowingTheme()
                 },
                 onToggleFollows: { [weak self] on in
                     guard let self else { return }
@@ -176,6 +177,16 @@ extension BrowserViewController {
         // A transparent title bar lets the tint run under the toolbar too, so a theme colors the
         // whole window rather than stopping at the panes.
         view.window?.titlebarAppearsTransparent = tint != nil
+        applyTerminalFollowingTheme()
+    }
+
+    /// The terminal's "System" theme follows the Pathem theme (its background, a readable
+    /// foreground, the accent cursor); any other terminal theme the user picked is left alone.
+    func applyTerminalFollowingTheme() {
+        guard terminal.theme.name == TerminalTheme.system.name else { return }
+        let following = TerminalTheme.system(
+            followingBackground: prefs.windowTintHex, accent: prefs.accentColorHex)
+        if terminal.theme != following { terminal.theme = following }
     }
 
     /// Adopt the selected icon set; reload every listing so the new icons appear.

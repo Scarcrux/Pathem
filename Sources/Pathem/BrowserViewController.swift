@@ -989,6 +989,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         else { return }
         terminal.theme = preset
         saveConfig(preset, to: Self.terminalThemeURL)
+        applyTerminalFollowingTheme()
     }
 
     override func viewDidLayout() {

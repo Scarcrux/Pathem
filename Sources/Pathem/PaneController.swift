@@ -511,6 +511,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             guard let self else { return }
             self.setActive(self.isActivePane)
             self.applyFolderBackground()  // the views' default background follows the theme
+            self.content.scrollView.verticalScroller?.needsDisplay = true  // themed track
         }
         enterDirectory()
     }

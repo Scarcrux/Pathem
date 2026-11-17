@@ -245,3 +245,17 @@ final class ThemedHeaderView: NSTableHeaderView {
         NSRect(x: bounds.minX, y: bounds.maxY - 1, width: bounds.width, height: 1).fill()
     }
 }
+
+/// A vertical scroller whose track takes the theme's background. With "always show scroll bars"
+/// the stock track is a system-colored strip beside themed rows; without a tint, or with overlay
+/// scrollers (which draw no track), it is the stock scroller.
+final class ThemedScroller: NSScroller {
+    override func drawKnobSlot(in slotRect: NSRect, highlight flag: Bool) {
+        guard let background = ThemeManager.shared.windowTint else {
+            super.drawKnobSlot(in: slotRect, highlight: flag)
+            return
+        }
+        ThemeManager.shifted(background, by: 0.03).setFill()
+        slotRect.fill()
+    }
+}

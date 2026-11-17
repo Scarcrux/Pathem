@@ -313,7 +313,9 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
 
         let scroll = NSScrollView()
         scroll.documentView = table
+        scroll.verticalScroller = ThemedScroller()
         scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true  // no empty track beside a column that fits
         scroll.hasHorizontalScroller = false
         scroll.borderType = .noBorder
         scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -331,6 +333,12 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     func setBackgroundColor(_ color: NSColor?) {
         backgroundColor = color
         for column in columns { applyBackground(to: column) }
+        // The space right of the last column is the outer scroll view's own background; without
+        // this it stayed the system color beside themed columns.
+        let transparent = (color?.alphaComponent ?? 1) < 0.02
+        outerScroll.backgroundColor =
+            transparent ? .clear : (color ?? ThemeManager.shared.contentBackground)
+        outerScroll.drawsBackground = !transparent
     }
     private func applyBackground(to column: Column) {
         let transparent = (backgroundColor?.alphaComponent ?? 1) < 0.02

@@ -1,5 +1,4 @@
 import AppKit
-
 @preconcurrency import SwiftTerm
 
 /// Terminal appearance and shell, persisted as config-as-data (terminal.json):
@@ -61,7 +60,8 @@ public struct TerminalTheme: Codable, Sendable, Equatable {
 
     static func nsColor(_ hex: String) -> NSColor? {
         guard let (r, g, b) = rgb(hex) else { return nil }
-        return NSColor(srgbRed: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
+        return NSColor(
+            srgbRed: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
     }
 
     /// SwiftTerm.Color uses 16-bit components, so scale each byte by 257.
@@ -142,6 +142,22 @@ public struct TerminalTheme: Codable, Sendable, Equatable {
             "#24292E", "#D73A49", "#28A745", "#DBAB09", "#0366D6", "#5A32A3", "#0598BC", "#6A737D",
             "#959DA5", "#CB2431", "#22863A", "#B08800", "#005CC5", "#5A32A3", "#3192AA", "#D1D5DA",
         ])
+
+    /// The "System" theme as it looks inside an app whose window has `background` (a "#RRGGBB"
+    /// tint): that background, a readable foreground, `accent` as the cursor, and a light or
+    /// dark ANSI palette to match. Still named "System", so it reads as the default in menus.
+    /// An empty or invalid background gives plain `.system` (follow the macOS appearance).
+    public static func system(followingBackground background: String, accent: String)
+        -> TerminalTheme
+    {
+        guard let (r, g, b) = rgb(background) else { return .system }
+        let luminance = (0.2126 * Double(r) + 0.7152 * Double(g) + 0.0722 * Double(b)) / 255
+        let dark = luminance < 0.5
+        let base = dark ? oneDark : githubLight
+        return TerminalTheme(
+            name: system.name, foreground: dark ? "#D8DCE3" : "#2B2B2B", background: background,
+            cursor: rgb(accent) == nil ? base.cursor : accent, ansi: base.ansi)
+    }
 
     public static let presets: [TerminalTheme] = [
         system, dracula, nord, solarizedDark, solarizedLight,

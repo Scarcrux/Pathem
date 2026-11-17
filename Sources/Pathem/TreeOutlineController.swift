@@ -838,6 +838,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         outline.servicesAvailable = { [weak self] in self?.allowsLocalMetadata ?? false }
 
         scrollView.documentView = outline
+        scrollView.verticalScroller = ThemedScroller()
         scrollView.hasVerticalScroller = true
         scrollView.autohidesScrollers = true
         scrollView.drawsBackground = true

@@ -599,6 +599,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         tableView.onDragExited = { [weak self] in self?.springLoader.cancel() }
 
         scrollView.documentView = tableView
+        scrollView.verticalScroller = ThemedScroller()
         scrollView.hasVerticalScroller = true
         // Name flexes to fit the pane, so most of the time no horizontal bar appears
         // (autohidesScrollers). But once the visible columns outgrow the pane, Name clamps to its
