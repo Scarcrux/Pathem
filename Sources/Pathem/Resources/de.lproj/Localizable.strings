@@ -1327,7 +1327,7 @@
 "prefs.dragTrailWidth" = "Breite";
 "prefs.fixedFolderLabel" = "Fester Ordner";
 "prefs.folderHandler" = "Ordner in Pathem statt im Finder öffnen";
-"prefs.folderHandlerConfirmBody" = "Dadurch wird Pathem systemweit zur Standard-App zum Öffnen von Ordnern, sodass ein Doppelklick auf einen Ordner oder eine App, die einen Ordner öffnet, Pathem statt Finder verwendet. Dies betrifft nicht u{201C}Im Finder zeigen.u{201D} Du kannst hier jederzeit zurückwechseln.";
+"prefs.folderHandlerConfirmBody" = "Dadurch wird Pathem systemweit zur Standard-App zum Öffnen von Ordnern, sodass ein Doppelklick auf einen Ordner oder eine App, die einen Ordner öffnet, Pathem statt Finder verwendet. Dies betrifft nicht „Im Finder zeigen.“ Du kannst hier jederzeit zurückwechseln.";
 "prefs.folderHandlerConfirmTitle" = "Ordner in Pathem öffnen?";
 "prefs.folderHandlerFailed" = "Standard-Ordner-App konnte nicht geändert werden";
 "prefs.folderHandlerFailedBody" = "Diese macOS-Version erlaubt möglicherweise nicht, Finder als Standard-App für Ordner zu ersetzen. Du kannst Ordner in Pathem weiterhin per Drag & Drop oder mit „In Pathem öffnen“ öffnen.\n\n(%@)";
@@ -1621,11 +1621,11 @@
 "size.windowTitle" = "Größenbrowser";
 "slideshow.hint" = "Leertaste: Wiedergabe/Pause    ←/→: vorheriges/nächstes    Esc: beenden";
 "smart.audio" = "Audiodateien";
-"smart.contains" = "die u{201C}%@u{201D} enthalten";
+"smart.contains" = "die „%@“ enthalten";
 "smart.documents" = "Dokumente";
 "smart.folders" = "Ordner";
 "smart.images" = "Bilder";
-"smart.nameContains" = "deren Name u{201C}%@u{201D} enthält";
+"smart.nameContains" = "deren Name „%@“ enthält";
 "smart.overSize" = "über %@";
 "smart.pdfs" = "PDFs";
 "smart.summaryPrefix" = "Findet %@";

@@ -155,12 +155,16 @@ enum PathemApp {
             func code(for wanted: String) -> String? {
                 available.first { $0.caseInsensitiveCompare(wanted) == .orderedSame }
             }
-            for lang in ["en", "es", "fr", "de", "zh-Hans", "ja"] where code(for: lang) == nil {
+            for lang in [
+                "en", "es", "fr", "de", "zh-Hans", "ja", "it", "pt-BR", "ko", "zh-Hant", "ru", "nl",
+            ] where code(for: lang) == nil {
                 print("  MISSING lproj: \(lang)")
                 ok = false
             }
             let sample = ["menu.file": "File", "common.cancel": "Cancel"]
-            for lang in ["es", "fr", "de", "zh-Hans", "ja"] {
+            for lang in [
+                "es", "fr", "de", "zh-Hans", "ja", "it", "pt-BR", "ko", "zh-Hant", "ru", "nl",
+            ] {
                 guard let actual = code(for: lang),
                     let path = pathemResourceBundle.path(forResource: actual, ofType: "lproj"),
                     let bundle = Bundle(path: path)

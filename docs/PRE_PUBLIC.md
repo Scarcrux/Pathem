@@ -35,11 +35,11 @@ your Marketplace publisher account:
 **3. Localization phrasing (optional, post-public, not a blocker).** Coverage,
 plist validity, and printf format-specifier consistency are all gated in CI, so no
 translation can crash or garble the UI. What's left is *phrasing* quality: the
-fr/de/es/ja/zh-Hans strings are AI-generated and provisional, and only a native
+fr/de/es/ja/zh-Hans and it/pt-BR/ko/zh-Hant/ru/nl strings are AI-generated and provisional, and only a native
 speaker can polish them. That's inherently a crowdsourced, post-public task (going
 public is what surfaces the volunteers). Two honest choices: ship the provisional
 translations as-is and invite fixes (worst case is an awkward phrase, strictly
-better than a missing feature), or drop the five locales and ship English-only if
+better than a missing feature), or drop the eleven locales and ship English-only if
 you'd rather not show unreviewed strings. Either way it does not block the flip.
 
 **4. The public flip itself.** Gated on your user-testing bar. See

@@ -23,7 +23,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCES = os.path.join(ROOT, "Sources")
 RESOURCES = os.path.join(ROOT, "Sources", "Pathem", "Resources")
-LOCALES = ["en", "fr", "de", "es", "ja", "zh-Hans"]
+LOCALES = ["en", "fr", "de", "es", "ja", "zh-Hans", "it", "pt-BR", "ko", "zh-Hant", "ru", "nl"]
 
 # Keys built at runtime from a variable -- e.g. L("menu.\(commandID)", title). Their concrete keys
 # (menu.copy, toolbar.reveal, ...) can't be enumerated statically, so any locale key under these
@@ -109,7 +109,13 @@ def unescape(body):
     out, i = [], 0
     simple = {"n": "\n", "t": "\t", '"': '"', "\\": "\\", "'": "'"}
     while i < len(body):
-        if body[i] == "\\" and i + 1 < len(body):
+        if body[i] == "\\" and body[i + 1 : i + 3] == "u{" and "}" in body[i + 3 : i + 12]:
+            # Swift's \u{201C}: without this the escape lost its backslash and catalogs shipped
+            # the literal text "u{201C}" (Mission 53, 2026-11-16).
+            end = body.index("}", i + 3)
+            out.append(chr(int(body[i + 3 : end], 16)))
+            i = end + 1
+        elif body[i] == "\\" and i + 1 < len(body):
             out.append(simple.get(body[i + 1], body[i + 1]))
             i += 2
         else:
@@ -223,7 +229,13 @@ def main():
         mismatched = [
             k for k in present & set(english) if format_specs(english[k]) != format_specs(current[k])
         ]
-        status = "ok" if not missing and not stale and not mismatched else "GAP"
+        # A Swift escape copied without its backslash ships as visible text ("u{201C}").
+        broken = sorted(k for k, v in current.items() if re.search(r"u\{[0-9A-Fa-f]{2,6}\}", v))
+        if broken:
+            ok = False
+            for key in broken[:8]:
+                print(f"       broken escape (literal u{{...}}): {locale} {key}")
+        status = "ok" if not missing and not stale and not mismatched and not broken else "GAP"
         print(
             f"{status:4} {locale:8} present={len(present):5} missing={len(missing):4} "
             f"stale={len(stale):4} fmt={len(mismatched):3}")

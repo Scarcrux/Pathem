@@ -1327,7 +1327,7 @@
 "prefs.dragTrailWidth" = "宽度";
 "prefs.fixedFolderLabel" = "固定文件夹";
 "prefs.folderHandler" = "用 Pathem 而非访达打开文件夹";
-"prefs.folderHandlerConfirmBody" = "这会将 Pathem 设为系统范围内打开文件夹的默认应用，因此双击文件夹或某个应用打开文件夹时会使用 Pathem 而非 Finder。这不会影响u{201C}在 Finder 中显示u{201D}。你可以随时在此切换回来。";
+"prefs.folderHandlerConfirmBody" = "这会将 Pathem 设为系统范围内打开文件夹的默认应用，因此双击文件夹或某个应用打开文件夹时会使用 Pathem 而非 Finder。这不会影响“在 Finder 中显示”。你可以随时在此切换回来。";
 "prefs.folderHandlerConfirmTitle" = "用 Pathem 打开文件夹？";
 "prefs.folderHandlerFailed" = "无法更改默认文件夹应用";
 "prefs.folderHandlerFailedBody" = "此版本的 macOS 可能不允许将 Finder 替换为文件夹的默认应用。你仍可以通过拖放或“在 Pathem 中打开”来在 Pathem 中打开文件夹。\n\n（%@）";
@@ -1621,11 +1621,11 @@
 "size.windowTitle" = "大小浏览器";
 "slideshow.hint" = "空格键：播放/暂停    ←/→：上一张/下一张    Esc：退出";
 "smart.audio" = "音频";
-"smart.contains" = "包含 u{201C}%@u{201D}";
+"smart.contains" = "包含 “%@”";
 "smart.documents" = "文稿";
 "smart.folders" = "文件夹";
 "smart.images" = "图像";
-"smart.nameContains" = "名称包含 u{201C}%@u{201D}";
+"smart.nameContains" = "名称包含 “%@”";
 "smart.overSize" = "大于 %@";
 "smart.pdfs" = "PDF";
 "smart.summaryPrefix" = "查找%@";

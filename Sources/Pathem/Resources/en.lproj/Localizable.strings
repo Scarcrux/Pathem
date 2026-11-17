@@ -1259,7 +1259,7 @@
 "prefs.dragTrailWidth" = "Width";
 "prefs.fixedFolderLabel" = "Fixed folder";
 "prefs.folderHandler" = "Open folders in Pathem instead of Finder";
-"prefs.folderHandlerConfirmBody" = "This makes Pathem the default app for opening folders system-wide, so a folder double-click or an app that opens a folder uses Pathem instead of Finder. It does not affect u{201C}Reveal in Finder.u{201D} You can switch back here anytime.";
+"prefs.folderHandlerConfirmBody" = "This makes Pathem the default app for opening folders system-wide, so a folder double-click or an app that opens a folder uses Pathem instead of Finder. It does not affect “Reveal in Finder.” You can switch back here anytime.";
 "prefs.folderHandlerConfirmTitle" = "Open folders in Pathem?";
 "prefs.folderHandlerFailed" = "Couldn’t change the default folder app";
 "prefs.folderHandlerFailedBody" = "This version of macOS may not allow replacing Finder as the default app for folders. You can still open folders in Pathem with drag-and-drop or “Open in Pathem.”\n\n(%@)";
@@ -1594,11 +1594,11 @@
 "sizes.skip.temporary" = "Temporary folder";
 "slideshow.hint" = "Space: play/pause    ←/→: previous/next    Esc: exit";
 "smart.audio" = "audio";
-"smart.contains" = "containing u{201C}%@u{201D}";
+"smart.contains" = "containing “%@”";
 "smart.documents" = "documents";
 "smart.folders" = "folders";
 "smart.images" = "images";
-"smart.nameContains" = "name contains u{201C}%@u{201D}";
+"smart.nameContains" = "name contains “%@”";
 "smart.overSize" = "over %@";
 "smart.pdfs" = "PDFs";
 "smart.summaryPrefix" = "Finds %@";

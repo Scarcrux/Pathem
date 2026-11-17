@@ -1327,7 +1327,7 @@
 "prefs.dragTrailWidth" = "Ancho";
 "prefs.fixedFolderLabel" = "Carpeta fija";
 "prefs.folderHandler" = "Abrir carpetas en Pathem en lugar de Finder";
-"prefs.folderHandlerConfirmBody" = "Esto convierte a Pathem en la app predeterminada para abrir carpetas en todo el sistema, así que al hacer doble clic en una carpeta o cuando una app abre una carpeta se usa Pathem en lugar de Finder. No afecta a u{201C}Mostrar en Finder.u{201D} Puedes volver a cambiarlo aquí en cualquier momento.";
+"prefs.folderHandlerConfirmBody" = "Esto convierte a Pathem en la app predeterminada para abrir carpetas en todo el sistema, así que al hacer doble clic en una carpeta o cuando una app abre una carpeta se usa Pathem en lugar de Finder. No afecta a “Mostrar en Finder.” Puedes volver a cambiarlo aquí en cualquier momento.";
 "prefs.folderHandlerConfirmTitle" = "¿Abrir carpetas en Pathem?";
 "prefs.folderHandlerFailed" = "No se pudo cambiar la app de carpetas predeterminada";
 "prefs.folderHandlerFailedBody" = "Puede que esta versión de macOS no permita reemplazar Finder como la app predeterminada para carpetas. Aún puedes abrir carpetas en Pathem arrastrando y soltando o con «Abrir en Pathem».\n\n(%@)";
@@ -1621,11 +1621,11 @@
 "size.windowTitle" = "Explorador de tamaños";
 "slideshow.hint" = "Espacio: reproducir/pausar    ←/→: anterior/siguiente    Esc: salir";
 "smart.audio" = "audio";
-"smart.contains" = "que contienen u{201C}%@u{201D}";
+"smart.contains" = "que contienen “%@”";
 "smart.documents" = "documentos";
 "smart.folders" = "carpetas";
 "smart.images" = "imágenes";
-"smart.nameContains" = "el nombre contiene u{201C}%@u{201D}";
+"smart.nameContains" = "el nombre contiene “%@”";
 "smart.overSize" = "de más de %@";
 "smart.pdfs" = "PDF";
 "smart.summaryPrefix" = "Encuentra %@";

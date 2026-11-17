@@ -1327,7 +1327,7 @@
 "prefs.dragTrailWidth" = "Largeur";
 "prefs.fixedFolderLabel" = "Dossier fixe";
 "prefs.folderHandler" = "Ouvrir les dossiers dans Pathem plutôt que dans le Finder";
-"prefs.folderHandlerConfirmBody" = "Cela fait de Pathem l'application par défaut pour ouvrir les dossiers dans tout le système : un double-clic sur un dossier, ou une application qui ouvre un dossier, utilise Pathem au lieu de Finder. Cela n'affecte pas u{201C}Afficher dans le Finder.u{201D} Vous pouvez revenir en arrière ici à tout moment.";
+"prefs.folderHandlerConfirmBody" = "Cela fait de Pathem l'application par défaut pour ouvrir les dossiers dans tout le système : un double-clic sur un dossier, ou une application qui ouvre un dossier, utilise Pathem au lieu de Finder. Cela n'affecte pas « Afficher dans le Finder. » Vous pouvez revenir en arrière ici à tout moment.";
 "prefs.folderHandlerConfirmTitle" = "Ouvrir les dossiers dans Pathem ?";
 "prefs.folderHandlerFailed" = "Impossible de changer l’app de dossiers par défaut";
 "prefs.folderHandlerFailedBody" = "Cette version de macOS ne permet peut-être pas de remplacer Finder comme application par défaut pour les dossiers. Vous pouvez toujours ouvrir des dossiers dans Pathem par glisser-déposer ou avec « Ouvrir dans Pathem ».\n\n(%@)";
@@ -1621,11 +1621,11 @@
 "size.windowTitle" = "Explorateur de tailles";
 "slideshow.hint" = "Espace : lecture/pause    ←/→ : précédent/suivant    Échap : quitter";
 "smart.audio" = "audio";
-"smart.contains" = "contenant u{201C}%@u{201D}";
+"smart.contains" = "contenant « %@ »";
 "smart.documents" = "documents";
 "smart.folders" = "dossiers";
 "smart.images" = "images";
-"smart.nameContains" = "le nom contient u{201C}%@u{201D}";
+"smart.nameContains" = "le nom contient « %@ »";
 "smart.overSize" = "de plus de %@";
 "smart.pdfs" = "PDF";
 "smart.summaryPrefix" = "Trouve %@";
