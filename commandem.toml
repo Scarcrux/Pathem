@@ -1946,6 +1946,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Landed Codex's Japanese alert crash fix (5dcd77a content) as its own commit: six ja/zh-Hans strings swapped %@ and %d; lint now order-aware (red on a planted swap). All 12 catalogs pass."
     at = "2026-11-17T23:04:02Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Pre-public cleanup (owner chose: flip this repo after a cleanup commit): tree scan found no other private project names, account ids or personal email; added CONTRIBUTING.md (outside PRs wait for contribution terms; CLA open) and docs/README.md (user vs contributor docs vs engineering records); release-safety PASS. pathem-cli gained bare-path, changed and --print (e935f08); the Commandem plugin now delegates to it. Translations marked provisional across README/site/TRANSLATIONS (0733922); 0.9.0 changelog updated (7111b53). Flip itself awaits explicit owner approval."
+    at = "2026-11-17T23:24:19Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
