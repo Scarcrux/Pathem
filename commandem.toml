@@ -2079,6 +2079,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Ran all 48 Unit 2 GUI jobs across two builds. The first 35 receipts passed validation after m63 repair. Job 36 crashed in Japanese b25 because a translation implicitly swapped the object and integer printf arguments. Slot-aware lint caught six unsafe formats across Japanese and Simplified Chinese. Added explicit positions and rebuilt. All 13 remaining jobs produced valid receipts, including the Japanese rerun and clean markup close/quit. Recordings are .build/unit2-gui-20261117-164710 and its .remaining sibling. Recorded failures remain open for triage, including host-size setup drift. This is complete job coverage across two builds and does not establish a single-build or accepted findings baseline. Task 11 remains pending."
     at = "2026-11-17T22:39:19Z"
 
+  [[mission.comment]]
+    text = "Integrated Claude dialog handoff through 59189db on the private Unit 2 branch. f18 now recognizes the Save panel accessory host. m49/m50/m67 use the Transfers window close box. f23 recipe follows the cancellable archive save-back prompt, with main carrying the product fix in 3de5a3e. Retain main behavior when rebasing and reconcile factory provenance. m62 passed in isolation and remains unresolved in the full group after m58 host-size drift. Headless suite and inventory passed. Main CI owns the GUI and shared build slot."
+    at = "2026-11-17T23:37:33Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
