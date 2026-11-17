@@ -17,7 +17,7 @@ is bundled into the app and read by the Release Notes window.
 - Live Quick Look previews in the column and gallery views.
 - A visible update button in the window title bar when a new version is ready, and this Release Notes window.
 - Confirmation popovers no longer cancel themselves when one follows another quickly, and closing a tab can no longer close a tab you are not looking at.
-- All six languages are fully translated.
+- Pathem now has 12 interface languages. English is the source; the other 11 (French, German, Spanish, Japanese, Simplified and Traditional Chinese, Italian, Brazilian Portuguese, Korean, Russian, Dutch) are AI-drafted and have not been reviewed by native speakers.
 
 ## 0.8.0 - 2026-07-20
 - Native Swift BitTorrent engine with an optional confirm for inbound magnet and torrent links and a configurable download folder.

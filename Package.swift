@@ -23,7 +23,7 @@ let package = Package(
         // Sparkle (MIT): the auto-update framework. Used by the app for the
         // notarized direct-download build's update feed (DESIGN.md). A linked
         // framework, embedded and signed by scripts/package.sh.
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
+        .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.3"),
     ],
     targets: [
         // The engine: enumeration, watching, file ops, search. No AppKit.

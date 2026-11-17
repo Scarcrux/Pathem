@@ -1,5 +1,10 @@
 name: Release
 
+# NOT THE RELEASE ROUTE. Every run of this workflow has failed, so it no longer
+# runs on tag push; it is workflow_dispatch only. Releases are cut locally with
+# scripts/release.sh (PUBLISH=1 runs the preflight checks and the gate). The notes
+# below describe what this job was meant to do and are kept for reference.
+
 # Push a version tag (e.g. v1.0.0) to publish the same artifact the local runbook
 # does: scripts/release.sh with PUBLISH=1 runs the full gate (make ci), builds a
 # universal, Developer ID-signed, notarized, stapled Pathem.app, wraps it in the
@@ -26,8 +31,7 @@ name: Release
 # a failing gate or an artifact that fails verification stops the job before upload.
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write

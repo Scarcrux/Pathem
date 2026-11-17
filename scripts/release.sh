@@ -14,7 +14,7 @@
 #
 # PUBLISH=1 fails closed. Before anything is built it requires every credential,
 # a real Sparkle public key, an authenticated gh, a clean tree whose HEAD is the
-# version tag, and an unpublished tag; then `make ci` must pass; then the built app
+# version tag, an unpublished tag, and a build number above every earlier v* tag's; then `make ci` must pass; then the built app
 # and DMG must pass scripts/verify-release.sh before anything is uploaded.
 # Criteria: docs/PUBLISH_GATE_TESTING.md.
 #
@@ -62,6 +62,22 @@ PUBLISHING=0
 TEAM_ID=""
 HEAD_SHA=""
 
+# Highest CFBundleVersion recorded in Packaging/Info.plist at any existing v* tag other
+# than this release's own tag. Local git only, no network. Prints "BUILD TAG" or nothing.
+previous_build() {
+	local t b best="" best_tag="" tmp
+	tmp="$(mktemp "${TMPDIR:-/tmp}/pathem-prevplist.XXXXXX")"
+	while IFS= read -r t; do
+		[[ -n "$t" && "$t" != "$TAG" ]] || continue
+		git -C "$ROOT" show "$t:Packaging/Info.plist" > "$tmp" 2>/dev/null || continue
+		b="$(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$tmp" 2>/dev/null || true)"
+		[[ "$b" =~ ^[0-9]+$ ]] || continue
+		if [[ -z "$best" || "$b" -gt "$best" ]]; then best="$b"; best_tag="$t"; fi
+	done < <(git -C "$ROOT" tag --list 'v*' 2>/dev/null)
+	rm -f "$tmp"
+	[[ -z "$best" ]] || echo "$best $best_tag"
+}
+
 # Every publish requirement is checked before anything is built, gated or uploaded,
 # and all failures are reported together.
 preflight_publish() {
@@ -102,6 +118,15 @@ preflight_publish() {
 	if [[ $gh_ready == 1 ]] && gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
 		problems+=("P7 release $TAG already exists on $REPO; bump the version in Info.plist")
 	fi
+	local prev prev_build prev_tag
+	prev="$(previous_build)"
+	if [[ -n "$prev" ]]; then
+		prev_build="${prev%% *}"
+		prev_tag="${prev#* }"
+		if [[ "$BUILD" =~ ^[0-9]+$ ]] && (( BUILD > prev_build )); then :; else
+			problems+=("P8 CFBundleVersion $BUILD must be strictly greater than $prev_build, the highest build at an earlier release tag ($prev_tag); bump it in Packaging/Info.plist")
+		fi
+	fi
 	if [[ ${#problems[@]} -gt 0 ]]; then
 		echo "error: refusing to publish:" >&2
 		local p
@@ -110,6 +135,13 @@ preflight_publish() {
 	fi
 	echo "    publish preflight passed (team $TEAM_ID, $TAG at ${HEAD_SHA:0:12})"
 }
+
+if [[ $PUBLISHING != 1 ]]; then
+	prev="$(previous_build)"
+	if [[ -n "$prev" ]] && ! { [[ "$BUILD" =~ ^[0-9]+$ ]] && (( BUILD > ${prev%% *} )); }; then
+		echo "warning: CFBundleVersion $BUILD is not greater than ${prev%% *} (at ${prev#* }); PUBLISH=1 would refuse (P8)" >&2
+	fi
+fi
 
 if [[ $PUBLISHING == 1 ]]; then
 	echo "==> Checking publish requirements"

@@ -280,15 +280,16 @@ the script.
 
 ### Releasing (and auto-update)
 
-`.github/workflows/release.yml` builds, signs, notarizes, generates a signed
-Sparkle appcast, and attaches everything to a GitHub Release on a `v*` tag. It
-needs repo secrets (documented at the top of that file): the Developer ID
-certificate and notary credentials, plus `SPARKLE_PRIVATE_KEY`.
+Releases are cut locally with `scripts/release.sh` (`PUBLISH=1` runs the
+preflight checks and the full gate, builds, signs, notarizes, generates the
+signed Sparkle appcast, and creates the GitHub Release). The GitHub Actions
+workflow `.github/workflows/release.yml` is not the release route: every run of
+it has failed, so it is manual-only and should not be relied on.
 
-One-time Sparkle setup: run Sparkle's `generate_keys` to create an EdDSA key
-pair, paste the public key into `Packaging/Info.plist` as `SUPublicEDKey`, and
-store the exported private key (`generate_keys -x private.key`) as the
-`SPARKLE_PRIVATE_KEY` secret. Until `SUPublicEDKey` is set, the updater stays
+One-time Sparkle setup: run `scripts/setup-sparkle-key.sh` (or Sparkle's
+`generate_keys`) to create an EdDSA key pair and paste the public key into
+`Packaging/Info.plist` as `SUPublicEDKey`; the private key stays in your login
+Keychain (or `SPARKLE_KEY_FILE`). Until `SUPublicEDKey` is set, the updater stays
 dormant (source and unsigned builds simply say updates aren't configured).
 
 This bundle is the prerequisite for the App Intents and Services surfaces. Full

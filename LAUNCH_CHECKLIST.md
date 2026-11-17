@@ -54,7 +54,7 @@ things a human has to look at.
       the embedded terminal, a torrent, and one remote backend (S3/WebDAV/SFTP/FTP).
 - [ ] Drag a file **out to Finder and back into Pathem twice** (the drag-strand
       regression path): the second drag must still work.
-- [ ] Switch the system language to one of the five non-English locales and spot
+- [ ] Switch the system language to one of the eleven non-English locales and spot
       check that the menus/sidebar/dialogs are translated (coverage is linted, but
       look for layout truncation).
 - [ ] Sparkle: with a prior version installed, confirm "Check for Updates"

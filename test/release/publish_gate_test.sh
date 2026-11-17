@@ -13,6 +13,7 @@ SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/pathem-publish-gate.XXXXXX")"
 trap 'rm -rf "${SCRATCH:?}"' EXIT
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$SRC/Packaging/Info.plist")"
+BUILD="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$SRC/Packaging/Info.plist")"
 GOOD_KEY="$(head -c 32 /dev/urandom | base64)"
 GOOD_ID="Developer ID Application: Test Org (ABCDE12345)"
 pass=0
@@ -54,11 +55,11 @@ make_root() {
 #   EXPECT gate:   preflight passes and the gate runs, then fails before the build
 #   EXPECT dryrun: no preflight, reaches the build
 # Every case fails if the fake gh recorded a release create or an upload.
-# Mutations: ROOT_KEY=, DIRTY=1, AHEAD=1, NO_GH=1, STUB=1; other KEY=VALUE pairs are env.
+# Mutations: ROOT_KEY=, DIRTY=1, AHEAD=1, NO_GH=1, STUB=1, PREV_BUILD=N (an earlier tag carrying build N); other KEY=VALUE pairs are env.
 run_case() {
 	local name="$1" expect="$2" detail="$3"
 	shift 3
-	local dir="$SCRATCH/$name" key="$GOOD_KEY" dirty=0 ahead=0 no_gh=0 stub=0
+	local dir="$SCRATCH/$name" key="$GOOD_KEY" dirty=0 ahead=0 no_gh=0 stub=0 prev=""
 	local envs=(PUBLISH=1 "DEVELOPER_ID=$GOOD_ID" NOTARY_PROFILE=test-profile)
 	local kv
 	for kv in "$@"; do
@@ -68,6 +69,7 @@ run_case() {
 			AHEAD=1) ahead=1 ;;
 			NO_GH=1) no_gh=1 ;;
 			STUB=1) stub=1 ;;
+			PREV_BUILD=*) prev="${kv#PREV_BUILD=}" ;;
 			UNSET=*) local drop="${kv#UNSET=}" kept=() e
 				for e in "${envs[@]}"; do [[ "$e" == "$drop="* ]] || kept+=("$e"); done
 				envs=(${kept[@]+"${kept[@]}"}) ;;
@@ -77,6 +79,13 @@ run_case() {
 	make_root "$dir/root" "$key"
 	if [[ $stub == 1 ]]; then
 		printf '#!/bin/bash\ngh release create v0 bogus.dmg\nexit 1\n' > "$dir/root/scripts/release.sh"
+	fi
+	if [[ -n "$prev" ]]; then
+		local pg=(git -C "$dir/root" -c user.name=Test -c user.email=test@example.invalid -c core.hooksPath=/dev/null -c commit.gpgsign=false)
+		/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $prev" "$dir/root/Packaging/Info.plist"
+		"${pg[@]}" commit -q -a --allow-empty -m "earlier release"
+		"${pg[@]}" tag v0.0.1
+		"${pg[@]}" checkout -q --detach "v$VERSION"
 	fi
 	[[ $dirty == 1 ]] && touch "$dir/root/untracked.txt"
 	[[ $ahead == 1 ]] && git -C "$dir/root" -c user.name=Test -c user.email=test@example.invalid \
@@ -133,6 +142,9 @@ check run_case p5-gh-unauth         refuse "P5"    FAKE_GH_AUTH=fail
 check run_case p6-untracked-file    refuse "P6"    DIRTY=1
 check run_case p6-head-past-tag     refuse "P6"    AHEAD=1
 check run_case p7-already-released  refuse "P7"    FAKE_GH_EXISTS=1
+check run_case p8-build-equal       refuse "P8"    "PREV_BUILD=$BUILD"
+check run_case p8-build-lower       refuse "P8"    "PREV_BUILD=$((BUILD + 5))"
+check run_case p8-build-higher-ok   gate   ""      "PREV_BUILD=$((BUILD - 1))"
 check run_case satisfied            gate   ""
 check run_case satisfied-key-file   gate   ""      "SPARKLE_KEY_FILE=$SRC/Packaging/Info.plist"
 check run_case dry-run-no-creds     dryrun ""      UNSET=PUBLISH UNSET=DEVELOPER_ID UNSET=NOTARY_PROFILE
