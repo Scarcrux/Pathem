@@ -9,6 +9,10 @@ project's root folder; this plugin reaches inside it.
   commandem pathem [project] --preview F  show file F in Pathem's viewer
   commandem pathem [project] --changed    reveal the most recently changed uncommitted
                                           file and list the rest (what an agent touched)
+
+This plugin only resolves the project and keeps paths inside it; the work is done
+by Pathem's own CLI (`pathem-cli <path>`, `pathem-cli changed <dir>`), which anyone
+can use without Commandem.
   commandem pathem ... --print            print the command instead of running it
 
 <project> is matched like Commandem does: exact name, unique prefix, or unique
@@ -79,35 +83,17 @@ def inside_project(root, path):
     return target
 
 
-def changed_files(root):
-    out = subprocess.run(
-        ["git", "-C", root, "status", "--porcelain", "-z", "--untracked-files=all"],
-        capture_output=True, text=True)
-    if out.returncode != 0:
-        fail(f"not a git repository: {root}")
-    paths, fields, i = [], out.stdout.split("\0"), 0
-    while i < len(fields):
-        entry = fields[i]
-        i += 1
-        if len(entry) < 4:
-            continue
-        status, name = entry[:2], entry[3:]
-        if "R" in status or "C" in status:
-            i += 1  # the rename's source path follows; the new name is `name`
-        full = os.path.join(root, name)
-        if os.path.exists(full):  # deleted files cannot be revealed
-            paths.append(full)
-    return sorted(paths, key=lambda p: os.path.getmtime(p), reverse=True)
-
-
-def run(verb, path, dry):
+def run(args, fallback_verb, path, dry):
+    """Delegate to pathem-cli (`args`); with no CLI, hand the pathem:// URL to Launch Services."""
     cli = os.environ.get("PATHEM_CLI") or DEFAULT_CLI
     # PATHEM_CLI=none forces the URL route (tests, or a Pathem without its CLI).
     if cli != "none" and (os.path.exists(cli) or os.environ.get("PATHEM_CLI")):
-        command = [cli, verb, path]
-    else:  # no bundled CLI: hand the documented pathem:// URL to Launch Services
+        command = [cli, *args]
+    elif fallback_verb is None:
+        fail("--changed needs Pathem's command-line tool (pathem-cli); install or update Pathem")
+    else:
         from urllib.parse import quote
-        command = ["open", f"pathem://{verb}?path={quote(path, safe='/')}"]
+        command = ["open", f"pathem://{fallback_verb}?path={quote(path, safe='/')}"]
     if dry:
         print(shlex.join(command))
         return 0
@@ -146,19 +132,15 @@ def main(argv):
     if mode == "--changed":
         if path:
             fail("--changed takes no path")
-        changed = changed_files(root)
-        if not changed:
-            print(f"{name}: no uncommitted changes")
-            return 0
-        for other in changed[1:]:
-            print(os.path.relpath(other, root))
-        return run("reveal", changed[0], dry)
+        # The CLI reveals the newest uncommitted change and lists the rest.
+        return run(["changed", root], None, root, dry)
     target = inside_project(root, path) if path else os.path.realpath(root)
     if mode == "--preview":
         if not path or os.path.isdir(target):
             fail("--preview needs a file")
-        return run("preview", target, dry)
-    return run("open" if os.path.isdir(target) else "reveal", target, dry)
+        return run(["preview", target], "preview", target, dry)
+    # The CLI opens a folder or reveals a file; the fallback URL needs that choice made here.
+    return run([target], "open" if os.path.isdir(target) else "reveal", target, dry)
 
 
 if __name__ == "__main__":

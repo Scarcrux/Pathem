@@ -1471,7 +1471,7 @@
             "id": "cli",
             "title": "Use Pathem from the command line",
             "category": "personalize",
-            "description": "Install the bundled command-line handoff and use open, reveal, or preview with an existing path.",
+            "description": "Install the bundled command-line handoff and use open, reveal, preview, or changed with an existing path.",
             "keywords": [
                 "CLI",
                 "editor",
@@ -1479,14 +1479,22 @@
                 "pathem reveal",
                 "pathem open",
                 "pathem preview",
+                "pathem changed",
                 "PATH",
                 "integration"
             ],
             "sources": [
                 {
+                    "path": "Sources/PathemEngine/PathemCLI.swift",
+                    "needles": [
+                        "usage: pathem [--print] <path>",
+                        "changed [dir]",
+                        "must exist"
+                    ]
+                },
+                {
                     "path": "Sources/pathem-cli/main.swift",
                     "needles": [
-                        "usage: pathem <open|reveal|preview> <path>",
                         "fileExists(atPath",
                         "currentDirectoryPath"
                     ]
@@ -1521,9 +1529,9 @@
                     "id": "commands",
                     "title": "Choose the correct handoff",
                     "paragraphs": [
-                        "Open navigates into a directory, reveal selects an item in its parent folder, and preview opens the read-only viewer. Each command takes one existing path; relative paths are resolved from the shell's current directory."
+                        "Open navigates into a directory, reveal selects an item in its parent folder, and preview opens the read-only viewer. Each takes one existing path; relative paths are resolved from the shell's current directory. A bare pathem followed by a path needs no verb: it opens a folder or reveals a file. pathem changed [dir] reveals the newest uncommitted change in the git repository containing dir (default: the current directory) and prints the other changed paths, relative to the repository root, one per line. Add --print to any command to print the pathem:// URL instead of opening it, and run pathem --help for the usage text."
                     ],
-                    "code": "pathem open \"$HOME/Downloads\"\npathem reveal \"$HOME/Downloads/example.txt\"\npathem preview \"$HOME/Downloads/example.txt\"",
+                    "code": "pathem open \"$HOME/Downloads\"\npathem reveal \"$HOME/Downloads/example.txt\"\npathem preview \"$HOME/Downloads/example.txt\"\npathem \"$HOME/Downloads\"\npathem changed ~/Code/project",
                     "steps": [
                         "Replace the example filename with a harmless file that actually exists. Quote paths containing spaces.",
                         "Use reveal when your editor should select a file in its folder rather than merely open its parent directory.",
