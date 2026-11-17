@@ -3,6 +3,9 @@
 # hand-written page and one inline <script> on index.html, each pinned by SHA-256.
 # There are no inline style attributes, event handlers, data: URIs or external hosts.
 # The application/ld+json block is data, not script, so script-src does not govern it.
+# Cloudflare Web Analytics (owner decision 2026-11-17): Cloudflare injects its beacon from
+# static.cloudflareinsights.com, which reports to cloudflareinsights.com; both are allowed below
+# and disclosed on /privacy/.
 # If the inline <style> in index.html, 404.html or privacy/index.html, or the inline <script>
 # in index.html, is edited, recompute its hash (base64 of the SHA-256 of the exact text
 # between the tags) and update it here, or the browser will block it.
@@ -12,7 +15,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   X-Frame-Options: DENY
-  Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-SEmD6wRoM/2nyPDoUWA95DYT5PhPbLMauGjVhsmhW78='; style-src 'self' 'sha256-eKp4wlJKp4kKTYPf204hIBtz2vwRmx+jNlcj7FNGhvw=' 'sha256-NuAPmvPYAW9vidVrof7LhRrQuLTp4PE9al6JTAzmX4k=' 'sha256-VGftciyeWUPwZPJ76VsIqNeGcsYXlrRuSNncqTSNqHk='; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self' https://static.cloudflareinsights.com 'sha256-SEmD6wRoM/2nyPDoUWA95DYT5PhPbLMauGjVhsmhW78='; style-src 'self' 'sha256-eKp4wlJKp4kKTYPf204hIBtz2vwRmx+jNlcj7FNGhvw=' 'sha256-NuAPmvPYAW9vidVrof7LhRrQuLTp4PE9al6JTAzmX4k=' 'sha256-VGftciyeWUPwZPJ76VsIqNeGcsYXlrRuSNncqTSNqHk='; img-src 'self'; media-src 'self'; font-src 'self'; connect-src 'self' https://cloudflareinsights.com; manifest-src 'self'; form-action 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'
 
 /assets/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
