@@ -15,7 +15,7 @@ SOCIAL_IMAGE = f"{BASE}/assets/social-card.png"
 # Hand-written pages are not generated, so their sitemap dates are kept here. Bump the
 # date when the page changes (git log -1 --format=%cs -- site/<file>). The guide pages use
 # the larger of the content date and TEMPLATE_UPDATED, which is bumped when the shell changes.
-STATIC_PAGES = {"/": "2026-11-17", "/privacy.html": "2026-11-17"}
+STATIC_PAGES = {"/": "2026-11-17", "/privacy/": "2026-11-17"}
 TEMPLATE_UPDATED = "2026-11-17"
 
 
@@ -112,7 +112,7 @@ def shell(data, title, description, path, content, active=None):
 <main id="main-content" tabindex="-1">{content}</main>
 <footer><p>Pathem user guides · English UI · Updated {html.escape(data["updated"])}</p>
 <p>Shortcuts are defaults and may differ if customized. Features can depend on your build, provider, hardware, and macOS version.</p>
-<a href="/docs/">All guides</a> · <a href="/">Back to Pathem</a> · <a href="/privacy.html">Privacy</a> · <a href="mailto:security@pathem.app">Security contact</a></footer></div></div>
+<a href="/docs/">All guides</a> · <a href="/">Back to Pathem</a> · <a href="/privacy/">Privacy</a> · <a href="mailto:security@pathem.app">Security contact</a></footer></div></div>
 </body></html>
 '''
 
