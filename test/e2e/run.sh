@@ -254,8 +254,11 @@ if [[ $PACKAGED == 1 ]]; then
   assert "torrent daemon bundled" test -x "$APP/Contents/MacOS/pathem-torrentd"
   assert "AFC helper bundled"     test -x "$APP/Contents/MacOS/pathem-afc"
   assert "CLI bundled"            test -x "$APP/Contents/MacOS/pathem-cli"
+  # Every language the app declares (CFBundleLocalizations) must ship a catalog; the count
+  # is read from the plist so adding a language cannot leave this check stale.
   langs=$(ls -d "$APP/Contents/Resources/Pathem_Pathem.bundle/"*.lproj 2>/dev/null | wc -l | tr -d ' ')
-  assert "all 6 languages bundled ($langs)" test "$langs" -eq 6
+  declared=$(/usr/libexec/PlistBuddy -c "Print :CFBundleLocalizations" "$APP/Contents/Info.plist" 2>/dev/null | grep -c '^    ')
+  assert "all $declared declared languages bundled ($langs)" test "$declared" -gt 0 -a "$langs" -eq "$declared"
   assert "bundle signature verifies" codesign --verify --deep --strict "$APP"
   assert "hardened runtime enabled" hardened_runtime_enabled "$BIN"
   assert "Sparkle update metadata well-formed" sparkle_metadata_well_formed "$APP"

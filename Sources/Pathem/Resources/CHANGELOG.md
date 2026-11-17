@@ -26,6 +26,7 @@ is bundled into the app and read by the Release Notes window.
 - Closing a window, quitting or leaving a PDF with unsaved markup asks to save, with an option to save automatically instead. In a name conflict, Return keeps both files.
 - The Photos browser can now ask for access to your library; before, macOS refused it without asking. About shows the build's source commit and the open-source licenses Pathem includes.
 - Fixed a crash on some Japanese and Chinese alerts.
+- Leaving an edited archive now offers Cancel as well as Save and Discard: Cancel keeps your edits unsaved, and reopening the archive picks them up again.
 - Pathem now has 12 interface languages. English is the source; the other 11 (French, German, Spanish, Japanese, Simplified and Traditional Chinese, Italian, Brazilian Portuguese, Korean, Russian, Dutch) are AI-drafted and have not been reviewed by native speakers.
 
 ## 0.8.0 - 2026-07-20
