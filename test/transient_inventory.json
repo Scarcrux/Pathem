@@ -511,14 +511,14 @@
       "reason": "Localized default magnet-app failure report. Fixture: permission error with 255-character component. Do not change magnet or torrent handler.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+Archives.swift:245:13:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+Archives.swift:297:13:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+Archives.swift:240:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+Archives.swift:292:21:NSAlert"
       ],
       "reason": "Caller title and optional error description, standard OK only. Fixture: archive path with 255-character filename and permission error. No archive operation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -1599,7 +1599,7 @@
       "reason": "Plain rename-result report. Runtime fixture: two six-digit counts plus eight failure descriptions with 255-character names.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+Archives.swift:209:13:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+Archives.swift:212:13:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,

@@ -205,19 +205,71 @@ extension BrowserViewController {
                 "archive.saveBackBody",
                 "You changed files inside this archive. Repack them into it?")
             alert.addButton(withTitle: L("archive.saveBackSave", "Save to Archive"))
+            // Cancel sits next to the default, as in the standard save prompt, and owns Escape
+            // explicitly rather than relying on NSAlert recognizing a localized title.
+            alert.addButton(withTitle: L("common.cancel", "Cancel")).keyEquivalent = "\u{1b}"
             alert.addButton(withTitle: L("archive.saveBackDiscard", "Discard"))
             alert.beginSheetModal(for: window) { [weak self] response in
-                guard response == .alertFirstButtonReturn, let self else { return }
-                Task { @MainActor in
-                    do {
-                        try await Archiver.repack(from: mountRoot, into: archive)
-                        self.reloadBothSides()
-                    } catch {
-                        self.reportArchiveError(
-                            L("archive.saveBackFailed", "Couldn’t save changes to the archive"),
-                            error)
-                    }
+                guard let self else { return }
+                switch response {
+                case .alertFirstButtonReturn:
+                    self.repackArchive(archive, from: mountRoot)
+                case .alertSecondButtonReturn:
+                    // Cancel writes nothing and loses nothing: the edited copy stays parked
+                    // with its original snapshot; reopening this archive resumes it, and
+                    // leaving it again asks again.
+                    self.parkArchiveSession(archive, mountRoot: mountRoot, original: original)
+                default: break  // Discard: the archive keeps its original contents
                 }
+            }
+        }
+    }
+
+    /// Edited archive copies the user kept with Cancel on the save-back prompt, keyed by the
+    /// archive. Each holds the snapshot taken when the archive was first extracted, so the
+    /// edits still count as changes when the user comes back and leaves again.
+    private struct ParkedArchive {
+        let mountRoot: URL
+        let snapshot: [String: String]
+        let archiveModified: Date?
+    }
+    private static var parkedArchives: [URL: ParkedArchive] = [:]
+
+    private static func modificationDate(of url: URL) -> Date? {
+        (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?
+            .contentModificationDate
+    }
+
+    func parkArchiveSession(_ archive: URL, mountRoot: URL, original: [String: String]) {
+        Self.parkedArchives[archive.standardizedFileURL] = ParkedArchive(
+            mountRoot: mountRoot, snapshot: original,
+            archiveModified: Self.modificationDate(of: archive))
+    }
+
+    /// Open an archive as a folder. If the user cancelled the save-back prompt for it, resume
+    /// that edited copy instead of extracting a fresh one, unless the archive changed on disk
+    /// since (then the parked copy is stale and repacking it would overwrite newer contents).
+    func openArchive(_ archive: URL, in pane: PaneController, origin: URL) {
+        if let parked = Self.parkedArchives.removeValue(forKey: archive.standardizedFileURL),
+            FileManager.default.fileExists(atPath: parked.mountRoot.path),
+            parked.archiveModified == Self.modificationDate(of: archive)
+        {
+            pane.mountArchive(
+                archive: archive, mountRoot: parked.mountRoot, origin: origin,
+                prior: parked.snapshot)
+            return
+        }
+        browseArchive(archive, in: pane, origin: origin)
+    }
+
+    func repackArchive(_ archive: URL, from mountRoot: URL) {
+        Task { @MainActor in
+            do {
+                try await Archiver.repack(from: mountRoot, into: archive)
+                self.reloadBothSides()
+            } catch {
+                self.reportArchiveError(
+                    L("archive.saveBackFailed", "Couldn’t save changes to the archive"), error)
             }
         }
     }

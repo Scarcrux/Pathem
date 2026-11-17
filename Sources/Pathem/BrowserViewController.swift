@@ -480,7 +480,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
                 pane.onDragSessionHandler = { [weak self] event in self?.handleDragSession(event) }
                 pane.onBrowseArchive = { [weak self, weak pane] archive in
                     guard let self, let pane else { return }
-                    self.browseArchive(archive, in: pane, origin: pane.currentURL)
+                    self.openArchive(archive, in: pane, origin: pane.currentURL)
                 }
                 pane.onArchiveClosed = { [weak self] archive, mountRoot, snapshot in
                     self?.writeBackArchiveIfChanged(

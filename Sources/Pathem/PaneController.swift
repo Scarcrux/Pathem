@@ -1498,12 +1498,12 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
     }
 
-    /// Enter an extracted archive: navigate the pane into `mountRoot`, remembering the
-    /// archive and the folder to return to when going up from the root.
-    func mountArchive(archive: URL, mountRoot: URL, origin: URL) {
+    /// Enter an extracted archive: navigate into `mountRoot`, remembering the archive, the folder
+    /// to return to, and `prior` (a resumed edited copy's original snapshot) for edit detection.
+    func mountArchive(archive: URL, mountRoot: URL, origin: URL, prior: [String: String]? = nil) {
         archiveSession = ArchiveSession(
             archive: archive, mountRoot: mountRoot, origin: origin,
-            snapshot: Archiver.snapshot(of: mountRoot))
+            snapshot: prior ?? Archiver.snapshot(of: mountRoot))
         nav.go(to: mountRoot)
         enterDirectory()
         containerView.window?.makeFirstResponder(content.keyView)
