@@ -1926,6 +1926,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Reshoot (owner request) exposed and fixed two app bugs (3a83159): torrent progress bars never drew on screen (wantsUpdateLayer true with only draw(_:)), and the Network view kept the previous folder's tab title, window title and sidebar highlight; demo mode also listed a real network mount. Screenshots hero, list, torrent, remote and the social card redone at 2x (b5546ff). Six GUI suites pass. Notarization now fails with HTTP 401 (notarytool history too): the saved pathem-notary credentials are rejected; owner must re-store them before the next install."
     at = "2026-11-17T18:15:20Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Website deployed twice (owner approved): privacy page, security headers, new copy and screenshots, then 18df6c3 allowing and disclosing Cloudflare Web Analytics (owner chose to keep it on; Cloudflare injects the beacon on pathem.app, which the first CSP blocked). Live check in headless Chrome: home, privacy and two guide pages load with 0 CSP violations and 0 script errors (one search-guide violation was the old header still cached and did not recur in 3 reruns); the beacon loads. Cloudflare email obfuscation rewrites the mailto link; works under the CSP."
+    at = "2026-11-17T18:38:58Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
