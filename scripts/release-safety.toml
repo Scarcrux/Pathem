@@ -7,6 +7,11 @@ useDefault = true
 id = "personal-email-address"
 description = "Personal email provider address; requires private review"
 regex = '''(?i)[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:gmail|yahoo|outlook|hotmail|icloud|me|aol|protonmail|proton)\.(?:com|net)\b'''
+# Third-party license texts must be reproduced as published, and they include their
+# authors' own contact addresses (for example the Ed25519 notice inside Sparkle's license).
+# These are not Pathem personal data. Only this one generated file is exempt.
+[[rules.allowlists]]
+paths = ['''(^|/)THIRD_PARTY_NOTICES\.md$''']
 
 [[rules]]
 id = "absolute-user-path"

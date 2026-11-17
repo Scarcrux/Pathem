@@ -109,8 +109,9 @@ resourceBundle="$frameworkBinDir/${APP_NAME}_${APP_NAME}.bundle"
 [[ -d "$resourceBundle" ]] && cp -R "$resourceBundle" "$APP/Contents/Resources/"
 cp "$ROOT/Packaging/Info.plist" "$APP/Contents/Info.plist"
 # Record the source commit so two local builds with the same CFBundleVersion can be told apart
-# (About shows it). CFBundleVersion itself is left alone: Sparkle orders releases by it, and
-# scripts/release.sh bumps it in Packaging/Info.plist before each release.
+# (About shows it). CFBundleVersion itself is left alone: Sparkle orders releases by it. It is
+# bumped by hand in Packaging/Info.plist before each release, and release.sh's preflight (P8)
+# refuses a build number that is not above the last tagged release's.
 commit="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
 if [[ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ]]; then
 	commit="$commit-dirty"
@@ -127,6 +128,17 @@ if [[ -n "${DEVELOPER_ID:-}" ]] && grep -q "REPLACE_WITH_SPARKLE_PUBLIC_KEY" "$A
 	echo "       distribution build (see scripts/setup-sparkle-key.sh)." >&2
 	exit 1
 fi
+# Third-party notices (MIT terms require them in every copy). Credits.html is what the
+# standard About window shows; the plain file is the canonical text.
+cp "$ROOT/THIRD_PARTY_NOTICES.md" "$APP/Contents/Resources/THIRD_PARTY_NOTICES.md"
+python3 - "$ROOT/THIRD_PARTY_NOTICES.md" "$APP/Contents/Resources/Credits.html" <<'PY'
+import html, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+body = html.escape(text)
+open(sys.argv[2], "w", encoding="utf-8").write(
+    '<html><body style="font: 11px -apple-system, sans-serif"><pre style="white-space: pre-wrap; '
+    'font: 10px Menlo, monospace">' + body + "</pre></body></html>\n")
+PY
 [[ -f "$ROOT/Packaging/$APP_NAME.icns" ]] \
   && cp "$ROOT/Packaging/$APP_NAME.icns" "$APP/Contents/Resources/$APP_NAME.icns"
 
@@ -165,7 +177,8 @@ resourceBundleInApp="$APP/Contents/Resources/${APP_NAME}_${APP_NAME}.bundle"
 for helper in "${helperNames[@]}"; do
 	[[ -f "$APP/Contents/MacOS/$helper" ]] && codesign "${signargs[@]}" "$APP/Contents/MacOS/$helper"
 done
-codesign "${signargs[@]}" "$APP"
+# Only the app itself carries entitlements (Packaging/Pathem.entitlements explains each one).
+codesign "${signargs[@]}" --entitlements "$ROOT/Packaging/$APP_NAME.entitlements" "$APP"
 # --deep here is for VERIFYING (a thorough recursive check, which is correct and not
 # deprecated); it is only discouraged for SIGNING, which we do inside-out above.
 codesign --verify --strict --deep --verbose=2 "$APP"

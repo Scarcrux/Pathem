@@ -6,7 +6,8 @@
 #
 #   scripts/verify-release.sh app <Pathem.app> <TEAMID>
 #       A1 strict signature, A2 Developer ID leaf + team, A3 hardened runtime,
-#       A4 stapled ticket, A5 Gatekeeper, A6 universal executables
+#       A4 stapled ticket, A5 Gatekeeper, A6 universal executables,
+#       A10 the Photos entitlement is signed in, A11 third-party notices are bundled
 #   scripts/verify-release.sh signature <Pathem.app> <update.dmg> <base64 edSignature>
 #       A7 the DMG's EdDSA signature verifies against the app's own SUPublicEDKey
 #   scripts/verify-release.sh dmg <update.dmg> <TEAMID>
@@ -85,6 +86,20 @@ verify_app() {
 		pass "A6 all $found executables are arm64+x86_64"
 	else
 		fail "A6 not universal:${bad:- no executables found}"
+	fi
+	# Without this entitlement the hardened runtime denies PhotoKit with no prompt.
+	if codesign -d --entitlements - --xml "$app" 2>/dev/null \
+		| grep -q "com.apple.security.personal-information.photos-library"; then
+		pass "A10 Photos entitlement is signed in"
+	else
+		fail "A10 Photos entitlement missing (the Photos browser would be denied)"
+	fi
+	local notices="$app/Contents/Resources/THIRD_PARTY_NOTICES.md"
+	if [[ -f "$notices" ]] && grep -q "SwiftTerm" "$notices" && grep -q "Sparkle" "$notices" \
+		&& [[ -f "$app/Contents/Resources/Credits.html" ]]; then
+		pass "A11 third-party notices bundled (SwiftTerm, Sparkle, About credits)"
+	else
+		fail "A11 third-party notices missing from the app"
 	fi
 }
 

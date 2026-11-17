@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hardened Runtime resource-access entitlements for Pathem.app (not sandboxed).
+     photos-library: without it the hardened runtime denies PhotoKit outright, so the
+     Photos browser could never ask for access (verified 2026-11-17 with a signed probe:
+     status went from not determined to denied in 0.01 s with no prompt). Add an
+     entitlement here only with the same kind of evidence. -->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.personal-information.photos-library</key>
+	<true/>
+</dict>
+</plist>
