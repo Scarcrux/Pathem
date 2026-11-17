@@ -1878,6 +1878,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Finder F3 (Services) reviewed headless, still unlanded in claude-2 (6d42438 + c6e9183, rebased on 1dea169): review found Services offered on a remote pane where no file URLs exist (fixed via servicesAvailable bound to allowsLocalMetadata) and a mixed pasteboard write (fixed). Acceptance still open: Services seen drawn, Shortcuts check, Finder harness rerun; all need GUI, which the owner has paused."
     at = "2026-11-17T02:58:03Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 Owner decision: allow-list the 59 release-safety history findings, no rewrite. Each reviewed (placeholders, public handle, one public FTP demo password); scripts/release-safety-history-baseline.txt lists their fingerprints with the review notes; only history findings can be baselined. make release-safety now PASS. Controls: unlisted history finding fails, current-tree finding cannot be hidden, malformed baseline fails closed."
+    at = "2026-11-17T03:38:18Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
