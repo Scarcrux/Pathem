@@ -1918,6 +1918,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Closed the gaps left by 36843a7 (owner request), bd56491: column view outer area and scroll bar tracks themed (ThemedScroller, column scrollers autohide); the terminal's System theme follows the Pathem theme, named terminal themes untouched; tree/icon/gallery verified themed at launch by capture. Correction: the stale-build watcher uses executable mtime, not CFBundleVersion, so build 24 never affected it; package.sh now records PathemSourceCommit and About shows build plus commit. Six GUI suites pass. No unit test for the terminal theme derivation (no test target)."
     at = "2026-11-17T13:19:19Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Release and website audit fixes (owner request): Photos entitlement, convicted by a signed hardened-runtime probe, plus SwiftTerm and Sparkle notices with verify-release A10 and A11 (2a8d139); release preflight P8 build-number check, Sparkle pinned 2.9.3, release.yml manual-only, stale docs corrected (9b46f0a); privacy page at /privacy/, security headers with a hash-only CSP, truthful copy and captions (e234049, 3bd44ac); Codex View Options fit fix (ed99fed); DiskImageTests now reports hdiutil exit and stderr."
+    at = "2026-11-17T17:52:46Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
