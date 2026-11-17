@@ -927,7 +927,9 @@ enum PathemApp {
                     return
                 }
                 browser.debugTorrentLayout(
-                    openDetail: detail, seedDemo: seedDemo, pngPath: "/tmp/torrent-layout.png")
+                    openDetail: detail, seedDemo: seedDemo,
+                    magnetStates: ProcessInfo.processInfo.environment["META"] != nil,
+                    pngPath: "/tmp/torrent-layout.png")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { exit(0) }
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: tick)

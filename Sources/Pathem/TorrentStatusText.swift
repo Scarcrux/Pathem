@@ -14,10 +14,10 @@ enum TorrentStatusText {
         guard let search = status.metadataSearch else { return nil }
         switch search.phase {
         case .fetchingSource:
-            return L("torrents.meta.source", "Downloading the torrent file from its source…")
+            return L("torrents.meta.source", "Fetching the torrent file…")
         case .findingPeers:
             return String(
-                format: L("torrents.meta.finding", "Looking for peers (try %d of %d)…"),
+                format: L("torrents.meta.finding", "Finding peers (try %d of %d)…"),
                 search.round, search.rounds)
         case .askingPeers:
             return String(
@@ -27,18 +27,18 @@ enum TorrentStatusText {
             return search.peersFound == 0
                 ? String(
                     format: L(
-                        "torrents.meta.retryNone", "No peers found yet (try %d of %d). Retrying…"),
+                        "torrents.meta.retryNone", "No peers yet. Retrying (%d of %d)…"),
                     search.round, search.rounds)
                 : String(
                     format: L(
                         "torrents.meta.retrySome",
-                        "%d peers found, none sent the file list (try %d of %d). Retrying…"),
+                        "%d peers, no file list. Retrying (%d of %d)…"),
                     search.peersFound, search.round, search.rounds)
         case .gaveUp:
             return String(
                 format: L(
                     "torrents.meta.gaveUp",
-                    "No peer sent the file list after %d tries. Resume to try again."),
+                    "No file list after %d tries. Resume to retry."),
                 search.rounds)
         }
     }

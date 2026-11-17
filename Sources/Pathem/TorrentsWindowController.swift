@@ -427,6 +427,9 @@ final class TorrentsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 return c
             }()
         cell.textField?.stringValue = value(for: status, column: tableColumn.identifier.rawValue)
+        // A long state (a magnet's search) can be truncated by a narrow column; hovering shows all.
+        cell.textField?.toolTip =
+            tableColumn.identifier.rawValue == "state" ? cell.textField?.stringValue : nil
         cell.textField?.font =
             tableColumn.identifier.rawValue == "name"
             ? .systemFont(ofSize: 12) : .monospacedDigitSystemFont(ofSize: 11, weight: .regular)

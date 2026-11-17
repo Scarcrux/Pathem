@@ -1712,12 +1712,12 @@
 "torrents.remove.keep" = "Remove, Keep Files";
 "torrents.resume" = "Resume";
 "torrents.state.checking" = "Checking";
-"torrents.meta.source" = "Downloading the torrent file from its source…";
-"torrents.meta.finding" = "Looking for peers (try %d of %d)…";
+"torrents.meta.source" = "Fetching the torrent file…";
+"torrents.meta.finding" = "Finding peers (try %d of %d)…";
 "torrents.meta.asking" = "Asking %d peers for the file list…";
-"torrents.meta.retryNone" = "No peers found yet (try %d of %d). Retrying…";
-"torrents.meta.retrySome" = "%d peers found, none sent the file list (try %d of %d). Retrying…";
-"torrents.meta.gaveUp" = "No peer sent the file list after %d tries. Resume to try again.";
+"torrents.meta.retryNone" = "No peers yet. Retrying (%d of %d)…";
+"torrents.meta.retrySome" = "%d peers, no file list. Retrying (%d of %d)…";
+"torrents.meta.gaveUp" = "No file list after %d tries. Resume to retry.";
 "torrents.state.downloading" = "Downloading";
 "torrents.state.error" = "Error";
 "torrents.state.fetchingMeta" = "Fetching details…";

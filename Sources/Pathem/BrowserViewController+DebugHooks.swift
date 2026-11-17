@@ -53,7 +53,8 @@ extension BrowserViewController {
     /// (PATHEM_E2E). Ends any in-progress inline edit first so it doesn't fight the rename.
     func debugCommitRename(_ name: String, to newName: String) {
         view.window?.makeFirstResponder(nil)  // close any inline editor from a just-created item
-        guard let pane = activePane, let entry = pane.entries.first(where: { $0.name == name }) else { return }
+        guard let pane = activePane, let entry = pane.entries.first(where: { $0.name == name })
+        else { return }
         commitLocalRename(entry, to: newName, pane: pane)
     }
 
@@ -74,7 +75,9 @@ extension BrowserViewController {
 
     /// Select row N of column M in the active column view (PATHEM_VIEW_SHOT staging).
     /// Selecting a file in the last column surfaces the preview column.
-    func debugDrillActive(row: Int, column: Int = 0) { activePane?.debugColumnDrill(row: row, column: column) }
+    func debugDrillActive(row: Int, column: Int = 0) {
+        activePane?.debugColumnDrill(row: row, column: column)
+    }
 
     /// Hide the floating quick-actions bar so staged captures aren't photobombed by it.
     func debugHideQuickBar() { quickBar.isHidden = true }
@@ -103,7 +106,9 @@ extension BrowserViewController {
     func debugRender(to path: String) {
         view.layoutSubtreeIfNeeded()
         let bounds = view.bounds
-        guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else {
+            return
+        }
         view.cacheDisplay(in: bounds, to: rep)
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: URL(fileURLWithPath: path))
@@ -118,7 +123,9 @@ extension BrowserViewController {
         guard let window = view.window, let frame = window.contentView?.superview else { return }
         frame.layoutSubtreeIfNeeded()
         let bounds = frame.bounds
-        guard bounds.width > 10, let rep = frame.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        guard bounds.width > 10, let rep = frame.bitmapImageRepForCachingDisplay(in: bounds) else {
+            return
+        }
         frame.cacheDisplay(in: bounds, to: rep)
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: URL(fileURLWithPath: path))
@@ -159,7 +166,8 @@ extension BrowserViewController {
     /// Set a folder background on the active folder and apply it (PATHEM_FOLDERBG_SHOT).
     func debugSetFolderBackground(colorHex: String, imagePath: String) {
         guard let pane = activePane else { return }
-        folderBackgrounds.set(FolderBackground(colorHex: colorHex, imagePath: imagePath), for: pane.currentURL.path)
+        folderBackgrounds.set(
+            FolderBackground(colorHex: colorHex, imagePath: imagePath), for: pane.currentURL.path)
         pane.applyFolderBackground()
         view.layoutSubtreeIfNeeded()
     }
@@ -197,8 +205,10 @@ extension BrowserViewController {
     /// Seed grouped connections for a render, without persisting (PATHEM_SITE_GROUPS).
     func debugSeedGroupedConnections() {
         let conns = [
-            RemoteConnection(name: "Web 1", proto: .sftp, host: "web1.example.com", group: "Production"),
-            RemoteConnection(name: "Web 2", proto: .sftp, host: "web2.example.com", group: "Production"),
+            RemoteConnection(
+                name: "Web 1", proto: .sftp, host: "web1.example.com", group: "Production"),
+            RemoteConnection(
+                name: "Web 2", proto: .sftp, host: "web2.example.com", group: "Production"),
             RemoteConnection(name: "Backups", proto: .s3, host: "s3.example.com", group: "Storage"),
             RemoteConnection(name: "Scratch", proto: .ftp, host: "ftp.example.com"),
         ]
@@ -209,11 +219,21 @@ extension BrowserViewController {
     /// Seed sample color rules for a render, without persisting (PATHEM_COLOR_RULES).
     func debugSeedColorRules() {
         let rules = ColorRules(rules: [
-            ColorRule(name: "Folders", field: .kind, op: .isAnyOf, value: "folder", colorHex: "#95D5B2", bold: true),
-            ColorRule(name: "Images", field: .ext, op: .isAnyOf, value: "png, jpg, jpeg, gif, heic", colorHex: "#8ECAE6"),
-            ColorRule(name: "Docs", field: .ext, op: .isAnyOf, value: "pdf, doc, docx, txt, md", colorHex: "#FFB4A2"),
-            ColorRule(name: "Drafts", field: .name, op: .contains, value: "draft", colorHex: "#FFB703", italic: true),
-            ColorRule(name: "Big files", field: .size, op: .greaterThan, value: "50", colorHex: "#E76F51", bold: true),
+            ColorRule(
+                name: "Folders", field: .kind, op: .isAnyOf, value: "folder", colorHex: "#95D5B2",
+                bold: true),
+            ColorRule(
+                name: "Images", field: .ext, op: .isAnyOf, value: "png, jpg, jpeg, gif, heic",
+                colorHex: "#8ECAE6"),
+            ColorRule(
+                name: "Docs", field: .ext, op: .isAnyOf, value: "pdf, doc, docx, txt, md",
+                colorHex: "#FFB4A2"),
+            ColorRule(
+                name: "Drafts", field: .name, op: .contains, value: "draft", colorHex: "#FFB703",
+                italic: true),
+            ColorRule(
+                name: "Big files", field: .size, op: .greaterThan, value: "50", colorHex: "#E76F51",
+                bold: true),
         ])
         leftTabs.activePane?.setColorRules(rules)
         rightTabs.activePane?.setColorRules(rules)
@@ -228,9 +248,13 @@ extension BrowserViewController {
     /// Open the torrents drawer (and, if `openDetail`, the detail overlay for a fake torrent),
     /// then dump the frames of every view in the stack and render a PNG. Diagnoses the
     /// "full black single pane" report (PATHEM_TORRENT_LAYOUT_SHOT).
-    func debugTorrentLayout(openDetail: Bool, seedDemo: Bool = false, pngPath: String) {
+    func debugTorrentLayout(
+        openDetail: Bool, seedDemo: Bool = false, magnetStates: Bool = false, pngPath: String
+    ) {
         showTorrentsDrawer()
-        if seedDemo { torrentDrawer.debugSeedDemoTorrents() }  // populate the list for a real shot
+        if seedDemo || magnetStates {
+            torrentDrawer.debugSeedDemoTorrents(magnetStates: magnetStates)
+        }  // populate the list for a real shot
         view.layoutSubtreeIfNeeded()
         if openDetail {
             let fake = TorrentSession.Status(
@@ -241,9 +265,14 @@ extension BrowserViewController {
         }
         view.layoutSubtreeIfNeeded()
         func f(_ label: String, _ v: NSView?) {
-            guard let v else { print("  \(label): nil"); return }
+            guard let v else {
+                print("  \(label): nil")
+                return
+            }
             let fr = v.frame
-            print("  \(label): x=\(Int(fr.minX)) y=\(Int(fr.minY)) w=\(Int(fr.width)) h=\(Int(fr.height)) hidden=\(v.isHidden)")
+            print(
+                "  \(label): x=\(Int(fr.minX)) y=\(Int(fr.minY)) w=\(Int(fr.width)) h=\(Int(fr.height)) hidden=\(v.isHidden)"
+            )
         }
         print("=== TORRENT LAYOUT (detail=\(openDetail)) ===")
         f("vSplit", vSplit)
@@ -309,12 +338,15 @@ extension BrowserViewController {
     /// Render the sidebar to a PNG for headless layout inspection (PATHEM_SIDEBAR_SHOT). Set
     /// PATHEM_SIDEBAR_SELECT=<row> to highlight a row first, to inspect the selection style.
     func debugRenderSidebar(to path: String) {
-        if let sel = ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SELECT"], let r = Int(sel) {
+        if let sel = ProcessInfo.processInfo.environment["PATHEM_SIDEBAR_SELECT"], let r = Int(sel)
+        {
             sidebar.debugSelectRow(r)
         }
         let view = sidebar.containerView
         let bounds = view.bounds
-        guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return }
+        guard bounds.width > 10, let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else {
+            return
+        }
         view.cacheDisplay(in: bounds, to: rep)
         if let data = rep.representation(using: .png, properties: [:]) {
             try? data.write(to: URL(fileURLWithPath: path))
@@ -328,7 +360,8 @@ extension BrowserViewController {
 enum DebugDemoPDF {
     @MainActor
     static func write() -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-demo-brief.pdf")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-demo-brief.pdf")
         let page = NSSize(width: 612, height: 792)  // US Letter
         let textView = NSTextView(frame: NSRect(origin: .zero, size: page))
         textView.textContainerInset = NSSize(width: 56, height: 64)
@@ -365,7 +398,8 @@ enum DebugDemoPDF {
             .paragraphStyle: para,
         ]
         text.append(NSAttributedString(string: "Project Brief: Aurora\n", attributes: heading))
-        text.append(NSAttributedString(string: "Prepared for review \u{2014} draft 3\n\n", attributes: sub))
+        text.append(
+            NSAttributedString(string: "Prepared for review \u{2014} draft 3\n\n", attributes: sub))
         let paragraphs = [
             "Aurora is a cross-platform sync layer that keeps a team's working files consistent across machines without a central server. Edits propagate peer to peer, and conflicts resolve deterministically so two people can work offline and reconcile cleanly on reconnect.",
             "The first milestone covers the file-watching core, the change journal, and a reference client. The watcher coalesces rapid saves into a single logical change; the journal is append-only and content-addressed, so history is verifiable and cheap to prune.",

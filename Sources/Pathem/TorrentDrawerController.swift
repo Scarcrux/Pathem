@@ -58,8 +58,31 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
     /// Stage a realistic set of torrents for a marketing screenshot -- no daemon, no network, just
     /// display rows through the normal `apply()` path (mixed states, legal/public content), so the
     /// drawer looks live in a capture. Used by PATHEM_TORRENT_LAYOUT_SHOT with DEMO=1.
-    func debugSeedDemoTorrents() {
+    func debugSeedDemoTorrents(magnetStates: Bool = false) {
         active = true
+        if magnetStates {
+            // Magnets still without their metadata, one per search phase (META=1).
+            func magnet(
+                _ id: String, _ name: String, _ phase: TorrentSession.MetadataSearch.Phase,
+                round: Int, peers: Int
+            ) -> TorrentSession.Status {
+                .init(
+                    infoHash: id, name: name, totalLength: 0, downloaded: 0, fractionComplete: 0,
+                    downloadRate: 0, peersConnected: 0,
+                    state: phase == .gaveUp ? .error : .checking, savePath: "~/Downloads",
+                    metadataSearch: .init(phase: phase, round: round, rounds: 8, peersFound: peers))
+            }
+            apply([
+                magnet(
+                    "meta1", "debian-13.7.0-amd64-netinst.iso", .askingPeers, round: 1, peers: 12),
+                magnet(
+                    "meta2", "archlinux-2026.11.01-x86_64.iso", .waitingToRetry, round: 3, peers: 0),
+                magnet("meta3", "big-buck-bunny-1080p.mp4", .waitingToRetry, round: 2, peers: 5),
+                magnet("meta4", "sintel-4k.mkv", .gaveUp, round: 8, peers: 0),
+                magnet("meta5", "public-domain-films.torrent", .fetchingSource, round: 1, peers: 0),
+            ])
+            return
+        }
         apply([
             .init(
                 infoHash: "demo1", name: "ubuntu-24.04.1-desktop-amd64.iso",
@@ -304,6 +327,9 @@ final class TorrentDrawerController: NSObject, NSTableViewDataSource, NSTableVie
                 return c
             }()
         cell.textField?.stringValue = value(for: status, column: tableColumn.identifier.rawValue)
+        // A long state (a magnet's search) can be truncated by a narrow column; hovering shows all.
+        cell.textField?.toolTip =
+            tableColumn.identifier.rawValue == "state" ? cell.textField?.stringValue : nil
         cell.textField?.font =
             tableColumn.identifier.rawValue == "name"
             ? .systemFont(ofSize: 12) : .monospacedDigitSystemFont(ofSize: 11, weight: .regular)

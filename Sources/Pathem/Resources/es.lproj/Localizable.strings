@@ -1741,12 +1741,12 @@
 "torrents.remove.keep" = "Quitar y conservar archivos";
 "torrents.resume" = "Reanudar";
 "torrents.state.checking" = "Verificando";
-"torrents.meta.source" = "Descargando el archivo torrent desde su origen…";
+"torrents.meta.source" = "Obteniendo el archivo torrent…";
 "torrents.meta.finding" = "Buscando pares (intento %d de %d)…";
-"torrents.meta.asking" = "Pidiendo la lista de archivos a %d pares…";
-"torrents.meta.retryNone" = "Aún no se han encontrado pares (intento %d de %d). Reintentando…";
-"torrents.meta.retrySome" = "%d pares encontrados, ninguno envió la lista de archivos (intento %d de %d). Reintentando…";
-"torrents.meta.gaveUp" = "Ningún par envió la lista de archivos tras %d intentos. Reanuda para volver a intentarlo.";
+"torrents.meta.asking" = "Pidiendo la lista a %d pares…";
+"torrents.meta.retryNone" = "Aún sin pares. Reintentando (%d de %d)…";
+"torrents.meta.retrySome" = "%d pares, sin lista. Reintentando (%d de %d)…";
+"torrents.meta.gaveUp" = "Sin lista tras %d intentos. Reanuda para reintentar.";
 "torrents.state.downloading" = "Descargando";
 "torrents.state.error" = "Error";
 "torrents.state.fetchingMeta" = "Obteniendo detalles…";
