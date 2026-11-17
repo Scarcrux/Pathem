@@ -136,6 +136,9 @@
     border-radius: 8px;
     color: var(--text);
   }
+  .nav-links .ghost.soon { color: var(--muted); }
+  #features { padding-top: 0; }
+  .foot-muted { color: var(--muted); font-size: .92rem; }
   .nav-links .ghost:hover { border-color: var(--accent); background: var(--glow); }
   @media (max-width: 620px) { .nav-links a:not(.ghost):not(.guide-link) { display: none; } .nav-links { gap: .75rem; } }
   @media (max-width: 420px) { .nav-links .ghost { display: none; } }
@@ -423,6 +426,8 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Pathem: a fast, native macOS file manager">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pathem, a fast native macOS file manager">
+<meta name="twitter:description" content="Dual-pane, keyboard-driven, and built to stay quick even in folders with a million files. Free. Open-source release coming soon.">
 <meta name="twitter:image" content="https://pathem.app/assets/social-card.png">
 <script type="application/ld+json">
 {
@@ -449,7 +454,7 @@
     <a href="#features">Features</a>
     <a href="#views">Views</a>
     <a class="guide-link" href="/docs/">Guides</a>
-    <span class="ghost" style="color:var(--muted)" title="Open-source release coming soon">GitHub &middot; soon</span>
+    <span class="ghost soon" title="Open-source release coming soon">GitHub &middot; soon</span>
   </nav>
 </header>
 
@@ -536,7 +541,7 @@
     </div>
   </section>
 
-  <section class="sec wrap" id="features" style="padding-top: 0;">
+  <section class="sec wrap" id="features">
     <div class="sec-head">
       <span class="eyebrow">~/what-it-does</span>
       <h2>Everything Finder holds back.</h2>
@@ -562,12 +567,12 @@
       <article class="card">
         <div class="k">On-device AI</div>
         <h3>Native AI that stays home</h3>
-        <p>Semantic search built on Apple's NaturalLanguage embeddings over file names and text, PDFs included, plus an on-device AI command bar. It runs entirely on your Mac, costs nothing, and the search needs no Apple Intelligence.</p>
+        <p>Semantic search, a mode of the &#8984;F search panel, built on Apple's NaturalLanguage embeddings over file names and text, PDFs included, plus an on-device AI command bar. It runs entirely on your Mac, costs nothing, and the search needs no Apple Intelligence.</p>
       </article>
       <article class="card">
         <div class="k">BitTorrent</div>
         <h3>A torrent client, built in</h3>
-        <p>Add a magnet link or a .torrent and Pathem downloads it natively: DHT, peer exchange, and encrypted connections, in an out-of-process daemon with a FileZilla-style transfer drawer.</p>
+        <p>Add a magnet link or a .torrent and Pathem downloads it natively: DHT, peer exchange, and encrypted connections, plus the web seeds (<code>ws=</code>) and exact sources (<code>xs=</code>) a magnet link names, in an out-of-process daemon with a FileZilla-style transfer drawer.</p>
       </article>
       <article class="card">
         <div class="k">Remote &amp; cloud</div>
@@ -577,7 +582,7 @@
       <article class="card">
         <div class="k">Terminal</div>
         <h3>A shell that follows you</h3>
-        <p>An embedded login shell that tracks the active folder. Runs vim, ssh, and REPLs in color, and themes to System, Dracula, Nord, or Solarized.</p>
+        <p>An embedded login shell that tracks the active folder. Runs vim, ssh, and REPLs in color, and ships 11 color themes, from System, Dracula, and Nord to Solarized, Gruvbox, Tokyo Night, and GitHub Light.</p>
       </article>
       <article class="card">
         <div class="k">Git-aware</div>
@@ -588,6 +593,21 @@
         <div class="k">Organize</div>
         <h3>Tools for a tidy disk</h3>
         <p>Colored tags, batch rename, Quick Look on Space, sortable columns, and per-folder saved views and layouts that stick where you set them.</p>
+      </article>
+      <article class="card">
+        <div class="k">Themes</div>
+        <h3>Your window, your colors</h3>
+        <p>22 built-in themes, grouped Light and Dark, and a theme tints the whole window, not just the accent. Pick one that follows the system or stay with a fixed look.</p>
+      </article>
+      <article class="card">
+        <div class="k">Languages</div>
+        <h3>Twelve UI languages</h3>
+        <p>English, French, German, Spanish, Italian, Portuguese (Brazil), Dutch, Russian, Japanese, Korean, and Simplified and Traditional Chinese.</p>
+      </article>
+      <article class="card">
+        <div class="k">Plays well with macOS</div>
+        <h3>Services and iCloud, in the menu</h3>
+        <p>macOS Services are in the file context menu. iCloud files get Download Now and Remove Download, so you choose what stays on this Mac.</p>
       </article>
     </div>
   </section>
@@ -601,7 +621,7 @@
     <div class="feature-shots">
     <figure class="feature-shot reveal">
       <div class="window">
-      <img src="/assets/view-torrent.webp?v=3" width="1440" height="900" loading="lazy" alt="Pathem's built-in torrent client: a transfer drawer below the dual-pane browser lists five torrents (Ubuntu and Blender downloading, Debian and an Internet Archive set seeding, Fedora paused), each with progress, down and up speed, ETA, ratio, peers, and status." />
+      <img src="/assets/view-torrent.webp?v=3" width="1440" height="900" loading="lazy" alt="Pathem's built-in torrent client: a transfer drawer below the dual-pane browser lists five torrents (Ubuntu and Blender downloading, Debian and an Internet Archive set seeding, Fedora paused), under columns for progress, down and up speed, ETA, ratio, peers, and status. The progress column is empty in this capture." />
       </div>
       <figcaption>
         <h3>BitTorrent, built in</h3>
@@ -630,7 +650,7 @@
       <div class="window">
       <div class="titlebar">
         <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-        <span class="path">Project Brief.pdf &middot; Markup</span>
+        <span class="path">pathem-demo-brief.pdf &middot; Markup</span>
       </div>
       <img src="/assets/view-markup.webp?v=3" width="1440" height="900" loading="lazy" alt="A PDF open in Pathem's markup viewer: a line of the document is highlighted in yellow, a red arrow points to it, and a blue sticky note sits in the margin. Highlight, draw, add shapes and notes, sign, and save, all without leaving the file manager." />
       </div>
@@ -666,7 +686,7 @@
     <figure class="stage window reveal">
       <div class="titlebar">
         <div class="lights"><span class="r"></span><span class="y"></span><span class="g"></span></div>
-        <span class="path" id="stage-path">~/Downloads &middot; as List (&#8984;1)</span>
+        <span class="path" id="stage-path">~/Projects &middot; as List (&#8984;1)</span>
       </div>
       <div class="frames">
         <div class="frame active" role="tabpanel" id="frame-list" aria-labelledby="tab-list">
@@ -727,7 +747,9 @@
     </div>
     <div class="foot-links">
       <a href="/docs/">Documentation &amp; guides</a>
-      <span style="color:var(--muted);font-size:.92rem">MIT &middot; GitHub, security policy &amp; roadmap publish with the open-source release</span>
+      <a href="/privacy.html">Privacy</a>
+      <a href="mailto:security@pathem.app">Security contact</a>
+      <span class="foot-muted">MIT &middot; GitHub, security policy &amp; roadmap publish with the open-source release</span>
     </div>
   </div>
   <p class="foot-note">
@@ -762,7 +784,7 @@
     // view-mode carousel
     var modes = [
       { tab: "tab-list", frame: "frame-list",
-        path: "~/Downloads · as List (⌘1)",
+        path: "~/Projects · as List (⌘1)",
         cap: "<b>List.</b> The dense table: sortable columns, inline rename, and a million rows without a stutter." },
       { tab: "tab-icons", frame: "frame-icons",
         path: "~/Photos · as Icons (⌘2)",
@@ -771,10 +793,10 @@
         path: "~/Photos · as Gallery (⌘3)",
         cap: "<b>Gallery.</b> One big preview with a filmstrip underneath, for flipping through shoots and scans." },
       { tab: "tab-columns", frame: "frame-columns",
-        path: "~/Photos · as Columns (⌘4)",
+        path: "~/Projects/aurora-ios/Assets · as Columns (⌘4)",
         cap: "<b>Columns.</b> Miller columns walk deep trees, and selecting a file adds a preview column: a thumbnail with kind, size, and dates." },
       { tab: "tab-tree", frame: "frame-tree",
-        path: "~/ · as Tree (⌘5)",
+        path: "~/Projects · as Tree (⌘5)",
         cap: "<b>Tree.</b> The outline view: expand subtrees in place without losing the parent, Directory Opus style." }
     ];
     var current = 0;

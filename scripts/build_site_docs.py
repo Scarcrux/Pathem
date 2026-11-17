@@ -11,6 +11,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "docs/website/guides.json"
 BASE = "https://pathem.app"
+SOCIAL_IMAGE = f"{BASE}/assets/social-card.png"
+# Hand-written pages are not generated, so their sitemap dates are kept here. Bump the
+# date when the page changes (git log -1 --format=%cs -- site/<file>). The guide pages use
+# the larger of the content date and TEMPLATE_UPDATED, which is bumped when the shell changes.
+STATIC_PAGES = {"/": "2026-11-17", "/privacy.html": "2026-11-17"}
+TEMPLATE_UPDATED = "2026-11-17"
 
 
 def inline(value):
@@ -87,6 +93,14 @@ def shell(data, title, description, path, content, active=None):
 <meta property="og:title" content="{html.escape(title, quote=True)} | Pathem Guides">
 <meta property="og:description" content="{html.escape(description, quote=True)}">
 <meta property="og:type" content="article"><meta property="og:url" content="{BASE}{path}">
+<meta property="og:site_name" content="Pathem">
+<meta property="og:image" content="{SOCIAL_IMAGE}">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pathem: a fast, native macOS file manager">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{html.escape(title, quote=True)} | Pathem Guides">
+<meta name="twitter:description" content="{html.escape(description, quote=True)}">
+<meta name="twitter:image" content="{SOCIAL_IMAGE}">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/docs/docs.css"><script src="/docs/docs.js" defer></script>
 </head><body>
@@ -98,7 +112,7 @@ def shell(data, title, description, path, content, active=None):
 <main id="main-content" tabindex="-1">{content}</main>
 <footer><p>Pathem user guides · English UI · Updated {html.escape(data["updated"])}</p>
 <p>Shortcuts are defaults and may differ if customized. Features can depend on your build, provider, hardware, and macOS version.</p>
-<a href="/docs/">All guides</a> · <a href="/">Back to Pathem</a></footer></div></div>
+<a href="/docs/">All guides</a> · <a href="/">Back to Pathem</a> · <a href="/privacy.html">Privacy</a> · <a href="mailto:security@pathem.app">Security contact</a></footer></div></div>
 </body></html>
 '''
 
@@ -176,8 +190,11 @@ def build(data):
         files[f"site/docs/{slug}/index.html"] = shell(data, guide["title"], guide["description"], path, content, slug)
         search.append(dict(title=guide["title"], description=guide["description"], category=categories[guide["category"]], url=path, text=text_content(guide)))
     files["site/docs/search-index.json"] = json.dumps(search, ensure_ascii=False, indent=2) + "\n"
-    urls = ["/", "/docs/"] + [f'/docs/{guide["id"]}/' for guide in data["guides"]]
-    files["site/sitemap.xml"] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(f"  <url><loc>{BASE}{path}</loc><lastmod>{data['updated']}</lastmod></url>\n" for path in urls) + "</urlset>\n"
+    docs_date = max(data["updated"], TEMPLATE_UPDATED)
+    entries = [(f"{path}", date) for path, date in STATIC_PAGES.items()]
+    entries.insert(1, ("/docs/", docs_date))
+    entries += [(f'/docs/{guide["id"]}/', docs_date) for guide in data["guides"]]
+    files["site/sitemap.xml"] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + "".join(f"  <url><loc>{BASE}{path}</loc><lastmod>{date}</lastmod></url>\n" for path, date in entries) + "</urlset>\n"
     return files
 
 
