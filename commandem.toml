@@ -1950,6 +1950,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Pre-public cleanup (owner chose: flip this repo after a cleanup commit): tree scan found no other private project names, account ids or personal email; added CONTRIBUTING.md (outside PRs wait for contribution terms; CLA open) and docs/README.md (user vs contributor docs vs engineering records); release-safety PASS. pathem-cli gained bare-path, changed and --print (e935f08); the Commandem plugin now delegates to it. Translations marked provisional across README/site/TRANSLATIONS (0733922); 0.9.0 changelog updated (7111b53). Flip itself awaits explicit owner approval."
     at = "2026-11-17T23:24:19Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Dialog failures from Codex's Unit 2 run triaged (owner request): f23 archive save-back prompt was a real product bug (no Cancel/Escape), fixed on main with park-and-resume Cancel (isolated f23 de+ja 48 red pairs to 0). m49/m67 (Transfers window clicked its own 'Cancel transfer' button), f18 (Save panel accessory host window) were harness issues, fixed on branch claude3/dialog-fixes (acf7ae1, 652646e, 59189db) for Codex. m62 is green in isolation and fails only in Codex's group-8 run after m58; not convicted."
+    at = "2026-11-17T23:36:30Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
