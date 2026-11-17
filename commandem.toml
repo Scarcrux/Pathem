@@ -1954,6 +1954,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Dialog failures from Codex's Unit 2 run triaged (owner request): f23 archive save-back prompt was a real product bug (no Cancel/Escape), fixed on main with park-and-resume Cancel (isolated f23 de+ja 48 red pairs to 0). m49/m67 (Transfers window clicked its own 'Cancel transfer' button), f18 (Save panel accessory host window) were harness issues, fixed on branch claude3/dialog-fixes (acf7ae1, 652646e, 59189db) for Codex. m62 is green in isolation and fails only in Codex's group-8 run after m58; not convicted."
     at = "2026-11-17T23:36:30Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Final make ci on 77b2050: everything passed except one stale packaged check (asserted 6 languages; there are 12 since 2a880c0), fixed to read CFBundleLocalizations; packaged rerun 14/14. Debug E2E 69 pass, 1 known skip (browser-flow pixels)."
+    at = "2026-11-17T23:49:12Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
