@@ -2075,6 +2075,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Integrated the m63 harness repair from 2e30692. The repeat cycles now wait for the cancellation task to clear fileOperationBusy, with an explicit setup failure if it stays busy. Claude recorded 130/130 in both German and Japanese. The full Unit 2 run remains incomplete."
     at = "2026-11-17T21:34:23Z"
 
+  [[mission.comment]]
+    text = "Ran all 48 Unit 2 GUI jobs across two builds. The first 35 receipts passed validation after m63 repair. Job 36 crashed in Japanese b25 because a translation implicitly swapped the object and integer printf arguments. Slot-aware lint caught six unsafe formats across Japanese and Simplified Chinese. Added explicit positions and rebuilt. All 13 remaining jobs produced valid receipts, including the Japanese rerun and clean markup close/quit. Recordings are .build/unit2-gui-20261117-164710 and its .remaining sibling. Recorded failures remain open for triage, including host-size setup drift. This is complete job coverage across two builds and does not establish a single-build or accepted findings baseline. Task 11 remains pending."
+    at = "2026-11-17T22:39:19Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
