@@ -161,7 +161,9 @@ enum PathemApp {
                 print("  MISSING lproj: \(lang)")
                 ok = false
             }
-            let sample = ["menu.file": "File", "common.cancel": "Cancel"]
+            // Keys whose translation differs from English in every shipped language ("File" is also
+            // the Italian menu title, so menu.file cannot be a sample).
+            let sample = ["menu.edit": "Edit", "common.cancel": "Cancel"]
             for lang in [
                 "es", "fr", "de", "zh-Hans", "ja", "it", "pt-BR", "ko", "zh-Hant", "ru", "nl",
             ] {
