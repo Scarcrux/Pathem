@@ -1938,6 +1938,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 commandem pathem plugin (owner request): integrations/commandem/commandem-pathem opens/reveals/previews project files in Pathem, --changed reveals the newest uncommitted change; 8 unit tests; installed to ~/.config/commandem/plugins. Phone companion deferred (owner discussion): ride on Commandem's iOS/Android clients later rather than a new app."
     at = "2026-11-17T23:00:31Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 The commandem pathem plugin commit (88b1f05) landed after its roadmap note: the first commit missed the files because the repo's folder is Integrations/ (capital I) on a case-insensitive disk; paths fixed."
+    at = "2026-11-17T23:01:57Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
