@@ -9,7 +9,10 @@ import PathemEngine
 extension BrowserViewController {
     /// Show the Network view in the active pane.
     func showNetworkView() {
-        guard let pane = activePane else { NSSound.beep(); return }
+        guard let pane = activePane else {
+            NSSound.beep()
+            return
+        }
         let (entries, hostNames) = networkListing()
         pane.showNetworkResults(
             entries, hostNames: hostNames, title: L("network.title", "Network"))
@@ -36,8 +39,13 @@ extension BrowserViewController {
 
         // Mounted network volumes (local == false): OrbStack's NFS share, mounted SMB/AFP shares.
         let keys: [URLResourceKey] = [.volumeNameKey, .volumeIsLocalKey, .volumeIsBrowsableKey]
-        let mounts = FileManager.default.mountedVolumeURLs(
-            includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
+        // Demo mode lists only its generic hosts: a real mount (a NAS share, a VM's file share)
+        // would put this machine's own names into screenshots.
+        let mounts =
+            isDemoMode
+            ? []
+            : FileManager.default.mountedVolumeURLs(
+                includingResourceValuesForKeys: keys, options: [.skipHiddenVolumes]) ?? []
         for url in mounts {
             let v = try? url.resourceValues(forKeys: Set(keys))
             guard v?.volumeIsBrowsable != false, v?.volumeIsLocal == false else { continue }

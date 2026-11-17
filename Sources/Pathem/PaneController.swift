@@ -350,6 +350,10 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     /// in memory (there's no folder to re-read).
     private var smartEntries: [FileEntry] = []
     private var smartTitle = ""
+    /// The title of a smart listing (Network, a smart folder, search results) while one is
+    /// showing, so the tab, the window title and the sidebar describe it instead of the folder
+    /// the pane was on before; nil for an ordinary folder.
+    var smartListingTitle: String? { smartActive && !smartTitle.isEmpty ? smartTitle : nil }
     /// Bumped whenever the pane's shown content changes (navigation, a new smart
     /// request) so a slow async smart load can detect it's stale and not clobber.
     private var contentRequestToken = 0

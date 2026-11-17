@@ -227,6 +227,7 @@ final class TabbedPaneController: NSObject {
         }
         pane.onDidNavigate = { [weak self, weak pane] in
             guard let self, let pane else { return }
+            self.refreshTabBar()  // a smart listing (Network, search results) retitles the tab
             self.onPaneDidNavigate?(pane)
         }
         pane.onDropFiles = { [weak self] urls, move, destination in
@@ -392,7 +393,8 @@ final class TabbedPaneController: NSObject {
         for (index, pane) in tabs.enumerated() {
             tabBar.addArrangedSubview(
                 makeChip(
-                    title: Self.title(for: pane.currentURL), index: index,
+                    title: pane.smartListingTitle ?? Self.title(for: pane.currentURL),
+                    index: index,
                     active: index == activeIndex, closable: tabs.count > 1))
         }
         tabBar.addArrangedSubview(plusButton)

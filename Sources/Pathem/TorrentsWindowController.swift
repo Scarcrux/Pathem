@@ -503,7 +503,9 @@ final class TorrentProgressBar: NSView {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    override var wantsUpdateLayer: Bool { true }
+    // No wantsUpdateLayer override: returning true makes AppKit call updateLayer() instead of
+    // draw(_:), and this view only draws, so the bar never appeared on screen (in-process
+    // cacheDisplay renders call draw directly, which hid the bug there).
 
     override func draw(_ dirtyRect: NSRect) {
         let inset = bounds.insetBy(dx: 4, dy: 6)

@@ -31,6 +31,9 @@ extension BrowserViewController {
         var rightSide = Side(folder: at("Photos"), mode: .gallery, select: "Lofoten Dawn.jpg")
         var activeLeft = true
         switch name {
+        case "list":  // distinct from the hero: two list views, a file selected
+            leftSide = Side(folder: at("Projects"), mode: .list, select: "Roadmap.key")
+            rightSide = Side(folder: at("Documents"), mode: .list, select: nil)
         case "icons":
             leftSide = Side(folder: at("Photos"), mode: .icon, select: "Tromsø Aurora.jpg")
             rightSide = Side(folder: at("Documents"), mode: .list, select: nil)

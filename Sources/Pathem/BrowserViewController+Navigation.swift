@@ -32,7 +32,9 @@ extension BrowserViewController {
         // ensureIndex), so opening a folder stays cheap.
         if semanticSearch.cachedDirectory == url { semanticSearch.invalidate() }
         if pane === activePane {
-            sidebar.highlightFolder(url)  // keep the sidebar tracking the current folder, like Finder
+            // Keep the sidebar tracking the current folder, like Finder; a smart listing (Network,
+            // search results) is not that folder, so nothing stays highlighted for it.
+            sidebar.highlightFolder(pane.smartListingTitle == nil ? url : nil)
             updateWindowTitle()
             // The terminal follows the active folder only when the user opted in
             // and the drawer is open (changeDirectory itself ignores TUIs).
@@ -120,6 +122,11 @@ extension BrowserViewController {
         if let ctx = pane.remoteContext {
             window.representedURL = nil
             window.title = "\(ctx.connection.host)\(ctx.path)"
+            return
+        }
+        if let smart = pane.smartListingTitle {
+            window.representedURL = nil
+            window.title = smart
             return
         }
         let url = pane.currentURL

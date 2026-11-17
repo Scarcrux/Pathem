@@ -553,6 +553,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             side.onPaneDidNavigate = { [weak self] pane in
                 pane.searchQuery = ""  // navigating clears that pane's query
                 guard pane === self?.activePane else { return }
+                // Window title and sidebar follow a smart listing too (directoryChanged only
+                // runs for folder changes).
+                self?.updateWindowTitle()
+                self?.sidebar.highlightFolder(
+                    pane.smartListingTitle == nil ? pane.currentURL : nil)
                 self?.updateSearchButton(query: "")
                 self?.updateWindowTitle()  // covers remote nav too
                 if !pane.isRemote { self?.recordRecentFolder(pane.currentURL) }
@@ -1039,7 +1044,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         activePane = pane
         activeSide = side
         pane.setActive(true)
-        sidebar.highlightFolder(pane.currentURL)  // the sidebar tracks the newly active pane's folder
+        // The sidebar tracks the newly active pane's folder (nothing for a smart listing).
+        sidebar.highlightFolder(pane.smartListingTitle == nil ? pane.currentURL : nil)
         updateWindowTitle()
         updateSearchButton(query: pane.searchQuery)  // show the focused pane's own query
         // Note: the query is cleared on navigation (onDidNavigate), not on every

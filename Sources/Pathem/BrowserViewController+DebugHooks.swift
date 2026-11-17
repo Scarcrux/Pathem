@@ -341,6 +341,15 @@ extension BrowserViewController {
     /// with real thumbnails + vibrancy (PATHEM_MAIN_MODE=network).
     func debugStageNetworkView() {
         discoveredHosts = ["Studio-Mac", "living-room-nas", "media-server"]
+        // Generic saved servers in the sidebar so the shot shows remote connections too.
+        // Display only: nothing connects.
+        sidebar.demoConnections = [
+            RemoteConnection(
+                name: "assets-bucket", proto: .s3, host: "s3.amazonaws.com", region: "us-east-1",
+                colorLabel: "orange"),
+            RemoteConnection(name: "build-server", proto: .sftp, host: "build.example.com"),
+            RemoteConnection(name: "team-share", proto: .webdavs, host: "dav.example.com"),
+        ]
         showNetworkView()
         view.layoutSubtreeIfNeeded()
     }

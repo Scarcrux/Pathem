@@ -49,6 +49,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     var demoMode = false
     var demoCloud: [(name: String, url: URL)] = []
     var demoVolumes: [(name: String, url: URL)] = []
+    /// Demo mode: generic saved servers for the Connections section (never the user's real
+    /// ones). Empty hides the section, as demo mode always did.
+    var demoConnections: [RemoteConnection] = [] { didSet { reload() } }
     var onSelect: ((URL) -> Void)?
     /// Open Settings (the gear shortcut at the bottom of the sidebar).
     var onOpenSettings: (() -> Void)?
@@ -485,6 +488,7 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
             {
                 roots.append(volumes)
             }
+            if !demoConnections.isEmpty { roots.append(connectionsNode(demoConnections)) }
         } else {
             if let cloud = cloudNode() { roots.append(cloud) }
             roots.append(volumesNode())
@@ -642,7 +646,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
 
     /// Saved FTP/SFTP servers, always shown (with a Manage… row) so connections
     /// are discoverable; click a server to connect.
-    private func connectionsNode() -> Node {
+    private func connectionsNode(_ shown: [RemoteConnection]? = nil) -> Node {
+        let connections = shown ?? self.connections
         func connectionNode(_ connection: RemoteConnection) -> Node {
             Node(
                 kind: .connection(connection), title: connection.name, url: nil, icon: "network",
