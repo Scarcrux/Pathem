@@ -46,7 +46,8 @@ final class UndoHistoryController: NSObject, NSTableViewDataSource, NSTableViewD
         redoButton.isEnabled = history?.canRedo ?? false
         let row = table.selectedRow
         undoThisButton.isEnabled =
-            stackIndex(forRow: row).map { history?.isIndependentlyUndoable(at: $0) ?? false } ?? false
+            stackIndex(forRow: row).map { history?.isIndependentlyUndoable(at: $0) ?? false }
+            ?? false
     }
 
     func tableViewSelectionDidChange(_ notification: Notification) { refresh() }
@@ -54,7 +55,10 @@ final class UndoHistoryController: NSObject, NSTableViewDataSource, NSTableViewD
     @objc private func undoTapped() { history?.undo() }
     @objc private func redoTapped() { history?.redo() }
     @objc private func undoThisTapped() {
-        guard let index = stackIndex(forRow: table.selectedRow) else { NSSound.beep(); return }
+        guard let index = stackIndex(forRow: table.selectedRow) else {
+            NSSound.beep()
+            return
+        }
         if history?.undo(at: index) != true { NSSound.beep() }  // something newer depends on it
     }
 
@@ -86,7 +90,10 @@ final class UndoHistoryController: NSObject, NSTableViewDataSource, NSTableViewD
             b.action = selector
             return b
         }
-        let hint = NSTextField(labelWithString: L("history.hint", "“Undo This” selectively undoes an action nothing newer touched."))
+        let hint = NSTextField(
+            labelWithString: L(
+                "history.hint", "“Undo This” selectively undoes an action nothing newer touched."))
+        hint.translatesAutoresizingMaskIntoConstraints = false
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .secondaryLabelColor
         let bar = NSStackView(views: [
@@ -119,8 +126,11 @@ final class UndoHistoryController: NSObject, NSTableViewDataSource, NSTableViewD
 
     // MARK: Table
     func numberOfRows(in tableView: NSTableView) -> Int { history?.undoStack.count ?? 0 }
-    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        guard let tableColumn, let index = stackIndex(forRow: row), let action = history?.undoStack[index]
+    func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int)
+        -> NSView?
+    {
+        guard let tableColumn, let index = stackIndex(forRow: row),
+            let action = history?.undoStack[index]
         else { return nil }
         let id = NSUserInterfaceItemIdentifier("cell")
         let cell =
@@ -144,7 +154,8 @@ final class UndoHistoryController: NSObject, NSTableViewDataSource, NSTableViewD
             cell.textField?.stringValue = action.name
             cell.textField?.textColor = .labelColor
         } else {
-            cell.textField?.stringValue = Self.relative.localizedString(for: action.date, relativeTo: Date())
+            cell.textField?.stringValue = Self.relative.localizedString(
+                for: action.date, relativeTo: Date())
             cell.textField?.textColor = .secondaryLabelColor
         }
         return cell
