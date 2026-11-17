@@ -236,6 +236,26 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     func debugHasEntry(_ name: String) -> Bool { entries.contains { $0.name == name } }
     func debugEntryPosition(_ name: String) -> Int? { entries.firstIndex { $0.name == name } }
     func debugSelectNames(_ names: [String]) { content.selectNames(Set(names)) }
+    #if DEBUG
+    /// Right-click the first selected row of a list view, as a user would, so AppKit builds
+    /// the real context menu (including the system's Services) for a screenshot
+    /// (PATHEM_SERVICES_SHOT). Blocks in menu tracking until the process is ended.
+    func debugRightClickSelection() {
+        guard let list = content as? FileListController, let window = list.tableView.window,
+            let row = list.tableView.selectedRowIndexes.first
+        else { return }
+        let rect = list.tableView.rect(ofRow: row)
+        let point = list.tableView.convert(NSPoint(x: rect.minX + 60, y: rect.midY), to: nil)
+        guard
+            let event = NSEvent.mouseEvent(
+                with: .rightMouseDown, location: point, modifierFlags: [], timestamp: 0,
+                windowNumber: window.windowNumber, context: nil, eventNumber: 0,
+                clickCount: 1, pressure: 1),
+            let menu = list.tableView.menu(for: event)
+        else { return }
+        NSMenu.popUpContextMenu(menu, with: event, for: list.tableView)
+    }
+    #endif
 
     /// Repro for the New-Folder-rename race (PATHEM_SMOKE): arm a queued rename plus a pending
     /// watcher refresh, as a real create does, run the post-listing step, and report that the

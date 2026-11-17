@@ -522,6 +522,22 @@ enum PathemApp {
             }
         }
 
+        #if DEBUG
+        // Open a list view's context menu on a selected demo file, so a screenshot taken from
+        // outside shows what AppKit adds, Services included (PATHEM_SERVICES_SHOT=<file name>,
+        // with PATHEM_DEMO=1).
+        if let name = ProcessInfo.processInfo.environment["PATHEM_SERVICES_SHOT"] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                guard let pane = browser.activePane else { return }
+                pane.setViewMode(.list)
+                pane.debugSelectNames([name])
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    pane.debugRightClickSelection()
+                }
+            }
+        }
+        #endif
+
         // Open Reclaim Space against the real home folder, wait for every known place to be
         // measured, print how long that took, and save a picture of the window
         // (PATHEM_RECLAIM_SHOT=<png path>). Read-only: nothing is checked or deleted.
