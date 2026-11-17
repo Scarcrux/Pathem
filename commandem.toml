@@ -1289,6 +1289,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
     id = "t-dd8d2ed3"
     title = "Resolve the encrypted-image accessory stack ambiguity (TS-U2-M12-AMBIG). Input widths are repaired; targeted profile remains70/76/native1 from six check3 warnings. The accessory340pt-width experiment was refuted and removed. Use focused validation only."
 
+  [[mission.task]]
+    id = "t-7836609b"
+    title = "Repair Undo History hint/button overlap and collapsed bottom toolbar (TS-U2-M30); validate only its focused panel regression."
+    done = true
+
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
     at = "2026-10-03T06:41:14Z"
@@ -2036,6 +2041,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "TS-U2-M12 input fix verified by the existing focused regression: check1 now6/6 PASS (was zero-width fields); size/ownership/cancel/default/dismiss/reopen also6/6 each, isolation intact, before/after render inspected. Full targeted profile honestly remains70/76/native1 from existing stack ambiguity, recorded separately. Reverted ineffective accessory-width experiment; final production diff is one input-width constraint. Only two focused M12 launches, no matrix or GUI CI replay; no land/install."
     at = "2026-11-16T22:44:18Z"
+
+  [[mission.comment]]
+    text = "Owner permits targeted GUI testing again. Preparing only Undo History m30: prior native render shows overlapping hint/buttons and a0pt toolbar. Its hint had autoresizing-mask constraints enabled while also pinned by explicit Auto Layout constraints. Disable that conflicting mask on the hint. Native probe is held until Claude Services/torrent slot handoff; no matrix, GUI CI, install or land."
+    at = "2026-11-17T03:39:42Z"
+
+  [[mission.comment]]
+    text = "TS-U2-M30 repaired: Undo History hint translated an autoresizing mask while pinned by Auto Layout, producing a0pt toolbar and hint/button overlap. Disable that translation. After Claude actual GUI handoff, one targeted m30 launch passed49/49, native0/wrapper0,4.01s; three close/reopen cycles, empty owned history, no history operations. Before/after renders inspected, isolation intact. GUI window released, no broad matrix/GUI CI, install or land. Unit2 qualification remains incomplete."
+    at = "2026-11-17T03:44:47Z"
 
 [[mission]]
   id = "m-e1443252"

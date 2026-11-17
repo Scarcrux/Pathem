@@ -775,3 +775,30 @@ Private receipts: .build/dmg-input-width-only-negative.json,
 .build/dmg-input-width-only-native.log and the dmg-input-fixed diagnostic PNGs.
 Refuted accessory-width experiment: .build/dmg-accessory-width-regression.log.
 No full matrix or GUI CI replay ran for this fix. No installation or land.
+
+## Targeted product fix: Undo History layout
+
+M30's retained pre-fix render shows the explanatory hint overlapping the buttons
+and a zero-height bottom toolbar. The hint was constrained with Auto Layout but
+still translated its autoresizing mask. Disable that translation on the hint;
+its existing top/leading/trailing constraints then determine its layout without
+conflicting frame-derived constraints. Other source changes are swift-format only.
+
+After Claude explicitly handed over the GUI window, run only:
+
+```sh
+python3 test/transient_surfaces_sample.py clean --full --set mounts --only m30 --probe-one --language de
+```
+
+Result: native exit 0, wrapper exit 0, 49/49 checks, 4.01 seconds total. One app
+process, German at the minimum 720x420 host, three close/reopen cycles over an
+owned empty ActionHistory. Geometry, text fit, ambiguity, presentation, cancel,
+Return mapping, complete dismissal and repeat checks all pass. The inspected
+post-fix render shows separate hint and button rows. No undo/redo operation was
+performed; populated-history behavior is outside this layout regression's scope.
+Owner preferences match, private application domain/demo root are removed, and
+localization matches source. No matrix or GUI CI replay, install or land.
+
+Private evidence: .build/undo-hint-targeted-regression.log,
+.build/transient-sample-clean-de-full-mounts-g0-m30-probe.json and its raw log,
+plus the scoped diagnostic render. GUI window was released after actual closure.
