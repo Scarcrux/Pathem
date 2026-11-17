@@ -12,6 +12,23 @@ import subprocess
 import tempfile
 
 POLICY = Path(__file__).with_name("release-safety.toml")
+# Reviewed history findings (gitleaks fingerprints: commit:file:rule:line), one per line, '#'
+# comments allowed. Only all-ref-history findings can be baselined; the candidate tree never can.
+HISTORY_BASELINE = Path(__file__).with_name("release-safety-history-baseline.txt")
+
+
+def load_baseline(path):
+    if path is None or not path.exists():
+        return set()
+    entries = set()
+    for raw in path.read_text().splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line:
+            continue
+        if line.count(":") < 3 or not COMMIT.fullmatch(line.split(":", 1)[0]):
+            raise SafetyFailure("invalid history baseline entry (details withheld)")
+        entries.add(line)
+    return entries
 NOREPLY = re.compile(r"(?:[a-z0-9][a-z0-9+._\[\]-]*@users\.noreply\.github\.com|noreply@github\.com)\Z", re.I)
 COMMIT = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?\Z")
 
@@ -127,7 +144,7 @@ def summarise(scope, findings):
         print(f"RELEASESAFETY: {scope} review-commit={commit}")
 
 
-def audit(repo, scanner):
+def audit(repo, scanner, baseline_path=None):
     repo = repo.resolve()
     if not shutil.which(scanner):
         raise SafetyFailure("gitleaks unavailable; install it before release")
@@ -142,6 +159,9 @@ def audit(repo, scanner):
         fingerprints = tree_snapshot(repo, tree)
         current = scan(scanner, "dir", tree, scratch)
         history = scan(scanner, "git", repo, scratch)
+        baseline = load_baseline(baseline_path)
+        reviewed = [f for f in history if f.get("Fingerprint") in baseline]
+        history = [f for f in history if f.get("Fingerprint") not in baseline]
         commit_count, metadata, review_ids = authors(repo)
         if ref_snapshot(repo) != refs or candidates(repo) != sorted(fingerprints):
             raise SafetyFailure("repository changed during scan; rerun on stable input")
@@ -151,6 +171,10 @@ def audit(repo, scanner):
         print(f"RELEASESAFETY: delivered candidate-files={len(fingerprints)} history-commits={commit_count}")
         summarise("candidate-tree", current)
         summarise("all-ref-history", history)
+        if baseline:
+            # A baseline entry that no longer matches means history changed; say so, never fail on it.
+            print(f"RELEASESAFETY: all-ref-history reviewed-baseline matched={len(reviewed)} "
+                  f"unmatched={len(baseline) - len({f['Fingerprint'] for f in reviewed})}")
         print(f"RELEASESAFETY: {'FAIL' if metadata else 'PASS'} authorship findings={sum(metadata.values())}")
         for rule, count in sorted(metadata.items()):
             print(f"RELEASESAFETY: authorship rule={rule} count={count}")
@@ -166,9 +190,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--scanner", default="gitleaks")
+    parser.add_argument("--history-baseline", type=Path, default=None,
+                        help="reviewed history fingerprints; defaults to this repo's own list "
+                             "when auditing this repo, none otherwise")
     args = parser.parse_args()
+    baseline = args.history_baseline
+    if baseline is None and args.repo.resolve() == Path(__file__).resolve().parents[1]:
+        baseline = HISTORY_BASELINE
     try:
-        return audit(args.repo, args.scanner)
+        return audit(args.repo, args.scanner, baseline)
     except SafetyFailure as error:
         print(f"RESULT: FAIL release safety: {error}")
     except (OSError, subprocess.TimeoutExpired, UnicodeError, TypeError):

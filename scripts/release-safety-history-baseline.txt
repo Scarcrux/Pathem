@@ -1,0 +1,69 @@
+# Reviewed all-ref-history findings for scripts/release_safety.py (gitleaks fingerprints:
+# commit:file:rule:line). Reviewed 2026-11-16; the owner chose to allow-list them rather than
+# rewrite history. What they are:
+# - absolute-user-path (55): test fixtures with placeholder home folders (me, someone, tester, x)
+#   and the project's public GitHub handle in two config files.
+# - personal-email-address (3): the placeholder accounts me@ and you@ inside Google Drive
+#   folder-name fixtures; no real address. None remain in the current tree.
+# - generic-api-key (1): the password of a public FTP demo server in a live-test fixture.
+# Anything not listed here still fails the gate. Never add a real credential or personal
+# address here: rotate or rewrite instead.
+0534b0c3fd5f0120dfd0cd457358e5418e6011cb:Tests/PathemEngineTests/FilingDestinationsTests.swift:absolute-user-path:11
+0534b0c3fd5f0120dfd0cd457358e5418e6011cb:Tests/PathemEngineTests/FilingDestinationsTests.swift:absolute-user-path:13
+0534b0c3fd5f0120dfd0cd457358e5418e6011cb:Tests/PathemEngineTests/FilingDestinationsTests.swift:absolute-user-path:18
+0534b0c3fd5f0120dfd0cd457358e5418e6011cb:Tests/PathemEngineTests/FilingDestinationsTests.swift:absolute-user-path:19
+0760882c5c4344b26aadcf12466652d1f51f80c4:Tests/PathemEngineTests/SidebarTests.swift:absolute-user-path:40
+0835adc12888cfea3543f32ffe8e3e14a9923793:Tests/PathemEngineTests/LiveRemoteTests.swift:generic-api-key:24
+151bdb93bf79dddd38c1e5f8a104a15d2ff6d1d0:Tests/PathemEngineTests/OrganizeFeedbackTests.swift:absolute-user-path:55
+151bdb93bf79dddd38c1e5f8a104a15d2ff6d1d0:Tests/PathemEngineTests/OrganizeFeedbackTests.swift:absolute-user-path:56
+151bdb93bf79dddd38c1e5f8a104a15d2ff6d1d0:Tests/PathemEngineTests/OrganizeFeedbackTests.swift:absolute-user-path:59
+186c7103a8d0d56bb0757f5ba661177e1bf338ab:Tests/PathemEngineTests/PreferencesTests.swift:absolute-user-path:28
+186c7103a8d0d56bb0757f5ba661177e1bf338ab:Tests/PathemEngineTests/PreferencesTests.swift:absolute-user-path:31
+1ac94aa5d0a33f7820cd46ac7e86da0431624924:Tests/PathemEngineTests/PathemURLContractTests.swift:absolute-user-path:11
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:13
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:14
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:15
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:16
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:17
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:21
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:22
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:27
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:28
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:29
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:30
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:31
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:34
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:40
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:41
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:42
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:43
+293be43874c56f7e2fe62865c0a0f43f548def7a:Tests/PathemEngineTests/FolderSizeSkipTests.swift:absolute-user-path:44
+48fefdad1171460cdef37254d271517d9d4a7023:Tests/PathemEngineTests/PathemURLContractTests.swift:absolute-user-path:10
+48fefdad1171460cdef37254d271517d9d4a7023:Tests/PathemEngineTests/PathemURLContractTests.swift:absolute-user-path:14
+48fefdad1171460cdef37254d271517d9d4a7023:Tests/PathemEngineTests/PathemURLContractTests.swift:absolute-user-path:26
+4a76c9bd9781f089a15784d4af6fd33136920ae1:polaris.toml:absolute-user-path:6
+4adb7bb77d3196c43cdd0f8dfb6049de7b70fd9d:Tests/PathemEngineTests/DirectoryWatcherTests.swift:absolute-user-path:51
+4adb7bb77d3196c43cdd0f8dfb6049de7b70fd9d:Tests/PathemEngineTests/DirectoryWatcherTests.swift:absolute-user-path:52
+4adb7bb77d3196c43cdd0f8dfb6049de7b70fd9d:Tests/PathemEngineTests/DirectoryWatcherTests.swift:absolute-user-path:56
+5ed38ca0ea9e822f169bc86f392e5b3333228aa1:Tests/PathemEngineTests/RemoteConnectionTests.swift:absolute-user-path:13
+5ed38ca0ea9e822f169bc86f392e5b3333228aa1:Tests/PathemEngineTests/RemoteConnectionTests.swift:absolute-user-path:9
+8a7a2f8a98cc04ce69d9e2b6f85ac44b877a811a:Tests/PathemEngineTests/ContentSearchTests.swift:absolute-user-path:10
+8a7a2f8a98cc04ce69d9e2b6f85ac44b877a811a:Tests/PathemEngineTests/ContentSearchTests.swift:absolute-user-path:15
+8a7a2f8a98cc04ce69d9e2b6f85ac44b877a811a:Tests/PathemEngineTests/ContentSearchTests.swift:absolute-user-path:19
+8a7a2f8a98cc04ce69d9e2b6f85ac44b877a811a:Tests/PathemEngineTests/ContentSearchTests.swift:absolute-user-path:9
+c6bd524ee40478fe10d3c8a21afa6320ffd0a2fa:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:41
+c6bd524ee40478fe10d3c8a21afa6320ffd0a2fa:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:43
+c6bd524ee40478fe10d3c8a21afa6320ffd0a2fa:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:44
+dbcc48aedc296135ce0ae620767f33e9da006df6:.claude/settings.json:absolute-user-path:9
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:10
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:11
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:14
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:16
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:18
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:20
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:26
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:27
+f0790601b7a41153f98109faa8b17947ac614dd6:Tests/PathemEngineTests/OpenerRulesTests.swift:absolute-user-path:28
+f6052969f602570a09d5b935f943d65d8e91e062:Sources/PathemEngine/CloudLocation.swift:personal-email-address:77
+f6052969f602570a09d5b935f943d65d8e91e062:Tests/PathemEngineTests/CloudLocationTests.swift:personal-email-address:22
+f6052969f602570a09d5b935f943d65d8e91e062:Tests/PathemEngineTests/CloudLocationTests.swift:personal-email-address:34

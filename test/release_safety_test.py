@@ -90,6 +90,50 @@ class ReleaseSafetyTests(unittest.TestCase):
         self.assertIn("PASS candidate-tree", result.stdout)
         self.assertIn("FAIL all-ref-history", result.stdout)
 
+    def history_fingerprint(self, path, rule, line=1):
+        commit = self.git("log", "-1", "--format=%H", "--", path).decode().strip()
+        return f"{commit}:{path}:{rule}:{line}"
+
+    def test_reviewed_history_baseline_passes_only_listed_findings(self):
+        self.write("key.txt", 'token="' + self.token() + '"\n')
+        self.commit()
+        listed = self.history_fingerprint("key.txt", "github-pat")
+        self.git("rm", "-q", "key.txt")
+        self.commit()
+        baseline = self.repo.parent / (self.repo.name + "-baseline.txt")
+        baseline.write_text("# reviewed fixture\n" + listed + "\n")
+        self.addCleanup(baseline.unlink)
+        result = self.run_gate("--history-baseline", str(baseline))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("PASS all-ref-history", result.stdout)
+        self.assertIn("reviewed-baseline matched=1 unmatched=0", result.stdout)
+        # Control: a new history finding that is not listed still fails.
+        self.write("other.txt", 'token="' + self.token() + '"\n')
+        self.commit()
+        self.git("rm", "-q", "other.txt")
+        self.commit()
+        result = self.run_gate("--history-baseline", str(baseline))
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("FAIL all-ref-history findings=1", result.stdout)
+
+    def test_baseline_cannot_hide_a_current_finding(self):
+        self.write("key.txt", 'token="' + self.token() + '"\n')
+        self.commit()
+        baseline = self.repo.parent / (self.repo.name + "-baseline.txt")
+        baseline.write_text(self.history_fingerprint("key.txt", "github-pat") + "\n")
+        self.addCleanup(baseline.unlink)
+        result = self.run_gate("--history-baseline", str(baseline))
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("FAIL candidate-tree", result.stdout)
+        self.assertIn("PASS all-ref-history", result.stdout)
+
+    def test_malformed_baseline_fails_closed(self):
+        baseline = self.repo.parent / (self.repo.name + "-baseline.txt")
+        baseline.write_text("not-a-fingerprint\n")
+        self.addCleanup(baseline.unlink)
+        result = self.run_gate("--history-baseline", str(baseline))
+        self.assertEqual(result.returncode, 2, result.stdout)
+
     def test_non_noreply_author(self):
         self.git("config", "user.email", "fixture@example.invalid")
         self.write("new.txt", "safe\n")
