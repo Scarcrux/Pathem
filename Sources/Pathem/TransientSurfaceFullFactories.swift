@@ -378,12 +378,35 @@ extension TransientSurfaceSample {
             content, alert: object.alert, cell: cell, phase: "cycle\(cycle)-factory",
             sheet: entry.sheet, presented: true, systemAccessory: object.save?.accessoryView,
             systemPanel: object.save != nil)
+        // Name the failing clause and the extra windows so a red states its own cause.
+        // A Save panel with an accessory view hosts that view in AppKit's own
+        // NSAccessoryViewWindow (the panel UI is out of process). Exempt only the window
+        // that hosts this exact panel's accessory, newly visible and inside the panel frame;
+        // any other extra window still fails.
+        let accessoryHost = object.save?.accessoryView?.window.flatMap { $0 === window ? nil : $0 }
+        let single =
+            accessoryHost.map { companion in
+                trace(
+                    "TSAMPLE: FRAMEWORK-COMPANION expected=\(window.windowNumber) number=\(companion.windowNumber) class=\(type(of: companion)) frame=\(companion.frame) boundTo=saveAccessory"
+                )
+                return companion.isVisible && !before.contains(companion.windowNumber)
+                    && window.frame.contains(companion.frame)
+                    && TransientSurfaceChecks.singlePresentation(
+                        before: before, after: windows(), expected: window.windowNumber,
+                        companions: [companion.windowNumber])
+            }
+            ?? singleSurfacePresentation(before: before, expected: window, alert: object.alert)
+        let styled = entry.sheet ? window.sheetParent === host : NSApp.modalWindow === window
+        let appearanceOK = TransientSurfaceChecks.appearance(
+            content, expected: requestedAppearance)
+        let added = NSApp.windows.filter { $0.isVisible && !before.contains($0.windowNumber) }
+            .map {
+                "\($0.windowNumber):\(type(of: $0)):\($0.frame):parent=\(String(describing: $0.sheetParent?.windowNumber))"
+            }
         emit(
-            cell, 4,
-            singleSurfacePresentation(before: before, expected: window, alert: object.alert)
-                && (entry.sheet ? window.sheetParent === host : NSApp.modalWindow === window)
-                && TransientSurfaceChecks.appearance(content, expected: requestedAppearance),
-            "cycle=\(cycle) production factory; original presentation style", content: content)
+            cell, 4, single && styled && appearanceOK,
+            "cycle=\(cycle) production factory; original presentation style single=\(single) style=\(styled) appearance=\(appearanceOK) actual=\(String(describing: content.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]))) expected=\(String(describing: requestedAppearance)) new=\(added)",
+            content: content)
         let buttons = object.buttons
         let defaults = buttons.filter {
             $0.cell === window.defaultButtonCell || $0.keyEquivalent == "\r"
