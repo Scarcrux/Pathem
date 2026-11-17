@@ -1906,6 +1906,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Owner screenshot: accent sliver right of the toolbar '…' button. Reproduced on demo + Nord via Terminal capture; cause: hidden UpdateButtonAccessory still drawing its accent-bezel button past the window edge. Fixed by hiding its view too; recapture clean. Found while checking: the real composited title bar stays system gray under tinted themes, unlike the in-process renders used for the theme work (cacheDisplay does not show the title bar material). Open."
     at = "2026-11-17T12:29:37Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Correction: the sliver fix note (793c326) was pushed before the fix itself (a failed commit). The fix is 03abe94, pushed with this note."
+    at = "2026-11-17T12:31:18Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
