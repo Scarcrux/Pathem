@@ -2067,6 +2067,14 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "TS-U2-M07 size fix validated in one focused launch: all6 mounted size observations pass,512x340(short)/512x346(long) within720x420host; all geometry/cancel/default/dismiss/reopen checks pass and renders inspected. Full profile honestly70/76/native1 on existing stack ambiguity, recorded separately. Intermediate standalone-layout receipts752->420/832->426 differ from mounted frames; fit is conservative and floor44binds long fixture, no arbitrary-size/maximal-use promise. Isolation intact, build0, no settings applied. GUI window released; no further visual launches, fullmatrix/GUI CI, land or install."
     at = "2026-11-17T15:50:51Z"
 
+  [[mission.comment]]
+    text = "Owner-authorized Unit 2 GUI recording on aadf7f3 stopped after 9 of 48 launches, 563 seconds. Mount group 8 could not observe Delete Immediately (m63) repeat presentations, leaving cycle receipts and required renders incomplete. Partial evidence is in .build/unit2-gui-20261117-160543. No accepted baseline. German View Options and encrypted-image sizing regressions passed with stack warnings remaining, and Undo History recorded no failures. Isolate m63 before any broad replay."
+    at = "2026-11-17T21:15:56Z"
+
+  [[mission.comment]]
+    text = "Integrated the m63 harness repair from 2e30692. The repeat cycles now wait for the cancellation task to clear fileOperationBusy, with an explicit setup failure if it stays busy. Claude recorded 130/130 in both German and Japanese. The full Unit 2 run remains incomplete."
+    at = "2026-11-17T21:34:23Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
