@@ -1898,6 +1898,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Release: notarized build of bd75d98 (build 24) Accepted, stapled, verify-release A1-A6 PASS, installed to /Applications with a staged swap (backup /tmp/pathem-install-backup.Ix3b); the running copy needs a relaunch. Themes (owner report: buggy, thin choice, no light/dark cue), landed 7d40f12: renders of every theme showed only the window background tinted while list, sidebar and title bar stayed system gray and AppKit row views painted system stripes; now one themed surface (views, sidebar fill, transparent title bar, themed list stripes), menus grouped Follow System / Light / Dark with swatches, 22 themes (9 light, 11 dark). Verified by re-renders, a Terminal capture of the menu (display had slept; caffeinate -u woke it), ThemePresetTests with a red mutation, smoke/UI/settings/content/background suites. Not installed yet: themes came after the install."
     at = "2026-11-17T04:35:25Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Reinstalled with the theme work: notarized 97d2edb Accepted and stapled, verify-release A1-A6 PASS in /Applications, backup /tmp/pathem-install-backup.eUM9. Observed: CFBundleVersion is 24 for both of yesterday's builds (BUILD_NUMBER is not read by scripts/package.sh), so the running app's stale-build notice cannot tell them apart; the owner must relaunch to pick it up."
+    at = "2026-11-17T12:22:39Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
