@@ -1870,3 +1870,6 @@
 "filesearch.semanticKeyword" = "Describe lo que buscas…";
 "filesearch.semanticMode" = "Significado (semántica)";
 "filesearch.semanticNeedsFolder" = "La búsqueda semántica ordena una carpeta cada vez. Elige Esta carpeta u Otra carpeta….";
+"theme.group.dark" = "Temas oscuros";
+"theme.group.light" = "Temas claros";
+"theme.group.system" = "Seguir el sistema";

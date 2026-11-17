@@ -7,7 +7,9 @@ import UniformTypeIdentifiers
 final class KeyOutlineView: NSOutlineView {
     /// Stripes stop at the last real row, as in the list view (see KeyTableView).
     override func drawBackground(inClipRect clipRect: NSRect) {
-        drawStripesOnlyBehindRows(in: clipRect) { super.drawBackground(inClipRect: $0) }
+        drawStripesOnlyBehindRows(in: clipRect) { rect in
+            if !drawThemedStripes(in: rect) { super.drawBackground(inClipRect: rect) }
+        }
     }
     var onKeyChord: ((KeyChord) -> Bool)?
     var onBecomeActive: (() -> Void)?
@@ -380,16 +382,24 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         reloadAppearancePreservingState {
             self.fontSize = fontSize
             outline.rowHeight = rowHeight
-            outline.usesAlternatingRowBackgroundColors = alternatingRows
+            configuredAlternating = alternatingRows
+            outline.usesAlternatingRowBackgroundColors =
+                alternatingRows && ThemeManager.shared.allowsSystemStripes
         }
     }
 
     func setBackgroundColor(_ color: NSColor?) {
         let transparent = (color?.alphaComponent ?? 1) < 0.02
-        outline.backgroundColor = transparent ? .clear : (color ?? .controlBackgroundColor)
-        scrollView.backgroundColor = transparent ? .clear : (color ?? .controlBackgroundColor)
+        outline.backgroundColor =
+            transparent ? .clear : (color ?? ThemeManager.shared.contentBackground)
+        scrollView.backgroundColor =
+            transparent ? .clear : (color ?? ThemeManager.shared.contentBackground)
         scrollView.drawsBackground = !transparent
+        outline.usesAlternatingRowBackgroundColors =
+            configuredAlternating && ThemeManager.shared.allowsSystemStripes
     }
+    /// The alternating-rows setting as configured, kept so a theme change can restore it.
+    private var configuredAlternating = true
 
     // MARK: Lazy children
 

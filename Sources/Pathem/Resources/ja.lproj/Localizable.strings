@@ -1870,3 +1870,6 @@
 "filesearch.semanticKeyword" = "探しているものを説明してください…";
 "filesearch.semanticMode" = "意味 (セマンティック)";
 "filesearch.semanticNeedsFolder" = "セマンティック検索は一度に1つのフォルダを対象にします。「このフォルダ」または「別のフォルダ…」を選んでください。";
+"theme.group.dark" = "ダークテーマ";
+"theme.group.light" = "ライトテーマ";
+"theme.group.system" = "システムに合わせる";

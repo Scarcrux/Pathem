@@ -1715,6 +1715,9 @@
 "templates.title" = "Criar modelos";
 "terminal.followsFolder" = "O terminal acompanha a pasta ativa";
 "terminal.theme" = "Tema";
+"theme.group.dark" = "Temas escuros";
+"theme.group.light" = "Temas claros";
+"theme.group.system" = "Seguir o sistema";
 "toolbar.cleanup" = "Limpeza";
 "toolbar.cleanup.tip" = "Encontrar e remover arquivos recuperáveis";
 "torrents.add" = "Adicionar torrent…";

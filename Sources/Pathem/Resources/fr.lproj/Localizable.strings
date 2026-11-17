@@ -1870,3 +1870,6 @@
 "filesearch.semanticKeyword" = "Décrivez ce que vous cherchez…";
 "filesearch.semanticMode" = "Sens (sémantique)";
 "filesearch.semanticNeedsFolder" = "La recherche sémantique classe un dossier à la fois. Choisissez Ce dossier ou Autre dossier….";
+"theme.group.dark" = "Thèmes sombres";
+"theme.group.light" = "Thèmes clairs";
+"theme.group.system" = "Suivre le système";

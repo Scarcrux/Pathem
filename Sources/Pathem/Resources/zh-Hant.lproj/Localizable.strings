@@ -1715,6 +1715,9 @@
 "templates.title" = "建立範本";
 "terminal.followsFolder" = "終端機跟隨使用中的檔案夾";
 "terminal.theme" = "主題";
+"theme.group.dark" = "深色主題";
+"theme.group.light" = "淺色主題";
+"theme.group.system" = "跟隨系統";
 "toolbar.cleanup" = "清理";
 "toolbar.cleanup.tip" = "尋找並移除可回收的檔案";
 "torrents.add" = "加入 Torrent…";

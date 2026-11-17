@@ -510,6 +510,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         ThemeManager.shared.onChange(owner: self) { [weak self] in
             guard let self else { return }
             self.setActive(self.isActivePane)
+            self.applyFolderBackground()  // the views' default background follows the theme
         }
         enterDirectory()
     }

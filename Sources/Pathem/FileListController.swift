@@ -723,7 +723,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             configuredAlternating = alternatingRows
             tableView.rowHeight = rowHeight
             if backgroundColor == nil {
-                tableView.usesAlternatingRowBackgroundColors = alternatingRows
+                tableView.usesAlternatingRowBackgroundColors =
+                    alternatingRows && ThemeManager.shared.allowsSystemStripes
             }
         }
     }
@@ -748,10 +749,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             scrollView.drawsBackground = !transparent
             tableView.usesAlternatingRowBackgroundColors = false  // uniform under a folder background
         } else {
-            tableView.backgroundColor = .controlBackgroundColor
-            scrollView.backgroundColor = .controlBackgroundColor
+            tableView.backgroundColor = ThemeManager.shared.contentBackground
+            scrollView.backgroundColor = ThemeManager.shared.contentBackground
             scrollView.drawsBackground = true
-            tableView.usesAlternatingRowBackgroundColors = configuredAlternating
+            tableView.usesAlternatingRowBackgroundColors =
+                configuredAlternating && ThemeManager.shared.allowsSystemStripes
         }
         tableView.reloadData()
     }
@@ -1794,7 +1796,19 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }()
         let color = entryIndex(forRow: row).flatMap { tagColors(for: entries[$0]).first }
         rowView.tint = color.map { TagColors.nsColor($0) }
+        rowView.themedFill = themedRowFill(row)
         return rowView
+    }
+
+    /// Under a tinted theme with no folder background, the row's own fill: the theme background,
+    /// with the theme's stripe on odd rows when alternating rows are on. Nil otherwise, so the
+    /// row view draws as AppKit would.
+    private func themedRowFill(_ row: Int) -> NSColor? {
+        guard let stripe = ThemeManager.shared.stripeColor, backgroundColor == nil else {
+            return nil
+        }
+        return configuredAlternating && row % 2 == 1
+            ? stripe : ThemeManager.shared.contentBackground
     }
 
     /// A human-readable file kind (localized) derived from the type, no I/O.
@@ -2417,8 +2431,18 @@ final class TintRowView: NSTableRowView {
         didSet { if tint != oldValue { needsDisplay = true } }
     }
 
+    /// The themed row background (see FileListController.themedRowFill), or nil for AppKit's.
+    var themedFill: NSColor? {
+        didSet { if themedFill != oldValue { needsDisplay = true } }
+    }
+
     override func drawBackground(in dirtyRect: NSRect) {
-        super.drawBackground(in: dirtyRect)
+        if let themedFill {
+            themedFill.setFill()
+            dirtyRect.fill()
+        } else {
+            super.drawBackground(in: dirtyRect)
+        }
         guard let tint, !isSelected else { return }
         tint.withAlphaComponent(0.16).setFill()
         dirtyRect.fill()

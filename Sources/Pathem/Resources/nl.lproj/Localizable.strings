@@ -1715,6 +1715,9 @@
 "templates.title" = "Maak sjablonen";
 "terminal.followsFolder" = "Terminal volgt de actieve map";
 "terminal.theme" = "Thema";
+"theme.group.dark" = "Donkere thema's";
+"theme.group.light" = "Lichte thema's";
+"theme.group.system" = "Volg systeem";
 "toolbar.cleanup" = "Opruimen";
 "toolbar.cleanup.tip" = "Zoek en verwijder terug te winnen bestanden";
 "torrents.add" = "Voeg torrent toe…";

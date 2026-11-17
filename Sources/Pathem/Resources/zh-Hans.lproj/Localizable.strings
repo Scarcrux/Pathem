@@ -1870,3 +1870,6 @@
 "filesearch.semanticKeyword" = "描述你要找的内容…";
 "filesearch.semanticMode" = "含义(语义)";
 "filesearch.semanticNeedsFolder" = "语义搜索一次只对一个文件夹排序。请选择“此文件夹”或“其他文件夹…”。";
+"theme.group.dark" = "深色主题";
+"theme.group.light" = "浅色主题";
+"theme.group.system" = "跟随系统";

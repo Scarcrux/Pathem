@@ -899,8 +899,18 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let themePopup = NSPopUpButton()
     private func themeControl() -> NSView {
         themePopup.removeAllItems()
-        themePopup.addItems(
-            withTitles: ThemePreset.presets.map(\.name) + [L("prefs.themeCustom", "Custom")])
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        for group in ThemePreset.groups where !group.members.isEmpty {
+            menu.addItem(.sectionHeader(title: ThemeManager.groupTitle(group.appearance)))
+            for (_, preset) in group.members {
+                menu.addItem(ThemeManager.menuItem(for: preset, action: nil, target: nil))
+            }
+        }
+        menu.addItem(.separator())
+        menu.addItem(
+            NSMenuItem(title: L("prefs.themeCustom", "Custom"), action: nil, keyEquivalent: ""))
+        themePopup.menu = menu
         let selected =
             ThemePreset.matching(
                 accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,

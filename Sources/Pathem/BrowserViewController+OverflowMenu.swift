@@ -29,7 +29,8 @@ extension BrowserViewController {
         menu.addItem(overflowCommandItem("view.customizeToolbar"))
         menu.addItem(.separator())
         let settings = NSMenuItem(
-            title: L("overflow.settings", "Settings…"), action: #selector(openOverflowSettings), keyEquivalent: ",")
+            title: L("overflow.settings", "Settings…"), action: #selector(openOverflowSettings),
+            keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
     }
@@ -48,7 +49,8 @@ extension BrowserViewController {
             (L("prefs.appearanceDark", "Dark"), .dark),
         ]
         for (index, entry) in appearances.enumerated() {
-            let mi = NSMenuItem(title: entry.0, action: #selector(setOverflowAppearance(_:)), keyEquivalent: "")
+            let mi = NSMenuItem(
+                title: entry.0, action: #selector(setOverflowAppearance(_:)), keyEquivalent: "")
             mi.target = self
             mi.tag = index
             mi.state = prefs.appearance == entry.1 ? .on : .off
@@ -57,17 +59,22 @@ extension BrowserViewController {
         sub.addItem(.separator())
 
         let current = ThemePreset.matching(
-            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex, appearance: prefs.appearance)
-        for (index, preset) in ThemePreset.presets.enumerated() {
-            let mi = NSMenuItem(title: preset.name, action: #selector(applyOverflowThemePreset(_:)), keyEquivalent: "")
-            mi.target = self
-            mi.tag = index
-            mi.state = preset == current ? .on : .off
-            sub.addItem(mi)
+            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
+            appearance: prefs.appearance)
+        for group in ThemePreset.groups where !group.members.isEmpty {
+            sub.addItem(.sectionHeader(title: ThemeManager.groupTitle(group.appearance)))
+            for (index, preset) in group.members {
+                let mi = ThemeManager.menuItem(
+                    for: preset, action: #selector(applyOverflowThemePreset(_:)), target: self)
+                mi.tag = index
+                mi.state = preset == current ? .on : .off
+                sub.addItem(mi)
+            }
         }
         sub.addItem(.separator())
         let more = NSMenuItem(
-            title: L("overflow.themeSettings", "Theme Settings…"), action: #selector(openOverflowSettings), keyEquivalent: "")
+            title: L("overflow.themeSettings", "Theme Settings…"),
+            action: #selector(openOverflowSettings), keyEquivalent: "")
         more.target = self
         sub.addItem(more)
 
@@ -79,7 +86,8 @@ extension BrowserViewController {
     private func overflowCommandItem(_ id: String) -> NSMenuItem {
         let command = commands.command(id)
         let mi = NSMenuItem(
-            title: command?.title ?? id, action: #selector(runOverflowCommand(_:)), keyEquivalent: "")
+            title: command?.title ?? id, action: #selector(runOverflowCommand(_:)),
+            keyEquivalent: "")
         mi.target = self
         mi.representedObject = id
         mi.isEnabled = command?.isEnabled() ?? true
@@ -87,7 +95,10 @@ extension BrowserViewController {
     }
 
     @objc private func runOverflowCommand(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? String else { NSSound.beep(); return }
+        guard let id = sender.representedObject as? String else {
+            NSSound.beep()
+            return
+        }
         if !commands.perform(id) { NSSound.beep() }
     }
 
@@ -104,6 +115,7 @@ extension BrowserViewController {
         prefs.appearance = preset.appearance
         prefs.accentColorHex = preset.accentHex
         prefs.windowTintHex = preset.backgroundHex
+        prefs.themeName = preset.name  // as Settings records it, so both report the same theme
         persistAndApplyTheme()
     }
 

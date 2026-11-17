@@ -1715,6 +1715,9 @@
 "templates.title" = "Создание шаблонов";
 "terminal.followsFolder" = "Терминал следует за активной папкой";
 "terminal.theme" = "Тема";
+"theme.group.dark" = "Тёмные темы";
+"theme.group.light" = "Светлые темы";
+"theme.group.system" = "Как в системе";
 "toolbar.cleanup" = "Очистка";
 "toolbar.cleanup.tip" = "Найти и удалить файлы, занимающие место";
 "torrents.add" = "Добавить торрент…";

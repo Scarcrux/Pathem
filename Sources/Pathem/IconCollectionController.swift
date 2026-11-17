@@ -856,7 +856,8 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         // The collection stays clear, so the scroll view's background (or, when transparent, the
         // folder background image behind the pane) shows through the grid.
         let transparent = (color?.alphaComponent ?? 1) < 0.02
-        scrollView.backgroundColor = transparent ? .clear : (color ?? .controlBackgroundColor)
+        scrollView.backgroundColor =
+            transparent ? .clear : (color ?? ThemeManager.shared.contentBackground)
         scrollView.drawsBackground = !transparent
     }
 

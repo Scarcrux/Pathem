@@ -1870,3 +1870,6 @@
 "filesearch.semanticKeyword" = "Beschreiben Sie, was Sie suchen…";
 "filesearch.semanticMode" = "Bedeutung (semantisch)";
 "filesearch.semanticNeedsFolder" = "Die semantische Suche ordnet jeweils einen Ordner. Wählen Sie Dieser Ordner oder Anderer Ordner….";
+"theme.group.dark" = "Dunkle Themen";
+"theme.group.light" = "Helle Themen";
+"theme.group.system" = "Wie System";

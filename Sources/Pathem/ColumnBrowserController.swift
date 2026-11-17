@@ -275,7 +275,8 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         let table = KeyTableView()
         table.headerView = nil
         table.rowHeight = columnRowHeight
-        table.usesAlternatingRowBackgroundColors = alternatingRows
+        table.usesAlternatingRowBackgroundColors =
+            alternatingRows && ThemeManager.shared.allowsSystemStripes
         table.allowsMultipleSelection = true
         table.tag = index
         table.dataSource = self
@@ -334,10 +335,12 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
     private func applyBackground(to column: Column) {
         let transparent = (backgroundColor?.alphaComponent ?? 1) < 0.02
         column.table.backgroundColor =
-            transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
+            transparent ? .clear : (backgroundColor ?? ThemeManager.shared.contentBackground)
         column.scroll.backgroundColor =
-            transparent ? .clear : (backgroundColor ?? .controlBackgroundColor)
+            transparent ? .clear : (backgroundColor ?? ThemeManager.shared.contentBackground)
         column.scroll.drawsBackground = !transparent
+        column.table.usesAlternatingRowBackgroundColors =
+            alternatingRows && ThemeManager.shared.allowsSystemStripes
     }
 
     /// Rebuild the columns' layout (left to right, full height). The container's
@@ -1000,7 +1003,8 @@ extension ColumnBrowserController: PaneContentView {
         for column in columns {
             PaneAppearanceReload.table(column.table, in: column.scroll) {
                 column.table.rowHeight = rowHeight
-                column.table.usesAlternatingRowBackgroundColors = alternatingRows
+                column.table.usesAlternatingRowBackgroundColors =
+                    alternatingRows && ThemeManager.shared.allowsSystemStripes
             }
         }
     }

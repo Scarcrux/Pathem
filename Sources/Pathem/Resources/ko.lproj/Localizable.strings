@@ -1715,6 +1715,9 @@
 "templates.title" = "템플릿 생성";
 "terminal.followsFolder" = "터미널이 활성 폴더를 따라감";
 "terminal.theme" = "테마";
+"theme.group.dark" = "다크 테마";
+"theme.group.light" = "라이트 테마";
+"theme.group.system" = "시스템 설정 따르기";
 "toolbar.cleanup" = "정리";
 "toolbar.cleanup.tip" = "확보 가능한 파일 찾기 및 제거";
 "torrents.add" = "토렌트 추가…";

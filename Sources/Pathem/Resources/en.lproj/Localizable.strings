@@ -1641,6 +1641,9 @@
 "templates.title" = "Create Templates";
 "terminal.followsFolder" = "Terminal follows the active folder";
 "terminal.theme" = "Theme";
+"theme.group.dark" = "Dark Themes";
+"theme.group.light" = "Light Themes";
+"theme.group.system" = "Follow System";
 "torrents.add" = "Add Torrent…";
 "torrents.add.message" = "Choose one or more .torrent files. Downloads go to your Downloads folder.";
 "torrents.add.prompt" = "Add";

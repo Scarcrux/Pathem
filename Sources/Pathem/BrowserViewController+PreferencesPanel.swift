@@ -173,6 +173,9 @@ extension BrowserViewController {
             accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)
         let tint = ThemeManager.shared.windowTint
         view.window?.backgroundColor = tint ?? .windowBackgroundColor
+        // A transparent title bar lets the tint run under the toolbar too, so a theme colors the
+        // whole window rather than stopping at the panes.
+        view.window?.titlebarAppearsTransparent = tint != nil
     }
 
     /// Adopt the selected icon set; reload every listing so the new icons appear.

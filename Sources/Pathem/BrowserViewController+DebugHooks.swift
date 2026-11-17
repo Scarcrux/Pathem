@@ -116,6 +116,37 @@ extension BrowserViewController {
         }
     }
 
+    /// Apply every built-in theme in turn through the same path the toolbar menu uses and render
+    /// the window chrome after each, with a selection in both panes so the accent shows
+    /// (PATHEM_THEME_SHOTS=<dir>, with PATHEM_DEMO=1). Calls `done` after the last one.
+    func debugRenderThemes(toDir dir: String, done: @escaping () -> Void) {
+        let presets = ThemePreset.presets
+        func step(_ index: Int) {
+            guard index < presets.count else {
+                done()
+                return
+            }
+            let preset = presets[index]
+            prefs.appearance = preset.appearance
+            prefs.accentColorHex = preset.accentHex
+            prefs.windowTintHex = preset.backgroundHex
+            prefs.themeName = preset.name
+            applyPreferences()
+            for side in [leftTabs, rightTabs] {
+                if let pane = side.activePane, let first = pane.entries.dropFirst(2).first {
+                    pane.debugSelectNames([first.name])
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                let name = preset.name.replacingOccurrences(of: " ", with: "-")
+                self.debugRenderWindowChrome(
+                    to: "\(dir)/\(String(format: "%02d", index))-\(name).png")
+                step(index + 1)
+            }
+        }
+        step(0)
+    }
+
     /// Render the whole window chrome (title bar + toolbar + content) to a PNG by caching the
     /// window's theme frame, the view that owns the toolbar -- `debugRender` covers only the content
     /// view. Needs no Screen Recording permission, unlike screencapture (PATHEM_CHROME_RENDER).

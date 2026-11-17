@@ -544,6 +544,30 @@ enum PathemApp {
         }
         #endif
 
+        #if DEBUG
+        // Pop up the toolbar's Theme submenu so a capture from outside shows it as drawn
+        // (PATHEM_THEME_MENU_SHOT=1). Blocks in menu tracking until the process is ended.
+        if ProcessInfo.processInfo.environment["PATHEM_THEME_MENU_SHOT"] != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                let menu = NSMenu()
+                browser.populateOverflowMenu(menu)
+                let theme = menu.items.first {
+                    $0.submenu?.items.contains { $0.title == "Nord" } ?? false
+                }
+                if let sub = theme?.submenu, let content = window.contentView {
+                    sub.popUp(
+                        positioning: nil, at: NSPoint(x: 300, y: content.bounds.maxY - 40),
+                        in: content)
+                }
+            }
+        }
+        if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                browser.debugRenderThemes(toDir: dir) { exit(0) }
+            }
+        }
+        #endif
+
         // Open Reclaim Space against the real home folder, wait for every known place to be
         // measured, print how long that took, and save a picture of the window
         // (PATHEM_RECLAIM_SHOT=<png path>). Read-only: nothing is checked or deleted.

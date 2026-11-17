@@ -42,7 +42,9 @@ final class KeyTableView: NSTableView {
     /// keeps drawing rounded stripes down the empty part of the list (macOS 26 and 27), which
     /// read as loading placeholders for rows that will never arrive.
     override func drawBackground(inClipRect clipRect: NSRect) {
-        drawStripesOnlyBehindRows(in: clipRect) { super.drawBackground(inClipRect: $0) }
+        drawStripesOnlyBehindRows(in: clipRect) { rect in
+            if !drawThemedStripes(in: rect) { super.drawBackground(inClipRect: rect) }
+        }
     }
     /// A right-drag that started on a row: the super-drag flick + its swipe trail. Kept on the
     /// right button so it never collides with a left-drag (which is normal drag-and-drop).
@@ -164,6 +166,23 @@ final class KeyTableView: NSTableView {
 }
 
 extension NSTableView {
+    /// Under a tinted theme, draw the alternate-row stripes in a shade of the theme's background
+    /// instead of AppKit's system gray. False (draw nothing) when there is no tint, or when this
+    /// table shows its own background (a folder color or picture), so AppKit draws as usual.
+    @MainActor func drawThemedStripes(in rect: NSRect) -> Bool {
+        guard let stripe = ThemeManager.shared.stripeColor,
+            backgroundColor == ThemeManager.shared.contentBackground
+        else { return false }
+        backgroundColor.setFill()
+        rect.fill()
+        stripe.setFill()
+        let visible = rows(in: rect)
+        for row in visible.location..<(visible.location + visible.length) where row % 2 == 1 {
+            rect.intersection(self.rect(ofRow: row)).fill()
+        }
+        return true
+    }
+
     /// Shared by the list and tree views: fill the clip with the plain background, then let
     /// AppKit draw its alternating stripes only over the rows that exist.
     func drawStripesOnlyBehindRows(in clipRect: NSRect, drawStripes: (NSRect) -> Void) {

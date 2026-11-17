@@ -32,6 +32,9 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     NSMenuDelegate, NSTextFieldDelegate, NSMenuItemValidation
 {
     let containerView = NSVisualEffectView()
+    /// An opaque fill over the translucent sidebar material while a tinted theme is active, so the
+    /// sidebar matches the panes instead of staying system gray (hidden otherwise).
+    private let themeFill = NSView()
     private let scrollView = NSScrollView()
     private let outline = SidebarOutlineView()
 
@@ -265,6 +268,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         super.init()
         build()
         reload()
+        applyThemeFill()
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.applyThemeFill() }
         let center = NSWorkspace.shared.notificationCenter
         for name in [
             NSWorkspace.didMountNotification, NSWorkspace.didUnmountNotification,
@@ -277,6 +282,12 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     deinit { NSWorkspace.shared.notificationCenter.removeObserver(self) }
 
     @objc private func volumesChanged() { reload() }
+
+    private func applyThemeFill() {
+        let color = ThemeManager.shared.sidebarBackground
+        themeFill.isHidden = color == nil
+        themeFill.layer?.backgroundColor = color?.cgColor
+    }
 
     private func build() {
         containerView.material = .sidebar
@@ -358,9 +369,16 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         collapseButtonHeight = collapseButton.heightAnchor.constraint(equalToConstant: 24)
         configureBottomBar()
 
+        themeFill.wantsLayer = true
+        themeFill.translatesAutoresizingMaskIntoConstraints = false
+        containerView.addSubview(themeFill)
         containerView.addSubview(scrollView)
         containerView.addSubview(bottomBar)
         NSLayoutConstraint.activate([
+            themeFill.topAnchor.constraint(equalTo: containerView.topAnchor),
+            themeFill.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+            themeFill.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            themeFill.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
             scrollView.topAnchor.constraint(equalTo: containerView.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),

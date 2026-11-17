@@ -1715,6 +1715,9 @@
 "templates.title" = "Crea modelli";
 "terminal.followsFolder" = "Il Terminale segue la cartella attiva";
 "terminal.theme" = "Tema";
+"theme.group.dark" = "Temi scuri";
+"theme.group.light" = "Temi chiari";
+"theme.group.system" = "Segui il sistema";
 "toolbar.cleanup" = "Pulizia";
 "toolbar.cleanup.tip" = "Trova e rimuovi i file recuperabili";
 "torrents.add" = "Aggiungi torrent…";
