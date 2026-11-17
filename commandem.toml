@@ -1890,6 +1890,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Landed Codex's Undo History hint fix (m30) as its own commit: one line (translatesAutoresizingMaskIntoConstraints = false) plus formatter output, from 4d76b06. Evidence is Codex's single isolated probe (49/49, before/after renders); here build, swift test and inventory. Unit 2 branch still unlanded."
     at = "2026-11-17T03:46:29Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 Full make ci passed on 13213b5 (owner request): 852 unit tests, debug E2E 69 pass / 1 skip (browser-flow pixels: capture rejected as mostly transparent, native appearance unverified), packaged E2E 14/14. Translations (owner request): it, pt-BR, ko, zh-Hant, ru, nl added (2a880c0), 1870 keys each, drafted by Sonnet agents and gated by key/format/plutil checks; not native-reviewed. Found and fixed: lint's unescape dropped the backslash of Swift \\u{...}, so en/fr/de/es/zh-Hans shipped literal u{201C} in three strings; lint now fails on any literal u{...} (red on a planted case). L10N smoke sample changed from menu.file (Italian is also 'File') to menu.edit; smoke PASS with all twelve locales."
+    at = "2026-11-17T03:55:47Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
