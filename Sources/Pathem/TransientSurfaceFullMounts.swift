@@ -789,6 +789,16 @@ extension TransientSurfaceSample {
     func runMount(_ mount: Mount, cell: String, name: String) {
         mount.reset()
         for cycle in 0..<3 {
+            // A cancelled file confirmation (Delete Immediately, Empty Trash) clears the app's
+            // busy flag only when its awaiting task resumes on a later run-loop turn. Opening the
+            // next cycle before that made the production guard (!fileOperationBusy) refuse it
+            // silently: cycle 1 "real presentation not delivered" in every m63 cell, and cycle 0
+            // of the next cell, with busy=true traced right before (2026-11-17). Wait for the
+            // flag before every cycle, cells included; say so if it never clears.
+            if !settle({ !self.browser.fileOperationBusy }) {
+                emit(cell, 0, false, "cycle=\(cycle) app still busy from the previous cycle")
+                return
+            }
             let directory = root.appendingPathComponent(cell + "-\(cycle)", isDirectory: true)
                 .appendingPathComponent(name, isDirectory: true)
             let file = directory.appendingPathComponent(name)
