@@ -1000,6 +1000,10 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         super.viewDidAppear()
         installToolbarIfNeeded()
         installUpdateButtonIfNeeded()
+        // viewDidLoad applied preferences before the view had a window, so the theme's window
+        // background and transparent title bar were never set at launch (only a later theme change
+        // reached them). Apply the theme again now that the window exists.
+        applyTheme()
         applyInitialSplitPositions()
         // Focus the restored active pane, not always the left one.
         let focusPane = activePane ?? activeSide?.activePane ?? leftTabs.activePane

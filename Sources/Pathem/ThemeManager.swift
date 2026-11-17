@@ -22,6 +22,9 @@ final class ThemeManager {
     /// The alternate-row stripe over a tinted background (the stock stripes are system gray and
     /// look wrong on a colored theme), or nil to use AppKit's own.
     var stripeColor: NSColor? { windowTint.map { Self.shifted($0, by: 0.04) } }
+    /// The list's column-header background under a tint, or nil for AppKit's header material
+    /// (which ignores the window background and shows a wallpaper-tinted gray).
+    var headerBackground: NSColor? { windowTint.map { Self.shifted($0, by: 0.05) } }
     /// Whether AppKit may draw its own alternating rows. Its row views paint system gray stripes
     /// that ignore a tinted background, so a tinted theme turns them off: the list draws its own
     /// themed stripes (TintRowView), the tree and columns show the plain themed background.

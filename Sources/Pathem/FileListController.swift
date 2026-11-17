@@ -585,6 +585,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             tableView.autosaveName = "PathemFileList.v3.\(Self.instanceCount)"
             tableView.autosaveTableColumns = true
         }
+        tableView.headerView = ThemedHeaderView(
+            frame: tableView.headerView?.frame ?? NSRect(x: 0, y: 0, width: 100, height: 28))
         tableView.headerView?.menu = makeHeaderMenu()
 
         tableView.dataSource = self
@@ -742,6 +744,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
     func setBackgroundColor(_ color: NSColor?) {
         backgroundColor = color
+        tableView.headerView?.needsDisplay = true  // ThemedHeaderView follows the theme
         if let color {
             let transparent = color.alphaComponent < 0.02  // a picture is behind; show through
             tableView.backgroundColor = transparent ? .clear : color

@@ -202,3 +202,46 @@ extension NSTableView {
         NSGraphicsContext.restoreGraphicsState()
     }
 }
+
+/// The list's column header. AppKit's header draws a system material that ignores the window
+/// background, so under a tinted theme it showed as a wallpaper-tinted gray strip; with a tint
+/// this draws the header itself (background, titles, sort arrow, separators). Without one it is
+/// the stock header.
+final class ThemedHeaderView: NSTableHeaderView {
+    override func draw(_ dirtyRect: NSRect) {
+        guard let fill = ThemeManager.shared.headerBackground, let table = tableView else {
+            super.draw(dirtyRect)
+            return
+        }
+        fill.setFill()
+        dirtyRect.fill()
+        for (index, column) in table.tableColumns.enumerated() where !column.isHidden {
+            let rect = headerRect(ofColumn: index)
+            guard rect.intersects(dirtyRect) else { continue }
+            var title = rect.insetBy(dx: 4, dy: 0)
+            if let arrow = table.indicatorImage(in: column) {
+                let size = arrow.size
+                let frame = NSRect(
+                    x: rect.maxX - size.width - 8, y: rect.midY - size.height / 2,
+                    width: size.width, height: size.height)
+                let tinted = NSImage(size: size, flipped: false) { bounds in
+                    arrow.draw(in: bounds)
+                    NSColor.secondaryLabelColor.set()
+                    bounds.fill(using: .sourceAtop)
+                    return true
+                }
+                tinted.draw(in: frame)
+                title.size.width -= size.width + 8
+            }
+            // drawInterior puts the title at the top of the frame; center it vertically.
+            let height = column.headerCell.cellSize.height
+            title.origin.y = rect.midY - height / 2
+            title.size.height = height
+            column.headerCell.drawInterior(withFrame: title, in: self)
+            NSColor.separatorColor.setFill()
+            NSRect(x: rect.maxX - 1, y: rect.minY + 5, width: 1, height: rect.height - 10).fill()
+        }
+        NSColor.separatorColor.setFill()
+        NSRect(x: bounds.minX, y: bounds.maxY - 1, width: bounds.width, height: 1).fill()
+    }
+}

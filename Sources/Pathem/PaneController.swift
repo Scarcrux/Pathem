@@ -1636,6 +1636,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         layer.shadowRadius = 7
         layer.shadowOpacity = active ? 0.38 : 0
         layer.zPosition = active ? 1 : 0  // the raised pane's shadow falls on the flat one
+        // The shadow path covers the whole pane, and the tab strip and status bar are
+        // transparent, so under a tinted theme the active pane's own shadow showed through them
+        // as a dark band (olive on a cream theme). Fill the pane with the theme's background so
+        // it cannot. The stock look keeps a clear pane.
+        layer.backgroundColor = ThemeManager.shared.windowTint?.cgColor
         updateShadowPath()
     }
 
