@@ -1882,6 +1882,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-16 Owner decision: allow-list the 59 release-safety history findings, no rewrite. Each reviewed (placeholders, public handle, one public FTP demo password); scripts/release-safety-history-baseline.txt lists their fingerprints with the review notes; only history findings can be baselined. make release-safety now PASS. Controls: unlisted history finding fails, current-tree finding cannot be hidden, malformed baseline fails closed."
     at = "2026-11-17T03:38:18Z"
 
+  [[mission.comment]]
+    text = "2026-11-16 GUI resumed for held items (owner). Torrent wording (49ac491): first render cut two magnet states mid-word; shortened all six in every catalog plus a full-text tooltip; second render on the demo workspace shows all five whole. Finder F3 Services landed (478b0d3, ce153af, e332377): Finder harness 229/229 on the branch (before the final rebase onto unrelated commits); a composited Terminal capture of a real right-click on a demo file shows Services with its submenu at the bottom of the file menu, and AppKit's Ask Siri at the top. Still open: Services submenu contents and the Shortcuts-as-Quick-Action check. GUI handed back to Codex at closure."
+    at = "2026-11-17T03:44:38Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
