@@ -45,7 +45,8 @@ import Testing
     }
 
     @Test(.timeLimit(.minutes(1))) func createsEncryptedImage() async throws {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-dmg-\(UUID().uuidString)")
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-dmg-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
         let file = dir.appendingPathComponent("secret.txt")
@@ -61,10 +62,19 @@ import Testing
         check.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
         check.arguments = ["isencrypted", dmg.path]
         let pipe = Pipe()
+        let errors = Pipe()
         check.standardOutput = pipe
+        check.standardError = errors
         try check.run()
         check.waitUntilExit()
-        let output = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-        #expect(output.contains("YES"))
+        let output = String(
+            decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        // This failed once under heavy load (2026-11-16 and 11-17, 17 s instead of 4 s) with the
+        // cause unknown; report what hdiutil said so the next failure names it.
+        let stderr = String(
+            decoding: errors.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        #expect(
+            output.contains("YES"),
+            "hdiutil isencrypted exit=\(check.terminationStatus) stdout=\(output) stderr=\(stderr)")
     }
 }

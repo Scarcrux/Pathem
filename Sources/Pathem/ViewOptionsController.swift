@@ -126,6 +126,28 @@ final class ViewOptionsController: NSObject {
         updateCapabilities()
     }
 
+    /// Keep the sheet within its host by scrolling the controls, not clipping the buttons.
+    func fit(in host: NSWindow) {
+        guard let scroll = alert.accessoryView as? NSScrollView else { return }
+        alert.layout()
+        let originalHeight = alert.window.frame.height
+        let available = min(
+            host.contentLayoutRect.height,
+            host.screen?.visibleFrame.height ?? host.contentLayoutRect.height)
+        let overflow = max(0, originalHeight - available)
+        guard overflow > 0 else { return }
+        scroll.setFrameSize(
+            NSSize(width: scroll.frame.width, height: max(44, scroll.frame.height - overflow)))
+        alert.layout()
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_TRANSIENT_SURFACES_TEST"] == "1" {
+            let receipt =
+                "TSAMPLE: VIEW-OPTIONS-HEIGHT available=\(available) before=\(originalHeight) after=\(alert.window.frame.height) viewport=\(scroll.frame.height)\n"
+            FileHandle.standardOutput.write(Data(receipt.utf8))
+        }
+        #endif
+    }
+
     @objc func updateCapabilities() {
         let selected = ViewFormat.ViewMode.allCases[max(0, mode.indexOfSelectedItem)]
         let isList = selected == .list

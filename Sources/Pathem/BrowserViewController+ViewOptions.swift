@@ -9,6 +9,7 @@ extension BrowserViewController {
             format: pane.format, effective: pane.effectiveViewOptions,
             folderName: origin.lastPathComponent)
         Task { @MainActor in
+            if let window = view.window { options.fit(in: window) }
             let response = await presentSheet(options.alert)
             guard response == .alertFirstButtonReturn || response == .alertSecondButtonReturn else {
                 return
