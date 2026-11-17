@@ -1942,6 +1942,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 The commandem pathem plugin commit (88b1f05) landed after its roadmap note: the first commit missed the files because the repo's folder is Integrations/ (capital I) on a case-insensitive disk; paths fixed."
     at = "2026-11-17T23:01:57Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Landed Codex's Japanese alert crash fix (5dcd77a content) as its own commit: six ja/zh-Hans strings swapped %@ and %d; lint now order-aware (red on a planted swap). All 12 catalogs pass."
+    at = "2026-11-17T23:04:02Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
