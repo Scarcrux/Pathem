@@ -121,7 +121,7 @@
 "bvc.checksumExpectedActual" = "予想値: %@\n実際の値: %@";
 "bvc.checksumMatches" = "%@は一致します ✓";
 "bvc.checksumNoMatch" = "%@は一致しません";
-"bvc.chooseDownloadDest" = "%@から%d項目の保存先を選択";
+"bvc.chooseDownloadDest" = "%2$@から%1$d項目の保存先を選択";
 "bvc.chooseEllipsis" = "選択…";
 "bvc.cmd.addBookmark" = "このリモートフォルダをブックマーク…";
 "bvc.cmd.addToCollection" = "コレクションに追加…";
@@ -363,7 +363,7 @@
 "bvc.emptyTrashTitle" = "ゴミ箱内の%d項目を完全に消去しますか？";
 "bvc.enterPassphrase" = "秘密鍵のパスフレーズを入力してください（ない場合は空欄のまま）。";
 "bvc.enterPasswordFor" = "%@@%@のパスワードを入力してください。";
-"bvc.failuresForItems" = "%d項目で%@";
+"bvc.failuresForItems" = "%2$d項目で%1$@";
 "bvc.findingNearDup" = "%@内のほぼ重複する写真を検索中…";
 "bvc.findingSimilar" = "%@内で似た名前を検索中…";
 "bvc.flatCount" = "%@内のすべての項目: %d";

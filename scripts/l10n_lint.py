@@ -35,14 +35,19 @@ DYNAMIC_PREFIXES = ("menu.", "toolbar.", "commander.", "acl.preset.")
 def is_dynamic(key):
     return key.startswith(DYNAMIC_PREFIXES)
 
-# printf-style format specifiers (%@, %d, %1$@, %.2f, ...), ignoring the literal %%. A translation
-# that drops, adds, or renames one relative to English will crash or garble the UI at runtime, so
-# the multisets must match. This is the machine-checkable half of translation correctness (the
-# phrasing itself needs a human).
-FORMAT_SPEC = re.compile(r"%(?:\d+\$)?[-+ 0#]*\d*(?:\.\d+)?[@diouxXeEfgGscp]")
+# Compare the specifier bound to each argument slot. Translations can reorder
+# arguments explicitly, but an implicit reorder can interpret a number as a pointer.
+FORMAT_SPEC = re.compile(r"%%|%(?:(?P<position>[1-9]\d*)\$)?(?P<specifier>[-+ 0#]*\d*(?:\.\d+)?[@diouxXeEfgGscp])")
 
 def format_specs(value):
-    return sorted(FORMAT_SPEC.findall(value.replace("%%", "")))
+    matches = [match for match in FORMAT_SPEC.finditer(value) if match[0] != "%%"]
+    positional = [match["position"] is not None for match in matches]
+    if any(positional) and not all(positional):
+        return None
+    return sorted(
+        (int(match["position"] or index), match["specifier"])
+        for index, match in enumerate(matches, 1)
+    )
 
 # The KEY of an L() call: the first string-literal argument. Lenient on purpose -- it captures the
 # key even when the fallback isn't a clean literal (a comment between the args, a "a" + "b"
@@ -225,9 +230,10 @@ def main():
         present = set(current)
         missing = keys - present
         stale = {k for k in present - keys if not is_dynamic(k)}  # dynamic keys are never stale
-        # A translation must carry the same printf specifiers as English (order-insensitive).
+        # A translation must preserve the argument slots and their specifiers.
         mismatched = [
-            k for k in present & set(english) if format_specs(english[k]) != format_specs(current[k])
+            k for k in present & set(english)
+            if format_specs(current[k]) is None or format_specs(english[k]) != format_specs(current[k])
         ]
         # A Swift escape copied without its backslash ships as visible text ("u{201C}").
         broken = sorted(k for k, v in current.items() if re.search(r"u\{[0-9A-Fa-f]{2,6}\}", v))
