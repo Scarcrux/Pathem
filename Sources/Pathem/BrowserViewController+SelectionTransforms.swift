@@ -253,6 +253,9 @@ extension BrowserViewController {
             let name = NSTextField(labelWithString: label)
             name.alignment = .right
             name.widthAnchor.constraint(equalToConstant: 80).isActive = true
+            // The stack lays out with Auto Layout, so the fields' 240 pt frames do not hold:
+            // without a width constraint both collapse to zero width.
+            control.widthAnchor.constraint(equalToConstant: 240).isActive = true
             let row = NSStackView(views: [name, control])
             row.orientation = .horizontal
             row.spacing = 8
