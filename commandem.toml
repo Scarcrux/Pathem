@@ -1910,6 +1910,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Correction: the sliver fix note (793c326) was pushed before the fix itself (a failed commit). The fix is 03abe94, pushed with this note."
     at = "2026-11-17T12:31:18Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Title bar tint (owner request), landed: the theme never reached the window at launch (applied in viewDidLoad before the view had a window); also themed the column header (ThemedHeaderView) and stopped the active pane's shadow showing through its transparent strips as a dark/olive band. Verified by launch captures on Nord and Gruvbox Light with measured colors and six GUI suites. The earlier theme renders were misleading because they switched themes after launch."
+    at = "2026-11-17T12:57:51Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
