@@ -1902,6 +1902,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Reinstalled with the theme work: notarized 97d2edb Accepted and stapled, verify-release A1-A6 PASS in /Applications, backup /tmp/pathem-install-backup.eUM9. Observed: CFBundleVersion is 24 for both of yesterday's builds (BUILD_NUMBER is not read by scripts/package.sh), so the running app's stale-build notice cannot tell them apart; the owner must relaunch to pick it up."
     at = "2026-11-17T12:22:39Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Owner screenshot: accent sliver right of the toolbar '…' button. Reproduced on demo + Nord via Terminal capture; cause: hidden UpdateButtonAccessory still drawing its accent-bezel button past the window edge. Fixed by hiding its view too; recapture clean. Found while checking: the real composited title bar stays system gray under tinted themes, unlike the in-process renders used for the theme work (cacheDisplay does not show the title bar material). Open."
+    at = "2026-11-17T12:29:37Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
