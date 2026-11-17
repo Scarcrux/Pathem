@@ -5,6 +5,7 @@ from transient_inventory import scan, validate as validate_inventory, validate_a
 from transient_mounts import validate as validate_mounts
 from transient_factories import validate as validate_factories
 from transient_full_alerts import validate as validate_alerts
+from transient_catalogs import shipped_languages, A_LANGUAGES
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -16,11 +17,11 @@ def plan(root=ROOT):
     def add(category, language, group=0, only=None):
         label = f'clean-{language}-full-{category}-g{group}' + ('-' + only if only else '')
         jobs.append(dict(category=category, language=language, group=group, only=only, label=label))
-    for language in ['de', 'ja']:
+    for language in A_LANGUAGES:
         add('core', language)
         for group in sorted({row['group'] for row in mounts}): add('mounts', language, group)
         for group in sorted({row['group'] for row in factories}): add('factories', language, group)
-    for language in ['de', 'ja', 'en', 'fr', 'es', 'zh-Hans']: add('b', language)
+    for language in shipped_languages(root): add('b', language)
     for mode in ['close', 'quit']: add('lifecycle', 'de', only=mode)
     return jobs
 
@@ -68,7 +69,7 @@ def focused_plan(surface_ids, root=ROOT):
     jobs = []
     for surface in surface_ids:
         category = families[surface]
-        languages = ['de','ja','en','fr','es','zh-Hans'] if category == 'b' else ['de','ja']
+        languages = shipped_languages(root) if category == 'b' else A_LANGUAGES
         for language in languages:
             jobs.append(dict(category=category, language=language, group=0, only=surface,
                              label=f'clean-{language}-full-{category}-g0-{surface}'))

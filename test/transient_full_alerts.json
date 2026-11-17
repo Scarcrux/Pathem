@@ -182,8 +182,8 @@
     },
     {
       "id": "b09",
-      "site": "Sources/Pathem/PaneController.swift:2967:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:2958:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3068:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3059:21:NSAlert",
       "source_sha256": "276cf9b7eaaa25a48df438a5eb11bd4ca5727556f390fc27a164fc25ee474809",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
@@ -203,8 +203,8 @@
     },
     {
       "id": "b10",
-      "site": "Sources/Pathem/PaneController.swift:2981:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:2977:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3082:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3078:21:NSAlert",
       "source_sha256": "e905d42c1d775804ddb147ed3e8c937fc1e1843b570e4a215afb306ffa1dba90",
       "sheet": true,
       "fixture": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",
@@ -225,8 +225,8 @@
     },
     {
       "id": "b11",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1035:9:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:1027:21:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1045:9:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1037:21:NSAlert",
       "source_sha256": "8c75532062623d86d7bec2d2099f2da31b523ca0183b1183f92f751e7996758e",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Static localized strings. Build from catalog; never invoke folderHandlerToggled/applyFolderHandler, which changes the system default.",
@@ -351,8 +351,8 @@
     },
     {
       "id": "b18",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1059:17:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:1048:29:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1069:17:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1058:29:NSAlert",
       "source_sha256": "5f6070bfe654667cc7a634fabbc600936cfdf5434330ec3ef1dd422f259378a9",
       "sheet": true,
       "fixture": "Localized folder-handler failure report plus error detail. Fixture: permission error with 255-character component. Do not change system handler.",
@@ -372,8 +372,8 @@
     },
     {
       "id": "b19",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1102:17:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:1098:29:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1112:17:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1108:29:NSAlert",
       "source_sha256": "2052297b508bafc18713f7587f90fa1efc4dff6762e36fb26b00286dcfa1a738",
       "sheet": true,
       "fixture": "Localized default magnet-app failure report. Fixture: permission error with 255-character component. Do not change magnet or torrent handler.",
@@ -420,8 +420,8 @@
     },
     {
       "id": "b22",
-      "site": "Sources/Pathem/TorrentDrawerController.swift:411:9:beginSheetModal",
-      "builder": "Sources/Pathem/TorrentDrawerController.swift:407:21:NSAlert",
+      "site": "Sources/Pathem/TorrentDrawerController.swift:442:9:beginSheetModal",
+      "builder": "Sources/Pathem/TorrentDrawerController.swift:438:21:NSAlert",
       "source_sha256": "46bf5b53611030c44e3bdc1c54d39ed75c7f90ca5e67b1504710fc4623aeb07a",
       "sheet": true,
       "fixture": "Localized torrent error title with runtime error body; standard OK only. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
@@ -602,9 +602,9 @@
     },
     {
       "id": "b32",
-      "site": "Sources/Pathem/BrowserViewController+ContentSearch.swift:101:30:presentSheet",
-      "builder": "Sources/Pathem/BrowserViewController+ContentSearch.swift:93:21:NSAlert",
-      "source_sha256": "8a8d11b083e173d2ca0a928a408034c91d6e04e19f3803eced6959709b3c9352",
+      "site": "Sources/Pathem/BrowserViewController+ContentSearch.swift:140:30:presentSheet",
+      "builder": "Sources/Pathem/BrowserViewController+ContentSearch.swift:129:21:NSAlert",
+      "source_sha256": "dc4d7e3ec508366e1c61148a83a68dad706104fcf06578655d0099011366083b",
       "sheet": true,
       "fixture": "Plain near-duplicate confirmation moves extras to recoverable Trash via performLocalTrash. Fixture: six-digit group/photo counts. No permanent deletion path in this alert.",
       "message": {

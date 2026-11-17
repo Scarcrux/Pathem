@@ -15,10 +15,10 @@ import tempfile
 import time
 from transient_deadline import bounded_native_timeout, validate_native_timeout
 from transient_process import run_owned_native
+from transient_catalogs import shipped_languages, A_LANGUAGES
 from layout_matrix_support import defaults_snapshot, verify_defaults
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-LANGUAGES = ['de', 'ja', 'en', 'fr', 'es', 'zh-Hans']
 CASES = {'clean': None, 'accessory-short': ('A-rename-', 1),
          'dismiss-failure': ('A-conflict-', 7), 'leaked-window': ('A-rename-', 8),
          'cancel-commits-edit': ('A-rename-', 5)}
@@ -283,11 +283,32 @@ def main():
     parser.add_argument('--pilot', action='store_true')
     parser.add_argument('--full', action='store_true')
     parser.add_argument('--set', choices=['all', 'core', 'b', 'mounts', 'factories', 'lifecycle'], default='all')
-    parser.add_argument('--language', choices=LANGUAGES)
+    parser.add_argument('--language', choices=shipped_languages(ROOT))
     parser.add_argument('--group', type=int, default=0)
     parser.add_argument('--probe-one', action='store_true')
     parser.add_argument('--only')
     args = parser.parse_args()
+    if args.only is not None and args.language is None:
+        parser.error('--only requires explicit --language to keep a focused run bounded')
+    if args.only is not None and (not args.only.strip() or not args.full):
+        parser.error('--only requires --full and a nonempty surface ID')
+    if args.full and args.set in {'all','core','mounts','factories'} and args.language and args.language not in A_LANGUAGES:
+        parser.error('full class A variants use de or ja; use --set b for another shipped catalog')
+    if args.only is not None:
+        if args.set not in {'mounts','factories','b','lifecycle'}:
+            parser.error('--only requires an explicit surface family via --set')
+        if args.set == 'lifecycle':
+            valid = args.only in {'close','quit'} and args.language == 'de' and args.group == 0
+        else:
+            module = {'mounts':'transient_mounts','factories':'transient_factories','b':'transient_full_alerts'}[args.set]
+            recipes = __import__(module).validate()
+            valid = any(row['id'] == args.only and
+                (args.group == 0 or (args.set != 'b' and row.get('group') == args.group))
+                for row in recipes)
+        if not valid:
+            parser.error('--only surface does not match the selected family, group or lifecycle language')
+    if args.set == 'lifecycle' and args.only is None:
+        parser.error('lifecycle checks require explicit --only close or --only quit and --language de')
     os.umask(0o077)
     if args.full:
         __import__("transient_full_alerts").validate()
@@ -296,7 +317,8 @@ def main():
             parser.error("a full pilot is allowed only for the bounded core controls")
     if args.case != 'clean' and not args.pilot:
         parser.error('injections are bounded pilot controls')
-    languages = [args.language] if args.language else (['de'] if args.pilot else LANGUAGES)
+    languages = [args.language] if args.language else (['de'] if args.pilot else
+        list(A_LANGUAGES) if args.full and args.set in {'all','core','mounts','factories'} else shipped_languages(ROOT))
     if args.case != 'clean' and languages != ['de']:
         parser.error('injections use the contracted German pilot')
     results = [run_case(args.case, language, args.pilot, args.full, args.set, args.group, args.probe_one, args.only) for language in languages]

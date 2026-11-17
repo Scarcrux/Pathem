@@ -4,8 +4,8 @@ from transient_mounts import validate as validate_mounts
 from transient_factories import validate as validate_factories
 from transient_full_alerts import validate as validate_alerts
 from transient_core_receipts import cells as core_cells
+from transient_catalogs import shipped_languages, A_LANGUAGES
 ROOT=Path(__file__).resolve().parents[1]
-LANGUAGES={'de','ja','en','fr','es','zh-Hans'}
 
 
 def planned_pairs(jobs=None,root=ROOT):
@@ -15,7 +15,9 @@ def planned_pairs(jobs=None,root=ROOT):
     result=set();cache={}
     for job in jobs:
         category=job['category'];language=job['language'];group=job.get('group',0);only=job.get('only')
-        if language not in LANGUAGES:raise ValueError('unknown planned language: '+str(language))
+        if language not in shipped_languages(root):raise ValueError('unknown planned language: '+str(language))
+        if category in {'core','mounts','factories'} and language not in A_LANGUAGES:
+            raise ValueError('class A plan requires de or ja')
         if category=='core':
             cells=core_cells(language)
             if not cells:raise ValueError('core plan requires de or ja')
@@ -46,7 +48,7 @@ def planned_pairs(jobs=None,root=ROOT):
     return result
 
 
-def validate_jobs(jobs):
+def validate_jobs(jobs,root=ROOT):
     """Reject an empty, duplicate or noncanonical invocation plan before side effects."""
     if not isinstance(jobs,list) or not jobs:
         raise ValueError('selected plan must be a nonempty job list')
@@ -56,11 +58,13 @@ def validate_jobs(jobs):
         if not isinstance(job,dict) or set(job)!=fields:
             raise ValueError('selected plan job has unknown or missing fields')
         category=job['category'];language=job['language'];group=job['group'];only=job['only']
-        if not isinstance(category,str) or not isinstance(language,str) or category not in {'core','mounts','factories','b','lifecycle'} or language not in LANGUAGES:
+        if not isinstance(category,str) or not isinstance(language,str) or category not in {'core','mounts','factories','b','lifecycle'} or language not in shipped_languages(root):
             raise ValueError('selected plan has unknown category or language')
         if type(group) is not int or group<0 or (only is not None and (not isinstance(only,str) or not only)):
             raise ValueError('selected plan has invalid group or surface selector')
-        if category=='core' and (language not in {'de','ja'} or group!=0 or only is not None):
+        if category in {'core','mounts','factories'} and language not in A_LANGUAGES:
+            raise ValueError('class A selected plan requires de or ja')
+        if category=='core' and (group!=0 or only is not None):
             raise ValueError('core selected plan must use its complete contracted treatment')
         if category=='b' and group!=0:
             raise ValueError('plain-alert selected plan has no group selector')

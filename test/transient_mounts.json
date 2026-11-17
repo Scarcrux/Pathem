@@ -51,7 +51,7 @@
     },
     {
       "id": "m08",
-      "site": "Sources/Pathem/BrowserViewController+SelectionInspection.swift:250:30:presentSheet",
+      "site": "Sources/Pathem/BrowserViewController+SelectionInspection.swift:252:30:presentSheet",
       "filename": true,
       "group": 1,
       "content_change": false
@@ -79,14 +79,14 @@
     },
     {
       "id": "m12",
-      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:272:9:beginSheetModal",
+      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:279:9:beginSheetModal",
       "filename": true,
       "group": 2,
       "content_change": false
     },
     {
       "id": "m13",
-      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:319:9:beginSheetModal",
+      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:326:9:beginSheetModal",
       "filename": true,
       "group": 2,
       "content_change": false
@@ -170,14 +170,14 @@
     },
     {
       "id": "m25",
-      "site": "Sources/Pathem/FindInFilesController.swift:76:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/FindInFilesController.swift:85:9:makeKeyAndOrderFront",
       "filename": true,
       "group": 4,
       "content_change": false
     },
     {
       "id": "m26",
-      "site": "Sources/Pathem/GlobalSearchController.swift:85:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/GlobalSearchController.swift:98:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 4,
       "content_change": false
@@ -359,7 +359,7 @@
     },
     {
       "id": "m52",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1828:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1838:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false
@@ -515,7 +515,7 @@
     },
     {
       "id": "m73",
-      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:193:13:beginSheetModal",
+      "site": "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:198:13:beginSheetModal",
       "filename": true,
       "group": 10,
       "content_change": false

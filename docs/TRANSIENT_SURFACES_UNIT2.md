@@ -4,29 +4,44 @@ The accepted contract is docs/TRANSIENT_SURFACES.md. This receipt is not READY.
 Unit 1 landed at 7d3d7fc; Unit 2 starts with 861884b (bounded path display) and
 d870e40 (opaque failure renders), both private pending final review.
 
-## Current checkpoint
+## Current rebase checkpoint (2026-11-17)
 
-The inventory has 112 A sites after four reviewed standard menu providers moved
-from conservative A to C. Of those, 103 have native adapters and nine browser
-window presentations delegate to accepted task 2. All 47 B alerts have recipes;
-36 sheet branches have behavior coverage and 11 modal branches are structural
-only by contract. These are planned coverage counts until a complete run closes.
+The private branch is rebased onto main 3c65e5a. Main's theme, Services, search
+Outcome API/reporting and markup close guards are preserved. Encrypted-image
+input widths and Undo History already landed separately; those source files now
+match main exactly. The M25 fixture returns ContentSearch.Outcome() to match the
+current search interface. No GUI test has run during this rebase.
 
-The owner authorized the coordinated serial GUI batch. V5 passed the clean core,
-M42/M23, markup confirmation and real close/Quit probes, with all four injections
-still discriminating. All 209 headless tests passed. Full v2 was deliberately
-interrupted at six receipts after review found scroll geometry lost alignment
-insets. It is incomplete and ineligible for a baseline. Its interrupted child
-was terminated and reaped by the owned supervisor; preferences were unchanged
-and the exact demo root was removed. The initial new inset-control setup then
-failed before any product surface was shown; its diagnostics and corrected
-frame-for-alignment construction are pending validation. Popup menu-universe
-sizing is also being replaced with current-title measurement. No native raw
-failure has been reclassified as PASS and no final baseline exists.
+Headless verification: 245 Python controls pass, the native debug build passes,
+the presentation inventory passes, shell syntax passes and all twelve catalogs
+pass localization lint. Normal commit hooks are required before this checkpoint
+is committed. None of these results replaces current GUI qualification.
 
-The later sections retain chronological negative results. Their earlier paused,
-pending and source-count statements describe those checkpoints, not current
-readiness. No final CI, land, install or deployment has occurred for Unit 2.
+Current inventory: 197 builders, 196 presentation rows, 75 explicitly excluded
+DEBUG/harness expressions and 39 implicit menus. A112 = 103 native adapters plus
+nine browser-window sites delegated to accepted task 2; B47; C33 and four wrapper
+rows. Those are classified/planned counts, not newly executed native coverage.
+All classifications and destructive-default intent survived the identity mapping.
+Main's Services/theme menus were merged from their reviewed implicit metadata.
+
+Main now ships twelve catalogs, so the old six-catalog plan is incomplete for
+current main. Catalog discovery and B planning include all twelve; A variants
+remain German/Japanese. The future full plan is 48 jobs/15,355 possible product
+cell/check pairs. That plan was not run. Historical six-locale and 42-job receipts
+below apply only to their old source/artifact, never the rebased tree.
+
+Focused CLI commands now require --full, explicit --set and --language, and a
+nonempty surface ID belonging to the selected family/group. Lifecycle commands
+require an explicit close/quit mode in German. Missing or ignored selectors fail
+before native admission; subprocess canaries prove that no app is launched on
+those refusals. No automatic all-language fanout follows a focused request.
+
+Unit 2 remains NOT READY: no complete current-source GUI results or reviewed
+known-findings baseline exists, and no final CI, land, install or deployment is
+claimed. Existing product findings remain open. Source review also notes that
+PATHEM_THEME_SHOTS alone is not recognized by isAutomationLaunch; that separate
+main hook was not launched or modified here. Earlier sections retain chronological
+negative results and historical statuses, not current readiness claims.
 
 ## Criteria before expansion
 

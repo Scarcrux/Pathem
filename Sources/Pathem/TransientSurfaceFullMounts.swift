@@ -78,7 +78,7 @@ extension TransientSurfaceSample {
                 b.showViewOptions()
                 return b
             },
-            mount("m08", "BrowserViewController+SelectionInspection.swift:250", filename: true) {
+            mount("m08", "BrowserViewController+SelectionInspection.swift:252", filename: true) {
                 _, _ in
                 b.setFinderCommentSelection()
                 return b
@@ -95,12 +95,12 @@ extension TransientSurfaceSample {
                 b.setDefaultOpener(nil)
                 return b
             },
-            mount("m12", "BrowserViewController+SelectionTransforms.swift:272", filename: true) {
+            mount("m12", "BrowserViewController+SelectionTransforms.swift:279", filename: true) {
                 _, _ in
                 b.encryptToDiskImage()
                 return b
             },
-            mount("m13", "BrowserViewController+SelectionTransforms.swift:319", filename: true) {
+            mount("m13", "BrowserViewController+SelectionTransforms.swift:326", filename: true) {
                 _, _ in
                 b.secureDeleteSelection()
                 return b
@@ -194,17 +194,18 @@ extension TransientSurfaceSample {
                     }, onRun: { _ in self.emit("mount-callback", 5, false, "unexpected command") })
                 return controller
             },
-            mount("m25", "FindInFilesController.swift:76", filename: true) { _, name in
+            mount("m25", "FindInFilesController.swift:85", filename: true) { _, name in
                 let controller = owners.get("m25") { FindInFilesController() }
                 controller.present(
-                    over: self.host, folderName: name, search: { _, _, _ in [] },
+                    over: self.host, folderName: name,
+                    search: { _, _, _ in ContentSearch.Outcome() },
                     open: { _ in self.emit("mount-callback", 5, false, "unexpected file open") },
                     replace: { _, _, _, _ in
                         ContentSearch.ReplaceResult(filesChanged: 0, replacements: 0)
                     })
                 return controller
             },
-            mount("m26", "GlobalSearchController.swift:85") { file, _ in
+            mount("m26", "GlobalSearchController.swift:98") { file, _ in
                 let controller = owners.get("m26") { GlobalSearchController() }
                 controller.present(
                     over: self.host, currentFolder: file.deletingLastPathComponent(),
@@ -378,7 +379,7 @@ extension TransientSurfaceSample {
                     })
                 return controller
             },
-            mount("m52", "SettingsWindowController.swift:1828") { _, _ in
+            mount("m52", "SettingsWindowController.swift:1838") { _, _ in
                 let controller = owners.get("m52") { SettingsWindowController() }
                 _ = controller.debugPresentLive()
                 return controller
@@ -575,7 +576,7 @@ extension TransientSurfaceSample {
                 return controller
             },
             mount(
-                "m73", "BrowserViewController+SelectionTransforms.swift:193", filename: true,
+                "m73", "BrowserViewController+SelectionTransforms.swift:198", filename: true,
                 prepare: { file, _ in
                     let directory = file.deletingLastPathComponent()
                     let process = Process()

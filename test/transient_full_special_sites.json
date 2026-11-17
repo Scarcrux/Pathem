@@ -11,7 +11,7 @@
       "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only."
     },
     {
-      "site": "Sources/Pathem/PathemApp.swift:259:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/PathemApp.swift:265:9:makeKeyAndOrderFront",
       "coverage": "task2",
       "reason": "Primary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -51,7 +51,7 @@
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
     {
-      "site": "Sources/Pathem/SidebarController.swift:580:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SidebarController.swift:598:9:makeKeyAndOrderFront",
       "coverage": "task2",
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
     },

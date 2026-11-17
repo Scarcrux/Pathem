@@ -1,4 +1,5 @@
 import unittest
+from transient_catalogs import shipped_languages
 from transient_full_plan import classify_coverage
 
 class CoverageControls(unittest.TestCase):
@@ -32,7 +33,7 @@ class CoverageControls(unittest.TestCase):
     def test_focused_B_keeps_all_shipped_languages(self):
         from transient_full_plan import focused_plan
         jobs=focused_plan(['b03'])
-        self.assertEqual({r['language'] for r in jobs},{'de','ja','en','fr','es','zh-Hans'})
+        self.assertEqual({r['language'] for r in jobs},set(shipped_languages()))
     def test_unknown_and_duplicate_surface_refused(self):
         from transient_full_plan import focused_plan
         for selection in [['unknown'],['m39','m39']]:
