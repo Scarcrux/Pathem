@@ -640,6 +640,12 @@ extension TransientSurfaceSample {
         ]
     }
 
+    /// Non-modal utility windows dismissed by their close box (Cmd-W), like Finder's copy
+    /// window. The Transfers window's "Cancel" button cancels the selected transfer row, and
+    /// in en/de/ja its title equals common.cancel, so the title match would press a row action
+    /// instead of dismissing the window. Escape is not a dismissal there by design.
+    static let closeBoxMounts: Set<String> = ["m49", "m50", "m67"]
+
     static let contentMounts: Set<String> = [
         "m27", "m36", "m37", "m38", "m39", "m40", "m43", "m47", "m48", "m49", "m62", "m74",
     ]
@@ -959,9 +965,15 @@ extension TransientSurfaceSample {
                     || $0.title == L("common.close", "Close")
                     || $0.title == L("fda.notNow", "Not Now")
             }
-            if let cancel {
+            var dismissal = "escape"
+            if Self.closeBoxMounts.contains(mount.id) {
+                dismissal = "closeBox"
+                window.performClose(nil)
+            } else if let cancel {
+                dismissal = "button:\(cancel.title)"
                 cancel.performClick(nil)
             } else if window.styleMask.contains(.closable) {
+                dismissal = "closeBox"
                 window.performClose(nil)
             } else if let event = NSEvent.keyEvent(
                 with: .keyDown, location: .zero,
@@ -982,7 +994,7 @@ extension TransientSurfaceSample {
                 content: content)
             emit(
                 cell, 7, dismissed && (host.firstResponder.map(ObjectIdentifier.init) == responder),
-                "cycle=\(cycle) visible=\(window.isVisible) responderRestored=\(host.firstResponder.map(ObjectIdentifier.init) == responder)",
+                "cycle=\(cycle) dismissal=\(dismissal) visible=\(window.isVisible) responderRestored=\(host.firstResponder.map(ObjectIdentifier.init) == responder)",
                 content: content)
             emit(
                 cell, 8, TransientSurfaceChecks.noAccumulation(before: before, after: windows()),
