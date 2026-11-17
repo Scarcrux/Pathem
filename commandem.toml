@@ -1930,6 +1930,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Website deployed twice (owner approved): privacy page, security headers, new copy and screenshots, then 18df6c3 allowing and disclosing Cloudflare Web Analytics (owner chose to keep it on; Cloudflare injects the beacon on pathem.app, which the first CSP blocked). Live check in headless Chrome: home, privacy and two guide pages load with 0 CSP violations and 0 script errors (one search-guide violation was the old header still cached and did not recur in 3 reruns); the beacon loads. Cloudflare email obfuscation rewrites the mailto link; works under the CSP."
     at = "2026-11-17T18:38:58Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Installed f6db680: notarization Accepted and stapled (the earlier 401 cleared without a credential change; pathem-notary now authenticates), verify-release A1-A6, A10 (Photos entitlement) and A11 (notices) PASS on the build and in /Applications; backup /tmp/pathem-install-backup.Vb6z. The real app's Photos prompt and the About credits are not yet seen on screen."
+    at = "2026-11-17T21:02:24Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
