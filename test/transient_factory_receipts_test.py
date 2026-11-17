@@ -1,5 +1,28 @@
+import json
+from pathlib import Path
+import tempfile
 import unittest
-from transient_factories import validate, receipt_errors
+from transient_factories import ROOT, validate, receipt_errors
+
+
+def absent_cancel_root(case):
+    """A copy of the reviewed inputs in which f23 is a sheet without Cancel.
+
+    No shipped factory lacks Cancel any more (f23 gained one), so the missing-Cancel
+    receipt rules are exercised against this synthetic recipe and adapter."""
+    temp=tempfile.TemporaryDirectory();case.addCleanup(temp.cleanup)
+    root=Path(temp.name);(root/'test').mkdir()
+    records=json.loads((ROOT/'test/transient_factories.json').read_text())
+    next(row for row in records['factories'] if row['id']=='f23')['cancel_absent']=True
+    (root/'test/transient_factories.json').write_text(json.dumps(records))
+    (root/'test/transient_inventory.json').write_bytes((ROOT/'test/transient_inventory.json').read_bytes())
+    for file in {r['file'] for r in records['factories']}|{'Sources/Pathem/TransientSurfaceFullFactories.swift'}:
+        target=root/file;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes((ROOT/file).read_bytes())
+    adapter=root/'Sources/Pathem/TransientSurfaceFullFactories.swift'
+    old='FactoryObject(BrowserViewController.makeArchiveSaveDialog(archive: file))'
+    case.assertIn(old,adapter.read_text())
+    adapter.write_text(adapter.read_text().replace(old,old[:-1]+', cancel: nil)'))
+    return root
 
 def sample(profile='f01'):
     r=next(r for r in validate() if r['id']==profile)
@@ -62,12 +85,12 @@ class FactoryReceiptControls(unittest.TestCase):
                 text+=f'\nTSAMPLE: SHEET-NO-CANCEL cell=F-f23-de-light-720-{name} cycle={cycle} complete=true equivalent=false keyDownSent=true received=[] response=None visible={str(visible).lower()} buttonCallbacksWithheld=true'
         return text
     def test_missing_cancel_real_sheet_observations_are_product_reds(self):
-        self.assertEqual(receipt_errors(self.absent_cancel_sample(),'de',0,True,'f23'),[])
+        self.assertEqual(receipt_errors(self.absent_cancel_sample(),'de',0,True,'f23',root=absent_cancel_root(self)),[])
     def test_missing_cancel_implicit_dismissal_does_not_become_cancel_pass(self):
-        self.assertEqual(receipt_errors(self.absent_cancel_sample(False),'de',0,True,'f23'),[])
+        self.assertEqual(receipt_errors(self.absent_cancel_sample(False),'de',0,True,'f23',root=absent_cancel_root(self)),[])
     def test_missing_cancel_sheet_escape_delivery_required(self):
         text=self.absent_cancel_sample().replace('complete=true','complete=false',1)
-        self.assertTrue(any('Escape observation incomplete' in e for e in receipt_errors(text,'de',0,True,'f23')))
+        self.assertTrue(any('Escape observation incomplete' in e for e in receipt_errors(text,'de',0,True,'f23',root=absent_cancel_root(self))))
     def test_missing_cancel_cannot_claim_discard_as_cancel(self):
         text=self.absent_cancel_sample().replace('FAIL cell=F-f23-de-light-720-short check=5','PASS cell=F-f23-de-light-720-short check=5',1)
-        self.assertTrue(any('cannot claim native Cancel' in e for e in receipt_errors(text,'de',0,True,'f23')))
+        self.assertTrue(any('cannot claim native Cancel' in e for e in receipt_errors(text,'de',0,True,'f23',root=absent_cancel_root(self))))

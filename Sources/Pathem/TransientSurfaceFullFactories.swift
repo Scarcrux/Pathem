@@ -229,8 +229,7 @@ extension TransientSurfaceSample {
                 "f23", "BrowserViewController+Archives.swift",
                 function: "writeBackArchiveIfChanged", sheet: true
             ) { file, _ in
-                FactoryObject(
-                    BrowserViewController.makeArchiveSaveDialog(archive: file), cancel: nil)
+                FactoryObject(BrowserViewController.makeArchiveSaveDialog(archive: file))
             },
             factory(
                 "f24", "SidebarController.swift", function: "customIcon", sheet: true,
@@ -538,6 +537,11 @@ extension TransientSurfaceSample {
                     }
                     inspectFactory(entry, object: object, cell: cell, cycle: cycle, before: before)
                     if let index = object.cancelIndex, object.buttons.indices.contains(index) {
+                        // Record whether Escape reaches this Cancel (the click below does not
+                        // exercise the key binding).
+                        trace(
+                            "TSAMPLE: CANCEL-BINDING cell=\(cell) cycle=\(cycle) title=\(object.buttons[index].title) escape=\(object.buttons[index].keyEquivalent == "\u{1b}")"
+                        )
                         object.buttons[index].performClick(nil)
                         state.nativeCancel = true
                         _ = settle { state.response != nil }

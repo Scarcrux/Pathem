@@ -47,7 +47,14 @@ class FactoryProvenanceTests(unittest.TestCase):
         root,r=self.fixture();r['factories'][0]['sheet']=True;(root/'test/transient_factories.json').write_text(json.dumps(r))
         with self.assertRaisesRegex(ValueError,'presentation/string treatment'):validate(root)
 
+    # No shipped factory lacks Cancel now (f23 gained one), so mark absence synthetically.
     def test_absent_cancel_recipe_is_bound_to_adapter(self):
-        root,r=self.fixture();profile=next(row for row in r['factories'] if row['id']=='f23');profile.pop('cancel_absent')
+        root,r=self.fixture();profile=next(row for row in r['factories'] if row['id']=='f23');profile['cancel_absent']=True
         (root/'test/transient_factories.json').write_text(json.dumps(r))
+        with self.assertRaisesRegex(ValueError,'Cancel recipe differs'):validate(root)
+
+    def test_adapter_without_cancel_is_bound_to_recipe(self):
+        root,_=self.fixture();p=root/'Sources/Pathem/TransientSurfaceFullFactories.swift';s=p.read_text()
+        old='FactoryObject(BrowserViewController.makeArchiveSaveDialog(archive: file))';self.assertIn(old,s)
+        p.write_text(s.replace(old,'FactoryObject(BrowserViewController.makeArchiveSaveDialog(archive: file), cancel: nil)'))
         with self.assertRaisesRegex(ValueError,'Cancel recipe differs'):validate(root)
