@@ -59,19 +59,26 @@ final class UpdateButtonAccessory: NSTitlebarAccessoryViewController {
             button.image = NSImage(
                 systemSymbolName: "arrow.down.circle.fill", accessibilityDescription: button.title)
             button.action = #selector(openPendingUpdate)
-            button.toolTip = L("update.buttonTooltip", "Version %@ is ready to install").replacingOccurrences(
-                of: "%@", with: version)
+            button.toolTip = L("update.buttonTooltip", "Version %@ is ready to install")
+                .replacingOccurrences(
+                    of: "%@", with: version)
         } else if StaleBuildState.current != nil {
             // No network update, but a newer build was installed under us: offer a relaunch.
             isHidden = false
             button.title = L("update.relaunchTitle", "Relaunch to Update")
             button.image = NSImage(
-                systemSymbolName: "arrow.clockwise.circle.fill", accessibilityDescription: button.title)
+                systemSymbolName: "arrow.clockwise.circle.fill",
+                accessibilityDescription: button.title)
             button.action = #selector(relaunchForUpdate)
-            button.toolTip = L("update.relaunchTooltip", "A newer build of Pathem is installed. Relaunch to run it.")
+            button.toolTip = L(
+                "update.relaunchTooltip",
+                "A newer build of Pathem is installed. Relaunch to run it.")
         } else {
             isHidden = true
         }
+        // Hiding the accessory collapses its slot but the button can still draw past the window's
+        // trailing edge as an accent-colored sliver beside the toolbar; hide the content too.
+        view.isHidden = isHidden
     }
 
     @objc private func openPendingUpdate() {
