@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+"""commandem-pathem: open, reveal or preview a project's files in Pathem.
+
+A Commandem plugin (any executable named commandem-<name>; see Commandem's
+examples/plugins/README.md). `commandem open --pathem <project>` already opens a
+project's root folder; this plugin reaches inside it.
+
+  commandem pathem [project] [path]       open a folder, or reveal a file, in Pathem
+  commandem pathem [project] --preview F  show file F in Pathem's viewer
+  commandem pathem [project] --changed    reveal the most recently changed uncommitted
+                                          file and list the rest (what an agent touched)
+  commandem pathem ... --print            print the command instead of running it
+
+<project> is matched like Commandem does: exact name, unique prefix, or unique
+substring (case-insensitive). Without it, the project containing the current
+directory is used. A relative <path> is resolved inside the project and may not
+leave it; an absolute path is used as is. The path must exist.
+"""
+import json
+import os
+import shlex
+import subprocess
+import sys
+
+USAGE = __doc__.split("\n\n", 2)[1] if __doc__ else ""
+DEFAULT_CLI = "/Applications/Pathem.app/Contents/MacOS/pathem-cli"
+
+
+def fail(message, code=2):
+    print(f"commandem pathem: {message}", file=sys.stderr)
+    sys.exit(code)
+
+
+def projects():
+    binary = os.environ.get("COMMANDEM_BIN") or "commandem"
+    try:
+        out = subprocess.run(
+            [binary, "projects", "--json", "--include-workbenches"],
+            capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        fail(f"could not list projects with {binary}: {error}")
+    if out.returncode != 0:
+        fail(f"{binary} projects failed: {out.stderr.strip()[:200]}")
+    data = json.loads(out.stdout)
+    rows = data.get("projects", data) if isinstance(data, dict) else data
+    return [(r["Name"], r["WorkingDir"]) for r in rows if r.get("Name") and r.get("WorkingDir")]
+
+
+def resolve_project(pattern, rows):
+    if pattern is None:
+        here = os.path.realpath(os.getcwd())
+        inside = [(n, d) for n, d in rows
+                  if here == os.path.realpath(d) or here.startswith(os.path.realpath(d) + os.sep)]
+        if not inside:
+            fail("not inside a registered project; name one: commandem pathem <project>")
+        return max(inside, key=lambda r: len(os.path.realpath(r[1])))  # deepest (workbenches)
+    low = pattern.lower()
+    for test in (lambda n: n.lower() == low, lambda n: n.lower().startswith(low),
+                 lambda n: low in n.lower()):
+        hits = [r for r in rows if test(r[0])]
+        if len(hits) == 1:
+            return hits[0]
+        if len(hits) > 1:
+            names = ", ".join(sorted(n for n, _ in hits)[:8])
+            fail(f"'{pattern}' matches several projects: {names}")
+    fail(f"no project matches '{pattern}'")
+
+
+def inside_project(root, path):
+    if os.path.isabs(path):
+        target = os.path.realpath(path)
+    else:
+        target = os.path.realpath(os.path.join(root, path))
+        real_root = os.path.realpath(root)
+        if target != real_root and not target.startswith(real_root + os.sep):
+            fail(f"'{path}' leaves the project folder")
+    if not os.path.exists(target):
+        fail(f"no such file or folder: {target}")
+    return target
+
+
+def changed_files(root):
+    out = subprocess.run(
+        ["git", "-C", root, "status", "--porcelain", "-z", "--untracked-files=all"],
+        capture_output=True, text=True)
+    if out.returncode != 0:
+        fail(f"not a git repository: {root}")
+    paths, fields, i = [], out.stdout.split("\0"), 0
+    while i < len(fields):
+        entry = fields[i]
+        i += 1
+        if len(entry) < 4:
+            continue
+        status, name = entry[:2], entry[3:]
+        if "R" in status or "C" in status:
+            i += 1  # the rename's source path follows; the new name is `name`
+        full = os.path.join(root, name)
+        if os.path.exists(full):  # deleted files cannot be revealed
+            paths.append(full)
+    return sorted(paths, key=lambda p: os.path.getmtime(p), reverse=True)
+
+
+def run(verb, path, dry):
+    cli = os.environ.get("PATHEM_CLI") or DEFAULT_CLI
+    # PATHEM_CLI=none forces the URL route (tests, or a Pathem without its CLI).
+    if cli != "none" and (os.path.exists(cli) or os.environ.get("PATHEM_CLI")):
+        command = [cli, verb, path]
+    else:  # no bundled CLI: hand the documented pathem:// URL to Launch Services
+        from urllib.parse import quote
+        command = ["open", f"pathem://{verb}?path={quote(path, safe='/')}"]
+    if dry:
+        print(shlex.join(command))
+        return 0
+    return subprocess.run(command).returncode
+
+
+def main(argv):
+    if any(a in ("-h", "--help", "help") for a in argv):
+        print(__doc__.strip())
+        return 0
+    dry = "--print" in argv
+    argv = [a for a in argv if a != "--print"]
+    mode = None
+    for flag in ("--preview", "--changed"):
+        if flag in argv:
+            if mode:
+                fail("use only one of --preview and --changed")
+            mode = flag
+            argv.remove(flag)
+    unknown = [a for a in argv if a.startswith("--")]
+    if unknown:
+        fail(f"unknown option {unknown[0]} (see --help)")
+    rows = projects()
+    pattern, path = None, None
+    if len(argv) >= 1:
+        # One argument: a project name, unless it names an existing path in the current project.
+        if len(argv) == 1 and mode != "--changed" and os.path.exists(argv[0]) and not any(
+                argv[0].lower() in n.lower() for n, _ in rows):
+            path = argv[0]
+        else:
+            pattern = argv[0]
+            path = argv[1] if len(argv) > 1 else None
+    if len(argv) > 2:
+        fail("too many arguments (see --help)")
+    name, root = resolve_project(pattern, rows)
+    if mode == "--changed":
+        if path:
+            fail("--changed takes no path")
+        changed = changed_files(root)
+        if not changed:
+            print(f"{name}: no uncommitted changes")
+            return 0
+        for other in changed[1:]:
+            print(os.path.relpath(other, root))
+        return run("reveal", changed[0], dry)
+    target = inside_project(root, path) if path else os.path.realpath(root)
+    if mode == "--preview":
+        if not path or os.path.isdir(target):
+            fail("--preview needs a file")
+        return run("preview", target, dry)
+    return run("open" if os.path.isdir(target) else "reveal", target, dry)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
