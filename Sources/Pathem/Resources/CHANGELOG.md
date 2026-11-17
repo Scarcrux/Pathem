@@ -17,6 +17,15 @@ is bundled into the app and read by the Release Notes window.
 - Live Quick Look previews in the column and gallery views.
 - A visible update button in the window title bar when a new version is ready, and this Release Notes window.
 - Confirmation popovers no longer cancel themselves when one follows another quickly, and closing a tab can no longer close a tab you are not looking at.
+- Themes: 22 built-in themes, grouped Light and Dark with a swatch for each, and a theme now tints the whole window, title bar, column headers and sidebar included. The terminal's System theme follows it.
+- Find in Files and semantic search say what they are doing: indexing and ranking states, a failed search with its reason, and when a result cap was reached. Semantic search is also a mode of the Cmd-F search window.
+- macOS Services in the file context menu, and Download Now and Remove Download for iCloud files.
+- Torrents: magnet links use their web seeds and .torrent sources, a magnet still looking for its file list says so, and the progress bars in the Torrents drawer and window are visible again.
+- The Network view now shows its own name in the tab and window title.
+- Folder size calculation skips cache and temporary folders by default (configurable), stops when you leave the folder, and uses fewer threads at once.
+- Closing a window, quitting or leaving a PDF with unsaved markup asks to save, with an option to save automatically instead. In a name conflict, Return keeps both files.
+- The Photos browser can now ask for access to your library; before, macOS refused it without asking. About shows the build's source commit and the open-source licenses Pathem includes.
+- Fixed a crash on some Japanese and Chinese alerts.
 - Pathem now has 12 interface languages. English is the source; the other 11 (French, German, Spanish, Japanese, Simplified and Traditional Chinese, Italian, Brazilian Portuguese, Korean, Russian, Dutch) are AI-drafted and have not been reviewed by native speakers.
 
 ## 0.8.0 - 2026-07-20
