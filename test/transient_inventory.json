@@ -2364,7 +2364,7 @@
       ],
       "reason": "App-defined standard NSMenu items tracked by the native menu system, no custom item views. Class C presentation/dismissal only. Cancel without triggering actions."
     },
-    "Sources/Pathem/IconCollectionController.swift:81:17:popUpContextMenu": {
+    "Sources/Pathem/IconCollectionController.swift:86:17:popUpContextMenu": {
       "class": "A",
       "kind": "dynamic context menu",
       "custom_content": false,
@@ -2373,7 +2373,7 @@
       "builder_status": "unresolved",
       "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
     },
-    "Sources/Pathem/IconCollectionController.swift:88:42:popUpContextMenu": {
+    "Sources/Pathem/IconCollectionController.swift:93:42:popUpContextMenu": {
       "class": "A",
       "kind": "dynamic context menu",
       "custom_content": false,
@@ -2382,7 +2382,7 @@
       "builder_status": "unresolved",
       "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
     },
-    "Sources/Pathem/KeyTableView.swift:100:17:popUpContextMenu": {
+    "Sources/Pathem/KeyTableView.swift:105:17:popUpContextMenu": {
       "class": "A",
       "kind": "dynamic context menu",
       "custom_content": false,
@@ -2391,7 +2391,7 @@
       "builder_status": "unresolved",
       "reason": "Dynamic menu(for: event) may come from shared FileContextMenu or a background provider/super implementation. Complete builder provenance is not statically established for every runtime owner of this reusable view; retained and conservatively A per contract, not silently dropped or claimed covered."
     },
-    "Sources/Pathem/KeyTableView.swift:107:42:popUpContextMenu": {
+    "Sources/Pathem/KeyTableView.swift:112:42:popUpContextMenu": {
       "class": "A",
       "kind": "dynamic context menu",
       "custom_content": false,
@@ -2543,12 +2543,12 @@
       "attachments": [
         {
           "file": "Sources/Pathem/FileListController.swift",
-          "line": 630,
+          "line": 631,
           "expression": "tableView.menu = contextMenu.menu"
         },
         {
           "file": "Sources/Pathem/IconCollectionController.swift",
-          "line": 709,
+          "line": 715,
           "expression": "collection.menu = contextMenu.menu"
         }
       ],
@@ -2587,7 +2587,7 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/FileListController.swift:1802:20:NSMenu": {
+    "Sources/Pathem/FileListController.swift:1803:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {

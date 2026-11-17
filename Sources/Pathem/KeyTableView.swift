@@ -15,13 +15,18 @@ final class KeyTableView: NSTableView {
 
     /// The selected files for a Service (set by the owning controller; location-aware).
     var servicesURLs: (() -> [URL])?
+    /// Whether the selection is local files at all. False on a remote pane, whose rows have no
+    /// file URL to hand a service. Kept separate from `servicesURLs` because AppKit asks
+    /// `validRequestor` on every menu update, and building every URL there would be wasteful.
+    var servicesAvailable: () -> Bool = { true }
     // Services: answer for file types only with a selection and no return type, else defer.
     override func validRequestor(
         forSendType sendType: NSPasteboard.PasteboardType?,
         returnType: NSPasteboard.PasteboardType?
     ) -> Any? {
         if FileServices.accepts(
-            sendType: sendType, returnType: returnType, hasSelection: !selectedRowIndexes.isEmpty)
+            sendType: sendType, returnType: returnType,
+            hasSelection: !selectedRowIndexes.isEmpty && servicesAvailable())
         {
             return self
         }

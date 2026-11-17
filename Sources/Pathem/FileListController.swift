@@ -623,6 +623,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
 
         contextMenu.selectedURLs = { [weak self] in self?.selectedFileURLs() ?? [] }
         tableView.servicesURLs = contextMenu.selectedURLs
+        tableView.servicesAvailable = { [weak self] in self?.allowsLocalMetadata ?? false }
         contextMenu.currentFolder = { [weak self] in self?.directoryURL }
         contextMenu.canCalculateSize = { [weak self] in
             self?.canCalculateSelectedFolderSizes == true

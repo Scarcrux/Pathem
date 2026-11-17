@@ -42,12 +42,20 @@ enum FileServices {
     ) -> Bool {
         let wanted = types.filter { sendTypes.contains($0) }
         guard !urls.isEmpty, !wanted.isEmpty else { return false }
-        pasteboard.declareTypes(wanted, owner: nil)
+        // One API per pasteboard: writeObjects for the URL items (one item per file, as Finder
+        // writes them), then the legacy filenames list added to the first item. Declaring types
+        // first and then calling writeObjects mixes the two APIs.
+        pasteboard.clearContents()
         var wrote = false
         if wanted.contains(.fileURL) {
-            wrote = pasteboard.writeObjects(urls as [NSURL]) || wrote
+            wrote = pasteboard.writeObjects(urls as [NSURL])
         }
         if wanted.contains(filenamesType) {
+            if !wrote {
+                pasteboard.declareTypes([filenamesType], owner: nil)
+            } else {
+                pasteboard.addTypes([filenamesType], owner: nil)
+            }
             wrote = pasteboard.setPropertyList(urls.map(\.path), forType: filenamesType) || wrote
         }
         return wrote

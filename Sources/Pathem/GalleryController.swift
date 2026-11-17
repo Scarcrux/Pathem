@@ -224,6 +224,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
             self?.selectedEntries.compactMap { self?.fileURL(for: $0) } ?? []
         }
         filmstrip.servicesURLs = contextMenu.selectedURLs
+        filmstrip.servicesAvailable = { [weak self] in self?.allowsLocalMetadata ?? false }
         contextMenu.currentFolder = { [weak self] in
             guard let self, self.allowsLocalMetadata else { return nil }
             return self.directoryURL
