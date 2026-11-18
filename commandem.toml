@@ -2372,4 +2372,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Scripted checks added for the two parts previously marked unverified: the context menu offers Calculate Size for a skipped folder and hides it after sizing (smoke); the real Settings checkbox and Also skip field deliver to the lists (settings harness 61/61). Remaining gap is visual only. Installed build 0fb5e21 already contains the feature; these checks are DEBUG-only."
     at = "2026-11-13T14:06:55Z"
+
+[[mission]]
+  id = "m-d5f4b409"
+  title = "1.0 beta: close the launch checklist, then a Sparkle beta channel"
+  status = "now"
+  issue = 0
 # <<< commandem roadmap <<<
