@@ -1958,6 +1958,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Final make ci on 77b2050: everything passed except one stale packaged check (asserted 6 languages; there are 12 since 2a880c0), fixed to read CFBundleLocalizations; packaged rerun 14/14. Debug E2E 69 pass, 1 known skip (browser-flow pixels)."
     at = "2026-11-17T23:49:12Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 RELEASED Pathem 0.9.0 (owner approved: flip, tag, publish). Repo Scarcrux/Pathem made public with Discussions and private vulnerability reporting on, wiki off. Tag v0.9.0 at 3dd07c9; PUBLISH=1 release.sh: make ci gate (861 unit, debug E2E 69/1 skip, packaged 14/14), app and DMG notarized and stapled, A1-A11 PASS, published as a full release (not prerelease) with curated changelog notes. Verified from outside: releases/latest = v0.9.0, Sparkle feed 200 with build 24, unauthenticated DMG download passes A9 and the mounted app A10/A11. Website switched to a live Download button and open-source wording. Not done: second-Mac/macOS 15 beta and environmental sign-off (owner chose to release first)."
+    at = "2026-11-18T03:17:25Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
