@@ -83,6 +83,18 @@ Never commit API keys, tokens, or credentials. Keep them in gitignored env files
 
 Don't report a task done without verifying it. Run the project's tests / build LOCALLY before claiming done. If tests fail, say so with the output; if a step was skipped, say that. For a UI change, verify with a scripted check or screenshot -- don't ask the user to click through it.
 
+## Use American spelling
+
+Write American English in everything you produce: code comments, identifiers you create, user-facing text, docs, commit messages and replies (color, behavior, center, license, organize, favorite, gray, canceled). Do not rename existing identifiers, file names or stored keys just to change their spelling; those are frozen.
+
+Why: mixed British and American spelling crept into a product written for American users when agents copied the spelling of their instructions.
+
+## Format longer replies with headings
+
+When a reply runs more than about 12 lines or covers more than one topic, use markdown ## or ### headings for its sections, one blank line around each; never a plain line ending in a colon as a section title; short replies stay plain. No headings inside code blocks.
+
+Why: headings let the owner scan a long reply, and plain colon lines could not be told apart from ordinary sentences, so the format has to come from the agent.
+
 ## Repository visibility: never publish without approval
 
 Never make a repository public, or change any repo from private to
@@ -385,8 +397,8 @@ line.
 
 Historical notes, not standing directives. Dates identify when notes were recorded; explicit supersessions are excluded.
 
-- [2026-09-21; mem-bfe59c4d9f8d] fix(keymap): normalize numpad plus for zoom Trigger: Cmd+numpad-plus produced no zoom while keypad minus worked. AppKit delivers the dedicated plus key without Shift ...
-- [2026-08-23; mem-0203afab3b49] chore(roadmap): eject moved off the main thread (live-app fix) Files changed: commit 460d35f9b95d93a141184260d15cf48f9897b37d Author: Scarcrux ...
-- [2026-08-23; mem-6b5dad59f2c7] fix(eject): eject off the main thread so the UI no longer freezes Clicking Eject beachballed the app for ~15s: unmountAndEjectDevice blocks until the unmount completes ...
+- [2026-11-17; mem-f345a210dfd3] docs(roadmap): record the theme gap fixes Files changed: commit 3c65e5ac05a909c41aa3a4b9cb55d0f721b71561 Author: Scarcrux <scarcrux@users.noreply.github.com> Date: Tue ...
+- [2026-11-17; mem-08f791504c69] docs(roadmap): record the title bar tint fix Files changed: commit 3d06cdfc3abe6cc70352064c71ac011a88c7e4ae Author: Scarcrux <scarcrux@users.noreply.github.com> Date ...
+- [2026-11-17; mem-ce522832aed3] docs(roadmap): correct the order of the sliver fix record Files changed: commit e6c784cb86e197a84a2c59cf2dac3129753f5148 Author: Scarcrux ...
 
 <!-- commandem:managed:end -->
