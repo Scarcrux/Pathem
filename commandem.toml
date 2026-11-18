@@ -2131,6 +2131,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-18 First real Sparkle update verified (owner): installed 0.9.0 build 24 was offered 0.9.1 build 25 and installed it; the installed app reports 0.9.1, build 25, 3e64f5a, team K466Z7J2AS."
     at = "2026-11-18T18:53:17Z"
 
+  [[mission.comment]]
+    text = "2026-11-18: Settings > Updates gains 'Automatically download and install updates' (e69c40f), off by default so updates ask first; grayed out unless automatic checks are on. Verified by hooks (swift test, l10n lint) and a PATHEM_PREFS_SHOT render; a configured signed build is checked at the next release. Install guide line waits for that release."
+    at = "2026-11-18T20:41:23Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
