@@ -268,8 +268,14 @@ fi
 #    --target pins a newly created tag to the verified commit, never the default branch.
 if [[ $PUBLISHING == 1 ]]; then
 	echo "==> Publishing $TAG to $REPO"
+	# The release body is this version's entry from the in-app changelog (the curated
+	# notes users also see under Help > Release Notes), not GitHub's commit list.
+	NOTES="$(mktemp)"
+	awk -v v="## $VERSION " 'index($0, v) == 1 {on = 1; next} on && /^## / {exit} on' \
+		"$ROOT/Sources/Pathem/Resources/CHANGELOG.md" > "$NOTES"
+	[[ -s "$NOTES" ]] || { echo "error: no CHANGELOG entry for $VERSION" >&2; exit 1; }
 	gh release create "$TAG" "$DMG" "$APPCAST" \
-		--repo "$REPO" --target "$HEAD_SHA" --title "$APP_NAME $VERSION" --generate-notes
+		--repo "$REPO" --target "$HEAD_SHA" --title "$APP_NAME $VERSION" --notes-file "$NOTES"
 	echo "    published: https://github.com/$REPO/releases/tag/$TAG"
 else
 	echo "==> Not publishing (set PUBLISH=1 to create the GitHub release)."
