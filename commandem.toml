@@ -1966,6 +1966,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Website copyright now reads Scarcrux LLC (owner request); LICENSE and the app's About copyright still say Scarcrux, owner deciding."
     at = "2026-11-18T04:10:50Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Site footer cleaned after release: links Security (GitHub policy), GitHub, Roadmap and MIT License instead of the stale 'publish with the open-source release' line and a bare security mailto; footnote now present tense."
+    at = "2026-11-18T04:11:50Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
