@@ -2376,6 +2376,6 @@ missions = ["m-1331afb7", "m-b2532fac"]
 [[mission]]
   id = "m-d5f4b409"
   title = "1.0 beta: close the launch checklist, then a Sparkle beta channel"
-  status = "now"
+  status = "later"
   issue = 0
 # <<< commandem roadmap <<<
