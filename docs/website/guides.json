@@ -1,5 +1,5 @@
 {
-    "updated": "2026-10-26",
+    "updated": "2026-11-17",
     "categories": [
         {
             "id": "start",
@@ -31,10 +31,13 @@
             "id": "install",
             "title": "Installation and permissions",
             "category": "start",
-            "description": "Understand build availability, macOS requirements, safe installation, and Full Disk Access before your first session.",
+            "description": "Download the notarized release, install it, keep it up to date, and grant Full Disk Access when you need it.",
             "keywords": [
                 "setup",
                 "download",
+                "install",
+                "update",
+                "Sparkle",
                 "Gatekeeper",
                 "macOS",
                 "permission denied"
@@ -43,8 +46,22 @@
                 {
                     "path": "README.md",
                     "needles": [
-                        "A prebuilt download is not published yet",
+                        "Download the latest release from",
                         "Full Disk Access"
+                    ]
+                },
+                {
+                    "path": "Packaging/Info.plist",
+                    "needles": [
+                        "SUEnableAutomaticChecks",
+                        "LSMinimumSystemVersion"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/SettingsWindowController.swift",
+                    "needles": [
+                        "Check for updates automatically",
+                        "Check for Updates Now"
                     ]
                 },
                 {
@@ -60,21 +77,21 @@
                     "id": "before-you-start",
                     "title": "Before you start",
                     "paragraphs": [
-                        "Pathem requires macOS 15 or later. The website does not currently offer a public prebuilt download, and the source repository may require access. These guides describe the current application; they are not a claim that a public release is already available.",
-                        "If you already have a trusted packaged build, use the steps below. If not, wait for an announced release or use an authorized source checkout. Do not download an unrelated app with the same name or disable macOS security protections to make an unknown copy run."
+                        "Pathem requires macOS 15 or later and runs natively on Apple Silicon and Intel Macs. The release is a free download from GitHub: a disk image that is Developer ID signed and notarized by Apple, so macOS opens it without warnings.",
+                        "Download it only from pathem.app or the project's GitHub Releases page. Do not download an app with the same name from elsewhere, and never disable macOS security protections to make a copy run."
                     ]
                 },
                 {
                     "id": "packaged-build",
-                    "title": "Install a trusted packaged build",
+                    "title": "Install Pathem",
                     "steps": [
-                        "Finish or pause file operations in any existing Pathem session. Save work before replacing an application.",
-                        "If supplied in a disk image, open it and inspect the application and publisher information. Follow the instructions that accompany that specific build.",
-                        "Place Pathem.app in Applications. Do not run a long-term installation from inside a mounted disk image.",
-                        "Open Pathem from Applications. If macOS rejects the signature or warns that the app is damaged, stop and obtain a trusted build rather than removing quarantine or disabling Gatekeeper.",
-                        "Open a normal folder in your home directory first. Confirm you can browse and preview a harmless test file before configuring broader access."
+                        "Download the latest release from https://github.com/Scarcrux/Pathem/releases/latest (the Download button on pathem.app goes there). Choose the .dmg file.",
+                        "Open the disk image and drag Pathem to the Applications folder shown next to it. Do not run Pathem from inside the mounted disk image.",
+                        "Eject the disk image, then open Pathem from Applications. macOS may ask once whether to open an app downloaded from the internet; it names the publisher, Scarcrux LLC.",
+                        "If you are replacing an earlier copy, finish or pause any file operations in it and quit it first.",
+                        "Open a normal folder in your home directory first, and confirm you can browse and preview a harmless test file before granting broader access."
                     ],
-                    "note": "A locally signed development build is not the same thing as a notarized public release. Availability, automatic updates, and supported architectures depend on the build you received."
+                    "note": "If macOS says the app is damaged or cannot be verified, delete that copy and download it again from the Releases page instead of removing quarantine or disabling Gatekeeper."
                 },
                 {
                     "id": "permissions",
@@ -88,11 +105,22 @@
                     "note": "Do not grant Accessibility or Screen Recording merely to browse files. These are separate macOS permissions, not substitutes for filesystem access."
                 },
                 {
+                    "id": "update",
+                    "title": "Keep Pathem up to date",
+                    "steps": [
+                        "Pathem checks for updates automatically. When a new version has downloaded, an Update Ready button appears in the window's title bar; click it to see what changed and install it.",
+                        "To check now, choose Check for Updates from the Pathem menu, or use Check for Updates Now in Settings, Updates.",
+                        "To stop automatic checks, turn off Check for updates automatically in Settings, Updates. You can still check by hand.",
+                        "If Pathem says updates are not set up for this build, it is a source or unsigned build. Download the latest release from GitHub; release builds update themselves."
+                    ],
+                    "note": "Updates come only from the project's GitHub releases and are verified with a signing key built into Pathem before they install."
+                },
+                {
                     "id": "source-build",
-                    "title": "For developers with source access",
+                    "title": "Build from source",
                     "paragraphs": [
-                        "Use the repository's build instructions and its selected Xcode toolchain. From an authorized checkout, make run builds and launches a development copy; make app assembles a local application bundle. A source build does not require a paid Apple Developer account.",
-                        "The current make install workflow can stop running Pathem and helper processes while replacing the app. Finish transfers and save work before using it. Signing, notarization, and publication are separate distribution steps; do not assume a local build has those properties."
+                        "Developers can build Pathem from the public repository with the selected Xcode toolchain: make run builds and launches a development copy, and make app assembles a local application bundle. A source build does not need a paid Apple Developer account.",
+                        "make install can stop a running Pathem and its helper processes while replacing the app, so finish transfers and save work first. A source build is not notarized and does not update itself."
                     ]
                 }
             ],
@@ -286,7 +314,12 @@
                 },
                 {
                     "path": "Sources/Pathem/BrowserViewController+Transfers.swift",
-                    "needles": ["Replace All", "Keep Both for All", "Skip All", "Your choice applies to all conflicts in this operation."]
+                    "needles": [
+                        "Replace All",
+                        "Keep Both for All",
+                        "Skip All",
+                        "Your choice applies to all conflicts in this operation."
+                    ]
                 }
             ],
             "sections": [
@@ -653,7 +686,11 @@
                 },
                 {
                     "path": "Sources/Pathem/SidebarController.swift",
-                    "needles": ["Add Current Folder", "New Group", "Remove from Sidebar"]
+                    "needles": [
+                        "Add Current Folder",
+                        "New Group",
+                        "Remove from Sidebar"
+                    ]
                 }
             ],
             "sections": [
@@ -1510,7 +1547,11 @@
                 },
                 {
                     "path": "Sources/Pathem/SettingsWindowController.swift",
-                    "needles": ["Integrations", "Terminal command", "integrations.cliInstall"]
+                    "needles": [
+                        "Integrations",
+                        "Terminal command",
+                        "integrations.cliInstall"
+                    ]
                 }
             ],
             "sections": [

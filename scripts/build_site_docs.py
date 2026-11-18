@@ -11,7 +11,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 CONTENT = ROOT / "docs/website/guides.json"
 BASE = "https://pathem.app"
-SOCIAL_IMAGE = f"{BASE}/assets/social-card.png"
+SOCIAL_IMAGE = f"{BASE}/assets/social-card.png?v=3"
 # Hand-written pages are not generated, so their sitemap dates are kept here. Bump the
 # date when the page changes (git log -1 --format=%cs -- site/<file>). The guide pages use
 # the larger of the content date and TEMPLATE_UPDATED, which is bumped when the shell changes.

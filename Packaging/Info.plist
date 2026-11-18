@@ -214,7 +214,7 @@
 		</dict>
 	</array>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026 Scarcrux. Open source under the MIT License.</string>
+	<string>Copyright © 2026 Scarcrux LLC. Open source under the MIT License.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- Per-folder access rationales shown in the system prompts the first time Pathem
