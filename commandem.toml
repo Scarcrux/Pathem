@@ -1261,17 +1261,17 @@ missions = ["m-1331afb7", "m-b2532fac"]
     done = true
 
   [[mission.task]]
-    id = "t-aa5f4a9a"
-    title = "TS-F2: Reclaim Space Delete Now makes Delete Permanently the Return default. Defect (irreversible, skips the Trash): Cancel becomes the default. Assigned to @pathem-codex-2 with task 11."
-    state = "skip"
-
-  [[mission.task]]
     id = "t-1fbb231a"
     title = "TS-U1-F1: Bound the No Such Path suggestion alert display while keeping full paths available and navigation unchanged. Existing 4 x 255-component cells overflow both host sizes; real owned 849-byte path also overflows the small host. Unit 1 receipt: docs/TRANSIENT_SURFACES_UNIT1.md. Authorized Unit 2 separate red-first fix."
 
   [[mission.task]]
     id = "t-30527098"
     title = "TS-U2-F04 (P1, data loss): unsaved markup is discarded with no prompt when the window is closed or the app quits. Proven by pathem-codex-2 on owned PDFs 2026-11-16 (edited=true, zero annotations on disk after close and after quit). Related TS-U2-F03: the unsaved-markup prompt has Save and Discard but no Cancel, and Escape does nothing. Fix owner: pathem-claude, pending the owner's choice of behaviour."
+    done = true
+
+  [[mission.task]]
+    id = "t-39222df2"
+    title = "TS-F2 closed as intended, not a defect (owner ruling 2026-11-15: 'Go back to the original: Return deletes'; destructive actions the user invoked that already confirm get no extra friction). Reclaim Space Delete Now keeps Delete Permanently as the Return default."
     done = true
 
   [[mission.comment]]
