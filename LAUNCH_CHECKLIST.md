@@ -66,8 +66,9 @@ things a human has to look at.
 - [ ] Switch the system language to one of the eleven non-English locales and spot
       check that the menus/sidebar/dialogs are translated (coverage is linted, but
       look for layout truncation).
-- [ ] Sparkle: with a prior version installed, confirm "Check for Updates"
-      offers and applies the new build (needs the appcast published per RELEASE.md).
+- [x] Sparkle: with a prior version installed, confirm "Check for Updates"
+      offers and applies the new build (2026-11-18: an installed 0.9.0, build 24,
+      was offered 0.9.1, build 25, and installed it) (needs the appcast published per RELEASE.md).
 
 ## 3. Docs & repo hygiene (before it's public)
 
@@ -127,8 +128,8 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 ## 6. Immediately after
 
 - [ ] Watch the first issues/discussions; triage against the known-minor list.
-- [ ] Confirm auto-update works from the *first* public version to a quick
-      follow-up (the real test of the Sparkle chain is the second release).
+- [x] Confirm auto-update works from the *first* public version to a quick
+      follow-up (2026-11-18: 0.9.0 to 0.9.1 through the published feed) (the real test of the Sparkle chain is the second release).
 - [x] Keep a short changelog going for the appcast release notes (the release body
       is taken from Sources/Pathem/Resources/CHANGELOG.md).
 
