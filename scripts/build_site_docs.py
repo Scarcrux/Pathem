@@ -112,7 +112,7 @@ def shell(data, title, description, path, content, active=None):
 <main id="main-content" tabindex="-1">{content}</main>
 <footer><p>Pathem user guides · English UI · Updated {html.escape(data["updated"])}</p>
 <p>Shortcuts are defaults and may differ if customized. Features can depend on your build, provider, hardware, and macOS version.</p>
-<a href="/docs/">All guides</a> · <a href="/">Back to Pathem</a> · <a href="/privacy/">Privacy</a> · <a href="mailto:security@pathem.app">Security contact</a></footer></div></div>
+<a href="/docs/">All guides</a> · <a href="/">Back to Pathem</a> · <a href="/privacy/">Privacy</a> · <a href="https://github.com/Scarcrux/Pathem/security/policy">Security</a> · <a href="https://github.com/Scarcrux/Pathem">GitHub</a></footer></div></div>
 </body></html>
 '''
 
