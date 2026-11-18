@@ -5,6 +5,9 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
+## 0.9.2 - 2026-11-18
+- Settings, Updates has a new switch, Automatically download and install updates. It is off by default, so Pathem still asks before installing an update.
+
 ## 0.9.1 - 2026-11-18
 - Fixed a crash when opening the Size Browser on a folder with contents.
 - The Photos browser opens again after you close it.
