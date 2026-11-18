@@ -111,6 +111,7 @@
                         "Pathem checks for updates automatically. When a new version has downloaded, an Update Ready button appears in the window's title bar; click it to see what changed and install it.",
                         "To check now, choose Check for Updates from the Pathem menu, or use Check for Updates Now in Settings, Updates.",
                         "To stop automatic checks, turn off Check for updates automatically in Settings, Updates. You can still check by hand.",
+                        "Pathem asks before it installs an update. To install updates without being asked, turn on Automatically download and install updates in Settings, Updates (Pathem 0.9.2 or later). It works only while automatic checks are on.",
                         "If Pathem says updates are not set up for this build, it is a source or unsigned build. Download the latest release from GitHub; release builds update themselves."
                     ],
                     "note": "Updates come only from the project's GitHub releases and are verified with a signing key built into Pathem before they install."
