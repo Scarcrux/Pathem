@@ -1970,6 +1970,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-17 Site footer cleaned after release: links Security (GitHub policy), GitHub, Roadmap and MIT License instead of the stale 'publish with the open-source release' line and a bare security mailto; footnote now present tense."
     at = "2026-11-18T04:11:50Z"
 
+  [[mission.comment]]
+    text = "2026-11-17 Post-release site audit fixes: Install guide and README now describe the published notarized DMG, new 'Keep Pathem up to date' guide section, versioned social card on all pages, richer JSON-LD, download facts and the macOS 26 AI-bar requirement on the home page, a Photos and media card; LICENSE and the app copyright now Scarcrux LLC (owner decision)."
+    at = "2026-11-18T04:27:48Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
