@@ -4,6 +4,14 @@ The accepted contract is docs/TRANSIENT_SURFACES.md. This receipt is not READY.
 Unit 1 landed at 7d3d7fc; Unit 2 starts with 861884b (bounded path display) and
 d870e40 (opaque failure renders), both private pending final review.
 
+## Qualification status
+
+Ordinary E2E runs the inventory and existing transient controls. Set
+`PATHEM_TRANSIENT_QUALIFICATION=1` to include the full comparison after a reviewed
+baseline is available. The comparison requires that baseline and fails on any
+difference. The 48-job recording spanned two builds, so Unit 2 qualification
+remains open.
+
 ## Current rebase checkpoint (2026-11-17)
 
 The private branch is rebased onto main 3c65e5a. Main's theme, Services, search

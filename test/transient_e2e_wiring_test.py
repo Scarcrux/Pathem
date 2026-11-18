@@ -14,6 +14,7 @@ class TransientE2EWiringControls(unittest.TestCase):
         self.assertIn('PATHEM_SCENARIO_TIMEOUT=2400 scenario',line)
         self.assertIn('python3 "$ROOT/test/transient_surfaces_full.py"',line)
         self.assertIn('--known-findings "$ROOT/test/transient_known_findings.json"',line)
+        self.assertIn('if [[ "${PATHEM_TRANSIENT_QUALIFICATION:-0}" == 1 ]]; then\n'+line+'\nfi', self.source())
         self.assertNotIn("caffeinate",line)  # Alarm must reach the Python supervisor.
         self.assertNotRegex(line,r'--record|--surface|--plan|--probe|--only|\|\||true|RESULT: \(PASS\|SKIP\)')
     def completion(self,status,text):

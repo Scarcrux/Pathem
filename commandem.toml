@@ -1276,6 +1276,16 @@ missions = ["m-1331afb7", "m-b2532fac"]
     done = true
 
   [[mission.task]]
+    id = "t-aa5f4a9a"
+    title = "TS-F2: Reclaim Space Delete Now makes Delete Permanently the Return default. Defect (irreversible, skips the Trash): Cancel becomes the default. Assigned to @pathem-codex-2 with task 11."
+    state = "skip"
+
+  [[mission.task]]
+    id = "t-8649c51d"
+    title = "TS-U2-F03: unsaved markup prompt lacked Cancel and Escape left it visible. Fixed with Save/Cancel/Discard in 64753ba; private Unit 2 probes must qualify the combined source."
+    done = true
+
+  [[mission.task]]
     id = "t-8df68b94"
     title = "TS-U2-Fsize: Size Browser crashes on nonempty folder because row-to-container width constraint activates before attachment. Real full g6 crash convicted; attach then constrain; M43 full German regression completes, geometry findings retained. See docs/SIZE_BROWSER_CRASH.md."
     done = true
@@ -1748,12 +1758,12 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-15T15:01:01Z"
 
   [[mission.comment]]
-    text = "2026-11-15: site and README screenshots re-captured at 2x (2880x1800) by switching the 1x display to a scaled HiDPI mode for a few minutes and restoring it (d60aae3; scripts/display-mode.swift). Deployed with owner approval (Pages cea21f8d); live hero is 2880x1800 and its sha matches the repo. Task 2 design is docs/LAYOUT_MATRIX.md (3fcf5d7); implementation handed to @pathem-codex-2, Unit 1 sample first."
-    at = "2026-11-15T16:12:30Z"
-
-  [[mission.comment]]
     text = "Layout matrix Unit 1 pre-launch review at 3fcf5d7: docs/LAYOUT_MATRIX.md read, codex-2 pool allocated, no implementation or native launch yet. Safety clarification posted on Pathem board: DemoWorkspace.build deletes a fixed shared temporary root; main window autosave and terminal toggle write standard defaults before/during sample; new flag has no isolated config-root refusal guard. PATHEM_CONFIG_DIR does not isolate NSUserDefaults. Holding execution pending coordinator acceptance of narrow DEBUG launch isolation and unique demo root or an approved isolated launcher. No eight-check/sample/injection verdict claimed, no full expansion, owner preferences, display, installed app or website touched."
     at = "2026-11-15T15:21:15Z"
+
+  [[mission.comment]]
+    text = "2026-11-15: site and README screenshots re-captured at 2x (2880x1800) by switching the 1x display to a scaled HiDPI mode for a few minutes and restoring it (d60aae3; scripts/display-mode.swift). Deployed with owner approval (Pages cea21f8d); live hero is 2880x1800 and its sha matches the repo. Task 2 design is docs/LAYOUT_MATRIX.md (3fcf5d7); implementation handed to @pathem-codex-2, Unit 1 sample first."
+    at = "2026-11-15T16:12:30Z"
 
   [[mission.comment]]
     text = "Unit 1 launch isolation implemented after accepted bd48b24 contract. Lock-held debug build0; bounded caffeinated real site-shot terminal probe0: existing/outside demo roots refused2/2; missing/unsafe matrix config roots refused2/2; requested unique demo used and removed; real capture inspected; full before/after Pathem and com.scarcrux.pathem defaults exports unchanged. Display5120x1440 read only. Earlier instrument failures retained (Swiftly PATH preflight, var/private-var path spelling), then corrected. First isolation-only commit before harness; no install, deploy, full matrix or land."
@@ -1812,10 +1822,6 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-15T20:49:00Z"
 
   [[mission.comment]]
-    text = "2026-11-15/16 owner rulings on destructive Return defaults. (a) Delete Immediately, Empty Trash and remote Delete: intended as they are, Return confirms. Owner: 'we already have confirmations for those and this isn't a file manager meant for newbs.' (b) Reclaim Space Delete Now (TS-F2): owner chose 'Go back to the original: Return deletes'. My earlier ruling that Cancel should be the default was wrong for this product and is withdrawn; task 58 closed as not-a-defect. (c) Conflict popover (TS-F1): Keep Both on Return stands, chosen explicitly by the owner."
-    at = "2026-11-16T00:14:14Z"
-
-  [[mission.comment]]
     text = "Task11 Unit0/1 started after owner/coordinator handoff. Contract clarifications received: physical wrapper rows unclassed plus transitive classified caller rows, implicit menus flagged with attachments, Reclaim Delete Now A-destructive, ten B alerts structural across6locales/2sizes plus3sheet lifecycles. Initial lexical scanner nine controls PASS; counts exploratory until provenance/classification/table and CLI gate complete. Coordinator manually confirms CleanupController4production presentations/4builders on8a0220f. No native phase, sidebar edits or visual-baseline work. Rebased over coordinator sidebar fix before any matrix gate; task1 waits task11 sampleack. Criteria docs/TRANSIENT_SURFACES_RECEIPTS.md."
     at = "2026-11-15T20:54:13Z"
 
@@ -1842,6 +1848,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Independent task11 progress while Reclaim default is held: ten class B sample alert constructions reviewed and linked to actual builders/presenters, bringing reviewed rows to 21. All 28 declared localization keys exist in all six catalogs. Lifecycle sample candidates are extension confirmation, demo offer and folder-handler confirmation; harness must avoid production preference/system-handler effects. Runtime stress fixtures declared per row. No native sample result or full inventory acceptance claimed; gate still red for unfinished classifications."
     at = "2026-11-16T00:12:00Z"
+
+  [[mission.comment]]
+    text = "2026-11-15/16 owner rulings on destructive Return defaults. (a) Delete Immediately, Empty Trash and remote Delete: intended as they are, Return confirms. Owner: 'we already have confirmations for those and this isn't a file manager meant for newbs.' (b) Reclaim Space Delete Now (TS-F2): owner chose 'Go back to the original: Return deletes'. My earlier ruling that Cancel should be the default was wrong for this product and is withdrawn; task 58 closed as not-a-defect. (c) Conflict popover (TS-F1): Keep Both on Return stands, chosen explicitly by the owner."
+    at = "2026-11-16T00:14:14Z"
 
   [[mission.comment]]
     text = "Owner reversed TS-F2 policy: \"Go back to the original: Return deletes.\" Restore original native Delete/Return and Cancel/Escape construction, retain factory extraction and fixture harness; remove withdrawn policy key monitor/annotation. Valid compatibility red against private Cancel-default branch retained as behaviour evidence, not original-product defect. Final owned-fixture Return, Escape and click each pass 1/1 with unchanged preferences/demo cleanup. Inventory marks intended A destructive default with quote/date, no finding or hold; reviewed anchors valid and scanner15/15. First annotation-retaining restoration failed with no native default and is recorded. TS-F1 unchanged; full inventory/sample acceptance pending."
@@ -1872,12 +1882,52 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-16T10:00:42Z"
 
   [[mission.comment]]
+    text = "Unit2 progress, not READY: TS-U1-F1 repaired in 861884b, unchanged stress/native1678 of1678 and six-locale driver0, original navigation URL preserved and full tooltip accessible. Capture backing repair now clean203 of203/native0 and injected leaked-window103 of104/native1, validation0; all10 saved PNGs fully opaque and German path/Rename inspected. Inventory still196 sites, A116/B47; full expansion and strict known-findings gate remain pending. No CI, Unit2 land, install or deployment."
+    at = "2026-11-16T10:22:51Z"
+
+  [[mission.comment]]
+    text = "Task 11 Unit 2 remains in progress, not READY. c19ac87 adds all47 B source-bound recipes; German36-sheet behaviour passes cancel/Return/dismiss/repeat, only48 oversized geometry pairs remain. New32 A real-entrypoint adapters, initial16 exercised, strict requested-cell/site/three-cycle controls added. Unique temporary bundle isolates AppKit defaults; launcher crash from omitted Sparkle was identified to owner and now prevented by framework/resource preflight. First-run demo offer was measured blocking the control; argument-only startup state removes it without owner writes. Borderless AI bar Escape now passes3 cycles; framework focus-clip geometry stays red. No full baseline/CI/Unit2 land/install/deploy. Exact negative receipts retained in docs/TRANSIENT_SURFACES_UNIT2.md."
+    at = "2026-11-16T11:38:20Z"
+
+  [[mission.comment]]
+    text = "Unit 2 private checkpoint preparation: 47/47 B recipes, 36 sheet sites and 11 modal structural branches. 18 pure production factories in 13 files compile unchanged in business logic; 21 native modal profiles cover 19 A sites by provenance. 62 real-entrypoint adapters are drafted; only the first 32 groups and individual private Save Layout, AI bar and crop pilots have run, not final full coverage. Crop is 600pt against 420pt host (check2); modal first-frame Return readiness is still instrument validation. DEBUG transient-only discovery guards prove zero Bonjour/device starts; earlier no-network claims excluded startup and are qualified. Remaining: finish A adapters, modal control, final native groups, default-intent inventory, markup Cancel finding, exact known-findings baseline, all four injections, E2E wiring and one CI. No Unit 2 land, install or deploy."
+    at = "2026-11-16T12:46:24Z"
+
+  [[mission.comment]]
+    text = "Unit 2 next checkpoint: 31 real factory profiles cover 25 A sites by source provenance; 62 custom mounts cover 62 other A sites in draft, so 87/112 classified A have adapters (four prior conservative menu rows reviewed to C). Corrected color/connection native pilots have only layout/ambiguity/host-fit reds; Return, Cancel, responder and repeat pass. New Sendable warnings fixed. 103 Python controls cover provenance, exact B receipts, packaging, isolation and new/stale baseline refusal. Baseline/native final groups/remaining 12 controllers plus delegated primary/core rows, four injections, E2E wiring and CI remain incomplete. F03/F04 markup production fixes belong to pathem-claude; do not touch reserved markup files."
+    at = "2026-11-16T13:35:48Z"
+
+  [[mission.comment]]
+    text = "Unit 2 strict German plain-alert receipt run: 2029/2128 native, 49 distinct check-2 oversize pairs, exact site/cycle validation accepted, isolation unchanged. Focused no-default alert 72/72; 108 Python controls pass. Harness stream interleaving and inert-Return instrumentation corrected without product changes. Full custom variants, remaining seven adapters, baseline/injections/CI remain open; no READY or land."
+    at = "2026-11-16T15:13:55Z"
+
+  [[mission.comment]]
+    text = "Unit 2 has all seven remaining A adapters written with owned provider boundaries. Rule/FDA/Reclaim/Torrents/Trim pilots retain geometry/ambiguity reds; repository Reclaim 71/71. Photos first Cancel succeeds but cached window does not reappear, so exact validation refuses incomplete cycles; investigate lifetime in its own red/green commit. Full variants, baseline, injections, native E2E gate and final CI are pending."
+    at = "2026-11-16T15:28:17Z"
+
+  [[mission.comment]]
+    text = "Owner objects to repeated visible desktop tests. All owned GUI phases are terminal; further visible launches paused pending coordination. Headless checkpoint: richer no-follow Cancel snapshots, 12 async-content adapters, exact 42-job plan and input manifest. Core clean pilot passes; four injections discriminate; three-family native composition sample 3/3 zero exits, zero failures, 42.30s. Full variants, final baseline/E2E wiring and CI remain pending. Unit 2 is not READY."
+    at = "2026-11-16T15:48:04Z"
+
+  [[mission.comment]]
     text = "2026-11-16 owner decisions. (1) Trademark: 'Proceed without a search'; task 9's clearance item closed on that basis, not because a search was done. (2) Release channel: GitHub Releases, once the repo is public. (3) History: owner chose to rewrite this repo's history to remove the matches. Findings before acting (NOT yet rewritten): the 59 history matches are test placeholders (/Users/someone, me, x, tester; three GoogleDrive-<placeholder>@gmail.com fixture names), two /Users/<public GitHub handle>/ paths in old .claude/settings.json and polaris.toml, and one public FTP demo credential literal. Targeted searches for the owner's real name, surname and the old personal bundle ID find 0 commits, 0 messages, 0 files; authorship is all noreply. The candidate tree had regressed to 18 findings from my own 2026-11-13 test fixture; fixed, back to 0. Put back to the owner with this evidence before any rewrite."
     at = "2026-11-16T18:26:54Z"
 
   [[mission.comment]]
+    text = "Maximum parallel review: three reviewers found and fixed core receipt/predicate identity holes, missing isolation-helper hash, tooltip/presentation/config checks and baseline-before-GUI validation. Rebased private Unit 2 onto main df6d315 preserving markup Save/Cancel/Discard, rebound f04/provenance and strengthened close/Quit Cancel witnesses. Headless186 tests and debug build pass. Owned-child cancellation supervision in progress; no visible tests resumed. Final full variants, real baseline/injections and CI await one coordinated idle GUI window. Unit 2 not READY; no land/install/deploy."
+    at = "2026-11-16T18:47:58Z"
+
+  [[mission.comment]]
+    text = "Parallel headless integration now passes 201 tests plus inventory/shell checks. Exact core/predicate/phase validation, tooltip and all-family single-window checks, private-config Cancel snapshots, real-plan baseline preflight and owned-child deadline/cancellation handling are implemented. Headless debug build passed before final check4 extension; normal checkpoint hooks will compile/test final Swift. Native/CI qualification and real baseline are still pending the owner coordinated GUI timing choice. No visible tests, install, land or deploy resumed."
+    at = "2026-11-16T18:51:41Z"
+
+  [[mission.comment]]
     text = "2026-11-16 task 13 unit S1 landed (c25c007, 43f9473; Sonnet agent in claude-3 under docs/SEARCH_SURFACES.md, reviewed and rerun by pathem-claude): Find in Files now reports a failed search, the 2000-result cap, the 100-per-file ripgrep cap, and a failed Replace All, each in the status line. Evidence rerun independently: 16 engine tests, Find in Files sample 15/15, inventory gate PASS; agent reported the full sidebar suite 661/661. Limits: the UI checks had only a compile-level red; ja and zh sentence separators untested; translations are machine-written. Also today: device TLS moved to Network.framework and verified on a paired phone (e66a463); unsaved-markup prompt on close and quit (2313892); inventory pins repaired after my own line shifts (d89abb0). Units F1 (Finder empty-space menu) in review; S2 to S4 and F2 to F4 not started."
     at = "2026-11-16T19:23:15Z"
+
+  [[mission.comment]]
+    text = "TS-U2-Fsize fixed: raw g6 native-6 directly convicts row.width-to-rows.width activation before attachment. Same width constraint now activates after addArrangedSubview. Real M43 German full variant regression completes all8 cells/3cycles/loaded content with no crash, missing treatment or isolation error; native256/332 retains20 geometry/ambiguity pairs. Full old-build partial receipts remain diagnostic only; changed binary needs full rerun."
+    at = "2026-11-16T19:30:22Z"
 
   [[mission.comment]]
     text = "2026-11-16 task 10 unit F1 landed (Sonnet agent in claude-2 under docs/FINDER_PARITY.md; reviewed, rebased, squashed and rerun by pathem-claude): one empty-space menu in all five views with selection-only entries hidden, View Options in it, Eject on ejectable volumes with the sidebar's rule. Background 342/342, Finder 198/198, UI 49/49, sidebar 661/661, smoke and inventory PASS. Not verified: appearance on screen. F2 (iCloud), F3 (Services), F4 (tags) not started; F5 folded into F3 after the investigation."
@@ -1888,8 +1938,28 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-16T19:48:23Z"
 
   [[mission.comment]]
+    text = "Task 11 Unit 2 resumed by owner after stop-window closure. v7 controls: clean core, M42/M23, markup confirmation and close/Quit pass; four injections discriminate; 222 headless checks pass. Full v2 was deliberately interrupted on measurement review and is baseline-ineligible. Scroll alignment and popup displayed-title metrics repaired; current-run PNG evidence is enforced. Empty native alert label diagnostics and exact repeat-cycle receipt hardening remain in flight. No final baseline, CI, land or install claimed."
+    at = "2026-11-16T22:09:18Z"
+
+  [[mission.comment]]
+    text = "Task 11 v9 design sample validated: 13 native launches audited on one source/artifact digest; clean core/M02/M42/M23/markup/close/Quit pass, all four injections discriminate, 229 headless checks pass. Empty framework-label geometry is resolved by exact identity plus independent no-ink/visible-ink controls. Exact repeat phases and current PNG evidence are enforced. M07 and F23 remain sample product reds; full 42-job qualification and real baseline/CI remain pending. No land or install."
+    at = "2026-11-16T22:20:01Z"
+
+  [[mission.comment]]
+    text = "Owner stopped disruptive visual testing again. No further GUI launches or CI replay without a separately agreed visual-test window. Full v3 is incomplete: last log at mounts group7, no current matching runner or fixture observed, no final terminal/cleanup claim. Private checkpoints c1f5a75 and716f2f4 preserve reviewed instrument work; task11 remains pending. Further validation should prioritize headless checks and reduce foreground launch requirements before any visual batch resumes."
+    at = "2026-11-16T22:29:24Z"
+
+  [[mission.comment]]
     text = "2026-11-16 Live iCloud test (owner offered a real file): Remove Download on an iCloud Drive item is refused with NSFileProviderErrorNonEvictable (-2008) because Optimize Mac Storage is off on this Mac; Pathem showed 'The file couldn't be saved'. a29e9b1 names the cause and remedy; opt-in live test PATHEM_ICLOUD_LIVE_TEST=1. Google Drive round trip (download then remove download) worked and matched CloudItemFacts. Search S3 landed (ef415d8): semantic is a third mode of the Cmd-F panel with scope, subfolders, Open/Reveal and the S2 states; agent's GUI suites green before the owner's 15:30 test pause, only headless checks rerun after rebase. Finder F3 (Services, 5641f7f in claude-2) held: the drawn Services item and the Shortcuts check need a visual look, paused by the owner."
     at = "2026-11-16T22:33:47Z"
+
+  [[mission.comment]]
+    text = "Owner resumed targeted fixes only. Current concrete change supplies the missing240pt width constraint to encrypted-image controls; existing red receipt shows both editable fields at0pt. One m12 German/minimum-host short+255-name probe is queued, cancel only. No matrix or full GUI CI replay scheduled. Newer main shifts this source file by5lines and must be reconciled at a separately authorized integration."
+    at = "2026-11-16T22:38:45Z"
+
+  [[mission.comment]]
+    text = "TS-U2-M12 input fix verified by the existing focused regression: check1 now6/6 PASS (was zero-width fields); size/ownership/cancel/default/dismiss/reopen also6/6 each, isolation intact, before/after render inspected. Full targeted profile honestly remains70/76/native1 from existing stack ambiguity, recorded separately. Reverted ineffective accessory-width experiment; final production diff is one input-width constraint. Only two focused M12 launches, no matrix or GUI CI replay; no land/install."
+    at = "2026-11-16T22:44:18Z"
 
   [[mission.comment]]
     text = "2026-11-16 Live magnet test (owner request), headless, opt-in PATHEM_MAGNET_LIVE=1 (778c22a): Debian 13.7.0 netinst magnet with tracker only resolved metadata from a peer in 50 s and finished 792,723,456 bytes in 93 s, SHA-256 matches Debian's. First choice (Internet Archive public-domain book) had zero BitTorrent seeders; the Archive serves via web seeds only. Findings, not fixed: Magnet.parse ignores ws= web seeds, so web-seed-only magnets never start; a pending magnet shows only 'checking' with 0 peers. App/daemon path on a public magnet not run (GUI paused)."
@@ -1912,8 +1982,16 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-17T03:38:18Z"
 
   [[mission.comment]]
+    text = "Owner permits targeted GUI testing again. Preparing only Undo History m30: prior native render shows overlapping hint/buttons and a0pt toolbar. Its hint had autoresizing-mask constraints enabled while also pinned by explicit Auto Layout constraints. Disable that conflicting mask on the hint. Native probe is held until Claude Services/torrent slot handoff; no matrix, GUI CI, install or land."
+    at = "2026-11-17T03:39:42Z"
+
+  [[mission.comment]]
     text = "2026-11-16 GUI resumed for held items (owner). Torrent wording (49ac491): first render cut two magnet states mid-word; shortened all six in every catalog plus a full-text tooltip; second render on the demo workspace shows all five whole. Finder F3 Services landed (478b0d3, ce153af, e332377): Finder harness 229/229 on the branch (before the final rebase onto unrelated commits); a composited Terminal capture of a real right-click on a demo file shows Services with its submenu at the bottom of the file menu, and AppKit's Ask Siri at the top. Still open: Services submenu contents and the Shortcuts-as-Quick-Action check. GUI handed back to Codex at closure."
     at = "2026-11-17T03:44:38Z"
+
+  [[mission.comment]]
+    text = "TS-U2-M30 repaired: Undo History hint translated an autoresizing mask while pinned by Auto Layout, producing a0pt toolbar and hint/button overlap. Disable that translation. After Claude actual GUI handoff, one targeted m30 launch passed49/49, native0/wrapper0,4.01s; three close/reopen cycles, empty owned history, no history operations. Before/after renders inspected, isolation intact. GUI window released, no broad matrix/GUI CI, install or land. Unit2 qualification remains incomplete."
+    at = "2026-11-17T03:44:47Z"
 
   [[mission.comment]]
     text = "2026-11-16 Landed Codex's Undo History hint fix (m30) as its own commit: one line (translatesAutoresizingMaskIntoConstraints = false) plus formatter output, from 4d76b06. Evidence is Codex's single isolated probe (49/49, before/after renders); here build, swift test and inventory. Unit 2 branch still unlanded."
@@ -1948,6 +2026,18 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-17T13:19:19Z"
 
   [[mission.comment]]
+    text = "Unit2 private branch rebased onto main3c65e5a. Retained main theme/Services/search/markup changes; m12/m30 productionfiles match main. Fresh semantic identity mapping reconciles197builders/196sites/39implicit menus/75DEBUG exclusions, preserves A112/B47/C33/default intent, and verifies all49 factory maker/caller bodies unchanged. Roadmap merge preserves completed26+59, all65tasks and178historicalcomments/owner decisions; task11 pending. Build and245 headless controls/l10n12 pass. New explicit language/family/valid-surface CLI guards refuse before native admission, preventing focused-test fanout. Future B scope now12catalogs; no GUI tests, fullCI, baseline, land or install in this rebase."
+    at = "2026-11-17T14:28:06Z"
+
+  [[mission.comment]]
+    text = "Targeted View Options size repair in progress: unchanged source from red receipt uses a450pt accessory, yielding672/752pt sheets against420/700pt hosts. Measure actual alert and host height before presentation and reduce only the scroll viewport by overflow. One scoped m07 German/minimum-host short+long-name probe planned, cancel only; no full matrix/GUI CI, install or land."
+    at = "2026-11-17T15:43:32Z"
+
+  [[mission.comment]]
+    text = "TS-U2-M07 size fix validated in one focused launch: all6 mounted size observations pass,512x340(short)/512x346(long) within720x420host; all geometry/cancel/default/dismiss/reopen checks pass and renders inspected. Full profile honestly70/76/native1 on existing stack ambiguity, recorded separately. Intermediate standalone-layout receipts752->420/832->426 differ from mounted frames; fit is conservative and floor44binds long fixture, no arbitrary-size/maximal-use promise. Isolation intact, build0, no settings applied. GUI window released; no further visual launches, fullmatrix/GUI CI, land or install."
+    at = "2026-11-17T15:50:51Z"
+
+  [[mission.comment]]
     text = "2026-11-17 Release and website audit fixes (owner request): Photos entitlement, convicted by a signed hardened-runtime probe, plus SwiftTerm and Sparkle notices with verify-release A10 and A11 (2a8d139); release preflight P8 build-number check, Sparkle pinned 2.9.3, release.yml manual-only, stale docs corrected (9b46f0a); privacy page at /privacy/, security headers with a hash-only CSP, truthful copy and captions (e234049, 3bd44ac); Codex View Options fit fix (ed99fed); DiskImageTests now reports hdiutil exit and stderr."
     at = "2026-11-17T17:52:46Z"
 
@@ -1962,6 +2052,18 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "2026-11-17 Installed f6db680: notarization Accepted and stapled (the earlier 401 cleared without a credential change; pathem-notary now authenticates), verify-release A1-A6, A10 (Photos entitlement) and A11 (notices) PASS on the build and in /Applications; backup /tmp/pathem-install-backup.Vb6z. The real app's Photos prompt and the About credits are not yet seen on screen."
     at = "2026-11-17T21:02:24Z"
+
+  [[mission.comment]]
+    text = "Owner-authorized Unit 2 GUI recording on aadf7f3 stopped after 9 of 48 launches, 563 seconds. Mount group 8 could not observe Delete Immediately (m63) repeat presentations, leaving cycle receipts and required renders incomplete. Partial evidence is in .build/unit2-gui-20261117-160543. No accepted baseline. German View Options and encrypted-image sizing regressions passed with stack warnings remaining, and Undo History recorded no failures. Isolate m63 before any broad replay."
+    at = "2026-11-17T21:15:56Z"
+
+  [[mission.comment]]
+    text = "Integrated the m63 harness repair from 2e30692. The repeat cycles now wait for the cancellation task to clear fileOperationBusy, with an explicit setup failure if it stays busy. Claude recorded 130/130 in both German and Japanese. The full Unit 2 run remains incomplete."
+    at = "2026-11-17T21:34:23Z"
+
+  [[mission.comment]]
+    text = "Ran all 48 Unit 2 GUI jobs across two builds. The first 35 receipts passed validation after m63 repair. Job 36 crashed in Japanese b25 because a translation implicitly swapped the object and integer printf arguments. Slot-aware lint caught six unsafe formats across Japanese and Simplified Chinese. Added explicit positions and rebuilt. All 13 remaining jobs produced valid receipts, including the Japanese rerun and clean markup close/quit. Recordings are .build/unit2-gui-20261117-164710 and its .remaining sibling. Recorded failures remain open for triage, including host-size setup drift. This is complete job coverage across two builds and does not establish a single-build or accepted findings baseline. Task 11 remains pending."
+    at = "2026-11-17T22:39:19Z"
 
   [[mission.comment]]
     text = "2026-11-17 commandem pathem plugin (owner request): integrations/commandem/commandem-pathem opens/reveals/previews project files in Pathem, --changed reveals the newest uncommitted change; 8 unit tests; installed to ~/.config/commandem/plugins. Phone companion deferred (owner discussion): ride on Commandem's iOS/Android clients later rather than a new app."
@@ -1984,12 +2086,20 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-17T23:36:30Z"
 
   [[mission.comment]]
+    text = "Integrated Claude dialog handoff through 59189db on the private Unit 2 branch. f18 now recognizes the Save panel accessory host. m49/m50/m67 use the Transfers window close box. f23 recipe follows the cancellable archive save-back prompt, with main carrying the product fix in 3de5a3e. Retain main behavior when rebasing and reconcile factory provenance. m62 passed in isolation and remains unresolved in the full group after m58 host-size drift. Headless suite and inventory passed. Main CI owns the GUI and shared build slot."
+    at = "2026-11-17T23:37:33Z"
+
+  [[mission.comment]]
     text = "2026-11-17 Final make ci on 77b2050: everything passed except one stale packaged check (asserted 6 languages; there are 12 since 2a880c0), fixed to read CFBundleLocalizations; packaged rerun 14/14. Debug E2E 69 pass, 1 known skip (browser-flow pixels)."
     at = "2026-11-17T23:49:12Z"
 
   [[mission.comment]]
     text = "2026-11-17 RELEASED Pathem 0.9.0 (owner approved: flip, tag, publish). Repo Scarcrux/Pathem made public with Discussions and private vulnerability reporting on, wiki off. Tag v0.9.0 at 3dd07c9; PUBLISH=1 release.sh: make ci gate (861 unit, debug E2E 69/1 skip, packaged 14/14), app and DMG notarized and stapled, A1-A11 PASS, published as a full release (not prerelease) with curated changelog notes. Verified from outside: releases/latest = v0.9.0, Sparkle feed 200 with build 24, unauthenticated DMG download passes A9 and the mounted app A10/A11. Website switched to a live Download button and open-source wording. Not done: second-Mac/macOS 15 beta and environmental sign-off (owner chose to release first)."
     at = "2026-11-18T03:17:25Z"
+
+  [[mission.comment]]
+    text = "Rebased private Unit 2 onto the 0.9.0 release roadmap at bd5242d. Main already carries localization, View Options and archive cancellation. Retained the shared f23 alert factory and updated source locations for the inventory and recipes. Unit 2 remains pending. No public push."
+    at = "2026-11-18T03:19:59Z"
 
   [[mission.comment]]
     text = "2026-11-17 Website copyright now reads Scarcrux LLC (owner request); LICENSE and the app's About copyright still say Scarcrux, owner deciding."
@@ -2004,84 +2114,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-18T04:27:48Z"
 
   [[mission.comment]]
-    text = "Unit 2 next checkpoint: 31 real factory profiles cover 25 A sites by source provenance; 62 custom mounts cover 62 other A sites in draft, so 87/112 classified A have adapters (four prior conservative menu rows reviewed to C). Corrected color/connection native pilots have only layout/ambiguity/host-fit reds; Return, Cancel, responder and repeat pass. New Sendable warnings fixed. 103 Python controls cover provenance, exact B receipts, packaging, isolation and new/stale baseline refusal. Baseline/native final groups/remaining 12 controllers plus delegated primary/core rows, four injections, E2E wiring and CI remain incomplete. F03/F04 markup production fixes belong to pathem-claude; do not touch reserved markup files."
-    at = "2026-11-16T13:35:48Z"
-
-  [[mission.comment]]
-    text = "Unit 2 strict German plain-alert receipt run: 2029/2128 native, 49 distinct check-2 oversize pairs, exact site/cycle validation accepted, isolation unchanged. Focused no-default alert 72/72; 108 Python controls pass. Harness stream interleaving and inert-Return instrumentation corrected without product changes. Full custom variants, remaining seven adapters, baseline/injections/CI remain open; no READY or land."
-    at = "2026-11-16T15:13:55Z"
-
-  [[mission.comment]]
-    text = "Unit 2 has all seven remaining A adapters written with owned provider boundaries. Rule/FDA/Reclaim/Torrents/Trim pilots retain geometry/ambiguity reds; repository Reclaim 71/71. Photos first Cancel succeeds but cached window does not reappear, so exact validation refuses incomplete cycles; investigate lifetime in its own red/green commit. Full variants, baseline, injections, native E2E gate and final CI are pending."
-    at = "2026-11-16T15:28:17Z"
-
-  [[mission.comment]]
-    text = "Owner objects to repeated visible desktop tests. All owned GUI phases are terminal; further visible launches paused pending coordination. Headless checkpoint: richer no-follow Cancel snapshots, 12 async-content adapters, exact 42-job plan and input manifest. Core clean pilot passes; four injections discriminate; three-family native composition sample 3/3 zero exits, zero failures, 42.30s. Full variants, final baseline/E2E wiring and CI remain pending. Unit 2 is not READY."
-    at = "2026-11-16T15:48:04Z"
-
-  [[mission.comment]]
-    text = "Maximum parallel review: three reviewers found and fixed core receipt/predicate identity holes, missing isolation-helper hash, tooltip/presentation/config checks and baseline-before-GUI validation. Rebased private Unit 2 onto main df6d315 preserving markup Save/Cancel/Discard, rebound f04/provenance and strengthened close/Quit Cancel witnesses. Headless186 tests and debug build pass. Owned-child cancellation supervision in progress; no visible tests resumed. Final full variants, real baseline/injections and CI await one coordinated idle GUI window. Unit 2 not READY; no land/install/deploy."
-    at = "2026-11-16T18:47:58Z"
-
-  [[mission.comment]]
-    text = "Parallel headless integration now passes 201 tests plus inventory/shell checks. Exact core/predicate/phase validation, tooltip and all-family single-window checks, private-config Cancel snapshots, real-plan baseline preflight and owned-child deadline/cancellation handling are implemented. Headless debug build passed before final check4 extension; normal checkpoint hooks will compile/test final Swift. Native/CI qualification and real baseline are still pending the owner coordinated GUI timing choice. No visible tests, install, land or deploy resumed."
-    at = "2026-11-16T18:51:41Z"
-
-  [[mission.comment]]
-    text = "TS-U2-Fsize fixed: raw g6 native-6 directly convicts row.width-to-rows.width activation before attachment. Same width constraint now activates after addArrangedSubview. Real M43 German full variant regression completes all8 cells/3cycles/loaded content with no crash, missing treatment or isolation error; native256/332 retains20 geometry/ambiguity pairs. Full old-build partial receipts remain diagnostic only; changed binary needs full rerun."
-    at = "2026-11-16T19:30:22Z"
-
-  [[mission.comment]]
-    text = "Task 11 Unit 2 resumed by owner after stop-window closure. v7 controls: clean core, M42/M23, markup confirmation and close/Quit pass; four injections discriminate; 222 headless checks pass. Full v2 was deliberately interrupted on measurement review and is baseline-ineligible. Scroll alignment and popup displayed-title metrics repaired; current-run PNG evidence is enforced. Empty native alert label diagnostics and exact repeat-cycle receipt hardening remain in flight. No final baseline, CI, land or install claimed."
-    at = "2026-11-16T22:09:18Z"
-
-  [[mission.comment]]
-    text = "Task 11 v9 design sample validated: 13 native launches audited on one source/artifact digest; clean core/M02/M42/M23/markup/close/Quit pass, all four injections discriminate, 229 headless checks pass. Empty framework-label geometry is resolved by exact identity plus independent no-ink/visible-ink controls. Exact repeat phases and current PNG evidence are enforced. M07 and F23 remain sample product reds; full 42-job qualification and real baseline/CI remain pending. No land or install."
-    at = "2026-11-16T22:20:01Z"
-
-  [[mission.comment]]
-    text = "Owner stopped disruptive visual testing again. No further GUI launches or CI replay without a separately agreed visual-test window. Full v3 is incomplete: last log at mounts group7, no current matching runner or fixture observed, no final terminal/cleanup claim. Private checkpoints c1f5a75 and716f2f4 preserve reviewed instrument work; task11 remains pending. Further validation should prioritize headless checks and reduce foreground launch requirements before any visual batch resumes."
-    at = "2026-11-16T22:29:24Z"
-
-  [[mission.comment]]
-    text = "Owner resumed targeted fixes only. Current concrete change supplies the missing240pt width constraint to encrypted-image controls; existing red receipt shows both editable fields at0pt. One m12 German/minimum-host short+255-name probe is queued, cancel only. No matrix or full GUI CI replay scheduled. Newer main shifts this source file by5lines and must be reconciled at a separately authorized integration."
-    at = "2026-11-16T22:38:45Z"
-
-  [[mission.comment]]
-    text = "TS-U2-M12 input fix verified by the existing focused regression: check1 now6/6 PASS (was zero-width fields); size/ownership/cancel/default/dismiss/reopen also6/6 each, isolation intact, before/after render inspected. Full targeted profile honestly remains70/76/native1 from existing stack ambiguity, recorded separately. Reverted ineffective accessory-width experiment; final production diff is one input-width constraint. Only two focused M12 launches, no matrix or GUI CI replay; no land/install."
-    at = "2026-11-16T22:44:18Z"
-
-  [[mission.comment]]
-    text = "Owner permits targeted GUI testing again. Preparing only Undo History m30: prior native render shows overlapping hint/buttons and a0pt toolbar. Its hint had autoresizing-mask constraints enabled while also pinned by explicit Auto Layout constraints. Disable that conflicting mask on the hint. Native probe is held until Claude Services/torrent slot handoff; no matrix, GUI CI, install or land."
-    at = "2026-11-17T03:39:42Z"
-
-  [[mission.comment]]
-    text = "TS-U2-M30 repaired: Undo History hint translated an autoresizing mask while pinned by Auto Layout, producing a0pt toolbar and hint/button overlap. Disable that translation. After Claude actual GUI handoff, one targeted m30 launch passed49/49, native0/wrapper0,4.01s; three close/reopen cycles, empty owned history, no history operations. Before/after renders inspected, isolation intact. GUI window released, no broad matrix/GUI CI, install or land. Unit2 qualification remains incomplete."
-    at = "2026-11-17T03:44:47Z"
-
-  [[mission.comment]]
-    text = "Targeted View Options size repair in progress: unchanged source from red receipt uses a450pt accessory, yielding672/752pt sheets against420/700pt hosts. Measure actual alert and host height before presentation and reduce only the scroll viewport by overflow. One scoped m07 German/minimum-host short+long-name probe planned, cancel only; no full matrix/GUI CI, install or land."
-    at = "2026-11-17T15:43:32Z"
-
-  [[mission.comment]]
-    text = "TS-U2-M07 size fix validated in one focused launch: all6 mounted size observations pass,512x340(short)/512x346(long) within720x420host; all geometry/cancel/default/dismiss/reopen checks pass and renders inspected. Full profile honestly70/76/native1 on existing stack ambiguity, recorded separately. Intermediate standalone-layout receipts752->420/832->426 differ from mounted frames; fit is conservative and floor44binds long fixture, no arbitrary-size/maximal-use promise. Isolation intact, build0, no settings applied. GUI window released; no further visual launches, fullmatrix/GUI CI, land or install."
-    at = "2026-11-17T15:50:51Z"
-
-  [[mission.comment]]
-    text = "Owner-authorized Unit 2 GUI recording on aadf7f3 stopped after 9 of 48 launches, 563 seconds. Mount group 8 could not observe Delete Immediately (m63) repeat presentations, leaving cycle receipts and required renders incomplete. Partial evidence is in .build/unit2-gui-20261117-160543. No accepted baseline. German View Options and encrypted-image sizing regressions passed with stack warnings remaining, and Undo History recorded no failures. Isolate m63 before any broad replay."
-    at = "2026-11-17T21:15:56Z"
-
-  [[mission.comment]]
-    text = "Integrated the m63 harness repair from 2e30692. The repeat cycles now wait for the cancellation task to clear fileOperationBusy, with an explicit setup failure if it stays busy. Claude recorded 130/130 in both German and Japanese. The full Unit 2 run remains incomplete."
-    at = "2026-11-17T21:34:23Z"
-
-  [[mission.comment]]
-    text = "Ran all 48 Unit 2 GUI jobs across two builds. The first 35 receipts passed validation after m63 repair. Job 36 crashed in Japanese b25 because a translation implicitly swapped the object and integer printf arguments. Slot-aware lint caught six unsafe formats across Japanese and Simplified Chinese. Added explicit positions and rebuilt. All 13 remaining jobs produced valid receipts, including the Japanese rerun and clean markup close/quit. Recordings are .build/unit2-gui-20261117-164710 and its .remaining sibling. Recorded failures remain open for triage, including host-size setup drift. This is complete job coverage across two builds and does not establish a single-build or accepted findings baseline. Task 11 remains pending."
-    at = "2026-11-17T22:39:19Z"
-
-  [[mission.comment]]
-    text = "Integrated Claude dialog handoff through 59189db on the private Unit 2 branch. f18 now recognizes the Save panel accessory host. m49/m50/m67 use the Transfers window close box. f23 recipe follows the cancellable archive save-back prompt, with main carrying the product fix in 3de5a3e. Retain main behavior when rebasing and reconcile factory provenance. m62 passed in isolation and remains unresolved in the full group after m58 host-size drift. Headless suite and inventory passed. Main CI owns the GUI and shared build slot."
-    at = "2026-11-17T23:37:33Z"
+    text = "Rebased Unit 2 onto 9ad8509 for local integration. Full transient comparison is opt-in until a single-build recording is triaged and a reviewed baseline exists. Ordinary E2E retains inventory and existing transient controls. Unit 2 qualification remains pending."
+    at = "2026-11-18T14:01:18Z"
 
 [[mission]]
   id = "m-e1443252"
