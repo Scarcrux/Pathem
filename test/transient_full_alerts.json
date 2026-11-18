@@ -182,8 +182,8 @@
     },
     {
       "id": "b09",
-      "site": "Sources/Pathem/PaneController.swift:3068:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:3059:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3072:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3063:21:NSAlert",
       "source_sha256": "276cf9b7eaaa25a48df438a5eb11bd4ca5727556f390fc27a164fc25ee474809",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
@@ -203,8 +203,8 @@
     },
     {
       "id": "b10",
-      "site": "Sources/Pathem/PaneController.swift:3082:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:3078:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3086:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3082:21:NSAlert",
       "source_sha256": "e905d42c1d775804ddb147ed3e8c937fc1e1843b570e4a215afb306ffa1dba90",
       "sheet": true,
       "fixture": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",
@@ -833,8 +833,8 @@
     },
     {
       "id": "b40",
-      "site": "Sources/Pathem/BrowserViewController.swift:951:28:presentSheet",
-      "builder": "Sources/Pathem/BrowserViewController.swift:939:24:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController.swift:956:28:presentSheet",
+      "builder": "Sources/Pathem/BrowserViewController.swift:944:24:NSAlert",
       "source_sha256": "7ec3d65cd102cab00155efc5d3c07076e2e7623880164200fde6b9d766321b06",
       "sheet": true,
       "fixture": "Plain reset-result report and Quit. Runtime fixture: both removal summary and Finder-restored suffix. Build text only; never run reset or terminate the owner app.",

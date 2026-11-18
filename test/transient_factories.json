@@ -306,7 +306,7 @@
     {
       "id": "f24",
       "file": "Sources/Pathem/SidebarController.swift",
-      "site": "Sources/Pathem/SidebarController.swift:1765:13:beginSheetModal",
+      "site": "Sources/Pathem/SidebarController.swift:1770:13:beginSheetModal",
       "caller": "customIcon",
       "maker": "makeSymbolDialog",
       "owner_type": "SidebarController",
@@ -425,7 +425,7 @@
     },
     {
       "id": "f32",
-      "site": "Sources/Pathem/BrowserViewController.swift:915:30:presentSheet",
+      "site": "Sources/Pathem/BrowserViewController.swift:920:30:presentSheet",
       "file": "Sources/Pathem/BrowserViewController.swift",
       "caller": "resetPathemData",
       "maker": "makeResetDialog",

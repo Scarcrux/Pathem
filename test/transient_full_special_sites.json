@@ -51,7 +51,7 @@
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
     {
-      "site": "Sources/Pathem/SidebarController.swift:598:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SidebarController.swift:602:9:makeKeyAndOrderFront",
       "coverage": "task2",
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
     },

@@ -342,14 +342,14 @@
         "runtime_fixture": "Runtime error.localizedDescription fixture: permission error with a 255-character filename. Declared stress fixture, not a universal maximum error length. No file metadata change."
       }
     },
-    "Sources/Pathem/PaneController.swift:3068:9:beginSheetModal": {
+    "Sources/Pathem/PaneController.swift:3072:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:3059:21:NSAlert"
+        "Sources/Pathem/PaneController.swift:3063:21:NSAlert"
       ],
       "reason": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
       "sample": {
@@ -366,14 +366,14 @@
         "runtime_fixture": "Runtime failed-item count fixture: 999999. Do not write tags."
       }
     },
-    "Sources/Pathem/PaneController.swift:3082:9:beginSheetModal": {
+    "Sources/Pathem/PaneController.swift:3086:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:3078:21:NSAlert"
+        "Sources/Pathem/PaneController.swift:3082:21:NSAlert"
       ],
       "reason": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",
       "sample": {
@@ -1253,7 +1253,7 @@
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
     },
-    "Sources/Pathem/SidebarController.swift:598:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/SidebarController.swift:602:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "existing browser window",
       "custom_content": true,
@@ -1485,25 +1485,25 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/PaneController.swift:2764:9:show": {
+    "Sources/Pathem/PaneController.swift:2768:9:show": {
       "class": "C",
       "kind": "system sharing picker",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:2763:22:NSSharingServicePicker"
+        "Sources/Pathem/PaneController.swift:2767:22:NSSharingServicePicker"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/PaneController.swift:2538:9:begin": {
+    "Sources/Pathem/PaneController.swift:2542:9:begin": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PaneController.swift:2535:21:NSOpenPanel"
+        "Sources/Pathem/PaneController.swift:2539:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -1997,14 +1997,14 @@
       "reason": "Workspace-selection popup accessory; Open restores tabs. Cancel without changing the browser.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController.swift:915:30:presentSheet": {
+    "Sources/Pathem/BrowserViewController.swift:920:30:presentSheet": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/BrowserViewController.swift:1065:21:NSAlert"
+        "Sources/Pathem/BrowserViewController.swift:1071:21:NSAlert"
       ],
       "reason": "Keep-data checkbox accessory; default Continue and Quit can remove config/Keychain entries and restore folder handler. Permanent destructive class. Cancel only; never invoke reset in this harness. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
@@ -2014,14 +2014,14 @@
         "scope": "Return confirms an explicitly invoked destructive action; applied by pathem-claude 2026-11-16, owner informed."
       }
     },
-    "Sources/Pathem/BrowserViewController.swift:951:28:presentSheet": {
+    "Sources/Pathem/BrowserViewController.swift:956:28:presentSheet": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController.swift:939:24:NSAlert"
+        "Sources/Pathem/BrowserViewController.swift:944:24:NSAlert"
       ],
       "reason": "Plain reset-result report and Quit. Runtime fixture: both removal summary and Finder-restored suffix. Build text only; never run reset or terminate the owner app.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2245,14 +2245,14 @@
       "reason": "makeCommanderKeysDialog factory supplies measured six-popup F-key accessory. Cancel without modifying preferences.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/SidebarController.swift:1765:13:beginSheetModal": {
+    "Sources/Pathem/SidebarController.swift:1770:13:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SidebarController.swift:1941:21:NSAlert"
+        "Sources/Pathem/SidebarController.swift:1946:21:NSAlert"
       ],
       "reason": "SF Symbol name text field accessory; Set edits sidebar config. Cancel without committing.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2324,7 +2324,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:483:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:485:21:NSAlert"
       ],
       "reason": "Magnet URI text field accessory with optional clipboard prefill. Cancel without starting a torrent.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2336,7 +2336,7 @@
       "destructive": true,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:508:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:510:21:NSAlert"
       ],
       "reason": "Three-button Remove/Keep Files, Remove/Delete Files and Cancel; permanent deletion is secondary action. Runtime torrent name255. Cancel only, no client calls.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2348,7 +2348,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/TorrentsWindowController.swift:526:21:NSAlert"
+        "Sources/Pathem/TorrentsWindowController.swift:528:21:NSAlert"
       ],
       "reason": "Legacy window speed/network-options accessory with limit fields and network toggles/status. Cancel without changing client state.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2810,67 +2810,67 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:400:30:NSMenu": {
+    "Sources/Pathem/PaneController.swift:404:30:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 1765,
+          "line": 1769,
           "expression": "toolbarStack.menu = headerMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2461:20:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2465:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2463,
+          "line": 2467,
           "expression": "sortButton.menu = menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2487:20:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2491:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2489,
+          "line": 2493,
           "expression": "actionButton.menu = menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2501:23:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2505:23:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2573,
+          "line": 2577,
           "expression": "item.submenu = openWith"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2554:25:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2558:25:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2556,
+          "line": 2560,
           "expression": "headerItem.submenu = headerSub"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PaneController.swift:2608:20:NSMenu": {
+    "Sources/Pathem/PaneController.swift:2612:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PaneController.swift",
-          "line": 2592,
+          "line": 2596,
           "expression": "tagsItem.submenu = makeTagsSubmenu()"
         }
       ],
@@ -3039,34 +3039,34 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/SidebarController.swift:335:20:NSMenu": {
+    "Sources/Pathem/SidebarController.swift:338:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/SidebarController.swift",
-          "line": 337,
+          "line": 340,
           "expression": "outline.menu = menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/SidebarController.swift:1724:23:NSMenu": {
+    "Sources/Pathem/SidebarController.swift:1729:23:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/SidebarController.swift",
-          "line": 1738,
+          "line": 1743,
           "expression": "parent.submenu = submenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/TabbedPaneController.swift:466:20:NSMenu": {
+    "Sources/Pathem/TabbedPaneController.swift:468:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/TabbedPaneController.swift",
-          "line": 411,
+          "line": 413,
           "expression": "chip.menu = makeTabMenu(index: index, closable: closable)"
         }
       ],
