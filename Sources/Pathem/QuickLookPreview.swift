@@ -34,18 +34,29 @@ final class QuickLookPreview: NSView {
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.imageScaling = .scaleProportionallyUpOrDown
         iconView.imageAlignment = .alignCenter
-        addSubview(iconView)
-        addSubview(quickLook)
-        NSLayoutConstraint.activate([
-            quickLook.leadingAnchor.constraint(equalTo: leadingAnchor),
-            quickLook.trailingAnchor.constraint(equalTo: trailingAnchor),
-            quickLook.topAnchor.constraint(equalTo: topAnchor),
-            quickLook.bottomAnchor.constraint(equalTo: bottomAnchor),
-            iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
-            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+        // The fallback icon must never hold the preview open against its neighbors. Its
+        // 32pt intrinsic size plus a required 24pt inset used to demand 56pt at priority 750,
+        // tying with (and beating) the gallery's name label, which then got 0pt with both
+        // drawers open (layout matrix LM2-F4). The icon scales anyway, so it gives way first.
+        for axis in [NSLayoutConstraint.Orientation.horizontal, .vertical] {
+            iconView.setContentCompressionResistancePriority(.defaultLow - 1, for: axis)
+        }
+        let insets = [
             iconView.widthAnchor.constraint(lessThanOrEqualTo: widthAnchor, constant: -24),
             iconView.heightAnchor.constraint(lessThanOrEqualTo: heightAnchor, constant: -24),
-        ])
+        ]
+        for inset in insets { inset.priority = .defaultHigh - 1 }
+        addSubview(iconView)
+        addSubview(quickLook)
+        NSLayoutConstraint.activate(
+            [
+                quickLook.leadingAnchor.constraint(equalTo: leadingAnchor),
+                quickLook.trailingAnchor.constraint(equalTo: trailingAnchor),
+                quickLook.topAnchor.constraint(equalTo: topAnchor),
+                quickLook.bottomAnchor.constraint(equalTo: bottomAnchor),
+                iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
+                iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            ] + insets)
     }
 
     /// Show `url`. Folders, online-only (dataless) items, and `nil` fall back to `fallbackIcon`

@@ -1,18 +1,6 @@
 {
   "findings": [
     {
-      "id": "LM2-F4",
-      "cell": "default-gallery-terminal+torrent-dark",
-      "check": 4,
-      "reason": "At default size the two drawers squeeze the Gallery preview name to zero height. Accepted open design finding."
-    },
-    {
-      "id": "LM2-F4",
-      "cell": "default-gallery-terminal+torrent-light",
-      "check": 4,
-      "reason": "At default size the two drawers squeeze the Gallery preview name to zero height. Accepted open design finding."
-    },
-    {
       "id": "LM2-F6",
       "cell": "default-column-terminal+torrent-dark",
       "check": 2,

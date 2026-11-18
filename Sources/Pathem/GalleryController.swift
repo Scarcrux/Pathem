@@ -250,6 +250,8 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         previewName.font = .systemFont(ofSize: 13)
         previewName.textColor = .secondaryLabelColor
         previewName.lineBreakMode = .byTruncatingMiddle
+        // In a short pane the preview shrinks first; the name keeps its line (LM2-F4).
+        previewName.setContentCompressionResistancePriority(.defaultHigh + 1, for: .vertical)
 
         emptyLabel.alignment = .center
         emptyLabel.textColor = .secondaryLabelColor

@@ -1250,6 +1250,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-b6136c1d"
     title = "LM2-F4: Gallery name label has zero height with terminal + torrent at default size. Resolve the paired-drawer layout design; retain dark/light check4 receipts in test/layout_matrix_known_findings.json."
+    done = true
 
   [[mission.task]]
     id = "t-d36755d1"
