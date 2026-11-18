@@ -5,7 +5,12 @@ site into a live funnel. It is deliberately about **decisions and verification**
 not build mechanics: the notarize / sign / Sparkle / appcast runbook lives in
 **[RELEASE.md](RELEASE.md)** and is not repeated here.
 
-The repo is intentionally private until the gate below is met. Nothing on the
+**Status (2026-11-18):** the repository went public and Pathem 0.9.0 was released
+on 2026-11-17. Boxes below are ticked only where the evidence is recorded (noted on
+the line); unticked boxes are still open, including some the owner may have done
+but not recorded. The rest of this file is kept as written.
+
+The repo was intentionally private until the gate below was met. Nothing on the
 [ROADMAP](ROADMAP.md) is blocked on the flip; everything here just makes the flip
 land well. Work top to bottom: **exit criteria → QA → docs → cut the build →
 flip → post-flip**. Draft criteria are proposals; adjust the thresholds, then
@@ -27,10 +32,14 @@ The standing decision is "more user testing before public." Make that concrete s
       exercised on real files with the outcome verified. No silent data loss.
 - [ ] **Full Disk Access onboarding** has been walked by someone who did *not*
       build the app, from a clean state, and it was obvious what to do.
-- [ ] **No P0/P1 open** in whatever issue list you keep. Known-minor is fine;
+- [x] **No P0/P1 open** in whatever issue list you keep (2026-11-18: none in the
+      roadmap; known-minor LM2-F4 and LM2-F6 layout findings; TS-F2 closed as
+      intended by owner ruling). Known-minor is fine;
       write them down so launch-day reports can be triaged against them.
-- [ ] **`swift test` green**, `PATHEM_SMOKE=1` reports `RESULT: PASS`, and the
-      l10n lint (`python3 scripts/l10n_lint.py`) exits 0.
+- [x] **`swift test` green**, `PATHEM_SMOKE=1` reports `RESULT: PASS`, and the
+      l10n lint (`python3 scripts/l10n_lint.py`) exits 0. (2026-11-17: the 0.9.0
+      release gate's make ci: 861 unit tests, debug E2E 69 pass with 1 known skip,
+      packaged E2E 14/14, l10n lint clean.)
 
 When every box is checked, the gate is open. Everything below is executable in a
 day or two.
@@ -62,48 +71,57 @@ things a human has to look at.
 
 ## 3. Docs & repo hygiene (before it's public)
 
-- [ ] **README** reads well to a stranger: what it is, the honest state, a
+- [x] **README** reads well to a stranger: what it is, the honest state, a
       screenshot, build-from-source steps, and the download story (see §5).
-- [ ] **LICENSE** present and correct.
-- [ ] **SECURITY.md** has a real disclosure contact.
-- [ ] No secrets, tokens, absolute local paths, or private notes in the tree or
-      git history. Run `make release-safety` (runs the discrimination controls first)
+- [x] **LICENSE** present and correct (MIT, Copyright Scarcrux LLC).
+- [x] **SECURITY.md** has a real disclosure contact (GitHub private vulnerability
+      reporting is on; security@pathem.app is listed, but whether it is monitored
+      is unconfirmed).
+- [x] No secrets, tokens, absolute local paths, or private notes in the tree or
+      git history (2026-11-17: make release-safety PASS, 59 history findings
+      reviewed and baselined in scripts/release-safety-history-baseline.txt). Run `make release-safety` (runs the discrimination controls first)
       (requires local gitleaks). The gate scans candidate files plus all reachable
       refs and enforces noreply author/committer emails with redacted summaries.
       Pattern checks do not certify all personal identities, addresses, phone
       numbers or private prose: manual review remains required. A failure requires
       private review/credential rotation as applicable, not automatic history edits.
-- [ ] `.github/workflows/release.yml` secrets exist (Developer ID cert, notary
+- [x] Not applicable: release.yml is manual-only and releases are cut locally with
+      scripts/release.sh (README). Original item: `.github/workflows/release.yml` secrets exist (Developer ID cert, notary
       creds, `SPARKLE_PRIVATE_KEY`) if you want tag-triggered releases.
 - [ ] Optional: to publish the VS Code / Cursor extension, set `VSCE_PAT`
       (and `OVSX_PAT`) and push a `vscode-v<version>` tag
       (`.github/workflows/vscode-extension-release.yml`). Without the tokens the
       tag still builds the `.vsix` and attaches it to a GitHub Release.
-- [ ] Scrub for stray iCloud conflicted-copy files (`* [0-9].*`).
+- [x] Scrub for stray iCloud conflicted-copy files (`* [0-9].*`) (2026-11-18: none
+      tracked).
 
 ## 4. Cut the first public build
 
 Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 
-- [ ] One-time: `scripts/setup-sparkle-key.sh` run, `SUPublicEDKey` committed,
-      **private key backed up** (losing it means no user can ever update again).
-- [ ] Developer ID cert + `notarytool` profile in place.
-- [ ] Version bumped in `Packaging/Info.plist` (`CFBundleShortVersionString` +
+- [x] One-time: `scripts/setup-sparkle-key.sh` run, `SUPublicEDKey` committed
+      (verified; the 0.9.0 appcast signature checks against it). **Still confirm the
+      private key is backed up** (losing it means no user can ever update again).
+- [x] Developer ID cert + `notarytool` profile in place.
+- [x] Version bumped in `Packaging/Info.plist` (0.9.0, build 24; the next release
+      needs build 25 or higher, enforced by release.sh P8) (`CFBundleShortVersionString` +
       an incremented `CFBundleVersion`).
-- [ ] `PUBLISH=1 scripts/release.sh` (or push a `v*` tag) produces a **notarized,
+- [x] `PUBLISH=1 scripts/release.sh` (or push a `v*` tag) produces a **notarized,
       stapled** DMG + a signed `appcast.xml` on the GitHub release.
 - [ ] Download the published DMG on a clean Mac and confirm Gatekeeper opens it
-      without a warning.
+      without a warning. (Partly: a signed-out download on the build Mac passed
+      Gatekeeper and verify-release; a clean second Mac has not been tried.)
 
 ## 5. The flip
 
-- [ ] Wire the site's primary CTA from "Star on GitHub / downloads soon" to the
+- [x] Wire the site's primary CTA from "Star on GitHub / downloads soon" to the
       **real download link** (the release DMG) + confirm the Sparkle feed URL
       resolves. (Site Track B item B3.)
-- [ ] Add the marquee screenshots the site currently only describes: terminal,
+- [x] Add the marquee screenshots the site currently only describes: terminal,
       torrents, remote/site-manager. (Track B item B2.)
-- [ ] Flip the repository to **public**.
-- [ ] Verify the live site: OG card renders when the URL is shared, favicon +
+- [x] Flip the repository to **public** (2026-11-17).
+- [x] Verify the live site (2026-11-17: links, headers and console checked; see
+      the roadmap): OG card renders when the URL is shared, favicon +
       manifest load, sitemap reachable, all links resolve.
 
 ## 6. Immediately after
@@ -111,7 +129,8 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 - [ ] Watch the first issues/discussions; triage against the known-minor list.
 - [ ] Confirm auto-update works from the *first* public version to a quick
       follow-up (the real test of the Sparkle chain is the second release).
-- [ ] Keep a short changelog going for the appcast release notes.
+- [x] Keep a short changelog going for the appcast release notes (the release body
+      is taken from Sources/Pathem/Resources/CHANGELOG.md).
 
 ## Rollback
 
