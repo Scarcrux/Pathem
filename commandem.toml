@@ -2127,6 +2127,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-18 RELEASED Pathem 0.9.1 (build 25, tag v0.9.1 at 3e64f5a; owner approved): Size Browser crash fix, Photos browser reopen, Gallery and Column preview names in short panes (LM2-F4/F6), bounded path-suggestion sheet, Scarcrux LLC copyright. Release gate: 861 unit, debug E2E 69/1 skip, packaged 14/14; app and DMG notarized and stapled. Verified from outside: releases/latest = v0.9.1, Sparkle feed offers build 25, signed-out DMG passes verify-release dmg and the mounted app passes app checks. Site updated to 0.9.1. Pending: seeing an installed 0.9.0 offer and apply the update (the first real Sparkle update test)."
     at = "2026-11-18T17:09:26Z"
 
+  [[mission.comment]]
+    text = "2026-11-18 First real Sparkle update verified (owner): installed 0.9.0 build 24 was offered 0.9.1 build 25 and installed it; the installed app reports 0.9.1, build 25, 3e64f5a, team K466Z7J2AS."
+    at = "2026-11-18T18:53:17Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
