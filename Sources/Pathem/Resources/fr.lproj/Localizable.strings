@@ -1766,6 +1766,7 @@
 "trim.noRange" = "Aucune plage de découpe n'a été sélectionnée.";
 "trim.title" = "Raccourcir « %@ »";
 "update.autoCheck" = "Rechercher les mises à jour automatiquement";
+"update.autoInstall" = "Télécharger et installer automatiquement les mises à jour";
 "update.buttonTitle" = "Mise à jour prête";
 "update.buttonTooltip" = "La version %@ est prête à être installée";
 "update.checkNow" = "Rechercher les mises à jour maintenant";

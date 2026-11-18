@@ -58,6 +58,14 @@ final class UpdaterController: NSObject, @preconcurrency SPUStandardUserDriverDe
         set { if isConfigured { controller.updater.automaticallyChecksForUpdates = newValue } }
     }
 
+    /// Whether Sparkle downloads and installs updates without asking first (Settings >
+    /// Updates). Off by default, so a new user is asked before each update; it only matters
+    /// while automatic checks are on. A no-op on unconfigured builds.
+    var automaticDownloads: Bool {
+        get { isConfigured && controller.updater.automaticallyDownloadsUpdates }
+        set { if isConfigured { controller.updater.automaticallyDownloadsUpdates = newValue } }
+    }
+
     @objc func checkForUpdates(_ sender: Any?) {
         guard isConfigured else {
             let alert = NSAlert()

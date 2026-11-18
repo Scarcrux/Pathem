@@ -1816,6 +1816,7 @@
 "trim.noRange" = "Non è stato selezionato alcun intervallo da tagliare.";
 "trim.title" = "Taglia “%@”";
 "update.autoCheck" = "Verifica automaticamente gli aggiornamenti";
+"update.autoInstall" = "Scarica e installa automaticamente gli aggiornamenti";
 "update.buttonTitle" = "Aggiornamento pronto";
 "update.buttonTooltip" = "La versione %@ è pronta per l’installazione";
 "update.checkNow" = "Verifica aggiornamenti ora";

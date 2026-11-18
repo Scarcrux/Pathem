@@ -1816,6 +1816,7 @@
 "trim.noRange" = "다듬을 범위가 선택되지 않았습니다.";
 "trim.title" = "“%@” 다듬기";
 "update.autoCheck" = "업데이트 자동 확인";
+"update.autoInstall" = "업데이트 자동으로 다운로드 및 설치";
 "update.buttonTitle" = "업데이트 준비됨";
 "update.buttonTooltip" = "버전 %@을(를) 설치할 준비가 되었습니다";
 "update.checkNow" = "지금 업데이트 확인";

@@ -1766,6 +1766,7 @@
 "trim.noRange" = "Es wurde kein Kürzungsbereich ausgewählt.";
 "trim.title" = "„%@“ kürzen";
 "update.autoCheck" = "Automatisch nach Updates suchen";
+"update.autoInstall" = "Updates automatisch laden und installieren";
 "update.buttonTitle" = "Update bereit";
 "update.buttonTooltip" = "Version %@ kann installiert werden";
 "update.checkNow" = "Jetzt nach Updates suchen";

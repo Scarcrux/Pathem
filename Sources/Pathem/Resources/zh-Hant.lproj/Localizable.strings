@@ -1816,6 +1816,7 @@
 "trim.noRange" = "未選取修剪範圍。";
 "trim.title" = "修剪「%@」";
 "update.autoCheck" = "自動檢查更新";
+"update.autoInstall" = "自動下載並安裝更新";
 "update.buttonTitle" = "更新已就緒";
 "update.buttonTooltip" = "版本 %@ 已可安裝";
 "update.checkNow" = "立即檢查更新";

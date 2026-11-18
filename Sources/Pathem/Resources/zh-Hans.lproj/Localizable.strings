@@ -1766,6 +1766,7 @@
 "trim.noRange" = "未选择裁剪范围。";
 "trim.title" = "裁剪“%@”";
 "update.autoCheck" = "自动检查更新";
+"update.autoInstall" = "自动下载并安装更新";
 "update.buttonTitle" = "更新就绪";
 "update.buttonTooltip" = "版本 %@ 已可安装";
 "update.checkNow" = "立即检查更新";

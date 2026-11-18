@@ -1816,6 +1816,7 @@
 "trim.noRange" = "Er is geen bereik geselecteerd om bij te snijden.";
 "trim.title" = "Snijd “%@” bij";
 "update.autoCheck" = "Zoek automatisch naar updates";
+"update.autoInstall" = "Updates automatisch downloaden en installeren";
 "update.buttonTitle" = "Update gereed";
 "update.buttonTooltip" = "Versie %@ is klaar om te worden geïnstalleerd";
 "update.checkNow" = "Zoek nu naar updates";

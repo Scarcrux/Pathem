@@ -71,6 +71,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private let gestureConflictLabel = NSTextField(labelWithString: "")
     private weak var updater: UpdaterController?
     private let updatesStatus = NSTextField(labelWithString: "")
+    private let autoInstall = NSButton(checkboxWithTitle: "", target: nil, action: nil)
 
     // Terminal pane state (stored outside Preferences, so callbacks drive it).
     private var terminalThemes: [String] = []
@@ -1772,6 +1773,12 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             action: #selector(autoCheckToggled(_:)))
         auto.state = (updater?.automaticChecks ?? false) ? .on : .off
         auto.isEnabled = configured
+        autoInstall.title = L(
+            "update.autoInstall", "Automatically download and install updates")
+        autoInstall.target = self
+        autoInstall.action = #selector(autoInstallToggled(_:))
+        autoInstall.state = (updater?.automaticDownloads ?? false) ? .on : .off
+        autoInstall.isEnabled = configured && auto.state == .on
         let checkNow = NSButton(
             title: L("update.checkNow", "Check for Updates Now"), target: self,
             action: #selector(checkNow))
@@ -1788,11 +1795,16 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         updatesStatus.lineBreakMode = .byWordWrapping
         (updatesStatus.cell as? NSTextFieldCell)?.wraps = true
         updatesStatus.preferredMaxLayoutWidth = 400
-        return form([auto, checkNow, updatesStatus])
+        return form([auto, autoInstall, checkNow, updatesStatus])
     }
 
     @objc private func autoCheckToggled(_ sender: NSButton) {
         updater?.automaticChecks = (sender.state == .on)
+        // Installing without asking only applies while Sparkle is checking on its own.
+        autoInstall.isEnabled = (updater?.isConfigured ?? false) && sender.state == .on
+    }
+    @objc private func autoInstallToggled(_ sender: NSButton) {
+        updater?.automaticDownloads = (sender.state == .on)
     }
     @objc private func checkNow() { updater?.checkForUpdates(self) }
 

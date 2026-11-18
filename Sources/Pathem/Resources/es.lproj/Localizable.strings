@@ -1766,6 +1766,7 @@
 "trim.noRange" = "No se seleccionó ningún intervalo de recorte.";
 "trim.title" = "Recortar «%@»";
 "update.autoCheck" = "Buscar actualizaciones automáticamente";
+"update.autoInstall" = "Descargar e instalar actualizaciones automáticamente";
 "update.buttonTitle" = "Actualización lista";
 "update.buttonTooltip" = "La versión %@ está lista para instalarse";
 "update.checkNow" = "Buscar actualizaciones ahora";

@@ -1766,6 +1766,7 @@
 "trim.noRange" = "トリミング範囲が選択されていません。";
 "trim.title" = "「%@」をトリミング";
 "update.autoCheck" = "自動的にアップデートを確認";
+"update.autoInstall" = "アップデートを自動的にダウンロードしてインストール";
 "update.buttonTitle" = "アップデート準備完了";
 "update.buttonTooltip" = "バージョン %@ をインストールできます";
 "update.checkNow" = "今すぐアップデートを確認";

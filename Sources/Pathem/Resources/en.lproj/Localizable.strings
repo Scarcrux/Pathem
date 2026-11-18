@@ -1740,6 +1740,7 @@
 "trim.noRange" = "No trim range was selected.";
 "trim.title" = "Trim “%@”";
 "update.autoCheck" = "Check for updates automatically";
+"update.autoInstall" = "Automatically download and install updates";
 "update.buttonTitle" = "Update Ready";
 "update.buttonTooltip" = "Version %@ is ready to install";
 "update.checkNow" = "Check for Updates Now";
