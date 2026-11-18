@@ -2123,6 +2123,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-18 LM2-F4 and LM2-F6 fixed (owner authorized): e950e89 Gallery (QuickLookPreview fallback icon held 56 pt at priority 750 and beat the name label; it now gives way first and the name resists squeezing) and 9754bc9 Column (the preview well's fixed 210 pt height pushed the name to y=-71 in a 183 pt column; now a 740-priority preference). Layout matrix full run: 1192/1192 with an empty known-findings baseline (61 s); smoke, UI 49/49, Finder 229/229 pass. Note: three earlier runs took 600-1030 s; a CPU sample showed the time in sheet open/close animations during a heavy-load window (~09:20-10:00), and controls on plain main were 57-63 s, so the slowdown was environmental, not the fixes."
     at = "2026-11-18T15:05:14Z"
 
+  [[mission.comment]]
+    text = "2026-11-18 RELEASED Pathem 0.9.1 (build 25, tag v0.9.1 at 3e64f5a; owner approved): Size Browser crash fix, Photos browser reopen, Gallery and Column preview names in short panes (LM2-F4/F6), bounded path-suggestion sheet, Scarcrux LLC copyright. Release gate: 861 unit, debug E2E 69/1 skip, packaged 14/14; app and DMG notarized and stapled. Verified from outside: releases/latest = v0.9.1, Sparkle feed offers build 25, signed-out DMG passes verify-release dmg and the mounted app passes app checks. Site updated to 0.9.1. Pending: seeing an installed 0.9.0 offer and apply the update (the first real Sparkle update test)."
+    at = "2026-11-18T17:09:26Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
