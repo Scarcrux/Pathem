@@ -5,6 +5,13 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
+## 0.9.1 - 2026-11-18
+- Fixed a crash when opening the Size Browser on a folder with contents.
+- The Photos browser opens again after you close it.
+- File names under the Gallery preview and in the Column view's preview stay visible in short panes, for example with both the terminal and torrent drawers open.
+- The "no such path" suggestions sheet now fits the window: long paths are shortened in the middle, and the full path is still available.
+- About now names Scarcrux LLC as the copyright holder.
+
 ## 0.9.0 - 2026-11-17
 - Finder parity: the full set of Finder sort and group options, per-folder view options, in-place rename in every view, a Finder-style Dock menu with recent folders, spring-loaded path segments and navigation buttons during a drag, and Compress, Quick Look, Make Alias, Show Original and Show Package Contents in the right-click menu.
 - Search: one search window for filenames or file contents, with This Folder, This Mac and Other Folder scopes. Replace in files now only ever changes files inside the folder you chose.
