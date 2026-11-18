@@ -1,28 +1,3 @@
 {
-  "findings": [
-    {
-      "id": "LM2-F6",
-      "cell": "default-column-terminal+torrent-dark",
-      "check": 2,
-      "reason": "At default size the two drawers place the Column preview name at y=-71 outside its 183pt parent. Accepted open design finding."
-    },
-    {
-      "id": "LM2-F6",
-      "cell": "default-column-terminal+torrent-dark",
-      "check": 4,
-      "reason": "The Column paired-drawer preview name is clipped outside its parent. Accepted open design finding."
-    },
-    {
-      "id": "LM2-F6",
-      "cell": "default-column-terminal+torrent-light",
-      "check": 2,
-      "reason": "At default size the two drawers place the Column preview name at y=-71 outside its 183pt parent. Accepted open design finding."
-    },
-    {
-      "id": "LM2-F6",
-      "cell": "default-column-terminal+torrent-light",
-      "check": 4,
-      "reason": "The Column paired-drawer preview name is clipped outside its parent. Accepted open design finding."
-    }
-  ]
+  "findings": []
 }

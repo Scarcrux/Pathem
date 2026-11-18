@@ -33,7 +33,7 @@ The standing decision is "more user testing before public." Make that concrete s
 - [ ] **Full Disk Access onboarding** has been walked by someone who did *not*
       build the app, from a clean state, and it was obvious what to do.
 - [x] **No P0/P1 open** in whatever issue list you keep (2026-11-18: none in the
-      roadmap; known-minor LM2-F4 and LM2-F6 layout findings; TS-F2 closed as
+      roadmap; LM2-F4 and LM2-F6 repaired 2026-11-18; TS-F2 closed as
       intended by owner ruling). Known-minor is fine;
       write them down so launch-day reports can be triaged against them.
 - [x] **`swift test` green**, `PATHEM_SMOKE=1` reports `RESULT: PASS`, and the

@@ -599,11 +599,23 @@ final class ColumnBrowserController: NSObject, NSTableViewDataSource, NSTableVie
         box.addSubview(well)
         box.addSubview(name)
         box.addSubview(grid)
+        // The well is 210pt when the column has room. In a short column (both drawers open,
+        // LM2-F6) a required 210pt pushed the name to y=-71, outside the box. Now the well
+        // shrinks first so the metadata and then the name stay inside the column.
+        let wellHeight = well.heightAnchor.constraint(equalToConstant: 210)
+        wellHeight.priority = .defaultHigh - 10
+        let gridFits = grid.bottomAnchor.constraint(
+            lessThanOrEqualTo: box.bottomAnchor, constant: -12)
+        gridFits.priority = .defaultHigh
+        let nameFits = name.bottomAnchor.constraint(
+            lessThanOrEqualTo: box.bottomAnchor, constant: -12)
+        nameFits.priority = .required - 1
+        name.setContentCompressionResistancePriority(.defaultHigh + 1, for: .vertical)
         NSLayoutConstraint.activate([
             well.topAnchor.constraint(equalTo: box.topAnchor, constant: 16),
             well.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: 16),
             well.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -16),
-            well.heightAnchor.constraint(equalToConstant: 210),
+            wellHeight, gridFits, nameFits,
             preview.leadingAnchor.constraint(equalTo: well.leadingAnchor),
             preview.trailingAnchor.constraint(equalTo: well.trailingAnchor),
             preview.topAnchor.constraint(equalTo: well.topAnchor),

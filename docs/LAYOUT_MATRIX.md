@@ -148,13 +148,44 @@ or pixel/material approval.
 | Focused existing suites |Smoke PASS; sidebar650/650, content preferences206/206, Finder198/198, UI49/49; preferences unchanged each | PASS |
 | Final full CI |826 tests/168 suites; E2E68 pass/1 skip/0 fail; packaged14/14; make exit0 and independent preference wrapper exit0 | PASS with named skip |
 
-The checked-in `test/layout_matrix_known_findings.json` contains only:
+The checked-in `test/layout_matrix_known_findings.json` is now empty. Each finding
+it once retained was repaired and removed only after the full clean run stopped
+failing it (the gate rejects a stale entry):
 
-| ID | Cells/checks retained red | Status |
+| ID | Cells/checks once retained red | Status |
 |---|---|---|
-| LM2-F1b |Custom sidebar dark/light check8 (two pairs) | Known250pt width returns to200pt; no fix authorized |
-| LM2-F4 |Gallery terminal+torrent dark/light check4 (two pairs) | Known preview-name collapse with paired drawers; no fix authorized |
-| LM2-F6 |Column terminal+torrent dark/light checks2/4 (four pairs) | Known preview name outside squeezed parent; no fix authorized |
+| LM2-F1b |Custom sidebar dark/light check8 (two pairs) | Repaired in `38af23e` (sidebar width kept across compact mode) |
+| LM2-F4 |Gallery terminal+torrent dark/light check4 (two pairs) | Repaired 2026-11-18; see "LM2-F4 and LM2-F6 repair" below |
+| LM2-F6 |Column terminal+torrent dark/light checks2/4 (four pairs) | Repaired 2026-11-18; see "LM2-F4 and LM2-F6 repair" below |
+
+#### LM2-F4 and LM2-F6 repair
+
+- **Trigger:** the owner authorized fixing the two "preview name with paired drawers"
+  findings on 2026-11-18.
+- **Evidence (red):** full clean run, native `RESULT: FAIL (1186/1192)`, baseline
+  MATCH on exactly these six pairs. Gallery: `NSTextField frame=(14,147,421,0)`
+  "Big Sur Coast.jpg" needs 16pt, parent `(0,0,449,203)`. Column:
+  `NSTextField frame=(10,-71,260,16)` outside `NSView bounds=(0,0,280,183)`.
+- **Mechanism, Column:** the preview well had a required 210pt height. In a 183pt
+  column, 183 - 16 - 210 - 12 - 16 = -71, exactly the logged name origin.
+- **Mechanism, Gallery:** the 203pt composite leaves 32pt for preview plus name
+  (16 + preview + 8 + name + 8 + 139pt filmstrip). `QuickLookPreview`'s fallback
+  icon view keeps its last icon while hidden (intrinsic 32x32, compression
+  resistance 750, measured with a standalone probe) behind a required
+  `height <= preview - 24` inset, so it asked for 56pt at priority 750. That tied
+  with the name label's default 750, and the label lost all 16pt.
+- **Change:** the fallback icon's compression resistance drops below the preview's
+  own, and its 24pt insets become priority 749. The Gallery name's vertical
+  compression resistance is 751. The Column well's 210pt height is priority 740,
+  with the metadata grid kept inside the column at 750 and the name at 999.
+  All constraints are satisfiable at normal sizes, so those layouts do not move.
+- **Effect (green):** the same full clean run is native `RESULT: PASS (1192/1192)`,
+  exit 0, 134 cells; the six baseline entries reported STALE until removed, then
+  the known-findings gate reports MATCH with an empty baseline.
+- **Confidence:** the arithmetic matches both logged frames exactly, and the fix
+  turns exactly those six pairs green with no new failure. Shorter panes than the
+  matrix covers (below about 187pt in Gallery) can still compress the name; no
+  claim is made there.
 
 F1's hidden-sidebar axis is dropped as unreachable. F2/F3 are repaired separately;
 F5 is repaired separately in Icon, Gallery and Column. No setup or selection
@@ -500,7 +531,7 @@ remain unchanged. No constraint-conflict logs were present.
 | LM2-F1 | `minimum-list-sidebar-hidden-dark check8`: sidebar131pt before versus111pt after; compact restoration may return200pt rather than prior width. Twenty-five check8 failures in the final clean run. | Allocated-frame drift observed. Hidden-sidebar is a direct split fixture, not an exposed app command. Some compact/pair failures follow that earlier drift; independent product mechanisms remain for triage. |
 | LM2-F2 | `default-list-compact-sidebar-dark check2`: four NSTextFields at(2,-4,25,14) inside6pt cells. | Structural containment violation. Render shows fitting icons; empty/section-header labels may be intentionally collapsed. Do not claim visible clipping without semantic triage. |
 | LM2-F3 | `default-list-drop-stack-dark check2/check4`: empty text179x16 allocated in a630x0 NSScrollView, measured text needs14pt. | Out-of-bounds allocation observed. Render still shows the empty text; pixel clipping is not proven. All 12 tested Drop Stack cells remain red. |
-| LM2-F4 | `default-gallery-terminal+torrent-dark check4`: two preview-name fields have zero height, e.g.(14,147,421,0), need16pt; corresponding light case also fails. | Zero-height allocated labels observed with the two drawers. Mechanism not yet convicted. |
+| LM2-F4 | `default-gallery-terminal+torrent-dark check4`: two preview-name fields have zero height, e.g.(14,147,421,0), need16pt; corresponding light case also fails. | Zero-height allocated labels observed with the two drawers. Mechanism convicted and repaired 2026-11-18 (see "LM2-F4 and LM2-F6 repair"). |
 | LM2-F5 | First final clean selection failure: `wide-icon-none-dark check6`, incoming left/Tromsø Aurora.jpg + right/Lofoten Dawn.jpg; setup loses the left name. Eighty-six downstream check6 failures retain the global anchor. | The earlier full run first lost selection at a different cell. Before/setup/shown/restored names are now recorded. These correlated failures are not86 independent bugs, nor attributed to an injection or timing cause. |
 
 The final clean run has149 failed assertions: check2=24, check4=14, check6=86,
