@@ -44,3 +44,9 @@ docs/demo/*.mov
 # Cloudflare Wrangler local cache/tmp (site Worker); regenerated on every dev run
 .wrangler/
 .claude/
+
+# Agent guidance files stay local: commandem brief writes fleet-wide directives
+# into them, and those name other projects and must not reach the public repo.
+CLAUDE.md
+AGENTS.md
+GEMINI.md
