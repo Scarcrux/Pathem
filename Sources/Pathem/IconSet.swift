@@ -8,12 +8,15 @@ import UniformTypeIdentifiers
 /// file views; anything it doesn't cover falls back to the system icon.
 struct IconSet: Equatable {
     let name: String
+    var displayName: String { isSystem ? L("prefs.appearanceSystem", "System") : name }
     /// True for "System": no overrides, use the OS icons.
     let isSystem: Bool
     /// Per-category SF Symbol + color; a missing category falls back to the system icon.
     let symbols: [FileIconCategory: (symbol: String, color: NSColor)]
 
-    func entry(for category: FileIconCategory) -> (symbol: String, color: NSColor)? { symbols[category] }
+    func entry(for category: FileIconCategory) -> (symbol: String, color: NSColor)? {
+        symbols[category]
+    }
 
     // Sets are identified by name (the symbol table has tuple values, which block synthesis).
     static func == (lhs: IconSet, rhs: IconSet) -> Bool { lhs.name == rhs.name }
@@ -25,29 +28,39 @@ struct IconSet: Equatable {
     /// One clean monochrome symbol per category (secondary-label gray), for a calm, uniform look.
     static let monochrome: IconSet = {
         let gray = NSColor.secondaryLabelColor
-        return IconSet(name: "Monochrome", isSystem: false, symbols: Dictionary(
-            uniqueKeysWithValues: FileIconCategory.allCases.map { ($0, ($0.defaultSymbol, gray)) }))
+        return IconSet(
+            name: "Monochrome", isSystem: false,
+            symbols: Dictionary(
+                uniqueKeysWithValues: FileIconCategory.allCases.map {
+                    ($0, ($0.defaultSymbol, gray))
+                }))
     }()
 
     /// A distinct color per category, for a lively, easy-to-scan grid.
-    static let vivid = IconSet(name: "Vivid", isSystem: false, symbols: [
-        .folder: ("folder.fill", .systemBlue),
-        .image: ("photo.fill", .systemGreen),
-        .video: ("film.fill", .systemPurple),
-        .audio: ("music.note", .systemPink),
-        .archive: ("archivebox.fill", .systemBrown),
-        .code: ("chevron.left.forwardslash.chevron.right", .systemTeal),
-        .pdf: ("doc.richtext.fill", .systemRed),
-        .document: ("doc.fill", .systemGray),
-        .app: ("app.fill", .systemOrange),
-        .generic: ("doc", .systemGray),
-    ])
+    static let vivid = IconSet(
+        name: "Vivid", isSystem: false,
+        symbols: [
+            .folder: ("folder.fill", .systemBlue),
+            .image: ("photo.fill", .systemGreen),
+            .video: ("film.fill", .systemPurple),
+            .audio: ("music.note", .systemPink),
+            .archive: ("archivebox.fill", .systemBrown),
+            .code: ("chevron.left.forwardslash.chevron.right", .systemTeal),
+            .pdf: ("doc.richtext.fill", .systemRed),
+            .document: ("doc.fill", .systemGray),
+            .app: ("app.fill", .systemOrange),
+            .generic: ("doc", .systemGray),
+        ])
 
     /// A single-hue (indigo) set, all filled symbols, for a cohesive "blueprint" feel.
     static let blueprint: IconSet = {
         let indigo = NSColor.systemIndigo
-        return IconSet(name: "Blueprint", isSystem: false, symbols: Dictionary(
-            uniqueKeysWithValues: FileIconCategory.allCases.map { ($0, ($0.defaultSymbol, indigo)) }))
+        return IconSet(
+            name: "Blueprint", isSystem: false,
+            symbols: Dictionary(
+                uniqueKeysWithValues: FileIconCategory.allCases.map {
+                    ($0, ($0.defaultSymbol, indigo))
+                }))
     }()
 }
 
@@ -72,14 +85,31 @@ enum FileIconCategory: String, CaseIterable {
 
     private static let byExtension: [String: FileIconCategory] = {
         var map: [String: FileIconCategory] = [:]
-        func add(_ category: FileIconCategory, _ exts: [String]) { for e in exts { map[e] = category } }
-        add(.image, ["png", "jpg", "jpeg", "heic", "heif", "gif", "tiff", "tif", "bmp", "webp", "svg", "raw"])
+        func add(_ category: FileIconCategory, _ exts: [String]) {
+            for e in exts { map[e] = category }
+        }
+        add(
+            .image,
+            [
+                "png", "jpg", "jpeg", "heic", "heif", "gif", "tiff", "tif", "bmp", "webp", "svg",
+                "raw",
+            ])
         add(.video, ["mov", "mp4", "m4v", "avi", "mkv", "webm", "wmv", "flv"])
         add(.audio, ["mp3", "m4a", "wav", "aac", "flac", "aiff", "ogg", "opus"])
         add(.archive, ["zip", "tar", "gz", "tgz", "bz2", "xz", "7z", "rar", "dmg", "pkg"])
-        add(.code, ["swift", "py", "js", "ts", "rb", "go", "rs", "c", "h", "cpp", "java", "sh", "json", "xml", "yml", "yaml", "toml", "html", "css"])
+        add(
+            .code,
+            [
+                "swift", "py", "js", "ts", "rb", "go", "rs", "c", "h", "cpp", "java", "sh", "json",
+                "xml", "yml", "yaml", "toml", "html", "css",
+            ])
         add(.pdf, ["pdf"])
-        add(.document, ["txt", "md", "rtf", "doc", "docx", "pages", "key", "ppt", "pptx", "xls", "xlsx", "numbers", "csv"])
+        add(
+            .document,
+            [
+                "txt", "md", "rtf", "doc", "docx", "pages", "key", "ppt", "pptx", "xls", "xlsx",
+                "numbers", "csv",
+            ])
         add(.app, ["app"])
         return map
     }()
@@ -126,6 +156,7 @@ final class IconSetManager {
         let config = NSImage.SymbolConfiguration(pointSize: 96, weight: .regular)
             .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
         return NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
-            .withSymbolConfiguration(config) ?? NSImage(systemSymbolName: "doc", accessibilityDescription: nil) ?? NSImage()
+            .withSymbolConfiguration(config) ?? NSImage(
+                systemSymbolName: "doc", accessibilityDescription: nil) ?? NSImage()
     }
 }

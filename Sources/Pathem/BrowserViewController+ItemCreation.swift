@@ -1,21 +1,25 @@
 import AppKit
 import PathemEngine
 
+extension Preferences {
+    var effectiveNewFolderName: String {
+        let name = newFolderName.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty || name == Self.default.newFolderName
+            ? L("bvc.untitledFolder", "untitled folder") : name
+    }
+
+    var effectiveNewFileName: String {
+        let name = newFileName.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty || name == Self.default.newFileName
+            ? L("bvc.untitledFile", "untitled file") : name
+    }
+}
+
 // Item creation: New Folder / New Folder with Selection / New File, batch-create,
 // create-templates, and running a macOS Shortcut on the selection, plus their
 // undo/redo registration helpers. Split out of BrowserViewController.
 @MainActor
 extension BrowserViewController {
-    /// The user's default New Folder / New File base name (falling back if they cleared it).
-    private var defaultNewFolderName: String {
-        let name = prefs.newFolderName.trimmingCharacters(in: .whitespaces)
-        return name.isEmpty ? L("bvc.untitledFolder", "untitled folder") : name
-    }
-    private var defaultNewFileName: String {
-        let name = prefs.newFileName.trimmingCharacters(in: .whitespaces)
-        return name.isEmpty ? "untitled file" : name
-    }
-
     func newFolder() {
         guard let pane = activePane else { return }
         if pane.isShowingSmartResults {
@@ -27,7 +31,7 @@ extension BrowserViewController {
                 guard
                     let name = await self.promptForName(
                         title: L("bvc.newFolderPrompt", "New Folder"),
-                        default: self.defaultNewFolderName)
+                        default: self.prefs.effectiveNewFolderName)
                 else { return }
                 self.performRemoteOp(pane, verb: L("bvc.newFolderVerb", "New Folder")) {
                     provider, connection, path, password in
@@ -39,7 +43,7 @@ extension BrowserViewController {
         }
         do {
             let name = try FileOperations.makeFolder(
-                in: pane.currentURL, baseName: defaultNewFolderName)
+                in: pane.currentURL, baseName: prefs.effectiveNewFolderName)
             pane.reloadIfShowingListing()
             // Select it once the (off-main) listing lands, then offer to name it right away, the way
             // Finder drops you straight into renaming a new folder.
@@ -150,7 +154,7 @@ extension BrowserViewController {
         }
         do {
             let name = try FileOperations.makeFile(
-                in: pane.currentURL, baseName: defaultNewFileName)
+                in: pane.currentURL, baseName: prefs.effectiveNewFileName)
             pane.reloadIfShowingListing()
             // Select it once the (off-main) listing lands, then offer to name it right away, like
             // New Folder does -- a plain select(name:) here is a no-op, since the row doesn't exist

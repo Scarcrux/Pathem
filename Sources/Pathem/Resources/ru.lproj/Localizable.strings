@@ -311,7 +311,6 @@
 "bvc.confirmTrashCount" = "Переместить выбранные объекты (%d) в Корзину?";
 "bvc.confirmTrashTitle" = "Переместить выбранные объекты в Корзину?";
 "bvc.conflictBatch" = "Ваш выбор применяется ко всем конфликтам в этой операции.";
-"bvc.conflictHandle" = "Выберите, как поступить: %@.";
 "bvc.conflictMany" = "Объектов, уже существующих в месте назначения: %d";
 "bvc.conflictOne" = "1 объект уже существует в месте назначения";
 "bvc.connect" = "Подключиться";
@@ -326,7 +325,6 @@
 "bvc.convertingMedia" = "Конвертация медиа…";
 "bvc.copyAction" = "Скопировать";
 "bvc.copyFailed" = "Не удалось скопировать";
-"bvc.copyNoun" = "копирование";
 "bvc.copyToRecent" = "Скопировать в: %@";
 "bvc.copying" = "Копирование";
 "bvc.couldntCreateArchive" = "Не удалось создать архив";
@@ -396,7 +394,6 @@
 "bvc.moveAllToTrash" = "Переместить все в Корзину";
 "bvc.moveFailed" = "Не удалось переместить";
 "bvc.moveIntoFolderFailed" = "Не удалось переместить часть объектов в папку";
-"bvc.moveNoun" = "перемещение";
 "bvc.moveToRecent" = "Переместить в: %@";
 "bvc.moveToTrashAction" = "Переместить в Корзину";
 "bvc.moveToTrashFailed" = "Не удалось переместить в Корзину";
@@ -845,7 +842,7 @@
 "gestures.colGesture" = "Жест";
 "gestures.help" = "Удерживайте правую кнопку мыши и перетаскивайте в списке файлов: ← назад, → вперёд, ↑ содержащая папка. Выберите команду, затем перетащите правой кнопкой в поле, чтобы переназначить.";
 "gestures.reassigned" = "%@ переназначено с «%@».";
-"gestures.recordHint" = "Перетащите сюда, чтобы записать жест";
+"gestures.recordHint" = "Потяните правой кнопкой";
 "gestures.setLabel" = "Жест:";
 "git.commitButton" = "Закоммитить";
 "git.commitFailedTitle" = "Не удалось выполнить коммит";
@@ -1414,7 +1411,7 @@
 "prefs.themeClearTint" = "Нет";
 "prefs.themeCustom" = "Своя";
 "prefs.themeHint" = "Оформление подкрашивает выделение, панели, вкладки и строку пути в самом Pathem. Стандартные кнопки по-прежнему используют системный акцент.";
-"prefs.themeLabel" = "Оформление";
+"prefs.themeLabel" = "Тема";
 "prefs.torrentFolderDefault" = "Загрузки (по умолчанию)";
 "prefs.torrentFolderLabel" = "Папка загрузки торрентов";
 "prefs.torrentFolderReset" = "Использовать «Загрузки»";
@@ -1610,7 +1607,7 @@
 "shortcuts.colShortcut" = "Сочетание";
 "shortcuts.reassigned" = "%@ переназначено с «%@».";
 "shortcuts.recording" = "Введите сочетание клавиш…";
-"shortcuts.restoreDefaults" = "Восстановить по умолчанию";
+"shortcuts.restoreDefaults" = "Вернуть по умолчанию";
 "shortcuts.setLabel" = "Сочетание:";
 "sidebar.addConnection" = "Добавить подключение…";
 "sidebar.addCurrentFolder" = "Добавить текущую папку";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Это имя удалено, но содержимое не перезаписано, так как на тот же файл указывают другие жёсткие ссылки.";
 
 "menu.help.fullDiskAccess" = "Руководство по полному доступу к диску…";
+"search.preset.largeFiles" = "Большие файлы";
+"search.preset.recentImages" = "Недавние изображения";
+"search.preset.screenshots" = "Снимки экрана";
+"search.preset.recentDocuments" = "Недавние документы";
+"bvc.untitledFile" = "файл без названия";
+"bvc.conflictCopyHint" = "Выберите, как выполнить копирование.";
+"bvc.conflictMoveHint" = "Выберите, как выполнить перемещение.";
+"tags.color.none" = "Без цвета";
+"tags.color.gray" = "Серый";
+"tags.color.green" = "Зеленый";
+"tags.color.purple" = "Лиловый";
+"tags.color.blue" = "Синий";
+"tags.color.yellow" = "Желтый";
+"tags.color.red" = "Красный";
+"tags.color.orange" = "Оранжевый";

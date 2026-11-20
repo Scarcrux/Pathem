@@ -310,7 +310,6 @@
 "bvc.confirmTrashCount" = "将所选的 %d 个项目移到废纸篓？";
 "bvc.confirmTrashTitle" = "将所选项目移到废纸篓？";
 "bvc.conflictBatch" = "你的选择将应用于本次操作中的所有冲突。";
-"bvc.conflictHandle" = "选择如何处理这 %@。";
 "bvc.conflictMany" = "目的位置已存在 %d 个项目";
 "bvc.conflictOne" = "目的位置已存在 1 个项目";
 "bvc.connect" = "连接";
@@ -325,7 +324,6 @@
 "bvc.convertingMedia" = "正在转换媒体…";
 "bvc.copyAction" = "拷贝";
 "bvc.copyFailed" = "拷贝失败";
-"bvc.copyNoun" = "拷贝";
 "bvc.copyToRecent" = "拷贝到：%@";
 "bvc.copying" = "正在拷贝";
 "bvc.couldntCreateArchive" = "无法创建归档";
@@ -395,7 +393,6 @@
 "bvc.moveAllToTrash" = "全部移到废纸篓";
 "bvc.moveFailed" = "移动失败";
 "bvc.moveIntoFolderFailed" = "无法将部分项目移入文件夹";
-"bvc.moveNoun" = "移动";
 "bvc.moveToRecent" = "移动到：%@";
 "bvc.moveToTrashAction" = "移到废纸篓";
 "bvc.moveToTrashFailed" = "移到废纸篓失败";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "已移除此名称，但由于其他硬链接共享该文件，未覆写其内容。";
 
 "menu.help.fullDiskAccess" = "完全磁盘访问权限指南…";
+"search.preset.largeFiles" = "大型文件";
+"search.preset.recentImages" = "最近的图像";
+"search.preset.screenshots" = "截屏";
+"search.preset.recentDocuments" = "最近的文稿";
+"bvc.untitledFile" = "未命名文件";
+"bvc.conflictCopyHint" = "请选择如何处理复制操作。";
+"bvc.conflictMoveHint" = "请选择如何处理移动操作。";
+"tags.color.none" = "无颜色";
+"tags.color.gray" = "灰色";
+"tags.color.green" = "绿色";
+"tags.color.purple" = "紫色";
+"tags.color.blue" = "蓝色";
+"tags.color.yellow" = "黄色";
+"tags.color.red" = "红色";
+"tags.color.orange" = "橙色";

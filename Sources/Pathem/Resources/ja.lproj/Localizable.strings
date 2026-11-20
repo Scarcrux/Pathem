@@ -310,7 +310,6 @@
 "bvc.confirmTrashCount" = "選択した%d項目をゴミ箱に移動しますか？";
 "bvc.confirmTrashTitle" = "選択した項目をゴミ箱に入れますか？";
 "bvc.conflictBatch" = "この選択は、この操作のすべての競合に適用されます。";
-"bvc.conflictHandle" = "%@の処理方法を選択してください。";
 "bvc.conflictMany" = "%d項目が移動先に既に存在します";
 "bvc.conflictOne" = "1項目が移動先に既に存在します";
 "bvc.connect" = "接続";
@@ -325,7 +324,6 @@
 "bvc.convertingMedia" = "メディアを変換中…";
 "bvc.copyAction" = "コピー";
 "bvc.copyFailed" = "コピーに失敗しました";
-"bvc.copyNoun" = "コピー";
 "bvc.copyToRecent" = "コピー先: %@";
 "bvc.copying" = "コピー中";
 "bvc.couldntCreateArchive" = "アーカイブを作成できませんでした";
@@ -395,7 +393,6 @@
 "bvc.moveAllToTrash" = "すべてゴミ箱に移動";
 "bvc.moveFailed" = "移動に失敗しました";
 "bvc.moveIntoFolderFailed" = "一部の項目をフォルダに移動できませんでした";
-"bvc.moveNoun" = "移動";
 "bvc.moveToRecent" = "移動先: %@";
 "bvc.moveToTrashAction" = "ゴミ箱に入れる";
 "bvc.moveToTrashFailed" = "ゴミ箱に入れられませんでした";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "この名前は削除されましたが、他のハードリンクがファイルを共有しているため、内容は上書きされませんでした。";
 
 "menu.help.fullDiskAccess" = "フルディスクアクセスガイド…";
+"search.preset.largeFiles" = "大きいファイル";
+"search.preset.recentImages" = "最近の画像";
+"search.preset.screenshots" = "スクリーンショット";
+"search.preset.recentDocuments" = "最近の書類";
+"bvc.untitledFile" = "名称未設定のファイル";
+"bvc.conflictCopyHint" = "コピーの処理方法を選択してください。";
+"bvc.conflictMoveHint" = "移動の処理方法を選択してください。";
+"tags.color.none" = "カラーなし";
+"tags.color.gray" = "グレイ";
+"tags.color.green" = "グリーン";
+"tags.color.purple" = "パープル";
+"tags.color.blue" = "ブルー";
+"tags.color.yellow" = "イエロー";
+"tags.color.red" = "レッド";
+"tags.color.orange" = "オレンジ";

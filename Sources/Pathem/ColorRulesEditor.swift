@@ -44,6 +44,8 @@ final class ColorRulesEditorController: NSObject, NSTableViewDataSource, NSTable
                 "Color and style filenames by rules. Drag to reorder (the first enabled rule that matches wins); uncheck to disable. Double-click a rule to edit it."
             ))
         hint.font = .systemFont(ofSize: 11)
+        hint.preferredMaxLayoutWidth = 390
+        hint.setContentCompressionResistancePriority(.required, for: .vertical)
         hint.textColor = .secondaryLabelColor
         hint.translatesAutoresizingMaskIntoConstraints = false
 

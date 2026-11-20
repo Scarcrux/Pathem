@@ -311,7 +311,6 @@
 "bvc.confirmTrashCount" = "%d geselecteerde onderdelen naar de prullenmand verplaatsen?";
 "bvc.confirmTrashTitle" = "De geselecteerde onderdelen naar de prullenmand verplaatsen?";
 "bvc.conflictBatch" = "Je keuze geldt voor alle conflicten in deze bewerking.";
-"bvc.conflictHandle" = "Kies hoe je met %@ wilt omgaan.";
 "bvc.conflictMany" = "%d onderdelen bestaan al op de bestemming";
 "bvc.conflictOne" = "1 onderdeel bestaat al op de bestemming";
 "bvc.connect" = "Verbind";
@@ -326,7 +325,6 @@
 "bvc.convertingMedia" = "Media worden geconverteerd…";
 "bvc.copyAction" = "Kopieer";
 "bvc.copyFailed" = "Kopiëren mislukt";
-"bvc.copyNoun" = "kopie";
 "bvc.copyToRecent" = "Kopieer naar: %@";
 "bvc.copying" = "Kopiëren";
 "bvc.couldntCreateArchive" = "Kan het archief niet maken";
@@ -396,7 +394,6 @@
 "bvc.moveAllToTrash" = "Verplaats alles naar prullenmand";
 "bvc.moveFailed" = "Verplaatsen mislukt";
 "bvc.moveIntoFolderFailed" = "Kan sommige onderdelen niet naar de map verplaatsen";
-"bvc.moveNoun" = "verplaatsing";
 "bvc.moveToRecent" = "Verplaats naar: %@";
 "bvc.moveToTrashAction" = "Verplaats naar prullenmand";
 "bvc.moveToTrashFailed" = "Verplaatsen naar prullenmand mislukt";
@@ -845,7 +842,7 @@
 "gestures.colGesture" = "Gebaar";
 "gestures.help" = "Houd de rechtermuisknop ingedrukt en sleep in een bestandsweergave: ← terug, → vooruit, ↑ bovenliggende map. Kies een opdracht en sleep dan met rechts in het vak om opnieuw toe te wijzen.";
 "gestures.reassigned" = "%@ is opnieuw toegewezen van “%@”.";
-"gestures.recordHint" = "Sleep hier om een gebaar op te nemen";
+"gestures.recordHint" = "Sleep met de rechtermuisknop";
 "gestures.setLabel" = "Gebaar:";
 "git.commitButton" = "Commit";
 "git.commitFailedTitle" = "Commit mislukt";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Deze naam is verwijderd, maar de inhoud is niet overschreven omdat andere harde koppelingen het bestand delen.";
 
 "menu.help.fullDiskAccess" = "Gids voor volledige schijftoegang…";
+"search.preset.largeFiles" = "Grote bestanden";
+"search.preset.recentImages" = "Recente afbeeldingen";
+"search.preset.screenshots" = "Schermafbeeldingen";
+"search.preset.recentDocuments" = "Recente documenten";
+"bvc.untitledFile" = "naamloos bestand";
+"bvc.conflictCopyHint" = "Kies hoe je de kopie wilt afhandelen.";
+"bvc.conflictMoveHint" = "Kies hoe je de verplaatsing wilt afhandelen.";
+"tags.color.none" = "Geen kleur";
+"tags.color.gray" = "Grijs";
+"tags.color.green" = "Groen";
+"tags.color.purple" = "Paars";
+"tags.color.blue" = "Blauw";
+"tags.color.yellow" = "Geel";
+"tags.color.red" = "Rood";
+"tags.color.orange" = "Oranje";

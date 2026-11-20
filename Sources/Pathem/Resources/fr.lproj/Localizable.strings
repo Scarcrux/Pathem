@@ -310,7 +310,6 @@
 "bvc.confirmTrashCount" = "Placer les %d éléments sélectionnés dans la corbeille ?";
 "bvc.confirmTrashTitle" = "Placer les éléments sélectionnés dans la corbeille ?";
 "bvc.conflictBatch" = "Votre choix s’applique à tous les conflits de cette opération.";
-"bvc.conflictHandle" = "Choisissez comment gérer le %@.";
 "bvc.conflictMany" = "%d éléments existent déjà à la destination";
 "bvc.conflictOne" = "1 élément existe déjà à la destination";
 "bvc.connect" = "Se connecter";
@@ -325,7 +324,6 @@
 "bvc.convertingMedia" = "Conversion du média…";
 "bvc.copyAction" = "Copier";
 "bvc.copyFailed" = "Échec de la copie";
-"bvc.copyNoun" = "copie";
 "bvc.copyToRecent" = "Copier vers : %@";
 "bvc.copying" = "Copie en cours";
 "bvc.couldntCreateArchive" = "Impossible de créer l’archive";
@@ -395,7 +393,6 @@
 "bvc.moveAllToTrash" = "Tout mettre à la corbeille";
 "bvc.moveFailed" = "Échec du déplacement";
 "bvc.moveIntoFolderFailed" = "Impossible de déplacer certains éléments dans le dossier";
-"bvc.moveNoun" = "déplacement";
 "bvc.moveToRecent" = "Déplacer vers : %@";
 "bvc.moveToTrashAction" = "Placer dans la corbeille";
 "bvc.moveToTrashFailed" = "Échec du placement dans la corbeille";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Ce nom a été supprimé, mais son contenu n’a pas été écrasé, car d’autres liens physiques partagent le fichier.";
 
 "menu.help.fullDiskAccess" = "Guide d’accès complet au disque…";
+"search.preset.largeFiles" = "Gros fichiers";
+"search.preset.recentImages" = "Images récentes";
+"search.preset.screenshots" = "Captures d’écran";
+"search.preset.recentDocuments" = "Documents récents";
+"bvc.untitledFile" = "fichier sans titre";
+"bvc.conflictCopyHint" = "Choisissez comment gérer la copie.";
+"bvc.conflictMoveHint" = "Choisissez comment gérer le déplacement.";
+"tags.color.none" = "Aucune couleur";
+"tags.color.gray" = "Gris";
+"tags.color.green" = "Vert";
+"tags.color.purple" = "Violet";
+"tags.color.blue" = "Bleu";
+"tags.color.yellow" = "Jaune";
+"tags.color.red" = "Rouge";
+"tags.color.orange" = "Orange";

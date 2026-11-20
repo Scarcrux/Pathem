@@ -1,6 +1,21 @@
 import AppKit
 import PathemEngine
 
+extension SavedSearch {
+    /// Localize only exact shipped presets. The stored name and command ID remain stable,
+    /// and a user's edited search retains the name they gave it.
+    var displayName: String {
+        guard SavedSearches.default.searches.contains(self) else { return name }
+        switch name {
+        case "Large Files": return L("search.preset.largeFiles", "Large Files")
+        case "Recent Images": return L("search.preset.recentImages", "Recent Images")
+        case "Screenshots": return L("search.preset.screenshots", "Screenshots")
+        case "Recent Documents": return L("search.preset.recentDocuments", "Recent Documents")
+        default: return name
+        }
+    }
+}
+
 @MainActor
 extension BrowserViewController {
     /// Load collections and register each as a "Collection: <name>" command that
@@ -74,8 +89,8 @@ extension BrowserViewController {
         for search in savedSearches.searches where !search.name.isEmpty {
             let query = search.mdfindQuery()
             guard !query.isEmpty else { continue }
-            let name = search.name
-            let id = "search.\(name)"
+            let name = search.displayName
+            let id = "search.\(search.name)"
             guard commands.command(id) == nil else { continue }  // a saved name cannot override built-ins
             savedSearchCommandIDs.insert(id)
             commands.register(

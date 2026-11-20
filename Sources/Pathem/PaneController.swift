@@ -2619,7 +2619,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }()
         for color in FileTag.Color.displayOrder {
             let item = NSMenuItem(
-                title: color.label, action: #selector(tagMenuItem(_:)), keyEquivalent: "")
+                title: TagColors.label(color), action: #selector(tagMenuItem(_:)), keyEquivalent: ""
+            )
             item.target = self
             item.representedObject = color.rawValue
             item.image = TagColors.dot(color)

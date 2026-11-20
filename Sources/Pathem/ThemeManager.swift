@@ -84,12 +84,18 @@ final class ThemeManager {
         }
     }
 
+    static func displayName(for preset: ThemePreset) -> String {
+        preset.name == "System" ? L("prefs.appearanceSystem", "System") : preset.name
+    }
+
     /// A menu item for a theme: its name with a swatch of its background and accent, so the
     /// list shows at a glance what each theme looks like and whether it is light or dark.
     static func menuItem(for preset: ThemePreset, action: Selector?, target: AnyObject?)
         -> NSMenuItem
     {
-        let item = NSMenuItem(title: preset.name, action: action, keyEquivalent: "")
+        let title = displayName(for: preset)
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.representedObject = preset.name
         item.target = target
         item.image = swatch(for: preset)
         let mode: String
@@ -98,7 +104,7 @@ final class ThemeManager {
         case .light: mode = L("prefs.appearanceLight", "Light")
         case .dark: mode = L("prefs.appearanceDark", "Dark")
         }
-        item.toolTip = "\(preset.name) (\(mode))"
+        item.toolTip = "\(title) (\(mode))"
         return item
     }
 

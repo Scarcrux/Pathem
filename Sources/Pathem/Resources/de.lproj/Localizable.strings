@@ -310,7 +310,6 @@
 "bvc.confirmTrashCount" = "%d ausgewählte Objekte in den Papierkorb bewegen?";
 "bvc.confirmTrashTitle" = "Die ausgewählten Objekte in den Papierkorb legen?";
 "bvc.conflictBatch" = "Ihre Auswahl gilt für alle Konflikte dieses Vorgangs.";
-"bvc.conflictHandle" = "Wähle, wie mit %@ umgegangen werden soll.";
 "bvc.conflictMany" = "%d Objekte sind am Zielort bereits vorhanden";
 "bvc.conflictOne" = "1 Objekt ist am Zielort bereits vorhanden";
 "bvc.connect" = "Verbinden";
@@ -325,7 +324,6 @@
 "bvc.convertingMedia" = "Medien werden konvertiert…";
 "bvc.copyAction" = "Kopieren";
 "bvc.copyFailed" = "Kopieren fehlgeschlagen";
-"bvc.copyNoun" = "Kopie";
 "bvc.copyToRecent" = "Kopieren nach: %@";
 "bvc.copying" = "Kopieren";
 "bvc.couldntCreateArchive" = "Das Archiv konnte nicht erstellt werden";
@@ -395,7 +393,6 @@
 "bvc.moveAllToTrash" = "Alle in den Papierkorb";
 "bvc.moveFailed" = "Bewegen fehlgeschlagen";
 "bvc.moveIntoFolderFailed" = "Einige Objekte konnten nicht in den Ordner bewegt werden";
-"bvc.moveNoun" = "bewegen";
 "bvc.moveToRecent" = "Bewegen nach: %@";
 "bvc.moveToTrashAction" = "In den Papierkorb legen";
 "bvc.moveToTrashFailed" = "In den Papierkorb legen fehlgeschlagen";
@@ -500,7 +497,7 @@
 "bvc.undoFailed" = "Widerrufen fehlgeschlagen";
 "bvc.unsupportedChecksum" = "Nicht unterstützte Prüfsumme";
 "bvc.unsupportedChecksumBody" = "Kopiere zuerst eine hexadezimale MD5-, SHA-1- oder SHA-256-Summe in die Zwischenablage.";
-"bvc.untitledFolder" = "ordner ohne titel";
+"bvc.untitledFolder" = "Ordner ohne Titel";
 "bvc.uploadingTo" = "Hochladen auf %@";
 "bvc.viewPresetCmd" = "Ansicht: %@";
 "changelog.heading" = "Neu in Pathem";
@@ -1616,7 +1613,7 @@
 "sidebar.tagsHeader" = "Tags";
 "sidebar.toggleWidth" = "Seitenleiste einklappen";
 "sidebar.trash" = "Papierkorb";
-"sidebar.volumesHeader" = "Volumes";
+"sidebar.volumesHeader" = "Laufwerke";
 "size.enclosingFolder" = "Übergeordneter Ordner";
 "size.windowTitle" = "Größenbrowser";
 "slideshow.hint" = "Leertaste: Wiedergabe/Pause    ←/→: vorheriges/nächstes    Esc: beenden";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Dieser Name wurde entfernt, aber der Inhalt wurde nicht überschrieben, da andere harte Links dieselbe Datei verwenden.";
 
 "menu.help.fullDiskAccess" = "Anleitung zum Festplattenvollzugriff…";
+"search.preset.largeFiles" = "Große Dateien";
+"search.preset.recentImages" = "Neueste Bilder";
+"search.preset.screenshots" = "Bildschirmfotos";
+"search.preset.recentDocuments" = "Neueste Dokumente";
+"bvc.untitledFile" = "Datei ohne Titel";
+"bvc.conflictCopyHint" = "Wähle, wie mit der Kopie verfahren werden soll.";
+"bvc.conflictMoveHint" = "Wähle, wie die Dateien bewegt werden sollen.";
+"tags.color.none" = "Ohne Farbe";
+"tags.color.gray" = "Grau";
+"tags.color.green" = "Grün";
+"tags.color.purple" = "Lila";
+"tags.color.blue" = "Blau";
+"tags.color.yellow" = "Gelb";
+"tags.color.red" = "Rot";
+"tags.color.orange" = "Orange";

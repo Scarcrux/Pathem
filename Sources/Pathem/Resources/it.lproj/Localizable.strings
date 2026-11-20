@@ -311,7 +311,6 @@
 "bvc.confirmTrashCount" = "Vuoi spostare nel Cestino i %d elementi selezionati?";
 "bvc.confirmTrashTitle" = "Vuoi spostare nel Cestino gli elementi selezionati?";
 "bvc.conflictBatch" = "La tua scelta vale per tutti i conflitti di questa operazione.";
-"bvc.conflictHandle" = "Scegli come gestire: %@.";
 "bvc.conflictMany" = "%d elementi esistono già nella destinazione";
 "bvc.conflictOne" = "1 elemento esiste già nella destinazione";
 "bvc.connect" = "Connetti";
@@ -326,7 +325,6 @@
 "bvc.convertingMedia" = "Conversione dei contenuti multimediali…";
 "bvc.copyAction" = "Copia";
 "bvc.copyFailed" = "Copia non riuscita";
-"bvc.copyNoun" = "copia";
 "bvc.copyToRecent" = "Copia in: %@";
 "bvc.copying" = "Copia in corso";
 "bvc.couldntCreateArchive" = "Impossibile creare l’archivio";
@@ -396,7 +394,6 @@
 "bvc.moveAllToTrash" = "Sposta tutto nel Cestino";
 "bvc.moveFailed" = "Spostamento non riuscito";
 "bvc.moveIntoFolderFailed" = "Impossibile spostare alcuni elementi nella cartella";
-"bvc.moveNoun" = "spostamento";
 "bvc.moveToRecent" = "Sposta in: %@";
 "bvc.moveToTrashAction" = "Sposta nel Cestino";
 "bvc.moveToTrashFailed" = "Impossibile spostare nel Cestino";
@@ -845,7 +842,7 @@
 "gestures.colGesture" = "Gesto";
 "gestures.help" = "Tieni premuto il pulsante destro del mouse e trascina in una vista file: ← indietro, → avanti, ↑ cartella superiore. Scegli un comando, poi trascina con il tasto destro nel riquadro per riassegnarlo.";
 "gestures.reassigned" = "%@ è stato riassegnato da “%@”.";
-"gestures.recordHint" = "Trascina qui per registrare un gesto";
+"gestures.recordHint" = "Trascina col tasto destro";
 "gestures.setLabel" = "Gesto:";
 "git.commitButton" = "Commit";
 "git.commitFailedTitle" = "Commit non riuscito";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Il nome è stato rimosso, ma il contenuto non è stato sovrascritto perché altri collegamenti fisici condividono il file.";
 
 "menu.help.fullDiskAccess" = "Guida all’accesso completo al disco…";
+"search.preset.largeFiles" = "File di grandi dimensioni";
+"search.preset.recentImages" = "Immagini recenti";
+"search.preset.screenshots" = "Istantanee schermo";
+"search.preset.recentDocuments" = "Documenti recenti";
+"bvc.untitledFile" = "file senza titolo";
+"bvc.conflictCopyHint" = "Scegli come gestire la copia.";
+"bvc.conflictMoveHint" = "Scegli come gestire lo spostamento.";
+"tags.color.none" = "Nessun colore";
+"tags.color.gray" = "Grigio";
+"tags.color.green" = "Verde";
+"tags.color.purple" = "Viola";
+"tags.color.blue" = "Blu";
+"tags.color.yellow" = "Giallo";
+"tags.color.red" = "Rosso";
+"tags.color.orange" = "Arancione";

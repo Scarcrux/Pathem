@@ -21,7 +21,7 @@ final class GestureRecorderView: StrokeRecordingView {
     override init(frame: NSRect) {
         super.init(frame: frame)
         overflowPolicy = .prefix
-        hintFont = .systemFont(ofSize: 15)
+        hintFont = .systemFont(ofSize: 13)
         onStroke = { [weak self] directions in self?.onRecord?(directions.map(\.letter).joined()) }
         onEmpty = { [weak self] in self?.onClear?() }
         accentColor = ThemeManager.shared.accent

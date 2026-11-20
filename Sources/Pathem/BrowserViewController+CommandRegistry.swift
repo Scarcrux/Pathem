@@ -974,7 +974,7 @@ extension BrowserViewController {
         for color in FileTag.Color.displayOrder {
             add(
                 "tags.toggle.\(color.rawValue)",
-                String(format: L("bvc.cmd.tagColor", "Tag %@"), color.label),
+                String(format: L("bvc.cmd.tagColor", "Tag %@"), TagColors.label(color)),
                 enabled: taggableSelection
             ) {
                 [weak self] in self?.activePane?.tagSelection(toggle: color)

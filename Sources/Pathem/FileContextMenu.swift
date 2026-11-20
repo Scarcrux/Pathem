@@ -280,7 +280,8 @@ final class FileContextMenuController: NSObject, NSMenuDelegate {
         tagsMenu.delegate = self
         for color in FileTag.Color.displayOrder {
             let item = NSMenuItem(
-                title: color.label, action: #selector(BrowserViewController.performMenuCommand(_:)),
+                title: TagColors.label(color),
+                action: #selector(BrowserViewController.performMenuCommand(_:)),
                 keyEquivalent: "")
             item.representedObject = "tags.toggle.\(color.rawValue)"
             item.image = TagColors.dot(color)

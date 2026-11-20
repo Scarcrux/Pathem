@@ -311,7 +311,6 @@
 "bvc.confirmTrashCount" = "Move %d selected items to the Trash?";
 "bvc.confirmTrashTitle" = "Move the selected items to the Trash?";
 "bvc.conflictBatch" = "Your choice applies to all conflicts in this operation.";
-"bvc.conflictHandle" = "Choose how to handle the %@.";
 "bvc.conflictMany" = "%d items already exist at the destination";
 "bvc.conflictOne" = "1 item already exists at the destination";
 "bvc.connect" = "Connect";
@@ -326,7 +325,6 @@
 "bvc.convertingMedia" = "Converting media…";
 "bvc.copyAction" = "Copy";
 "bvc.copyFailed" = "Copy failed";
-"bvc.copyNoun" = "copy";
 "bvc.copyToRecent" = "Copy To: %@";
 "bvc.copying" = "Copying";
 "bvc.couldntCreateArchive" = "Couldn’t create the archive";
@@ -396,7 +394,6 @@
 "bvc.moveAllToTrash" = "Move All to Trash";
 "bvc.moveFailed" = "Move failed";
 "bvc.moveIntoFolderFailed" = "Couldn’t move some items into the folder";
-"bvc.moveNoun" = "move";
 "bvc.moveToRecent" = "Move To: %@";
 "bvc.moveToTrashAction" = "Move to Trash";
 "bvc.moveToTrashFailed" = "Move to Trash failed";
@@ -1804,3 +1801,18 @@
 "bvc.secureDeleteSharedLink" = "This name was removed, but its contents were not overwritten because other hard links share the file.";
 
 "menu.help.fullDiskAccess" = "Full Disk Access Guide…";
+"search.preset.largeFiles" = "Large Files";
+"search.preset.recentImages" = "Recent Images";
+"search.preset.screenshots" = "Screenshots";
+"search.preset.recentDocuments" = "Recent Documents";
+"bvc.untitledFile" = "untitled file";
+"bvc.conflictCopyHint" = "Choose how to handle the copy.";
+"bvc.conflictMoveHint" = "Choose how to handle the move.";
+"tags.color.none" = "No Color";
+"tags.color.gray" = "Gray";
+"tags.color.green" = "Green";
+"tags.color.purple" = "Purple";
+"tags.color.blue" = "Blue";
+"tags.color.yellow" = "Yellow";
+"tags.color.red" = "Red";
+"tags.color.orange" = "Orange";

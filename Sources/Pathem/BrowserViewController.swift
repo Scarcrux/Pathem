@@ -599,7 +599,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         sidebar.onEmptyTrash = { [weak self] in self?.emptyTrash() }
         sidebar.onSelectSmart = { [weak self] query in self?.openSmart(query) }
         sidebar.onSelectSavedSearch = { [weak self] search in
-            self?.runSavedSearch(search.name, query: search.mdfindQuery())
+            self?.runSavedSearch(search.displayName, query: search.mdfindQuery())
         }
         sidebar.savedSearches = savedSearches.searches  // show saved smart folders in the sidebar
         sidebar.onSelectShared = { [weak self] host in self?.connectToShared(host) }

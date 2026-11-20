@@ -48,6 +48,8 @@ final class ContextMenuEditorController: NSObject, NSTableViewDataSource, NSTabl
                 "Drag to reorder the file right-click menu. Uncheck an item to hide it. Dividers are added automatically."
             ))
         hint.font = .systemFont(ofSize: 11)
+        hint.preferredMaxLayoutWidth = 390
+        hint.setContentCompressionResistancePriority(.required, for: .vertical)
         hint.textColor = .secondaryLabelColor
         hint.translatesAutoresizingMaskIntoConstraints = false
 

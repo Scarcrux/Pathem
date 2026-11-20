@@ -6,6 +6,12 @@ import PathemEngine
 // keeps to setup and navigation. Every copy/move funnels through `runTransfer`, and every
 // destructive op registers undo through `registerUndo`.
 extension BrowserViewController {
+    static func conflictActionHint(move: Bool) -> String {
+        move
+            ? L("bvc.conflictMoveHint", "Choose how to handle the move.")
+            : L("bvc.conflictCopyHint", "Choose how to handle the copy.")
+    }
+
     /// Run a copy/move off the main thread with a deferred progress sheet (so the
     /// window never freezes and quick ops never flash a sheet), then hand the
     /// outcome back on the main actor. One transfer at a time.
@@ -73,9 +79,7 @@ extension BrowserViewController {
                 format: L("bvc.conflictMany", "%d items already exist at the destination"),
                 conflictCount)
         let info =
-            String(
-                format: L("bvc.conflictHandle", "Choose how to handle the %@."),
-                move ? L("bvc.moveNoun", "move") : L("bvc.copyNoun", "copy"))
+            Self.conflictActionHint(move: move)
             + " "
             + L("bvc.conflictBatch", "Your choice applies to all conflicts in this operation.")
         // A popover at the pointer, near the drop -- not a sheet at the title bar.

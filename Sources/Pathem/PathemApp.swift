@@ -638,9 +638,7 @@ enum PathemApp {
             CursorConfirm().debugRender(
                 to: capturePath("conflict.png"),
                 message: L("bvc.conflictOne", "1 item already exists at the destination"),
-                info: String(
-                    format: L("bvc.conflictHandle", "Choose how to handle the %@."),
-                    L("bvc.copyNoun", "copy")),
+                info: BrowserViewController.conflictActionHint(move: false),
                 buttons: longLabels
                     ? [
                         "Vorhandene Datei vollständig ersetzen", "Beide Dateien dauerhaft behalten",

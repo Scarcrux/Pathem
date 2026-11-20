@@ -764,7 +764,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
         ]
         children += savedSearches.filter { !$0.name.isEmpty }.map {
             Node(
-                kind: .savedSearch($0), title: $0.name, url: nil, icon: Self.smartIcon(for: $0),
+                kind: .savedSearch($0), title: $0.displayName, url: nil,
+                icon: Self.smartIcon(for: $0),
                 tooltip: Self.smartSummary(for: $0))
         }
         return Node(
@@ -835,7 +836,8 @@ final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewD
     private func tagsNode() -> Node {
         var children = FileTag.Color.displayOrder.map { color in
             Node(
-                kind: .smart(.tag(color)), title: color.label, url: nil, icon: nil, tagColor: color)
+                kind: .smart(.tag(color)), title: TagColors.label(color), url: nil, icon: nil,
+                tagColor: color)
         }
         // The custom, named tags the user made in Finder (Finder shows these in its sidebar too),
         // filtered by tag name. Read from Finder's own preference so the two lists match.

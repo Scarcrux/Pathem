@@ -311,7 +311,6 @@
 "bvc.confirmTrashCount" = "Mover %d itens selecionados para a Lixeira?";
 "bvc.confirmTrashTitle" = "Mover os itens selecionados para a Lixeira?";
 "bvc.conflictBatch" = "Sua escolha vale para todos os conflitos desta operação.";
-"bvc.conflictHandle" = "Escolha como tratar %@.";
 "bvc.conflictMany" = "%d itens já existem no destino";
 "bvc.conflictOne" = "1 item já existe no destino";
 "bvc.connect" = "Conectar";
@@ -326,7 +325,6 @@
 "bvc.convertingMedia" = "Convertendo mídia…";
 "bvc.copyAction" = "Copiar";
 "bvc.copyFailed" = "Falha ao copiar";
-"bvc.copyNoun" = "cópia";
 "bvc.copyToRecent" = "Copiar para: %@";
 "bvc.copying" = "Copiando";
 "bvc.couldntCreateArchive" = "Não foi possível criar o arquivo compactado";
@@ -396,7 +394,6 @@
 "bvc.moveAllToTrash" = "Mover tudo para a Lixeira";
 "bvc.moveFailed" = "Falha ao mover";
 "bvc.moveIntoFolderFailed" = "Não foi possível mover alguns itens para a pasta";
-"bvc.moveNoun" = "movimentação";
 "bvc.moveToRecent" = "Mover para: %@";
 "bvc.moveToTrashAction" = "Mover para a Lixeira";
 "bvc.moveToTrashFailed" = "Falha ao mover para a Lixeira";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Este nome foi removido, mas o conteúdo não foi sobrescrito porque outros links físicos compartilham o arquivo.";
 
 "menu.help.fullDiskAccess" = "Guia de acesso total ao disco…";
+"search.preset.largeFiles" = "Arquivos grandes";
+"search.preset.recentImages" = "Imagens recentes";
+"search.preset.screenshots" = "Capturas de tela";
+"search.preset.recentDocuments" = "Documentos recentes";
+"bvc.untitledFile" = "arquivo sem título";
+"bvc.conflictCopyHint" = "Escolha como lidar com a cópia.";
+"bvc.conflictMoveHint" = "Escolha como lidar com a movimentação.";
+"tags.color.none" = "Nenhuma Cor";
+"tags.color.gray" = "Cinza";
+"tags.color.green" = "Verde";
+"tags.color.purple" = "Roxo";
+"tags.color.blue" = "Azul";
+"tags.color.yellow" = "Amarelo";
+"tags.color.red" = "Vermelho";
+"tags.color.orange" = "Laranja";

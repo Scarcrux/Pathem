@@ -52,7 +52,9 @@ final class KeyRecorderView: NSView {
     required init?(coder: NSCoder) { fatalError("not used") }
 
     override var acceptsFirstResponder: Bool { true }
-    override var intrinsicContentSize: NSSize { NSSize(width: 150, height: 24) }
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: max(150, ceil(label.intrinsicContentSize.width) + 12), height: 24)
+    }
 
     private func setup() {
         wantsLayer = true
@@ -90,7 +92,10 @@ final class KeyRecorderView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
-        guard recording else { super.keyDown(with: event); return }
+        guard recording else {
+            super.keyDown(with: event)
+            return
+        }
         let flags = event.modifierFlags
         if event.keyCode == 53 {  // Esc cancels
             window?.makeFirstResponder(nil)
@@ -120,5 +125,6 @@ final class KeyRecorderView: NSView {
         } else {
             label.stringValue = ChordFormat.display(canonical)
         }
+        invalidateIntrinsicContentSize()
     }
 }

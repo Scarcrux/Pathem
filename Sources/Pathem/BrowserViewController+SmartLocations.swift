@@ -16,7 +16,8 @@ extension BrowserViewController {
             switch query {
             case .recents:
                 let opened = prefs.recentsBasis == .opened
-                urls = await SpotlightSearch.recentFiles(scope: scope, days: 30, limit: 200, opened: opened)
+                urls = await SpotlightSearch.recentFiles(
+                    scope: scope, days: 30, limit: 200, opened: opened)
                 title = L("bvc.recents", "Recents")
                 // Recents is a recency list, so default it to newest-first (Finder does the same),
                 // rather than inheriting the pane's folder sort (usually name, ascending). The user
@@ -25,7 +26,7 @@ extension BrowserViewController {
                 pane.format.ascending = false
             case .tag(let color):
                 urls = await SpotlightSearch.taggedFiles(color.label, scope: scope, limit: 500)
-                title = String(format: L("bvc.tagTitle", "Tag: %@"), color.label)
+                title = String(format: L("bvc.tagTitle", "Tag: %@"), TagColors.label(color))
             case .namedTag(let name):
                 urls = await SpotlightSearch.taggedFiles(name, scope: scope, limit: 500)
                 title = String(format: L("bvc.tagTitle", "Tag: %@"), name)
@@ -38,9 +39,13 @@ extension BrowserViewController {
 
     /// Run a saved smart folder's mdfind query and show its results in the active pane.
     func runSavedSearch(_ name: String, query: String) {
-        guard let pane = activePane, !pane.isRemote else { NSSound.beep(); return }
+        guard let pane = activePane, !pane.isRemote else {
+            NSSound.beep()
+            return
+        }
         let token = pane.beginContentRequest()
-        pane.showSmartResults([], title: String(format: L("bvc.searchingLoading", "Searching: %@…"), name))
+        pane.showSmartResults(
+            [], title: String(format: L("bvc.searchingLoading", "Searching: %@…"), name))
         Task { @MainActor in
             let urls = await SpotlightSearch.matching(query, scope: nil, limit: 1000)
             let entries = await Task.detached { urls.map { FileEntry(contentsOf: $0) } }.value

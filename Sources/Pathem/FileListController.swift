@@ -489,7 +489,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .name: return 240
             case .size: return 90
             case .kind: return 130
-            case .date, .dateCreated, .dateAccessed: return 150
+            case .date: return max(150, squeezeFloor)
+            case .dateCreated, .dateAccessed: return 150
             case .ext: return 90
             case .git: return 56
             case .path: return 280
@@ -507,7 +508,12 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .name: return 120
             case .size: return 60
             case .kind: return 80
-            case .date, .dateCreated, .dateAccessed: return 100
+            case .date:
+                let font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+                // Reserve room for the sort indicator and the header cell's insets.
+                return max(
+                    100, ceil((title as NSString).size(withAttributes: [.font: font]).width) + 28)
+            case .dateCreated, .dateAccessed: return 100
             case .ext: return 56
             case .git: return 44
             case .path: return 120
@@ -1162,7 +1168,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             wantedWidths[col.identifier.rawValue] ?? col.width
         }
         func floorOf(_ col: NSTableColumn) -> CGFloat {
-            Column(rawValue: col.identifier.rawValue)?.squeezeFloor ?? 80
+            col.minWidth
         }
         // The table is wider than its columns: the .inset style pads the sides (32 pt) and
         // each gap adds intercell spacing. Compute that overhead analytically, and only

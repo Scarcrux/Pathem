@@ -311,7 +311,6 @@
 "bvc.confirmTrashCount" = "선택한 항목 %d개를 휴지통으로 이동하시겠습니까?";
 "bvc.confirmTrashTitle" = "선택한 항목을 휴지통으로 이동하시겠습니까?";
 "bvc.conflictBatch" = "선택한 내용이 이 작업의 모든 충돌에 적용됩니다.";
-"bvc.conflictHandle" = "%@의 처리 방법을 선택하십시오.";
 "bvc.conflictMany" = "대상 위치에 이미 항목 %d개가 있습니다";
 "bvc.conflictOne" = "대상 위치에 이미 항목 1개가 있습니다";
 "bvc.connect" = "연결";
@@ -326,7 +325,6 @@
 "bvc.convertingMedia" = "미디어 변환 중…";
 "bvc.copyAction" = "복사";
 "bvc.copyFailed" = "복사 실패";
-"bvc.copyNoun" = "복사";
 "bvc.copyToRecent" = "복사 위치: %@";
 "bvc.copying" = "복사 중";
 "bvc.couldntCreateArchive" = "압축 파일을 생성할 수 없음";
@@ -396,7 +394,6 @@
 "bvc.moveAllToTrash" = "모두 휴지통으로 이동";
 "bvc.moveFailed" = "이동 실패";
 "bvc.moveIntoFolderFailed" = "일부 항목을 폴더로 이동할 수 없음";
-"bvc.moveNoun" = "이동";
 "bvc.moveToRecent" = "이동 위치: %@";
 "bvc.moveToTrashAction" = "휴지통으로 이동";
 "bvc.moveToTrashFailed" = "휴지통으로 이동하지 못함";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "이 이름은 제거했지만 다른 하드 링크가 이 파일을 공유하므로 내용은 덮어쓰지 않았습니다.";
 
 "menu.help.fullDiskAccess" = "전체 디스크 접근 가이드…";
+"search.preset.largeFiles" = "대용량 파일";
+"search.preset.recentImages" = "최근 이미지";
+"search.preset.screenshots" = "스크린샷";
+"search.preset.recentDocuments" = "최근 문서";
+"bvc.untitledFile" = "제목 없는 파일";
+"bvc.conflictCopyHint" = "복사를 어떻게 처리할지 선택하세요.";
+"bvc.conflictMoveHint" = "이동을 어떻게 처리할지 선택하세요.";
+"tags.color.none" = "색상 없음";
+"tags.color.gray" = "회색";
+"tags.color.green" = "초록색";
+"tags.color.purple" = "보라색";
+"tags.color.blue" = "파란색";
+"tags.color.yellow" = "노란색";
+"tags.color.red" = "빨간색";
+"tags.color.orange" = "주황색";

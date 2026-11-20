@@ -2151,6 +2151,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20 launch QA Batch 2: native FDA probe reproduced stale relaunch status after unrelated activation and AppKit refusing terminate before reaching its delegate. The guide now waits for its Settings action, can reopen from Help after Not Now, and ends before AppKit termination without recording a dismissal. Isolated native treatment passed all 12 checks, including willTerminate. Updated English and all 11 translations. Live Sparkle installation was not rerun."
     at = "2026-11-20T14:29:10Z"
 
+  [[mission.comment]]
+    text = "2026-11-20 launch QA Batch 3: localized system presets, smart-folder names, built-in creation names, Finder tag color labels, and conflict copy. Settings captures in all 12 languages confirmed the affected hint sizes and labels, with a Russian-only rerender for the adjacent Restore Defaults button. Date Modified now reserves localized header and sort-indicator space; a mounted list was not rerun. The supplied short-sidebar image shows scrolling content clipped at the viewport edge; footer overlap remains unconvicted."
+    at = "2026-11-20T14:47:36Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

@@ -620,8 +620,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private func transfersPane() -> NSView {
         let field = NSTextField()
         field.stringValue = prefs.bandwidthLimitKBps > 0 ? "\(prefs.bandwidthLimitKBps)" : ""
-        field.placeholderString = L("prefs.bandwidthPlaceholder", "0 = unlimited")
-        field.widthAnchor.constraint(equalToConstant: 90).isActive = true
+        let placeholder = L("prefs.bandwidthPlaceholder", "0 = unlimited")
+        field.placeholderString = placeholder
+        let font = field.font ?? .systemFont(ofSize: NSFont.systemFontSize)
+        let width = ceil((placeholder as NSString).size(withAttributes: [.font: font]).width) + 16
+        field.widthAnchor.constraint(equalToConstant: max(90, width)).isActive = true
         field.target = self
         field.action = #selector(bandwidthChanged(_:))
         field.cell?.sendsActionOnEndEditing = true  // commit on Tab/click-away too
@@ -790,6 +793,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         -> NSView
     {
         let field = NSTextField(string: prefs[keyPath: keyPath])
+        if keyPath == \.newFolderName, field.stringValue == Preferences.default.newFolderName {
+            field.stringValue = prefs.effectiveNewFolderName
+        } else if keyPath == \.newFileName, field.stringValue == Preferences.default.newFileName {
+            field.stringValue = prefs.effectiveNewFileName
+        }
         field.target = self
         field.action = #selector(stringFieldCommitted(_:))
         field.widthAnchor.constraint(equalToConstant: width).isActive = true
@@ -912,19 +920,19 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         menu.addItem(
             NSMenuItem(title: L("prefs.themeCustom", "Custom"), action: nil, keyEquivalent: ""))
         themePopup.menu = menu
-        let selected =
-            ThemePreset.matching(
-                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
-                appearance: prefs.appearance)?
-            .name ?? L("prefs.themeCustom", "Custom")
-        themePopup.selectItem(withTitle: selected)
+        let preset = ThemePreset.matching(
+            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
+            appearance: prefs.appearance)
+        let selected = menu.items.first { ($0.representedObject as? String) == preset?.name }
+        themePopup.select(preset == nil ? menu.items.last : selected)
         themePopup.target = self
         themePopup.action = #selector(themeChanged(_:))
         return themePopup
     }
     @objc private func themeChanged(_ sender: NSPopUpButton) {
         guard
-            let preset = ThemePreset.presets.first(where: { $0.name == sender.titleOfSelectedItem })
+            let name = sender.selectedItem?.representedObject as? String,
+            let preset = ThemePreset.presets.first(where: { $0.name == name })
         else { return }
         prefs.themeName = preset.name
         prefs.accentColorHex = preset.accentHex
@@ -935,14 +943,19 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     private func iconSetControl() -> NSView {
         let popup = NSPopUpButton()
-        popup.addItems(withTitles: IconSet.all.map(\.name))
-        popup.selectItem(withTitle: prefs.iconSetName)
+        for set in IconSet.all {
+            popup.addItem(withTitle: set.displayName)
+            popup.lastItem?.representedObject = set.name
+        }
+        popup.select(
+            popup.itemArray.first { ($0.representedObject as? String) == prefs.iconSetName })
         popup.target = self
         popup.action = #selector(iconSetChanged(_:))
         return popup
     }
     @objc private func iconSetChanged(_ sender: NSPopUpButton) {
-        prefs.iconSetName = sender.titleOfSelectedItem ?? "System"
+        prefs.iconSetName =
+            (sender.selectedItem?.representedObject as? String) ?? IconSet.system.name
         onChange?(prefs)
     }
 

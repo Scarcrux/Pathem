@@ -310,7 +310,6 @@
 "bvc.confirmTrashCount" = "¿Mover los %d elementos seleccionados a la papelera?";
 "bvc.confirmTrashTitle" = "¿Mover los elementos seleccionados a la papelera?";
 "bvc.conflictBatch" = "Tu elección se aplica a todos los conflictos de esta operación.";
-"bvc.conflictHandle" = "Elige cómo gestionar el %@.";
 "bvc.conflictMany" = "%d ítems ya existen en el destino";
 "bvc.conflictOne" = "1 ítem ya existe en el destino";
 "bvc.connect" = "Conectar";
@@ -325,7 +324,6 @@
 "bvc.convertingMedia" = "Convirtiendo medios…";
 "bvc.copyAction" = "Copiar";
 "bvc.copyFailed" = "No se pudo copiar";
-"bvc.copyNoun" = "copia";
 "bvc.copyToRecent" = "Copiar en: %@";
 "bvc.copying" = "Copiando";
 "bvc.couldntCreateArchive" = "No se pudo crear el archivo comprimido";
@@ -395,7 +393,6 @@
 "bvc.moveAllToTrash" = "Mover todos a la papelera";
 "bvc.moveFailed" = "No se pudo mover";
 "bvc.moveIntoFolderFailed" = "No se pudieron mover algunos ítems a la carpeta";
-"bvc.moveNoun" = "movimiento";
 "bvc.moveToRecent" = "Mover a: %@";
 "bvc.moveToTrashAction" = "Mover a la papelera";
 "bvc.moveToTrashFailed" = "No se pudo mover a la papelera";
@@ -840,7 +837,7 @@
 "gestures.colGesture" = "Gesto";
 "gestures.help" = "Mantén pulsado el botón derecho y arrastra en una vista de archivos: ← atrás, → adelante, ↑ carpeta contenedora. Elige un comando y luego arrastra con el botón derecho en el recuadro para reasignar.";
 "gestures.reassigned" = "%@ se reasignó desde «%@».";
-"gestures.recordHint" = "Arrastra con el botón derecho aquí";
+"gestures.recordHint" = "Arrastra con clic derecho";
 "gestures.setLabel" = "Gesto:";
 "git.commitButton" = "Confirmar";
 "git.commitFailedTitle" = "Error al confirmar";
@@ -1879,3 +1876,18 @@
 "bvc.secureDeleteSharedLink" = "Se eliminó este nombre, pero no se sobrescribió el contenido porque la misma información se comparte con otros enlaces duros.";
 
 "menu.help.fullDiskAccess" = "Guía de acceso total al disco…";
+"search.preset.largeFiles" = "Archivos grandes";
+"search.preset.recentImages" = "Imágenes recientes";
+"search.preset.screenshots" = "Capturas de pantalla";
+"search.preset.recentDocuments" = "Documentos recientes";
+"bvc.untitledFile" = "archivo sin título";
+"bvc.conflictCopyHint" = "Elige qué hacer con la copia.";
+"bvc.conflictMoveHint" = "Elige qué hacer con el traslado.";
+"tags.color.none" = "Sin color";
+"tags.color.gray" = "Gris";
+"tags.color.green" = "Verde";
+"tags.color.purple" = "Morado";
+"tags.color.blue" = "Azul";
+"tags.color.yellow" = "Amarillo";
+"tags.color.red" = "Rojo";
+"tags.color.orange" = "Naranja";

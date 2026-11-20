@@ -37,7 +37,7 @@
     },
     {
       "id": "m06",
-      "site": "Sources/Pathem/BrowserViewController+SmartFolders.swift:171:9:beginSheetModal",
+      "site": "Sources/Pathem/BrowserViewController+SmartFolders.swift:186:9:beginSheetModal",
       "filename": false,
       "group": 1,
       "content_change": false
@@ -359,7 +359,7 @@
     },
     {
       "id": "m52",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1838:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1851:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false
