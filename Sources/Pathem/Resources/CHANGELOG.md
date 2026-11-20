@@ -5,6 +5,9 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
+## 0.9.4 - 2026-11-20
+- Pathem now quits normally while the Full Disk Access guide is open, including when you log out, restart or another app asks it to quit, so a waiting update can install. The guide is now a panel over the window instead of a sheet.
+
 ## 0.9.3 - 2026-11-20
 - Copying and moving no longer lose files when a copy fails. Copying into a read-only folder, copying an unreadable file, or running out of space now stops with an error instead of reporting success, and a move between disks keeps the original until the copy is complete.
 - A move between disks that can't remove every original now keeps the complete copy and lists what stayed behind, instead of deleting files from both places.
