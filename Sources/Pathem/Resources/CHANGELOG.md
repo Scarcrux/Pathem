@@ -5,6 +5,17 @@ Pathem never forces it in front of you. Author new versions at the top,
 newest-first, as `## <version> - <date>` followed by `-` bullet lines. This file
 is bundled into the app and read by the Release Notes window.
 
+## 0.9.3 - 2026-11-20
+- Copying and moving no longer lose files when a copy fails. Copying into a read-only folder, copying an unreadable file, or running out of space now stops with an error instead of reporting success, and a move between disks keeps the original until the copy is complete.
+- A move between disks that can't remove every original now keeps the complete copy and lists what stayed behind, instead of deleting files from both places.
+- Running out of disk space during a copy now stops right away instead of hanging.
+- Replace keeps your existing file if the replacement can't be copied.
+- Secure Delete no longer overwrites a file that other hard links still point to.
+- The Full Disk Access guide has clearer steps, no longer blocks Quit or a pending update, and can be reopened from Help > Full Disk Access Guide.
+- More of Pathem is translated: built-in names, smart folders, tag colors and the copy and move conflict alert. Settings text no longer gets cut off in several languages.
+- Batch Rename rejects names that would move a file out of its folder, catches names that differ only by case, and can be undone.
+- Undoing a Replace restores the original name exactly, and redoing Make Link recreates a link instead of a copy.
+
 ## 0.9.2 - 2026-11-18
 - Settings, Updates has a new switch, Automatically download and install updates. It is off by default, so Pathem still asks before installing an update.
 
