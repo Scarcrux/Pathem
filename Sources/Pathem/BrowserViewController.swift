@@ -1022,8 +1022,6 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         }
     }
 
-    func dismissFullDiskAccessGuideForTermination() { fdaGuide?.dismissForTermination() }
-
     /// Mark a pane (in some side) as the active one: move the accent border to it
     /// and remember which side it belongs to (so transfers target the other side).
     func setActiveSide(_ side: TabbedPaneController, pane: PaneController) {

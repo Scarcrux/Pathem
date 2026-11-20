@@ -555,7 +555,7 @@ extension TransientSurfaceSample {
                 controller.present()
                 return controller
             },
-            mount("m71", "FullDiskAccessGuide.swift:196") { _, _ in
+            mount("m71", "FullDiskAccessGuide.swift:199") { _, _ in
                 let controller = owners.get("m71") { FullDiskAccessGuide() }
                 controller.present(over: self.host) {}
                 return controller

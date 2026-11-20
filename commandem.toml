@@ -2163,6 +2163,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20: 0.9.3 (build 27) released and verified externally (feed 200 names 0.9.3/27, signed-out DMG A9, mounted app A1-A6/A10/A11, EdDSA A7); gate 69 pass, 1 known skip. Ships the launch-QA fixes designed by the claude lane and implemented by Codex, each reviewed before push: data loss d5d2a97 (copyfile ERR swallowed, cross-volume rollback after source deletion, Replace trashing before copy, secure erase of shared inodes; 44 failing checks -> pass), FDA guide 576523f (sheet blocked terminate before the delegate; stale relaunch hint), strings/layout b01cd16, batch rename/undo 9f372d8. Open: Finder trailing-space parity, hard-link pairs inside copied trees, sidebar footer overlap (unconvicted), Date Modified width not recaptured, live Sparkle install-on-quit with the FDA sheet open (VM check next). Launch-QA evidence: /tmp/pathem-launch-qa/FINDINGS.md."
     at = "2026-11-20T15:10:53Z"
 
+  [[mission.comment]]
+    text = "2026-11-20 launch QA Batch 5: macOS 15 rejected Quit AppleEvents with the Full Disk Access sheet open in 0.9.3. The PID-targeted host regression also timed out on old source. Present the guide as a nonmodal child panel and use standard AppKit termination. The isolated host exits with the guide open and leaves Not Now unset. Explicit Not Now still records dismissal and the guide can be presented again. Packaged macOS 15 verification is assigned to the release lane."
+    at = "2026-11-20T15:21:09Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

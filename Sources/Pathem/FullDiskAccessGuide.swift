@@ -22,19 +22,7 @@ enum FullDiskAccess {
     }
 }
 
-/// AppKit declines termination while a document sheet is attached, before consulting
-/// the delegate. The optional FDA guide can safely end first without recording Not Now.
-@MainActor
-final class PathemApplication: NSApplication {
-    var dismissFullDiskAccessGuides: (() -> Void)?
-
-    override func terminate(_ sender: Any?) {
-        dismissFullDiskAccessGuides?()
-        super.terminate(sender)
-    }
-}
-
-/// A guided, step-by-step Full Disk Access sheet (phone-style): numbered steps,
+/// A guided, step-by-step Full Disk Access panel: numbered steps,
 /// a button straight to the Settings pane, and a live status row that flips to a
 /// green check the moment access is detected, polled on a timer and whenever the
 /// user returns from System Settings.
@@ -64,6 +52,7 @@ final class FullDiskAccessGuide: NSObject {
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 360),
             styleMask: [.titled], backing: .buffered, defer: true)
         super.init()
+        panel.isReleasedWhenClosed = false
         build()
     }
 
@@ -177,6 +166,10 @@ final class FullDiskAccessGuide: NSObject {
     }
 
     func present(over window: NSWindow, onDismiss: @escaping () -> Void) {
+        if host === window {
+            panel.makeKey()
+            return
+        }
         guard host == nil, window.attachedSheet == nil else { return }
 
         self.host = window
@@ -193,7 +186,17 @@ final class FullDiskAccessGuide: NSObject {
         timer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.check() }
         }
-        window.beginSheet(panel)
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(hostWillClose), name: NSWindow.willCloseNotification,
+            object: window)
+        panel.setFrameOrigin(
+            NSPoint(
+                x: window.frame.midX - panel.frame.width / 2,
+                y: window.frame.midY - panel.frame.height / 2))
+        // AppKit can refuse Quit AppleEvents while a sheet is attached, before the app's
+        // delegate can act. A child window keeps the guide above its browser without modality.
+        window.addChildWindow(panel, ordered: .above)
+        panel.makeKeyAndOrderFront(nil)
     }
 
     private func check() {
@@ -265,7 +268,7 @@ final class FullDiskAccessGuide: NSObject {
 
     @objc private func primaryClicked() { dismiss(notify: true) }
 
-    func dismissForTermination() { dismiss(notify: false) }
+    @objc private func hostWillClose(_ notification: Notification) { dismiss(notify: false) }
 
     private func dismiss(notify: Bool) {
         guard let host else { return }
@@ -276,7 +279,10 @@ final class FullDiskAccessGuide: NSObject {
         self.host = nil
         let callback = onDismiss
         onDismiss = nil
-        host.endSheet(panel)
+        NotificationCenter.default.removeObserver(
+            self, name: NSWindow.willCloseNotification, object: host)
+        host.removeChildWindow(panel)
+        panel.orderOut(nil)
         if notify { callback?() }
     }
 }
