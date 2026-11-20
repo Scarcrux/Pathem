@@ -5,8 +5,9 @@ site into a live funnel. It is deliberately about **decisions and verification**
 not build mechanics: the notarize / sign / Sparkle / appcast runbook lives in
 **[RELEASE.md](RELEASE.md)** and is not repeated here.
 
-**Status (2026-11-18):** the repository went public and Pathem 0.9.0 was released
-on 2026-11-17. Boxes below are ticked only where the evidence is recorded (noted on
+**Status (2026-11-20):** the repository went public and Pathem 0.9.0 was released
+on 2026-11-17; 0.9.4 is current. A launch-QA pass on 2026-11-19 and 2026-11-20 added
+the evidence below. Boxes below are ticked only where the evidence is recorded (noted on
 the line); unticked boxes are still open, including some the owner may have done
 but not recorded. The rest of this file is kept as written.
 
@@ -24,15 +25,42 @@ The standing decision is "more user testing before public." Make that concrete s
 - [ ] **Real-hardware soak:** the dev build has run as the daily file manager on
       at least one Mac for **2+ weeks** with no data-loss incident and no
       unresolved crash.
+      (2026-11-19, partly: no crash report from the installed `/Applications` app in the
+      last 30 days; the five Pathem crash reports on disk all came from test or dev
+      builds, and the two real bugs among them are fixed (b21a715 in 0.9.1, 8e31865 in
+      0.9.0). Installed-app use is proven from the unified log on 11-12, 11-13, 11-14,
+      11-17, 11-18 and 11-19; the log only reaches back to 11-09. Daily use for two weeks
+      and "nothing lost unnoticed" are the owner's to attest.)
 - [ ] **A second machine / macOS version** has run it for a few days (catches
       per-Mac assumptions: Intel vs Apple Silicon, an older macOS, a different
       accent/appearance, a non-English system language).
+      (2026-11-20, partly: a clean macOS 15.7.7 VM (Tart, Apple Silicon) ran the
+      released builds: Gatekeeper, first launch, Sparkle 0.9.1 to 0.9.2, and Quit with
+      the Full Disk Access guide open (fixed in 0.9.4). All 11 non-English languages were
+      rendered with app-level language overrides and the clipped and untranslated text
+      fixed (b01cd16). Not covered: Intel hardware, a few days of real use, a real
+      system-language switch.)
 - [ ] **The destructive paths are trusted:** trash + Empty Trash, move/copy with
       conflicts, batch rename, secure delete, and undo/redo have each been
       exercised on real files with the outcome verified. No silent data loss.
+      (2026-11-20, partly: an engine-level pass on a 2,270-file, 300 MB corpus with
+      xattrs, tags, ACLs, flags, links, packages and a second APFS volume verified
+      bytes and metadata for copy, move, conflicts, cancel, batch rename, trash and
+      restore, secure delete and undo/redo. It found four silent data-loss bugs, all
+      fixed in 0.9.3 with regression tests that failed first (d5d2a97): failed copies
+      reported success, a cross-volume folder move with one locked item deleted its
+      siblings, Replace trashed the original before the copy, and secure delete
+      overwrote other hard links. Batch rename validation and undo followed (9f372d8).
+      Still open: Empty Trash on the release build (an automated run would erase the
+      real Trash) and the same paths driven through the UI with real input.)
 - [ ] **Full Disk Access onboarding** has been walked by someone who did *not*
       build the app, from a clean state, and it was obvious what to do.
-- [x] **No P0/P1 open** in whatever issue list you keep (2026-11-18: none in the
+      (2026-11-20, partly: a clean-VM first launch and a cold read of the guide led to
+      clearer steps, a Help > Full Disk Access Guide route, and a guide that no longer
+      blocks Quit or a pending update (576523f, 6c0d64a). A walk-through by a person who
+      did not build Pathem is still needed.)
+- [x] **No P0/P1 open** in whatever issue list you keep (2026-11-20: the four P0
+      data-loss bugs found by launch QA on 11-19 are fixed in 0.9.3; 2026-11-18: none in the
       roadmap; LM2-F4 and LM2-F6 repaired 2026-11-18; TS-F2 closed as
       intended by owner ruling). Known-minor is fine;
       write them down so launch-day reports can be triaged against them.
@@ -77,7 +105,8 @@ things a human has to look at.
 - [x] **LICENSE** present and correct (MIT, Copyright Scarcrux LLC).
 - [x] **SECURITY.md** has a real disclosure contact (GitHub private vulnerability
       reporting is on; security@pathem.app is listed, but whether it is monitored
-      is unconfirmed).
+      is unconfirmed; 2026-11-19: pathem.app mail is handled by Google Workspace, and
+      whether a security@ user or group exists needs a test message).
 - [x] No secrets, tokens, absolute local paths, or private notes in the tree or
       git history (2026-11-17: make release-safety PASS, 59 history findings
       reviewed and baselined in scripts/release-safety-history-baseline.txt). Run `make release-safety` (runs the discrimination controls first)
@@ -102,16 +131,21 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 
 - [x] One-time: `scripts/setup-sparkle-key.sh` run, `SUPublicEDKey` committed
       (verified; the 0.9.0 appcast signature checks against it). **Still confirm the
-      private key is backed up** (losing it means no user can ever update again).
+      private key is backed up** (losing it means no user can ever update again). (2026-11-19: the key exists only in the login Keychain and its public half
+      matches `SUPublicEDKey`; no backup was found, so this is still open.)
 - [x] Developer ID cert + `notarytool` profile in place.
 - [x] Version bumped in `Packaging/Info.plist` (0.9.0, build 24; the next release
       needs build 25 or higher, enforced by release.sh P8) (`CFBundleShortVersionString` +
       an incremented `CFBundleVersion`).
 - [x] `PUBLISH=1 scripts/release.sh` (or push a `v*` tag) produces a **notarized,
       stapled** DMG + a signed `appcast.xml` on the GitHub release.
-- [ ] Download the published DMG on a clean Mac and confirm Gatekeeper opens it
-      without a warning. (Partly: a signed-out download on the build Mac passed
-      Gatekeeper and verify-release; a clean second Mac has not been tried.)
+- [x] Download the published DMG on a clean Mac and confirm Gatekeeper opens it
+      without a warning. (2026-11-19: on a clean macOS 15.7.7 VM with Gatekeeper on,
+      the quarantined 0.9.2 DMG and the app copied from it were assessed "accepted,
+      Notarized Developer ID" by spctl, stapler and codesign passed, and syspolicyd
+      showed only the standard "downloaded from the Internet" confirmation, no
+      malware or unidentified-developer warning. Clicking Open on that prompt was not
+      possible in the headless VM.)
 
 ## 5. The flip
 
@@ -127,7 +161,9 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 
 ## 6. Immediately after
 
-- [ ] Watch the first issues/discussions; triage against the known-minor list.
+- [ ] Watch the first issues/discussions; triage against the known-minor list
+      ([KNOWN_ISSUES.md](KNOWN_ISSUES.md)). (2026-11-19: no issues, PRs, discussions or
+      security advisories yet.)
 - [x] Confirm auto-update works from the *first* public version to a quick
       follow-up (2026-11-18: 0.9.0 to 0.9.1 through the published feed) (the real test of the Sparkle chain is the second release).
 - [x] Keep a short changelog going for the appcast release notes (the release body
