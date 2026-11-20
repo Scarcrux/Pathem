@@ -84,9 +84,11 @@ public struct RenamePlan: Sendable, Equatable {
 public struct RenameOutcome: Sendable, Equatable {
     public let renamed: Int
     public let failures: [String]
-    public init(renamed: Int, failures: [String]) {
+    public let performed: [RenamePair]
+    public init(renamed: Int, failures: [String], performed: [RenamePair] = []) {
         self.renamed = renamed
         self.failures = failures
+        self.performed = performed
     }
 }
 
@@ -220,39 +222,77 @@ public enum BatchRename {
         }
     }
 
-    /// Build a preview plan, flagging unsafe renamed values. `existing` is every
-    /// name in the folder (used to catch a rename that would clobber a file not
-    /// being renamed). `contexts` supplies per-file token values for the preview.
+    /// Build a preview plan, flagging invalid names, duplicate targets, and clobbers.
     public static func plan(
         _ rule: RenameRule, names: [String], existing: Set<String> = [],
-        contexts: [RenameContext] = []
+        contexts: [RenameContext] = [], caseSensitive: Bool = true
     ) -> RenamePlan {
         let renamed = apply(rule, to: names, contexts: contexts)
         let pairs = zip(names, renamed).map { RenamePair(original: $0, renamed: $1) }
-        let originals = Set(names)
-        var counts: [String: Int] = [:]
-        for value in renamed { counts[value, default: 0] += 1 }
+        return RenamePlan(
+            pairs: pairs,
+            collisions: conflicts(for: pairs, existing: existing, caseSensitive: caseSensitive))
+    }
+
+    public static func supportsCaseSensitiveNames(in directory: URL) -> Bool {
+        (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey])
+            .volumeSupportsCaseSensitiveNames) == true
+    }
+
+    private static func validName(_ name: String) -> Bool {
+        !name.isEmpty && name != "." && name != ".." && !name.contains("/")
+            && !name.utf8.contains(0)
+    }
+
+    private static func conflicts(
+        for pairs: [RenamePair], existing: Set<String>, caseSensitive: Bool
+    ) -> Set<String> {
+        func key(_ name: String) -> Data {
+            if caseSensitive { return Data(name.utf8) }
+            let folded = name.folding(
+                options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
+            return Data(folded.precomposedStringWithCanonicalMapping.utf8)
+        }
+
+        let originals = Set(pairs.map { key($0.original) })
+        let outside = Set(existing.map(key)).subtracting(originals)
+        var counts: [Data: Int] = [:]
+        for pair in pairs { counts[key(pair.renamed), default: 0] += 1 }
 
         var collisions = Set<String>()
-        for (original, value) in zip(names, renamed) {
-            if value.isEmpty {
-                collisions.insert(value)
-                continue
-            }
-            if counts[value]! > 1 { collisions.insert(value) }
-            if value != original, existing.contains(value), !originals.contains(value) {
-                collisions.insert(value)
+        for pair in pairs {
+            let target = key(pair.renamed)
+            if !validName(pair.original) || !validName(pair.renamed)
+                || counts[target, default: 0] > 1 || outside.contains(target)
+            {
+                collisions.insert(pair.renamed)
             }
         }
-        return RenamePlan(pairs: pairs, collisions: collisions)
+        return collisions
     }
 
     /// Apply renames inside `directory`. Two-phase (move to unique temps, then to
     /// finals) so swaps and cycles (a->b, b->a) work. No-op pairs are skipped.
     public static func perform(in directory: URL, pairs: [RenamePair]) -> RenameOutcome {
         let fm = FileManager.default
-        let work = pairs.filter { $0.original != $0.renamed && !$0.renamed.isEmpty }
-        var staged: [(temp: URL, final: URL, original: String)] = []
+        let existing = Set(
+            pairs.compactMap { pair -> String? in
+                guard validName(pair.renamed) else { return nil }
+                var item = stat()
+                let target = directory.appendingPathComponent(pair.renamed)
+                return lstat(target.path, &item) == 0 ? pair.renamed : nil
+            })
+        let collisions = conflicts(
+            for: pairs, existing: existing,
+            caseSensitive: supportsCaseSensitiveNames(in: directory))
+        guard collisions.isEmpty else {
+            let failures = pairs.filter { collisions.contains($0.renamed) }.map {
+                "\($0.original): \(CocoaError(.fileWriteInvalidFileName).localizedDescription)"
+            }
+            return RenameOutcome(renamed: 0, failures: failures)
+        }
+        let work = pairs.filter { !$0.original.utf8.elementsEqual($0.renamed.utf8) }
+        var staged: [(temp: URL, final: URL, pair: RenamePair)] = []
         var failures: [String] = []
 
         for pair in work {
@@ -260,40 +300,40 @@ public enum BatchRename {
             let temp = directory.appendingPathComponent(".pathem-rename-\(UUID().uuidString)")
             do {
                 try fm.moveItem(at: source, to: temp)
-                staged.append((temp, directory.appendingPathComponent(pair.renamed), pair.original))
+                staged.append((temp, directory.appendingPathComponent(pair.renamed), pair))
             } catch {
                 failures.append("\(pair.original): \(error.localizedDescription)")
             }
         }
 
-        var renamed = 0
+        var performed: [RenamePair] = []
         for item in staged {
             do {
                 try fm.moveItem(at: item.temp, to: item.final)
-                renamed += 1
+                performed.append(item.pair)
             } catch {
                 // Phase 2 failed. Restore to the original name; if that's occupied too, land the
                 // file at a unique visible name rather than leaving it stranded under the hidden
                 // ".pathem-rename-<UUID>" temp name where the user can't find it.
-                let originalURL = directory.appendingPathComponent(item.original)
+                let originalURL = directory.appendingPathComponent(item.pair.original)
                 if (try? fm.moveItem(at: item.temp, to: originalURL)) != nil {
-                    failures.append("\(item.original): \(error.localizedDescription)")
+                    failures.append("\(item.pair.original): \(error.localizedDescription)")
                 } else {
                     let fallback = FileOperations.uniqueDestination(originalURL)
                     if (try? fm.moveItem(at: item.temp, to: fallback)) != nil {
                         failures.append(
-                            "\(item.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))"
+                            "\(item.pair.original): \(error.localizedDescription) (kept as \(fallback.lastPathComponent))"
                         )
                     } else {
                         // Even the fallback move failed, so the file is still under the hidden temp
                         // name. Report that truthfully instead of claiming a name that doesn't exist.
                         failures.append(
-                            "\(item.original): \(error.localizedDescription) (recover it at \(item.temp.lastPathComponent))"
+                            "\(item.pair.original): \(error.localizedDescription) (recover it at \(item.temp.lastPathComponent))"
                         )
                     }
                 }
             }
         }
-        return RenameOutcome(renamed: renamed, failures: failures)
+        return RenameOutcome(renamed: performed.count, failures: failures, performed: performed)
     }
 }

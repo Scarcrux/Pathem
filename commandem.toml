@@ -2155,6 +2155,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20 launch QA Batch 3: localized system presets, smart-folder names, built-in creation names, Finder tag color labels, and conflict copy. Settings captures in all 12 languages confirmed the affected hint sizes and labels, with a Russian-only rerender for the adjacent Restore Defaults button. Date Modified now reserves localized header and sort-indicator space; a mounted list was not rerun. The supplied short-sidebar image shows scrolling content clipped at the viewport edge; footer overlap remains unconvicted."
     at = "2026-11-20T14:47:36Z"
 
+  [[mission.comment]]
+    text = "2026-11-20 launch QA Batch 4: the original build let a rename target escape its folder, missed combined case and Unicode collisions, restored overwritten items under the incoming spelling, and replayed links as copies. Scratch-volume tests and a headless ActionHistory fixture now verify rejection, exact undo/redo spelling, two-way batch undo, and symlink, hard-link, and alias redo. Full Swift suite passed 871 tests. Finder trailing-space behavior remains unverified; optional hard-link grouping during tree copy is deferred."
+    at = "2026-11-20T14:56:09Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

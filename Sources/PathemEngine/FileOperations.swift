@@ -32,13 +32,19 @@ public enum FileOperations {
         /// If a Replace conflict trashed an existing item at `destination`, where it
         /// landed in the Trash, so undo can restore the overwritten file.
         public let replacedOriginalTrashed: URL?
+        /// The replaced directory entry can differ in case or Unicode spelling from destination.
+        public let replacedOriginal: URL?
+        public let linkKind: LinkKind?
         public init(
-            action: Action, source: URL, destination: URL, replacedOriginalTrashed: URL? = nil
+            action: Action, source: URL, destination: URL, replacedOriginalTrashed: URL? = nil,
+            replacedOriginal: URL? = nil, linkKind: LinkKind? = nil
         ) {
             self.action = action
             self.source = source
             self.destination = destination
             self.replacedOriginalTrashed = replacedOriginalTrashed
+            self.replacedOriginal = replacedOriginal
+            self.linkKind = linkKind
         }
     }
 
@@ -589,7 +595,7 @@ public enum FileOperations {
                 // leave it stranded in the Trash (and report failure if it can't).
                 if let trashed = op.replacedOriginalTrashed {
                     do {
-                        try fm.moveItem(at: trashed, to: op.destination)
+                        try fm.moveItem(at: trashed, to: op.replacedOriginal ?? op.destination)
                     } catch {
                         blockedDestinations.insert(destinationPath)
                         outcome.failures.append(
@@ -625,28 +631,35 @@ public enum FileOperations {
         var outcome = Outcome()
         for op in performed {
             var replacedTrash: URL?
+            let original = op.replacedOriginal ?? op.destination
             do {
                 // Undo of a Replace restored the overwritten original to the destination. Redo must
                 // displace it again (to a fresh trash location), or the copy/move below fails
                 // "file exists" and a later undo would trash the restored original by mistake.
-                if op.replacedOriginalTrashed != nil, fm.fileExists(atPath: op.destination.path) {
+                if op.replacedOriginalTrashed != nil, itemExists(at: original) {
                     var landed: NSURL?
-                    try fm.trashItem(at: op.destination, resultingItemURL: &landed)
+                    try fm.trashItem(at: original, resultingItemURL: &landed)
                     replacedTrash = landed as URL?
                 }
                 switch op.action {
                 case .moved: try fm.moveItem(at: op.source, to: op.destination)
-                case .copied: try fm.copyItem(at: op.source, to: op.destination)
+                case .copied:
+                    if let kind = op.linkKind {
+                        try createLink(from: op.source, at: op.destination, kind: kind)
+                    } else {
+                        try fm.copyItem(at: op.source, to: op.destination)
+                    }
                 }
                 outcome.performed.append(
                     Performed(
                         action: op.action, source: op.source, destination: op.destination,
-                        replacedOriginalTrashed: replacedTrash))
+                        replacedOriginalTrashed: replacedTrash,
+                        replacedOriginal: op.replacedOriginal, linkKind: op.linkKind))
             } catch {
                 let transferError = error
                 if let trashed = replacedTrash {
                     do {
-                        try fm.moveItem(at: trashed, to: op.destination)
+                        try fm.moveItem(at: trashed, to: original)
                     } catch {
                         outcome.failures.append(
                             Failure(
@@ -687,6 +700,7 @@ public enum FileOperations {
             let base = progress.completedBytes  // bytes fully done before this item
             var to = destination.appendingPathComponent(name)
             var replacedTrash: URL?  // where a Replace put the overwritten file (for undo)
+            var replacedOriginal: URL?
             var published = false
             do {
                 // Never act on the source onto itself: a no-op self-transfer via a
@@ -720,6 +734,7 @@ public enum FileOperations {
                         continue
                     case .replace:
                         replacing = true
+                        replacedOriginal = actualDirectoryEntry(to, matching: destinationInfo)
                     case .keepBoth:
                         to = uniqueDestination(to)
                     }
@@ -741,7 +756,8 @@ public enum FileOperations {
                                     current.st_ino == destinationInfo.st_ino
                                 else { throw removalError(EBUSY, at: final) }
                                 var landed: NSURL?
-                                try fm.trashItem(at: final, resultingItemURL: &landed)
+                                try fm.trashItem(
+                                    at: replacedOriginal ?? final, resultingItemURL: &landed)
                                 replacedTrash = landed as URL?
                             }
                             try fm.moveItem(at: ready, to: final)
@@ -752,7 +768,7 @@ public enum FileOperations {
                     // publication leave the full copy in place and do not create an undo entry.
                     if !published, let trashed = replacedTrash {
                         do {
-                            try fm.moveItem(at: trashed, to: to)
+                            try fm.moveItem(at: trashed, to: replacedOriginal ?? to)
                         } catch {
                             // The op failed AND the overwritten original couldn't be put back: it's
                             // stranded in the Trash. Say so explicitly, with its location, instead of
@@ -772,7 +788,7 @@ public enum FileOperations {
                 outcome.performed.append(
                     Performed(
                         action: action, source: from, destination: to,
-                        replacedOriginalTrashed: replacedTrash))
+                        replacedOriginalTrashed: replacedTrash, replacedOriginal: replacedOriginal))
                 // Only a file that actually transferred advances the byte counter, so a
                 // failure doesn't inflate the bar the way a completed item would. Skips
                 // (handled by `continue` above) likewise never reach this line. Set (not +=)
@@ -794,6 +810,33 @@ public enum FileOperations {
             report(progress)
         }
         return outcome
+    }
+
+    private static func itemExists(at url: URL) -> Bool {
+        var info = stat()
+        return lstat(url.path, &info) == 0
+    }
+
+    private static func actualDirectoryEntry(_ requested: URL, matching info: stat) -> URL {
+        let directory = requested.deletingLastPathComponent()
+        guard
+            let entries = try? FileManager.default.contentsOfDirectory(
+                at: directory, includingPropertiesForKeys: nil)
+        else { return requested }
+        if let exact = entries.first(where: {
+            $0.lastPathComponent.utf8.elementsEqual(requested.lastPathComponent.utf8)
+        }) {
+            return exact
+        }
+        return entries.first {
+            guard
+                $0.lastPathComponent.caseInsensitiveCompare(requested.lastPathComponent)
+                    == .orderedSame
+            else { return false }
+            var candidate = stat()
+            return lstat($0.path, &candidate) == 0
+                && candidate.st_dev == info.st_dev && candidate.st_ino == info.st_ino
+        } ?? requested
     }
 
     /// Whether two URLs refer to the same on-disk item. Prefers the file's
@@ -855,29 +898,32 @@ public enum FileOperations {
     /// undo trashes it like a copy.
     @discardableResult
     public static func makeLinks(_ urls: [URL], kind: LinkKind) -> Outcome {
-        let fm = FileManager.default
         var outcome = Outcome()
         for url in urls {
             let link = suffixedName(url, suffix: kind.rawValue)
             do {
-                switch kind {
-                case .symlink:
-                    try fm.createSymbolicLink(at: link, withDestinationURL: url)
-                case .hardlink:
-                    try fm.linkItem(at: url, to: link)
-                case .alias:
-                    let data = try url.bookmarkData(
-                        options: .suitableForBookmarkFile, includingResourceValuesForKeys: nil,
-                        relativeTo: nil)
-                    try URL.writeBookmarkData(data, to: link)
-                }
-                outcome.performed.append(Performed(action: .copied, source: url, destination: link))
+                try createLink(from: url, at: link, kind: kind)
+                outcome.performed.append(
+                    Performed(action: .copied, source: url, destination: link, linkKind: kind))
             } catch {
                 outcome.failures.append(
                     Failure(name: url.lastPathComponent, reason: error.localizedDescription))
             }
         }
         return outcome
+    }
+
+    private static func createLink(from source: URL, at link: URL, kind: LinkKind) throws {
+        let fm = FileManager.default
+        switch kind {
+        case .symlink: try fm.createSymbolicLink(at: link, withDestinationURL: source)
+        case .hardlink: try fm.linkItem(at: source, to: link)
+        case .alias:
+            let data = try source.bookmarkData(
+                options: .suitableForBookmarkFile, includingResourceValuesForKeys: nil,
+                relativeTo: nil)
+            try URL.writeBookmarkData(data, to: link)
+        }
     }
 
     /// A non-colliding "<base> <suffix>[.ext]" next to `url` (e.g. "report symlink.pdf").

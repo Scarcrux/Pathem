@@ -583,8 +583,8 @@
     },
     {
       "id": "b31",
-      "site": "Sources/Pathem/BatchRenameController.swift:323:13:runModal",
-      "builder": "Sources/Pathem/BatchRenameController.swift:317:25:NSAlert",
+      "site": "Sources/Pathem/BatchRenameController.swift:327:13:runModal",
+      "builder": "Sources/Pathem/BatchRenameController.swift:321:25:NSAlert",
       "source_sha256": "c476f7f21391cddb8d9f4f0ecb687ecb91dff82002680d9bea3c0dc45e09fd91",
       "sheet": false,
       "fixture": "Plain rename-result report. Runtime fixture: two six-digit counts plus eight failure descriptions with 255-character names.",

@@ -139,6 +139,35 @@ import Testing
         }
     }
 
+    @Test(arguments: [false, true]) func undoReplaceRestoresOriginalSpelling(_ move: Bool) throws {
+        try withVolume { scratch, volume in
+            let source = scratch.appendingPathComponent("ITEM")
+            let original = volume.appendingPathComponent("item")
+            let replacement = Data("replacement".utf8)
+            try replacement.write(to: source)
+            try payload.write(to: original)
+            let applied =
+                move
+                ? FileOperations.move(urls: [source], into: volume, onConflict: .replace)
+                : FileOperations.copy(urls: [source], into: volume, onConflict: .replace)
+            try #require(applied.failures.isEmpty)
+            try #require(applied.performed.count == 1)
+            let firstUndo = FileOperations.undo(applied.performed)
+            try #require(firstUndo.failures.isEmpty)
+            func assertRestored() throws {
+                let names = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+                #expect(names.contains("item"))
+                #expect(!names.contains("ITEM"))
+                #expect(try Data(contentsOf: original) == payload)
+            }
+            try assertRestored()
+            let replay = FileOperations.redo(firstUndo.performed)
+            try #require(replay.failures.isEmpty)
+            try #require(FileOperations.undo(replay.performed).failures.isEmpty)
+            try assertRestored()
+        }
+    }
+
     @Test func diskFullStopsAndRemovesPartialCopy() throws {
         try withVolume { scratch, volume in
             let source = scratch.appendingPathComponent("large")

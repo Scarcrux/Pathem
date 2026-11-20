@@ -136,12 +136,12 @@ extension TransientSurfaceSample {
                     })
                 return controller
             },
-            mount("m18", "BatchRenameController.swift:198", filename: true) { file, name in
+            mount("m18", "BatchRenameController.swift:200", filename: true) { file, name in
                 let controller = owners.get("m18") { BatchRenameController() }
                 controller.present(
                     names: [name], in: file.deletingLastPathComponent(), existing: [name],
                     over: self.host,
-                    onComplete: { self.emit("mount-callback", 5, false, "unexpected rename") })
+                    onComplete: { _ in self.emit("mount-callback", 5, false, "unexpected rename") })
                 return controller
             },
             mount("m19", "BulkAttributesController.swift:36") { _, _ in

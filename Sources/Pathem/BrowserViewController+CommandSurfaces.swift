@@ -30,8 +30,36 @@ extension BrowserViewController {
             return
         }
         let existing = Set(pane.entries.map(\.name))
-        batchRename.present(names: names, in: pane.currentURL, existing: existing, over: window) {
-            [weak self] in self?.activePane?.reloadIfShowingListing()
+        let directory = pane.currentURL
+        batchRename.present(names: names, in: directory, existing: existing, over: window) {
+            [weak self, weak pane] performed in
+            pane?.reloadIfShowingListing()
+            self?.registerBatchRenameUndo(performed, in: directory)
+        }
+    }
+
+    private func registerBatchRenameUndo(_ performed: [RenamePair], in directory: URL) {
+        guard !performed.isEmpty else { return }
+        let inverse = performed.map { RenamePair(original: $0.renamed, renamed: $0.original) }
+        let paths = Set(
+            performed.flatMap {
+                [
+                    directory.appendingPathComponent($0.original).path,
+                    directory.appendingPathComponent($0.renamed).path,
+                ]
+            })
+        actionHistory.record(
+            name: L("rename.panelTitle", "Batch Rename"), footprint: paths, undoFootprint: paths
+        ) { [weak self] in
+            guard let self else { return }
+            let outcome = BatchRename.perform(in: directory, pairs: inverse)
+            self.reloadBothSides()
+            self.registerBatchRenameUndo(outcome.performed, in: directory)
+            if !outcome.failures.isEmpty {
+                self.presentInfo(
+                    L("rename.panelTitle", "Batch Rename"),
+                    outcome.failures.prefix(8).joined(separator: "\n"))
+            }
         }
     }
 

@@ -5,9 +5,42 @@ import Testing
 
 @Suite struct LinkOperationsTests {
     private func tempDir() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-link-\(UUID().uuidString)")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-link-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
+    }
+
+    @Test(arguments: FileOperations.LinkKind.allCases) func redoRecreatesLink(
+        kind: FileOperations.LinkKind
+    ) throws {
+        let fm = FileManager.default
+        let directory = fm.temporaryDirectory.appendingPathComponent("pathem-link-redo-\(UUID())")
+        try fm.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? fm.removeItem(at: directory) }
+        let source = directory.appendingPathComponent("payload")
+        try Data("fixture".utf8).write(to: source)
+        let original = FileOperations.makeLinks([source], kind: kind)
+        let created = try #require(original.performed.first)
+        try fm.removeItem(at: created.destination)
+        let replayed = FileOperations.redo([created])
+        #expect(replayed.failures.isEmpty)
+        #expect(replayed.performed.count == 1)
+        switch kind {
+        case .symlink:
+            #expect(
+                try fm.destinationOfSymbolicLink(atPath: created.destination.path) == source.path)
+        case .hardlink:
+            var a = stat()
+            var b = stat()
+            try #require(lstat(source.path, &a) == 0)
+            try #require(lstat(created.destination.path, &b) == 0)
+            #expect(a.st_ino == b.st_ino)
+        case .alias:
+            let resolved = try URL(resolvingAliasFileAt: created.destination)
+                .resolvingSymlinksInPath()
+            #expect(resolved.path == source.resolvingSymlinksInPath().path)
+        }
     }
 
     @Test func symlinkPointsAtOriginal() throws {
@@ -67,7 +100,11 @@ import Testing
         try Data("n".utf8).write(to: file)
         _ = FileOperations.makeLinks([file], kind: .symlink)
         _ = FileOperations.makeLinks([file], kind: .symlink)
-        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("note symlink.txt").path))
-        #expect(FileManager.default.fileExists(atPath: dir.appendingPathComponent("note symlink 2.txt").path))
+        #expect(
+            FileManager.default.fileExists(
+                atPath: dir.appendingPathComponent("note symlink.txt").path))
+        #expect(
+            FileManager.default.fileExists(
+                atPath: dir.appendingPathComponent("note symlink 2.txt").path))
     }
 }

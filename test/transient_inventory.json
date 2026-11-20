@@ -674,14 +674,14 @@
       ],
       "reason": "Batch create input and generated-name preview. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/BatchRenameController.swift:198:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/BatchRenameController.swift:200:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BatchRenameController.swift:44:17:NSPanel"
+        "Sources/Pathem/BatchRenameController.swift:45:17:NSPanel"
       ],
       "reason": "Batch rename fields, options and preview table. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1586,26 +1586,26 @@
       "reason": "Plain feature/reason alert, Learn More and OK. Runtime fixture: localized availability explanation with 80-character feature name; do not open external URLs.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BatchRenameController.swift:284:15:runModal": {
+    "Sources/Pathem/BatchRenameController.swift:288:15:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BatchRenameController.swift:373:21:NSAlert"
+        "Sources/Pathem/BatchRenameController.swift:377:21:NSAlert"
       ],
       "reason": "Preset-name text field accessory; Save may update a same-named preset. Own temporary config only.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BatchRenameController.swift:323:13:runModal": {
+    "Sources/Pathem/BatchRenameController.swift:327:13:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BatchRenameController.swift:317:25:NSAlert"
+        "Sources/Pathem/BatchRenameController.swift:321:25:NSAlert"
       ],
       "reason": "Plain rename-result report. Runtime fixture: two six-digit counts plus eight failure descriptions with 255-character names.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."

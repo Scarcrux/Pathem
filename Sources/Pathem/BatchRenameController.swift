@@ -36,8 +36,9 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     /// so the live preview and rename interpolate real metadata without re-reading on each keystroke.
     private var contexts: [RenameContext] = []
     private var existing: Set<String> = []
+    private var caseSensitiveNames = false
     private var directory = URL(fileURLWithPath: "/")
-    private var onComplete: (() -> Void)?
+    private var onComplete: (([RenamePair]) -> Void)?
     private var plan = RenamePlan(pairs: [], collisions: [])
 
     override init() {
@@ -179,11 +180,12 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
     func present(
         names: [String], in directory: URL, existing: Set<String>,
-        over window: NSWindow, onComplete: @escaping () -> Void
+        over window: NSWindow, onComplete: @escaping ([RenamePair]) -> Void
     ) {
         self.names = names
         self.directory = directory
         self.existing = existing
+        caseSensitiveNames = BatchRename.supportsCaseSensitiveNames(in: directory)
         self.onComplete = onComplete
         buildContexts()
         presets = RenamePresetStore.load()
@@ -234,9 +236,11 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     }
 
     private func recompute() {
-        plan = BatchRename.plan(currentRule(), names: names, existing: existing, contexts: contexts)
+        plan = BatchRename.plan(
+            currentRule(), names: names, existing: existing, contexts: contexts,
+            caseSensitive: caseSensitiveNames)
         table.reloadData()
-        let changes = plan.pairs.contains { $0.original != $0.renamed }
+        let changes = plan.pairs.contains { !$0.original.utf8.elementsEqual($0.renamed.utf8) }
         applyButton.isEnabled = changes && !plan.hasCollisions
         warnLabel.stringValue =
             plan.hasCollisions
@@ -312,7 +316,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         guard applyButton.isEnabled else { return }
         let outcome = BatchRename.perform(in: directory, pairs: plan.pairs)
         panel.orderOut(nil)
-        onComplete?()
+        onComplete?(outcome.performed)
         if !outcome.failures.isEmpty {
             let alert = NSAlert()
             alert.alertStyle = .warning
