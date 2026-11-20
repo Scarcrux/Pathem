@@ -2171,6 +2171,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20: 0.9.4 (build 28) released and verified externally (feed 200 names 0.9.4/28, DMG A9, app A1-A6/A10/A11, EdDSA A7; gate 69 pass, 1 known skip). One fix, 6c0d64a (Codex): the FDA guide is a nonmodal child panel, because a sheet makes AppKit refuse Quit AppleEvents before terminate(_:) runs, so 576523f missed AppleEvent/logout/shutdown quits. Convicted on a clean macOS 15 Tart VM: 0.9.3 control refused (-128, 'blocked by modal sheet'); signed 6c0d64a quit cleanly incl. a logout-reason quit, and the guide returned on relaunch with the dismissed flag unset. Evidence /tmp/pathem-launch-qa/vm2, vm3. Cosmetic follow-up: ~50 px empty space under Not Now."
     at = "2026-11-20T15:40:44Z"
 
+  [[mission.comment]]
+    text = "2026-11-20: LAUNCH_CHECKLIST.md records the launch-QA evidence (clean-Mac Gatekeeper ticked; soak, second machine, destructive paths and FDA onboarding marked partly, with what remains) and KNOWN_ISSUES.md is the known-minor list for triage (127ee02). The macOS 15 Tart VM sequoia-qa is kept for future testing at the owner's request."
+    at = "2026-11-20T16:02:08Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
