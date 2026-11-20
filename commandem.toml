@@ -2167,6 +2167,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20 launch QA Batch 5: macOS 15 rejected Quit AppleEvents with the Full Disk Access sheet open in 0.9.3. The PID-targeted host regression also timed out on old source. Present the guide as a nonmodal child panel and use standard AppKit termination. The isolated host exits with the guide open and leaves Not Now unset. Explicit Not Now still records dismissal and the guide can be presented again. Packaged macOS 15 verification is assigned to the release lane."
     at = "2026-11-20T15:21:09Z"
 
+  [[mission.comment]]
+    text = "2026-11-20: 0.9.4 (build 28) released and verified externally (feed 200 names 0.9.4/28, DMG A9, app A1-A6/A10/A11, EdDSA A7; gate 69 pass, 1 known skip). One fix, 6c0d64a (Codex): the FDA guide is a nonmodal child panel, because a sheet makes AppKit refuse Quit AppleEvents before terminate(_:) runs, so 576523f missed AppleEvent/logout/shutdown quits. Convicted on a clean macOS 15 Tart VM: 0.9.3 control refused (-128, 'blocked by modal sheet'); signed 6c0d64a quit cleanly incl. a logout-reason quit, and the guide returned on relaunch with the dismissed flag unset. Evidence /tmp/pathem-launch-qa/vm2, vm3. Cosmetic follow-up: ~50 px empty space under Not Now."
+    at = "2026-11-20T15:40:44Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
