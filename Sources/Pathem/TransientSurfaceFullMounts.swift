@@ -70,7 +70,7 @@ extension TransientSurfaceSample {
                 b.saveViewPreset()
                 return b
             },
-            mount("m06", "BrowserViewController+SmartFolders.swift:171") { _, _ in
+            mount("m06", "BrowserViewController+SmartFolders.swift:186") { _, _ in
                 b.showAdvancedFind()
                 return b
             },
