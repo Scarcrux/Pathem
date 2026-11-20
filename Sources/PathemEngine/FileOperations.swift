@@ -12,9 +12,11 @@ public enum FileOperations {
     public struct Failure: Error, Equatable, Sendable {
         public let name: String
         public let reason: String
-        public init(name: String, reason: String) {
+        public let incompleteMove: MoveIncompleteError?
+        public init(name: String, reason: String, incompleteMove: MoveIncompleteError? = nil) {
             self.name = name
             self.reason = reason
+            self.incompleteMove = incompleteMove
         }
     }
 
@@ -346,15 +348,27 @@ public enum FileOperations {
         }
     }
 
-    /// A cross-volume move that copied `name` but then could neither remove the original nor roll the
-    /// copy back, so a duplicate remains at the destination. Surfaced so the user isn't left with an
-    /// unexplained stray copy after a bare "move failed".
-    public struct MoveIncompleteError: LocalizedError {
-        public let name: String
+    /// The full copy landed. Source cleanup stopped at the first error and the landed
+    /// copy must be kept, including when the items already removed were only part of a tree.
+    public struct MoveIncompleteError: LocalizedError, Equatable {
+        public let destination: URL
+        public let remainingSourceItems: [URL]
+        public let cleanupFailure: String
+
+        public var remainingPathSummary: String {
+            let items = remainingSourceItems.prefix(8).map(\.path).joined(separator: ", ")
+            return items + (remainingSourceItems.count > 8 ? ", …" : "")
+        }
+
         public var errorDescription: String? {
-            "Couldn’t finish moving \(name): the original couldn’t be removed, and a copy was left at the destination."
+            return
+                "Moved, but \(remainingSourceItems.count) item(s) could not be removed from the original "
+                + "location. The full copy is at \(destination.path). Remaining: \(remainingPathSummary). "
+                + cleanupFailure
         }
     }
+
+    private typealias PublishMove = (URL, URL) throws -> Void
 
     @discardableResult
     public static func copy(
@@ -366,13 +380,13 @@ public enum FileOperations {
         apply(
             urls, into: destination, action: .copied, onConflict: onConflict,
             shouldCancel: shouldCancel, report: report
-        ) { source, dest, onBytes in
-            // Stream the copy so the bar/speed/ETA move as the bytes land (metadata-preserving,
-            // cancellable), instead of the opaque all-or-nothing of FileManager.copyItem.
-            try ProgressiveCopy.copy(
-                from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
-            // Verify files by SHA-256; a mismatch means a corrupt copy -- remove it and fail.
-            if verify { try verifyCopy(source: source, dest: dest) }
+        ) { source, dest, onBytes, publish in
+            try ProgressiveCopy.withStagedCopy(
+                from: source, beside: dest, onBytes: onBytes, shouldCancel: shouldCancel
+            ) { staged in
+                if verify { try verifyCopy(source: source, dest: staged) }
+                try publish(staged, dest)
+            }
         }
     }
 
@@ -397,41 +411,87 @@ public enum FileOperations {
         apply(
             urls, into: destination, action: .moved, onConflict: onConflict,
             shouldCancel: shouldCancel, report: report
-        ) { source, dest, onBytes in
-            // iCloud / file-provider items must be moved through NSFileCoordinator. A raw moveItem on
-            // an online-only item "succeeds" but the provider never releases the source, so a cut+paste
-            // silently duplicates (the file lands at the destination AND stays in iCloud). Route those
-            // through a coordinated move that also verifies the source is actually gone.
+        ) { source, dest, onBytes, publish in
+            // File providers must coordinate the source and destination before accessing either.
             if requiresCoordinatedMove(from: source, to: dest) {
                 try coordinatedMove(
-                    from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
-                return
-            }
-            // A same-volume move is an instant rename (same inode, no bytes copied). A cross-volume
-            // move must physically copy then delete the source, so stream it with progress and only
-            // unlink the source once the copy fully lands -- rolling the copy back if the delete
-            // fails, so the move stays all-or-nothing.
-            if sameVolume(source, dest) {
-                try FileManager.default.moveItem(at: source, to: dest)
+                    from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel,
+                    publish: publish)
             } else {
-                try ProgressiveCopy.copy(
-                    from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel)
-                do {
-                    try FileManager.default.removeItem(at: source)
-                } catch {
-                    // The copy landed but the source couldn't be removed, so the move didn't complete.
-                    // Roll the copy back so there's no duplicate; if the rollback ALSO fails, a stray
-                    // copy is left at the destination -- say so explicitly rather than reporting a bare
-                    // "move failed" that hides the duplicate.
-                    do {
-                        try FileManager.default.removeItem(at: dest)
-                    } catch {
-                        throw MoveIncompleteError(name: source.lastPathComponent)
-                    }
-                    throw error
-                }
+                try moveItem(
+                    from: source, to: dest, onBytes: onBytes, shouldCancel: shouldCancel,
+                    publish: publish)
             }
         }
+    }
+
+    private static func moveItem(
+        from source: URL, to dest: URL,
+        onBytes: @escaping (Int64) -> Void, shouldCancel: @escaping () -> Bool,
+        publish: PublishMove
+    ) throws {
+        if sameVolume(source, dest) {
+            try publish(source, dest)
+            return
+        }
+        try ProgressiveCopy.withStagedCopy(
+            from: source, beside: dest, onBytes: onBytes, shouldCancel: shouldCancel
+        ) { staged in
+            try publish(staged, dest)
+        }
+
+        do {
+            try removeSourceItem(source, copiedTo: dest)
+        } catch {
+            // This copy may be the only surviving location for descendants already unlinked.
+            throw incompleteMove(from: source, to: dest, cause: error)
+        }
+    }
+
+    private static func removeSourceItem(_ url: URL, copiedTo copy: URL) throws {
+        var item = stat()
+        guard lstat(url.path, &item) == 0 else { throw removalError(errno, at: url) }
+        // A new descendant can appear after the copyfile walk. Never delete an entry for
+        // which no corresponding copy exists.
+        var copied = stat()
+        let type = item.st_mode & S_IFMT
+        guard lstat(copy.path, &copied) == 0, copied.st_mode & S_IFMT == type,
+            type != S_IFREG || item.st_size == copied.st_size
+        else { throw removalError(EBUSY, at: url) }
+        if type == S_IFDIR {
+            let children = try FileManager.default.contentsOfDirectory(
+                at: url, includingPropertiesForKeys: nil)
+            for child in children {
+                try removeSourceItem(
+                    child, copiedTo: copy.appendingPathComponent(child.lastPathComponent))
+            }
+            guard rmdir(url.path) == 0 else { throw removalError(errno, at: url) }
+        } else {
+            guard unlink(url.path) == 0 else { throw removalError(errno, at: url) }
+        }
+    }
+
+    private static func removalError(_ code: Int32, at url: URL) -> NSError {
+        NSError(
+            domain: NSPOSIXErrorDomain, code: Int(code),
+            userInfo: [
+                NSFilePathErrorKey: url.path,
+                NSLocalizedDescriptionKey: "\(String(cString: strerror(code))): \(url.path)",
+            ])
+    }
+
+    private static func incompleteMove(from source: URL, to dest: URL, cause: Error)
+        -> MoveIncompleteError
+    {
+        var items = [source]
+        if let children = FileManager.default.enumerator(
+            at: source, includingPropertiesForKeys: nil)
+        {
+            for case let child as URL in children { items.append(child) }
+        }
+        return MoveIncompleteError(
+            destination: dest, remainingSourceItems: items,
+            cleanupFailure: cause.localizedDescription)
     }
 
     /// Whether `source` and the folder that will hold `dest` live on the same volume. A move
@@ -466,9 +526,11 @@ public enum FileOperations {
     /// (iCloud reported success without releasing it), surface it instead of leaving a silent duplicate.
     static func coordinatedMove(
         from source: URL, to dest: URL, onBytes: @escaping (Int64) -> Void,
-        shouldCancel: @escaping () -> Bool
+        shouldCancel: @escaping () -> Bool,
+        publish: (URL, URL) throws -> Void = { from, to in
+            try FileManager.default.moveItem(at: from, to: to)
+        }
     ) throws {
-        let fm = FileManager.default
         var coordError: NSError?
         var opError: Error?
         NSFileCoordinator().coordinate(
@@ -476,20 +538,16 @@ public enum FileOperations {
             error: &coordError
         ) { coordinatedSource, coordinatedDest in
             do {
-                if sameVolume(coordinatedSource, coordinatedDest) {
-                    try fm.moveItem(at: coordinatedSource, to: coordinatedDest)
-                } else {
-                    try ProgressiveCopy.copy(
-                        from: coordinatedSource, to: coordinatedDest, onBytes: onBytes,
-                        shouldCancel: shouldCancel)
-                    try fm.removeItem(at: coordinatedSource)
-                }
+                try moveItem(
+                    from: coordinatedSource, to: coordinatedDest, onBytes: onBytes,
+                    shouldCancel: shouldCancel, publish: publish)
             } catch { opError = error }
         }
-        if let coordError { throw coordError }
         if let opError { throw opError }
-        if fm.fileExists(atPath: source.path) {
-            throw MoveIncompleteError(name: source.lastPathComponent)
+        if let coordError { throw coordError }
+        var sourceInfo = stat()
+        if lstat(source.path, &sourceInfo) == 0 {
+            throw incompleteMove(from: source, to: dest, cause: removalError(EBUSY, at: source))
         }
     }
 
@@ -614,7 +672,7 @@ public enum FileOperations {
         _ sources: [URL], into destination: URL,
         action: Action, onConflict: ConflictResolution,
         shouldCancel: @escaping () -> Bool, report: @escaping (Progress) -> Void,
-        _ op: (URL, URL, _ onItemBytes: @escaping (Int64) -> Void) throws -> Void
+        _ op: (URL, URL, _ onItemBytes: @escaping (Int64) -> Void, PublishMove) throws -> Void
     ) -> Outcome {
         let fm = FileManager.default
         var outcome = Outcome()
@@ -629,6 +687,7 @@ public enum FileOperations {
             let base = progress.completedBytes  // bytes fully done before this item
             var to = destination.appendingPathComponent(name)
             var replacedTrash: URL?  // where a Replace put the overwritten file (for undo)
+            var published = false
             do {
                 // Never act on the source onto itself: a no-op self-transfer via a
                 // different spelling, a symlink, or letter case on a case-insensitive
@@ -652,30 +711,46 @@ public enum FileOperations {
                         Failure(name: name, reason: "A folder can’t be moved inside itself."))
                     continue
                 }
-                if fm.fileExists(atPath: to.path) {
+                var replacing = false
+                var destinationInfo = stat()
+                if lstat(to.path, &destinationInfo) == 0 {
                     switch onConflict {
                     case .skip:
                         outcome.skipped.append(name)
                         continue
                     case .replace:
-                        var landed: NSURL?
-                        try fm.trashItem(at: to, resultingItemURL: &landed)
-                        replacedTrash = landed as URL?  // remember it so undo can restore it
+                        replacing = true
                     case .keepBoth:
                         to = uniqueDestination(to)
                     }
                 }
                 do {
-                    try op(from, to) { copiedInItem in
-                        // Live intra-file progress: cap at the item's own size so a slightly
-                        // ahead-of-itself count never pushes the bar past this item.
-                        progress.completedBytes = base + min(copiedInItem, itemBytes)
-                        report(progress)
-                    }
+                    try op(
+                        from, to,
+                        { copiedInItem in
+                            // Live intra-file progress: cap at the item's own size so a slightly
+                            // ahead-of-itself count never pushes the bar past this item.
+                            progress.completedBytes = base + min(copiedInItem, itemBytes)
+                            report(progress)
+                        },
+                        { ready, final in
+                            if replacing {
+                                var current = stat()
+                                guard lstat(final.path, &current) == 0,
+                                    current.st_dev == destinationInfo.st_dev,
+                                    current.st_ino == destinationInfo.st_ino
+                                else { throw removalError(EBUSY, at: final) }
+                                var landed: NSURL?
+                                try fm.trashItem(at: final, resultingItemURL: &landed)
+                                replacedTrash = landed as URL?
+                            }
+                            try fm.moveItem(at: ready, to: final)
+                            published = true
+                        })
                 } catch {
-                    // Replace already trashed the old destination. If the op then fails, restore it
-                    // so a failed replace doesn't silently leave the user's file in the Trash.
-                    if let trashed = replacedTrash {
+                    // Restore only if the replacement never landed. Cleanup failures after
+                    // publication leave the full copy in place and do not create an undo entry.
+                    if !published, let trashed = replacedTrash {
                         do {
                             try fm.moveItem(at: trashed, to: to)
                         } catch {
@@ -710,7 +785,10 @@ public enum FileOperations {
                 break
             } catch {
                 progress.completedBytes = base  // a failed item contributes nothing to the bar
-                outcome.failures.append(Failure(name: name, reason: error.localizedDescription))
+                outcome.failures.append(
+                    Failure(
+                        name: name, reason: error.localizedDescription,
+                        incompleteMove: error as? MoveIncompleteError))
             }
             progress.completedItems = index + 1
             report(progress)

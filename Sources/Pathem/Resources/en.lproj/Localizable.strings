@@ -1799,3 +1799,6 @@
 "xattr.title" = "Extended Attributes";
 "xattr.titleFor" = "Extended Attributes: %@";
 
+
+"bvc.moveIncomplete" = "Moved, but %1$d item(s) could not be removed from the original location. The full copy is at %2$@. Remaining: %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "This name was removed, but its contents were not overwritten because other hard links share the file.";

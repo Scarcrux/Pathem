@@ -1874,3 +1874,6 @@
 "xattr.removeQuarantine" = "Verwijder quarantaine";
 "xattr.title" = "Uitgebreide kenmerken";
 "xattr.titleFor" = "Uitgebreide kenmerken: %@";
+
+"bvc.moveIncomplete" = "Verplaatst, maar %1$d onderdeel of onderdelen konden niet uit de oorspronkelijke locatie worden verwijderd. De volledige kopie staat op %2$@. Resterend: %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "Deze naam is verwijderd, maar de inhoud is niet overschreven omdat andere harde koppelingen het bestand delen.";

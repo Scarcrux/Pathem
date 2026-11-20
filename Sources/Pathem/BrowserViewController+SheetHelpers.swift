@@ -41,8 +41,10 @@ extension BrowserViewController {
         field.lineBreakMode = .byTruncatingTail
         // Grow to fit the text (capped), so long names are visible without a giant sheet; the
         // field still scrolls horizontally while editing past the cap.
-        let fitting = field.cell?.cellSize(
-            forBounds: NSRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: 24)).width ?? 300
+        let fitting =
+            field.cell?.cellSize(
+                forBounds: NSRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude, height: 24)
+            ).width ?? 300
         field.frame = NSRect(x: 0, y: 0, width: min(520, max(300, ceil(fitting) + 16)), height: 24)
         return field
     }
@@ -58,9 +60,23 @@ extension BrowserViewController {
     func presentFailures(_ failures: [FileOperations.Failure], title: String) {
         let alert = NSAlert()
         alert.alertStyle = .warning
-        alert.messageText = String(format: L("bvc.failuresForItems", "%@ for %d item(s)"), title, failures.count)
-        alert.informativeText =
-            failures.prefix(8).map { "\($0.name): \($0.reason)" }.joined(separator: "\n")
+        alert.messageText = String(
+            format: L("bvc.failuresForItems", "%@ for %d item(s)"), title, failures.count)
+        alert.informativeText = failures.prefix(8).map { failure in
+            let reason: String
+            if let move = failure.incompleteMove {
+                reason = String(
+                    format: L(
+                        "bvc.moveIncomplete",
+                        "Moved, but %1$d item(s) could not be removed from the original location. The full copy is at %2$@. Remaining: %3$@. %4$@"
+                    ),
+                    move.remainingSourceItems.count, move.destination.path,
+                    move.remainingPathSummary, move.cleanupFailure)
+            } else {
+                reason = failure.reason
+            }
+            return "\(failure.name): \(reason)"
+        }.joined(separator: "\n")
         if let window = view.window {
             alert.beginSheetModal(for: window, completionHandler: nil)
         } else {
@@ -73,6 +89,10 @@ extension BrowserViewController {
         alert.messageText = title
         alert.informativeText = text
         alert.addButton(withTitle: L("common.ok", "OK"))
-        if let window = view.window { alert.beginSheetModal(for: window) { _ in } } else { alert.runModal() }
+        if let window = view.window {
+            alert.beginSheetModal(for: window) { _ in }
+        } else {
+            alert.runModal()
+        }
     }
 }

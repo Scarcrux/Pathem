@@ -570,62 +570,62 @@
       "reason": "Same plain torrent error report presented with runModal. Fixture: invalid magnet text containing 255-character input. Do not start torrent client.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:55:39:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:57:39:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:51:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:53:21:NSAlert"
       ],
       "reason": "Caller-provided title/body and OK, no edited state. Fixture: title of 80 characters and two 255-character path components in body.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:65:13:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:81:13:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:59:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:61:21:NSAlert"
       ],
       "reason": "Localized caller title/count and first eight failure names/reasons, no custom view. Fixture: eight 255-character names plus permission reasons.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:67:13:runModal": {
+    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:83:13:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:59:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:61:21:NSAlert"
       ],
       "reason": "Localized caller title/count and first eight failure names/reasons, no custom view. Fixture: eight 255-character names plus permission reasons.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:76:39:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:93:13:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:72:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:88:21:NSAlert"
       ],
       "reason": "Caller title/checksum output and OK only. Fixture: 255-character filename with SHA-512, SHA-256, SHA-1 and MD5 text. No checksum computation required for layout.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:76:92:runModal": {
+    "Sources/Pathem/BrowserViewController+SheetHelpers.swift:95:13:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:72:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SheetHelpers.swift:88:21:NSAlert"
       ],
       "reason": "Caller title/checksum output and OK only. Fixture: 255-character filename with SHA-512, SHA-256, SHA-1 and MD5 text. No checksum computation required for layout.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."

@@ -3,103 +3,213 @@ import Testing
 
 @testable import PathemEngine
 
-/// The cross-volume move path is the single highest data-loss risk in the app: it physically
-/// copies the file to another volume and then deletes the user's original. Same-volume moves are
-/// just renames and are covered elsewhere; these tests exercise the copy-then-delete path (and its
-/// rollback) against a real second volume, a RAM disk. Serialized so two RAM disks don't churn
-/// diskutil concurrently.
 @Suite(.serialized) struct CrossVolumeMoveTests {
+    private let payload = Data("fixture bytes".utf8)
+
     @Test func copiesThenDeletesSourceAcrossVolumes() throws {
-        guard let ram = RAMDisk.make() else { return }  // environment forbids a RAM disk: skip, don't fail
-        defer { ram.eject() }
-        let srcDir = try tempDir()
-        defer { try? FileManager.default.removeItem(at: srcDir) }
-        let src = srcDir.appendingPathComponent("data.bin")
-        let payload = Data((0..<200_000).map { UInt8($0 % 251) })  // bigger than one copy buffer
-        try payload.write(to: src)
+        try withVolume { scratch, volume in
+            let source = scratch.appendingPathComponent("data.bin")
+            try payload.write(to: source)
+            let landed = volume.appendingPathComponent(source.lastPathComponent)
+            #expect(!FileOperations.sameVolume(source, landed))
+            let outcome = FileOperations.move(urls: [source], into: volume)
+            #expect(outcome.failures.isEmpty)
+            #expect(outcome.performed.count == 1)
+            #expect(try Data(contentsOf: landed) == payload)
+            #expect(!FileManager.default.fileExists(atPath: source.path))
 
-        // The whole point: source and destination are genuinely different volumes, so the move
-        // takes the copy-then-delete path, not a rename.
-        #expect(!FileOperations.sameVolume(src, ram.mount.appendingPathComponent("data.bin")))
-
-        let outcome = FileOperations.move(urls: [src], into: ram.mount)
-        #expect(outcome.failures.isEmpty)
-        #expect(outcome.performed.count == 1)
-        let landed = ram.mount.appendingPathComponent("data.bin")
-        #expect(FileManager.default.fileExists(atPath: landed.path))
-        #expect((try? Data(contentsOf: landed)) == payload)  // content copied verbatim
-        #expect(!FileManager.default.fileExists(atPath: src.path))  // original physically removed
-    }
-
-    @Test func rollsBackWhenSourceCannotBeRemoved() throws {
-        guard let ram = RAMDisk.make() else { return }
-        defer { ram.eject() }
-        let srcDir = try tempDir()
-        defer {
-            _ = chmod(srcDir.path, 0o700)  // restore write so cleanup can delete it
-            try? FileManager.default.removeItem(at: srcDir)
+            let undo = FileOperations.undo(outcome.performed)
+            #expect(undo.failures.isEmpty)
+            #expect(try Data(contentsOf: source) == payload)
+            #expect(!FileManager.default.fileExists(atPath: landed.path))
         }
-        let src = srcDir.appendingPathComponent("data.bin")
-        try Data((0..<200_000).map { UInt8($0 % 251) }).write(to: src)
-
-        // Read-only parent: the copy still reads the source (r-x), but removeItem(source) can't
-        // unlink it (no write on the parent), so the move must roll the landed copy back.
-        #expect(chmod(srcDir.path, 0o500) == 0)
-        let outcome = FileOperations.move(urls: [src], into: ram.mount)
-        _ = chmod(srcDir.path, 0o700)
-
-        #expect(outcome.failures.count == 1)  // reported as failed, not silently lost
-        #expect(FileManager.default.fileExists(atPath: src.path))  // the original survived
-        // The copy was rolled back, so there's no stray duplicate on the destination volume.
-        #expect(!FileManager.default.fileExists(atPath: ram.mount.appendingPathComponent("data.bin").path))
     }
 
-    private func tempDir() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-xvol-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
-    }
-}
+    enum Protection: CaseIterable { case immutable, readOnlyFolder, denyDeleteACL }
 
-/// A throwaway APFS RAM disk for cross-volume tests. `make()` returns nil when the environment
-/// won't allow one (a restricted sandbox), so the test skips rather than fails.
-private struct RAMDisk {
-    let mount: URL
-    let device: String
+    @Test(arguments: Protection.allCases) func keepsCompleteCopyWhenSourceRemovalFails(
+        _ protection: Protection
+    ) throws {
+        try withVolume { scratch, volume in
+            let tree = scratch.appendingPathComponent("tree")
+            let nested = tree.appendingPathComponent("nested")
+            try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+            let names = (0..<10).map { "sibling-\($0)" } + ["nested/protected"]
+            for name in names { try payload.write(to: tree.appendingPathComponent(name)) }
+            let protected = nested.appendingPathComponent("protected")
+            defer {
+                _ = chflags(protected.path, 0)
+                _ = chmod(nested.path, 0o700)
+                _ = Self.run("/bin/chmod", ["-N", protected.path])
+                let landed = volume.appendingPathComponent("tree/nested/protected")
+                _ = chflags(landed.path, 0)
+                _ = chmod(landed.deletingLastPathComponent().path, 0o700)
+                _ = Self.run("/bin/chmod", ["-N", landed.path])
+            }
+            switch protection {
+            case .immutable: try #require(chflags(protected.path, UInt32(UF_IMMUTABLE)) == 0)
+            case .readOnlyFolder: try #require(chmod(nested.path, 0o555) == 0)
+            case .denyDeleteACL:
+                try #require(
+                    Self.run("/bin/chmod", ["+a", "everyone deny delete", protected.path]))
+            }
 
-    static func make() -> RAMDisk? {
-        // 64 MB = 131072 512-byte sectors; -nomount yields a raw /dev/diskN we then format.
-        guard let device = run("/usr/bin/hdiutil", ["attach", "-nomount", "ram://131072"])?
-            .split(whereSeparator: { $0 == "\n" || $0 == " " }).first.map(String.init),
-            device.hasPrefix("/dev/disk")
-        else { return nil }
-        let name = "PathemXVol\(UUID().uuidString.prefix(8))"
-        guard run("/usr/sbin/diskutil", ["eraseVolume", "APFS", name, device]) != nil else {
-            _ = run("/usr/sbin/diskutil", ["eject", device])
-            return nil
+            let outcome = FileOperations.move(urls: [tree], into: volume)
+            #expect(outcome.failures.count == 1)
+            #expect(outcome.performed.isEmpty)
+            #expect(try Data(contentsOf: protected) == payload)
+            let landed = volume.appendingPathComponent("tree")
+            let incompleteMove = try #require(outcome.failures.first?.incompleteMove)
+            let remainingPaths = incompleteMove.remainingSourceItems.map {
+                $0.resolvingSymlinksInPath().path
+            }
+            #expect(remainingPaths.contains(protected.resolvingSymlinksInPath().path))
+            for name in names {
+                #expect((try? Data(contentsOf: landed.appendingPathComponent(name))) == payload)
+            }
+            #expect(outcome.failures.first?.reason.contains(landed.path) == true)
         }
-        let mount = URL(fileURLWithPath: "/Volumes/\(name)")
-        guard FileManager.default.fileExists(atPath: mount.path) else {
-            _ = run("/usr/sbin/diskutil", ["eject", device])
-            return nil
-        }
-        return RAMDisk(mount: mount, device: device)
     }
 
-    func eject() { _ = RAMDisk.run("/usr/sbin/diskutil", ["eject", device]) }
+    @Test(arguments: [false, true]) func readOnlyDestinationFails(_ acrossVolumes: Bool) throws {
+        let check: (URL, URL) throws -> Void = { scratch, volume in
+            let source = scratch.appendingPathComponent("source")
+            try self.payload.write(to: source)
+            let destination = volume.appendingPathComponent("destination")
+            try FileManager.default.createDirectory(
+                at: destination, withIntermediateDirectories: false)
+            try #require(chmod(destination.path, 0o500) == 0)
+            defer { _ = chmod(destination.path, 0o700) }
+            #expect(throws: (any Error).self) {
+                try ProgressiveCopy.copy(
+                    from: source, to: destination.appendingPathComponent("copy"), onBytes: { _ in })
+            }
+            #expect(try FileManager.default.contentsOfDirectory(atPath: destination.path).isEmpty)
+            #expect(try Data(contentsOf: source) == self.payload)
+        }
+        if acrossVolumes {
+            try withVolume(check)
+        } else {
+            try withScratch { try check($0, $0) }
+        }
+    }
 
-    @discardableResult
-    static func run(_ path: String, _ args: [String]) -> String? {
+    @Test(arguments: [false, true]) func unreadableSourceSurvives(_ directory: Bool) throws {
+        try withVolume { scratch, volume in
+            let source = scratch.appendingPathComponent("source")
+            let file = directory ? source.appendingPathComponent("unreadable") : source
+            if directory {
+                try FileManager.default.createDirectory(
+                    at: source, withIntermediateDirectories: false)
+                try payload.write(to: source.appendingPathComponent("readable"))
+            }
+            try payload.write(to: file)
+            try #require(chmod(file.path, 0) == 0)
+            defer { _ = chmod(file.path, 0o600) }
+            let before = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+            let outcome = FileOperations.move(urls: [source], into: volume)
+            #expect(outcome.failures.count == 1)
+            #expect(outcome.performed.isEmpty)
+            #expect(chmod(file.path, 0o600) == 0)
+            #expect((try? Data(contentsOf: file)) == payload)
+            let after = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+            #expect(Set(before) == Set(after))
+        }
+    }
+
+    @Test(arguments: [false, true]) func unreadableReplaceKeepsOriginal(_ move: Bool) throws {
+        try withVolume { scratch, volume in
+            let source = scratch.appendingPathComponent("conflict")
+            let original = volume.appendingPathComponent("conflict")
+            try Data("replacement".utf8).write(to: source)
+            try payload.write(to: original)
+            try #require(chmod(source.path, 0) == 0)
+            defer { _ = chmod(source.path, 0o600) }
+            let before = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+            let outcome =
+                move
+                ? FileOperations.move(urls: [source], into: volume, onConflict: .replace)
+                : FileOperations.copy(urls: [source], into: volume, onConflict: .replace)
+            #expect(outcome.failures.count == 1)
+            #expect(outcome.performed.isEmpty)
+            #expect((try? Data(contentsOf: original)) == payload)
+            #expect(FileManager.default.fileExists(atPath: source.path))
+            let after = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+            #expect(Set(before) == Set(after))
+        }
+    }
+
+    @Test func diskFullStopsAndRemovesPartialCopy() throws {
+        try withVolume { scratch, volume in
+            let source = scratch.appendingPathComponent("large")
+            let destination = volume.appendingPathComponent("large")
+            try Data(repeating: 0x41, count: 80 << 20).write(to: source)
+            let before = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+            let start = ContinuousClock.now
+            do {
+                try ProgressiveCopy.copy(
+                    from: source, to: destination, onBytes: { _ in },
+                    shouldCancel: { start.duration(to: .now) > .seconds(5) })
+                Issue.record("Copy unexpectedly succeeded")
+            } catch {
+                #expect((error as NSError).domain == NSPOSIXErrorDomain)
+                #expect((error as NSError).code == Int(ENOSPC))
+            }
+            #expect(start.duration(to: .now) < .seconds(5))
+            #expect(!FileManager.default.fileExists(atPath: destination.path))
+            let after = try FileManager.default.contentsOfDirectory(atPath: volume.path)
+            #expect(Set(before) == Set(after))
+        }
+    }
+
+    private func withScratch(_ body: (URL) throws -> Void) throws {
+        let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-xvol-\(UUID())")
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: scratch) }
+        try body(scratch)
+    }
+
+    private func withVolume(_ body: (URL, URL) throws -> Void) throws {
+        try withScratch { scratch in
+            let image = scratch.appendingPathComponent("fixture.dmg")
+            let mount = scratch.appendingPathComponent("mount")
+            guard
+                Self.run(
+                    "/usr/bin/hdiutil",
+                    [
+                        "create", "-size", "64m", "-fs", "APFS", "-volname", "PathemTest",
+                        image.path,
+                    ]),
+                Self.run(
+                    "/usr/bin/hdiutil",
+                    [
+                        "attach", "-nobrowse", "-owners", "on", "-mountpoint", mount.path,
+                        image.path,
+                    ])
+            else {
+                print(
+                    "Skipping cross-volume fixture: hdiutil could not create or attach a 64 MB APFS image"
+                )
+                return
+            }
+            defer {
+                if !Self.run("/usr/bin/hdiutil", ["detach", mount.path]) {
+                    Issue.record("Unable to detach the scratch APFS image")
+                }
+            }
+            try body(scratch, mount)
+        }
+    }
+
+    private static func run(_ path: String, _ args: [String]) -> Bool {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = args
-        let out = Pipe()
-        process.standardOutput = out
-        process.standardError = Pipe()
-        guard (try? process.run()) != nil else { return nil }
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        guard (try? process.run()) != nil else { return false }
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else { return nil }
-        return String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return process.terminationStatus == 0
     }
 }

@@ -1874,3 +1874,6 @@
 "theme.group.dark" = "Dunkle Themen";
 "theme.group.light" = "Helle Themen";
 "theme.group.system" = "Wie System";
+
+"bvc.moveIncomplete" = "Verschoben, aber %1$d Objekt(e) konnten am ursprünglichen Ort nicht entfernt werden. Die vollständige Kopie liegt unter %2$@. Verbleibend: %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "Dieser Name wurde entfernt, aber der Inhalt wurde nicht überschrieben, da andere harte Links dieselbe Datei verwenden.";

@@ -1874,3 +1874,6 @@
 "xattr.removeQuarantine" = "Remover quarentena";
 "xattr.title" = "Atributos estendidos";
 "xattr.titleFor" = "Atributos estendidos: %@";
+
+"bvc.moveIncomplete" = "Movido, mas não foi possível remover %1$d itens do local original. A cópia completa está em %2$@. Itens restantes: %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "Este nome foi removido, mas o conteúdo não foi sobrescrito porque outros links físicos compartilham o arquivo.";

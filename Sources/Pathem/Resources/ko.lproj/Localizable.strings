@@ -1874,3 +1874,6 @@
 "xattr.removeQuarantine" = "격리 해제";
 "xattr.title" = "확장 속성";
 "xattr.titleFor" = "확장 속성: %@";
+
+"bvc.moveIncomplete" = "이동했지만 원래 위치에서 항목 %1$d개를 제거하지 못했습니다. 전체 복사본은 %2$@에 있습니다. 남은 항목: %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "이 이름은 제거했지만 다른 하드 링크가 이 파일을 공유하므로 내용은 덮어쓰지 않았습니다.";

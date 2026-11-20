@@ -456,8 +456,8 @@
     },
     {
       "id": "b24",
-      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:55:39:beginSheetModal",
-      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:51:21:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:57:39:beginSheetModal",
+      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:53:21:NSAlert",
       "source_sha256": "b676374b814971754ded81422eb719761bbc253dc0633c53377b55d97a76ffdb",
       "sheet": true,
       "fixture": "Caller-provided title/body and OK, no edited state. Fixture: title of 80 characters and two 255-character path components in body.",
@@ -473,9 +473,9 @@
     },
     {
       "id": "b25",
-      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:65:13:beginSheetModal",
-      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:59:21:NSAlert",
-      "source_sha256": "ec115b089f66768daae37563d97eb4dd85e4a490c1e614930294dda229491248",
+      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:81:13:beginSheetModal",
+      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:61:21:NSAlert",
+      "source_sha256": "99309cb04856814596b409befde94f6b8ce88d40bbd4113d7303c85dd8efb8fc",
       "sheet": true,
       "fixture": "Localized caller title/count and first eight failure names/reasons, no custom view. Fixture: eight 255-character names plus permission reasons.",
       "message": {
@@ -492,9 +492,9 @@
     },
     {
       "id": "b26",
-      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:67:13:runModal",
-      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:59:21:NSAlert",
-      "source_sha256": "f8fa30e604224937af92938dafb18d73269de10e25fd42fba2ae4dc2c1e3cfae",
+      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:83:13:runModal",
+      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:61:21:NSAlert",
+      "source_sha256": "a8585166b838c6bc8ad0136f75202afed9b27d226b408d6fc7e4a61e39d0b0d2",
       "sheet": false,
       "fixture": "Localized caller title/count and first eight failure names/reasons, no custom view. Fixture: eight 255-character names plus permission reasons.",
       "message": {
@@ -511,9 +511,9 @@
     },
     {
       "id": "b27",
-      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:76:39:beginSheetModal",
-      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:72:21:NSAlert",
-      "source_sha256": "496c9ffb7b01a6ca9632fe5935735b853212a02a6841229ae5e2924ffd5c3bfb",
+      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:93:13:beginSheetModal",
+      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:88:21:NSAlert",
+      "source_sha256": "902557cffd374af688e46f49404c92a6ffec379df721a0d566574e1a36921257",
       "sheet": true,
       "fixture": "Caller title/checksum output and OK only. Fixture: 255-character filename with SHA-512, SHA-256, SHA-1 and MD5 text. No checksum computation required for layout.",
       "message": {
@@ -528,9 +528,9 @@
     },
     {
       "id": "b28",
-      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:76:92:runModal",
-      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:72:21:NSAlert",
-      "source_sha256": "496c9ffb7b01a6ca9632fe5935735b853212a02a6841229ae5e2924ffd5c3bfb",
+      "site": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:95:13:runModal",
+      "builder": "Sources/Pathem/BrowserViewController+SheetHelpers.swift:88:21:NSAlert",
+      "source_sha256": "675b7f01b91bf72b3d878da681770868470d5a1ed6377465c0018af7d06e5d42",
       "sheet": false,
       "fixture": "Caller title/checksum output and OK only. Fixture: 255-character filename with SHA-512, SHA-256, SHA-1 and MD5 text. No checksum computation required for layout.",
       "message": {

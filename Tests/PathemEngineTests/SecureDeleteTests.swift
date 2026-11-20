@@ -5,7 +5,8 @@ import Testing
 
 @Suite struct SecureDeleteTests {
     private func tempDir() throws -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent("pathem-shred-\(UUID().uuidString)")
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-shred-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }
@@ -31,6 +32,38 @@ import Testing
         #expect(result.deleted == ["data.bin"])
         #expect(result.failures.isEmpty)
         #expect(!FileManager.default.fileExists(atPath: file.path))
+    }
+
+    @Test func shredOneHardLinkLeavesOtherBytesIntact() throws {
+        let dir = try tempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let selected = dir.appendingPathComponent("selected")
+        let other = dir.appendingPathComponent("other")
+        let original = Data("shared inode".utf8)
+        try original.write(to: selected)
+        try FileManager.default.linkItem(at: selected, to: other)
+        let result = SecureDelete.shred([selected])
+        #expect(result.deleted == ["selected"])
+        #expect(result.sharedLinksUnlinked == ["selected"])
+        #expect(result.failures.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: selected.path))
+        #expect(try Data(contentsOf: other) == original)
+    }
+
+    @Test func shredCannotOverwriteWhenUnlinkIsDenied() throws {
+        let dir = try tempDir()
+        defer {
+            _ = chmod(dir.path, 0o700)
+            try? FileManager.default.removeItem(at: dir)
+        }
+        let file = dir.appendingPathComponent("protected")
+        let original = Data("keep if deletion fails".utf8)
+        try original.write(to: file)
+        try #require(chmod(dir.path, 0o500) == 0)
+        let result = SecureDelete.shred([file])
+        #expect(result.deleted.isEmpty)
+        #expect(result.failures.count == 1)
+        #expect(try Data(contentsOf: file) == original)
     }
 
     @Test func shredRecursesIntoFolders() throws {

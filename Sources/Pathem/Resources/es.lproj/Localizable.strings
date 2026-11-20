@@ -1874,3 +1874,6 @@
 "theme.group.dark" = "Temas oscuros";
 "theme.group.light" = "Temas claros";
 "theme.group.system" = "Seguir el sistema";
+
+"bvc.moveIncomplete" = "Se realizó el traslado, pero no se pudieron eliminar %1$d elementos de la ubicación original. La copia completa está en %2$@. Elementos restantes: %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "Se eliminó este nombre, pero no se sobrescribió el contenido porque la misma información se comparte con otros enlaces duros.";

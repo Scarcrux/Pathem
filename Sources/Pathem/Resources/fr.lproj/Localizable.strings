@@ -1874,3 +1874,6 @@
 "theme.group.dark" = "Thèmes sombres";
 "theme.group.light" = "Thèmes clairs";
 "theme.group.system" = "Suivre le système";
+
+"bvc.moveIncomplete" = "Déplacement effectué, mais %1$d élément(s) n’ont pas pu être supprimés de l’emplacement d’origine. La copie complète se trouve dans %2$@. Éléments restants : %3$@. %4$@";
+"bvc.secureDeleteSharedLink" = "Ce nom a été supprimé, mais son contenu n’a pas été écrasé, car d’autres liens physiques partagent le fichier.";

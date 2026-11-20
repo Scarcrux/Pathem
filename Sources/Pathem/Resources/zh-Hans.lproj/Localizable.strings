@@ -1874,3 +1874,6 @@
 "theme.group.dark" = "深色主题";
 "theme.group.light" = "浅色主题";
 "theme.group.system" = "跟随系统";
+
+"bvc.moveIncomplete" = "已移动，但无法从原位置移除 %1$d 个项目。完整副本位于 %2$@。剩余项目：%3$@。%4$@";
+"bvc.secureDeleteSharedLink" = "已移除此名称，但由于其他硬链接共享该文件，未覆写其内容。";

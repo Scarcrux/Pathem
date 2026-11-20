@@ -22,12 +22,50 @@ public enum ProgressiveCopy {
         onBytes: @escaping (Int64) -> Void,
         shouldCancel: @escaping () -> Bool = { false }
     ) throws {
+        try withStagedCopy(
+            from: source, beside: destination, onBytes: onBytes, shouldCancel: shouldCancel
+        ) { staged in
+            try FileManager.default.moveItem(at: staged, to: destination)
+        }
+    }
+
+    /// Keep partial data in an owned directory on the target volume. Publishing can only begin
+    /// after the complete copy is verified, and deleting staging never touches the final path.
+    static func withStagedCopy(
+        from source: URL, beside destination: URL,
+        onBytes: @escaping (Int64) -> Void, shouldCancel: @escaping () -> Bool,
+        publish: (URL) throws -> Void
+    ) throws {
+        let parent = destination.deletingLastPathComponent()
+        var template = Array(parent.appendingPathComponent(".pathem-copy.XXXXXX").path.utf8CString)
+        let directory = try template.withUnsafeMutableBufferPointer { buffer in
+            guard let path = mkdtemp(buffer.baseAddress!) else {
+                throw posixError(errno, path: destination.path)
+            }
+            return URL(fileURLWithPath: String(cString: path), isDirectory: true)
+        }
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let staged = directory.appendingPathComponent(destination.lastPathComponent)
+        try copyContents(from: source, to: staged, onBytes: onBytes, shouldCancel: shouldCancel)
+        try publish(staged)
+    }
+
+    private static func copyContents(
+        from source: URL, to destination: URL,
+        onBytes: @escaping (Int64) -> Void, shouldCancel: @escaping () -> Bool
+    ) throws {
+        var sourceInfo = stat()
+        guard lstat(source.path, &sourceInfo) == 0 else {
+            throw posixError(errno, path: source.path)
+        }
+
         // Boxed so the C callback (which can't capture) can reach it through the
         // copyfile "status context" raw pointer.
         final class Context {
-            var base: Int64 = 0        // bytes from files already fully copied in this run
+            var base: Int64 = 0  // bytes from files already fully copied in this run
             var currentCopied: Int64 = 0  // bytes copied so far in the file being copied now
             var cancelled = false
+            var failure: (code: Int32, path: String?)?
             let onBytes: (Int64) -> Void
             let shouldCancel: () -> Bool
             init(_ onBytes: @escaping (Int64) -> Void, _ shouldCancel: @escaping () -> Bool) {
@@ -48,16 +86,24 @@ public enum ProgressiveCopy {
         // within a file, and roll the finished file's bytes into `base` at its FINISH so it stays
         // cumulative across the whole tree. (Rolling in at RECURSE_FILE, not COPY_DATA, is what
         // keeps multi-file trees accurate -- COPIED does not carry across files reliably.)
-        let callback: copyfile_callback_t = { what, stage, cbState, _, _, info in
+        let callback: copyfile_callback_t = { what, stage, cbState, src, dst, info in
+            let callbackErrno = errno
             guard let info else { return COPYFILE_CONTINUE }
             let context = Unmanaged<Context>.fromOpaque(info).takeUnretainedValue()
+            if context.cancelled { return COPYFILE_QUIT }
+            if stage == COPYFILE_ERR {
+                context.failure = (
+                    callbackErrno != 0 ? callbackErrno : EIO,
+                    (dst ?? src).map { String(cString: $0) }
+                )
+                return COPYFILE_QUIT
+            }
             if context.shouldCancel() {
                 context.cancelled = true
                 return COPYFILE_QUIT
             }
-            if what == COPYFILE_COPY_DATA, stage != COPYFILE_ERR {
-                // PROGRESS (partial) and FINISH (final) report real bytes; skip ERR, where COPIED is
-                // stale and the copy is about to fail anyway (apply() resets the item's bytes then).
+            if what == COPYFILE_COPY_DATA {
+                // PROGRESS (partial) and FINISH (final) report real bytes.
                 var copied: off_t = 0
                 _ = copyfile_state_get(cbState, UInt32(COPYFILE_STATE_COPIED), &copied)
                 context.currentCopied = Int64(copied)
@@ -81,20 +127,39 @@ public enum ProgressiveCopy {
         // COPYFILE_ALL = data + metadata (stat, ACLs, xattrs); RECURSIVE walks directories;
         // NOFOLLOW copies a symlink as a symlink rather than its target.
         let flags = copyfile_flags_t(COPYFILE_ALL | COPYFILE_RECURSIVE | COPYFILE_NOFOLLOW)
-        let result = source.withUnsafeFileSystemRepresentation { src -> Int32 in
-            destination.withUnsafeFileSystemRepresentation { dst -> Int32 in
-                copyfile(src, dst, state, flags)
+        var copyErrno: Int32 = 0
+        let result = source.withUnsafeFileSystemRepresentation { src in
+            destination.withUnsafeFileSystemRepresentation { dst in
+                let result = copyfile(src, dst, state, flags)
+                copyErrno = errno
+                return result
             }
         }
 
-        if result != 0 {
-            let posix = errno
-            // Never leave a partial/corrupt copy behind, whether cancelled or failed.
-            try? FileManager.default.removeItem(at: destination)
-            if context.cancelled { throw Cancelled() }
-            throw NSError(
-                domain: NSPOSIXErrorDomain, code: Int(posix),
-                userInfo: [NSLocalizedDescriptionKey: String(cString: strerror(posix))])
+        if let failure = context.failure {
+            throw posixError(failure.code, path: failure.path ?? destination.path)
         }
+        if context.cancelled { throw Cancelled() }
+        guard result == 0 else {
+            throw posixError(copyErrno != 0 ? copyErrno : EIO, path: destination.path)
+        }
+
+        var copied = stat()
+        guard lstat(destination.path, &copied) == 0 else {
+            throw posixError(errno, path: destination.path)
+        }
+        let sourceType = sourceInfo.st_mode & S_IFMT
+        guard copied.st_mode & S_IFMT == sourceType,
+            sourceType != S_IFREG || copied.st_size == sourceInfo.st_size
+        else { throw posixError(EIO, path: destination.path) }
+    }
+
+    private static func posixError(_ code: Int32, path: String) -> NSError {
+        NSError(
+            domain: NSPOSIXErrorDomain, code: Int(code),
+            userInfo: [
+                NSFilePathErrorKey: path,
+                NSLocalizedDescriptionKey: "\(String(cString: strerror(code))): \(path)",
+            ])
     }
 }

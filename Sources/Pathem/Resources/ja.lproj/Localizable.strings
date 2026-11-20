@@ -1874,3 +1874,6 @@
 "theme.group.dark" = "ダークテーマ";
 "theme.group.light" = "ライトテーマ";
 "theme.group.system" = "システムに合わせる";
+
+"bvc.moveIncomplete" = "移動しましたが、元の場所から%1$d個の項目を削除できませんでした。完全なコピーは %2$@ にあります。残っている項目: %3$@。%4$@";
+"bvc.secureDeleteSharedLink" = "この名前は削除されましたが、他のハードリンクがファイルを共有しているため、内容は上書きされませんでした。";

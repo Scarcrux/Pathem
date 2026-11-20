@@ -1874,3 +1874,6 @@
 "xattr.removeQuarantine" = "移除隔離";
 "xattr.title" = "延伸屬性";
 "xattr.titleFor" = "延伸屬性：%@";
+
+"bvc.moveIncomplete" = "已移動，但無法從原位置移除 %1$d 個項目。完整副本位於 %2$@。剩餘項目：%3$@。%4$@";
+"bvc.secureDeleteSharedLink" = "已移除此名稱，但因其他硬連結共用該檔案，未覆寫其內容。";

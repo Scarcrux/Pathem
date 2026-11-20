@@ -328,9 +328,18 @@ extension BrowserViewController {
             Task { @MainActor in
                 let result = await Task.detached { SecureDelete.shred(urls) }.value
                 self.activePane?.reloadIfShowingListing()
-                if !result.failures.isEmpty {
+                let sharedLinks = result.sharedLinksUnlinked.map {
+                    FileOperations.Failure(
+                        name: $0,
+                        reason: L(
+                            "bvc.secureDeleteSharedLink",
+                            "This name was removed, but its contents were not overwritten because other hard links share the file."
+                        ))
+                }
+                let eraseFailures = result.failures + sharedLinks
+                if !eraseFailures.isEmpty {
                     self.presentFailures(
-                        result.failures, title: L("bvc.secureDeleteFailed", "Couldn’t erase"))
+                        eraseFailures, title: L("bvc.secureDeleteFailed", "Couldn’t erase"))
                 }
             }
         }
