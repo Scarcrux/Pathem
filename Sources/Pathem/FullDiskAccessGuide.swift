@@ -22,6 +22,18 @@ enum FullDiskAccess {
     }
 }
 
+/// AppKit declines termination while a document sheet is attached, before consulting
+/// the delegate. The optional FDA guide can safely end first without recording Not Now.
+@MainActor
+final class PathemApplication: NSApplication {
+    var dismissFullDiskAccessGuides: (() -> Void)?
+
+    override func terminate(_ sender: Any?) {
+        dismissFullDiskAccessGuides?()
+        super.terminate(sender)
+    }
+}
+
 /// A guided, step-by-step Full Disk Access sheet (phone-style): numbered steps,
 /// a button straight to the Settings pane, and a live status row that flips to a
 /// green check the moment access is detected, polled on a timer and whenever the
@@ -41,11 +53,13 @@ final class FullDiskAccessGuide: NSObject {
     private weak var host: NSWindow?
     private var timer: Timer?
     private var observer: NSObjectProtocol?
-    private var returnedFromSettings = false
+    private let openSettingsPane: () -> Bool
+    private var openedSettings = false
     private var granted = false
     private var onDismiss: (() -> Void)?
 
-    override init() {
+    init(openSettingsPane: (() -> Bool)? = nil) {
+        self.openSettingsPane = openSettingsPane ?? Self.openPrivacySettings
         panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 360),
             styleMask: [.titled], backing: .buffered, defer: true)
@@ -105,12 +119,16 @@ final class FullDiskAccessGuide: NSObject {
         separator.boxType = .separator
         separator.translatesAutoresizingMaskIntoConstraints = false
 
+        let step1 = stepRow(1, L("fda.step1", "Click the button below to open the settings pane."))
+        let step2 = stepRow(
+            2,
+            L(
+                "fda.step2",
+                "Click + and add Pathem from Applications. macOS may ask for your password."))
+        let step3 = stepRow(
+            3, L("fda.step3", "After adding Pathem, use Relaunch Pathem here to apply access."))
         let stack = NSStackView(views: [
-            title, subtitle,
-            stepRow(1, L("fda.step1", "Click the button below to open the settings pane.")),
-            openButton,
-            stepRow(2, L("fda.step2", "Click the + button (or the toggle) and add Pathem.")),
-            stepRow(3, L("fda.step3", "Come back to Pathem. It detects access automatically.")),
+            title, subtitle, step1, openButton, step2, step3,
             separator,
             statusRow,
             buttonRow,
@@ -128,6 +146,9 @@ final class FullDiskAccessGuide: NSObject {
             stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: content.bottomAnchor, constant: -18),
             subtitle.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            step1.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            step2.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            step3.widthAnchor.constraint(equalTo: stack.widthAnchor),
             buttonRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
             separator.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
@@ -156,26 +177,18 @@ final class FullDiskAccessGuide: NSObject {
     }
 
     func present(over window: NSWindow, onDismiss: @escaping () -> Void) {
-        // Tear down any prior run's timer/observer first so a second present() can't
-        // leak them (mirrors dismiss()).
-        timer?.invalidate()
-        timer = nil
-        if let observer { NotificationCenter.default.removeObserver(observer) }
-        observer = nil
+        guard host == nil, window.attachedSheet == nil else { return }
 
         self.host = window
         self.onDismiss = onDismiss
-        granted = false
-        returnedFromSettings = false
+        granted = FullDiskAccess.isGranted()
+        openedSettings = false
         updateStatus()
 
         observer = NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated {
-                self?.returnedFromSettings = true
-                self?.check()
-            }
+            MainActor.assumeIsolated { self?.check() }
         }
         timer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.check() }
@@ -188,8 +201,8 @@ final class FullDiskAccessGuide: NSObject {
         if FullDiskAccess.isGranted() {
             granted = true
             updateStatus()
-        } else if returnedFromSettings {
-            // They visited Settings but we still can't read; a relaunch applies it.
+        } else if openedSettings {
+            // Settings opened from this presentation. A relaunch applies the grant.
             statusLabel.stringValue = L(
                 "fda.addedRelaunchHint", "Added Pathem? A relaunch will apply it.")
             relaunchButton.isHidden = false
@@ -217,6 +230,7 @@ final class FullDiskAccessGuide: NSObject {
             spinner.startAnimation(nil)
             statusIcon.isHidden = true
             statusLabel.stringValue = L("fda.waitingForAccess", "Waiting for access…")
+            relaunchButton.isHidden = true
             // Still just the "Not Now" dismiss: keep it subdued behind the Open Settings button.
             primaryButton.title = L("fda.notNow", "Not Now")
             primaryButton.keyEquivalent = ""
@@ -226,11 +240,18 @@ final class FullDiskAccessGuide: NSObject {
     }
 
     @objc private func openSettings() {
-        if let url = URL(
-            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
-        {
-            NSWorkspace.shared.open(url)
+        if openSettingsPane() {
+            openedSettings = true
+            check()
         }
+    }
+
+    private static func openPrivacySettings() -> Bool {
+        guard
+            let url = URL(
+                string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")
+        else { return false }
+        return NSWorkspace.shared.open(url)
     }
 
     @objc private func relaunch() {
@@ -242,14 +263,20 @@ final class FullDiskAccessGuide: NSObject {
         }
     }
 
-    @objc private func primaryClicked() { dismiss() }
+    @objc private func primaryClicked() { dismiss(notify: true) }
 
-    private func dismiss() {
+    func dismissForTermination() { dismiss(notify: false) }
+
+    private func dismiss(notify: Bool) {
+        guard let host else { return }
         timer?.invalidate()
         timer = nil
         if let observer { NotificationCenter.default.removeObserver(observer) }
         observer = nil
-        if let host { host.endSheet(panel) } else { panel.orderOut(nil) }
-        onDismiss?()
+        self.host = nil
+        let callback = onDismiss
+        onDismiss = nil
+        host.endSheet(panel)
+        if notify { callback?() }
     }
 }

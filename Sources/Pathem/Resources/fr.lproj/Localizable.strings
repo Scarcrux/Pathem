@@ -738,8 +738,8 @@
 "fda.panelTitle" = "Accès complet au disque";
 "fda.relaunchButton" = "Redémarrer Pathem";
 "fda.step1" = "Cliquez sur le bouton ci-dessous pour ouvrir la sous-fenêtre des réglages.";
-"fda.step2" = "Cliquez sur le bouton + (ou sur l’interrupteur) et ajoutez Pathem.";
-"fda.step3" = "Revenez à Pathem. Il détecte l’accès automatiquement.";
+"fda.step2" = "Cliquez sur + et ajoutez Pathem depuis Applications. macOS peut demander votre mot de passe.";
+"fda.step3" = "Après avoir ajouté Pathem, relancez-le ici pour appliquer l’accès.";
 "fda.subtitle" = "Votre dossier personnel fonctionne désormais. Pour tout parcourir (autres utilisateurs, dossiers système et certaines données d’app), ajoutez Pathem à Accès complet au disque.";
 "fda.waitingForAccess" = "En attente de l’accès…";
 "filesearch.choose" = "Choisir un dossier";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "Déplacement effectué, mais %1$d élément(s) n’ont pas pu être supprimés de l’emplacement d’origine. La copie complète se trouve dans %2$@. Éléments restants : %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "Ce nom a été supprimé, mais son contenu n’a pas été écrasé, car d’autres liens physiques partagent le fichier.";
+
+"menu.help.fullDiskAccess" = "Guide d’accès complet au disque…";

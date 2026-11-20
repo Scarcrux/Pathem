@@ -739,8 +739,8 @@
 "fda.panelTitle" = "전체 디스크 접근 권한";
 "fda.relaunchButton" = "Pathem 다시 열기";
 "fda.step1" = "아래 버튼을 클릭하여 설정 패널을 여십시오.";
-"fda.step2" = "+ 버튼(또는 토글)을 클릭하고 Pathem을 추가하십시오.";
-"fda.step3" = "Pathem으로 돌아오십시오. 접근 권한을 자동으로 감지합니다.";
+"fda.step2" = "+를 클릭하고 응용 프로그램에서 Pathem을 추가하세요. macOS에서 암호를 요청할 수 있습니다.";
+"fda.step3" = "Pathem을 추가한 후 여기에서 다시 실행하여 접근 권한을 적용하세요.";
 "fda.subtitle" = "홈 폴더는 지금 사용할 수 있습니다. 모든 항목(다른 사용자, 시스템 폴더, 일부 앱 데이터)을 탐색하려면 전체 디스크 접근 권한에 Pathem을 추가하십시오.";
 "fda.waitingForAccess" = "접근 권한을 기다리는 중…";
 "filesearch.choose" = "폴더 선택";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "이동했지만 원래 위치에서 항목 %1$d개를 제거하지 못했습니다. 전체 복사본은 %2$@에 있습니다. 남은 항목: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "이 이름은 제거했지만 다른 하드 링크가 이 파일을 공유하므로 내용은 덮어쓰지 않았습니다.";
+
+"menu.help.fullDiskAccess" = "전체 디스크 접근 가이드…";

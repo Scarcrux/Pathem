@@ -739,8 +739,8 @@
 "fda.panelTitle" = "Accesso completo al disco";
 "fda.relaunchButton" = "Riavvia Pathem";
 "fda.step1" = "Clicca sul pulsante qui sotto per aprire il pannello delle impostazioni.";
-"fda.step2" = "Clicca sul pulsante + (o sull’interruttore) e aggiungi Pathem.";
-"fda.step3" = "Torna a Pathem. Rileva l’accesso automaticamente.";
+"fda.step2" = "Fai clic su + e aggiungi Pathem da Applicazioni. macOS potrebbe chiederti la password.";
+"fda.step3" = "Dopo aver aggiunto Pathem, riaprilo da qui per applicare l’accesso.";
 "fda.subtitle" = "La tua cartella Home funziona già. Per esplorare tutto (altri utenti, cartelle di sistema e alcuni dati delle app), aggiungi Pathem ad Accesso completo al disco.";
 "fda.waitingForAccess" = "In attesa dell’accesso…";
 "filesearch.choose" = "Scegli cartella";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "Spostamento eseguito, ma non è stato possibile rimuovere %1$d elementi dalla posizione originale. La copia completa è in %2$@. Elementi rimasti: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "Il nome è stato rimosso, ma il contenuto non è stato sovrascritto perché altri collegamenti fisici condividono il file.";
+
+"menu.help.fullDiskAccess" = "Guida all’accesso completo al disco…";

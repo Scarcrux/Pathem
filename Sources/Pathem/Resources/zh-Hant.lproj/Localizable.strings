@@ -739,8 +739,8 @@
 "fda.panelTitle" = "完整磁碟取用權限";
 "fda.relaunchButton" = "重新打開 Pathem";
 "fda.step1" = "點按下方按鈕以打開設定面板。";
-"fda.step2" = "點按 + 按鈕（或開關）並加入 Pathem。";
-"fda.step3" = "回到 Pathem。它會自動偵測取用權限。";
+"fda.step2" = "點按 +，從「應用程式」加入 Pathem。macOS 可能會要求輸入密碼。";
+"fda.step3" = "加入 Pathem 後，在這裡重新啟動 Pathem 以套用取用權限。";
 "fda.subtitle" = "你的家檔案夾目前可以使用。若要瀏覽所有內容（其他使用者、系統檔案夾和部分 App 資料），請將 Pathem 加入「完整磁碟取用權限」。";
 "fda.waitingForAccess" = "正在等待授權…";
 "filesearch.choose" = "選擇檔案夾";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "已移動，但無法從原位置移除 %1$d 個項目。完整副本位於 %2$@。剩餘項目：%3$@。%4$@";
 "bvc.secureDeleteSharedLink" = "已移除此名稱，但因其他硬連結共用該檔案，未覆寫其內容。";
+
+"menu.help.fullDiskAccess" = "完整磁碟取用權限指南…";

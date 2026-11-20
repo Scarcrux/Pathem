@@ -739,8 +739,8 @@
 "fda.panelTitle" = "Full Disk Access";
 "fda.relaunchButton" = "Relaunch Pathem";
 "fda.step1" = "Click the button below to open the settings pane.";
-"fda.step2" = "Click the + button (or the toggle) and add Pathem.";
-"fda.step3" = "Come back to Pathem. It detects access automatically.";
+"fda.step2" = "Click + and add Pathem from Applications. macOS may ask for your password.";
+"fda.step3" = "After adding Pathem, use Relaunch Pathem here to apply access.";
 "fda.subtitle" = "Your home folder works now. To browse everything (other users, system folders, and some app data), add Pathem to Full Disk Access.";
 "fda.waitingForAccess" = "Waiting for access…";
 "filesearch.choose" = "Choose Folder";
@@ -1802,3 +1802,5 @@
 
 "bvc.moveIncomplete" = "Moved, but %1$d item(s) could not be removed from the original location. The full copy is at %2$@. Remaining: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "This name was removed, but its contents were not overwritten because other hard links share the file.";
+
+"menu.help.fullDiskAccess" = "Full Disk Access Guide…";

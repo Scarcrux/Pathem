@@ -738,8 +738,8 @@
 "fda.panelTitle" = "Acceso total al disco";
 "fda.relaunchButton" = "Reiniciar Pathem";
 "fda.step1" = "Haz clic en el botón de abajo para abrir el panel de ajustes.";
-"fda.step2" = "Haz clic en el botón + (o en el conmutador) y añade Pathem.";
-"fda.step3" = "Vuelve a Pathem. Detecta el acceso automáticamente.";
+"fda.step2" = "Haz clic en + y añade Pathem desde Aplicaciones. macOS puede pedirte la contraseña.";
+"fda.step3" = "Después de añadir Pathem, usa aquí «Reabrir Pathem» para aplicar el acceso.";
 "fda.subtitle" = "Tu carpeta de inicio ya funciona. Para explorar todo (otros usuarios, carpetas del sistema y algunos datos de apps), añade Pathem a Acceso a disco completo.";
 "fda.waitingForAccess" = "Esperando el acceso…";
 "filesearch.choose" = "Elegir carpeta";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "Se realizó el traslado, pero no se pudieron eliminar %1$d elementos de la ubicación original. La copia completa está en %2$@. Elementos restantes: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "Se eliminó este nombre, pero no se sobrescribió el contenido porque la misma información se comparte con otros enlaces duros.";
+
+"menu.help.fullDiskAccess" = "Guía de acceso total al disco…";

@@ -739,8 +739,8 @@
 "fda.panelTitle" = "Toegang tot volledige schijf";
 "fda.relaunchButton" = "Start Pathem opnieuw";
 "fda.step1" = "Klik op de knop hieronder om het instellingenpaneel te openen.";
-"fda.step2" = "Klik op de knop + (of de schakelaar) en voeg Pathem toe.";
-"fda.step3" = "Ga terug naar Pathem. Het herkent de toegang automatisch.";
+"fda.step2" = "Klik op + en voeg Pathem toe vanuit Apps. macOS kan om je wachtwoord vragen.";
+"fda.step3" = "Start Pathem hier opnieuw nadat je het hebt toegevoegd om de toegang toe te passen.";
 "fda.subtitle" = "Je thuismap werkt nu al. Voeg Pathem toe aan Toegang tot volledige schijf om alles te bekijken (andere gebruikers, systeemmappen en sommige appgegevens).";
 "fda.waitingForAccess" = "Wachten op toegang…";
 "filesearch.choose" = "Kies map";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "Verplaatst, maar %1$d onderdeel of onderdelen konden niet uit de oorspronkelijke locatie worden verwijderd. De volledige kopie staat op %2$@. Resterend: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "Deze naam is verwijderd, maar de inhoud is niet overschreven omdat andere harde koppelingen het bestand delen.";
+
+"menu.help.fullDiskAccess" = "Gids voor volledige schijftoegang…";

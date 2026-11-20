@@ -738,8 +738,8 @@
 "fda.panelTitle" = "Vollständiger Festplattenzugriff";
 "fda.relaunchButton" = "Pathem neu starten";
 "fda.step1" = "Klicke auf die Taste unten, um den Einstellungsbereich zu öffnen.";
-"fda.step2" = "Klicke auf die Taste „+“ (oder den Schalter) und füge Pathem hinzu.";
-"fda.step3" = "Kehre zu Pathem zurück. Der Zugriff wird automatisch erkannt.";
+"fda.step2" = "Klicke auf + und füge Pathem aus dem Ordner „Programme“ hinzu. macOS fragt möglicherweise nach deinem Passwort.";
+"fda.step3" = "Starte Pathem danach hier neu, um den Zugriff zu übernehmen.";
 "fda.subtitle" = "Ihr Benutzerordner funktioniert jetzt. Um alles zu durchsuchen (andere Benutzer, Systemordner und einige App-Daten), fügen Sie Pathem zum Festplattenvollzugriff hinzu.";
 "fda.waitingForAccess" = "Warten auf Zugriff…";
 "filesearch.choose" = "Ordner wählen";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "Verschoben, aber %1$d Objekt(e) konnten am ursprünglichen Ort nicht entfernt werden. Die vollständige Kopie liegt unter %2$@. Verbleibend: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "Dieser Name wurde entfernt, aber der Inhalt wurde nicht überschrieben, da andere harte Links dieselbe Datei verwenden.";
+
+"menu.help.fullDiskAccess" = "Anleitung zum Festplattenvollzugriff…";

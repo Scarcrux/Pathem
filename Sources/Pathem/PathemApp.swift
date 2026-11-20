@@ -118,7 +118,12 @@ enum PathemApp {
         // A broken pipe to a subprocess (curl/sftp exiting mid-write) must never
         // deliver a fatal signal; the remote runner handles the error instead.
         signal(SIGPIPE, SIG_IGN)
-        let app = NSApplication.shared
+        let app = PathemApplication.shared
+        (app as? PathemApplication)?.dismissFullDiskAccessGuides = {
+            for browser in WindowManager.shared.browsers {
+                browser.dismissFullDiskAccessGuideForTermination()
+            }
+        }
         app.setActivationPolicy(.regular)
         let updater = UpdaterController()
         app.mainMenu = makeMainMenu(updater: updater)
@@ -1953,13 +1958,14 @@ enum PathemApp {
             action: #selector(NSApplication.arrangeInFront(_:)), keyEquivalent: "")
         NSApplication.shared.windowsMenu = windowMenu
 
-        // Help: an in-app changelog the user opens on demand (never forced on them).
+        // Help: onboarding, demo workspace, and the in-app changelog.
         let helpItem = NSMenuItem()
         mainMenu.addItem(helpItem)
         let helpMenu = NSMenu(title: L("menu.help", "Help"))
         helpItem.submenu = helpMenu
         helpMenu.addItem(commandItem("Load Demo Workspace", "help.demoWorkspace"))
         helpMenu.addItem(commandItem("Release Notes", "help.releaseNotes"))
+        helpMenu.addItem(commandItem("Full Disk Access Guide…", "help.fullDiskAccess"))
         NSApplication.shared.helpMenu = helpMenu
 
         return mainMenu

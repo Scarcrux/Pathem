@@ -679,6 +679,9 @@ extension BrowserViewController {
         add("help.releaseNotes", L("bvc.cmd.releaseNotes", "Release Notes")) {
             ChangelogWindowController.shared.present()
         }
+        add("help.fullDiskAccess", L("menu.help.fullDiskAccess", "Full Disk Access Guide…")) {
+            [weak self] in self?.showFullDiskAccessGuide()
+        }
         add("help.demoWorkspace", L("bvc.cmd.demoWorkspace", "Load Demo Workspace")) {
             [weak self] in self?.loadDemoWorkspace()
         }

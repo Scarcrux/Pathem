@@ -254,7 +254,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
     static let compactSidebarWidth = BrowserSplitLayoutController.compactSidebarWidth
     /// Guided Full Disk Access walkthrough (first launch, until granted).
-    private lazy var fdaGuide = FullDiskAccessGuide()
+    private var fdaGuide: FullDiskAccessGuide?
     lazy var infoInspector = InfoInspectorController()
     lazy var connectionsController = ConnectionsController()
     lazy var transferController: TransferQueueController = {
@@ -1003,23 +1003,26 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         maybeOfferDemoWorkspace()  // first-run tour, once FDA is granted (never stacks on the FDA guide)
     }
 
-    /// Show the guided Full Disk Access walkthrough when we don't have access and
-    /// the user hasn't dismissed it. It auto-detects the grant and updates live;
-    /// the home folder works without it, so this never blocks use.
+    /// Offer the guide once automatically. Help can reopen it after Not Now.
     private func maybePromptFullDiskAccess() {
-        guard !FullDiskAccess.isGranted() else { return }
-        guard !UserDefaults.standard.bool(forKey: "pathem.fdaGuideDismissed") else { return }
-        DispatchQueue.main.async { [weak self] in
-            guard let self, let window = self.view.window else { return }
-            self.fdaGuide.present(over: window) {
-                // Remember a skip only when access still isn't granted, so we stop
-                // nagging but reappear nothing once it's actually on.
-                if !FullDiskAccess.isGranted() {
-                    UserDefaults.standard.set(true, forKey: "pathem.fdaGuideDismissed")
-                }
+        guard !PathemApp.isAutomationLaunch, !FullDiskAccess.isGranted(),
+            !UserDefaults.standard.bool(forKey: "pathem.fdaGuideDismissed")
+        else { return }
+        DispatchQueue.main.async { [weak self] in self?.showFullDiskAccessGuide() }
+    }
+
+    func showFullDiskAccessGuide() {
+        guard let window = view.window else { return }
+        let guide = fdaGuide ?? FullDiskAccessGuide()
+        fdaGuide = guide
+        guide.present(over: window) {
+            if !PathemApp.isAutomationLaunch, !FullDiskAccess.isGranted() {
+                UserDefaults.standard.set(true, forKey: "pathem.fdaGuideDismissed")
             }
         }
     }
+
+    func dismissFullDiskAccessGuideForTermination() { fdaGuide?.dismissForTermination() }
 
     /// Mark a pane (in some side) as the active one: move the accent border to it
     /// and remember which side it belongs to (so transfers target the other side).

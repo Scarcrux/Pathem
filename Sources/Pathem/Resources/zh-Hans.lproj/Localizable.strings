@@ -738,8 +738,8 @@
 "fda.panelTitle" = "完全磁盘访问权限";
 "fda.relaunchButton" = "重新启动 Pathem";
 "fda.step1" = "点按下方按钮以打开设置面板。";
-"fda.step2" = "点按 + 按钮（或开关）并添加 Pathem。";
-"fda.step3" = "返回 Pathem。它会自动检测访问权限。";
+"fda.step2" = "点按 +，从“应用程序”添加 Pathem。macOS 可能会要求输入密码。";
+"fda.step3" = "添加 Pathem 后，在这里重新启动 Pathem 以应用访问权限。";
 "fda.subtitle" = "您的个人文件夹现在可用。要浏览所有内容（其他用户、系统文件夹和某些 App 数据），请将 Pathem 添加到完全磁盘访问权限。";
 "fda.waitingForAccess" = "正在等待访问权限…";
 "filesearch.choose" = "选择文件夹";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "已移动，但无法从原位置移除 %1$d 个项目。完整副本位于 %2$@。剩余项目：%3$@。%4$@";
 "bvc.secureDeleteSharedLink" = "已移除此名称，但由于其他硬链接共享该文件，未覆写其内容。";
+
+"menu.help.fullDiskAccess" = "完全磁盘访问权限指南…";

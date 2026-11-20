@@ -2147,6 +2147,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20 launch QA Batch 1 landed locally at d5d2a97. A scratch APFS baseline reproduced swallowed copy I/O errors, original and replacement data loss, and secure overwrite before unlink. Copy errors now abort staging; cross-volume cleanup retains the complete copy and stops at the first source error; Replace stages before trashing; secure erase unlinks before writing and leaves shared inodes intact. Full Swift suite 867/867, 12-catalog lint, and presentation inventory passed. The separate full transient recipe tests already fail on main at stale m51, f31, and class B provenance pins. FDA, localization and layout, and remaining engine fixes are separate batches."
     at = "2026-11-20T14:20:40Z"
 
+  [[mission.comment]]
+    text = "2026-11-20 launch QA Batch 2: native FDA probe reproduced stale relaunch status after unrelated activation and AppKit refusing terminate before reaching its delegate. The guide now waits for its Settings action, can reopen from Help after Not Now, and ends before AppKit termination without recording a dismissal. Isolated native treatment passed all 12 checks, including willTerminate. Updated English and all 11 translations. Live Sparkle installation was not rerun."
+    at = "2026-11-20T14:29:10Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"

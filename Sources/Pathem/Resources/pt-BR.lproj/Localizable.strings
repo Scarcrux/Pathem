@@ -739,8 +739,8 @@
 "fda.panelTitle" = "Acesso Total ao Disco";
 "fda.relaunchButton" = "Reabrir Pathem";
 "fda.step1" = "Clique no botão abaixo para abrir o painel de ajustes.";
-"fda.step2" = "Clique no botão + (ou no interruptor) e adicione o Pathem.";
-"fda.step3" = "Volte ao Pathem. Ele detecta o acesso automaticamente.";
+"fda.step2" = "Clique em + e adicione o Pathem da pasta Aplicativos. O macOS pode pedir sua senha.";
+"fda.step3" = "Depois de adicionar o Pathem, reinicie-o aqui para aplicar o acesso.";
 "fda.subtitle" = "Sua pasta pessoal já funciona. Para navegar por tudo (outros usuários, pastas do sistema e alguns dados de apps), adicione o Pathem ao Acesso Total ao Disco.";
 "fda.waitingForAccess" = "Aguardando acesso…";
 "filesearch.choose" = "Escolher pasta";
@@ -1877,3 +1877,5 @@
 
 "bvc.moveIncomplete" = "Movido, mas não foi possível remover %1$d itens do local original. A cópia completa está em %2$@. Itens restantes: %3$@. %4$@";
 "bvc.secureDeleteSharedLink" = "Este nome foi removido, mas o conteúdo não foi sobrescrito porque outros links físicos compartilham o arquivo.";
+
+"menu.help.fullDiskAccess" = "Guia de acesso total ao disco…";
