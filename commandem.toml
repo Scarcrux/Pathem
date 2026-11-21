@@ -2179,6 +2179,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20: Full Disk Access panel sizing follow-up. The fixed 360-point content height left 66 points below the English control stack. Fit the panel at its existing reading width with 18-point bottom padding. Initial offscreen checks cover all 12 catalogs, with German and Russian renders reviewed."
     at = "2026-11-21T03:22:06Z"
 
+  [[mission.comment]]
+    text = "2026-11-20: docs home still said no public download (template in scripts/build_site_docs.py missed by the post-release site pass); fixed and redeployed. Sweep of generator, guides.json and site/ found no other pre-release wording."
+    at = "2026-11-21T03:52:27Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
