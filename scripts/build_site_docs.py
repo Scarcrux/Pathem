@@ -144,7 +144,7 @@ def build(data):
     files = {}
     intro = f'''<p class="eyebrow">Pathem documentation</p><h1>Learn your way around.</h1>
 <p class="lead">Practical, step-by-step guides for everyday file work and the tools beyond it.</p>
-<p class="release-note">Already have a trusted build? Start below. A public prebuilt download is not published yet. <a href="/docs/install/">Installation and requirements</a>.</p>
+<p class="release-note">New to Pathem? <a href="https://github.com/Scarcrux/Pathem/releases/latest">Download the latest release</a>, a notarized app for macOS 15 or later that updates itself. See <a href="/docs/install/">Installation and requirements</a>.</p>
 {search_form()}<p class="search-status" id="search-status" role="status" aria-live="polite"></p>
 <section id="search-results" aria-label="Search results" hidden></section>
 <noscript><p>Search needs JavaScript. Every guide below is readable without it; use your browser’s Find command to browse this index.</p></noscript>
