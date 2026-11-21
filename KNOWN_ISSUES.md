@@ -38,8 +38,8 @@ Last reviewed 2026-11-20, after the launch-QA pass recorded in
   per protected location Pathem touches.
 - **Full Disk Access applies after a relaunch.** After you add Pathem in System
   Settings, use Relaunch Pathem in the guide.
-- **The Full Disk Access guide has extra space under Not Now.** Cosmetic; a fix is in
-  progress.
+- **The Full Disk Access guide has extra space under Not Now.** Cosmetic; fixed on
+  main (9f620dd) and included in the next release.
 
 ## Layout and language
 
