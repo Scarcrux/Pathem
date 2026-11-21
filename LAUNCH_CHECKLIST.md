@@ -131,8 +131,11 @@ Follow **[RELEASE.md](RELEASE.md)** end to end. Gating summary:
 
 - [x] One-time: `scripts/setup-sparkle-key.sh` run, `SUPublicEDKey` committed
       (verified; the 0.9.0 appcast signature checks against it). **Still confirm the
-      private key is backed up** (losing it means no user can ever update again). (2026-11-19: the key exists only in the login Keychain and its public half
-      matches `SUPublicEDKey`; no backup was found, so this is still open.)
+      private key is backed up** (losing it means no user can ever update again). (2026-11-20: backed up to Apple Passwords, which syncs end-to-end encrypted
+      through iCloud Keychain. Verified by copying it back out of Passwords: the bytes
+      matched the Keychain export, and importing that copy under a throwaway account
+      produced the same public key as `SUPublicEDKey`. The test entry and every
+      temporary copy were then deleted. An offline copy is still worth adding.)
 - [x] Developer ID cert + `notarytool` profile in place.
 - [x] Version bumped in `Packaging/Info.plist` (0.9.0, build 24; the next release
       needs build 25 or higher, enforced by release.sh P8) (`CFBundleShortVersionString` +
