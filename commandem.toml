@@ -1436,7 +1436,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-10-11T21:28:06Z"
 
   [[mission.comment]]
-    text = "Owner authorized installation. Installed the exact CI-tested current-host package for landed 9f200fc into /Applications/Pathem.app, preserving previous ad-hoc app as rollback at /tmp/pathem-install-backup.kWEvAA/Pathem.app. Recursive signature verifies; installed executable matches tested package (SHA-256 900881f47445f47294400f4f9887fbe31af3df2a6d476af33b2de629525c3013). Installed normal launch process 97244 stays alive with one visible window; absent-PID window control returns zero. No new build, keychain access, TCC grants or publication. Broader native/environmental acceptance remains open."
+    text = "Owner authorized installation. Installed the exact CI-tested current-host package for landed 9f200fc into /Applications/Pathem.app, preserving previous ad-hoc app as rollback at a local backup. Recursive signature verifies; installed executable matches tested package (SHA-256 900881f47445f47294400f4f9887fbe31af3df2a6d476af33b2de629525c3013). Installed normal launch process 97244 stays alive with one visible window; absent-PID window control returns zero. No new build, keychain access, TCC grants or publication. Broader native/environmental acceptance remains open."
     at = "2026-10-11T21:50:21Z"
 
   [[mission.comment]]
@@ -1472,7 +1472,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-10-12T02:40:25Z"
 
   [[mission.comment]]
-    text = "Owner authorized installation of latest landed changes. Installed the exact full-CI-tested f1ce71d current-host arm64 ad-hoc bundle into /Applications/Pathem.app using a verified staged copy and native atomic bundle exchange. Signature verifies recursively; installed executable SHA-256 539328e3b81f28e31155808ef5f2424ec91c301b42948835e3788c9a33bebb2b matches tested package. Initial recursive diff emitted framework symlink-loop notices, so independently verified complete checksum/symlink inventory with read-only rsync and a prior-binary mismatch control; inventory identical/control discriminates. Previous app retained at /tmp/pathem-install-backup.2KB0mO/Pathem.app, signature valid. Running owner app PID97244 and original start time preserved; no quit/relaunch/helper signal. New executable takes effect on next owner restart; installed fresh-launch acceptance not claimed, source package had already passed launch/window checks9/9. No rebuild/keychain/signing credentials/TCC grants/publication. Mission53 remains now, task29/30 pending, Missions4/6 held."
+    text = "Owner authorized installation of latest landed changes. Installed the exact full-CI-tested f1ce71d current-host arm64 ad-hoc bundle into /Applications/Pathem.app using a verified staged copy and native atomic bundle exchange. Signature verifies recursively; installed executable SHA-256 539328e3b81f28e31155808ef5f2424ec91c301b42948835e3788c9a33bebb2b matches tested package. Initial recursive diff emitted framework symlink-loop notices, so independently verified complete checksum/symlink inventory with read-only rsync and a prior-binary mismatch control; inventory identical/control discriminates. Previous app retained at a local backup, signature valid. Running owner app PID97244 and original start time preserved; no quit/relaunch/helper signal. New executable takes effect on next owner restart; installed fresh-launch acceptance not claimed, source package had already passed launch/window checks9/9. No rebuild/keychain/signing credentials/TCC grants/publication. Mission53 remains now, task29/30 pending, Missions4/6 held."
     at = "2026-10-12T02:53:20Z"
 
   [[mission.comment]]
@@ -1512,7 +1512,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-10-12T06:15:47Z"
 
   [[mission.comment]]
-    text = "Owner-authorized install of tested 5a0abe5 completed without rebuilding or restarting owner app. Staged signature and full checksum/symlink bundle inventory verified, then atomic swap into /Applications/Pathem.app; installed signature and exact full bundle inventory match tested source. Prior f1ce71d retained at /tmp/pathem-install-backup.tlrsHY/Pathem.app with verified signature/executable. Running owner app identity and prefs/formats/openers fingerprints preserved. New opener and Settings-default fixes activate on owner quit/reopen; no installed-launch claim, keychain action, credential access or public flip."
+    text = "Owner-authorized install of tested 5a0abe5 completed without rebuilding or restarting owner app. Staged signature and full checksum/symlink bundle inventory verified, then atomic swap into /Applications/Pathem.app; installed signature and exact full bundle inventory match tested source. Prior f1ce71d retained at a local backup with verified signature/executable. Running owner app identity and prefs/formats/openers fingerprints preserved. New opener and Settings-default fixes activate on owner quit/reopen; no installed-launch claim, keychain action, credential access or public flip."
     at = "2026-10-12T06:44:40Z"
 
   [[mission.comment]]
@@ -1612,7 +1612,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-10-13T06:56:12Z"
 
   [[mission.comment]]
-    text = "Owner-authorized install of e4ad036 (code identical to a08c084): release package built at nice 20 in the claude workbench during Codex's CI (Codex notified; treated as a CPU confound only), ad-hoc arm64 like prior installs. Deliberately not make install: its pkill patterns would have quit the owner's app and killed Codex's packaged CI probe. Staged in /Applications, swapped atomically (renamex_np RENAME_SWAP), previous bundle backed up to /tmp/pathem-install-backup.W5Gv; installed executable sha256 prefix 13a867244236ef33 matches the build, both signatures verify, new opener strings present. Running app untouched; takes effect on next relaunch. No launch-acceptance claim."
+    text = "Owner-authorized install of e4ad036 (code identical to a08c084): release package built at nice 20 in the claude workbench during Codex's CI (Codex notified; treated as a CPU confound only), ad-hoc arm64 like prior installs. Deliberately not make install: its pkill patterns would have quit the owner's app and killed Codex's packaged CI probe. Staged in /Applications, swapped atomically (renamex_np RENAME_SWAP), previous bundle backed up to a local backup; installed executable sha256 prefix 13a867244236ef33 matches the build, both signatures verify, new opener strings present. Running app untouched; takes effect on next relaunch. No launch-acceptance claim."
     at = "2026-10-13T07:01:42Z"
 
   [[mission.comment]]
@@ -1652,7 +1652,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-10-13T09:29:33Z"
 
   [[mission.comment]]
-    text = "Owner-authorized install of latest landed3080261 completed: source clean, universal arm64+x86_64 Developer ID signed with exact existing installed leaf identity, Hardened Runtime, no NOTARY_PROFILE/notarization. Signed packaged E2E15/15 includes both architectures/updater-disabled receipt. Old/new designated requirements match, all four bundled executables universal; entire staged and installed bundle byte/symlink checksums match verified package, deep signature verifies. Atomic renameatx_np exchange into /Applications; old bundle retained at /tmp/pathem-install-backup.zvn1Wf/Pathem.app plus exchanged original. Installed executable SHA256 prefix34855a9fc714724a. Owner app was not running at before/after swap checks (prior peer PID receipt was stale); no owner/helper quit/relaunch/kill. No keychain credential change/notarization/publication/history action. Initial certificate-extract optional argument syntax was corrected before any build/install. New app is ready to open."
+    text = "Owner-authorized install of latest landed3080261 completed: source clean, universal arm64+x86_64 Developer ID signed with exact existing installed leaf identity, Hardened Runtime, no NOTARY_PROFILE/notarization. Signed packaged E2E15/15 includes both architectures/updater-disabled receipt. Old/new designated requirements match, all four bundled executables universal; entire staged and installed bundle byte/symlink checksums match verified package, deep signature verifies. Atomic renameatx_np exchange into /Applications; old bundle retained at a local backup plus exchanged original. Installed executable SHA256 prefix34855a9fc714724a. Owner app was not running at before/after swap checks (prior peer PID receipt was stale); no owner/helper quit/relaunch/kill. No keychain credential change/notarization/publication/history action. Initial certificate-extract optional argument syntax was corrected before any build/install. New app is ready to open."
     at = "2026-10-13T10:01:09Z"
 
   [[mission.comment]]
@@ -1676,7 +1676,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-10-17T22:34:16Z"
 
   [[mission.comment]]
-    text = "Owner-requested follow-up audit on bde8cea found two dynamically reproduced failures and one source-confirmed data-loss path; no fixes applied. Current ContentSearch/RemoteRunner + real search tool changed an outside disposable sibling on numeric-colon folder path while intended file stayed unchanged. Actual unchanged FindInFiles controller/gated backends accepted old-session and pre-clear replies; normal controls pass. Markup failed-Save refusal discarded by show/prepareToClose/dismissViewer is static-confirmed, native failure reproduction pending. Criteria/receipts retained in /tmp/pathem-audit.diFUPr; durable report docs/MISSION_53_AUDIT.md. New44/45/46 remain pending;53now and prior owner asks/intermittents unchanged. No install/publication/owner-data changes; prior green CI is not coverage of these failures."
+    text = "Owner-requested follow-up audit on bde8cea found two dynamically reproduced failures and one source-confirmed data-loss path; no fixes applied. Current ContentSearch/RemoteRunner + real search tool changed an outside disposable sibling on numeric-colon folder path while intended file stayed unchanged. Actual unchanged FindInFiles controller/gated backends accepted old-session and pre-clear replies; normal controls pass. Markup failed-Save refusal discarded by show/prepareToClose/dismissViewer is static-confirmed, native failure reproduction pending. Criteria/receipts retained in a local scratch folder; durable report docs/MISSION_53_AUDIT.md. New44/45/46 remain pending;53now and prior owner asks/intermittents unchanged. No install/publication/owner-data changes; prior green CI is not coverage of these failures."
     at = "2026-10-17T22:40:00Z"
 
   [[mission.comment]]
@@ -1740,7 +1740,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-11T12:56:21Z"
 
   [[mission.comment]]
-    text = "Landed task 53.53: release.sh signs, notarizes and staples the DMG before the Sparkle signature; verify-release dmg (A9) required for publish. Second local dry run: both notarizations Accepted, A9 3/3, A1-A8 still pass; controls (unsigned DMG, wrong team) fail correctly. Owner-requested install of that notarized universal build (main d211f51 code incl. tasks 44/45 fixes) by atomic swap, sha256 prefix 6af865e85e15, verify-release 6/6 installed; previous build backed up at /tmp/pathem-install-backup.fE1c. The owner's app was running (PID 61950) and was not touched, so the fixes apply on next relaunch. Nothing published."
+    text = "Landed task 53.53: release.sh signs, notarizes and staples the DMG before the Sparkle signature; verify-release dmg (A9) required for publish. Second local dry run: both notarizations Accepted, A9 3/3, A1-A8 still pass; controls (unsigned DMG, wrong team) fail correctly. Owner-requested install of that notarized universal build (main d211f51 code incl. tasks 44/45 fixes) by atomic swap, sha256 prefix 6af865e85e15, verify-release 6/6 installed; previous build backed up at a local backup. The owner's app was running (PID 61950) and was not touched, so the fixes apply on next relaunch. Nothing published."
     at = "2026-11-11T13:04:54Z"
 
   [[mission.comment]]
@@ -1972,7 +1972,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-16T23:53:48Z"
 
   [[mission.comment]]
-    text = "2026-11-16 Landed Codex's encrypted disk image fix as 480996e (one width constraint from 62f36f6; the rest of Codex's Unit 2 branch, 18 commits, is not landed). GUI evidence is Codex's single M12 probe on its branch; here only build, swift test, inventory and l10n ran (GUI paused). Six stack-ambiguity warnings remain open. Negative: the first commit attempt's hook swift test failed once and the output was cut off before the failing test; a direct rerun passed 852/852 and the retried hook passed. Unidentified intermittent; hook output is now kept in /tmp/dmg-hook.log style logs."
+    text = "2026-11-16 Landed Codex's encrypted disk image fix as 480996e (one width constraint from 62f36f6; the rest of Codex's Unit 2 branch, 18 commits, is not landed). GUI evidence is Codex's single M12 probe on its branch; here only build, swift test, inventory and l10n ran (GUI paused). Six stack-ambiguity warnings remain open. Negative: the first commit attempt's hook swift test failed once and the output was cut off before the failing test; a direct rerun passed 852/852 and the retried hook passed. Unidentified intermittent; hook output is now kept in local logs."
     at = "2026-11-17T02:55:30Z"
 
   [[mission.comment]]
@@ -2004,11 +2004,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-17T03:55:47Z"
 
   [[mission.comment]]
-    text = "2026-11-16 Release: notarized build of bd75d98 (build 24) Accepted, stapled, verify-release A1-A6 PASS, installed to /Applications with a staged swap (backup /tmp/pathem-install-backup.Ix3b); the running copy needs a relaunch. Themes (owner report: buggy, thin choice, no light/dark cue), landed 7d40f12: renders of every theme showed only the window background tinted while list, sidebar and title bar stayed system gray and AppKit row views painted system stripes; now one themed surface (views, sidebar fill, transparent title bar, themed list stripes), menus grouped Follow System / Light / Dark with swatches, 22 themes (9 light, 11 dark). Verified by re-renders, a Terminal capture of the menu (display had slept; caffeinate -u woke it), ThemePresetTests with a red mutation, smoke/UI/settings/content/background suites. Not installed yet: themes came after the install."
+    text = "2026-11-16 Release: notarized build of bd75d98 (build 24) Accepted, stapled, verify-release A1-A6 PASS, installed to /Applications with a staged swap (backup a local backup); the running copy needs a relaunch. Themes (owner report: buggy, thin choice, no light/dark cue), landed 7d40f12: renders of every theme showed only the window background tinted while list, sidebar and title bar stayed system gray and AppKit row views painted system stripes; now one themed surface (views, sidebar fill, transparent title bar, themed list stripes), menus grouped Follow System / Light / Dark with swatches, 22 themes (9 light, 11 dark). Verified by re-renders, a Terminal capture of the menu (display had slept; caffeinate -u woke it), ThemePresetTests with a red mutation, smoke/UI/settings/content/background suites. Not installed yet: themes came after the install."
     at = "2026-11-17T04:35:25Z"
 
   [[mission.comment]]
-    text = "2026-11-17 Reinstalled with the theme work: notarized 97d2edb Accepted and stapled, verify-release A1-A6 PASS in /Applications, backup /tmp/pathem-install-backup.eUM9. Observed: CFBundleVersion is 24 for both of yesterday's builds (BUILD_NUMBER is not read by scripts/package.sh), so the running app's stale-build notice cannot tell them apart; the owner must relaunch to pick it up."
+    text = "2026-11-17 Reinstalled with the theme work: notarized 97d2edb Accepted and stapled, verify-release A1-A6 PASS in /Applications, backup a local backup. Observed: CFBundleVersion is 24 for both of yesterday's builds (BUILD_NUMBER is not read by scripts/package.sh), so the running app's stale-build notice cannot tell them apart; the owner must relaunch to pick it up."
     at = "2026-11-17T12:22:39Z"
 
   [[mission.comment]]
@@ -2052,7 +2052,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-17T18:38:58Z"
 
   [[mission.comment]]
-    text = "2026-11-17 Installed f6db680: notarization Accepted and stapled (the earlier 401 cleared without a credential change; pathem-notary now authenticates), verify-release A1-A6, A10 (Photos entitlement) and A11 (notices) PASS on the build and in /Applications; backup /tmp/pathem-install-backup.Vb6z. The real app's Photos prompt and the About credits are not yet seen on screen."
+    text = "2026-11-17 Installed f6db680: notarization Accepted and stapled (the earlier 401 cleared without a credential change; pathem-notary now authenticates), verify-release A1-A6, A10 (Photos entitlement) and A11 (notices) PASS on the build and in /Applications; backup a local backup. The real app's Photos prompt and the About credits are not yet seen on screen."
     at = "2026-11-17T21:02:24Z"
 
   [[mission.comment]]
@@ -2160,7 +2160,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-20T14:56:09Z"
 
   [[mission.comment]]
-    text = "2026-11-20: 0.9.3 (build 27) released and verified externally (feed 200 names 0.9.3/27, signed-out DMG A9, mounted app A1-A6/A10/A11, EdDSA A7); gate 69 pass, 1 known skip. Ships the launch-QA fixes designed by the claude lane and implemented by Codex, each reviewed before push: data loss d5d2a97 (copyfile ERR swallowed, cross-volume rollback after source deletion, Replace trashing before copy, secure erase of shared inodes; 44 failing checks -> pass), FDA guide 576523f (sheet blocked terminate before the delegate; stale relaunch hint), strings/layout b01cd16, batch rename/undo 9f372d8. Open: Finder trailing-space parity, hard-link pairs inside copied trees, sidebar footer overlap (unconvicted), Date Modified width not recaptured, live Sparkle install-on-quit with the FDA sheet open (VM check next). Launch-QA evidence: /tmp/pathem-launch-qa/FINDINGS.md."
+    text = "2026-11-20: 0.9.3 (build 27) released and verified externally (feed 200 names 0.9.3/27, signed-out DMG A9, mounted app A1-A6/A10/A11, EdDSA A7); gate 69 pass, 1 known skip. Ships the launch-QA fixes designed by the claude lane and implemented by Codex, each reviewed before push: data loss d5d2a97 (copyfile ERR swallowed, cross-volume rollback after source deletion, Replace trashing before copy, secure erase of shared inodes; 44 failing checks -> pass), FDA guide 576523f (sheet blocked terminate before the delegate; stale relaunch hint), strings/layout b01cd16, batch rename/undo 9f372d8. Open: Finder trailing-space parity, hard-link pairs inside copied trees, sidebar footer overlap (unconvicted), Date Modified width not recaptured, live Sparkle install-on-quit with the FDA sheet open (VM check next). Launch-QA evidence is kept locally."
     at = "2026-11-20T15:10:53Z"
 
   [[mission.comment]]
@@ -2168,7 +2168,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
     at = "2026-11-20T15:21:09Z"
 
   [[mission.comment]]
-    text = "2026-11-20: 0.9.4 (build 28) released and verified externally (feed 200 names 0.9.4/28, DMG A9, app A1-A6/A10/A11, EdDSA A7; gate 69 pass, 1 known skip). One fix, 6c0d64a (Codex): the FDA guide is a nonmodal child panel, because a sheet makes AppKit refuse Quit AppleEvents before terminate(_:) runs, so 576523f missed AppleEvent/logout/shutdown quits. Convicted on a clean macOS 15 Tart VM: 0.9.3 control refused (-128, 'blocked by modal sheet'); signed 6c0d64a quit cleanly incl. a logout-reason quit, and the guide returned on relaunch with the dismissed flag unset. Evidence /tmp/pathem-launch-qa/vm2, vm3. Cosmetic follow-up: ~50 px empty space under Not Now."
+    text = "2026-11-20: 0.9.4 (build 28) released and verified externally (feed 200 names 0.9.4/28, DMG A9, app A1-A6/A10/A11, EdDSA A7; gate 69 pass, 1 known skip). One fix, 6c0d64a (Codex): the FDA guide is a nonmodal child panel, because a sheet makes AppKit refuse Quit AppleEvents before terminate(_:) runs, so 576523f missed AppleEvent/logout/shutdown quits. Convicted on a clean macOS 15 Tart VM: 0.9.3 control refused (-128, 'blocked by modal sheet'); signed 6c0d64a quit cleanly incl. a logout-reason quit, and the guide returned on relaunch with the dismissed flag unset. Evidence kept locally. Cosmetic follow-up: ~50 px empty space under Not Now."
     at = "2026-11-20T15:40:44Z"
 
   [[mission.comment]]
