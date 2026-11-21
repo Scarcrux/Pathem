@@ -28,6 +28,7 @@ enum FullDiskAccess {
 /// user returns from System Settings.
 @MainActor
 final class FullDiskAccessGuide: NSObject {
+    private static let contentWidth: CGFloat = 480
     private let panel: NSPanel
     private let spinner = NSProgressIndicator()
     private let statusIcon = NSImageView()
@@ -49,7 +50,7 @@ final class FullDiskAccessGuide: NSObject {
     init(openSettingsPane: (() -> Bool)? = nil) {
         self.openSettingsPane = openSettingsPane ?? Self.openPrivacySettings
         panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 480, height: 360),
+            contentRect: NSRect(x: 0, y: 0, width: Self.contentWidth, height: 1),
             styleMask: [.titled], backing: .buffered, defer: true)
         super.init()
         panel.isReleasedWhenClosed = false
@@ -130,6 +131,7 @@ final class FullDiskAccessGuide: NSObject {
         let content = panel.contentView!
         content.addSubview(stack)
         NSLayoutConstraint.activate([
+            stack.widthAnchor.constraint(equalToConstant: Self.contentWidth - 40),
             stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 18),
             stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 20),
             stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -20),
@@ -141,6 +143,14 @@ final class FullDiskAccessGuide: NSObject {
             buttonRow.widthAnchor.constraint(equalTo: stack.widthAnchor),
             separator.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
+        fitPanel()
+    }
+
+    /// Measure at the guide's fixed reading width so localized lines can wrap before sizing.
+    private func fitPanel() {
+        guard let content = panel.contentView else { return }
+        panel.setContentSize(
+            NSSize(width: Self.contentWidth, height: ceil(content.fittingSize.height)))
     }
 
     /// A numbered step: a small accent circle with the number, then the text.
@@ -204,11 +214,12 @@ final class FullDiskAccessGuide: NSObject {
         if FullDiskAccess.isGranted() {
             granted = true
             updateStatus()
-        } else if openedSettings {
+        } else if openedSettings, relaunchButton.isHidden {
             // Settings opened from this presentation. A relaunch applies the grant.
             statusLabel.stringValue = L(
                 "fda.addedRelaunchHint", "Added Pathem? A relaunch will apply it.")
             relaunchButton.isHidden = false
+            fitPanel()
         }
     }
 
@@ -240,6 +251,7 @@ final class FullDiskAccessGuide: NSObject {
             primaryButton.isBordered = false
             primaryButton.contentTintColor = .secondaryLabelColor
         }
+        fitPanel()
     }
 
     @objc private func openSettings() {

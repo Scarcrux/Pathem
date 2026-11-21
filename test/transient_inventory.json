@@ -861,14 +861,14 @@
       ],
       "reason": "Content search, replace fields and result rows. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/FullDiskAccessGuide.swift:199:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/FullDiskAccessGuide.swift:209:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/FullDiskAccessGuide.swift:51:17:NSPanel"
+        "Sources/Pathem/FullDiskAccessGuide.swift:52:17:NSPanel"
       ],
       "reason": "Permission guidance and settings/dismiss controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },

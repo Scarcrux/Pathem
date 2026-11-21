@@ -2175,6 +2175,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20: LAUNCH_CHECKLIST.md records the launch-QA evidence (clean-Mac Gatekeeper ticked; soak, second machine, destructive paths and FDA onboarding marked partly, with what remains) and KNOWN_ISSUES.md is the known-minor list for triage (127ee02). The macOS 15 Tart VM sequoia-qa is kept for future testing at the owner's request."
     at = "2026-11-20T16:02:08Z"
 
+  [[mission.comment]]
+    text = "2026-11-20: Full Disk Access panel sizing follow-up. The fixed 360-point content height left 66 points below the English control stack. Fit the panel at its existing reading width with 18-point bottom padding. Initial offscreen checks cover all 12 catalogs, with German and Russian renders reviewed."
+    at = "2026-11-21T03:22:06Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
