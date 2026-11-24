@@ -2201,6 +2201,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Messages copy triage: the current Copy path writes NSURL objects. On this host a private pasteboard using the same write preserved both fixture URLs and basenames, including accented text, and AppKit also made both paths available through NSFilenamesPboardType. Missing legacy filenames is not established as the cause. Actual Messages paste versus drag and Finder controls remain open; no clipboard change."
     at = "2026-11-24T07:43:52Z"
 
+  [[mission.comment]]
+    text = "2026-11-24: Themes beta update path left as is by owner decision (no beta testers yet). Beta builds take the stable Sparkle feed, and a stable update drops the PathemThemesBeta flag, so the Themes gallery disappears and an applied community theme loses its source after the first update. Decide this (a separate beta feed, or a runtime setting instead of a build flag) before any beta build is distributed. Also before distribution: publish the Themes entry on the privacy page."
+    at = "2026-11-24T19:47:14Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
