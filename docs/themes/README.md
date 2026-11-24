@@ -20,3 +20,16 @@ The theme tests cover both samples, package rejection, export round-trips, indep
 2. Customize the main toolbar by reordering two items and write down the ordered item identifiers. Compare the sequence during preview and after Cancel, Apply, Reset Theme, and a full quit and relaunch.
 3. Change and clear appearance, accent, and tint individually. Check the other two values, file icon set, and density after each action. Export the result, reset, import the export, and verify that the preview and applied values match.
 4. Import malformed JSON, a package with an extra key, and a package with a future version. Verify the current look and saved preferences after each rejection.
+
+## Import colors from another app
+
+Use **Settings → Appearance → Import…** and select an exported VS Code color theme
+(`.json` or JSON with comments) or an iTerm2 `.itermcolors` file.
+
+- VS Code applies supported opaque background and accent colors to Pathem's window.
+  Light and dark declarations map to the corresponding appearance.
+- iTerm2 applies the imported foreground, background, cursor, and complete 16-color
+  ANSI palette to the embedded terminal. Missing roles keep their current values.
+  The import does not read shell or font settings.
+
+The preview identifies the destination and shows a color swatch. Apply saves the palette.

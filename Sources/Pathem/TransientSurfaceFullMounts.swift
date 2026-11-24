@@ -360,7 +360,7 @@ extension TransientSurfaceSample {
                 controller.showWindow()
                 return controller
             },
-            mount("m51", "SettingsWindowController.swift:199") { _, _ in
+            mount("m51", "SettingsWindowController.swift:200") { _, _ in
                 let controller = owners.get("m51") { SettingsWindowController() }
                 controller.present(
                     prefs: Preferences(), commands: [], effective: [:], gestures: [:],
@@ -379,7 +379,7 @@ extension TransientSurfaceSample {
                     })
                 return controller
             },
-            mount("m52", "SettingsWindowController.swift:1966") { _, _ in
+            mount("m52", "SettingsWindowController.swift:1998") { _, _ in
                 let controller = owners.get("m52") { SettingsWindowController() }
                 _ = controller.debugPresentLive()
                 return controller

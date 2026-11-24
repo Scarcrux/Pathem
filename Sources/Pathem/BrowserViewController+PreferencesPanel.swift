@@ -39,6 +39,21 @@ extension BrowserViewController {
         settings.onThemePreview = { [weak self] preview in
             self?.renderThemePreview(preview)
         }
+        settings.onImportedTerminalPalette = { [weak self] palette in
+            guard let self else { return }
+            var theme = self.terminal.theme
+            theme.name = palette.name
+            theme.foreground = palette.foreground ?? theme.foreground
+            theme.background = palette.background ?? theme.background
+            theme.cursor = palette.cursor ?? theme.cursor
+            theme.ansi = palette.ansi ?? theme.ansi
+            self.terminal.theme = theme
+            self.saveConfig(theme, to: Self.terminalThemeURL)
+        }
+        var terminalNames = TerminalTheme.presets.map(\.name)
+        if !terminalNames.contains(terminal.theme.name) {
+            terminalNames.append(terminal.theme.name)
+        }
         let content = settings.makeEmbedded(
             prefs: prefs,
             commands: commands.all.map { (id: $0.id, title: $0.title) },
@@ -46,7 +61,7 @@ extension BrowserViewController {
             gestures: gestureMap.bindings,
             updater: updater,
             terminal: .init(
-                themes: TerminalTheme.presets.map(\.name),
+                themes: terminalNames,
                 current: terminal.theme.name,
                 follows: terminalFollows,
                 onSelectTheme: { [weak self] name in

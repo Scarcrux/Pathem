@@ -2683,8 +2683,13 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-85ec5d69"
     title = "Import exported VS Code color-theme JSON as a Pathem window palette and iTerm2 .itermcolors as an embedded terminal palette. Preview mapped colors before applying, preserve existing icon and toolbar choices, and retain source and license information for community submissions."
+    done = true
 
   [[mission.comment]]
     text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
     at = "2026-11-24T09:14:49Z"
+
+  [[mission.comment]]
+    text = "External import implements VS Code JSON/JSONC window palettes and iTerm2 property-list terminal palettes. Three focused Swift fixture tests cover role mapping, missing values, complete and partial ANSI, and rejection. Appearance Settings routes both through confirmation. Catalog submissions still need credit and license metadata in the gallery workflow."
+    at = "2026-11-24T09:21:23Z"
 # <<< commandem roadmap <<<

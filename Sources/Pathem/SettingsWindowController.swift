@@ -53,6 +53,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
     var onThemePreview: ((ThemePreset?) -> Void)?
+    var onImportedTerminalPalette: ((ExternalThemeImport.TerminalPalette) -> Void)?
     var onTrashRetentionChange: ((Bool) -> Void)?
     private var contextMenuEditor: ContextMenuEditorController?  // retains the Menus pane editor
     private var colorRulesEditor: ColorRulesEditorController?  // retains the Labels pane editor
@@ -989,7 +990,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     @objc private func importTheme() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.json]
+        panel.allowedContentTypes = [
+            .json, UTType(filenameExtension: "itermcolors") ?? .propertyList,
+        ]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             guard try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
@@ -997,25 +1000,54 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             }
             let file = try FileHandle(forReadingFrom: url)
             defer { try? file.close() }
-            let data = try file.read(upToCount: ThemePackage.maximumBytes + 1) ?? Data()
-            previewTheme(try ThemePackage.decode(data))
+            let data = try file.read(upToCount: ExternalThemeImport.maximumBytes + 1) ?? Data()
+            guard data.count <= ExternalThemeImport.maximumBytes else {
+                throw ThemePackage.ValidationError.tooLarge
+            }
+            let name = String(url.deletingPathExtension().lastPathComponent.prefix(80))
+            if url.pathExtension.lowercased() == "itermcolors" {
+                let palette = try ExternalThemeImport.iterm(data, name: "\(name) (.itermcolors)")
+                let swatch = ThemePreset(
+                    name: name, appearance: .system,
+                    accentHex: palette.cursor ?? palette.foreground ?? "",
+                    backgroundHex: palette.background ?? "")
+                previewTheme(swatch, terminalPalette: palette)
+            } else if let object = (try? JSONSerialization.jsonObject(with: data))
+                as? [String: Any],
+                object["schemaVersion"] != nil
+            {
+                previewTheme(try ThemePackage.decode(data))
+            } else {
+                previewTheme(try ExternalThemeImport.vscode(data, name: name))
+            }
         } catch {
             NSAlert(error: error).runModal()
         }
     }
 
-    private func previewTheme(_ theme: ThemePreset) {
+    private func previewTheme(
+        _ theme: ThemePreset, terminalPalette: ExternalThemeImport.TerminalPalette? = nil
+    ) {
         let alert = NSAlert()
         alert.messageText = L("prefs.themePreview", "Theme Preview")
-        alert.informativeText = theme.name
+        alert.informativeText =
+            terminalPalette.map { "\(Pane.terminal.title) · \($0.name)" } ?? theme.name
         alert.icon = ThemeManager.swatch(for: theme)
         alert.addButton(withTitle: L("common.apply", "Apply"))
         let cancel = alert.addButton(withTitle: L("common.cancel", "Cancel"))
         cancel.keyEquivalent = "\u{1b}"
-        onThemePreview?(theme)
+        if terminalPalette == nil { onThemePreview?(theme) }
         if alert.runModal() == .alertFirstButtonReturn {
-            commitTheme(theme)
-        } else {
+            if let terminalPalette {
+                onImportedTerminalPalette?(terminalPalette)
+                currentTerminalTheme = terminalPalette.name
+                if !terminalThemes.contains(terminalPalette.name) {
+                    terminalThemes.append(terminalPalette.name)
+                }
+            } else {
+                commitTheme(theme)
+            }
+        } else if terminalPalette == nil {
             onThemePreview?(nil)
             updateThemeSelection()
         }
