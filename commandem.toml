@@ -2679,4 +2679,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-f7451d51"
     title = "Verify appearance across supported file views, light and dark modes, and standard and increased contrast. Validate one built-in and one community theme end to end before expanding the catalog."
+
+  [[mission.task]]
+    id = "t-85ec5d69"
+    title = "Import exported VS Code color-theme JSON as a Pathem window palette and iTerm2 .itermcolors as an embedded terminal palette. Preview mapped colors before applying, preserve existing icon and toolbar choices, and retain source and license information for community submissions."
 # <<< commandem roadmap <<<
