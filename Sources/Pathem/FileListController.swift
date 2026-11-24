@@ -743,6 +743,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// without rebuilding the listing or scheduling unrelated metadata work.
     private func reloadAppearancePreservingState(_ update: () -> Void) {
         PaneAppearanceReload.table(tableView, in: scrollView, update: update)
+        fitColumns()
     }
 
     /// The active folder-background color (nil = default). Kept so applyStyle doesn't re-enable
@@ -1164,10 +1165,9 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         // AppKit's autosave may have restored a squeezed width from last quit, and seeding from
         // that would lock the column at its squeeze floor forever. User drags update wanted via
         // columnResized, so deliberate in-session sizing is still honored.
-        for col in others where wantedWidths[col.identifier.rawValue] == nil {
-            wantedWidths[col.identifier.rawValue] =
-                Column(rawValue: col.identifier.rawValue)?.width ?? col.width
-        }
+        // Date columns want the measured width of a full date (see seedWantedWidth), taken
+        // again on each fit because the format, font size and language can each change it.
+        for col in others { seedWantedWidth(col) }
         func wanted(_ col: NSTableColumn) -> CGFloat {
             wantedWidths[col.identifier.rawValue] ?? col.width
         }
@@ -2415,6 +2415,28 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// A type icon for the entry, cached by extension (via the shared FileIconCache so the
     /// list, column, and tree views share one cache) so scrolling a huge directory never does
     /// per-row disk work.
+
+    /// The measured default last given to each date column. A wanted width still equal to it
+    /// was never dragged by the user, so it follows a change of format, font or language.
+    private var measuredDateWidths: [String: CGFloat] = [:]
+
+    /// Seed a value column's wanted width: its fixed default, or for a date column the width
+    /// that shows a full date, within the column's own minimum and maximum.
+    private func seedWantedWidth(_ col: NSTableColumn) {
+        let id = col.identifier.rawValue
+        guard let column = Column(rawValue: id) else { return }
+        switch column {
+        case .date, .dateCreated, .dateAccessed, .dateAdded:
+            let fitting = DateColumnWidth.fitting(dateFormatter, fontSize: listFontSize)
+            let measured = min(max(column.width, fitting), col.maxWidth)
+            if wantedWidths[id] == nil || wantedWidths[id] == measuredDateWidths[id] {
+                wantedWidths[id] = measured
+            }
+            measuredDateWidths[id] = measured
+        default:
+            if wantedWidths[id] == nil { wantedWidths[id] = column.width }
+        }
+    }
 }
 
 /// A lock-guarded generation counter, readable from a background queue so an
