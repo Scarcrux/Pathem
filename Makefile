@@ -91,7 +91,7 @@ e2e: preflight
 
 # Same, against the assembled .app (also checks the bundle is complete).
 e2e-app: preflight
-	PATHEM_THEMES_BETA=1 test/e2e/run.sh --packaged
+	test/e2e/run.sh --packaged
 
 # Environmental boundaries are explicit PASS/SKIP/FAIL checks. Missing hardware, permissions,
 # credentials, or opt-in public-network access never masquerades as a pass.
@@ -112,6 +112,7 @@ ci: preflight
 	python3 scripts/check_warnings.py --self-test
 	test/e2e/run.sh --scenario-self-test
 	test/release/publish_gate_test.sh
+	python3 -m unittest discover -s test -p themes_shipped_test.py
 	mkdir -p .build
 	# An unused, unique condition forces owned-source diagnostics even on a warm cache.
 	"$(XCODE_SWIFT)" build $(SWIFTPM_FLAGS) -Xswiftc -D -Xswiftc PATHEM_CI_WARNING_INVENTORY_$$(uuidgen | tr -d '-') > .build/ci-debug-build.log 2>&1 || { tail -80 .build/ci-debug-build.log; exit 1; }
@@ -119,7 +120,6 @@ ci: preflight
 	"$(XCODE_SWIFT)" test $(SWIFTPM_FLAGS) --no-parallel
 	test/e2e/run.sh
 	test/e2e/run.sh --packaged
-	PATHEM_THEMES_BETA=1 test/e2e/run.sh --packaged
 
 app: preflight
 	scripts/package.sh

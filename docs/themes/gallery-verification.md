@@ -1,5 +1,7 @@
 # Themes 04 gallery verification
 
+This is the verification record for the local gallery pilot. The gallery now ships in every build and reads the published catalog; see [the Themes guide](README.md#themes-gallery). The local review flow recorded here remains available in debug builds.
+
 The built-in catalog at `0b7cfda` was present before implementation. Verification ran on macOS 27.2.1 (26B131) in the assigned checkout. The gallery is available in debug builds with `PATHEM_COMMUNITY_GALLERY=1` and an explicit `PATHEM_CONFIG_DIR`. Submissions, reviews, withdrawals, and installed copies are stored in that local configuration directory.
 
 ## Local review

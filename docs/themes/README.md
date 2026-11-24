@@ -56,14 +56,46 @@ override the folder, file, and toolbar styles independently. Up to 16 single-fra
 are allowed, each at most 256 pixels per side and 16 KiB. The package has no external
 asset paths. Export carries the embedded artwork and System reset clears it.
 
-## Shared catalog staging
+## Themes gallery
 
-Creators prepare a submission using [the example fixtures](gallery-fixture/) and open
-the **Submit a Pathem theme** GitHub issue form. A maintainer with write access reviews
-the submission, records the decision in a private review store, and publishes the
-generated snapshot to the catalog host. Use branch protection to restrict who can
-update the published snapshot. The publisher does not accept review decisions from
-the app or include reviewer notes in the public file.
+Every Pathem build includes the Themes gallery. Open **Settings → Appearance →
+Themes…** to browse approved listings published by the project.
+
+1. **Browse** lists the current approved revision of each listing. Search matches
+   titles, creators, and tags. Each listing shows its creator, license, optional
+   source, and one to three screenshots.
+2. **Preview** shows the theme live and restores your previous look when you close it.
+3. **Install** saves a copy on this Mac without changing your appearance. **Apply**
+   switches to an installed theme.
+4. When a listing publishes a higher revision, **Browse** offers **Update**. The
+   installed copy stays as it is until you update, and the applied look changes only
+   when you apply the new revision.
+5. **Installed** lists your copies, including listings that were later withdrawn.
+   **Uninstall** removes a copy. Uninstalling the applied theme restores System.
+
+Pathem requests the catalog only when you open the gallery. It makes no catalog
+request at launch or in the background. The request goes to the project's CloudFront
+endpoint over HTTPS and carries no local files, file names, installed themes, or search
+text. If the request or validation fails, Pathem shows the error, does not open the
+gallery, and leaves the stored copy unchanged. An applied theme is saved in your
+preferences and keeps working offline.
+`test/themes_shipped_test.py` pins the single fetch entry point and its callers.
+
+## Submit a theme
+
+Open **Settings → Appearance → Submit a Theme…**. Choose one to three screenshots,
+enter the listing details, and save the validated JSON. Pathem then offers to open
+the **Submit a Pathem theme** GitHub issue form, where you attach the saved file.
+Preparing a submission makes no network request from Pathem. The file and the issue
+are public. [The example fixtures](gallery-fixture/) show the format.
+
+A maintainer with write access reviews the submission, records the decision in a
+private review store, and publishes the generated snapshot to the catalog host. The
+app cannot record review decisions, and the public file carries no reviewer notes.
+See [the review dashboard](admin-dashboard.md) for the review runbook and the publish
+command.
+
+## Catalog tool
 
 Build the publisher with `swift build --build-system native --product pathem-theme-catalog`.
 On the maintainer's machine, with the review store in a private directory, run:
@@ -78,12 +110,17 @@ Use a higher version to submit an update. To withdraw a listing, run
 `pathem-theme-catalog /path/to/private/reviews.json withdraw theme-id` and publish a new
 snapshot. Clients keep their installed copies after withdrawal and can still uninstall them.
 
-For a local shared-gallery preview, launch a debug build with
-`PATHEM_COMMUNITY_GALLERY=1`, a scratch `PATHEM_CONFIG_DIR`, and
-`PATHEM_SHARED_THEME_CATALOG` set to the HTTPS snapshot URL. The preview also accepts
-HTTP on `127.0.0.1` for local verification. Opening Community Themes fetches and
-validates the snapshot before replacing discovery results. Without the shared URL, the
-existing isolated local submission and review pilot is available.
+## Local development
 
-Run the two-client staging check with
+Release builds always read the published catalog and ignore the overrides below.
+To point a debug build at another snapshot, launch it with
+`PATHEM_COMMUNITY_GALLERY=1`, a scratch `PATHEM_CONFIG_DIR`, and
+`PATHEM_SHARED_THEME_CATALOG` set to the HTTPS snapshot URL. HTTP is accepted only on
+`127.0.0.1`. Opening the gallery fetches and validates the snapshot before replacing
+discovery results. Without the snapshot URL, the same flags open an isolated local
+gallery with submission and **Review** controls and no network access.
+
+Run the two-client lifecycle check with
 `python3 test/shared_theme_catalog_e2e.py .build/debug/pathem-theme-catalog`.
+The packaged end-to-end run (`make e2e-app`) repeats it against the assembled app and
+checks discovery, install, and apply through the real gallery on loopback.

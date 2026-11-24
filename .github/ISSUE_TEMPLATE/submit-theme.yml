@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         This issue is public. Include theme files and screenshots you intend to share.
-        In a Themes preview build, open Settings → Appearance → Submit a Theme to prepare the submission JSON.
+        In Pathem, open Settings → Appearance → Submit a Theme to prepare the submission JSON.
   - type: input
     id: listing
     attributes:

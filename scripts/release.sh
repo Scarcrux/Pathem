@@ -60,10 +60,6 @@ echo "==> Releasing $APP_NAME $VERSION (build $BUILD) as $TAG"
 PUBLISHING=0
 [[ "${PUBLISH:-}" == "1" ]] && PUBLISHING=1
 
-if [[ $PUBLISHING == 1 && "${PATHEM_THEMES_BETA:-}" == "1" ]]; then
-	echo "error: Themes beta packages cannot be published through the stable release path." >&2
-	exit 1
-fi
 TEAM_ID=""
 HEAD_SHA=""
 

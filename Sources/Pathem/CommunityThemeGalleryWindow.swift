@@ -6,13 +6,13 @@ private final class GalleryDocumentView: NSView {
     override var isFlipped: Bool { true }
 }
 
-/// Browse the shared Themes catalog in a beta package or use an isolated debug gallery.
+/// Browse the shared Themes catalog. Debug builds can also run an isolated local gallery.
 @MainActor
 final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFieldDelegate {
-    static var betaEnabled: Bool {
-        Bundle.main.object(forInfoDictionaryKey: "PathemThemesBeta") as? Bool == true
-    }
+    /// The published catalog. Fetched only when the user opens the gallery, never at launch.
+    static let catalogEndpoint = "https://d3v2l0mmdgkblv.cloudfront.net/catalog.json"
 
+    /// Nil only when the configuration directory is unavailable.
     static var storeURL: URL? {
         #if DEBUG
         let env = ProcessInfo.processInfo.environment
@@ -25,16 +25,17 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
             return ConfigStore.url(filename)
         }
         #endif
-        return betaEnabled ? ConfigStore.url("shared-community-themes.json") : nil
+        return ConfigStore.url("shared-community-themes.json")
     }
 
+    /// Nil selects the debug-only local review gallery, which never uses the network.
     static var sharedEndpoint: String? {
         #if DEBUG
         if ProcessInfo.processInfo.environment["PATHEM_COMMUNITY_GALLERY"] == "1" {
             return ProcessInfo.processInfo.environment["PATHEM_SHARED_THEME_CATALOG"]
         }
         #endif
-        return betaEnabled ? "https://d3v2l0mmdgkblv.cloudfront.net/catalog.json" : nil
+        return catalogEndpoint
     }
 
     static func refreshSharedCatalog(_ endpoint: String, at store: URL) async throws {
@@ -44,7 +45,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
 
     // The release smoke mounts the production gallery without activating the app.
     static func verifyPackagedInstallation(endpoint: String) async throws {
-        guard betaEnabled, let url = storeURL, let fixture = URL(string: endpoint),
+        guard let url = storeURL, let fixture = URL(string: endpoint),
             fixture.scheme == "http", fixture.host == "127.0.0.1", fixture.user == nil,
             fixture.password == nil
         else {

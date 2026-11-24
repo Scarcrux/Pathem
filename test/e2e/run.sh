@@ -260,14 +260,10 @@ if [[ $PACKAGED == 1 ]]; then
   declared=$(/usr/libexec/PlistBuddy -c "Print :CFBundleLocalizations" "$APP/Contents/Info.plist" 2>/dev/null | grep -c '^    ')
   assert "all $declared declared languages bundled ($langs)" test "$declared" -gt 0 -a "$langs" -eq "$declared"
   assert "bundle signature verifies" codesign --verify --deep --strict "$APP"
-  # The Themes beta is opt-in at package time. A stable package (what release.sh ships)
-  # must not carry the flag, and a beta package must, so both variants are gated here.
-  beta_flag=$(/usr/libexec/PlistBuddy -c "Print :PathemThemesBeta" "$APP/Contents/Info.plist" 2>/dev/null || true)
-  if [[ "${PATHEM_THEMES_BETA:-}" == 1 ]]; then
-    assert "Themes beta flag set in a beta package" test "$beta_flag" = "true"
-  else
-    assert "no Themes beta flag in a stable package" test -z "$beta_flag"
-  fi
+  # Themes ships in every package and has no build-time switch. The retired opt-in key
+  # must stay out of the bundle so a stale flag cannot split packages into variants again.
+  themes_flag=$(/usr/libexec/PlistBuddy -c "Print :PathemThemesBeta" "$APP/Contents/Info.plist" 2>/dev/null || true)
+  assert "no Themes build flag in the bundle" test -z "$themes_flag"
   assert "hardened runtime enabled" hardened_runtime_enabled "$BIN"
   assert "Sparkle update metadata well-formed" sparkle_metadata_well_formed "$APP"
   # Universal isn't forced here (every arch doubles this build's time, a cost tradeoff
@@ -283,13 +279,11 @@ if [[ $PACKAGED == 1 ]]; then
     assert "requested architectures present ($ARCHS)" test -z "$missing_archs"
   fi
   scenario "release configuration-root guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN" PATHEM_RELEASE_TEST
-  if [[ "${PATHEM_THEMES_BETA:-}" == 1 ]]; then
-    catalog_tool="$(swift build --build-system native -c release --show-bin-path)/pathem-theme-catalog"
-    scenario "packaged Themes against loopback" 'RESULT: PASS' python3 \
-      test/shared_theme_catalog_e2e.py "$catalog_tool" "$BIN"
-    scenario "private theme review and publication" 'RESULT: PASS' python3 \
-      test/theme_admin_e2e.py "$catalog_tool"
-  fi
+  catalog_tool="$(swift build --build-system native -c release --show-bin-path)/pathem-theme-catalog"
+  scenario "packaged Themes against loopback" 'RESULT: PASS' python3 \
+    test/shared_theme_catalog_e2e.py "$catalog_tool" "$BIN"
+  scenario "private theme review and publication" 'RESULT: PASS' python3 \
+    test/theme_admin_e2e.py "$catalog_tool"
   packaged_launch_probe
   echo
   echo "==> ${pass} passed, ${skip} skipped, ${fail} failed"

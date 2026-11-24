@@ -40,19 +40,33 @@ and Pathem share this vocabulary. Each product validates and publishes its own a
 
 Verify the dashboard with `python3 test/theme_admin_e2e.py .build/debug/pathem-theme-catalog`.
 
-## Creator submission and AWS staging
+## Review runbook
 
-In Pathem, open **Settings → Appearance → Submit a Theme…**.
-Choose one to three screenshots, enter listing details, and save the validated JSON.
-The export includes the active theme and its effective styles. Open the GitHub form
-from the confirmation dialog, then attach the saved JSON in the submission field.
-You can also link to the file in a permanent GitHub commit or release asset.
-The file and issue are public. Keep the same listing
-ID and increase the revision for a correction or update. The issue is the creator's
-status and feedback thread. A maintainer retrieves the submitted file, imports it into
-Marketplace Admin, and can post the exported decision back to that issue. Public release
-is a separate snapshot publication action. An existing published revision stays visible
-until that action replaces or withdraws it.
+Themes ships in every Pathem build, so a published snapshot is visible to all users
+the next time they open the gallery. Approval and publication are separate steps.
+
+1. **Intake.** A creator prepares a submission in **Settings → Appearance → Submit a
+   Theme…** and attaches the saved JSON to the **Submit a Pathem theme** GitHub issue.
+   They can also link to the file in a permanent GitHub commit or release asset. The
+   file and issue are public. The issue is the creator's status and feedback thread.
+2. **Import.** Retrieve the submitted file and import it into the dashboard. The
+   validator rejects malformed listings, packages, and screenshots before they reach
+   the queue.
+3. **Inspect.** Check the screenshots, attribution, license, and source. Use
+   **Download theme for Pathem preview** and open the package with **Settings →
+   Appearance → Import…** to see it in the app.
+4. **Decide.** Record approval, rejection, or a request for changes with a note, and
+   post the exported feedback to the issue. A correction or update keeps the listing
+   ID and uses a higher revision.
+5. **Publish.** Generate the snapshot and upload it with the command below. An
+   existing published revision stays visible until a snapshot replaces or withdraws it.
+6. **Confirm.** Fetch the public catalog URL and check that it lists the expected
+   revisions, then open **Themes…** in a release build.
+
+To withdraw a listing, record the withdrawal with a note and publish a new snapshot.
+Clients keep installed copies of a withdrawn listing and can still uninstall them.
+
+## Catalog host
 
 [The AWS template](../../infra/aws/marketplace.yaml) provisions two private, versioned S3
 buckets, a CloudFront endpoint scoped to the approved catalog snapshot, and an
@@ -60,30 +74,28 @@ invite-only Cognito reviewer pool with authenticator-app MFA. The main Pathem we
 stays on its existing host. The reviewer pool is available for the hosted dashboard
 integration. The current local dashboard still runs the macOS Swift validator.
 
-After generating an approved snapshot, an authorized maintainer can publish just that
-file to the stack's `CatalogBucket` using key `catalog.json`. Private review notes and
-source submissions stay outside the CloudFront origin path.
+Release builds read `catalog.json` from that CloudFront endpoint. The URL is compiled
+into the app, so the stack's distribution must stay in place across updates. Private
+review notes and source submissions stay outside the CloudFront origin path.
 
-To provision or update the staging stack from this checkout:
+To provision or update the stack from this checkout:
 
 ```sh
 aws cloudformation deploy --region us-east-1 --stack-name pathem-marketplace \
   --template-file infra/aws/marketplace.yaml
 ```
 
-Use the stack outputs for the bucket and HTTPS catalog URL. Publish with
-`aws s3 cp <approved-snapshot> s3://<CatalogBucket>/catalog.json --content-type application/json --cache-control "public, max-age=300"`.
-S3 versioning preserves prior snapshots. The CloudFront origin can read only that key.
+## Publish
 
+Use the stack outputs for the bucket name. An authorized maintainer publishes just the
+approved snapshot to the stack's `CatalogBucket` using key `catalog.json`:
 
-## Themes preview build
+```sh
+aws s3 cp <approved-snapshot> s3://<CatalogBucket>/catalog.json \
+  --content-type application/json --cache-control "public, max-age=300"
+```
 
-Use `PATHEM_THEMES_BETA=1` with `scripts/package.sh` to enable **Themes** and
-**Submit a Theme** in Appearance. The package reads only the hosted catalog
-and hides the gallery's local review controls. A regular package omits both
-buttons. Preview builds receive updates from the stable Sparkle feed. The
-preview itself is distributed manually. The stable release script refuses to publish a Themes preview package.
-
-Before public distribution, publish the issue form and one approved listing,
-then verify the submission and a subsequent revision from an independent
-packaged client.
+The five-minute cache lifetime applies at CloudFront and again in each client's HTTP
+cache, so allow up to about ten minutes for a publication or withdrawal to reach
+everyone who opens the gallery. S3 versioning preserves prior snapshots, and the CloudFront
+origin can read only that key. To roll back, publish the previous snapshot again.

@@ -996,7 +996,6 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 action: #selector(resetTheme)),
         ])
         stack.spacing = 8
-        guard CommunityThemeGalleryWindow.storeURL != nil else { return stack }
         let browse = NSButton(
             title: L("prefs.themes", "Themes") + "…", target: self,
             action: #selector(openCommunityThemes))
@@ -1013,7 +1012,11 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     }
 
     @objc private func openCommunityThemes() {
-        guard let url = CommunityThemeGalleryWindow.storeURL else { return }
+        guard let url = CommunityThemeGalleryWindow.storeURL else {
+            NSSound.beep()
+            return
+        }
+        // The only catalog request in the app: it follows this explicit click.
         Task { @MainActor in
             do {
                 if let endpoint = CommunityThemeGalleryWindow.sharedEndpoint {
