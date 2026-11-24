@@ -1400,6 +1400,10 @@
 "prefs.statusSize" = "大小（文件夹或所选项）";
 "prefs.suggestFilenames" = "重命名时建议文件名（设备端 AI）";
 "prefs.themeClearTint" = "无";
+"prefs.themeImport" = "导入…";
+"prefs.themeExport" = "导出…";
+"prefs.themeReset" = "重置主题";
+"prefs.themePreview" = "主题预览";
 "prefs.themeCustom" = "自定义";
 "prefs.themeHint" = "皮肤会为 Pathem 自身的选中项、窗格、标签页和路径栏着色。标准按钮仍使用系统强调色。";
 "prefs.themeLabel" = "皮肤";

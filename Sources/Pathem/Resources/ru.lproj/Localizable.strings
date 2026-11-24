@@ -1409,6 +1409,10 @@
 "prefs.statusSize" = "Размер (папки или выбранного)";
 "prefs.suggestFilenames" = "Предлагать имена файлов при переименовании (ИИ на устройстве)";
 "prefs.themeClearTint" = "Нет";
+"prefs.themeImport" = "Импортировать…";
+"prefs.themeExport" = "Экспортировать…";
+"prefs.themeReset" = "Сбросить тему";
+"prefs.themePreview" = "Предпросмотр темы";
 "prefs.themeCustom" = "Своя";
 "prefs.themeHint" = "Оформление подкрашивает выделение, панели, вкладки и строку пути в самом Pathem. Стандартные кнопки по-прежнему используют системный акцент.";
 "prefs.themeLabel" = "Тема";

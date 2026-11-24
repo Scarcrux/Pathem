@@ -1409,6 +1409,10 @@
 "prefs.statusSize" = "Grootte (van de map of de selectie)";
 "prefs.suggestFilenames" = "Stel bestandsnamen voor bij het hernoemen (AI op het apparaat)";
 "prefs.themeClearTint" = "Geen";
+"prefs.themeImport" = "Importeren…";
+"prefs.themeExport" = "Exporteren…";
+"prefs.themeReset" = "Thema herstellen";
+"prefs.themePreview" = "Themavoorbeeld";
 "prefs.themeCustom" = "Eigen";
 "prefs.themeHint" = "De skin kleurt de selectie, panelen, tabbladen en broodkruimelbalk van Pathem. Standaardknoppen gebruiken nog steeds de systeemaccentkleur.";
 "prefs.themeLabel" = "Skin";

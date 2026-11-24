@@ -1335,6 +1335,10 @@
 "prefs.statusSize" = "Size (of the folder, or the selection)";
 "prefs.suggestFilenames" = "Suggest filenames when renaming (on-device AI)";
 "prefs.themeClearTint" = "None";
+"prefs.themeImport" = "Import…";
+"prefs.themeExport" = "Export…";
+"prefs.themeReset" = "Reset Theme";
+"prefs.themePreview" = "Theme Preview";
 "prefs.themeCustom" = "Custom";
 "prefs.themeHint" = "The skin tints Pathem’s own selection, panes, tabs, and breadcrumb. Standard buttons still use the system accent.";
 "prefs.themeLabel" = "Skin";

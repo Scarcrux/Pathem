@@ -1409,6 +1409,10 @@
 "prefs.statusSize" = "Tamanho (da pasta ou da seleção)";
 "prefs.suggestFilenames" = "Sugerir nomes de arquivo ao renomear (IA no dispositivo)";
 "prefs.themeClearTint" = "Nenhum";
+"prefs.themeImport" = "Importar…";
+"prefs.themeExport" = "Exportar…";
+"prefs.themeReset" = "Redefinir tema";
+"prefs.themePreview" = "Prévia do tema";
 "prefs.themeCustom" = "Personalizado";
 "prefs.themeHint" = "O tema colore a seleção, os painéis, as abas e a barra de caminho do próprio Pathem. Os botões padrão continuam usando a cor de destaque do sistema.";
 "prefs.themeLabel" = "Tema visual";

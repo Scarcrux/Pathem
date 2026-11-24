@@ -1400,6 +1400,10 @@
 "prefs.statusSize" = "Größe (des Ordners oder der Auswahl)";
 "prefs.suggestFilenames" = "Dateinamen beim Umbenennen vorschlagen (lokale KI)";
 "prefs.themeClearTint" = "Keine";
+"prefs.themeImport" = "Importieren…";
+"prefs.themeExport" = "Exportieren…";
+"prefs.themeReset" = "Theme zurücksetzen";
+"prefs.themePreview" = "Theme-Vorschau";
 "prefs.themeCustom" = "Benutzerdefiniert";
 "prefs.themeHint" = "Das Design färbt Pathems eigene Auswahl, Bereiche, Tabs und Pfadleiste ein. Standardtasten verwenden weiterhin die System-Akzentfarbe.";
 "prefs.themeLabel" = "Skin";

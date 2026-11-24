@@ -23,7 +23,7 @@ class FullAlertProvenanceTests(unittest.TestCase):
 
     def test_reviewed_inventory_is_exact(self):
         rows = validate()
-        self.assertEqual(len(rows),47)
+        self.assertEqual(len(rows),48)
         self.assertEqual(sum(r['sheet'] for r in rows),36)
 
     def test_missing_site_fails(self):

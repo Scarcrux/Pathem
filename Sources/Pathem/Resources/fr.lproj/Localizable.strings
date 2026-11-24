@@ -1400,6 +1400,10 @@
 "prefs.statusSize" = "Taille (du dossier ou de la sélection)";
 "prefs.suggestFilenames" = "Suggérer des noms lors du renommage (IA locale)";
 "prefs.themeClearTint" = "Aucune";
+"prefs.themeImport" = "Importer…";
+"prefs.themeExport" = "Exporter…";
+"prefs.themeReset" = "Réinitialiser le thème";
+"prefs.themePreview" = "Aperçu du thème";
 "prefs.themeCustom" = "Personnalisé";
 "prefs.themeHint" = "L'habillage colore la sélection, les volets, les onglets et le fil d'Ariane propres à Pathem. Les boutons standard utilisent toujours la couleur d'accentuation du système.";
 "prefs.themeLabel" = "Habillage";

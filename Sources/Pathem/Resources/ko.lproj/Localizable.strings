@@ -1409,6 +1409,10 @@
 "prefs.statusSize" = "크기 (폴더 또는 선택 항목)";
 "prefs.suggestFilenames" = "이름을 변경할 때 파일 이름 제안 (온디바이스 AI)";
 "prefs.themeClearTint" = "없음";
+"prefs.themeImport" = "가져오기…";
+"prefs.themeExport" = "내보내기…";
+"prefs.themeReset" = "테마 재설정";
+"prefs.themePreview" = "테마 미리보기";
 "prefs.themeCustom" = "사용자화";
 "prefs.themeHint" = "스킨은 Pathem의 선택 영역, 패널, 탭, 이동 경로에 색조를 입힙니다. 표준 버튼은 계속 시스템 강조 색상을 사용합니다.";
 "prefs.themeLabel" = "스킨";

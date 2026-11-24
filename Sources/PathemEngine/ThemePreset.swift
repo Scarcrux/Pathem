@@ -20,12 +20,29 @@ public struct ThemePreset: Codable, Sendable, Equatable {
         self.backgroundHex = backgroundHex
     }
 
+    public static let system = ThemePreset(name: "System", appearance: .system, accentHex: "")
+    public static let harbor = ThemePreset(
+        name: "Harbor", appearance: .dark, accentHex: "#82D4DE", backgroundHex: "#182630")
+
+    public init(preferences: Preferences) {
+        self.init(
+            name: preferences.themeName, appearance: preferences.appearance,
+            accentHex: preferences.accentColorHex, backgroundHex: preferences.windowTintHex)
+    }
+
+    public func apply(to preferences: inout Preferences) {
+        preferences.themeName = name
+        preferences.appearance = appearance
+        preferences.accentColorHex = accentHex
+        preferences.windowTintHex = backgroundHex
+    }
+
     /// Built-in skins, grouped: those that follow the system appearance, then light, then dark.
     /// "System" restores the stock look (system accent, no tint, system appearance). Names are
     /// stored in preferences, so existing names never change. The added palettes follow
     /// well-known open-source color schemes (their published background and accent colors).
     public static let presets: [ThemePreset] = [
-        .init(name: "System", appearance: .system, accentHex: "", backgroundHex: ""),
+        system,
         .init(name: "Graphite", appearance: .system, accentHex: "#8A8A8F", backgroundHex: ""),
         // Light
         .init(name: "Paper", appearance: .light, accentHex: "#0969DA", backgroundHex: "#FAFAF8"),
@@ -64,6 +81,7 @@ public struct ThemePreset: Codable, Sendable, Equatable {
         .init(
             name: "High Contrast", appearance: .dark, accentHex: "#FFD400", backgroundHex: "#000000"
         ),
+        harbor,
     ]
 
     /// The presets in display groups (follows system, light, dark), each with its indexes into

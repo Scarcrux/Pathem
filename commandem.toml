@@ -2660,7 +2660,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
 [[mission]]
   id = "m-c67d643a"
   title = "Theme customization and community gallery"
-  status = "next"
+  status = "now"
   note = "Owner wants at least ten choices per appearance category and a place to discover and post themes. Existing palette presets and four file icon sets establish the starting point. Expand independent choices, add complete looks, then support community discovery and submission with preview and explicit apply."
   issue = 0
 
@@ -2683,4 +2683,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-85ec5d69"
     title = "Import exported VS Code color-theme JSON as a Pathem window palette and iTerm2 .itermcolors as an embedded terminal palette. Preview mapped colors before applying, preserve existing icon and toolbar choices, and retain source and license information for community submissions."
+
+  [[mission.comment]]
+    text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
+    at = "2026-11-24T09:14:49Z"
 # <<< commandem roadmap <<<

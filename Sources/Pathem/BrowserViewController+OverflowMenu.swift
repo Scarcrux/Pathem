@@ -112,18 +112,15 @@ extension BrowserViewController {
     @objc private func applyOverflowThemePreset(_ sender: NSMenuItem) {
         guard sender.tag < ThemePreset.presets.count else { return }
         let preset = ThemePreset.presets[sender.tag]
-        prefs.appearance = preset.appearance
-        prefs.accentColorHex = preset.accentHex
-        prefs.windowTintHex = preset.backgroundHex
-        prefs.themeName = preset.name  // as Settings records it, so both report the same theme
+        preset.apply(to: &prefs)
         persistAndApplyTheme()
     }
 
     /// Persist prefs and re-apply, the same path Settings uses, so a theme change from the toolbar is
     /// identical to changing it in Settings ▸ Appearance.
     private func persistAndApplyTheme() {
-        saveConfig(prefs, to: Self.preferencesURL)
         applyPreferences()
+        if settingsPanel != nil { settings.synchronizeTheme(ThemePreset(preferences: prefs)) }
     }
 
     @objc private func openOverflowSettings() { showPreferences() }

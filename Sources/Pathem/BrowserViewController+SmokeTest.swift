@@ -12,6 +12,53 @@ import Quartz
 // out of BrowserViewController to keep that file focused.
 @MainActor
 extension BrowserViewController {
+    func smokeThemePreservesCustomToolbar() -> Bool {
+        guard let toolbar = view.window?.toolbar else { return false }
+        let initialOrder = toolbar.itemIdentifiers
+        guard let first = initialOrder.first,
+            let swapIndex = initialOrder.firstIndex(where: { $0 != first })
+        else { return false }
+        let original = ThemePreset(preferences: prefs)
+        let autosaves = toolbar.autosavesConfiguration
+        var reordered = initialOrder
+        reordered.swapAt(0, swapIndex)
+        toolbar.autosavesConfiguration = false
+        toolbar.itemIdentifiers = reordered
+        defer {
+            var restored = prefs
+            original.apply(to: &restored)
+            receiveSettingsPreferences(restored)
+            toolbar.itemIdentifiers = initialOrder
+            toolbar.autosavesConfiguration = autosaves
+        }
+        guard toolbar.itemIdentifiers == reordered else { return false }
+
+        renderThemePreview(.harbor)
+        let previewKeptOrder =
+            toolbar.items.map(\.itemIdentifier) == reordered
+            && ThemePreset(preferences: prefs) == original
+            && ThemeManager.shared.windowTint
+                == ThemeManager.color(fromHex: ThemePreset.harbor.backgroundHex)
+        renderThemePreview(nil)
+        let cancelKeptOrder =
+            toolbar.items.map(\.itemIdentifier) == reordered
+            && ThemeManager.shared.windowTint == ThemeManager.color(fromHex: original.backgroundHex)
+
+        var updated = prefs
+        ThemePreset.harbor.apply(to: &updated)
+        receiveSettingsPreferences(updated)
+        let appliedKeptOrder =
+            toolbar.items.map(\.itemIdentifier) == reordered
+            && ThemePreset(preferences: prefs) == .harbor
+
+        ThemePreset.system.apply(to: &updated)
+        receiveSettingsPreferences(updated)
+        let resetKeptOrder =
+            toolbar.items.map(\.itemIdentifier) == reordered
+            && ThemePreset(preferences: prefs) == .system
+        return previewKeptOrder && cancelKeptOrder && appliedKeptOrder && resetKeptOrder
+    }
+
     func smokeReport() -> (ok: Bool, lines: [String]) {
         var lines: [String] = []
         var ok = true
@@ -1857,6 +1904,7 @@ extension BrowserViewController {
             parsedAccent != nil && emptyParse == nil && presetName == "Dracula" && accentApplied,
             "parsed=\(parsedAccent != nil) empty=\(emptyParse == nil) preset=\(presetName ?? "nil") applied=\(accentApplied)"
         )
+        check("theme-preserves-custom-toolbar", smokeThemePreservesCustomToolbar(), "")
         // Folder backgrounds: the per-folder store round-trips (set, read, clear).
         check("folder-background-roundtrips", debugFolderBackgroundRoundTrips(), "")
         // Icon sets: a themed set renders an icon; "System" returns nil (use the OS icon).

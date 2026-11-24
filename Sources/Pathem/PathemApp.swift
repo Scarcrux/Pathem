@@ -270,6 +270,14 @@ enum PathemApp {
         // tears every window down cleanly. Only the primary restores/saves the session.
         WindowManager.shared.updater = updater
         WindowManager.shared.adoptPrimary(window: window, browser: browser)
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == "themes" {
+            browser.installToolbarIfNeeded()
+            let passed = browser.smokeThemePreservesCustomToolbar()
+            print("theme-preserves-custom-toolbar: \(passed ? "PASS" : "FAIL")")
+            exit(passed ? 0 : 1)
+        }
+        #endif
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
         delegate.vpnStatusItem = VPNStatusItem()  // shows only while VPN binding is enabled

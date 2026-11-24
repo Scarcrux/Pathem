@@ -1409,6 +1409,10 @@
 "prefs.statusSize" = "大小（檔案夾或所選項目的）";
 "prefs.suggestFilenames" = "重新命名時建議檔案名稱（裝置端 AI）";
 "prefs.themeClearTint" = "無";
+"prefs.themeImport" = "匯入…";
+"prefs.themeExport" = "匯出…";
+"prefs.themeReset" = "重置主題";
+"prefs.themePreview" = "主題預覽";
 "prefs.themeCustom" = "自訂";
 "prefs.themeHint" = "外觀主題會為 Pathem 自己的選取項目、面板、標籤頁與路徑列著色。標準按鈕仍使用系統強調色。";
 "prefs.themeLabel" = "外觀主題";

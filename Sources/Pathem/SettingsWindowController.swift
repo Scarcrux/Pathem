@@ -1,5 +1,6 @@
 import AppKit
 import PathemEngine
+import UniformTypeIdentifiers
 
 /// The app's Settings window: a System-Settings-style window whose toolbar switches
 /// between panes. Exposes every Preferences field, a full keyboard-shortcut editor
@@ -51,6 +52,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     let rootView = NSView()
     private var prefs = Preferences.default
     private var onChange: ((Preferences) -> Void)?
+    var onThemePreview: ((ThemePreset?) -> Void)?
     var onTrashRetentionChange: ((Bool) -> Void)?
     private var contextMenuEditor: ContextMenuEditorController?  // retains the Menus pane editor
     private var colorRulesEditor: ColorRulesEditorController?  // retains the Labels pane editor
@@ -328,6 +330,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         case .appearance:
             return form([
                 labeled(L("prefs.themeLabel", "Skin"), themeControl()),
+                themePackageControls(),
                 labeled(L("prefs.accentLabel", "Accent color"), accentColorControl()),
                 labeled(L("prefs.windowTintLabel", "Window tint"), windowTintControl()),
                 labeled(L("prefs.iconSetLabel", "File icons"), iconSetControl()),
@@ -886,21 +889,24 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         onChange?(prefs)
     }
 
+    private let appearancePopup = NSPopUpButton()
     private func appearanceControl() -> NSView {
-        let popup = NSPopUpButton()
+        let popup = appearancePopup
+        popup.removeAllItems()
         popup.addItems(withTitles: [
             L("prefs.appearanceSystem", "System"), L("prefs.appearanceLight", "Light"),
             L("prefs.appearanceDark", "Dark"),
         ])
-        let order: [Preferences.Appearance] = [.system, .light, .dark]
-        popup.selectItem(at: order.firstIndex(of: prefs.appearance) ?? 0)
+        popup.selectItem(at: Preferences.Appearance.allCases.firstIndex(of: prefs.appearance) ?? 0)
         popup.target = self
         popup.action = #selector(appearanceChanged(_:))
         return popup
     }
     @objc private func appearanceChanged(_ sender: NSPopUpButton) {
-        prefs.appearance = [.system, .light, .dark][sender.indexOfSelectedItem]
-        onChange?(prefs)
+        let modes = Preferences.Appearance.allCases
+        guard modes.indices.contains(sender.indexOfSelectedItem) else { return }
+        prefs.appearance = modes[sender.indexOfSelectedItem]
+        themeOverridesChanged()
     }
 
     // MARK: Skins (theming)
@@ -920,11 +926,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         menu.addItem(
             NSMenuItem(title: L("prefs.themeCustom", "Custom"), action: nil, keyEquivalent: ""))
         themePopup.menu = menu
-        let preset = ThemePreset.matching(
-            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
-            appearance: prefs.appearance)
-        let selected = menu.items.first { ($0.representedObject as? String) == preset?.name }
-        themePopup.select(preset == nil ? menu.items.last : selected)
+        updateThemeSelection()
         themePopup.target = self
         themePopup.action = #selector(themeChanged(_:))
         return themePopup
@@ -934,11 +936,110 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             let name = sender.selectedItem?.representedObject as? String,
             let preset = ThemePreset.presets.first(where: { $0.name == name })
         else { return }
-        prefs.themeName = preset.name
-        prefs.accentColorHex = preset.accentHex
-        prefs.windowTintHex = preset.backgroundHex
-        prefs.appearance = preset.appearance
+        if preset == .harbor {
+            previewTheme(preset)
+        } else {
+            commitTheme(preset)
+        }
+    }
+
+    private func updateThemeSelection() {
+        let preset = ThemePreset.matching(
+            accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
+            appearance: prefs.appearance)
+        guard let custom = themePopup.itemArray.last else { return }
+        let name = prefs.themeName
+        let isBuiltIn = ThemePreset.presets.contains { $0.name == name }
+        custom.title = isBuiltIn || name.isEmpty ? L("prefs.themeCustom", "Custom") : name
+        let selected = themePopup.itemArray.first {
+            ($0.representedObject as? String) == preset?.name
+        }
+        themePopup.select(preset == nil ? custom : selected)
+    }
+
+    func synchronizeTheme(_ theme: ThemePreset) {
+        theme.apply(to: &prefs)
+        updateThemeSelection()
+        let modes = Preferences.Appearance.allCases
+        appearancePopup.selectItem(at: modes.firstIndex(of: theme.appearance) ?? 0)
+        accentWell.color = ThemeManager.color(fromHex: theme.accentHex) ?? .controlAccentColor
+        tintWell.color = ThemeManager.color(fromHex: theme.backgroundHex) ?? .windowBackgroundColor
+    }
+
+    private func commitTheme(_ theme: ThemePreset) {
+        synchronizeTheme(theme)
         onChange?(prefs)
+    }
+
+    private func themePackageControls() -> NSView {
+        let stack = NSStackView(views: [
+            NSButton(
+                title: L("prefs.themeImport", "Import…"), target: self,
+                action: #selector(importTheme)),
+            NSButton(
+                title: L("prefs.themeExport", "Export…"), target: self,
+                action: #selector(exportTheme)),
+            NSButton(
+                title: L("prefs.themeReset", "Reset Theme"), target: self,
+                action: #selector(resetTheme)),
+        ])
+        stack.spacing = 8
+        return stack
+    }
+
+    @objc private func importTheme() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            guard try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
+                throw ThemePackage.ValidationError.invalidDocument
+            }
+            let file = try FileHandle(forReadingFrom: url)
+            defer { try? file.close() }
+            let data = try file.read(upToCount: ThemePackage.maximumBytes + 1) ?? Data()
+            previewTheme(try ThemePackage.decode(data))
+        } catch {
+            NSAlert(error: error).runModal()
+        }
+    }
+
+    private func previewTheme(_ theme: ThemePreset) {
+        let alert = NSAlert()
+        alert.messageText = L("prefs.themePreview", "Theme Preview")
+        alert.informativeText = theme.name
+        alert.icon = ThemeManager.swatch(for: theme)
+        alert.addButton(withTitle: L("common.apply", "Apply"))
+        let cancel = alert.addButton(withTitle: L("common.cancel", "Cancel"))
+        cancel.keyEquivalent = "\u{1b}"
+        onThemePreview?(theme)
+        if alert.runModal() == .alertFirstButtonReturn {
+            commitTheme(theme)
+        } else {
+            onThemePreview?(nil)
+            updateThemeSelection()
+        }
+    }
+
+    @objc private func exportTheme() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.json]
+        panel.nameFieldStringValue = "Pathem Theme.json"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            var theme = ThemePreset(preferences: prefs)
+            if theme.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                theme.name = L("prefs.themeCustom", "Custom")
+            }
+            let data = try ThemePackage.encode(theme)
+            try data.write(to: url, options: .atomic)
+        } catch {
+            NSAlert(error: error).runModal()
+        }
+    }
+
+    @objc private func resetTheme() {
+        commitTheme(.system)
     }
 
     private func iconSetControl() -> NSView {
@@ -959,58 +1060,60 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         onChange?(prefs)
     }
 
+    private let accentWell = NSColorWell()
+    private let tintWell = NSColorWell()
+
     private func accentColorControl() -> NSView {
-        let well = NSColorWell()
-        well.color = ThemeManager.color(fromHex: prefs.accentColorHex) ?? .controlAccentColor
-        well.target = self
-        well.action = #selector(accentColorChanged(_:))
-        well.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        return well
-    }
-    @objc private func accentColorChanged(_ sender: NSColorWell) {
-        prefs.accentColorHex = ThemeManager.hex(from: sender.color)
-        prefs.themeName =
-            ThemePreset.matching(
-                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
-                appearance: prefs.appearance)?.name
-            ?? L("prefs.themeCustom", "Custom")
-        themePopup.selectItem(withTitle: prefs.themeName)
-        onChange?(prefs)
+        colorControl(
+            accentWell, hex: prefs.accentColorHex, fallback: .controlAccentColor,
+            action: #selector(accentColorChanged(_:)),
+            clearTitle: L("prefs.appearanceSystem", "System"), clear: #selector(clearAccent))
     }
 
     private func windowTintControl() -> NSView {
-        let well = NSColorWell()
-        well.color = ThemeManager.color(fromHex: prefs.windowTintHex) ?? .windowBackgroundColor
+        colorControl(
+            tintWell, hex: prefs.windowTintHex, fallback: .windowBackgroundColor,
+            action: #selector(windowTintChanged(_:)),
+            clearTitle: L("prefs.themeClearTint", "None"), clear: #selector(clearWindowTint))
+    }
+
+    private func colorControl(
+        _ well: NSColorWell, hex: String, fallback: NSColor, action: Selector, clearTitle: String,
+        clear: Selector
+    ) -> NSView {
+        well.color = ThemeManager.color(fromHex: hex) ?? fallback
         well.target = self
-        well.action = #selector(windowTintChanged(_:))
-        well.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        // A button to clear the tint back to the system background (a color well can't be "empty").
-        let clear = NSButton(
-            title: L("prefs.themeClearTint", "None"), target: self,
-            action: #selector(clearWindowTint))
-        clear.bezelStyle = .rounded
-        let stack = NSStackView(views: [well, clear])
-        stack.orientation = .horizontal
+        well.action = action
+        let button = NSButton(title: clearTitle, target: self, action: clear)
+        let stack = NSStackView(views: [well, button])
         stack.spacing = 8
         return stack
     }
+
+    @objc private func accentColorChanged(_ sender: NSColorWell) {
+        prefs.accentColorHex = ThemeManager.hex(from: sender.color)
+        themeOverridesChanged()
+    }
+
     @objc private func windowTintChanged(_ sender: NSColorWell) {
         prefs.windowTintHex = ThemeManager.hex(from: sender.color)
-        prefs.themeName =
-            ThemePreset.matching(
-                accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
-                appearance: prefs.appearance)?.name
-            ?? L("prefs.themeCustom", "Custom")
-        themePopup.selectItem(withTitle: prefs.themeName)
-        onChange?(prefs)
+        themeOverridesChanged()
     }
+
+    @objc private func clearAccent() {
+        prefs.accentColorHex = ""
+        accentWell.color = .controlAccentColor
+        themeOverridesChanged()
+    }
+
     @objc private func clearWindowTint() {
         prefs.windowTintHex = ""
-        themePopup.selectItem(
-            withTitle: ThemePreset.matching(
-                accentHex: prefs.accentColorHex, backgroundHex: "", appearance: prefs.appearance)?
-                .name
-                ?? L("prefs.themeCustom", "Custom"))
+        tintWell.color = .windowBackgroundColor
+        themeOverridesChanged()
+    }
+
+    private func themeOverridesChanged() {
+        updateThemeSelection()
         onChange?(prefs)
     }
 

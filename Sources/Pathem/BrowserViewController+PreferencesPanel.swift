@@ -36,6 +36,9 @@ extension BrowserViewController {
         settings.onTrashRetentionChange = { [weak self] enabled in
             self?.trashRetention.setPreference(enabled)
         }
+        settings.onThemePreview = { [weak self] preview in
+            self?.renderThemePreview(preview)
+        }
         let content = settings.makeEmbedded(
             prefs: prefs,
             commands: commands.all.map { (id: $0.id, title: $0.title) },
@@ -157,10 +160,15 @@ extension BrowserViewController {
         applyPreferences()  // applies labels + width and persists
     }
 
-    /// Hide/show sidebar labels and narrow/restore the sidebar per the preference.
-    /// Force the app's appearance (System/Light/Dark) per the preference.
-    func applyAppearance() {
-        switch prefs.appearance {
+    /// Render a candidate look, or restore the saved look when a preview is cancelled.
+    func renderThemePreview(_ preview: ThemePreset?) {
+        let theme = preview ?? ThemePreset(preferences: prefs)
+        applyAppearance(theme.appearance)
+        applyTheme(theme)
+    }
+
+    private func applyAppearance(_ appearance: Preferences.Appearance) {
+        switch appearance {
         case .system: NSApp.appearance = nil
         case .light: NSApp.appearance = NSAppearance(named: .aqua)
         case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
@@ -169,23 +177,24 @@ extension BrowserViewController {
 
     /// Push the skin's colors into the theme manager (which notifies the themed chrome) and tint
     /// the window/pane background. The accent is honored by Pathem-drawn elements via ThemeManager.
-    func applyTheme() {
-        ThemeManager.shared.apply(
-            accentHex: prefs.accentColorHex, windowTintHex: prefs.windowTintHex)
+    func applyTheme(_ preview: ThemePreset? = nil) {
+        let theme = preview ?? ThemePreset(preferences: prefs)
+        ThemeManager.shared.apply(accentHex: theme.accentHex, windowTintHex: theme.backgroundHex)
         let tint = ThemeManager.shared.windowTint
         view.window?.backgroundColor = tint ?? .windowBackgroundColor
         // A transparent title bar lets the tint run under the toolbar too, so a theme colors the
         // whole window rather than stopping at the panes.
         view.window?.titlebarAppearsTransparent = tint != nil
-        applyTerminalFollowingTheme()
+        applyTerminalFollowingTheme(theme)
     }
 
     /// The terminal's "System" theme follows the Pathem theme (its background, a readable
     /// foreground, the accent cursor); any other terminal theme the user picked is left alone.
-    func applyTerminalFollowingTheme() {
+    func applyTerminalFollowingTheme(_ preview: ThemePreset? = nil) {
         guard terminal.theme.name == TerminalTheme.system.name else { return }
+        let theme = preview ?? ThemePreset(preferences: prefs)
         let following = TerminalTheme.system(
-            followingBackground: prefs.windowTintHex, accent: prefs.accentColorHex)
+            followingBackground: theme.backgroundHex, accent: theme.accentHex)
         if terminal.theme != following { terminal.theme = following }
     }
 
@@ -313,8 +322,7 @@ extension BrowserViewController {
         torrentDrawer.preferredDownloadPath = prefs.torrentDownloadPath
         applyCompactSidebar()
         applyCommanderCommands()
-        applyAppearance()
-        applyTheme()
+        renderThemePreview(nil)
         applyIconSet()
         applyTooltipDelay()
         applyToolbarIconSize()

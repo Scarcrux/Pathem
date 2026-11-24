@@ -1400,6 +1400,10 @@
 "prefs.statusSize" = "Tamaño (de la carpeta o la selección)";
 "prefs.suggestFilenames" = "Sugerir nombres al renombrar (IA local)";
 "prefs.themeClearTint" = "Ninguno";
+"prefs.themeImport" = "Importar…";
+"prefs.themeExport" = "Exportar…";
+"prefs.themeReset" = "Restablecer tema";
+"prefs.themePreview" = "Vista previa del tema";
 "prefs.themeCustom" = "Personalizado";
 "prefs.themeHint" = "El aspecto tiñe la selección propia de Pathem, los paneles, las pestañas y la ruta de navegación. Los botones estándar siguen usando el color de acento del sistema.";
 "prefs.themeLabel" = "Aspecto";

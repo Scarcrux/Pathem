@@ -1400,6 +1400,10 @@
 "prefs.statusSize" = "サイズ（フォルダまたは選択項目）";
 "prefs.suggestFilenames" = "名前の変更時にファイル名を提案（デバイス上のAI）";
 "prefs.themeClearTint" = "なし";
+"prefs.themeImport" = "読み込む…";
+"prefs.themeExport" = "書き出す…";
+"prefs.themeReset" = "テーマをリセット";
+"prefs.themePreview" = "テーマのプレビュー";
 "prefs.themeCustom" = "カスタム";
 "prefs.themeHint" = "スキンはPathem独自の選択、ペイン、タブ、パンくずリストに色を付けます。標準のボタンは引き続きシステムのアクセントカラーを使用します。";
 "prefs.themeLabel" = "スキン";

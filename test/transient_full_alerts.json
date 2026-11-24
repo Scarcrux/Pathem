@@ -225,8 +225,8 @@
     },
     {
       "id": "b11",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1059:9:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:1051:21:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1162:9:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1154:21:NSAlert",
       "source_sha256": "8c75532062623d86d7bec2d2099f2da31b523ca0183b1183f92f751e7996758e",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Static localized strings. Build from catalog; never invoke folderHandlerToggled/applyFolderHandler, which changes the system default.",
@@ -281,8 +281,8 @@
     },
     {
       "id": "b14",
-      "site": "Sources/Pathem/SettingsWindowController.swift:576:13:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:571:21:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:579:13:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:574:21:NSAlert",
       "source_sha256": "fa8aaccdd10cd6440b9e2926918bf65070467ff8635473c0845c898016de4a53",
       "sheet": true,
       "fixture": "Plain caller-supplied title/body, including integration file previews. Fixture: two 255-character paths and two 80-line file previews; finite stress fixture, not a universal bound.",
@@ -298,8 +298,8 @@
     },
     {
       "id": "b15",
-      "site": "Sources/Pathem/SettingsWindowController.swift:578:13:runModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:571:21:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:581:13:runModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:574:21:NSAlert",
       "source_sha256": "3522018da338ca58b2cb302e85ca5703ed912db6e9ff3eab6b291d779031dc04",
       "sheet": false,
       "fixture": "Plain caller-supplied title/body, including integration file previews. Fixture: two 255-character paths and two 80-line file previews; finite stress fixture, not a universal bound.",
@@ -315,8 +315,8 @@
     },
     {
       "id": "b16",
-      "site": "Sources/Pathem/SettingsWindowController.swift:612:17:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:607:25:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:615:17:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:610:25:NSAlert",
       "source_sha256": "e3729b098e6585c9dd8ba4ff17f255d22a011e9dfc967ef439b2a21896708945",
       "sheet": true,
       "fixture": "Install/remove failure report only. Fixture: permission error with a 255-character component. Do not invoke installation.",
@@ -333,8 +333,8 @@
     },
     {
       "id": "b17",
-      "site": "Sources/Pathem/SettingsWindowController.swift:614:17:runModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:607:25:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:617:17:runModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:610:25:NSAlert",
       "source_sha256": "2fbf37d59f0f173244e60732d7e6db33f13a583b2d6831eb54646b5d8b6ab213",
       "sheet": false,
       "fixture": "Install/remove failure report only. Fixture: permission error with a 255-character component. Do not invoke installation.",
@@ -351,8 +351,8 @@
     },
     {
       "id": "b18",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1083:17:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:1072:29:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1186:17:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1175:29:NSAlert",
       "source_sha256": "5f6070bfe654667cc7a634fabbc600936cfdf5434330ec3ef1dd422f259378a9",
       "sheet": true,
       "fixture": "Localized folder-handler failure report plus error detail. Fixture: permission error with 255-character component. Do not change system handler.",
@@ -372,8 +372,8 @@
     },
     {
       "id": "b19",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1126:17:beginSheetModal",
-      "builder": "Sources/Pathem/SettingsWindowController.swift:1122:29:NSAlert",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1229:17:beginSheetModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1225:29:NSAlert",
       "source_sha256": "2052297b508bafc18713f7587f90fa1efc4dff6762e36fb26b00286dcfa1a738",
       "sheet": true,
       "fixture": "Localized default magnet-app failure report. Fixture: permission error with 255-character component. Do not change magnet or torrent handler.",
@@ -992,6 +992,25 @@
       },
       "buttons": [
         "common.ok"
+      ]
+    },
+    {
+      "id": "b48",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1016:12:runModal",
+      "builder": "Sources/Pathem/SettingsWindowController.swift:1008:21:NSAlert",
+      "source_sha256": "3641fb278c6ecb3335f2b88d88f0c9de6593a6320f0a87ef9247c797696f4390",
+      "sheet": false,
+      "fixture": "Theme preview uses a swatch as the standard alert icon, a theme name, and Apply and Cancel. Structural check only for runModal.",
+      "message": {
+        "key": "prefs.themePreview",
+        "args": []
+      },
+      "body": {
+        "literal": "Community Theme"
+      },
+      "buttons": [
+        "common.apply",
+        "common.cancel"
       ]
     }
   ]

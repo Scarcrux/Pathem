@@ -1409,6 +1409,10 @@
 "prefs.statusSize" = "Dimensione (della cartella o della selezione)";
 "prefs.suggestFilenames" = "Suggerisci nomi file quando rinomini (AI sul dispositivo)";
 "prefs.themeClearTint" = "Nessuna";
+"prefs.themeImport" = "Importa…";
+"prefs.themeExport" = "Esporta…";
+"prefs.themeReset" = "Ripristina tema";
+"prefs.themePreview" = "Anteprima tema";
 "prefs.themeCustom" = "Personalizzata";
 "prefs.themeHint" = "La skin colora la selezione, i pannelli, le schede e il percorso di Pathem. I pulsanti standard usano ancora il colore principale del sistema.";
 "prefs.themeLabel" = "Skin";
