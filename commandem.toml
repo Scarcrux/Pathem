@@ -2773,4 +2773,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "A dense valid 2400 by 1600 screenshot reproduced rejection at the full-size quality floor. Intake and export now retry smaller aspect-ratio-preserving encodes under the 300 KiB cap. The draft privacy page discloses the on-open Themes request and public GitHub attachment. Site deployment remains pending."
     at = "2026-11-24T19:38:38Z"
+
+  [[mission.comment]]
+    text = "The screenshot privacy regression now uses a JPEG with verified EXIF capture time and GPS coordinates. It asserts export and review intake remove those fields, the embedded EXIF comment, and the trailing payload."
+    at = "2026-11-24T19:44:56Z"
 # <<< commandem roadmap <<<

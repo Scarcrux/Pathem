@@ -60,8 +60,40 @@ struct CommunityThemeGalleryTests {
         let images = try #require(document["screenshots"] as? [String])
         let first = try #require(images.first)
         let image = try #require(Data(base64Encoded: first))
+        let source = try #require(CGImageSourceCreateWithData(image as CFData, nil))
+        let pixels = try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+        let tagged = NSMutableData()
+        let writer = try #require(
+            CGImageDestinationCreateWithData(tagged, "public.jpeg" as CFString, 1, nil))
+        let exif: [CFString: Any] = [
+            kCGImagePropertyExifDateTimeOriginal: "2020:01:02 03:04:05",
+            kCGImagePropertyExifUserComment: "PATHEM-TEST-EXIF",
+        ]
+        let gps: [CFString: Any] = [
+            kCGImagePropertyGPSLatitude: 1.25,
+            kCGImagePropertyGPSLatitudeRef: "N",
+            kCGImagePropertyGPSLongitude: 2.5,
+            kCGImagePropertyGPSLongitudeRef: "E",
+        ]
+        CGImageDestinationAddImage(
+            writer, pixels,
+            [
+                kCGImagePropertyExifDictionary: exif,
+                kCGImagePropertyGPSDictionary: gps,
+            ] as CFDictionary)
+        try #require(CGImageDestinationFinalize(writer))
+        let taggedImage = try #require(CGImageSourceCreateWithData(tagged as CFData, nil))
+        let metadata = try #require(
+            CGImageSourceCopyPropertiesAtIndex(taggedImage, 0, nil) as? [CFString: Any])
+        let taggedExif = try #require(metadata[kCGImagePropertyExifDictionary] as? [CFString: Any])
+        let taggedGPS = try #require(metadata[kCGImagePropertyGPSDictionary] as? [CFString: Any])
+        try #require(
+            taggedExif[kCGImagePropertyExifDateTimeOriginal] as? String == "2020:01:02 03:04:05")
+        try #require(taggedGPS[kCGImagePropertyGPSLatitude] as? Double == 1.25)
+        try #require(taggedGPS[kCGImagePropertyGPSLongitude] as? Double == 2.5)
+
         let payload = Data("PATHEM-TEST-PRIVATE-SCREENSHOT-METADATA".utf8)
-        document["screenshots"] = [(image + payload).base64EncodedString()]
+        document["screenshots"] = [((tagged as Data) + payload).base64EncodedString()]
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: url) }
         try JSONSerialization.data(withJSONObject: document).write(to: url)
@@ -74,6 +106,13 @@ struct CommunityThemeGalleryTests {
             let screenshot = try #require(revision.screenshots.first)
             #expect(screenshot.range(of: payload) == nil)
             #expect(screenshot.count <= 300 * 1024)
+            let clean = try #require(CGImageSourceCreateWithData(screenshot as CFData, nil))
+            let remaining = try #require(
+                CGImageSourceCopyPropertiesAtIndex(clean, 0, nil) as? [CFString: Any])
+            let remainingExif = remaining[kCGImagePropertyExifDictionary] as? [CFString: Any]
+            #expect(remainingExif?[kCGImagePropertyExifDateTimeOriginal] == nil)
+            #expect(remainingExif?[kCGImagePropertyExifUserComment] == nil)
+            #expect(remaining[kCGImagePropertyGPSDictionary] == nil)
         }
     }
 
