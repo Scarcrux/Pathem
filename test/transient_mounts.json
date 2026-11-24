@@ -352,14 +352,14 @@
     },
     {
       "id": "m51",
-      "site": "Sources/Pathem/SettingsWindowController.swift:196:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:197:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false
     },
     {
       "id": "m52",
-      "site": "Sources/Pathem/SettingsWindowController.swift:1851:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:1863:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false

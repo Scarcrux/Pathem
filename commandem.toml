@@ -2183,6 +2183,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-20: docs home still said no public download (template in scripts/build_site_docs.py missed by the post-release site pass); fixed and redeployed. Sweep of generator, guides.json and site/ found no other pre-release wording."
     at = "2026-11-21T03:52:27Z"
 
+  [[mission.comment]]
+    text = "Focused transient review: repaired stale Settings and Updater source pins for the full recipes. Inventory and 246 harness tests pass. German native sweep used light/dark, two hosts and short/long inputs. View Options (m07) and encrypted image (m12) each retained eight check-3 cell failures; the existing host-fit and field-width repairs held. Both ambiguity tasks stay open. No full visual matrix was run."
+    at = "2026-11-24T01:18:30Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
