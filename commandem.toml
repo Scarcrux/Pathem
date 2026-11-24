@@ -2667,6 +2667,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-0481758f"
     title = "Ship at least 10 complete themes and at least 10 choices each for folder styles, file icon sets, and toolbar glyph styles. Allow independent overrides and preserve toolbar commands and order."
+    done = true
 
   [[mission.task]]
     id = "t-965feb34"
@@ -2696,4 +2697,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Catalog candidate includes 23 complete looks and 10 choices each for folders, file icons, and toolbar glyphs. Focused tests passed 12/12 and offscreen testing preserved toolbar order through in-process preview, apply, and reset. Fifty-three offscreen renders cover the catalog, individual choices, and the five view modes across light, dark, and increased contrast. An isolated toolbar write passed but the next process did not find its saved order; two candidate bundle attempts also aborted before application initialization. Desktop relaunch qualification remains open."
     at = "2026-11-24T09:42:30Z"
+
+  [[mission.comment]]
+    text = "Landed 23 complete looks and 10 choices each for folders, file icons and toolbar glyphs. The bundled-host autosave follow-up passed in two separate processes with a unique preferences domain, resolving the runner relaunch result. Active desktop interaction, live Quick Look and thumbnail visual checks remain separate."
+    at = "2026-11-24T09:47:08Z"
 # <<< commandem roadmap <<<

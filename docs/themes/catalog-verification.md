@@ -9,7 +9,7 @@ Run on the assigned checkout on macOS 27.2.1 (26B131). The built-in catalog cont
 | Full Swift suite | The run reported failures in OrganizePlanner tests and exited with status 70 without a suite summary. See `.build/catalog-full-tests.log`. |
 | Catalog AppKit smoke | Passed. Preview, cancel, apply, reset, and changing and clearing each style override preserved the customized toolbar order within the same process. The check exercised the browser’s appearance path programmatically. |
 | Catalog and style renders | Reviewed 23 List renders, ten Icon renders covering every style choice, and the 20-view matrix below. The seeded PNGs showed file glyph and Quick Look fallback behavior. The demo’s red tag dot remained visible. |
-| Native toolbar autosave across relaunch | Write probe passed in-process. The read probe failed after a full process restart. The first process had a native saved item order and reported successful defaults synchronization. The order was absent before installing the toolbar in the second process. The actual desktop quit and relaunch remains unverified. |
+| Native toolbar autosave across relaunch | The runner’s offscreen read probe failed after its write probe passed. Outside that runner, the bundled debug app used a unique bundle identifier and scratch configuration. Two separate processes passed native autosave write and read with the same test toolbar identifier. Both checks ran before window activation. |
 
 ## View matrix
 
@@ -51,3 +51,9 @@ done
 ```
 
 A second visual run supplied a fresh `PATHEM_DEMO_ROOT` and added three synthetic PNGs to its `Photos/2026-11 Lisbon` folder before capture. The 53 local captures from that run are in `.build/theme-shots-reviewed/`. The focused test, smoke, and relaunch logs are `.build/catalog-tests.log`, `.build/catalog-smoke.log`, and `.build/catalog-autosave-final.log`. The captures and logs are local to the assigned checkout.
+
+The bundled-host follow-up on the landed catalog at `0b7cfda` used the same write and
+read flags, a unique toolbar identifier, and a temporary app with its own preferences domain.
+The first bundle was missing the Sparkle framework and exited in the loader. With the
+framework present, both processes returned PASS. Cleanup removed the scratch preferences
+domain and bundle.
