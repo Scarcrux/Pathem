@@ -1,5 +1,5 @@
 name: Submit a Pathem theme
-description: Submit a new theme or a revision for the Pathem marketplace.
+description: Submit a new theme or a revision for Pathem Themes.
 title: '[Theme] '
 labels: [enhancement]
 body:
@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         This issue is public. Include theme files and screenshots you intend to share.
-        See [the submission guide](https://github.com/Scarcrux/Pathem/blob/main/docs/themes/admin-dashboard.md).
+        In a Themes preview build, open Settings → Appearance → Submit a Theme to prepare the submission JSON.
   - type: input
     id: listing
     attributes:
