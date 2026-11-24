@@ -274,6 +274,150 @@ import Testing
         }
     }
 
+    /// A scripted hdiutil: `busy` plain detaches fail first, `forceOnly` needs -force, and
+    /// `stuck` never detaches.
+    private final class FakeImages {
+        var attached = true
+        var busy = 0
+        var forceOnly = false
+        var stuck = false
+        var lies = false  // detach always exits nonzero, even when it worked
+        var infoWorks = true
+        var calls: [[String]] = []
+        var pauses: [TimeInterval] = []
+
+        var fixture: ScratchImage {
+            ScratchImage(
+                hdiutil: { [self] args in
+                    if args.first == "info" {
+                        let images: [[String: Any]] =
+                            attached
+                            ? [
+                                [
+                                    "image-path": "/tmp/other.dmg",
+                                    "system-entities": [["dev-entry": "/dev/disk7"]],
+                                ],
+                                [
+                                    "image-path": "/tmp/fixture.dmg",
+                                    "system-entities": [
+                                        ["dev-entry": "/dev/disk9s1"], ["dev-entry": "/dev/disk9"],
+                                        ["dev-entry": "/dev/disk10"],
+                                    ],
+                                ],
+                            ] : []
+                        let plist = try! PropertyListSerialization.data(
+                            fromPropertyList: ["images": images], format: .xml, options: 0)
+                        return (infoWorks, infoWorks ? plist : Data())
+                    }
+                    calls.append(args)
+                    let force = args.contains("-force")
+                    if busy > 0, !force {
+                        busy -= 1
+                        return (false, Data())
+                    }
+                    if stuck || (forceOnly && !force) { return (false, Data()) }
+                    attached = false
+                    return (!lies, Data())
+                },
+                pause: { [self] in pauses.append($0) })
+        }
+
+        func detach() -> Bool {
+            fixture.detach(
+                image: URL(fileURLWithPath: "/tmp/fixture.dmg"),
+                mount: URL(fileURLWithPath: "/tmp/pathem-xvol-absent/mount"))
+        }
+    }
+
+    @Test func detachRetriesABusyImageWithBackoff() {
+        let images = FakeImages()
+        images.busy = 2
+        #expect(images.detach())
+        // Only this image's whole disk is detached, never another image's device.
+        #expect(images.calls == Array(repeating: ["detach", "/dev/disk9"], count: 3))
+        #expect(images.pauses == [0.2, 0.5])
+    }
+
+    @Test func detachForcesAfterTheRetriesRunOut() {
+        let images = FakeImages()
+        images.forceOnly = true
+        #expect(images.detach())
+        #expect(images.pauses == [0.2, 0.5, 1, 2])
+        #expect(images.calls.count == 6)
+        #expect(images.calls.last == ["detach", "-force", "/dev/disk9"])
+        #expect(images.calls.dropLast().allSatisfy { $0 == ["detach", "/dev/disk9"] })
+    }
+
+    @Test func detachFailsOnlyWhenTheImageIsStillAttached() {
+        let stuck = FakeImages()
+        stuck.stuck = true  // even the forced detach leaves it attached
+        #expect(!stuck.detach())
+        #expect(stuck.calls.last == ["detach", "-force", "/dev/disk9"])
+        #expect(stuck.attached)
+
+        // A detach that exits nonzero but released the image is a success, with no retry.
+        let lying = FakeImages()
+        lying.lies = true
+        #expect(lying.detach())
+        #expect(lying.calls == [["detach", "/dev/disk9"]])
+        #expect(lying.pauses.isEmpty)
+
+        // Nothing attached (a failed create or attach): no detach call at all.
+        let absent = FakeImages()
+        absent.attached = false
+        #expect(absent.detach())
+        #expect(absent.calls.isEmpty)
+        // The same when hdiutil cannot list images and the mount point is not a volume.
+        absent.infoWorks = false
+        #expect(absent.detach())
+        #expect(absent.calls.isEmpty)
+    }
+
+    /// The real thing: an open file keeps the volume busy, so only the forced detach works.
+    @Test func detachForcesARealBusyImage() throws {
+        var fixture = ScratchImage.live
+        fixture.backoff = [0.1]
+        var calls: [[String]] = []
+        let hdiutil = fixture.hdiutil
+        fixture.hdiutil = {
+            if $0.first == "detach" { calls.append($0) }
+            return hdiutil($0)
+        }
+        let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-xvol-\(UUID())")
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: false)
+        let image = scratch.appendingPathComponent("fixture.dmg")
+        let mount = scratch.appendingPathComponent("mount")
+        var held: FileHandle?
+        defer {
+            try? held?.close()
+            if fixture.detach(image: image, mount: mount) {
+                try? FileManager.default.removeItem(at: scratch)
+            }
+        }
+        guard
+            fixture.hdiutil([
+                "create", "-size", "64m", "-fs", "APFS", "-volname", "PathemTest", image.path,
+            ]).ok,
+            fixture.hdiutil(["attach", "-nobrowse", "-mountpoint", mount.path, image.path]).ok
+        else {
+            print("Skipping busy-image fixture: hdiutil could not create or attach an image")
+            return
+        }
+        #expect(fixture.devices(for: image)?.count == 1)
+        #expect(ScratchImage.isMountPoint(mount))
+        let file = mount.appendingPathComponent("held.txt")
+        try payload.write(to: file)
+        held = try FileHandle(forReadingFrom: file)
+
+        #expect(fixture.detach(image: image, mount: mount))
+        #expect(fixture.devices(for: image) == [])
+        #expect(!ScratchImage.isMountPoint(mount))
+        #expect(calls.count == 3)
+        #expect(calls.last?.contains("-force") == true)
+        #expect(calls.dropLast().allSatisfy { !$0.contains("-force") })
+    }
+
     private func withScratch(_ body: (URL) throws -> Void) throws {
         let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(
             "pathem-xvol-\(UUID())")
@@ -283,35 +427,37 @@ import Testing
     }
 
     private func withVolume(_ body: (URL, URL) throws -> Void) throws {
-        try withScratch { scratch in
-            let image = scratch.appendingPathComponent("fixture.dmg")
-            let mount = scratch.appendingPathComponent("mount")
-            guard
-                Self.run(
-                    "/usr/bin/hdiutil",
-                    [
-                        "create", "-size", "64m", "-fs", "APFS", "-volname", "PathemTest",
-                        image.path,
-                    ]),
-                Self.run(
-                    "/usr/bin/hdiutil",
-                    [
-                        "attach", "-nobrowse", "-owners", "on", "-mountpoint", mount.path,
-                        image.path,
-                    ])
-            else {
-                print(
-                    "Skipping cross-volume fixture: hdiutil could not create or attach a 64 MB APFS image"
+        // Not withScratch: the folder holds the image, so it goes only after a clean detach.
+        let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "pathem-xvol-\(UUID())")
+        try FileManager.default.createDirectory(at: scratch, withIntermediateDirectories: false)
+        let image = scratch.appendingPathComponent("fixture.dmg")
+        let mount = scratch.appendingPathComponent("mount")
+        let fixture = ScratchImage.live
+        defer {
+            if fixture.detach(image: image, mount: mount) {
+                try? FileManager.default.removeItem(at: scratch)
+            } else {
+                Issue.record(
+                    "Unable to detach the scratch APFS image; it is still attached at \(mount.path)"
                 )
-                return
             }
-            defer {
-                if !Self.run("/usr/bin/hdiutil", ["detach", mount.path]) {
-                    Issue.record("Unable to detach the scratch APFS image")
-                }
-            }
-            try body(scratch, mount)
         }
+        guard
+            fixture.hdiutil([
+                "create", "-size", "64m", "-fs", "APFS", "-volname", "PathemTest", image.path,
+            ]).ok,
+            fixture.hdiutil([
+                "attach", "-nobrowse", "-owners", "on", "-mountpoint", mount.path, image.path,
+            ]).ok
+        else {
+            // The deferred detach also releases an image that attached but failed to mount.
+            print(
+                "Skipping cross-volume fixture: hdiutil could not create or attach a 64 MB APFS image"
+            )
+            return
+        }
+        try body(scratch, mount)
     }
 
     private static func run(_ path: String, _ args: [String]) -> Bool {
@@ -323,5 +469,80 @@ import Testing
         guard (try? process.run()) != nil else { return false }
         process.waitUntilExit()
         return process.terminationStatus == 0
+    }
+}
+
+/// Teardown for the scratch disk image. The hdiutil runner and the pause are injected so the
+/// retry and force logic can be tested without a real image.
+struct ScratchImage {
+    var hdiutil: ([String]) -> (ok: Bool, output: Data)
+    var pause: (TimeInterval) -> Void
+    /// Waits before each plain retry. A new volume is often briefly busy with indexing.
+    var backoff: [TimeInterval] = [0.2, 0.5, 1, 2]
+
+    static var live: ScratchImage {
+        ScratchImage(
+            hdiutil: { args in
+                let process = Process()
+                let pipe = Pipe()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/hdiutil")
+                process.arguments = args
+                process.standardOutput = pipe
+                process.standardError = FileHandle.nullDevice
+                guard (try? process.run()) != nil else { return (false, Data()) }
+                let output = pipe.fileHandleForReading.readDataToEndOfFile()
+                process.waitUntilExit()
+                return (process.terminationStatus == 0, output)
+            },
+            pause: { Thread.sleep(forTimeInterval: $0) })
+    }
+
+    /// Device nodes still backed by `image`, whole disk first. Nil when hdiutil cannot say.
+    func devices(for image: URL) -> [String]? {
+        let info = hdiutil(["info", "-plist"])
+        guard info.ok,
+            let plist = try? PropertyListSerialization.propertyList(from: info.output, format: nil)
+                as? [String: Any],
+            let images = plist["images"] as? [[String: Any]]
+        else { return nil }
+        let wanted = image.resolvingSymlinksInPath().path
+        return images.filter {
+            ($0["image-path"] as? String).map {
+                URL(fileURLWithPath: $0).resolvingSymlinksInPath().path == wanted
+            } ?? false
+        }.compactMap { record in
+            (record["system-entities"] as? [[String: Any]] ?? [])
+                .compactMap { $0["dev-entry"] as? String }
+                .min { ($0.count, $0) < ($1.count, $1) }
+        }
+    }
+
+    /// Detach `image`: plain attempts with a backoff, then `-force`. True unless the image is
+    /// still attached afterward, so a detach that reports an error but worked is not a failure.
+    func detach(image: URL, mount: URL) -> Bool {
+        // Without device info, fall back to whether `mount` is still a separate volume.
+        func gone() -> Bool { devices(for: image)?.isEmpty ?? !Self.isMountPoint(mount) }
+        func attempt(_ flags: [String]) {
+            for target in devices(for: image) ?? [mount.path] {
+                _ = hdiutil(["detach"] + flags + [target])
+            }
+        }
+        for delay in [0] + backoff {
+            if gone() { return true }
+            if delay > 0 { pause(delay) }
+            attempt([])
+        }
+        if gone() { return true }
+        attempt(["-force"])
+        return gone()
+    }
+
+    static func isMountPoint(_ url: URL) -> Bool {
+        var own = stat()
+        var parent = stat()
+        guard lstat(url.path, &own) == 0,
+            lstat(url.deletingLastPathComponent().path, &parent) == 0
+        else { return false }
+        return own.st_dev != parent.st_dev
     }
 }
