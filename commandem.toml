@@ -2656,4 +2656,27 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Beta preparation has started with focused product fixes and a notarized local verification build. The release checklist and Sparkle beta channel remain open."
     at = "2026-11-24T06:38:01Z"
+
+[[mission]]
+  id = "m-c67d643a"
+  title = "Theme customization and community gallery"
+  status = "next"
+  note = "Owner wants at least ten choices per appearance category and a place to discover and post themes. Existing palette presets and four file icon sets establish the starting point. Expand independent choices, add complete looks, then support community discovery and submission with preview and explicit apply."
+  issue = 0
+
+  [[mission.task]]
+    id = "t-0481758f"
+    title = "Ship at least 10 complete themes and at least 10 choices each for folder styles, file icon sets, and toolbar glyph styles. Allow independent overrides and preserve toolbar commands and order."
+
+  [[mission.task]]
+    id = "t-965feb34"
+    title = "Define a versioned data-only theme format with bundled assets, validation, compatibility checks, local preview, import/export, and reset."
+
+  [[mission.task]]
+    id = "t-8093aee2"
+    title = "Build a browsable community theme gallery with screenshots, creator credit, search, previews, and explicit installation. Give creators a submission path with review, updates, and removal."
+
+  [[mission.task]]
+    id = "t-f7451d51"
+    title = "Verify appearance across supported file views, light and dark modes, and standard and increased contrast. Validate one built-in and one community theme end to end before expanding the catalog."
 # <<< commandem roadmap <<<
