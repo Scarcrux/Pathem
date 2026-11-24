@@ -311,7 +311,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         var path: String
         let password: String
     }
-    private var remote: RemoteSession?
+    // A sheet can resume after leaving and reopening an identical connection and path.
+    private(set) var remoteSessionRevision = 0
+    private var remote: RemoteSession? {
+        didSet { remoteSessionRevision += 1 }
+    }
     var isRemote: Bool { remote != nil }
 
     /// Browsing an archive's contents: the archive was extracted to `mountRoot` (a temp
@@ -1291,6 +1295,13 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         containerView.window?.makeFirstResponder(content.keyView)
     }
 
+    func remoteProvider(for proto: RemoteConnection.Proto) -> RemoteProvider {
+        #if DEBUG
+        if let factory = debugRemoteProviderFactory { return factory(proto) }
+        #endif
+        return RemoteProviders.make(for: proto)
+    }
+
     /// Re-list the current remote folder (e.g. after an upload added a file).
     func refreshRemote() {
         if remote != nil { reloadRemote() }
@@ -1331,13 +1342,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         forwardButton.isEnabled = false
         upButton.isEnabled = true  // up goes to the parent, or back to local at the root
 
-        #if DEBUG
-        let provider =
-            debugRemoteProviderFactory?(session.connection.proto)
-            ?? RemoteProviders.make(for: session.connection.proto)
-        #else
-        let provider = RemoteProviders.make(for: session.connection.proto)
-        #endif
+        let provider = remoteProvider(for: session.connection.proto)
         Task { [weak self] in
             do {
                 let entries = try await provider.list(

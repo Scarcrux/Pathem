@@ -56,7 +56,7 @@
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
     },
     {
-      "site": "Sources/Pathem/BrowserViewController+Rename.swift:27:30:presentSheet",
+      "site": "Sources/Pathem/BrowserViewController+Rename.swift:28:30:presentSheet",
       "coverage": "core",
       "reason": "RenameDialogController factory owns the name field and optional suggestion accessory; presentSheet caller retains provenance. One of the three Unit 1 sample kinds."
     },

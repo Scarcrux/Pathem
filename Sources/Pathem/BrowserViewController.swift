@@ -753,7 +753,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             Void
     ) {
         guard let ctx = pane.remoteContext else { return }
-        let provider = RemoteProviders.make(for: ctx.connection.proto)
+        let provider = pane.remoteProvider(for: ctx.connection.proto)
         Task { @MainActor [weak self] in
             do {
                 try await op(provider, ctx.connection, ctx.path, ctx.password)

@@ -2375,6 +2375,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-689d4e95"
     title = "Verify delayed Rename sheet dispatch across mode/path/server changes with recording provider and unchanged-origin control"
+    done = true
 
   [[mission.task]]
     id = "t-01331b47"
@@ -2425,6 +2426,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Tree refresh fixed for expanded branches. The offscreen probe held the parent timestamp constant and reported stale size 3/13 and stale date before. After re-enumerating expanded branches on listing refresh, size 13/13 and date match, and selection and expansion hold. Sort-only and collapsed branches retain cached stats."
     at = "2026-11-24T01:13:50Z"
+
+  [[mission.comment]]
+    text = "Native Rename fixture confirmed stale dispatch. The mode, folder, server and reopened-session attempts all reached the old server and folder when the original coordinates were restored before the sheet continuation resumed. Capture a remote session revision that changes on navigation or reconnection, independently of listing refresh. Retest 14/14: four stale attempts and Cancel did not dispatch; one unchanged-session rename reached the recording provider with exact arguments."
+    at = "2026-11-24T06:38:01Z"
 
 [[mission]]
   id = "m-768176ca"
@@ -2637,6 +2642,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
 [[mission]]
   id = "m-d5f4b409"
   title = "1.0 beta: close the launch checklist, then a Sparkle beta channel"
-  status = "later"
+  status = "now"
   issue = 0
+
+  [[mission.comment]]
+    text = "Beta preparation has started with focused product fixes and a notarized local verification build. The release checklist and Sparkle beta channel remain open."
+    at = "2026-11-24T06:38:01Z"
 # <<< commandem roadmap <<<

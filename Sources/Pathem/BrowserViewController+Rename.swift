@@ -17,6 +17,7 @@ extension BrowserViewController {
         if !offerSuggestions, !pane.isRemote, pane.beginInlineRename() { return }
         let directory = entry.location.map { URL(fileURLWithPath: $0) } ?? pane.currentURL
         let originRemote = pane.remoteContext
+        let originRevision = pane.remoteSessionRevision
         let dialog = RenameDialogController(
             name: entry.name, url: directory.appendingPathComponent(entry.name),
             dataless: entry.isDataless, offerSuggestions: offerSuggestions)
@@ -27,7 +28,9 @@ extension BrowserViewController {
             guard await self.presentSheet(alert) == .alertFirstButtonReturn else { return }
             let newName = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !newName.isEmpty, newName != entry.name else { return }
-            guard Self.renameContextMatches(originRemote, pane.remoteContext) else { return }
+            guard Self.renameContextMatches(originRemote, pane.remoteContext),
+                originRemote == nil || pane.remoteSessionRevision == originRevision
+            else { return }
             if originRemote != nil {
                 guard entry.rawName == nil else {
                     self.presentInfo(

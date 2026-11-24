@@ -57,8 +57,8 @@
     },
     {
       "id": "b03",
-      "site": "Sources/Pathem/BrowserViewController+Rename.swift:96:25:presentSheet",
-      "builder": "Sources/Pathem/BrowserViewController+Rename.swift:87:21:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController+Rename.swift:99:25:presentSheet",
+      "builder": "Sources/Pathem/BrowserViewController+Rename.swift:90:21:NSAlert",
       "source_sha256": "27df1dca1dac3361d2dcc1e0ad39dbd314189b906afe08b1b4512de51137094f",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Static localized strings. Cancel the sample; do not rename an owner file.",
@@ -182,8 +182,8 @@
     },
     {
       "id": "b09",
-      "site": "Sources/Pathem/PaneController.swift:3073:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:3064:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3078:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3069:21:NSAlert",
       "source_sha256": "276cf9b7eaaa25a48df438a5eb11bd4ca5727556f390fc27a164fc25ee474809",
       "sheet": true,
       "fixture": "Plain NSAlert text with at most two standard buttons. Runtime failed-item count fixture: 999999. Do not write tags.",
@@ -203,8 +203,8 @@
     },
     {
       "id": "b10",
-      "site": "Sources/Pathem/PaneController.swift:3087:9:beginSheetModal",
-      "builder": "Sources/Pathem/PaneController.swift:3083:21:NSAlert",
+      "site": "Sources/Pathem/PaneController.swift:3092:9:beginSheetModal",
+      "builder": "Sources/Pathem/PaneController.swift:3088:21:NSAlert",
       "source_sha256": "e905d42c1d775804ddb147ed3e8c937fc1e1843b570e4a215afb306ffa1dba90",
       "sheet": true,
       "fixture": "Plain path-correction alert; shared display configuration bounds each path to 96 characters, full text remains in tooltip/accessibility help, action keeps original URL. TS-U1-F1 regression uses unchanged 4 x 255 stress input.",

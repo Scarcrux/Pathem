@@ -93,6 +93,10 @@ extension BrowserViewController {
             checkViewOptions(root: root, check: check, settle: settle)
             finish()
         }
+        if ProcessInfo.processInfo.environment["PATHEM_REMOTE_RENAME_SAMPLE"] == "1" {
+            checkDelayedRemoteRename(check: check, settle: settle)
+            finish()
+        }
         if ProcessInfo.processInfo.environment["PATHEM_SORT_GROUP_SAMPLE"] == "1" {
             checkSortGroupDelivery(
                 root: root.appendingPathComponent("sort-group"), check: check, settle: settle)
@@ -338,6 +342,7 @@ extension BrowserViewController {
         checkSidebarWidthKept(check: check, settle: settle)
         checkSortGroupDelivery(
             root: root.appendingPathComponent("sort-group"), check: check, settle: settle)
+        checkDelayedRemoteRename(check: check, settle: settle)
         finish()
     }
 }

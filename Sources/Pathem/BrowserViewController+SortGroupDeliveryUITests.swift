@@ -33,6 +33,15 @@ private final class SortingMetadataContexts {
 private final class SortingRemoteFixture: RemoteProvider {
     let entries: [FileEntry]
     private(set) var lists = 0
+    private(set) var renames: [Rename] = []
+
+    struct Rename: Equatable {
+        let connection: RemoteConnection
+        let from: String
+        let to: String
+        let password: String
+    }
+
     init(_ entries: [FileEntry]) { self.entries = entries }
     func list(_ connection: RemoteConnection, path: String, password: String) async throws
         -> [FileEntry]
@@ -53,10 +62,93 @@ private final class SortingRemoteFixture: RemoteProvider {
     { throw RemoteError.unsupported("fixture") }
     func rename(_ connection: RemoteConnection, from: String, to: String, password: String)
         async throws
-    { throw RemoteError.unsupported("fixture") }
+    { renames.append(.init(connection: connection, from: from, to: to, password: password)) }
 }
 
 extension BrowserViewController {
+    func checkDelayedRemoteRename(
+        check: (String, Bool) -> Void, settle: (() -> Bool) -> Bool
+    ) {
+        guard let window = view.window, let pane = leftTabs.activePane else {
+            check("rename-fixture-window-and-pane", false)
+            return
+        }
+        let originalFactory = pane.debugRemoteProviderFactory
+        let file = FileEntry(
+            name: "original.txt", isDirectory: false, size: 1, modificationDate: nil)
+        let provider = SortingRemoteFixture([file])
+        pane.debugRemoteProviderFactory = { _ in provider }
+        defer {
+            pane.closeRemote()
+            pane.debugRemoteProviderFactory = originalFactory
+        }
+        setActiveSide(leftTabs, pane: pane)
+        let origin = RemoteConnection(
+            name: "Rename origin", proto: .sftp, host: "origin.invalid", path: "/parent/origin")
+        let other = RemoteConnection(
+            name: "Rename other", proto: .sftp, host: "other.invalid", path: "/parent/origin")
+        let expected = SortingRemoteFixture.Rename(
+            connection: origin, from: "/parent/origin/original.txt",
+            to: "/parent/origin/renamed.txt", password: "fixture")
+
+        func respond(
+            _ name: String, response: NSApplication.ModalResponse = .alertFirstButtonReturn,
+            change: () -> Bool
+        ) -> Bool {
+            let lists = provider.lists
+            pane.openRemote(origin, password: "fixture")
+            guard settle({ provider.lists > lists && pane.entries.map(\.name) == [file.name] })
+            else { return false }
+            pane.select(name: file.name)
+            renameSelection()
+            guard settle({ window.attachedSheet?.isVisible == true }),
+                let sheet = window.attachedSheet,
+                let field = sheet.initialFirstResponder as? NSTextField,
+                field.stringValue == file.name
+            else { return false }
+            field.stringValue = "\(name).txt"
+            let transitioned = change()
+            window.endSheet(sheet, returnCode: response)
+            check("rename-\(name)-sheet-dismissed", settle { window.attachedSheet == nil })
+            return transitioned
+        }
+
+        check(
+            "rename-local-mode-switch-delivered",
+            respond("local") {
+                pane.closeRemote()
+                return !pane.isRemote
+            })
+        check(
+            "rename-remote-path-switch-delivered",
+            respond("path") {
+                pane.goUp()
+                return pane.remoteContext?.path == "/parent"
+            })
+        check(
+            "rename-remote-server-switch-delivered",
+            respond("server") {
+                pane.openRemote(other, password: "fixture")
+                return pane.remoteContext?.connection == other
+            })
+        check(
+            "rename-cancel-sheet-delivered",
+            respond("cancel", response: .alertSecondButtonReturn) { true })
+        check(
+            "rename-session-replacement-delivered",
+            respond("reopened") {
+                pane.closeRemote()
+                pane.openRemote(origin, password: "fixture")
+                return pane.remoteContext?.connection == origin
+                    && pane.remoteContext?.path == origin.path
+            })
+        check("rename-stale-and-cancel-did-not-dispatch", provider.renames.isEmpty)
+        check("rename-same-origin-sheet-delivered", respond("renamed") { true })
+        let dispatched = settle { provider.renames.contains(expected) }
+        print("RENAME FIXTURE: destinations=\(provider.renames.map(\.to))")
+        check("rename-only-same-origin-dispatched", dispatched && provider.renames == [expected])
+    }
+
     func checkSortGroupDelivery(
         root: URL, check: (String, Bool) -> Void, settle: (() -> Bool) -> Bool
     ) {
