@@ -190,7 +190,9 @@ extension BrowserViewController {
         preview?.apply(to: &candidate)
         applyAppearance(candidate.appearance)
         applyTheme(ThemePreset(preferences: candidate))
-        applyIconSet(candidate.effectiveThemeStyles)
+        applyIconSet(candidate)
+        toolbarArtwork =
+            candidate.toolbarStyleOverride == nil ? candidate.themeArtwork?.toolbar ?? [:] : [:]
         applyToolbarIconSize(style: candidate.effectiveThemeStyles.toolbar)
     }
 
@@ -241,11 +243,17 @@ extension BrowserViewController {
     }
 
     /// Refresh the delivered views without re-reading their listings.
-    func applyIconSet(_ previewStyles: ThemeStyles? = nil) {
-        let styles = previewStyles ?? prefs.effectiveThemeStyles
+    func applyIconSet(_ preview: Preferences? = nil) {
+        let settings = preview ?? prefs
+        let styles = settings.effectiveThemeStyles
+        let bundled = (settings.themeArtwork?.files ?? [:]).filter { key, _ in
+            key == "folder"
+                ? settings.folderStyleOverride == nil
+                : ThemeStyles.FileIcons(rawValue: settings.iconSetName) == nil
+        }
         guard
             IconSetManager.shared.setCurrent(
-                named: styles.fileIcons.rawValue, folder: styles.folder)
+                named: styles.fileIcons.rawValue, folder: styles.folder, bundled: bundled)
         else { return }
         for side in [leftTabs, rightTabs] {
             for pane in side.tabs { pane.refreshIcons() }

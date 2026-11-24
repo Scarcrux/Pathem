@@ -90,6 +90,7 @@ public struct CommunityThemeGallery: Codable, Sendable {
     public struct Entry: Codable, Sendable {
         public let revision: CommunityThemeRevision
         public fileprivate(set) var review: Review?
+        fileprivate var retainedOnly: Bool? = nil
     }
 
     public private(set) var entries: [Entry] = []
@@ -100,7 +101,8 @@ public struct CommunityThemeGallery: Codable, Sendable {
 
     public func discover(_ query: String = "") -> [CommunityThemeRevision] {
         var latest: [String: CommunityThemeRevision] = [:]
-        for entry in entries where entry.review?.outcome == .approved {
+        for entry in entries where entry.retainedOnly != true && entry.review?.outcome == .approved
+        {
             let revision = entry.revision
             guard !withdrawn.contains(revision.id),
                 revision.version > (latest[revision.id]?.version ?? 0)
@@ -144,6 +146,17 @@ public struct CommunityThemeGallery: Codable, Sendable {
     public mutating func withdraw(_ id: String) throws {
         guard entries.contains(where: { $0.revision.id == id }), withdrawn.insert(id).inserted
         else { throw CommunityThemeError.invalidTransition }
+    }
+
+    /// Replace remote discovery results while keeping separately installed snapshots.
+    /// This store is reserved for a shared catalog and never accepts local review operations.
+    public mutating func synchronize(_ catalog: SharedThemeCatalog) {
+        let published = Review(outcome: .approved, reviewer: "Shared catalog", note: "Published")
+        let visible = Set(catalog.themes.map(\.id))
+        withdrawn = Set(installed.keys).subtracting(visible)
+        let retained = installed.values.filter { !catalog.themes.contains($0) }
+        entries = catalog.themes.map { Entry(revision: $0, review: published) }
+        entries += retained.map { Entry(revision: $0, review: published, retainedOnly: true) }
     }
 
     public mutating func install(_ reference: CommunityThemeRevision.Reference) throws {

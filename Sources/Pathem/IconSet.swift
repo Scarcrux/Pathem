@@ -152,15 +152,21 @@ final class IconSetManager {
 
     private(set) var current: IconSet = .system
     private(set) var folderStyle: ThemeStyles.Folder = .system
+    private var bundledIcons: [String: Data] = [:]
     private var cache: [FileIconCategory: NSImage] = [:]
 
     /// Adopt the set named `name` (from Preferences); returns true when it actually changed.
     @discardableResult
-    func setCurrent(named name: String, folder: ThemeStyles.Folder = .system) -> Bool {
+    func setCurrent(
+        named name: String, folder: ThemeStyles.Folder = .system, bundled: [String: Data] = [:]
+    ) -> Bool {
         let set = IconSet.all.first { $0.name == name } ?? .system
-        guard set != current || folder != folderStyle else { return false }
+        guard set != current || folder != folderStyle || bundled != bundledIcons else {
+            return false
+        }
         current = set
         folderStyle = folder
+        bundledIcons = bundled
         cache.removeAll()
         return true
     }
@@ -168,11 +174,15 @@ final class IconSetManager {
     /// The themed icon for an entry, or nil when the "System" set is active (use the OS icon).
     func icon(for entry: FileEntry) -> NSImage? {
         let category = FileIconCategory.of(entry)
-        if let image = cache[category], category != .folder || folderStyle != .accent {
+        if let image = cache[category],
+            category != .folder || folderStyle != .accent || bundledIcons[category.rawValue] != nil
+        {
             return image
         }
         let image: NSImage?
-        if category == .folder {
+        if let artwork = bundledIcons[category.rawValue], let bundled = NSImage(data: artwork) {
+            image = bundled
+        } else if category == .folder {
             image = folderIcon()
         } else {
             image = current.entry(for: category).map { Self.render($0.symbol, color: $0.color) }

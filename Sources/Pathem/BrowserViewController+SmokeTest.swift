@@ -83,7 +83,34 @@ extension BrowserViewController {
         renderThemePreview(nil)
         let restored = shows(.init(.azure, .blueprint, .rounded))
 
-        return previewKeptOrder && cancelKeptOrder && appliedKeptOrder && resetKeptOrder
+        guard
+            let bitmap = NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: 8, pixelsHigh: 8, bitsPerSample: 8,
+                samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                bytesPerRow: 0, bitsPerPixel: 0)
+        else { return false }
+        for x in 0..<8 {
+            for y in 0..<8 { bitmap.setColor(.systemPink, atX: x, y: y) }
+        }
+        guard let png = bitmap.representation(using: .png, properties: [:]),
+            let artwork = try? ThemeArtwork(
+                files: ["folder": png], toolbar: ["magnifyingglass": png])
+        else { return false }
+        let folder = FileEntry(name: "Folder", isDirectory: true, size: 0, modificationDate: nil)
+        var custom = ThemePreset.harbor
+        custom.artwork = artwork
+        renderThemePreview(custom)
+        let artworkDelivered =
+            IconSetManager.shared.icon(for: folder)?.size.width == 8
+            && toolbarArtwork["magnifyingglass"] == png
+            && toolbar.itemIdentifiers == reordered
+        renderThemePreview(nil)
+        let artworkRestored =
+            IconSetManager.shared.icon(for: folder)?.size.width != 8
+            && toolbarArtwork.isEmpty
+
+        return artworkDelivered && artworkRestored && previewKeptOrder && cancelKeptOrder
+            && appliedKeptOrder && resetKeptOrder
             && overridesKept && folderCleared && iconsCleared && toolbarCleared && systemPreview
             && restored
     }

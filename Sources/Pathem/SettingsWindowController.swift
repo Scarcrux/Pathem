@@ -1014,9 +1014,14 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
     #if DEBUG
     @objc private func openCommunityThemes() {
         guard let url = CommunityThemeGalleryWindow.storeURL else { return }
-        do {
-            try makeCommunityGallery(at: url).run()
-        } catch { NSAlert(error: error).runModal() }
+        Task { @MainActor in
+            do {
+                if let endpoint = CommunityThemeGalleryWindow.sharedEndpoint {
+                    try await CommunityThemeGalleryWindow.refreshSharedCatalog(endpoint, at: url)
+                }
+                try makeCommunityGallery(at: url).run()
+            } catch { NSAlert(error: error).runModal() }
+        }
     }
 
     func makeCommunityGallery(at url: URL) throws -> CommunityThemeGalleryWindow {

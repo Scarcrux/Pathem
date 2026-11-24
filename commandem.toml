@@ -2672,6 +2672,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-965feb34"
     title = "Define a versioned data-only theme format with bundled assets, validation, compatibility checks, local preview, import/export, and reset."
+    done = true
 
   [[mission.task]]
     id = "t-8093aee2"
@@ -2713,4 +2714,12 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "The local gallery queue is cleared. The landed debug fixture passes submit, update, and relaunch with an isolated store. Public sharing between users, arbitrary bundled icon assets, and active desktop gallery controls remain open. No push, install, or publication was part of this theme pass."
     at = "2026-11-24T10:03:28Z"
+
+  [[mission.comment]]
+    text = "Version 3 theme packages now carry bounded single-frame PNG artwork for folders, file categories and toolbar symbols. Independent overrides and old palette imports preserve their existing behavior. Focused engine tests and offscreen AppKit preview and restore passed."
+    at = "2026-11-24T10:45:05Z"
+
+  [[mission.comment]]
+    text = "Shared-catalog staging exports approved revisions from a private review store, consumes a validated snapshot in the debug app, and retains local installs on withdrawal. Two clients passed same-timestamp approval and update, withdrawal, and malformed snapshot preservation over loopback. Native gallery panel passed visibility, focus, screenshot, Install, and Apply checks. Public hosting, repository setup and production rollout remain open."
+    at = "2026-11-24T10:45:06Z"
 # <<< commandem roadmap <<<

@@ -15,9 +15,21 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         if env["PATHEM_COMMUNITY_GALLERY"] == "1",
             let path = env["PATHEM_CONFIG_DIR"], !path.isEmpty
         {
-            return ConfigStore.url("community-themes.json")
+            let filename =
+                env["PATHEM_SHARED_THEME_CATALOG"] == nil
+                ? "community-themes.json" : "shared-community-themes.json"
+            return ConfigStore.url(filename)
         }
         return nil
+    }
+
+    static var sharedEndpoint: String? {
+        ProcessInfo.processInfo.environment["PATHEM_SHARED_THEME_CATALOG"]
+    }
+
+    static func refreshSharedCatalog(_ endpoint: String, at store: URL) async throws {
+        let catalog = try await SharedThemeCatalog.fetch(endpoint)
+        _ = try CommunityThemeGallery.update(at: store) { $0.synchronize(catalog) }
     }
 
     private let url: URL
@@ -29,7 +41,8 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         contentRect: NSRect(x: 0, y: 0, width: 680, height: 625),
         styleMask: [.titled, .closable], backing: .buffered, defer: false)
     private let scope = NSSegmentedControl(
-        labels: ["Browse", "Installed", "Review"], trackingMode: .selectOne,
+        labels: CommunityThemeGalleryWindow.sharedEndpoint == nil
+            ? ["Browse", "Installed", "Review"] : ["Browse", "Installed"], trackingMode: .selectOne,
         target: nil, action: nil)
     private let search = NSSearchField()
     private let listings = NSPopUpButton()
@@ -89,7 +102,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         let submit = button("Submit Revision…", #selector(chooseSubmission))
         let done = button("Done", #selector(close))
         done.keyEquivalent = "\u{1b}"
-        let footer = NSStackView(views: [submit, done])
+        let footer = NSStackView(views: Self.sharedEndpoint == nil ? [submit, done] : [done])
         footer.spacing = 8
         let stack = NSStackView(views: [
             scope, search, listings, title, details, status, screenshots, screenshot, actions,
@@ -449,6 +462,36 @@ extension CommunityThemeGalleryWindow {
         }
 
         switch phase {
+        case "desktop":
+            try submitRevision(at: v1URL)
+            try approve(v1, decision: reviews[0])
+            browse()
+            NSApp.activate(ignoringOtherApps: true)
+            panel.center()
+            panel.makeKeyAndOrderFront(nil)
+            defer { panel.orderOut(nil) }
+            RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+            try galleryCheck(
+                panel.isVisible && panel.makeFirstResponder(search),
+                "Native gallery is visible and accepts search focus")
+            func click(_ title: String) throws {
+                guard
+                    let control = actions.arrangedSubviews.compactMap({ $0 as? NSButton })
+                        .first(where: { $0.title == title }), control.isEnabled
+                else { throw GallerySmokeFailure(message: "Missing action \(title)") }
+                control.performClick(nil)
+            }
+            search.stringValue = "marsh"
+            controlTextDidChange(
+                Notification(name: NSControl.textDidChangeNotification, object: search))
+            try galleryCheck(
+                selection == v1 && screenshot.image != nil, "Native search and screenshot")
+            try click("Install")
+            try galleryCheck(
+                gallery.installed[v1.id] == v1 && active == nil,
+                "Install button saves without applying")
+            try click("Apply Installed")
+            try galleryCheck(active == v1.reference, "Apply button applies the installed revision")
         case "submit", "stage":
             try galleryCheck(rows.isEmpty, "Fresh gallery")
             try submitRevision(at: v1URL)

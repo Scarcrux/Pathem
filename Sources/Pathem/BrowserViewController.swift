@@ -121,6 +121,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// The toolbar's search-and-command button: looks like a search field, opens the one
     /// overlay (Cmd-F search mode, Cmd-K command mode), and shows the active pane's query.
     var toolbarGlyphStyle: ThemeStyles.Toolbar = .system
+    var toolbarArtwork: [String: Data] = [:]
     let searchButton = NSButton()
     var didSetInitialSplit: Bool {
         get { splitLayout.didSetInitialSplit }

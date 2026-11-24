@@ -379,7 +379,7 @@ extension TransientSurfaceSample {
                     })
                 return controller
             },
-            mount("m52", "SettingsWindowController.swift:2068") { _, _ in
+            mount("m52", "SettingsWindowController.swift:2073") { _, _ in
                 let controller = owners.get("m52") { SettingsWindowController() }
                 _ = controller.debugPresentLive()
                 return controller
@@ -397,7 +397,7 @@ extension TransientSurfaceSample {
                 b.presentCompare([], leftURL: file.deletingLastPathComponent(), rightURL: file)
                 return b
             },
-            mount("m55", "BrowserViewController.swift:924") { _, _ in
+            mount("m55", "BrowserViewController.swift:925") { _, _ in
                 // Return target/action is intercepted; only the real Cancel executes.
                 // Exercise the exact production UI without constructing a callback
                 // that can touch Keychain or the owner's folder-handler default.

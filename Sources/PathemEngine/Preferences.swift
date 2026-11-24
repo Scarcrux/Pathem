@@ -197,6 +197,7 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var folderStyleOverride: ThemeStyles.Folder? = nil
     public var toolbarStyleOverride: ThemeStyles.Toolbar? = nil
     public var themeStyles: ThemeStyles = .system
+    public var themeArtwork: ThemeArtwork? = nil
 
     public var effectiveThemeStyles: ThemeStyles {
         ThemeStyles(
@@ -444,6 +445,7 @@ public struct Preferences: Codable, Sendable, Equatable {
             ThemeStyles.Folder.self, forKey: .folderStyleOverride)
         toolbarStyleOverride = try c.decodeIfPresent(
             ThemeStyles.Toolbar.self, forKey: .toolbarStyleOverride)
+        themeArtwork = try? c.decodeIfPresent(ThemeArtwork.self, forKey: .themeArtwork)
         themeStyles = try c.decodeIfPresent(ThemeStyles.self, forKey: .themeStyles) ?? .system
     }
 }

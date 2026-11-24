@@ -86,6 +86,15 @@ extension BrowserViewController {
 
     func toolbarGlyph(_ symbol: String, label: String, pointSize: CGFloat? = nil) -> NSImage? {
         let size = pointSize ?? prefs.toolbarIconSize.pointSize + 2
+        if let data = toolbarArtwork[symbol], let artwork = NSImage(data: data),
+            artwork.size.width > 0, artwork.size.height > 0
+        {
+            let scale = size / max(artwork.size.width, artwork.size.height)
+            artwork.size = NSSize(
+                width: artwork.size.width * scale, height: artwork.size.height * scale)
+            artwork.accessibilityDescription = label
+            return artwork
+        }
         let weight: NSFont.Weight
         let glyph: String
         let scale: NSImage.SymbolScale

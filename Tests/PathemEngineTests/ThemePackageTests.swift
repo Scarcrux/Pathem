@@ -79,15 +79,15 @@ import Testing
 
     @Test func rejectsUnsupportedVersionOversizedInputAndUTF16() throws {
         let future =
-            #"{"schemaVersion":3,"name":"Test","appearance":"dark","accent":null,"background":null}"#
-        #expect(throws: ThemePackage.ValidationError.unsupportedVersion(3)) {
+            #"{"schemaVersion":4,"name":"Test","appearance":"dark","accent":null,"background":null}"#
+        #expect(throws: ThemePackage.ValidationError.unsupportedVersion(4)) {
             try ThemePackage.decode(Data(future.utf8))
         }
         #expect(throws: ThemePackage.ValidationError.tooLarge) {
             try ThemePackage.decode(Data(repeating: 32, count: ThemePackage.maximumBytes + 1))
         }
         let utf16 = try #require(
-            future.replacingOccurrences(of: ":3", with: ":1").data(using: .utf16LittleEndian))
+            future.replacingOccurrences(of: ":4", with: ":1").data(using: .utf16LittleEndian))
         #expect(throws: ThemePackage.ValidationError.invalidDocument) {
             try ThemePackage.decode(utf16)
         }

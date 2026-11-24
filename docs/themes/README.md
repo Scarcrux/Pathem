@@ -45,3 +45,45 @@ Export now writes a v2 package. It uses the v1 palette fields and requires three
 Exports capture the effective styles, including any active overrides. On import, those values become the theme’s bundled styles. Select **Use Theme** in all three pickers to see an imported package without local style overrides. V1 and VS Code imports update the palette and keep the current styles. iTerm2 imports still update the terminal palette.
 
 See [catalog verification](catalog-verification.md) for the commands and coverage.
+
+## Embedded icon artwork
+
+A version 3 theme adds an `artwork` object to the version 2 fields. Its `files`
+and `toolbar` objects map icon roles to base64-encoded PNGs. Use file roles such as
+`folder`, `document`, or `image`, and toolbar symbol names such as
+`magnifyingglass`. Unspecified icons use the theme's selected styles. A user can
+override the folder, file, and toolbar styles independently. Up to 16 single-frame PNGs
+are allowed, each at most 256 pixels per side and 16 KiB. The package has no external
+asset paths. Export carries the embedded artwork and System reset clears it.
+
+## Shared catalog staging
+
+Creators prepare a submission using [the example fixtures](gallery-fixture/) and open
+a pull request in the catalog repository. A maintainer with write access reviews
+the submission, records the decision in a private review store, and publishes the
+generated snapshot to the catalog host. Use branch protection to restrict who can
+update the published snapshot. The publisher does not accept review decisions from
+the app or include reviewer notes in the public file.
+
+Build the publisher with `swift build --build-system native --product pathem-theme-catalog`.
+On the maintainer's machine, with the review store in a private directory, run:
+
+```sh
+pathem-theme-catalog /path/to/private/reviews.json submit submission.json
+pathem-theme-catalog /path/to/private/reviews.json review theme-id 1 approved Reviewer "Reviewed"
+pathem-theme-catalog /path/to/private/reviews.json snapshot /path/to/hosted/catalog.json
+```
+
+Use a higher version to submit an update. To withdraw a listing, run
+`pathem-theme-catalog /path/to/private/reviews.json withdraw theme-id` and publish a new
+snapshot. Clients keep their installed copies after withdrawal and can still uninstall them.
+
+For a local shared-gallery preview, launch a debug build with
+`PATHEM_COMMUNITY_GALLERY=1`, a scratch `PATHEM_CONFIG_DIR`, and
+`PATHEM_SHARED_THEME_CATALOG` set to the HTTPS snapshot URL. The preview also accepts
+HTTP on `127.0.0.1` for local verification. Opening Community Themes fetches and
+validates the snapshot before replacing discovery results. Without the shared URL, the
+existing isolated local submission and review pilot is available.
+
+Run the two-client staging check with
+`python3 test/shared_theme_catalog_e2e.py .build/debug/pathem-theme-catalog`.

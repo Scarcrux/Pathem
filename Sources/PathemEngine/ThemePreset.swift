@@ -8,16 +8,18 @@ public struct ThemePreset: Codable, Sendable, Equatable {
     public var backgroundHex: String  // "" = system background
 
     public var styles: ThemeStyles?
+    public var artwork: ThemeArtwork?
 
     public init(
         name: String, appearance: Preferences.Appearance, accentHex: String,
-        backgroundHex: String = "", styles: ThemeStyles? = nil
+        backgroundHex: String = "", styles: ThemeStyles? = nil, artwork: ThemeArtwork? = nil
     ) {
         self.name = name
         self.appearance = appearance
         self.accentHex = accentHex
         self.backgroundHex = backgroundHex
-        self.styles = styles
+        self.styles = styles ?? (artwork == nil ? nil : .system)
+        self.artwork = artwork
     }
 
     public static let system = ThemePreset(
@@ -30,7 +32,7 @@ public struct ThemePreset: Codable, Sendable, Equatable {
         self.init(
             name: preferences.themeName, appearance: preferences.appearance,
             accentHex: preferences.accentColorHex, backgroundHex: preferences.windowTintHex,
-            styles: preferences.themeStyles)
+            styles: preferences.themeStyles, artwork: preferences.themeArtwork)
     }
 
     public func apply(to preferences: inout Preferences) {
@@ -39,7 +41,10 @@ public struct ThemePreset: Codable, Sendable, Equatable {
         preferences.appearance = appearance
         preferences.accentColorHex = accentHex
         preferences.windowTintHex = backgroundHex
-        if let styles { preferences.themeStyles = styles }
+        if let styles {
+            preferences.themeStyles = styles
+            preferences.themeArtwork = artwork
+        }
     }
 
     /// Built-in skins, grouped: those that follow the system appearance, then light, then dark.
