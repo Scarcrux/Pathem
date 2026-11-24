@@ -191,6 +191,89 @@ import Testing
         }
     }
 
+    /// A folder with `a.txt` and `b.txt` as two names for one inode, an unrelated file, and
+    /// `nested/escaped.txt` hard-linked to a file outside the folder.
+    private func makeLinkedTree(in scratch: URL) throws -> URL {
+        let tree = scratch.appendingPathComponent("linked")
+        let nested = tree.appendingPathComponent("nested")
+        try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
+        let first = tree.appendingPathComponent("a.txt")
+        try Data(repeating: 0x61, count: 200_000).write(to: first)
+        try #require(link(first.path, tree.appendingPathComponent("b.txt").path) == 0)
+        try payload.write(to: tree.appendingPathComponent("other.txt"))
+        let outside = scratch.appendingPathComponent("outside.txt")
+        try payload.write(to: outside)
+        try #require(link(outside.path, nested.appendingPathComponent("escaped.txt").path) == 0)
+        return tree
+    }
+
+    private func info(_ url: URL) throws -> stat {
+        var value = stat()
+        try #require(lstat(url.path, &value) == 0, "lstat \(url.path)")
+        return value
+    }
+
+    private func expectLinkedTree(at copy: URL, sourceInode: ino_t?) throws {
+        let a = try info(copy.appendingPathComponent("a.txt"))
+        let b = try info(copy.appendingPathComponent("b.txt"))
+        #expect(a.st_ino == b.st_ino)
+        #expect(a.st_nlink == 2)
+        #expect(b.st_nlink == 2)
+        if let sourceInode { #expect(a.st_ino != sourceInode) }
+        let bytes = Data(repeating: 0x61, count: 200_000)
+        #expect(try Data(contentsOf: copy.appendingPathComponent("a.txt")) == bytes)
+        #expect(try Data(contentsOf: copy.appendingPathComponent("b.txt")) == bytes)
+        #expect(try Data(contentsOf: copy.appendingPathComponent("other.txt")) == payload)
+        #expect(try info(copy.appendingPathComponent("other.txt")).st_nlink == 1)
+        // The other name of this inode is outside the copied folder, so it stays independent.
+        let escaped = copy.appendingPathComponent("nested/escaped.txt")
+        #expect(try Data(contentsOf: escaped) == payload)
+        #expect(try info(escaped).st_nlink == 1)
+    }
+
+    @Test func copyKeepsHardLinksInsideAFolder() throws {
+        try withScratch { scratch in
+            let tree = try makeLinkedTree(in: scratch)
+            let sourceInode = try info(tree.appendingPathComponent("a.txt")).st_ino
+            let destination = scratch.appendingPathComponent("destination")
+            try FileManager.default.createDirectory(
+                at: destination, withIntermediateDirectories: false)
+            var reported: [Int64] = []
+            var total: Int64 = 0
+            let outcome = FileOperations.copy(
+                urls: [tree], into: destination, verify: true,
+                report: {
+                    reported.append($0.completedBytes)
+                    total = $0.totalBytes
+                })
+            #expect(outcome.failures.isEmpty)
+            #expect(outcome.performed.count == 1)
+            try expectLinkedTree(
+                at: destination.appendingPathComponent("linked"), sourceInode: sourceInode)
+            // The source pair is untouched and still not linked to the copy.
+            #expect(try info(tree.appendingPathComponent("a.txt")).st_nlink == 2)
+            #expect(try info(tree.appendingPathComponent("b.txt")).st_ino == sourceInode)
+            #expect(reported == reported.sorted())
+            #expect(reported.last == total)
+            #expect(
+                try FileManager.default.contentsOfDirectory(atPath: destination.path) == ["linked"])
+        }
+    }
+
+    @Test func moveAcrossVolumesKeepsHardLinksInsideAFolder() throws {
+        try withVolume { scratch, volume in
+            let tree = try makeLinkedTree(in: scratch)
+            let outcome = FileOperations.move(urls: [tree], into: volume)
+            #expect(outcome.failures.isEmpty)
+            #expect(outcome.performed.count == 1)
+            try expectLinkedTree(at: volume.appendingPathComponent("linked"), sourceInode: nil)
+            // Both source names passed the per-item size and type guard and were removed.
+            #expect(!FileManager.default.fileExists(atPath: tree.path))
+            #expect(try Data(contentsOf: scratch.appendingPathComponent("outside.txt")) == payload)
+            #expect(try info(scratch.appendingPathComponent("outside.txt")).st_nlink == 1)
+        }
+    }
+
     private func withScratch(_ body: (URL) throws -> Void) throws {
         let scratch = FileManager.default.temporaryDirectory.appendingPathComponent(
             "pathem-xvol-\(UUID())")

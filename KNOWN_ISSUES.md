@@ -11,9 +11,11 @@ Last reviewed 2026-11-20, after the launch-QA pass recorded in
 
 ## File operations
 
-- **Hard links in a copied folder become separate files.** Copying a folder, or moving
-  it to another disk, turns a pair of hard links inside it into two independent files
-  with the same contents. Nothing is lost; the link between them is.
+- **A hard link that reaches outside a copied folder becomes a separate file.** Hard
+  links between files inside the folder are kept when it is copied or moved to another
+  disk. A file whose other name is outside the folder is copied as an independent file,
+  and so is a linked pair copied as two separately selected files rather than inside
+  one folder. Nothing is lost; the link between them is.
 - **A copied folder can get a new modification date.** File contents and metadata
   match exactly, but a folder's own modified date can change during a copy.
 - **A file still being written while it is moved to another disk** can miss the

@@ -61,7 +61,16 @@ public enum ProgressiveCopy {
 
         // Boxed so the C callback (which can't capture) can reach it through the
         // copyfile "status context" raw pointer.
+        struct FileID: Hashable {
+            let device: dev_t
+            let inode: ino_t
+        }
         final class Context {
+            // copyfile(3) has no hard-link handling (COPYFILE_CLONE is a per-file clone), so a
+            // recursive copy would turn two names for one inode into two files. Remember where
+            // the first name of each multiply linked file landed; later names link to it.
+            var linked: [FileID: String] = [:]
+            var copying: (id: FileID, path: String)?
             var base: Int64 = 0  // bytes from files already fully copied in this run
             var currentCopied: Int64 = 0  // bytes copied so far in the file being copied now
             var cancelled = false
@@ -102,7 +111,25 @@ public enum ProgressiveCopy {
                 context.cancelled = true
                 return COPYFILE_QUIT
             }
-            if what == COPYFILE_COPY_DATA {
+            if what == COPYFILE_RECURSE_FILE, stage == COPYFILE_START, let src, let dst {
+                context.copying = nil
+                var item = stat()
+                if lstat(src, &item) == 0, item.st_mode & S_IFMT == S_IFREG, item.st_nlink > 1 {
+                    let id = FileID(device: item.st_dev, inode: item.st_ino)
+                    if let first = context.linked[id] {
+                        // A name seen earlier in this tree: link instead of copying the bytes
+                        // again, and count them as done so progress still reaches the total.
+                        // If the volume refuses the link, fall through to an ordinary copy.
+                        if link(first, dst) == 0 {
+                            context.base += Int64(item.st_size)
+                            context.onBytes(context.base)
+                            return COPYFILE_SKIP
+                        }
+                    } else {
+                        context.copying = (id, String(cString: dst))
+                    }
+                }
+            } else if what == COPYFILE_COPY_DATA {
                 // PROGRESS (partial) and FINISH (final) report real bytes.
                 var copied: off_t = 0
                 _ = copyfile_state_get(cbState, UInt32(COPYFILE_STATE_COPIED), &copied)
@@ -110,6 +137,10 @@ public enum ProgressiveCopy {
                 context.onBytes(context.base + context.currentCopied)
             } else if what == COPYFILE_RECURSE_FILE, stage == COPYFILE_FINISH {
                 // A file within the tree just finished: bank its bytes and reset for the next.
+                // Only a fully copied file becomes a link target, and only names inside this
+                // tree are recorded, so a link to a file outside it stays an independent copy.
+                if let copying = context.copying { context.linked[copying.id] = copying.path }
+                context.copying = nil
                 context.base += context.currentCopied
                 context.currentCopied = 0
                 context.onBytes(context.base)
