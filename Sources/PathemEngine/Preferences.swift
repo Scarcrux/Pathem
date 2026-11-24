@@ -186,6 +186,7 @@ public struct Preferences: Codable, Sendable, Equatable {
 
     /// The selected theme preset name (or "Custom" when the colors were edited by hand).
     public var themeName: String
+    public var communityTheme: CommunityThemeRevision.Reference? = nil
     /// Accent color for Pathem-drawn chrome (list/sidebar selection, active pane/tab, breadcrumb),
     /// as "#RRGGBB". Empty means "use the system accent" (the default look).
     public var accentColorHex: String
@@ -432,6 +433,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         dragTrailDecay =
             try c.decodeIfPresent(Double.self, forKey: .dragTrailDecay) ?? d.dragTrailDecay
         themeName = try c.decodeIfPresent(String.self, forKey: .themeName) ?? d.themeName
+        communityTheme = try c.decodeIfPresent(
+            CommunityThemeRevision.Reference.self, forKey: .communityTheme)
         accentColorHex =
             try c.decodeIfPresent(String.self, forKey: .accentColorHex) ?? d.accentColorHex
         windowTintHex =

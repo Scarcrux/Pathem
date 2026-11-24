@@ -79,6 +79,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
             || launchEnvironment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
             || launchEnvironment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil
+            || launchEnvironment["PATHEM_COMMUNITY_GALLERY_TEST"] != nil
         #else
         let configurationTest = false
         #endif
@@ -271,6 +272,24 @@ enum PathemApp {
         WindowManager.shared.updater = updater
         WindowManager.shared.adoptPrimary(window: window, browser: browser)
         #if DEBUG
+        if let phase = launchEnvironment["PATHEM_COMMUNITY_GALLERY_TEST"] {
+            guard let fixture = launchEnvironment["PATHEM_COMMUNITY_FIXTURE"],
+                let store = CommunityThemeGalleryWindow.storeURL
+            else {
+                print("COMMUNITY GALLERY: fixture and local gallery configuration required")
+                exit(64)
+            }
+            browser.installToolbarIfNeeded()
+            do {
+                try browser.smokeCommunityGallery(
+                    phase: phase, fixture: URL(fileURLWithPath: fixture), store: store)
+                print("community-gallery-\(phase): PASS")
+                exit(0)
+            } catch {
+                print("community-gallery-\(phase): FAIL: \(error.localizedDescription)")
+                exit(1)
+            }
+        }
         if ProcessInfo.processInfo.environment["PATHEM_SMOKE"] == "themes" {
             browser.installToolbarIfNeeded()
             let passed = browser.smokeThemePreservesCustomToolbar()
@@ -292,11 +311,23 @@ enum PathemApp {
             exit(passed ? 0 : 1)
         }
         if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
+            let communityTheme: ThemePreset?
+            if let package = launchEnvironment["PATHEM_COMMUNITY_RENDER_PACKAGE"] {
+                do {
+                    communityTheme = try ThemePackage.decode(
+                        Data(contentsOf: URL(fileURLWithPath: package)))
+                } catch {
+                    print("COMMUNITY RENDER: \(error.localizedDescription)")
+                    exit(1)
+                }
+            } else {
+                communityTheme = nil
+            }
             browser.installToolbarIfNeeded()
             window.setContentSize(NSSize(width: 1200, height: 760))
             browser.view.layoutSubtreeIfNeeded()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                browser.debugRenderThemes(toDir: dir) { exit(0) }
+                browser.debugRenderThemes(toDir: dir, communityTheme: communityTheme) { exit(0) }
             }
             // The in-process render does not need desktop activation or Screen Recording.
             RunLoop.main.run(until: Date().addingTimeInterval(60))

@@ -2701,4 +2701,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Landed 23 complete looks and 10 choices each for folders, file icons and toolbar glyphs. The bundled-host autosave follow-up passed in two separate processes with a unique preferences domain, resolving the runner relaunch result. Active desktop interaction, live Quick Look and thumbnail visual checks remain separate."
     at = "2026-11-24T09:47:08Z"
+
+  [[mission.comment]]
+    text = "Local Community Themes pilot supports discovery, search, screenshot previews and attribution plus submit, review, install, apply, update, withdraw and uninstall. Offscreen AppKit smoke verified the full Tidal Marsh v1 to v2 workflow plus state across three processes. Gallery UI is compiled only for a debug build and requires an explicit configuration directory. Public shared hosting and desktop visual interaction remain open."
+    at = "2026-11-24T10:00:47Z"
 # <<< commandem roadmap <<<

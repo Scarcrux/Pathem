@@ -1,0 +1,12 @@
+[
+  {
+    "outcome": "approved",
+    "reviewer": "Local fixture reviewer",
+    "note": "Validated the original light palette, creator credit, license, and List and Icon screenshots."
+  },
+  {
+    "outcome": "approved",
+    "reviewer": "Local fixture reviewer",
+    "note": "Validated the dark revision and confirmed v1 remains installed until an explicit update."
+  }
+]

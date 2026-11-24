@@ -120,7 +120,10 @@ extension BrowserViewController {
     /// identical to changing it in Settings ▸ Appearance.
     private func persistAndApplyTheme() {
         applyPreferences()
-        if settingsPanel != nil { settings.synchronizeTheme(ThemePreset(preferences: prefs)) }
+        if settingsPanel != nil {
+            settings.synchronizeTheme(
+                ThemePreset(preferences: prefs), communityTheme: prefs.communityTheme)
+        }
     }
 
     @objc private func openOverflowSettings() { showPreferences() }

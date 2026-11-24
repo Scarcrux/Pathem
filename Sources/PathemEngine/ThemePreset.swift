@@ -35,6 +35,7 @@ public struct ThemePreset: Codable, Sendable, Equatable {
 
     public func apply(to preferences: inout Preferences) {
         preferences.themeName = name
+        preferences.communityTheme = nil
         preferences.appearance = appearance
         preferences.accentColorHex = accentHex
         preferences.windowTintHex = backgroundHex

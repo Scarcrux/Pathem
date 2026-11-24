@@ -119,7 +119,9 @@ extension BrowserViewController {
     /// Apply every built-in theme in turn through the same path the toolbar menu uses and render
     /// the window chrome after each, with a selection in both panes so the accent shows
     /// (PATHEM_THEME_SHOTS=<dir>, with PATHEM_DEMO=1). Calls `done` after the last one.
-    func debugRenderThemes(toDir dir: String, done: @escaping () -> Void) {
+    func debugRenderThemes(
+        toDir dir: String, communityTheme: ThemePreset? = nil, done: @escaping () -> Void
+    ) {
         let presets = ThemePreset.presets
         var shots = presets.map {
             (
@@ -153,6 +155,17 @@ extension BrowserViewController {
                     "Styles-\(folder.rawValue)-\(files.rawValue)-\(toolbar.rawValue)",
                     theme, .icon, nil
                 ))
+        }
+
+        if let communityTheme {
+            shots = [
+                NSAppearance.Name.aqua, .darkAqua,
+                .accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua,
+            ].flatMap { appearance in
+                ViewFormat.ViewMode.allCases.map { mode in
+                    ("\(mode.rawValue)-\(appearance.rawValue)", communityTheme, mode, appearance)
+                }
+            }
         }
 
         func step(_ index: Int) {

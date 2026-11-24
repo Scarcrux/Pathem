@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "name": "Tidal Marsh",
+  "appearance": "dark",
+  "accent": "#87DBBA",
+  "background": "#152D29",
+  "folderStyle": "Mint",
+  "fileIconSet": "Ink",
+  "toolbarStyle": "Rounded"
+}

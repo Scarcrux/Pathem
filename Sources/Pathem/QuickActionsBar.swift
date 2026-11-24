@@ -15,13 +15,20 @@ final class QuickActionsBar: NSView {
     private let blur = NSVisualEffectView()
     private let stack = NSStackView()
     /// (command id, button, whether it needs exactly one selected item).
-    private var buttons: [(id: String, button: NSButton, needsSingle: Bool, viewableOnly: Bool)] = []
+    private var buttons: [(id: String, button: NSButton, needsSingle: Bool, viewableOnly: Bool)] =
+        []
 
     /// id, SF Symbol, tooltip, needs a single selection, only for a viewable file (PDF/image).
     private static let actions: [(String, String, String, Bool, Bool)] = [
         ("files.open", "arrow.up.forward.app", L("quick.open", "Open"), false, false),
-        ("files.openInThisPane", "rectangle.lefthalf.inset.filled", L("bvc.cmd.openInThisPane", "Open in This Pane"), true, true),
-        ("files.openInOtherPane", "rectangle.righthalf.inset.filled", L("bvc.cmd.openInOtherPane", "Open in Other Pane"), true, true),
+        (
+            "files.openInThisPane", "rectangle.lefthalf.inset.filled",
+            L("bvc.cmd.openInThisPane", "Open in This Pane"), true, true
+        ),
+        (
+            "files.openInOtherPane", "rectangle.righthalf.inset.filled",
+            L("bvc.cmd.openInOtherPane", "Open in Other Pane"), true, true
+        ),
         ("files.openWith", "square.grid.2x2", L("quick.openWith", "Open With"), false, false),
         ("files.rename", "pencil", L("quick.rename", "Rename"), true, false),
         ("files.copy", "doc.on.doc", L("quick.copy", "Copy"), false, false),
@@ -33,6 +40,8 @@ final class QuickActionsBar: NSView {
     init() {
         super.init(frame: .zero)
         build()
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.applyTint() }
+        applyTint()
     }
     required init?(coder: NSCoder) { fatalError("not used") }
 
@@ -81,7 +90,6 @@ final class QuickActionsBar: NSView {
             button.target = self
             button.action = #selector(tapped(_:))
             button.tag = index
-            button.contentTintColor = id == "files.trash" ? .systemRed : ThemeManager.shared.accent
             button.widthAnchor.constraint(equalToConstant: 30).isActive = true
             button.heightAnchor.constraint(equalToConstant: 26).isActive = true
             stack.addArrangedSubview(button)
@@ -100,9 +108,16 @@ final class QuickActionsBar: NSView {
         ])
     }
 
+    private func applyTint() {
+        for (id, button, _, _) in buttons {
+            button.contentTintColor = id == "files.trash" ? .systemRed : ThemeManager.shared.accent
+        }
+    }
+
     override func layout() {
         super.layout()
-        layer?.shadowPath = CGPath(roundedRect: bounds, cornerWidth: 11, cornerHeight: 11, transform: nil)
+        layer?.shadowPath = CGPath(
+            roundedRect: bounds, cornerWidth: 11, cornerHeight: 11, transform: nil)
     }
 
     /// Show/hide and enable buttons for the current selection.

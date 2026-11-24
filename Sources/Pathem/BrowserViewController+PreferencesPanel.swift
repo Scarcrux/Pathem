@@ -9,6 +9,15 @@ import PathemTerminal
 extension BrowserViewController {
     func loadPreferences() {
         if let saved = loadConfig(Preferences.self, from: Self.preferencesURL) { prefs = saved }
+        #if DEBUG
+        // Recover if the app exited after saving an uninstall but before resetting appearance.
+        if let active = prefs.communityTheme, let url = CommunityThemeGalleryWindow.storeURL,
+            let gallery = try? CommunityThemeGallery.load(from: url),
+            gallery.installed[active.id] == nil
+        {
+            ThemePreset.system.apply(to: &prefs)
+        }
+        #endif
         NotificationCenter.default.removeObserver(
             self, name: .pathemTrashRetentionChanged, object: nil)
         NotificationCenter.default.addObserver(

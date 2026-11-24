@@ -801,6 +801,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         return field.sendAction(field.action, to: field.target)
     }
     func debugShowGeneralPane() { select(.general) }
+    func debugShowAppearancePane() { select(.appearance) }
     #endif
 
     /// A text field bound to a String preference; commits on edit.
@@ -962,11 +963,14 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         let selected = themePopup.itemArray.first {
             ($0.representedObject as? String) == preset?.name
         }
-        themePopup.select(preset == nil ? custom : selected)
+        themePopup.select(preset == nil || prefs.communityTheme != nil ? custom : selected)
     }
 
-    func synchronizeTheme(_ theme: ThemePreset) {
+    func synchronizeTheme(
+        _ theme: ThemePreset, communityTheme: CommunityThemeRevision.Reference? = nil
+    ) {
         theme.apply(to: &prefs)
+        prefs.communityTheme = communityTheme
         updateThemeSelection()
         let modes = Preferences.Appearance.allCases
         appearancePopup.selectItem(at: modes.firstIndex(of: theme.appearance) ?? 0)
@@ -992,8 +996,41 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 action: #selector(resetTheme)),
         ])
         stack.spacing = 8
+        #if DEBUG
+        guard CommunityThemeGalleryWindow.storeURL != nil else { return stack }
+        let gallery = NSButton(
+            title: "Community Themes…", target: self,
+            action: #selector(openCommunityThemes))
+        let controls = NSStackView(views: [stack, gallery])
+        controls.orientation = .vertical
+        controls.alignment = .leading
+        controls.spacing = 8
+        return controls
+        #else
         return stack
+        #endif
     }
+
+    #if DEBUG
+    @objc private func openCommunityThemes() {
+        guard let url = CommunityThemeGalleryWindow.storeURL else { return }
+        do {
+            try makeCommunityGallery(at: url).run()
+        } catch { NSAlert(error: error).runModal() }
+    }
+
+    func makeCommunityGallery(at url: URL) throws -> CommunityThemeGalleryWindow {
+        try CommunityThemeGalleryWindow(
+            url: url, active: prefs.communityTheme,
+            preview: { [weak self] in self?.onThemePreview?($0) },
+            apply: { [weak self] theme, reference in
+                guard let self else { return }
+                self.synchronizeTheme(theme, communityTheme: reference)
+                self.onChange?(self.prefs)
+            })
+    }
+
+    #endif
 
     @objc private func importTheme() {
         let panel = NSOpenPanel()

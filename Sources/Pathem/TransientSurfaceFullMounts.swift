@@ -379,7 +379,7 @@ extension TransientSurfaceSample {
                     })
                 return controller
             },
-            mount("m52", "SettingsWindowController.swift:2031") { _, _ in
+            mount("m52", "SettingsWindowController.swift:2068") { _, _ in
                 let controller = owners.get("m52") { SettingsWindowController() }
                 _ = controller.debugPresentLive()
                 return controller
