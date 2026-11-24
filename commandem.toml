@@ -2757,4 +2757,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Public theme intake form is live in the default GitHub branch. Published the first approved listing, Tidal Marsh v1 (CC0), to the hosted catalog and verified installation in two separate client stores. The starter review history is retained in private versioned storage. A real external creator submission and hosted reviewer UI remain open."
     at = "2026-11-24T18:51:19Z"
+
+  [[mission.comment]]
+    text = "GitHub issue #1 exercised the public creator intake with a pinned demo submission link. Retrieved the exact bytes from the posted issue, imported and previewed them through the private dashboard, approved the revision, and published it to an isolated snapshot. The test issue was closed and the hosted catalog still contained only Tidal Marsh v1. The issue was posted with the GitHub CLI, so browser form attachment remains unverified."
+    at = "2026-11-24T19:13:46Z"
 # <<< commandem roadmap <<<
