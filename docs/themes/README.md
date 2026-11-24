@@ -89,6 +89,11 @@ the **Submit a Pathem theme** GitHub issue form, where you attach the saved file
 Preparing a submission makes no network request from Pathem. The file and the issue
 are public. [The example fixtures](gallery-fixture/) show the format.
 
+Choose PNG or JPEG screenshots. Pathem re-encodes each one for the listing, keeping
+only the pixels, so no metadata from your file is published. Published screenshots are
+HEIC. Listings published earlier keep their PNG or JPEG screenshots, and the gallery
+shows either.
+
 A maintainer with write access reviews the submission, records the decision in a
 private review store, and publishes the generated snapshot to the catalog host. The
 app cannot record review decisions, and the public file carries no reviewer notes.

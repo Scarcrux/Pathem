@@ -17,7 +17,28 @@ admin = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(admin)
 
 
+def check_image_types():
+    box = lambda major, *compatible: (
+        (16 + 4 * len(compatible)).to_bytes(4, "big") + b"ftyp" + major + bytes(4) + b"".join(compatible) + b"mdat"
+    )
+    for data, expected in [
+        (b"\x89PNG\r\n\x1a\n" + bytes(8), "image/png"),
+        (b"\xff\xd8\xff\xe0" + bytes(8), "image/jpeg"),
+        (box(b"heic", b"mif1", b"heic"), "image/heic"),
+        (box(b"heix"), "image/heic"),
+        (box(b"mif1", b"mif1", b"heic"), "image/heic"),
+        (box(b"msf1"), "image/heic"),
+        (box(b"avif", b"mif1", b"miaf"), "application/octet-stream"),
+        (box(b"avis"), "application/octet-stream"),
+        (box(b"isom"), "application/octet-stream"),
+        (b"GIF89a" + bytes(8), "application/octet-stream"),
+        (b"", "application/octet-stream"),
+    ]:
+        assert admin.image_type(data) == expected, (data[:20], admin.image_type(data))
+
+
 def run(binary):
+    check_image_types()
     with tempfile.TemporaryDirectory(prefix="pathem-theme-admin-") as directory:
         root = Path(directory)
         private = root / "reviews.json"
@@ -65,7 +86,10 @@ def run(binary):
                 assert b"No matching submissions" in request("/?q=no-match")
                 first = "/?selection=tidal-marsh%3A1"
                 assert b"Pending review" in request(first)
-                assert request("/screenshot?selection=tidal-marsh%3A1&image=0")
+                shot = request("/screenshot?selection=tidal-marsh%3A1&image=0")
+                assert admin.image_type(shot) in ("image/heic", "image/png", "image/jpeg"), shot[:16]
+                if shot[4:8] == b"ftyp":
+                    assert shot[8:12] in (b"heic", b"heix"), shot[:16]
                 assert json.loads(request("/theme?selection=tidal-marsh%3A1"))["schemaVersion"] >= 1
                 post("/review", id="tidal-marsh", version=1, decision="approved", note="Approved fixture")
                 assert not public.exists()

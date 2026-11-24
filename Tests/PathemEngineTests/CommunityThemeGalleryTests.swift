@@ -10,6 +10,103 @@ struct CommunityThemeGalleryTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("docs/themes/gallery-fixture", isDirectory: true)
 
+    /// The first preferred format this Mac can encode. Nil only where no such encoder exists,
+    /// in which case the sanitizer falls back to PNG or JPEG.
+    private var expectedScreenshotType: String? {
+        CommunityThemeRevision.preferredScreenshotTypes.first {
+            CGImageDestinationCreateWithData(NSMutableData(), $0 as CFString, 1, nil) != nil
+        }
+    }
+
+    private func imageType(_ data: Data) -> String? {
+        CGImageSourceCreateWithData(data as CFData, nil).flatMap { CGImageSourceGetType($0) }
+            as String?
+    }
+
+    /// The major brand of an ISO BMFF file, read from its leading `ftyp` box.
+    private func fileTypeBrand(_ data: Data) -> String? {
+        guard data.count >= 12, data[4..<8].elementsEqual("ftyp".utf8) else { return nil }
+        return String(decoding: data[8..<12], as: UTF8.self)
+    }
+
+    private func screenshot(as type: String, quality: Double? = nil) throws -> Data {
+        let context = try #require(
+            CGContext(
+                data: nil, width: 640, height: 400, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue))
+        for band in 0..<8 {
+            context.setFillColor(
+                red: Double(band) / 8, green: 0.4, blue: 1 - Double(band) / 8, alpha: 1)
+            context.fill(CGRect(x: band * 80, y: 0, width: 80, height: 400))
+        }
+        let image = try #require(context.makeImage())
+        let output = NSMutableData()
+        let writer = try #require(
+            CGImageDestinationCreateWithData(output, type as CFString, 1, nil))
+        CGImageDestinationAddImage(
+            writer, image,
+            quality.map { [kCGImageDestinationLossyCompressionQuality: $0] as CFDictionary })
+        try #require(CGImageDestinationFinalize(writer))
+        return output as Data
+    }
+
+    @Test func sanitizedScreenshotUsesThePreferredFormatAndRoundTripsThroughTheCatalog() throws {
+        let expected = try #require(expectedScreenshotType)
+        let v1 = try CommunityThemeGallery.submission(
+            at: fixture.appendingPathComponent("v1.submission.json"))
+        for image in v1.screenshots {
+            #expect(imageType(image) == expected)
+            #expect(["heic", "heix"].contains(try #require(fileTypeBrand(image))))
+            #expect(image.count <= 300 * 1024)
+        }
+        var gallery = CommunityThemeGallery()
+        try gallery.submit(v1)
+        try gallery.review(
+            v1.reference, outcome: .approved, reviewer: "Reviewer", note: "Approved in test.")
+        let published = try SharedThemeCatalog.decode(
+            SharedThemeCatalog(reviewed: gallery).encoded())
+        #expect(published.themes == [v1])
+        #expect(published.themes.first?.screenshots.compactMap(imageType) == [expected, expected])
+    }
+
+    /// Listings published before the format change hold PNG or JPEG. They sit beside HEIC
+    /// listings in one catalog, and all of them must decode.
+    @Test func catalogMixingScreenshotFormatsDecodes() throws {
+        let v1 = try JSONDecoder().decode(
+            CommunityThemeRevision.self,
+            from: Data(contentsOf: fixture.appendingPathComponent("v1.submission.json")))
+        #expect(v1.screenshots.compactMap(imageType) == ["public.jpeg", "public.jpeg"])
+        var formats: [(String, Double?)] = [("public.png", nil), ("public.jpeg", 0.82)]
+        for type in CommunityThemeRevision.preferredScreenshotTypes
+        where CGImageDestinationCreateWithData(NSMutableData(), type as CFString, 1, nil) != nil {
+            formats.append((type, CommunityThemeRevision.preferredScreenshotQuality))
+        }
+        // A catalog that only ever held the old formats would not test the new ones.
+        try #require(formats.count > 2)
+        var gallery = CommunityThemeGallery()
+        try gallery.submit(v1)
+        try gallery.review(
+            v1.reference, outcome: .approved, reviewer: "Reviewer", note: "Approved in test.")
+        for (index, (type, quality)) in formats.enumerated() {
+            let image = try screenshot(as: type, quality: quality)
+            #expect(imageType(image) == type)
+            let listing = CommunityThemeRevision(
+                id: "mixed-\(index)", version: 1, title: "Mixed \(index)", summary: v1.summary,
+                creator: v1.creator, license: v1.license, source: v1.source, tags: v1.tags,
+                package: v1.package, screenshots: [image])
+            try gallery.submit(listing)
+            try gallery.review(
+                listing.reference, outcome: .approved, reviewer: "Reviewer",
+                note: "Approved in test.")
+        }
+        let published = try SharedThemeCatalog.decode(
+            SharedThemeCatalog(reviewed: gallery).encoded())
+        #expect(published.themes.count == formats.count + 1)
+        let types = Set(published.themes.flatMap { $0.screenshots.compactMap(imageType) })
+        #expect(types == Set(formats.map(\.0)))
+    }
+
     @Test func denseScreenshotShrinksToFitPublishedBudget() throws {
         let width = 2400
         let height = 1600
@@ -45,6 +142,7 @@ struct CommunityThemeGalleryTests {
         let clean = try CommunityThemeGallery.submission(at: url)
         let image = try #require(clean.screenshots.first)
         #expect(image.count <= 300 * 1024)
+        #expect(imageType(image) == expectedScreenshotType)
         let cleanSource = try #require(CGImageSourceCreateWithData(image as CFData, nil))
         let properties = try #require(
             CGImageSourceCopyPropertiesAtIndex(cleanSource, 0, nil) as? [CFString: Any])
@@ -106,6 +204,7 @@ struct CommunityThemeGalleryTests {
             let screenshot = try #require(revision.screenshots.first)
             #expect(screenshot.range(of: payload) == nil)
             #expect(screenshot.count <= 300 * 1024)
+            #expect(imageType(screenshot) == expectedScreenshotType)
             let clean = try #require(CGImageSourceCreateWithData(screenshot as CFData, nil))
             let remaining = try #require(
                 CGImageSourceCopyPropertiesAtIndex(clean, 0, nil) as? [CFString: Any])
@@ -196,6 +295,17 @@ struct CommunityThemeGalleryTests {
             let revision = try JSONDecoder().decode(
                 CommunityThemeRevision.self, from: JSONSerialization.data(withJSONObject: invalid))
             #expect(throws: (any Error).self) { try gallery.submit(revision) }
+            #expect(gallery.entries.isEmpty)
+        }
+        // AVIF is not a published format: macOS 15 cannot write it, so no listing may hold it.
+        if CGImageDestinationCreateWithData(NSMutableData(), "public.avif" as CFString, 1, nil)
+            != nil
+        {
+            var invalid = original
+            invalid["screenshots"] = [try screenshot(as: "public.avif").base64EncodedString()]
+            let revision = try JSONDecoder().decode(
+                CommunityThemeRevision.self, from: JSONSerialization.data(withJSONObject: invalid))
+            #expect(throws: CommunityThemeError.self) { try gallery.submit(revision) }
             #expect(gallery.entries.isEmpty)
         }
     }

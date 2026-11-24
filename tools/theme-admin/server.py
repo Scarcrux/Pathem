@@ -36,7 +36,14 @@ def markup(text):
 
 
 def image_type(data):
-    return "image/png" if data.startswith(b"\x89PNG\r\n\x1a\n") else "image/jpeg"
+    """Label a screenshot by its magic bytes. HEIC is an ISO BMFF file with a HEIF brand."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data[4:8] == b"ftyp" and data[8:12] in (b"heic", b"heix", b"mif1", b"msf1"):
+        return "image/heic"
+    return "application/octet-stream"
 
 
 class Dashboard:

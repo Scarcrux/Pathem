@@ -64,6 +64,11 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
 
     static let publishedScreenshotLimit = 300 * 1024
 
+    /// The formats a published screenshot is encoded in, in order of preference. The first one
+    /// this Mac can encode and that fits the budget wins; PNG and JPEG follow as fallbacks.
+    static let preferredScreenshotTypes = ["public.heic"]
+    static let preferredScreenshotQuality = 0.82
+
     func validate(screenshotLimit: Int) throws {
         guard (1...64).contains(id.utf8.count),
             id.utf8.allSatisfy({ (97...122).contains($0) || (48...57).contains($0) || $0 == 45 }),
@@ -91,7 +96,8 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
         guard data.count <= 2 * 1024 * 1024,
             let image = CGImageSourceCreateWithData(data as CFData, noCache),
             let type = CGImageSourceGetType(image) as String?,
-            ["public.png", "public.jpeg"].contains(type), CGImageSourceGetCount(image) == 1,
+            (["public.png", "public.jpeg"] + preferredScreenshotTypes).contains(type),
+            CGImageSourceGetCount(image) == 1,
             let properties = CGImageSourceCopyPropertiesAtIndex(image, 0, noCache)
                 as? [CFString: Any],
             let width = properties[kCGImagePropertyPixelWidth] as? Int,
@@ -139,16 +145,21 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
 
     private static func encodeScreenshot(_ image: CGImage) -> Data? {
         // Add only decoded pixels. Copying the source would retain metadata or trailing bytes.
-        for (type, options) in [
-            ("public.png", nil),
-            ("public.jpeg", [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary),
-            ("public.jpeg", [kCGImageDestinationLossyCompressionQuality: 0.55] as CFDictionary),
+        // A Mac without a preferred encoder gets no destination and falls through to the next.
+        let preferred: [(String, Double?)] = preferredScreenshotTypes.map {
+            ($0, preferredScreenshotQuality)
+        }
+        for (type, quality) in preferred + [
+            ("public.png", nil), ("public.jpeg", 0.82), ("public.jpeg", 0.55),
         ] {
             let output = NSMutableData()
             guard
                 let destination = CGImageDestinationCreateWithData(
                     output, type as CFString, 1, nil)
             else { continue }
+            let options = quality.map {
+                [kCGImageDestinationLossyCompressionQuality: $0] as CFDictionary
+            }
             CGImageDestinationAddImage(destination, image, options)
             if CGImageDestinationFinalize(destination), output.length <= publishedScreenshotLimit {
                 return output as Data

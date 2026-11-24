@@ -52,7 +52,10 @@ the next time they open the gallery. Approval and publication are separate steps
 2. **Import.** Retrieve the submitted file and import it into the dashboard. The
    validator rejects malformed listings, packages, and screenshots before they reach
    the queue.
-3. **Inspect.** Check the screenshots, attribution, license, and source. Use
+3. **Inspect.** Check the screenshots, attribution, license, and source. Intake
+   re-encodes screenshots as HEIC, which Safari renders; open the dashboard in Safari
+   to see the previews. Older listings hold PNG or JPEG, and the dashboard serves each
+   image under its own type. Use
    **Download theme for Pathem preview** and open the package with **Settings →
    Appearance → Import…** to see it in the app.
 4. **Decide.** Record approval, rejection, or a request for changes with a note, and
