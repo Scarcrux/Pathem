@@ -6,8 +6,9 @@ enum CatalogCommandError: LocalizedError {
     var errorDescription: String? {
         """
         Usage: pathem-theme-catalog <store> submit <submission.json>
-               pathem-theme-catalog <store> review <id> <version> <approved|rejected> <reviewer> <note>
-               pathem-theme-catalog <store> withdraw <id>
+               pathem-theme-catalog <store> review <id> <version> <approved|rejected|changesRequested> <reviewer> <note>
+               pathem-theme-catalog <store> withdraw <id> [<reviewer> <note>]
+               pathem-theme-catalog <store> state
                pathem-theme-catalog <store> snapshot <catalog.json>
                pathem-theme-catalog <client-store> sync <catalog-url>
                pathem-theme-catalog <client-store> install <id>
@@ -16,7 +17,7 @@ enum CatalogCommandError: LocalizedError {
 }
 
 func perform(_ arguments: [String]) async throws {
-    guard arguments.count >= 3 else { throw CatalogCommandError.usage }
+    guard arguments.count >= 2 else { throw CatalogCommandError.usage }
     let store = URL(fileURLWithPath: arguments[0])
     let command = arguments[1]
     let values = Array(arguments.dropFirst(2))
@@ -35,6 +36,13 @@ func perform(_ arguments: [String]) async throws {
                 })?.revision.reference
             else { throw CommunityThemeError.invalidTransition }
             try gallery.review(reference, outcome: decision, reviewer: values[3], note: values[4])
+        }
+    case "state" where values.isEmpty:
+        let gallery = try CommunityThemeGallery.load(from: store)
+        try FileHandle.standardOutput.write(contentsOf: JSONEncoder().encode(gallery))
+    case "withdraw" where values.count == 3:
+        _ = try CommunityThemeGallery.update(at: store) {
+            try $0.withdraw(values[0], reviewer: values[1], note: values[2])
         }
     case "withdraw" where values.count == 1:
         _ = try CommunityThemeGallery.update(at: store) { try $0.withdraw(values[0]) }

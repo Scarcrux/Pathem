@@ -2691,6 +2691,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
     id = "t-8e15e269"
     title = "Connect the reviewed local gallery to a shared catalog and creator submission service with reviewer authorization. Verify publication, update, and withdrawal between independent clients before public rollout."
 
+  [[mission.task]]
+    id = "t-a4d6d561"
+    title = "Build and verify a private marketplace review dashboard for submission intake, decisions, creator feedback export, snapshot publication and withdrawal."
+    done = true
+
   [[mission.comment]]
     text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
     at = "2026-11-24T09:14:49Z"
@@ -2722,4 +2727,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Shared-catalog staging exports approved revisions from a private review store, consumes a validated snapshot in the debug app, and retains local installs on withdrawal. Two clients passed same-timestamp approval and update, withdrawal, and malformed snapshot preservation over loopback. Native gallery panel passed visibility, focus, screenshot, Install, and Apply checks. Public hosting, repository setup and production rollout remain open."
     at = "2026-11-24T10:45:06Z"
+
+  [[mission.comment]]
+    text = "The loopback Marketplace Admin dashboard uses the Swift validator and publisher and keeps approval separate from publication. End-to-end controls covered unauthorized access, wrong origin and token, submission, approval, request changes, creator feedback export, superseding a revision, and withdrawal. Chrome verified authenticated rendering, screenshots and mobile width. Commandem and Pathem aligned listing metadata, stable IDs and action vocabulary. Hosted access and the creator repository remain open."
+    at = "2026-11-24T11:23:19Z"
 # <<< commandem roadmap <<<

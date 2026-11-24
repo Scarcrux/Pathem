@@ -81,8 +81,13 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
 /// Local review history and installed snapshots, persisted together in an atomic write.
 public struct CommunityThemeGallery: Codable, Sendable {
     public struct Review: Codable, Sendable {
-        public enum Outcome: String, Codable, Sendable { case approved, rejected }
+        public enum Outcome: String, Codable, Sendable { case approved, rejected, changesRequested }
         public let outcome: Outcome
+        public let reviewer: String
+        public let note: String
+    }
+
+    public struct Withdrawal: Codable, Sendable {
         public let reviewer: String
         public let note: String
     }
@@ -96,6 +101,7 @@ public struct CommunityThemeGallery: Codable, Sendable {
     public private(set) var entries: [Entry] = []
     public private(set) var installed: [String: CommunityThemeRevision] = [:]
     public private(set) var withdrawn: Set<String> = []
+    public private(set) var withdrawalReviews: [String: Withdrawal]? = nil
 
     public init() {}
 
@@ -141,6 +147,16 @@ public struct CommunityThemeGallery: Codable, Sendable {
             entries[index].review == nil
         else { throw CommunityThemeError.invalidTransition }
         entries[index].review = Review(outcome: outcome, reviewer: reviewer, note: note)
+    }
+
+    public mutating func withdraw(_ id: String, reviewer: String, note: String) throws {
+        guard CommunityThemeRevision.validText(reviewer, limit: 120),
+            CommunityThemeRevision.validText(note, limit: 600)
+        else { throw CommunityThemeError.invalidListing }
+        try withdraw(id)
+        var reviews = withdrawalReviews ?? [:]
+        reviews[id] = Withdrawal(reviewer: reviewer, note: note)
+        withdrawalReviews = reviews
     }
 
     public mutating func withdraw(_ id: String) throws {
