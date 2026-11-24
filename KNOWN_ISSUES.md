@@ -76,7 +76,7 @@ Last reviewed 2026-11-20, after the launch-QA pass recorded in
   update themselves; choose Update on the listing.
 - **A VS Code import brings over the window background and accent only.** Syntax and
   other editor colors have no counterpart in Pathem, and translucent colors are
-  skipped. The file must have a `.json` extension; rename a `.jsonc` file first.
+  skipped.
 - **An iTerm2 preset changes the embedded terminal only,** not the window colors.
 
 ## Not yet verified on a release build

@@ -1510,7 +1510,7 @@
                     "id": "import-export",
                     "title": "Import and export theme files",
                     "steps": [
-                        "In Preferences > Appearance, choose Import… and select a file. The same button accepts a Pathem theme file (.json), a VS Code color theme saved as .json (comments are allowed), and an iTerm2 color preset (.itermcolors).",
+                        "In Preferences > Appearance, choose Import… and select a file. The same button accepts a Pathem theme file (.json), a VS Code color theme (.json or .jsonc), and an iTerm2 color preset (.itermcolors).",
                         "Check Theme Preview. It names what will change and shows a color swatch. Choose Apply to save it or Cancel to leave everything as it was.",
                         "To save your current look, choose Export… and pick a location. The file is named Pathem Theme.json unless you rename it, and it records your colors, appearance, and the folder, file icon, and toolbar styles in effect, including any overrides."
                     ],
