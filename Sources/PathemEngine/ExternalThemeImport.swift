@@ -4,6 +4,9 @@ import Foundation
 /// Translates color data from other applications into Pathem's appearance roles.
 public enum ExternalThemeImport {
     public static let maximumBytes = 512 * 1024
+    /// Extensions the import panel offers. macOS does not treat `.jsonc` as JSON, so VS Code's
+    /// own theme files need it listed by name.
+    public static let fileExtensions = ["json", "jsonc", "itermcolors"]
 
     public struct TerminalPalette: Equatable, Sendable {
         public let name: String

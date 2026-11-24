@@ -13,7 +13,7 @@ In **Settings → Appearance**, pick **Harbor** under Skin to preview it, or cho
 ## Import colors from another app
 
 Use **Settings → Appearance → Import…** and select an exported VS Code color theme
-(`.json` or JSON with comments) or an iTerm2 `.itermcolors` file.
+(`.json` or `.jsonc`, comments allowed) or an iTerm2 `.itermcolors` file.
 
 - VS Code applies supported opaque background and accent colors to Pathem's window.
   Light and dark declarations map to the corresponding appearance.

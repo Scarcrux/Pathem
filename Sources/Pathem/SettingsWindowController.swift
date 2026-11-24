@@ -1040,9 +1040,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
 
     @objc private func importTheme() {
         let panel = NSOpenPanel()
-        panel.allowedContentTypes = [
-            .json, UTType(filenameExtension: "itermcolors") ?? .propertyList,
-        ]
+        panel.allowedContentTypes = ExternalThemeImport.fileExtensions.compactMap {
+            UTType(filenameExtension: $0)
+        }
         guard panel.runModal() == .OK, let url = panel.url else { return }
         Task { @MainActor in
             do {

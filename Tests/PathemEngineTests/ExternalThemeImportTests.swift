@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UniformTypeIdentifiers
 
 @testable import PathemEngine
 
@@ -15,6 +16,26 @@ struct ExternalThemeImportTests {
             try ExternalThemeImport.vscode(data, name: "Invalid")
         }
         #expect(start.duration(to: .now) < .seconds(1))
+    }
+
+    // The import panel filters by content type, so each offered extension must resolve to a
+    // type that a real file with that extension conforms to.
+    @Test func importPanelTypesAcceptEveryOfferedExtension() throws {
+        #expect(ExternalThemeImport.fileExtensions == ["json", "jsonc", "itermcolors"])
+        let allowed = ExternalThemeImport.fileExtensions.compactMap {
+            UTType(filenameExtension: $0)
+        }
+        #expect(allowed.count == ExternalThemeImport.fileExtensions.count)
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        for name in ["Night.json", "Night.jsonc", "Night.JSONC", "Night.itermcolors"] {
+            let file = folder.appendingPathComponent(name)
+            try Data("{ /* VS Code */ \"type\": \"dark\", \"colors\": {} }".utf8).write(to: file)
+            let type = try #require(try file.resourceValues(forKeys: [.contentTypeKey]).contentType)
+            #expect(allowed.contains { type.conforms(to: $0) }, "\(name) resolves to \(type)")
+        }
     }
 
     @Test func vscodeAcceptsJSONCAndMapsOpaqueRoles() throws {
