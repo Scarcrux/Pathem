@@ -545,14 +545,17 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
     {
         let item = collectionView.makeItem(withIdentifier: Self.itemID, for: indexPath) as! IconItem
         let entry = entries[indexPath.item]
+        // A themed file keeps its theme icon unless it has real content to show.
+        let previewKind = IconSetManager.shared.previewKind(for: entry)
         let thumbnailURL =
-            (entry.isDirectory || entry.isDataless || !showIconPreviews) ? nil : fileURL(for: entry)
+            (entry.isDirectory || entry.isDataless || !showIconPreviews || previewKind == .none)
+            ? nil : fileURL(for: entry)
         let ruleStyle = FileColorStyle.style(
             for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
         item.configure(
             name: entry.name, image: entry.isDataless ? Self.cloudIcon : Self.icon(for: entry),
             iconSize: 64, fontSize: labelFontSize, dimmed: entry.isDataless,
-            thumbnailURL: thumbnailURL,
+            thumbnailURL: thumbnailURL, previewKind: previewKind,
             git: allowsLocalMetadata ? decorations.gitState(for: entry, in: directoryURL) : nil,
             tags: allowsLocalMetadata ? decorations.tagColors(for: entry, in: directoryURL) : [],
             underlined: indexPath.item == hoveredItem,

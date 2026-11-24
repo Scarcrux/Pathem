@@ -264,7 +264,8 @@ final class IconItem: NSCollectionViewItem {
 
     func configure(
         name: String, image: NSImage, iconSize: CGFloat, fontSize: CGFloat, dimmed: Bool,
-        thumbnailURL: URL?, git: GitFileState? = nil, tags: [FileTag.Color] = [],
+        thumbnailURL: URL?, previewKind: IconPreviewPolicy.Kind = .systemDefault,
+        git: GitFileState? = nil, tags: [FileTag.Color] = [],
         underlined: Bool = false,
         nameFont: NSFont? = nil, nameColor: NSColor? = nil, accessibilityLabel: String? = nil,
         labelPosition: FolderViewOptions.LabelPosition = .below
@@ -287,12 +288,13 @@ final class IconItem: NSCollectionViewItem {
         representedURL = thumbnailURL
         guard let url = thumbnailURL else { return }
         let size = CGSize(width: iconSize, height: iconSize)
-        if let hit = ThumbnailProvider.shared.cached(url, size: size) {
+        if let hit = ThumbnailProvider.shared.cached(url, size: size, kind: previewKind) {
             icon.image = hit
             return
         }
         let scale = view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-        ThumbnailProvider.shared.generate(url, size: size, scale: scale) { [weak self] image in
+        ThumbnailProvider.shared.generate(url, size: size, scale: scale, kind: previewKind) {
+            [weak self] image in
             guard let self, self.representedURL == url else { return }  // cell wasn't reused
             self.icon.image = image
         }
@@ -1048,14 +1050,17 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
             : base
         // Real content thumbnails for files only; never for folders or online-only
         // (dataless) items, where generating one could fault a download.
+        // A themed file keeps its theme icon unless it has real content to show.
+        let previewKind = IconSetManager.shared.previewKind(for: entry)
         let thumbnailURL =
-            (entry.isDirectory || entry.isDataless || viewOptions.showIconPreviews == false)
+            (entry.isDirectory || entry.isDataless || viewOptions.showIconPreviews == false
+                || previewKind == .none)
             ? nil : fileURL(for: entry)
         let ruleStyle = FileColorStyle.style(
             for: entry, rules: colorRules, baseFont: .systemFont(ofSize: labelFontSize))
         item.configure(
             name: entry.name, image: image, iconSize: iconSize, fontSize: labelFontSize,
-            dimmed: entry.isDataless, thumbnailURL: thumbnailURL,
+            dimmed: entry.isDataless, thumbnailURL: thumbnailURL, previewKind: previewKind,
             git: allowsLocalMetadata ? decorations.gitState(for: entry, in: directoryURL) : nil,
             tags: allowsLocalMetadata ? decorations.tagColors(for: entry, in: directoryURL) : [],
             underlined: ei == hoveredItem, nameFont: ruleStyle?.font, nameColor: ruleStyle?.color,

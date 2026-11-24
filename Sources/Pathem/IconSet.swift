@@ -191,6 +191,13 @@ final class IconSetManager {
         return image
     }
 
+    /// Which QuickLook preview may replace this file's icon. A file the active theme draws
+    /// (a file icon style other than System, or theme artwork for its category) keeps the
+    /// themed icon unless it has real content to show; see `IconPreviewPolicy`.
+    func previewKind(for entry: FileEntry) -> IconPreviewPolicy.Kind {
+        IconPreviewPolicy.kind(forFileNamed: entry.name, themed: icon(for: entry) != nil)
+    }
+
     private func folderIcon() -> NSImage? {
         switch folderStyle {
         case .system: return nil

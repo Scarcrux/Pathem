@@ -1610,9 +1610,11 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
             let identity = ObjectIdentifier(cell)
             previewFiles[identity] = nil
+            let previewKind = IconSetManager.shared.previewKind(for: entry)
             if allowsLocalMetadata, deliveredViewOptions?.showIconPreviews == true,
                 !entry.isDirectory,
                 !entry.isDataless,
+                previewKind != .none,
                 let base = entry.location.map({ URL(fileURLWithPath: $0) }) ?? directoryURL
             {
                 let url = base.appendingPathComponent(entry.name)
@@ -1623,7 +1625,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 #endif
                 ThumbnailProvider.shared.generate(
                     url, size: .init(width: iconSize, height: iconSize),
-                    scale: cell.window?.backingScaleFactor ?? 2
+                    scale: cell.window?.backingScaleFactor ?? 2, kind: previewKind
                 ) { [weak self, weak cell] image in
                     guard let self, let cell, self.allowsLocalMetadata,
                         self.localMetadataGeneration == generation,

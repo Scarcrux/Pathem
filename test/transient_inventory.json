@@ -2447,7 +2447,7 @@
         },
         {
           "file": "Sources/Pathem/IconCollectionController.swift",
-          "line": 728,
+          "line": 730,
           "expression": "collection.menu = contextMenu.menu"
         },
         {
@@ -2494,7 +2494,7 @@
         },
         {
           "file": "Sources/Pathem/IconCollectionController.swift",
-          "line": 728,
+          "line": 730,
           "expression": "collection.menu = contextMenu.menu"
         },
         {
@@ -2541,7 +2541,7 @@
         },
         {
           "file": "Sources/Pathem/IconCollectionController.swift",
-          "line": 728,
+          "line": 730,
           "expression": "collection.menu = contextMenu.menu"
         },
         {
@@ -2588,7 +2588,7 @@
         },
         {
           "file": "Sources/Pathem/IconCollectionController.swift",
-          "line": 728,
+          "line": 730,
           "expression": "collection.menu = contextMenu.menu"
         },
         {
@@ -2899,7 +2899,7 @@
         },
         {
           "file": "Sources/Pathem/IconCollectionController.swift",
-          "line": 728,
+          "line": 730,
           "expression": "collection.menu = contextMenu.menu"
         },
         {
@@ -2943,7 +2943,7 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/FileListController.swift:1831:20:NSMenu": {
+    "Sources/Pathem/FileListController.swift:1833:20:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {

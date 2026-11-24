@@ -1,4 +1,5 @@
 import AppKit
+import PathemEngine
 import QuickLookThumbnailing
 
 /// Produces QuickLook content thumbnails (image/PDF/video/app previews) for the icon
@@ -43,19 +44,39 @@ final class ThumbnailProvider {
         }
     }
 
-    private func key(_ url: URL, _ size: CGSize) -> String {
+    /// At list-row sizes a bare content thumbnail of a text document is a blank white
+    /// square. The icon representation (the page with its folded corner, as Finder draws
+    /// it) stays recognizable; larger sizes keep the plain content thumbnail. A themed file
+    /// (`.contentThumbnail`) never takes the icon representation: it would be the macOS
+    /// document icon painted over the theme's own.
+    private func wantsSystemIcon(_ size: CGSize, _ kind: IconPreviewPolicy.Kind) -> Bool {
+        kind == .systemDefault && max(size.width, size.height) <= 32
+    }
+
+    /// The two representations of one file at one size are different pictures, so they are
+    /// cached apart: switching themes must not hand back the other one.
+    private func key(_ url: URL, _ size: CGSize, _ kind: IconPreviewPolicy.Kind) -> String {
         "\(url.path)|\(Int(size.width))x\(Int(size.height))"
+            + (wantsSystemIcon(size, kind) ? "" : "|content")
     }
 
     /// A cached thumbnail if one was already generated for this url/size.
-    func cached(_ url: URL, size: CGSize) -> NSImage? {
-        cache.object(forKey: key(url, size) as NSString)
+    func cached(
+        _ url: URL, size: CGSize, kind: IconPreviewPolicy.Kind = .systemDefault
+    ) -> NSImage? {
+        guard kind != .none else { return nil }
+        return cache.object(forKey: key(url, size, kind) as NSString)
     }
 
     /// Generate a thumbnail off the main thread; `completion` runs on the main actor
     /// only if a representation is produced (callers guard against cell reuse).
-    func generate(_ url: URL, size: CGSize, scale: CGFloat, completion: @escaping (NSImage) -> Void)
-    {
+    /// `kind` comes from `IconPreviewPolicy`: `.none` requests nothing, `.contentThumbnail`
+    /// asks for the file's content at every size, `.systemDefault` is the unthemed behavior.
+    func generate(
+        _ url: URL, size: CGSize, scale: CGFloat,
+        kind: IconPreviewPolicy.Kind = .systemDefault, completion: @escaping (NSImage) -> Void
+    ) {
+        guard kind != .none else { return }
         // QuickLook thumbnailing depends on an XPC agent that a headless automation/CI session
         // lacks; there the framework traps ("BUG IN CLIENT OF ..." on a background thread).
         // Thumbnails aren't under test in that mode, so skip generation and leave the type icon.
@@ -66,19 +87,15 @@ final class ThumbnailProvider {
         {
             return
         }
-        let cacheKey = key(url, size)
+        let cacheKey = key(url, size, kind)
         if let hit = cache.object(forKey: cacheKey as NSString) {
             completion(hit)
             return
         }
         if noPreview.object(forKey: cacheKey as NSString) != nil { return }  // known: no preview
-        // At list-row sizes a bare content thumbnail of a text document is a blank white
-        // square. The icon representation (the page with its folded corner, as Finder draws
-        // it) stays recognisable; larger sizes keep the plain content thumbnail.
-        let small = max(size.width, size.height) <= 32
         let request = QLThumbnailGenerator.Request(
             fileAt: url, size: size, scale: scale,
-            representationTypes: small ? .icon : .thumbnail)
+            representationTypes: wantsSystemIcon(size, kind) ? .icon : .thumbnail)
         // Boxed into Delivery below anyway (@unchecked Sendable, main-actor-only); shadow
         // here too so capturing it into this already-@Sendable callback doesn't also warn.
         nonisolated(unsafe) let completion = completion
