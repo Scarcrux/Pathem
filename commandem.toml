@@ -2197,6 +2197,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Focused native German validation: m07 and m12 each 238/238, zero failing cell/check pairs, across light/dark, both host sizes, short/long inputs and three cycles. Explicit fill distribution resolves the app-owned View Options row ambiguity. The encrypted form uses a frame-owned outer accessory with anchored inner rows and keeps its field widths. No full transient matrix was run."
     at = "2026-11-24T04:56:06Z"
 
+  [[mission.comment]]
+    text = "Messages copy triage: the current Copy path writes NSURL objects. On this host a private pasteboard using the same write preserved both fixture URLs and basenames, including accented text, and AppKit also made both paths available through NSFilenamesPboardType. Missing legacy filenames is not established as the cause. Actual Messages paste versus drag and Finder controls remain open; no clipboard change."
+    at = "2026-11-24T07:43:52Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
@@ -2430,6 +2434,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Native Rename fixture confirmed stale dispatch. The mode, folder, server and reopened-session attempts all reached the old server and folder when the original coordinates were restored before the sheet continuation resumed. Capture a remote session revision that changes on navigation or reconnection, independently of listing refresh. Retest 14/14: four stale attempts and Cancel did not dispatch; one unchanged-session rename reached the recording provider with exact arguments."
     at = "2026-11-24T06:38:01Z"
+
+  [[mission.comment]]
+    text = "Release triage: one focused native Sort/Group fixture passed 194/194 including a temporary date-format probe on the drilled Column. The selected file remained zebra.bin and the child scroll offset stayed at y=160 after setting Short dates. The sampled reset did not reproduce. This probe directly called the format setter and sampled one child offset; broader Settings and nested-column coverage remains open."
+    at = "2026-11-24T07:43:52Z"
 
 [[mission]]
   id = "m-768176ca"
