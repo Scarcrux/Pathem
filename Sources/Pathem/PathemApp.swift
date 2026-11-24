@@ -97,6 +97,22 @@ enum PathemApp {
                 exit(64)
             }
         }
+        if launchEnvironment["PATHEM_RELEASE_TEST"] == "themes" {
+            let app = NSApplication.shared
+            app.setActivationPolicy(.prohibited)
+            Task { @MainActor in
+                do {
+                    try await CommunityThemeGalleryWindow.verifyPackagedInstallation()
+                    print("RESULT: PASS packaged Themes discovery, install, and apply")
+                    exit(0)
+                } catch {
+                    print("RESULT: FAIL packaged Themes: \(error.localizedDescription)")
+                    exit(1)
+                }
+            }
+            app.run()
+            exit(1)
+        }
         // Automation owns a new, private demo tree. Never delete an existing directory
         // supplied through the environment, including a symlink to another launch's tree.
         var automationDemoRoot: URL?

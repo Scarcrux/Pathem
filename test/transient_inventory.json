@@ -939,14 +939,14 @@
       ],
       "reason": "Organization review list and destination controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/PathemApp.swift:337:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/PathemApp.swift:353:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init"
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init"
       ],
       "reason": "Primary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1177,7 +1177,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1189,7 +1189,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1201,7 +1201,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1213,7 +1213,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1225,7 +1225,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1237,7 +1237,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1249,7 +1249,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface."
@@ -1261,7 +1261,7 @@
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:143:22:windowType.init",
+        "Sources/Pathem/PathemApp.swift:159:22:windowType.init",
         "Sources/Pathem/WindowManager.swift:79:22:NSWindow"
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
@@ -2176,14 +2176,14 @@
       "reason": "PDF annotation text field accessory. Runtime title80/name255; cancel without changing document.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/PathemApp.swift:2397:16:runModal": {
+    "Sources/Pathem/PathemApp.swift:2413:16:runModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/PathemApp.swift:2405:21:NSAlert"
+        "Sources/Pathem/PathemApp.swift:2421:21:NSAlert"
       ],
       "reason": "Quit Anyway during in-flight transfer can leave incomplete data; conservative destructive class A. Static localized strings. Never terminate the owner app. Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",
@@ -2702,58 +2702,58 @@
       ],
       "reason": "Offers to open the GitHub issue form or close the alert."
     },
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:88:9:runModal": {
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:119:9:runModal": {
       "class": "A",
       "kind": "custom panel",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CommunityThemeGalleryWindow.swift:50:25:NSPanel"
+        "Sources/Pathem/CommunityThemeGalleryWindow.swift:81:25:NSPanel"
       ],
       "reason": "Hosted theme search, detail, screenshots and install controls."
     },
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:276:17:runModal": {
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:307:17:runModal": {
       "class": "B",
       "kind": "information alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CommunityThemeGalleryWindow.swift:271:29:NSAlert"
+        "Sources/Pathem/CommunityThemeGalleryWindow.swift:302:29:NSAlert"
       ],
       "reason": "Close reverts the temporary preview."
     },
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:320:15:runModal": {
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:351:15:runModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CommunityThemeGalleryWindow.swift:317:22:NSOpenPanel"
+        "Sources/Pathem/CommunityThemeGalleryWindow.swift:348:22:NSOpenPanel"
       ],
       "reason": "Only reachable from the local debug gallery."
     },
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:359:15:runModal": {
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:390:15:runModal": {
       "class": "A",
       "kind": "review alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CommunityThemeGalleryWindow.swift:340:21:NSAlert"
+        "Sources/Pathem/CommunityThemeGalleryWindow.swift:371:21:NSAlert"
       ],
       "reason": "App-owned reviewer and note fields. Only reachable from the local debug gallery."
     },
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:419:16:runModal": {
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:450:16:runModal": {
       "class": "B",
       "kind": "confirmation alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CommunityThemeGalleryWindow.swift:414:21:NSAlert"
+        "Sources/Pathem/CommunityThemeGalleryWindow.swift:445:21:NSAlert"
       ],
       "reason": "Cancel is the default. The alternate action changes the local gallery state."
     }
@@ -3009,164 +3009,164 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1636:24:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1652:24:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 133,
+          "line": 149,
           "expression": "app.mainMenu = makeMainMenu(updater: updater)"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1640:23:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1656:23:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1641,
+          "line": 1657,
           "expression": "appItem.submenu = appMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1672:24:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1688:24:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1673,
+          "line": 1689,
           "expression": "fileItem.submenu = fileMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1677:24:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1693:24:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1680,
+          "line": 1696,
           "expression": "item.submenu = menu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1795:24:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1811:24:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1796,
+          "line": 1812,
           "expression": "editItem.submenu = editMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1827:24:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1843:24:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1828,
+          "line": 1844,
           "expression": "viewItem.submenu = viewMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1926:25:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1942:25:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1934,
+          "line": 1950,
           "expression": "themeItem.submenu = themeMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1973:22:NSMenu": {
-      "status": "implicit presentation",
-      "attachments": [
-        {
-          "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1974,
-          "expression": "goItem.submenu = goMenu"
-        }
-      ],
-      "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
-    },
-    "Sources/Pathem/PathemApp.swift:1989:25:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1989:22:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
           "line": 1990,
+          "expression": "goItem.submenu = goMenu"
+        }
+      ],
+      "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
+    },
+    "Sources/Pathem/PathemApp.swift:2005:25:NSMenu": {
+      "status": "implicit presentation",
+      "attachments": [
+        {
+          "file": "Sources/Pathem/PathemApp.swift",
+          "line": 2006,
           "expression": "toolsItem.submenu = toolsMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:2007:26:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:2023:26:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 2008,
+          "line": 2024,
           "expression": "windowItem.submenu = windowMenu"
         },
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 2019,
+          "line": 2035,
           "expression": "NSApplication.shared.windowsMenu = windowMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:2024:24:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:2040:24:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 2025,
+          "line": 2041,
           "expression": "helpItem.submenu = helpMenu"
         },
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 2029,
+          "line": 2045,
           "expression": "NSApplication.shared.helpMenu = helpMenu"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:2041:23:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:2057:23:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 2058,
+          "line": 2074,
           "expression": "item.submenu = submenu"
         },
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1703,
+          "line": 1719,
           "expression": "fileMenu.addItem(openInEditorMenuItem())"
         }
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:2065:23:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:2081:23:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 2076,
+          "line": 2092,
           "expression": "item.submenu = submenu"
         },
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1718,
+          "line": 1734,
           "expression": "fileMenu.addItem(applyLabelMenuItem())"
         }
       ],
@@ -3216,12 +3216,12 @@
       ],
       "reason": "Native menu attached to a view, menu item, application menu or delegate/provider return path. Attachment expressions are source-pinned; no explicit popUp at this builder. Outside structural sample checks, not unused or claimed covered."
     },
-    "Sources/Pathem/PathemApp.swift:1661:28:NSMenu": {
+    "Sources/Pathem/PathemApp.swift:1677:28:NSMenu": {
       "status": "implicit presentation",
       "attachments": [
         {
           "file": "Sources/Pathem/PathemApp.swift",
-          "line": 1662,
+          "line": 1678,
           "expression": "servicesItem.submenu = servicesMenu"
         }
       ],
@@ -3245,13 +3245,13 @@
     "Sources/Pathem/ThemeSubmissionDialog.swift:30:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
     "Sources/Pathem/ThemeSubmissionDialog.swift:86:17:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
     "Sources/Pathem/ThemeSubmissionDialog.swift:99:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:278:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:291:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:303:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:323:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:364:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:385:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/CommunityThemeGalleryWindow.swift:401:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:309:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:322:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:334:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:354:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:395:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:416:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/CommunityThemeGalleryWindow.swift:432:19:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
     "Sources/Pathem/SettingsWindowController.swift:1023:23:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations."
   },
   "native_coverage_note": "Unit 1 accepted. Unit 2 has recipes for all47 B alerts across twelve planned catalogs and native adapters for103 A sites, with nine main-browser sites delegated to accepted task2. Recipe counts are not executed qualification on rebased main3c65e5a; see docs/TRANSIENT_SURFACES_UNIT2.md. Historical six-catalog GUI receipts are not current coverage."

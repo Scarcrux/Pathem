@@ -42,6 +42,37 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         _ = try CommunityThemeGallery.update(at: store) { $0.synchronize(catalog) }
     }
 
+    // The release smoke mounts the production gallery without activating the app.
+    static func verifyPackagedInstallation() async throws {
+        guard betaEnabled, let url = storeURL, let endpoint = sharedEndpoint else {
+            throw CommunityThemeError.invalidTransition
+        }
+        try await refreshSharedCatalog(endpoint, at: url)
+        var applied: CommunityThemeRevision.Reference?
+        let window = try Self(
+            url: url, active: nil, preview: { _ in }, apply: { _, reference in applied = reference }
+        )
+        window.configure()
+        window.search.stringValue = "Tidal Marsh"
+        window.refresh()
+        guard window.scope.segmentCount == 2, let revision = window.selection,
+            revision.id == "tidal-marsh", window.screenshot.image != nil
+        else { throw CommunityThemeError.invalidListing }
+        func click(_ action: Selector) throws {
+            guard
+                let button = window.actions.arrangedSubviews.compactMap({ $0 as? NSButton })
+                    .first(where: { $0.action == action }),
+                NSApp.sendAction(action, to: button.target, from: button)
+            else { throw CommunityThemeError.invalidTransition }
+        }
+        try click(#selector(installSelection))
+        try click(#selector(applySelection))
+        let stored = try CommunityThemeGallery.load(from: url)
+        guard stored.installed[revision.id] == revision, applied == revision.reference else {
+            throw CommunityThemeError.invalidTransition
+        }
+    }
+
     private let url: URL
     private var gallery: CommunityThemeGallery
     private let preview: (ThemePreset?) -> Void

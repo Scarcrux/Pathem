@@ -2753,4 +2753,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Owner chose a short gallery name for the beta. Themes and Submit a Theme are now gated by signed bundle metadata in opt-in packages, with a fixed hosted endpoint and manual updates. The stable publishing path rejects the beta flag. Verified catalog and review lifecycle on loopback and a reachable empty hosted snapshot. Public intake, a starter listing and live packaged acceptance are still pending."
     at = "2026-11-24T17:57:50Z"
+
+  [[mission.comment]]
+    text = "Public theme intake form is live in the default GitHub branch. Published the first approved listing, Tidal Marsh v1 (CC0), to the hosted catalog and verified installation in two separate client stores. The starter review history is retained in private versioned storage. A real external creator submission and hosted reviewer UI remain open."
+    at = "2026-11-24T18:51:19Z"
 # <<< commandem roadmap <<<
