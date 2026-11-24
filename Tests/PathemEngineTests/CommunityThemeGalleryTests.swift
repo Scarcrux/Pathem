@@ -222,4 +222,77 @@ struct CommunityThemeGalleryTests {
         #expect(reloaded.entries.first?.review == nil)
         #expect(reloaded.discover().isEmpty)
     }
+
+    /// Release builds never read the gallery store at launch: the applied theme is a snapshot in
+    /// Preferences. Losing the store entry must leave that snapshot readable and resettable.
+    @Test func appliedThemeSurvivesAMissingOrCorruptStoreEntry() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let store = folder.appendingPathComponent("shared-community-themes.json")
+        let saved = folder.appendingPathComponent("preferences.json")
+        let v1 = try CommunityThemeGallery.submission(
+            at: fixture.appendingPathComponent("v1.submission.json"))
+        let installed = try CommunityThemeGallery.update(at: store) {
+            try $0.submit(v1)
+            try $0.review(
+                v1.reference, outcome: .approved, reviewer: "Reviewer", note: "Approved in test.")
+            try $0.install(v1.reference)
+        }
+        let intact = try Data(contentsOf: store)
+
+        // Apply the installed theme the way Settings does, then persist it.
+        let theme = try #require(installed.installed[v1.id]).theme()
+        var applied = Preferences()
+        theme.apply(to: &applied)
+        applied.communityTheme = v1.reference
+        try JSONEncoder().encode(applied).write(to: saved)
+        #expect(ThemePreset(preferences: applied) != ThemePreset(preferences: Preferences()))
+
+        // What every later launch sees, whatever happened to the store in between.
+        func relaunch() throws -> Preferences {
+            try JSONDecoder().decode(Preferences.self, from: Data(contentsOf: saved))
+        }
+        func expectSnapshotIntactAndResettable() throws {
+            var loaded = try relaunch()
+            #expect(loaded.communityTheme == v1.reference)
+            #expect(ThemePreset(preferences: loaded) == ThemePreset(preferences: applied))
+            ThemePreset.system.apply(to: &loaded)
+            #expect(loaded.communityTheme == nil)
+            #expect(ThemePreset(preferences: loaded) == .system)
+        }
+
+        // 1. The entry was uninstalled but the appearance reset was never saved.
+        let removed = try CommunityThemeGallery.update(at: store) { try $0.uninstall(v1.id) }
+        #expect(removed.installed[v1.id] == nil)
+        try expectSnapshotIntactAndResettable()
+        // The dangling reference does not block installing and applying the theme again.
+        let again = try CommunityThemeGallery.update(at: store) { try $0.install(v1.reference) }
+        #expect(try again.installed[v1.id]?.theme() == theme)
+
+        // 2. The store file is gone: it reads as an empty gallery, not an error.
+        try FileManager.default.removeItem(at: store)
+        #expect(try CommunityThemeGallery.load(from: store).installed.isEmpty)
+        try expectSnapshotIntactAndResettable()
+
+        // 3. The store is damaged: truncated, garbage, or an installed entry with no listing.
+        var orphaned = try #require(
+            JSONSerialization.jsonObject(with: intact) as? [String: Any])
+        orphaned["entries"] = []
+        for damaged in [
+            intact.prefix(intact.count / 2), Data("not json".utf8), Data(),
+            try JSONSerialization.data(withJSONObject: orphaned),
+        ] {
+            try damaged.write(to: store)
+            // Loading reports an error instead of crashing or returning a partial gallery.
+            #expect(throws: (any Error).self) { try CommunityThemeGallery.load(from: store) }
+            try expectSnapshotIntactAndResettable()
+            // Known limit: a damaged store is never rewritten, so the gallery stays closed.
+            #expect(throws: (any Error).self) {
+                try CommunityThemeGallery.update(at: store) { _ in }
+            }
+            #expect(try Data(contentsOf: store) == damaged)
+        }
+    }
 }
