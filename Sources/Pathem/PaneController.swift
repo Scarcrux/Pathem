@@ -1260,6 +1260,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
     }
 
+    func refreshIcons() { content.refreshIcons() }
+
     /// Refresh the listing unless this pane is currently showing search results.
     /// File operations use this so an op elsewhere never wipes a pane's results
     /// (the on-disk change is still picked up by the watcher for index rebuild).

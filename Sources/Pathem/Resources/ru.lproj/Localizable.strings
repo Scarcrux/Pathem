@@ -1341,7 +1341,10 @@
 "prefs.iconExtraLarge" = "Очень большие";
 "prefs.iconLarge" = "Большие";
 "prefs.iconMedium" = "Средние";
+"prefs.folderStyleLabel" = "Стиль папок";
 "prefs.iconSetLabel" = "Значки файлов";
+"prefs.toolbarStyleLabel" = "Значки панели инструментов";
+"prefs.useThemeStyle" = "Использовать тему";
 "prefs.iconSizeLabel" = "Размер значков панели инструментов";
 "prefs.iconSmall" = "Малые";
 "prefs.instantTooltips" = "Показывать подсказки мгновенно";

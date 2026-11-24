@@ -177,16 +177,34 @@ extension BrowserViewController {
 
     /// Render a candidate look, or restore the saved look when a preview is cancelled.
     func renderThemePreview(_ preview: ThemePreset?) {
-        let theme = preview ?? ThemePreset(preferences: prefs)
-        applyAppearance(theme.appearance)
-        applyTheme(theme)
+        var candidate = prefs
+        preview?.apply(to: &candidate)
+        applyAppearance(candidate.appearance)
+        applyTheme(ThemePreset(preferences: candidate))
+        applyIconSet(candidate.effectiveThemeStyles)
+        applyToolbarIconSize(style: candidate.effectiveThemeStyles.toolbar)
     }
 
     private func applyAppearance(_ appearance: Preferences.Appearance) {
+        let increased = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
         switch appearance {
         case .system: NSApp.appearance = nil
-        case .light: NSApp.appearance = NSAppearance(named: .aqua)
-        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        case .light:
+            NSApp.appearance = NSAppearance(
+                named: increased ? .accessibilityHighContrastAqua : .aqua)
+        case .dark:
+            NSApp.appearance = NSAppearance(
+                named: increased ? .accessibilityHighContrastDarkAqua : .darkAqua)
+        }
+    }
+
+    @objc func refreshDisplayContrast() {
+        // Preserve the mode of a live preview when the accessibility setting changes.
+        if let mode = NSApp.appearance?.bestMatch(from: [.aqua, .darkAqua]) {
+            applyAppearance(mode == .darkAqua ? .dark : .light)
+        }
+        for side in [leftTabs, rightTabs] {
+            for pane in side.tabs { pane.refreshIcons() }
         }
     }
 
@@ -213,11 +231,15 @@ extension BrowserViewController {
         if terminal.theme != following { terminal.theme = following }
     }
 
-    /// Adopt the selected icon set; reload every listing so the new icons appear.
-    func applyIconSet() {
-        guard IconSetManager.shared.setCurrent(named: prefs.iconSetName) else { return }
+    /// Refresh the delivered views without re-reading their listings.
+    func applyIconSet(_ previewStyles: ThemeStyles? = nil) {
+        let styles = previewStyles ?? prefs.effectiveThemeStyles
+        guard
+            IconSetManager.shared.setCurrent(
+                named: styles.fileIcons.rawValue, folder: styles.folder)
+        else { return }
         for side in [leftTabs, rightTabs] {
-            for pane in side.tabs { pane.reloadIfShowingListing() }
+            for pane in side.tabs { pane.refreshIcons() }
         }
     }
 
@@ -338,9 +360,7 @@ extension BrowserViewController {
         applyCompactSidebar()
         applyCommanderCommands()
         renderThemePreview(nil)
-        applyIconSet()
         applyTooltipDelay()
-        applyToolbarIconSize()
         RemoteLimits.bandwidthKBps = prefs.bandwidthLimitKBps  // honored by the transfer backends
         saveConfig(prefs, to: Self.preferencesURL)
         semanticSearch.includeOCR = prefs.searchOCR

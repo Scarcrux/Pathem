@@ -121,27 +121,73 @@ extension BrowserViewController {
     /// (PATHEM_THEME_SHOTS=<dir>, with PATHEM_DEMO=1). Calls `done` after the last one.
     func debugRenderThemes(toDir dir: String, done: @escaping () -> Void) {
         let presets = ThemePreset.presets
+        var shots = presets.map {
+            (
+                name: $0.name, theme: $0, mode: ViewFormat.ViewMode.list,
+                appearance: Optional<NSAppearance.Name>.none
+            )
+        }
+        for (themeName, standard, increased) in [
+            ("Paper", NSAppearance.Name.aqua, NSAppearance.Name.accessibilityHighContrastAqua),
+            (
+                "Harbor", NSAppearance.Name.darkAqua,
+                NSAppearance.Name.accessibilityHighContrastDarkAqua
+            ),
+        ] {
+            guard let theme = presets.first(where: { $0.name == themeName }) else { continue }
+            for mode in ViewFormat.ViewMode.allCases {
+                shots.append(("\(themeName)-\(mode.rawValue)-standard", theme, mode, standard))
+                shots.append(("\(themeName)-\(mode.rawValue)-contrast", theme, mode, increased))
+            }
+        }
+
+        for (folderAndFiles, toolbar) in zip(
+            zip(ThemeStyles.Folder.allCases, ThemeStyles.FileIcons.allCases),
+            ThemeStyles.Toolbar.allCases
+        ) {
+            let (folder, files) = folderAndFiles
+            var theme = ThemePreset.harbor
+            theme.styles = ThemeStyles(folder, files, toolbar)
+            shots.append(
+                (
+                    "Styles-\(folder.rawValue)-\(files.rawValue)-\(toolbar.rawValue)",
+                    theme, .icon, nil
+                ))
+        }
+
         func step(_ index: Int) {
-            guard index < presets.count else {
+            guard index < shots.count else {
+                renderThemePreview(nil)
                 done()
                 return
             }
-            let preset = presets[index]
-            prefs.appearance = preset.appearance
-            prefs.accentColorHex = preset.accentHex
-            prefs.windowTintHex = preset.backgroundHex
-            prefs.themeName = preset.name
-            applyPreferences()
-            for side in [leftTabs, rightTabs] {
-                if let pane = side.activePane, let first = pane.entries.dropFirst(2).first {
-                    pane.debugSelectNames([first.name])
-                }
+            let shot = shots[index]
+            renderThemePreview(shot.theme)
+            if let appearance = shot.appearance {
+                NSApp.appearance = NSAppearance(named: appearance)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                let name = preset.name.replacingOccurrences(of: " ", with: "-")
+            for side in [leftTabs, rightTabs] {
+                side.activePane?.setViewMode(shot.mode)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                for side in [self.leftTabs, self.rightTabs] {
+                    if let pane = side.activePane,
+                        let entry = pane.entries.dropFirst(2).first ?? pane.entries.first
+                    {
+                        pane.debugSelectNames([entry.name])
+                        if shot.appearance != nil { pane.refreshIcons() }
+                    }
+                }
+                let name = shot.name.replacingOccurrences(of: " ", with: "-")
                 self.debugRenderWindowChrome(
                     to: "\(dir)/\(String(format: "%02d", index))-\(name).png")
                 step(index + 1)
+            }
+        }
+        if let photos = rightTabs.activePane {
+            let lisbon = photos.currentURL.appendingPathComponent("2026-11 Lisbon")
+            if FileManager.default.fileExists(atPath: lisbon.path) {
+                photos.navigate(to: lisbon)
             }
         }
         step(0)

@@ -1341,7 +1341,10 @@
 "prefs.iconExtraLarge" = "Extra grandi";
 "prefs.iconLarge" = "Grandi";
 "prefs.iconMedium" = "Medie";
+"prefs.folderStyleLabel" = "Stile cartelle";
 "prefs.iconSetLabel" = "Icone dei file";
+"prefs.toolbarStyleLabel" = "Icone della barra strumenti";
+"prefs.useThemeStyle" = "Usa il tema";
 "prefs.iconSizeLabel" = "Dimensione icone della barra strumenti";
 "prefs.iconSmall" = "Piccole";
 "prefs.instantTooltips" = "Mostra subito i suggerimenti";

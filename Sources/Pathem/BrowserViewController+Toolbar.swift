@@ -7,9 +7,11 @@ import PathemEngine
 extension BrowserViewController {
     /// Put the search field in the window's unified toolbar (Finder-style), so it
     /// doesn't waste a whole strip at the top of the content.
-    func installToolbarIfNeeded() {
+    func installToolbarIfNeeded(
+        identifier: NSToolbar.Identifier = "com.scarcrux.pathem.toolbar"
+    ) {
         guard let window = view.window, window.toolbar == nil else { return }
-        let toolbar = NSToolbar(identifier: "com.scarcrux.pathem.toolbar")
+        let toolbar = NSToolbar(identifier: identifier)
         toolbar.delegate = self
         // Native customization: users drag items in/out and reorder via the standard
         // sheet, and NSToolbar autosaves the arrangement under the toolbar identifier.
@@ -67,26 +69,84 @@ extension BrowserViewController {
         }
     }
 
-    /// Resize the window toolbar's icon(s) to match the toolbar-icon-size preference.
-    func applyToolbarIconSize() {
+    /// Refresh existing toolbar items without touching their identifiers or arrangement.
+    func applyToolbarIconSize(style: ThemeStyles.Toolbar) {
+        toolbarGlyphStyle = style
+        searchButton.image = toolbarGlyph(
+            "magnifyingglass", label: L("bvc.searchToolbarLabel", "Search"), pointSize: 13)
         guard let toolbar = view.window?.toolbar else { return }
-        let config = NSImage.SymbolConfiguration(
-            pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular)
         for item in toolbar.items {
             if item.itemIdentifier == Self.overflowItemID {
-                // Not a command item, so the loop below skipped it and its glyph only picked up a
-                // new size on relaunch.
-                item.image = NSImage(
-                    systemSymbolName: "ellipsis.circle", accessibilityDescription: item.label)?
-                    .withSymbolConfiguration(config)
-                continue
+                item.image = toolbarGlyph("ellipsis.circle", label: item.label)
+            } else if let id = Self.toolbarCommandID(item.itemIdentifier) {
+                item.image = toolbarGlyph(Self.toolbarSymbolName(for: id), label: item.label)
             }
-            guard let id = Self.toolbarCommandID(item.itemIdentifier) else { continue }
-            item.image = NSImage(
-                systemSymbolName: Self.toolbarSymbolName(for: id),
-                accessibilityDescription: item.label)?
-                .withSymbolConfiguration(config)
         }
+    }
+
+    func toolbarGlyph(_ symbol: String, label: String, pointSize: CGFloat? = nil) -> NSImage? {
+        let size = pointSize ?? prefs.toolbarIconSize.pointSize + 2
+        let weight: NSFont.Weight
+        let glyph: String
+        let scale: NSImage.SymbolScale
+        switch toolbarGlyphStyle {
+        case .system, .circled, .squared:
+            (glyph, weight, scale) = (symbol, .regular, .medium)
+        case .fine:
+            (glyph, weight, scale) = (symbol, .light, .medium)
+        case .bold:
+            (glyph, weight, scale) = (symbol, .bold, .medium)
+        case .heavy:
+            (glyph, weight, scale) = (symbol, .heavy, .medium)
+        case .solid:
+            let filled = NSImage(systemSymbolName: symbol + ".fill", accessibilityDescription: nil)
+            (glyph, weight, scale) = (filled == nil ? symbol : symbol + ".fill", .semibold, .medium)
+        case .rounded:
+            let arrows = [
+                "chevron.backward": "arrow.backward.circle",
+                "chevron.forward": "arrow.forward.circle",
+                "chevron.up": "arrow.up.circle", "ellipsis.circle": "ellipsis",
+            ]
+            (glyph, weight, scale) = (arrows[symbol] ?? symbol, .medium, .large)
+        case .arrowheads:
+            let arrows = [
+                "chevron.backward": "arrowshape.backward", "chevron.forward": "arrowshape.forward",
+                "chevron.up": "arrowshape.up",
+            ]
+            (glyph, weight, scale) = (arrows[symbol] ?? symbol, .medium, .medium)
+        case .compact:
+            (glyph, weight, scale) = (symbol, .semibold, .small)
+        }
+
+        let enclosed = toolbarGlyphStyle == .circled || toolbarGlyphStyle == .squared
+        let config = NSImage.SymbolConfiguration(
+            pointSize: enclosed ? size * 0.66 : size, weight: weight, scale: scale)
+        let image =
+            (NSImage(systemSymbolName: glyph, accessibilityDescription: label)
+            ?? NSImage(systemSymbolName: symbol, accessibilityDescription: label))?
+            .withSymbolConfiguration(config)
+        guard enclosed, let image else { return image }
+
+        let circular = toolbarGlyphStyle == .circled
+        let side = size + 2
+        let badge = NSImage(size: NSSize(width: side, height: side), flipped: false) { rect in
+            let border = rect.insetBy(dx: 1, dy: 1)
+            let path =
+                circular
+                ? NSBezierPath(ovalIn: border)
+                : NSBezierPath(roundedRect: border, xRadius: 3, yRadius: 3)
+            NSColor.black.setStroke()
+            path.lineWidth = 1
+            path.stroke()
+            image.draw(
+                at: NSPoint(
+                    x: rect.midX - image.size.width / 2, y: rect.midY - image.size.height / 2),
+                from: .zero, operation: .sourceOver, fraction: 1)
+            return true
+        }
+        badge.isTemplate = true
+        badge.accessibilityDescription = label
+        return badge
     }
 }
 
@@ -190,11 +250,7 @@ extension BrowserViewController: NSToolbarDelegate {
             let item = NSMenuToolbarItem(itemIdentifier: identifier)
             item.label = L("overflow.label", "Options")
             item.toolTip = L("overflow.tooltip", "Options and theme")
-            item.image = NSImage(
-                systemSymbolName: "ellipsis.circle",
-                accessibilityDescription: L("overflow.label", "Options"))?
-                .withSymbolConfiguration(
-                    .init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
+            item.image = toolbarGlyph("ellipsis.circle", label: item.label)
             item.showsIndicator = false
             let menu = NSMenu()
             menu.delegate = overflowMenuDelegate  // repopulated on open, so checkmarks stay fresh
@@ -212,11 +268,7 @@ extension BrowserViewController: NSToolbarDelegate {
         let item = NSToolbarItem(itemIdentifier: identifier)
         item.label = label
         item.toolTip = label
-        item.image = NSImage(
-            systemSymbolName: Self.toolbarSymbolName(for: commandID),
-            accessibilityDescription: label)?
-            .withSymbolConfiguration(
-                .init(pointSize: prefs.toolbarIconSize.pointSize + 2, weight: .regular))
+        item.image = toolbarGlyph(Self.toolbarSymbolName(for: commandID), label: label)
         item.isBordered = true
         item.target = self
         item.action = #selector(runToolbarCommand(_:))

@@ -334,7 +334,18 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 themePackageControls(),
                 labeled(L("prefs.accentLabel", "Accent color"), accentColorControl()),
                 labeled(L("prefs.windowTintLabel", "Window tint"), windowTintControl()),
-                labeled(L("prefs.iconSetLabel", "File icons"), iconSetControl()),
+                labeled(
+                    L("prefs.folderStyleLabel", "Folder style"),
+                    styleControl(
+                        folderStylePopup, choices: ThemeStyles.Folder.allCases.map(\.rawValue))),
+                labeled(
+                    L("prefs.iconSetLabel", "File icons"),
+                    styleControl(
+                        fileIconPopup, choices: ThemeStyles.FileIcons.allCases.map(\.rawValue))),
+                labeled(
+                    L("prefs.toolbarStyleLabel", "Toolbar glyphs"),
+                    styleControl(
+                        toolbarStylePopup, choices: ThemeStyles.Toolbar.allCases.map(\.rawValue))),
                 hint(
                     L(
                         "prefs.themeHint",
@@ -937,17 +948,13 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             let name = sender.selectedItem?.representedObject as? String,
             let preset = ThemePreset.presets.first(where: { $0.name == name })
         else { return }
-        if preset == .harbor {
-            previewTheme(preset)
-        } else {
-            commitTheme(preset)
-        }
+        previewTheme(preset)
     }
 
     private func updateThemeSelection() {
         let preset = ThemePreset.matching(
             accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
-            appearance: prefs.appearance)
+            appearance: prefs.appearance, styles: prefs.themeStyles)
         guard let custom = themePopup.itemArray.last else { return }
         let name = prefs.themeName
         let isBuiltIn = ThemePreset.presets.contains { $0.name == name }
@@ -1063,6 +1070,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             if theme.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 theme.name = L("prefs.themeCustom", "Custom")
             }
+            theme.styles = prefs.effectiveThemeStyles
             let data = try ThemePackage.encode(theme)
             try data.write(to: url, options: .atomic)
         } catch {
@@ -1074,21 +1082,46 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         commitTheme(.system)
     }
 
-    private func iconSetControl() -> NSView {
-        let popup = NSPopUpButton()
-        for set in IconSet.all {
-            popup.addItem(withTitle: set.displayName)
-            popup.lastItem?.representedObject = set.name
+    private let folderStylePopup = NSPopUpButton()
+    private let fileIconPopup = NSPopUpButton()
+    private let toolbarStylePopup = NSPopUpButton()
+
+    private func styleControl(_ popup: NSPopUpButton, choices: [String]) -> NSView {
+        popup.removeAllItems()
+        popup.addItem(withTitle: L("prefs.useThemeStyle", "Use Theme"))
+        for name in choices {
+            popup.addItem(
+                withTitle: name == "System" ? L("prefs.appearanceSystem", "System") : name)
+            popup.lastItem?.representedObject = name
         }
-        popup.select(
-            popup.itemArray.first { ($0.representedObject as? String) == prefs.iconSetName })
+        synchronizeStyleControls()
         popup.target = self
-        popup.action = #selector(iconSetChanged(_:))
+        popup.action = #selector(styleChanged(_:))
         return popup
     }
-    @objc private func iconSetChanged(_ sender: NSPopUpButton) {
-        prefs.iconSetName =
-            (sender.selectedItem?.representedObject as? String) ?? IconSet.system.name
+
+    private func synchronizeStyleControls() {
+        for (popup, choice) in [
+            (folderStylePopup, prefs.folderStyleOverride?.rawValue),
+            (fileIconPopup, prefs.iconSetName),
+            (toolbarStylePopup, prefs.toolbarStyleOverride?.rawValue),
+        ] {
+            popup.select(
+                popup.itemArray.first {
+                    ($0.representedObject as? String) == choice
+                } ?? popup.itemArray.first)
+        }
+    }
+
+    @objc private func styleChanged(_ sender: NSPopUpButton) {
+        let choice = sender.selectedItem?.representedObject as? String
+        if sender === folderStylePopup {
+            prefs.folderStyleOverride = choice.flatMap(ThemeStyles.Folder.init(rawValue:))
+        } else if sender === fileIconPopup {
+            prefs.iconSetName = choice ?? ""
+        } else {
+            prefs.toolbarStyleOverride = choice.flatMap(ThemeStyles.Toolbar.init(rawValue:))
+        }
         onChange?(prefs)
     }
 

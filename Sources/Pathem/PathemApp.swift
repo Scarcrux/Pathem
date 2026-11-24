@@ -277,6 +277,31 @@ enum PathemApp {
             print("theme-preserves-custom-toolbar: \(passed ? "PASS" : "FAIL")")
             exit(passed ? 0 : 1)
         }
+        if let check = launchEnvironment["PATHEM_THEME_AUTOSAVE_TEST"],
+            ["write", "read"].contains(check),
+            let runID = launchEnvironment["PATHEM_THEME_AUTOSAVE_ID"].flatMap(
+                UUID.init(uuidString:))
+        {
+            let identifier = NSToolbar.Identifier("com.scarcrux.pathem.toolbar.test.\(runID)")
+            let key = "NSToolbar Configuration \(identifier)"
+            let stored = UserDefaults.standard.dictionary(forKey: key)?["TB Item Identifiers"]
+            print("theme-toolbar-before-install: \(stored != nil)")
+            browser.installToolbarIfNeeded(identifier: identifier)
+            let passed = browser.smokeThemeToolbarAutosave(write: check == "write")
+            print("theme-toolbar-autosave-\(check): \(passed ? "PASS" : "FAIL")")
+            exit(passed ? 0 : 1)
+        }
+        if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
+            browser.installToolbarIfNeeded()
+            window.setContentSize(NSSize(width: 1200, height: 760))
+            browser.view.layoutSubtreeIfNeeded()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                browser.debugRenderThemes(toDir: dir) { exit(0) }
+            }
+            // The in-process render does not need desktop activation or Screen Recording.
+            RunLoop.main.run(until: Date().addingTimeInterval(60))
+            exit(1)
+        }
         #endif
         window.makeKeyAndOrderFront(nil)
         app.activate(ignoringOtherApps: true)
@@ -589,11 +614,6 @@ enum PathemApp {
                         }
                     }
                 }
-            }
-        }
-        if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                browser.debugRenderThemes(toDir: dir) { exit(0) }
             }
         }
         #endif
@@ -2173,7 +2193,8 @@ enum PathemApp {
                 && (key.hasSuffix("_SMOKE") || key.hasSuffix("_E2E")
                     || key == "PATHEM_GATE_A" || key == "PATHEM_GATE_A_DEMO"
                     || key.hasSuffix("_SHOT") || key.hasSuffix("_TEST")
-                    || key.hasSuffix("_RENDER") || key.hasSuffix("_PREVIEW"))
+                    || key.hasSuffix("_RENDER") || key.hasSuffix("_PREVIEW")
+                    || key == "PATHEM_THEME_SHOTS")
         }
     }
 

@@ -1333,7 +1333,10 @@
 "prefs.iconExtraLarge" = "特大";
 "prefs.iconLarge" = "大";
 "prefs.iconMedium" = "中";
+"prefs.folderStyleLabel" = "文件夹样式";
 "prefs.iconSetLabel" = "文件图标";
+"prefs.toolbarStyleLabel" = "工具栏图标";
+"prefs.useThemeStyle" = "跟随主题";
 "prefs.iconSizeLabel" = "工具栏图标大小";
 "prefs.iconSmall" = "小";
 "prefs.instantTooltips" = "立即显示工具提示";

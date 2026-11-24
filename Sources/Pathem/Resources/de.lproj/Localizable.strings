@@ -1333,7 +1333,10 @@
 "prefs.iconExtraLarge" = "Sehr groß";
 "prefs.iconLarge" = "Groß";
 "prefs.iconMedium" = "Mittel";
+"prefs.folderStyleLabel" = "Ordnerstil";
 "prefs.iconSetLabel" = "Dateisymbole";
+"prefs.toolbarStyleLabel" = "Symbolleiste";
+"prefs.useThemeStyle" = "Vom Thema übernehmen";
 "prefs.iconSizeLabel" = "Symbolgröße der Symbolleiste";
 "prefs.iconSmall" = "Klein";
 "prefs.instantTooltips" = "Kurzinfos sofort anzeigen";

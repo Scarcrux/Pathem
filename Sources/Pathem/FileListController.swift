@@ -548,7 +548,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     override init() {
         super.init()
         configure()
-        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.tableView.reloadData() }
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.refreshIcons() }
     }
 
     private func configure() {
@@ -765,7 +765,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             tableView.usesAlternatingRowBackgroundColors =
                 configuredAlternating && ThemeManager.shared.allowsSystemStripes
         }
-        tableView.reloadData()
+        refreshIcons()
     }
 
     /// Replace the listing. With `preserveState` (an in-place refresh: a sort, a
@@ -773,6 +773,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
     /// position is held, so a background metadata change cannot drag the viewport
     /// after a re-sorted selection. Only explicit sort/Reveal commands reveal it.
     /// Without it (navigation, search results) the view resets to the top.
+    func refreshIcons() {
+        reloadAppearancePreservingState {}
+    }
+
     func setEntries(_ entries: [FileEntry], preserveState: Bool = false) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         defer {

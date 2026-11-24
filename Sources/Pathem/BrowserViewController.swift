@@ -120,6 +120,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     let torrentDetail = TorrentDetailView()  // overlays the panes when a torrent is opened
     /// The toolbar's search-and-command button: looks like a search field, opens the one
     /// overlay (Cmd-F search mode, Cmd-K command mode), and shows the active pane's query.
+    var toolbarGlyphStyle: ThemeStyles.Toolbar = .system
     let searchButton = NSButton()
     var didSetInitialSplit: Bool {
         get { splitLayout.didSetInitialSplit }
@@ -457,6 +458,9 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         loadRecentDestinations()  // register Copy/Move To <recent> commands for the palette
         loadKeymap()
         loadGestures()
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(refreshDisplayContrast),
+            name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil)
         loadPreferences()
         loadFolderFormats()
         loadLayouts()
@@ -993,7 +997,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         // viewDidLoad applied preferences before the view had a window, so the theme's window
         // background and transparent title bar were never set at launch (only a later theme change
         // reached them). Apply the theme again now that the window exists.
-        applyTheme()
+        renderThemePreview(nil)
         applyInitialSplitPositions()
         // Focus the restored active pane, not always the left one.
         let focusPane = activePane ?? activeSide?.activePane ?? leftTabs.activePane

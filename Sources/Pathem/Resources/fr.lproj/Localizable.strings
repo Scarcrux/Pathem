@@ -1333,7 +1333,10 @@
 "prefs.iconExtraLarge" = "Très grande";
 "prefs.iconLarge" = "Grande";
 "prefs.iconMedium" = "Moyenne";
+"prefs.folderStyleLabel" = "Style des dossiers";
 "prefs.iconSetLabel" = "Icônes de fichier";
+"prefs.toolbarStyleLabel" = "Icônes de la barre d’outils";
+"prefs.useThemeStyle" = "Utiliser le thème";
 "prefs.iconSizeLabel" = "Taille des icônes de la barre d’outils";
 "prefs.iconSmall" = "Petite";
 "prefs.instantTooltips" = "Afficher les infobulles instantanément";

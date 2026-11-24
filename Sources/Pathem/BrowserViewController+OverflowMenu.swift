@@ -60,7 +60,7 @@ extension BrowserViewController {
 
         let current = ThemePreset.matching(
             accentHex: prefs.accentColorHex, backgroundHex: prefs.windowTintHex,
-            appearance: prefs.appearance)
+            appearance: prefs.appearance, styles: prefs.themeStyles)
         for group in ThemePreset.groups where !group.members.isEmpty {
             sub.addItem(.sectionHeader(title: ThemeManager.groupTitle(group.appearance)))
             for (index, preset) in group.members {

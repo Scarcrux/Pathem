@@ -1341,7 +1341,10 @@
 "prefs.iconExtraLarge" = "特大";
 "prefs.iconLarge" = "大";
 "prefs.iconMedium" = "中";
+"prefs.folderStyleLabel" = "資料夾樣式";
 "prefs.iconSetLabel" = "檔案圖像";
+"prefs.toolbarStyleLabel" = "工具列圖示";
+"prefs.useThemeStyle" = "跟隨主題";
 "prefs.iconSizeLabel" = "工具列圖像大小";
 "prefs.iconSmall" = "小";
 "prefs.instantTooltips" = "立即顯示工具提示";

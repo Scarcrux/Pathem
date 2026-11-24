@@ -18,16 +18,15 @@ extension BrowserViewController {
         guard let first = initialOrder.first,
             let swapIndex = initialOrder.firstIndex(where: { $0 != first })
         else { return false }
-        let original = ThemePreset(preferences: prefs)
+        let savedPreferences = prefs
+        let original = ThemePreset(preferences: savedPreferences)
         let autosaves = toolbar.autosavesConfiguration
         var reordered = initialOrder
         reordered.swapAt(0, swapIndex)
         toolbar.autosavesConfiguration = false
         toolbar.itemIdentifiers = reordered
         defer {
-            var restored = prefs
-            original.apply(to: &restored)
-            receiveSettingsPreferences(restored)
+            receiveSettingsPreferences(savedPreferences)
             toolbar.itemIdentifiers = initialOrder
             toolbar.autosavesConfiguration = autosaves
         }
@@ -56,7 +55,67 @@ extension BrowserViewController {
         let resetKeptOrder =
             toolbar.items.map(\.itemIdentifier) == reordered
             && ThemePreset(preferences: prefs) == .system
+        // The real appearance path must resolve each override on its own and restore the
+        // rendered styles after a preview, including the search and overflow glyph styling.
+        func shows(_ styles: ThemeStyles) -> Bool {
+            IconSetManager.shared.folderStyle == styles.folder
+                && IconSetManager.shared.current.name == styles.fileIcons.rawValue
+                && toolbarGlyphStyle == styles.toolbar
+                && toolbar.items.map(\.itemIdentifier) == reordered
+        }
+        ThemePreset.harbor.apply(to: &updated)
+        updated.folderStyleOverride = .system
+        updated.iconSetName = ThemeStyles.FileIcons.vivid.rawValue
+        updated.toolbarStyleOverride = .squared
+        receiveSettingsPreferences(updated)
+        let overridesKept = shows(.init(.system, .vivid, .squared))
+        updated.folderStyleOverride = nil
+        receiveSettingsPreferences(updated)
+        let folderCleared = shows(.init(.azure, .vivid, .squared))
+        updated.iconSetName = ""
+        receiveSettingsPreferences(updated)
+        let iconsCleared = shows(.init(.azure, .blueprint, .squared))
+        updated.toolbarStyleOverride = nil
+        receiveSettingsPreferences(updated)
+        let toolbarCleared = shows(.init(.azure, .blueprint, .rounded))
+        renderThemePreview(.system)
+        let systemPreview = shows(.system)
+        renderThemePreview(nil)
+        let restored = shows(.init(.azure, .blueprint, .rounded))
+
         return previewKeptOrder && cancelKeptOrder && appliedKeptOrder && resetKeptOrder
+            && overridesKept && folderCleared && iconsCleared && toolbarCleared && systemPreview
+            && restored
+    }
+
+    /// The caller supplies a unique native toolbar identifier shared by the two launches.
+    func smokeThemeToolbarAutosave(write: Bool) -> Bool {
+        guard let toolbar = view.window?.toolbar, toolbar.autosavesConfiguration else {
+            return false
+        }
+        var expected = toolbarDefaultItemIdentifiers(toolbar)
+        guard let first = expected.first, let second = expected.firstIndex(where: { $0 != first })
+        else { return false }
+        expected.swapAt(0, second)
+        let defaultsKey = "NSToolbar Configuration \(toolbar.identifier)"
+        defer {
+            if !write { UserDefaults.standard.removeObject(forKey: defaultsKey) }
+        }
+        if !write { RunLoop.main.run(until: Date().addingTimeInterval(1)) }
+        if write {
+            toolbar.removeItem(at: 0)
+            toolbar.insertItem(withItemIdentifier: first, at: second)
+            renderThemePreview(.harbor)
+            renderThemePreview(nil)
+            RunLoop.main.run(until: Date().addingTimeInterval(1))
+            print("theme-toolbar-defaults-synchronized: \(UserDefaults.standard.synchronize())")
+        }
+        let saved = UserDefaults.standard.dictionary(forKey: defaultsKey)
+        print("theme-toolbar-native-configuration: \(saved?["TB Item Identifiers"] != nil)")
+        if toolbar.itemIdentifiers != expected {
+            print("theme-toolbar-order: actual=\(toolbar.itemIdentifiers) expected=\(expected)")
+        }
+        return toolbar.itemIdentifiers == expected
     }
 
     func smokeReport() -> (ok: Bool, lines: [String]) {
@@ -1910,11 +1969,13 @@ extension BrowserViewController {
         // Icon sets: a themed set renders an icon; "System" returns nil (use the OS icon).
         let sampleFolder = FileEntry(
             name: "docs", isDirectory: true, size: 0, modificationDate: nil)
-        IconSetManager.shared.setCurrent(named: "Vivid")
+        IconSetManager.shared.setCurrent(named: "Vivid", folder: .azure)
         let themedIcon = IconSetManager.shared.icon(for: sampleFolder)
         IconSetManager.shared.setCurrent(named: "System")
         let systemIcon = IconSetManager.shared.icon(for: sampleFolder)
-        IconSetManager.shared.setCurrent(named: prefs.iconSetName)  // restore
+        IconSetManager.shared.setCurrent(
+            named: prefs.effectiveThemeStyles.fileIcons.rawValue,
+            folder: prefs.effectiveThemeStyles.folder)  // restore
         check(
             "icon-set-renders",
             themedIcon != nil && (themedIcon?.size.width ?? 0) > 0 && systemIcon == nil,

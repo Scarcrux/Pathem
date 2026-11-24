@@ -11,7 +11,7 @@
       "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only."
     },
     {
-      "site": "Sources/Pathem/PathemApp.swift:281:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/PathemApp.swift:306:9:makeKeyAndOrderFront",
       "coverage": "task2",
       "reason": "Primary browser window, covered by task 2. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },

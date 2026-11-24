@@ -351,8 +351,21 @@ final class IconItem: NSCollectionViewItem {
 
     private func updateHighlight() {
         view.layer?.cornerRadius = 6
-        let selectedColor = ThemeManager.shared.customAccent ?? .selectedContentBackgroundColor
-        view.layer?.backgroundColor = isSelected ? selectedColor.cgColor : NSColor.clear.cgColor
+        // Keep the original icon and label colors legible, including when the
+        // selected folder uses the very same accent as its selection.
+        let accent = ThemeManager.shared.accent
+        view.effectiveAppearance.performAsCurrentDrawingAppearance {
+            view.layer?.backgroundColor =
+                isSelected ? accent.withAlphaComponent(0.18).cgColor : NSColor.clear.cgColor
+            view.layer?.borderColor = isSelected ? accent.cgColor : nil
+        }
+        let appearance = view.effectiveAppearance.bestMatch(from: [
+            .accessibilityHighContrastAqua, .accessibilityHighContrastDarkAqua, .aqua, .darkAqua,
+        ])
+        let increasedContrast =
+            appearance == .accessibilityHighContrastAqua
+            || appearance == .accessibilityHighContrastDarkAqua
+        view.layer?.borderWidth = isSelected ? (increasedContrast ? 2 : 1) : 0
     }
 }
 
@@ -578,7 +591,7 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         // takes focus (as list/column/tree do). Without this, selecting an icon/gallery pane left
         // the active pane -- and keyboard focus -- on the previously active one.
         collection.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
-        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.collection.reloadData() }
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.refreshIcons() }
     }
 
     /// Right-drag flick + swipe trail (super-drag), forwarded from the collection view.
@@ -804,6 +817,10 @@ final class IconCollectionController: NSObject, NSCollectionViewDataSource,
         let visible = union.intersection(collection.visibleRect)
         guard !visible.isNull, visible.height > 1 else { return nil }  // scrolled out of view
         return collection.convert(visible, to: nil)
+    }
+
+    func refreshIcons() {
+        PaneAppearanceReload.collection(collection, in: scrollView) {}
     }
 
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {

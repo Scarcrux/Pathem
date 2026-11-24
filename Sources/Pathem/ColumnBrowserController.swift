@@ -925,6 +925,12 @@ extension ColumnBrowserController: PaneContentView {
         onInlineRename?(entry, newName)
     }
 
+    func refreshIcons() {
+        preservingColumnState {
+            for column in columns { column.table.reloadData() }
+        }
+    }
+
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         guard let root = rootURL else {

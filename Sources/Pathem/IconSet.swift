@@ -8,7 +8,6 @@ import UniformTypeIdentifiers
 /// file views; anything it doesn't cover falls back to the system icon.
 struct IconSet: Equatable {
     let name: String
-    var displayName: String { isSystem ? L("prefs.appearanceSystem", "System") : name }
     /// True for "System": no overrides, use the OS icons.
     let isSystem: Bool
     /// Per-category SF Symbol + color; a missing category falls back to the system icon.
@@ -21,7 +20,32 @@ struct IconSet: Equatable {
     // Sets are identified by name (the symbol table has tuple values, which block synthesis).
     static func == (lhs: IconSet, rhs: IconSet) -> Bool { lhs.name == rhs.name }
 
-    static let all: [IconSet] = [.system, .monochrome, .vivid, .blueprint]
+    static let all: [IconSet] = [
+        .system, .monochrome, .vivid, .blueprint,
+        themed(.outline, color: .labelColor, outline: true),
+        themed(.mint, color: .systemTeal),
+        themed(.amber, color: .systemOrange),
+        themed(.orchid, color: .systemPurple),
+        themed(.twoTone, color: .systemBlue, detail: .systemTeal),
+        themed(.ink, color: .labelColor),
+    ]
+
+    private static func themed(
+        _ choice: ThemeStyles.FileIcons, color: NSColor, outline: Bool = false,
+        detail: NSColor? = nil
+    ) -> IconSet {
+        let entries = FileIconCategory.allCases.map { category in
+            let symbol = category.defaultSymbol
+            let glyph = outline ? symbol.replacingOccurrences(of: ".fill", with: "") : symbol
+            let tint =
+                category == .generic || category == .document || category == .archive
+                ? color : detail ?? color
+            return (category, (glyph, tint))
+        }
+        return IconSet(
+            name: choice.rawValue, isSystem: false,
+            symbols: Dictionary(uniqueKeysWithValues: entries))
+    }
 
     static let system = IconSet(name: "System", isSystem: true, symbols: [:])
 
@@ -127,34 +151,63 @@ final class IconSetManager {
     static let shared = IconSetManager()
 
     private(set) var current: IconSet = .system
-    private var cache: [String: NSImage] = [:]
+    private(set) var folderStyle: ThemeStyles.Folder = .system
+    private var cache: [FileIconCategory: NSImage] = [:]
 
     /// Adopt the set named `name` (from Preferences); returns true when it actually changed.
     @discardableResult
-    func setCurrent(named name: String) -> Bool {
+    func setCurrent(named name: String, folder: ThemeStyles.Folder = .system) -> Bool {
         let set = IconSet.all.first { $0.name == name } ?? .system
-        guard set != current else { return false }
+        guard set != current || folder != folderStyle else { return false }
         current = set
+        folderStyle = folder
         cache.removeAll()
         return true
     }
 
     /// The themed icon for an entry, or nil when the "System" set is active (use the OS icon).
     func icon(for entry: FileEntry) -> NSImage? {
-        guard !current.isSystem else { return nil }
         let category = FileIconCategory.of(entry)
-        let key = "\(current.name)|\(category.rawValue)"
-        if let hit = cache[key] { return hit }
-        guard let spec = current.entry(for: category) else { return nil }
-        let image = Self.render(spec.symbol, color: spec.color)
-        cache[key] = image
+        if let image = cache[category], category != .folder || folderStyle != .accent {
+            return image
+        }
+        let image: NSImage?
+        if category == .folder {
+            image = folderIcon()
+        } else {
+            image = current.entry(for: category).map { Self.render($0.symbol, color: $0.color) }
+        }
+        cache[category] = image
         return image
     }
 
+    private func folderIcon() -> NSImage? {
+        switch folderStyle {
+        case .system: return nil
+        case .outline: return Self.render("folder", color: .labelColor)
+        case .azure: return Self.render("folder.fill", color: .systemBlue)
+        case .mint: return Self.render("folder.fill", color: .systemMint)
+        case .amber: return Self.render("folder.fill", color: .systemOrange)
+        case .plum: return Self.render("folder.fill", color: .systemPurple)
+        case .coral: return Self.render("folder.fill", color: .systemPink)
+        case .slate: return Self.render("folder.fill", color: .secondaryLabelColor)
+        case .twoTone:
+            let fill = Self.render("folder.fill", color: .systemTeal)
+            let outline = Self.render("folder", color: .labelColor)
+            return NSImage(size: fill.size, flipped: false) { rect in
+                fill.draw(in: rect)
+                outline.draw(in: rect)
+                return true
+            }
+        case .accent: return Self.render("folder.fill", color: ThemeManager.shared.accent)
+        }
+    }
+
     /// Render an SF Symbol tinted with `color` at a size that scales cleanly to any cell.
-    private static func render(_ symbol: String, color: NSColor) -> NSImage {
+    private static func render(_ symbol: String, color: NSColor, detail: NSColor? = nil) -> NSImage
+    {
         let config = NSImage.SymbolConfiguration(pointSize: 96, weight: .regular)
-            .applying(NSImage.SymbolConfiguration(paletteColors: [color]))
+            .applying(NSImage.SymbolConfiguration(paletteColors: [color, detail ?? color]))
         return NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(config) ?? NSImage(
                 systemSymbolName: "doc", accessibilityDescription: nil) ?? NSImage()

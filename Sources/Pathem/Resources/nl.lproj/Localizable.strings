@@ -1341,7 +1341,10 @@
 "prefs.iconExtraLarge" = "Extra groot";
 "prefs.iconLarge" = "Groot";
 "prefs.iconMedium" = "Gemiddeld";
+"prefs.folderStyleLabel" = "Mapstijl";
 "prefs.iconSetLabel" = "Bestandssymbolen";
+"prefs.toolbarStyleLabel" = "Knoppenbalksymbolen";
+"prefs.useThemeStyle" = "Thema gebruiken";
 "prefs.iconSizeLabel" = "Symboolgrootte in knoppenbalk";
 "prefs.iconSmall" = "Klein";
 "prefs.instantTooltips" = "Toon tooltips direct";

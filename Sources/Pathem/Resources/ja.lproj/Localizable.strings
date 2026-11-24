@@ -1333,7 +1333,10 @@
 "prefs.iconExtraLarge" = "特大";
 "prefs.iconLarge" = "大";
 "prefs.iconMedium" = "中";
+"prefs.folderStyleLabel" = "フォルダのスタイル";
 "prefs.iconSetLabel" = "ファイルアイコン";
+"prefs.toolbarStyleLabel" = "ツールバーアイコン";
+"prefs.useThemeStyle" = "テーマに従う";
 "prefs.iconSizeLabel" = "ツールバーアイコンのサイズ";
 "prefs.iconSmall" = "小";
 "prefs.instantTooltips" = "ツールチップを即座に表示";

@@ -247,6 +247,10 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         onInlineRename?(entry, newName)
     }
 
+    func refreshIcons() {
+        reloadAppearancePreservingState {}
+    }
+
     func setEntries(_ newEntries: [FileEntry], preserveState: Bool) {
         cancelInlineEdit()  // a reload recycles the editing cell; don't let it commit a partial name
         invalidateChildLoads()

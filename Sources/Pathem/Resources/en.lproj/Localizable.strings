@@ -1267,7 +1267,10 @@
 "prefs.iconExtraLarge" = "Extra Large";
 "prefs.iconLarge" = "Large";
 "prefs.iconMedium" = "Medium";
+"prefs.folderStyleLabel" = "Folder style";
 "prefs.iconSetLabel" = "File icons";
+"prefs.toolbarStyleLabel" = "Toolbar glyphs";
+"prefs.useThemeStyle" = "Use Theme";
 "prefs.iconSizeLabel" = "Toolbar icon size";
 "prefs.iconSmall" = "Small";
 "prefs.instantTooltips" = "Show tooltips instantly";

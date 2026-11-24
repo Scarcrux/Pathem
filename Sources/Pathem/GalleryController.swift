@@ -157,7 +157,7 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         filmstrip.onSuperDrag = { [weak self] event in self?.onDragSession?(event) }
         // Forward focus so clicking the gallery makes its pane active + focused, like list/tree.
         filmstrip.onBecomeActive = { [weak self] in self?.onBecomeActive?() }
-        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.filmstrip.reloadData() }
+        ThemeManager.shared.onChange(owner: self) { [weak self] in self?.refreshIcons() }
     }
 
     /// Right-drag flick + swipe trail (super-drag), forwarded from the filmstrip.
@@ -463,6 +463,13 @@ final class GalleryController: NSObject, NSCollectionViewDataSource, NSCollectio
         }
         guard !cancelled, !newName.isEmpty, newName != entry.name else { return }
         onInlineRename?(entry, newName)
+    }
+
+    func refreshIcons() {
+        PaneAppearanceReload.collection(filmstrip, in: scrollView) {}
+        if let entry = selectedEntries.first ?? entries.first, entry.isDirectory {
+            updatePreview(for: entry)
+        }
     }
 
     func setEntries(_ entries: [FileEntry], preserveState: Bool) {

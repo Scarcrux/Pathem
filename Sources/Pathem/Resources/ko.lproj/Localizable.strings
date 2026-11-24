@@ -1341,7 +1341,10 @@
 "prefs.iconExtraLarge" = "매우 크게";
 "prefs.iconLarge" = "크게";
 "prefs.iconMedium" = "보통";
+"prefs.folderStyleLabel" = "폴더 스타일";
 "prefs.iconSetLabel" = "파일 아이콘";
+"prefs.toolbarStyleLabel" = "도구 막대 아이콘";
+"prefs.useThemeStyle" = "테마 따르기";
 "prefs.iconSizeLabel" = "도구 막대 아이콘 크기";
 "prefs.iconSmall" = "작게";
 "prefs.instantTooltips" = "툴팁 즉시 표시";

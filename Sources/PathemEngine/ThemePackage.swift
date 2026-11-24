@@ -4,7 +4,7 @@ import Foundation
 /// The versioned interchange format for Pathem appearance settings.
 public enum ThemePackage {
     public static let maximumBytes = 16 * 1024
-    private static let version = 1
+    private static let styleFields: Set<String> = ["folderStyle", "fileIconSet", "toolbarStyle"]
     private static let fields: Set<String> = [
         "schemaVersion", "name", "appearance", "accent", "background",
     ]
@@ -35,29 +35,44 @@ public enum ThemePackage {
             CFGetTypeID(number) != CFBooleanGetTypeID(),
             let schemaVersion = Int(number.stringValue)
         else { throw ValidationError.invalidDocument }
-        guard schemaVersion == version else {
+        guard schemaVersion == 1 || schemaVersion == 2 else {
             throw ValidationError.unsupportedVersion(schemaVersion)
         }
-        guard Set(object.keys) == fields,
+        let expectedFields = schemaVersion == 1 ? fields : fields.union(styleFields)
+        guard Set(object.keys) == expectedFields,
             let name = object["name"] as? String,
             let mode = object["appearance"] as? String,
             let appearance = Preferences.Appearance(rawValue: mode)
         else { throw ValidationError.invalidDocument }
+        var styles: ThemeStyles?
+        if schemaVersion == 2 {
+            guard let folder = (object["folderStyle"] as? String).flatMap(ThemeStyles.Folder.init),
+                let files = (object["fileIconSet"] as? String).flatMap(ThemeStyles.FileIcons.init),
+                let toolbar = (object["toolbarStyle"] as? String).flatMap(ThemeStyles.Toolbar.init)
+            else { throw ValidationError.invalidDocument }
+            styles = ThemeStyles(folder, files, toolbar)
+        }
         return try ThemePreset(
             name: validatedName(name), appearance: appearance,
             accentHex: color(object["accent"], field: "accent"),
-            backgroundHex: color(object["background"], field: "background"))
+            backgroundHex: color(object["background"], field: "background"), styles: styles)
     }
 
     public static func encode(_ preset: ThemePreset) throws -> Data {
+        var object: [String: Any] = [
+            "schemaVersion": preset.styles == nil ? 1 : 2,
+            "name": try validatedName(preset.name),
+            "appearance": preset.appearance.rawValue,
+            "accent": exportColor(preset.accentHex),
+            "background": exportColor(preset.backgroundHex),
+        ]
+        if let styles = preset.styles {
+            object["folderStyle"] = styles.folder.rawValue
+            object["fileIconSet"] = styles.fileIcons.rawValue
+            object["toolbarStyle"] = styles.toolbar.rawValue
+        }
         let data = try JSONSerialization.data(
-            withJSONObject: [
-                "schemaVersion": version,
-                "name": validatedName(preset.name),
-                "appearance": preset.appearance.rawValue,
-                "accent": exportColor(preset.accentHex),
-                "background": exportColor(preset.backgroundHex),
-            ], options: [.prettyPrinted, .sortedKeys])
+            withJSONObject: object, options: [.prettyPrinted, .sortedKeys])
         guard data.count <= maximumBytes else { throw ValidationError.tooLarge }
         return data
     }

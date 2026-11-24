@@ -66,6 +66,7 @@ protocol PaneContentView: AnyObject {
     /// Dragging items between folders moves by default (else copies).
     var dragMovesByDefault: Bool { get set }
 
+    func refreshIcons()
     func setEntries(_ entries: [FileEntry], preserveState: Bool)
     func showPlaceholder(_ text: String?)
     func select(name: String)

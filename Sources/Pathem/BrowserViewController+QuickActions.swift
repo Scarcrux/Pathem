@@ -30,6 +30,8 @@ extension BrowserViewController {
     /// window leaks), invalidate the repeating device-poll timer, hide the torrent detail
     /// timer, and drop the scroll observer.
     func teardown() {
+        NSWorkspace.shared.notificationCenter.removeObserver(
+            self, name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil)
         for side in [leftTabs, rightTabs] { side.teardownAllTabs() }
         downloadSuggestions.stop()  // its Downloads watcher self-retains; stop it or the window leaks
         _automation?.stopWatching()  // likewise the per-rule folder watchers (only if it was created)
@@ -101,15 +103,21 @@ extension BrowserViewController {
 
     /// Pop up an "Open With" apps menu for the active selection, anchored to the quick-bar button.
     func showQuickOpenWith(from anchor: NSView) {
-        guard let urls = activePane?.selectedLocalURLs(), let first = urls.first else { NSSound.beep(); return }
+        guard let urls = activePane?.selectedLocalURLs(), let first = urls.first else {
+            NSSound.beep()
+            return
+        }
         let menu = NSMenu()
         var apps = NSWorkspace.shared.urlsForApplications(toOpen: first)
-        if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first), let index = apps.firstIndex(of: preferred) {
+        if let preferred = NSWorkspace.shared.urlForApplication(toOpen: first),
+            let index = apps.firstIndex(of: preferred)
+        {
             apps.remove(at: index)
             apps.insert(preferred, at: 0)  // default app first
         }
         if apps.isEmpty {
-            let none = NSMenuItem(title: L("list.noApplications", "No applications"), action: nil, keyEquivalent: "")
+            let none = NSMenuItem(
+                title: L("list.noApplications", "No applications"), action: nil, keyEquivalent: "")
             none.isEnabled = false
             menu.addItem(none)
         } else {
@@ -119,13 +127,16 @@ extension BrowserViewController {
                     action: #selector(quickOpenSelection(with:)), keyEquivalent: "")
                 item.target = self
                 item.representedObject = app
-                let icon = (NSWorkspace.shared.icon(forFile: app.path).copy() as? NSImage) ?? NSImage()
+                let icon =
+                    (NSWorkspace.shared.icon(forFile: app.path).copy() as? NSImage) ?? NSImage()
                 icon.size = NSSize(width: 18, height: 18)  // match the 18pt menu-icon size
                 item.image = icon
                 menu.addItem(item)
             }
             menu.addItem(.separator())
-            let other = NSMenuItem(title: L("list.other", "Other…"), action: #selector(quickOpenSelectionWithOther), keyEquivalent: "")
+            let other = NSMenuItem(
+                title: L("list.other", "Other…"), action: #selector(quickOpenSelectionWithOther),
+                keyEquivalent: "")
             other.target = self
             menu.addItem(other)
         }
@@ -136,7 +147,8 @@ extension BrowserViewController {
         guard let app = sender.representedObject as? URL,
             let urls = activePane?.selectedLocalURLs(), !urls.isEmpty
         else { return }
-        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        NSWorkspace.shared.open(
+            urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
     @objc private func quickOpenSelectionWithOther() {
@@ -147,7 +159,8 @@ extension BrowserViewController {
         guard panel.runModal() == .OK, let app = panel.url,
             let urls = activePane?.selectedLocalURLs(), !urls.isEmpty
         else { return }
-        NSWorkspace.shared.open(urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+        NSWorkspace.shared.open(
+            urls, withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     }
 
     /// Right after a quick-bar Copy/Cut, offer where to drop it: this pane's folder or the
@@ -156,12 +169,14 @@ extension BrowserViewController {
     func showQuickPasteFollowUp(from anchor: NSView) {
         let pasteboard = NSPasteboard.general
         let items =
-            pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
+            pasteboard.readObjects(
+                forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true])
             as? [URL] ?? []
         guard !items.isEmpty else { return }  // copy beeped (remote / nothing selected)
         let menu = NSMenu()
         let here = NSMenuItem(
-            title: L("quick.pasteHere", "Paste in This Pane"), action: #selector(quickPasteHere), keyEquivalent: "")
+            title: L("quick.pasteHere", "Paste in This Pane"), action: #selector(quickPasteHere),
+            keyEquivalent: "")
         here.target = self
         here.image = MenuIcons.image("doc.on.clipboard")
         menu.addItem(here)

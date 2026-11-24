@@ -191,8 +191,18 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var accentColorHex: String
     /// Optional window/pane background tint as "#RRGGBB". Empty means the system background.
     public var windowTintHex: String
-    /// The active icon set name ("System" uses the OS icons; the others theme file icons).
+    /// A saved file icon override. An empty string follows the theme.
     public var iconSetName: String
+    public var folderStyleOverride: ThemeStyles.Folder? = nil
+    public var toolbarStyleOverride: ThemeStyles.Toolbar? = nil
+    public var themeStyles: ThemeStyles = .system
+
+    public var effectiveThemeStyles: ThemeStyles {
+        ThemeStyles(
+            folderStyleOverride ?? themeStyles.folder,
+            ThemeStyles.FileIcons(rawValue: iconSetName) ?? themeStyles.fileIcons,
+            toolbarStyleOverride ?? themeStyles.toolbar)
+    }
 
     public init(
         density: Density = .comfortable, fontSize: Int = 13,
@@ -226,7 +236,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         dragFlickActions: Bool = false, dragTrailColor: String = "#3B82F6",
         dragTrailWidth: Double = 6, dragTrailDecay: Double = 0.6,
         themeName: String = "System", accentColorHex: String = "", windowTintHex: String = "",
-        iconSetName: String = "System"
+        iconSetName: String = ""
     ) {
         self.themeName = themeName
         self.accentColorHex = accentColorHex
@@ -427,6 +437,11 @@ public struct Preferences: Codable, Sendable, Equatable {
         windowTintHex =
             try c.decodeIfPresent(String.self, forKey: .windowTintHex) ?? d.windowTintHex
         iconSetName = try c.decodeIfPresent(String.self, forKey: .iconSetName) ?? d.iconSetName
+        folderStyleOverride = try c.decodeIfPresent(
+            ThemeStyles.Folder.self, forKey: .folderStyleOverride)
+        toolbarStyleOverride = try c.decodeIfPresent(
+            ThemeStyles.Toolbar.self, forKey: .toolbarStyleOverride)
+        themeStyles = try c.decodeIfPresent(ThemeStyles.self, forKey: .themeStyles) ?? .system
     }
 }
 
