@@ -2765,4 +2765,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Batch A addresses measured JSONC import delay, raw screenshot metadata and trailing bytes, catalog image decode and size bounds, stable Sparkle updates for opt-in builds, legacy file icon defaults, gallery localization, and hermetic catalog checks. The released 0.9.4 scratch prefs wrote iconSetName System with no themeStyles key. The malformed import fell from 5.18 seconds to under 1 ms and the full sequential suite passed 15 XCTest and 890 Swift Testing cases."
     at = "2026-11-24T19:30:05Z"
+
+  [[mission.comment]]
+    text = "A dense valid 2400 by 1600 screenshot reproduced rejection at the full-size quality floor. Intake and export now retry smaller aspect-ratio-preserving encodes under the 300 KiB cap. The draft privacy page discloses the on-open Themes request and public GitHub attachment. Site deployment remains pending."
+    at = "2026-11-24T19:38:38Z"
 # <<< commandem roadmap <<<

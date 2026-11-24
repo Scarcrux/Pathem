@@ -9,7 +9,7 @@ public enum CommunityThemeError: LocalizedError {
         case .invalidListing: return "The listing or attribution fields are invalid."
         case .invalidScreenshot:
             return
-                "Include one to three PNG or JPEG screenshots, each at most 2 MiB and 2400 pixels per side."
+                "Use one to three PNG or JPEG screenshots, each up to 2 MiB and 2400 pixels per side. Published previews must fit within 300 KiB each."
         case .invalidTransition: return "The requested action is unavailable for this revision."
         case .oversizedFile: return "The gallery file exceeds the size limit."
         }
@@ -112,16 +112,32 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
     }
 
     private static func sanitizeScreenshot(_ data: Data) throws -> Data {
-        guard let source = screenshotSource(data),
-            let image = CGImageSourceCreateThumbnailAtIndex(
-                source, 0,
-                [
-                    kCGImageSourceCreateThumbnailFromImageAlways: true,
-                    kCGImageSourceCreateThumbnailWithTransform: true,
-                    kCGImageSourceThumbnailMaxPixelSize: 2400,
-                    kCGImageSourceShouldCacheImmediately: true,
-                ] as CFDictionary)
-        else { throw CommunityThemeError.invalidScreenshot }
+        guard let source = screenshotSource(data) else {
+            throw CommunityThemeError.invalidScreenshot
+        }
+        var previousSize: (Int, Int)?
+        for maximumDimension in [2400, 1800, 1200, 900] {
+            // Skip sizes that cannot reduce the image tried at the previous step.
+            if let (width, height) = previousSize, max(width, height) <= maximumDimension {
+                continue
+            }
+            guard
+                let image = CGImageSourceCreateThumbnailAtIndex(
+                    source, 0,
+                    [
+                        kCGImageSourceCreateThumbnailFromImageAlways: true,
+                        kCGImageSourceCreateThumbnailWithTransform: true,
+                        kCGImageSourceThumbnailMaxPixelSize: maximumDimension,
+                        kCGImageSourceShouldCacheImmediately: true,
+                    ] as CFDictionary)
+            else { break }
+            previousSize = (image.width, image.height)
+            if let encoded = encodeScreenshot(image) { return encoded }
+        }
+        throw CommunityThemeError.invalidScreenshot
+    }
+
+    private static func encodeScreenshot(_ image: CGImage) -> Data? {
         // Add only decoded pixels. Copying the source would retain metadata or trailing bytes.
         for (type, options) in [
             ("public.png", nil),
@@ -138,7 +154,7 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
                 return output as Data
             }
         }
-        throw CommunityThemeError.invalidScreenshot
+        return nil
     }
 
 }

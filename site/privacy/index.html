@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy | Pathem</title>
-<meta name="description" content="What Pathem does and does not do with your data: no analytics or telemetry in the app, on-device AI, update checks, the network connections you start yourself, and aggregate visit counts on this website.">
+<meta name="description" content="What Pathem does and does not do with your data: no analytics or telemetry in the app, on-device AI, update checks, Themes, the network connections you start yourself, and aggregate visit counts on this website.">
 <link rel="canonical" href="https://pathem.app/privacy/">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
@@ -14,12 +14,12 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Pathem">
 <meta property="og:title" content="Pathem privacy">
-<meta property="og:description" content="No analytics or telemetry in the app. On-device AI. Network connections only to servers you choose, plus update checks.">
+<meta property="og:description" content="No analytics or telemetry in the app. On-device AI. Network connections for updates, Themes, and services you use.">
 <meta property="og:url" content="https://pathem.app/privacy/">
 <meta property="og:image" content="https://pathem.app/assets/social-card.png?v=3">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Pathem privacy">
-<meta name="twitter:description" content="No analytics or telemetry in the app. On-device AI. Network connections only to servers you choose, plus update checks.">
+<meta name="twitter:description" content="No analytics or telemetry in the app. On-device AI. Network connections for updates, Themes, and services you use.">
 <meta name="twitter:image" content="https://pathem.app/assets/social-card.png?v=3">
 <style>
   :root {
@@ -213,6 +213,7 @@
     <h2>Network connections Pathem makes</h2>
     <ul>
       <li><strong>Update checks.</strong> Pathem uses Sparkle to look for new versions. Automatic checks are on by default and can be turned off in Settings, Updates. Each check requests the update feed (an appcast file) published with the project's GitHub releases, so that server sees an ordinary web request from your IP address. Pathem does not enable Sparkle's system profiling, so no hardware or software inventory is attached.</li>
+      <li><strong>Themes.</strong> In builds that include the Themes gallery, opening it may request the public catalog from Amazon CloudFront. CloudFront receives an ordinary web request from your IP address. This request does not include your local files, file names, installed themes, or search text. Preparing a theme submission creates a local file. If you attach that file to a public GitHub issue, the theme, attribution, and screenshots you chose become public.</li>
       <li><strong>Torrents.</strong> Pathem talks to the BitTorrent network only when you use the built-in torrent client. When you add a magnet link or a .torrent file, it contacts the trackers listed there, DHT peers, and any web seeds the magnet names. Peers in a swarm can see your IP address, as with any torrent client. Torrents you added earlier keep going across restarts.</li>
       <li><strong>Remote connections.</strong> SFTP, FTP, FTPS, WebDAV, Amazon S3, Azure Blob, and similar connections go only to servers you configure, using the details you enter. Pathem has no server of its own in that path.</li>
     </ul>

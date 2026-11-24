@@ -10,6 +10,50 @@ struct CommunityThemeGalleryTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("docs/themes/gallery-fixture", isDirectory: true)
 
+    @Test func denseScreenshotShrinksToFitPublishedBudget() throws {
+        let width = 2400
+        let height = 1600
+        var generator: UInt32 = 12345
+        let pixels = Data(
+            (0..<(width * height)).map { _ in
+                generator = generator &* 1_664_525 &+ 1_013_904_223
+                return UInt8(generator >> 24)
+            })
+        let provider = try #require(CGDataProvider(data: pixels as CFData))
+        let source = try #require(
+            CGImage(
+                width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 8,
+                bytesPerRow: width, space: CGColorSpaceCreateDeviceGray(),
+                bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
+                provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent))
+        let jpeg = NSMutableData()
+        let writer = try #require(
+            CGImageDestinationCreateWithData(jpeg, "public.jpeg" as CFString, 1, nil))
+        CGImageDestinationAddImage(
+            writer, source,
+            [kCGImageDestinationLossyCompressionQuality: 0.40] as CFDictionary)
+        try #require(CGImageDestinationFinalize(writer))
+        try #require(jpeg.length <= 2 * 1024 * 1024)
+
+        let bytes = try Data(contentsOf: fixture.appendingPathComponent("v1.submission.json"))
+        var document = try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
+        document["screenshots"] = [(jpeg as Data).base64EncodedString()]
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        try JSONSerialization.data(withJSONObject: document).write(to: url)
+
+        let clean = try CommunityThemeGallery.submission(at: url)
+        let image = try #require(clean.screenshots.first)
+        #expect(image.count <= 300 * 1024)
+        let cleanSource = try #require(CGImageSourceCreateWithData(image as CFData, nil))
+        let properties = try #require(
+            CGImageSourceCopyPropertiesAtIndex(cleanSource, 0, nil) as? [CFString: Any])
+        let resizedWidth = try #require(properties[kCGImagePropertyPixelWidth] as? Int)
+        let resizedHeight = try #require(properties[kCGImagePropertyPixelHeight] as? Int)
+        #expect(resizedWidth < width)
+        #expect(abs(Double(resizedWidth) / Double(resizedHeight) - 1.5) < 0.01)
+    }
+
     @Test func submissionStripsTrailingScreenshotPayload() throws {
         let bytes = try Data(contentsOf: fixture.appendingPathComponent("v1.submission.json"))
         var document = try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
