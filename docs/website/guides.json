@@ -1524,6 +1524,9 @@
                 {
                     "id": "gallery",
                     "title": "Browse and apply community themes",
+                    "paragraphs": [
+                        "To look through the published themes in a browser first, with screenshots, colors, and licenses, see the [community themes gallery](/themes/)."
+                    ],
                     "steps": [
                         "In Preferences > Appearance, choose Themes…. Pathem downloads the current public catalog and opens the Themes window.",
                         "Stay on Browse and use the search field to filter by title, creator, or tag. Select a listing to see its creator credit, license, version, and screenshots.",

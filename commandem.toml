@@ -2781,4 +2781,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "The screenshot privacy regression now uses a JPEG with verified EXIF capture time and GPS coordinates. It asserts export and review intake remove those fields, the embedded EXIF comment, and the trailing payload."
     at = "2026-11-24T19:44:56Z"
+
+[[mission]]
+  id = "m-29d825a5"
+  title = "Community themes gallery page on the website"
+  status = "done"
+  note = "Trigger: the community catalog had no public web view, so themes could only be seen inside the app. Change: scripts/build_site_themes.py generates pathem.app/themes/ from the catalog (validated as untrusted input, every text escaped, every screenshot re-encoded to metadata-free WebP under a content-hash name). Built from the 13-theme seed catalog: 26 images, about 1.0 MB, page 26 KB, no inline style or script and no CSP loosening. Evidence: test/site_themes_test.py (hostile title and summary inert, bad id and color rejected, HEIC/PNG/JPEG all become WebP, rebuild byte-identical, drift controls seen red) and a headless Chrome render at 1440 and 390 px under the site CSP with zero violations. Not yet done: rebuild from the live catalog once the seed is published there (make themes), then deploy."
+  issue = 0
 # <<< commandem roadmap <<<

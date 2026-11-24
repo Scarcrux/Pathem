@@ -9,6 +9,12 @@ repos:
         language: system
         pass_filenames: false
         files: ^(site/|docs/website/|scripts/build_site_docs\.py$|test/site_docs|Makefile$)
+      - id: site-themes
+        name: community themes page generation and escaping
+        entry: make themes-check
+        language: system
+        pass_filenames: false
+        files: ^(site/themes/|site/assets/themes\.css$|docs/website/themes-build\.json$|scripts/build_site_themes\.py$|test/site_themes|Makefile$)
       - id: site-docs-source-contracts
         name: guide source anchors and generated output
         entry: python3 scripts/build_site_docs.py --check

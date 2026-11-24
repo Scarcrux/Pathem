@@ -43,7 +43,7 @@ SWIFTPM_FLAGS ?= --build-system native
 preflight:
 	scripts/toolchain_preflight.sh
 
-.PHONY: docs docs-check docs-browser
+.PHONY: docs docs-check docs-browser themes themes-check
 docs:
 	python3 scripts/build_site_docs.py
 
@@ -51,6 +51,17 @@ docs-check:
 	python3 scripts/build_site_docs.py --check
 	python3 -m unittest discover -s test -p site_docs_test.py -v
 	node --test test/site_docs_search_test.cjs
+
+# Rebuild pathem.app/themes/ from the theme catalog, then the sitemap that dates it.
+# The default source is the live catalog; pass THEMES_CATALOG=<file or https URL> for another.
+# Needs sips (macOS) and cwebp (brew install webp).
+THEMES_CATALOG ?=
+themes:
+	python3 scripts/build_site_themes.py $(THEMES_CATALOG)
+	python3 scripts/build_site_docs.py
+
+themes-check:
+	python3 -m unittest discover -s test -p site_themes_test.py -v
 
 docs-browser: docs-check
 	node test/site_docs_browser.cjs
