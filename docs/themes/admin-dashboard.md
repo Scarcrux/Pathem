@@ -72,7 +72,7 @@ aws cloudformation deploy --region us-east-1 --stack-name pathem-marketplace \
 ```
 
 Use the stack outputs for the bucket and HTTPS catalog URL. Publish with
-`aws s3 cp <approved-snapshot> s3://<CatalogBucket>/catalog.json --content-type application/json --cache-control no-store`.
+`aws s3 cp <approved-snapshot> s3://<CatalogBucket>/catalog.json --content-type application/json --cache-control "public, max-age=300"`.
 S3 versioning preserves prior snapshots. The CloudFront origin can read only that key.
 
 
