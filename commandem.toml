@@ -2696,6 +2696,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     title = "Build and verify a private marketplace review dashboard for submission intake, decisions, creator feedback export, snapshot publication and withdrawal."
     done = true
 
+  [[mission.task]]
+    id = "t-ccdaca2b"
+    title = "Stage the GitHub theme submission issue form and AWS private catalog and reviewer infrastructure."
+
   [[mission.comment]]
     text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
     at = "2026-11-24T09:14:49Z"
