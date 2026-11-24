@@ -2374,6 +2374,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-5d9519ef"
     title = "Reproduce loaded Tree child size/mtime staleness after content-only edits with unchanged parent-directory mtime; design targeted invalidation if confirmed"
+    done = true
 
   [[mission.task]]
     id = "t-966c171e"
@@ -2406,6 +2407,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Delayed archive browse fixed. A controlled extraction completion mounted over a different current folder on the baseline. The pane content request now owns delivery. The same-origin control mounts and the navigated-away control stays in place and releases scratch output."
     at = "2026-11-24T01:10:14Z"
+
+  [[mission.comment]]
+    text = "Tree refresh fixed for expanded branches. The offscreen probe held the parent timestamp constant and reported stale size 3/13 and stale date before. After re-enumerating expanded branches on listing refresh, size 13/13 and date match, and selection and expansion hold. Sort-only and collapsed branches retain cached stats."
+    at = "2026-11-24T01:13:50Z"
 
 [[mission]]
   id = "m-768176ca"

@@ -302,7 +302,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
             scrollView.contentView.scroll(to: origin)
             scrollView.reflectScrolledClipView(scrollView.contentView)
         }
-        sortLoadedChildren()
+        sortLoadedChildren(refreshingExpanded: expandedPaths())
     }
 
     func showPlaceholder(_ text: String?) {
@@ -522,7 +522,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
 
     /// Already expanded branches retain their Node identities. Their value snapshots are
     /// enriched/sorted away from AppKit; a changed pane generation rejects stale results.
-    private func sortLoadedChildren() {
+    private func sortLoadedChildren(refreshingExpanded: Set<String> = []) {
         guard allowsLocalMetadata else { return }
         var snapshots: [(URL, [FileEntry])] = []
         func collect(_ nodes: [Node]) {
@@ -541,6 +541,7 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
         workerFormat.groupKey = .none
         let format = workerFormat
         let captured = snapshots
+        let hidden = includesHidden
         #if DEBUG
         let deliveryGate = debugBeforeTreeDelivery
         let generationGate = debugBeforeTreeDeliveryWithGeneration
@@ -549,8 +550,14 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
             var sorted: [String: [FileEntry]] = [:]
             for (url, entries) in captured {
                 guard !Task.isCancelled else { return [String: [FileEntry]]() }
+                // An in-place listing refresh must see content-only edits in visible branches.
+                // Sort-only updates and collapsed branches can keep their existing stat snapshots.
+                let current =
+                    refreshingExpanded.contains(url.path)
+                    ? (try? BulkEnumerator().entries(of: url, includingHidden: hidden)) ?? entries
+                    : entries
                 sorted[url.path] = format.sorted(
-                    ListingViewMetadata.enrich(entries, directory: url, format: format))
+                    ListingViewMetadata.enrich(current, directory: url, format: format))
             }
             return sorted
         }
@@ -588,7 +595,9 @@ final class TreeOutlineController: NSObject, NSOutlineViewDataSource, NSOutlineV
                                 uniqueKeysWithValues: children.map { ($0.url.path, $0) })
                             node.children = entries.map { entry in
                                 let url = node.url.appendingPathComponent(entry.name)
-                                if let old = previous[url.path] {
+                                if let old = previous[url.path],
+                                    old.entry.isDirectory == entry.isDirectory
+                                {
                                     old.entry = entry
                                     return old
                                 }

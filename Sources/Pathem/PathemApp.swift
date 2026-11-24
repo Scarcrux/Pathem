@@ -63,6 +63,14 @@ enum PathemApp {
     static func main() {
         let launchEnvironment = ProcessInfo.processInfo.environment
         #if DEBUG
+        if launchEnvironment["PATHEM_TREE_STAT_TEST"] == "1" {
+            do { exit(try TreeMetadataProbe.run() ? 0 : 1) } catch {
+                print("TREE STAT: \(error.localizedDescription)")
+                exit(1)
+            }
+        }
+        #endif
+        #if DEBUG
         let configurationTest =
             launchEnvironment["PATHEM_CONTENT_PREFS_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SETTINGS_DEFAULTS_UI_TEST"] != nil
