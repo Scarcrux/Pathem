@@ -118,6 +118,7 @@ ci: preflight
 	python3 scripts/check_warnings.py .build/ci-debug-build.log
 	"$(XCODE_SWIFT)" test $(SWIFTPM_FLAGS) --no-parallel
 	test/e2e/run.sh
+	test/e2e/run.sh --packaged
 	PATHEM_THEMES_BETA=1 test/e2e/run.sh --packaged
 
 app: preflight

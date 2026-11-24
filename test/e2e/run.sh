@@ -260,6 +260,14 @@ if [[ $PACKAGED == 1 ]]; then
   declared=$(/usr/libexec/PlistBuddy -c "Print :CFBundleLocalizations" "$APP/Contents/Info.plist" 2>/dev/null | grep -c '^    ')
   assert "all $declared declared languages bundled ($langs)" test "$declared" -gt 0 -a "$langs" -eq "$declared"
   assert "bundle signature verifies" codesign --verify --deep --strict "$APP"
+  # The Themes beta is opt-in at package time. A stable package (what release.sh ships)
+  # must not carry the flag, and a beta package must, so both variants are gated here.
+  beta_flag=$(/usr/libexec/PlistBuddy -c "Print :PathemThemesBeta" "$APP/Contents/Info.plist" 2>/dev/null || true)
+  if [[ "${PATHEM_THEMES_BETA:-}" == 1 ]]; then
+    assert "Themes beta flag set in a beta package" test "$beta_flag" = "true"
+  else
+    assert "no Themes beta flag in a stable package" test -z "$beta_flag"
+  fi
   assert "hardened runtime enabled" hardened_runtime_enabled "$BIN"
   assert "Sparkle update metadata well-formed" sparkle_metadata_well_formed "$APP"
   # Universal isn't forced here (every arch doubles this build's time, a cost tradeoff
