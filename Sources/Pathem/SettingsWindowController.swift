@@ -996,28 +996,22 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 action: #selector(resetTheme)),
         ])
         stack.spacing = 8
-        var rows: [NSView] = [
-            stack,
-            NSButton(
-                title: L("prefs.themePrepareSubmission", "Prepare Marketplace Submission…"),
-                target: self, action: #selector(prepareThemeSubmission)),
-        ]
-        #if DEBUG
-        if CommunityThemeGalleryWindow.storeURL != nil {
-            rows.append(
-                NSButton(
-                    title: "Community Themes…", target: self,
-                    action: #selector(openCommunityThemes)))
-        }
-        #endif
-        let controls = NSStackView(views: rows)
+        guard CommunityThemeGalleryWindow.storeURL != nil else { return stack }
+        let browse = NSButton(
+            title: L("prefs.themes", "Themes") + "…", target: self,
+            action: #selector(openCommunityThemes))
+        let submit = NSButton(
+            title: L("prefs.themePrepareSubmission", "Submit a Theme…"), target: self,
+            action: #selector(prepareThemeSubmission))
+        let gallery = NSStackView(views: [browse, submit])
+        gallery.spacing = 8
+        let controls = NSStackView(views: [stack, gallery])
         controls.orientation = .vertical
         controls.alignment = .leading
         controls.spacing = 8
         return controls
     }
 
-    #if DEBUG
     @objc private func openCommunityThemes() {
         guard let url = CommunityThemeGalleryWindow.storeURL else { return }
         Task { @MainActor in
@@ -1040,8 +1034,6 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 self.onChange?(self.prefs)
             })
     }
-
-    #endif
 
     @objc private func importTheme() {
         let panel = NSOpenPanel()

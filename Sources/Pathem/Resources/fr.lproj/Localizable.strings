@@ -1335,7 +1335,8 @@
 "prefs.iconMedium" = "Moyenne";
 "prefs.folderStyleLabel" = "Style des dossiers";
 "prefs.iconSetLabel" = "Icônes de fichier";
-"prefs.themePrepareSubmission" = "Préparer un envoi au catalogue…";
+"prefs.themePrepareSubmission" = "Proposer un thème…";
+"prefs.themes" = "Thèmes";
 "prefs.toolbarStyleLabel" = "Icônes de la barre d’outils";
 "prefs.useThemeStyle" = "Utiliser le thème";
 "prefs.iconSizeLabel" = "Taille des icônes de la barre d’outils";

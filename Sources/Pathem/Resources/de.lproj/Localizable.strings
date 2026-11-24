@@ -1335,7 +1335,8 @@
 "prefs.iconMedium" = "Mittel";
 "prefs.folderStyleLabel" = "Ordnerstil";
 "prefs.iconSetLabel" = "Dateisymbole";
-"prefs.themePrepareSubmission" = "Marktplatzeinreichung vorbereiten…";
+"prefs.themePrepareSubmission" = "Design einreichen…";
+"prefs.themes" = "Designs";
 "prefs.toolbarStyleLabel" = "Symbolleiste";
 "prefs.useThemeStyle" = "Vom Thema übernehmen";
 "prefs.iconSizeLabel" = "Symbolgröße der Symbolleiste";

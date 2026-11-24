@@ -42,7 +42,7 @@ Verify the dashboard with `python3 test/theme_admin_e2e.py .build/debug/pathem-t
 
 ## Creator submission and AWS staging
 
-In Pathem, open **Settings → Appearance → Prepare Marketplace Submission…**.
+In Pathem, open **Settings → Appearance → Submit a Theme…**.
 Choose one to three screenshots, enter listing details, and save the validated JSON.
 The export includes the active theme and its effective styles. Open the GitHub form
 from the confirmation dialog, then attach the saved JSON in the submission field.
@@ -74,3 +74,16 @@ aws cloudformation deploy --region us-east-1 --stack-name pathem-marketplace \
 Use the stack outputs for the bucket and HTTPS catalog URL. Publish with
 `aws s3 cp <approved-snapshot> s3://<CatalogBucket>/catalog.json --content-type application/json --cache-control no-store`.
 S3 versioning preserves prior snapshots. The CloudFront origin can read only that key.
+
+
+## Themes preview build
+
+Use `PATHEM_THEMES_BETA=1` with `scripts/package.sh` to enable **Themes** and
+**Submit a Theme** in Appearance. The package reads only the hosted catalog
+and hides the gallery's local review controls. A regular package omits both
+buttons. Preview builds are distributed manually while the beta update feed
+is pending. The stable release script refuses to publish a Themes preview package.
+
+Before public distribution, publish the issue form and one approved listing,
+then verify the submission and a subsequent revision from an independent
+packaged client.

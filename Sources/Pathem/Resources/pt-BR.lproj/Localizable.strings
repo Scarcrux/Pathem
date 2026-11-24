@@ -1343,7 +1343,8 @@
 "prefs.iconMedium" = "Médio";
 "prefs.folderStyleLabel" = "Estilo das pastas";
 "prefs.iconSetLabel" = "Ícones de arquivo";
-"prefs.themePrepareSubmission" = "Preparar envio ao catálogo…";
+"prefs.themePrepareSubmission" = "Enviar um tema…";
+"prefs.themes" = "Temas";
 "prefs.toolbarStyleLabel" = "Ícones da barra de ferramentas";
 "prefs.useThemeStyle" = "Usar tema";
 "prefs.iconSizeLabel" = "Tamanho dos ícones da barra de ferramentas";

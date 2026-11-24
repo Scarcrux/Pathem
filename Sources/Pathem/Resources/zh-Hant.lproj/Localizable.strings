@@ -1343,7 +1343,8 @@
 "prefs.iconMedium" = "中";
 "prefs.folderStyleLabel" = "資料夾樣式";
 "prefs.iconSetLabel" = "檔案圖像";
-"prefs.themePrepareSubmission" = "準備提交到主題市集…";
+"prefs.themePrepareSubmission" = "提交主題…";
+"prefs.themes" = "主題";
 "prefs.toolbarStyleLabel" = "工具列圖示";
 "prefs.useThemeStyle" = "跟隨主題";
 "prefs.iconSizeLabel" = "工具列圖像大小";

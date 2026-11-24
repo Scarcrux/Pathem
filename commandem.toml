@@ -2749,4 +2749,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Creators wanted to reuse their GitHub account and the existing form required a hand-assembled artifact. Appearance now packages effective theme styles, metadata, and selected previews into the same bounded JSON that Marketplace Admin validates. Focused tests, the private Admin lifecycle, a Settings render, and the YAML check passed. GitHub issue upload and public rollout remain to be verified."
     at = "2026-11-24T12:00:25Z"
+
+  [[mission.comment]]
+    text = "Owner chose a short gallery name for the beta. Themes and Submit a Theme are now gated by signed bundle metadata in opt-in packages, with a fixed hosted endpoint and manual updates. The stable publishing path rejects the beta flag. Verified catalog and review lifecycle on loopback and a reachable empty hosted snapshot. Public intake, a starter listing and live packaged acceptance are still pending."
+    at = "2026-11-24T17:57:50Z"
 # <<< commandem roadmap <<<

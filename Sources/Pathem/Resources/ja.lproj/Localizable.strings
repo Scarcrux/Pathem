@@ -1335,7 +1335,8 @@
 "prefs.iconMedium" = "中";
 "prefs.folderStyleLabel" = "フォルダのスタイル";
 "prefs.iconSetLabel" = "ファイルアイコン";
-"prefs.themePrepareSubmission" = "マーケットプレイスへの提出を準備…";
+"prefs.themePrepareSubmission" = "テーマを提出…";
+"prefs.themes" = "テーマ";
 "prefs.toolbarStyleLabel" = "ツールバーアイコン";
 "prefs.useThemeStyle" = "テーマに従う";
 "prefs.iconSizeLabel" = "ツールバーアイコンのサイズ";

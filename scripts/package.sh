@@ -11,6 +11,7 @@
 #                    arch for local builds (fast, and avoids needing the Metal
 #                    toolchain that a universal SwiftTerm build requires);
 #                    "arm64 x86_64" when DEVELOPER_ID is set (distribution).
+#   PATHEM_THEMES_BETA=1 enables the hosted Themes gallery in this package.
 #   SWIFT_BUILD_JOBS compiler workers (default: 2, including packaging invoked by CI).
 #   DEVELOPER_ID     "Developer ID Application: Name (TEAMID)" to sign for release
 #                    with Hardened Runtime (required before notarization)
@@ -117,6 +118,9 @@ if [[ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)"
 	commit="$commit-dirty"
 fi
 /usr/libexec/PlistBuddy -c "Add :PathemSourceCommit string $commit" "$APP/Contents/Info.plist"
+if [[ "${PATHEM_THEMES_BETA:-}" == "1" ]]; then
+	/usr/libexec/PlistBuddy -c "Add :PathemThemesBeta bool true" "$APP/Contents/Info.plist"
+fi
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 # Release gate: a distribution build (DEVELOPER_ID set) must not ship the placeholder Sparkle

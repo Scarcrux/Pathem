@@ -1824,7 +1824,8 @@
 "tags.color.red" = "Red";
 "tags.color.orange" = "Orange";
 
-"prefs.themePrepareSubmission" = "Prepare Marketplace Submission…";
+"prefs.themePrepareSubmission" = "Submit a Theme…";
+"prefs.themes" = "Themes";
 "themeSubmission.attach" = "Attach the saved JSON to the GitHub issue form. Use your existing GitHub account. The file and issue will be public.";
 "themeSubmission.creator" = "Creator credit";
 "themeSubmission.help" = "Use a lowercase listing ID with letters, digits, or hyphens. For an update, reuse the ID and increase the revision. Your submission will be public on GitHub.";

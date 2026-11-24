@@ -1335,7 +1335,8 @@
 "prefs.iconMedium" = "中";
 "prefs.folderStyleLabel" = "文件夹样式";
 "prefs.iconSetLabel" = "文件图标";
-"prefs.themePrepareSubmission" = "准备提交到主题市场…";
+"prefs.themePrepareSubmission" = "提交主题…";
+"prefs.themes" = "主题";
 "prefs.toolbarStyleLabel" = "工具栏图标";
 "prefs.useThemeStyle" = "跟随主题";
 "prefs.iconSizeLabel" = "工具栏图标大小";

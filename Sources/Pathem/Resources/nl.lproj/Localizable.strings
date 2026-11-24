@@ -1343,7 +1343,8 @@
 "prefs.iconMedium" = "Gemiddeld";
 "prefs.folderStyleLabel" = "Mapstijl";
 "prefs.iconSetLabel" = "Bestandssymbolen";
-"prefs.themePrepareSubmission" = "Inzending voor catalogus voorbereiden…";
+"prefs.themePrepareSubmission" = "Een thema indienen…";
+"prefs.themes" = "Thema’s";
 "prefs.toolbarStyleLabel" = "Knoppenbalksymbolen";
 "prefs.useThemeStyle" = "Thema gebruiken";
 "prefs.iconSizeLabel" = "Symboolgrootte in knoppenbalk";

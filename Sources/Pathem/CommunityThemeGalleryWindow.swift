@@ -1,4 +1,3 @@
-#if DEBUG
 import AppKit
 import PathemEngine
 import UniformTypeIdentifiers
@@ -7,10 +6,15 @@ private final class GalleryDocumentView: NSView {
     override var isFlipped: Bool { true }
 }
 
-/// The local gallery is available only in an explicitly configured debug launch.
+/// Browse the shared Themes catalog in a beta package or use an isolated debug gallery.
 @MainActor
 final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFieldDelegate {
+    static var betaEnabled: Bool {
+        Bundle.main.object(forInfoDictionaryKey: "PathemThemesBeta") as? Bool == true
+    }
+
     static var storeURL: URL? {
+        #if DEBUG
         let env = ProcessInfo.processInfo.environment
         if env["PATHEM_COMMUNITY_GALLERY"] == "1",
             let path = env["PATHEM_CONFIG_DIR"], !path.isEmpty
@@ -20,11 +24,17 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
                 ? "community-themes.json" : "shared-community-themes.json"
             return ConfigStore.url(filename)
         }
-        return nil
+        #endif
+        return betaEnabled ? ConfigStore.url("shared-community-themes.json") : nil
     }
 
     static var sharedEndpoint: String? {
-        ProcessInfo.processInfo.environment["PATHEM_SHARED_THEME_CATALOG"]
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["PATHEM_COMMUNITY_GALLERY"] == "1" {
+            return ProcessInfo.processInfo.environment["PATHEM_SHARED_THEME_CATALOG"]
+        }
+        #endif
+        return betaEnabled ? "https://d3v2l0mmdgkblv.cloudfront.net/catalog.json" : nil
     }
 
     static func refreshSharedCatalog(_ endpoint: String, at store: URL) async throws {
@@ -80,7 +90,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
     }
 
     private func configure() {
-        panel.title = "Community Themes"
+        panel.title = L("prefs.themes", "Themes")
         panel.delegate = self
         panel.isReleasedWhenClosed = false
         scope.selectedSegment = 0
@@ -616,5 +626,4 @@ extension BrowserViewController {
             phase: phase, fixture: fixture, browser: self, toolbar: toolbar)
     }
 }
-#endif
 #endif

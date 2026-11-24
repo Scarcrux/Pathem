@@ -1343,7 +1343,8 @@
 "prefs.iconMedium" = "보통";
 "prefs.folderStyleLabel" = "폴더 스타일";
 "prefs.iconSetLabel" = "파일 아이콘";
-"prefs.themePrepareSubmission" = "마켓플레이스 제출 준비…";
+"prefs.themePrepareSubmission" = "테마 제출…";
+"prefs.themes" = "테마";
 "prefs.toolbarStyleLabel" = "도구 막대 아이콘";
 "prefs.useThemeStyle" = "테마 따르기";
 "prefs.iconSizeLabel" = "도구 막대 아이콘 크기";

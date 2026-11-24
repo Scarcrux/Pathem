@@ -1343,7 +1343,8 @@
 "prefs.iconMedium" = "Средние";
 "prefs.folderStyleLabel" = "Стиль папок";
 "prefs.iconSetLabel" = "Значки файлов";
-"prefs.themePrepareSubmission" = "Подготовить отправку в каталог…";
+"prefs.themePrepareSubmission" = "Отправить тему…";
+"prefs.themes" = "Темы";
 "prefs.toolbarStyleLabel" = "Значки панели инструментов";
 "prefs.useThemeStyle" = "Использовать тему";
 "prefs.iconSizeLabel" = "Размер значков панели инструментов";
