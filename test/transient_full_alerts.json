@@ -2,8 +2,8 @@
   "alerts": [
     {
       "id": "b01",
-      "site": "Sources/Pathem/CleanupController.swift:1098:9:beginSheetModal",
-      "builder": "Sources/Pathem/CleanupController.swift:1094:21:NSAlert",
+      "site": "Sources/Pathem/CleanupController.swift:1114:9:beginSheetModal",
+      "builder": "Sources/Pathem/CleanupController.swift:1110:21:NSAlert",
       "source_sha256": "fb1f46edf822130fabd72887ada72bce460362627fd928e1fa5f02981042ae48",
       "sheet": true,
       "fixture": "Plain deletion-failure report; first eight runtime error messages.",
@@ -20,8 +20,8 @@
     },
     {
       "id": "b02",
-      "site": "Sources/Pathem/CleanupController.swift:1130:9:beginSheetModal",
-      "builder": "Sources/Pathem/CleanupController.swift:1121:21:NSAlert",
+      "site": "Sources/Pathem/CleanupController.swift:1146:9:beginSheetModal",
+      "builder": "Sources/Pathem/CleanupController.swift:1137:21:NSAlert",
       "source_sha256": "a221747199666cc138fc400ac771bc76fd7ac551e0f7279a9011e728f0685175",
       "sheet": true,
       "fixture": "Plain Trash-failure report; first eight runtime errors plus count; confirmation closes only.",

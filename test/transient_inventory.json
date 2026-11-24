@@ -154,42 +154,42 @@
       ],
       "reason": "Custom Reclaim Space panel with rows, controls and selections."
     },
-    "Sources/Pathem/CleanupController.swift:1039:9:beginSheetModal": {
+    "Sources/Pathem/CleanupController.swift:1055:9:beginSheetModal": {
       "role": "wrapper",
       "class": null,
       "reason": "Pass-through presenter; destructive intent belongs to deleteNowClicked caller.",
       "builders": []
     },
-    "Sources/Pathem/CleanupController.swift:1098:9:beginSheetModal": {
+    "Sources/Pathem/CleanupController.swift:1114:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CleanupController.swift:1094:21:NSAlert"
+        "Sources/Pathem/CleanupController.swift:1110:21:NSAlert"
       ],
       "reason": "Plain deletion-failure report; first eight runtime error messages."
     },
-    "Sources/Pathem/CleanupController.swift:1130:9:beginSheetModal": {
+    "Sources/Pathem/CleanupController.swift:1146:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CleanupController.swift:1121:21:NSAlert"
+        "Sources/Pathem/CleanupController.swift:1137:21:NSAlert"
       ],
       "reason": "Plain Trash-failure report; first eight runtime errors plus count; confirmation closes only."
     },
-    "Sources/Pathem/CleanupController.swift:1008:14:presentDeleteNowAlert": {
+    "Sources/Pathem/CleanupController.swift:1024:14:presentDeleteNowAlert": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/CleanupController.swift:1018:21:NSAlert"
+        "Sources/Pathem/CleanupController.swift:1034:21:NSAlert"
       ],
       "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only.",
       "default_action": "Delete Permanently (index 0); Escape Cancel (index 1)",
@@ -1848,26 +1848,26 @@
       "reason": "Conditional Clean Regenerable/Back Up/Close actions can exceed two buttons. Clean uses recoverable Trash. Runtime fixture: 255-character folder and six-digit counts/size strings.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:279:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:287:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:273:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:281:21:NSAlert"
       ],
       "reason": "Disk image name/password accessory; Create writes an encrypted image. Cancel only, no password or image creation.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:326:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:334:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": false,
       "destructive": true,
       "default_destructive_intended": true,
       "builders": [
-        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:316:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+SelectionTransforms.swift:324:21:NSAlert"
       ],
       "reason": "Plain secure erase confirmation is class A because random overwrite/deletion skips Trash and cannot be undone. Runtime six-digit count.  Return confirms: intended under the explicit-action rule, applied by pathem-claude 2026-11-16, owner informed.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample.",

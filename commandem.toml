@@ -1300,6 +1300,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-dd8d2ed3"
     title = "Resolve the encrypted-image accessory stack ambiguity (TS-U2-M12-AMBIG). Input widths are repaired; targeted profile remains70/76/native1 from six check3 warnings. The accessory340pt-width experiment was refuted and removed. Use focused validation only."
+    done = true
 
   [[mission.task]]
     id = "t-7836609b"
@@ -1314,6 +1315,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-ac6d5668"
     title = "Resolve View Options app-owned stack ambiguity (TS-U2-M07-AMBIG). Height is bounded; focused profile remains70/76/native1 solely on six check3 observations of seven stacks. Keep validation targeted."
+    done = true
 
   [[mission.comment]]
     text = "Finder parity audit 2026-10-03: files.compress and files.compress7z are implemented, tested, and available in File > Transform/toolbar, but absent from FileContextMenuController.defaultEntries and hideableCommands, so neither right-click nor Settings can expose them. PaneController treats packages as launchable and explicitly says entry is via Show Package Contents, but no command/handler exists. Other surface gaps include Finder Quick Actions/Services, context Quick Look/Make Alias/Show Original, complete iCloud Keep Downloaded/Remove Download semantics, volume Eject, named tag management, and background View/Sort/Group controls. Cause is independent hand-authored surface allowlists rather than a capability-driven menu model."
@@ -2191,6 +2193,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Release torrent walkthrough passed on signed Pathem 0.9.4 build 28. External Launch Services magnet URL reached the scratch release app; its packaged daemon requested controlled loopback metadata and web seed, and the downloaded file matched all 10,000 bytes. Confirmation disabled only in scratch. First probe reached the seed but its exact-process comparison used an uncanonicalized path. A subsequent probe was refused by demo-root isolation; the passing probe used the app-generated temporary demo root. Evidence recorded in LAUNCH_CHECKLIST.md."
     at = "2026-11-24T01:20:56Z"
 
+  [[mission.comment]]
+    text = "Focused native German validation: m07 and m12 each 238/238, zero failing cell/check pairs, across light/dark, both host sizes, short/long inputs and three cycles. Explicit fill distribution resolves the app-owned View Options row ambiguity. The encrypted form uses a frame-owned outer accessory with anchored inner rows and keeps its field widths. No full transient matrix was run."
+    at = "2026-11-24T04:56:06Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
@@ -2569,6 +2575,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-382e51bd"
     title = "Investigate Reclaim Space geometry (m72): eight check-1 and eight check-3 cell failures in the focused German run. The first collapsed control was an empty detail label. Establish whether the warnings produce visible clipping before changing the window or harness."
+    done = true
 
   [[mission.comment]]
     text = "Landed 0e42dfc (catalog engine, 4 tests incl. forged-path and symlink refusals) and the Reclaim Space window. Real-disk read-only run: 54 rows, 372.6 GB rebuilds / 319.05 GB re-downloads / 61.79 GB review; measuring all places took 204 s (rows appear progressively; DirectorySize is the bottleneck, a faster sizer is a follow-up). Smoke: known-place rows and Delete Now tier guard pass. Unverified: header/button layout (render method does not draw them) and live clicks on Deep Scan, Stop, Delete Now sheet, Empty Trash. Task 4 (verify in a real window and install) stays open."
@@ -2593,6 +2600,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Real Reclaim Space window exercised on scratch data in German: 24 open and close cycles across appearance and host sizes, with files and private config unchanged. Prior fixture smoke verified catalog sizes, consequence labels and Delete Now eligibility for the rebuildable tier. The installed Pathem 0.9.4 build 28 already contains Reclaim Space. No reinstall was needed."
     at = "2026-11-24T01:20:38Z"
+
+  [[mission.comment]]
+    text = "Focused Reclaim Space m72: original 190/238 showed geometry and ambiguous stacks. Anchor detail content to the real box container, hide idle empty labels and set fill distribution. The next run cleared ambiguity and exposed an unlabeled checkbox. Give each checkbox its row title for hover and accessibility. Final native 238/238, zero failed pairs, with owned files and scratch configuration preserved. The focused run mounts the unselected detail pane."
+    at = "2026-11-24T04:56:06Z"
 
 [[mission]]
   id = "m-b4ebb9d9"

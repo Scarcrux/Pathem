@@ -475,20 +475,26 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         }
 
         let buttons = NSStackView(views: [goodButton, badButton, feedbackNote])
+        buttons.distribution = .fill
         buttons.spacing = 8
         buttons.alignment = .centerY
         let stack = NSStackView(views: [detailName, detailPath, detailWhy, buttons])
         stack.orientation = .vertical
         stack.alignment = .leading
+        stack.distribution = .fill
         stack.spacing = 4
         stack.translatesAutoresizingMaskIntoConstraints = false
-        box.contentView = stack
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: box.contentView!.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: box.contentView!.trailingAnchor),
-            stack.topAnchor.constraint(equalTo: box.contentView!.topAnchor),
-            detailWhy.widthAnchor.constraint(equalTo: stack.widthAnchor),
-        ])
+        if let content = box.contentView {
+            content.addSubview(stack)
+            NSLayoutConstraint.activate([
+                stack.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+                stack.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+                stack.topAnchor.constraint(equalTo: content.topAnchor),
+                detailName.widthAnchor.constraint(equalTo: stack.widthAnchor),
+                detailPath.widthAnchor.constraint(equalTo: stack.widthAnchor),
+                detailWhy.widthAnchor.constraint(equalTo: stack.widthAnchor),
+            ])
+        }
         box.heightAnchor.constraint(equalToConstant: 104).isActive = true
         return box
     }
@@ -734,6 +740,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 }()
             button.tag = row
             button.state = rows[row].checked ? .on : .off
+            let title = rowTitle(rows[row])
+            button.toolTip = title
+            button.setAccessibilityLabel(title)
             return button
         case "name":
             let cell = Self.textCell(tableView, owner: self, icon: true)
@@ -770,11 +779,14 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         }
         let group = rows[selected].group
         detailName.stringValue = rowTitle(rows[selected])
+        detailPath.isHidden = false
+        detailWhy.isHidden = false
         detailPath.stringValue = group.isSingle ? group.items[0].path : Self.locations(of: group)
         detailWhy.stringValue =
             rows[selected].candidate.map { self.explanation(for: $0.place.consequence) }
             ?? whyText(for: group)
         feedbackNote.stringValue = ""
+        feedbackNote.isHidden = true
         goodButton.isEnabled = true
         badButton.isEnabled = true
     }
@@ -784,6 +796,9 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
         detailPath.stringValue = ""
         detailWhy.stringValue = ""
         feedbackNote.stringValue = ""
+        detailPath.isHidden = true
+        detailWhy.isHidden = true
+        feedbackNote.isHidden = true
         goodButton.isEnabled = false
         badButton.isEnabled = false
     }
@@ -913,6 +928,7 @@ final class CleanupController: NSObject, NSTableViewDataSource, NSTableViewDeleg
                 forRowIndexes: [selected], columnIndexes: IndexSet(0..<table.numberOfColumns))
             updateSummary()
         }
+        feedbackNote.isHidden = false
         feedbackNote.stringValue =
             verdict == .good
             ? L("cleanup.notedGood", "Noted as good")

@@ -56,6 +56,7 @@ final class ViewOptionsController: NSObject {
             let label = NSTextField(labelWithString: title)
             label.widthAnchor.constraint(equalToConstant: 145).isActive = true
             let line = NSStackView(views: [label, control])
+            line.distribution = .fill
             line.spacing = 10
             stack.addArrangedSubview(line)
         }

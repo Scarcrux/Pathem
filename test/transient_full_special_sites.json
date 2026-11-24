@@ -6,7 +6,7 @@
       "reason": "TS-F1 repaired in 3e1c19a: Keep Both for All is Return default; Replace All remains click-only. Original bytes preserved by one/two-clash native fixture tests."
     },
     {
-      "site": "Sources/Pathem/CleanupController.swift:1008:14:presentDeleteNowAlert",
+      "site": "Sources/Pathem/CleanupController.swift:1024:14:presentDeleteNowAlert",
       "coverage": "core",
       "reason": "A (destructive), Return confirms: intended. Permanent deletion skips Trash. Owner ruling 2026-11-15 supersedes the coordinator Cancel-default policy; native verification must target owned fixtures only."
     },

@@ -258,17 +258,25 @@ extension BrowserViewController {
             control.widthAnchor.constraint(equalToConstant: 240).isActive = true
             let row = NSStackView(views: [name, control])
             row.orientation = .horizontal
+            row.distribution = .fill
             row.spacing = 8
             return row
         }
-        let accessory = NSStackView(views: [
+        let fields = NSStackView(views: [
             labeledRow(L("dmg.name", "Name"), nameField),
             labeledRow(L("dmg.passwordLabel", "Password"), passField),
         ])
-        accessory.orientation = .vertical
-        accessory.alignment = .leading
-        accessory.spacing = 8
-        accessory.frame = NSRect(x: 0, y: 0, width: 340, height: 66)
+        fields.orientation = .vertical
+        fields.alignment = .leading
+        fields.distribution = .fill
+        fields.spacing = 8
+        fields.translatesAutoresizingMaskIntoConstraints = false
+        let accessory = NSView(frame: NSRect(x: 0, y: 0, width: 340, height: 66))
+        accessory.addSubview(fields)
+        NSLayoutConstraint.activate([
+            fields.leadingAnchor.constraint(equalTo: accessory.leadingAnchor),
+            fields.topAnchor.constraint(equalTo: accessory.topAnchor),
+        ])
 
         let alert = NSAlert()
         alert.messageText = String(
