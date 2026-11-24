@@ -2761,4 +2761,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "GitHub issue #1 exercised the public creator intake with a pinned demo submission link. Retrieved the exact bytes from the posted issue, imported and previewed them through the private dashboard, approved the revision, and published it to an isolated snapshot. The test issue was closed and the hosted catalog still contained only Tidal Marsh v1. The issue was posted with the GitHub CLI, so browser form attachment remains unverified."
     at = "2026-11-24T19:13:46Z"
+
+  [[mission.comment]]
+    text = "Batch A addresses measured JSONC import delay, raw screenshot metadata and trailing bytes, catalog image decode and size bounds, stable Sparkle updates for opt-in builds, legacy file icon defaults, gallery localization, and hermetic catalog checks. The released 0.9.4 scratch prefs wrote iconSetName System with no themeStyles key. The malformed import fell from 5.18 seconds to under 1 ms and the full sequential suite passed 15 XCTest and 890 Swift Testing cases."
+    at = "2026-11-24T19:30:05Z"
 # <<< commandem roadmap <<<

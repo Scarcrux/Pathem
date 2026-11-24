@@ -27,7 +27,7 @@ enum ThemeSubmissionDialog {
             let package = try ThemePackage.encode(theme)
             prepare(title: theme.name, package: package, screenshots: screenshots)
         } catch {
-            NSAlert(error: error).runModal()
+            showThemeError(error)
         }
     }
 
@@ -81,9 +81,10 @@ enum ThemeSubmissionDialog {
                         $0.trimmingCharacters(in: .whitespacesAndNewlines)
                     }, package: package, screenshots: screenshots)
                 let data = try CommunityThemeGallery.encodeSubmission(submission)
-                if saveSubmission(data, submission: submission) { return }
+                let exported = try JSONDecoder().decode(CommunityThemeRevision.self, from: data)
+                if saveSubmission(data, submission: exported) { return }
             } catch {
-                NSAlert(error: error).runModal()
+                showThemeError(error)
             }
         }
     }
@@ -96,7 +97,7 @@ enum ThemeSubmissionDialog {
         do {
             try data.write(to: url, options: .atomic)
         } catch {
-            NSAlert(error: error).runModal()
+            showThemeError(error)
             return false
         }
         let next = NSAlert()
@@ -105,6 +106,17 @@ enum ThemeSubmissionDialog {
             "themeSubmission.attach",
             "Attach the saved JSON to the GitHub issue form. Use your existing GitHub account. The file and issue will be public."
         )
+        let previews = NSStackView(
+            views: submission.screenshots.map { data in
+                let view = NSImageView()
+                view.image = NSImage(data: data)
+                view.imageScaling = .scaleProportionallyUpOrDown
+                view.widthAnchor.constraint(equalToConstant: 154).isActive = true
+                view.heightAnchor.constraint(equalToConstant: 110).isActive = true
+                return view
+            })
+        previews.setFrameSize(previews.fittingSize)
+        next.accessoryView = previews
         next.addButton(withTitle: L("themeSubmission.open", "Open GitHub Form"))
         next.addButton(withTitle: L("themeSubmission.later", "Done for Now"))
         if next.runModal() == .alertFirstButtonReturn {

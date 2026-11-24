@@ -441,6 +441,9 @@ public struct Preferences: Codable, Sendable, Equatable {
         windowTintHex =
             try c.decodeIfPresent(String.self, forKey: .windowTintHex) ?? d.windowTintHex
         iconSetName = try c.decodeIfPresent(String.self, forKey: .iconSetName) ?? d.iconSetName
+        // Releases before bundled styles persisted System even without a user override.
+        // Current documents always encode themeStyles, including an explicit System override.
+        if iconSetName == "System", !c.contains(.themeStyles) { iconSetName = "" }
         folderStyleOverride = try c.decodeIfPresent(
             ThemeStyles.Folder.self, forKey: .folderStyleOverride)
         toolbarStyleOverride = try c.decodeIfPresent(

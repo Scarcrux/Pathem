@@ -13,7 +13,14 @@ ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "docs/themes/gallery-fixture"
 
 
-def run(binary):
+class FixtureHandler(http.server.SimpleHTTPRequestHandler):
+    def end_headers(self):
+        # Exercise immediately visible publications without a production TTL.
+        self.send_header("Cache-Control", "no-store")
+        super().end_headers()
+
+
+def run(binary, packaged=None):
     with tempfile.TemporaryDirectory(prefix="pathem-shared-catalog-") as folder:
         root = Path(folder)
         public = root / "public"
@@ -22,7 +29,7 @@ def run(binary):
         publisher = root / "reviews.json"
         client_a = root / "client-a.json"
         client_b = root / "client-b.json"
-        handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=public)
+        handler = functools.partial(FixtureHandler, directory=public)
         with http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
             worker = threading.Thread(target=server.serve_forever, daemon=True)
             worker.start()
@@ -55,6 +62,21 @@ def run(binary):
                 publish()
                 sync_and_check(client_a, [1])
                 sync_and_check(client_b, [1])
+                if packaged is not None:
+                    release_root = root / "release"
+                    release_root.mkdir()
+                    result = subprocess.run(
+                        [packaged],
+                        env={
+                            **os.environ,
+                            "PATHEM_RELEASE_TEST": "themes",
+                            "PATHEM_CONFIG_DIR": str(release_root),
+                            "PATHEM_THEMES_FIXTURE_URL": endpoint,
+                        },
+                        capture_output=True, timeout=40,
+                    )
+                    assert result.returncode == 0, (result.stdout, result.stderr)
+                    assert b"PASS packaged Themes discovery, install, and apply" in result.stdout
                 cli(client_a, "install", "tidal-marsh")
                 cli(publisher, "submit", FIXTURES / "v2.submission.json")
                 publish()
@@ -84,4 +106,4 @@ def run(binary):
 
 
 if __name__ == "__main__":
-    run(Path(sys.argv[1]).resolve())
+    run(Path(sys.argv[1]).resolve(), Path(sys.argv[2]).resolve() if len(sys.argv) == 3 else None)

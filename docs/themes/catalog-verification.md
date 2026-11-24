@@ -6,7 +6,7 @@ Run on the assigned checkout on macOS 27.2.1 (26B131). The built-in catalog cont
 | --- | --- |
 | Themes 01 gate | The unchanged pilot at `a7d6611` built and passed the offscreen reordered-toolbar smoke. A desktop visual pass on the pilot was unavailable in this runner. |
 | Focused Swift tests | 12 tests passed. Coverage includes all built-in v2 round trips, v1 Orchard, VS Code and iTerm2 imports, invalid packages, saved legacy file icon choices, independent override clearing, and reset. |
-| Full Swift suite | The run reported failures in OrganizePlanner tests and exited with status 70 without a suite summary. See `.build/catalog-full-tests.log`. |
+| Full static/unit verification | Batch A rerun passed 15 XCTest cases and 890 Swift Testing cases (180 suites). The earlier exit 70 did not reproduce. |
 | Catalog AppKit smoke | Passed. Preview, cancel, apply, reset, and changing and clearing each style override preserved the customized toolbar order within the same process. The check exercised the browser’s appearance path programmatically. |
 | Catalog and style renders | Reviewed 23 List renders, ten Icon renders covering every style choice, and the 20-view matrix below. The seeded PNGs showed file glyph and Quick Look fallback behavior. The demo’s red tag dot remained visible. |
 | Native toolbar autosave across relaunch | The runner’s offscreen read probe failed after its write probe passed. Outside that runner, the bundled debug app used a unique bundle identifier and scratch configuration. Two separate processes passed native autosave write and read with the same test toolbar identifier. Both checks ran before window activation. |

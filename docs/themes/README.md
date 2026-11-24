@@ -59,7 +59,7 @@ asset paths. Export carries the embedded artwork and System reset clears it.
 ## Shared catalog staging
 
 Creators prepare a submission using [the example fixtures](gallery-fixture/) and open
-a pull request in the catalog repository. A maintainer with write access reviews
+the **Submit a Pathem theme** GitHub issue form. A maintainer with write access reviews
 the submission, records the decision in a private review store, and publishes the
 generated snapshot to the catalog host. Use branch protection to restrict who can
 update the published snapshot. The publisher does not accept review decisions from

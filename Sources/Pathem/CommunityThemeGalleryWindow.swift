@@ -43,8 +43,11 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
     }
 
     // The release smoke mounts the production gallery without activating the app.
-    static func verifyPackagedInstallation() async throws {
-        guard betaEnabled, let url = storeURL, let endpoint = sharedEndpoint else {
+    static func verifyPackagedInstallation(endpoint: String) async throws {
+        guard betaEnabled, let url = storeURL, let fixture = URL(string: endpoint),
+            fixture.scheme == "http", fixture.host == "127.0.0.1", fixture.user == nil,
+            fixture.password == nil
+        else {
             throw CommunityThemeError.invalidTransition
         }
         try await refreshSharedCatalog(endpoint, at: url)
@@ -83,7 +86,11 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         styleMask: [.titled, .closable], backing: .buffered, defer: false)
     private let scope = NSSegmentedControl(
         labels: CommunityThemeGalleryWindow.sharedEndpoint == nil
-            ? ["Browse", "Installed", "Review"] : ["Browse", "Installed"], trackingMode: .selectOne,
+            ? [
+                L("themes.browse", "Browse"), L("integrations.installed", "Installed"),
+                L("themes.review", "Review"),
+            ] : [L("themes.browse", "Browse"), L("integrations.installed", "Installed")],
+        trackingMode: .selectOne,
         target: nil, action: nil)
     private let search = NSSearchField()
     private let listings = NSPopUpButton()
@@ -127,7 +134,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         scope.selectedSegment = 0
         scope.target = self
         scope.action = #selector(scopeChanged)
-        search.placeholderString = "Search titles, creators, and tags"
+        search.placeholderString = L("themes.search", "Search titles, creators, and tags")
         search.delegate = self
         listings.target = self
         listings.action = #selector(refreshDetail)
@@ -136,12 +143,12 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         screenshot.imageScaling = .scaleProportionallyUpOrDown
         screenshot.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         screenshot.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
-        screenshot.setAccessibilityLabel("Theme screenshot")
+        screenshot.setAccessibilityLabel(L("themes.screenshot", "Theme screenshot"))
         title.font = .boldSystemFont(ofSize: 17)
         status.textColor = .secondaryLabelColor
         actions.spacing = 8
-        let submit = button("Submit Revision…", #selector(chooseSubmission))
-        let done = button("Done", #selector(close))
+        let submit = button(L("themes.submit", "Submit Revision…"), #selector(chooseSubmission))
+        let done = button(L("common.done", "Done"), #selector(close))
         done.keyEquivalent = "\u{1b}"
         let footer = NSStackView(views: Self.sharedEndpoint == nil ? [submit, done] : [done])
         footer.spacing = 8
@@ -226,7 +233,11 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         screenshots.isHidden = selection == nil
         guard let revision = selection else {
             title.stringValue =
-                ["No matching themes", "No installed themes", "No submissions"][
+                [
+                    L("themes.emptyBrowse", "No matching themes"),
+                    L("themes.emptyInstalled", "No installed themes"),
+                    L("themes.emptyReview", "No submissions"),
+                ][
                     scope.selectedSegment]
             details.stringValue = ""
             status.stringValue = ""
@@ -234,48 +245,76 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         }
         title.stringValue = revision.title
         var lines = [
-            revision.summary, "Creator: \(revision.creator) · License: \(revision.license)",
+            revision.summary,
+            L("themeSubmission.creator", "Creator credit") + ": " + revision.creator + " · "
+                + L("themeSubmission.license", "License") + ": " + revision.license,
         ]
-        if let source = revision.source { lines.append("Source: \(source)") }
+        if let source = revision.source {
+            lines.append(L("torrents.detail.source", "Source") + ": " + source)
+        }
         if !revision.tags.isEmpty { lines.append(revision.tags.joined(separator: " · ")) }
         details.stringValue = lines.joined(separator: "\n")
         screenshots.addItems(
-            withTitles: revision.screenshots.indices.map { "Screenshot \($0 + 1)" })
+            withTitles: revision.screenshots.indices.map {
+                L("themes.screenshot", "Theme screenshot") + " \($0 + 1)"
+            })
         showScreenshot()
         let installed = gallery.installed[revision.id]
         let withdrawn = gallery.withdrawn.contains(revision.id)
-        var states = ["Version \(revision.version)"]
-        if let installed { states.append("Installed v\(installed.version)") }
-        if active?.id == revision.id, let active { states.append("Applied v\(active.version)") }
-        if withdrawn { states.append("Withdrawn") }
-        actions.addArrangedSubview(button("Preview", #selector(previewSelection)))
+        var states = [L("info.versionLabel", "Version") + " \(revision.version)"]
+        if let installed {
+            states.append(L("integrations.installed", "Installed") + " v\(installed.version)")
+        }
+        if active?.id == revision.id, let active {
+            states.append(L("themes.active", "Active") + " v\(active.version)")
+        }
+        if withdrawn { states.append(L("themes.withdrawn", "Withdrawn")) }
+        actions.addArrangedSubview(
+            button(L("menu.group.preview", "Preview"), #selector(previewSelection)))
         switch scope.selectedSegment {
         case 2:
             let record = gallery.entries.first { $0.revision.reference == revision.reference }
             if let review = record?.review {
                 states.append(
-                    "\(review.outcome.rawValue.capitalized) by \(review.reviewer) · \(review.note)")
+                    reviewLabel(review.outcome) + " · " + review.reviewer + " · " + review.note)
             } else {
-                states.append("Pending review")
+                states.append(L("themes.pending", "Pending review"))
                 if !withdrawn {
-                    actions.addArrangedSubview(button("Approve…", #selector(approve)))
-                    actions.addArrangedSubview(button("Reject…", #selector(reject)))
+                    actions.addArrangedSubview(
+                        button(
+                            L("themes.approve", L("themes.approve", "Approve")) + "…",
+                            #selector(approve)))
+                    actions.addArrangedSubview(
+                        button(
+                            L("themes.reject", L("themes.reject", "Reject")) + "…",
+                            #selector(reject)))
                 }
             }
             if !withdrawn {
-                actions.addArrangedSubview(button("Withdraw…", #selector(confirmWithdrawal)))
+                actions.addArrangedSubview(
+                    button(
+                        L("themes.withdraw", L("themes.withdraw", "Withdraw")) + "…",
+                        #selector(confirmWithdrawal)))
             }
         case 1:
-            actions.addArrangedSubview(button("Apply", #selector(applySelection)))
-            actions.addArrangedSubview(button("Uninstall…", #selector(confirmUninstall)))
+            actions.addArrangedSubview(
+                button(L("common.apply", "Apply"), #selector(applySelection)))
+            actions.addArrangedSubview(
+                button(
+                    L("themes.uninstall", L("themes.uninstall", "Uninstall")) + "…",
+                    #selector(confirmUninstall)))
         default:
             if let installed, installed.version < revision.version {
-                actions.addArrangedSubview(button("Update", #selector(installSelection)))
+                actions.addArrangedSubview(
+                    button(L("themes.update", "Update"), #selector(installSelection)))
             } else if installed == nil {
-                actions.addArrangedSubview(button("Install", #selector(installSelection)))
+                actions.addArrangedSubview(
+                    button(L("integrations.cliInstall", "Install"), #selector(installSelection)))
             }
             if installed != nil {
-                actions.addArrangedSubview(button("Apply Installed", #selector(applySelection)))
+                actions.addArrangedSubview(
+                    button(L("themes.applyInstalled", "Apply Installed"), #selector(applySelection))
+                )
             }
         }
         status.stringValue = states.joined(separator: " · ")
@@ -300,13 +339,14 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         do {
             try withPreview(revision) {
                 let alert = NSAlert()
-                alert.messageText = "Preview \(revision.title)"
-                alert.informativeText = "Close the preview to restore your appearance."
-                let close = alert.addButton(withTitle: "Close Preview")
+                alert.messageText = L("menu.group.preview", "Preview") + " · " + revision.title
+                alert.informativeText = L(
+                    "themes.restore", "Close the preview to restore your appearance.")
+                let close = alert.addButton(withTitle: L("themes.closePreview", "Close Preview"))
                 close.keyEquivalent = "\u{1b}"
                 alert.runModal()
             }
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func withPreview(_ revision: CommunityThemeRevision, show: () -> Void) throws {
@@ -319,7 +359,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         guard let revision = selection else { return }
         do {
             try install(revision.reference)
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func install(_ reference: CommunityThemeRevision.Reference) throws {
@@ -331,7 +371,7 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         guard let id = selection?.id else { return }
         do {
             try applyInstalled(id)
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func applyInstalled(_ id: String) throws {
@@ -347,11 +387,11 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
     @objc private func chooseSubmission() {
         let picker = NSOpenPanel()
         picker.allowedContentTypes = [.json]
-        picker.message = "Choose a community theme submission JSON file."
+        picker.message = L("themes.chooseFile", "Choose a theme submission JSON file.")
         guard picker.runModal() == .OK, let file = picker.url else { return }
         do {
             try submitRevision(at: file)
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func submitRevision(at file: URL) throws {
@@ -359,6 +399,14 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         try mutate { try $0.submit(revision) }
         scope.selectedSegment = 2
         refresh(preferred: revision.reference)
+    }
+
+    private func reviewLabel(_ outcome: CommunityThemeGallery.Review.Outcome) -> String {
+        switch outcome {
+        case .approved: L("themes.approved", "Approved")
+        case .rejected: L("themes.rejected", "Rejected")
+        case .changesRequested: L("themes.changes", "Changes requested")
+        }
     }
 
     @objc private func approve() { review(.approved) }
@@ -369,14 +417,14 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         guard let revision = selection else { return }
         let approving = outcome == .approved
         let alert = NSAlert()
-        alert.messageText =
-            "\(approving ? "Approve" : "Reject") \(revision.title) v\(revision.version)?"
+        let action = approving ? L("themes.approve", "Approve") : L("themes.reject", "Reject")
+        alert.messageText = action + " · " + revision.title + " v\(revision.version)?"
         let reviewer = NSTextField(string: "")
-        reviewer.placeholderString = "Reviewer name"
-        reviewer.setAccessibilityLabel("Reviewer name")
+        reviewer.placeholderString = L("themes.reviewer", "Reviewer name")
+        reviewer.setAccessibilityLabel(L("themes.reviewer", "Reviewer name"))
         let note = NSTextField(string: "")
-        note.placeholderString = "Decision note"
-        note.setAccessibilityLabel("Decision note")
+        note.placeholderString = L("themes.note", "Decision note")
+        note.setAccessibilityLabel(L("themes.note", "Decision note"))
         let fields = NSStackView(views: [reviewer, note])
         fields.orientation = .vertical
         fields.alignment = .leading
@@ -385,14 +433,14 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         note.widthAnchor.constraint(equalTo: reviewer.widthAnchor).isActive = true
         alert.accessoryView = fields
         alert.window.initialFirstResponder = reviewer
-        alert.addButton(withTitle: approving ? "Approve" : "Reject")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: action)
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         do {
             try recordReview(
                 revision.reference, outcome: outcome, reviewer: reviewer.stringValue,
                 note: note.stringValue)
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func recordReview(
@@ -407,13 +455,14 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
     @objc private func confirmWithdrawal() {
         guard let revision = selection,
             confirm(
-                "Withdraw \(revision.title)?", action: "Withdraw",
+                L("themes.withdraw", "Withdraw") + " · " + revision.title + "?",
+                action: L("themes.withdraw", "Withdraw"),
                 detail:
-                    "This removes the listing from discovery. Installed copies remain available.")
+                    L("themes.withdrawDetail", "Installed copies remain available."))
         else { return }
         do {
             try withdraw(revision.id)
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func withdraw(_ id: String) throws {
@@ -424,12 +473,15 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
     @objc private func confirmUninstall() {
         guard let revision = selection,
             confirm(
-                "Uninstall \(revision.title)?", action: "Uninstall",
-                detail: "If this theme is applied, Pathem will return to System appearance.")
+                L("themes.uninstall", "Uninstall") + " · " + revision.title + "?",
+                action: L("themes.uninstall", "Uninstall"),
+                detail: L(
+                    "themes.uninstallDetail",
+                    "If this theme is applied, Pathem will return to System appearance."))
         else { return }
         do {
             try uninstall(revision.id)
-        } catch { NSAlert(error: error).runModal() }
+        } catch { showThemeError(error) }
     }
 
     private func uninstall(_ id: String) throws {
@@ -445,10 +497,35 @@ final class CommunityThemeGalleryWindow: NSObject, NSWindowDelegate, NSSearchFie
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = detail
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.addButton(withTitle: action)
         return alert.runModal() == .alertSecondButtonReturn
     }
+}
+
+@MainActor
+func showThemeError(_ error: Error) {
+    let message: String
+    switch error as? CommunityThemeError {
+    case .invalidListing:
+        message = L("themes.invalidListing", "The listing or attribution fields are invalid.")
+    case .invalidScreenshot:
+        message = L(
+            "themes.invalidScreenshot",
+            "Use one to three PNG or JPEG screenshots, each up to 2 MiB and 2400 pixels per side. Exported previews must fit within 300 KiB."
+        )
+    case .invalidTransition:
+        message = L(
+            "themes.invalidTransition", "The requested action is unavailable for this revision.")
+    case .oversizedFile:
+        message = L("themes.oversized", "The gallery file exceeds the size limit.")
+    case nil:
+        message = error.localizedDescription
+    }
+    let alert = NSAlert()
+    alert.messageText = message
+    alert.addButton(withTitle: L("common.ok", "OK"))
+    alert.runModal()
 }
 
 #if DEBUG

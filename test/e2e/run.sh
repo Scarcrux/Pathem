@@ -275,6 +275,13 @@ if [[ $PACKAGED == 1 ]]; then
     assert "requested architectures present ($ARCHS)" test -z "$missing_archs"
   fi
   scenario "release configuration-root guards" 'RESULT: PASS' "$ROOT/test/e2e/run.sh" --configuration-root-guards "$BIN" PATHEM_RELEASE_TEST
+  if [[ "${PATHEM_THEMES_BETA:-}" == 1 ]]; then
+    catalog_tool="$(swift build --build-system native -c release --show-bin-path)/pathem-theme-catalog"
+    scenario "packaged Themes against loopback" 'RESULT: PASS' python3 \
+      test/shared_theme_catalog_e2e.py "$catalog_tool" "$BIN"
+    scenario "private theme review and publication" 'RESULT: PASS' python3 \
+      test/theme_admin_e2e.py "$catalog_tool"
+  fi
   packaged_launch_probe
   echo
   echo "==> ${pass} passed, ${skip} skipped, ${fail} failed"

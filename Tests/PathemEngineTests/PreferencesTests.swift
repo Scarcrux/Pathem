@@ -4,6 +4,19 @@ import Testing
 @testable import PathemEngine
 
 @Suite struct PreferencesTests {
+    @Test func legacySystemIconFollowsThemeButExplicitCurrentOverrideSurvives() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: file) }
+        try Data(#"{"iconSetName":"System"}"#.utf8).write(to: file)
+        let decoder = JSONDecoder()
+        let legacy = try decoder.decode(Preferences.self, from: Data(contentsOf: file))
+        #expect(legacy.iconSetName.isEmpty)
+
+        let current = Preferences(iconSetName: "System")
+        let decoded = try decoder.decode(Preferences.self, from: JSONEncoder().encode(current))
+        #expect(decoded.iconSetName == "System")
+    }
+
     @Test func defaultsAreSensible() {
         let prefs = Preferences.default
         #expect(prefs.density == .comfortable)

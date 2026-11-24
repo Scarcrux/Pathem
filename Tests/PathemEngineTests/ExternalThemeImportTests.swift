@@ -4,6 +4,19 @@ import Testing
 @testable import PathemEngine
 
 struct ExternalThemeImportTests {
+    @Test func unterminatedCommentsFailInBoundedTime() throws {
+        let input = Data(String(repeating: "/*x", count: 5500).utf8)
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: file) }
+        try input.write(to: file)
+        let data = try Data(contentsOf: file)
+        let start = ContinuousClock.now
+        #expect(throws: (any Error).self) {
+            try ExternalThemeImport.vscode(data, name: "Invalid")
+        }
+        #expect(start.duration(to: .now) < .seconds(1))
+    }
+
     @Test func vscodeAcceptsJSONCAndMapsOpaqueRoles() throws {
         let json = """
             {

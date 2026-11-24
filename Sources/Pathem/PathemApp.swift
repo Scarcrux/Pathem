@@ -102,7 +102,11 @@ enum PathemApp {
             app.setActivationPolicy(.prohibited)
             Task { @MainActor in
                 do {
-                    try await CommunityThemeGalleryWindow.verifyPackagedInstallation()
+                    guard let fixture = launchEnvironment["PATHEM_THEMES_FIXTURE_URL"] else {
+                        throw CommunityThemeError.invalidListing
+                    }
+                    try await CommunityThemeGalleryWindow.verifyPackagedInstallation(
+                        endpoint: fixture)
                     print("RESULT: PASS packaged Themes discovery, install, and apply")
                     exit(0)
                 } catch {

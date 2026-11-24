@@ -37,10 +37,7 @@ final class UpdaterController: NSObject, @preconcurrency SPUStandardUserDriverDe
         // installed app, so a running updater would fetch the feed and write its state into the
         // owner's real defaults. Tests never start it.
         let isReleaseTest = ProcessInfo.processInfo.environment["PATHEM_RELEASE_TEST"] != nil
-        // Themes previews are distributed manually until a beta feed exists.
-        isConfigured =
-            !key.isEmpty && key != Self.placeholderKey && !isReleaseTest
-            && !CommunityThemeGalleryWindow.betaEnabled
+        isConfigured = !key.isEmpty && key != Self.placeholderKey && !isReleaseTest
         if isReleaseTest {
             // Unbuffered: the probe ends this process with SIGTERM, which would drop a print().
             FileHandle.standardOutput.write(Data("UPDATER: disabled for release test\n".utf8))

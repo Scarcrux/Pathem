@@ -359,7 +359,7 @@
     },
     {
       "id": "m52",
-      "site": "Sources/Pathem/SettingsWindowController.swift:2079:9:makeKeyAndOrderFront",
+      "site": "Sources/Pathem/SettingsWindowController.swift:2089:9:makeKeyAndOrderFront",
       "filename": false,
       "group": 7,
       "content_change": false

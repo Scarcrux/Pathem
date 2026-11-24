@@ -10,6 +10,29 @@ struct CommunityThemeGalleryTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("docs/themes/gallery-fixture", isDirectory: true)
 
+    @Test func submissionStripsTrailingScreenshotPayload() throws {
+        let bytes = try Data(contentsOf: fixture.appendingPathComponent("v1.submission.json"))
+        var document = try #require(JSONSerialization.jsonObject(with: bytes) as? [String: Any])
+        let images = try #require(document["screenshots"] as? [String])
+        let first = try #require(images.first)
+        let image = try #require(Data(base64Encoded: first))
+        let payload = Data("PATHEM-TEST-PRIVATE-SCREENSHOT-METADATA".utf8)
+        document["screenshots"] = [(image + payload).base64EncodedString()]
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        try JSONSerialization.data(withJSONObject: document).write(to: url)
+        let imported = try CommunityThemeGallery.submission(at: url)
+        let exported = try JSONDecoder().decode(
+            CommunityThemeRevision.self,
+            from: CommunityThemeGallery.encodeSubmission(
+                try JSONDecoder().decode(CommunityThemeRevision.self, from: Data(contentsOf: url))))
+        for revision in [imported, exported] {
+            let screenshot = try #require(revision.screenshots.first)
+            #expect(screenshot.range(of: payload) == nil)
+            #expect(screenshot.count <= 300 * 1024)
+        }
+    }
+
     @Test func creatorExportRoundTripsThroughReviewIntake() throws {
         let source = try CommunityThemeGallery.submission(
             at: fixture.appendingPathComponent("v1.submission.json"))
@@ -18,7 +41,9 @@ struct CommunityThemeGalleryTests {
         defer { try? FileManager.default.removeItem(at: url) }
         try exported.write(to: url)
         let imported = try CommunityThemeGallery.submission(at: url)
-        #expect(imported == source)
+        #expect(imported.reference == source.reference)
+        #expect(imported.package == source.package)
+        #expect(imported.screenshots.count == source.screenshots.count)
         var gallery = CommunityThemeGallery()
         try gallery.submit(imported)
         #expect(gallery.discover().isEmpty)

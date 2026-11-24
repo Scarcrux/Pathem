@@ -91,7 +91,7 @@ e2e: preflight
 
 # Same, against the assembled .app (also checks the bundle is complete).
 e2e-app: preflight
-	test/e2e/run.sh --packaged
+	PATHEM_THEMES_BETA=1 test/e2e/run.sh --packaged
 
 # Environmental boundaries are explicit PASS/SKIP/FAIL checks. Missing hardware, permissions,
 # credentials, or opt-in public-network access never masquerades as a pass.
@@ -118,7 +118,7 @@ ci: preflight
 	python3 scripts/check_warnings.py .build/ci-debug-build.log
 	"$(XCODE_SWIFT)" test $(SWIFTPM_FLAGS) --no-parallel
 	test/e2e/run.sh
-	test/e2e/run.sh --packaged
+	PATHEM_THEMES_BETA=1 test/e2e/run.sh --packaged
 
 app: preflight
 	scripts/package.sh

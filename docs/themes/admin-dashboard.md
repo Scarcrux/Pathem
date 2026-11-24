@@ -81,8 +81,8 @@ S3 versioning preserves prior snapshots. The CloudFront origin can read only tha
 Use `PATHEM_THEMES_BETA=1` with `scripts/package.sh` to enable **Themes** and
 **Submit a Theme** in Appearance. The package reads only the hosted catalog
 and hides the gallery's local review controls. A regular package omits both
-buttons. Preview builds are distributed manually while the beta update feed
-is pending. The stable release script refuses to publish a Themes preview package.
+buttons. Preview builds receive updates from the stable Sparkle feed. The
+preview itself is distributed manually. The stable release script refuses to publish a Themes preview package.
 
 Before public distribution, publish the issue form and one approved listing,
 then verify the submission and a subsequent revision from an independent

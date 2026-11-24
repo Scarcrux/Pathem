@@ -1041,35 +1041,45 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
             .json, UTType(filenameExtension: "itermcolors") ?? .propertyList,
         ]
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        do {
-            guard try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
-                throw ThemePackage.ValidationError.invalidDocument
+        Task { @MainActor in
+            do {
+                let (theme, palette) = try await Task.detached(priority: .userInitiated) {
+                    try Self.readImportedTheme(at: url)
+                }.value
+                previewTheme(theme, terminalPalette: palette)
+            } catch {
+                NSAlert(error: error).runModal()
             }
-            let file = try FileHandle(forReadingFrom: url)
-            defer { try? file.close() }
-            let data = try file.read(upToCount: ExternalThemeImport.maximumBytes + 1) ?? Data()
-            guard data.count <= ExternalThemeImport.maximumBytes else {
-                throw ThemePackage.ValidationError.tooLarge
-            }
-            let name = String(url.deletingPathExtension().lastPathComponent.prefix(80))
-            if url.pathExtension.lowercased() == "itermcolors" {
-                let palette = try ExternalThemeImport.iterm(data, name: "\(name) (.itermcolors)")
-                let swatch = ThemePreset(
-                    name: name, appearance: .system,
-                    accentHex: palette.cursor ?? palette.foreground ?? "",
-                    backgroundHex: palette.background ?? "")
-                previewTheme(swatch, terminalPalette: palette)
-            } else if let object = (try? JSONSerialization.jsonObject(with: data))
-                as? [String: Any],
-                object["schemaVersion"] != nil
-            {
-                previewTheme(try ThemePackage.decode(data))
-            } else {
-                previewTheme(try ExternalThemeImport.vscode(data, name: name))
-            }
-        } catch {
-            NSAlert(error: error).runModal()
         }
+    }
+
+    private nonisolated static func readImportedTheme(at url: URL) throws
+        -> (ThemePreset, ExternalThemeImport.TerminalPalette?)
+    {
+        guard try url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
+            throw ThemePackage.ValidationError.invalidDocument
+        }
+        let file = try FileHandle(forReadingFrom: url)
+        defer { try? file.close() }
+        let data = try file.read(upToCount: ExternalThemeImport.maximumBytes + 1) ?? Data()
+        guard data.count <= ExternalThemeImport.maximumBytes else {
+            throw ThemePackage.ValidationError.tooLarge
+        }
+        let name = String(url.deletingPathExtension().lastPathComponent.prefix(80))
+        if url.pathExtension.lowercased() == "itermcolors" {
+            let palette = try ExternalThemeImport.iterm(data, name: "\(name) (.itermcolors)")
+            let swatch = ThemePreset(
+                name: name, appearance: .system,
+                accentHex: palette.cursor ?? palette.foreground ?? "",
+                backgroundHex: palette.background ?? "")
+            return (swatch, palette)
+        }
+        if let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+            object["schemaVersion"] != nil
+        {
+            return (try ThemePackage.decode(data), nil)
+        }
+        return (try ExternalThemeImport.vscode(data, name: name), nil)
     }
 
     private func previewTheme(

@@ -4,7 +4,7 @@ The built-in catalog at `0b7cfda` was present before implementation. Verificatio
 
 ## Local review
 
-The staged catalog contains one approved listing, **Tidal Marsh v1**, by **Pathem contributors** under **CC0-1.0**. It starts with no theme installed. Launch the app from the checkout, then open **Settings → Appearance → Community Themes…**.
+The staged catalog contains one approved listing, **Tidal Marsh v1**, by **Pathem contributors** under **CC0-1.0**. It starts with no theme installed. Launch the app from the checkout, then open **Settings → Appearance → Themes…**.
 
 ```sh
 TMPDIR="$PWD/.build/local-tmp" PATHEM_COMMUNITY_GALLERY=1 \
@@ -14,7 +14,7 @@ TMPDIR="$PWD/.build/local-tmp" PATHEM_COMMUNITY_GALLERY=1 \
 
 The checked-in [fixture](gallery-fixture/) includes both submission JSON files, their original Pathem packages, and the ordered v1 and v2 decisions in `reviews.json`. Each submission embeds two screenshots of the theme in Pathem's demo workspace. To exercise the update in the staged gallery, install and apply v1, submit `v2.submission.json`, then record its approval in **Review**. Check that **Browse** offers **Update**, that **Installed** still shows v1 before updating, and that the current appearance changes only after applying v2. **Review** also offers withdrawal, and **Installed** offers uninstall. For a full manual replay beginning with submission of v1, run the same launch command with a fresh configuration directory.
 
-Creators can use the two submission files as examples. A submission contains a stable lowercase ID, positive integer revision, title, summary, creator, license, optional source attribution, tags, a base64-encoded Pathem theme package, and one to three base64-encoded PNG or JPEG screenshots. Screenshot limits are 2 MiB and 2400 pixels per side per image. Revisions of an existing listing use its ID and a higher version number.
+Creators can use the two submission files as examples. A submission contains a stable lowercase ID, positive integer revision, title, summary, creator, license, optional source attribution, tags, a base64-encoded Pathem theme package, and one to three base64-encoded PNG or JPEG screenshots. Source screenshots are limited to 2 MiB and 2400 pixels per side. Export and review intake re-encode previews with a 300 KiB limit per image. Revisions of an existing listing use its ID and a higher version number.
 
 ## Results
 
@@ -22,7 +22,7 @@ Creators can use the two submission files as examples. A submission contains a s
 | --- | --- |
 | Native debug build | Passed with the Xcode toolchain under the shared Swift build lock. |
 | Theme-focused tests | 15 tests passed, including rejection, invalid metadata and package, screenshot validation, and preservation of persisted state after a failed transaction. |
-| Full Swift suite | Exited 70 without a suite summary after reporting failures in `OrganizePlannerTests` and `ArchiveRepackTests.snapshotDetectsChanges`. The catalog verification also recorded OrganizePlanner failures. Log at `.build/gallery-full-tests.log`. |
+| Full static/unit verification | Batch A rerun passed 15 XCTest cases and 890 Swift Testing cases (180 suites). The earlier exit 70 did not reproduce. |
 | Submission and approval | The AppKit smoke submitted v1 through the gallery controller. It confirmed the revision was pending and absent from Browse, then recorded the fixture approval. Search matched title, creator, and tags in one query, and a nonmatching query returned an empty list. |
 | Details and preview | Creator, license, source, and both screenshot selections appeared in the gallery controls. The offscreen detail capture was inspected. The preview applied live tint and restored System appearance on exit, with the catalog still uninstalled. |
 | Explicit install and apply | Install saved v1 and left System appearance active. Apply selected v1. A second process restored the installed revision and its applied appearance from disk. |

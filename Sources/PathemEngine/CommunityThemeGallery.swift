@@ -59,6 +59,12 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
     }
 
     public func validate() throws {
+        try validate(screenshotLimit: 2 * 1024 * 1024)
+    }
+
+    static let publishedScreenshotLimit = 300 * 1024
+
+    func validate(screenshotLimit: Int) throws {
         guard (1...64).contains(id.utf8.count),
             id.utf8.allSatisfy({ (97...122).contains($0) || (48...57).contains($0) || $0 == 45 }),
             version > 0, Self.validText(title, limit: 80), Self.validText(summary, limit: 600),
@@ -67,7 +73,10 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
             source.map({ Self.validText($0, limit: 300) }) ?? true
         else { throw CommunityThemeError.invalidListing }
         _ = try theme()
-        guard (1...3).contains(screenshots.count), screenshots.allSatisfy(Self.validScreenshot)
+        guard (1...3).contains(screenshots.count),
+            screenshots.allSatisfy({
+                $0.count <= screenshotLimit && Self.screenshotSource($0) != nil
+            })
         else { throw CommunityThemeError.invalidScreenshot }
     }
 
@@ -77,21 +86,61 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
             && text.rangeOfCharacter(from: .controlCharacters) == nil
     }
 
-    private static func validScreenshot(_ data: Data) -> Bool {
+    private static func screenshotSource(_ data: Data) -> CGImageSource? {
+        let noCache = [kCGImageSourceShouldCache: false] as CFDictionary
         guard data.count <= 2 * 1024 * 1024,
-            let image = CGImageSourceCreateWithData(data as CFData, nil),
+            let image = CGImageSourceCreateWithData(data as CFData, noCache),
             let type = CGImageSourceGetType(image) as String?,
             ["public.png", "public.jpeg"].contains(type), CGImageSourceGetCount(image) == 1,
-            let properties = CGImageSourceCopyPropertiesAtIndex(image, 0, nil) as? [CFString: Any],
+            let properties = CGImageSourceCopyPropertiesAtIndex(image, 0, noCache)
+                as? [CFString: Any],
             let width = properties[kCGImagePropertyPixelWidth] as? Int,
             let height = properties[kCGImagePropertyPixelHeight] as? Int,
-            (1...2400).contains(width), (1...2400).contains(height)
-        else { return false }
-        return CGImageSourceGetStatus(image) == .statusComplete
-            && CGImageSourceGetStatusAtIndex(image, 0) == .statusComplete
-            && CGImageSourceCreateImageAtIndex(
-                image, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary) != nil
+            (1...2400).contains(width), (1...2400).contains(height),
+            CGImageSourceGetStatus(image) == .statusComplete,
+            CGImageSourceGetStatusAtIndex(image, 0) == .statusComplete
+        else { return nil }
+        return image
     }
+
+    fileprivate func sanitizingScreenshots() throws -> Self {
+        try validate()
+        let clean = try screenshots.map(Self.sanitizeScreenshot)
+        return Self(
+            id: id, version: version, title: title, summary: summary, creator: creator,
+            license: license, source: source, tags: tags, package: package, screenshots: clean)
+    }
+
+    private static func sanitizeScreenshot(_ data: Data) throws -> Data {
+        guard let source = screenshotSource(data),
+            let image = CGImageSourceCreateThumbnailAtIndex(
+                source, 0,
+                [
+                    kCGImageSourceCreateThumbnailFromImageAlways: true,
+                    kCGImageSourceCreateThumbnailWithTransform: true,
+                    kCGImageSourceThumbnailMaxPixelSize: 2400,
+                    kCGImageSourceShouldCacheImmediately: true,
+                ] as CFDictionary)
+        else { throw CommunityThemeError.invalidScreenshot }
+        // Add only decoded pixels. Copying the source would retain metadata or trailing bytes.
+        for (type, options) in [
+            ("public.png", nil),
+            ("public.jpeg", [kCGImageDestinationLossyCompressionQuality: 0.82] as CFDictionary),
+            ("public.jpeg", [kCGImageDestinationLossyCompressionQuality: 0.55] as CFDictionary),
+        ] {
+            let output = NSMutableData()
+            guard
+                let destination = CGImageDestinationCreateWithData(
+                    output, type as CFString, 1, nil)
+            else { continue }
+            CGImageDestinationAddImage(destination, image, options)
+            if CGImageDestinationFinalize(destination), output.length <= publishedScreenshotLimit {
+                return output as Data
+            }
+        }
+        throw CommunityThemeError.invalidScreenshot
+    }
+
 }
 
 /// Local review history and installed snapshots, persisted together in an atomic write.
@@ -216,10 +265,10 @@ public struct CommunityThemeGallery: Codable, Sendable {
     private static let submissionLimit = 9 * 1024 * 1024
 
     public static func encodeSubmission(_ revision: CommunityThemeRevision) throws -> Data {
-        try revision.validate()
+        let sanitized = try revision.sanitizingScreenshots()
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        let data = try encoder.encode(revision)
+        let data = try encoder.encode(sanitized)
         guard data.count <= submissionLimit else { throw CommunityThemeError.oversizedFile }
         return data
     }
@@ -231,8 +280,7 @@ public struct CommunityThemeGallery: Codable, Sendable {
     public static func submission(at url: URL) throws -> CommunityThemeRevision {
         let revision = try JSONDecoder().decode(
             CommunityThemeRevision.self, from: read(url, limit: submissionLimit))
-        try revision.validate()
-        return revision
+        return try revision.sanitizingScreenshots()
     }
 
     private static let storeLimit = 64 * 1024 * 1024

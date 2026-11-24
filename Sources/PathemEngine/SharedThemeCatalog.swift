@@ -17,7 +17,9 @@ public struct SharedThemeCatalog: Codable, Sendable {
         guard catalog.schemaVersion == 1,
             Set(catalog.themes.map(\.id)).count == catalog.themes.count
         else { throw CommunityThemeError.invalidListing }
-        for theme in catalog.themes { try theme.validate() }
+        for theme in catalog.themes {
+            try theme.validate(screenshotLimit: CommunityThemeRevision.publishedScreenshotLimit)
+        }
         return catalog
     }
 
@@ -26,17 +28,12 @@ public struct SharedThemeCatalog: Codable, Sendable {
             url.password == nil,
             url.scheme == "https" || (url.scheme == "http" && url.host == "127.0.0.1")
         else { throw URLError(.unsupportedURL) }
-        // A review can publish twice in the same second. Filesystem Last-Modified dates
-        // have only second precision, so a cached conditional response can hide the update.
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.urlCache = nil
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        // The gallery opens on demand and uses the catalog's HTTP freshness policy.
+        let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForResource = 30
         let session = URLSession(configuration: configuration)
         defer { session.finishTasksAndInvalidate() }
-        var request = URLRequest(url: url)
-        request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-        let (bytes, response) = try await session.bytes(for: request)
+        let (bytes, response) = try await session.bytes(from: url)
         guard let response = response as? HTTPURLResponse, response.statusCode == 200,
             response.expectedContentLength <= SharedThemeCatalog.maximumBytes,
             let finalURL = response.url, finalURL.host == url.host, finalURL.scheme == url.scheme
@@ -51,6 +48,9 @@ public struct SharedThemeCatalog: Codable, Sendable {
     }
 
     public func encoded() throws -> Data {
+        for theme in themes {
+            try theme.validate(screenshotLimit: CommunityThemeRevision.publishedScreenshotLimit)
+        }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
         let data = try encoder.encode(self)

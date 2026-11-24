@@ -22,13 +22,10 @@ public enum ExternalThemeImport {
     }
 
     public static func vscode(_ data: Data, name: String) throws -> ThemePreset {
-        guard data.count <= maximumBytes, let source = String(data: data, encoding: .utf8)
+        guard data.count <= maximumBytes, String(data: data, encoding: .utf8) != nil
         else { throw ImportError.invalidPalette }
-        // Preserve quoted strings, including escaped quotes and URLs, inside JSONC.
-        let json = source.replacing(/"(?:[^"\\]|\\.)*"|\/\/[^\r\n]*|\/\*[\s\S]*?\*\//) {
-            $0.output.first == "\"" ? String($0.output) : " "
-        }
-        guard let root = try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
+        let json = try stripComments(data)
+        guard let root = try JSONSerialization.jsonObject(with: json) as? [String: Any],
             let colors = root["colors"] as? [String: Any]
         else { throw ImportError.invalidPalette }
         let background = ["editor.background", "sideBar.background"]
@@ -61,6 +58,51 @@ public enum ExternalThemeImport {
         return TerminalPalette(
             name: name, background: background, foreground: foreground,
             cursor: cursor, ansi: ansi.count == 16 ? ansi : nil)
+    }
+
+    // Each byte is visited once. Keeping one space per comment avoids joining tokens.
+    private static func stripComments(_ data: Data) throws -> Data {
+        let bytes = Array(data)
+        var result = Data()
+        result.reserveCapacity(bytes.count)
+        var index = 0
+        var inString = false
+        while index < bytes.count {
+            let byte = bytes[index]
+            index += 1
+            if byte == 34 {
+                inString.toggle()
+            } else if inString && byte == 92 && index < bytes.count {
+                result.append(byte)
+                result.append(bytes[index])
+                index += 1
+                continue
+            } else if !inString && byte == 47 && index < bytes.count {
+                switch bytes[index] {
+                case 47:
+                    index += 1
+                    while index < bytes.count && bytes[index] != 10 && bytes[index] != 13 {
+                        index += 1
+                    }
+                    result.append(32)
+                    continue
+                case 42:
+                    index += 1
+                    while index + 1 < bytes.count && !(bytes[index] == 42 && bytes[index + 1] == 47)
+                    {
+                        index += 1
+                    }
+                    guard index + 1 < bytes.count else { throw ImportError.invalidPalette }
+                    index += 2
+                    result.append(32)
+                    continue
+                default:
+                    break
+                }
+            }
+            result.append(byte)
+        }
+        return result
     }
 
     private static func opaqueHex(_ value: Any?) -> String? {
