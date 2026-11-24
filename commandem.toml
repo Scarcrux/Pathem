@@ -2205,6 +2205,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "2026-11-24: Themes beta update path left as is by owner decision (no beta testers yet). Beta builds take the stable Sparkle feed, and a stable update drops the PathemThemesBeta flag, so the Themes gallery disappears and an applied community theme loses its source after the first update. Decide this (a separate beta feed, or a runtime setting instead of a build flag) before any beta build is distributed. Also before distribution: publish the Themes entry on the privacy page."
     at = "2026-11-24T19:47:14Z"
 
+  [[mission.comment]]
+    text = "2026-11-24: Themes ships in every build (26beafb), which supersedes the beta update-path note above. Trigger: owner approved removing the beta plumbing. The build flag is gone from the app, packaging, release script, Makefile and e2e runner; CI packages once and always runs both Themes loopback scenarios. A static test with red controls pins the single catalog fetch entry point to the gallery button, so nothing fetches at launch (proven from source, not from an observed launch). Import also accepts .jsonc (fac193d). Not yet verified: the packaged e2e run and the Settings buttons on screen."
+    at = "2026-11-24T20:04:09Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
