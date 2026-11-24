@@ -2699,6 +2699,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-ccdaca2b"
     title = "Stage the GitHub theme submission issue form and AWS private catalog and reviewer infrastructure."
+    done = true
 
   [[mission.comment]]
     text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
@@ -2735,4 +2736,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "The loopback Marketplace Admin dashboard uses the Swift validator and publisher and keeps approval separate from publication. End-to-end controls covered unauthorized access, wrong origin and token, submission, approval, request changes, creator feedback export, superseding a revision, and withdrawal. Chrome verified authenticated rendering, screenshots and mobile width. Commandem and Pathem aligned listing metadata, stable IDs and action vocabulary. Hosted access and the creator repository remain open."
     at = "2026-11-24T11:23:19Z"
+
+  [[mission.comment]]
+    text = "AWS staging stack CREATE_COMPLETE in us-east-1. The Swift client synced the empty approved snapshot through CloudFront. Unauthenticated direct S3 reads of the catalog and review bucket returned HTTP 403. Cognito verified invite-only creation and required MFA. GitHub form parses and landed locally. Hosted admin integration and public issue-form rollout remain open."
+    at = "2026-11-24T11:43:13Z"
 # <<< commandem roadmap <<<
