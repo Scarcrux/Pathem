@@ -1,0 +1,56 @@
+name: Submit a Pathem theme
+description: Submit a new theme or a revision for Pathem Themes.
+title: '[Theme] '
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Include theme files and screenshots you intend to share.
+        In a Themes preview build, open Settings → Appearance → Submit a Theme to prepare the submission JSON.
+  - type: input
+    id: listing
+    attributes:
+      label: Theme name and listing ID
+      description: Keep the same lowercase listing ID for an update, even if the display name changes.
+      placeholder: Tidal Marsh (tidal-marsh)
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Revision
+      description: Use a positive integer. Increase it when you update a theme or respond to review.
+      placeholder: '1'
+    validations:
+      required: true
+  - type: textarea
+    id: submission
+    attributes:
+      label: Submission JSON
+      description: Attach the exported .submission.json here, or link to it in a permanent GitHub commit or release asset.
+      placeholder: Drag your .submission.json file here
+    validations:
+      required: true
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: State the license covering the package, artwork, and screenshots.
+      placeholder: CC0-1.0
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: About this revision
+      description: Describe the look or what changed. Attach preview screenshots if you have them.
+    validations:
+      required: true
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Permission to share
+      options:
+        - label: I have permission to share this theme, its artwork, and its screenshots under the stated license.
+          required: true
