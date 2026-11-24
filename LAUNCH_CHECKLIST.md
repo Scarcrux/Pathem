@@ -89,6 +89,13 @@ things a human has to look at.
       Other Pane shows a PDF/image.
 - [ ] The marquee features that the site will show actually work on this build:
       the embedded terminal, a torrent, and one remote backend (S3/WebDAV/SFTP/FTP).
+      (2026-11-23, torrent verified: sent an external `magnet:` URL via
+      Launch Services to a signed scratch copy of the installed Pathem 0.9.4,
+      build 28. With inbound confirmation disabled in scratch preferences, the
+      bundled daemon fetched the generated torrent metadata and web seed from
+      loopback, and the file in the isolated download folder matched all 10,000
+      fixture bytes. The default confirmation prompt, public peer discovery, the
+      terminal, and a remote backend were outside this run.)
 - [ ] Drag a file **out to Finder and back into Pathem twice** (the drag-strand
       regression path): the second drag must still work.
 - [ ] Switch the system language to one of the eleven non-English locales and spot

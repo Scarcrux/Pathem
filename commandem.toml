@@ -2187,6 +2187,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Focused transient review: repaired stale Settings and Updater source pins for the full recipes. Inventory and 246 harness tests pass. German native sweep used light/dark, two hosts and short/long inputs. View Options (m07) and encrypted image (m12) each retained eight check-3 cell failures; the existing host-fit and field-width repairs held. Both ambiguity tasks stay open. No full visual matrix was run."
     at = "2026-11-24T01:18:30Z"
 
+  [[mission.comment]]
+    text = "Release torrent walkthrough passed on signed Pathem 0.9.4 build 28. External Launch Services magnet URL reached the scratch release app; its packaged daemon requested controlled loopback metadata and web seed, and the downloaded file matched all 10,000 bytes. Confirmation disabled only in scratch. First probe reached the seed but its exact-process comparison used an uncanonicalized path. A subsequent probe was refused by demo-root isolation; the passing probe used the app-generated temporary demo root. Evidence recorded in LAUNCH_CHECKLIST.md."
+    at = "2026-11-24T01:20:56Z"
+
 [[mission]]
   id = "m-e1443252"
   design = "docs/design-shared-gestures.md"
@@ -2560,6 +2564,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-6565823c"
     title = "Verify in a real window and install"
+    done = true
+
+  [[mission.task]]
+    id = "t-382e51bd"
+    title = "Investigate Reclaim Space geometry (m72): eight check-1 and eight check-3 cell failures in the focused German run. The first collapsed control was an empty detail label. Establish whether the warnings produce visible clipping before changing the window or harness."
 
   [[mission.comment]]
     text = "Landed 0e42dfc (catalog engine, 4 tests incl. forged-path and symlink refusals) and the Reclaim Space window. Real-disk read-only run: 54 rows, 372.6 GB rebuilds / 319.05 GB re-downloads / 61.79 GB review; measuring all places took 204 s (rows appear progressively; DirectorySize is the bottleneck, a faster sizer is a follow-up). Smoke: known-place rows and Delete Now tier guard pass. Unverified: header/button layout (render method does not draw them) and live clicks on Deep Scan, Stop, Delete Now sheet, Empty Trash. Task 4 (verify in a real window and install) stays open."
@@ -2581,6 +2590,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Owner re-ran Delete Now on the 3a300b7 build: folder emptied (110 GB to 76 KB) but alert said 23 items left, No such file or directory. Reproduced with 4 concurrent deletes (3 of 9 runs red); fixed: vanished folders count as deleted, button stays disabled with a Deleting… note during a run. 30 of 30 green after. Unproven whether the second actor was a second click or another process; the first-ever permission error remains unexplained."
     at = "2026-11-12T16:31:06Z"
 
+  [[mission.comment]]
+    text = "Real Reclaim Space window exercised on scratch data in German: 24 open and close cycles across appearance and host sizes, with files and private config unchanged. Prior fixture smoke verified catalog sizes, consequence labels and Delete Now eligibility for the rebuildable tier. The installed Pathem 0.9.4 build 28 already contains Reclaim Space. No reinstall was needed."
+    at = "2026-11-24T01:20:38Z"
+
 [[mission]]
   id = "m-b4ebb9d9"
   title = "Folder sizes: cancellable walk, bounded threads, exclude list"
@@ -2588,6 +2601,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
   note = "Trigger: 2026-11-13, Finder sat at about 119% CPU because \"Calculate all sizes\" was on by default and it kept walking ~/Library (Go build cache, simulator devices); owner asked whether Pathem has the same problem. Evidence (code read, not run): FileListController.refreshFolderSizesAsync checks its generation only between folders, so DirectorySize.total cannot be cancelled mid-walk; each walk uses concurrentPerform over every core and up to 6 folders are walked at once; there is no exclude list. What already holds: the option is off by default and sizes are cached on disk by folder mtime. Change: (1) a cancel flag checked per directory inside ParallelWalk, honoured on navigate-away and on switching the option off; (2) one shared cap on total walker threads across folders, at utility QoS; (3) an exclude list in Settings (paths and name patterns such as ~/Library/Caches and node_modules) whose folders show a dash with a tooltip saying why. Tests seen red first for each; measure CPU and time on a large tree before and after. Confidence: mechanisms read from source, effect unmeasured."
   issue = 0
   estimate = "M"
+
+  [[mission.task]]
+    id = "t-86f6232e"
+    title = "Verify skipped size dash and tooltip, Calculate Size context action, and General settings controls on a controlled fixture."
+    done = true
 
   [[mission.comment]]
     text = "Owner 2026-11-13: \"pathem can identify the temp and cache directories\". Confirmed in source: Cleanup already classifies them (StorageScan.junkDirectories, excludedDirectories and cacheDirectories in Sources/PathemEngine/StorageScan.swift:10-28; ReclaimCatalog.cacheRoots at ReclaimCatalog.swift:100; RepoScan.regenerableNames at RepoScan.swift:19). So change (3) is not a hand-typed list: the folder-size walk reuses these classifiers. Default: cache, temp and regenerable folders are recognised and not walked automatically; the row shows a dash with a reason and a \"Calculate size\" action for that one folder, so the size is still one click away. Settings offers \"Skip caches and temporary folders when calculating sizes\" (default on) plus user-added paths. Add the system temp roots (the per-user TMPDIR under /var/folders, /tmp, /private/tmp) to the shared classifier if they are missing, in one place used by both Cleanup and sizes."
@@ -2600,6 +2618,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Scripted checks added for the two parts previously marked unverified: the context menu offers Calculate Size for a skipped folder and hides it after sizing (smoke); the real Settings checkbox and Also skip field deliver to the lists (settings harness 61/61). Remaining gap is visual only. Installed build 0fb5e21 already contains the feature; these checks are DEBUG-only."
     at = "2026-11-13T14:06:55Z"
+
+  [[mission.comment]]
+    text = "Folder size UI verified: the scratch smoke shows a dash and reason with the skip enabled, Calculate Size appears for that folder and disappears after it shows 4 KB, and the skip-off control calculates automatically. The 463 × 584 offscreen General Settings render shows the checkbox, Also skip field and help text without clipping. This closes the queued visual check; the roadmap performance measurement remains separate."
+    at = "2026-11-24T01:20:39Z"
 
 [[mission]]
   id = "m-d5f4b409"
