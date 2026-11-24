@@ -405,8 +405,8 @@
     },
     {
       "id": "b21",
-      "site": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:243:9:beginSheetModal",
-      "builder": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:237:21:NSAlert",
+      "site": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:222:9:beginSheetModal",
+      "builder": "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:216:21:NSAlert",
       "source_sha256": "2fa2856197e35f74d2410670a11b139a76c2a77980e4636c12f75e9f60cc243f",
       "sheet": true,
       "fixture": "Runtime verb/count and first eight filename/error pairs, plain report. Fixture: eight 255-character names with permission errors. No provider access.",

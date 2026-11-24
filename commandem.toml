@@ -2356,6 +2356,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-89011ba8"
     title = "Reserve sanitized remote download destinations across the batch; reproduce collision safely before receiver changes"
+    done = true
 
   [[mission.task]]
     id = "t-689d4e95"
@@ -2396,6 +2397,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Final read-only Tree review confirmed unchanged preexisting mechanism in HEAD: root Node reuse keys on parent modificationDate and keeps loaded children; extra metadata enrichment does not restat child size/mtime. Content-only nested edits may therefore retain stale stat fields. Source-confirmed limitation, functional reproduction pending; not claimed fixed by Mission59."
     at = "2026-10-23T16:56:22Z"
+
+  [[mission.comment]]
+    text = "Remote download collision fixed. Three planned jobs chose the same local path before any provider wrote. The scratch fixture reproduced overwritten bytes. Reserving names across the batch preserves each payload and the existing destination."
+    at = "2026-11-24T01:08:37Z"
 
 [[mission]]
   id = "m-768176ca"

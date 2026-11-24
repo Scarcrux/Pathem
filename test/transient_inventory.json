@@ -534,14 +534,14 @@
       "reason": "Caller title and optional error description, standard OK only. Fixture: archive path with 255-character filename and permission error. No archive operation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:243:9:beginSheetModal": {
+    "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:222:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:237:21:NSAlert"
+        "Sources/Pathem/BrowserViewController+RemoteTransfer.swift:216:21:NSAlert"
       ],
       "reason": "Runtime verb/count and first eight filename/error pairs, plain report. Fixture: eight 255-character names with permission errors. No provider access.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
