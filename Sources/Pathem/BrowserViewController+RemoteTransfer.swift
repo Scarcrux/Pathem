@@ -155,15 +155,30 @@ extension BrowserViewController {
 
     /// Extract an archive to a fresh temp folder and browse it as a folder.
     func browseArchive(_ archive: URL, in pane: PaneController, origin: URL) {
-        Task { @MainActor in
-            let mount = Self.archiveTempDir.appendingPathComponent(
-                UUID().uuidString, isDirectory: true
-            ).appendingPathComponent((archive.lastPathComponent as NSString).deletingPathExtension)
+        let request = pane.beginContentRequest()
+        Task { @MainActor [weak self, weak pane] in
+            let scratch = Self.archiveTempDir.appendingPathComponent(
+                UUID().uuidString, isDirectory: true)
+            let mount = scratch.appendingPathComponent(
+                (archive.lastPathComponent as NSString).deletingPathExtension)
+            var mounted = false
+            defer {
+                if !mounted { try? FileManager.default.removeItem(at: scratch) }
+            }
             do {
                 try await Archiver.extract(archive, to: mount)
+                guard let pane, pane.isContentRequestCurrent(request), pane.currentURL == origin
+                else {
+                    return
+                }
                 pane.mountArchive(archive: archive, mountRoot: mount, origin: origin)
+                mounted = true
             } catch {
-                self.reportArchiveError(L("archive.cantRead", "Couldn’t read the archive"), error)
+                guard let pane, pane.isContentRequestCurrent(request), pane.currentURL == origin
+                else {
+                    return
+                }
+                self?.reportArchiveError(L("archive.cantRead", "Couldn’t read the archive"), error)
             }
         }
     }

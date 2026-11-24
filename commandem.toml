@@ -2365,6 +2365,7 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.task]]
     id = "t-01331b47"
     title = "Reproduce delayed archive extraction navigation reversal and add origin/generation ownership guard"
+    done = true
 
   [[mission.task]]
     id = "t-0e9bf044"
@@ -2401,6 +2402,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Remote download collision fixed. Three planned jobs chose the same local path before any provider wrote. The scratch fixture reproduced overwritten bytes. Reserving names across the batch preserves each payload and the existing destination."
     at = "2026-11-24T01:08:37Z"
+
+  [[mission.comment]]
+    text = "Delayed archive browse fixed. A controlled extraction completion mounted over a different current folder on the baseline. The pane content request now owns delivery. The same-origin control mounts and the navigated-away control stays in place and releases scratch output."
+    at = "2026-11-24T01:10:14Z"
 
 [[mission]]
   id = "m-768176ca"
