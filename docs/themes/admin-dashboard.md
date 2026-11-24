@@ -1,6 +1,6 @@
 # Marketplace review dashboard
 
-The first dashboard is a private local web app for a catalog maintainer. It uses the same Swift validator, review history, and snapshot publisher as Pathem. Creators submit through the proposed Git pull-request workflow or provide a submission JSON to a maintainer for local review.
+The first dashboard is a private local web app for a catalog maintainer. It uses the same Swift validator, review history, and snapshot publisher as Pathem. Creators use a GitHub issue with their existing GitHub account.
 
 1. Import a submission into the pending queue and inspect its screenshot, attribution, license, and downloadable Pathem theme package.
 2. Record approval, rejection, or a request for changes with a required note. A corrected submission uses a higher revision. Approval does not change the published snapshot.
@@ -42,8 +42,12 @@ Verify the dashboard with `python3 test/theme_admin_e2e.py .build/debug/pathem-t
 
 ## Creator submission and AWS staging
 
-Creators use the **Submit a Pathem theme** issue form in the Pathem GitHub repository.
-The public issue links to a fixed revision of the submission JSON. Keep the same listing
+In Pathem, open **Settings → Appearance → Prepare Marketplace Submission…**.
+Choose one to three screenshots, enter listing details, and save the validated JSON.
+The export includes the active theme and its effective styles. Open the GitHub form
+from the confirmation dialog, then attach the saved JSON in the submission field.
+You can also link to the file in a permanent GitHub commit or release asset.
+The file and issue are public. Keep the same listing
 ID and increase the revision for a correction or update. The issue is the creator's
 status and feedback thread. A maintainer retrieves the submitted file, imports it into
 Marketplace Admin, and can post the exported decision back to that issue. Public release

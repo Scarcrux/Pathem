@@ -2701,6 +2701,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
     title = "Stage the GitHub theme submission issue form and AWS private catalog and reviewer infrastructure."
     done = true
 
+  [[mission.task]]
+    id = "t-2b40f185"
+    title = "Export a validated marketplace submission from Appearance and hand it off to the GitHub issue form using the creator’s existing account."
+    done = true
+
   [[mission.comment]]
     text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
     at = "2026-11-24T09:14:49Z"
@@ -2740,4 +2745,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "AWS staging stack CREATE_COMPLETE in us-east-1. The Swift client synced the empty approved snapshot through CloudFront. Unauthenticated direct S3 reads of the catalog and review bucket returned HTTP 403. Cognito verified invite-only creation and required MFA. GitHub form parses and landed locally. Hosted admin integration and public issue-form rollout remain open."
     at = "2026-11-24T11:43:13Z"
+
+  [[mission.comment]]
+    text = "Creators wanted to reuse their GitHub account and the existing form required a hand-assembled artifact. Appearance now packages effective theme styles, metadata, and selected previews into the same bounded JSON that Marketplace Admin validates. Focused tests, the private Admin lifecycle, a Settings render, and the YAML check passed. GitHub issue upload and public rollout remain to be verified."
+    at = "2026-11-24T12:00:25Z"
 # <<< commandem roadmap <<<

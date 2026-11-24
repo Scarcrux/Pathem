@@ -33,6 +33,22 @@ public struct CommunityThemeRevision: Codable, Equatable, Sendable {
     public let package: Data
     public let screenshots: [Data]
 
+    public init(
+        id: String, version: Int, title: String, summary: String, creator: String,
+        license: String, source: String?, tags: [String], package: Data, screenshots: [Data]
+    ) {
+        self.id = id
+        self.version = version
+        self.title = title
+        self.summary = summary
+        self.creator = creator
+        self.license = license
+        self.source = source
+        self.tags = tags
+        self.package = package
+        self.screenshots = screenshots
+    }
+
     public var reference: Reference { Reference(id: id, version: version) }
 
     public func theme() throws -> ThemePreset {
@@ -197,9 +213,24 @@ public struct CommunityThemeGallery: Codable, Sendable {
         return data
     }
 
+    private static let submissionLimit = 9 * 1024 * 1024
+
+    public static func encodeSubmission(_ revision: CommunityThemeRevision) throws -> Data {
+        try revision.validate()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+        let data = try encoder.encode(revision)
+        guard data.count <= submissionLimit else { throw CommunityThemeError.oversizedFile }
+        return data
+    }
+
+    public static func readSubmissionScreenshot(at url: URL) throws -> Data {
+        try read(url, limit: 2 * 1024 * 1024)
+    }
+
     public static func submission(at url: URL) throws -> CommunityThemeRevision {
         let revision = try JSONDecoder().decode(
-            CommunityThemeRevision.self, from: read(url, limit: 9 * 1024 * 1024))
+            CommunityThemeRevision.self, from: read(url, limit: submissionLimit))
         try revision.validate()
         return revision
     }

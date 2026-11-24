@@ -10,6 +10,29 @@ struct CommunityThemeGalleryTests {
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         .appendingPathComponent("docs/themes/gallery-fixture", isDirectory: true)
 
+    @Test func creatorExportRoundTripsThroughReviewIntake() throws {
+        let source = try CommunityThemeGallery.submission(
+            at: fixture.appendingPathComponent("v1.submission.json"))
+        let exported = try CommunityThemeGallery.encodeSubmission(source)
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        try exported.write(to: url)
+        let imported = try CommunityThemeGallery.submission(at: url)
+        #expect(imported == source)
+        var gallery = CommunityThemeGallery()
+        try gallery.submit(imported)
+        #expect(gallery.discover().isEmpty)
+
+        let invalid = CommunityThemeRevision(
+            id: source.id, version: source.version, title: source.title, summary: source.summary,
+            creator: source.creator, license: source.license, source: source.source,
+            tags: source.tags,
+            package: source.package, screenshots: [Data("invalid image".utf8)])
+        #expect(throws: CommunityThemeError.self) {
+            try CommunityThemeGallery.encodeSubmission(invalid)
+        }
+    }
+
     @Test func rejectionAndWithdrawalNeverExposeRevisionForInstall() throws {
         let v1 = try CommunityThemeGallery.submission(
             at: fixture.appendingPathComponent("v1.submission.json"))

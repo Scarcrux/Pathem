@@ -24,12 +24,12 @@ body:
       placeholder: '1'
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: submission
     attributes:
       label: Submission JSON
-      description: Link to a permanent GitHub commit or release asset containing the complete submission JSON.
-      placeholder: https://github.com/example/theme/releases/download/v1/submission.json
+      description: Attach the exported .submission.json here, or link to it in a permanent GitHub commit or release asset.
+      placeholder: Drag your .submission.json file here
     validations:
       required: true
   - type: input

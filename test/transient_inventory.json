@@ -393,14 +393,14 @@
         "runtime_fixture": "Runtime input/suggestion fixtures: four 255-character components per path. Declared path stress fixture, not a filesystem maximum. Do not navigate."
       }
     },
-    "Sources/Pathem/SettingsWindowController.swift:1269:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1283:9:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1261:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1275:21:NSAlert"
       ],
       "reason": "Plain NSAlert text with at most two standard buttons. Static localized strings. Build from catalog; never invoke folderHandlerToggled/applyFolderHandler, which changes the system default.",
       "sample": {
@@ -500,26 +500,26 @@
       "reason": "Install/remove failure report only. Fixture: permission error with a 255-character component. Do not invoke installation.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1293:17:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1307:17:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1282:29:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1296:29:NSAlert"
       ],
       "reason": "Localized folder-handler failure report plus error detail. Fixture: permission error with 255-character component. Do not change system handler.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1336:17:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1350:17:beginSheetModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1332:29:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1346:29:NSAlert"
       ],
       "reason": "Localized default magnet-app failure report. Fixture: permission error with 255-character component. Do not change magnet or torrent handler.",
       "coverage_status": "Source reviewed only; not part of the ten-alert Unit 1 sample. Native structural coverage deferred to Unit 2."
@@ -984,7 +984,7 @@
       ],
       "reason": "Settings sidebar, search and preference controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/SettingsWindowController.swift:2073:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/SettingsWindowController.swift:2087:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
@@ -1531,14 +1531,14 @@
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1375:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1389:9:beginSheetModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1371:21:NSOpenPanel"
+        "Sources/Pathem/SettingsWindowController.swift:1385:21:NSOpenPanel"
       ],
       "reason": "Native system UI; reviewed constructor/configuration and presentation receiver. Class C presentation/dismissal only. Cancel without selecting anything outside the owned fixture. No handler, provider, torrent-client or owner-file side effects authorized by this row."
     },
@@ -2235,14 +2235,14 @@
       "reason": "Pattern, match type, kind and selection-mode custom accessory. Cancel without changing pane selection.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1395:9:beginSheetModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1409:9:beginSheetModal": {
       "class": "A",
       "kind": "alert",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1446:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1460:21:NSAlert"
       ],
       "reason": "makeCommanderKeysDialog factory supplies measured six-popup F-key accessory. Cancel without modifying preferences.",
       "coverage_status": "Source review only; native task 11 coverage pending. Outside the ten-alert Unit 1 structural sample."
@@ -2626,38 +2626,82 @@
       ],
       "reason": "Custom content factory; individual caller rows carry the Return action and destructive intent."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1045:15:runModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1051:15:runModal": {
       "class": "C",
       "kind": "system open panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1041:21:NSOpenPanel"
+        "Sources/Pathem/SettingsWindowController.swift:1047:21:NSOpenPanel"
       ],
       "reason": "Standard theme JSON picker. Cancel without accessing any file."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1109:15:runModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1115:15:runModal": {
       "class": "C",
       "kind": "system save panel",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1106:21:NSSavePanel"
+        "Sources/Pathem/SettingsWindowController.swift:1112:21:NSSavePanel"
       ],
       "reason": "Standard theme JSON picker. Cancel without accessing any file."
     },
-    "Sources/Pathem/SettingsWindowController.swift:1089:12:runModal": {
+    "Sources/Pathem/SettingsWindowController.swift:1095:12:runModal": {
       "class": "B",
       "kind": "alert",
       "custom_content": false,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/SettingsWindowController.swift:1080:21:NSAlert"
+        "Sources/Pathem/SettingsWindowController.swift:1086:21:NSAlert"
       ],
       "reason": "Theme preview uses a swatch as the standard alert icon, a theme name, and Apply and Cancel. Structural check only for runModal."
+    },
+    "Sources/Pathem/ThemeSubmissionDialog.swift:18:15:runModal": {
+      "class": "C",
+      "kind": "system open panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ThemeSubmissionDialog.swift:11:22:NSOpenPanel"
+      ],
+      "reason": "System picker for submission screenshots."
+    },
+    "Sources/Pathem/ThemeSubmissionDialog.swift:71:15:runModal": {
+      "class": "A",
+      "kind": "metadata form",
+      "custom_content": true,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ThemeSubmissionDialog.swift:55:22:NSAlert"
+      ],
+      "reason": "App-owned grid of listing fields. Save validates and opens the system save panel."
+    },
+    "Sources/Pathem/ThemeSubmissionDialog.swift:95:15:runModal": {
+      "class": "C",
+      "kind": "system save panel",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ThemeSubmissionDialog.swift:92:21:NSSavePanel"
+      ],
+      "reason": "System save panel for a validated submission JSON."
+    },
+    "Sources/Pathem/ThemeSubmissionDialog.swift:110:12:runModal": {
+      "class": "B",
+      "kind": "information alert",
+      "custom_content": false,
+      "destructive": false,
+      "default_destructive_intended": false,
+      "builders": [
+        "Sources/Pathem/ThemeSubmissionDialog.swift:102:20:NSAlert"
+      ],
+      "reason": "Offers to open the GitHub issue form or close the alert."
     }
   },
   "implicit_builders": {
@@ -3142,8 +3186,11 @@
     }
   },
   "unpresented_builders": {
-    "Sources/Pathem/SettingsWindowController.swift:1073:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
-    "Sources/Pathem/SettingsWindowController.swift:1119:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations."
+    "Sources/Pathem/SettingsWindowController.swift:1079:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/SettingsWindowController.swift:1120:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/ThemeSubmissionDialog.swift:30:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/ThemeSubmissionDialog.swift:86:17:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations.",
+    "Sources/Pathem/ThemeSubmissionDialog.swift:99:13:NSAlert": "Inline NSAlert(error:).runModal() presents a standard failure message. The scanner does not resolve chained constructor presentations."
   },
   "native_coverage_note": "Unit 1 accepted. Unit 2 has recipes for all47 B alerts across twelve planned catalogs and native adapters for103 A sites, with nine main-browser sites delegated to accepted task2. Recipe counts are not executed qualification on rebased main3c65e5a; see docs/TRANSIENT_SURFACES_UNIT2.md. Historical six-catalog GUI receipts are not current coverage."
 }

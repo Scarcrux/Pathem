@@ -1823,3 +1823,23 @@
 "tags.color.yellow" = "Yellow";
 "tags.color.red" = "Red";
 "tags.color.orange" = "Orange";
+
+"prefs.themePrepareSubmission" = "Prepare Marketplace Submission…";
+"themeSubmission.attach" = "Attach the saved JSON to the GitHub issue form. Use your existing GitHub account. The file and issue will be public.";
+"themeSubmission.creator" = "Creator credit";
+"themeSubmission.help" = "Use a lowercase listing ID with letters, digits, or hyphens. For an update, reuse the ID and increase the revision. Your submission will be public on GitHub.";
+"themeSubmission.id" = "Listing ID";
+"themeSubmission.imageHelp" = "Choose 1–3 PNG or JPEG screenshots you intend to share publicly.";
+"themeSubmission.images" = "Choose Marketplace Screenshots";
+"themeSubmission.later" = "Done for Now";
+"themeSubmission.license" = "License";
+"themeSubmission.open" = "Open GitHub Form";
+"themeSubmission.ready" = "Submission Ready";
+"themeSubmission.revision" = "Revision";
+"themeSubmission.save" = "Save and Continue…";
+"themeSubmission.source" = "Source (optional)";
+"themeSubmission.summary" = "Summary";
+"themeSubmission.tags" = "Tags (optional)";
+"themeSubmission.tagsHint" = "Separate tags with commas";
+"themeSubmission.title" = "Title";
+"themeSubmission.titleDialog" = "Prepare Marketplace Submission";

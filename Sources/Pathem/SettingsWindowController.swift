@@ -996,19 +996,25 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 action: #selector(resetTheme)),
         ])
         stack.spacing = 8
+        var rows: [NSView] = [
+            stack,
+            NSButton(
+                title: L("prefs.themePrepareSubmission", "Prepare Marketplace Submission…"),
+                target: self, action: #selector(prepareThemeSubmission)),
+        ]
         #if DEBUG
-        guard CommunityThemeGalleryWindow.storeURL != nil else { return stack }
-        let gallery = NSButton(
-            title: "Community Themes…", target: self,
-            action: #selector(openCommunityThemes))
-        let controls = NSStackView(views: [stack, gallery])
+        if CommunityThemeGalleryWindow.storeURL != nil {
+            rows.append(
+                NSButton(
+                    title: "Community Themes…", target: self,
+                    action: #selector(openCommunityThemes)))
+        }
+        #endif
+        let controls = NSStackView(views: rows)
         controls.orientation = .vertical
         controls.alignment = .leading
         controls.spacing = 8
         return controls
-        #else
-        return stack
-        #endif
     }
 
     #if DEBUG
@@ -1108,16 +1114,24 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
         panel.nameFieldStringValue = "Pathem Theme.json"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
-            var theme = ThemePreset(preferences: prefs)
-            if theme.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                theme.name = L("prefs.themeCustom", "Custom")
-            }
-            theme.styles = prefs.effectiveThemeStyles
-            let data = try ThemePackage.encode(theme)
+            let data = try ThemePackage.encode(themeForExport())
             try data.write(to: url, options: .atomic)
         } catch {
             NSAlert(error: error).runModal()
         }
+    }
+
+    private func themeForExport() -> ThemePreset {
+        var theme = ThemePreset(preferences: prefs)
+        if theme.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            theme.name = L("prefs.themeCustom", "Custom")
+        }
+        theme.styles = prefs.effectiveThemeStyles
+        return theme
+    }
+
+    @objc private func prepareThemeSubmission() {
+        ThemeSubmissionDialog.run(theme: themeForExport())
     }
 
     @objc private func resetTheme() {
