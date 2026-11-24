@@ -83,15 +83,44 @@ class Page(HTMLParser):
         self.tags = []
         self.attributes = []
         self.text = []
+        self.elements = []  # (tag, attributes, open ancestor tags)
+        self.open = []
+        self.labels = {}  # for= id -> visible label text
+        self.label = None
+        self.legends = []
         self.feed(text)
         self.close()
 
     def handle_starttag(self, tag, attributes):
         self.tags.append(tag)
         self.attributes += [(tag, key, value) for key, value in attributes]
+        self.elements.append((tag, dict(attributes), tuple(self.open)))
+        if tag == "label":
+            self.labels[dict(attributes).get("for")] = ""
+            self.label = dict(attributes).get("for")
+        if tag not in ("meta", "link", "img", "input", "rect"):
+            self.open.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag == "label":
+            self.label = None
+        if tag in self.open:
+            while self.open.pop() != tag:
+                pass
 
     def handle_data(self, data):
         self.text.append(data)
+        if self.label is not None:
+            self.labels[self.label] += data
+        if self.open and self.open[-1] == "legend":
+            self.legends.append(data)
+
+    def find(self, tag, **wanted):
+        """Attributes of every <tag> whose attributes include the wanted ones."""
+        return [found for name, found, _ in self.elements if name == tag and all(found.get(key.rstrip("_")) == value for key, value in wanted.items())]
+
+    def ancestors(self, tag, **wanted):
+        return next(inside for name, found, inside in self.elements if name == tag and all(found.get(key) == value for key, value in wanted.items()))
 
 
 def scratch_root():
@@ -278,8 +307,79 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(page.tags.count("img"), sum(1 for entry in page.attributes if entry[0] == "img" and entry[1] == "alt"))
         self.assertIn(("rect", "fill", "#D4334E"), page.attributes)
         self.assertIn("Second, screenshot 2 of 2", [entry[2] for entry in page.attributes])
-        self.assertIn("2 themes: 1 light, 1 dark", text)
         self.assertIn(">System<", text)
+
+    def filter_page(self, *appearances):
+        themes = [listing(id=f"theme-{index}", title=f"Theme {index}", screenshots=[png(seed=index)], package=package(appearance=appearance)) for index, appearance in enumerate(appearances)]
+        with scratch_root() as root:
+            files, _ = build(catalog(*themes), root)
+        return Page(files[builder.PAGE].decode())
+
+    def shown_by(self, page, choice):
+        """How many cards the stylesheet leaves visible for a filter choice, read from data-appearance."""
+        hidden = {"all": set(), "light": {"dark"}, "dark": {"light"}}[choice]
+        return sum(1 for card in page.find("li", class_="theme") if card["data-appearance"] not in hidden)
+
+    def test_cards_carry_the_package_appearance_not_the_tags(self):
+        # The tags say "dark" on every test listing; only the package decides.
+        page = self.filter_page("light", "dark", "dark", "system")
+        self.assertEqual([card["data-appearance"] for card in page.find("li", class_="theme")], ["light", "dark", "dark", "system"])
+
+    def test_filter_is_three_labeled_radios_with_counts(self):
+        page = self.filter_page("light", "dark", "dark", "light", "light")
+        radios = page.find("input", type="radio")
+        self.assertEqual([radio["id"] for radio in radios], ["show-all", "show-light", "show-dark"])
+        self.assertEqual({radio["name"] for radio in radios}, {"appearance"})
+        self.assertEqual([radio["id"] for radio in radios if "checked" in radio], ["show-all"])
+        for radio in radios:
+            self.assertIn("fieldset", page.ancestors("input", id=radio["id"]))
+        self.assertEqual(page.legends, ["Show"])
+        self.assertEqual({key: " ".join(value.split()) for key, value in page.labels.items()}, {"show-all": "All 5 themes", "show-light": "Light 3 themes", "show-dark": "Dark 2 themes"})
+        for choice, count in (("all", 5), ("light", 3), ("dark", 2)):
+            self.assertEqual(self.shown_by(page, choice), count)
+        # The radios sit before the gallery, inside the section the stylesheet's :has() rules match.
+        order = [(tag, found.get("class")) for tag, found, _ in page.elements]
+        self.assertLess(order.index(("fieldset", "filter")), order.index(("ul", "gallery")))
+        self.assertIn("section", page.ancestors("fieldset", **{"class": "filter"}))
+
+    def test_system_theme_counts_as_both_light_and_dark(self):
+        page = self.filter_page("light", "dark", "system")
+        labels = {key: " ".join(value.split()) for key, value in page.labels.items()}
+        self.assertEqual(labels, {"show-all": "All 3 themes", "show-light": "Light 2 themes", "show-dark": "Dark 2 themes"})
+        self.assertEqual((self.shown_by(page, "light"), self.shown_by(page, "dark")), (2, 2))
+
+    def test_filter_is_left_out_when_it_could_not_narrow_anything(self):
+        for appearances in (["dark"], ["dark", "dark"], ["light", "light"], ["system", "system"], ["light", "system"]):
+            with self.subTest(appearances=appearances):
+                page = self.filter_page(*appearances)
+                self.assertEqual(page.find("input"), [])
+                self.assertIn(f"{len(appearances)} theme", "".join(page.text))
+        self.assertIn("1 theme ", " ".join("".join(self.filter_page("dark").text).split()) + " ")
+
+    def test_stylesheet_hides_the_other_appearance_and_shows_focus(self):
+        css = " ".join((ROOT / builder.STYLESHEET).read_text().split())
+        self.assertIn('.published:has(#show-light:checked) .theme[data-appearance="dark"]', css)
+        self.assertIn('.published:has(#show-dark:checked) .theme[data-appearance="light"]', css)
+        self.assertNotIn('[data-appearance="system"]', css)  # a system theme is never hidden
+        self.assertIn(".filter input:focus-visible + label", css)
+        self.assertIn(".filter input:checked + label", css)
+        # The radios stay focusable: hidden from sight, never display: none.
+        rule = css[css.index(".filter input {") :].split("}")[0]
+        self.assertNotIn("display", rule)
+        self.assertNotIn("visibility", rule)
+
+    def test_intro_punctuation_and_current_page_in_the_header(self):
+        page = self.filter_page("light", "dark")
+        shown = " ".join("".join(page.text).split())
+        self.assertNotIn("….", shown)
+        self.assertNotIn("...", shown)
+        self.assertIn("click Themes… to open the gallery.", shown)
+        header = [found for tag, found, inside in page.elements if tag == "a" and "header" in inside and "nav" in inside]
+        self.assertEqual([link["href"] for link in header if link.get("aria-current") == "page"], ["/themes/"])
+        self.assertEqual([link["href"] for link in header if "ghost" in (link.get("class") or "")], [])
+        self.assertIn("/", [link["href"] for link in header])
+        css = " ".join((ROOT / builder.STYLESHEET).read_text().split())
+        self.assertIn(".nav-links a[aria-current]", css)
 
 
 class CommittedOutputTests(unittest.TestCase):

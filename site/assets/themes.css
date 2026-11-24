@@ -105,16 +105,20 @@ a.brand:hover { text-decoration: none; }
 .nav-links { display: flex; align-items: center; gap: 1.6rem; }
 .nav-links a { color: var(--muted); font-size: .92rem; }
 .nav-links a:hover { color: var(--text); text-decoration: none; }
-.nav-links .ghost {
-  border: 1px solid var(--line);
-  padding: .4rem .85rem;
-  border-radius: 8px;
-  color: var(--text);
-}
-.nav-links .ghost:hover { border-color: var(--accent); background: var(--glow); }
+/* The current page, marked the way the guides mark theirs: aria-current, brighter and bolder. */
+.nav-links a[aria-current] { color: var(--text); font-weight: 650; }
 @media (max-width: 620px) {
-  .nav-links a:not(.ghost):not(.guide-link) { display: none; }
-  .nav-links { gap: .75rem; }
+  .nav-links a:not(.here):not(.home-link):not(.guide-link) { display: none; }
+  .nav-links { gap: .9rem; }
+}
+.vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* ---- intro ---- */
@@ -135,6 +139,65 @@ a.brand:hover { text-decoration: none; }
 
 /* ---- gallery ---- */
 .count { font-family: var(--mono); font-size: .78rem; color: var(--faint); margin: 0 0 1rem; }
+/* ---- appearance filter ----
+   Three radios and no script. The inputs are hidden from sight but stay focusable, so Tab
+   reaches the group and the arrow keys move within it; the label after each one is what
+   shows. The :has() rules hide the cards of the other appearance. A theme that follows the
+   system has data-appearance="system" and matches neither rule, so it shows under both.
+   A browser without :has() shows every card, whichever radio is checked. */
+.filter {
+  border: 0;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .9rem;
+}
+.filter legend {
+  float: left; /* lets the legend sit in the flex row beside the choices */
+  padding: 0;
+  font-family: var(--mono);
+  font-size: .78rem;
+  color: var(--faint);
+}
+.filter .choices {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  gap: 3px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.filter input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.filter label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .45rem;
+  padding: .32rem .85rem;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: .9rem;
+  cursor: pointer;
+  user-select: none;
+}
+.filter label:hover { color: var(--text); }
+.filter .n { font-family: var(--mono); font-size: .76rem; color: var(--faint); }
+.filter input:checked + label { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.filter input:checked + label .n { color: var(--accent-ink); }
+.filter input:focus-visible + label { outline: 2px solid var(--text); outline-offset: 2px; }
+.published:has(#show-light:checked) .theme[data-appearance="dark"],
+.published:has(#show-dark:checked) .theme[data-appearance="light"] { display: none; }
+
 .gallery {
   list-style: none;
   margin: 0;

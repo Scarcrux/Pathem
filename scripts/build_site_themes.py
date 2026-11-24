@@ -272,7 +272,9 @@ def card(listing, eager):
     shots = listing["shots"]
     first = shots[0]
     loading = "eager" if eager else "lazy"
-    parts = [f'<li class="theme" id="theme-{listing["id"]}"><article aria-labelledby="title-{listing["id"]}">']
+    # data-appearance is what the filter's stylesheet rules match. It comes from the theme
+    # package (validated against APPEARANCES), never from the free-text tags.
+    parts = [f'<li class="theme" id="theme-{listing["id"]}" data-appearance="{listing["appearance"]}"><article aria-labelledby="title-{listing["id"]}">']
     parts.append(
         f'<a class="shot" href="/themes/img/{first["file"]}"><img src="/themes/img/{first["file"]}" width="{first["width"]}" height="{first["height"]}" '
         f'loading="{loading}" decoding="async" alt="{title} theme in Pathem. {esc(listing["summary"])}"></a>'
@@ -303,18 +305,40 @@ def card(listing, eager):
 
 def count_phrase(listings):
     count = len(listings)
-    light = sum(1 for listing in listings if listing["appearance"] == "light")
-    dark = sum(1 for listing in listings if listing["appearance"] == "dark")
-    noun = "theme" if count == 1 else "themes"
-    detail = f": {light} light, {dark} dark" if light and dark and light + dark == count else ""
-    return f"{count} {noun}{detail}"
+    return f"{count} {'theme' if count == 1 else 'themes'}"
+
+
+def appearance_filter(listings):
+    """The All / Light / Dark control, or "" when it could not narrow the list.
+
+    It is three radio inputs and no script: the stylesheet hides the other appearance with
+    :has() on the checked radio. A theme that follows the system works in both appearances,
+    so it is counted and shown under Light and under Dark. Each count is the number of
+    cards that choice leaves visible.
+    """
+    light = sum(1 for listing in listings if listing["appearance"] != "dark")
+    dark = sum(1 for listing in listings if listing["appearance"] != "light")
+    if light == len(listings) or dark == len(listings):
+        return ""
+    parts = ['<fieldset class="filter">\n<legend>Show</legend>\n<div class="choices">']
+    for key, label, count in (("all", "All", len(listings)), ("light", "Light", light), ("dark", "Dark", dark)):
+        checked = " checked" if key == "all" else ""
+        noun = "theme" if count == 1 else "themes"
+        parts.append(
+            f'<input type="radio" name="appearance" id="show-{key}" value="{key}"{checked}>'
+            f'<label for="show-{key}">{label} <span class="n">{count}</span><span class="vh"> {noun}</span></label>'
+        )
+    parts.append("</div>\n</fieldset>")
+    return "\n".join(parts)
 
 
 def render(listings, stylesheet_version):
     description = "Browse the community themes for Pathem, the native macOS file manager. Every theme is free under its listed license and installs from inside the app."
     cards = "\n".join(card(listing, index < 3) for index, listing in enumerate(listings))
     if listings:
-        gallery = f'<p class="count">{count_phrase(listings)}</p>\n<ul class="gallery">\n{cards}\n</ul>'
+        # The filter's labels carry the counts; without a filter, a plain count line does.
+        above = appearance_filter(listings) or f'<p class="count">{count_phrase(listings)}</p>'
+        gallery = f'{above}\n<ul class="gallery">\n{cards}\n</ul>'
     else:
         gallery = '<p class="count">No themes are published yet. Check back soon.</p>'
     return f'''<!doctype html>
@@ -352,7 +376,8 @@ def render(listings, stylesheet_version):
   <nav class="nav-links" aria-label="Website">
     <a href="/#features">Features</a>
     <a class="guide-link" href="/docs/">Guides</a>
-    <a class="ghost" href="/">Home</a>
+    <a class="here" href="/themes/" aria-current="page">Themes</a>
+    <a class="home-link" href="/">Home</a>
   </nav>
 </header>
 
@@ -361,10 +386,10 @@ def render(listings, stylesheet_version):
     <span class="eyebrow">~/themes</span>
     <h1>Community themes</h1>
     <p class="lede">Looks for Pathem made and shared by the people who use it. A theme tints the whole window and brings its own folder style, file icons, and toolbar glyphs.</p>
-    <p>Every theme here is free to use under the license listed on its card. To install one, open Pathem, go to Settings &gt; Appearance, and choose Themes…. You can preview a theme on your own window before you keep it.</p>
+    <p>Every theme here is free to use under the license listed on its card. To install one, open Pathem, go to Settings &gt; Appearance, and click Themes… to open the gallery. You can preview a theme on your own window before you keep it.</p>
     <p class="links"><a href="/docs/themes/#gallery">Read the Themes guide</a><a href="/docs/themes/#submit">Submit your own theme</a></p>
   </div>
-  <section aria-label="Published themes">
+  <section class="published" aria-label="Published themes">
 {gallery}
   </section>
 </main>
