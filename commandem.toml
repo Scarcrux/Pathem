@@ -2686,6 +2686,10 @@ missions = ["m-1331afb7", "m-b2532fac"]
     title = "Import exported VS Code color-theme JSON as a Pathem window palette and iTerm2 .itermcolors as an embedded terminal palette. Preview mapped colors before applying, preserve existing icon and toolbar choices, and retain source and license information for community submissions."
     done = true
 
+  [[mission.task]]
+    id = "t-8e15e269"
+    title = "Connect the reviewed local gallery to a shared catalog and creator submission service with reviewer authorization. Verify publication, update, and withdrawal between independent clients before public rollout."
+
   [[mission.comment]]
     text = "Foundation pilot adds Harbor and the Orchard package fixture with versioned color and appearance import/export, preview, apply and reset. Swift and offscreen toolbar-order controls pass. Full packages still need folder, file icon and toolbar glyph choices, plus visual and relaunch validation before catalog expansion."
     at = "2026-11-24T09:14:49Z"
@@ -2705,4 +2709,8 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Local Community Themes pilot supports discovery, search, screenshot previews and attribution plus submit, review, install, apply, update, withdraw and uninstall. Offscreen AppKit smoke verified the full Tidal Marsh v1 to v2 workflow plus state across three processes. Gallery UI is compiled only for a debug build and requires an explicit configuration directory. Public shared hosting and desktop visual interaction remain open."
     at = "2026-11-24T10:00:47Z"
+
+  [[mission.comment]]
+    text = "The local gallery queue is cleared. The landed debug fixture passes submit, update, and relaunch with an isolated store. Public sharing between users, arbitrary bundled icon assets, and active desktop gallery controls remain open. No push, install, or publication was part of this theme pass."
+    at = "2026-11-24T10:03:28Z"
 # <<< commandem roadmap <<<
