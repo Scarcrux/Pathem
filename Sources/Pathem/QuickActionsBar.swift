@@ -40,6 +40,10 @@ final class QuickActionsBar: NSView {
     init() {
         super.init(frame: .zero)
         build()
+        // The browser positions this bar by frame, and a frame-managed view carries its frame
+        // as required width/height constraints. Start at the size the buttons need, or the
+        // hidden bar is unsatisfiable from launch until the first selection.
+        setFrameSize(fittingSize)
         ThemeManager.shared.onChange(owner: self) { [weak self] in self?.applyTint() }
         applyTint()
     }

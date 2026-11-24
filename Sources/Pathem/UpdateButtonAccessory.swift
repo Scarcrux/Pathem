@@ -29,9 +29,15 @@ final class UpdateButtonAccessory: NSTitlebarAccessoryViewController {
 
         let container = NSView()
         container.addSubview(button)
+        // The title bar sizes this container by frame, and it is empty while no update is
+        // pending. Just under required, the trailing pin still sets the fitting width but
+        // yields quietly to a zero-width frame instead of being broken on every launch.
+        let trailing = button.trailingAnchor.constraint(
+            equalTo: container.trailingAnchor, constant: -8)
+        trailing.priority = NSLayoutConstraint.Priority(999)
         NSLayoutConstraint.activate([
             button.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            button.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -8),
+            trailing,
             button.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             button.topAnchor.constraint(greaterThanOrEqualTo: container.topAnchor),
             button.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor),

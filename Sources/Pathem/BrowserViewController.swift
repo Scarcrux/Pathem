@@ -373,7 +373,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
             torrentDetail.bottomAnchor.constraint(equalTo: panesContainer.bottomAnchor),
         ])
 
-        let host = NSView()
+        let host = NSView(frame: BrowserSplitLayoutController.initialHostFrame)
         host.addSubview(mainStack)  // browser split + torrents drawer dock
         host.addSubview(shelf.view)  // the stash shelf docks across the bottom
         shelf.view.isHidden = true

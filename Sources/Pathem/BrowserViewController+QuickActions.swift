@@ -61,7 +61,7 @@ extension BrowserViewController {
     private func positionQuickBar() {
         guard !quickBar.isHidden else { return }
         let host = view
-        quickBar.layoutSubtreeIfNeeded()
+        // Measure and set the frame before any layout: the frame is a required size constraint.
         let size = quickBar.fittingSize
         let pane =
             activePane.map { host.convert($0.contentClipView.bounds, from: $0.contentClipView) }

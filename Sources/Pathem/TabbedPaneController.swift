@@ -28,7 +28,7 @@ enum TabDrag {
 /// other side, or torn off into their own window.
 @MainActor
 final class TabbedPaneController: NSObject {
-    let containerView = NSView()
+    let containerView = NSView(frame: BrowserSplitLayoutController.placeholderFrame)
     private let tabBar = TabBarStack()
     private let content = NSView()
     private let plusButton = NSButton()

@@ -31,7 +31,7 @@ private final class SidebarOutlineView: NSOutlineView {
 final class SidebarController: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate,
     NSMenuDelegate, NSTextFieldDelegate, NSMenuItemValidation
 {
-    let containerView = NSVisualEffectView()
+    let containerView = NSVisualEffectView(frame: BrowserSplitLayoutController.placeholderFrame)
     /// An opaque fill over the translucent sidebar material while a tinted theme is active, so the
     /// sidebar matches the panes instead of staying system gray (hidden otherwise).
     private let themeFill = NSView()

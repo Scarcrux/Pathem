@@ -4,7 +4,14 @@ import AppKit
 @MainActor
 final class BrowserSplitLayoutController: NSObject, NSSplitViewDelegate {
     let split = NSSplitView()  // the two sides
-    let panesContainer = NSView()  // wraps `split` so torrent detail can overlay it
+    /// Split views size their arranged subviews by frame, and a frame-managed view carries
+    /// that frame as required width/height constraints. Starting each at a nominal size
+    /// instead of zero keeps the first layout pass satisfiable; the split replaces it.
+    static let placeholderFrame = NSRect(x: 0, y: 0, width: 400, height: 400)
+    /// The same for the window's content view, which starts at the default window size.
+    static let initialHostFrame = NSRect(x: 0, y: 0, width: 1100, height: 700)
+
+    let panesContainer = NSView(frame: placeholderFrame)  // wraps `split` so torrent detail can overlay it
     let outerSplit = NSSplitView()  // sidebar | panes
     let vSplit = NSSplitView()  // browser (top) | terminal (bottom)
     let mainStack = NSStackView()  // vSplit (top) + torrents drawer (bottom dock)
