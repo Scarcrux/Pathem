@@ -57,6 +57,26 @@ Last reviewed 2026-11-20, after the launch-QA pass recorded in
 - **iPhone and iPad browsing needs the device unlocked** while Pathem talks to it.
 - **Android (MTP) devices are not supported.**
 
+## Themes
+
+- **The community catalog is small at launch.** It grows as submissions are approved.
+- **Submissions are reviewed by hand.** A maintainer reads each one on GitHub, so
+  approval can take a while, and there is no status display inside Pathem. Follow
+  your GitHub issue for the outcome.
+- **Submitting needs a GitHub account,** and the issue, the theme file, and its
+  screenshots are public.
+- **Screenshots are resized to fit 300 KB.** Each published preview is re-encoded,
+  with camera and location metadata removed, and scaled down as needed, so a
+  detailed screenshot can look softer in the gallery than the original. Source
+  images are limited to three per submission, 2 MB and 2400 pixels per side each.
+- **The catalog loads only when you open the Themes window.** A newly approved theme
+  or an update shows up the next time you open it, and installed themes do not
+  update themselves; choose Update on the listing.
+- **A VS Code import brings over the window background and accent only.** Syntax and
+  other editor colors have no counterpart in Pathem, and translucent colors are
+  skipped. The file must have a `.json` extension; rename a `.jsonc` file first.
+- **An iTerm2 preset changes the embedded terminal only,** not the window colors.
+
 ## Not yet verified on a release build
 
 These have automated or engine-level coverage but have not been exercised by hand on

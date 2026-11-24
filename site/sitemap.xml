@@ -1,27 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://pathem.app/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://pathem.app/docs/</loc><lastmod>2026-11-24</lastmod></url>
   <url><loc>https://pathem.app/privacy/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/install/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/first-steps/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/navigation-tabs/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/copy-move/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/drag-drop/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/rename/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/batch-rename/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/views-dates/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/sidebar/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/search/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/semantic-ai/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/tags-smart-folders/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/previews-open-with/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/archives/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/cloud-devices/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/connections/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/terminal/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/customization/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/torrents/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/cli/</loc><lastmod>2026-11-17</lastmod></url>
-  <url><loc>https://pathem.app/docs/troubleshooting/</loc><lastmod>2026-11-17</lastmod></url>
+  <url><loc>https://pathem.app/docs/install/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/first-steps/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/navigation-tabs/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/copy-move/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/drag-drop/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/rename/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/batch-rename/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/views-dates/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/sidebar/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/search/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/semantic-ai/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/tags-smart-folders/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/previews-open-with/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/archives/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/cloud-devices/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/connections/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/terminal/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/customization/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/themes/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/torrents/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/cli/</loc><lastmod>2026-11-24</lastmod></url>
+  <url><loc>https://pathem.app/docs/troubleshooting/</loc><lastmod>2026-11-24</lastmod></url>
 </urlset>

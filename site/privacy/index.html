@@ -201,7 +201,7 @@
     <span class="eyebrow">~/privacy</span>
     <h1>Privacy</h1>
     <p class="lede">Pathem does not collect data about you or your files. There is no analytics, telemetry, crash reporting, or advertising in the app, and Pathem does not upload your files or file names anywhere.</p>
-    <p class="updated">Last updated 2026-11-17</p>
+    <p class="updated">Last updated 2026-11-24</p>
 
     <h2>What stays on your Mac</h2>
     <ul>
@@ -213,7 +213,7 @@
     <h2>Network connections Pathem makes</h2>
     <ul>
       <li><strong>Update checks.</strong> Pathem uses Sparkle to look for new versions. Automatic checks are on by default and can be turned off in Settings, Updates. Each check requests the update feed (an appcast file) published with the project's GitHub releases, so that server sees an ordinary web request from your IP address. Pathem does not enable Sparkle's system profiling, so no hardware or software inventory is attached.</li>
-      <li><strong>Themes.</strong> In builds that include the Themes gallery, opening it may request the public catalog from Amazon CloudFront. CloudFront receives an ordinary web request from your IP address. This request does not include your local files, file names, installed themes, or search text. Preparing a theme submission creates a local file. If you attach that file to a public GitHub issue, the theme, attribution, and screenshots you chose become public.</li>
+      <li><strong>Themes.</strong> Opening the Themes gallery in Settings, Appearance may request the public catalog from Amazon CloudFront. Pathem does not contact the catalog at any other time. CloudFront receives an ordinary web request from your IP address. This request does not include your local files, file names, installed themes, or search text. Preparing a theme submission creates a local file. If you attach that file to a public GitHub issue, the theme, attribution, and screenshots you chose become public.</li>
       <li><strong>Torrents.</strong> Pathem talks to the BitTorrent network only when you use the built-in torrent client. When you add a magnet link or a .torrent file, it contacts the trackers listed there, DHT peers, and any web seeds the magnet names. Peers in a swarm can see your IP address, as with any torrent client. Torrents you added earlier keep going across restarts.</li>
       <li><strong>Remote connections.</strong> SFTP, FTP, FTPS, WebDAV, Amazon S3, Azure Blob, and similar connections go only to servers you configure, using the details you enter. Pathem has no server of its own in that path.</li>
     </ul>
