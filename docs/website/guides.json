@@ -1,5 +1,5 @@
 {
-    "updated": "2026-11-24",
+    "updated": "2026-11-25",
     "categories": [
         {
             "id": "start",
@@ -1773,6 +1773,42 @@
                         "Reset Pathem Data",
                         "Full Disk Access"
                     ]
+                },
+                {
+                    "path": "Sources/Pathem/FolderHandler.swift",
+                    "needles": [
+                        "Reveal in Finder"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController+TrashLedger.swift",
+                    "needles": [
+                        "not trashed by Pathem"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/CloudItemActions.swift",
+                    "needles": [
+                        "isUbiquitous"
+                    ]
+                },
+                {
+                    "path": "Sources/PathemEngine/FileSearch.swift",
+                    "needles": [
+                        "independent of Spotlight"
+                    ]
+                },
+                {
+                    "path": "Sources/Pathem/BrowserViewController.swift",
+                    "needles": [
+                        "sendViaAirDrop"
+                    ]
+                },
+                {
+                    "path": "KNOWN_ISSUES.md",
+                    "needles": [
+                        "macOS platform limits"
+                    ]
                 }
             ],
             "sections": [
@@ -1807,6 +1843,22 @@
                         "For a cloud file, verify it is downloaded when an operation needs contents. For an external disk, check whether macOS mounted it and whether it is writable.",
                         "For a remote site, separate authentication, host/certificate verification, connectivity, and path permissions. Keep secrets out of screenshots and exported diagnostics.",
                         "For an app-specific opening or paste problem, compare the same harmless file in the same receiving app. Record whether you used Copy, Copy Name, a drag, or another action."
+                    ]
+                },
+                {
+                    "id": "platform-limits",
+                    "title": "Know the macOS limits Pathem cannot change",
+                    "paragraphs": [
+                        "These limits come from how macOS treats any third-party file manager. They are not settings you can fix, and none of them means Pathem is broken."
+                    ],
+                    "bullets": [
+                        "Finder stays. The Desktop, the Dock's Finder icon, Finder Sync extensions, and Reveal or Show in Finder requests from other apps and Spotlight are handled by Finder. In Settings > General, Open folders in Pathem instead of Finder makes Pathem the default app for folders, but it does not redirect Reveal in Finder.",
+                        "Put Back works from Pathem's own record. Items Pathem trashed can be put back; for an item trashed by Finder or another app, Pathem reports that the original location is unknown.",
+                        "Some Finder features are partial. Pathem sends files through the system AirDrop sheet and has no AirDrop window of its own. It shows the Services menu and can run Shortcuts, but not Finder's Quick Actions menu. Download Now and Remove Download appear only for iCloud Drive items, not for Dropbox, OneDrive, Google Drive or Box, whose own Finder badges and actions are not shown.",
+                        "Permissions come from macOS. Full Disk Access must be added by hand in System Settings, and the Desktop, Documents, Downloads, removable-disk and network-volume prompts are macOS's. Pathem cannot answer them for you.",
+                        "System Integrity Protection blocks changes to protected system locations for every app. Pathem has no privileged mode yet, so changing a file you do not own fails; Change Owner hands you a sudo command in the terminal instead.",
+                        "Devices: iPhone and iPad need the device unlocked and trusted. Android MTP is not supported. An adb-driven Android backend exists for phones with USB debugging and Android platform-tools installed, and an upgrade is in progress.",
+                        "Search: This Mac and smart locations such as Recents and tags depend on Spotlight's index, so unindexed or excluded volumes are missing. Searching a chosen folder does not depend on Spotlight. Pathem keeps no always-on file-name index of its own."
                     ]
                 },
                 {

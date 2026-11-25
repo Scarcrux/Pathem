@@ -57,7 +57,60 @@ Last reviewed 2026-11-20, after the launch-QA pass recorded in
 - **SFTP accepts a new server's host key on first connect without asking.** A key that
   later changes is still rejected. A proper "new host key, accept?" prompt is planned.
 - **iPhone and iPad browsing needs the device unlocked** while Pathem talks to it.
-- **Android (MTP) devices are not supported.**
+- **Android phones in MTP mode are not supported.** Pathem has no native MTP stack. A
+  phone with USB debugging on can be reached through the `adb` command-line tool when
+  Android platform-tools are installed; Pathem runs that tool and does not bundle it.
+  That adb-driven backend is basic today (names only in listings) and an upgrade is in
+  progress.
+
+## macOS platform limits
+
+These come from how macOS treats any third-party file manager, not from a Pathem
+fault. Each entry says what Pathem does and what it cannot change.
+
+- **Finder stays.** Pathem cannot fully replace Finder. macOS keeps the Desktop, the
+  Dock's Finder icon and Finder Sync extensions in Finder, and "Show in Finder" or
+  "Reveal" requests from other apps and from Spotlight open Finder. Settings > General >
+  "Open folders in Pathem instead of Finder" makes Pathem the default app for folders,
+  so a folder double-click, `open <folder>` or an app that opens a folder uses Pathem.
+  It does not redirect Reveal in Finder, and you can switch it back there at any time.
+- **Put Back only knows what Pathem recorded.** Pathem keeps its own list of where it
+  trashed items from, and Put Back uses it. An item trashed by Finder or another app has
+  no entry, and Pathem reports "Original location unknown (not trashed by Pathem)".
+  Pathem does not read Finder's own record of where an item came from.
+- **Some Finder features are only partly available.**
+  - AirDrop: Pathem hands the selection to the system AirDrop sheet (File menu,
+    context menu, or the sidebar's AirDrop row). It has no AirDrop window of its own,
+    and received files go where macOS puts them.
+  - Quick Actions and Services: Pathem shows the system Services menu and can run your
+    Shortcuts on the selection. Finder's own Quick Actions menu is not offered, so the
+    list can differ from Finder's.
+  - Tags: the sidebar's custom tag names come from Finder's tag list, so a tag you add
+    or rename is changed in Finder's settings. How that list syncs between Macs is up
+    to macOS.
+  - iCloud Drive: Download Now and Remove Download appear only for iCloud Drive items,
+    and an item set to Keep Downloaded cannot be removed until you turn that off.
+    Pathem does not show iCloud's sync progress.
+  - Dropbox, OneDrive, Google Drive and Box: these folders list like any other folder
+    and carry a service badge, but Download Now and Remove Download do not apply to
+    them, and the actions and status badges their own Finder integration adds are not
+    shown.
+- **Permissions come from macOS.** Full Disk Access is never granted automatically: you
+  add Pathem in System Settings > Privacy & Security > Full Disk Access, then relaunch
+  it. Prompts for Desktop, Documents, Downloads, removable disks and network volumes
+  come from macOS, and Pathem cannot answer or suppress them.
+- **System Integrity Protection.** macOS does not let any app change protected system
+  locations. Pathem has no privileged mode yet, so changing a file you do not own fails
+  with a permission error; Change Owner types a `sudo` command into the embedded
+  terminal for you to review and run.
+- **Devices.** iPhone and iPad need the device unlocked and trusted. Android MTP is not
+  supported (see Connections and devices above).
+- **Search depends on Spotlight in two places.** Searching This Mac and the smart
+  locations (Recents, tags and similar) use Spotlight's index, so a volume that is
+  excluded or not indexed, or indexing turned off, leaves results out; Pathem says so
+  when indexing is off. Searching a chosen folder reads that folder and does not depend
+  on Spotlight. Pathem keeps no always-on file-name index of its own, so there is no
+  instant whole-disk name search like the NTFS-journal tools on Windows.
 
 ## Themes
 
