@@ -413,9 +413,11 @@ import Testing
         #expect(fixture.detach(image: image, mount: mount))
         #expect(fixture.devices(for: image) == [])
         #expect(!ScratchImage.isMountPoint(mount))
-        #expect(calls.count == 3)
+        // Guaranteed: plain detaches fail while the file is held, and only a forced one releases
+        // it. The number of retries is timing dependent, so it is not asserted.
+        #expect(calls.first?.contains("-force") == false)
         #expect(calls.last?.contains("-force") == true)
-        #expect(calls.dropLast().allSatisfy { !$0.contains("-force") })
+        #expect(calls.filter { $0.contains("-force") }.count >= 1)
     }
 
     private func withScratch(_ body: (URL) throws -> Void) throws {
@@ -533,7 +535,15 @@ struct ScratchImage {
             attempt([])
         }
         if gone() { return true }
-        attempt(["-force"])
+        // A forced detach can return before diskarbitrationd has torn the volume down, so under
+        // load the image is still listed for a moment. Wait a bounded time, forcing once more.
+        for _ in 0..<3 {
+            attempt(["-force"])
+            for _ in 0..<5 {
+                if gone() { return true }
+                pause(0.5)
+            }
+        }
         return gone()
     }
 
