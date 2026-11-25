@@ -238,7 +238,7 @@
 "bvc.cmd.paste" = "Colar";
 "bvc.cmd.pasteOtherPane" = "Colar no outro painel";
 "bvc.cmd.peekArchive" = "Mostrar conteúdo do arquivo compactado";
-"bvc.cmd.preferences" = "Preferências…";
+"bvc.cmd.preferences" = "Ajustes…";
 "bvc.cmd.previewPane" = "Painel de pré-visualização";
 "bvc.cmd.previousTab" = "Aba anterior";
 "bvc.cmd.processViewer" = "Visualizador de processos";

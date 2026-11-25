@@ -237,7 +237,7 @@
 "bvc.cmd.paste" = "Coller";
 "bvc.cmd.pasteOtherPane" = "Coller dans l'autre volet";
 "bvc.cmd.peekArchive" = "Afficher le contenu de l’archive";
-"bvc.cmd.preferences" = "Préférences…";
+"bvc.cmd.preferences" = "Réglages…";
 "bvc.cmd.previewPane" = "Volet d’aperçu";
 "bvc.cmd.previousTab" = "Onglet précédent";
 "bvc.cmd.processViewer" = "Moniteur de processus";

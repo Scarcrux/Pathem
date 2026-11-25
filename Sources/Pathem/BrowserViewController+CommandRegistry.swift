@@ -623,7 +623,7 @@ extension BrowserViewController {
             "files.download", L("bvc.cmd.download", "Download Now"),
             enabled: { [weak self] in self?.cloudActions().showsDownloadNow ?? false }
         ) { [weak self] in self?.downloadSelection() }
-        add("view.preferences", L("bvc.cmd.preferences", "Preferences…")) { [weak self] in
+        add("view.preferences", L("bvc.cmd.preferences", "Settings…")) { [weak self] in
             self?.showPreferences()
         }
         add(

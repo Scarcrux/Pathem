@@ -237,7 +237,7 @@
 "bvc.cmd.paste" = "粘贴";
 "bvc.cmd.pasteOtherPane" = "粘贴到另一窗格";
 "bvc.cmd.peekArchive" = "查看压缩包内容";
-"bvc.cmd.preferences" = "偏好设置…";
+"bvc.cmd.preferences" = "设置…";
 "bvc.cmd.previewPane" = "预览窗格";
 "bvc.cmd.previousTab" = "上一个标签页";
 "bvc.cmd.processViewer" = "进程查看器";

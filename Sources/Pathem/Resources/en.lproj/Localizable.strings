@@ -238,7 +238,7 @@
 "bvc.cmd.paste" = "Paste";
 "bvc.cmd.pasteOtherPane" = "Paste in Other Pane";
 "bvc.cmd.peekArchive" = "Show Archive Contents";
-"bvc.cmd.preferences" = "Preferences…";
+"bvc.cmd.preferences" = "Settings…";
 "bvc.cmd.previewPane" = "Preview Pane";
 "bvc.cmd.previousTab" = "Previous Tab";
 "bvc.cmd.processViewer" = "Process Viewer";

@@ -5,6 +5,7 @@ from html.parser import HTMLParser
 import importlib.util
 import json
 from pathlib import Path
+import re
 import unittest
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
@@ -134,6 +135,20 @@ class SiteDocsTests(unittest.TestCase):
         self.assertTrue({builder.BASE + path for path in expected}.issubset(locations))
         for entry in index:
             self.assertNotIn("Sources/Pathem", entry["text"])
+
+    def test_settings_window_has_one_name(self):
+        # The window and app menu item are "Settings"; guides and the palette command must agree.
+        index = json.loads(self.generated["site/docs/search-index.json"])
+        stale = [entry["url"] for entry in index if "Preferences" in entry["text"]]
+        self.assertEqual(stale, [], "guide prose still calls the Settings window Preferences")
+        mismatched = []
+        catalogs = sorted((ROOT / "Sources/Pathem/Resources").glob("*.lproj/Localizable.strings"))
+        self.assertEqual(len(catalogs), 12)
+        for catalog in catalogs:
+            pairs = dict(re.findall(r'^"([^"]+)" = "(.*)";$', catalog.read_text(encoding="utf-8"), re.M))
+            if pairs["bvc.cmd.preferences"] != pairs["settings.title"] + "…":
+                mismatched.append(f'{catalog.parent.name}: {pairs["bvc.cmd.preferences"]}')
+        self.assertEqual(mismatched, [], "palette command name differs from the Settings window title")
 
 
 if __name__ == "__main__":

@@ -186,9 +186,9 @@
                     "title": "Find actions without memorizing menus",
                     "steps": [
                         "Press Command-K to open Command Palette. Command-Shift-P is also a default palette binding.",
-                        "Type an action such as New Folder, View Options, Connections, or Preferences. Select the intended command rather than an action with a similar name.",
+                        "Type an action such as New Folder, View Options, Connections, or Settings. Select the intended command rather than an action with a similar name.",
                         "If a command is unavailable, close the palette and check its prerequisites: an active pane, a selection, a local folder, or an appropriate file type.",
-                        "Open Preferences when you are ready to adjust dates, drag behavior, or appearance. Change one setting at a time, then return to your practice folder to see its effect."
+                        "Open Settings when you are ready to adjust dates, drag behavior, or appearance. Change one setting at a time, then return to your practice folder to see its effect."
                     ]
                 },
                 {
@@ -246,7 +246,7 @@
                         "Press Command-L or Command-Shift-G to edit the path. Enter an existing local folder path, such as ~/Downloads, and confirm.",
                         "Use Command-Up for the enclosing folder. Use Command-[ and Command-] to move backward and forward through that pane's history.",
                         "Select a folder and double-click it or press Command-Down to enter it. Return is the rename shortcut, not the open shortcut.",
-                        "Use the breadcrumb path bar to orient yourself before copying, moving, extracting, or creating files. The path bar can be placed at the bottom in Preferences."
+                        "Use the breadcrumb path bar to orient yourself before copying, moving, extracting, or creating files. The path bar can be placed at the bottom in Settings."
                     ]
                 },
                 {
@@ -257,7 +257,7 @@
                         "Navigate the new tab to another folder. Switch tabs without changing the other pane's location.",
                         "Use Command-Shift-] and Command-Shift-[ to cycle tabs with the default keymap, or click a tab directly.",
                         "Close an unneeded tab with its close control or Close Tab. Before closing the last tab or a window, finish any work you still need to inspect.",
-                        "In Preferences, adjust where new tabs open and whether they are placed at the end or next to the current tab. Existing tabs are not relocated by changing a default."
+                        "In Settings, adjust where new tabs open and whether they are placed at the end or next to the current tab. Existing tabs are not relocated by changing a default."
                     ]
                 },
                 {
@@ -352,7 +352,7 @@
                         "A filename conflict is different from a move confirmation. A conflict means the destination already contains an item with the same name. The local transfer dialog offers Replace All, Keep Both for All, Skip All, and Cancel; it states that the choice applies to all conflicts in this operation.",
                         "Skip All leaves conflicting destination items alone, Replace All can overwrite destination data, and Keep Both for All preserves distinct names. Check that the decision is appropriate for the entire operation before choosing it. It is not permission for an unrelated later transfer, and other kinds of confirmation may use different choices."
                     ],
-                    "note": "Preferences > General > When files already exist controls the default policy. Ask is the default. Check this setting if conflict prompts disappear or a previous automatic choice is surprising."
+                    "note": "Settings > General > When files already exist controls the default policy. Ask is the default. Check this setting if conflict prompts disappear or a previous automatic choice is surprising."
                 },
                 {
                     "id": "verify-undo",
@@ -400,9 +400,9 @@
             "sections": [
                 {
                     "id": "set-default",
-                    "title": "Choose the default in Preferences",
+                    "title": "Choose the default in Settings",
                     "steps": [
-                        "Open Preferences from the command palette, then select General.",
+                        "Open Settings from the command palette, then select General.",
                         "Find Dragging items moves them (hold Command to copy). Enabled means move is the preferred default; disabled means copy is the preferred default.",
                         "Choose the behavior you actually want. New preferences default to move; an existing saved preference may still be set differently.",
                         "Test the setting using a disposable file between two writable local practice folders. Confirm the source and destination after the drop before using important data."
@@ -488,7 +488,7 @@
                     "id": "suggestions",
                     "title": "Try an on-device filename suggestion",
                     "steps": [
-                        "Open Preferences > Layout and enable Suggest filenames when renaming (on-device AI) if it is not already enabled.",
+                        "Open Settings > Layout and enable Suggest filenames when renaming (on-device AI) if it is not already enabled.",
                         "Use a local, downloaded file on a Mac with the required Apple Intelligence model available. A cloud placeholder must be downloaded before its contents can be used.",
                         "Start Rename or the available AI Rename action. Continue typing your own name if you prefer; a response should not replace what you typed by itself.",
                         "Read the proposed name. Choose Use Suggested Name only if you want to put it into the editable field.",
@@ -642,7 +642,7 @@
                     "id": "relative-dates",
                     "title": "Show Today and Yesterday",
                     "steps": [
-                        "Open Preferences and select Layout.",
+                        "Open Settings and select Layout.",
                         "Find Dates and choose Relative (Yesterday at 3:14 PM). Relative dates are the default for a fresh preferences configuration.",
                         "Return to a folder with a date column. Recent dates use relative labels when appropriate; older dates may still use calendar dates.",
                         "If you need a numeric or more explicit calendar format, select Short or Medium in the same Dates control. Existing saved preferences are not discarded simply because a new default changes."
@@ -720,7 +720,7 @@
                     "id": "recents",
                     "title": "Understand Recents and compact mode",
                     "paragraphs": [
-                        "Recents can be based on recently modified or recently opened files. Pathem defaults to recently modified; this can differ from what you expect from Finder's Recents. Change the Recents basis in Preferences if you want the other behavior.",
+                        "Recents can be based on recently modified or recently opened files. Pathem defaults to recently modified; this can differ from what you expect from Finder's Recents. Change the Recents basis in Settings if you want the other behavior.",
                         "Compact sidebar mode uses icons with less space. Turn it off when learning unfamiliar places, particularly when several services contain a Documents or Downloads folder. Monochrome icons are another independent appearance choice.",
                         "A recent location or favorite is a reference to a path. It neither backs up the contents nor guarantees that an external volume is mounted."
                     ]
@@ -1390,7 +1390,7 @@
                     "id": "settings",
                     "title": "Change one preference at a time",
                     "steps": [
-                        "Open Preferences from Command Palette. Use the settings sidebar or search to find the relevant control.",
+                        "Open Settings from Command Palette. Use the settings sidebar or search to find the relevant control.",
                         "Use Appearance for skin, accent, density, fonts, and icon size. Use Layout for path-bar position, date format, and related presentation controls.",
                         "Use General for drag behavior, existing-file policy, copy verification, and Trash confirmation. Read the wording before changing a safety-related preference.",
                         "Return to a practice folder and verify the effect. If it looks unchanged, check whether a folder-specific saved view is overriding a global default.",
@@ -1401,7 +1401,7 @@
                     "id": "keys",
                     "title": "Customize keyboard actions deliberately",
                     "steps": [
-                        "Open Preferences > Shortcuts and identify the named command you want to change. Use the command palette to verify what that command actually does first.",
+                        "Open Settings > Shortcuts and identify the named command you want to change. Use the command palette to verify what that command actually does first.",
                         "Assign a shortcut that does not conflict with a text-editing shortcut you rely on. Test it with a harmless selection and with a text field focused.",
                         "Keep a note of changed bindings. These guides and the website shortcut overview show defaults, not your customized map.",
                         "If you edit keymap.json directly, back up the file first and use valid JSON with canonical chord names. An empty command value removes a default binding; it is not a request to execute an empty command."
@@ -1412,7 +1412,7 @@
                     "title": "Set up Commander F-keys",
                     "steps": [
                         "Run Commander Mode to show the Commander-style command bar.",
-                        "Open the Commander customization control in Preferences and inspect the six F3–F8 assignments.",
+                        "Open the Commander customization control in Settings and inspect the six F3–F8 assignments.",
                         "Choose commands by name, save the dialog, and test each button against disposable files. Cancel leaves the existing assignments unchanged.",
                         "If a Mac keyboard treats F-keys as brightness or media keys, use Fn/Globe as appropriate or adjust the Mac's keyboard behavior. Changing Commander assignments does not change the operating system's media-key mode."
                     ],
@@ -1498,7 +1498,7 @@
                     "id": "built-in",
                     "title": "Pick a built-in theme",
                     "steps": [
-                        "Open Preferences > Appearance. The Skin menu lists the 23 built-in themes under Follow System, Light Themes, and Dark Themes.",
+                        "Open Settings > Appearance. The Skin menu lists the 23 built-in themes under Follow System, Light Themes, and Dark Themes.",
                         "Choose a skin. Pathem shows it on the window right away and opens Theme Preview. Choose Apply to keep it or Cancel to return to the look you had.",
                         "Adjust single values if you want to. Accent color and Window tint change the two theme colors, and None clears the window tint. Appearance switches between System, Light, and Dark.",
                         "Each theme also brings a folder style, a file icon set, and toolbar glyphs. Use the Folder style, File icons, and Toolbar glyphs menus to override any of them. Choose Use Theme in a menu to go back to what the theme supplies.",
@@ -1510,7 +1510,7 @@
                     "id": "import-export",
                     "title": "Import and export theme files",
                     "steps": [
-                        "In Preferences > Appearance, choose Import… and select a file. The same button accepts a Pathem theme file (.json), a VS Code color theme (.json or .jsonc), and an iTerm2 color preset (.itermcolors).",
+                        "In Settings > Appearance, choose Import… and select a file. The same button accepts a Pathem theme file (.json), a VS Code color theme (.json or .jsonc), and an iTerm2 color preset (.itermcolors).",
                         "Check Theme Preview. It names what will change and shows a color swatch. Choose Apply to save it or Cancel to leave everything as it was.",
                         "To save your current look, choose Export… and pick a location. The file is named Pathem Theme.json unless you rename it, and it records your colors, appearance, and the folder, file icon, and toolbar styles in effect, including any overrides."
                     ],
@@ -1528,7 +1528,7 @@
                         "To look through the published themes in a browser first, with screenshots, colors, and licenses, see the [community themes gallery](/themes/)."
                     ],
                     "steps": [
-                        "In Preferences > Appearance, choose Themes…. Pathem downloads the current public catalog and opens the Themes window.",
+                        "In Settings > Appearance, click Themes… to open the gallery. Pathem downloads the current public catalog and opens the Themes window.",
                         "Stay on Browse and use the search field to filter by title, creator, or tag. Select a listing to see its creator credit, license, version, and screenshots.",
                         "Choose Preview to try the theme on your window. Choose Close Preview to restore your appearance.",
                         "Choose Install to keep a copy on your Mac, then Apply Installed to switch to it. When a newer revision is published, the listing offers Update.",
@@ -1540,7 +1540,7 @@
                     "id": "submit",
                     "title": "Submit a theme",
                     "steps": [
-                        "Set up the look you want to share in Preferences > Appearance, then choose Submit a Theme…. The submission captures the theme as it is at that moment.",
+                        "Set up the look you want to share in Settings > Appearance, then choose Submit a Theme…. The submission captures the theme as it is at that moment.",
                         "Choose one to three PNG or JPEG screenshots, each up to 2 MB and 2400 pixels per side. Pick images you are willing to publish, and check that no private file names or paths are visible in them.",
                         "Fill in Prepare Marketplace Submission: Listing ID, Revision, Title, Summary, Creator credit, and License, plus the optional Source and Tags. The listing ID is lowercase letters, digits, and hyphens, for example tidal-marsh.",
                         "Choose Save and Continue… and save the file. It is named after the listing ID and revision and ends in .submission.json. Nothing has been sent anywhere yet.",
@@ -1697,7 +1697,7 @@
                     "title": "Make the bundled CLI available",
                     "steps": [
                         "Use a packaged Pathem.app containing the command-line helper. A bare source-run process may not include the installable bundled CLI.",
-                        "Open Preferences > Integrations. In the Terminal command row, choose Install. Read the resulting Installed at path to see which writable directory was selected.",
+                        "Open Settings > Integrations. In the Terminal command row, choose Install. Read the resulting Installed at path to see which writable directory was selected.",
                         "Open a new terminal or refresh your shell's command lookup. Run command -v pathem to check which executable will be used.",
                         "If the command cannot be installed, inspect the reported directory or conflicting file. Do not delete an unrelated executable merely to make room for Pathem's link.",
                         "If a user-owned directory such as ~/.local/bin is chosen, ensure your own shell includes that directory in PATH. Do not add broad writable locations to PATH just to avoid understanding the error."
@@ -1793,7 +1793,7 @@
                     "bullets": [
                         "A drag copies instead of moving: inspect the drag-default preference, modifier keys, source application, and provider capabilities. Use an explicit Move To… for comparison.",
                         "Repeated prompts: distinguish an incoming request, a move confirmation, a filename conflict, and an extension warning. Record the prompt title and the action that triggered each one; do not disable unrelated safety prompts blindly.",
-                        "Unexpected dates: inspect Preferences > Layout > Dates. Relative date labels and date grouping are separate choices.",
+                        "Unexpected dates: inspect Settings > Layout > Dates. Relative date labels and date grouping are separate choices.",
                         "A command is disabled: select an appropriate item and verify whether the command requires a local folder, supported file type, model, or provider.",
                         "Scroll or location jumps during a file change: record the view, sort/group keys, open tabs, operation, and whether the change came from Pathem or another application. Use disposable files for a reproduction."
                     ],
