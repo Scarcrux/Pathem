@@ -238,6 +238,7 @@
 "bvc.cmd.pasteOtherPane" = "Pegar en el otro panel";
 "bvc.cmd.peekArchive" = "Ver contenido del archivo comprimido";
 "bvc.cmd.preferences" = "Ajustes…";
+"bvc.cmd.preferences.keyword" = "Preferencias";
 "bvc.cmd.previewPane" = "Panel de previsualización";
 "bvc.cmd.previousTab" = "Pestaña anterior";
 "bvc.cmd.processViewer" = "Visor de procesos";

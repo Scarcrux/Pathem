@@ -12,10 +12,11 @@ import UniformTypeIdentifiers
 extension BrowserViewController {
     func registerCommands() {
         func add(
-            _ id: String, _ title: String,
+            _ id: String, _ title: String, keywords: [String] = [],
             enabled: @escaping () -> Bool = { true }, _ run: @escaping () -> Void
         ) {
-            commands.register(.init(id: id, title: title, isEnabled: enabled, run: run))
+            commands.register(
+                .init(id: id, title: title, keywords: keywords, isEnabled: enabled, run: run))
         }
         let hasSelection: () -> Bool = { [weak self] in
             self?.activePane?.selectedEntries.isEmpty == false
@@ -623,7 +624,12 @@ extension BrowserViewController {
             "files.download", L("bvc.cmd.download", "Download Now"),
             enabled: { [weak self] in self?.cloudActions().showsDownloadNow ?? false }
         ) { [weak self] in self?.downloadSelection() }
-        add("view.preferences", L("bvc.cmd.preferences", "Settings…")) { [weak self] in
+        add(
+            "view.preferences", L("bvc.cmd.preferences", "Settings…"),
+            keywords: [
+                "Preferences", "Prefs", L("bvc.cmd.preferences.keyword", "Preferences"),
+            ]
+        ) { [weak self] in
             self?.showPreferences()
         }
         add(

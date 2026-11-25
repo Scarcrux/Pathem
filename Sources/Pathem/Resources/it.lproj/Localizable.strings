@@ -239,6 +239,7 @@
 "bvc.cmd.pasteOtherPane" = "Incolla nell’altro pannello";
 "bvc.cmd.peekArchive" = "Mostra contenuto archivio";
 "bvc.cmd.preferences" = "Impostazioni…";
+"bvc.cmd.preferences.keyword" = "Impostazioni";
 "bvc.cmd.previewPane" = "Pannello anteprima";
 "bvc.cmd.previousTab" = "Scheda precedente";
 "bvc.cmd.processViewer" = "Visualizzatore processi";

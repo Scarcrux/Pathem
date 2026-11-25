@@ -238,6 +238,7 @@
 "bvc.cmd.pasteOtherPane" = "反対側のペインにペースト";
 "bvc.cmd.peekArchive" = "アーカイブの内容を表示";
 "bvc.cmd.preferences" = "設定…";
+"bvc.cmd.preferences.keyword" = "環境設定";
 "bvc.cmd.previewPane" = "プレビューペイン";
 "bvc.cmd.previousTab" = "前のタブ";
 "bvc.cmd.processViewer" = "プロセスビューア";

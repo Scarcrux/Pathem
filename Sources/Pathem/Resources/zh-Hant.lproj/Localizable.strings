@@ -239,6 +239,7 @@
 "bvc.cmd.pasteOtherPane" = "貼到另一個面板";
 "bvc.cmd.peekArchive" = "顯示封存檔內容";
 "bvc.cmd.preferences" = "設定…";
+"bvc.cmd.preferences.keyword" = "偏好設定";
 "bvc.cmd.previewPane" = "預覽面板";
 "bvc.cmd.previousTab" = "上一個標籤頁";
 "bvc.cmd.processViewer" = "程序檢視器";

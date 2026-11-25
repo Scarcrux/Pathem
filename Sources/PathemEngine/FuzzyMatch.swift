@@ -34,15 +34,30 @@ public enum FuzzyMatch {
         return qi == q.count ? total : nil
     }
 
+    /// Points a keyword match loses against an equal title match, so a command
+    /// found by its real title outranks one found only by an alias.
+    static let keywordPenalty = 4
+
     /// Keep only matching items, best score first; ties preserve the original
-    /// order (stable). An empty query returns the items unchanged.
-    public static func rank<T>(_ items: [T], query: String, key: (T) -> String) -> [T] {
+    /// order (stable). An empty query returns the items unchanged. `keywords`
+    /// supplies search aliases (for example "Preferences" for Settings): an item
+    /// matches on its key or any alias, an alias scoring slightly lower than the
+    /// same text in the key. The alias only affects ranking, never what is shown.
+    public static func rank<T>(
+        _ items: [T], query: String, key: (T) -> String,
+        keywords: (T) -> [String] = { _ in [] }
+    ) -> [T] {
         if query.isEmpty { return items }
         return
             items
             .enumerated()
             .compactMap { index, item -> (score: Int, index: Int, item: T)? in
-                guard let s = score(query, key(item)) else { return nil }
+                var best = score(query, key(item))
+                for word in keywords(item) {
+                    guard let s = score(query, word) else { continue }
+                    best = max(best ?? Int.min, s - keywordPenalty)
+                }
+                guard let s = best else { return nil }
                 return (s, index, item)
             }
             .sorted { $0.score != $1.score ? $0.score > $1.score : $0.index < $1.index }

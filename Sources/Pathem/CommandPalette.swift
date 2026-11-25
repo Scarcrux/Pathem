@@ -19,6 +19,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     private let scroll = NSScrollView()
 
     private var all: [(id: String, title: String)] = []
+    private var keywords: [String: [String]] = [:]  // search aliases by command id
     private var filtered: [(id: String, title: String)] = []
     private var onRun: ((String) -> Void)?
     private var onNavigate: ((URL) -> Void)?
@@ -93,6 +94,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
     /// cleared so the caller can restore the plain listing.
     func present(
         commands: [(id: String, title: String)],
+        keywords: [String: [String]] = [:],
         prefill: String = "",
         onRun: @escaping (String) -> Void,
         onNavigate: @escaping (URL) -> Void,
@@ -100,6 +102,7 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
         over window: NSWindow
     ) {
         all = commands
+        self.keywords = keywords
         self.onRun = onRun
         self.onNavigate = onNavigate
         self.onSemantic = onSemantic
@@ -132,7 +135,8 @@ final class CommandPalette: NSObject, NSTableViewDataSource, NSTableViewDelegate
             let query =
                 field.stringValue.hasPrefix(">")
                 ? String(field.stringValue.dropFirst()) : field.stringValue
-            filtered = FuzzyMatch.rank(all, query: query, key: { $0.title })
+            filtered = FuzzyMatch.rank(
+                all, query: query, key: { $0.title }, keywords: { self.keywords[$0.id] ?? [] })
             scheduleLiveSearch("")  // leaving search mode restores the plain listing
         case .path:
             filtered = pathCompletions(field.stringValue)

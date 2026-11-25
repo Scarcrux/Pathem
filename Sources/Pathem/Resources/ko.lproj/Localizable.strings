@@ -239,6 +239,7 @@
 "bvc.cmd.pasteOtherPane" = "다른 패널에 붙여넣기";
 "bvc.cmd.peekArchive" = "압축 파일 내용 보기";
 "bvc.cmd.preferences" = "설정…";
+"bvc.cmd.preferences.keyword" = "설정";
 "bvc.cmd.previewPane" = "미리보기 패널";
 "bvc.cmd.previousTab" = "이전 탭";
 "bvc.cmd.processViewer" = "프로세스 뷰어";

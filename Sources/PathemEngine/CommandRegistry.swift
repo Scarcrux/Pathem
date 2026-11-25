@@ -13,16 +13,20 @@ public final class CommandRegistry {
     public struct Command {
         public let id: String
         public let title: String
+        /// Search aliases for the palette (for example "Preferences" for Settings).
+        /// Matched after the title at a slightly lower rank; never displayed.
+        public let keywords: [String]
         public let isEnabled: () -> Bool
         public let run: () -> Void
 
         public init(
-            id: String, title: String,
+            id: String, title: String, keywords: [String] = [],
             isEnabled: @escaping () -> Bool = { true },
             run: @escaping () -> Void
         ) {
             self.id = id
             self.title = title
+            self.keywords = keywords
             self.isEnabled = isEnabled
             self.run = run
         }

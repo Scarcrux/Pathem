@@ -238,6 +238,7 @@
 "bvc.cmd.pasteOtherPane" = "In anderem Bereich einsetzen";
 "bvc.cmd.peekArchive" = "Archivinhalt anzeigen";
 "bvc.cmd.preferences" = "Einstellungen…";
+"bvc.cmd.preferences.keyword" = "Einstellungen";
 "bvc.cmd.previewPane" = "Vorschaubereich";
 "bvc.cmd.previousTab" = "Vorheriger Tab";
 "bvc.cmd.processViewer" = "Prozessanzeige";

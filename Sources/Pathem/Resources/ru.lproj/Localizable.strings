@@ -239,6 +239,7 @@
 "bvc.cmd.pasteOtherPane" = "Вставить в другую панель";
 "bvc.cmd.peekArchive" = "Показать содержимое архива";
 "bvc.cmd.preferences" = "Настройки…";
+"bvc.cmd.preferences.keyword" = "Настройки";
 "bvc.cmd.previewPane" = "Панель просмотра";
 "bvc.cmd.previousTab" = "Предыдущая вкладка";
 "bvc.cmd.processViewer" = "Просмотр процессов";

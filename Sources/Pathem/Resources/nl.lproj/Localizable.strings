@@ -239,6 +239,7 @@
 "bvc.cmd.pasteOtherPane" = "Plak in ander paneel";
 "bvc.cmd.peekArchive" = "Toon archiefinhoud";
 "bvc.cmd.preferences" = "Instellingen…";
+"bvc.cmd.preferences.keyword" = "Instellingen";
 "bvc.cmd.previewPane" = "Voorvertoningspaneel";
 "bvc.cmd.previousTab" = "Vorig tabblad";
 "bvc.cmd.processViewer" = "Processenoverzicht";

@@ -41,3 +41,41 @@ import Testing
         #expect(ranked == items)  // identical scores keep original order
     }
 }
+
+@Suite struct FuzzyMatchKeywordTests {
+    private struct Item {
+        let title: String
+        let keywords: [String]
+    }
+
+    private let settings = Item(title: "Settings…", keywords: ["Preferences", "Prefs"])
+    private let copy = Item(title: "Copy", keywords: [])
+
+    @Test func keywordsFindACommandWhoseTitleDoesNotMatch() {
+        let items = [copy, settings]
+        for query in ["pref", "Preferences", "prefs"] {
+            let ranked = FuzzyMatch.rank(
+                items, query: query, key: { $0.title }, keywords: { $0.keywords })
+            #expect(ranked.map(\.title) == ["Settings…"], "query \(query)")
+        }
+        // Without keywords the old title-only behavior finds nothing.
+        #expect(FuzzyMatch.rank(items, query: "pref", key: { $0.title }).isEmpty)
+    }
+
+    @Test func aTitleMatchBeatsAKeywordMatchOfTheSameText() {
+        let prefsViewer = Item(title: "Preferences Viewer", keywords: [])
+        let ranked = FuzzyMatch.rank(
+            [settings, prefsViewer], query: "preferences", key: { $0.title },
+            keywords: { $0.keywords })
+        #expect(ranked.map(\.title) == ["Preferences Viewer", "Settings…"])
+    }
+
+    @Test func aKeywordNeverReplacesTheTitleAndEmptyQueryKeepsOrder() {
+        let ranked = FuzzyMatch.rank(
+            [settings], query: "prefs", key: { $0.title }, keywords: { $0.keywords })
+        #expect(ranked.first?.title == "Settings…")
+        let all = FuzzyMatch.rank(
+            [copy, settings], query: "", key: { $0.title }, keywords: { $0.keywords })
+        #expect(all.map(\.title) == ["Copy", "Settings…"])
+    }
+}

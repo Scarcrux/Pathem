@@ -13,6 +13,9 @@ extension BrowserViewController {
         let items = commands.all.map { (id: $0.id, title: $0.title) }
         palette.present(
             commands: items,
+            keywords: Dictionary(
+                commands.all.filter { !$0.keywords.isEmpty }.map { ($0.id, $0.keywords) },
+                uniquingKeysWith: { first, _ in first }),
             prefill: prefill,
             onRun: { [weak self] id in self?.commands.perform(id) },
             onNavigate: { [weak self] url in self?.activePane?.navigate(to: url) },
