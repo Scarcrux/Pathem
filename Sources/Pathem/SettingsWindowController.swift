@@ -314,6 +314,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 labeled(
                     L("prefs.conflictDefault", "When files already exist"), conflictDefaultControl()
                 ),
+                check(L("prefs.keepActivityLog", "Keep an activity log"), \.keepActivityLog),
                 check(
                     L("prefs.verifyCopies", "Verify copies with a checksum (slower)"),
                     \.verifyCopies),

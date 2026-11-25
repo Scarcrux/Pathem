@@ -26,6 +26,8 @@ extension BrowserViewController {
         Task { @MainActor [weak self, weak pane] in
             do {
                 try await Archiver.compress(urls, to: dest)
+                Self.recordActivity(
+                    "archive", sources: urls, destination: dest, completed: urls.count)
                 if let pane, !pane.isRemote, !pane.isShowingSmartResults,
                     pane.currentURL.path == folder.path
                 {
@@ -35,6 +37,7 @@ extension BrowserViewController {
                 }
                 self?.reloadBothSides()
             } catch {
+                Self.recordArchiveFailure(sources: urls, destination: dest, error: error)
                 self?.reportArchiveError(
                     L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
             }
@@ -57,6 +60,8 @@ extension BrowserViewController {
         Task { @MainActor [weak self, weak pane] in
             do {
                 try await Archiver.compress7z(urls, to: dest)
+                Self.recordActivity(
+                    "archive", sources: urls, destination: dest, completed: urls.count)
                 if let pane, !pane.isRemote, !pane.isShowingSmartResults,
                     pane.currentURL.path == folder.path
                 {
@@ -66,6 +71,7 @@ extension BrowserViewController {
                 }
                 self?.reloadBothSides()
             } catch {
+                Self.recordArchiveFailure(sources: urls, destination: dest, error: error)
                 self?.reportArchiveError(
                     L("bvc.couldntCreateArchive", "Couldn’t create the archive"), error)
             }
@@ -90,7 +96,14 @@ extension BrowserViewController {
             for archive in archives {
                 let name = (archive.lastPathComponent as NSString).deletingPathExtension
                 let out = self.uniqueLocalURL(folder.appendingPathComponent(name))
-                do { try await Archiver.extract(archive, to: out) } catch { failed = true }
+                do {
+                    try await Archiver.extract(archive, to: out)
+                    Self.recordActivity(
+                        "archive", sources: [archive], destination: out, completed: 1)
+                } catch {
+                    failed = true
+                    Self.recordArchiveFailure(sources: [archive], destination: out, error: error)
+                }
             }
             self.reloadBothSides()
             if failed {
@@ -117,7 +130,14 @@ extension BrowserViewController {
             guard let self else { return }
             var failed = false
             for archive in archives {
-                do { try await Archiver.extract(archive, to: folder) } catch { failed = true }
+                do {
+                    try await Archiver.extract(archive, to: folder)
+                    Self.recordActivity(
+                        "archive", sources: [archive], destination: folder, completed: 1)
+                } catch {
+                    failed = true
+                    Self.recordArchiveFailure(sources: [archive], destination: folder, error: error)
+                }
             }
             self.reloadBothSides()
             if failed {
@@ -153,7 +173,15 @@ extension BrowserViewController {
                 for archive in archives {
                     let name = (archive.lastPathComponent as NSString).deletingPathExtension
                     let out = self.uniqueLocalURL(destination.appendingPathComponent(name))
-                    do { try await Archiver.extract(archive, to: out) } catch { failed = true }
+                    do {
+                        try await Archiver.extract(archive, to: out)
+                        Self.recordActivity(
+                            "archive", sources: [archive], destination: out, completed: 1)
+                    } catch {
+                        failed = true
+                        Self.recordArchiveFailure(
+                            sources: [archive], destination: out, error: error)
+                    }
                 }
                 self.reloadBothSides()
                 if failed {
@@ -220,12 +248,21 @@ extension BrowserViewController {
             let out = self.uniqueLocalURL(folder.appendingPathComponent(name))
             do {
                 try await Archiver.extract(archive, to: out)
+                Self.recordActivity("archive", sources: [archive], destination: out, completed: 1)
                 self.reloadBothSides()
             } catch {
+                Self.recordArchiveFailure(sources: [archive], destination: out, error: error)
                 self.reportArchiveError(
                     L("bvc.couldntExtract", "Couldn’t extract one or more archives"), error)
             }
         }
+    }
+
+    private static func recordArchiveFailure(sources: [URL], destination: URL, error: Error) {
+        let systemError = error as NSError
+        recordActivity(
+            "archive", sources: sources, destination: destination, completed: 0,
+            failures: [.init(name: "", reason: "\(systemError.domain) (\(systemError.code))")])
     }
 
     func reportArchiveError(_ title: String, _ error: Error?) {
@@ -301,8 +338,11 @@ extension BrowserViewController {
         Task { @MainActor in
             do {
                 try await Archiver.repack(from: mountRoot, into: archive)
+                Self.recordActivity(
+                    "archive", sources: [mountRoot], destination: archive, completed: 1)
                 self.reloadBothSides()
             } catch {
+                Self.recordArchiveFailure(sources: [mountRoot], destination: archive, error: error)
                 self.reportArchiveError(
                     L("archive.saveBackFailed", "Couldn’t save changes to the archive"), error)
             }

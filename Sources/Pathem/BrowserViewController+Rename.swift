@@ -104,18 +104,26 @@ extension BrowserViewController {
     private func performLocalRename(
         _ entry: FileEntry, to trimmed: String, in directory: URL, pane: PaneController
     ) {
+        let source = directory.appendingPathComponent(entry.name)
+        let destination = directory.appendingPathComponent(trimmed)
         do {
             try FileOperations.rename(entry.name, to: trimmed, in: directory)
             registerRenameUndo(from: trimmed, to: entry.name, in: directory)
+            Self.recordActivity(
+                "rename", sources: [source], destination: destination, completed: 1,
+                undo: actionHistory.undoStack.last?.id)
             guard pane.currentURL == directory || pane.isShowingSmartResults else { return }
             pane.reloadIfShowingListing()
             // Carry identity into the fresh listing without revealing it: renaming
             // may re-sort the row, but must not move the user's viewport.
             pane.selectWhenListed(trimmed)
         } catch {
-            presentFailures(
-                [FileOperations.Failure(name: entry.name, reason: error.localizedDescription)],
-                title: L("bvc.renameFailed", "Rename failed"))
+            let failure = FileOperations.Failure(
+                name: entry.name, reason: error.localizedDescription)
+            Self.recordActivity(
+                "rename", sources: [source], destination: destination,
+                completed: 0, failures: [failure])
+            presentFailures([failure], title: L("bvc.renameFailed", "Rename failed"))
         }
     }
 

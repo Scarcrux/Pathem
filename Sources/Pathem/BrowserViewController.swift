@@ -28,6 +28,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     /// ops; text-field editing keeps its own). Drives Cmd-Z, the Edit menu, and a recent-actions
     /// panel with selective undo.
     let actionHistory = ActionHistory()
+    let activityDrawer = ActivityDrawerController()
     /// Absolute paths a set of performed ops touched, used as an action's footprint.
     static func paths(of performed: [FileOperations.Performed]) -> Set<String> {
         Set(performed.flatMap { [$0.source.path, $0.destination.path] })
@@ -380,6 +381,11 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
         mainStack.addArrangedSubview(updateBanner)  // unmissable update bar across the very top
         mainStack.addArrangedSubview(vSplit)
         mainStack.addArrangedSubview(torrentDrawer.view)
+        activityDrawer.view.isHidden = true
+        activityDrawer.view.heightAnchor.constraint(equalToConstant: 180).isActive = true
+        activityDrawer.view.setContentHuggingPriority(.required, for: .vertical)
+        mainStack.addArrangedSubview(activityDrawer.view)
+        configureActivityDrawer()
         NotificationCenter.default.addObserver(
             self, selector: #selector(refreshUpdateBanner), name: .pathemUpdateStateChanged,
             object: nil)

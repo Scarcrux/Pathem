@@ -19,7 +19,7 @@ final class TransferRunner {
     func run(
         urls: [URL], into destination: URL, move: Bool,
         resolution: FileOperations.ConflictResolution, verify: Bool = false, over window: NSWindow?,
-        completion: @escaping (FileOperations.Outcome) -> Void
+        completion: @escaping (FileOperations.Outcome, Int64?, Bool) -> Void
     ) {
         #if DEBUG
         // Fail closed before I/O if the default-key fixture tries to Replace.
@@ -29,7 +29,7 @@ final class TransferRunner {
             refused.failures = [
                 .init(name: "owned-fixture", reason: "Test guard refused Replace before I/O")
             ]
-            completion(refused)
+            completion(refused, nil, false)
             return
         }
         #endif
@@ -81,7 +81,7 @@ final class TransferRunner {
             }.value
             monitor.cancel()
             self?.progress.end()
-            completion(outcome)
+            completion(outcome, state.progress.completedBytes, state.isCancelled)
         }
     }
 }

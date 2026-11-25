@@ -77,6 +77,7 @@ enum PathemApp {
             || launchEnvironment["PATHEM_OPENER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_SIDEBAR_TRANSFER_UI_TEST"] != nil
             || launchEnvironment["PATHEM_FILE_SEARCH_TEST"] != nil
+            || launchEnvironment["PATHEM_ACTIVITY_TEST"] != nil
             || launchEnvironment["PATHEM_LAYOUT_MATRIX_TEST"] != nil
             || launchEnvironment["PATHEM_TRANSIENT_SURFACES_TEST"] != nil
             || launchEnvironment["PATHEM_COMMUNITY_GALLERY_TEST"] != nil
@@ -98,6 +99,12 @@ enum PathemApp {
                 exit(64)
             }
         }
+        #if DEBUG
+        if launchEnvironment["PATHEM_ACTIVITY_TEST"] != nil {
+            _ = NSApplication.shared
+            exit(ActivityDrawerController.runFixture() ? 0 : 1)
+        }
+        #endif
         if launchEnvironment["PATHEM_RELEASE_TEST"] == "themes" {
             let app = NSApplication.shared
             app.setActivationPolicy(.prohibited)
@@ -2052,6 +2059,7 @@ enum PathemApp {
                 [
                     commandItem("Quick Look", "view.quickLook"),
                     commandItem("Slideshow", "view.slideshow"),
+                    commandItem(L("activity.title", "Activity"), "activity.toggle"),
                     commandItem("Preview Pane", "view.previewPane", "p", [.command, .option]),
                     commandItem("Show Drop Stack", "shelf.toggle", "y", [.command, .shift]),
                 ]))

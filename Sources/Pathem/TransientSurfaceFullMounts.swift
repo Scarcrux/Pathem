@@ -141,7 +141,8 @@ extension TransientSurfaceSample {
                 controller.present(
                     names: [name], in: file.deletingLastPathComponent(), existing: [name],
                     over: self.host,
-                    onComplete: { _ in self.emit("mount-callback", 5, false, "unexpected rename") })
+                    onComplete: { _, _ in self.emit("mount-callback", 5, false, "unexpected rename")
+                    })
                 return controller
             },
             mount("m19", "BulkAttributesController.swift:36") { _, _ in

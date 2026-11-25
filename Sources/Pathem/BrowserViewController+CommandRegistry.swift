@@ -121,6 +121,9 @@ extension BrowserViewController {
         add("terminal.toggle", L("bvc.cmd.toggleTerminal", "Toggle Terminal")) { [weak self] in
             self?.toggleTerminal()
         }
+        add("activity.toggle", L("activity.toggle", "Toggle Activity")) { [weak self] in
+            self?.toggleActivityDrawer()
+        }
         add("commander.toggle", L("bvc.cmd.commanderMode", "Commander Mode")) { [weak self] in
             self?.toggleCommander()
         }

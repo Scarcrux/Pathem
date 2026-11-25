@@ -2830,3 +2830,11 @@ missions = ["m-1331afb7", "m-b2532fac"]
     text = "Offscreen AppKit control: at horizontal offset 110, overriding the table cell rectangle returned x=126 while the actual Name view remained at x=16. Moving the actual cell shifted its frame at offset 240, with selection, editing and header behavior still unqualified. Keep this separate from the metadata column work."
     at = "2026-11-25T19:41:53Z"
 # <<< commandem roadmap <<<
+
+[[mission]]
+  id = "m-9d3501f4"
+  title = "Activity drawer and local operation log"
+  status = "now"
+  note = "File operations currently report results only in the moment. Record paths and outcomes locally in a bounded rolling log with a searchable drawer and undo scoped to live history. Verify the engine storage and exercise the drawer with an isolated fixture."
+  issue = 0
+# <<< commandem roadmap <<<

@@ -42,7 +42,7 @@ extension BrowserViewController {
         transferRunner.run(
             urls: urls, into: destination, move: move, resolution: resolution,
             verify: !move && prefs.verifyCopies, over: view.window
-        ) { [weak self] outcome in
+        ) { [weak self] outcome, bytes, canceled in
             self?.transferInFlight = false
             // Surface skipped items centrally (every transfer path funnels through here), so a
             // Skip resolution or a name clash never silently drops files with no feedback.
@@ -53,7 +53,14 @@ extension BrowserViewController {
                             "bvc.transferSkipped", "%d item(s) skipped (name already in use)"),
                         outcome.skipped.count))
             }
+            let previous = self?.actionHistory.undoStack.last?.id
             completion(outcome)
+            let latest = self?.actionHistory.undoStack.last?.id
+            Self.recordActivity(
+                move ? "move" : "copy", sources: urls, destination: destination,
+                completed: outcome.performed.count, failures: outcome.failures,
+                skipped: outcome.skipped.count, bytes: bytes, canceled: canceled,
+                undo: latest == previous ? nil : latest)
         }
     }
 

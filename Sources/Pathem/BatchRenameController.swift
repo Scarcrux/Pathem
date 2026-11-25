@@ -38,7 +38,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
     private var existing: Set<String> = []
     private var caseSensitiveNames = false
     private var directory = URL(fileURLWithPath: "/")
-    private var onComplete: (([RenamePair]) -> Void)?
+    private var onComplete: ((RenameOutcome, [RenamePair]) -> Void)?
     private var plan = RenamePlan(pairs: [], collisions: [])
 
     override init() {
@@ -180,7 +180,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
 
     func present(
         names: [String], in directory: URL, existing: Set<String>,
-        over window: NSWindow, onComplete: @escaping ([RenamePair]) -> Void
+        over window: NSWindow, onComplete: @escaping (RenameOutcome, [RenamePair]) -> Void
     ) {
         self.names = names
         self.directory = directory
@@ -316,7 +316,7 @@ final class BatchRenameController: NSObject, NSTableViewDataSource, NSTableViewD
         guard applyButton.isEnabled else { return }
         let outcome = BatchRename.perform(in: directory, pairs: plan.pairs)
         panel.orderOut(nil)
-        onComplete?(outcome.performed)
+        onComplete?(outcome, plan.pairs)
         if !outcome.failures.isEmpty {
             let alert = NSAlert()
             alert.alertStyle = .warning

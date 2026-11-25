@@ -99,6 +99,7 @@ extension BrowserViewController {
         case "view.stackPanes": menuItem.state = prefs.stackPanesVertically ? .on : .off
         case "pairs.follow": menuItem.state = followPairedFolders ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
+        case "activity.toggle": menuItem.state = activityDrawer.view.isHidden ? .off : .on
         case "view.previewPane": menuItem.state = previewPane.isVisible ? .on : .off
         case "shelf.toggle":
             menuItem.state = shelf.view.isHidden ? .off : .on

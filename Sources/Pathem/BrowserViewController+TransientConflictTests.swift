@@ -102,7 +102,7 @@ extension BrowserViewController {
             transferRunner.run(
                 urls: names.map { source.appendingPathComponent($0) }, into: destination,
                 move: false, resolution: .replace, over: view.window
-            ) { guardOutcome = $0 }
+            ) { outcome, _, _ in guardOutcome = outcome }
             let guarded =
                 guardOutcome?.performed.isEmpty == true
                 && guardOutcome?.failures.count == 1

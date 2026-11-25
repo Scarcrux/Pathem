@@ -265,6 +265,9 @@ extension BrowserViewController {
         pruneSmartEntries(Set(result.trashed.map(\.original.path)))  // drop stale rows in smart views
         recordTrashOrigins(result.trashed)  // remember where each came from, for Put Back
         if !result.trashed.isEmpty { registerTrashUndo(result.trashed) }
+        Self.recordActivity(
+            "trash", sources: urls, completed: result.trashed.count, failures: result.failures,
+            undo: result.trashed.isEmpty ? nil : actionHistory.undoStack.last?.id)
         if !result.failures.isEmpty {
             presentFailures(
                 result.failures, title: L("bvc.moveToTrashFailed", "Move to Trash failed"))

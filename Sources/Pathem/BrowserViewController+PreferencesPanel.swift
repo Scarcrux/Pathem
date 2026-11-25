@@ -23,6 +23,7 @@ extension BrowserViewController {
         NotificationCenter.default.addObserver(
             self, selector: #selector(synchronizeTrashRetentionPreference),
             name: .pathemTrashRetentionChanged, object: nil)
+        OperationLogger.shared.enabled = prefs.keepActivityLog
         trashRetention.initialize(enabled: prefs.trashAfter30Days)
         synchronizeTrashRetentionPreference()
     }
@@ -117,6 +118,7 @@ extension BrowserViewController {
 
     func receiveSettingsPreferences(_ updated: Preferences) {
         prefs = updated
+        OperationLogger.shared.enabled = updated.keepActivityLog
         prefs.trashAfter30Days = trashRetention.enabled
         applyPreferences()
     }

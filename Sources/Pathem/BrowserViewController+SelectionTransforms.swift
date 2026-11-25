@@ -345,6 +345,9 @@ extension BrowserViewController {
                         ))
                 }
                 let eraseFailures = result.failures + sharedLinks
+                Self.recordActivity(
+                    "secureDelete", sources: urls, completed: result.deleted.count,
+                    failures: eraseFailures)
                 if !eraseFailures.isEmpty {
                     self.presentFailures(
                         eraseFailures, title: L("bvc.secureDeleteFailed", "Couldn’t erase"))

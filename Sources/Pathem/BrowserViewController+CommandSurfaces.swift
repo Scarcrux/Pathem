@@ -35,9 +35,14 @@ extension BrowserViewController {
         let existing = Set(pane.entries.map(\.name))
         let directory = pane.currentURL
         batchRename.present(names: names, in: directory, existing: existing, over: window) {
-            [weak self, weak pane] performed in
+            [weak self, weak pane] outcome, pairs in
             pane?.reloadIfShowingListing()
-            self?.registerBatchRenameUndo(performed, in: directory)
+            self?.registerBatchRenameUndo(outcome.performed, in: directory)
+            Self.recordActivity(
+                "batchRename", sources: pairs.map { directory.appendingPathComponent($0.original) },
+                destination: directory, completed: outcome.performed.count,
+                failures: outcome.failures.map { .init(name: "", reason: $0) },
+                undo: outcome.performed.isEmpty ? nil : self?.actionHistory.undoStack.last?.id)
         }
     }
 
