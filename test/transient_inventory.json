@@ -719,14 +719,14 @@
       ],
       "reason": "Clipboard history rows and controls. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
-    "Sources/Pathem/CommandPalette.swift:125:9:makeKeyAndOrderFront": {
+    "Sources/Pathem/CommandPalette.swift:128:9:makeKeyAndOrderFront": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
       "destructive": false,
       "default_destructive_intended": false,
       "builders": [
-        "Sources/Pathem/CommandPalette.swift:39:17:NSPanel"
+        "Sources/Pathem/CommandPalette.swift:40:17:NSPanel"
       ],
       "reason": "Command search field and results. This row presents a custom window; confirmation alerts are separate rows. Native coverage pending unless task 2 is named."
     },
@@ -1266,7 +1266,7 @@
       ],
       "reason": "Brings an existing primary/secondary browser forward; covered by task 2, not a new transient surface. Unconditional debugSelectRow hook retained in census."
     },
-    "Sources/Pathem/BrowserViewController+CommandRegistry.swift:192:13:showWindow": {
+    "Sources/Pathem/BrowserViewController+CommandRegistry.swift:193:13:showWindow": {
       "class": "A",
       "kind": "custom window",
       "custom_content": true,
