@@ -19,6 +19,8 @@ public enum FileColumns {
         public var sharedBy: String?
         public var modifiedBy: String?
         public var version: String?
+        /// Media columns (date taken, camera, duration, ...), when requested via `mediaFields`.
+        public var media: MediaColumns.Attributes?
         public init(
             dimensions: String? = nil, permissions: String? = nil, owner: String? = nil,
             whereFrom: String? = nil, comment: String? = nil
@@ -42,10 +44,17 @@ public enum FileColumns {
         public static let comment = Request(rawValue: 1 << 4)
         public static let finder = Request(rawValue: 1 << 5)
         public static let lastOpened = Request(rawValue: 1 << 6)
+        /// Media metadata; which fields is passed to `gather(_:_:mediaFields:)`.
+        public static let media = Request(rawValue: 1 << 7)
     }
 
-    public static func gather(_ url: URL, _ request: Request) -> Extended {
+    public static func gather(
+        _ url: URL, _ request: Request, mediaFields: MediaColumns.Fields = []
+    ) -> Extended {
         var info = Extended()
+        if request.contains(.media), !mediaFields.isEmpty {
+            info.media = MediaColumns.Cache.shared.values(for: url, fields: mediaFields)
+        }
         if request.contains(.lastOpened),
             let item = MDItemCreate(kCFAllocatorDefault, url.path as CFString)
         {

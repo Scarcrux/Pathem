@@ -229,7 +229,9 @@ extension BrowserViewController {
                 case .dateCreated: return metadata[index].creationDate?.timeIntervalSince1970
                 case .dateAccessed: return lastOpened[index]?.timeIntervalSince1970
                 case .dateAdded: return metadata[index].addedToDirectoryDate?.timeIntervalSince1970
-                case .name, .kind, .tags: return nil
+                case .name, .kind, .tags, .dimensions, .dateTaken, .camera, .duration, .artist,
+                    .album, .pages, .codec, .bitRate:
+                    return nil
                 }
             }
             func compare(_ left: Int, _ right: Int) -> ComparisonResult {
@@ -251,6 +253,9 @@ extension BrowserViewController {
                     let b = numericValue(right) ?? Date.distantPast.timeIntervalSince1970
                     if a == b { return .orderedSame }
                     return a < b ? .orderedAscending : .orderedDescending
+                case .dimensions, .dateTaken, .camera, .duration, .artist, .album, .pages, .codec,
+                    .bitRate:
+                    return .orderedSame  // The ordinary .bin fixtures have no media fields.
                 }
             }
             let distinct = names.indices.allSatisfy { left in
@@ -267,6 +272,9 @@ extension BrowserViewController {
             case .tags: unknownOrUntagged = tags.filter(\.isEmpty).count
             case .size, .date, .dateCreated, .dateAccessed, .dateAdded:
                 unknownOrUntagged = names.indices.filter { numericValue($0) == nil }.count
+            case .dimensions, .dateTaken, .camera, .duration, .artist, .album, .pages, .codec,
+                .bitRate:
+                unknownOrUntagged = names.count
             }
             let evidence =
                 "key=\(key.rawValue) distinct=\(distinct) allTied=\(allTied) unknownOrUntagged=\(unknownOrUntagged)"

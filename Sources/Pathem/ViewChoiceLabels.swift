@@ -13,6 +13,15 @@ extension ViewFormat.SortKey {
         case .dateCreated: return L("list.columnDateCreated", "Date Created")
         case .size: return L("list.columnSize", "Size")
         case .tags: return L("list.columnTags", "Tags")
+        case .dimensions: return L("list.columnDimensions", "Dimensions")
+        case .dateTaken: return L("list.columnDateTaken", "Date Taken")
+        case .camera: return L("list.columnCamera", "Camera")
+        case .duration: return L("list.columnDuration", "Duration")
+        case .artist: return L("list.columnArtist", "Artist")
+        case .album: return L("list.columnAlbum", "Album")
+        case .pages: return L("list.columnPages", "Pages")
+        case .codec: return L("list.columnCodec", "Codec")
+        case .bitRate: return L("list.columnBitRate", "Bit Rate")
         }
     }
 
@@ -26,6 +35,15 @@ extension ViewFormat.SortKey {
         case .dateCreated: return "view.sortDateCreated"
         case .size: return "view.sortSize"
         case .tags: return "view.sortTags"
+        case .dimensions: return "view.sortDimensions"
+        case .dateTaken: return "view.sortDateTaken"
+        case .camera: return "view.sortCamera"
+        case .duration: return "view.sortDuration"
+        case .artist: return "view.sortArtist"
+        case .album: return "view.sortAlbum"
+        case .pages: return "view.sortPages"
+        case .codec: return "view.sortCodec"
+        case .bitRate: return "view.sortBitRate"
         }
     }
 }

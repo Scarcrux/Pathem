@@ -465,6 +465,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         case name, size, kind, date, dateCreated, dateAccessed, ext, git, path
         case dimensions, permissions, owner, whereFrom, comment
         case dateAdded, tags, cloudStatus, sharedBy, modifiedBy, version
+        case dateTaken, camera, duration, artist, album, pages, codec, bitRate
         var title: String {
             switch self {
             case .name: return L("list.columnName", "Name")
@@ -487,6 +488,14 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .sharedBy: return L("list.columnSharedBy", "Shared By")
             case .modifiedBy: return L("list.columnModifiedBy", "Last Modified By")
             case .version: return L("list.columnVersion", "Version")
+            case .dateTaken: return L("list.columnDateTaken", "Date Taken")
+            case .camera: return L("list.columnCamera", "Camera")
+            case .duration: return L("list.columnDuration", "Duration")
+            case .artist: return L("list.columnArtist", "Artist")
+            case .album: return L("list.columnAlbum", "Album")
+            case .pages: return L("list.columnPages", "Pages")
+            case .codec: return L("list.columnCodec", "Codec")
+            case .bitRate: return L("list.columnBitRate", "Bit Rate")
             }
         }
         var width: CGFloat {
@@ -504,6 +513,10 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .whereFrom: return 160
             case .comment: return 200
             case .dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version: return 150
+            case .dateTaken: return 150
+            case .camera, .artist, .album: return 150
+            case .duration, .pages, .bitRate: return 90
+            case .codec: return 100
             }
         }
         /// The width the column can be squeezed to before the list gives up and scrolls
@@ -527,12 +540,17 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             case .owner: return 80
             case .whereFrom, .comment: return 100
             case .dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version: return 100
+            case .dateTaken, .camera, .artist, .album: return 100
+            case .duration, .pages, .bitRate, .codec: return 64
             }
         }
         /// Only columns backed by a ViewFormat sort key get a clickable header.
         var isSortable: Bool {
-            [.name, .kind, .size, .date, .dateCreated, .dateAccessed, .dateAdded, .tags].contains(
-                self)
+            [
+                .name, .kind, .size, .date, .dateCreated, .dateAccessed, .dateAdded, .tags,
+                .dimensions, .dateTaken, .camera, .duration, .artist, .album, .pages, .codec,
+                .bitRate,
+            ].contains(self)
         }
         /// Shown by default; the rest are opt-in via the header menu (persisted).
         var defaultVisible: Bool { [.name, .size, .date].contains(self) }
@@ -542,6 +560,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 .dimensions, .permissions, .owner, .whereFrom, .comment, .dateAccessed, .dateAdded,
                 .tags,
                 .cloudStatus, .sharedBy, .modifiedBy, .version,
+                .dateTaken, .camera, .duration, .artist, .album, .pages, .codec, .bitRate,
             ].contains(self)
         }
     }
@@ -1715,7 +1734,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             let info = extendedValue(for: entry)
             let value: String?
             switch Column(rawValue: id.rawValue) {
-            case .dimensions: value = info?.dimensions
+            case .dimensions:
+                value = entry.viewMetadata?.media?.dimensionsLabel ?? info?.dimensions
             case .permissions: value = info?.permissions
             case .owner: value = info?.owner
             case .whereFrom: value = info?.whereFrom
@@ -1724,6 +1744,25 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             }
             cell.textField?.stringValue = value ?? ""
             cell.textField?.textColor = .secondaryLabelColor
+        case .dateTaken, .camera, .duration, .artist, .album, .pages, .codec, .bitRate:
+            let media = entry.viewMetadata?.media ?? extendedValue(for: entry)?.media
+            let text: String?
+            switch Column(rawValue: id.rawValue) {
+            case .dateTaken: text = media?.dateTaken.map { dateFormatter.string(from: $0) }
+            case .camera: text = media?.camera
+            case .duration: text = media?.duration.map { MediaColumns.durationLabel($0) }
+            case .artist: text = media?.artist
+            case .album: text = media?.album
+            case .pages: text = media?.pages.map(String.init)
+            case .codec: text = media?.codec
+            case .bitRate: text = media?.bitRate.flatMap { MediaColumns.bitRateLabel($0) }
+            default: text = nil
+            }
+            cell.textField?.stringValue = text ?? ""
+            cell.textField?.textColor = .secondaryLabelColor
+            cell.toolTip = L(
+                "columns.metadataHint",
+                "Blank when the file or its provider does not supply this metadata.")
         case .dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version:
             let info = extendedValue(for: entry)
             switch Column(rawValue: id.rawValue) {
@@ -2329,7 +2368,6 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
                 request.insert(flag)
             }
         }
-        on(.dimensions, .dimensions)
         on(.permissions, .permissions)
         on(.owner, .owner)
         on(.whereFrom, .whereFrom)
@@ -2338,7 +2376,28 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         for column: Column in [.dateAdded, .tags, .cloudStatus, .sharedBy, .modifiedBy, .version] {
             on(column, .finder)
         }
+        if !visibleMediaFields().isEmpty { request.insert(.media) }
         return request
+    }
+
+    /// The media metadata fields whose columns are currently shown.
+    private func visibleMediaFields() -> MediaColumns.Fields {
+        guard allowsLocalMetadata else { return [] }
+        var fields: MediaColumns.Fields = []
+        let map: [(Column, MediaColumns.Fields)] = [
+            (.dimensions, .dimensions), (.dateTaken, .dateTaken), (.camera, .camera),
+            (.duration, .duration),
+            (.artist, .artist), (.album, .album), (.pages, .pages), (.codec, .codec),
+            (.bitRate, .bitRate),
+        ]
+        for (column, field) in map {
+            if let col = tableView.tableColumn(withIdentifier: .init(column.rawValue)),
+                !col.isHidden
+            {
+                fields.insert(field)
+            }
+        }
+        return fields
     }
 
     /// Compute the visible metadata columns off-main, then cache and redraw. Skips entirely
@@ -2381,6 +2440,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let keys = pendingExtendedReads
         pendingExtendedReads.removeAll(keepingCapacity: true)
         let request = visibleExtendedRequest()
+        let mediaFields = visibleMediaFields()
         guard allowsLocalMetadata, !request.isEmpty, !keys.isEmpty else { return }
         let generation = extendedGeneration
         let localGeneration = localMetadataGeneration
@@ -2393,7 +2453,8 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
             result.reserveCapacity(keys.count)
             for key in keys {
                 guard localGen.isCurrent(localGeneration) else { return }
-                result[key] = FileColumns.gather(URL(fileURLWithPath: key), request)
+                result[key] = FileColumns.gather(
+                    URL(fileURLWithPath: key), request, mediaFields: mediaFields)
             }
             DispatchQueue.main.async {
                 guard let self, self.allowsLocalMetadata,
@@ -2433,7 +2494,7 @@ final class FileListController: NSObject, NSTableViewDataSource, NSTableViewDele
         let id = col.identifier.rawValue
         guard let column = Column(rawValue: id) else { return }
         switch column {
-        case .date, .dateCreated, .dateAccessed, .dateAdded:
+        case .date, .dateCreated, .dateAccessed, .dateAdded, .dateTaken:
             let fitting = DateColumnWidth.fitting(dateFormatter, fontSize: listFontSize)
             let measured = min(max(column.width, fitting), col.maxWidth)
             if wantedWidths[id] == nil || wantedWidths[id] == measuredDateWidths[id] {

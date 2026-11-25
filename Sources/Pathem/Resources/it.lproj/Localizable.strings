@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "Pannello destro";
 "foldertree.paneTop" = "Pannello superiore";
 "foldertree.paneBottom" = "Pannello inferiore";
+
+"list.columnDateTaken" = "Data di scatto";
+"list.columnCamera" = "Fotocamera";
+"list.columnDuration" = "Durata";
+"list.columnArtist" = "Artista";
+"list.columnAlbum" = "Album";
+"list.columnPages" = "Pagine";
+"list.columnCodec" = "Codec";
+"list.columnBitRate" = "Bitrate";

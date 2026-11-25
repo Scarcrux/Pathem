@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "右窗格";
 "foldertree.paneTop" = "上窗格";
 "foldertree.paneBottom" = "下窗格";
+
+"list.columnDateTaken" = "拍摄日期";
+"list.columnCamera" = "相机";
+"list.columnDuration" = "时长";
+"list.columnArtist" = "艺术家";
+"list.columnAlbum" = "专辑";
+"list.columnPages" = "页数";
+"list.columnCodec" = "编解码器";
+"list.columnBitRate" = "比特率";

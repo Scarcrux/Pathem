@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "右側面板";
 "foldertree.paneTop" = "上方面板";
 "foldertree.paneBottom" = "下方面板";
+
+"list.columnDateTaken" = "拍攝日期";
+"list.columnCamera" = "相機";
+"list.columnDuration" = "時長";
+"list.columnArtist" = "藝人";
+"list.columnAlbum" = "專輯";
+"list.columnPages" = "頁數";
+"list.columnCodec" = "編解碼器";
+"list.columnBitRate" = "位元率";

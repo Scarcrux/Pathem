@@ -650,10 +650,22 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     var debugRemoteProviderFactory: ((RemoteConnection.Proto) -> RemoteProvider)?
     #endif
 
+    private var mediaSortProgress: (completed: Int, total: Int)?
+
+    private func setMediaSortProgress(_ completed: Int, _ total: Int, revision: Int) {
+        guard metadataRevision == revision, mediaSortProgress != nil else { return }
+        mediaSortProgress = (completed, total)
+        updateStatus()
+    }
+
     private func invalidateViewMetadata() {
         metadataRevision += 1
         metadataWork?.cancel()
         metadataWork = nil
+        if mediaSortProgress != nil {
+            mediaSortProgress = nil
+            updateStatus()
+        }
     }
 
     private func displayEntries(
@@ -674,6 +686,18 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         }
         let revision = metadataRevision
         let local = remote == nil
+        let progress: (@Sendable (Int, Int) -> Void)?
+        if local, snapshot.metadataRequirements.contains(.media) {
+            mediaSortProgress = (0, entries.count)
+            updateStatus()
+            progress = { [weak self] completed, total in
+                DispatchQueue.main.async {
+                    self?.setMediaSortProgress(completed, total, revision: revision)
+                }
+            }
+        } else {
+            progress = nil
+        }
         let directory = local && !smartActive ? nav.current : nil
         #if DEBUG
         let loader = debugMetadataLoader
@@ -692,7 +716,8 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
                 }
                 #endif
                 let values = ListingViewMetadata.enrich(
-                    entries, directory: directory, format: snapshot, allowEntryLocations: local)
+                    entries, directory: directory, format: snapshot, allowEntryLocations: local,
+                    progress: progress)
                 return sortAfterEnrichment ? snapshot.sorted(values) : values
             }
             let enriched = await withTaskCancellationHandler {
@@ -721,6 +746,7 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
             }
             return
         }
+        mediaSortProgress = nil
         if smartActive { smartEntries = entries }
         commitDisplayEntries(entries, preserveState: preserveState)
         #if DEBUG
@@ -2303,6 +2329,11 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
     private func updateStatus() {
         if let searchPhase {
             statusLabel.stringValue = searchPhase
+            return
+        }
+        if let progress = mediaSortProgress {
+            statusLabel.stringValue =
+                L("info.reading", "Reading…") + " \(progress.completed)/\(progress.total)"
             return
         }
         let all = content.entries

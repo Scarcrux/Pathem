@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "Rechterpaneel";
 "foldertree.paneTop" = "Bovenste paneel";
 "foldertree.paneBottom" = "Onderste paneel";
+
+"list.columnDateTaken" = "Opnamedatum";
+"list.columnCamera" = "Camera";
+"list.columnDuration" = "Duur";
+"list.columnArtist" = "Artiest";
+"list.columnAlbum" = "Album";
+"list.columnPages" = "Pagina's";
+"list.columnCodec" = "Codec";
+"list.columnBitRate" = "Bitrate";

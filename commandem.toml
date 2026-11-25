@@ -2818,4 +2818,15 @@ missions = ["m-1331afb7", "m-b2532fac"]
   [[mission.comment]]
     text = "Focused verification passed 27 Swift tests. A native post-exec control reported inherited responsibility for the plain child and self responsibility for the disclaimed child. Missing symbols, signed-binary tampering, symlinks, protocol mismatch, output saturation, and grandchild cleanup were covered. An offscreen Settings render showed approval and removal controls for a verified signed fixture. Protected-file behavior of this packaged implementation still needs an independent SIP-enabled VM replay."
     at = "2026-11-25T12:05:33Z"
+
+[[mission]]
+  id = "m-ca4b53bc"
+  title = "Metadata columns and frozen Name column"
+  status = "now"
+  note = "Continue the nine-column handoff with isolated metadata reads, bounded AVFoundation fallbacks, and sort progress. Qualify the frozen Name column separately."
+  issue = 0
+
+  [[mission.comment]]
+    text = "Offscreen AppKit control: at horizontal offset 110, overriding the table cell rectangle returned x=126 while the actual Name view remained at x=16. Moving the actual cell shifted its frame at offset 240, with selection, editing and header behavior still unqualified. Keep this separate from the metadata column work."
+    at = "2026-11-25T19:41:53Z"
 # <<< commandem roadmap <<<

@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "Правая панель";
 "foldertree.paneTop" = "Верхняя панель";
 "foldertree.paneBottom" = "Нижняя панель";
+
+"list.columnDateTaken" = "Дата съёмки";
+"list.columnCamera" = "Камера";
+"list.columnDuration" = "Длительность";
+"list.columnArtist" = "Исполнитель";
+"list.columnAlbum" = "Альбом";
+"list.columnPages" = "Страницы";
+"list.columnCodec" = "Кодек";
+"list.columnBitRate" = "Битрейт";

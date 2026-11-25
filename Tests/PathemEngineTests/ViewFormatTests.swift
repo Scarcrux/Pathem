@@ -89,6 +89,9 @@ import Testing
         #expect(
             ViewFormat.SortKey.allCases.map(\.rawValue) == [
                 "name", "kind", "dateAccessed", "dateAdded", "date", "dateCreated", "size", "tags",
+                "dimensions", "dateTaken", "camera", "duration", "artist", "album", "pages",
+                "codec",
+                "bitRate",
             ])
         #expect(
             ViewFormat.GroupKey.allCases.map(\.rawValue) == [

@@ -5,11 +5,13 @@ import PathemEngine
 enum ListingViewMetadata {
     nonisolated static func enrich(
         _ entries: [FileEntry], directory: URL?, format: ViewFormat,
-        allowEntryLocations: Bool = true
+        allowEntryLocations: Bool = true, progress: (@Sendable (Int, Int) -> Void)? = nil
     ) -> [FileEntry] {
         FileViewMetadata.enrich(
             entries, directory: directory, requirements: format.metadataRequirements,
             allowEntryLocations: allowEntryLocations,
+            mediaFields: MediaColumns.Fields(sortKey: format.sortKey) ?? [],
+            progress: progress,
             applicationName: { url in
                 guard let app = NSWorkspace.shared.urlForApplication(toOpen: url) else {
                     return nil

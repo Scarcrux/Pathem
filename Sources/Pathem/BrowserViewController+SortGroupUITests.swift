@@ -19,6 +19,15 @@ extension BrowserViewController {
             ("dateCreated", "view.sortDateCreated", "list.columnDateCreated", "Date Created"),
             ("size", "view.sortSize", "list.columnSize", "Size"),
             ("tags", "view.sortTags", "list.columnTags", "Tags"),
+            ("dimensions", "view.sortDimensions", "list.columnDimensions", "Dimensions"),
+            ("dateTaken", "view.sortDateTaken", "list.columnDateTaken", "Date Taken"),
+            ("camera", "view.sortCamera", "list.columnCamera", "Camera"),
+            ("duration", "view.sortDuration", "list.columnDuration", "Duration"),
+            ("artist", "view.sortArtist", "list.columnArtist", "Artist"),
+            ("album", "view.sortAlbum", "list.columnAlbum", "Album"),
+            ("pages", "view.sortPages", "list.columnPages", "Pages"),
+            ("codec", "view.sortCodec", "list.columnCodec", "Codec"),
+            ("bitRate", "view.sortBitRate", "list.columnBitRate", "Bit Rate"),
         ]
         let groupChoices: [(String, String, String, String)] = [
             ("none", "view.arrangeNone", "bvc.cmd.arrangeNone", "None"),

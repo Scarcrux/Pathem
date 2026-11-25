@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "右ペイン";
 "foldertree.paneTop" = "上ペイン";
 "foldertree.paneBottom" = "下ペイン";
+
+"list.columnDateTaken" = "撮影日";
+"list.columnCamera" = "カメラ";
+"list.columnDuration" = "再生時間";
+"list.columnArtist" = "アーティスト";
+"list.columnAlbum" = "アルバム";
+"list.columnPages" = "ページ数";
+"list.columnCodec" = "コーデック";
+"list.columnBitRate" = "ビットレート";

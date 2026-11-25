@@ -7,6 +7,8 @@ import Foundation
 public struct ViewFormat: Codable, Sendable, Equatable {
     public enum SortKey: String, Codable, Sendable, CaseIterable {
         case name, kind, dateAccessed, dateAdded, date, dateCreated, size, tags
+        // Media metadata columns (see MediaColumns). Appended so older raw values keep meaning.
+        case dimensions, dateTaken, camera, duration, artist, album, pages, codec, bitRate
     }
     /// How the list view groups rows under section headers (`none` = flat, the default).
     public enum GroupKey: String, Codable, Sendable, CaseIterable {
@@ -81,6 +83,9 @@ public struct ViewFormat: Codable, Sendable, Equatable {
         case .dateAccessed: result.insert(.lastOpened)
         case .dateAdded: result.insert(.dateAdded)
         case .tags: result.insert(.tags)
+        case .dimensions, .dateTaken, .camera, .duration, .artist, .album, .pages, .codec,
+            .bitRate:
+            result.insert(.media)
         case .name, .date, .dateCreated, .size: break
         }
         switch groupKey {
@@ -137,6 +142,12 @@ public struct ViewFormat: Codable, Sendable, Equatable {
                     b.viewMetadata?.kind ?? "")
                 if comparison == .orderedSame { return nameAscending(a, b) }
                 ordered = comparison == .orderedAscending
+            case .dimensions, .dateTaken, .camera, .duration, .artist, .album, .pages, .codec,
+                .bitRate:
+                // Missing values sort first ascending, like the date keys.
+                let comparison = compareMedia(a, b)
+                if comparison == .orderedSame { return nameAscending(a, b) }
+                ordered = comparison == .orderedAscending
             case .tags:
                 let comparison = compareTags(
                     a.viewMetadata?.tagNames ?? [], b.viewMetadata?.tagNames ?? [])
@@ -155,6 +166,40 @@ public struct ViewFormat: Codable, Sendable, Equatable {
     private func lastOpened(_ entry: FileEntry) -> Date? {
         if let metadata = entry.viewMetadata { return metadata.lastOpenedDate }
         return entry.accessDate
+    }
+
+    private func compareMedia(_ a: FileEntry, _ b: FileEntry) -> ComparisonResult {
+        let x = a.viewMetadata?.media
+        let y = b.viewMetadata?.media
+        func number<T: Comparable>(_ l: T?, _ r: T?) -> ComparisonResult {
+            switch (l, r) {
+            case (nil, nil): return .orderedSame
+            case (nil, _): return .orderedAscending
+            case (_, nil): return .orderedDescending
+            case (let l?, let r?):
+                return l == r ? .orderedSame : (l < r ? .orderedAscending : .orderedDescending)
+            }
+        }
+        func text(_ l: String?, _ r: String?) -> ComparisonResult {
+            switch (l, r) {
+            case (nil, nil): return .orderedSame
+            case (nil, _): return .orderedAscending
+            case (_, nil): return .orderedDescending
+            case (let l?, let r?): return l.localizedStandardCompare(r)
+            }
+        }
+        switch sortKey {
+        case .dimensions: return number(x?.pixelArea, y?.pixelArea)
+        case .dateTaken: return number(x?.dateTaken, y?.dateTaken)
+        case .camera: return text(x?.camera, y?.camera)
+        case .duration: return number(x?.duration, y?.duration)
+        case .artist: return text(x?.artist, y?.artist)
+        case .album: return text(x?.album, y?.album)
+        case .pages: return number(x?.pages, y?.pages)
+        case .codec: return text(x?.codec, y?.codec)
+        case .bitRate: return number(x?.bitRate, y?.bitRate)
+        default: return .orderedSame
+        }
     }
 
     private func compareTags(_ a: [String], _ b: [String]) -> ComparisonResult {

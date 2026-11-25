@@ -11,11 +11,15 @@ public struct FileViewMetadata: Sendable, Hashable {
     public let lastOpenedDate: Date?
     public let tagNames: [String]
     public let applicationName: String?
+    /// Media column values (dimensions, duration, ...), present only when a media sort asked.
+    public let media: MediaColumns.Attributes?
 
     public init(
         kind: String? = nil, dateAdded: Date? = nil, lastOpenedDate: Date? = nil,
-        tagNames: [String] = [], applicationName: String? = nil
+        tagNames: [String] = [], applicationName: String? = nil,
+        media: MediaColumns.Attributes? = nil
     ) {
+        self.media = media
         self.kind = kind
         self.dateAdded = dateAdded
         self.lastOpenedDate = lastOpenedDate
@@ -36,6 +40,8 @@ public struct FileViewMetadata: Sendable, Hashable {
         public static let lastOpened = Requirements(rawValue: 1 << 2)
         public static let tags = Requirements(rawValue: 1 << 3)
         public static let application = Requirements(rawValue: 1 << 4)
+        /// Media columns (see `MediaColumns`); which fields is passed to `enrich`.
+        public static let media = Requirements(rawValue: 1 << 5)
     }
 
     /// Call off the main thread before sorting/grouping a new listing. A nil
@@ -46,6 +52,9 @@ public struct FileViewMetadata: Sendable, Hashable {
     public static func enrich(
         _ entries: [FileEntry], directory: URL?, requirements: Requirements,
         allowEntryLocations: Bool = true,
+        mediaFields: MediaColumns.Fields = [],
+        mediaSource: MediaColumns.Source = .spotlightThenFallback,
+        progress: (@Sendable (Int, Int) -> Void)? = nil,
         applicationName: (@Sendable (URL) -> String?)? = nil
     ) -> [FileEntry] {
         guard !requirements.isEmpty else { return entries }
@@ -55,8 +64,14 @@ public struct FileViewMetadata: Sendable, Hashable {
         if requirements.contains(.dateAdded) { keys.insert(.addedToDirectoryDateKey) }
         if requirements.contains(.tags) { keys.insert(.tagNamesKey) }
 
-        return entries.map { entry in
+        return entries.enumerated().map { index, entry in
             guard !Task.isCancelled else { return entry }
+            defer {
+                let completed = index + 1
+                if completed == 1 || completed.isMultiple(of: 32) || completed == entries.count {
+                    progress?(completed, entries.count)
+                }
+            }
             // Smart/cross-folder entries carry their actual parent. Never use
             // the pane's directory for a same-named file in another folder.
             let parent =
@@ -101,6 +116,13 @@ public struct FileViewMetadata: Sendable, Hashable {
             } else {
                 app = previous?.applicationName
             }
+            var media = previous?.media
+            if requirements.contains(.media), !mediaFields.isEmpty, !entry.isDirectory, let url,
+                !Task.isCancelled
+            {
+                media = MediaColumns.Cache.shared.values(
+                    for: url, fields: mediaFields, source: mediaSource)
+            }
             var result = entry
             result.viewMetadata = FileViewMetadata(
                 kind: kind,
@@ -109,7 +131,7 @@ public struct FileViewMetadata: Sendable, Hashable {
                 lastOpenedDate: opened,
                 tagNames: requirements.contains(.tags) && url != nil
                     ? (values?.tagNames ?? []) : (previous?.tagNames ?? []),
-                applicationName: app)
+                applicationName: app, media: media)
             return result
         }
     }

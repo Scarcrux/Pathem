@@ -2182,3 +2182,12 @@
 "foldertree.paneRight" = "Right pane";
 "foldertree.paneTop" = "Top pane";
 "foldertree.paneBottom" = "Bottom pane";
+
+"list.columnDateTaken" = "Date Taken";
+"list.columnCamera" = "Camera";
+"list.columnDuration" = "Duration";
+"list.columnArtist" = "Artist";
+"list.columnAlbum" = "Album";
+"list.columnPages" = "Pages";
+"list.columnCodec" = "Codec";
+"list.columnBitRate" = "Bit Rate";

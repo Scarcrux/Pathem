@@ -2131,3 +2131,12 @@
 "foldertree.paneRight" = "오른쪽 패널";
 "foldertree.paneTop" = "위쪽 패널";
 "foldertree.paneBottom" = "아래쪽 패널";
+
+"list.columnDateTaken" = "촬영 날짜";
+"list.columnCamera" = "카메라";
+"list.columnDuration" = "재생 시간";
+"list.columnArtist" = "아티스트";
+"list.columnAlbum" = "앨범";
+"list.columnPages" = "페이지";
+"list.columnCodec" = "코덱";
+"list.columnBitRate" = "비트 전송률";
