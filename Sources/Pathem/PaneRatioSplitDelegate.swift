@@ -13,34 +13,67 @@ final class PaneRatioSplitDelegate: NSObject, NSSplitViewDelegate {
         layout(splitView)
     }
 
+    /// Smallest pane extent in points when the panes are stacked, so neither can be dragged
+    /// (or resized) down to a sliver that hides its header and a few rows.
+    static let minStackedExtent: CGFloat = 120
+
+    /// Whether the panes sit top and bottom (a horizontal divider) instead of side by side.
+    private func isStacked(_ splitView: NSSplitView) -> Bool { !splitView.isVertical }
+
+    /// The pane-axis length: height when stacked, width when side by side.
+    private func axisLength(_ splitView: NSSplitView) -> CGFloat {
+        isStacked(splitView) ? splitView.bounds.height : splitView.bounds.width
+    }
+
+    /// The allowed range for the second pane's share. Side by side keeps 15 percent either
+    /// way; stacked also keeps `minStackedExtent` points, but never more than half.
+    func bounds(forTotal total: CGFloat, stacked: Bool) -> ClosedRange<Double> {
+        var low = 0.15
+        if stacked, total > 1 { low = min(0.5, max(low, Double(Self.minStackedExtent / total))) }
+        return low...(1 - low)
+    }
+
     /// Frame both panes at the current ratio. Safe to call directly to re-apply after a
     /// fraction change (the split's bounds haven't changed, so it won't relayout on its own).
+    /// Side by side the first pane is on the left; stacked it is on top (the split is flipped).
     func layout(_ splitView: NSSplitView) {
         let subviews = splitView.arrangedSubviews
-        guard subviews.count == 2 else { splitView.adjustSubviews(); return }
+        guard subviews.count == 2 else {
+            splitView.adjustSubviews()
+            return
+        }
         let divider = splitView.dividerThickness
-        let total = splitView.bounds.width
-        let height = splitView.bounds.height
+        let stacked = isStacked(splitView)
+        let total = axisLength(splitView)
         guard total > 1 else { return }
-        let clamped = max(0.15, min(0.85, fraction))
-        let rightWidth = (total - divider) * clamped
-        let leftWidth = total - divider - rightWidth
-        subviews[0].frame = NSRect(x: 0, y: 0, width: leftWidth, height: height)
-        subviews[1].frame = NSRect(x: leftWidth + divider, y: 0, width: rightWidth, height: height)
+        let range = bounds(forTotal: total, stacked: stacked)
+        let clamped = max(range.lowerBound, min(range.upperBound, fraction))
+        let second = (total - divider) * clamped
+        let first = total - divider - second
+        if stacked {
+            let width = splitView.bounds.width
+            subviews[0].frame = NSRect(x: 0, y: 0, width: width, height: first)
+            subviews[1].frame = NSRect(x: 0, y: first + divider, width: width, height: second)
+        } else {
+            let height = splitView.bounds.height
+            subviews[0].frame = NSRect(x: 0, y: 0, width: first, height: height)
+            subviews[1].frame = NSRect(x: first + divider, y: 0, width: second, height: height)
+        }
     }
 
     /// Track the user dragging the divider: adopt the new ratio so it sticks (and clamp so
     /// neither pane can be dragged away to nothing).
     func splitView(
-        _ splitView: NSSplitView, constrainSplitPosition proposedPosition: CGFloat, ofSubviewAt dividerIndex: Int
+        _ splitView: NSSplitView, constrainSplitPosition proposedPosition: CGFloat,
+        ofSubviewAt dividerIndex: Int
     ) -> CGFloat {
         let divider = splitView.dividerThickness
-        let total = splitView.bounds.width
+        let total = axisLength(splitView)
         guard total > 1 else { return proposedPosition }
-        let minLeft = total * 0.15
-        let maxLeft = total * 0.85
-        let clampedLeft = max(minLeft, min(maxLeft, proposedPosition))
-        fraction = (total - divider - clampedLeft) / total
-        return clampedLeft
+        let range = bounds(forTotal: total, stacked: isStacked(splitView))
+        let clampedFirst = max(
+            total * range.lowerBound, min(total * range.upperBound, proposedPosition))
+        fraction = (total - divider - clampedFirst) / total
+        return clampedFirst
     }
 }

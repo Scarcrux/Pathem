@@ -9,8 +9,15 @@ public struct Layout: Codable, Sendable, Equatable {
     public var leftPath: String
     public var rightPath: String
     public var dividerFraction: Double
+    /// The panes are stacked top and bottom (left pane on top). Layouts saved before this
+    /// field existed decode as side by side.
+    public var stackedPanes: Bool
 
-    public init(name: String, leftPath: String, rightPath: String, dividerFraction: Double) {
+    public init(
+        name: String, leftPath: String, rightPath: String, dividerFraction: Double,
+        stackedPanes: Bool = false
+    ) {
+        self.stackedPanes = stackedPanes
         self.name = name
         self.leftPath = leftPath
         self.rightPath = rightPath
@@ -25,9 +32,12 @@ public struct Layout: Codable, Sendable, Equatable {
         leftPath = try c.decodeIfPresent(String.self, forKey: .leftPath) ?? ""
         rightPath = try c.decodeIfPresent(String.self, forKey: .rightPath) ?? ""
         dividerFraction = try c.decodeIfPresent(Double.self, forKey: .dividerFraction) ?? 0.5
+        stackedPanes = try c.decodeIfPresent(Bool.self, forKey: .stackedPanes) ?? false
     }
 
-    private enum CodingKeys: String, CodingKey { case name, leftPath, rightPath, dividerFraction }
+    private enum CodingKeys: String, CodingKey {
+        case name, leftPath, rightPath, dividerFraction, stackedPanes
+    }
 }
 
 /// The saved layouts, persisted as config-as-data (DESIGN.md section 10).

@@ -1953,3 +1953,6 @@
 "themes.withdraw" = "Intrekken";
 "themes.withdrawDetail" = "Geïnstalleerde kopieën blijven beschikbaar.";
 "themes.withdrawn" = "Ingetrokken";
+"bvc.cmd.stackPanes" = "Panelen verticaal stapelen";
+"prefs.stackPanes" = "De twee panelen boven elkaar zetten";
+"menu.view.stackPanes" = "Panelen verticaal stapelen";

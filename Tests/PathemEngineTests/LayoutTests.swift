@@ -31,4 +31,25 @@ import Testing
         let restored = try JSONDecoder().decode(Layouts.self, from: data)
         #expect(restored.named("work") == layouts.named("work"))
     }
+
+    @Test func oldLayoutWithoutStackFieldDecodesSideBySide() throws {
+        let legacy = """
+            { "layouts": [ { "name": "old", "leftPath": "/a", "rightPath": "/b",
+                             "dividerFraction": 0.4 } ] }
+            """
+        let decoded = try JSONDecoder().decode(Layouts.self, from: Data(legacy.utf8))
+        #expect(decoded.named("old")?.stackedPanes == false)
+        #expect(decoded.named("old")?.dividerFraction == 0.4)
+    }
+
+    @Test func stackedFlagRoundTrips() throws {
+        var layouts = Layouts()
+        layouts.save(
+            Layout(
+                name: "stack", leftPath: "/a", rightPath: "/b", dividerFraction: 0.6,
+                stackedPanes: true))
+        let data = try JSONEncoder().encode(layouts)
+        let restored = try JSONDecoder().decode(Layouts.self, from: data)
+        #expect(restored.named("stack")?.stackedPanes == true)
+    }
 }

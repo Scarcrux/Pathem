@@ -1953,3 +1953,6 @@
 "themes.withdraw" = "Zurückziehen";
 "themes.withdrawDetail" = "Installierte Kopien bleiben verfügbar.";
 "themes.withdrawn" = "Zurückgezogen";
+"bvc.cmd.stackPanes" = "Bereiche übereinander anordnen";
+"prefs.stackPanes" = "Beide Bereiche übereinander anordnen";
+"menu.view.stackPanes" = "Bereiche übereinander anordnen";

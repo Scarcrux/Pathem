@@ -206,6 +206,47 @@ extension BrowserViewController {
         step(0)
     }
 
+    /// Render the pane arrangements (side by side, stacked, stacked with the terminal drawer)
+    /// in light and dark through the same preference path the menu uses
+    /// (PATHEM_LAYOUT_SHOTS=<dir>, with PATHEM_DEMO=1). Calls `done` after the last one.
+    func debugRenderLayoutShots(toDir dir: String, done: @escaping () -> Void) {
+        let shots: [(name: String, stacked: Bool, terminal: Bool)] = [
+            ("side-by-side", false, false), ("stacked", true, false),
+            ("stacked-terminal", true, true),
+        ]
+        let looks: [(String, Preferences.Appearance)] = [("light", .light), ("dark", .dark)]
+        let plan = looks.flatMap { look in shots.map { (look, $0) } }
+        func setTerminal(_ on: Bool) {
+            guard terminal.view.isHidden == on else { return }
+            if on { debugStageTerminal() } else { toggleTerminal() }
+        }
+        func step(_ index: Int) {
+            guard index < plan.count else {
+                setTerminal(false)
+                prefs.appearance = .system
+                prefs.stackPanesVertically = false
+                applyPreferences()
+                done()
+                return
+            }
+            let (look, shot) = plan[index]
+            prefs.appearance = look.1
+            prefs.stackPanesVertically = shot.stacked
+            applyPreferences()
+            setTerminal(shot.terminal)
+            for side in [leftTabs, rightTabs] {
+                side.activePane?.refreshIcons()
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + (shot.terminal ? 2.0 : 0.6)) {
+                self.view.layoutSubtreeIfNeeded()
+                self.debugRenderWindowChrome(
+                    to: "\(dir)/\(shot.name)-\(look.0).png")
+                step(index + 1)
+            }
+        }
+        step(0)
+    }
+
     /// Render the whole window chrome (title bar + toolbar + content) to a PNG by caching the
     /// window's theme frame, the view that owns the toolbar -- `debugRender` covers only the content
     /// view. Needs no Screen Recording permission, unlike screencapture (PATHEM_CHROME_RENDER).

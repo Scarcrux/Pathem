@@ -66,13 +66,36 @@ final class BrowserSplitLayoutController: NSObject, NSSplitViewDelegate {
     }
 
     /// Set the panes' divider to `fraction` (the right pane's share) and lay them out now.
+    /// The second pane (right, or bottom when stacked) gets this share.
     func setRightPaneFraction(_ fraction: Double) {
         paneRatioDelegate.fraction = max(0.15, min(0.85, fraction))
+        relayoutPanes()
+    }
+
+    private func relayoutPanes() {
         paneRatioDelegate.layout(split)
-        if let left = split.arrangedSubviews.first {
-            split.setPosition(left.frame.width, ofDividerAt: 0)
+        if let first = split.arrangedSubviews.first {
+            split.setPosition(isStacked ? first.frame.height : first.frame.width, ofDividerAt: 0)
         }
         split.needsDisplay = true
+    }
+
+    /// Whether the file panes are stacked top and bottom.
+    var isStacked: Bool { !split.isVertical }
+
+    /// Switch the panes between side by side and stacked. The divider fraction carries over:
+    /// the second pane keeps its share along the new axis.
+    func setStacked(_ stacked: Bool) {
+        guard stacked != isStacked else { return }
+        split.isVertical = !stacked
+        relayoutPanes()
+    }
+
+    /// The first (left or top) pane's share of the split along its axis, for saved Layouts.
+    var firstPaneShare: Double {
+        let total = isStacked ? split.bounds.height : split.bounds.width
+        guard total > 0, let first = split.arrangedSubviews.first else { return 0.5 }
+        return Double((isStacked ? first.frame.height : first.frame.width) / total)
     }
 
     var ownsSplitDelegates: Bool {

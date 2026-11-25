@@ -113,6 +113,8 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var autosaveMarkup: Bool
     /// Hide sidebar row labels (icons only) and narrow it, for a compact sidebar.
     public var compactSidebar: Bool
+    /// Stack the two file panes top and bottom (left pane on top) instead of side by side.
+    public var stackPanesVertically: Bool
     /// Render sidebar place icons as monochrome templates that tint with the sidebar (a clean,
     /// Liquid-Glass look) instead of full-color brand glyphs (Google Drive, AirDrop, etc.).
     public var monochromeSidebarIcons: Bool
@@ -213,7 +215,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         openConnectionsInNewTab: Bool = false, calculateFolderSizes: Bool = false,
         skipCacheFolderSizes: Bool = true, folderSizeExclusions: String = "",
         autosaveMarkup: Bool = false,
-        compactSidebar: Bool = false, monochromeSidebarIcons: Bool = false,
+        compactSidebar: Bool = false, stackPanesVertically: Bool = false,
+        monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
         dragMovesByDefault: Bool = true, appearance: Appearance = .system,
@@ -294,6 +297,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.folderSizeExclusions = folderSizeExclusions
         self.autosaveMarkup = autosaveMarkup
         self.compactSidebar = compactSidebar
+        self.stackPanesVertically = stackPanesVertically
         self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
         self.downloadSuggestionsEnabled = downloadSuggestionsEnabled
@@ -345,6 +349,9 @@ public struct Preferences: Codable, Sendable, Equatable {
             try c.decodeIfPresent(Bool.self, forKey: .autosaveMarkup) ?? d.autosaveMarkup
         compactSidebar =
             try c.decodeIfPresent(Bool.self, forKey: .compactSidebar) ?? d.compactSidebar
+        stackPanesVertically =
+            try c.decodeIfPresent(Bool.self, forKey: .stackPanesVertically)
+            ?? d.stackPanesVertically
         monochromeSidebarIcons =
             try c.decodeIfPresent(Bool.self, forKey: .monochromeSidebarIcons)
             ?? d.monochromeSidebarIcons

@@ -179,6 +179,11 @@ extension BrowserViewController {
         saveConfig(prefs, to: Self.preferencesURL)
     }
 
+    func toggleStackedPanes() {
+        prefs.stackPanesVertically.toggle()
+        applyPreferences()  // reorients the panes live and persists
+    }
+
     func toggleCompactSidebar() {
         prefs.compactSidebar.toggle()
         applyPreferences()  // applies labels + width and persists
@@ -375,6 +380,7 @@ extension BrowserViewController {
         for side in [leftTabs, rightTabs] { side.newTabAtEnd = prefs.newTabAtEnd }
         torrentDrawer.preferredDownloadPath = prefs.torrentDownloadPath
         applyCompactSidebar()
+        if didSetInitialSplit { splitLayout.setStacked(prefs.stackPanesVertically) }
         applyCommanderCommands()
         renderThemePreview(nil)
         applyTooltipDelay()

@@ -1953,3 +1953,6 @@
 "themes.withdraw" = "Ritira";
 "themes.withdrawDetail" = "Le copie installate restano disponibili.";
 "themes.withdrawn" = "Ritirato";
+"bvc.cmd.stackPanes" = "Disponi i pannelli in verticale";
+"prefs.stackPanes" = "Disponi i due pannelli uno sopra l’altro";
+"menu.view.stackPanes" = "Disponi i pannelli in verticale";

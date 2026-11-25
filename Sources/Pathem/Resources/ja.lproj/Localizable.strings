@@ -1953,3 +1953,6 @@
 "themes.withdraw" = "公開終了";
 "themes.withdrawDetail" = "インストール済みのコピーは引き続き使えます。";
 "themes.withdrawn" = "公開終了";
+"bvc.cmd.stackPanes" = "ペインを上下に並べる";
+"prefs.stackPanes" = "2つのペインを上下に並べる";
+"menu.view.stackPanes" = "ペインを上下に並べる";

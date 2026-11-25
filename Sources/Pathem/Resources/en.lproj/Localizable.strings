@@ -1879,3 +1879,5 @@
 "themes.withdraw" = "Withdraw";
 "themes.withdrawDetail" = "Installed copies remain available.";
 "themes.withdrawn" = "Withdrawn";
+"bvc.cmd.stackPanes" = "Stack Panes Vertically";
+"prefs.stackPanes" = "Stack the two panes top and bottom";

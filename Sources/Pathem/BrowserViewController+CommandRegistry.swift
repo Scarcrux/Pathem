@@ -720,6 +720,13 @@ extension BrowserViewController {
         ) {
             [weak self] in self?.toggleCalculateSizes()
         }
+        add(
+            "view.stackPanes", L("bvc.cmd.stackPanes", "Stack Panes Vertically"),
+            keywords: [
+                "horizontal split", "top and bottom", "layout", "stacked", "side by side",
+                "panes",
+            ]
+        ) { [weak self] in self?.toggleStackedPanes() }
         add("view.compactSidebar", L("bvc.cmd.compactSidebar", "Compact Sidebar")) { [weak self] in
             self?.toggleCompactSidebar()
         }

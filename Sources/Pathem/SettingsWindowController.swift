@@ -366,6 +366,9 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                     L("prefs.pathBarBottom", "Show the path bar at the bottom"), \.pathBarAtBottom),
                 check(L("prefs.compactSidebar", "Compact sidebar (icons only)"), \.compactSidebar),
                 check(
+                    L("prefs.stackPanes", "Stack the two panes top and bottom"),
+                    \.stackPanesVertically),
+                check(
                     L("prefs.monochromeSidebar", "Monochrome sidebar icons (Liquid Glass)"),
                     \.monochromeSidebarIcons),
                 check(

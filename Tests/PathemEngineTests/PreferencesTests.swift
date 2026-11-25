@@ -168,6 +168,17 @@ import Testing
         #expect(try JSONDecoder().decode(Preferences.self, from: data) == prefs)
     }
 
+    @Test func stackPanesVerticallyDefaultsOffAndPersists() throws {
+        #expect(Preferences().stackPanesVertically == false)
+        let legacy = Data(#"{ "density": "compact" }"#.utf8)
+        #expect(
+            try JSONDecoder().decode(Preferences.self, from: legacy).stackPanesVertically == false)
+        var prefs = Preferences()
+        prefs.stackPanesVertically = true
+        let data = try JSONEncoder().encode(prefs)
+        #expect(try JSONDecoder().decode(Preferences.self, from: data).stackPanesVertically == true)
+    }
+
     @Test func decodesOlderFileWithMissingKeys() throws {
         // A prefs.json from a build before the newer keys existed must still load,
         // defaulting the missing keys instead of failing (which would reset prefs).

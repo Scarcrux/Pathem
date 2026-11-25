@@ -356,6 +356,17 @@ enum PathemApp {
             print("theme-toolbar-autosave-\(check): \(passed ? "PASS" : "FAIL")")
             exit(passed ? 0 : 1)
         }
+        if let dir = ProcessInfo.processInfo.environment["PATHEM_LAYOUT_SHOTS"] {
+            browser.installToolbarIfNeeded()
+            window.setContentSize(NSSize(width: 1200, height: 760))
+            browser.view.layoutSubtreeIfNeeded()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                browser.debugRenderLayoutShots(toDir: dir) { exit(0) }
+            }
+            // In-process render: no desktop activation or Screen Recording needed.
+            RunLoop.main.run(until: Date().addingTimeInterval(50))
+            exit(1)
+        }
         if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
             let communityTheme: ThemePreset?
             if let package = launchEnvironment["PATHEM_COMMUNITY_RENDER_PACKAGE"] {
@@ -1932,6 +1943,7 @@ enum PathemApp {
                     commandItem("Show Full Path in Title Bar", "view.fullPathTitle"),
                     commandItem("Show Path Bar at Bottom", "view.pathBarBottom"),
                     commandItem("Compact Sidebar", "view.compactSidebar"),
+                    commandItem("Stack Panes Vertically", "view.stackPanes"),
                     commandItem("Sync Browsing", "view.syncBrowsing"),
                     commandItem("Vim Navigation", "nav.vimMode"),
                 ]))
@@ -2271,7 +2283,7 @@ enum PathemApp {
                     || key == "PATHEM_GATE_A" || key == "PATHEM_GATE_A_DEMO"
                     || key.hasSuffix("_SHOT") || key.hasSuffix("_TEST")
                     || key.hasSuffix("_RENDER") || key.hasSuffix("_PREVIEW")
-                    || key == "PATHEM_THEME_SHOTS")
+                    || key == "PATHEM_THEME_SHOTS" || key == "PATHEM_LAYOUT_SHOTS")
         }
     }
 

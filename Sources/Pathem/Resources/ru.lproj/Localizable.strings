@@ -1953,3 +1953,6 @@
 "themes.withdraw" = "Снять с публикации";
 "themes.withdrawDetail" = "Установленные копии останутся доступны.";
 "themes.withdrawn" = "Снято с публикации";
+"bvc.cmd.stackPanes" = "Расположить панели друг под другом";
+"prefs.stackPanes" = "Расположить две панели друг под другом";
+"menu.view.stackPanes" = "Расположить панели друг под другом";

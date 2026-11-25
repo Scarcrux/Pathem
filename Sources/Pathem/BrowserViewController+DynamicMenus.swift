@@ -190,13 +190,8 @@ extension BrowserViewController {
             name: name,
             leftPath: leftTabs.activePane?.currentURL.path ?? "",
             rightPath: rightTabs.activePane?.currentURL.path ?? "",
-            dividerFraction: dividerFraction())
-    }
-
-    private func dividerFraction() -> Double {
-        let total = split.bounds.width
-        guard total > 0 else { return 0.5 }
-        return Double(leftTabs.containerView.frame.width / total)
+            dividerFraction: splitLayout.firstPaneShare,
+            stackedPanes: splitLayout.isStacked)
     }
 
     private func applyLayout(_ layout: Layout) {
@@ -208,6 +203,10 @@ extension BrowserViewController {
         }
         if let url = Self.existingFolderURL(layout.rightPath) {
             rightTabs.activePane?.navigate(to: url)
+        }
+        if prefs.stackPanesVertically != layout.stackedPanes {
+            prefs.stackPanesVertically = layout.stackedPanes
+            applyPreferences()  // reorients the panes and persists the preference
         }
         setRightPaneFraction(1 - layout.dividerFraction)  // saved fraction is the left pane's share
     }
@@ -230,6 +229,7 @@ extension BrowserViewController {
         guard !didSetInitialSplit, outerSplit.bounds.width > 200 else { return }
         outerSplit.setPosition(compactSidebar ? Self.compactSidebarWidth : 200, ofDividerAt: 0)  // sidebar width
         outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
+        splitLayout.setStacked(prefs.stackPanesVertically)
         setRightPaneFraction(0.5)  // even panes
         didSetInitialSplit = true
         // Restore the terminal drawer if it was open last session -- but never on an automation

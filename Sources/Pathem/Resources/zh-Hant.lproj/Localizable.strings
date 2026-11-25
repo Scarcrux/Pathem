@@ -1953,3 +1953,6 @@
 "themes.withdraw" = "撤回";
 "themes.withdrawDetail" = "已安裝的副本仍可使用。";
 "themes.withdrawn" = "已撤回";
+"bvc.cmd.stackPanes" = "上下堆疊窗格";
+"prefs.stackPanes" = "將兩個窗格上下堆疊";
+"menu.view.stackPanes" = "上下堆疊窗格";
