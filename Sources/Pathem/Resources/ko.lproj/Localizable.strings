@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "폴더 트리";
 "foldertree.unreadable" = "이 폴더를 읽을 수 없습니다(권한 없음)";
 "menu.view.folderTree" = "폴더 트리 보기";
+"menu.select" = "선택";
+"menu.select.invert" = "선택 반전";
+"menu.select.allFiles" = "모든 파일 선택";
+"menu.select.allFolders" = "모든 폴더 선택";
+"menu.select.sameExtension" = "같은 확장자 선택";
+"menu.select.sameKind" = "같은 종류 선택";
+"menu.select.deselectByPattern" = "패턴으로 선택 해제…";
+"menu.select.unique" = "고유 항목 선택";
+"menu.select.newer" = "더 새로운 항목 선택";
+"menu.select.different" = "다른 항목 선택";
+"select.deselectTitle" = "패턴으로 선택 해제";
+"select.deselectApply" = "선택 해제";
+"select.resultOne" = "1개 항목 선택됨";
+"select.resultMany" = "%d개 항목 선택됨";

@@ -77,4 +77,62 @@ extension BrowserViewController {
             pane.applySelection(query, mode: mode)
         }
     }
+
+    /// Deselect items in the active pane by a name pattern (the same sheet, subtract only).
+    func deselectByPattern() {
+        guard let pane = activePane, let window = view.window else {
+            NSSound.beep()
+            return
+        }
+        SelectByPatternSheet.present(over: window, deselect: true) { query, _ in
+            pane.applySelection(query, mode: .subtract)
+        }
+    }
+
+    /// The Edit > Select commands that need only the active pane's listing.
+    enum SelectCommand { case invert, allFiles, allFolders, sameExtension, sameKind }
+
+    func runSelectCommand(_ command: SelectCommand) {
+        guard let pane = activePane else { return }
+        let entries = pane.entries
+        let focus = pane.selectedEntries.last
+        let names: Set<String>
+        switch command {
+        case .invert:
+            names = SelectionCommands.invert(
+                entries, selected: Set(pane.selectedEntries.map(\.name)))
+        case .allFiles: names = SelectionCommands.allFiles(entries)
+        case .allFolders: names = SelectionCommands.allFolders(entries)
+        case .sameExtension:
+            guard let focus else { return NSSound.beep() }
+            names = SelectionCommands.sameExtension(as: focus, in: entries)
+        case .sameKind:
+            guard let focus else { return NSSound.beep() }
+            names = SelectionCommands.sameKind(as: focus, in: entries)
+        }
+        pane.selectEntries(named: names)
+        reportSelectionResult(pane, count: names.count)
+    }
+
+    /// Select Unique / Newer / Different against the other pane, naming files the way the
+    /// volume does (case and Unicode normalization from `BatchRename`).
+    func compareSelect(_ mode: SelectionCommands.Comparison) {
+        guard let pane = activePane, let other = otherPane, other !== pane else {
+            NSSound.beep()
+            return
+        }
+        let caseSensitive =
+            pane.isRemote || BatchRename.supportsCaseSensitiveNames(in: pane.currentURL)
+        let names = SelectionCommands.compare(
+            mode, pane.entries, with: other.entries, caseSensitive: caseSensitive)
+        pane.selectEntries(named: names)
+        reportSelectionResult(pane, count: names.count)
+    }
+
+    private func reportSelectionResult(_ pane: PaneController, count: Int) {
+        pane.flashStatus(
+            count == 1
+                ? L("select.resultOne", "1 item selected")
+                : String(format: L("select.resultMany", "%d items selected"), count))
+    }
 }

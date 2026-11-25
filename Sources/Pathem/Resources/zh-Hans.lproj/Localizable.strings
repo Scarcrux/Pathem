@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "文件夹树";
 "foldertree.unreadable" = "无法读取此文件夹(没有权限)";
 "menu.view.folderTree" = "显示文件夹树";
+"menu.select" = "选择";
+"menu.select.invert" = "反向选择";
+"menu.select.allFiles" = "选择所有文件";
+"menu.select.allFolders" = "选择所有文件夹";
+"menu.select.sameExtension" = "选择相同扩展名";
+"menu.select.sameKind" = "选择相同种类";
+"menu.select.deselectByPattern" = "按模式取消选择…";
+"menu.select.unique" = "选择独有项目";
+"menu.select.newer" = "选择较新项目";
+"menu.select.different" = "选择不同项目";
+"select.deselectTitle" = "按模式取消选择";
+"select.deselectApply" = "取消选择";
+"select.resultOne" = "已选择 1 项";
+"select.resultMany" = "已选择 %d 项";

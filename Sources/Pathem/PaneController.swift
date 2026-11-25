@@ -570,6 +570,9 @@ final class PaneController: NSObject, NSSearchFieldDelegate, NSMenuDelegate {
         content.selectNames(result)
     }
 
+    /// Replace the selection with the shown entries named in `names` (Edit > Select commands).
+    func selectEntries(named names: Set<String>) { content.selectNames(names) }
+
     /// The single funnel every listing passes through, so the live filter applies
     /// uniformly (local, smart, flat, remote). A context change (preserveState ==
     /// false, i.e. navigation or a new smart/remote view) clears the filter; an

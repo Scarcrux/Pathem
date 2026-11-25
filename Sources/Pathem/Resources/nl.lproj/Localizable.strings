@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "Mapstructuur";
 "foldertree.unreadable" = "Deze map kan niet worden gelezen (geen toegang)";
 "menu.view.folderTree" = "Mapstructuur tonen";
+"menu.select" = "Selecteren";
+"menu.select.invert" = "Selectie omkeren";
+"menu.select.allFiles" = "Alle bestanden selecteren";
+"menu.select.allFolders" = "Alle mappen selecteren";
+"menu.select.sameExtension" = "Zelfde extensie selecteren";
+"menu.select.sameKind" = "Zelfde soort selecteren";
+"menu.select.deselectByPattern" = "Deselecteer op patroon…";
+"menu.select.unique" = "Unieke onderdelen selecteren";
+"menu.select.newer" = "Nieuwere onderdelen selecteren";
+"menu.select.different" = "Afwijkende onderdelen selecteren";
+"select.deselectTitle" = "Deselecteer op patroon";
+"select.deselectApply" = "Deselecteren";
+"select.resultOne" = "1 onderdeel geselecteerd";
+"select.resultMany" = "%d onderdelen geselecteerd";

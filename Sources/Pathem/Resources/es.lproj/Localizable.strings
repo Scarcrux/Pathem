@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "Árbol de carpetas";
 "foldertree.unreadable" = "No se puede leer esta carpeta (sin permiso)";
 "menu.view.folderTree" = "Mostrar árbol de carpetas";
+"menu.select" = "Seleccionar";
+"menu.select.invert" = "Invertir selección";
+"menu.select.allFiles" = "Seleccionar todos los archivos";
+"menu.select.allFolders" = "Seleccionar todas las carpetas";
+"menu.select.sameExtension" = "Seleccionar misma extensión";
+"menu.select.sameKind" = "Seleccionar mismo tipo";
+"menu.select.deselectByPattern" = "Deseleccionar por patrón…";
+"menu.select.unique" = "Seleccionar elementos únicos";
+"menu.select.newer" = "Seleccionar elementos más nuevos";
+"menu.select.different" = "Seleccionar elementos distintos";
+"select.deselectTitle" = "Deseleccionar por patrón";
+"select.deselectApply" = "Deseleccionar";
+"select.resultOne" = "1 elemento seleccionado";
+"select.resultMany" = "%d elementos seleccionados";

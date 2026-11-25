@@ -244,15 +244,20 @@ public enum BatchRename {
             && !name.utf8.contains(0)
     }
 
+    /// The comparison key for a file name on a volume: exact bytes when the volume is case
+    /// sensitive, otherwise case-folded and canonically composed. Shared by rename collision
+    /// checks and the pane comparison selections.
+    public static func nameKey(_ name: String, caseSensitive: Bool) -> Data {
+        if caseSensitive { return Data(name.utf8) }
+        let folded = name.folding(
+            options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
+        return Data(folded.precomposedStringWithCanonicalMapping.utf8)
+    }
+
     private static func conflicts(
         for pairs: [RenamePair], existing: Set<String>, caseSensitive: Bool
     ) -> Set<String> {
-        func key(_ name: String) -> Data {
-            if caseSensitive { return Data(name.utf8) }
-            let folded = name.folding(
-                options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
-            return Data(folded.precomposedStringWithCanonicalMapping.utf8)
-        }
+        func key(_ name: String) -> Data { nameKey(name, caseSensitive: caseSensitive) }
 
         let originals = Set(pairs.map { key($0.original) })
         let outside = Set(existing.map(key)).subtracting(originals)

@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "フォルダツリー";
 "foldertree.unreadable" = "このフォルダを読み取れません(権限がありません)";
 "menu.view.folderTree" = "フォルダツリーを表示";
+"menu.select" = "選択";
+"menu.select.invert" = "選択を反転";
+"menu.select.allFiles" = "すべてのファイルを選択";
+"menu.select.allFolders" = "すべてのフォルダを選択";
+"menu.select.sameExtension" = "同じ拡張子を選択";
+"menu.select.sameKind" = "同じ種類を選択";
+"menu.select.deselectByPattern" = "パターンで選択解除…";
+"menu.select.unique" = "固有の項目を選択";
+"menu.select.newer" = "新しい項目を選択";
+"menu.select.different" = "異なる項目を選択";
+"select.deselectTitle" = "パターンで選択解除";
+"select.deselectApply" = "選択解除";
+"select.resultOne" = "1 項目を選択";
+"select.resultMany" = "%d 項目を選択";

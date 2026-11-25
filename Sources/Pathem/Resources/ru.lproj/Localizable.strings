@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "Дерево папок";
 "foldertree.unreadable" = "Не удаётся прочитать папку (нет доступа)";
 "menu.view.folderTree" = "Показать дерево папок";
+"menu.select" = "Выделить";
+"menu.select.invert" = "Инвертировать выделение";
+"menu.select.allFiles" = "Выделить все файлы";
+"menu.select.allFolders" = "Выделить все папки";
+"menu.select.sameExtension" = "Выделить с тем же расширением";
+"menu.select.sameKind" = "Выделить того же типа";
+"menu.select.deselectByPattern" = "Снять выделение по шаблону…";
+"menu.select.unique" = "Выделить уникальные элементы";
+"menu.select.newer" = "Выделить более новые элементы";
+"menu.select.different" = "Выделить отличающиеся элементы";
+"select.deselectTitle" = "Снять выделение по шаблону";
+"select.deselectApply" = "Снять выделение";
+"select.resultOne" = "Выделен 1 элемент";
+"select.resultMany" = "Выделено элементов: %d";

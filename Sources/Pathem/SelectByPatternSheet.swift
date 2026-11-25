@@ -10,7 +10,8 @@ enum SelectionMode: Sendable { case replace, add, subtract }
 @MainActor
 enum SelectByPatternSheet {
     static func present(
-        over window: NSWindow, completion: @escaping (SelectionQuery, SelectionMode) -> Void
+        over window: NSWindow, deselect: Bool = false,
+        completion: @escaping (SelectionQuery, SelectionMode) -> Void
     ) {
         let pattern = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 22))
         pattern.placeholderString = "*.log"
@@ -31,7 +32,8 @@ enum SelectByPatternSheet {
             L("select.remove", "Remove from selection"),
         ])
         let caseBox = NSButton(
-            checkboxWithTitle: L("select.caseSensitive", "Case sensitive"), target: nil, action: nil)
+            checkboxWithTitle: L("select.caseSensitive", "Case sensitive"), target: nil, action: nil
+        )
 
         func row(_ label: String, _ control: NSView) -> NSStackView {
             let name = NSTextField(labelWithString: label)
@@ -42,32 +44,39 @@ enum SelectByPatternSheet {
             stack.spacing = 8
             return stack
         }
-        let stack = NSStackView(views: [
+        let rows: [NSView?] = [
             row(L("select.patternLabel", "Pattern"), pattern),
             row(L("select.matchLabel", "Match"), match),
             row(L("select.kindLabel", "Kind"), kind),
-            row(L("select.modeLabel", "Then"), mode),
+            deselect ? nil : row(L("select.modeLabel", "Then"), mode),
             caseBox,
-        ])
+        ]
+        let stack = NSStackView(views: rows.compactMap { $0 })
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 8
-        stack.frame = NSRect(x: 0, y: 0, width: 380, height: 156)
+        stack.frame = NSRect(x: 0, y: 0, width: 380, height: deselect ? 126 : 156)
 
         let alert = NSAlert()
-        alert.messageText = L("select.title", "Select by Pattern")
+        alert.messageText =
+            deselect
+            ? L("select.deselectTitle", "Deselect by Pattern")
+            : L("select.title", "Select by Pattern")
         alert.informativeText = L(
             "select.help",
-            "Select the items whose name matches. Wildcards: * (any run), ? (one character), [0-9] (a range).")
+            "Select the items whose name matches. Wildcards: * (any run), ? (one character), [0-9] (a range)."
+        )
         alert.accessoryView = stack
-        alert.addButton(withTitle: L("select.apply", "Select"))
+        alert.addButton(
+            withTitle: deselect
+                ? L("select.deselectApply", "Deselect") : L("select.apply", "Select"))
         alert.addButton(withTitle: L("common.cancel", "Cancel"))
         alert.window.initialFirstResponder = pattern
         alert.beginSheetModal(for: window) { response in
             guard response == .alertFirstButtonReturn else { return }
             let matches: [SelectionQuery.Match] = [.glob, .regex, .substring]
             let kinds: [SelectionQuery.Kind] = [.any, .files, .folders]
-            let modes: [SelectionMode] = [.replace, .add, .subtract]
+            let modes: [SelectionMode] = deselect ? [.subtract] : [.replace, .add, .subtract]
             let query = SelectionQuery(
                 pattern: pattern.stringValue,
                 match: matches[max(0, match.indexOfSelectedItem)],

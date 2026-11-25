@@ -133,6 +133,50 @@ extension BrowserViewController {
                 self?.activePane != nil
             }
         ) { [weak self] in self?.selectByPattern() }
+        let hasPane: () -> Bool = { [weak self] in self?.activePane != nil }
+        let hasSplit: () -> Bool = { [weak self] in
+            guard let self, let pane = self.activePane, let other = self.otherPane else {
+                return false
+            }
+            return other !== pane
+        }
+        add(
+            "select.invert", L("menu.select.invert", "Invert Selection"),
+            keywords: ["reverse", "toggle selection"], enabled: hasPane
+        ) { [weak self] in self?.runSelectCommand(.invert) }
+        add(
+            "select.allFiles", L("menu.select.allFiles", "Select All Files"),
+            keywords: ["files only"], enabled: hasPane
+        ) { [weak self] in self?.runSelectCommand(.allFiles) }
+        add(
+            "select.allFolders", L("menu.select.allFolders", "Select All Folders"),
+            keywords: ["directories only"], enabled: hasPane
+        ) { [weak self] in self?.runSelectCommand(.allFolders) }
+        add(
+            "select.sameExtension", L("menu.select.sameExtension", "Select Same Extension"),
+            keywords: ["same type", "suffix"], enabled: hasSelection
+        ) { [weak self] in self?.runSelectCommand(.sameExtension) }
+        add(
+            "select.sameKind", L("menu.select.sameKind", "Select Same Kind"),
+            keywords: ["same type", "category"], enabled: hasSelection
+        ) { [weak self] in self?.runSelectCommand(.sameKind) }
+        add(
+            "select.deselectByPattern",
+            L("menu.select.deselectByPattern", "Deselect by Pattern…"),
+            keywords: ["unselect", "remove from selection"], enabled: hasPane
+        ) { [weak self] in self?.deselectByPattern() }
+        add(
+            "select.unique", L("menu.select.unique", "Select Unique Items"),
+            keywords: ["compare", "only here", "not in other pane"], enabled: hasSplit
+        ) { [weak self] in self?.compareSelect(.unique) }
+        add(
+            "select.newer", L("menu.select.newer", "Select Newer Items"),
+            keywords: ["compare", "newer than other pane"], enabled: hasSplit
+        ) { [weak self] in self?.compareSelect(.newer) }
+        add(
+            "select.different", L("menu.select.different", "Select Different Items"),
+            keywords: ["compare", "changed", "differ from other pane"], enabled: hasSplit
+        ) { [weak self] in self?.compareSelect(.different) }
         add("files.newFolder", L("bvc.cmd.newFolder", "New Folder")) { [weak self] in
             self?.newFolder()
         }

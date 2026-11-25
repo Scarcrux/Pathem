@@ -1885,3 +1885,17 @@
 "prefs.folderTree" = "Show the folder tree";
 "foldertree.accessibility" = "Folder tree";
 "foldertree.unreadable" = "Can’t read this folder (no permission)";
+"menu.select" = "Select";
+"menu.select.invert" = "Invert Selection";
+"menu.select.allFiles" = "Select All Files";
+"menu.select.allFolders" = "Select All Folders";
+"menu.select.sameExtension" = "Select Same Extension";
+"menu.select.sameKind" = "Select Same Kind";
+"menu.select.deselectByPattern" = "Deselect by Pattern…";
+"menu.select.unique" = "Select Unique Items";
+"menu.select.newer" = "Select Newer Items";
+"menu.select.different" = "Select Different Items";
+"select.deselectTitle" = "Deselect by Pattern";
+"select.deselectApply" = "Deselect";
+"select.resultOne" = "1 item selected";
+"select.resultMany" = "%d items selected";

@@ -1961,3 +1961,17 @@
 "foldertree.accessibility" = "Arborescence des dossiers";
 "foldertree.unreadable" = "Impossible de lire ce dossier (accès refusé)";
 "menu.view.folderTree" = "Afficher l’arborescence des dossiers";
+"menu.select" = "Sélectionner";
+"menu.select.invert" = "Inverser la sélection";
+"menu.select.allFiles" = "Sélectionner tous les fichiers";
+"menu.select.allFolders" = "Sélectionner tous les dossiers";
+"menu.select.sameExtension" = "Sélectionner la même extension";
+"menu.select.sameKind" = "Sélectionner le même type";
+"menu.select.deselectByPattern" = "Désélectionner par motif…";
+"menu.select.unique" = "Sélectionner les éléments uniques";
+"menu.select.newer" = "Sélectionner les éléments plus récents";
+"menu.select.different" = "Sélectionner les éléments différents";
+"select.deselectTitle" = "Désélectionner par motif";
+"select.deselectApply" = "Désélectionner";
+"select.resultOne" = "1 élément sélectionné";
+"select.resultMany" = "%d éléments sélectionnés";
