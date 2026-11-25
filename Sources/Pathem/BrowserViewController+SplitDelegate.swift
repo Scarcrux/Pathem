@@ -1,4 +1,5 @@
 import AppKit
+import PathemEngine
 
 /// Owns the browser's nested split views, divider policy, and pane-ratio state.
 @MainActor
@@ -26,9 +27,68 @@ final class BrowserSplitLayoutController: NSObject, NSSplitViewDelegate {
 
     static let compactSidebarWidth: CGFloat = 60
 
+    /// The folder tree column, inserted between the sidebar and the panes only while shown
+    /// (a hidden arranged subview leaves NSSplitView's divider indexes unreliable).
+    private(set) var folderTreeView: NSView?
+    private var folderTreeWidthConstraint: NSLayoutConstraint?
+    /// The tree's width outside a drag, kept so showing it again restores the last width.
+    private(set) var folderTreeWidth = CGFloat(FolderTree.defaultWidth)
+    /// Reports the new width after the user drags the tree's divider.
+    var onFolderTreeWidthChange: ((CGFloat) -> Void)?
+
+    var showsFolderTree: Bool {
+        guard let folderTreeView else { return false }
+        return outerSplit.arrangedSubviews.contains(folderTreeView)
+    }
+
+    /// Show or hide the folder tree column at `width`. Keeps the sidebar and panes as they are.
+    func setFolderTree(visible: Bool, width: CGFloat) {
+        guard let tree = folderTreeView, visible != showsFolderTree else {
+            if visible, showsFolderTree { applyFolderTreeWidth(width) }
+            return
+        }
+        if visible {
+            folderTreeWidth = CGFloat(FolderTree.clampedWidth(Double(width)))
+            let constraint = tree.widthAnchor.constraint(equalToConstant: folderTreeWidth)
+            constraint.priority = NSLayoutConstraint.Priority(260)
+            constraint.isActive = true
+            folderTreeWidthConstraint = constraint
+            outerSplit.insertArrangedSubview(tree, at: 1)
+            outerSplit.setHoldingPriority(NSLayoutConstraint.Priority(260), forSubviewAt: 1)
+            outerSplit.adjustSubviews()
+            applyFolderTreeWidth(folderTreeWidth)
+        } else {
+            folderTreeWidthConstraint?.isActive = false
+            folderTreeWidthConstraint = nil
+            outerSplit.removeArrangedSubview(tree)
+            tree.removeFromSuperview()
+            outerSplit.adjustSubviews()
+        }
+    }
+
+    private func applyFolderTreeWidth(_ width: CGFloat) {
+        folderTreeWidth = CGFloat(FolderTree.clampedWidth(Double(width)))
+        folderTreeWidthConstraint?.constant = folderTreeWidth
+        guard outerSplit.bounds.width > 400, let sidebar = outerSplit.arrangedSubviews.first
+        else { return }
+        outerSplit.setPosition(
+            sidebar.frame.maxX + outerSplit.dividerThickness + folderTreeWidth, ofDividerAt: 1)
+    }
+
+    func splitViewDidResizeSubviews(_ notification: Notification) {
+        // Only a drag of the tree's own divider carries a divider index.
+        guard notification.object as? NSSplitView === outerSplit, showsFolderTree,
+            let tree = folderTreeView,
+            let index = notification.userInfo?["NSSplitViewDividerIndex"] as? Int, index == 1
+        else { return }
+        folderTreeWidth = tree.frame.width
+        onFolderTreeWidthChange?(folderTreeWidth)
+    }
+
     func configure(
-        left: NSView, right: NSView, sidebar: NSView, terminal: NSView
+        left: NSView, right: NSView, sidebar: NSView, terminal: NSView, folderTree: NSView
     ) {
+        folderTreeView = folderTree
         split.isVertical = true
         split.dividerStyle = .thin
         split.delegate = paneRatioDelegate
@@ -112,6 +172,11 @@ final class BrowserSplitLayoutController: NSObject, NSSplitViewDelegate {
     ) -> CGFloat {
         // Compact mode lets the sidebar shrink to an icons-only width.
         if splitView === outerSplit, dividerIndex == 0 { return compactSidebar ? 52 : 140 }
+        if splitView === outerSplit, dividerIndex == 1,
+            let sidebar = outerSplit.arrangedSubviews.first
+        {
+            return sidebar.frame.maxX + splitView.dividerThickness + CGFloat(FolderTree.minWidth)
+        }
         if splitView === vSplit, dividerIndex == 0 { return 160 }  // min browser height
         return proposedMin
     }
@@ -121,6 +186,16 @@ final class BrowserSplitLayoutController: NSObject, NSSplitViewDelegate {
         ofSubviewAt dividerIndex: Int
     ) -> CGFloat {
         if splitView === outerSplit, dividerIndex == 0 { return 320 }  // max sidebar width
+        if splitView === outerSplit, dividerIndex == 1,
+            let sidebar = outerSplit.arrangedSubviews.first
+        {
+            // The panes keep at least 320 points.
+            let widest =
+                sidebar.frame.maxX + splitView.dividerThickness + CGFloat(FolderTree.maxWidth)
+            return max(
+                sidebar.frame.maxX + CGFloat(FolderTree.minWidth),
+                min(widest, splitView.bounds.width - 320))
+        }
         if splitView === vSplit, dividerIndex == 0 { return splitView.bounds.height - 120 }  // min terminal height
         return proposedMax
     }

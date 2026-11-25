@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Расположить панели друг под другом";
 "prefs.stackPanes" = "Расположить две панели друг под другом";
 "menu.view.stackPanes" = "Расположить панели друг под другом";
+"bvc.cmd.folderTree" = "Показать дерево папок";
+"prefs.folderTree" = "Показывать дерево папок";
+"foldertree.accessibility" = "Дерево папок";
+"foldertree.unreadable" = "Не удаётся прочитать папку (нет доступа)";
+"menu.view.folderTree" = "Показать дерево папок";

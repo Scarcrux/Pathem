@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Panelen verticaal stapelen";
 "prefs.stackPanes" = "De twee panelen boven elkaar zetten";
 "menu.view.stackPanes" = "Panelen verticaal stapelen";
+"bvc.cmd.folderTree" = "Mapstructuur tonen";
+"prefs.folderTree" = "De mapstructuur tonen";
+"foldertree.accessibility" = "Mapstructuur";
+"foldertree.unreadable" = "Deze map kan niet worden gelezen (geen toegang)";
+"menu.view.folderTree" = "Mapstructuur tonen";

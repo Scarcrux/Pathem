@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "上下堆疊窗格";
 "prefs.stackPanes" = "將兩個窗格上下堆疊";
 "menu.view.stackPanes" = "上下堆疊窗格";
+"bvc.cmd.folderTree" = "顯示檔案夾樹狀圖";
+"prefs.folderTree" = "顯示檔案夾樹狀圖";
+"foldertree.accessibility" = "檔案夾樹狀圖";
+"foldertree.unreadable" = "無法讀取此檔案夾(沒有權限)";
+"menu.view.folderTree" = "顯示檔案夾樹狀圖";

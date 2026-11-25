@@ -116,6 +116,7 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     }
     let sidebar = SidebarController()
     let terminal = TerminalController()
+    let folderTree: FolderTreeController
     let torrentDrawer = TorrentDrawerController()  // FileZilla-style transfer drawer at the bottom
     let torrentDetail = TorrentDetailView()  // overlays the panes when a torrent is opened
     /// The toolbar's search-and-command button: looks like a search field, opens the one
@@ -303,6 +304,8 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
 
     init(start: URL, demo: DemoWorkspace.Layout? = nil, persistsSession: Bool = true) {
         demoLayout = demo
+        folderTree = FolderTreeController(
+            home: demo?.root ?? FileManager.default.homeDirectoryForCurrentUser)
         if let demo { FolderSizeSkipSettings.demoRoot = demo.root.path }
         self.persistsSession = persistsSession
         leftTabs = TabbedPaneController(start: demo?.leftStart ?? start)
@@ -315,7 +318,18 @@ final class BrowserViewController: NSViewController, NSMenuDelegate, QLPreviewPa
     override func loadView() {
         splitLayout.configure(
             left: leftTabs.containerView, right: rightTabs.containerView,
-            sidebar: sidebar.containerView, terminal: terminal.view)
+            sidebar: sidebar.containerView, terminal: terminal.view,
+            folderTree: folderTree.containerView)
+        folderTree.onSelectFolder = { [weak self] url in
+            guard let pane = self?.activePane, pane.currentURL.standardizedFileURL != url
+            else { return }
+            pane.navigate(to: url)
+        }
+        splitLayout.onFolderTreeWidthChange = { [weak self] width in
+            guard let self else { return }
+            prefs.folderTreeWidth = Double(width)
+            saveConfig(prefs, to: Self.preferencesURL)
+        }
 
         // The search-and-command button lives in the window's unified toolbar (Finder-style).
         // It reads like a search field but opens the overlay; the active pane's live query

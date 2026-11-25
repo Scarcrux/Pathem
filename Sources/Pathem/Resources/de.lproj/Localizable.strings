@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Bereiche übereinander anordnen";
 "prefs.stackPanes" = "Beide Bereiche übereinander anordnen";
 "menu.view.stackPanes" = "Bereiche übereinander anordnen";
+"bvc.cmd.folderTree" = "Ordnerbaum anzeigen";
+"prefs.folderTree" = "Ordnerbaum anzeigen";
+"foldertree.accessibility" = "Ordnerbaum";
+"foldertree.unreadable" = "Dieser Ordner kann nicht gelesen werden (keine Berechtigung)";
+"menu.view.folderTree" = "Ordnerbaum anzeigen";

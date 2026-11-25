@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Disponi i pannelli in verticale";
 "prefs.stackPanes" = "Disponi i due pannelli uno sopra l’altro";
 "menu.view.stackPanes" = "Disponi i pannelli in verticale";
+"bvc.cmd.folderTree" = "Mostra albero delle cartelle";
+"prefs.folderTree" = "Mostra l’albero delle cartelle";
+"foldertree.accessibility" = "Albero delle cartelle";
+"foldertree.unreadable" = "Impossibile leggere questa cartella (nessun permesso)";
+"menu.view.folderTree" = "Mostra albero delle cartelle";

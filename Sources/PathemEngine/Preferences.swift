@@ -115,6 +115,10 @@ public struct Preferences: Codable, Sendable, Equatable {
     public var compactSidebar: Bool
     /// Stack the two file panes top and bottom (left pane on top) instead of side by side.
     public var stackPanesVertically: Bool
+    /// Show the folder tree column between the sidebar and the panes (hidden by default).
+    public var showFolderTree: Bool
+    /// The folder tree column's width in points.
+    public var folderTreeWidth: Double
     /// Render sidebar place icons as monochrome templates that tint with the sidebar (a clean,
     /// Liquid-Glass look) instead of full-color brand glyphs (Google Drive, AirDrop, etc.).
     public var monochromeSidebarIcons: Bool
@@ -216,6 +220,7 @@ public struct Preferences: Codable, Sendable, Equatable {
         skipCacheFolderSizes: Bool = true, folderSizeExclusions: String = "",
         autosaveMarkup: Bool = false,
         compactSidebar: Bool = false, stackPanesVertically: Bool = false,
+        showFolderTree: Bool = false, folderTreeWidth: Double = FolderTree.defaultWidth,
         monochromeSidebarIcons: Bool = false,
         confirmBeforeDelete: Bool = false, downloadSuggestionsEnabled: Bool = false,
         conflictDefault: ConflictDefault = .ask, verifyCopies: Bool = false,
@@ -298,6 +303,8 @@ public struct Preferences: Codable, Sendable, Equatable {
         self.autosaveMarkup = autosaveMarkup
         self.compactSidebar = compactSidebar
         self.stackPanesVertically = stackPanesVertically
+        self.showFolderTree = showFolderTree
+        self.folderTreeWidth = folderTreeWidth
         self.monochromeSidebarIcons = monochromeSidebarIcons
         self.confirmBeforeDelete = confirmBeforeDelete
         self.downloadSuggestionsEnabled = downloadSuggestionsEnabled
@@ -352,6 +359,11 @@ public struct Preferences: Codable, Sendable, Equatable {
         stackPanesVertically =
             try c.decodeIfPresent(Bool.self, forKey: .stackPanesVertically)
             ?? d.stackPanesVertically
+        showFolderTree =
+            try c.decodeIfPresent(Bool.self, forKey: .showFolderTree) ?? d.showFolderTree
+        folderTreeWidth =
+            FolderTree.clampedWidth(
+                try c.decodeIfPresent(Double.self, forKey: .folderTreeWidth) ?? d.folderTreeWidth)
         monochromeSidebarIcons =
             try c.decodeIfPresent(Bool.self, forKey: .monochromeSidebarIcons)
             ?? d.monochromeSidebarIcons

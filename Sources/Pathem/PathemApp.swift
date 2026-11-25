@@ -361,10 +361,14 @@ enum PathemApp {
             window.setContentSize(NSSize(width: 1200, height: 760))
             browser.view.layoutSubtreeIfNeeded()
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                browser.debugRenderLayoutShots(toDir: dir) { exit(0) }
+                browser.debugFolderTreeFollowCheck {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        browser.debugRenderLayoutShots(toDir: dir) { exit(0) }
+                    }
+                }
             }
             // In-process render: no desktop activation or Screen Recording needed.
-            RunLoop.main.run(until: Date().addingTimeInterval(50))
+            RunLoop.main.run(until: Date().addingTimeInterval(55))
             exit(1)
         }
         if let dir = ProcessInfo.processInfo.environment["PATHEM_THEME_SHOTS"] {
@@ -1944,6 +1948,7 @@ enum PathemApp {
                     commandItem("Show Path Bar at Bottom", "view.pathBarBottom"),
                     commandItem("Compact Sidebar", "view.compactSidebar"),
                     commandItem("Stack Panes Vertically", "view.stackPanes"),
+                    commandItem("Show Folder Tree", "view.folderTree"),
                     commandItem("Sync Browsing", "view.syncBrowsing"),
                     commandItem("Vim Navigation", "nav.vimMode"),
                 ]))

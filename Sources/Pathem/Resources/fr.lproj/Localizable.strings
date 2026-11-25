@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Empiler les panneaux verticalement";
 "prefs.stackPanes" = "Empiler les deux panneaux (haut et bas)";
 "menu.view.stackPanes" = "Empiler les panneaux verticalement";
+"bvc.cmd.folderTree" = "Afficher l’arborescence des dossiers";
+"prefs.folderTree" = "Afficher l’arborescence des dossiers";
+"foldertree.accessibility" = "Arborescence des dossiers";
+"foldertree.unreadable" = "Impossible de lire ce dossier (accès refusé)";
+"menu.view.folderTree" = "Afficher l’arborescence des dossiers";

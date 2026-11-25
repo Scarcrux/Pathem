@@ -179,6 +179,28 @@ extension BrowserViewController {
         saveConfig(prefs, to: Self.preferencesURL)
     }
 
+    func toggleFolderTree() {
+        prefs.showFolderTree.toggle()
+        applyPreferences()  // shows or hides the column live and persists
+    }
+
+    /// Show or hide the folder tree to match the preference, and keep it on the active folder.
+    func applyFolderTree() {
+        folderTree.includesHidden = prefs.showHiddenByDefault
+        splitLayout.setFolderTree(
+            visible: prefs.showFolderTree, width: CGFloat(prefs.folderTreeWidth))
+        syncFolderTree()
+    }
+
+    /// Point the folder tree at the active pane's folder. A smart listing or a remote folder
+    /// has no place in the local tree, so it keeps its last selection.
+    func syncFolderTree() {
+        guard prefs.showFolderTree, let pane = activePane, pane.smartListingTitle == nil,
+            !pane.isRemote
+        else { return }
+        folderTree.reveal(pane.currentURL)
+    }
+
     func toggleStackedPanes() {
         prefs.stackPanesVertically.toggle()
         applyPreferences()  // reorients the panes live and persists
@@ -380,7 +402,10 @@ extension BrowserViewController {
         for side in [leftTabs, rightTabs] { side.newTabAtEnd = prefs.newTabAtEnd }
         torrentDrawer.preferredDownloadPath = prefs.torrentDownloadPath
         applyCompactSidebar()
-        if didSetInitialSplit { splitLayout.setStacked(prefs.stackPanesVertically) }
+        if didSetInitialSplit {
+            splitLayout.setStacked(prefs.stackPanesVertically)
+            applyFolderTree()
+        }
         applyCommanderCommands()
         renderThemePreview(nil)
         applyTooltipDelay()

@@ -721,6 +721,10 @@ extension BrowserViewController {
             [weak self] in self?.toggleCalculateSizes()
         }
         add(
+            "view.folderTree", L("bvc.cmd.folderTree", "Show Folder Tree"),
+            keywords: ["folder tree", "navigation tree", "directory tree", "hierarchy"]
+        ) { [weak self] in self?.toggleFolderTree() }
+        add(
             "view.stackPanes", L("bvc.cmd.stackPanes", "Stack Panes Vertically"),
             keywords: [
                 "horizontal split", "top and bottom", "layout", "stacked", "side by side",

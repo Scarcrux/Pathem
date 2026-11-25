@@ -206,13 +206,60 @@ extension BrowserViewController {
         step(0)
     }
 
+    /// Scripted check of the folder tree against two real panes (PATHEM_LAYOUT_SHOTS): the
+    /// selection follows the active pane's folder, follows a focus switch, and a click
+    /// navigates the active pane. Prints one FOLDERTREE line per check.
+    func debugFolderTreeFollowCheck(done: @escaping () -> Void) {
+        func report(_ name: String, _ ok: Bool, _ detail: String = "") {
+            print("FOLDERTREE: \(ok ? "PASS" : "FAIL") \(name) \(detail)")
+        }
+        prefs.showFolderTree = true
+        applyPreferences()
+        guard let left = leftTabs.activePane, let right = rightTabs.activePane,
+            let child = FolderTree.subfolders(of: left.currentURL, includingHidden: false)
+                .folders.first
+        else {
+            report("setup", false)
+            done()
+            return
+        }
+        let leftHome = left.currentURL
+        setActiveSide(leftTabs, pane: left)
+        left.navigate(to: child.url)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            report(
+                "follows-navigation",
+                self.folderTree.debugSelectedPath == child.url.standardizedFileURL.path,
+                self.folderTree.debugSelectedPath ?? "nil")
+            self.setActiveSide(self.rightTabs, pane: right)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                report(
+                    "follows-pane-focus",
+                    self.folderTree.debugSelectedPath == right.currentURL.standardizedFileURL.path,
+                    self.folderTree.debugSelectedPath ?? "nil")
+                self.folderTree.onSelectFolder?(leftHome)  // what a click on the folder does
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    report(
+                        "click-navigates-active-pane",
+                        right.currentURL.standardizedFileURL.path
+                            == leftHome.standardizedFileURL.path,
+                        right.currentURL.path)
+                    self.setActiveSide(self.leftTabs, pane: left)
+                    left.navigate(to: leftHome)
+                    done()
+                }
+            }
+        }
+    }
+
     /// Render the pane arrangements (side by side, stacked, stacked with the terminal drawer)
     /// in light and dark through the same preference path the menu uses
     /// (PATHEM_LAYOUT_SHOTS=<dir>, with PATHEM_DEMO=1). Calls `done` after the last one.
     func debugRenderLayoutShots(toDir dir: String, done: @escaping () -> Void) {
-        let shots: [(name: String, stacked: Bool, terminal: Bool)] = [
-            ("side-by-side", false, false), ("stacked", true, false),
-            ("stacked-terminal", true, true),
+        let shots: [(name: String, stacked: Bool, terminal: Bool, tree: Bool)] = [
+            ("side-by-side", false, false, false), ("stacked", true, false, false),
+            ("stacked-terminal", true, true, false), ("side-by-side-tree", false, false, true),
+            ("stacked-tree", true, false, true),
         ]
         let looks: [(String, Preferences.Appearance)] = [("light", .light), ("dark", .dark)]
         let plan = looks.flatMap { look in shots.map { (look, $0) } }
@@ -225,6 +272,7 @@ extension BrowserViewController {
                 setTerminal(false)
                 prefs.appearance = .system
                 prefs.stackPanesVertically = false
+                prefs.showFolderTree = false
                 applyPreferences()
                 done()
                 return
@@ -232,12 +280,13 @@ extension BrowserViewController {
             let (look, shot) = plan[index]
             prefs.appearance = look.1
             prefs.stackPanesVertically = shot.stacked
+            prefs.showFolderTree = shot.tree
             applyPreferences()
             setTerminal(shot.terminal)
             for side in [leftTabs, rightTabs] {
                 side.activePane?.refreshIcons()
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + (shot.terminal ? 2.0 : 0.6)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + (shot.terminal ? 2.0 : 1.0)) {
                 self.view.layoutSubtreeIfNeeded()
                 self.debugRenderWindowChrome(
                     to: "\(dir)/\(shot.name)-\(look.0).png")

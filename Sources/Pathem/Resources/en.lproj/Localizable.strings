@@ -1881,3 +1881,7 @@
 "themes.withdrawn" = "Withdrawn";
 "bvc.cmd.stackPanes" = "Stack Panes Vertically";
 "prefs.stackPanes" = "Stack the two panes top and bottom";
+"bvc.cmd.folderTree" = "Show Folder Tree";
+"prefs.folderTree" = "Show the folder tree";
+"foldertree.accessibility" = "Folder tree";
+"foldertree.unreadable" = "Can’t read this folder (no permission)";

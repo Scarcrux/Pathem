@@ -112,6 +112,7 @@ extension BrowserViewController {
     /// when the preference is on, or the server location for a remote pane. Also
     /// sets representedURL so the title gets a proxy icon and path popup.
     func updateWindowTitle() {
+        syncFolderTree()
         updateCommanderPrompt()  // keep the commander prompt in sync with the active folder
         guard let window = view.window else { return }
         guard let pane = activePane else {

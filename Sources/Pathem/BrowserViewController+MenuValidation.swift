@@ -81,6 +81,7 @@ extension BrowserViewController {
                 (activePane?.effectiveViewOptions.calculateFolderSizes ?? prefs.calculateFolderSizes)
                 ? .on : .off
         case "view.syncBrowsing": menuItem.state = syncBrowsing ? .on : .off
+        case "view.folderTree": menuItem.state = prefs.showFolderTree ? .on : .off
         case "view.stackPanes": menuItem.state = prefs.stackPanesVertically ? .on : .off
         case "view.compactSidebar": menuItem.state = prefs.compactSidebar ? .on : .off
         case "view.previewPane": menuItem.state = previewPane.isVisible ? .on : .off

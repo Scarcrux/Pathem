@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "ペインを上下に並べる";
 "prefs.stackPanes" = "2つのペインを上下に並べる";
 "menu.view.stackPanes" = "ペインを上下に並べる";
+"bvc.cmd.folderTree" = "フォルダツリーを表示";
+"prefs.folderTree" = "フォルダツリーを表示する";
+"foldertree.accessibility" = "フォルダツリー";
+"foldertree.unreadable" = "このフォルダを読み取れません(権限がありません)";
+"menu.view.folderTree" = "フォルダツリーを表示";

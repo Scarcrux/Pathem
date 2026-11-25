@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Empilhar painéis verticalmente";
 "prefs.stackPanes" = "Empilhar os dois painéis (em cima e embaixo)";
 "menu.view.stackPanes" = "Empilhar painéis verticalmente";
+"bvc.cmd.folderTree" = "Mostrar árvore de pastas";
+"prefs.folderTree" = "Mostrar a árvore de pastas";
+"foldertree.accessibility" = "Árvore de pastas";
+"foldertree.unreadable" = "Não foi possível ler esta pasta (sem permissão)";
+"menu.view.folderTree" = "Mostrar árvore de pastas";

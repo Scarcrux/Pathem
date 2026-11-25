@@ -1956,3 +1956,8 @@
 "bvc.cmd.stackPanes" = "Apilar paneles verticalmente";
 "prefs.stackPanes" = "Apilar los dos paneles (arriba y abajo)";
 "menu.view.stackPanes" = "Apilar paneles verticalmente";
+"bvc.cmd.folderTree" = "Mostrar árbol de carpetas";
+"prefs.folderTree" = "Mostrar el árbol de carpetas";
+"foldertree.accessibility" = "Árbol de carpetas";
+"foldertree.unreadable" = "No se puede leer esta carpeta (sin permiso)";
+"menu.view.folderTree" = "Mostrar árbol de carpetas";

@@ -230,6 +230,7 @@ extension BrowserViewController {
         outerSplit.setPosition(compactSidebar ? Self.compactSidebarWidth : 200, ofDividerAt: 0)  // sidebar width
         outerSplit.layoutSubtreeIfNeeded()  // give the panes area its real width
         splitLayout.setStacked(prefs.stackPanesVertically)
+        applyFolderTree()
         setRightPaneFraction(0.5)  // even panes
         didSetInitialSplit = true
         // Restore the terminal drawer if it was open last session -- but never on an automation

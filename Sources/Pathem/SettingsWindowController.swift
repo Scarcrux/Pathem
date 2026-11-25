@@ -368,6 +368,7 @@ final class SettingsWindowController: NSObject, NSTableViewDataSource, NSTableVi
                 check(
                     L("prefs.stackPanes", "Stack the two panes top and bottom"),
                     \.stackPanesVertically),
+                check(L("prefs.folderTree", "Show the folder tree"), \.showFolderTree),
                 check(
                     L("prefs.monochromeSidebar", "Monochrome sidebar icons (Liquid Glass)"),
                     \.monochromeSidebarIcons),
